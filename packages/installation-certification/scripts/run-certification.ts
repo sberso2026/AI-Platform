@@ -103,7 +103,7 @@ async function main(): Promise<void> {
   try {
     serverPort = await certServer.start({ skipBuild: false });
     log(`Verifying certification server build-identity at ${certServer.baseUrl}`);
-    const identityProbe = await verifyBuildIdentity(ROOT);
+    const identityProbe = await verifyBuildIdentity(ROOT, certServer.baseUrl);
     if (!identityProbe.ok) {
       gates.push({
         gate: "PRE",
@@ -124,7 +124,23 @@ async function main(): Promise<void> {
     gates.push(gate("J", "Lifecycle transition tests", "pnpm test:lifecycle", PKG));
     gates.push(gate("K", "Dependency enforcement tests", "pnpm test:dependency", PKG));
     gates.push(gate("F", "Browser E2E tests", "pnpm test:e2e", PKG));
-    gates.push(await gateBuildIdentity(certServer.baseUrl));
+
+    const localSha = resolveLocalCommitSha(ROOT);
+    const gateLStatus =
+      localSha !== "unknown" && buildIdentityPayload?.commitSha === localSha ? "pass" : "fail";
+    gates.push({
+      gate: "L",
+      name: "Build identity (Git SHA)",
+      status: gateLStatus,
+      command: "GET /api/platform/build-identity",
+      output: buildIdentityPayload
+        ? JSON.stringify(buildIdentityPayload, null, 2).slice(-4000)
+        : undefined,
+      error:
+        gateLStatus === "fail"
+          ? `SHA mismatch or unknown: local=${localSha} server=${buildIdentityPayload?.commitSha ?? "unknown"}`
+          : undefined,
+    });
   } finally {
     certServer.stop();
   }

@@ -4,9 +4,11 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { NextResponse } from "next/server";
 
+const REPO_ROOT = resolve(process.cwd(), "../..");
+
 function gitSha(): string {
   try {
-    return execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+    return execSync("git rev-parse HEAD", { cwd: REPO_ROOT, encoding: "utf8" }).trim();
   } catch {
     return "unknown";
   }
@@ -14,7 +16,7 @@ function gitSha(): string {
 
 function gitBranch(): string {
   try {
-    return execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf8" }).trim();
+    return execSync("git rev-parse --abbrev-ref HEAD", { cwd: REPO_ROOT, encoding: "utf8" }).trim();
   } catch {
     return "unknown";
   }
@@ -22,7 +24,7 @@ function gitBranch(): string {
 
 function workingTreeDirty(): boolean {
   try {
-    const status = execSync("git status --porcelain", { encoding: "utf8" }).trim();
+    const status = execSync("git status --porcelain", { cwd: REPO_ROOT, encoding: "utf8" }).trim();
     return status.length > 0;
   } catch {
     return true;
@@ -31,7 +33,7 @@ function workingTreeDirty(): boolean {
 
 function changedFiles(): string[] {
   try {
-    return execSync("git status --porcelain", { encoding: "utf8" })
+    return execSync("git status --porcelain", { cwd: REPO_ROOT, encoding: "utf8" })
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
@@ -41,7 +43,7 @@ function changedFiles(): string[] {
 }
 
 function migrationChecksums(): Record<string, string> {
-  const dir = resolve(process.cwd(), "../../supabase/migrations");
+  const dir = resolve(REPO_ROOT, "supabase/migrations");
   const out: Record<string, string> = {};
   if (!existsSync(dir)) return out;
   for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql"))) {

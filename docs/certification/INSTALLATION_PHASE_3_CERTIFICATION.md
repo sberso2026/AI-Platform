@@ -1,9 +1,9 @@
 # Installation Phase 3 Certification
 
 **Verdict:** FAIL
-**Date:** 2026-07-10T18:28:40.466Z
+**Date:** 2026-07-10T18:48:44.961Z
 **Environment:** https://wcydlhqiqdwgoaqrlget.supabase.co
-**Commit:** 7e570363604991c3163f0d1055a578561b8e4192
+**Commit:** ab18e28dc5d0f3c61e73c6cf8bf3dad912652b57
 **Supabase project:** wcydlhqiqdwgoaqrlget
 
 ## Gates
@@ -21,18 +21,17 @@
 | G | Scheduler lifecycle tests | PASS |
 | H | Cache invalidation tests | PASS |
 | I | Workspace provisioning tests | PASS |
-| J | Lifecycle transition tests | FAIL |
+| J | Lifecycle transition tests | PASS |
 | K | Dependency enforcement tests | PASS |
 | F | Browser E2E tests | PASS |
 | L | Build identity (Git SHA) | FAIL |
 
 ## Summary
 
-- Failures: 2
+- Failures: 1
 - Warnings: 0
 - Skipped required tests: 0
 
 ## Failures
 
-- Gate J Lifecycle transition tests
 - Gate L Build identity (Git SHA)
