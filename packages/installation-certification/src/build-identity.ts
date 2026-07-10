@@ -30,13 +30,16 @@ export function resolveLocalCommitSha(root: string): string {
   }
 }
 
-export async function verifyBuildIdentity(root: string): Promise<BuildIdentityResult> {
+export async function verifyBuildIdentity(
+  root: string,
+  baseUrlOverride?: string
+): Promise<BuildIdentityResult> {
   const expectedSha = resolveLocalCommitSha(root);
   if (expectedSha === "unknown") {
     return { ok: false, expectedSha, error: "Local git SHA is unknown" };
   }
 
-  const base = resolveTestBaseUrl().replace(/\/$/, "");
+  const base = (baseUrlOverride ?? resolveTestBaseUrl()).replace(/\/$/, "");
   let response: Response;
   try {
     response = await fetch(`${base}/api/platform/build-identity`, {

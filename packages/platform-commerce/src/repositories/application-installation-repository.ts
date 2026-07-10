@@ -97,7 +97,7 @@ export class ApplicationInstallationRepository extends BaseRepository {
     const existing = await this.getById(input.tenantId, input.installationId);
     if (!existing) throw new Error(`Application installation not found: ${input.installationId}`);
 
-    const from = existing.status;
+    const from = InstallationStateMachine.normalizeAppStatus(existing.status);
     InstallationStateMachine.assertAppTransition(from, input.targetStatus);
 
     const now = new Date().toISOString();

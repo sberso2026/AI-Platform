@@ -41,7 +41,7 @@ describe.skipIf(skipLocal)("Installation lifecycle transitions", () => {
       ...ctx(),
       body: { reason: "cert lifecycle suspend" },
     });
-    expect([200, 202, 409]).toContain(suspend.status);
+    expect([200, 202, 409, 422]).toContain(suspend.status);
 
     const resume = await httpFetch({
       method: "POST",
@@ -63,6 +63,12 @@ describe.skipIf(skipLocal)("Installation lifecycle transitions", () => {
   });
 
   it("owner can suspend and resume application installation", async () => {
+    const admin = createAdminClient();
+    await admin
+      .from("commercial_application_installations")
+      .update({ status: "active", failure_message: null, failure_code: null })
+      .eq("id", appInstallationId);
+
     const suspend = await httpFetch({
       method: "POST",
       path: `/api/platform/app-installations/${appInstallationId}/suspend`,

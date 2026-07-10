@@ -62,9 +62,9 @@ function gate(id: string, name: string, command: string, cwd?: string): GateResu
   };
 }
 
-async function gateBuildIdentity(): Promise<GateResult> {
+async function gateBuildIdentity(baseUrl?: string): Promise<GateResult> {
   log("Gate L: Build identity verification");
-  const result = await verifyBuildIdentity(ROOT);
+  const result = await verifyBuildIdentity(ROOT, baseUrl);
   return {
     gate: "L",
     name: "Build identity (Git SHA)",
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
     gates.push(gate("J", "Lifecycle transition tests", "pnpm test:lifecycle", PKG));
     gates.push(gate("K", "Dependency enforcement tests", "pnpm test:dependency", PKG));
     gates.push(gate("F", "Browser E2E tests", "pnpm test:e2e", PKG));
-    gates.push(await gateBuildIdentity());
+    gates.push(await gateBuildIdentity(certServer.baseUrl));
   } finally {
     certServer.stop();
   }

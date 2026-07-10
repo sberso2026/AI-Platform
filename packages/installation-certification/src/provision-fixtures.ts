@@ -271,6 +271,7 @@ async function seedInstallations(
         product_id: ENGINEERING_PRODUCT_ID,
         parent_product_installation_id: productInstallationId,
         application_key: appKey,
+        subscription_id: subscriptionId,
         status: "active",
         installed_version: "1.0.0",
         installed_at: new Date().toISOString(),
