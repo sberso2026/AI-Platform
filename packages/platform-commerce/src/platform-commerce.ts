@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@rtb/database";
 import {
   BillingRepository,
   InstallationRepository,
+  ApplicationInstallationRepository,
   LicenseRepository,
   MarketplaceRepository,
   OutboxRepository,
@@ -31,6 +32,7 @@ import { EntitlementCache } from "./services/entitlement-cache";
 import { EntitlementService } from "./services/entitlement-service";
 import { InstallationService } from "./services/installation-service";
 import { InstallationLifecycleService } from "./services/installation-lifecycle-service";
+import { ApplicationInstallationLifecycleService } from "./services/application-installation-lifecycle-service";
 import { InstallationHealthService } from "./services/installation-health-service";
 import { InstallationDependencyResolver } from "./services/installation-dependency-resolver";
 import { ProvisioningOrchestrator } from "./services/provisioning-orchestrator";
@@ -56,6 +58,7 @@ export function createPlatformCommerce(supabase: SupabaseClient) {
   const seats = new SeatRepository(supabase);
   const seatAssignments = new SeatAssignmentRepository(supabase);
   const installations = new InstallationRepository(supabase);
+  const applicationInstallations = new ApplicationInstallationRepository(supabase);
   const usage = new UsageRepository(supabase);
   const billing = new BillingRepository(supabase);
   const marketplace = new MarketplaceRepository(supabase);
@@ -89,7 +92,9 @@ export function createPlatformCommerce(supabase: SupabaseClient) {
     entitlementOverrides,
     productApplications,
     cache,
-    installations
+    installations,
+    entitlementVersions,
+    installationVersions
   );
   const installationLifecycle = new InstallationLifecycleService(
     installations,
@@ -107,6 +112,19 @@ export function createPlatformCommerce(supabase: SupabaseClient) {
     installations,
     subscriptions,
     licenses,
+    supabase
+  );
+  const applicationInstallationLifecycle = new ApplicationInstallationLifecycleService(
+    applicationInstallations,
+    installations,
+    subscriptions,
+    licenses,
+    productApplications,
+    events,
+    cache,
+    installationVersions,
+    provisioning,
+    installationHealth,
     supabase
   );
   const seatAssignment = new SeatAssignmentService(
@@ -143,6 +161,7 @@ export function createPlatformCommerce(supabase: SupabaseClient) {
     trials,
     installations: new InstallationService(installations),
     installationLifecycle,
+    applicationInstallationLifecycle,
     installationHealth,
     usage: new UsageService(usage),
     billing: new BillingService(billing),

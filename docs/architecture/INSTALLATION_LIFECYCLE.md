@@ -55,11 +55,25 @@ Workspace-scoped assignments enforced when workspace assignments exist.
 
 ## API routes
 
+**Product installations**
+
 - `GET/POST /api/platform/installations`
 - `GET /api/platform/installations/[id]`
-- `POST .../suspend`, `.../resume`, `.../uninstall`
+- `POST .../suspend`, `.../resume`, `.../upgrade`, `.../rollback`, `.../uninstall`
 - `GET .../health`, `.../events`
 - `GET/POST /api/platform/workspace-product-assignments`
+
+**Application installations**
+
+- `GET/POST /api/platform/app-installations`
+- `POST /api/platform/app-installations/request`
+- `GET /api/platform/app-installations/[id]`
+- `POST .../start`, `.../suspend`, `.../resume`, `.../upgrade`, `.../rollback`, `.../uninstall`
+- `GET .../health`, `.../events`
+
+## Application ownership
+
+`commercial_application_installations` is authoritative. `engineering_application_installations` is runtime registration only.
 
 ## UI
 
@@ -77,4 +91,4 @@ Workspace-scoped assignments enforced when workspace assignments exist.
 
 `bump_commercial_installation_version(tenant_id)` invalidates installation-sensitive reads alongside entitlement version bumps.
 
-Process-local read cache limitation remains documented (Phase 2).
+Entitlement cache entries are version-stamped; stale decisions are rejected when DB `entitlement_version` or `installation_version` differs (multi-instance consistency bound: next guarded request after write).

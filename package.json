@@ -15,6 +15,11 @@
     "commerce:certify": "pnpm --filter @rtb/commerce-certification certify",
     "commerce:provision-fixtures": "pnpm --filter @rtb/commerce-certification provision",
     "commerce:teardown-fixtures": "pnpm --filter @rtb/commerce-certification teardown",
+    "installation:certify": "pnpm --filter @rtb/installation-certification certify",
+    "installation:provision-fixtures": "pnpm --filter @rtb/installation-certification provision",
+    "installation:teardown-fixtures": "pnpm --filter @rtb/installation-certification teardown",
+    "installation:verify-hosted-schema": "pnpm --filter @rtb/installation-certification verify-hosted-schema",
+    "installation:verify-backfill": "pnpm --filter @rtb/installation-certification verify-backfill",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/database/src/types.ts"

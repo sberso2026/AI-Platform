@@ -1,0 +1,73 @@
+{
+  "verifiedAt": "2026-07-10T18:10:23.133Z",
+  "environment": "https://wcydlhqiqdwgoaqrlget.supabase.co",
+  "tenantCount": 12,
+  "result": "PASS",
+  "failures": [],
+  "tenants": [
+    {
+      "slug": "sberso",
+      "subscriptionStatus": "active",
+      "hasInstallation": true,
+      "installationStatus": "active",
+      "issues": []
+    },
+    {
+      "slug": "sberso2003",
+      "subscriptionStatus": "active",
+      "hasInstallation": true,
+      "installationStatus": "active",
+      "issues": []
+    },
+    {
+      "slug": "cert-a-owner-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-a-admin-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-a-engineer-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-a-viewer-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-a-unassigned-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-b-owner-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-b-admin-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-b-engineer-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-b-viewer-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    },
+    {
+      "slug": "cert-b-unassigned-mrf5q3b7",
+      "hasInstallation": false,
+      "issues": []
+    }
+  ]
+}

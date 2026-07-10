@@ -166,16 +166,60 @@ export class EngineeringApplicationRuntime {
 
   async listInstallations(commerce: CommerceExecutionContext, tenantId: string) {
     assertEngineeringService(commerce, "application.list", tenantId);
-    const { data, error } = await this.supabase
-      .from("engineering_application_installations")
-      .select("*, engineering_application_registry(*)")
+    const { data: commerceInstalls, error: commerceError } = await this.supabase
+      .from("commercial_application_installations")
+      .select("*")
       .eq("tenant_id", tenantId);
-    if (error) throw new Error(`Failed to list installations: ${error.message}`);
-    return data ?? [];
+    if (commerceError) {
+      throw new Error(`Failed to list commerce application installations: ${commerceError.message}`);
+    }
+
+    const { data: runtimeInstalls, error } = await this.supabase
+      .from("engineering_application_installations")
+      .select("*, engineering_application_registry(app_key)")
+      .eq("tenant_id", tenantId);
+    if (error) throw new Error(`Failed to list runtime installations: ${error.message}`);
+
+    const runtimeByKey = new Map<string, Record<string, unknown>>();
+    for (const row of runtimeInstalls ?? []) {
+      const record = row as Record<string, unknown>;
+      const registry = record.engineering_application_registry as { app_key?: string } | null;
+      if (registry?.app_key) runtimeByKey.set(registry.app_key, record);
+    }
+
+    return (commerceInstalls ?? []).map((commerceRow) => {
+      const commerce = commerceRow as Record<string, unknown>;
+      const runtime = runtimeByKey.get(commerce.application_key as string);
+      return {
+        ...commerce,
+        source_of_truth: "commercial_application_installations",
+        runtime_registration: runtime ?? null,
+        enabled:
+          (commerce.status === "active" || commerce.status === "degraded") &&
+          Boolean(runtime?.enabled ?? true),
+      };
+    });
   }
 
   async setEnabled(commerce: CommerceExecutionContext, tenantId: string, appKey: string, enabled: boolean) {
     assertEngineeringService(commerce, "application.list", tenantId);
+    const { data: commerceInstall } = await this.supabase
+      .from("commercial_application_installations")
+      .select("id, status")
+      .eq("tenant_id", tenantId)
+      .eq("application_key", appKey)
+      .maybeSingle();
+    if (!commerceInstall) {
+      throw new Error("Commercial application installation required");
+    }
+    if (
+      enabled &&
+      commerceInstall.status !== "active" &&
+      commerceInstall.status !== "degraded"
+    ) {
+      throw new Error("Cannot enable runtime registration when commercial installation is not active");
+    }
+
     const { data: app } = await this.supabase
       .from("engineering_application_registry")
       .select("id")
@@ -189,7 +233,8 @@ export class EngineeringApplicationRuntime {
         tenant_id: tenantId,
         app_id: app.id,
         enabled,
-        installed_at: new Date().toISOString(),
+        installed_at: enabled ? new Date().toISOString() : undefined,
+        metadata: { source: "commercial_application_installations", commercial_id: commerceInstall.id },
       })
       .select()
       .single();

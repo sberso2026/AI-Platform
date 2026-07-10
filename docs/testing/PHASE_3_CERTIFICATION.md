@@ -1,35 +1,42 @@
-# Phase 3 Certification
+# Phase 3 Installation Certification
 
-Phase 3 certification extends Phase 2 gates A–H with installation-specific gates I–L.
+Certification package: `packages/installation-certification/`
 
-## Gates
+## Gates A–L
 
 | Gate | Scope |
-|------|--------|
+|------|-------|
 | A | Unit tests, typecheck, production build |
-| B | Hosted migration verification (Batch 32) |
-| C | Installation backfill verification |
+| B | Hosted Batch 32 schema verification |
+| C | Legacy installation backfill |
 | D | Real-JWT RLS on installation tables |
-| E | HTTP installation enforcement |
-| F | Browser installation E2E |
+| E | HTTP enforcement with SSR cookies |
+| F | Playwright browser E2E |
 | G | Scheduler lifecycle execution |
-| H | Cache / invalidation verification |
+| H | Cache invalidation / multi-instance |
 | I | Workspace provisioning and isolation |
 | J | Upgrade, rollback, suspend, resume, uninstall |
 | K | Application dependency enforcement |
-| L | Reproducible build identity (Git SHA, working tree) |
+| L | Reproducible build identity (Git SHA required) |
 
-## Required artifacts
+## Commands
 
-- `artifacts/installation-phase3-certification.json`
-- `docs/certification/INSTALLATION_PHASE_3_CERTIFICATION.md`
+```bash
+pnpm installation:provision-fixtures
+pnpm installation:certify
+pnpm installation:teardown-fixtures
+```
 
-## Certification harness requirements
+## Artifacts
 
-- Own production server lifecycle (no unidentified running server)
-- Zero skipped required tests
-- Record commit SHA, migration checksums, hosted project ref
+- `packages/installation-certification/artifacts/phase-3-certification.json`
+- `packages/installation-certification/artifacts/hosted-schema-verification.json`
+- `packages/installation-certification/artifacts/installation-backfill-verification.json`
 
-## Status
+## Server ownership
 
-**Not yet certified** — Batch 32 migrations and core services implemented; full hosted RLS/HTTP/browser/scheduler certification pending.
+The certification harness builds the current commit, starts its own `next start` process, verifies `/api/platform/build-identity`, and refuses stale unidentified servers.
+
+## Environment
+
+Requires hosted Supabase (`wcydlhqiqdwgoaqrlget`), `COMMERCE_SCHEDULER_SECRET`, `COMMERCE_AUTH_SECRET`, and `INSTALLATION_CERTIFICATION=1`.

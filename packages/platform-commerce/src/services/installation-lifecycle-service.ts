@@ -322,7 +322,11 @@ export class InstallationLifecycleService {
     });
   }
 
-  async uninstall(tenantId: string, installationId: string, actorUserId: string) {
+  async uninstall(tenantId: string, installationId: string, actorUserId: string, options?: { force?: boolean }) {
+    if (!options?.force) {
+      await this.assertNoDependentApplications(tenantId, installationId);
+    }
+
     let current = await this.transition({
       tenantId,
       installationId,
@@ -518,5 +522,212 @@ export class InstallationLifecycleService {
       }
     }
     return count;
+  }
+
+  async requestUpgrade(
+    tenantId: string,
+    installationId: string,
+    targetVersion: string,
+    actorUserId: string,
+    correlationId?: string
+  ) {
+    const installation = await this.installations.getById(tenantId, installationId);
+    if (!installation) throw new InstallationNotFoundError(installationId);
+    if (!InstallationStateMachine.isAccessGranting(installation.status)) {
+      throw new InstallationConflictError(
+        "Installation must be active to upgrade",
+        InstallationErrorCode.INSTALLATION_NOT_ACTIVE
+      );
+    }
+
+    const subs = await this.subscriptions.listByTenant(tenantId);
+    const sub = subs.find((s) => s.id === installation.subscription_id);
+    if (!sub || !SubscriptionStateMachine.isAccessGranting(sub.status as never)) {
+      throw new InstallationDependencyError(
+        "Active subscription required",
+        InstallationErrorCode.SUBSCRIPTION_INACTIVE
+      );
+    }
+
+    await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "upgrade_pending",
+      actorUserId,
+      correlationId,
+      patch: {
+        requested_version: targetVersion,
+        metadata: {
+          ...installation.metadata,
+          pre_upgrade_version: installation.installed_version,
+        },
+      },
+    });
+
+    return this.executeUpgrade(tenantId, installationId, targetVersion, actorUserId, correlationId);
+  }
+
+  async executeUpgrade(
+    tenantId: string,
+    installationId: string,
+    targetVersion: string,
+    actorUserId: string,
+    correlationId?: string
+  ) {
+    const installation = await this.installations.getById(tenantId, installationId);
+    if (!installation) throw new InstallationNotFoundError(installationId);
+    const product = await this.products.getById(installation.product_id);
+
+    let current = await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "upgrading",
+      actorUserId,
+      correlationId,
+    });
+
+    try {
+      await this.provisioning.runProductProvisioning({
+        tenantId,
+        installationId,
+        productSlug: (product?.slug as string) ?? "engineering-os",
+        idempotencyKey: `upgrade:${installationId}:${targetVersion}`,
+      });
+    } catch (err) {
+      return this.transition({
+        tenantId,
+        installationId,
+        targetStatus: "failed",
+        actorUserId,
+        patch: {
+          failure_code: InstallationErrorCode.PROVISIONING_FAILED,
+          failure_message: err instanceof Error ? err.message : String(err),
+        },
+      });
+    }
+
+    current = await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "validating",
+      actorUserId,
+    });
+
+    current = await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "active",
+      actorUserId,
+      patch: {
+        installed_version: targetVersion,
+        failure_code: null,
+        failure_message: null,
+      },
+    });
+
+    await this.events.emit({
+      eventType: "installation.upgraded",
+      tenantId,
+      actorUserId,
+      aggregateType: "installation",
+      aggregateId: installationId,
+      correlationId,
+      payload: { targetVersion, installationId },
+    });
+
+    return current;
+  }
+
+  async requestRollback(
+    tenantId: string,
+    installationId: string,
+    targetVersion: string,
+    reason: string,
+    actorUserId: string,
+    correlationId?: string
+  ) {
+    const installation = await this.installations.getById(tenantId, installationId);
+    if (!installation) throw new InstallationNotFoundError(installationId);
+
+    const preVersion = (installation.metadata?.pre_upgrade_version as string | undefined) ?? null;
+    if (!preVersion || preVersion !== targetVersion) {
+      throw new InstallationConflictError(
+        "Rollback target version is not supported",
+        InstallationErrorCode.DEPENDENCY_VERSION_INCOMPATIBLE
+      );
+    }
+
+    await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "rollback_pending",
+      actorUserId,
+      correlationId,
+      patch: { metadata: { ...installation.metadata, rollback_reason: reason } },
+    });
+
+    let current = await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "rolling_back",
+      actorUserId,
+    });
+
+    const product = await this.products.getById(installation.product_id);
+    try {
+      await this.provisioning.runProductProvisioning({
+        tenantId,
+        installationId,
+        productSlug: (product?.slug as string) ?? "engineering-os",
+        idempotencyKey: `rollback:${installationId}:${targetVersion}`,
+      });
+    } catch (err) {
+      return this.transition({
+        tenantId,
+        installationId,
+        targetStatus: "failed",
+        actorUserId,
+        patch: {
+          failure_code: InstallationErrorCode.PROVISIONING_FAILED,
+          failure_message: err instanceof Error ? err.message : String(err),
+        },
+      });
+    }
+
+    current = await this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "validating",
+      actorUserId,
+    });
+
+    return this.transition({
+      tenantId,
+      installationId,
+      targetStatus: "active",
+      actorUserId,
+      patch: {
+        installed_version: targetVersion,
+        requested_version: targetVersion,
+        failure_code: null,
+        failure_message: null,
+      },
+    });
+  }
+
+  async assertNoDependentApplications(tenantId: string, installationId: string): Promise<void> {
+    const { data, error } = await this.supabase
+      .from("commercial_application_installations")
+      .select("id, application_key")
+      .eq("tenant_id", tenantId)
+      .eq("parent_product_installation_id", installationId)
+      .in("status", ["active", "degraded", "provisioning", "validating"]);
+    if (error) throw new Error(error.message);
+    if ((data?.length ?? 0) > 0) {
+      throw new InstallationDependencyError(
+        "Dependent applications must be uninstalled first",
+        InstallationErrorCode.DEPENDENCY_MISSING
+      );
+    }
   }
 }

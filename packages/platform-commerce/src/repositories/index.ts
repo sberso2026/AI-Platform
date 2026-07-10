@@ -5,6 +5,7 @@ export { SubscriptionRepository } from "./subscription-repository";
 export { LicenseRepository } from "./license-repository";
 export { SeatRepository } from "./seat-repository";
 export { InstallationRepository } from "./installation-repository";
+export { ApplicationInstallationRepository } from "./application-installation-repository";
 export { InstallationVersionRepository } from "./installation-version-repository";
 export { UsageRepository } from "./usage-repository";
 export { BillingRepository } from "./billing-repository";

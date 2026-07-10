@@ -12,6 +12,8 @@ import type { SeatAssignmentRepository } from "../repositories/seat-assignment-r
 import type { SeatRepository } from "../repositories/seat-repository";
 import type { SubscriptionRepository } from "../repositories/subscription-repository";
 import type { LicenseRepository } from "../repositories/license-repository";
+import type { EntitlementVersionRepository } from "../repositories/entitlement-version-repository";
+import type { InstallationVersionRepository } from "../repositories/installation-version-repository";
 import { EntitlementCache } from "./entitlement-cache";
 
 export class EntitlementService {
@@ -24,7 +26,9 @@ export class EntitlementService {
     private readonly overrides: EntitlementOverrideRepository,
     private readonly products: ProductApplicationRepository,
     private readonly cache: EntitlementCache,
-    private readonly installations?: InstallationRepository
+    private readonly installations?: InstallationRepository,
+    private readonly entitlementVersions?: EntitlementVersionRepository,
+    private readonly installationVersions?: InstallationVersionRepository
   ) {}
 
   invalidateTenant(tenantId: string): void {
@@ -44,13 +48,17 @@ export class EntitlementService {
     });
 
     if (useCache) {
-      const cached = this.cache.get<EntitlementDecision>(cacheKey);
+      await this.syncVersionStamps(input.tenantId);
+      const cached = this.cache.get<EntitlementDecision>(cacheKey, input.tenantId);
       if (cached) return cached;
     }
 
     try {
       const decision = await this.evaluate(input);
-      if (useCache) this.cache.set(cacheKey, decision);
+      if (useCache) {
+        const versions = await this.readVersionStamps(input.tenantId);
+        this.cache.set(cacheKey, decision, false, versions);
+      }
       return decision;
     } catch {
       return {
@@ -458,6 +466,26 @@ export class EntitlementService {
       seatAssigned: true,
       workspaceAllowed: true,
     };
+  }
+
+  private async readVersionStamps(tenantId: string): Promise<{
+    entitlementVersion?: number;
+    installationVersion?: number;
+  }> {
+    const [entitlementVersion, installationVersion] = await Promise.all([
+      this.entitlementVersions?.getTenantVersion(tenantId) ?? Promise.resolve(0),
+      this.installationVersions?.getTenantVersion(tenantId) ?? Promise.resolve(0),
+    ]);
+    return { entitlementVersion, installationVersion };
+  }
+
+  private async syncVersionStamps(tenantId: string): Promise<void> {
+    const versions = await this.readVersionStamps(tenantId);
+    this.cache.setTenantVersions(
+      tenantId,
+      versions.entitlementVersion ?? 0,
+      versions.installationVersion ?? 0
+    );
   }
 }
 

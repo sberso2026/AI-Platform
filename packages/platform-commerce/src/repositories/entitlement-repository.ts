@@ -62,4 +62,15 @@ export class ProductApplicationRepository extends BaseRepository {
     if (error) this.fail("list product applications", error);
     return data ?? [];
   }
+
+  async getApplicationByKey(applicationKey: string) {
+    const { data, error } = await this.supabase
+      .from("commercial_product_applications")
+      .select("*")
+      .eq("application_key", applicationKey)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) this.fail("get application by key", error);
+    return data;
+  }
 }

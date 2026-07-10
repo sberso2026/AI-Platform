@@ -1,0 +1,33 @@
+{
+  "name": "@rtb/installation-certification",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:rls": "cross-env INSTALLATION_CERTIFICATION=1 VITEST_RLS_SUITE=1 vitest run src/rls-certification.ts",
+    "test:http": "cross-env INSTALLATION_CERTIFICATION=1 vitest run src/http-certification.ts",
+    "test:scheduler": "cross-env INSTALLATION_CERTIFICATION=1 vitest run src/scheduler-certification.ts",
+    "test:cache": "cross-env INSTALLATION_CERTIFICATION=1 vitest run src/cache-certification.ts",
+    "test:workspace": "cross-env INSTALLATION_CERTIFICATION=1 vitest run src/workspace-certification.ts",
+    "test:lifecycle": "cross-env INSTALLATION_CERTIFICATION=1 vitest run src/lifecycle-certification.ts",
+    "test:dependency": "cross-env INSTALLATION_CERTIFICATION=1 vitest run src/dependency-certification.ts",
+    "test:e2e": "cross-env INSTALLATION_CERTIFICATION=1 playwright test",
+    "provision": "tsx scripts/provision-fixtures.ts",
+    "teardown": "tsx scripts/cleanup-fixtures.ts",
+    "verify-hosted-schema": "tsx src/verify-hosted-schema.ts",
+    "verify-backfill": "tsx src/verify-backfill.ts",
+    "certify": "tsx scripts/run-certification.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.29",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

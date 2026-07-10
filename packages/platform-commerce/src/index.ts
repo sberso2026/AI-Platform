@@ -8,6 +8,7 @@ export * from "./services/license-service";
 export * from "./services/seat-service";
 export * from "./services/installation-service";
 export * from "./services/installation-lifecycle-service";
+export * from "./services/application-installation-lifecycle-service";
 export * from "./services/installation-health-service";
 export * from "./services/provisioning-orchestrator";
 export * from "./domain/installation-state-machine";

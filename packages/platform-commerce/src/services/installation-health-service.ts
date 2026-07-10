@@ -70,4 +70,48 @@ export class InstallationHealthService {
     await this.installations.saveHealthCheck(tenantId, installationId, result);
     return result;
   }
+
+  async checkApplication(tenantId: string, installationId: string): Promise<InstallationHealthCheckResult> {
+    const { data: appInstall } = await this.supabase
+      .from("commercial_application_installations")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("id", installationId)
+      .maybeSingle();
+
+    if (!appInstall) {
+      return {
+        installationId,
+        healthState: "failed",
+        checks: [{ key: "application_installation", passed: false, detail: "not_found" }],
+        checkedAt: new Date().toISOString(),
+      };
+    }
+
+    const checks: InstallationHealthCheckResult["checks"] = [];
+    let healthState: InstallationHealthState = "healthy";
+
+    if (appInstall.parent_product_installation_id) {
+      const parent = await this.installations.getById(
+        tenantId,
+        appInstall.parent_product_installation_id as string
+      );
+      const parentOk = Boolean(parent && InstallationStateMachine.isAccessGranting(parent.status));
+      checks.push({ key: "parent_product_active", passed: parentOk });
+      if (!parentOk) healthState = "failed";
+    }
+
+    const status = appInstall.status as string;
+    const installOk = status === "active" || status === "degraded";
+    checks.push({ key: "application_active", passed: installOk });
+    if (!installOk) healthState = status === "suspended" ? "suspended" : "failed";
+
+    return {
+      installationId,
+      healthState,
+      checks,
+      summary: `${checks.filter((c) => c.passed).length}/${checks.length} checks passed`,
+      checkedAt: new Date().toISOString(),
+    };
+  }
 }

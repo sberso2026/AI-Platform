@@ -30,7 +30,7 @@ CREATE POLICY commercial_installation_requests_insert ON commercial_installation
       SELECT tm.tenant_id FROM tenant_memberships tm
       JOIN roles r ON r.id = tm.role_id
       WHERE tm.user_id = auth.uid() AND tm.status = 'active'
-        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin'))
+        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin', tm.tenant_id))
     )
   );
 
@@ -70,14 +70,14 @@ CREATE POLICY commercial_ws_product_assign_write ON commercial_workspace_product
       SELECT tm.tenant_id FROM tenant_memberships tm
       JOIN roles r ON r.id = tm.role_id
       WHERE tm.user_id = auth.uid() AND tm.status = 'active'
-        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin'))
+        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin', tm.tenant_id))
     )
   ) WITH CHECK (
     tenant_id IN (
       SELECT tm.tenant_id FROM tenant_memberships tm
       JOIN roles r ON r.id = tm.role_id
       WHERE tm.user_id = auth.uid() AND tm.status = 'active'
-        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin'))
+        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin', tm.tenant_id))
     )
   );
 
@@ -92,14 +92,14 @@ CREATE POLICY commercial_ws_app_assign_write ON commercial_workspace_application
       SELECT tm.tenant_id FROM tenant_memberships tm
       JOIN roles r ON r.id = tm.role_id
       WHERE tm.user_id = auth.uid() AND tm.status = 'active'
-        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin'))
+        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin', tm.tenant_id))
     )
   ) WITH CHECK (
     tenant_id IN (
       SELECT tm.tenant_id FROM tenant_memberships tm
       JOIN roles r ON r.id = tm.role_id
       WHERE tm.user_id = auth.uid() AND tm.status = 'active'
-        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin'))
+        AND (r.slug IN ('owner', 'admin') OR has_permission('commerce', 'admin', tm.tenant_id))
     )
   );
 
