@@ -85,6 +85,12 @@ export class InstallationStateMachine {
     return status === "active" || status === "degraded";
   }
 
+  static normalizeProductStatus(status: string): ProductInstallationStatus {
+    if (status === "healthy") return "active";
+    if (status === "installing") return "provisioning";
+    return status as ProductInstallationStatus;
+  }
+
   static normalizeAppStatus(status: string): ApplicationInstallationStatus {
     if (status === "healthy") return "active";
     if (status === "installing") return "provisioning";
