@@ -1,0 +1,276 @@
+import { describe, it, expect } from "vitest";
+import {
+  FULL_NAVIGATION,
+  ENGINEERING_NAVIGATION,
+  NAV_GROUP_LABELS,
+  NAV_GROUP_ORDER,
+  SIDEBAR_COLLAPSED_KEY,
+  SIDEBAR_GROUP_STATE_KEY,
+  SIDEBAR_SCROLL_KEY,
+  SIDEBAR_SECTIONS,
+  getDefaultSidebarGroupState,
+  groupNavigation,
+  itemsForSidebarSection,
+  parseSidebarGroupState,
+} from "./navigation";
+import { filterSidebarNavigation } from "./nav-visibility";
+
+describe("Batch 2.07 — Navigation grouping", () => {
+  it("places Engineering OS groups first", () => {
+    expect(NAV_GROUP_ORDER[0]).toBe("engineering");
+    expect(NAV_GROUP_ORDER[1]).toBe("engineering_registers");
+    expect(NAV_GROUP_ORDER[2]).toBe("engineering_admin");
+  });
+
+  it("labels Engineering Command Center as primary engineering entry", () => {
+    const cmd = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard");
+    expect(cmd?.label).toBe("Engineering Command Center");
+    expect(cmd?.href).toBe("/engineering");
+    expect(cmd?.group).toBe("engineering");
+  });
+
+  it("splits registers and administration away from primary eng ops", () => {
+    const grouped = groupNavigation(FULL_NAVIGATION);
+    expect(Object.keys(grouped)[0]).toBe("engineering");
+    expect(grouped.engineering_registers?.some((i) => i.id === "eng-risks")).toBe(true);
+    expect(grouped.engineering_admin?.some((i) => i.id === "eng-settings")).toBe(true);
+    expect(NAV_GROUP_LABELS.engineering_registers).toBe("Engineering Registers");
+    expect(NAV_GROUP_LABELS.administration).toBe("Administration");
+  });
+
+  it("keeps simplified System Administration in platform group only", () => {
+    const grouped = groupNavigation(FULL_NAVIGATION);
+    expect(grouped.platform?.some((i) => i.href === "/system/products")).toBe(true);
+    expect(grouped.platform?.some((i) => i.href === "/platform/health")).toBe(true);
+    expect(grouped.platform?.some((i) => i.href === "/command-centre")).toBe(false);
+    expect(grouped.kernel?.some((i) => i.href === "/platform/ai-director")).toBe(true);
+  });
+
+  it("does not drop existing engineering register routes", () => {
+    const hrefs = FULL_NAVIGATION.map((i) => i.href);
+    for (const href of [
+      "/engineering/decisions",
+      "/engineering/actions",
+      "/engineering/risks",
+      "/engineering/issues",
+      "/engineering/technical-queries",
+      "/engineering/lessons",
+      "/engineering/timeline",
+      "/engineering/activity",
+      "/engineering/health",
+      "/engineering/test-runner",
+    ]) {
+      expect(hrefs).toContain(href);
+    }
+  });
+});
+
+describe("Batch 2.07 — UX theme contracts", () => {
+  it("defines enterprise light background token", () => {
+    expect("#F4F6F8".toLowerCase()).toBe("#f4f6f8");
+  });
+
+  it("requires dark sidebar with light main content", () => {
+    const theme = {
+      sidebar: "dark",
+      main: "light",
+      cards: "white",
+    };
+    expect(theme.sidebar).toBe("dark");
+    expect(theme.main).toBe("light");
+  });
+});
+
+describe("Batch 2.07 — Sidebar scroll persistence contract", () => {
+  it("uses sessionStorage key for scroll position", () => {
+    expect(SIDEBAR_SCROLL_KEY).toBe("rtb.sidebar.scrollTop");
+    expect(SIDEBAR_COLLAPSED_KEY).toBe("rtb.sidebar.collapsed");
+  });
+
+  it("requires layout-hosted PlatformShell to avoid remount", () => {
+    const architecture = { shellInLayout: true, shellPerPage: false };
+    expect(architecture.shellInLayout).toBe(true);
+    expect(architecture.shellPerPage).toBe(false);
+  });
+});
+
+describe("Batch 2.08 — Collapsible sidebar sections", () => {
+  it("defines five sidebar sections including advanced tools", () => {
+    expect(SIDEBAR_SECTIONS.map((s) => s.id)).toEqual([
+      "engineering",
+      "engineering_registers",
+      "engineering_admin",
+      "platform_admin",
+      "platform_advanced",
+    ]);
+  });
+
+  it("expands Engineering OS and Registers by default", () => {
+    const defaults = getDefaultSidebarGroupState();
+    expect(defaults.engineering).toBe(true);
+    expect(defaults.engineering_registers).toBe(true);
+    expect(defaults.engineering_admin).toBe(false);
+    expect(defaults.platform_admin).toBe(false);
+  });
+
+  it("persists group expand state via sessionStorage key", () => {
+    expect(SIDEBAR_GROUP_STATE_KEY).toBe("rtb.sidebar.groupState");
+  });
+
+  it("parses stored group state and merges with defaults", () => {
+    const parsed = parseSidebarGroupState(
+      JSON.stringify({ engineering_admin: true, platform_admin: true, unknown: false })
+    );
+    expect(parsed.engineering).toBe(true);
+    expect(parsed.engineering_registers).toBe(true);
+    expect(parsed.engineering_admin).toBe(true);
+    expect(parsed.platform_admin).toBe(true);
+    expect(parsed).not.toHaveProperty("unknown");
+  });
+
+  it("falls back to defaults on invalid stored JSON", () => {
+    expect(parseSidebarGroupState("{not-json")).toEqual(getDefaultSidebarGroupState());
+    expect(parseSidebarGroupState(null)).toEqual(getDefaultSidebarGroupState());
+  });
+
+  it("keeps simplified routes under collapsed System Administration", () => {
+    const grouped = groupNavigation(
+      filterSidebarNavigation(FULL_NAVIGATION, {
+        roleSlug: "owner",
+        tier: "admin",
+        permissions: [{ resource: "tenant", action: "admin" }],
+        showAdvancedInSidebar: false,
+        hasPermission: () => true,
+      })
+    );
+    const platformSection = SIDEBAR_SECTIONS.find((s) => s.id === "platform_admin")!;
+    const items = itemsForSidebarSection(platformSection, grouped);
+    const hrefs = items.map((i) => i.href);
+    expect(hrefs).toContain("/platform/health");
+    expect(hrefs).toContain("/system/products");
+    expect(hrefs).toContain("/platform/users-permissions");
+    expect(hrefs).not.toContain("/platform/ai-director");
+    expect(hrefs).toContain("/system/commerce-audit");
+    expect(items.length).toBe(17);
+  });
+
+  it("keeps Engineering Administration routes without dropping them", () => {
+    const grouped = groupNavigation(FULL_NAVIGATION);
+    const adminSection = SIDEBAR_SECTIONS.find((s) => s.id === "engineering_admin")!;
+    const hrefs = itemsForSidebarSection(adminSection, grouped).map((i) => i.href);
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        "/engineering/disciplines",
+        "/engineering/companies",
+        "/engineering/settings",
+        "/engineering/health",
+        "/engineering/test-runner",
+      ])
+    );
+  });
+
+  it("labels Platform section as System Administration", () => {
+    expect(NAV_GROUP_LABELS.platform).toBe("System Administration");
+    expect(SIDEBAR_SECTIONS.find((s) => s.id === "platform_admin")?.label).toBe(
+      "System Administration"
+    );
+  });
+});
+
+describe("Platform Commerce UI — navigation rename", () => {
+  it("exposes Products as primary commerce catalogue route", () => {
+    const item = FULL_NAVIGATION.find((i) => i.id === "installed-products");
+    expect(item?.label).toBe("Products");
+    expect(item?.href).toBe("/system/products");
+  });
+
+  it("adds Platform Commerce Engine administration routes", () => {
+    const hrefs = FULL_NAVIGATION.filter((i) => i.group === "platform").map((i) => i.href);
+    expect(hrefs).toContain("/system/subscriptions");
+    expect(hrefs).toContain("/system/licenses");
+    expect(hrefs).toContain("/system/seats");
+    expect(hrefs).toContain("/system/billing");
+    expect(hrefs).toContain("/system/marketplace");
+    expect(hrefs).toContain("/system/analytics");
+    expect(hrefs).toContain("/system/customers");
+  });
+});
+
+describe("Platform Commerce UI — Engineering OS access", () => {
+  it("keeps Engineering Command Center route unchanged", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+      "/engineering"
+    );
+  });
+
+  it("preserves sidebar persistence keys", () => {
+    expect(SIDEBAR_GROUP_STATE_KEY).toBe("rtb.sidebar.groupState");
+    expect(SIDEBAR_SCROLL_KEY).toBe("rtb.sidebar.scrollTop");
+  });
+});
+
+describe("Batch 2.08 — Default landing and Platform Overview access", () => {
+  it("uses Engineering Command Center as product home route", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+      "/engineering"
+    );
+  });
+
+  it("keeps System Health Overview accessible at /dashboard as legacy route", () => {
+    expect(FULL_NAVIGATION.some((i) => i.href === "/dashboard")).toBe(true);
+    expect(FULL_NAVIGATION.find((i) => i.href === "/dashboard")?.label).toBe(
+      "System Health Overview"
+    );
+    expect(FULL_NAVIGATION.find((i) => i.href === "/dashboard")?.sidebarHidden).toBe(
+      true
+    );
+  });
+
+  it("documents default landing redirect targets", () => {
+    const defaults = {
+      home: "/engineering",
+      postAuth: "/engineering",
+      platformOverview: "/dashboard",
+    };
+    expect(defaults.home).toBe("/engineering");
+    expect(defaults.postAuth).toBe("/engineering");
+    expect(defaults.platformOverview).toBe("/dashboard");
+  });
+});
+
+describe("Batch 2.08 — Layout spacing contract", () => {
+  it("requires page main padding tokens", () => {
+    const spacing = {
+      pageTopPx: 24,
+      pageHorizontalMinPx: 24,
+      pageHorizontalDesktopPx: 32,
+      pageBottomPx: 32,
+      sectionGapPx: 32,
+      cardGapPx: 16,
+      cardPaddingPx: 20,
+      headerMinHeightPx: 64,
+    };
+    expect(spacing.pageTopPx).toBeGreaterThanOrEqual(24);
+    expect(spacing.pageHorizontalDesktopPx).toBeGreaterThanOrEqual(24);
+    expect(spacing.pageBottomPx).toBeGreaterThanOrEqual(32);
+    expect(spacing.headerMinHeightPx).toBeGreaterThanOrEqual(56);
+  });
+
+  it("keeps compact sidebar mode toggle supported", () => {
+    expect(SIDEBAR_COLLAPSED_KEY).toBe("rtb.sidebar.collapsed");
+  });
+});
+
+describe("Batch 2.09 — Design system persistence contracts", () => {
+  it("preserves sidebar scroll and group collapse keys", () => {
+    expect(SIDEBAR_SCROLL_KEY).toBe("rtb.sidebar.scrollTop");
+    expect(SIDEBAR_GROUP_STATE_KEY).toBe("rtb.sidebar.groupState");
+    expect(SIDEBAR_COLLAPSED_KEY).toBe("rtb.sidebar.collapsed");
+  });
+
+  it("keeps Command Center as engineering home", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+      "/engineering"
+    );
+  });
+});

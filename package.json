@@ -1,0 +1,31 @@
+{
+  "name": "rtb-ai-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RTB AI OS — Enterprise AI Operating System Platform",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:rls": "pnpm --filter @rtb/platform-commerce test:rls",
+    "commerce:verify-backfill": "pnpm --filter @rtb/platform-commerce commerce:verify-backfill",
+    "commerce:verify-hosted-phase2": "pnpm --filter @rtb/platform-commerce commerce:verify-hosted-phase2",
+    "commerce:certify": "pnpm --filter @rtb/commerce-certification certify",
+    "commerce:provision-fixtures": "pnpm --filter @rtb/commerce-certification provision",
+    "commerce:teardown-fixtures": "pnpm --filter @rtb/commerce-certification teardown",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > packages/database/src/types.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

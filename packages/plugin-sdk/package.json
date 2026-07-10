@@ -1,0 +1,18 @@
+{
+  "name": "@rtb/plugin-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@rtb/types": "workspace:*",
+    "zod": "^3.25.36"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

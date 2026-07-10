@@ -1,0 +1,28 @@
+{
+  "name": "@rtb/commerce-certification",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:rls": "cross-env COMMERCE_CERTIFICATION=1 VITEST_RLS_SUITE=1 vitest run src/rls",
+    "test:http": "vitest run src/http",
+    "test:scheduler": "vitest run src/scheduler",
+    "test:security-definer": "vitest run src/security-definer",
+    "test:e2e": "playwright test",
+    "provision": "tsx scripts/provision-fixtures.ts",
+    "teardown": "tsx scripts/teardown-fixtures.ts",
+    "certify": "tsx scripts/run-certification.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.29",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

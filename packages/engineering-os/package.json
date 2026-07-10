@@ -1,0 +1,30 @@
+{
+  "name": "@rtb/engineering-os",
+  "version": "0.2.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifest": "./src/manifest.ts",
+    "./commerce": "./src/commerce/service-guard.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rtb/database": "workspace:*",
+    "@rtb/platform-commerce": "workspace:*",
+    "@rtb/platform-kernel": "workspace:*",
+    "@rtb/platform-intelligence": "workspace:*",
+    "@rtb/types": "workspace:*",
+    "zod": "^3.25.36"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

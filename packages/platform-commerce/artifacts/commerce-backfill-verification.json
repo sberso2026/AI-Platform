@@ -1,0 +1,23 @@
+{
+  "verifiedAt": "2026-07-10T16:39:47.081Z",
+  "environment": "https://wcydlhqiqdwgoaqrlget.supabase.co",
+  "tenantCount": 2,
+  "result": "PASS",
+  "failures": [],
+  "tenants": [
+    {
+      "slug": "sberso",
+      "subscriptionStatus": "active",
+      "appLicences": 7,
+      "seatTotal": 100,
+      "issues": []
+    },
+    {
+      "slug": "sberso2003",
+      "subscriptionStatus": "active",
+      "appLicences": 7,
+      "seatTotal": 100,
+      "issues": []
+    }
+  ]
+}

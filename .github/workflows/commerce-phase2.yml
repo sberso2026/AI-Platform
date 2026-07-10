@@ -1,0 +1,130 @@
+name: Commerce Phase 2
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+concurrency:
+  group: commerce-phase2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      COMMERCE_AUTH_SECRET: ci-test-commerce-secret
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run workspace tests
+        run: pnpm test
+
+      - name: Run platform-commerce tests
+        run: pnpm --filter @rtb/platform-commerce test
+
+      - name: Run commerce RLS tests (local — may skip without secrets)
+        run: pnpm --filter @rtb/commerce-certification test:rls
+        env:
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+
+      - name: Run engineering-os tests
+        run: pnpm --filter @rtb/engineering-os test
+
+      - name: Run web route policy tests
+        run: pnpm --filter @rtb/web test
+
+      - name: Web typecheck
+        run: pnpm --filter @rtb/web typecheck
+
+      - name: Web build
+        run: pnpm --filter @rtb/web build
+
+      - name: Verify hosted Phase 2 schema (local — may skip without secrets)
+        run: pnpm commerce:verify-hosted-phase2
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  certification:
+    runs-on: ubuntu-latest
+    needs: verify
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+    env:
+      COMMERCE_CERTIFICATION: "1"
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+      SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+      RTB_TEST_BASE_URL: ${{ secrets.RTB_TEST_BASE_URL }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets
+        run: |
+          missing=""
+          for key in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_TEST_URL SUPABASE_TEST_ANON_KEY RTB_TEST_BASE_URL COMMERCE_SCHEDULER_SECRET COMMERCE_AUTH_SECRET; do
+            if [ -z "${!key}" ]; then
+              missing="$missing $key"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Certification job requires secrets:$missing"
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Provision certification fixtures
+        run: pnpm commerce:provision-fixtures
+
+      - name: Run Commerce Phase 2 certification
+        run: pnpm commerce:certify
+
+      - name: Upload certification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: commerce-phase2-certification
+          path: |
+            packages/commerce-certification/artifacts/
+            docs/certification/COMMERCE_PHASE_2_CERTIFICATION.md
+            packages/platform-commerce/artifacts/
+
+      - name: Teardown certification fixtures
+        if: always()
+        run: pnpm commerce:teardown-fixtures

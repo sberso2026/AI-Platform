@@ -1,0 +1,46 @@
+export * from "./manifest";
+export * from "./permissions";
+export * from "./engineering-os";
+export {
+  normalizeDisciplineKey,
+  dedupeDisciplinesForDisplay,
+  assertNoDuplicateDisciplineNames,
+} from "./services/discipline-dedupe";
+export {
+  EngineeringProjectService,
+  EngineeringAssetService,
+  EngineeringDocumentService,
+} from "./services/core-services";
+export {
+  EngineeringDisciplineService,
+  EngineeringCompanyService,
+  EngineeringApplicationRuntime,
+  EngineeringSettingsService,
+  EngineeringSearchService,
+  EngineeringAIService,
+  EngineeringDashboardService,
+} from "./services/supporting-services";
+export {
+  EngineeringObjectFramework,
+  EngineeringTimelineService,
+  EngineeringActivityService,
+} from "./services/object-framework";
+export {
+  EngineeringDecisionService,
+  EngineeringActionService,
+  EngineeringRiskService,
+  EngineeringIssueService,
+  EngineeringTechnicalQueryService,
+  EngineeringLessonService,
+} from "./services/register-services";
+export {
+  EngineeringDemoDataService,
+  type DemoSeedResult,
+  type DemoResetResult,
+  type DemoDataStatus,
+} from "./services/demo-data-service";
+export {
+  EngineeringHealthService,
+  type EngineeringHealthReport,
+  type HealthCheckItem,
+} from "./services/health-service";

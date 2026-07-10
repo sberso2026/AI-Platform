@@ -1,0 +1,32 @@
+{
+  "name": "@rtb/platform-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:rls": "vitest run src/tests/rls",
+    "commerce:verify-backfill": "tsx scripts/verify-backfill.ts",
+    "commerce:verify-hosted-phase2": "tsx scripts/verify-hosted-phase2.ts"
+  },
+  "dependencies": {
+    "@rtb/database": "workspace:*",
+    "@rtb/platform-core": "workspace:*",
+    "@rtb/types": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8",
+    "zod": "^3.25.36"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}
