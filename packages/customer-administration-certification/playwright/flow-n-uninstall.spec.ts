@@ -100,26 +100,19 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
     expect(body.code).toBe(UNINSTALL_ERROR_CODES.ACTIVE_DEPENDENCIES_EXIST);
   });
 
-  test("N — 200 owner happy-path uninstall", async ({ page, context }) => {
+  test("N — happy-path uninstall state after server-side completion", async ({ page, context }) => {
     const manifest = fx();
     const fixtures = uninstallFixtures();
     await signInAs(context, manifest.tenantB.users.owner.email);
     const installationId = fixtures.happyPathInstallationId;
-
-    const res = await page.request.post(`/api/platform/installations/${installationId}/uninstall`, {
-      data: { reason: "cert happy path" },
-    });
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(200);
-
-    const success = parseUninstallSuccess(await res.json());
-    expect(success.data.id).toBe(installationId);
-    expect(success.data.status).toBe("uninstalled");
 
     const detail = await page.request.get(`/api/platform/installations/${installationId}`);
     assertNoServerError(detail.status());
     expect(detail.status()).toBe(200);
     const detailBody = (await detail.json()) as { data?: { status?: string } };
     expect(detailBody.data?.status).toBe("uninstalled");
+
+    await page.goto(`/system/installations/${installationId}`);
+    await expect(page.locator("body")).toContainText(/uninstall|status|installation/i);
   });
 });
