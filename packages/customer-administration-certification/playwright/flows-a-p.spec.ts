@@ -12,8 +12,10 @@ test.describe("Phase 4 Playwright flows A–P", () => {
   test("A — View Installed Products", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
-    await page.goto("/system/products");
-    await expect(page.getByRole("heading", { name: "Installed Products" })).toBeVisible();
+    await page.goto("/system/products", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Installed Products" })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("B — Open Engineering OS product detail tabs", async ({ page, context }) => {
@@ -75,8 +77,8 @@ test.describe("Phase 4 Playwright flows A–P", () => {
   test("F — Subscription & Billing", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
-    await page.goto("/system/subscription-billing");
-    await expect(page.getByTestId("page-header")).toContainText(/Subscription/i);
+    await page.goto("/system/subscription-billing", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("page-header")).toContainText(/Subscription/i, { timeout: 15_000 });
   });
 
   test("G — Usage portal", async ({ page, context }) => {

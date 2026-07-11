@@ -34,9 +34,13 @@ npm-debug.log*
 # Test
 coverage/
 packages/customer-administration-certification/artifacts/
+packages/customer-administration-certification/artifacts/generated/
 packages/customer-administration-certification/test-results/
+packages/customer-administration-certification/.tmp/
 packages/installation-certification/artifacts/
 packages/installation-certification/test-results/
+test-results/customer-administration/
+.tmp/customer-administration/
 
 # TypeScript
 *.tsbuildinfo

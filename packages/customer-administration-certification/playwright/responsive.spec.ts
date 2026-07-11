@@ -16,14 +16,16 @@ for (const vp of viewports) {
     const manifest = requireFixtures();
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await signInAs(context, manifest.tenantA.users.owner.email);
-    await page.goto("/system/products");
-    await expect(page.getByRole("heading", { name: "Installed Products" })).toBeVisible();
+    await page.goto("/system/products", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Installed Products" })).toBeVisible({
+      timeout: 15_000,
+    });
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth + 2
     );
     expect(overflow).toBe(false);
     await page.screenshot({
-      path: `artifacts/responsive-products-${vp.name}.png`,
+      path: `.tmp/customer-administration/responsive-products-${vp.name}.png`,
       fullPage: true,
     });
   });

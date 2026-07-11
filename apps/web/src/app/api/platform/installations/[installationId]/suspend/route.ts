@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { handleInstallationError, requireInstallationAdmin } from "@/lib/installations/with-installation-admin";
+import { emitLifecycleObservation } from "@rtb/platform-commerce";
+
+import {
+  handleInstallationError,
+  requireInstallationAdmin,
+} from "@/lib/installations/with-installation-admin";
 
 type Params = { params: Promise<{ installationId: string }> };
 
 export async function POST(request: Request, { params }: Params) {
-  const auth = await requireInstallationAdmin();
+  const auth = await requireInstallationAdmin(request);
   if ("error" in auth && auth.error) return auth.error;
-  const { ctx } = auth;
+  const { ctx, requestId } = auth;
   const { installationId } = await params;
 
   try {
@@ -16,8 +21,21 @@ export async function POST(request: Request, { params }: Params) {
       ctx!.userId,
       (await request.json().catch(() => ({}))).reason
     );
-    return NextResponse.json({ data });
+    await emitLifecycleObservation(ctx!.commerce.events, {
+      eventType: "installation.suspended",
+      tenantId: ctx!.tenantId,
+      workspaceId: ctx!.workspaceId,
+      installationId,
+      actorUserId: ctx!.userId,
+      actorRole: ctx!.roleSlug,
+      operation: "installation.suspend",
+      result: "success",
+      correlationId: requestId,
+      aggregateType: "installation",
+      aggregateId: installationId,
+    });
+    return NextResponse.json({ data, requestId });
   } catch (err) {
-    return handleInstallationError(err);
+    return handleInstallationError(err, requestId);
   }
 }

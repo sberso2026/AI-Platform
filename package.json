@@ -21,6 +21,8 @@
     "installation:verify-hosted-schema": "pnpm --filter @rtb/installation-certification verify-hosted-schema",
     "installation:verify-backfill": "pnpm --filter @rtb/installation-certification verify-backfill",
     "customer-admin:certify": "pnpm --filter @rtb/customer-administration-certification certify",
+    "customer-admin:release-check": "pnpm --filter @rtb/customer-administration-certification release-check",
+    "customer-admin:verify-release-artifact": "pnpm --filter @rtb/customer-administration-certification verify-release-artifact",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/database/src/types.ts"

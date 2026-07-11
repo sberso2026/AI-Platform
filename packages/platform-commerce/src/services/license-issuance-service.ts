@@ -125,4 +125,18 @@ export class LicenseIssuanceService {
     this.cache.invalidateTenant(tenantId);
     return updated;
   }
+
+  async resume(tenantId: string, licenceId: string, actorUserId?: string) {
+    const updated = await this.licenses.updateStatus(tenantId, licenceId, "active");
+    await this.events.emit({
+      eventType: "licence.resumed",
+      tenantId,
+      actorUserId,
+      aggregateType: "licence",
+      aggregateId: licenceId,
+      payload: {},
+    });
+    this.cache.invalidateTenant(tenantId);
+    return updated;
+  }
 }

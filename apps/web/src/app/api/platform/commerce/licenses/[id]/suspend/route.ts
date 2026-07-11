@@ -1,27 +1,42 @@
-import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/kernel";
-import { requireCommerceAdmin } from "@/lib/commerce/with-commerce-entitlement";
-import { CommerceDomainError } from "@rtb/platform-commerce";
-
-type Params = { params: Promise<{ id: string }> };
-
-export async function POST(_request: Request, { params }: Params) {
-  const ctx = await getAuthContext();
-  if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const adminDenied = await requireCommerceAdmin(ctx);
-  if (adminDenied) return adminDenied;
-
-  const { id } = await params;
-
-  try {
-    const result = await ctx.commerce.licences.suspend(ctx.tenantId, id, ctx.userId);
-    return NextResponse.json({ data: result });
-  } catch (err) {
-    if (err instanceof CommerceDomainError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
-    }
-    throw err;
-  }
-}
-
+import { NextResponse } from "next/server";
+import { emitLifecycleObservation } from "@rtb/platform-commerce";
+
+import { getAuthContext } from "@/lib/kernel";
+import { requireCommerceAdmin } from "@/lib/commerce/with-commerce-entitlement";
+import {
+  handleCommerceDomainError,
+  resolveRequestId,
+  unauthenticatedResponse,
+  forbiddenResponse,
+} from "@/lib/lifecycle-api";
+
+type Params = { params: Promise<{ id: string }> };
+
+export async function POST(request: Request, { params }: Params) {
+  const requestId = resolveRequestId(request);
+  const ctx = await getAuthContext();
+  if (!ctx) return unauthenticatedResponse(requestId);
+  const denied = await requireCommerceAdmin(ctx);
+  if (denied) {
+    return forbiddenResponse(requestId, "Commerce permission denied", "commerce_permission_denied");
+  }
+
+  const { id } = await params;
+  try {
+    const result = await ctx.commerce.licences.suspend(ctx.tenantId, id, ctx.userId);
+    await emitLifecycleObservation(ctx.commerce.events, {
+      eventType: "licence.suspended",
+      tenantId: ctx.tenantId,
+      actorUserId: ctx.userId,
+      actorRole: ctx.roleSlug,
+      operation: "licence.suspend",
+      result: "success",
+      correlationId: requestId,
+      aggregateType: "licence",
+      aggregateId: id,
+    });
+    return NextResponse.json({ data: result, requestId });
+  } catch (err) {
+    return handleCommerceDomainError(err, requestId);
+  }
+}

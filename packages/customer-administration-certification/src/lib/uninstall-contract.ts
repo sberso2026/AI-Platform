@@ -31,6 +31,14 @@ export function assertNoServerError(status: number): void {
   }
 }
 
+/** Use for uninstall certification — assertNoServerError alone is not sufficient. */
+export function assertExactUninstallStatus(status: number, expected: number): void {
+  assertNoServerError(status);
+  if (status !== expected) {
+    throw new Error(`Expected uninstall HTTP status ${expected}, got ${status}`);
+  }
+}
+
 function assertCondition(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
@@ -50,6 +58,13 @@ export function parseUninstallSuccess(body: unknown): UninstallSuccessResponse {
 export function parseUninstallError(body: unknown): UninstallErrorResponse {
   assertCondition(body && typeof body === "object", "invalid uninstall error body");
   const payload = body as Record<string, unknown>;
+  const nested = payload.error;
+  if (nested && typeof nested === "object") {
+    const err = nested as Record<string, unknown>;
+    assertCondition(typeof err.code === "string", "missing error code");
+    assertCondition(typeof err.message === "string", "missing error message");
+    return { error: err.message as string, code: err.code as string };
+  }
   assertCondition(typeof payload.error === "string", "missing error message");
   assertCondition(typeof payload.code === "string", "missing error code");
   return payload as UninstallErrorResponse;

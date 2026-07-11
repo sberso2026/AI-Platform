@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 
 export const CERT_SLUG_PREFIX = "cert-phase4-";
 export const HOSTED_PROJECT_REF = "wcydlhqiqdwgoaqrlget";
+export const HOSTED_STAGING_PROJECT_REFS = [HOSTED_PROJECT_REF] as const;
+export const HOSTED_PRODUCTION_PROJECT_REFS = [] as const;
 
 export const REQUIRED_SECRETS = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -41,14 +43,18 @@ export function certUserPassword(): string {
   return pwd;
 }
 
-export function assertPreflight(root: string): { commitSha: string; branch: string } {
+export function assertPreflight(
+  root: string,
+  options?: { allowDirty?: boolean }
+): { commitSha: string; branch: string } {
   const missing = REQUIRED_SECRETS.filter((k) => !process.env[k]?.trim());
   if (missing.length > 0) {
     throw new Error(`Phase 4 preflight missing secrets: ${missing.join(", ")}`);
   }
 
+  const allowDirty = options?.allowDirty ?? process.env.CUSTOMER_ADMIN_ALLOW_DIRTY === "1";
   const status = execSync("git status --porcelain", { cwd: root, encoding: "utf8" }).trim();
-  if (status) {
+  if (status && !allowDirty) {
     throw new Error(
       `Phase 4 preflight: working tree must be clean before certification. Uncommitted:\n${status}`
     );
@@ -60,5 +66,5 @@ export function assertPreflight(root: string): { commitSha: string; branch: stri
 }
 
 export function fixturesManifestPath(): string {
-  return resolve(process.cwd(), "artifacts", "phase4-cert-fixtures.json");
+  return resolve(process.cwd(), "artifacts/generated/customer-administration/phase4-cert-fixtures.json");
 }

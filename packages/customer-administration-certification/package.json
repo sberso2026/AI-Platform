@@ -4,16 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:unit": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 vitest run src/administration-certification.ts src/http-certification.ts src/uninstall-contract.test.ts",
+    "test:unit": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 vitest run src/administration-certification.ts src/http-certification.ts src/uninstall-contract.test.ts src/certification-regression.test.ts",
+    "test:regression": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 vitest run src/certification-regression.test.ts",
     "test:administration": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 vitest run src/administration-certification.ts",
     "test:http": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 vitest run src/http-certification.ts src/http-live-certification.ts src/uninstall-http-certification.ts",
     "test:growth": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 vitest run src/growth-credit-certification.ts",
-    "test:e2e": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 playwright test playwright/flow-n-uninstall.spec.ts playwright/flows-a-p.spec.ts",
+    "test:e2e": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 playwright test playwright/flows-a-p.spec.ts playwright/flow-n-uninstall.spec.ts",
     "test:a11y": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 playwright test playwright/accessibility.spec.ts",
     "test:responsive": "cross-env CUSTOMER_ADMIN_CERTIFICATION=1 playwright test playwright/responsive.spec.ts",
     "verify-hosted-schema": "tsx src/verify-hosted-schema.ts",
     "provision": "tsx scripts/provision-fixtures.ts",
-    "certify": "tsx scripts/run-certification.ts"
+    "teardown": "tsx scripts/teardown-fixtures.ts",
+    "certify": "tsx scripts/run-certification.ts",
+    "release-check": "tsx scripts/release-check.ts",
+    "verify-release-artifact": "tsx scripts/verify-release-artifact.ts"
   },
   "dependencies": {
     "@rtb/platform-commerce": "workspace:*",

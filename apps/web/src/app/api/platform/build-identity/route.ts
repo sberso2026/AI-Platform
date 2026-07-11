@@ -1,10 +1,20 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { platform, release } from "node:os";
 import { resolve } from "node:path";
 import { NextResponse } from "next/server";
 
 const REPO_ROOT = resolve(process.cwd(), "../..");
+
+const CERTIFICATION_OUTPUT_IGNORE_PREFIXES = [
+  "packages/customer-administration-certification/artifacts/",
+  "packages/customer-administration-certification/test-results/",
+  "packages/customer-administration-certification/.tmp/",
+  "artifacts/generated/",
+  "test-results/customer-administration/",
+  ".tmp/customer-administration/",
+];
 
 function gitSha(): string {
   try {
@@ -22,28 +32,30 @@ function gitBranch(): string {
   }
 }
 
+function gitRepositoryUrl(): string | null {
+  try {
+    return execSync("git config --get remote.origin.url", { cwd: REPO_ROOT, encoding: "utf8" }).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function isIgnoredCertOutput(path: string): boolean {
+  const normalized = path.replace(/\\/g, "/");
+  return CERTIFICATION_OUTPUT_IGNORE_PREFIXES.some((prefix) => normalized.includes(prefix));
+}
+
 function changedFiles(): string[] {
   try {
     return execSync("git status --porcelain", { cwd: REPO_ROOT, encoding: "utf8" })
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean)
-      .filter((line) => {
-        const path = line.length > 3 ? line.slice(3).trim() : line.trim();
-        return (
-          !path.includes("/artifacts/") &&
-          !path.includes("\\artifacts\\") &&
-          !path.includes("test-results") &&
-          !path.endsWith(".png")
-        );
-      });
+      .map((line) => (line.length > 3 ? line.slice(3).trim() : line.trim()))
+      .filter((path) => !isIgnoredCertOutput(path));
   } catch {
     return [];
   }
-}
-
-function workingTreeDirty(): boolean {
-  return changedFiles().length > 0;
 }
 
 function migrationChecksums(): Record<string, string> {
@@ -57,19 +69,32 @@ function migrationChecksums(): Record<string, string> {
   return out;
 }
 
+function pnpmVersion(): string | null {
+  try {
+    return execSync("pnpm --version", { encoding: "utf8" }).trim();
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const sha = gitSha();
   const buildTimestamp = new Date().toISOString();
+  const packageVersion = process.env.npm_package_version ?? "0.1.0";
   const token = createHash("sha256")
-    .update(`${sha}:${buildTimestamp}:${process.env.npm_package_version ?? "0.1.0"}`)
+    .update(`${sha}:${buildTimestamp}:${packageVersion}`)
     .digest("hex");
+  const dirtyFiles = changedFiles();
+  const dirty = dirtyFiles.length > 0;
 
   return NextResponse.json({
     commitSha: sha,
     branch: gitBranch(),
-    dirty: workingTreeDirty(),
-    changedFiles: workingTreeDirty() ? changedFiles() : [],
-    packageVersion: process.env.npm_package_version ?? "0.1.0",
+    dirty,
+    workingTreeClean: !dirty,
+    changedFiles: dirty ? dirtyFiles : [],
+    repositoryUrl: gitRepositoryUrl(),
+    packageVersion,
     buildTimestamp,
     buildIdentityToken: token,
     migrationChecksums: migrationChecksums(),
@@ -77,5 +102,9 @@ export async function GET() {
       process.env.SUPABASE_PROJECT_REF ??
       process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1] ??
       null,
+    certificationTarget: process.env.CUSTOMER_ADMIN_CERTIFICATION_TARGET ?? null,
+    nodeVersion: process.version,
+    pnpmVersion: pnpmVersion(),
+    runnerOs: `${platform()} ${release()}`,
   });
 }

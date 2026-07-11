@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { signInAs } from "./auth.js";
 import { requireFixtures } from "./fixtures.js";
 import {
+  assertExactUninstallStatus,
   assertNoServerError,
   parseUninstallError,
   parseUninstallSuccess,
@@ -30,8 +31,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
       `/api/platform/installations/${fixtures.happyPathInstallationId}/uninstall`,
       { data: { reason: "cert" } }
     );
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(401);
+    assertExactUninstallStatus(res.status(), 401);
   });
 
   test("N — 403 viewer uninstall", async ({ page, context }) => {
@@ -42,8 +42,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
       `/api/platform/installations/${fixtures.withDependenciesInstallationId}/uninstall`,
       { data: { reason: "cert" } }
     );
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(403);
+    assertExactUninstallStatus(res.status(), 403);
   });
 
   test("N — 403 engineer uninstall", async ({ page, context }) => {
@@ -54,8 +53,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
       `/api/platform/installations/${fixtures.withDependenciesInstallationId}/uninstall`,
       { data: { reason: "cert" } }
     );
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(403);
+    assertExactUninstallStatus(res.status(), 403);
   });
 
   test("N — 404 missing installation", async ({ page, context }) => {
@@ -66,8 +64,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
       `/api/platform/installations/${fixtures.missingInstallationId}/uninstall`,
       { data: { reason: "cert" } }
     );
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(404);
+    assertExactUninstallStatus(res.status(), 404);
     const body = parseUninstallError(await res.json());
     expect(body.code).toBe(UNINSTALL_ERROR_CODES.INSTALLATION_NOT_FOUND);
   });
@@ -80,8 +77,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
       `/api/platform/installations/${fixtures.invalidStateInstallationId}/uninstall`,
       { data: { reason: "cert" } }
     );
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(409);
+    assertExactUninstallStatus(res.status(), 409);
     const body = parseUninstallError(await res.json());
     expect(body.code).toBe(UNINSTALL_ERROR_CODES.INVALID_INSTALLATION_TRANSITION);
   });
@@ -94,8 +90,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
       `/api/platform/installations/${fixtures.withDependenciesInstallationId}/uninstall`,
       { data: { reason: "cert" } }
     );
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(422);
+    assertExactUninstallStatus(res.status(), 422);
     const body = parseUninstallError(await res.json());
     expect(body.code).toBe(UNINSTALL_ERROR_CODES.ACTIVE_DEPENDENCIES_EXIST);
   });

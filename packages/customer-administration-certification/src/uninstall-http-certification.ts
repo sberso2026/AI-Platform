@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from "node:fs";
 
 import { buildAuthCookies } from "./lib/auth-cookies.js";
 import {
+  assertExactUninstallStatus,
   assertNoServerError,
   parseUninstallError,
   parseUninstallSuccess,
@@ -101,8 +102,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
 
     it("401 unauthenticated uninstall", async () => {
       const res = await postUninstall(fixtures.happyPathInstallationId, ctx());
-      assertNoServerError(res.status);
-      expect(res.status).toBe(401);
+      assertExactUninstallStatus(res.status, 401);
     });
 
     it("403 viewer uninstall", async () => {
@@ -110,8 +110,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         ...ctx(),
         cookieHeader: viewerCookies,
       });
-      assertNoServerError(res.status);
-      expect(res.status).toBe(403);
+      assertExactUninstallStatus(res.status, 403);
     });
 
     it("403 engineer uninstall", async () => {
@@ -119,8 +118,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         ...ctx(),
         cookieHeader: engineerCookies,
       });
-      assertNoServerError(res.status);
-      expect(res.status).toBe(403);
+      assertExactUninstallStatus(res.status, 403);
     });
 
     it("404 missing installation", async () => {
@@ -128,8 +126,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         ...ctx(),
         cookieHeader: ownerCookies,
       });
-      assertNoServerError(res.status);
-      expect(res.status).toBe(404);
+      assertExactUninstallStatus(res.status, 404);
       const body = parseUninstallError(await res.json());
       expect(body.code).toBe(UNINSTALL_ERROR_CODES.INSTALLATION_NOT_FOUND);
     });
@@ -139,8 +136,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         ...ctx(),
         cookieHeader: ownerCookies,
       });
-      assertNoServerError(res.status);
-      expect(res.status).toBe(409);
+      assertExactUninstallStatus(res.status, 409);
       const body = parseUninstallError(await res.json());
       expect(body.code).toBe(UNINSTALL_ERROR_CODES.INVALID_INSTALLATION_TRANSITION);
     });
@@ -159,8 +155,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         ...ctx(),
         cookieHeader: ownerCookies,
       });
-      assertNoServerError(res.status);
-      expect(res.status).toBe(422);
+      assertExactUninstallStatus(res.status, 422);
       const body = parseUninstallError(await res.json());
       expect(body.code).toBe(UNINSTALL_ERROR_CODES.ACTIVE_DEPENDENCIES_EXIST);
 
@@ -190,8 +185,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         workspaceId: happyPathWorkspaceId,
         cookieHeader: tenantBOwnerCookies,
       });
-      assertNoServerError(res.status);
-      expect(res.status).toBe(200);
+      assertExactUninstallStatus(res.status, 200);
 
       const success = parseUninstallSuccess(await res.json());
       expect(success.data.id).toBe(installationId);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assertExactUninstallStatus,
+  assertNoServerError,
   parseUninstallError,
   parseUninstallSuccess,
   UNINSTALL_ERROR_CODES,
@@ -27,5 +29,20 @@ describe("uninstall response contract parsers", () => {
       code: UNINSTALL_ERROR_CODES.ACTIVE_DEPENDENCIES_EXIST,
     });
     expect(parsed.code).toBe("active_dependencies_exist");
+  });
+});
+
+describe("uninstall status assertions", () => {
+  it("assertExactUninstallStatus rejects non-200 success codes", () => {
+    expect(() => assertExactUninstallStatus(201, 200)).toThrow(/Expected uninstall HTTP status 200/);
+    expect(() => assertExactUninstallStatus(422, 200)).toThrow(/Expected uninstall HTTP status 200/);
+    expect(() => assertExactUninstallStatus(500, 200)).toThrow(/Unexpected server error status 500/);
+    expect(() => assertExactUninstallStatus(200, 200)).not.toThrow();
+  });
+
+  it("assertNoServerError alone allows unintended non-5xx codes", () => {
+    expect(() => assertNoServerError(599)).toThrow(/Unexpected server error status 599/);
+    expect(() => assertNoServerError(201)).not.toThrow();
+    expect(() => assertNoServerError(422)).not.toThrow();
   });
 });

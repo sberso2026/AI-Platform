@@ -5,13 +5,14 @@ import { getAuthContext } from "@/lib/kernel";
 import { requireCommerceAdmin } from "@/lib/commerce/with-commerce-entitlement";
 import {
   handleCommerceDomainError,
-  lifecycleErrorResponse,
   resolveRequestId,
   unauthenticatedResponse,
   forbiddenResponse,
 } from "@/lib/lifecycle-api";
 
-export async function POST(request: Request) {
+type Params = { params: Promise<{ id: string }> };
+
+export async function POST(request: Request, { params }: Params) {
   const requestId = resolveRequestId(request);
   const ctx = await getAuthContext();
   if (!ctx) return unauthenticatedResponse(requestId);
@@ -20,29 +21,21 @@ export async function POST(request: Request) {
     return forbiddenResponse(requestId, "Commerce permission denied", "commerce_permission_denied");
   }
 
-  const body = await request.json();
+  const { id } = await params;
   try {
-    const assignment = await ctx.commerce.seatAssignment.assign({
-      tenantId: ctx.tenantId,
-      seatPoolId: body.seatPoolId,
-      userId: body.userId,
-      workspaceId: body.workspaceId,
-      assignedBy: ctx.userId,
-    });
+    const result = await ctx.commerce.licences.resume(ctx.tenantId, id, ctx.userId);
     await emitLifecycleObservation(ctx.commerce.events, {
-      eventType: "seat.assigned",
+      eventType: "licence.resumed",
       tenantId: ctx.tenantId,
-      workspaceId: body.workspaceId,
       actorUserId: ctx.userId,
       actorRole: ctx.roleSlug,
-      operation: "seat.assign",
+      operation: "licence.resume",
       result: "success",
       correlationId: requestId,
-      aggregateType: "seat_assignment",
-      aggregateId: assignment.id as string,
-      payload: { seatPoolId: body.seatPoolId, userId: body.userId },
+      aggregateType: "licence",
+      aggregateId: id,
     });
-    return NextResponse.json({ data: assignment, requestId }, { status: 201 });
+    return NextResponse.json({ data: result, requestId });
   } catch (err) {
     return handleCommerceDomainError(err, requestId);
   }

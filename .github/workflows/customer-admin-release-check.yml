@@ -1,0 +1,151 @@
+name: Customer Admin Release Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+    tags:
+      - "customer-admin-rc-*"
+      - "customer-admin-v*"
+
+concurrency:
+  group: customer-admin-release-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CUSTOMER_ADMIN_CERTIFICATION: "1"
+  CUSTOMER_ADMIN_RELEASE_CHECK: "1"
+  CUSTOMER_ADMIN_CERTIFICATION_TARGET: hosted_staging
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Customer admin unit and regression tests
+        run: pnpm --filter @rtb/customer-administration-certification test:unit
+
+      - name: Weakened assertion source scan
+        run: pnpm --filter @rtb/customer-administration-certification test:regression
+
+      - name: Production build
+        run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  hosted-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    env:
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @rtb/customer-administration-certification exec playwright install chromium
+
+      - name: Release check (single certification run)
+        run: pnpm customer-admin:release-check
+
+      - name: Verify release artifact
+        run: |
+          pnpm customer-admin:verify-release-artifact \
+            --artifact packages/customer-administration-certification/artifacts/generated/customer-administration/phase-4-certification.json \
+            --commit-sha "${{ github.sha }}" \
+            --project-ref wcydlhqiqdwgoaqrlget \
+            --target hosted_staging
+
+      - name: Upload certification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: customer-admin-certification-${{ github.run_id }}
+          path: |
+            packages/customer-administration-certification/artifacts/generated/
+            packages/customer-administration-certification/test-results/customer-administration/
+
+  release-evidence:
+    needs: hosted-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: customer-admin-certification-${{ github.run_id }}
+          path: evidence
+
+      - name: Publish job summary
+        run: |
+          ARTIFACT="evidence/customer-administration/phase-4-certification.json"
+          if [ ! -f "$ARTIFACT" ]; then ARTIFACT="evidence/phase-4-certification.json"; fi
+          echo "## Customer Admin Release Evidence" >> "$GITHUB_STEP_SUMMARY"
+          echo "- run: ${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- sha: ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          node -e "const fs=require('fs'); const p=process.argv[1]; const a=JSON.parse(fs.readFileSync(p,'utf8')); console.log(JSON.stringify({releaseEligible:a.releaseEligible,commitSha:a.commitSha,gates:a.passedGateCount+'/'+a.requiredGateCount,unexpected5xx:a.unexpectedServerErrorCount},null,2));" "$ARTIFACT" >> "$GITHUB_STEP_SUMMARY"
+
+  release-approval:
+    if: startsWith(github.ref, 'refs/tags/customer-admin-v')
+    needs: release-evidence
+    runs-on: ubuntu-latest
+    environment: customer-admin-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: customer-admin-certification-${{ github.run_id }}
+          path: evidence
+      - name: Revalidate immutable artifact
+        run: |
+          ARTIFACT="evidence/customer-administration/phase-4-certification.json"
+          if [ ! -f "$ARTIFACT" ]; then ARTIFACT="evidence/phase-4-certification.json"; fi
+          pnpm customer-admin:verify-release-artifact \
+            --artifact "$ARTIFACT" \
+            --commit-sha "${{ github.sha }}" \
+            --project-ref wcydlhqiqdwgoaqrlget \
+            --target hosted_staging
+      - name: Deployment authorization output
+        run: echo "deployment_authorized=true" >> "$GITHUB_OUTPUT"

@@ -7,6 +7,7 @@ import { resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
 import { fixturesManifestPath, HOSTED_PROJECT_REF } from "../src/lib/env.js";
+import { generatedArtifactDir } from "../src/lib/artifact-paths.js";
 
 const ROOT = resolve(process.cwd(), "../..");
 const ENGINEERING_PRODUCT_ID = "c1000000-0000-4000-8000-000000000001";
@@ -226,15 +227,18 @@ async function main(): Promise<void> {
 
   const uninstallFixtures = await seedUninstallFixtures(admin, installManifest);
 
+  const ciRunId = process.env.GITHUB_RUN_ID ?? `local-${Date.now()}`;
   const phase4Manifest = {
     ...JSON.parse(readFileSync(installManifestPath, "utf8")),
     growthCreditAccountId: accountId,
     hostedProjectRef: HOSTED_PROJECT_REF,
     provisionedAt: new Date().toISOString(),
+    ciRunId,
+    certificationTarget: process.env.CUSTOMER_ADMIN_CERTIFICATION_TARGET ?? "hosted_staging",
     uninstallFixtures,
   };
 
-  mkdirSync(resolve(process.cwd(), "artifacts"), { recursive: true });
+  generatedArtifactDir(process.cwd());
   writeFileSync(fixturesManifestPath(), JSON.stringify(phase4Manifest, null, 2));
   console.log("[phase4:provision] Growth credit and uninstall fixtures seeded");
 }

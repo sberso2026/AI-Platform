@@ -32,6 +32,7 @@ export * from "./domain/subscription-state-machine";
 export * from "./domain/entitlement-reason-codes";
 export * from "./domain/commerce-access-policy";
 export * from "./domain/engineering-service-policies";
+export * from "./services/lifecycle-observability";
 export * from "./domain/errors";
 export * from "./services/entitlement-cache";
 export * from "./services/entitlement-cache-interface";

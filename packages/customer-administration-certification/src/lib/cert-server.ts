@@ -79,9 +79,17 @@ export class CertificationServer {
   }
 
   stop(): void {
-    if (this.proc) {
-      this.proc.kill("SIGTERM");
-      this.proc = null;
+    if (!this.proc) return;
+    const proc = this.proc;
+    this.proc = null;
+    if (proc.pid && process.platform === "win32") {
+      try {
+        execSync(`taskkill /pid ${proc.pid} /T /F`, { stdio: "ignore" });
+        return;
+      } catch {
+        // fall through
+      }
     }
+    proc.kill("SIGTERM");
   }
 }
