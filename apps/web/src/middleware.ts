@@ -30,22 +30,23 @@ function resolveMembershipAccess(
 ): { roleSlug: string; tier: NavTier } | null {
   if (!memberships.length) return null;
 
-  let bestTier: NavTier = "viewer";
-  let bestRoleSlug = "viewer";
-  let isOwner = false;
+  let strictestTier: NavTier = "admin";
+  let strictestRoleSlug = "owner";
 
   for (const row of memberships) {
     const role = row.roles;
     const slug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
-    if (slug === "owner") isOwner = true;
     const tier = resolveNavTier(slug);
-    if (NAV_TIER_RANK[tier] >= NAV_TIER_RANK[bestTier]) {
-      bestTier = tier;
-      bestRoleSlug = slug;
+    if (NAV_TIER_RANK[tier] <= NAV_TIER_RANK[strictestTier]) {
+      strictestTier = tier;
+      strictestRoleSlug = slug;
     }
   }
 
-  return { roleSlug: isOwner ? "owner" : bestRoleSlug, tier: bestTier };
+  return {
+    roleSlug: strictestRoleSlug,
+    tier: strictestTier,
+  };
 }
 
 export async function middleware(request: NextRequest) {
