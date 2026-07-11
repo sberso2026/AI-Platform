@@ -116,36 +116,38 @@ test.describe("Phase 4 Playwright flows A–P", () => {
     await expect(page.locator("body")).toContainText(/progress|status|installation/i);
   });
 
-  test("L — Suspend and resume installation", async ({ page, context }) => {
-    const manifest = fx();
-    await signInAs(context, manifest.tenantA.users.owner.email);
-    const id = manifest.tenantA.installations.productInstallationId;
-    const res = await page.request.post(`/api/platform/installations/${id}/suspend`, {
-      data: { reason: "cert" },
+  test.describe.serial("L–M — Lifecycle mutations", () => {
+    test("L — Suspend and resume installation", async ({ page, context }) => {
+      const manifest = fx();
+      await signInAs(context, manifest.tenantA.users.owner.email);
+      const id = manifest.tenantA.installations.productInstallationId;
+      const res = await page.request.post(`/api/platform/installations/${id}/suspend`, {
+        data: { reason: "cert" },
+      });
+      assertNoServerError(res.status());
+      expect(res.status()).toBe(200);
+      const resume = await page.request.post(`/api/platform/installations/${id}/resume`, {
+        data: { reason: "cert resume" },
+      });
+      assertNoServerError(resume.status());
+      expect(resume.status()).toBe(200);
     });
-    assertNoServerError(res.status());
-    expect(res.status()).toBe(200);
-    const resume = await page.request.post(`/api/platform/installations/${id}/resume`, {
-      data: { reason: "cert resume" },
-    });
-    assertNoServerError(resume.status());
-    expect(resume.status()).toBe(200);
-  });
 
-  test("M — Upgrade and rollback endpoints", async ({ page, context }) => {
-    const manifest = fx();
-    await signInAs(context, manifest.tenantA.users.owner.email);
-    const id = manifest.tenantA.installations.productInstallationId;
-    const upgrade = await page.request.post(`/api/platform/installations/${id}/upgrade`, {
-      data: { targetVersion: "1.0.1" },
+    test("M — Upgrade and rollback endpoints", async ({ page, context }) => {
+      const manifest = fx();
+      await signInAs(context, manifest.tenantA.users.owner.email);
+      const id = manifest.tenantA.installations.productInstallationId;
+      const upgrade = await page.request.post(`/api/platform/installations/${id}/upgrade`, {
+        data: { targetVersion: "1.0.1" },
+      });
+      assertNoServerError(upgrade.status());
+      expect(upgrade.status()).toBe(200);
+      const rollback = await page.request.post(`/api/platform/installations/${id}/rollback`, {
+        data: { targetVersion: "1.0.0" },
+      });
+      assertNoServerError(rollback.status());
+      expect(rollback.status()).toBe(200);
     });
-    assertNoServerError(upgrade.status());
-    expect(upgrade.status()).toBe(200);
-    const rollback = await page.request.post(`/api/platform/installations/${id}/rollback`, {
-      data: { targetVersion: "1.0.0" },
-    });
-    assertNoServerError(rollback.status());
-    expect(rollback.status()).toBe(200);
   });
 
   test("O — Viewer denied products API", async ({ page, context }) => {

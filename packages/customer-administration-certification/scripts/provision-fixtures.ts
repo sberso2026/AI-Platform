@@ -33,12 +33,40 @@ interface InstallManifest {
   };
 }
 
+async function resetTenantAProductInstallation(
+  admin: ReturnType<typeof createClient>,
+  tenantA: InstallManifest["tenantA"]
+) {
+  const productInstallationId = tenantA.installations.productInstallationId;
+
+  await admin
+    .from("commercial_installations")
+    .update({
+      status: "active",
+      desired_state: "active",
+      current_state: "active",
+      installed_version: "1.0.0",
+      requested_version: "1.0.0",
+      failure_code: null,
+      failure_message: null,
+    })
+    .eq("id", productInstallationId);
+
+  await admin
+    .from("commercial_application_installations")
+    .update({ status: "active" })
+    .eq("tenant_id", tenantA.id)
+    .eq("parent_product_installation_id", productInstallationId);
+}
+
 async function seedUninstallFixtures(
   admin: ReturnType<typeof createClient>,
   manifest: InstallManifest
 ) {
   const tenantA = manifest.tenantA;
   const tenantB = manifest.tenantB;
+
+  await resetTenantAProductInstallation(admin, tenantA);
 
   const { data: licenceA } = await admin
     .from("commercial_licenses")

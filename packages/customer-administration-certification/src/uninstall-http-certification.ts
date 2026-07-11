@@ -219,7 +219,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         const healthBody = (await health.json()) as { data?: { status?: string } };
         expect(healthBody.data?.status).not.toBe("active");
       } else {
-        expect([404, 409, 422, 503]).toContain(health.status);
+        expect(health.status).toBe(404);
       }
 
       const { data: events } = await admin
