@@ -621,6 +621,8 @@ export class InstallationLifecycleService {
       actorUserId,
       patch: {
         installed_version: targetVersion,
+        requested_version: targetVersion,
+        version: targetVersion,
         failure_code: null,
         failure_message: null,
       },
@@ -711,6 +713,7 @@ export class InstallationLifecycleService {
       patch: {
         installed_version: resolvedTarget,
         requested_version: resolvedTarget,
+        version: resolvedTarget,
         failure_code: null,
         failure_message: null,
       },
