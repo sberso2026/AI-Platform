@@ -21,9 +21,40 @@ env:
   CUSTOMER_ADMIN_CERTIFICATION_TARGET: hosted_staging
   ALLOW_PRODUCTION_CERTIFICATION: "false"
   PNPM_VERSION: "9.15.0"
+  NODE_VERSION: "22"
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies (cert package)
+        run: pnpm install --frozen-lockfile
+
+      - name: CI secret preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+          COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+          COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+          CUSTOMER_ADMIN_CERTIFICATION_TARGET: ${{ env.CUSTOMER_ADMIN_CERTIFICATION_TARGET }}
+          ALLOW_PRODUCTION_CERTIFICATION: ${{ env.ALLOW_PRODUCTION_CERTIFICATION }}
+        run: pnpm --filter @rtb/customer-administration-certification ci-preflight
+
   validate:
+    needs: preflight
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +67,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
@@ -64,6 +95,8 @@ jobs:
       CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
       COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
@@ -78,7 +111,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies

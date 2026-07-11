@@ -64,7 +64,16 @@ export function missingEnv(keys: readonly string[]): string[] {
 }
 
 export function assertProvisionEnv(): void {
-  const missing = missingEnv(PROVISION_SECRETS);
+  const missing: string[] = [];
+  if (!resolveSupabaseUrl()?.trim()) {
+    missing.push("SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL");
+  }
+  if (!resolveSupabaseAnonKey()?.trim()) {
+    missing.push("SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  if (!resolveServiceRoleKey()?.trim()) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY");
+  }
   if (missing.length > 0) {
     throw new Error(`Provision requires: ${missing.join(", ")}`);
   }

@@ -14,6 +14,9 @@ import {
   ENGINEERING_PLAN_ID,
   ENGINEERING_PRODUCT_ID,
   fixturesManifestPath,
+  resolveSupabaseAnonKey,
+  resolveServiceRoleKey,
+  resolveSupabaseUrl,
   type CertFixturesManifest,
   type CertInstallationFixture,
   type CertTenantFixture,
@@ -426,9 +429,9 @@ async function cleanupStaleCertTenants(admin: ReturnType<typeof createClient>): 
 export async function provisionInstallationFixtures(): Promise<CertFixturesManifest> {
   assertProvisionEnv();
 
-  const url = process.env.SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  const anonKey = process.env.SUPABASE_ANON_KEY!;
+  const url = resolveSupabaseUrl()!;
+  const serviceKey = resolveServiceRoleKey()!;
+  const anonKey = resolveSupabaseAnonKey()!;
   const password = certUserPassword();
   const runId = Date.now().toString(36);
 

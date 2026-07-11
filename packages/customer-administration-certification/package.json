@@ -17,7 +17,8 @@
     "teardown": "tsx scripts/teardown-fixtures.ts",
     "certify": "tsx scripts/run-certification.ts",
     "release-check": "tsx scripts/release-check.ts",
-    "verify-release-artifact": "tsx scripts/verify-release-artifact.ts"
+    "verify-release-artifact": "tsx scripts/verify-release-artifact.ts",
+    "ci-preflight": "tsx scripts/ci-preflight.ts"
   },
   "dependencies": {
     "@rtb/platform-commerce": "workspace:*",

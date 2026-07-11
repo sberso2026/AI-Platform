@@ -40,6 +40,9 @@ function loadRootEnv(): void {
     if (!process.env[key]) process.env[key] = value;
   }
   process.env.SUPABASE_URL ??= process.env.NEXT_PUBLIC_SUPABASE_URL;
+  process.env.SUPABASE_ANON_KEY ??= process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  process.env.SUPABASE_TEST_URL ??= process.env.SUPABASE_URL;
+  process.env.SUPABASE_TEST_ANON_KEY ??= process.env.SUPABASE_ANON_KEY;
 }
 
 function runTimed(cmd: string, cwd = ROOT): TimedStep {
