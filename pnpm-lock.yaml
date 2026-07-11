@@ -133,9 +133,15 @@ importers:
 
   packages/customer-administration-certification:
     dependencies:
+      '@rtb/platform-commerce':
+        specifier: workspace:*
+        version: link:../platform-commerce
       '@rtb/platform-core':
         specifier: workspace:*
         version: link:../platform-core
+      '@supabase/ssr':
+        specifier: ^0.6.1
+        version: 0.6.1(@supabase/supabase-js@2.110.1)
       '@supabase/supabase-js':
         specifier: ^2.49.8
         version: 2.110.1

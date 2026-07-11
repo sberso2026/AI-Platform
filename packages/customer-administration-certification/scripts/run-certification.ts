@@ -2,10 +2,10 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { verifyBuildIdentity, resolveLocalCommitSha } from "../build-identity.js";
-import { assertPreflight, fixturesManifestPath, HOSTED_PROJECT_REF } from "./lib/env.js";
-import { CertificationServer } from "./lib/cert-server.js";
-import { type GateResult, writePhase4Report } from "../report.js";
+import { verifyBuildIdentity, resolveLocalCommitSha } from "../src/build-identity.js";
+import { assertPreflight, fixturesManifestPath, HOSTED_PROJECT_REF } from "../src/lib/env.js";
+import { CertificationServer } from "../src/lib/cert-server.js";
+import { type GateResult, writePhase4Report } from "../src/report.js";
 
 const ROOT = resolve(process.cwd(), "../..");
 const PKG = process.cwd();
