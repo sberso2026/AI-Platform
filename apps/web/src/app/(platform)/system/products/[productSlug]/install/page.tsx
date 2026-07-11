@@ -25,8 +25,12 @@ export default function ProductInstallPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Installation failed");
-      router.push(`/system/products/${productSlug}`);
-      router.refresh();
+      const installationId = json.data?.id ?? json.data?.installation?.id;
+      if (installationId) {
+        router.push(`/system/installations/${installationId}`);
+      } else {
+        router.push(`/system/products/${productSlug}`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Installation failed");
     } finally {

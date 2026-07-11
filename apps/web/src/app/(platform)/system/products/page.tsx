@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Boxes, Calendar, KeyRound, Layers, Package } from "lucide-react";
+import { Activity, Boxes, Calendar, KeyRound, Layers, Package } from "lucide-react";
 import { MetricCard } from "@rtb/ui";
 import type { CommercialProductView, ProductCatalogTab } from "@rtb/platform-core";
 import {
-  buildCatalogSummary,
+  buildProductCatalogSummary,
   filterProductsByTab,
+  HEALTH_STATUS_LABELS,
 } from "@rtb/platform-core";
 import { ProductCard } from "@/components/commerce/product-card";
 import { ProductCatalogTabs } from "@/components/commerce/product-catalog-tabs";
@@ -50,11 +51,7 @@ export default function InstalledProductsPage() {
   }, []);
 
   const summary = useMemo(
-    () =>
-      buildCatalogSummary(products, {
-        roleSlug,
-        engineeringOsEnabled: true,
-      }),
+    () => buildProductCatalogSummary(products, { roleSlug }),
     [products, roleSlug]
   );
 
@@ -80,8 +77,8 @@ export default function InstalledProductsPage() {
 
   return (
     <CommerceAdminShell
-      title="Products"
-      description="Manage commercial products, subscriptions, licences, and installations across your tenant."
+      title="Installed Products"
+      description="Manage your RTB Operating Systems, applications, licences, workspaces, and access."
       searchPlaceholder="Search products…"
       onSearch={setSearch}
       actions={<EntitlementDiagnoseButton productKey="engineering-os" />}
@@ -90,17 +87,52 @@ export default function InstalledProductsPage() {
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
       {loading && <p className="mb-3 text-sm text-muted-foreground">Loading…</p>}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Installed Products" value={summary.installedProducts} icon={<Package className="h-5 w-5" />} tone="blue" />
-        <MetricCard label="Installed Applications" value={summary.installedApplications} icon={<Layers className="h-5 w-5" />} tone="green" />
-        <MetricCard label="Assigned Seats" value={`${summary.assignedSeats} / ${summary.totalSeats}`} icon={<KeyRound className="h-5 w-5" />} tone="amber" />
-        <MetricCard label="Renewal Date" value={summary.renewalDate ?? "—"} icon={<Calendar className="h-5 w-5" />} tone="slate" />
-        <MetricCard label="Current Plan" value={summary.currentPlan ?? "—"} icon={<Boxes className="h-5 w-5" />} tone="blue" />
+      <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <MetricCard
+          label="Installed Operating Systems"
+          value={summary.installedOperatingSystems}
+          icon={<Package className="h-5 w-5" />}
+          tone="blue"
+        />
+        <MetricCard
+          label="Installed Applications"
+          value={summary.installedApplications}
+          icon={<Layers className="h-5 w-5" />}
+          tone="green"
+        />
+        <MetricCard
+          label="Assigned Seats"
+          value={`${summary.assignedSeats} / ${summary.totalSeats}`}
+          icon={<KeyRound className="h-5 w-5" />}
+          tone="amber"
+        />
+        <MetricCard
+          label="Current Plan"
+          value={summary.currentPlan ?? "—"}
+          icon={<Boxes className="h-5 w-5" />}
+          tone="blue"
+        />
+        <MetricCard
+          label="Renewal Date"
+          value={summary.renewalDate ?? "—"}
+          icon={<Calendar className="h-5 w-5" />}
+          tone="slate"
+        />
+        <MetricCard
+          label="Installation Health"
+          value={HEALTH_STATUS_LABELS[summary.installationHealth]}
+          icon={<Activity className="h-5 w-5" />}
+          tone={summary.installationHealth === "healthy" ? "green" : "amber"}
+        />
       </div>
 
       <ProductCatalogTabs activeTab={activeTab} onTabChange={setActiveTab} counts={tabCounts} />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2" data-testid="product-catalog-panel" data-active-tab={activeTab}>
+      <div
+        className="mt-6 grid gap-4 md:grid-cols-2"
+        data-testid="product-catalog-panel"
+        data-active-tab={activeTab}
+      >
         {visibleProducts.map((product) => (
           <ProductCard
             key={product.slug}

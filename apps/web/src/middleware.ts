@@ -6,6 +6,7 @@ import { canAccessPlatformRoute, resolveNavTier } from "@rtb/platform-core";
 const PLATFORM_ACCESS_PREFIXES = [
   "/platform/",
   "/system/",
+  "/my-account",
   "/operating-systems",
   "/workspaces",
   "/command-centre",

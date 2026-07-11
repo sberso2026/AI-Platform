@@ -71,19 +71,13 @@ describe("Batch 2.12 — Nav tier resolution", () => {
 });
 
 describe("Batch 2.12 — Simplified System Administration sidebar", () => {
-  it("exposes commerce-aware platform admin items", () => {
+  it("exposes Phase 4 System Administration items", () => {
     expect(PLATFORM_NAVIGATION.map((i) => i.label)).toEqual([
-      "Products",
-      "Subscriptions",
-      "Licences",
-      "Seats",
+      "Installed Products",
+      "Subscription & Billing",
+      "Licences & Seats",
       "Usage",
-      "Billing",
-      "Marketplace",
-      "Growth",
-      "Analytics",
-      "Customers",
-      "Commerce Audit",
+      "Growth Credits",
       "Workspaces",
       "Users & Permissions",
       "Integrations",
@@ -122,7 +116,7 @@ describe("Batch 2.12 — Simplified System Administration sidebar", () => {
     expect(labels).toEqual(
       expect.arrayContaining(["Users & Permissions", "System Health", "Audit Logs"])
     );
-    expect(labels).not.toContain("Products");
+    expect(labels).not.toContain("Installed Products");
     expect(labels).not.toContain("Integrations");
     expect(labels).not.toContain("Settings");
   });
@@ -201,9 +195,9 @@ describe("Platform Commerce UI — access control", () => {
   it("hides owner-only commerce routes from tenant admin", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("admin"));
     const labels = visible.filter((i) => i.group === "platform").map((i) => i.label);
-    expect(labels).toContain("Products");
-    expect(labels).not.toContain("Billing");
-    expect(labels).not.toContain("Growth");
+    expect(labels).toContain("Installed Products");
+    expect(labels).not.toContain("Subscription & Billing");
+    expect(labels).not.toContain("Growth Credits");
   });
 
   it("allows owner on commerce billing routes", () => {
@@ -231,7 +225,7 @@ describe("Batch 2.12 — Sidebar section defaults", () => {
     expect(platformSection.groups).toEqual(["platform"]);
     const grouped = groupNavigation(filterSidebarNavigation(FULL_NAVIGATION, ctx("owner")));
     const items = itemsForSidebarSection(platformSection, grouped);
-    expect(items.length).toBe(17);
+    expect(items.length).toBe(11);
   });
 });
 

@@ -20,6 +20,7 @@
     "installation:teardown-fixtures": "pnpm --filter @rtb/installation-certification teardown",
     "installation:verify-hosted-schema": "pnpm --filter @rtb/installation-certification verify-hosted-schema",
     "installation:verify-backfill": "pnpm --filter @rtb/installation-certification verify-backfill",
+    "customer-admin:certify": "pnpm --filter @rtb/customer-administration-certification certify",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/database/src/types.ts"

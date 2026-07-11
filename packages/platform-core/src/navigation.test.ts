@@ -150,8 +150,8 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
     expect(hrefs).toContain("/system/products");
     expect(hrefs).toContain("/platform/users-permissions");
     expect(hrefs).not.toContain("/platform/ai-director");
-    expect(hrefs).toContain("/system/commerce-audit");
-    expect(items.length).toBe(17);
+    expect(hrefs).not.toContain("/system/commerce-audit");
+    expect(items.length).toBe(11);
   });
 
   it("keeps Engineering Administration routes without dropping them", () => {
@@ -178,21 +178,18 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
 });
 
 describe("Platform Commerce UI — navigation rename", () => {
-  it("exposes Products as primary commerce catalogue route", () => {
+  it("exposes Installed Products as primary commerce catalogue route", () => {
     const item = FULL_NAVIGATION.find((i) => i.id === "installed-products");
-    expect(item?.label).toBe("Products");
+    expect(item?.label).toBe("Installed Products");
     expect(item?.href).toBe("/system/products");
   });
 
-  it("adds Platform Commerce Engine administration routes", () => {
+  it("keeps legacy commerce routes reachable but hidden", () => {
     const hrefs = FULL_NAVIGATION.filter((i) => i.group === "platform").map((i) => i.href);
     expect(hrefs).toContain("/system/subscriptions");
-    expect(hrefs).toContain("/system/licenses");
-    expect(hrefs).toContain("/system/seats");
-    expect(hrefs).toContain("/system/billing");
-    expect(hrefs).toContain("/system/marketplace");
-    expect(hrefs).toContain("/system/analytics");
-    expect(hrefs).toContain("/system/customers");
+    expect(hrefs).toContain("/system/licenses-seats");
+    expect(hrefs).toContain("/system/subscription-billing");
+    expect(hrefs).toContain("/system/growth-credits");
   });
 });
 

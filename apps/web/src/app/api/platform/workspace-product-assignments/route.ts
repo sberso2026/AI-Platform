@@ -41,3 +41,34 @@ export async function POST(request: Request) {
     return handleInstallationError(err);
   }
 }
+
+export async function DELETE(request: Request) {
+  const auth = await requireInstallationAdmin();
+  if ("error" in auth && auth.error) return auth.error;
+  const { ctx } = auth;
+
+  const assignmentId = new URL(request.url).searchParams.get("assignmentId");
+  if (!assignmentId) {
+    return NextResponse.json({ error: "assignmentId required" }, { status: 422 });
+  }
+
+  try {
+    await ctx!.commerce.installationLifecycle.removeWorkspaceAssignment(
+      ctx!.tenantId,
+      assignmentId
+    );
+    const { notifyTenantAdmins, AdminNotificationTypes } = await import(
+      "@/lib/administration/customer-admin-notifications"
+    );
+    await notifyTenantAdmins(ctx!, {
+      type: AdminNotificationTypes.workspaceAccessRemoved,
+      title: "Workspace product access removed",
+      body: "A workspace no longer has access to an installed product.",
+      linkTarget: "/system/products",
+      correlationId: assignmentId,
+    });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleInstallationError(err);
+  }
+}

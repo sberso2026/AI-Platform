@@ -12,6 +12,9 @@ export const SHOW_ADVANCED_PLATFORM_TOOLS_KEY = "showAdvancedPlatformTools";
 /** Legacy route — redirects to Installed Products */
 export const LEGACY_OPERATING_SYSTEMS_ROUTE = "/operating-systems";
 
+/** My Account — all authenticated tenant users */
+export const MY_ACCOUNT_ROUTE = "/my-account";
+
 /** Simplified System Administration routes */
 export const PLATFORM_ADMIN_ROUTES = [
   "/system/products",
@@ -27,6 +30,9 @@ export const PLATFORM_ADMIN_ROUTES = [
   "/system/analytics",
   "/system/customers",
   "/system/commerce-audit",
+  "/system/health",
+  "/system/installations",
+  "/system/applications",
   LEGACY_OPERATING_SYSTEMS_ROUTE,
   "/workspaces",
   "/platform/users-permissions",
@@ -34,6 +40,7 @@ export const PLATFORM_ADMIN_ROUTES = [
   "/platform/health",
   "/platform/audit",
   "/platform/settings",
+  MY_ACCOUNT_ROUTE,
 ] as const;
 
 /** Owner-only commerce administration routes */
@@ -136,10 +143,8 @@ export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolea
   if (item.sidebarHidden) return false;
 
   if (
-    (item.id === "billing" ||
-      item.id === "growth-credits" ||
-      item.id === "commerce-analytics" ||
-      item.id === "subscription-billing") &&
+    (item.id === "subscription-billing" ||
+      item.id === "growth-credits") &&
     context.roleSlug !== "owner"
   ) {
     return false;
@@ -180,6 +185,10 @@ export function canAccessPlatformRoute(
   pathname: string,
   context: Pick<SidebarNavContext, "tier" | "roleSlug">
 ): boolean {
+  if (pathname === MY_ACCOUNT_ROUTE || pathname.startsWith(`${MY_ACCOUNT_ROUTE}/`)) {
+    return hasMinimumNavTier(context.tier, "viewer");
+  }
+
   if (isOwnerOnlyCommerceRoute(pathname) && context.roleSlug !== "owner") {
     return false;
   }
@@ -187,6 +196,22 @@ export function canAccessPlatformRoute(
   if (
     pathname === "/system/products" ||
     pathname.startsWith("/system/products/")
+  ) {
+    return hasMinimumNavTier(context.tier, "admin");
+  }
+
+  if (
+    pathname === "/system/health" ||
+    pathname.startsWith("/system/health/")
+  ) {
+    return hasMinimumNavTier(context.tier, "manager");
+  }
+
+  if (
+    pathname === "/system/installations" ||
+    pathname.startsWith("/system/installations/") ||
+    pathname === "/system/applications" ||
+    pathname.startsWith("/system/applications/")
   ) {
     return hasMinimumNavTier(context.tier, "admin");
   }

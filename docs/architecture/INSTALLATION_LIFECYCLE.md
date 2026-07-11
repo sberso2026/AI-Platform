@@ -92,3 +92,46 @@ Workspace-scoped assignments enforced when workspace assignments exist.
 `bump_commercial_installation_version(tenant_id)` invalidates installation-sensitive reads alongside entitlement version bumps.
 
 Entitlement cache entries are version-stamped; stale decisions are rejected when DB `entitlement_version` or `installation_version` differs (multi-instance consistency bound: next guarded request after write).
+
+## Phase 4 — Customer installation progress UI
+
+Phase 4 exposes installation workflow state to tenant administrators through a customer-readable progress view — without exposing internal step keys directly.
+
+### Routes
+
+| Route | Purpose |
+|-------|---------|
+| `/system/installations/[installationId]` | Installation progress page |
+| `/system/products/[slug]/install` | Product install initiation |
+| `/system/applications/[slug]/install` | Application install initiation |
+
+### Administration API
+
+`GET /api/platform/administration/installations/[installationId]/progress`
+
+Calls:
+
+1. `ctx.commerce.installations.getById`
+2. `ctx.commerce.installationLifecycle.getWorkflowProgress`
+3. `ctx.commerce.installationHealth.check`
+4. Product lookup for slug/name display
+
+Maps internal workflow steps to customer steps via `mapInstallationProgress()` in `packages/platform-core/src/administration/installation-administration-service.ts`.
+
+### Customer step mapping
+
+Internal lifecycle steps (`entitlement_verified`, `dependencies_validated`, `provisioning`, `validation`, `workspace_assignment`, `activation`) are translated to ten customer-facing steps. Mapping rules ensure future steps remain `pending` until the workflow actually completes them (regression test in `installation-administration.test.ts`).
+
+### Failure presentation
+
+When installation status is `failed`, the progress view includes:
+
+- Human-readable explanation from workflow step error message
+- Reference code (`error_code` or `INSTALLATION_FAILED`)
+- Retry affordance (reload progress; retry uses Phase 3 installation API)
+
+### Health integration
+
+Customer `healthStatus` on the progress view uses `normalizeHealthStatus()` combining installation status with latest health check outcome — distinct from raw installation state machine status.
+
+See [CUSTOMER_ADMINISTRATION_PORTAL.md](./CUSTOMER_ADMINISTRATION_PORTAL.md) and [PRODUCT_DETAIL.md](../ui/PRODUCT_DETAIL.md).

@@ -18,6 +18,8 @@ import {
 } from "@rtb/platform-core";
 import { getIcon } from "@/lib/icons";
 import { CommercialStatusChips } from "./commercial-status-chips";
+import { HealthStatusChip } from "./health-status-chip";
+import { normalizeHealthStatus } from "@rtb/platform-core";
 
 function actionHref(action: CommercialActionId, product: CommercialProductView): string | undefined {
   switch (action) {
@@ -61,7 +63,9 @@ function InstallActionButton({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Installation failed");
-      window.location.href = `/system/products/${product.slug}`;
+      window.location.href = json.data?.id
+        ? `/system/installations/${json.data.id}`
+        : `/system/products/${product.slug}`;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Installation failed");
     } finally {
@@ -134,12 +138,23 @@ export function ProductCard({
   product,
   roleSlug,
   subdued = false,
+  healthStatus,
+  availableVersion,
+  workspaceAssignmentCount,
+  lastHealthCheckAt,
 }: {
   product: CommercialProductView;
   roleSlug: string;
   subdued?: boolean;
+  healthStatus?: ReturnType<typeof normalizeHealthStatus>;
+  availableVersion?: string;
+  workspaceAssignmentCount?: number;
+  lastHealthCheckAt?: string;
 }) {
   const Icon = getIcon(product.icon);
+  const health =
+    healthStatus ??
+    normalizeHealthStatus({ installationStatus: product.installationStatus });
 
   return (
     <Card
@@ -177,17 +192,26 @@ export function ProductCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <CommercialStatusChips
-          subscriptionStatus={product.subscriptionStatus}
-          licenceStatus={product.licenceStatus}
-          installationStatus={product.installationStatus}
-        />
+        <div className="flex flex-wrap gap-2">
+          <CommercialStatusChips
+            subscriptionStatus={product.subscriptionStatus}
+            licenceStatus={product.licenceStatus}
+            installationStatus={product.installationStatus}
+          />
+          <HealthStatusChip status={health} />
+        </div>
 
         <dl className="grid grid-cols-2 gap-3 text-xs text-slate-600">
           {product.version && (
             <div>
-              <dt className="font-medium text-slate-500">Version</dt>
+              <dt className="font-medium text-slate-500">Installed version</dt>
               <dd>{product.version}</dd>
+            </div>
+          )}
+          {availableVersion && (
+            <div>
+              <dt className="font-medium text-slate-500">Available version</dt>
+              <dd>{availableVersion}</dd>
             </div>
           )}
           {product.seatUsage && (
@@ -202,6 +226,18 @@ export function ProductCard({
             <div>
               <dt className="font-medium text-slate-500">Renewal</dt>
               <dd>{product.renewalDate}</dd>
+            </div>
+          )}
+          {workspaceAssignmentCount !== undefined && (
+            <div>
+              <dt className="font-medium text-slate-500">Workspaces</dt>
+              <dd>{workspaceAssignmentCount} assigned</dd>
+            </div>
+          )}
+          {lastHealthCheckAt && (
+            <div>
+              <dt className="font-medium text-slate-500">Last health check</dt>
+              <dd>{new Date(lastHealthCheckAt).toLocaleString()}</dd>
             </div>
           )}
           {product.installedApplications.length > 0 && (

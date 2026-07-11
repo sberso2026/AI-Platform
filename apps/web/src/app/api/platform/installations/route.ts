@@ -27,6 +27,18 @@ export async function POST(request: Request) {
       correlationId: request.headers.get("x-correlation-id") ?? undefined,
       workspaceIds: body.workspaceIds,
     });
+    const correlationId = request.headers.get("x-correlation-id") ?? data.id;
+    const { notifyTenantAdmins, AdminNotificationTypes } = await import(
+      "@/lib/administration/customer-admin-notifications"
+    );
+    await notifyTenantAdmins(ctx!, {
+      type: AdminNotificationTypes.installationRequested,
+      title: "Product installation requested",
+      body: `Installation workflow started for ${body.productSlug ?? "product"}.`,
+      linkTarget: `/system/installations/${data.id}`,
+      correlationId,
+      metadata: { installationId: data.id },
+    });
     return NextResponse.json({ data }, { status: 201 });
   } catch (err) {
     return handleInstallationError(err);

@@ -1,227 +1,299 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageMain } from "@/components/layout/page-main";
 import { buttonVariants, SectionHeader } from "@rtb/ui";
-import type { CommercialLicense, CommercialSubscription } from "@rtb/types";
-import type { CommercialApplicationView, CommercialProductView } from "@rtb/platform-core";
-import {
-  filterApplicationsBySection,
-  getProductBySlug,
-  mapEngineeringApplications,
-  mapRegistryToCommercialProducts,
+import type {
+  CommercialApplicationView,
+  InstallationProgressView,
+  LicenceSeatPoolView,
+  ProductAdministrationView,
+  UsageMetricView,
+  WorkspaceProductAssignmentView,
 } from "@rtb/platform-core";
-import { ENGINEERING_APPLICATIONS } from "@rtb/engineering-os/manifest";
+import { parseProductDetailTab, type ProductDetailTab } from "@rtb/platform-core";
 import { ApplicationCard } from "@/components/commerce/application-card";
 import { CommercialDimensionsPanel } from "@/components/commerce/commercial-dimensions-panel";
-import { ProductCard } from "@/components/commerce/product-card";
+import { CommercialStatusChips } from "@/components/commerce/commercial-status-chips";
+import { HealthStatusChip } from "@/components/commerce/health-status-chip";
+import { InstallationProgressPanel } from "@/components/commerce/installation-progress-panel";
+import { ProductDetailTabs } from "@/components/commerce/product-detail/product-detail-tabs";
+import { ProductWorkspacePanel } from "@/components/commerce/product-detail/product-workspace-panel";
 import { CatalogueFallbackBanner } from "@/components/commerce/commerce-filters";
 import { EntitlementDiagnoseButton } from "@/components/commerce/entitlement-diagnose-button";
-import { buildDefaultCommerceContext } from "@/lib/commerce/context";
 
-type NavContextResponse = {
-  roleSlug: string;
+type TabPayload = {
+  product: ProductAdministrationView;
+  applications?: unknown[];
+  workspaces?: WorkspaceProductAssignmentView[];
+  availableWorkspaces?: Array<{ id: string; name: string }>;
+  installationId?: string;
+  productId?: string;
+  licenceSeats?: LicenceSeatPoolView[];
+  usage?: UsageMetricView[];
+  installationProgress?: InstallationProgressView;
+  health?: Record<string, unknown>;
+  versionHistory?: Array<{ version?: string; created_at?: string }>;
+  auditEvents?: Array<Record<string, unknown>>;
 };
 
-type CatalogResponse = {
-  products?: CommercialProductView[];
-  catalogueFallback?: boolean;
-};
-
-function mapAppsFromLicenses(
-  roleSlug: string,
-  licenses: CommercialLicense[],
-  subscription?: CommercialSubscription
-): CommercialApplicationView[] {
-  const activeAppKeys = new Set(
-    licenses
-      .filter((l) => l.license_type === "application" && (l.status === "active" || l.status === "expiring_soon"))
-      .map((l) => l.application_key)
-      .filter(Boolean) as string[]
-  );
-
-  const seeds = ENGINEERING_APPLICATIONS.map((app) => ({
-    app_key: app.app_key,
-    name: app.name,
-    description: app.description,
-    version: app.version,
-    enabled: activeAppKeys.has(app.app_key) || app.enabled,
-    routes: app.routes,
-  }));
-
-  const context = {
-    ...buildDefaultCommerceContext(roleSlug),
-    engineeringApplications: seeds,
-  };
-
-  const views = mapEngineeringApplications(seeds, context);
-
-  if (subscription?.status === "trialing" || subscription?.status === "trial") {
-    return views.map((v) =>
-      activeAppKeys.has(v.appKey) ? { ...v, subscriptionStatus: "trialing" as const } : v
-    );
-  }
-
-  return views;
-}
-
-export default function ProductDetailPage() {
+function ProductDetailContent() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const productSlug = params.productSlug as string;
+  const activeTab = parseProductDetailTab(searchParams.get("tab"));
   const [roleSlug, setRoleSlug] = useState("owner");
-  const [product, setProduct] = useState<CommercialProductView | null>(null);
-  const [catalogueFallback, setCatalogueFallback] = useState(false);
-  const [applications, setApplications] = useState<CommercialApplicationView[]>([]);
-  const [subscription, setSubscription] = useState<CommercialSubscription | undefined>();
-  const [entitlementAllowed, setEntitlementAllowed] = useState<boolean | undefined>();
+  const [payload, setPayload] = useState<TabPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const params = useParams();
-  const productSlug = params.productSlug as string;
 
-  useEffect(() => {
+  const loadTab = useCallback(() => {
     setLoading(true);
     Promise.all([
       fetch("/api/platform/nav-context").then((r) => r.json()),
-      fetch("/api/platform/commerce/catalog").then((r) => r.json()),
-      fetch("/api/platform/commerce/licenses").then((r) => r.json()),
-      fetch("/api/platform/commerce/subscriptions").then((r) => r.json()),
-      fetch("/api/platform/commerce/entitlements/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productKey: productSlug, action: "access" }),
-      }).then((r) => r.json()),
+      fetch(`/api/platform/administration/products/${productSlug}?tab=${activeTab}`).then((r) => r.json()),
     ])
-      .then(([navJson, catalogJson, licensesJson, subsJson, entitlementJson]) => {
+      .then(([navJson, tabJson]) => {
         if (navJson.roleSlug) setRoleSlug(navJson.roleSlug);
-
-        const catalogData = catalogJson.data as CatalogResponse | undefined;
-        const fallback = Boolean(catalogData?.catalogueFallback);
-        setCatalogueFallback(fallback);
-
-        const context = buildDefaultCommerceContext(navJson.roleSlug ?? "owner");
-        const products =
-          catalogData?.products ??
-          mapRegistryToCommercialProducts(context, catalogJson.data?.commerceData ?? undefined);
-        const matched = getProductBySlug(products, productSlug);
-        setProduct(matched ?? null);
-
-        const licenses = (licensesJson.data ?? []) as CommercialLicense[];
-        const subscriptions = (subsJson.data ?? []) as CommercialSubscription[];
-        const productRecord = licenses.find((l) => l.product_id)?.product_id;
-        const subForProduct = subscriptions.find((s) =>
-          productRecord ? s.product_id === productRecord : s.status === "active" || s.status === "trialing"
-        );
-        setSubscription(subForProduct);
-        setEntitlementAllowed(Boolean(entitlementJson.data?.allowed));
-
-        if (productSlug === "engineering-os") {
-          setApplications(mapAppsFromLicenses(navJson.roleSlug ?? "owner", licenses, subForProduct));
-        }
+        if (tabJson.error) throw new Error(tabJson.error);
+        setPayload(tabJson.data as TabPayload);
         setError(null);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [productSlug]);
+  }, [productSlug, activeTab]);
 
-  const installedApps = useMemo(
-    () => filterApplicationsBySection(applications, "installed"),
-    [applications]
-  );
-  const availableApps = useMemo(
-    () => filterApplicationsBySection(applications, "available"),
-    [applications]
-  );
+  useEffect(() => {
+    loadTab();
+  }, [loadTab]);
 
-  if (!loading && !product) {
+  if (!loading && !payload?.product) {
     notFound();
   }
 
-  if (!product) {
-    return null;
-  }
+  const product = payload?.product;
+  if (!product) return null;
 
   return (
     <>
       <Header
         title={product.name}
-        description="Manage product subscription, licences, and installed applications."
+        description="Manage product subscription, licences, workspaces, installation, and health."
         showEngineeringChrome={false}
       />
       <PageMain>
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <Link
-            href="/system/products"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
+          <Link href="/system/products" className={buttonVariants({ variant: "outline", size: "sm" })}>
             ← Back to Installed Products
           </Link>
           <EntitlementDiagnoseButton productKey={product.slug} />
         </div>
 
-        {catalogueFallback && <CatalogueFallbackBanner />}
-        {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="mb-3 text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
         {loading && <p className="mb-3 text-sm text-muted-foreground">Loading…</p>}
 
-        <CommercialDimensionsPanel
-          subscriptionStatus={product.subscriptionStatus}
-          licenceStatus={product.licenceStatus}
-          installationStatus={product.installationStatus}
-          seatUsage={product.seatUsage}
-          trialEnd={subscription?.trial_end ?? subscription?.trial_ends_at}
-          entitlementAllowed={entitlementAllowed}
-          catalogueFallback={catalogueFallback}
-        />
+        <ProductDetailTabs activeTab={activeTab} />
 
-        <div className="mt-6">
-          <ProductCard product={product} roleSlug={roleSlug} />
+        <div
+          role="tabpanel"
+          id={`product-tabpanel-${activeTab}`}
+          aria-labelledby={`product-tab-${activeTab}`}
+          data-testid={`product-tabpanel-${activeTab}`}
+        >
+          <TabPanel
+            tab={activeTab}
+            product={product}
+            payload={payload}
+            roleSlug={roleSlug}
+            onRefresh={loadTab}
+          />
         </div>
-
-        {product.slug === "engineering-os" && (
-          <div className="mt-8 space-y-8">
-            <section data-testid="installed-applications-section">
-              <SectionHeader
-                title="Installed applications"
-                description="Applications enabled for this tenant."
-              />
-              {installedApps.length > 0 ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {installedApps.map((app) => (
-                    <ApplicationCard key={app.appKey} app={app} roleSlug={roleSlug} />
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-slate-500">
-                  No applications installed yet. Enable applications from the available
-                  catalogue below.
-                </p>
-              )}
-            </section>
-
-            <section data-testid="available-applications-section">
-              <SectionHeader
-                title="Available applications"
-                description="Install, trial, or request a quote for additional applications."
-              />
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                {availableApps.map((app) => (
-                  <ApplicationCard key={app.appKey} app={app} roleSlug={roleSlug} />
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-
-        {product.slug !== "engineering-os" && (
-          <div className="mt-8 rounded-lg border border-border bg-white p-6">
-            <p className="text-sm text-slate-500">
-              Application catalogue for this product will appear when Platform Commerce
-              provisioning is connected.
-            </p>
-          </div>
-        )}
       </PageMain>
     </>
+  );
+}
+
+function TabPanel({
+  tab,
+  product,
+  payload,
+  roleSlug,
+  onRefresh,
+}: {
+  tab: ProductDetailTab;
+  product: ProductAdministrationView;
+  payload: TabPayload | null;
+  roleSlug: string;
+  onRefresh: () => void;
+}) {
+  switch (tab) {
+    case "overview":
+      return (
+        <div className="space-y-6">
+          <CommercialDimensionsPanel
+            subscriptionStatus={product.subscriptionStatus}
+            licenceStatus={product.licenceStatus}
+            installationStatus={product.installationStatus}
+            seatUsage={product.seatUsage}
+            entitlementAllowed
+            catalogueFallback={false}
+          />
+          <div className="flex flex-wrap gap-2">
+            <CommercialStatusChips
+              subscriptionStatus={product.subscriptionStatus}
+              licenceStatus={product.licenceStatus}
+              installationStatus={product.installationStatus}
+            />
+            <HealthStatusChip status={product.healthStatus} />
+          </div>
+          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <OverviewItem label="Edition" value={product.edition ?? "—"} />
+            <OverviewItem label="Installed version" value={product.version ?? "—"} />
+            <OverviewItem label="Available version" value={product.availableVersion ?? "—"} />
+            <OverviewItem label="Renewal" value={product.renewalDate ?? "—"} />
+            <OverviewItem
+              label="Seats"
+              value={
+                product.seatUsage
+                  ? `${product.seatUsage.assigned} / ${product.seatUsage.total}`
+                  : "—"
+              }
+            />
+            <OverviewItem
+              label="Workspaces"
+              value={String(product.workspaceAssignmentCount ?? "—")}
+            />
+            <OverviewItem
+              label="Applications"
+              value={String(product.installedApplications.length)}
+            />
+            <OverviewItem label="Usage" value={product.usageSummary ?? "—"} />
+            <OverviewItem
+              label="Last health check"
+              value={
+                product.lastHealthCheckAt
+                  ? new Date(product.lastHealthCheckAt).toLocaleString()
+                  : "—"
+              }
+            />
+          </dl>
+        </div>
+      );
+    case "applications":
+      return product.slug === "engineering-os" ? (
+        <p className="text-sm text-muted-foreground">
+          Application cards load from Engineering OS registry and Commerce licences.
+        </p>
+      ) : (
+        <p className="text-sm text-muted-foreground">Application catalogue not available for this product.</p>
+      );
+    case "workspaces":
+      return (
+        <ProductWorkspacePanel
+          assignments={payload?.workspaces ?? []}
+          availableWorkspaces={payload?.availableWorkspaces ?? []}
+          installationId={payload?.installationId}
+          productId={payload?.productId}
+          onChanged={onRefresh}
+        />
+      );
+    case "licences-seats":
+      return (
+        <ul className="space-y-2 text-sm">
+          {(payload?.licenceSeats ?? []).map((row) => (
+            <li key={row.id} className="rounded-md border border-border p-3">
+              {row.productName ?? row.productId} — {row.seatType}: {row.assignedSeats}/{row.seatLimit}{" "}
+              ({row.licenceStatus})
+            </li>
+          ))}
+          {(payload?.licenceSeats ?? []).length === 0 && (
+            <li className="text-muted-foreground">No licence or seat pools for this product.</li>
+          )}
+        </ul>
+      );
+    case "usage":
+      return (
+        <ul className="space-y-2 text-sm">
+          {(payload?.usage ?? []).map((u) => (
+            <li key={u.metricKey} className="flex justify-between gap-2 rounded-md border border-border p-3">
+              <span>{u.name}</span>
+              <span>
+                {u.consumed}
+                {u.includedAllowance !== undefined ? ` / ${u.includedAllowance}` : ""} {u.unit}
+              </span>
+            </li>
+          ))}
+        </ul>
+      );
+    case "installation":
+      return payload?.installationProgress ? (
+        <InstallationProgressPanel progress={payload.installationProgress} onRetry={onRefresh} />
+      ) : (
+        <p className="text-sm text-muted-foreground">No installation record for this product.</p>
+      );
+    case "health":
+      return payload?.health ? (
+        <pre className="overflow-x-auto rounded-md bg-slate-50 p-4 text-xs">
+          {JSON.stringify(payload.health, null, 2)}
+        </pre>
+      ) : (
+        <p className="text-sm text-muted-foreground">No health data available.</p>
+      );
+    case "version-history":
+      return (
+        <ul className="space-y-2 text-sm">
+          {(payload?.versionHistory ?? []).map((v, i) => (
+            <li key={i}>
+              {v.version ?? "—"} — {v.created_at ? new Date(v.created_at).toLocaleString() : "—"}
+            </li>
+          ))}
+        </ul>
+      );
+    case "audit-history":
+      return (
+        <ul className="space-y-2 text-sm">
+          {(payload?.auditEvents ?? []).map((e, i) => (
+            <li key={i} className="rounded-md border border-border p-3">
+              {(e as { event_type?: string }).event_type ?? "event"} —{" "}
+              {(e as { created_at?: string }).created_at ?? ""}
+            </li>
+          ))}
+        </ul>
+      );
+    case "support":
+      return (
+        <div className="rounded-lg border border-border bg-white p-6 text-sm">
+          <p className="mb-2">Contact RTB support for product administration assistance.</p>
+          <a href="mailto:support@rtb.eng" className="text-primary hover:underline">
+            support@rtb.eng
+          </a>
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
+function OverviewItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium text-slate-500">{label}</dt>
+      <dd className="text-sm text-slate-800">{value}</dd>
+    </div>
+  );
+}
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense fallback={<PageMain><p className="text-sm text-muted-foreground">Loading…</p></PageMain>}>
+      <ProductDetailContent />
+    </Suspense>
   );
 }

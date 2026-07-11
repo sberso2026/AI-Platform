@@ -49,3 +49,39 @@ Section id `platform_admin` is unchanged to preserve `sessionStorage` group coll
 | Legacy | Behaviour |
 |--------|-----------|
 | `/operating-systems` | Redirects to `/system/products` |
+
+## Phase 4 — Customer Administration Portal
+
+Phase 4 connects System Administration items to real Commerce and Installation Lifecycle services. Placeholder shells are replaced with data-backed pages and dedicated administration API routes.
+
+### Data-backed pages
+
+| Item | API / service source |
+|------|---------------------|
+| Installed Products | `/api/platform/commerce/catalog` + `buildProductCatalogSummary` |
+| Subscription & Billing | `/api/platform/administration/subscription-billing` |
+| Licences & Seats | `/api/platform/administration/licenses-seats` |
+| Usage | `/api/platform/commerce/usage` + `mapUsageMetrics` |
+| Growth Credits | `/api/platform/administration/growth-credits` |
+
+### Additional routes (not in sidebar)
+
+| Route | Purpose |
+|-------|---------|
+| `/my-account` | All authenticated users — assigned products and usage |
+| `/system/installations/[id]` | Installation workflow progress |
+| `/system/applications/[slug]/install` | Application install entry |
+
+### Legacy sidebar-hidden routes
+
+Still reachable for bookmarks and diagnostics:
+
+- `/system/subscriptions`, `/system/licenses`, `/system/seats`, `/system/billing`
+- `/system/marketplace`, `/system/analytics`, `/system/customers`, `/system/commerce-audit`
+
+Defined in `LEGACY_PLATFORM_NAVIGATION` in `navigation.ts`.
+
+### Architecture reference
+
+- [CUSTOMER_ADMINISTRATION_PORTAL.md](../architecture/CUSTOMER_ADMINISTRATION_PORTAL.md)
+- Per-page UI docs under `docs/ui/` (INSTALLED_PRODUCTS, PRODUCT_DETAIL, SUBSCRIPTION_BILLING, etc.)

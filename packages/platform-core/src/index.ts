@@ -5,5 +5,6 @@ export * from "./navigation";
 export * from "./nav-visibility";
 export * from "./operating-systems";
 export * from "./commerce";
+export * from "./administration";
 export * from "./permissions";
 export * from "./tenant";

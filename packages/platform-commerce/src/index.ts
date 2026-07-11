@@ -14,6 +14,7 @@ export * from "./services/provisioning-orchestrator";
 export * from "./domain/installation-state-machine";
 export * from "./domain/installation-reason-codes";
 export * from "./services/usage-service";
+export * from "./services/growth-credit-service";
 export * from "./services/billing-service";
 export * from "./services/marketplace-service";
 export * from "./services/commerce-audit-service";

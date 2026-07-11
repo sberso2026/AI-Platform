@@ -48,6 +48,7 @@ import { SubscriptionLifecycleService } from "./services/subscription-lifecycle-
 import { SubscriptionService } from "./services/subscription-service";
 import { TrialService } from "./services/trial-service";
 import { UsageService } from "./services/usage-service";
+import { GrowthCreditService } from "./services/growth-credit-service";
 
 export function createPlatformCommerce(supabase: SupabaseClient) {
   const products = new ProductRepository(supabase);
@@ -164,6 +165,7 @@ export function createPlatformCommerce(supabase: SupabaseClient) {
     applicationInstallationLifecycle,
     installationHealth,
     usage: new UsageService(usage),
+    growthCredits: new GrowthCreditService(supabase),
     billing: new BillingService(billing),
     marketplace: new MarketplaceService(marketplace),
     analytics: new AnalyticsService(subscriptions, seats, installations, usage, billing),

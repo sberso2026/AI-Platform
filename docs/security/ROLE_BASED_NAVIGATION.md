@@ -39,3 +39,36 @@ Batch **2.12** — navigation visibility by role tier.
 
 - `NavTier` on `NavItem.audience` in `@rtb/types`
 - `sidebarHidden: true` for routes that exist but are not listed in sidebar
+
+## Phase 4 — Customer Administration routes
+
+### My Account
+
+`/my-account` is available to **all authenticated users** (viewer tier minimum). It is not part of System Administration sidebar filtering.
+
+### Owner-only commerce UI
+
+These routes require `roleSlug === "owner"` in addition to admin tier:
+
+- `/system/subscription-billing`
+- `/system/growth-credits`
+- `/system/billing` (legacy)
+- `/system/analytics` (legacy)
+
+Sidebar: `canSeeNavItem` hides `subscription-billing` and `growth-credits` for non-owners.
+
+API: administration routes return `403 Owner access required` for admins attempting billing or Growth Credits reads.
+
+### Admin commerce UI
+
+Require admin tier (`canAccessPlatformRoute`):
+
+- `/system/products` and sub-routes
+- `/system/licenses-seats`, `/system/usage`
+- `/system/installations/*`, `/system/applications/*`
+
+### Route constants
+
+`PLATFORM_ADMIN_ROUTES`, `OWNER_COMMERCE_ROUTES`, and `MY_ACCOUNT_ROUTE` in `nav-visibility.ts`.
+
+See [CUSTOMER_ADMINISTRATION_ACCESS.md](./CUSTOMER_ADMINISTRATION_ACCESS.md) for full access matrix.

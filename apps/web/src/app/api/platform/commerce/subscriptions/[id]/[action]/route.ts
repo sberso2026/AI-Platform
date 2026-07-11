@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/kernel";
+import { requireCommerceAdmin } from "@/lib/commerce/with-commerce-entitlement";
 import { CommerceDomainError } from "@rtb/platform-commerce";
 
 type Params = { params: Promise<{ id: string; action: string }> };
@@ -7,6 +8,8 @@ type Params = { params: Promise<{ id: string; action: string }> };
 export async function POST(request: Request, { params }: Params) {
   const ctx = await getAuthContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = await requireCommerceAdmin(ctx);
+  if (denied) return denied;
 
   const { id, action } = await params;
   const body = await request.json().catch(() => ({}));
