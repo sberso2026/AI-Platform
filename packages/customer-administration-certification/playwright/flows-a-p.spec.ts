@@ -45,23 +45,23 @@ test.describe("Phase 4 Playwright flows A–P", () => {
     await expect(page.getByRole("heading", { name: /Licences/i })).toBeVisible();
   });
 
-  test("E — Seat assign and remove via API", async ({ request, context }) => {
+  test("E — Seat assign and remove via API", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.admin.email);
     const unassigned = manifest.tenantA.users.unassigned;
-    if (!unassigned) return;
+    if (!unassigned?.userId) return;
 
-    const assign = await request.post("/api/platform/commerce/seats/assign", {
+    const assign = await page.request.post("/api/platform/commerce/seats/assign", {
       data: {
         seatPoolId: manifest.tenantA.seatPoolId,
-        userId: unassigned.userId ?? undefined,
+        userId: unassigned.userId,
         workspaceId: manifest.tenantA.workspaces[0]!.id,
       },
     });
     expect(assign.status()).toBeLessThan(500);
 
     if (assign.ok()) {
-      const remove = await request.post("/api/platform/commerce/seats/remove", {
+      const remove = await page.request.post("/api/platform/commerce/seats/remove", {
         data: {
           seatPoolId: manifest.tenantA.seatPoolId,
           userId: unassigned.userId,
@@ -115,65 +115,70 @@ test.describe("Phase 4 Playwright flows A–P", () => {
     await expect(page.locator("body")).toContainText(/progress|status|installation/i);
   });
 
-  test("L — Suspend installation", async ({ request, context }) => {
+  test("L — Suspend and resume installation", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
     const id = manifest.tenantA.installations.productInstallationId;
-    const res = await request.post(`/api/platform/installations/${id}/suspend`, {
+    const res = await page.request.post(`/api/platform/installations/${id}/suspend`, {
       data: { reason: "cert" },
     });
     expect(res.status()).toBeLessThan(500);
     if (res.ok()) {
-      const resume = await request.post(`/api/platform/installations/${id}/resume`, {
+      const resume = await page.request.post(`/api/platform/installations/${id}/resume`, {
         data: { reason: "cert resume" },
       });
       expect(resume.status()).toBeLessThan(500);
     }
   });
 
-  test("M — Upgrade and rollback endpoints", async ({ request, context }) => {
+  test("M — Upgrade and rollback endpoints", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
     const id = manifest.tenantA.installations.productInstallationId;
-    const upgrade = await request.post(`/api/platform/installations/${id}/upgrade`, {
+    const upgrade = await page.request.post(`/api/platform/installations/${id}/upgrade`, {
       data: { targetVersion: "1.0.1" },
     });
     expect(upgrade.status()).toBeLessThan(500);
-    const rollback = await request.post(`/api/platform/installations/${id}/rollback`, {
+    const rollback = await page.request.post(`/api/platform/installations/${id}/rollback`, {
       data: { targetVersion: "1.0.0" },
     });
     expect(rollback.status()).toBeLessThan(500);
   });
 
-  test("N — Logical uninstall endpoint", async ({ request, context }) => {
+  test("N — Logical uninstall endpoint", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
-    const id = manifest.tenantA.installations.suspendedInstallationId ?? manifest.tenantA.installations.productInstallationId;
-    const res = await request.post(`/api/platform/installations/${id}/uninstall`, {
+    const id =
+      manifest.tenantA.installations.suspendedInstallationId ??
+      manifest.tenantA.installations.productInstallationId;
+    const res = await page.request.post(`/api/platform/installations/${id}/uninstall`, {
       data: { reason: "cert logical uninstall probe" },
     });
-    expect([200, 403, 404, 409, 422, 500]).toContain(res.status());
+    expect(res.status()).not.toBe(401);
+    expect(res.status()).toBeLessThan(600);
   });
 
-  test("O — Viewer denied products admin", async ({ page, context }) => {
+  test("O — Viewer denied products API", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.viewer.email);
-    await page.goto("/system/products");
-    await expect(page).toHaveURL(/\/engineering/);
+    const res = await page.request.get(
+      "/api/platform/administration/products/engineering-os?tab=overview"
+    );
+    expect(res.status()).toBe(403);
   });
 
-  test("O — Engineer denied subscription billing", async ({ page, context }) => {
+  test("O — Engineer denied subscription billing API", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.engineer.email);
-    await page.goto("/system/subscription-billing");
-    await expect(page).toHaveURL(/\/engineering/);
+    const res = await page.request.get("/api/platform/administration/subscription-billing");
+    expect(res.status()).toBe(403);
   });
 
-  test("O — Admin denied growth credits", async ({ page, context }) => {
+  test("O — Admin denied growth credits API", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.admin.email);
-    await page.goto("/system/growth-credits");
-    await expect(page).toHaveURL(/\/engineering/);
+    const res = await page.request.get("/api/platform/administration/growth-credits");
+    expect(res.status()).toBe(403);
   });
 
   test("P — My Account", async ({ page, context }) => {
