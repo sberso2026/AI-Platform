@@ -190,12 +190,21 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       const detailBody = (await detail.json()) as { data?: { status?: string } };
       expect(detailBody.data?.status).toBe("uninstalled");
 
-      const { data: assignments } = await admin
+      const { data: activeAssignments } = await admin
         .from("commercial_workspace_product_assignments")
-        .select("id")
+        .select("id, status")
         .eq("tenant_id", happyPathTenantId)
-        .eq("installation_id", installationId);
-      expect(assignments ?? []).toHaveLength(0);
+        .eq("installation_id", installationId)
+        .eq("status", "active");
+      expect(activeAssignments ?? []).toHaveLength(0);
+
+      const { data: removedAssignments } = await admin
+        .from("commercial_workspace_product_assignments")
+        .select("id, status")
+        .eq("tenant_id", happyPathTenantId)
+        .eq("installation_id", installationId)
+        .eq("status", "removed");
+      expect((removedAssignments ?? []).length).toBeGreaterThan(0);
 
       const health = await httpFetch({
         path: `/api/platform/installations/${installationId}/health`,
