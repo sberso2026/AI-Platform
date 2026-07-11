@@ -55,9 +55,18 @@ async function seedUninstallFixtures(
 
   await admin
     .from("commercial_application_installations")
-    .update({ status: "uninstalled", current_state: "uninstalled", desired_state: "uninstalled" })
+    .delete()
     .eq("tenant_id", tenantB.id)
     .eq("parent_product_installation_id", happyPathInstallationId);
+
+  await admin
+    .from("commercial_installations")
+    .update({
+      status: "active",
+      current_state: "active",
+      desired_state: "active",
+    })
+    .eq("id", happyPathInstallationId);
 
   const betaWorkspace =
     tenantB.workspaces.find((w) => w.slug === "beta") ?? tenantB.workspaces[1]!;
