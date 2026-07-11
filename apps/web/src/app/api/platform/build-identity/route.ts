@@ -22,24 +22,28 @@ function gitBranch(): string {
   }
 }
 
-function workingTreeDirty(): boolean {
-  try {
-    const status = execSync("git status --porcelain", { cwd: REPO_ROOT, encoding: "utf8" }).trim();
-    return status.length > 0;
-  } catch {
-    return true;
-  }
-}
-
 function changedFiles(): string[] {
   try {
     return execSync("git status --porcelain", { cwd: REPO_ROOT, encoding: "utf8" })
       .split("\n")
       .map((l) => l.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter((line) => {
+        const path = line.length > 3 ? line.slice(3).trim() : line.trim();
+        return (
+          !path.includes("/artifacts/") &&
+          !path.includes("\\artifacts\\") &&
+          !path.includes("test-results") &&
+          !path.endsWith(".png")
+        );
+      });
   } catch {
     return [];
   }
+}
+
+function workingTreeDirty(): boolean {
+  return changedFiles().length > 0;
 }
 
 function migrationChecksums(): Record<string, string> {

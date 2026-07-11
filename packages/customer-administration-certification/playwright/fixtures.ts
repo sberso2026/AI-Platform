@@ -11,10 +11,10 @@ export function requireFixtures() {
   return JSON.parse(readFileSync(path, "utf8")) as {
     tenantA: {
       id: string;
-      users: Record<string, { email: string; jwt: string }>;
+      users: Record<string, { email: string; jwt: string; userId?: string }>;
       workspaces: Array<{ id: string; slug: string }>;
       seatPoolId: string;
-      installations: { productInstallationId: string };
+      installations: { productInstallationId: string; suspendedInstallationId?: string };
     };
     tenantB: { id: string; users: Record<string, { email: string; jwt: string }> };
   };
