@@ -314,6 +314,7 @@ export class InstallationLifecycleService {
   }
 
   async requestUninstall(tenantId: string, installationId: string, actorUserId: string) {
+    await this.assertNoDependentApplications(tenantId, installationId);
     return this.transition({
       tenantId,
       installationId,

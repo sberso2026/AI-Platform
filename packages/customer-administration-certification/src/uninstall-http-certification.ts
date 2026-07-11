@@ -146,7 +146,16 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
     });
 
     it("422 active dependent applications", async () => {
-      const res = await postUninstall(fixtures.withDependenciesInstallationId, {
+      const admin = createCertAdminClient();
+      const installationId = fixtures.withDependenciesInstallationId;
+      const { data: before } = await admin
+        .from("commercial_installations")
+        .select("status")
+        .eq("id", installationId)
+        .single();
+      expect(before?.status).toBe("active");
+
+      const res = await postUninstall(installationId, {
         ...ctx(),
         cookieHeader: ownerCookies,
       });
@@ -154,6 +163,13 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       expect(res.status).toBe(422);
       const body = parseUninstallError(await res.json());
       expect(body.code).toBe(UNINSTALL_ERROR_CODES.ACTIVE_DEPENDENCIES_EXIST);
+
+      const { data: after } = await admin
+        .from("commercial_installations")
+        .select("status")
+        .eq("id", installationId)
+        .single();
+      expect(after?.status).toBe("active");
     });
 
     it(
