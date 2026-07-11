@@ -10,9 +10,19 @@ import { fixturesManifestPath, HOSTED_PROJECT_REF } from "../src/lib/env.js";
 
 const ROOT = resolve(process.cwd(), "../..");
 const ENGINEERING_PRODUCT_ID = "c1000000-0000-4000-8000-000000000001";
+const BUSINESS_OS_PRODUCT_ID = "c1000000-0000-4000-8000-000000000002";
 
 interface InstallManifest {
   tenantA: {
+    id: string;
+    subscriptionId: string;
+    workspaces: Array<{ id: string; slug: string }>;
+    users: { owner: { userId: string } };
+    installations: {
+      productInstallationId: string;
+    };
+  };
+  tenantB: {
     id: string;
     subscriptionId: string;
     workspaces: Array<{ id: string; slug: string }>;
@@ -25,9 +35,12 @@ interface InstallManifest {
 
 async function seedUninstallFixtures(
   admin: ReturnType<typeof createClient>,
-  tenantA: InstallManifest["tenantA"]
+  manifest: InstallManifest
 ) {
-  const { data: licence } = await admin
+  const tenantA = manifest.tenantA;
+  const tenantB = manifest.tenantB;
+
+  const { data: licenceA } = await admin
     .from("commercial_licenses")
     .select("id")
     .eq("tenant_id", tenantA.id)
@@ -36,68 +49,60 @@ async function seedUninstallFixtures(
     .limit(1)
     .single();
 
-  if (!licence?.id) throw new Error("active product licence missing for uninstall fixtures");
+  if (!licenceA?.id) throw new Error("tenant A active product licence missing");
 
-  const licenceId = licence.id as string;
-  const ownerUserId = tenantA.users.owner.userId;
-  const betaWorkspace = tenantA.workspaces.find((w) => w.slug === "beta") ?? tenantA.workspaces[1]!;
+  const happyPathInstallationId = tenantB.installations.productInstallationId;
 
-  const { data: happyInstall, error: happyError } = await admin
-    .from("commercial_installations")
-    .insert({
-      tenant_id: tenantA.id,
-      product_id: ENGINEERING_PRODUCT_ID,
-      subscription_id: tenantA.subscriptionId,
-      licence_id: licenceId,
-      status: "active",
-      desired_state: "active",
-      current_state: "active",
-      installed_version: "1.0.0-cert-uninstall",
-      requested_version: "1.0.0-cert-uninstall",
-      started_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-      installed_at: new Date().toISOString(),
-      metadata: { source: "cert_uninstall_happy_path" },
-    })
-    .select("id")
-    .single();
+  await admin
+    .from("commercial_application_installations")
+    .update({ status: "uninstalled", current_state: "uninstalled", desired_state: "uninstalled" })
+    .eq("tenant_id", tenantB.id)
+    .eq("parent_product_installation_id", happyPathInstallationId);
 
-  if (happyError || !happyInstall) {
-    throw new Error(`happy-path uninstall fixture failed: ${happyError?.message}`);
-  }
+  const betaWorkspace =
+    tenantB.workspaces.find((w) => w.slug === "beta") ?? tenantB.workspaces[1]!;
 
-  const happyPathInstallationId = happyInstall.id as string;
-
-  const { data: happyAssignment, error: assignError } = await admin
+  const { data: existingAssignment } = await admin
     .from("commercial_workspace_product_assignments")
-    .insert({
-      tenant_id: tenantA.id,
-      workspace_id: betaWorkspace.id,
-      installation_id: happyPathInstallationId,
-      product_id: ENGINEERING_PRODUCT_ID,
-      status: "active",
-      assigned_by: ownerUserId,
-      metadata: { source: "cert_uninstall_happy_path" },
-    })
     .select("id")
-    .single();
+    .eq("tenant_id", tenantB.id)
+    .eq("installation_id", happyPathInstallationId)
+    .maybeSingle();
 
-  if (assignError || !happyAssignment) {
-    throw new Error(`happy-path workspace assignment failed: ${assignError?.message}`);
+  let happyPathWorkspaceAssignmentId = existingAssignment?.id as string | undefined;
+
+  if (!happyPathWorkspaceAssignmentId) {
+    const { data: createdAssignment, error: assignError } = await admin
+      .from("commercial_workspace_product_assignments")
+      .insert({
+        tenant_id: tenantB.id,
+        workspace_id: betaWorkspace.id,
+        installation_id: happyPathInstallationId,
+        product_id: ENGINEERING_PRODUCT_ID,
+        status: "active",
+        assigned_by: tenantB.users.owner.userId,
+        metadata: { source: "cert_uninstall_happy_path" },
+      })
+      .select("id")
+      .single();
+    if (assignError || !createdAssignment) {
+      throw new Error(`happy-path workspace assignment failed: ${assignError?.message}`);
+    }
+    happyPathWorkspaceAssignmentId = createdAssignment.id as string;
   }
 
   const { data: invalidInstall, error: invalidError } = await admin
     .from("commercial_installations")
     .insert({
       tenant_id: tenantA.id,
-      product_id: ENGINEERING_PRODUCT_ID,
+      product_id: BUSINESS_OS_PRODUCT_ID,
       subscription_id: tenantA.subscriptionId,
-      licence_id: licenceId,
+      licence_id: licenceA.id,
       status: "uninstalled",
       desired_state: "uninstalled",
       current_state: "uninstalled",
-      installed_version: "0.9.0-cert-invalid",
-      requested_version: "0.9.0-cert-invalid",
+      installed_version: "0.2.0-cert-invalid",
+      requested_version: "0.2.0-cert-invalid",
       metadata: { source: "cert_uninstall_invalid_state" },
     })
     .select("id")
@@ -109,7 +114,9 @@ async function seedUninstallFixtures(
 
   return {
     happyPathInstallationId,
-    happyPathWorkspaceAssignmentId: happyAssignment.id as string,
+    happyPathTenantId: tenantB.id,
+    happyPathWorkspaceId: betaWorkspace.id,
+    happyPathWorkspaceAssignmentId,
     invalidStateInstallationId: invalidInstall.id as string,
     withDependenciesInstallationId: tenantA.installations.productInstallationId,
     missingInstallationId: "00000000-0000-4000-8000-000000000001",
@@ -179,7 +186,7 @@ async function main(): Promise<void> {
     if (error) throw new Error(error.message);
   }
 
-  const uninstallFixtures = await seedUninstallFixtures(admin, installManifest.tenantA);
+  const uninstallFixtures = await seedUninstallFixtures(admin, installManifest);
 
   const phase4Manifest = {
     ...JSON.parse(readFileSync(installManifestPath, "utf8")),

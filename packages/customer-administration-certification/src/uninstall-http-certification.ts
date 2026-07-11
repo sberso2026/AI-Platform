@@ -14,6 +14,8 @@ import { createCertAdminClient } from "./lib/supabase-admin.js";
 
 interface UninstallFixtures {
   happyPathInstallationId: string;
+  happyPathTenantId: string;
+  happyPathWorkspaceId: string;
   happyPathWorkspaceAssignmentId: string;
   invalidStateInstallationId: string;
   withDependenciesInstallationId: string;
@@ -30,6 +32,11 @@ function loadManifest() {
       users: Record<string, { email: string }>;
       workspaces: Array<{ id: string }>;
       installations: { productInstallationId: string };
+    };
+    tenantB: {
+      id: string;
+      subscriptionId: string;
+      users: Record<string, { email: string }>;
     };
     uninstallFixtures: UninstallFixtures;
   };
@@ -58,9 +65,12 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
   () => {
     let tenantId: string;
     let workspaceId: string;
-    let subscriptionId: string;
+    let happyPathTenantId: string;
+    let happyPathWorkspaceId: string;
+    let happyPathSubscriptionId: string;
     let fixtures: UninstallFixtures;
     let ownerCookies: string;
+    let tenantBOwnerCookies: string;
     let viewerCookies: string;
     let engineerCookies: string;
 
@@ -71,11 +81,15 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       }
       tenantId = manifest.tenantA.id;
       workspaceId = manifest.tenantA.workspaces[0]!.id;
-      subscriptionId = manifest.tenantA.subscriptionId;
+      happyPathTenantId = manifest.uninstallFixtures.happyPathTenantId;
+      happyPathWorkspaceId = manifest.uninstallFixtures.happyPathWorkspaceId;
+      happyPathSubscriptionId = manifest.tenantB.subscriptionId;
       fixtures = manifest.uninstallFixtures;
       const password = certUserPassword();
 
       ownerCookies = (await buildAuthCookies(manifest.tenantA.users.owner.email, password))
+        .cookieHeader;
+      tenantBOwnerCookies = (await buildAuthCookies(manifest.tenantB.users.owner.email, password))
         .cookieHeader;
       viewerCookies = (await buildAuthCookies(manifest.tenantA.users.viewer.email, password))
         .cookieHeader;
@@ -149,13 +163,14 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       const { data: beforeSub } = await admin
         .from("commercial_subscriptions")
         .select("id, status")
-        .eq("id", subscriptionId)
+        .eq("id", happyPathSubscriptionId)
         .single();
       expect(beforeSub?.status).toBeTruthy();
 
       const res = await postUninstall(installationId, {
-        ...ctx(),
-        cookieHeader: ownerCookies,
+        tenantId: happyPathTenantId,
+        workspaceId: happyPathWorkspaceId,
+        cookieHeader: tenantBOwnerCookies,
       });
       assertNoServerError(res.status);
       expect(res.status).toBe(200);
@@ -166,8 +181,9 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
 
       const detail = await httpFetch({
         path: `/api/platform/installations/${installationId}`,
-        cookieHeader: ownerCookies,
-        ...ctx(),
+        cookieHeader: tenantBOwnerCookies,
+        tenantId: happyPathTenantId,
+        workspaceId: happyPathWorkspaceId,
       });
       assertNoServerError(detail.status);
       expect(detail.status).toBe(200);
@@ -177,14 +193,15 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       const { data: assignments } = await admin
         .from("commercial_workspace_product_assignments")
         .select("id")
-        .eq("tenant_id", tenantId)
+        .eq("tenant_id", happyPathTenantId)
         .eq("installation_id", installationId);
       expect(assignments ?? []).toHaveLength(0);
 
       const health = await httpFetch({
         path: `/api/platform/installations/${installationId}/health`,
-        cookieHeader: ownerCookies,
-        ...ctx(),
+        cookieHeader: tenantBOwnerCookies,
+        tenantId: happyPathTenantId,
+        workspaceId: happyPathWorkspaceId,
       });
       assertNoServerError(health.status);
       if (health.status === 200) {
@@ -197,7 +214,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       const { data: events } = await admin
         .from("commercial_installation_events")
         .select("event_type")
-        .eq("tenant_id", tenantId)
+        .eq("tenant_id", happyPathTenantId)
         .eq("installation_id", installationId);
       const eventTypes = (events ?? []).map((e) => e.event_type as string);
       expect(eventTypes).toContain("installation.uninstall_requested");
@@ -207,7 +224,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       const { data: afterSub } = await admin
         .from("commercial_subscriptions")
         .select("id, status")
-        .eq("id", subscriptionId)
+        .eq("id", happyPathSubscriptionId)
         .single();
       expect(afterSub?.id).toBe(beforeSub?.id);
       expect(afterSub?.status).toBe(beforeSub?.status);

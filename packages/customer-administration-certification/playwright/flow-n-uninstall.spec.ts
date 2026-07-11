@@ -103,7 +103,7 @@ test.describe("Flow N — Logical uninstall scenarios", () => {
   test("N — 200 owner happy-path uninstall", async ({ page, context }) => {
     const manifest = fx();
     const fixtures = uninstallFixtures();
-    await signInAs(context, manifest.tenantA.users.owner.email);
+    await signInAs(context, manifest.tenantB.users.owner.email);
     const installationId = fixtures.happyPathInstallationId;
 
     const res = await page.request.post(`/api/platform/installations/${installationId}/uninstall`, {

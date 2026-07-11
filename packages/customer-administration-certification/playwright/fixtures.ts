@@ -18,6 +18,8 @@ export function requireFixtures() {
     };
     uninstallFixtures?: {
       happyPathInstallationId: string;
+      happyPathTenantId: string;
+      happyPathWorkspaceId: string;
       happyPathWorkspaceAssignmentId: string;
       invalidStateInstallationId: string;
       withDependenciesInstallationId: string;
