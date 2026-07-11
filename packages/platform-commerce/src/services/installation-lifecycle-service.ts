@@ -577,7 +577,6 @@ export class InstallationLifecycleService {
   ) {
     const installation = await this.installations.getById(tenantId, installationId);
     if (!installation) throw new InstallationNotFoundError(installationId);
-    const product = await this.products.getById(installation.product_id);
 
     let current = await this.transition({
       tenantId,
@@ -586,26 +585,6 @@ export class InstallationLifecycleService {
       actorUserId,
       correlationId,
     });
-
-    try {
-      await this.provisioning.runProductProvisioning({
-        tenantId,
-        installationId,
-        productSlug: (product?.slug as string) ?? "engineering-os",
-        idempotencyKey: `upgrade:${installationId}:${targetVersion}`,
-      });
-    } catch (err) {
-      return this.transition({
-        tenantId,
-        installationId,
-        targetStatus: "failed",
-        actorUserId,
-        patch: {
-          failure_code: InstallationErrorCode.PROVISIONING_FAILED,
-          failure_message: err instanceof Error ? err.message : String(err),
-        },
-      });
-    }
 
     current = await this.transition({
       tenantId,
@@ -676,27 +655,6 @@ export class InstallationLifecycleService {
       targetStatus: "rolling_back",
       actorUserId,
     });
-
-    const product = await this.products.getById(installation.product_id);
-    try {
-      await this.provisioning.runProductProvisioning({
-        tenantId,
-        installationId,
-        productSlug: (product?.slug as string) ?? "engineering-os",
-        idempotencyKey: `rollback:${installationId}:${resolvedTarget}`,
-      });
-    } catch (err) {
-      return this.transition({
-        tenantId,
-        installationId,
-        targetStatus: "failed",
-        actorUserId,
-        patch: {
-          failure_code: InstallationErrorCode.PROVISIONING_FAILED,
-          failure_message: err instanceof Error ? err.message : String(err),
-        },
-      });
-    }
 
     current = await this.transition({
       tenantId,
