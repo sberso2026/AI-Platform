@@ -1,5 +1,3 @@
-import { expect } from "vitest";
-
 /** Canonical machine-readable codes for POST /api/platform/installations/:id/uninstall */
 export const UNINSTALL_ERROR_CODES = {
   INVALID_INSTALLATION_TRANSITION: "invalid_installation_transition",
@@ -33,24 +31,26 @@ export function assertNoServerError(status: number): void {
   }
 }
 
+function assertCondition(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message);
+}
+
 export function parseUninstallSuccess(body: unknown): UninstallSuccessResponse {
-  expect(body).toBeTruthy();
-  expect(typeof body).toBe("object");
+  assertCondition(body && typeof body === "object", "invalid uninstall success body");
   const payload = body as Record<string, unknown>;
-  expect(payload.data).toBeTruthy();
+  assertCondition(payload.data && typeof payload.data === "object", "missing data in success body");
   const data = payload.data as Record<string, unknown>;
-  expect(typeof data.id).toBe("string");
-  expect(data.status).toBe("uninstalled");
-  expect(typeof data.tenant_id).toBe("string");
-  expect(typeof data.product_id).toBe("string");
+  assertCondition(typeof data.id === "string", "missing id in success body");
+  assertCondition(data.status === "uninstalled", `expected uninstalled status, got ${String(data.status)}`);
+  assertCondition(typeof data.tenant_id === "string", "missing tenant_id in success body");
+  assertCondition(typeof data.product_id === "string", "missing product_id in success body");
   return payload as UninstallSuccessResponse;
 }
 
 export function parseUninstallError(body: unknown): UninstallErrorResponse {
-  expect(body).toBeTruthy();
-  expect(typeof body).toBe("object");
+  assertCondition(body && typeof body === "object", "invalid uninstall error body");
   const payload = body as Record<string, unknown>;
-  expect(typeof payload.error).toBe("string");
-  expect(typeof payload.code).toBe("string");
+  assertCondition(typeof payload.error === "string", "missing error message");
+  assertCondition(typeof payload.code === "string", "missing error code");
   return payload as UninstallErrorResponse;
 }
