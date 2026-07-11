@@ -13,6 +13,10 @@ describe("InstallationStateMachine", () => {
     expect(InstallationStateMachine.canTransitionProduct("validating", "active")).toBe(true);
   });
 
+  it("allows active rollback after upgrade", () => {
+    expect(InstallationStateMachine.canTransitionProduct("active", "rollback_pending")).toBe(true);
+  });
+
   it("rejects active → provisioning", () => {
     expect(InstallationStateMachine.canTransitionProduct("active", "provisioning")).toBe(false);
     expect(() => InstallationStateMachine.assertProductTransition("active", "provisioning")).toThrow(
