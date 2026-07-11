@@ -50,6 +50,22 @@ Key assertion: `mapInstallationProgress` does not mark `activation_complete` whi
 | Viewer opens `/my-account` | Assigned products per entitlement |
 | Viewer opens `/system/products` | Redirect to `/engineering` |
 | Installation progress page | Real workflow steps from lifecycle service |
+| Flow N uninstall | Scenario-specific HTTP statuses — see `docs/api/INSTALLATION_UNINSTALL.md` |
+
+## Uninstall certification
+
+Required scenarios (exact HTTP status, no 5xx acceptance):
+
+| Scenario | Status | Error code |
+|----------|--------|------------|
+| Owner happy path (no dependants) | 200 | — |
+| Unauthenticated | 401 | — |
+| Viewer / engineer | 403 | `commerce_permission_denied` |
+| Missing installation | 404 | `installation_not_found` |
+| Invalid lifecycle state | 409 | `invalid_installation_transition` |
+| Active dependent applications | 422 | `active_dependencies_exist` |
+
+Tests: `src/uninstall-http-certification.ts`, `playwright/flow-n-uninstall.spec.ts`
 
 Reuse patterns from `packages/commerce-certification/e2e/` and `packages/installation-certification/playwright/`.
 

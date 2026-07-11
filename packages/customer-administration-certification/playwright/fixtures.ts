@@ -16,6 +16,13 @@ export function requireFixtures() {
       seatPoolId: string;
       installations: { productInstallationId: string; suspendedInstallationId?: string };
     };
+    uninstallFixtures?: {
+      happyPathInstallationId: string;
+      happyPathWorkspaceAssignmentId: string;
+      invalidStateInstallationId: string;
+      withDependenciesInstallationId: string;
+      missingInstallationId: string;
+    };
     tenantB: { id: string; users: Record<string, { email: string; jwt: string }> };
   };
 }

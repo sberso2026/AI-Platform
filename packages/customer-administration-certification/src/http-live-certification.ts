@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { buildAuthCookies } from "./lib/auth-cookies.js";
+import { assertNoServerError } from "./lib/uninstall-contract.js";
 import { certUserPassword, fixturesManifestPath, isCertificationMode } from "./lib/env.js";
 import { httpFetch } from "./lib/http-client.js";
 import { readFileSync, existsSync } from "node:fs";
@@ -64,6 +65,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         path: "/api/platform/administration/products/engineering-os?tab=overview",
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(401);
     });
 
@@ -73,6 +75,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         cookieHeader: viewerCookies,
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(403);
     });
 
@@ -82,6 +85,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         cookieHeader: engineerCookies,
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(403);
     });
 
@@ -91,6 +95,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         cookieHeader: adminCookies,
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(403);
     });
 
@@ -100,6 +105,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         cookieHeader: ownerCookies,
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(200);
     });
 
@@ -109,6 +115,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         cookieHeader: ownerCookies,
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(200);
     });
 
@@ -118,6 +125,7 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         cookieHeader: adminCookies,
         ...ctx(),
       });
+      assertNoServerError(res.status);
       expect(res.status).toBe(200);
     });
 
@@ -129,16 +137,18 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         ...ctx(),
         body: { seatPoolId, userId: "00000000-0000-0000-0000-000000000001" },
       });
-      expect([401, 403, 422]).toContain(res.status);
+      assertNoServerError(res.status);
+      expect(res.status).toBe(403);
     });
 
-    it("cross-tenant installation detail denied", async () => {
+    it("404 cross-tenant installation detail", async () => {
       const res = await httpFetch({
         path: `/api/platform/installations/${installationId}`,
         cookieHeader: tenantBCookies,
         tenantId: tenantBId,
       });
-      expect([403, 404]).toContain(res.status);
+      assertNoServerError(res.status);
+      expect(res.status).toBe(404);
     });
   }
 );

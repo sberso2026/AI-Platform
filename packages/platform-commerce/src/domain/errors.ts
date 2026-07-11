@@ -92,7 +92,11 @@ export class PlanChangeConflictError extends CommerceDomainError {
 
 export class InvalidInstallationTransitionError extends CommerceDomainError {
   constructor(from: string, to: string) {
-    super(`Invalid installation transition: ${from} → ${to}`, "invalid_installation_transition", 422);
+    super(
+      `Invalid installation transition: ${from} → ${to}`,
+      "invalid_installation_transition",
+      409
+    );
     this.name = "InvalidInstallationTransitionError";
   }
 }

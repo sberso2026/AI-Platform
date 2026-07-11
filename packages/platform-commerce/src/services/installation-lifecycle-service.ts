@@ -726,7 +726,7 @@ export class InstallationLifecycleService {
     if ((data?.length ?? 0) > 0) {
       throw new InstallationDependencyError(
         "Dependent applications must be uninstalled first",
-        InstallationErrorCode.DEPENDENCY_MISSING
+        InstallationErrorCode.ACTIVE_DEPENDENCIES_EXIST
       );
     }
   }
