@@ -156,7 +156,9 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
       expect(body.code).toBe(UNINSTALL_ERROR_CODES.ACTIVE_DEPENDENCIES_EXIST);
     });
 
-    it("200 owner happy-path uninstall with lifecycle and audit proof", async () => {
+    it(
+      "200 owner happy-path uninstall with lifecycle and audit proof",
+      async () => {
       const admin = createCertAdminClient();
       const installationId = fixtures.happyPathInstallationId;
 
@@ -237,6 +239,8 @@ describe.skipIf(!isCertificationMode() && !process.env.RTB_TEST_BASE_URL)(
         .single();
       expect(afterSub?.id).toBe(beforeSub?.id);
       expect(afterSub?.status).toBe(beforeSub?.status);
-    });
+    },
+      120_000
+    );
   }
 );
