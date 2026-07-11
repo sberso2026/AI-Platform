@@ -642,7 +642,7 @@ export class InstallationLifecycleService {
   async requestRollback(
     tenantId: string,
     installationId: string,
-    targetVersion: string,
+    targetVersion: string | undefined,
     reason: string,
     actorUserId: string,
     correlationId?: string
@@ -651,7 +651,8 @@ export class InstallationLifecycleService {
     if (!installation) throw new InstallationNotFoundError(installationId);
 
     const preVersion = (installation.metadata?.pre_upgrade_version as string | undefined) ?? null;
-    if (!preVersion || preVersion !== targetVersion) {
+    const resolvedTarget = targetVersion ?? preVersion;
+    if (!preVersion || !resolvedTarget || preVersion !== resolvedTarget) {
       throw new InstallationConflictError(
         "Rollback target version is not supported",
         InstallationErrorCode.DEPENDENCY_VERSION_INCOMPATIBLE
@@ -680,7 +681,7 @@ export class InstallationLifecycleService {
         tenantId,
         installationId,
         productSlug: (product?.slug as string) ?? "engineering-os",
-        idempotencyKey: `rollback:${installationId}:${targetVersion}`,
+        idempotencyKey: `rollback:${installationId}:${resolvedTarget}`,
       });
     } catch (err) {
       return this.transition({
@@ -708,8 +709,8 @@ export class InstallationLifecycleService {
       targetStatus: "active",
       actorUserId,
       patch: {
-        installed_version: targetVersion,
-        requested_version: targetVersion,
+        installed_version: resolvedTarget,
+        requested_version: resolvedTarget,
         failure_code: null,
         failure_message: null,
       },

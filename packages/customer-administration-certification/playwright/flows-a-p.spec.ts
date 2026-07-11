@@ -142,8 +142,18 @@ test.describe("Phase 4 Playwright flows A–P", () => {
       });
       assertNoServerError(upgrade.status());
       expect(upgrade.status()).toBe(200);
+
+      const detail = await page.request.get(`/api/platform/installations/${id}`);
+      assertNoServerError(detail.status());
+      expect(detail.status()).toBe(200);
+      const detailBody = (await detail.json()) as {
+        data?: { installed_version?: string; metadata?: Record<string, unknown> };
+      };
+      expect(detailBody.data?.installed_version).toBe("1.0.1");
+      expect(detailBody.data?.metadata?.pre_upgrade_version).toBe("1.0.0");
+
       const rollback = await page.request.post(`/api/platform/installations/${id}/rollback`, {
-        data: { targetVersion: "1.0.0" },
+        data: { reason: "cert rollback" },
       });
       assertNoServerError(rollback.status());
       expect(rollback.status()).toBe(200);

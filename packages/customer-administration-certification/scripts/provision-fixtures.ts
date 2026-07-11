@@ -49,6 +49,7 @@ async function resetTenantAProductInstallation(
       requested_version: "1.0.0",
       failure_code: null,
       failure_message: null,
+      metadata: { source: "cert_install_fixture" },
     })
     .eq("id", productInstallationId);
 
