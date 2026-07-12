@@ -42,6 +42,7 @@ Only `esbuild` and `sharp` postinstall/install scripts were approved. See `PROJE
 
 1. `@supabase/storage-js` added in worktree/CI so `storageReadiness` typecheck resolves.
 2. CI extracts `vendor/project-intelligence-baseline/ab1f442-source.tar.gz` (git archive of the frozen tag) because the standalone repository is private to the Actions default token. Optional live clone is available when `PI_BASELINE_REPO_TOKEN` is configured.
+3. `apply-ci-compat.cjs` (`0001-posix-backslash-basename`) — `expectedG1FileName` normalizes `\` before `path.basename`. Required on Linux CI; the frozen comment incorrectly assumes Node POSIX basename splits on backslashes. Windows local observation passes without this patch. Frozen tag is not modified.
 
 ---
 

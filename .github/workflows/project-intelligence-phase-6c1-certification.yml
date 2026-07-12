@@ -17,6 +17,7 @@ on:
       - "docs/testing/**"
       - "docs/operations/PROJECT_INTELLIGENCE*"
       - "artifacts/project-intelligence-baseline-equivalence.json"
+      - "vendor/project-intelligence-baseline/**"
       - ".github/workflows/project-intelligence-phase-6c1-certification.yml"
 
 concurrency:
@@ -98,6 +99,8 @@ jobs:
               pi-baseline-live
             test "$(git -C pi-baseline-live rev-parse HEAD)" = "$PI_BASELINE_SHA"
           fi
+      - name: Apply documented CI compatibility patches
+        run: node vendor/project-intelligence-baseline/patches/apply-ci-compat.cjs pi-baseline
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}

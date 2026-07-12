@@ -55,3 +55,5 @@ packages/project-intelligence-certification/artifacts/pi-cert-fixtures.json
 packages/project-intelligence-certification/artifacts/project-intelligence-certification.json
 packages/project-intelligence-certification/artifacts/playwright-report.json
 
+
+.tmp-pi-baseline/

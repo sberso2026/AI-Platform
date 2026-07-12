@@ -12,7 +12,9 @@
                       "nodeVersionObserved":  "v24.16.0",
                       "deviations":  [
                                          "Local observation used Node v24.16.0; CI/target remains Node 22",
-                                         "Compatibility patch: added @supabase/storage-js for typecheck (not in frozen tag)"
+                                         "Compatibility patch: added @supabase/storage-js for typecheck (not in frozen tag)",
+                                         "CI extracts vendored git-archive (private sibling repo inaccessible to default GITHUB_TOKEN)",
+                                         "CI applies apply-ci-compat.cjs (0001-posix-backslash-basename) for Linux path.basename (frozen tag unchanged)"
                                      ],
                       "pnpmVersion":  "9.15.0",
                       "nodeVersionRequested":  "22",
@@ -261,3 +263,4 @@
     "unresolved":  false,
     "buildStatus":  "pass"
 }
+
