@@ -1,0 +1,263 @@
+name: Project Intelligence Phase 6C-2 Certification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/project-intelligence/**"
+      - "packages/project-intelligence-certification/**"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/project-intelligence/**"
+      - "apps/web/src/components/engineering/project-intelligence-shell.tsx"
+      - "apps/web/src/lib/project-intelligence/**"
+      - "apps/web/src/app/(platform)/access-denied/**"
+      - "apps/web/src/app/(auth)/login/**"
+      - "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql"
+      - "supabase/migrations/20260712120000_batch_35_pi_mapping_identity_immutable.sql"
+      - "supabase/migrations/20260712180000_batch_36_project_intelligence_documents.sql"
+      - "docs/architecture/PROJECT_INTELLIGENCE*"
+      - "docs/migration/PROJECT_INTELLIGENCE*"
+      - "docs/testing/**"
+      - "docs/operations/PROJECT_INTELLIGENCE*"
+      - "artifacts/project-intelligence-baseline-equivalence.json"
+      - "vendor/project-intelligence-baseline/**"
+      - ".github/workflows/project-intelligence-phase-6c2-certification.yml"
+
+concurrency:
+  group: project-intelligence-phase-6c2-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  PI_BASELINE_TAG: project-intelligence-integration-baseline-1
+  PI_BASELINE_SHA: ab1f44276715888123d9f669464987e6f7c39b6c
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI secret preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/web typecheck
+      - name: Offline unit tests
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification test:unit
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  baseline-equivalence:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract frozen baseline source (vendored archive)
+        run: |
+          test -f vendor/project-intelligence-baseline/ab1f442-source.tar.gz
+          test -f vendor/project-intelligence-baseline/IDENTITY.txt
+          grep -q "ab1f44276715888123d9f669464987e6f7c39b6c" vendor/project-intelligence-baseline/IDENTITY.txt
+          mkdir -p pi-baseline
+          tar -xzf vendor/project-intelligence-baseline/ab1f442-source.tar.gz -C pi-baseline
+          if [ -n "${{ secrets.PI_BASELINE_REPO_TOKEN }}" ]; then
+            rm -rf pi-baseline-live
+            git clone --depth 1 --branch "$PI_BASELINE_TAG" \
+              "https://x-access-token:${{ secrets.PI_BASELINE_REPO_TOKEN }}@github.com/sberso2026/rtb-project-intelligence.git" \
+              pi-baseline-live
+            test "$(git -C pi-baseline-live rev-parse HEAD)" = "$PI_BASELINE_SHA"
+          fi
+      - name: Apply documented CI compatibility patches
+        run: node vendor/project-intelligence-baseline/patches/apply-ci-compat.cjs pi-baseline
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install with ignored scripts then approve rebuilds
+        working-directory: pi-baseline
+        run: |
+          pnpm install --ignore-scripts
+          pnpm rebuild esbuild sharp
+          pnpm add -D @supabase/storage-js --ignore-scripts
+      - name: Typecheck
+        working-directory: pi-baseline
+        run: pnpm typecheck
+      - name: Vitest cases
+        working-directory: pi-baseline
+        run: pnpm exec vitest run --reporter=dot --pool=forks --fileParallelism=false
+      - name: Production build
+        working-directory: pi-baseline
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: pnpm build
+      - name: Upload baseline evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-intelligence-baseline-equivalence-${{ github.run_id }}
+          path: |
+            artifacts/project-intelligence-baseline-equivalence.json
+            pi-baseline/.next/BUILD_ID
+            vendor/project-intelligence-baseline/IDENTITY.txt
+
+  hosted-certification:
+    needs: [validate, baseline-equivalence]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+      - name: Provision full PI entitlement fixture
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Verify fixture readiness
+        run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
+      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Hosted certification (document intelligence gates A–Q)
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+          ALLOW_PRODUCTION_CERTIFICATION: "false"
+        run: |
+          mkdir -p packages/project-intelligence-certification/artifacts
+          cp artifacts/project-intelligence-baseline-equivalence.json packages/project-intelligence-certification/artifacts/
+          pnpm project-intelligence:certify
+      - name: Cleanup PI fixtures
+        if: always()
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-intelligence-phase-6c2-${{ github.run_id }}
+          path: |
+            packages/project-intelligence-certification/artifacts/
+            packages/project-intelligence-certification/test-results/
+            artifacts/project-intelligence-baseline-equivalence.json
+
+  release-evidence:
+    needs: hosted-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: project-intelligence-phase-6c2-${{ github.run_id }}
+          path: evidence
+      - name: Verify artifact identity and Phase 6C-2 eligibility
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_BASELINE_SHA: ${{ env.PI_BASELINE_SHA }}
+        run: |
+          ARTIFACT="evidence/packages/project-intelligence-certification/artifacts/project-intelligence-certification.json"
+          BASELINE="evidence/artifacts/project-intelligence-baseline-equivalence.json"
+          if [ ! -f "$BASELINE" ]; then
+            BASELINE="evidence/packages/project-intelligence-certification/artifacts/project-intelligence-baseline-equivalence.json"
+          fi
+          test -f "$ARTIFACT"
+          test -f "$BASELINE"
+          export ARTIFACT_PATH="$ARTIFACT"
+          export BASELINE_PATH="$BASELINE"
+          node -e '
+          const fs = require("fs");
+          const a = JSON.parse(fs.readFileSync(process.env.ARTIFACT_PATH, "utf8").replace(/^\uFEFF/, ""));
+          const b = JSON.parse(fs.readFileSync(process.env.BASELINE_PATH, "utf8").replace(/^\uFEFF/, ""));
+          const expected = process.env.EXPECTED_SHA;
+          const baselineSha = process.env.EXPECTED_BASELINE_SHA;
+          const failures = [];
+          if (a.phase !== "6C-2") failures.push("phase=" + a.phase);
+          if (a.verdict !== "PASS") failures.push("verdict=" + a.verdict);
+          if (!a.releaseEligible) failures.push("releaseEligible=false");
+          if (a.commitSha !== expected) failures.push("commitSha mismatch");
+          if (a.buildIdentityCommitSha !== expected) failures.push("buildIdentityCommitSha mismatch");
+          if ((a.skippedGateCount || 0) > 0) failures.push("required skips=" + a.skippedGateCount);
+          if ((a.unexpectedServerErrorCount || 0) > 0) failures.push("unexpected 5xx=" + a.unexpectedServerErrorCount);
+          if (!a.productionCertificationBlocked) failures.push("production certification not blocked");
+          if (!a.fullEntitlementFixtureReady) failures.push("full entitlement fixture not ready");
+          if (!a.positiveEntitlementProven) failures.push("positive entitlement path not proven");
+          if ((a.citationAssertionCount || 0) < 1) failures.push("citationAssertionCount missing");
+          if ((a.abstentionAssertionCount || 0) < 1) failures.push("abstentionAssertionCount missing");
+          if (b.baseline.commitSha !== baselineSha) failures.push("baseline SHA mismatch");
+          if (b.tests.failed !== 0) failures.push("baseline tests failed");
+          if (b.productionBuild.result !== "pass") failures.push("baseline build not pass");
+          if (b.typecheck.result !== "pass") failures.push("baseline typecheck not pass");
+          const summary = {
+            phase: a.phase,
+            releaseEligible: a.releaseEligible,
+            gates: a.passedGateCount + "/" + a.requiredGateCount,
+            unexpected5xx: a.unexpectedServerErrorCount,
+            commitSha: a.commitSha,
+            baselineSha: b.baseline.commitSha,
+            documentFixtureCount: a.documentFixtureCount,
+            citationAssertionCount: a.citationAssertionCount,
+            abstentionAssertionCount: a.abstentionAssertionCount,
+            positiveEntitlementProven: a.positiveEntitlementProven
+          };
+          console.log(JSON.stringify(summary, null, 2));
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "```json\n" + JSON.stringify(summary, null, 2) + "\n```\n");
+          }
+          if (failures.length) {
+            console.error(failures.join("; "));
+            process.exit(1);
+          }
+          '

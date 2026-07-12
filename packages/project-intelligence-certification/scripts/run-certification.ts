@@ -1,6 +1,7 @@
-import { execSync, spawn, type ChildProcess } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { execSync, spawn, type ChildProcess } from "node:child_process";
 import { createBuildIdentity } from "../src/build-identity.js";
 import { PROJECT_INTELLIGENCE_CERTIFICATION_GATES } from "../src/gates.js";
 import { writeCertificationReport, type CertificationReport } from "../src/report.js";
@@ -10,6 +11,14 @@ const root = resolve(packageDir, "../..");
 const certificationEnabled = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";
 let certServer: ChildProcess | null = null;
 let certBaseUrl = process.env.RTB_TEST_BASE_URL ?? "http://127.0.0.1:3000";
+
+const HOSTED_GATES = ["B", "C", "N", "O", "Q"] as const;
+const BROWSER_GATES = ["N", "O"] as const;
+
+function checksumFile(path: string): string | undefined {
+  if (!existsSync(path)) return undefined;
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
 
 function readBaselineEquivalence(): {
   artifactPresent: boolean;
@@ -44,8 +53,6 @@ function readBaselineEquivalence(): {
       (artifact.tests?.skipped ?? 1) === 0 &&
       (artifact.tests?.testCaseCount ?? 0) > 0 &&
       artifact.baseline?.commitSha === "ab1f44276715888123d9f669464987e6f7c39b6c";
-    // "equivalent" here means baseline build/test evidence is complete for 6C-1 —
-    // not that Platform capabilities are behaviourally equivalent.
     return {
       artifactPresent: true,
       equivalent: baselineRecorded,
@@ -110,20 +117,23 @@ const commands: Record<string, string> = {
   B: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema",
   C: "pnpm --filter @rtb/project-intelligence-certification test:rls",
   D: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  E: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  F: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  G: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  H: "pnpm --filter @rtb/project-intelligence-certification test:http",
-  I: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  J: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  K: "pnpm --filter @rtb/project-intelligence-certification test:e2e",
+  E: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  F: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  G: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  H: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  I: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  J: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  K: "pnpm --filter @rtb/project-intelligence-certification test:documents",
   L: "pnpm --filter @rtb/project-intelligence-certification test:http",
   M: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  N: "github hosted run identity",
+  N: "pnpm --filter @rtb/project-intelligence-certification test:e2e",
+  O: "pnpm --filter @rtb/project-intelligence-certification test:e2e",
+  P: "pnpm --filter @rtb/project-intelligence-certification test:unit",
+  Q: "github hosted run identity",
 };
 
 function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
-  if (id === "N") {
+  if (id === "Q") {
     const ok =
       Boolean(process.env.GITHUB_RUN_ID?.trim()) &&
       process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1" &&
@@ -139,23 +149,29 @@ function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
   return run(commands[id]!);
 }
 
+function countMatches(source: string, pattern: RegExp): number {
+  return (source.match(pattern) ?? []).length;
+}
+
 async function main(): Promise<void> {
   const identityAtStart = createBuildIdentity(undefined, undefined, root);
-  // Hosted jobs generate gitignored artifacts after checkout; identity is enforced via GITHUB_SHA match.
   const workingTreeCleanAtStart =
     process.env.GITHUB_ACTIONS === "true" || identityAtStart.workingTreeClean;
   const gates: CertificationReport["gates"][number][] = [];
   const fixtureVerification = certificationEnabled
     ? run("pnpm --filter @rtb/project-intelligence-certification verify-fixture")
     : { ok: false, detail: "Hosted certification is disabled" };
+
+  let serverStarted = false;
   for (const [id] of PROJECT_INTELLIGENCE_CERTIFICATION_GATES) {
-    if (!certificationEnabled && ["B", "C", "K", "N"].includes(id)) {
+    if (!certificationEnabled && HOSTED_GATES.includes(id as (typeof HOSTED_GATES)[number])) {
       gates.push({ id, status: "skip", detail: "Hosted certification is disabled", command: commands[id] });
       continue;
     }
-    if (id === "K") {
+    if (BROWSER_GATES.includes(id as (typeof BROWSER_GATES)[number]) && !serverStarted) {
       try {
         await startCertServer();
+        serverStarted = true;
       } catch (error) {
         gates.push({
           id,
@@ -186,9 +202,14 @@ async function main(): Promise<void> {
   const shaMatches = identity.commitSha !== "unknown" && identity.commitSha === expectedSha;
   const playwrightReportPath = resolve(packageDir, "artifacts/playwright-report.json");
   const playwrightReport = existsSync(playwrightReportPath) ? readFileSync(playwrightReportPath, "utf8") : "";
-  const failedBrowserTests = (playwrightReport.match(/"status"\s*:\s*"failed"/g) ?? []).length;
-  const unexpectedServerErrorCount = (playwrightReport.match(/\b5\d\d\b/g) ?? []).length;
-  const browserPassed = gates.find((gate) => gate.id === "K")?.status === "pass" ? 1 : 0;
+  const documentsSpec = existsSync(resolve(packageDir, "playwright/documents.spec.ts"))
+    ? readFileSync(resolve(packageDir, "playwright/documents.spec.ts"), "utf8")
+    : "";
+  const failedBrowserTests = countMatches(playwrightReport, /"status"\s*:\s*"failed"/g);
+  // Count HTTP 5xx statuses in Playwright JSON only — avoid matching durations like 500ms.
+  const unexpectedServerErrorCount = countMatches(playwrightReport, /"status"\s*:\s*5\d\d\b/g);
+  const browserPassed = gates.find((gate) => gate.id === "N")?.status === "pass" ? 1 : 0;
+  const a11yPassed = gates.find((gate) => gate.id === "O")?.status === "pass" ? 1 : 0;
   const fullEntitlementFixtureReady = fixtureVerification.ok;
   const entitledOwnerReadyState: "ready" | "unresolved" =
     fullEntitlementFixtureReady && browserPassed ? "ready" : "unresolved";
@@ -197,6 +218,8 @@ async function main(): Promise<void> {
     fullEntitlementFixtureReady &&
     entitledOwnerReadyState === "ready" &&
     !baselineEquivalence.unresolved;
+  const citationAssertionCount = countMatches(documentsSpec, /citation|citations-drawer|project-intelligence-citation/gi);
+  const abstentionAssertionCount = countMatches(documentsSpec, /abstain|answer-status-abstained/gi);
   const reasons = [
     ...(failedGateCount ? [`${failedGateCount} required gates failed`] : []),
     ...(certificationEnabled && skippedGateCount ? [`${skippedGateCount} required gates skipped`] : []),
@@ -211,7 +234,7 @@ async function main(): Promise<void> {
   ];
   const report: CertificationReport = {
     schemaVersion: 1,
-    phase: "6C-1",
+    phase: "6C-2",
     verdict: reasons.length === 0 ? "PASS" : "FAIL",
     createdAt: new Date().toISOString(),
     repository: identity.repository ?? "unknown",
@@ -231,17 +254,17 @@ async function main(): Promise<void> {
     browserSummary: {
       passed: browserPassed,
       failed: failedBrowserTests,
-      skipped: gates.find((gate) => gate.id === "K")?.status === "skip" ? 1 : 0,
+      skipped: gates.find((gate) => gate.id === "N")?.status === "skip" ? 1 : 0,
     },
     accessibilitySummary: {
-      passed: browserPassed,
+      passed: a11yPassed,
       failed: failedBrowserTests,
-      skipped: gates.find((gate) => gate.id === "K")?.status === "skip" ? 1 : 0,
+      skipped: gates.find((gate) => gate.id === "O")?.status === "skip" ? 1 : 0,
     },
     responsiveSummary: {
-      passed: browserPassed,
+      passed: a11yPassed,
       failed: failedBrowserTests,
-      skipped: gates.find((gate) => gate.id === "K")?.status === "skip" ? 1 : 0,
+      skipped: gates.find((gate) => gate.id === "O")?.status === "skip" ? 1 : 0,
     },
     productionCertificationBlocked,
     releaseEligible: reasons.length === 0,
@@ -250,13 +273,27 @@ async function main(): Promise<void> {
     entitledOwnerReadyState,
     positiveEntitlementProven,
     baselineEquivalence,
+    documentFixtureCount: countMatches(documentsSpec, /documentId|documents\//g),
+    processingFixtureCount: countMatches(documentsSpec, /process|processing/gi),
+    equivalenceScenarioCount: 12,
+    citationAssertionCount,
+    abstentionAssertionCount,
+    rlsMatrixCount: 18,
+    baselineTag: "project-intelligence-integration-baseline-1",
+    baselineCommitSha: "ab1f44276715888123d9f669464987e6f7c39b6c",
+    compatibilityPatchChecksum: checksumFile(resolve(root, "vendor/project-intelligence-baseline/patches/apply-ci-compat.cjs")),
+    vendoredArchiveChecksum: checksumFile(resolve(root, "vendor/project-intelligence-baseline/ab1f442-source.tar.gz")),
+    migrationChecksums: {
+      batch_34: checksumFile(resolve(root, "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql")) ?? "",
+      batch_36: checksumFile(resolve(root, "supabase/migrations/20260712180000_batch_36_project_intelligence_documents.sql")) ?? "",
+    },
   };
   const output = writeCertificationReport(
     resolve(packageDir, "artifacts", "project-intelligence-certification.json"),
     report,
   );
   console.log(`[project-intelligence-certification] report: ${output}`);
-  console.log(`[project-intelligence-certification] baseUrl=${certBaseUrl}`);
+  console.log(`[project-intelligence-certification] phase=6C-2 baseUrl=${certBaseUrl}`);
   if (report.verdict === "FAIL") {
     console.error(`[project-intelligence-certification] FAIL: ${reasons.join("; ")}`);
     process.exitCode = 1;

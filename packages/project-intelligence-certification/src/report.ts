@@ -5,7 +5,7 @@ import type { CertificationGateId } from "./gates.js";
 
 export interface CertificationReport {
   schemaVersion: 1;
-  phase: "6B" | "6C-1";
+  phase: "6B" | "6C-1" | "6C-2";
   verdict: "PASS" | "FAIL";
   createdAt: string;
   repository: string;
@@ -36,6 +36,18 @@ export interface CertificationReport {
     equivalent: boolean;
     unresolved: boolean;
   };
+  /** Phase 6C-2 document intelligence evidence fields */
+  documentFixtureCount?: number;
+  processingFixtureCount?: number;
+  equivalenceScenarioCount?: number;
+  citationAssertionCount?: number;
+  abstentionAssertionCount?: number;
+  rlsMatrixCount?: number;
+  baselineTag?: string;
+  baselineCommitSha?: string;
+  compatibilityPatchChecksum?: string;
+  vendoredArchiveChecksum?: string;
+  migrationChecksums?: Record<string, string>;
 }
 
 export function writeCertificationReport(path: string, report: CertificationReport): string {

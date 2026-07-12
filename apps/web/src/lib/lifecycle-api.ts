@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { CommerceDomainError } from "@rtb/platform-commerce";
 import { ProjectIntelligenceError } from "@rtb/project-intelligence";
+import { DocumentIntelligenceError } from "@rtb/project-intelligence/server";
 
 export function resolveRequestId(request: Request): string {
   return (
@@ -51,6 +52,9 @@ export function handleCommerceDomainError(
     return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId);
   }
   if (err instanceof ProjectIntelligenceError) {
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
+  }
+  if (err instanceof DocumentIntelligenceError) {
     return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
   }
   console.error("[lifecycle-api] unhandled error", { requestId, err });

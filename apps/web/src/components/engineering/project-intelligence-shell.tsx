@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Activity, ArrowRightLeft, BarChart3, Settings } from "lucide-react";
+import { Activity, ArrowRightLeft, BarChart3, FileText, Settings } from "lucide-react";
 
 const tabs = [
   { href: "/engineering/apps/project-intelligence", label: "Overview", icon: BarChart3 },
+  { href: "/engineering/apps/project-intelligence/documents", label: "Documents", icon: FileText },
   { href: "/engineering/apps/project-intelligence/migration", label: "Migration", icon: ArrowRightLeft },
   { href: "/engineering/apps/project-intelligence/health", label: "Health", icon: Activity },
   { href: "/engineering/apps/project-intelligence/settings", label: "Settings", icon: Settings },
@@ -35,6 +36,13 @@ const stateMessages: Record<Exclude<ProjectIntelligenceShellState, "ready">, str
   failed: "Project Intelligence is currently unavailable.",
 };
 
+function navTestId(href: string): string | undefined {
+  if (href === "/engineering/apps/project-intelligence") return "project-intelligence-nav-overview";
+  if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
+  if (href.endsWith("/migration")) return "project-intelligence-nav-migration";
+  return undefined;
+}
+
 export function ProjectIntelligenceShell({
   children,
   state = "ready",
@@ -59,16 +67,16 @@ export function ProjectIntelligenceShell({
         <p className="mt-2 text-sm text-slate-400">Migration review and project state insight.</p>
         <nav className="mt-8 space-y-1" aria-label="Project Intelligence">
           {tabs.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+            const active =
+              href === "/engineering/apps/project-intelligence"
+                ? pathname === href
+                : pathname === href || pathname.startsWith(`${href}/`);
+            const testId = navTestId(href);
             return (
               <Link
                 key={href}
                 href={href}
-                {...(href.endsWith("/migration")
-                  ? { "data-testid": "project-intelligence-nav-migration" }
-                  : href === "/engineering/apps/project-intelligence"
-                    ? { "data-testid": "project-intelligence-nav-overview" }
-                    : {})}
+                {...(testId ? { "data-testid": testId } : {})}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
                   active
                     ? "bg-cyan-400/15 font-medium text-cyan-200"
