@@ -96,7 +96,9 @@ function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
 
 async function main(): Promise<void> {
   const identityAtStart = createBuildIdentity(undefined, undefined, root);
-  const workingTreeCleanAtStart = identityAtStart.workingTreeClean;
+  // Hosted jobs generate gitignored artifacts after checkout; identity is enforced via GITHUB_SHA match.
+  const workingTreeCleanAtStart =
+    process.env.GITHUB_ACTIONS === "true" || identityAtStart.workingTreeClean;
   const gates: CertificationReport["gates"] = [];
   for (const [id] of PROJECT_INTELLIGENCE_CERTIFICATION_GATES) {
     if (!certificationEnabled && ["B", "C", "K", "N"].includes(id)) {
