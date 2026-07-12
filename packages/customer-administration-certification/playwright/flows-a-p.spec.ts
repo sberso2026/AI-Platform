@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { resolve } from "node:path";
 
 import { signInAs } from "./auth.js";
+import {
+  REQUIRED_PRODUCT_DETAIL_TABS,
+  assertProductDetailRoute,
+  attachPageDiagnostics,
+} from "./diagnostics.js";
 import { requireFixtures } from "./fixtures.js";
 import { assertNoServerError } from "../src/lib/uninstall-contract.js";
 
@@ -20,24 +26,95 @@ test.describe("Phase 4 Playwright flows A–P", () => {
 
   test("B — Open Engineering OS product detail tabs", async ({ page, context }) => {
     const manifest = fx();
+    const diag = attachPageDiagnostics(page);
     await signInAs(context, manifest.tenantA.users.owner.email);
-    await page.goto("/system/products/engineering-os");
-    await expect(page.getByRole("tablist")).toBeVisible();
-    await expect(page.getByRole("tab", { name: "Overview" })).toBeVisible();
+
+    const productResPromise = page.waitForResponse(
+      (res) =>
+        res.url().includes("/api/platform/administration/products/engineering-os") &&
+        res.request().method() === "GET",
+      { timeout: 20_000 }
+    );
+
+    await page.goto("/system/products/engineering-os", { waitUntil: "domcontentloaded" });
+
+    const productRes = await productResPromise;
+    expect(
+      productRes.ok(),
+      `Product administration API failed: ${productRes.status()} ${productRes.url()}`
+    ).toBe(true);
+
+    await assertProductDetailRoute(page);
+    expect(page.url()).not.toMatch(/error|denied|login/i);
+
+    await expect(page.getByTestId("product-detail-error")).toHaveCount(0);
+    await expect(page.getByTestId("product-detail-unauthorized")).toHaveCount(0);
+    await expect(page.getByTestId("product-detail-not-found")).toHaveCount(0);
+
+    const ready = page.getByTestId("product-detail-ready");
+    await expect(ready, "product-detail-ready marker missing after data load").toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(ready).toHaveAttribute("data-product-slug", "engineering-os");
+
+    await expect(page.getByRole("heading", { name: /Engineering OS/i })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const tablist = page.getByRole("tablist", { name: "Product administration sections" });
+    await expect(tablist, "tablist missing after readiness marker").toBeVisible({
+      timeout: 10_000,
+    });
+
+    for (const label of REQUIRED_PRODUCT_DETAIL_TABS) {
+      await expect(page.getByRole("tab", { name: label })).toBeVisible();
+    }
+
+    await expect(page.getByRole("tab", { name: "Overview", selected: true })).toBeVisible();
+    await expect(page.getByTestId("product-tabpanel-overview")).toBeVisible();
+
+    await page.getByRole("tab", { name: "Applications" }).click();
+    await expect(page).toHaveURL(/tab=applications/);
+    await expect(page.getByTestId("product-detail-ready")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("product-tabpanel-applications")).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByRole("tab", { name: "Applications", selected: true })).toBeVisible();
+
+    const readyState = await page.evaluate(() => document.readyState);
+    expect(readyState).toBe("complete");
+
+    try {
+      diag.assertClean();
+    } catch (err) {
+      diag.dump(
+        resolve(process.cwd(), "test-results/customer-administration"),
+        "flow-b"
+      );
+      throw err;
+    }
   });
 
   test("C — Applications tab", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
-    await page.goto("/system/products/engineering-os?tab=applications");
-    await expect(page.getByTestId("product-tabpanel-applications")).toBeVisible();
+    await page.goto("/system/products/engineering-os?tab=applications", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByTestId("product-detail-ready")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("product-tabpanel-applications")).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("D — Workspaces tab and assignment panel", async ({ page, context }) => {
     const manifest = fx();
     await signInAs(context, manifest.tenantA.users.owner.email);
-    await page.goto("/system/products/engineering-os?tab=workspaces");
-    await expect(page.getByTestId("product-workspaces-panel")).toBeVisible();
+    await page.goto("/system/products/engineering-os?tab=workspaces", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByTestId("product-detail-ready")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("product-workspaces-panel")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/Assigned workspaces/i)).toBeVisible();
   });
 

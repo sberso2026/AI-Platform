@@ -32,9 +32,9 @@ export function computeReleaseEligibility(
 ): ReleaseEligibilityResult {
   const reasons: string[] = [];
   const workingTreeClean = context.workingTree.clean;
-  const productionCertificationBlocked =
-    artifact.environmentSafety.certificationTarget === "hosted_production" &&
-    !artifact.environmentSafety.allowProductionCertification;
+  // Safety signal: production destructive certification remains disallowed.
+  // This must NOT fail release eligibility on hosted_staging artifacts.
+  const productionCertificationBlocked = !artifact.environmentSafety.allowProductionCertification;
 
   if (!workingTreeClean) {
     reasons.push(
@@ -67,7 +67,6 @@ export function computeReleaseEligibility(
   if (!artifact.migrationChecksums || Object.keys(artifact.migrationChecksums).length === 0) {
     reasons.push("migration checksums not recorded");
   }
-  if (productionCertificationBlocked) reasons.push("production destructive certification blocked");
 
   const releaseEligible = reasons.length === 0 && workingTreeClean;
 

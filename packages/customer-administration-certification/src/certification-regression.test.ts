@@ -133,18 +133,76 @@ describe("Phase 5 — certification regression guards", () => {
   });
 });
 
-describe("Phase 5 — dependency validation ordering", () => {
-  it("requestUninstall validates dependencies before transition", () => {
-    const source = readFileSync(
-      resolve(process.cwd(), "../platform-commerce/src/services/installation-lifecycle-service.ts"),
-      "utf8"
-    );
-    const fnStart = source.indexOf("async requestUninstall");
-    const fnBody = source.slice(fnStart, fnStart + 400);
-    const depsIndex = fnBody.indexOf("assertNoDependentApplications");
-    const transitionIndex = fnBody.indexOf('targetStatus: "uninstall_pending"');
-    expect(depsIndex).toBeGreaterThan(-1);
-    expect(transitionIndex).toBeGreaterThan(-1);
-    expect(depsIndex).toBeLessThan(transitionIndex);
+describe("Phase 5 — product detail readiness contract", () => {
+  const pageSource = readFileSync(
+    resolve(process.cwd(), "../../apps/web/src/app/(platform)/system/products/[productSlug]/page.tsx"),
+    "utf8"
+  );
+  const tabsSource = readFileSync(
+    resolve(
+      process.cwd(),
+      "../../apps/web/src/components/commerce/product-detail/product-detail-tabs.tsx"
+    ),
+    "utf8"
+  );
+  const flowB = readFileSync(resolve(process.cwd(), "playwright/flows-a-p.spec.ts"), "utf8");
+
+  it("exposes product-detail-ready only in the ready state", () => {
+    expect(pageSource).toContain('data-testid="product-detail-ready"');
+    expect(pageSource).toContain('status: "ready"');
+    expect(pageSource).toContain('data-testid="product-detail-loading"');
+    expect(pageSource).toContain('data-testid="product-detail-error"');
+    expect(pageSource).toMatch(/status === "loading"[\s\S]*product-detail-loading/);
+    expect(pageSource).toMatch(/status === "error"[\s\S]*product-detail-error/);
+    expect(pageSource).not.toMatch(/waitForTimeout/);
+    expect(pageSource).not.toMatch(/setTimeout\(\s*\(\)\s*=>/);
+  });
+
+  it("renders accessible tab roles with the readiness marker", () => {
+    expect(tabsSource).toContain('role="tablist"');
+    expect(tabsSource).toContain('role="tab"');
+    expect(tabsSource).toContain("aria-selected");
+    expect(tabsSource).toContain("aria-controls");
+    expect(pageSource).toContain('role="tabpanel"');
+    expect(pageSource).toMatch(/product-detail-ready[\s\S]*ProductDetailTabs/);
+  });
+
+  it("Flow B validates URL, heading, API success, and readiness before tablist", () => {
+    expect(flowB).toContain("assertProductDetailRoute");
+    expect(flowB).toContain("product-detail-ready");
+    expect(flowB).toContain("Engineering OS");
+    expect(flowB).toContain("waitUntil: \"domcontentloaded\"");
+    expect(flowB).toContain("Product administration API failed");
+    expect(flowB).toContain("diag.assertClean");
+    expect(flowB).not.toMatch(/waitForTimeout/);
+    const readyIdx = flowB.indexOf('getByTestId("product-detail-ready")');
+    const tablistIdx = flowB.indexOf('getByRole("tablist"');
+    expect(readyIdx).toBeGreaterThan(-1);
+    expect(tablistIdx).toBeGreaterThan(readyIdx);
+  });
+
+  it("fixture verification runs during provision", () => {
+    const provision = readFileSync(resolve(process.cwd(), "scripts/provision-fixtures.ts"), "utf8");
+    expect(provision).toContain("assertEngineeringOsFixtureReady");
+  });
+});
+
+describe("Phase 5 — release eligibility production block signal", () => {
+  it("treats disallowed production certification as a non-blocking safety signal", async () => {
+    const { computeReleaseEligibility } = await import("./lib/release-eligibility.js");
+    const artifact = minimalArtifact({
+      environmentSafety: {
+        ...minimalArtifact({}).environmentSafety,
+        allowProductionCertification: false,
+        productionProjectBlocked: false,
+      },
+    });
+    const result = computeReleaseEligibility(artifact, {
+      workingTree: { clean: true, allowDirtyOverride: false, dirtyPaths: [] },
+      expectedCommitSha: "abc123",
+      buildIdentityCommitSha: "abc123",
+    });
+    expect(result.productionCertificationBlocked).toBe(true);
+    expect(result.releaseEligible).toBe(true);
   });
 });

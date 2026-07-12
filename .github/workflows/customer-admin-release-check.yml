@@ -146,6 +146,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
       - uses: actions/download-artifact@v4
         with:
           name: customer-admin-certification-${{ github.run_id }}
@@ -158,7 +167,7 @@ jobs:
           echo "## Customer Admin Release Evidence" >> "$GITHUB_STEP_SUMMARY"
           echo "- run: ${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- sha: ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
-          node -e "const fs=require('fs'); const p=process.argv[1]; const a=JSON.parse(fs.readFileSync(p,'utf8')); console.log(JSON.stringify({releaseEligible:a.releaseEligible,commitSha:a.commitSha,gates:a.passedGateCount+'/'+a.requiredGateCount,unexpected5xx:a.unexpectedServerErrorCount},null,2));" "$ARTIFACT" >> "$GITHUB_STEP_SUMMARY"
+          node -e "const fs=require('fs'); const p=process.argv[1]; const a=JSON.parse(fs.readFileSync(p,'utf8')); console.log(JSON.stringify({releaseEligible:a.releaseEligible,commitSha:a.commitSha,gates:a.passedGateCount+'/'+a.requiredGateCount,unexpected5xx:a.unexpectedServerErrorCount,productionCertificationBlocked:a.productionCertificationBlocked},null,2));" "$ARTIFACT" >> "$GITHUB_STEP_SUMMARY"
 
   release-approval:
     if: startsWith(github.ref, 'refs/tags/customer-admin-v')
@@ -167,6 +176,19 @@ jobs:
     environment: customer-admin-production
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - uses: actions/download-artifact@v4
         with:
           name: customer-admin-certification-${{ github.run_id }}

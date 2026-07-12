@@ -2,12 +2,11 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound, useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageMain } from "@/components/layout/page-main";
-import { buttonVariants, SectionHeader } from "@rtb/ui";
+import { buttonVariants } from "@rtb/ui";
 import type {
-  CommercialApplicationView,
   InstallationProgressView,
   LicenceSeatPoolView,
   ProductAdministrationView,
@@ -15,14 +14,12 @@ import type {
   WorkspaceProductAssignmentView,
 } from "@rtb/platform-core";
 import { parseProductDetailTab, type ProductDetailTab } from "@rtb/platform-core";
-import { ApplicationCard } from "@/components/commerce/application-card";
 import { CommercialDimensionsPanel } from "@/components/commerce/commercial-dimensions-panel";
 import { CommercialStatusChips } from "@/components/commerce/commercial-status-chips";
 import { HealthStatusChip } from "@/components/commerce/health-status-chip";
 import { InstallationProgressPanel } from "@/components/commerce/installation-progress-panel";
 import { ProductDetailTabs } from "@/components/commerce/product-detail/product-detail-tabs";
 import { ProductWorkspacePanel } from "@/components/commerce/product-detail/product-workspace-panel";
-import { CatalogueFallbackBanner } from "@/components/commerce/commerce-filters";
 import { EntitlementDiagnoseButton } from "@/components/commerce/entitlement-diagnose-button";
 
 type TabPayload = {
@@ -40,45 +37,168 @@ type TabPayload = {
   auditEvents?: Array<Record<string, unknown>>;
 };
 
+type DetailState =
+  | { status: "loading" }
+  | { status: "error"; message: string; httpStatus?: number }
+  | { status: "unauthorized" }
+  | { status: "not_found" }
+  | { status: "ready"; roleSlug: string; payload: TabPayload };
+
+async function readJson(res: Response): Promise<Record<string, unknown>> {
+  try {
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
 function ProductDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const productSlug = params.productSlug as string;
   const activeTab = parseProductDetailTab(searchParams.get("tab"));
-  const [roleSlug, setRoleSlug] = useState("owner");
-  const [payload, setPayload] = useState<TabPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<DetailState>({ status: "loading" });
+  const [reloadToken, setReloadToken] = useState(0);
 
-  const loadTab = useCallback(() => {
-    setLoading(true);
-    Promise.all([
-      fetch("/api/platform/nav-context").then((r) => r.json()),
-      fetch(`/api/platform/administration/products/${productSlug}?tab=${activeTab}`).then((r) => r.json()),
-    ])
-      .then(([navJson, tabJson]) => {
-        if (navJson.roleSlug) setRoleSlug(navJson.roleSlug);
-        if (tabJson.error) throw new Error(tabJson.error);
-        setPayload(tabJson.data as TabPayload);
-        setError(null);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [productSlug, activeTab]);
+  const refresh = useCallback(() => {
+    setReloadToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    loadTab();
-  }, [loadTab]);
+    let cancelled = false;
+    setState((prev) => (prev.status === "ready" ? prev : { status: "loading" }));
 
-  if (!loading && !payload?.product) {
-    notFound();
+    void (async () => {
+      try {
+        const [navRes, tabRes] = await Promise.all([
+          fetch("/api/platform/nav-context"),
+          fetch(`/api/platform/administration/products/${productSlug}?tab=${activeTab}`),
+        ]);
+
+        if (cancelled) return;
+
+        if (navRes.status === 401 || tabRes.status === 401) {
+          setState({ status: "unauthorized" });
+          return;
+        }
+        if (tabRes.status === 403) {
+          setState({ status: "error", message: "Access denied", httpStatus: 403 });
+          return;
+        }
+        if (tabRes.status === 404) {
+          setState({ status: "not_found" });
+          return;
+        }
+        if (!tabRes.ok) {
+          const body = await readJson(tabRes);
+          setState({
+            status: "error",
+            message:
+              typeof body.error === "string"
+                ? body.error
+                : `Product detail request failed (${tabRes.status})`,
+            httpStatus: tabRes.status,
+          });
+          return;
+        }
+
+        const [navJson, tabJson] = await Promise.all([readJson(navRes), readJson(tabRes)]);
+        if (cancelled) return;
+
+        if (typeof tabJson.error === "string") {
+          setState({ status: "error", message: tabJson.error, httpStatus: tabRes.status });
+          return;
+        }
+
+        const payload = tabJson.data as TabPayload | undefined;
+        if (!payload?.product?.slug) {
+          setState({ status: "not_found" });
+          return;
+        }
+
+        setState({
+          status: "ready",
+          roleSlug: typeof navJson.roleSlug === "string" ? navJson.roleSlug : "owner",
+          payload,
+        });
+      } catch (e) {
+        if (cancelled) return;
+        setState({
+          status: "error",
+          message: e instanceof Error ? e.message : "Failed to load product detail",
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [productSlug, activeTab, reloadToken]);
+
+  if (state.status === "loading") {
+    return (
+      <>
+        <Header title="Product administration" description="Loading product detail…" showEngineeringChrome={false} />
+        <PageMain>
+          <p className="text-sm text-muted-foreground" data-testid="product-detail-loading" aria-live="polite">
+            Loading…
+          </p>
+        </PageMain>
+      </>
+    );
   }
 
-  const product = payload?.product;
-  if (!product) return null;
+  if (state.status === "unauthorized") {
+    return (
+      <>
+        <Header title="Sign in required" showEngineeringChrome={false} />
+        <PageMain>
+          <p className="text-sm text-destructive" role="alert" data-testid="product-detail-unauthorized">
+            Authentication required to view product administration.
+          </p>
+        </PageMain>
+      </>
+    );
+  }
+
+  if (state.status === "not_found") {
+    return (
+      <>
+        <Header title="Product not found" showEngineeringChrome={false} />
+        <PageMain>
+          <p className="text-sm text-muted-foreground" data-testid="product-detail-not-found">
+            No product matched slug “{productSlug}”.
+          </p>
+          <Link href="/system/products" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            ← Back to Installed Products
+          </Link>
+        </PageMain>
+      </>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <>
+        <Header title="Product administration" showEngineeringChrome={false} />
+        <PageMain>
+          <p className="text-sm text-destructive" role="alert" data-testid="product-detail-error">
+            {state.message}
+          </p>
+        </PageMain>
+      </>
+    );
+  }
+
+  const { payload, roleSlug } = state;
+  const product = payload.product;
 
   return (
-    <>
+    <div
+      data-testid="product-detail-ready"
+      data-product-slug={product.slug}
+      data-active-tab={activeTab}
+    >
       <Header
         title={product.name}
         description="Manage product subscription, licences, workspaces, installation, and health."
@@ -91,13 +211,6 @@ function ProductDetailContent() {
           </Link>
           <EntitlementDiagnoseButton productKey={product.slug} />
         </div>
-
-        {error && (
-          <p className="mb-3 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        )}
-        {loading && <p className="mb-3 text-sm text-muted-foreground">Loading…</p>}
 
         <ProductDetailTabs activeTab={activeTab} />
 
@@ -112,11 +225,11 @@ function ProductDetailContent() {
             product={product}
             payload={payload}
             roleSlug={roleSlug}
-            onRefresh={loadTab}
+            onRefresh={refresh}
           />
         </div>
       </PageMain>
-    </>
+    </div>
   );
 }
 
@@ -124,7 +237,6 @@ function TabPanel({
   tab,
   product,
   payload,
-  roleSlug,
   onRefresh,
 }: {
   tab: ProductDetailTab;
@@ -292,7 +404,15 @@ function OverviewItem({ label, value }: { label: string; value: string }) {
 
 export default function ProductDetailPage() {
   return (
-    <Suspense fallback={<PageMain><p className="text-sm text-muted-foreground">Loading…</p></PageMain>}>
+    <Suspense
+      fallback={
+        <PageMain>
+          <p className="text-sm text-muted-foreground" data-testid="product-detail-loading">
+            Loading…
+          </p>
+        </PageMain>
+      }
+    >
       <ProductDetailContent />
     </Suspense>
   );

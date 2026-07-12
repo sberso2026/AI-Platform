@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, type KeyboardEvent } from "react";
 import { cn } from "@rtb/ui";
 import {
   PRODUCT_DETAIL_TABS,
@@ -11,7 +12,33 @@ import {
 
 export function ProductDetailTabs({ activeTab }: { activeTab: ProductDetailTab }) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
+
+  const hrefFor = useCallback(
+    (tab: ProductDetailTab) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      return `${pathname}?${params.toString()}`;
+    },
+    [pathname, searchParams]
+  );
+
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const index = PRODUCT_DETAIL_TABS.indexOf(activeTab);
+      if (index < 0) return;
+      const nextIndex =
+        event.key === "ArrowRight"
+          ? (index + 1) % PRODUCT_DETAIL_TABS.length
+          : (index - 1 + PRODUCT_DETAIL_TABS.length) % PRODUCT_DETAIL_TABS.length;
+      const next = PRODUCT_DETAIL_TABS[nextIndex]!;
+      router.push(hrefFor(next));
+    },
+    [activeTab, hrefFor, router]
+  );
 
   return (
     <div
@@ -19,12 +46,11 @@ export function ProductDetailTabs({ activeTab }: { activeTab: ProductDetailTab }
       role="tablist"
       aria-label="Product administration sections"
       data-testid="product-detail-tabs"
+      onKeyDown={onKeyDown}
     >
       <div className="-mb-px flex flex-wrap gap-1 overflow-x-auto">
         {PRODUCT_DETAIL_TABS.map((tab) => {
-          const params = new URLSearchParams(searchParams.toString());
-          params.set("tab", tab);
-          const href = `${pathname}?${params.toString()}`;
+          const href = hrefFor(tab);
           const selected = activeTab === tab;
 
           return (

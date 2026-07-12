@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { fixturesManifestPath, HOSTED_PROJECT_REF } from "../src/lib/env.js";
 import { generatedArtifactDir } from "../src/lib/artifact-paths.js";
+import { assertEngineeringOsFixtureReady } from "../src/lib/verify-engineering-os-fixture.js";
 
 const ROOT = resolve(process.cwd(), "../..");
 const ENGINEERING_PRODUCT_ID = "c1000000-0000-4000-8000-000000000001";
@@ -241,6 +242,8 @@ async function main(): Promise<void> {
   generatedArtifactDir(process.cwd());
   writeFileSync(fixturesManifestPath(), JSON.stringify(phase4Manifest, null, 2));
   console.log("[phase4:provision] Growth credit and uninstall fixtures seeded");
+
+  await assertEngineeringOsFixtureReady(phase4Manifest);
 }
 
 main().catch((e) => {
