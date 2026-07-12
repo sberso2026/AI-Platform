@@ -92,7 +92,8 @@ async function ensureCoreDocument(
     id: documentId,
     tenant_id: context.ctx.tenantId,
     workspace_id: workspaceId,
-    document_number: body.documentNumber ?? `CERT-${documentId.slice(0, 6).toUpperCase()}`,
+    document_number: body.documentNumber
+      ?? `CERT-${documentId.replace(/-/g, "").slice(-10).toUpperCase()}`,
     title: body.title ?? `Document ${documentId.slice(0, 8)}`,
     revision: body.revision ?? "A",
     status: "issued",
@@ -102,7 +103,7 @@ async function ensureCoreDocument(
     uploaded_by: context.ctx.userId,
     uploaded_at: new Date().toISOString(),
   } as never);
-  if (error && !error.message.toLowerCase().includes("duplicate")) {
+  if (error && !/duplicate|unique/i.test(error.message)) {
     throw new DocumentIntelligenceError("document_not_found", `Unable to register Core document: ${error.message}`, 422);
   }
 }
@@ -246,43 +247,53 @@ export async function processDocument(
   const workspaceId = requireWorkspace(context);
   const revision = body.revision ?? "A";
   const mimeType = body.mimeType ?? "text/plain";
-  await ensureCoreDocument(context, documentId, {
-    title: body.title,
-    revision,
-    mimeType,
-  });
-
-  const fixtureText = body.fixtureText
-    ?? (process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1"
-      ? "Pump design pressure is 16 bar g per section 4.2."
-      : undefined);
-
-  const enqueued = await enqueueDocumentProcessing(service() as unknown as Parameters<typeof enqueueDocumentProcessing>[0], {
-    tenantId: context.ctx.tenantId,
-    workspaceId,
-    engineeringDocumentId: documentId,
-    sourceRevision: revision,
-    processingVersion: "1",
-    correlationId: context.correlationId,
-    createdBy: context.ctx.userId,
-    payload: {
-      fixtureText,
-      mimeType,
+  try {
+    await ensureCoreDocument(context, documentId, {
       title: body.title,
+      revision,
+      mimeType,
+    });
+
+    const fixtureText = body.fixtureText
+      ?? (process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1"
+        ? "Pump design pressure is 16 bar g per section 4.2."
+        : undefined);
+
+    const enqueued = await enqueueDocumentProcessing(service() as unknown as Parameters<typeof enqueueDocumentProcessing>[0], {
+      tenantId: context.ctx.tenantId,
+      workspaceId,
+      engineeringDocumentId: documentId,
       sourceRevision: revision,
       processingVersion: "1",
-    },
-  });
+      correlationId: context.correlationId,
+      createdBy: context.ctx.userId,
+      payload: {
+        fixtureText,
+        mimeType,
+        title: body.title,
+        sourceRevision: revision,
+        processingVersion: "1",
+      },
+    });
 
-  return {
-    ...(await getDocumentIntelligence(context, documentId)),
-    enqueue: enqueued,
-    processing: {
-      ...(await getDocumentIntelligence(context, documentId)).processing,
-      status: "queued" as const,
-      detail: "Enqueued durable processing job; worker must claim and complete",
-    },
-  };
+    const detail = await getDocumentIntelligence(context, documentId);
+    return {
+      ...detail,
+      enqueue: enqueued,
+      processing: {
+        ...detail.processing,
+        status: (detail.processing.status === "unregistered" ? "queued" : detail.processing.status) as DocumentProcessingStatus,
+        detail: "Enqueued durable processing job; worker must claim and complete",
+      },
+    };
+  } catch (error) {
+    if (error instanceof DocumentIntelligenceError) throw error;
+    throw new DocumentIntelligenceError(
+      "document_parser_failed",
+      error instanceof Error ? error.message : String(error),
+      500,
+    );
+  }
 }
 
 export async function retryDocument(context: CommerceHandlerContext, documentId: string) {
