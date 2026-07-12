@@ -51,7 +51,15 @@ async function existingOrInsert(
 async function getOrCreateUser(admin: Admin, email: string, password: string): Promise<string> {
   const users = await required<any>(admin.auth.admin.listUsers({ page: 1, perPage: 1000 }), "list auth users");
   const existing = users.users.find((user: any) => user.email === email);
-  if (existing) return existing.id;
+  if (existing) {
+    // Keep password aligned with CERT_USER_PASSWORD across re-provisions of the same run id.
+    const { error } = await admin.auth.admin.updateUserById(existing.id, {
+      password,
+      email_confirm: true,
+    });
+    if (error) throw new Error(`update password for ${email}: ${error.message}`);
+    return existing.id;
+  }
   const user = await required<any>(
     admin.auth.admin.createUser({
       email,

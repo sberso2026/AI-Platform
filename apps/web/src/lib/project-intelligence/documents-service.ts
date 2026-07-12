@@ -80,20 +80,13 @@ async function ensureCoreDocument(
 ): Promise<void> {
   const workspaceId = requireWorkspace(context);
   const supabase = service();
-  const { data: existing } = await supabase
-    .from("engineering_documents")
-    .select("id")
-    .eq("id", documentId)
-    .eq("tenant_id", context.ctx.tenantId)
-    .maybeSingle();
-  if ((existing as { id?: string } | null)?.id) return;
-
-  const { error } = await supabase.from("engineering_documents").insert({
+  const documentNumber = body.documentNumber
+    ?? `CERT-${documentId.replace(/-/g, "").slice(-10).toUpperCase()}`;
+  const payload = {
     id: documentId,
     tenant_id: context.ctx.tenantId,
     workspace_id: workspaceId,
-    document_number: body.documentNumber
-      ?? `CERT-${documentId.replace(/-/g, "").slice(-10).toUpperCase()}`,
+    document_number: documentNumber,
     title: body.title ?? `Document ${documentId.slice(0, 8)}`,
     revision: body.revision ?? "A",
     status: "issued",
@@ -102,10 +95,60 @@ async function ensureCoreDocument(
     source: "project_intelligence_cert_fixture",
     uploaded_by: context.ctx.userId,
     uploaded_at: new Date().toISOString(),
-  } as never);
-  if (error && !/duplicate|unique/i.test(error.message)) {
+  };
+
+  const { data: existing } = await supabase
+    .from("engineering_documents")
+    .select("id, tenant_id, workspace_id, source")
+    .eq("id", documentId)
+    .maybeSingle();
+  const row = existing as { id?: string; tenant_id?: string; workspace_id?: string; source?: string } | null;
+
+  if (row?.id) {
+    if (row.tenant_id === context.ctx.tenantId && row.workspace_id === workspaceId) return;
+    // Reclaim stale cert fixtures left by prior runs with the same fixed UUID.
+    const certMode = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";
+    const isCertFixture = row.source === "project_intelligence_cert_fixture";
+    if (certMode || isCertFixture) {
+      const { error: deleteError } = await supabase.from("engineering_documents").delete().eq("id", documentId);
+      if (deleteError) {
+        throw new DocumentIntelligenceError(
+          "document_not_found",
+          `Unable to reclaim Core document: ${deleteError.message}`,
+          422,
+        );
+      }
+    } else {
+      throw new DocumentIntelligenceError(
+        "document_not_found",
+        "Document id is owned by another tenant/workspace",
+        409,
+      );
+    }
+  }
+
+  const { error } = await supabase.from("engineering_documents").insert(payload as never);
+  if (!error) return;
+
+  if (!/duplicate|unique/i.test(error.message)) {
     throw new DocumentIntelligenceError("document_not_found", `Unable to register Core document: ${error.message}`, 422);
   }
+
+  // Race or unique(document_number,revision): confirm the intended row is readable for this tenant.
+  const { data: again } = await supabase
+    .from("engineering_documents")
+    .select("id, tenant_id, workspace_id")
+    .eq("id", documentId)
+    .eq("tenant_id", context.ctx.tenantId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle();
+  if ((again as { id?: string } | null)?.id) return;
+
+  throw new DocumentIntelligenceError(
+    "document_not_found",
+    `Unable to register Core document after conflict: ${error.message}`,
+    422,
+  );
 }
 
 export async function listDocumentIntelligence(
