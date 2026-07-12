@@ -23,7 +23,8 @@ function readBaselineEquivalence(): {
   const path = candidates.find((candidate) => existsSync(candidate));
   if (!path) return { artifactPresent: false, equivalent: false, unresolved: true };
   try {
-    const artifact = JSON.parse(readFileSync(path, "utf8")) as {
+    const raw = readFileSync(path, "utf8").replace(/^\uFEFF/, "");
+    const artifact = JSON.parse(raw) as {
       equivalent?: boolean;
       unresolved?: boolean;
       buildStatus?: string;

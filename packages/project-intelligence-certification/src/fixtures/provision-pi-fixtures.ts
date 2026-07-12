@@ -93,6 +93,35 @@ async function addMembership(admin: Admin, tenantId: string, workspaceIds: strin
   }
 }
 
+async function removeOrphanMemberships(admin: Admin, userId: string, keepTenantId: string): Promise<void> {
+  const { data: memberships, error } = await admin
+    .from("tenant_memberships")
+    .select("tenant_id")
+    .eq("user_id", userId)
+    .eq("status", "active");
+  if (error) throw new Error(`list memberships for orphan cleanup: ${error.message}`);
+  for (const row of memberships ?? []) {
+    const tenantId = row.tenant_id as string;
+    if (tenantId === keepTenantId) continue;
+    const { data: workspaces } = await admin.from("workspaces").select("id").eq("tenant_id", tenantId);
+    for (const workspace of workspaces ?? []) {
+      await admin.from("workspace_memberships").delete().eq("user_id", userId).eq("workspace_id", workspace.id);
+    }
+    await admin.from("tenant_memberships").delete().eq("user_id", userId).eq("tenant_id", tenantId);
+    const { count } = await admin
+      .from("tenant_memberships")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId);
+    if (!count) {
+      const { data: tenant } = await admin.from("tenants").select("slug").eq("id", tenantId).maybeSingle();
+      // Only auto-delete non-cert tenants created as personal defaults for the user.
+      if (tenant && !String(tenant.slug ?? "").startsWith(PI_CERT_SLUG_PREFIX)) {
+        await admin.from("tenants").delete().eq("id", tenantId);
+      }
+    }
+  }
+}
+
 async function createFixtureUser(
   admin: Admin, url: string, anonKey: string, password: string, key: string, id: string, role: string,
 ): Promise<PiUserFixture> {
@@ -244,6 +273,9 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
   await addMembership(admin, baselineTenant.id, [workspaceB.id], engineerB.id, "engineer");
   await addMembership(admin, baselineTenant.id, [workspaceA.id], viewer.id, "viewer");
   await addMembership(admin, baselineTenant.id, [], userWithoutWorkspace.id, "engineer");
+  for (const user of [owner, administrator, engineer, engineerB, viewer, userWithoutWorkspace]) {
+    await removeOrphanMemberships(admin, user.id, baselineTenant.id);
+  }
 
   const entitlement = await seedEntitlements(admin, baselineTenant.id, workspaceA.id, owner.id);
   // Also assign Engineering OS + PI to workspace B so multi-workspace principals
@@ -305,6 +337,7 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
   const otherWorkspace = await workspace(admin, otherTenant.id, `other-${id}`);
   const otherTenantOwner = await createFixtureUser(admin, url, anonKey, password, "other-owner", id, "owner");
   await addMembership(admin, otherTenant.id, [otherWorkspace.id], otherTenantOwner.id, "owner");
+  await removeOrphanMemberships(admin, otherTenantOwner.id, otherTenant.id);
   const otherProject = await existingOrInsert(
     admin, "engineering_projects", { tenant_id: otherTenant.id, project_code: `PI-OTHER-${id}` },
     { tenant_id: otherTenant.id, workspace_id: otherWorkspace.id, project_code: `PI-OTHER-${id}`, project_name: "PI Certification Foreign Project", status: "active", created_by: otherTenantOwner.id },
@@ -317,12 +350,14 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
   const noPiWorkspace = await workspace(admin, noPiTenant.id, `no-pi-${id}`);
   const noPiOwner = await createFixtureUser(admin, url, anonKey, password, "no-pi-owner", id, "owner");
   await addMembership(admin, noPiTenant.id, [noPiWorkspace.id], noPiOwner.id, "owner");
+  await removeOrphanMemberships(admin, noPiOwner.id, noPiTenant.id);
   const noPiEntitlement = await seedEntitlements(admin, noPiTenant.id, noPiWorkspace.id, noPiOwner.id, { includePiApplication: false });
   await seedSeat(admin, noPiTenant.id, noPiWorkspace.id, noPiEntitlement.subscriptionId, noPiEntitlement.licenceId, noPiOwner.id);
   const suspendedTenant = await createTenant(admin, `${PI_CERT_SLUG_PREFIX}suspended-${id}`, "Suspended licence", true);
   const suspendedWorkspace = await workspace(admin, suspendedTenant.id, `suspended-${id}`);
   const suspendedOwner = await createFixtureUser(admin, url, anonKey, password, "suspended-owner", id, "owner");
   await addMembership(admin, suspendedTenant.id, [suspendedWorkspace.id], suspendedOwner.id, "owner");
+  await removeOrphanMemberships(admin, suspendedOwner.id, suspendedTenant.id);
   const suspended = await seedEntitlements(admin, suspendedTenant.id, suspendedWorkspace.id, suspendedOwner.id, { suspended: true });
   await seedSeat(admin, suspendedTenant.id, suspendedWorkspace.id, suspended.subscriptionId, suspended.licenceId, suspendedOwner.id);
 
