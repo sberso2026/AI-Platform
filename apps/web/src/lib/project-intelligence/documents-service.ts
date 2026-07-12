@@ -272,19 +272,21 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
     .limit(1)
     .maybeSingle();
 
-  const { count: chunkCount } = await service()
+  const chunkCountResult = await (service()
     .from("project_intelligence_document_chunks")
     .select("id", { count: "exact", head: true })
     .eq("engineering_document_id", documentId)
     .eq("tenant_id", context.ctx.tenantId)
-    .is("deleted_at", null);
+    .is("deleted_at", null) as unknown as Promise<{ count: number | null }>);
+  const chunkCount = chunkCountResult.count;
 
-  const { count: findingsCount } = await service()
+  const findingsCountResult = await (service()
     .from("project_intelligence_document_findings")
     .select("id", { count: "exact", head: true })
     .eq("engineering_document_id", documentId)
     .eq("tenant_id", context.ctx.tenantId)
-    .is("deleted_at", null);
+    .is("deleted_at", null) as unknown as Promise<{ count: number | null }>);
+  const findingsCount = findingsCountResult.count;
 
   const status = (ingestion?.status ?? "unregistered") as DocumentProcessingStatus | "unregistered";
   return {
