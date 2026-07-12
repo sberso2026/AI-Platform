@@ -127,7 +127,7 @@ const commands: Record<string, string> = {
   L: "pnpm --filter @rtb/project-intelligence-certification test:http",
   M: "pnpm --filter @rtb/project-intelligence-certification test:unit",
   N: "pnpm --filter @rtb/project-intelligence-certification test:e2e",
-  O: "pnpm --filter @rtb/project-intelligence-certification test:e2e",
+  O: "pnpm --filter @rtb/project-intelligence-certification exec playwright test playwright/documents.spec.ts --grep \"accessibility|responsive\"",
   P: "pnpm --filter @rtb/project-intelligence-certification test:unit",
   Q: "github hosted run identity",
 };
