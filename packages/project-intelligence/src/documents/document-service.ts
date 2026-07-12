@@ -146,7 +146,7 @@ export class ProjectIntelligenceDocumentService {
     transition("embedding", "embedding");
     const embedded = await this.embeddings.embed({
       texts: chunks.map((chunk) => chunk.content),
-      dimensions: 64,
+      dimensions: 1536,
       correlationId: request.correlationId,
     });
 
