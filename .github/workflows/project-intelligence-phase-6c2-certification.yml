@@ -15,6 +15,8 @@ on:
       - "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql"
       - "supabase/migrations/20260712120000_batch_35_pi_mapping_identity_immutable.sql"
       - "supabase/migrations/20260712180000_batch_36_project_intelligence_documents.sql"
+      - "supabase/migrations/20260712200000_batch_37_project_intelligence_document_runtime.sql"
+      - "supabase/migrations/20260712201000_batch_37b_project_intelligence_document_search.sql"
       - "docs/architecture/PROJECT_INTELLIGENCE*"
       - "docs/migration/PROJECT_INTELLIGENCE*"
       - "docs/testing/**"

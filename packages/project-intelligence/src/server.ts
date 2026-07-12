@@ -20,3 +20,9 @@ export * from "./documents/grounded-answer";
 export * from "./documents/abstention";
 export * from "./documents/findings";
 export * from "./documents/jobs";
+export * from "./documents/durable-enqueue";
+export * from "./documents/governed-embedding-adapter";
+export * from "./documents/postgres-index-adapter";
+export * from "./documents/document-worker";
+export * from "./documents/parser-routing";
+

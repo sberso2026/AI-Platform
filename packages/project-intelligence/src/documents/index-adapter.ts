@@ -95,7 +95,7 @@ export class InMemoryDocumentIndexAdapter implements ProjectIntelligenceDocument
   }
 }
 
-/** Postgres-backed stub interface — implementation lives with server persistence. */
-export interface PostgresDocumentIndexAdapter extends ProjectIntelligenceDocumentIndexAdapter {
+/** Marker for postgres-backed index adapters. */
+export interface PostgresDocumentIndexPort extends ProjectIntelligenceDocumentIndexAdapter {
   readonly kind: "postgres";
 }

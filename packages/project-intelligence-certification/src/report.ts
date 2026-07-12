@@ -48,6 +48,11 @@ export interface CertificationReport {
   compatibilityPatchChecksum?: string;
   vendoredArchiveChecksum?: string;
   migrationChecksums?: Record<string, string>;
+  parserProviders?: string[];
+  embeddingProvider?: string;
+  embeddingModel?: string;
+  vectorDimension?: number;
+  vectorIndexType?: string;
 }
 
 export function writeCertificationReport(path: string, report: CertificationReport): string {

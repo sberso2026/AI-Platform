@@ -14,10 +14,17 @@ const REQUIRED_TABLES = [
   "project_intelligence_document_embeddings",
   "project_intelligence_document_findings",
   "project_intelligence_document_review_items",
+  "project_intelligence_document_jobs",
+  "project_intelligence_document_outbox",
+  "project_intelligence_document_worker_leases",
+  "project_intelligence_document_dead_letters",
+  "project_intelligence_document_processing_steps",
 ] as const;
 const MIGRATION_FILES = [
   "20260712000000_batch_34_project_intelligence_mappings.sql",
   "20260712180000_batch_36_project_intelligence_documents.sql",
+  "20260712200000_batch_37_project_intelligence_document_runtime.sql",
+  "20260712201000_batch_37b_project_intelligence_document_search.sql",
 ] as const;
 
 describe.skipIf(!enabled)("Gate B — hosted document-intelligence schema verification", () => {

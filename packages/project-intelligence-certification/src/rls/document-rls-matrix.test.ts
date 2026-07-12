@@ -16,6 +16,10 @@ const tables = [
   "project_intelligence_document_answer_traces",
   "project_intelligence_document_review_items",
   "project_intelligence_document_audit",
+  "project_intelligence_document_jobs",
+  "project_intelligence_document_outbox",
+  "project_intelligence_document_dead_letters",
+  "project_intelligence_document_processing_steps",
 ] as const;
 
 type RestResult = { status: number; body: unknown };

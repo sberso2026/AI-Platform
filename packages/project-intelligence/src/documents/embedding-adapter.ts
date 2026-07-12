@@ -3,7 +3,7 @@ import { DocumentIntelligenceError } from "./errors";
 
 export interface EmbeddingRequest {
   texts: readonly string[];
-  dimensions?: 64 | 3072;
+  dimensions?: 64 | 1536 | 3072;
   model?: string;
   correlationId?: string;
 }
@@ -28,11 +28,11 @@ function hashToUnitFloat(seed: string, index: number): number {
 
 /** Deterministic local embeddings for certification — not for production semantic quality. */
 export class DeterministicLocalEmbeddingAdapter implements ProjectIntelligenceEmbeddingAdapter {
-  constructor(private readonly defaultDimensions: 64 | 3072 = 64) {}
+  constructor(private readonly defaultDimensions: 64 | 1536 | 3072 = 64) {}
 
   async embed(request: EmbeddingRequest): Promise<EmbeddingResult> {
     const dimensions = request.dimensions ?? this.defaultDimensions;
-    if (dimensions !== 64 && dimensions !== 3072) {
+    if (dimensions !== 64 && dimensions !== 1536 && dimensions !== 3072) {
       throw new DocumentIntelligenceError(
         "document_embedding_failed",
         "Unsupported embedding dimensions",

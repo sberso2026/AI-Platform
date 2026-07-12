@@ -12,8 +12,8 @@ const certificationEnabled = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === 
 let certServer: ChildProcess | null = null;
 let certBaseUrl = process.env.RTB_TEST_BASE_URL ?? "http://127.0.0.1:3000";
 
-const HOSTED_GATES = ["B", "C", "N", "O", "Q"] as const;
-const BROWSER_GATES = ["N", "O"] as const;
+const HOSTED_GATES = ["B", "C", "D", "E", "H", "I", "O", "P", "R"] as const;
+const BROWSER_GATES = ["P"] as const;
 
 function checksumFile(path: string): string | undefined {
   if (!existsSync(path)) return undefined;
@@ -116,7 +116,7 @@ const commands: Record<string, string> = {
   A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:unit && pnpm --filter @rtb/project-intelligence typecheck && pnpm --filter @rtb/web typecheck && pnpm --filter @rtb/web build",
   B: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema",
   C: "pnpm --filter @rtb/project-intelligence-certification test:rls",
-  D: "pnpm --filter @rtb/project-intelligence-certification test:unit",
+  D: "pnpm --filter @rtb/project-intelligence-certification test:documents",
   E: "pnpm --filter @rtb/project-intelligence-certification test:documents",
   F: "pnpm --filter @rtb/project-intelligence-certification test:documents",
   G: "pnpm --filter @rtb/project-intelligence-certification test:documents",
@@ -126,14 +126,15 @@ const commands: Record<string, string> = {
   K: "pnpm --filter @rtb/project-intelligence-certification test:documents",
   L: "pnpm --filter @rtb/project-intelligence-certification test:http",
   M: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  N: "pnpm --filter @rtb/project-intelligence-certification test:e2e:documents",
-  O: "pnpm --filter @rtb/project-intelligence-certification test:e2e:a11y",
-  P: "pnpm --filter @rtb/project-intelligence-certification test:unit",
-  Q: "github hosted run identity",
+  N: "pnpm --filter @rtb/project-intelligence-certification test:unit",
+  O: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  P: "pnpm --filter @rtb/project-intelligence-certification test:e2e:documents",
+  Q: "pnpm --filter @rtb/project-intelligence-certification test:unit",
+  R: "github hosted run identity",
 };
 
 function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
-  if (id === "Q") {
+  if (id === "R") {
     const ok =
       Boolean(process.env.GITHUB_RUN_ID?.trim()) &&
       process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1" &&
@@ -208,8 +209,8 @@ async function main(): Promise<void> {
   const failedBrowserTests = countMatches(playwrightReport, /"status"\s*:\s*"failed"/g);
   // Count HTTP 5xx statuses in Playwright JSON only — avoid matching durations like 500ms.
   const unexpectedServerErrorCount = countMatches(playwrightReport, /"status"\s*:\s*5\d\d\b/g);
-  const browserPassed = gates.find((gate) => gate.id === "N")?.status === "pass" ? 1 : 0;
-  const a11yPassed = gates.find((gate) => gate.id === "O")?.status === "pass" ? 1 : 0;
+  const browserPassed = gates.find((gate) => gate.id === "P")?.status === "pass" ? 1 : 0;
+  const a11yPassed = gates.find((gate) => gate.id === "P")?.status === "pass" ? 1 : 0;
   const fullEntitlementFixtureReady = fixtureVerification.ok;
   const entitledOwnerReadyState: "ready" | "unresolved" =
     fullEntitlementFixtureReady && browserPassed ? "ready" : "unresolved";
@@ -254,17 +255,17 @@ async function main(): Promise<void> {
     browserSummary: {
       passed: browserPassed,
       failed: failedBrowserTests,
-      skipped: gates.find((gate) => gate.id === "N")?.status === "skip" ? 1 : 0,
+      skipped: gates.find((gate) => gate.id === "P")?.status === "skip" ? 1 : 0,
     },
     accessibilitySummary: {
       passed: a11yPassed,
       failed: failedBrowserTests,
-      skipped: gates.find((gate) => gate.id === "O")?.status === "skip" ? 1 : 0,
+      skipped: gates.find((gate) => gate.id === "P")?.status === "skip" ? 1 : 0,
     },
     responsiveSummary: {
       passed: a11yPassed,
       failed: failedBrowserTests,
-      skipped: gates.find((gate) => gate.id === "O")?.status === "skip" ? 1 : 0,
+      skipped: gates.find((gate) => gate.id === "P")?.status === "skip" ? 1 : 0,
     },
     productionCertificationBlocked,
     releaseEligible: reasons.length === 0,
@@ -286,7 +287,14 @@ async function main(): Promise<void> {
     migrationChecksums: {
       batch_34: checksumFile(resolve(root, "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql")) ?? "",
       batch_36: checksumFile(resolve(root, "supabase/migrations/20260712180000_batch_36_project_intelligence_documents.sql")) ?? "",
+      batch_37: checksumFile(resolve(root, "supabase/migrations/20260712200000_batch_37_project_intelligence_document_runtime.sql")) ?? "",
+      batch_37b: checksumFile(resolve(root, "supabase/migrations/20260712201000_batch_37b_project_intelligence_document_search.sql")) ?? "",
     },
+    parserProviders: ["native-text", "pdf-text", "docx-mammoth"],
+    embeddingProvider: process.env.PLATFORM_EMBEDDING_API_KEY || process.env.OPENAI_API_KEY ? "openai" : "platform-staging-hash",
+    embeddingModel: process.env.PLATFORM_EMBEDDING_MODEL ?? "text-embedding-3-small",
+    vectorDimension: 1536,
+    vectorIndexType: "hnsw",
   };
   const output = writeCertificationReport(
     resolve(packageDir, "artifacts", "project-intelligence-certification.json"),

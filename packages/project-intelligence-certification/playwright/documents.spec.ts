@@ -31,6 +31,35 @@ async function openCitationsDrawer(page: import("@playwright/test").Page) {
   await expect(drawer).toBeVisible({ timeout: 15_000 });
 }
 
+async function enqueueAndDrain(
+  page: import("@playwright/test").Page,
+  documentId: string,
+  data: Record<string, unknown>,
+) {
+  const enqueue = await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, { data });
+  expect(enqueue.status(), await enqueue.text()).toBeLessThan(500);
+  expect(enqueue.ok()).toBeTruthy();
+  const enqueuedBody = await enqueue.json();
+  expect(["queued", "fetching", "parsing", "chunking", "embedding", "indexing", "ready", "ready_with_warnings"]).toContain(
+    enqueuedBody.data.processing.status,
+  );
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const drain = await page.request.post("/api/platform/project-intelligence/document-jobs/run", {
+      data: { loops: 3, workerId: `pw-${documentId.slice(-4)}-${attempt}` },
+    });
+    expect(drain.status()).toBeLessThan(500);
+    const status = await page.request.get(`/api/engineering/project-intelligence/documents/${documentId}/status`);
+    expect(status.ok()).toBeTruthy();
+    const body = await status.json();
+    if (body.data.status === "ready" || body.data.status === "ready_with_warnings") {
+      return body.data;
+    }
+    await page.waitForTimeout(500);
+  }
+  throw new Error(`Document ${documentId} did not become ready via durable worker`);
+}
+
 describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification", () => {
   test("A list authorized documents", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
@@ -43,9 +72,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6c2";
-    await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Design pressure is 16 bar g.", title: "Cert Spec", revision: "A" },
-    });
+    await enqueueAndDrain(page, documentId, { fixtureText: "Design pressure is 16 bar g.", title: "Cert Spec", revision: "A" });
     await page.goto(`${documentsPath}/${documentId}`);
     await expect(page.getByTestId("login-page")).toHaveCount(0);
     await expect(page.getByTestId("access-denied")).toHaveCount(0);
@@ -56,21 +83,22 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6c3";
-    const response = await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Pump casing material is ASTM A216 WCB.", title: "Process Cert", revision: "A" },
+    const status = await enqueueAndDrain(page, documentId, {
+      fixtureText: "Pump casing material is ASTM A216 WCB.",
+      title: "Process Cert",
+      revision: "A",
     });
-    expect(response.status()).toBeLessThan(500);
-    expect(response.ok()).toBeTruthy();
-    const body = await response.json();
-    expect(body.data.processing.status).toBe("ready");
+    expect(status.status).toBe("ready");
   });
 
   test("D observe real processing state", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6c4";
-    await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Section 3 lists flange rating class 300.", title: "State Cert", revision: "A" },
+    await enqueueAndDrain(page, documentId, {
+      fixtureText: "Section 3 lists flange rating class 300.",
+      title: "State Cert",
+      revision: "A",
     });
     const status = await page.request.get(`/api/engineering/project-intelligence/documents/${documentId}/status`);
     expect(status.ok()).toBeTruthy();
@@ -83,9 +111,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6c5";
-    await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Design pressure is 16 bar g.", title: "Query Cert", revision: "A" },
-    });
+    await enqueueAndDrain(page, documentId, { fixtureText: "Design pressure is 16 bar g.", title: "Query Cert", revision: "A" });
     await page.goto(`${documentsPath}/query`);
     await expect(page.getByTestId("project-intelligence-documents-query")).toBeVisible();
     await expect(page.getByTestId("login-page")).toHaveCount(0);
@@ -98,9 +124,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6c6";
-    await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Design pressure is 16 bar g.", title: "Cite Cert", revision: "A" },
-    });
+    await enqueueAndDrain(page, documentId, { fixtureText: "Design pressure is 16 bar g.", title: "Cite Cert", revision: "A" });
     await page.goto(`${documentsPath}/query`);
     await page.getByTestId("project-intelligence-documents-query-submit").click();
     await expect(page.getByTestId("project-intelligence-answer-status-answered")).toBeVisible({ timeout: 15_000 });
@@ -112,9 +136,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6c7";
-    await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Nozzle N1 is DN100.", title: "Drawer Cert", revision: "A" },
-    });
+    await enqueueAndDrain(page, documentId, { fixtureText: "Nozzle N1 is DN100.", title: "Drawer Cert", revision: "A" });
     await page.goto(`${documentsPath}/query`);
     await page.getByTestId("project-intelligence-documents-query-submit").click();
     await expect(page.getByTestId("project-intelligence-documents-answer")).toBeVisible({ timeout: 15_000 });
@@ -142,11 +164,13 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
   test("J compare revisions", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    await page.request.post("/api/engineering/project-intelligence/documents/00000000-0000-4000-8000-00000000c6c8/process", {
-      data: { fixtureText: "Design pressure 16 bar g", revision: "A" },
+    await enqueueAndDrain(page, "00000000-0000-4000-8000-00000000c6c8", {
+      fixtureText: "Design pressure 16 bar g",
+      revision: "A",
     });
-    await page.request.post("/api/engineering/project-intelligence/documents/00000000-0000-4000-8000-00000000c6c9/process", {
-      data: { fixtureText: "Design pressure 20 bar g", revision: "B" },
+    await enqueueAndDrain(page, "00000000-0000-4000-8000-00000000c6c9", {
+      fixtureText: "Design pressure 20 bar g",
+      revision: "B",
     });
     const compare = await page.request.post("/api/engineering/project-intelligence/documents/compare", {
       data: {
@@ -164,8 +188,10 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     const documentId = "00000000-0000-4000-8000-00000000c6ca";
-    await page.request.post(`/api/engineering/project-intelligence/documents/${documentId}/process`, {
-      data: { fixtureText: "Missing approval block on cover sheet.", title: "Review Cert", revision: "A" },
+    await enqueueAndDrain(page, documentId, {
+      fixtureText: "Missing approval block on cover sheet.",
+      title: "Review Cert",
+      revision: "A",
     });
     await page.goto(`${documentsPath}/review`);
     await expect(page.getByTestId("project-intelligence-documents-review")).toBeVisible();
