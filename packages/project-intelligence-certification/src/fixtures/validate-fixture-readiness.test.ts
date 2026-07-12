@@ -7,7 +7,7 @@ const manifest = {
     tenantId: "tenant", workspaceId: "workspace-a", workspaceBId: "workspace-b", engineeringProjectId: "project",
     mappingId: "mapping", approvedMappingId: "approved", foreignMappingId: "foreign-mapping", engineeringOsInstallationId: "engineering-install",
     piApplicationInstallationId: "pi-install", licenceId: "licence", seatAssignments: { owner: "seat-owner", engineer: "seat-engineer" },
-    users: Object.fromEntries(["owner", "admin", "engineer", "engineerWorkspaceBOnly", "viewer", "userWithoutWorkspace", "otherTenantOwner"].map((role) => [role, { id: `${role}-id`, email: `${role}@test`, jwt: `${role}-jwt`, role }])),
+    users: Object.fromEntries(["owner", "admin", "engineer", "engineerWorkspaceBOnly", "viewer", "otherTenantOwner"].map((role) => [role, { id: `${role}-id`, email: `${role}@test`, jwt: `${role}-jwt`, role }])),
   },
   denial: {
     piNotInstalledTenant: { tenantId: "no-pi", workspaceId: "no-pi-workspace", engineeringOsInstallationId: "no-pi-install", owner: { id: "a", email: "a@test", jwt: "a-jwt", role: "owner" }, expectedCode: "project_intelligence_not_installed", expectedReason: "application_not_in_plan" },

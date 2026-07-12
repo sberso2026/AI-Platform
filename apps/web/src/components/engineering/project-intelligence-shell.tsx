@@ -64,9 +64,11 @@ export function ProjectIntelligenceShell({
               <Link
                 key={href}
                 href={href}
-                {...(href === "/engineering/apps/project-intelligence"
-                  ? { "data-testid": "project-intelligence-nav-overview" }
-                  : {})}
+                {...(href.endsWith("/migration")
+                  ? { "data-testid": "project-intelligence-nav-migration" }
+                  : href === "/engineering/apps/project-intelligence"
+                    ? { "data-testid": "project-intelligence-nav-overview" }
+                    : {})}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
                   active
                     ? "bg-cyan-400/15 font-medium text-cyan-200"

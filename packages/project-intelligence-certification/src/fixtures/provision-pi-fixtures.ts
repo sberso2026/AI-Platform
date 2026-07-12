@@ -266,14 +266,12 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
   const engineer = await createFixtureUser(admin, url, anonKey, password, "baseline-engineer", id, "engineer");
   const engineerB = await createFixtureUser(admin, url, anonKey, password, "baseline-engineer-b", id, "engineer");
   const viewer = await createFixtureUser(admin, url, anonKey, password, "baseline-viewer", id, "viewer");
-  const userWithoutWorkspace = await createFixtureUser(admin, url, anonKey, password, "workspace-unassigned", id, "engineer");
   await addMembership(admin, baselineTenant.id, [workspaceA.id, workspaceB.id], owner.id, "owner");
   await addMembership(admin, baselineTenant.id, [workspaceA.id, workspaceB.id], administrator.id, "admin");
   await addMembership(admin, baselineTenant.id, [workspaceA.id], engineer.id, "engineer");
   await addMembership(admin, baselineTenant.id, [workspaceB.id], engineerB.id, "engineer");
   await addMembership(admin, baselineTenant.id, [workspaceA.id], viewer.id, "viewer");
-  await addMembership(admin, baselineTenant.id, [], userWithoutWorkspace.id, "engineer");
-  for (const user of [owner, administrator, engineer, engineerB, viewer, userWithoutWorkspace]) {
+  for (const user of [owner, administrator, engineer, engineerB, viewer]) {
     await removeOrphanMemberships(admin, user.id, baselineTenant.id);
   }
 
@@ -361,12 +359,21 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
   const suspended = await seedEntitlements(admin, suspendedTenant.id, suspendedWorkspace.id, suspendedOwner.id, { suspended: true });
   await seedSeat(admin, suspendedTenant.id, suspendedWorkspace.id, suspended.subscriptionId, suspended.licenceId, suspendedOwner.id);
 
+  // Dedicated tenant with entitlements but deliberately zero workspace memberships for the user.
+  const noWorkspaceTenant = await createTenant(admin, `${PI_CERT_SLUG_PREFIX}no-ws-${id}`, "No workspace membership", true);
+  const noWorkspaceWorkspace = await workspace(admin, noWorkspaceTenant.id, `no-ws-${id}`);
+  const noWorkspaceUser = await createFixtureUser(admin, url, anonKey, password, "workspace-unassigned", id, "engineer");
+  await addMembership(admin, noWorkspaceTenant.id, [], noWorkspaceUser.id, "engineer");
+  await removeOrphanMemberships(admin, noWorkspaceUser.id, noWorkspaceTenant.id);
+  const noWorkspaceEntitlement = await seedEntitlements(admin, noWorkspaceTenant.id, noWorkspaceWorkspace.id, noWorkspaceUser.id);
+  await seedSeat(admin, noWorkspaceTenant.id, noWorkspaceWorkspace.id, noWorkspaceEntitlement.subscriptionId, noWorkspaceEntitlement.licenceId, noWorkspaceUser.id);
+
   const manifest: PiFixtureManifest = {
     runId: id, createdAt: now(), slugPrefix: PI_CERT_SLUG_PREFIX,
     baseline: {
       tenantId: baselineTenant.id, workspaceId: workspaceA.id, workspaceBId: workspaceB.id,
       engineeringProjectId: project.id, mappingId: candidate.id, approvedMappingId: approved.id, foreignMappingId: foreignMapping.id,
-      users: { owner, admin: administrator, engineer, engineerWorkspaceBOnly: engineerB, viewer, userWithoutWorkspace, otherTenantOwner },
+      users: { owner, admin: administrator, engineer, engineerWorkspaceBOnly: engineerB, viewer, otherTenantOwner },
       engineeringOsInstallationId: entitlement.installationId, piApplicationInstallationId: entitlement.appInstallationId!,
       licenceId: entitlement.licenceId, seatAssignments: { owner: ownerSeat, engineer: engineerSeat },
     },
@@ -377,7 +384,12 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
       // `licence_suspended`.
       suspendedLicence: { tenantId: suspendedTenant.id, owner: suspendedOwner, licenceId: suspended.licenceId, expectedCode: "licence_suspended", expectedReason: "licence_not_found" },
       seatNotAssigned: { tenantId: baselineTenant.id, workspaceId: workspaceA.id, user: viewer, expectedCode: "seat_not_assigned", expectedReason: "seat_not_assigned" },
-      workspaceNotAssigned: { tenantId: baselineTenant.id, userWithoutWorkspace, expectedCode: "workspace_not_assigned", expectedReason: "workspace_not_assigned" },
+      workspaceNotAssigned: {
+        tenantId: noWorkspaceTenant.id,
+        userWithoutWorkspace: noWorkspaceUser,
+        expectedCode: "workspace_not_assigned",
+        expectedReason: "workspace_not_assigned",
+      },
     },
   };
   mkdirSync(resolve(process.cwd(), "artifacts"), { recursive: true });

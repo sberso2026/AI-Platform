@@ -25,7 +25,7 @@ export function validatePiFixtureReadiness(manifest: unknown): FixtureReadiness 
     for (const key of ["tenantId", "workspaceId", "workspaceBId", "engineeringProjectId", "mappingId", "approvedMappingId", "foreignMappingId", "engineeringOsInstallationId", "piApplicationInstallationId", "licenceId"] as const) {
       required(baseline[key], `baseline.${key}`, failures);
     }
-    for (const actor of ["owner", "admin", "engineer", "engineerWorkspaceBOnly", "viewer", "userWithoutWorkspace", "otherTenantOwner"]) {
+    for (const actor of ["owner", "admin", "engineer", "engineerWorkspaceBOnly", "viewer", "otherTenantOwner"]) {
       const user = baseline.users?.[actor];
       if (!user) {
         failures.push(`baseline.users.${actor} is required`);

@@ -42,8 +42,22 @@ export default function ProjectIntelligenceMigrationPage() {
     setMappings((current) => current.map((mapping) => mapping.id === id ? payload.data : mapping));
   }
 
-  if (loading) return <p className="text-slate-600" role="status">Loading mapping candidates…</p>;
-  if (error) return <p className="text-red-700" role="alert">{error}</p>;
+  if (loading) {
+    return (
+      <section>
+        <h2 className="text-2xl font-semibold text-slate-900">Migration review</h2>
+        <p className="mt-4 text-slate-600" role="status">Loading mapping candidates…</p>
+      </section>
+    );
+  }
+  if (error) {
+    return (
+      <section>
+        <h2 className="text-2xl font-semibold text-slate-900">Migration review</h2>
+        <p className="mt-4 text-red-700" role="alert">{error}</p>
+      </section>
+    );
+  }
 
   return (
     <section>

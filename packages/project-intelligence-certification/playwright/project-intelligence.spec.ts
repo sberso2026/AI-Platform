@@ -39,6 +39,7 @@ describePi("Phase 6C-1 Project Intelligence exact entitlement certification", ()
     await expect(page.getByTestId("login-page")).toHaveCount(0);
     await expect(page.getByTestId("access-denied")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Migration review" })).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-nav-migration")).toBeVisible();
 
     const approve = page.getByRole("button", { name: "Approve" }).first();
     if (await approve.count()) {
