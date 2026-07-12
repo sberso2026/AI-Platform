@@ -1,8 +1,10 @@
 # Project Intelligence — Data Ownership Matrix
 
-**Phase:** 6A discovery  
+**Phase:** 6A discovery + **6B approved decisions**  
 **Rule:** Engineering Core remains authoritative for shared engineering entities. Project Intelligence may own application-specific intelligence only.  
-**Certified baseline:** `customer-admin-rc-1` — do not weaken commerce/install/RLS semantics.
+**Certified baseline:** `customer-admin-rc-1` — do not weaken commerce/install/RLS semantics.  
+**Production database:** RTB Platform Supabase is final SoT; standalone PI Supabase is migration source only (no permanent dual-DB production).  
+**Meetings:** Remain inside Project Intelligence for Phase 6B; approved outputs enter Core only via human review.
 
 ---
 

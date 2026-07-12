@@ -39,8 +39,11 @@ packages/customer-administration-certification/test-results/
 packages/customer-administration-certification/.tmp/
 packages/installation-certification/artifacts/
 packages/installation-certification/test-results/
+packages/project-intelligence-certification/artifacts/
+packages/project-intelligence-certification/test-results/
 test-results/customer-administration/
 .tmp/customer-administration/
+.tmp-phase5-artifact/
 
 # TypeScript
 *.tsbuildinfo

@@ -49,6 +49,10 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "applications.read": { productKey: ENGINEERING_PRODUCT, action: "application.list", seatRequired: true },
   "demo.read": { productKey: ENGINEERING_PRODUCT, action: "demo.read", seatRequired: true },
   "demo.write": { productKey: ENGINEERING_PRODUCT, action: "demo.admin", seatRequired: true, cachePolicy: "fresh" },
+  "project-intelligence-mappings.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "mapping.read", seatRequired: true, workspaceRequired: true },
+  "project-intelligence-mappings.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "mapping.write", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
+  "project-intelligence-health.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "health.read", seatRequired: true, workspaceRequired: true },
+  "project-intelligence-ai-summary.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", featureKey: "ai_assistant", action: "ai.execute", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
 };
 
 /** Page route application guards */
@@ -76,6 +80,10 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
   "/engineering/companies": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
   "/engineering/disciplines": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
   "/engineering/search": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
+  "/engineering/apps/project-intelligence": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
+  "/engineering/apps/project-intelligence/migration": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "migration.access", seatRequired: true, workspaceRequired: true },
+  "/engineering/apps/project-intelligence/health": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "health.read", seatRequired: true, workspaceRequired: true },
+  "/engineering/apps/project-intelligence/settings": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "settings.read", seatRequired: true, workspaceRequired: true },
 };
 
 export function resolveApiPolicyKey(segment: string, method: string): string {

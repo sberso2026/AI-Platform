@@ -99,6 +99,12 @@ export const PROJECT_INTELLIGENCE_SUBSCRIBE_EVENTS: EngineeringEventType[] = [
 export const PROJECT_INTELLIGENCE_PUBLISH_EVENTS: EngineeringEventType[] = [
   "project_intelligence.sync.requested",
   "project_intelligence.sync.completed",
+  "project_intelligence.mapping.discovered",
+  "project_intelligence.mapping.approved",
+  "project_intelligence.mapping.rejected",
+  "project_intelligence.mapping.conflict_detected",
+  "project_intelligence.mapping.deferred",
+  "project_intelligence.migration.completed",
 ];
 
 export interface ProjectIntelligenceIntegrationClient {

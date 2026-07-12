@@ -43,8 +43,8 @@ export const ENGINEERING_APPLICATIONS = [
   {
     app_key: "project_intelligence",
     name: "Project Intelligence",
-    description: "Engineering project analytics and decision support",
-    version: "0.0.0",
+    description: "Engineering project analytics and decision support — Phase 6B foundation",
+    version: "0.1.0",
     status: "registered",
     enabled: false,
     required_capabilities: ["engineering_project_management"],

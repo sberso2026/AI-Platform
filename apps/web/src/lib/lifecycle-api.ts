@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 import { CommerceDomainError } from "@rtb/platform-commerce";
+import { ProjectIntelligenceError } from "@rtb/project-intelligence";
 
 export function resolveRequestId(request: Request): string {
   return (
@@ -16,6 +17,7 @@ export interface LifecycleErrorBody {
     code: string;
     message: string;
     requestId: string;
+    details?: Record<string, unknown>;
   };
 }
 
@@ -23,9 +25,10 @@ export function lifecycleErrorResponse(
   code: string,
   message: string,
   status: number,
-  requestId: string
+  requestId: string,
+  details?: Record<string, unknown>,
 ): NextResponse<LifecycleErrorBody> {
-  return NextResponse.json({ error: { code, message, requestId } }, { status });
+  return NextResponse.json({ error: { code, message, requestId, ...(details ? { details } : {}) } }, { status });
 }
 
 export function unauthenticatedResponse(requestId: string): NextResponse<LifecycleErrorBody> {
@@ -47,6 +50,9 @@ export function handleCommerceDomainError(
   if (err instanceof CommerceDomainError) {
     return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId);
   }
+  if (err instanceof ProjectIntelligenceError) {
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
+  }
   console.error("[lifecycle-api] unhandled error", { requestId, err });
   return lifecycleErrorResponse(
     "internal_error",
@@ -56,7 +62,7 @@ export function handleCommerceDomainError(
   );
 }
 
-export function parseLifecycleErrorBody(body: unknown): { code: string; message: string; requestId?: string } {
+export function parseLifecycleErrorBody(body: unknown): { code: string; message: string; requestId?: string; details?: Record<string, unknown> } {
   if (!body || typeof body !== "object") throw new Error("invalid error body");
   const payload = body as Record<string, unknown>;
   const nested = payload.error;
@@ -66,6 +72,7 @@ export function parseLifecycleErrorBody(body: unknown): { code: string; message:
       code: String(err.code ?? ""),
       message: String(err.message ?? err.error ?? ""),
       requestId: typeof err.requestId === "string" ? err.requestId : undefined,
+      details: err.details && typeof err.details === "object" ? err.details as Record<string, unknown> : undefined,
     };
   }
   return {

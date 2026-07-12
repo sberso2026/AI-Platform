@@ -28,7 +28,15 @@ export type EngineeringCoreEventType =
 /** Project Intelligence sync events (external app ↔ Engineering Core) */
 export type ProjectIntelligenceEventType =
   | "project_intelligence.sync.requested"
-  | "project_intelligence.sync.completed";
+  | "project_intelligence.sync.completed"
+  | "project_intelligence.sync.failed"
+  | "project_intelligence.mapping.candidate_created"
+  | "project_intelligence.mapping.discovered"
+  | "project_intelligence.mapping.approved"
+  | "project_intelligence.mapping.rejected"
+  | "project_intelligence.mapping.conflict_detected"
+  | "project_intelligence.mapping.deferred"
+  | "project_intelligence.migration.completed";
 
 export type EngineeringEventType = EngineeringCoreEventType | ProjectIntelligenceEventType;
 
@@ -50,6 +58,14 @@ export const ENGINEERING_CORE_EVENT_TYPES: EngineeringCoreEventType[] = [
 export const PROJECT_INTELLIGENCE_EVENT_TYPES: ProjectIntelligenceEventType[] = [
   "project_intelligence.sync.requested",
   "project_intelligence.sync.completed",
+  "project_intelligence.sync.failed",
+  "project_intelligence.mapping.candidate_created",
+  "project_intelligence.mapping.discovered",
+  "project_intelligence.mapping.approved",
+  "project_intelligence.mapping.rejected",
+  "project_intelligence.mapping.conflict_detected",
+  "project_intelligence.mapping.deferred",
+  "project_intelligence.migration.completed",
 ];
 
 export interface EngineeringEventEnvelope<T extends EngineeringEventType = EngineeringEventType> {
@@ -143,6 +159,21 @@ export interface ProjectIntelligenceSyncCompletedPayload {
   completed_at: string;
 }
 
+export interface ProjectIntelligenceSyncFailedPayload {
+  engineering_project_id: string;
+  project_intelligence_project_id?: string;
+  error_code: string;
+  failed_at: string;
+}
+
+export interface ProjectIntelligenceMappingPayload {
+  mapping_id: string;
+  engineering_project_id: string;
+  legacy_project_intelligence_project_id: string;
+  mapping_status: "discovered" | "approved" | "conflict" | "pending_review" | "migrated";
+  correlation_id?: string;
+}
+
 export type EngineeringEventPayloadMap = {
   "engineering.project.created": EngineeringProjectCreatedPayload;
   "engineering.project.updated": EngineeringProjectUpdatedPayload;
@@ -156,6 +187,14 @@ export type EngineeringEventPayloadMap = {
   "engineering.lesson.created": EngineeringLessonCreatedPayload;
   "project_intelligence.sync.requested": ProjectIntelligenceSyncRequestedPayload;
   "project_intelligence.sync.completed": ProjectIntelligenceSyncCompletedPayload;
+  "project_intelligence.sync.failed": ProjectIntelligenceSyncFailedPayload;
+  "project_intelligence.mapping.candidate_created": ProjectIntelligenceMappingPayload;
+  "project_intelligence.mapping.discovered": ProjectIntelligenceMappingPayload;
+  "project_intelligence.mapping.approved": ProjectIntelligenceMappingPayload;
+  "project_intelligence.mapping.rejected": ProjectIntelligenceMappingPayload;
+  "project_intelligence.mapping.conflict_detected": ProjectIntelligenceMappingPayload;
+  "project_intelligence.mapping.deferred": ProjectIntelligenceMappingPayload;
+  "project_intelligence.migration.completed": ProjectIntelligenceMappingPayload;
 };
 
 export function isEngineeringEventType(value: string): value is EngineeringEventType {

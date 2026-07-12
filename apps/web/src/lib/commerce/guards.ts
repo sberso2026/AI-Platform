@@ -35,7 +35,7 @@ const PRODUCT_SLUG_BY_PATH: Record<string, string> = {
 };
 
 const APPLICATION_BY_PATH_PREFIX: Array<{ prefix: string; key: string }> = [
-  { prefix: "/engineering/project-intelligence", key: "project_intelligence" },
+  { prefix: "/engineering/apps/project-intelligence", key: "project_intelligence" },
   { prefix: "/engineering/inspection", key: "inspection_intelligence" },
   { prefix: "/engineering/project-controls", key: "project_controls" },
   { prefix: "/engineering/meetings", key: "meetings" },
