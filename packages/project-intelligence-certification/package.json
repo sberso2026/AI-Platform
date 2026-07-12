@@ -14,6 +14,8 @@
     "test:rls": "vitest run src/rls/",
     "test:http": "vitest run src/http/nested-error-contract.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:documents": "playwright test playwright/documents.spec.ts",
+    "test:e2e:a11y": "playwright test playwright/documents.spec.ts -g \"landmarks on documents|responsive documents\"",
     "verify-hosted-schema": "vitest run src/hosted-schema.test.ts"
   },
   "dependencies": {

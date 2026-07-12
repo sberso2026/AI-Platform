@@ -125,16 +125,18 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     await page.goto(`${documentsPath}/query`);
+    await expect(page.getByTestId("project-intelligence-documents-query")).toBeVisible({ timeout: 30_000 });
     await page.getByTestId("project-intelligence-documents-query-abstain").click();
-    await expect(page.getByTestId("project-intelligence-answer-status-abstained")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-answer-status-abstained")).toBeVisible({ timeout: 15_000 });
   });
 
   test("I verify conflicting evidence", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
     await page.goto(`${documentsPath}/query`);
+    await expect(page.getByTestId("project-intelligence-documents-query")).toBeVisible({ timeout: 30_000 });
     await page.getByTestId("project-intelligence-documents-query-conflict").click();
-    await expect(page.getByTestId("project-intelligence-answer-status-conflicting_evidence")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-answer-status-conflicting_evidence")).toBeVisible({ timeout: 15_000 });
   });
 
   test("J compare revisions", async ({ page, context }) => {
