@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-import { HOSTED_PROJECT_REF, resolveSupabaseUrl } from "../src/lib/env.js";
+import { HOSTED_PROJECT_REF, resolveSupabaseUrl } from "./env.js";
 
 const ENGINEERING_PRODUCT_ID = "c1000000-0000-4000-8000-000000000001";
 const ENGINEERING_SLUG = "engineering-os";
