@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canAutoApprove, canTransition, detectConflict } from "../src/domain/mapping-state-machine.js";
-import { MappingStatus } from "../src/types/mapping.js";
+import { canAutoApprove, canTransition, detectConflict } from "../src/domain/mapping-state-machine";
+import { MappingStatus } from "../src/types/mapping";
 
 describe("mapping state machine", () => {
   it("only permits defined transitions", () => {

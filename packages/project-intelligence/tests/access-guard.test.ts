@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateAccess, evaluateProjectIntelligenceAccess, requireProjectIntelligenceAdmin } from "../src/security/access-guard.js";
+import { evaluateAccess, evaluateProjectIntelligenceAccess, requireProjectIntelligenceAdmin } from "../src/security/access-guard";
 
 describe("access guard", () => {
   const reader = {

@@ -1,4 +1,4 @@
-import { ProjectIntelligenceError, type ProjectIntelligenceErrorCode } from "../domain/errors.js";
+import { ProjectIntelligenceError, type ProjectIntelligenceErrorCode } from "../domain/errors";
 
 export type ProjectIntelligencePermission = "read" | "admin" | "migration";
 export interface AccessContext {

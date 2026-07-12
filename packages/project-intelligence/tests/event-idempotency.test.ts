@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectIntelligenceEventId } from "../src/events/project-intelligence-events.js";
+import { projectIntelligenceEventId } from "../src/events/project-intelligence-events";
 
 describe("event idempotency", () => {
   it("creates stable identifiers from the operation identity", () => {

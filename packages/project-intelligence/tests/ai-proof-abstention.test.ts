@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProjectIntelligenceAIAdapter } from "../src/adapters/ai-adapter.js";
+import { ProjectIntelligenceAIAdapter } from "../src/adapters/ai-adapter";
 
 describe("AI proof abstention", () => {
   it("does not invoke the director without enough evidence", async () => {

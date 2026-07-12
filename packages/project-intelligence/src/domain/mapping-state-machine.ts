@@ -1,4 +1,4 @@
-import { MappingStatus, type MappingEvidence } from "../types/mapping.js";
+import { MappingStatus, type MappingEvidence } from "../types/mapping";
 
 const TRANSITIONS: Readonly<Record<MappingStatus, readonly MappingStatus[]>> = {
   [MappingStatus.Discovered]: [MappingStatus.Candidate, MappingStatus.Retired],

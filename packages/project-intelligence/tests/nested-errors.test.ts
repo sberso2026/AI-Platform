@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProjectIntelligenceError } from "../src/domain/errors.js";
+import { ProjectIntelligenceError } from "../src/domain/errors";
 
 describe("nested errors", () => {
   it("uses the standard nested error envelope", () => {

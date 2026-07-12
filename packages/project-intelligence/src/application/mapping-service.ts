@@ -1,6 +1,6 @@
-import { ProjectIntelligenceError } from "../domain/errors.js";
-import { canTransition } from "../domain/mapping-state-machine.js";
-import { MappingStatus, type ProjectMapping } from "../types/mapping.js";
+import { ProjectIntelligenceError } from "../domain/errors";
+import { canTransition } from "../domain/mapping-state-machine";
+import { MappingStatus, type ProjectMapping } from "../types/mapping";
 
 export interface MappingRepository {
   get(id: string): Promise<ProjectMapping | null>;
