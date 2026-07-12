@@ -416,13 +416,29 @@ async function provisionTenant(
 }
 
 async function cleanupStaleCertTenants(admin: ReturnType<typeof createClient>): Promise<void> {
-  const patterns = [`${CERT_SLUG_PREFIX}%`, "cert-install-a-%", "cert-install-b-%"];
-  for (const pattern of patterns) {
-    const { data } = await admin.from("tenants").select("id, slug").like("slug", pattern);
-    for (const row of data ?? []) {
-      log(`Removing stale cert tenant: ${row.slug as string}`);
-      await admin.from("tenants").delete().eq("id", row.id as string);
-    }
+  // Primary fixture tenants look like cert-install-a-<runId> / cert-install-b-<runId>.
+  // Avoid matching role-suffixed leftover rows (cert-install-b-owner-*) that inflate cleanup time.
+  const primaryFixtureSlug = /^cert-install-[ab]-[a-z0-9]+$/i;
+  const { data } = await admin.from("tenants").select("id, slug").like("slug", `${CERT_SLUG_PREFIX}%`);
+  const stale = (data ?? []).filter((row) => primaryFixtureSlug.test(String(row.slug ?? "")));
+
+  // Bound cleanup so CI cannot spend unbounded time deleting historical debris.
+  const limited = stale.slice(0, 40);
+  if (stale.length > limited.length) {
+    log(
+      `Stale cert tenants capped: deleting ${limited.length} of ${stale.length} matching primary fixture slugs`
+    );
+  }
+
+  const concurrency = 5;
+  for (let i = 0; i < limited.length; i += concurrency) {
+    const batch = limited.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (row) => {
+        log(`Removing stale cert tenant: ${row.slug as string}`);
+        await admin.from("tenants").delete().eq("id", row.id as string);
+      })
+    );
   }
 }
 
