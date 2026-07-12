@@ -25,4 +25,7 @@ export * from "./documents/governed-embedding-adapter";
 export * from "./documents/postgres-index-adapter";
 export * from "./documents/document-worker";
 export * from "./documents/parser-routing";
+export * from "./documents/runtime-mode";
+export * from "./documents/embedding-registry";
+export * from "./documents/cost-controls";
 

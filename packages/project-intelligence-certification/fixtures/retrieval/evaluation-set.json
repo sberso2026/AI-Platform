@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "name": "pi-document-provider-eval-v1",
+  "provenance": "Synthetic non-confidential RTB engineering fixtures for Phase 6C-2 provider certification. No customer documents.",
+  "fixtures": [
+    {
+      "id": "native-text-spec",
+      "kind": "native_text",
+      "mimeType": "text/plain",
+      "fileName": "SPEC-1001-A.txt",
+      "revision": "A",
+      "checksumSha256": "cae30ff4ebc331009ae94b717cbbf2cd14f20e42d9de7ecbb9b801fb8bd9c516",
+      "content": "SPEC-1001 Revision A\n\nDesign Pressure\n\nThe design pressure for vessel V-101 is 16 bar g at 120 C.\n\nAbbreviations: NPSH, PSV, HAZOP.\n",
+      "expectedEvidence": [
+        "16 bar g",
+        "V-101"
+      ]
+    },
+    {
+      "id": "table-heavy-spec",
+      "kind": "table_heavy",
+      "mimeType": "text/plain",
+      "fileName": "SPEC-2002-B-tables.txt",
+      "revision": "B",
+      "documentClassification": "specification-table",
+      "checksumSha256": "3f2b9b810840977dc745a0ae37c84be34def8f52b26a09f66c07e4dd8a260931",
+      "content": "SPEC-2002 Revision B\n\nTable 1 Nozzle Schedule\n\n| Tag | Size | Rating | Service |\n| V-101-N1 | 6 in | 150# | Inlet |\n| V-101-N2 | 4 in | 150# | Outlet |\n\nNote: sizes are NPS.\n",
+      "expectedEvidence": [
+        "V-101-N1",
+        "6 in",
+        "150#"
+      ]
+    },
+    {
+      "id": "numeric-units",
+      "kind": "numeric_tables",
+      "mimeType": "text/plain",
+      "fileName": "CALC-3003-A.txt",
+      "revision": "A",
+      "documentClassification": "specification-table",
+      "checksumSha256": "f0fa0c2c6bbe0e86835d97f812faac8470b890b1c1120d27d9aadf64d0e2d177",
+      "content": "CALC-3003 Revision A\n\n| Parameter | Value | Unit |\n| Design pressure | 16 | bar g |\n| Design temperature | 120 | C |\n| Corrosion allowance | 3.0 | mm |\n",
+      "expectedEvidence": [
+        "16",
+        "bar g",
+        "120",
+        "C"
+      ]
+    },
+    {
+      "id": "revision-current",
+      "kind": "multi_revision",
+      "mimeType": "text/plain",
+      "fileName": "SPEC-1001-B.txt",
+      "revision": "B",
+      "supersedes": "A",
+      "checksumSha256": "2c253343e70b84081e1dfd356c388f74f2294dcef738cbed5e271d2718231a9a",
+      "content": "SPEC-1001 Revision B\n\nDesign Pressure\n\nThe design pressure for vessel V-101 is 18 bar g at 120 C.\n",
+      "expectedEvidence": [
+        "18 bar g"
+      ]
+    },
+    {
+      "id": "revision-superseded",
+      "kind": "multi_revision",
+      "mimeType": "text/plain",
+      "fileName": "SPEC-1001-A-superseded.txt",
+      "revision": "A",
+      "current": false,
+      "checksumSha256": "4fd3f186f4b8b9485eec468fb77d5783d3ef1b93775dce9f9d2104d9e8cdfadf",
+      "content": "SPEC-1001 Revision A\n\nDesign Pressure\n\nThe design pressure for vessel V-101 is 16 bar g at 120 C.\n",
+      "expectedEvidence": [
+        "16 bar g"
+      ]
+    },
+    {
+      "id": "conflict-doc-a",
+      "kind": "conflicting_revisions",
+      "mimeType": "text/plain",
+      "fileName": "SPEC-4004-A.txt",
+      "revision": "A",
+      "checksumSha256": "e80244fd7ed7597ad80a0102fc3f8b358aa84471829804c537ff6b0db076034e",
+      "content": "SPEC-4004 Revision A\n\nPump P-201 rated capacity is 120 m3/h.\n",
+      "expectedEvidence": [
+        "120 m3/h"
+      ]
+    },
+    {
+      "id": "conflict-doc-b",
+      "kind": "conflicting_revisions",
+      "mimeType": "text/plain",
+      "fileName": "DATASHEET-4004-A.txt",
+      "revision": "A",
+      "checksumSha256": "c112df974b01f799b90f826d483f14cae1449ae84e90b5c9e6fff54ed0b7595e",
+      "content": "DATASHEET-4004 Revision A\n\nPump P-201 rated capacity is 95 m3/h.\n",
+      "expectedEvidence": [
+        "95 m3/h"
+      ]
+    },
+    {
+      "id": "absent-evidence",
+      "kind": "absent_evidence",
+      "mimeType": "text/plain",
+      "fileName": "SPEC-5005-A.txt",
+      "revision": "A",
+      "checksumSha256": "3ee41da023dd09a4378cbdc49b1fb517998c8cee663e030682a8d40c3ac5752a",
+      "content": "SPEC-5005 Revision A\n\nThis document covers painting specification only. No pressure ratings are provided.\n",
+      "expectedEvidence": []
+    },
+    {
+      "id": "out-of-scope",
+      "kind": "permission_denied_scope",
+      "mimeType": "text/plain",
+      "fileName": "CONF-OTHER-TENANT.txt",
+      "revision": "A",
+      "unauthorized": true,
+      "checksumSha256": "1321a7f610a7fde3ebc370bc47347b81b33ed1091a64d44a4c06554437070119",
+      "content": "OTHER-TENANT Document\n\nSecret design pressure 99 bar g.\n",
+      "expectedEvidence": []
+    },
+    {
+      "id": "scanned-ocr-fixture",
+      "kind": "scanned_pdf",
+      "mimeType": "text/plain",
+      "fileName": "SCAN-6006-A.ocr.txt",
+      "revision": "A",
+      "scannedLikely": true,
+      "checksumSha256": "a7c5921abca7ed7a3d92aae03eefbf365c866d0f0bfb066f1bd4d0bb87225b0b",
+      "content": "[PI_OCR_FIXTURE]\nSCAN-6006 Revision A\nVessel V-202 MAWP is 10 bar g.\nDetected by OCR provider.\n",
+      "expectedEvidence": [
+        "V-202",
+        "10 bar g"
+      ]
+    },
+    {
+      "id": "docx-report",
+      "kind": "docx_report",
+      "mimeType": "text/plain",
+      "fileName": "RPT-7007-A.docx.txt",
+      "revision": "A",
+      "checksumSha256": "308189c0832e8445e11b5a81a377964e13865515ce4f7951b1c3e3d82e0eed69",
+      "content": "RPT-7007 Revision A\n\nExecutive Summary\n\nHAZOP recommendations include adding PSV-301 on line 8-P-101.\n",
+      "expectedEvidence": [
+        "PSV-301",
+        "8-P-101"
+      ]
+    },
+    {
+      "id": "digital-pdf-text",
+      "kind": "digital_pdf",
+      "mimeType": "text/plain",
+      "fileName": "PDF-8008-A.pdf.txt",
+      "revision": "A",
+      "checksumSha256": "e3df3f68289b176e53bafaf8e1510b3595c8a965a85ded60eafe3bb22d8cb9b4",
+      "content": "PDF-8008 Revision A\n\nNormal digital PDF extract.\nLine class is CL150 carbon steel.\n",
+      "expectedEvidence": [
+        "CL150"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "q-design-pressure-v101",
+      "query": "What is the design pressure for vessel V-101?",
+      "authorizedDocumentIds": [
+        "revision-current"
+      ],
+      "expectedRelevantDocumentIds": [
+        "revision-current"
+      ],
+      "expectedPageOrSection": "Design Pressure",
+      "expectedCitation": "18 bar g",
+      "expectedAnswerStatus": "answered",
+      "expectedAbstention": false,
+      "expectedConflict": false,
+      "numericExpectation": {
+        "value": 18,
+        "unit": "bar g"
+      }
+    },
+    {
+      "id": "q-superseded-avoidance",
+      "query": "What is the current design pressure for vessel V-101?",
+      "authorizedDocumentIds": [
+        "revision-current",
+        "revision-superseded"
+      ],
+      "expectedRelevantDocumentIds": [
+        "revision-current"
+      ],
+      "expectedPageOrSection": "Design Pressure",
+      "expectedCitation": "18 bar g",
+      "expectedAnswerStatus": "answered",
+      "expectedAbstention": false,
+      "expectedConflict": false,
+      "mustNotCite": [
+        "16 bar g"
+      ]
+    },
+    {
+      "id": "q-historical-revision",
+      "query": "What was the design pressure in revision A of SPEC-1001?",
+      "authorizedDocumentIds": [
+        "revision-superseded"
+      ],
+      "expectedRelevantDocumentIds": [
+        "revision-superseded"
+      ],
+      "expectedPageOrSection": "Design Pressure",
+      "expectedCitation": "16 bar g",
+      "expectedAnswerStatus": "answered",
+      "expectedAbstention": false,
+      "expectedConflict": false,
+      "numericExpectation": {
+        "value": 16,
+        "unit": "bar g"
+      }
+    },
+    {
+      "id": "q-conflict-capacity",
+      "query": "What is the rated capacity of pump P-201?",
+      "authorizedDocumentIds": [
+        "conflict-doc-a",
+        "conflict-doc-b"
+      ],
+      "expectedRelevantDocumentIds": [
+        "conflict-doc-a",
+        "conflict-doc-b"
+      ],
+      "expectedPageOrSection": null,
+      "expectedCitation": null,
+      "expectedAnswerStatus": "conflicting_evidence",
+      "expectedAbstention": false,
+      "expectedConflict": true
+    },
+    {
+      "id": "q-absent",
+      "query": "What is the design pressure in the painting specification?",
+      "authorizedDocumentIds": [
+        "absent-evidence"
+      ],
+      "expectedRelevantDocumentIds": [],
+      "expectedPageOrSection": null,
+      "expectedCitation": null,
+      "expectedAnswerStatus": "abstained",
+      "expectedAbstention": true,
+      "expectedConflict": false
+    },
+    {
+      "id": "q-table-nozzle",
+      "query": "What size is nozzle V-101-N1?",
+      "authorizedDocumentIds": [
+        "table-heavy-spec"
+      ],
+      "expectedRelevantDocumentIds": [
+        "table-heavy-spec"
+      ],
+      "expectedPageOrSection": "Table 1",
+      "expectedCitation": "6 in",
+      "expectedAnswerStatus": "answered",
+      "expectedAbstention": false,
+      "expectedConflict": false,
+      "tableExpectation": {
+        "rowLabel": "V-101-N1",
+        "column": "Size",
+        "value": "6 in"
+      }
+    },
+    {
+      "id": "q-unauthorized",
+      "query": "What is the secret design pressure?",
+      "authorizedDocumentIds": [],
+      "expectedRelevantDocumentIds": [],
+      "expectedPageOrSection": null,
+      "expectedCitation": null,
+      "expectedAnswerStatus": "insufficient_permission",
+      "expectedAbstention": true,
+      "expectedConflict": false
+    },
+    {
+      "id": "q-ocr-mawp",
+      "query": "What is the MAWP for vessel V-202?",
+      "authorizedDocumentIds": [
+        "scanned-ocr-fixture"
+      ],
+      "expectedRelevantDocumentIds": [
+        "scanned-ocr-fixture"
+      ],
+      "expectedPageOrSection": null,
+      "expectedCitation": "10 bar g",
+      "expectedAnswerStatus": "answered",
+      "expectedAbstention": false,
+      "expectedConflict": false,
+      "numericExpectation": {
+        "value": 10,
+        "unit": "bar g"
+      }
+    }
+  ]
+}

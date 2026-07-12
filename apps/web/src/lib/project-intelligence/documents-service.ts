@@ -309,6 +309,14 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
       lastErrorCode: (job?.last_error_code as string | null) ?? null,
       parser: (asRecord(job?.payload).parserProvider as string | null) ?? null,
       embeddingModel: (asRecord(job?.payload).embeddingModel as string | null) ?? null,
+      ocrStatus: (asRecord(step?.metrics).ocrStatus as string | null) ?? null,
+      ocrUsed: Number(asRecord(step?.metrics).ocrPages ?? 0) > 0
+        || (
+          String(asRecord(step?.metrics).ocrStatus ?? "").startsWith("ocr_")
+          && String(asRecord(step?.metrics).ocrStatus) !== "ocr_not_required"
+        ),
+      reviewRequired: String(asRecord(step?.metrics).ocrStatus ?? "").includes("review")
+        || Number(asRecord(ingestion?.metadata).warningCount ?? 0) > 0,
     },
     findingsCount: findingsCount ?? 0,
     chunkCount: chunkCount ?? 0,

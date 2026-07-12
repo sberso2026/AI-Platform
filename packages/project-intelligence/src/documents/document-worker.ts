@@ -4,9 +4,16 @@ import { chunkParsedDocument } from "./chunking";
 import { contentChecksum } from "./durable-enqueue";
 import type { ProjectIntelligenceEmbeddingAdapter } from "./embedding-adapter";
 import { GovernedEmbeddingAdapter } from "./governed-embedding-adapter";
-import { decideOcrPolicy, selectDocumentParser } from "./parser-routing";
+import {
+  decideOcrPolicy,
+  ProjectIntelligenceParserRouter,
+  selectDocumentParser,
+  type OcrStatus,
+} from "./parser-routing";
 import { assertDocumentTransition } from "./ingestion-state-machine";
 import type { DocumentProcessingStatus } from "./types";
+import { assertWithinBudget, emptyUsageCounters, estimateEmbeddingCostUsd } from "./cost-controls";
+import { isHashEmbeddingProvider } from "./runtime-mode";
 
 export interface DocumentWorkerOptions {
   workerId?: string;
@@ -49,6 +56,7 @@ export class ProjectIntelligenceDocumentWorker {
   private readonly batchSize: number;
   private readonly leaseSeconds: number;
   private readonly embeddings: ProjectIntelligenceEmbeddingAdapter;
+  private readonly parserRouter: ProjectIntelligenceParserRouter;
 
   constructor(
     private readonly supabase: SupabaseClient,
@@ -58,6 +66,7 @@ export class ProjectIntelligenceDocumentWorker {
     this.batchSize = options.batchSize ?? 5;
     this.leaseSeconds = options.leaseSeconds ?? 180;
     this.embeddings = options.embeddings ?? new GovernedEmbeddingAdapter();
+    this.parserRouter = new ProjectIntelligenceParserRouter();
   }
 
   get identity(): string {
@@ -120,9 +129,11 @@ export class ProjectIntelligenceDocumentWorker {
     }
 
     await this.transition(job, "queued", "fetching");
+    const usage = emptyUsageCounters();
     const bytes = fixtureText
       ? new TextEncoder().encode(fixtureText)
       : await this.fetchAuthorizedBytes(job, payload);
+    usage.storageBytes = bytes.byteLength;
     await this.checkpoint(job, "fetch", "completed", { output_checksum: contentChecksum(bytes) });
 
     await this.transition(job, "fetching", "validating");
@@ -132,31 +143,99 @@ export class ProjectIntelligenceDocumentWorker {
     await this.checkpoint(job, "validate", "completed", { evidence_count: 1 });
 
     await this.transition(job, "validating", "parsing");
-    const route = selectDocumentParser(mimeType);
-    const parsed = await route.parser.parse({
+    const extractedHint = typeof payload.fixtureText === "string" ? payload.fixtureText.length : bytes.byteLength;
+    const route = selectDocumentParser(mimeType, undefined, {
+      mimeType,
+      fileName,
+      textDensity: extractedHint,
+      tableComplexity: String(payload.documentClassification ?? "").includes("table") ? "complex" : "simple",
+      documentClassification: typeof payload.documentClassification === "string"
+        ? payload.documentClassification
+        : undefined,
+      scannedLikely: mimeType.startsWith("image/") || Boolean(payload.scannedLikely),
+      costBudget: "standard",
+    });
+    let parsed = await route.parser.parse({
       engineeringDocumentId: job.engineering_document_id,
       revision,
       mimeType,
       fileName,
       bytes,
     });
-    const ocr = decideOcrPolicy({
+    usage.parserPages = parsed.pages.length;
+
+    const ocrPolicy = decideOcrPolicy({
       mimeType,
       extractedTextLength: parsed.pages.reduce((sum, page) => sum + page.text.length, 0),
       pageCount: parsed.pages.length,
       parserConfidence: parsed.confidence,
       warnings: parsed.warnings,
     });
-    if (ocr.applyOcr) {
-      parsed.warnings = [...parsed.warnings, `ocr_policy:${ocr.reason}:review_required`];
-      // OCR provider integration point — do not silently substitute low-confidence OCR as authoritative.
+    let ocrStatus: OcrStatus = ocrPolicy.applyOcr ? "ocr_required" : "ocr_not_required";
+    if (ocrPolicy.applyOcr) {
+      ocrStatus = "ocr_running";
+      const ocrResult = await this.parserRouter.executeOcr({
+        mimeType,
+        bytes,
+        pages: parsed.pages,
+        language: parsed.language,
+      });
+      ocrStatus = ocrResult.status;
+      usage.ocrPages = ocrResult.ocrPageCount;
+      if (ocrResult.status === "ocr_ready" || ocrResult.status === "ocr_ready_with_warnings") {
+        parsed = {
+          ...parsed,
+          pages: ocrResult.pages.length ? ocrResult.pages : parsed.pages,
+          confidence: Math.min(parsed.confidence, ocrResult.confidence),
+          warnings: [
+            ...parsed.warnings,
+            ...ocrResult.warnings,
+            `ocr_provider:${ocrResult.provider}`,
+            `ocr_status:${ocrResult.status}`,
+            `ocr_trace:${ocrResult.traceId}`,
+          ],
+        };
+      } else if (ocrResult.status === "ocr_review_required" || ocrResult.status === "ocr_failed") {
+        parsed = {
+          ...parsed,
+          warnings: [
+            ...parsed.warnings,
+            `ocr_policy:${ocrPolicy.reason}`,
+            `ocr_status:${ocrResult.status}`,
+            ...ocrResult.warnings,
+            "ocr_not_authoritative",
+          ],
+        };
+      }
+    }
+    const budget = assertWithinBudget(usage);
+    if (!budget.ok) {
+      throw Object.assign(new Error(`Processing budget exceeded: ${budget.violations.join(",")}`), {
+        code: "document_processing_budget_exceeded",
+      });
     }
     await this.checkpoint(job, "parse", "completed", {
       provider: parsed.parserProvider,
       version: parsed.parserVersion,
       warning_count: parsed.warnings.length,
       output_checksum: contentChecksum(JSON.stringify(parsed.pages.map((page) => page.text))),
+      metrics: {
+        route: route.route,
+        ocrStatus,
+        ocrPages: usage.ocrPages,
+        parserPages: usage.parserPages,
+      },
     });
+    await this.supabase.from("project_intelligence_document_jobs").update({
+      payload: {
+        ...payload,
+        parserProvider: parsed.parserProvider,
+        parserVersion: parsed.parserVersion,
+        ocrStatus,
+        ocrPages: usage.ocrPages,
+      },
+      updated_at: new Date().toISOString(),
+    }).eq("id", job.id);
 
     await this.transition(job, "parsing", "normalizing");
     await this.checkpoint(job, "normalize", "completed", { evidence_count: parsed.pages.length });
@@ -220,6 +299,18 @@ export class ProjectIntelligenceDocumentWorker {
     if (embedded.dimensions !== 1536) {
       throw Object.assign(new Error("embedding dimension mismatch"), { code: "embedding_failed" });
     }
+    if (
+      process.env.PI_PROVIDER_CERTIFICATION === "1"
+      && isHashEmbeddingProvider(embedded.provider)
+    ) {
+      throw Object.assign(new Error("Hash embeddings are forbidden during provider certification"), {
+        code: "embedding_failed",
+      });
+    }
+    usage.embeddingRequests += 1;
+    usage.embeddingTokens += chunks.reduce((sum, chunk) => sum + Math.ceil(chunk.content.length / 4), 0);
+    usage.vectorCount += embedded.embeddings.length;
+    usage.estimatedCostUsd += estimateEmbeddingCostUsd(usage.embeddingTokens);
 
     const { data: persistedChunks, error: loadErr } = await this.supabase
       .from("project_intelligence_document_chunks")
@@ -263,6 +354,11 @@ export class ProjectIntelligenceDocumentWorker {
       provider: embedded.provider,
       version: embedded.model,
       evidence_count: embedded.embeddings.length,
+      metrics: {
+        embeddingTokens: usage.embeddingTokens,
+        estimatedCostUsd: usage.estimatedCostUsd,
+        hashDisabled: process.env.PI_PROVIDER_CERTIFICATION === "1",
+      },
     });
 
     await this.transition(job, "embedding", "indexing");

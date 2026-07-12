@@ -1,0 +1,291 @@
+name: Project Intelligence Phase 6C-2 Provider Certification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/project-intelligence/**"
+      - "packages/project-intelligence-certification/**"
+      - "apps/web/src/app/**/project-intelligence/**"
+      - "apps/web/src/lib/project-intelligence/**"
+      - "supabase/migrations/20260713*"
+      - "docs/architecture/PROJECT_INTELLIGENCE_DOCUMENT_PROVIDER*"
+      - "docs/testing/PROJECT_INTELLIGENCE_RETRIEVAL*"
+      - "docs/security/PROJECT_INTELLIGENCE_DOCUMENT_PROVIDER*"
+      - ".github/workflows/project-intelligence-phase-6c2-provider-certification.yml"
+
+concurrency:
+  group: project-intelligence-phase-6c2-provider-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PI_PROVIDER_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  PLATFORM_EMBEDDING_ALLOW_STAGING_HASH: "0"
+  PLATFORM_EMBEDDING_MODEL: text-embedding-3-small
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI secret preflight (provider keys required)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PI_PROVIDER_CERTIFICATION: "1"
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/web typecheck
+      - name: Offline unit tests
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "0"
+          PI_PROVIDER_CERTIFICATION: "0"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+        run: pnpm --filter @rtb/project-intelligence-certification test:unit
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  provider-configuration:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Registry and dimension guards
+        env:
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+          PI_PROVIDER_CERTIFICATION: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate B"
+
+  hosted-schema:
+    needs: provider-configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+        run: pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema
+
+  provider-processing:
+    needs: hosted-schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Advanced parser and OCR execution
+        env:
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+          AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
+          AZURE_DOCUMENT_INTELLIGENCE_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_KEY }}
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate E"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate F"
+
+  semantic-evaluation:
+    needs: provider-processing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Semantic retrieval thresholds (predeclared)
+        env:
+          PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PLATFORM_EMBEDDING_MODEL: text-embedding-3-small
+          PI_PROVIDER_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate G"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate K"
+          test -n "${PLATFORM_EMBEDDING_API_KEY}${OPENAI_API_KEY}"
+
+  failure-recovery:
+    needs: semantic-evaluation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provider failure contracts
+        env:
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate L"
+
+  multi-worker:
+    needs: failure-recovery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Multi-worker lease behavior
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PI_PROVIDER_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+        run: pnpm --filter @rtb/project-intelligence-certification test:documents
+
+  browser-certification:
+    needs: multi-worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Browser E2E documents
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+          PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PI_PROVIDER_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+        run: |
+          pnpm --filter @rtb/web start &
+          npx --yes wait-on http://127.0.0.1:3000
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:documents
+
+  release-evidence:
+    needs:
+      - preflight
+      - validate
+      - provider-configuration
+      - hosted-schema
+      - provider-processing
+      - semantic-evaluation
+      - failure-recovery
+      - multi-worker
+      - browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provider certification artifact
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
+          AZURE_DOCUMENT_INTELLIGENCE_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PI_PROVIDER_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+          PLATFORM_EMBEDDING_ALLOW_STAGING_HASH: "0"
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: pnpm --filter @rtb/project-intelligence-certification certify:providers
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-intelligence-provider-certification
+          path: packages/project-intelligence-certification/artifacts/project-intelligence-provider-certification.json

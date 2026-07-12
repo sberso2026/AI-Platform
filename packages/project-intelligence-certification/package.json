@@ -6,6 +6,8 @@
   "scripts": {
     "ci-preflight": "tsx src/ci-preflight.ts",
     "certify": "tsx scripts/run-certification.ts",
+    "certify:providers": "tsx scripts/run-provider-certification.ts",
+    "update-fixture-checksums": "tsx scripts/update-fixture-checksums.ts",
     "provision": "tsx scripts/provision.ts",
     "verify-fixture": "tsx scripts/verify-fixture.ts",
     "cleanup": "tsx scripts/cleanup.ts",

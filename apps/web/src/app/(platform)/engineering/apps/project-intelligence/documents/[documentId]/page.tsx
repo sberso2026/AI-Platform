@@ -22,6 +22,10 @@ type Detail = {
     updatedAt: string | null;
     stub?: boolean;
     detail?: string;
+    parser?: string | null;
+    ocrStatus?: string | null;
+    ocrUsed?: boolean;
+    reviewRequired?: boolean;
   };
   findingsCount: number;
   chunkCount: number;
@@ -156,6 +160,16 @@ export default function ProjectIntelligenceDocumentDetailPage() {
           <p>Readiness: {detail.processing.readiness}</p>
           <p>Source revision: {detail.processing.sourceRevision ?? "—"}</p>
           <p>Processing version: {detail.processing.processingVersion}</p>
+          <p data-testid="project-intelligence-parser-type">Parser: {detail.processing.parser ?? "—"}</p>
+          <p data-testid="project-intelligence-ocr-used">
+            OCR: {detail.processing.ocrUsed ? "used" : detail.processing.ocrStatus ?? "not required"}
+          </p>
+          {detail.processing.ocrStatus && (
+            <p data-testid="project-intelligence-ocr-status">OCR status: {detail.processing.ocrStatus}</p>
+          )}
+          {detail.processing.reviewRequired && (
+            <p className="text-amber-800" data-testid="project-intelligence-review-required">Review required</p>
+          )}
           <p>Chunks: {detail.chunkCount}</p>
           <p>Warnings: {detail.processing.warningCount}</p>
           {detail.processing.detail && <p className="text-amber-800">{detail.processing.detail}</p>}

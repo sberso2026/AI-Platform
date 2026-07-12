@@ -53,6 +53,15 @@ export interface CertificationReport {
   embeddingModel?: string;
   vectorDimension?: number;
   vectorIndexType?: string;
+  hashEmbeddingsDisabled?: boolean;
+  advancedParserProvider?: string;
+  ocrProvider?: string;
+  parserFixtureCount?: number;
+  ocrPageCount?: number;
+  retrievalDatasetChecksum?: string;
+  retrievalThresholds?: Record<string, number>;
+  retrievalResults?: Record<string, number>;
+  productionDocumentIntelligenceReady?: boolean;
 }
 
 export function writeCertificationReport(path: string, report: CertificationReport): string {
