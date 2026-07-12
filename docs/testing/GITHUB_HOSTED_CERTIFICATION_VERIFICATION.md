@@ -41,8 +41,9 @@
 | Field | Value |
 |-------|--------|
 | Workflow | Project Intelligence Phase 6C-1 Certification |
-| Commit (hosted PASS artifact) | `aef5d17765a59e75700421536554bf5164079cbd` |
-| Hosted run | **29185298419** (hosted-certification PASS; release-evidence path fix pending) |
+| Commit | `871c0fdb0d5b152ef680a6535243829411af7426` |
+| Run | **29185600975** |
+| Jobs | preflight · validate · baseline-equivalence · hosted-certification · release-evidence — all PASS |
 | Gates | 14/14 |
 | Positive entitlement proven | true |
 | Baseline cases | 1892 passed / 0 failed / 0 skipped |
