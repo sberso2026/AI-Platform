@@ -43,11 +43,34 @@ function requireWorkspace(context: CommerceHandlerContext): string {
   return context.ctx.workspaceId;
 }
 
-function service() {
-  return createServiceClient() as unknown as ReturnType<typeof createServiceClient> & {
-    rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
-    from: (table: string) => any;
-  };
+type LooseQuery = {
+  select: (columns?: string, options?: Record<string, unknown>) => LooseQuery;
+  insert: (values: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
+  update: (values: unknown) => LooseQuery;
+  eq: (column: string, value: unknown) => LooseQuery;
+  in: (column: string, values: unknown[]) => LooseQuery;
+  is: (column: string, value: unknown) => LooseQuery;
+  order: (column: string, options?: Record<string, unknown>) => LooseQuery;
+  limit: (count: number) => LooseQuery;
+  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+  then?: unknown;
+};
+
+type LooseSupabase = {
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  from: (table: string) => LooseQuery;
+};
+
+function service(): LooseSupabase {
+  return createServiceClient() as unknown as LooseSupabase;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function asRecordList(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.map(asRecord) : [];
 }
 
 async function ensureCoreDocument(
@@ -103,24 +126,26 @@ export async function listDocumentIntelligence(
     .eq("workspace_id", workspaceId)
     .is("deleted_at", null);
 
-  const byDoc = new Map((ingestions ?? []).map((row: any) => [row.engineering_document_id, row]));
+  const byDoc = new Map(
+    asRecordList(ingestions).map((row) => [String(row.engineering_document_id), row]),
+  );
 
-  return (core ?? []).map((doc: any) => {
-    const ingestion = byDoc.get(doc.id);
-    const status = (ingestion?.status ?? "unregistered") as DocumentProcessingStatus | "unregistered";
+  return asRecordList(core).map((doc) => {
+    const ingestion = byDoc.get(String(doc.id));
+    const status = (String(ingestion?.status ?? "unregistered")) as DocumentProcessingStatus | "unregistered";
     const ready = status === "ready" || status === "ready_with_warnings";
     return {
-      engineeringDocumentId: doc.id,
-      documentNumber: doc.document_number,
-      title: doc.title,
-      revision: ingestion?.source_revision ?? doc.revision,
-      documentType: doc.document_type,
-      discipline: doc.discipline ?? null,
+      engineeringDocumentId: String(doc.id),
+      documentNumber: (doc.document_number as string | null) ?? null,
+      title: (doc.title as string | null) ?? null,
+      revision: (ingestion?.source_revision as string | undefined) ?? (doc.revision as string | null) ?? null,
+      documentType: (doc.document_type as string | null) ?? null,
+      discipline: (doc.discipline as string | null) ?? null,
       processingStatus: status,
-      warningCount: Number(ingestion?.metadata?.warningCount ?? 0),
+      warningCount: Number(asRecord(ingestion?.metadata).warningCount ?? 0),
       findingsCount: 0,
       readiness: status === "unregistered" ? "unregistered" : ready ? "ready" : "not_ready",
-      processedAt: ingestion?.updated_at ?? null,
+      processedAt: (ingestion?.updated_at as string | null) ?? null,
     };
   });
 }
@@ -194,19 +219,19 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
       status,
       sourceRevision: ingestion?.source_revision ?? core.revision ?? null,
       processingVersion: ingestion?.processing_version ?? "1",
-      warningCount: Number((ingestion?.metadata as any)?.warningCount ?? 0),
+      warningCount: Number(asRecord(ingestion?.metadata).warningCount ?? 0),
       readiness: status === "unregistered"
         ? "unregistered"
         : isAuthoritativeAnswerAllowed(status as DocumentProcessingStatus)
           ? "ready"
           : "not_ready",
-      updatedAt: ingestion?.updated_at ?? null,
-      jobStatus: job?.status ?? null,
-      attemptCount: job?.attempt_count ?? 0,
-      currentStep: step?.step_name ?? null,
-      lastErrorCode: job?.last_error_code ?? null,
-      parser: (job?.payload as any)?.parserProvider ?? null,
-      embeddingModel: (job?.payload as any)?.embeddingModel ?? null,
+      updatedAt: (ingestion?.updated_at as string | null) ?? null,
+      jobStatus: (job?.status as string | null) ?? null,
+      attemptCount: Number(job?.attempt_count ?? 0),
+      currentStep: (step?.step_name as string | null) ?? null,
+      lastErrorCode: (job?.last_error_code as string | null) ?? null,
+      parser: (asRecord(job?.payload).parserProvider as string | null) ?? null,
+      embeddingModel: (asRecord(job?.payload).embeddingModel as string | null) ?? null,
     },
     findingsCount: findingsCount ?? 0,
     chunkCount: chunkCount ?? 0,
@@ -232,7 +257,7 @@ export async function processDocument(
       ? "Pump design pressure is 16 bar g per section 4.2."
       : undefined);
 
-  const enqueued = await enqueueDocumentProcessing(service() as any, {
+  const enqueued = await enqueueDocumentProcessing(service() as unknown as Parameters<typeof enqueueDocumentProcessing>[0], {
     tenantId: context.ctx.tenantId,
     workspaceId,
     engineeringDocumentId: documentId,
@@ -362,7 +387,7 @@ export async function queryDocuments(
   }
 
   const supabase = service();
-  const index = new PostgresDocumentIndexAdapter(supabase as any);
+  const index = new PostgresDocumentIndexAdapter(supabase as unknown as ConstructorParameters<typeof PostgresDocumentIndexAdapter>[0]);
   const embeddings = new GovernedEmbeddingAdapter();
   const retrieval = new ProjectIntelligenceDocumentRetrievalService(index, embeddings);
   const result = await retrieval.retrieve(
@@ -502,7 +527,7 @@ export async function getDocumentHealth(context: CommerceHandlerContext) {
 }
 
 export async function runDocumentWorkerOnce(workerId?: string) {
-  const worker = new ProjectIntelligenceDocumentWorker(service() as any, {
+  const worker = new ProjectIntelligenceDocumentWorker(service() as unknown as ConstructorParameters<typeof ProjectIntelligenceDocumentWorker>[0], {
     workerId: workerId ?? `api-drain-${randomUUID().slice(0, 8)}`,
     batchSize: 10,
   });
