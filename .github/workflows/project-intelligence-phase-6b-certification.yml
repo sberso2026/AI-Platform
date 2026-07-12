@@ -6,12 +6,20 @@ on:
     paths:
       - "packages/project-intelligence/**"
       - "packages/project-intelligence-certification/**"
-      - "apps/web/src/app/(platform)/engineering/apps/project-intelligence/**"
-      - "apps/web/src/app/api/engineering/project-intelligence/**"
+      - "apps/web/src/app/**/project-intelligence/**"
       - "apps/web/src/components/engineering/project-intelligence-shell.tsx"
+      - "apps/web/src/lib/project-intelligence/**"
       - "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql"
-      - "docs/**"
+      - "docs/architecture/PROJECT_INTELLIGENCE*"
+      - "docs/migration/PROJECT_INTELLIGENCE*"
+      - "docs/testing/PROJECT_INTELLIGENCE*"
+      - "docs/testing/GITHUB_HOSTED_CERTIFICATION_VERIFICATION.md"
+      - "docs/operations/PROJECT_INTELLIGENCE*"
       - ".github/workflows/project-intelligence-phase-6b-certification.yml"
+
+concurrency:
+  group: project-intelligence-phase-6b-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   PROJECT_INTELLIGENCE_CERTIFICATION: "1"
@@ -27,9 +35,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }} }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: CI secret preflight
         env:
@@ -44,9 +55,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }} }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @rtb/project-intelligence typecheck
       - run: pnpm --filter @rtb/web typecheck
@@ -69,11 +83,15 @@ jobs:
       CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
-        with: { version: ${{ env.PNPM_VERSION }} }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: pnpm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @rtb/web build
         env:
@@ -81,7 +99,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - run: pnpm --filter @rtb/installation-certification provision
       - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
-      - run: pnpm project-intelligence:certify
+      - name: Hosted certification
         env:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
@@ -97,6 +115,7 @@ jobs:
           PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
           PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
           ALLOW_PRODUCTION_CERTIFICATION: "false"
+        run: pnpm project-intelligence:certify
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -119,7 +138,7 @@ jobs:
         run: |
           ARTIFACT="evidence/artifacts/project-intelligence-certification.json"
           test -f "$ARTIFACT"
-          node <<'NODE'
+          node -e '
           const fs = require("fs");
           const a = JSON.parse(fs.readFileSync("evidence/artifacts/project-intelligence-certification.json", "utf8"));
           const expected = process.env.EXPECTED_SHA;
@@ -128,20 +147,22 @@ jobs:
           if (!a.releaseEligible) failures.push("releaseEligible=false");
           if (a.commitSha !== expected) failures.push("commitSha mismatch");
           if (a.buildIdentityCommitSha !== expected) failures.push("buildIdentityCommitSha mismatch");
-          if ((a.skippedGateCount ?? 0) > 0) failures.push("required skips=" + a.skippedGateCount);
-          if ((a.unexpectedServerErrorCount ?? 0) > 0) failures.push("unexpected 5xx=" + a.unexpectedServerErrorCount);
+          if ((a.skippedGateCount || 0) > 0) failures.push("required skips=" + a.skippedGateCount);
+          if ((a.unexpectedServerErrorCount || 0) > 0) failures.push("unexpected 5xx=" + a.unexpectedServerErrorCount);
           if (!a.productionCertificationBlocked) failures.push("production certification not blocked");
           const summary = {
             releaseEligible: a.releaseEligible,
-            gates: `${a.passedGateCount}/${a.requiredGateCount}`,
+            gates: a.passedGateCount + "/" + a.requiredGateCount,
             unexpected5xx: a.unexpectedServerErrorCount,
             commitSha: a.commitSha,
-            expectedSha: expected,
+            expectedSha: expected
           };
           console.log(JSON.stringify(summary, null, 2));
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "```json\n" + JSON.stringify(summary, null, 2) + "\n```\n");
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "```json\n" + JSON.stringify(summary, null, 2) + "\n```\n");
+          }
           if (failures.length) {
             console.error(failures.join("; "));
             process.exit(1);
           }
-          NODE
+          '
