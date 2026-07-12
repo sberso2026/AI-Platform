@@ -164,11 +164,23 @@ jobs:
 
       - name: Publish job summary
         run: |
-          ARTIFACT="evidence/customer-administration/phase-4-certification.json"
-          if [ ! -f "$ARTIFACT" ]; then ARTIFACT="evidence/phase-4-certification.json"; fi
+          ARTIFACT=""
+          for candidate in \
+            "evidence/artifacts/generated/customer-administration/phase-4-certification.json" \
+            "evidence/customer-administration/phase-4-certification.json" \
+            "evidence/phase-4-certification.json"
+          do
+            if [ -f "$candidate" ]; then ARTIFACT="$candidate"; break; fi
+          done
+          if [ -z "$ARTIFACT" ]; then
+            echo "Certification artifact not found under evidence/" >&2
+            find evidence -type f -name "*.json" | head -n 50 >&2 || true
+            exit 1
+          fi
           echo "## Customer Admin Release Evidence" >> "$GITHUB_STEP_SUMMARY"
           echo "- run: ${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- sha: ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- artifact: $ARTIFACT" >> "$GITHUB_STEP_SUMMARY"
           node -e "const fs=require('fs'); const p=process.argv[1]; const a=JSON.parse(fs.readFileSync(p,'utf8')); console.log(JSON.stringify({releaseEligible:a.releaseEligible,commitSha:a.commitSha,gates:a.passedGateCount+'/'+a.requiredGateCount,unexpected5xx:a.unexpectedServerErrorCount,productionCertificationBlocked:a.productionCertificationBlocked},null,2));" "$ARTIFACT" >> "$GITHUB_STEP_SUMMARY"
 
   release-approval:
@@ -197,8 +209,19 @@ jobs:
           path: evidence
       - name: Revalidate immutable artifact
         run: |
-          ARTIFACT="evidence/customer-administration/phase-4-certification.json"
-          if [ ! -f "$ARTIFACT" ]; then ARTIFACT="evidence/phase-4-certification.json"; fi
+          ARTIFACT=""
+          for candidate in \
+            "evidence/artifacts/generated/customer-administration/phase-4-certification.json" \
+            "evidence/customer-administration/phase-4-certification.json" \
+            "evidence/phase-4-certification.json"
+          do
+            if [ -f "$candidate" ]; then ARTIFACT="$candidate"; break; fi
+          done
+          if [ -z "$ARTIFACT" ]; then
+            echo "Certification artifact not found under evidence/" >&2
+            find evidence -type f -name "*.json" | head -n 50 >&2 || true
+            exit 1
+          fi
           pnpm customer-admin:verify-release-artifact \
             --artifact "$ARTIFACT" \
             --commit-sha "${{ github.sha }}" \
