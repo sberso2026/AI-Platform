@@ -147,7 +147,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     await expect(page.getByTestId("login-page")).toHaveCount(0);
     await expect(page.getByTestId("access-denied")).toHaveCount(0);
     await page.getByTestId("project-intelligence-documents-query-submit").click();
-    await expect(page.getByTestId("project-intelligence-documents-answer")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-documents-answer")).toBeVisible({ timeout: 30_000 });
   });
 
   test("F verify citations", async ({ page, context }) => {

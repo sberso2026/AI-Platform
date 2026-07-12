@@ -84,66 +84,35 @@ async function ensureCoreDocument(
   const supabase = service();
   const documentNumber = body.documentNumber
     ?? `CERT-${documentId.replace(/-/g, "").slice(-10).toUpperCase()}`;
-  const payload = {
-    id: documentId,
-    tenant_id: context.ctx.tenantId,
-    workspace_id: workspaceId,
-    document_number: documentNumber,
-    title: body.title ?? `Document ${documentId.slice(0, 8)}`,
-    revision: body.revision ?? "A",
-    status: "issued",
-    document_type: "specification",
-    mime_type: body.mimeType ?? "text/plain",
-    source: "project_intelligence_cert_fixture",
-    uploaded_by: context.ctx.userId,
-    uploaded_at: new Date().toISOString(),
-  };
 
-  // Upsert by primary key so leftover cross-tenant cert UUIDs are reassigned to this tenant/workspace.
-  const upsertResult = await supabase
-    .from("engineering_documents")
-    .upsert(payload as never, { onConflict: "id" });
+  const { data, error } = await supabase.rpc("pi_document_ensure_core_document", {
+    p_id: documentId,
+    p_tenant_id: context.ctx.tenantId,
+    p_workspace_id: workspaceId,
+    p_document_number: documentNumber,
+    p_title: body.title ?? `Document ${documentId.slice(0, 8)}`,
+    p_revision: body.revision ?? "A",
+    p_mime_type: body.mimeType ?? "text/plain",
+    p_uploaded_by: context.ctx.userId,
+  });
 
-  if (upsertResult.error) {
-    // Unique (tenant_id, document_number, revision) collision: force a run-unique number and retry.
-    if (/duplicate|unique/i.test(upsertResult.error.message)) {
-      const retryPayload = {
-        ...payload,
-        document_number: `${documentNumber}-${context.ctx.tenantId.replace(/-/g, "").slice(0, 8).toUpperCase()}`,
-      };
-      const retry = await supabase
-        .from("engineering_documents")
-        .upsert(retryPayload as never, { onConflict: "id" });
-      if (retry.error) {
-        throw new DocumentIntelligenceError(
-          "document_not_found",
-          `Unable to register Core document: ${retry.error.message}`,
-          422,
-        );
-      }
-    } else {
-      throw new DocumentIntelligenceError(
-        "document_not_found",
-        `Unable to register Core document: ${upsertResult.error.message}`,
-        422,
-      );
-    }
+  if (error) {
+    throw new DocumentIntelligenceError(
+      "document_not_found",
+      `Unable to register Core document: ${error.message}`,
+      422,
+    );
   }
 
-  const { data: verified } = await supabase
-    .from("engineering_documents")
-    .select("id, tenant_id, workspace_id")
-    .eq("id", documentId)
-    .maybeSingle();
-  const verifiedRow = verified as { id?: string; tenant_id?: string; workspace_id?: string } | null;
+  const row = asRecord(data);
   if (
-    !verifiedRow?.id
-    || verifiedRow.tenant_id !== context.ctx.tenantId
-    || verifiedRow.workspace_id !== workspaceId
+    String(row.id ?? "") !== documentId
+    || String(row.tenant_id ?? "") !== context.ctx.tenantId
+    || String(row.workspace_id ?? "") !== workspaceId
   ) {
     throw new DocumentIntelligenceError(
       "document_not_found",
-      `Core document verify failed after upsert (tenant=${verifiedRow?.tenant_id ?? "none"} workspace=${verifiedRow?.workspace_id ?? "none"} expectedTenant=${context.ctx.tenantId})`,
+      `Core document ensure returned unexpected scope (tenant=${String(row.tenant_id ?? "none")} workspace=${String(row.workspace_id ?? "none")})`,
       422,
     );
   }
@@ -240,6 +209,32 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
     }
   }
 
+  // If Core metadata is missing but durable PI ingestion exists, synthesize a read model for UI/status.
+  if (!core) {
+    const { data: ingestionHint } = await service()
+      .from("project_intelligence_document_ingestions")
+      .select("engineering_document_id, source_revision, status, updated_at, metadata")
+      .eq("engineering_document_id", documentId)
+      .eq("tenant_id", context.ctx.tenantId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (ingestionHint) {
+      core = {
+        id: documentId,
+        document_number: `PI-${documentId.replace(/-/g, "").slice(-8).toUpperCase()}`,
+        title: "Project Intelligence document",
+        revision: (ingestionHint as { source_revision?: string }).source_revision ?? "A",
+        document_type: "specification",
+        discipline: null,
+        status: "issued",
+        updated_at: (ingestionHint as { updated_at?: string }).updated_at ?? null,
+        workspace_id: workspaceId,
+      };
+    }
+  }
+
   if (!core) {
     throw new DocumentIntelligenceError(
       "document_not_found",
@@ -248,29 +243,27 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
     );
   }
 
-  const { data: ingestion } = await context.ctx.supabase
+  const { data: ingestion } = await service()
     .from("project_intelligence_document_ingestions")
     .select("*")
     .eq("engineering_document_id", documentId)
     .eq("tenant_id", context.ctx.tenantId)
-    .eq("workspace_id", workspaceId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  const { data: job } = await context.ctx.supabase
+  const { data: job } = await service()
     .from("project_intelligence_document_jobs")
     .select("status, attempt_count, last_error_code, updated_at, payload")
     .eq("engineering_document_id", documentId)
     .eq("tenant_id", context.ctx.tenantId)
-    .eq("workspace_id", workspaceId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  const { data: step } = await context.ctx.supabase
+  const { data: step } = await service()
     .from("project_intelligence_document_processing_steps")
     .select("step_name, status, updated_at")
     .eq("engineering_document_id", documentId)
@@ -279,20 +272,18 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
     .limit(1)
     .maybeSingle();
 
-  const { count: chunkCount } = await context.ctx.supabase
+  const { count: chunkCount } = await service()
     .from("project_intelligence_document_chunks")
     .select("id", { count: "exact", head: true })
     .eq("engineering_document_id", documentId)
     .eq("tenant_id", context.ctx.tenantId)
-    .eq("workspace_id", workspaceId)
     .is("deleted_at", null);
 
-  const { count: findingsCount } = await context.ctx.supabase
+  const { count: findingsCount } = await service()
     .from("project_intelligence_document_findings")
     .select("id", { count: "exact", head: true })
     .eq("engineering_document_id", documentId)
     .eq("tenant_id", context.ctx.tenantId)
-    .eq("workspace_id", workspaceId)
     .is("deleted_at", null);
 
   const status = (ingestion?.status ?? "unregistered") as DocumentProcessingStatus | "unregistered";

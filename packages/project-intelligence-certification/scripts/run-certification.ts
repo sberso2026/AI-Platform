@@ -291,6 +291,7 @@ async function main(): Promise<void> {
       batch_37b: checksumFile(resolve(root, "supabase/migrations/20260712201000_batch_37b_project_intelligence_document_search.sql")) ?? "",
       batch_37c: checksumFile(resolve(root, "supabase/migrations/20260712202000_batch_37c_enqueue_tenant_guard.sql")) ?? "",
       batch_37d: checksumFile(resolve(root, "supabase/migrations/20260712203000_batch_37d_set_embedding_vector.sql")) ?? "",
+      batch_37e: checksumFile(resolve(root, "supabase/migrations/20260712204000_batch_37e_ensure_core_document.sql")) ?? "",
     },
     parserProviders: ["native-text", "pdf-text", "docx-mammoth"],
     embeddingProvider: process.env.PLATFORM_EMBEDDING_API_KEY || process.env.OPENAI_API_KEY ? "openai" : "platform-staging-hash",

@@ -44,10 +44,6 @@ const PIPELINE: DocumentProcessingStatus[] = [
   "ready",
 ];
 
-function vectorLiteral(values: readonly number[]): string {
-  return `[${values.join(",")}]`;
-}
-
 export class ProjectIntelligenceDocumentWorker {
   private readonly workerId: string;
   private readonly batchSize: number;
