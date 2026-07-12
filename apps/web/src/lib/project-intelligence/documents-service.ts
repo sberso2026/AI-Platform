@@ -255,16 +255,16 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
     .eq("workspace_id", workspaceId)
     .maybeSingle();
 
-  // Cert fixtures may need workspace repair if auth resolved a different active workspace.
-  if (!core && process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1") {
+  // Repair Core scope when the document exists for this tenant but workspace filter missed.
+  if (!core) {
     const { data: svc } = await service()
       .from("engineering_documents")
-      .select("id, document_number, title, revision, document_type, discipline, status, updated_at, workspace_id, tenant_id, source")
+      .select("id, document_number, title, revision, document_type, discipline, status, updated_at, workspace_id, tenant_id")
       .eq("id", documentId)
       .eq("tenant_id", context.ctx.tenantId)
       .maybeSingle();
     const svcRow = svc as Record<string, unknown> | null;
-    if (svcRow?.id && svcRow.source === "project_intelligence_cert_fixture") {
+    if (svcRow?.id) {
       if (svcRow.workspace_id !== workspaceId) {
         await (service()
           .from("engineering_documents")
@@ -279,26 +279,26 @@ export async function getDocumentIntelligence(context: CommerceHandlerContext, d
         .eq("tenant_id", context.ctx.tenantId)
         .eq("workspace_id", workspaceId)
         .maybeSingle();
-      core = reread.data;
-      if (!core) {
-        // User JWT still cannot see the row — return service snapshot for cert path after scope repair.
-        core = {
-          id: svcRow.id,
-          document_number: svcRow.document_number,
-          title: svcRow.title,
-          revision: svcRow.revision,
-          document_type: svcRow.document_type,
-          discipline: svcRow.discipline,
-          status: svcRow.status,
-          updated_at: svcRow.updated_at,
-          workspace_id: workspaceId,
-        };
-      }
+      core = reread.data ?? {
+        id: svcRow.id,
+        document_number: svcRow.document_number,
+        title: svcRow.title,
+        revision: svcRow.revision,
+        document_type: svcRow.document_type,
+        discipline: svcRow.discipline,
+        status: svcRow.status,
+        updated_at: svcRow.updated_at,
+        workspace_id: workspaceId,
+      };
     }
   }
 
   if (!core) {
-    throw new DocumentIntelligenceError("document_not_found", "Document was not found", 404);
+    throw new DocumentIntelligenceError(
+      "document_not_found",
+      `Document was not found (tenant=${context.ctx.tenantId} workspace=${workspaceId})`,
+      404,
+    );
   }
 
   const { data: ingestion } = await context.ctx.supabase
@@ -474,20 +474,77 @@ export async function retryDocument(context: CommerceHandlerContext, documentId:
 }
 
 export async function getDocumentStatus(context: CommerceHandlerContext, documentId: string) {
-  const detail = await getDocumentIntelligence(context, documentId);
-  return {
-    engineeringDocumentId: documentId,
-    status: detail.processing.status,
-    readiness: detail.processing.readiness,
-    sourceRevision: detail.processing.sourceRevision,
-    processingVersion: detail.processing.processingVersion,
-    warningCount: detail.processing.warningCount,
-    updatedAt: detail.processing.updatedAt,
-    jobStatus: detail.processing.jobStatus,
-    attemptCount: detail.processing.attemptCount,
-    currentStep: detail.processing.currentStep,
-    lastErrorCode: detail.processing.lastErrorCode,
-  };
+  try {
+    const detail = await getDocumentIntelligence(context, documentId);
+    return {
+      engineeringDocumentId: documentId,
+      status: detail.processing.status,
+      readiness: detail.processing.readiness,
+      sourceRevision: detail.processing.sourceRevision,
+      processingVersion: detail.processing.processingVersion,
+      warningCount: detail.processing.warningCount,
+      updatedAt: detail.processing.updatedAt,
+      jobStatus: detail.processing.jobStatus,
+      attemptCount: detail.processing.attemptCount,
+      currentStep: detail.processing.currentStep,
+      lastErrorCode: detail.processing.lastErrorCode,
+      parser: detail.processing.parser,
+      embeddingModel: detail.processing.embeddingModel,
+    };
+  } catch (error) {
+    if (!(error instanceof DocumentIntelligenceError) || error.statusCode !== 404) {
+      throw error;
+    }
+
+    const workspaceId = requireWorkspace(context);
+    const readIngestion = async (withWorkspace: boolean) => {
+      let query = service()
+        .from("project_intelligence_document_ingestions")
+        .select("status, source_revision, processing_version, updated_at, metadata, workspace_id")
+        .eq("engineering_document_id", documentId)
+        .eq("tenant_id", context.ctx.tenantId)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      if (withWorkspace) query = query.eq("workspace_id", workspaceId);
+      return query.maybeSingle();
+    };
+
+    let { data: ingestion } = await readIngestion(true);
+    if (!ingestion) {
+      ({ data: ingestion } = await readIngestion(false));
+    }
+    if (!ingestion) {
+      throw error;
+    }
+
+    const status = String(ingestion.status ?? "queued") as DocumentProcessingStatus;
+    const { data: job } = await service()
+      .from("project_intelligence_document_jobs")
+      .select("status, attempt_count, last_error_code, payload")
+      .eq("engineering_document_id", documentId)
+      .eq("tenant_id", context.ctx.tenantId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      engineeringDocumentId: documentId,
+      status,
+      readiness: isAuthoritativeAnswerAllowed(status) ? "ready" : "not_ready",
+      sourceRevision: (ingestion.source_revision as string | null) ?? null,
+      processingVersion: (ingestion.processing_version as string | null) ?? "1",
+      warningCount: Number(asRecord(ingestion.metadata).warningCount ?? 0),
+      updatedAt: (ingestion.updated_at as string | null) ?? null,
+      jobStatus: (job?.status as string | null) ?? null,
+      attemptCount: Number(job?.attempt_count ?? 0),
+      currentStep: null,
+      lastErrorCode: (job?.last_error_code as string | null) ?? null,
+      parser: (asRecord(job?.payload).parserProvider as string | null) ?? null,
+      embeddingModel: (asRecord(job?.payload).embeddingModel as string | null) ?? null,
+    };
+  }
 }
 
 export async function getDocumentChunks(context: CommerceHandlerContext, documentId: string) {
