@@ -2,12 +2,18 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Page, Response } from "@playwright/test";
 
+/** Documented browser noise that must not fail required certification flows. */
 const HARMLESS_CONSOLE = [
   /Download the React DevTools/i,
   /\[HMR\]/i,
   /\[Fast Refresh\]/i,
   /Third-party cookie will be blocked/i,
+  // Chromium resource-load messages for expected authz denials (engineering chrome prefetch).
+  /Failed to load resource: the server responded with a status of (401|403|404)/i,
 ];
+
+const REQUIRED_API_PATH =
+  /\/api\/platform\/(administration|nav-context|build-identity|installations|commerce)\b/;
 
 export interface PageDiagnostics {
   consoleErrors: string[];
@@ -17,10 +23,6 @@ export interface PageDiagnostics {
   navigationMs: number | null;
   assertClean(): void;
   dump(dir: string, label: string): void;
-}
-
-function isApiUrl(url: string): boolean {
-  return /\/api\//.test(url);
 }
 
 export function attachPageDiagnostics(page: Page): PageDiagnostics {
@@ -43,14 +45,19 @@ export function attachPageDiagnostics(page: Page): PageDiagnostics {
   });
 
   page.on("requestfailed", (req) => {
+    const url = req.url();
     const failure = req.failure()?.errorText ?? "unknown";
-    failedRequests.push(`${req.method()} ${req.url()} — ${failure}`);
+    // Next.js RSC prefetches abort when the route changes; ignore those.
+    if (failure.includes("ERR_ABORTED") || url.includes("_rsc=")) return;
+    if (!REQUIRED_API_PATH.test(url)) return;
+    failedRequests.push(`${req.method()} ${url} — ${failure}`);
   });
 
   page.on("response", (res: Response) => {
-    if (!isApiUrl(res.url())) return;
+    const url = res.url();
+    if (!REQUIRED_API_PATH.test(url)) return;
     if (res.status() >= 500) {
-      failedApiResponses.push({ url: res.url(), status: res.status() });
+      failedApiResponses.push({ url, status: res.status() });
     }
   });
 
@@ -76,6 +83,9 @@ export function attachPageDiagnostics(page: Page): PageDiagnostics {
         problems.push(
           `API 5xx: ${failedApiResponses.map((r) => `${r.status} ${r.url}`).join(" | ")}`
         );
+      }
+      if (failedRequests.length) {
+        problems.push(`required API request failures: ${failedRequests.join(" | ")}`);
       }
       if (problems.length) {
         throw new Error(`Client/page diagnostics failed:\n- ${problems.join("\n- ")}`);
