@@ -12,26 +12,40 @@ function correlationId(request: Request): string {
  */
 export async function POST(request: Request) {
   const cid = correlationId(request);
-  const schedulerSecret = request.headers.get("x-commerce-scheduler-secret");
-  const expectedSecret = process.env.COMMERCE_SCHEDULER_SECRET;
-  const hasValidSecret = Boolean(expectedSecret && schedulerSecret === expectedSecret);
+  try {
+    const schedulerSecret = request.headers.get("x-commerce-scheduler-secret");
+    const expectedSecret = process.env.COMMERCE_SCHEDULER_SECRET;
+    const hasValidSecret = Boolean(expectedSecret && schedulerSecret === expectedSecret);
 
-  if (!hasValidSecret) {
-    const ctx = await getAuthContext();
-    if (!ctx) {
-      return NextResponse.json({ error: { code: "unauthenticated", message: "Unauthorized", requestId: cid } }, { status: 401 });
+    if (!hasValidSecret) {
+      const ctx = await getAuthContext();
+      if (!ctx) {
+        return NextResponse.json({ error: { code: "unauthenticated", message: "Unauthorized", requestId: cid } }, { status: 401 });
+      }
+      if (ctx.roleSlug !== "owner") {
+        return NextResponse.json({ error: { code: "forbidden", message: "Forbidden", requestId: cid } }, { status: 403 });
+      }
     }
-    if (ctx.roleSlug !== "owner") {
-      return NextResponse.json({ error: { code: "forbidden", message: "Forbidden", requestId: cid } }, { status: 403 });
-    }
-  }
 
-  const body = await request.json().catch(() => ({}));
-  const workerId = typeof body.workerId === "string" ? body.workerId : undefined;
-  const loops = Math.min(Math.max(Number(body.loops ?? 1), 1), 20);
-  const results = [];
-  for (let i = 0; i < loops; i += 1) {
-    results.push(await runDocumentWorkerOnce(workerId ? `${workerId}-${i}` : undefined));
+    const body = await request.json().catch(() => ({}));
+    const workerId = typeof body.workerId === "string" ? body.workerId : undefined;
+    const loops = Math.min(Math.max(Number(body.loops ?? 1), 1), 20);
+    const results = [];
+    for (let i = 0; i < loops; i += 1) {
+      results.push(await runDocumentWorkerOnce(workerId ? `${workerId}-${i}` : undefined));
+    }
+    return NextResponse.json({ data: { workerResults: results, correlationId: cid } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        error: {
+          code: "document_worker_failed",
+          message,
+          requestId: cid,
+        },
+      },
+      { status: 500 },
+    );
   }
-  return NextResponse.json({ data: { workerResults: results, correlationId: cid } });
 }

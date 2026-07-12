@@ -91,7 +91,12 @@ export class ProjectIntelligenceDocumentWorker {
         completed += 1;
       } catch (reason) {
         failed += 1;
-        await this.failJob(job, reason);
+        try {
+          await this.failJob(job, reason);
+        } catch (failError) {
+          // Keep drain endpoint alive; surface both errors in job last_error on best effort.
+          console.error("pi document worker failJob error", failError);
+        }
       }
     }
     return { claimed: jobs.length, completed, failed };
@@ -244,11 +249,19 @@ export class ProjectIntelligenceDocumentWorker {
         embedding_model: embedded.model,
         embedding_dimensions: 1536,
         embedding: vector,
-        embedding_vector: vectorLiteral(vector),
         status: "ready",
         metadata: { traceId: embedded.traceId },
       }, { onConflict: "chunk_id,embedding_provider,embedding_model,processing_version" });
       if (embErr) throw Object.assign(new Error(embErr.message), { code: "embedding_failed" });
+
+      const { error: vectorErr } = await this.supabase.rpc("pi_document_set_embedding_vector", {
+        p_chunk_id: row.id,
+        p_provider: embedded.provider,
+        p_model: embedded.model,
+        p_processing_version: processingVersion,
+        p_vector: vector,
+      });
+      if (vectorErr) throw Object.assign(new Error(vectorErr.message), { code: "embedding_failed" });
     }
     await this.checkpoint(job, "embed", "completed", {
       provider: embedded.provider,
@@ -360,7 +373,7 @@ export class ProjectIntelligenceDocumentWorker {
       ingestion_id: job.ingestion_id,
       step_name: stepName,
       status,
-      attempt: job.attempt_count,
+      attempt: Math.max(1, job.attempt_count || 1),
       started_at: new Date().toISOString(),
       ended_at: status === "running" ? null : new Date().toISOString(),
       provider: extras.provider ?? null,

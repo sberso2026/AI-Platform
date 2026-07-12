@@ -71,6 +71,9 @@ async function enqueueAndDrain(
       headers: drainHeaders,
     });
     const drainText = await drain.text();
+    if (drain.status() >= 500) {
+      throw new Error(`drain ${documentId}: ${drain.status()} ${drainText}`);
+    }
     expect(drain.status(), `drain ${documentId}: ${drainText}`).toBeLessThan(500);
     const status = await page.request.get(`/api/engineering/project-intelligence/documents/${documentId}/status`);
     const statusText = await status.text();
