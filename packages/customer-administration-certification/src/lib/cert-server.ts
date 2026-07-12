@@ -69,7 +69,8 @@ export class CertificationServer {
     this.proc = spawn("pnpm", ["start"], {
       cwd: this.webDir,
       env: { ...process.env, PORT: String(this.port), HOSTNAME: "127.0.0.1" },
-      stdio: "pipe",
+      // Inherit stdio so the child cannot block once the pipe buffer fills.
+      stdio: "inherit",
       shell: true,
     });
 
