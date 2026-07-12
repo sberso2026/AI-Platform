@@ -1,0 +1,4 @@
+ab1f44276715888123d9f669464987e6f7c39b6c
+project-intelligence-integration-baseline-1
+https://github.com/sberso2026/rtb-project-intelligence.git
+archiveSha256=b5a9bba68aa8d49795483795c76da497a9c887a37ef885f133f04592517a90a7

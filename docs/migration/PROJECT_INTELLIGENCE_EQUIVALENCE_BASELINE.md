@@ -40,7 +40,8 @@ Only `esbuild` and `sharp` postinstall/install scripts were approved. See `PROJE
 
 ## Compatibility patches (not in frozen tag)
 
-1. `@supabase/storage-js` added in worktree so `storageReadiness` typecheck resolves.
+1. `@supabase/storage-js` added in worktree/CI so `storageReadiness` typecheck resolves.
+2. CI extracts `vendor/project-intelligence-baseline/ab1f442-source.tar.gz` (git archive of the frozen tag) because the standalone repository is private to the Actions default token. Optional live clone is available when `PI_BASELINE_REPO_TOKEN` is configured.
 
 ---
 

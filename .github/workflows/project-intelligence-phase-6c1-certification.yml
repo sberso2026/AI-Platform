@@ -83,16 +83,21 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: platform
-      - uses: actions/checkout@v4
-        with:
-          repository: sberso2026/rtb-project-intelligence
-          ref: ${{ env.PI_BASELINE_TAG }}
-          path: pi-baseline
-      - name: Verify frozen SHA
-        working-directory: pi-baseline
-        run: test "$(git rev-parse HEAD)" = "$PI_BASELINE_SHA"
+      - name: Extract frozen baseline source (vendored archive)
+        run: |
+          test -f vendor/project-intelligence-baseline/ab1f442-source.tar.gz
+          test -f vendor/project-intelligence-baseline/IDENTITY.txt
+          grep -q "ab1f44276715888123d9f669464987e6f7c39b6c" vendor/project-intelligence-baseline/IDENTITY.txt
+          mkdir -p pi-baseline
+          tar -xzf vendor/project-intelligence-baseline/ab1f442-source.tar.gz -C pi-baseline
+          # Optional live private-repo checkout when a cross-repo token is configured
+          if [ -n "${{ secrets.PI_BASELINE_REPO_TOKEN }}" ]; then
+            rm -rf pi-baseline-live
+            git clone --depth 1 --branch "$PI_BASELINE_TAG" \
+              "https://x-access-token:${{ secrets.PI_BASELINE_REPO_TOKEN }}@github.com/sberso2026/rtb-project-intelligence.git" \
+              pi-baseline-live
+            test "$(git -C pi-baseline-live rev-parse HEAD)" = "$PI_BASELINE_SHA"
+          fi
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
@@ -122,8 +127,9 @@ jobs:
         with:
           name: project-intelligence-baseline-equivalence-${{ github.run_id }}
           path: |
-            platform/artifacts/project-intelligence-baseline-equivalence.json
+            artifacts/project-intelligence-baseline-equivalence.json
             pi-baseline/.next/BUILD_ID
+            vendor/project-intelligence-baseline/IDENTITY.txt
 
   hosted-certification:
     needs: [validate, baseline-equivalence]
