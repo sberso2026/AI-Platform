@@ -111,11 +111,14 @@ async function ensureCoreDocument(
     const certMode = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";
     const isCertFixture = row.source === "project_intelligence_cert_fixture";
     if (certMode || isCertFixture) {
-      const { error: deleteError } = await supabase.from("engineering_documents").delete().eq("id", documentId);
-      if (deleteError) {
+      const deleteResult = await (supabase
+        .from("engineering_documents")
+        .delete()
+        .eq("id", documentId) as unknown as Promise<{ error: { message: string } | null }>);
+      if (deleteResult.error) {
         throw new DocumentIntelligenceError(
           "document_not_found",
-          `Unable to reclaim Core document: ${deleteError.message}`,
+          `Unable to reclaim Core document: ${deleteResult.error.message}`,
           422,
         );
       }
