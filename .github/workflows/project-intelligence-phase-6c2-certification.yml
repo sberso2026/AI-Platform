@@ -173,7 +173,7 @@ jobs:
       - name: Verify fixture readiness
         run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
       - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
-      - name: Hosted certification (document intelligence gates A–Q)
+      - name: Hosted certification (document intelligence gates A–R)
         env:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
