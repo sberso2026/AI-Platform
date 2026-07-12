@@ -57,7 +57,7 @@ test.describe("Phase 4 Playwright flows A–P", () => {
     });
     await expect(ready).toHaveAttribute("data-product-slug", "engineering-os");
 
-    await expect(page.getByRole("heading", { name: /Engineering OS/i })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /Engineering Operating System/i })).toBeVisible({
       timeout: 15_000,
     });
 

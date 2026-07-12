@@ -170,7 +170,7 @@ describe("Phase 5 — product detail readiness contract", () => {
   it("Flow B validates URL, heading, API success, and readiness before tablist", () => {
     expect(flowB).toContain("assertProductDetailRoute");
     expect(flowB).toContain("product-detail-ready");
-    expect(flowB).toContain("Engineering OS");
+    expect(flowB).toContain("Engineering Operating System");
     expect(flowB).toContain("waitUntil: \"domcontentloaded\"");
     expect(flowB).toContain("Product administration API failed");
     expect(flowB).toContain("diag.assertClean");
