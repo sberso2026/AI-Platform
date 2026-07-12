@@ -47,6 +47,7 @@ type LooseQuery = {
   select: (columns?: string, options?: Record<string, unknown>) => LooseQuery;
   insert: (values: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
   update: (values: unknown) => LooseQuery;
+  delete: () => LooseQuery;
   eq: (column: string, value: unknown) => LooseQuery;
   in: (column: string, values: unknown[]) => LooseQuery;
   is: (column: string, value: unknown) => LooseQuery;
