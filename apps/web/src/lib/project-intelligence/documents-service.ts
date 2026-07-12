@@ -65,8 +65,15 @@ type InMemoryReview = {
   updatedAt: string;
 };
 
-const memoryDocs = new Map<string, InMemoryDoc>();
-const memoryReviews = new Map<string, InMemoryReview>();
+const memoryStore = globalThis as typeof globalThis & {
+  __rtbPiDocumentMemory?: Map<string, InMemoryDoc>;
+  __rtbPiDocumentReviews?: Map<string, InMemoryReview>;
+};
+
+const memoryDocs = memoryStore.__rtbPiDocumentMemory ?? new Map<string, InMemoryDoc>();
+const memoryReviews = memoryStore.__rtbPiDocumentReviews ?? new Map<string, InMemoryReview>();
+memoryStore.__rtbPiDocumentMemory = memoryDocs;
+memoryStore.__rtbPiDocumentReviews = memoryReviews;
 
 function certificationMode(): boolean {
   return process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";

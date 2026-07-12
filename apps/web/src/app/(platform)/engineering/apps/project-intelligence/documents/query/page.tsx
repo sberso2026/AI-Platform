@@ -40,7 +40,7 @@ export default function ProjectIntelligenceDocumentsQueryPage() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Query failed");
       setAnswer(payload.data);
-      setDrawerOpen(Boolean(payload.data?.citations?.length));
+      setDrawerOpen(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {

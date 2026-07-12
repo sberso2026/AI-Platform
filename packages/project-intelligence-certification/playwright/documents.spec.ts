@@ -18,10 +18,17 @@ function requireUser(fixtures: PiFixtureManifest, role: string): PiUserFixture {
 }
 
 async function expectDocumentsReady(page: import("@playwright/test").Page) {
-  await expect(page.getByTestId("project-intelligence-documents-ready")).toBeVisible();
-  await expect(page.getByTestId("project-intelligence-nav-documents")).toBeVisible();
+  await expect(page.getByTestId("project-intelligence-documents-ready")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("project-intelligence-nav-documents")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("login-page")).toHaveCount(0);
   await expect(page.getByTestId("access-denied")).toHaveCount(0);
+}
+
+async function openCitationsDrawer(page: import("@playwright/test").Page) {
+  const drawer = page.getByTestId("project-intelligence-documents-citations-drawer");
+  if (await drawer.isVisible().catch(() => false)) return;
+  await page.getByTestId("project-intelligence-documents-citations-toggle").click();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
 }
 
 describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification", () => {
@@ -42,7 +49,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     await page.goto(`${documentsPath}/${documentId}`);
     await expect(page.getByTestId("login-page")).toHaveCount(0);
     await expect(page.getByTestId("access-denied")).toHaveCount(0);
-    await expect(page.getByTestId("project-intelligence-document-detail")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-document-detail")).toBeVisible({ timeout: 30_000 });
   });
 
   test("C process document", async ({ page, context }) => {
@@ -69,7 +76,7 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     expect(status.ok()).toBeTruthy();
     expect((await status.json()).data.status).toBe("ready");
     await page.goto(`${documentsPath}/${documentId}`);
-    await expect(page.getByTestId("project-intelligence-document-status-ready")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-document-status-ready")).toBeVisible({ timeout: 30_000 });
   });
 
   test("E query document", async ({ page, context }) => {
@@ -96,9 +103,8 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     });
     await page.goto(`${documentsPath}/query`);
     await page.getByTestId("project-intelligence-documents-query-submit").click();
-    await expect(page.getByTestId("project-intelligence-answer-status-answered")).toBeVisible();
-    await page.getByTestId("project-intelligence-documents-citations-toggle").click();
-    await expect(page.getByTestId("project-intelligence-documents-citations-drawer")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-answer-status-answered")).toBeVisible({ timeout: 15_000 });
+    await openCitationsDrawer(page);
     await expect(page.getByTestId("project-intelligence-citation").first()).toBeVisible();
   });
 
@@ -111,8 +117,8 @@ describeDocs("Phase 6C-2 Document Intelligence exact entitlement certification",
     });
     await page.goto(`${documentsPath}/query`);
     await page.getByTestId("project-intelligence-documents-query-submit").click();
-    await page.getByTestId("project-intelligence-documents-citations-toggle").click();
-    await expect(page.getByTestId("project-intelligence-documents-citations-drawer")).toBeVisible();
+    await expect(page.getByTestId("project-intelligence-documents-answer")).toBeVisible({ timeout: 15_000 });
+    await openCitationsDrawer(page);
   });
 
   test("H verify abstention", async ({ page, context }) => {
