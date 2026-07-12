@@ -101,7 +101,7 @@ export class ProjectIntelligenceDocumentRetrievalService {
     const threshold = request.scoreThreshold ?? 0.35;
     const [lexical, embedded] = await Promise.all([
       this.index.lexicalSearch(request.query, filter, limit * 2),
-      this.embeddings.embed({ texts: [request.query], dimensions: 64 }),
+      this.embeddings.embed({ texts: [request.query], dimensions: 1536 }),
     ]);
     const vector = await this.index.vectorSearch(embedded.embeddings[0] ?? [], filter, limit * 2);
     const combined = diversify(combineHits(lexical, vector), limit);
