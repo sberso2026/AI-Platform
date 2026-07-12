@@ -46,6 +46,7 @@ function requireWorkspace(context: CommerceHandlerContext): string {
 type LooseQuery = {
   select: (columns?: string, options?: Record<string, unknown>) => LooseQuery;
   insert: (values: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
+  upsert: (values: unknown, options?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
   update: (values: unknown) => LooseQuery;
   delete: () => LooseQuery;
   eq: (column: string, value: unknown) => LooseQuery;
@@ -98,86 +99,32 @@ async function ensureCoreDocument(
     uploaded_at: new Date().toISOString(),
   };
 
-  const { data: existing } = await supabase
+  // Upsert by primary key so leftover cross-tenant cert UUIDs are reassigned to this tenant/workspace.
+  const upsertResult = await supabase
     .from("engineering_documents")
-    .select("id, tenant_id, workspace_id, source")
-    .eq("id", documentId)
-    .maybeSingle();
-  const row = existing as { id?: string; tenant_id?: string; workspace_id?: string; source?: string } | null;
+    .upsert(payload as never, { onConflict: "id" });
 
-  if (row?.id) {
-    const sameScope = row.tenant_id === context.ctx.tenantId && row.workspace_id === workspaceId;
-    if (sameScope) return;
-
-    const certMode = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";
-    const isCertFixture = row.source === "project_intelligence_cert_fixture";
-    if (row.tenant_id === context.ctx.tenantId && (certMode || isCertFixture)) {
-      // Same tenant, wrong workspace — repair scope rather than deleting derivatives.
-      const updateResult = await (supabase
+  if (upsertResult.error) {
+    // Unique (tenant_id, document_number, revision) collision: force a run-unique number and retry.
+    if (/duplicate|unique/i.test(upsertResult.error.message)) {
+      const retryPayload = {
+        ...payload,
+        document_number: `${documentNumber}-${context.ctx.tenantId.replace(/-/g, "").slice(0, 8).toUpperCase()}`,
+      };
+      const retry = await supabase
         .from("engineering_documents")
-        .update({
-          workspace_id: workspaceId,
-          document_number: documentNumber,
-          title: payload.title,
-          revision: payload.revision,
-          mime_type: payload.mime_type,
-          source: payload.source,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", documentId) as unknown as Promise<{ error: { message: string } | null }>);
-      if (updateResult.error) {
+        .upsert(retryPayload as never, { onConflict: "id" });
+      if (retry.error) {
         throw new DocumentIntelligenceError(
           "document_not_found",
-          `Unable to repair Core document workspace: ${updateResult.error.message}`,
-          422,
-        );
-      }
-      return;
-    }
-
-    if (certMode || isCertFixture) {
-      const deleteResult = await (supabase
-        .from("engineering_documents")
-        .delete()
-        .eq("id", documentId) as unknown as Promise<{ error: { message: string } | null }>);
-      if (deleteResult.error) {
-        throw new DocumentIntelligenceError(
-          "document_not_found",
-          `Unable to reclaim Core document: ${deleteResult.error.message}`,
+          `Unable to register Core document: ${retry.error.message}`,
           422,
         );
       }
     } else {
       throw new DocumentIntelligenceError(
         "document_not_found",
-        "Document id is owned by another tenant/workspace",
-        409,
-      );
-    }
-  }
-
-  const { error } = await supabase.from("engineering_documents").insert(payload as never);
-  if (error) {
-    if (!/duplicate|unique/i.test(error.message)) {
-      throw new DocumentIntelligenceError("document_not_found", `Unable to register Core document: ${error.message}`, 422);
-    }
-    const updateResult = await (supabase
-      .from("engineering_documents")
-      .update({
-        workspace_id: workspaceId,
-        document_number: documentNumber,
-        title: payload.title,
-        revision: payload.revision,
-        mime_type: payload.mime_type,
-        source: payload.source,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", documentId)
-      .eq("tenant_id", context.ctx.tenantId) as unknown as Promise<{ error: { message: string } | null }>);
-    if (updateResult.error) {
-      throw new DocumentIntelligenceError(
-        "document_not_found",
-        `Unable to register Core document after conflict: ${error.message}; update=${updateResult.error.message}`,
+        `Unable to register Core document: ${upsertResult.error.message}`,
         422,
       );
     }
@@ -196,7 +143,7 @@ async function ensureCoreDocument(
   ) {
     throw new DocumentIntelligenceError(
       "document_not_found",
-      `Core document verify failed after register (tenant=${verifiedRow?.tenant_id ?? "none"} workspace=${verifiedRow?.workspace_id ?? "none"})`,
+      `Core document verify failed after upsert (tenant=${verifiedRow?.tenant_id ?? "none"} workspace=${verifiedRow?.workspace_id ?? "none"} expectedTenant=${context.ctx.tenantId})`,
       422,
     );
   }

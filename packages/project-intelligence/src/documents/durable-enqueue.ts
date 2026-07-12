@@ -38,6 +38,21 @@ export async function enqueueDocumentProcessing(
     processingVersion,
   });
 
+  const { data: coreDoc, error: coreError } = await supabase
+    .from("engineering_documents")
+    .select("id, tenant_id, workspace_id")
+    .eq("id", input.engineeringDocumentId)
+    .maybeSingle();
+  if (coreError) {
+    throw new Error(`engineering_documents lookup failed: ${coreError.message}`);
+  }
+  if (!coreDoc) {
+    throw new Error("engineering_documents row is required before durable enqueue");
+  }
+  if (String((coreDoc as { tenant_id?: string }).tenant_id) !== input.tenantId) {
+    throw new Error("engineering_documents tenant_id does not match enqueue tenant scope");
+  }
+
   const { data, error } = await supabase.rpc("pi_document_enqueue_processing", {
     p_tenant_id: input.tenantId,
     p_workspace_id: input.workspaceId,

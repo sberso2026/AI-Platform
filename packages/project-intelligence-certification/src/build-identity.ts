@@ -33,6 +33,7 @@ function migrationChecksums(root: string): Record<string, string> {
     "20260712180000_batch_36_project_intelligence_documents.sql",
     "20260712200000_batch_37_project_intelligence_document_runtime.sql",
     "20260712201000_batch_37b_project_intelligence_document_search.sql",
+    "20260712202000_batch_37c_enqueue_tenant_guard.sql",
   ];
   const result: Record<string, string> = {};
   for (const file of files) {

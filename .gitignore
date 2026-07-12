@@ -59,3 +59,5 @@ packages/project-intelligence-certification/artifacts/playwright-report.json
 .tmp-pi-baseline/
 
 .tmp-cert-artifacts/
+
+.tmp-ci-artifacts/
