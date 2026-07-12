@@ -64,6 +64,9 @@ export function ProjectIntelligenceShell({
               <Link
                 key={href}
                 href={href}
+                {...(href === "/engineering/apps/project-intelligence"
+                  ? { "data-testid": "project-intelligence-nav-overview" }
+                  : {})}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
                   active
                     ? "bg-cyan-400/15 font-medium text-cyan-200"
@@ -79,7 +82,11 @@ export function ProjectIntelligenceShell({
       </aside>
       <main className="bg-white p-6 lg:p-10">
         {!ready && (
-          <div role={resolvedState === "loading" ? "status" : "alert"} className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <div
+            data-testid={`project-intelligence-state-${resolvedState}`}
+            role={resolvedState === "loading" ? "status" : "alert"}
+            className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-950"
+          >
             {stateMessages[resolvedState]}
           </div>
         )}

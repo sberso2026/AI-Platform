@@ -37,7 +37,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F4F6F8] p-4">
+    <div data-testid="login-page" className="flex min-h-screen items-center justify-center bg-[#F4F6F8] p-4">
       <Card className="w-full max-w-md border-border bg-white shadow-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex justify-center">

@@ -11,6 +11,47 @@ const certificationEnabled = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === 
 let certServer: ChildProcess | null = null;
 let certBaseUrl = process.env.RTB_TEST_BASE_URL ?? "http://127.0.0.1:3000";
 
+function readBaselineEquivalence(): {
+  artifactPresent: boolean;
+  equivalent: boolean;
+  unresolved: boolean;
+} {
+  const candidates = [
+    resolve(packageDir, "artifacts", "project-intelligence-baseline-equivalence.json"),
+    resolve(root, "artifacts", "project-intelligence-baseline-equivalence.json"),
+  ];
+  const path = candidates.find((candidate) => existsSync(candidate));
+  if (!path) return { artifactPresent: false, equivalent: false, unresolved: true };
+  try {
+    const artifact = JSON.parse(readFileSync(path, "utf8")) as {
+      equivalent?: boolean;
+      unresolved?: boolean;
+      buildStatus?: string;
+      typecheck?: { result?: string };
+      tests?: { failed?: number; skipped?: number; testCaseCount?: number };
+      productionBuild?: { result?: string };
+      baseline?: { commitSha?: string };
+    };
+    const baselineRecorded =
+      artifact.buildStatus === "pass" &&
+      artifact.typecheck?.result === "pass" &&
+      artifact.productionBuild?.result === "pass" &&
+      (artifact.tests?.failed ?? 1) === 0 &&
+      (artifact.tests?.skipped ?? 1) === 0 &&
+      (artifact.tests?.testCaseCount ?? 0) > 0 &&
+      artifact.baseline?.commitSha === "ab1f44276715888123d9f669464987e6f7c39b6c";
+    // "equivalent" here means baseline build/test evidence is complete for 6C-1 —
+    // not that Platform capabilities are behaviourally equivalent.
+    return {
+      artifactPresent: true,
+      equivalent: baselineRecorded,
+      unresolved: artifact.unresolved === true || !baselineRecorded,
+    };
+  } catch {
+    return { artifactPresent: true, equivalent: false, unresolved: true };
+  }
+}
+
 function run(command: string): { ok: boolean; detail?: string } {
   try {
     execSync(command, { cwd: root, stdio: "pipe", encoding: "utf8", env: process.env });
@@ -99,7 +140,10 @@ async function main(): Promise<void> {
   // Hosted jobs generate gitignored artifacts after checkout; identity is enforced via GITHUB_SHA match.
   const workingTreeCleanAtStart =
     process.env.GITHUB_ACTIONS === "true" || identityAtStart.workingTreeClean;
-  const gates: CertificationReport["gates"] = [];
+  const gates: CertificationReport["gates"][number][] = [];
+  const fixtureVerification = certificationEnabled
+    ? run("pnpm --filter @rtb/project-intelligence-certification verify-fixture")
+    : { ok: false, detail: "Hosted certification is disabled" };
   for (const [id] of PROJECT_INTELLIGENCE_CERTIFICATION_GATES) {
     if (!certificationEnabled && ["B", "C", "K", "N"].includes(id)) {
       gates.push({ id, status: "skip", detail: "Hosted certification is disabled", command: commands[id] });
@@ -141,6 +185,14 @@ async function main(): Promise<void> {
   const failedBrowserTests = (playwrightReport.match(/"status"\s*:\s*"failed"/g) ?? []).length;
   const unexpectedServerErrorCount = (playwrightReport.match(/\b5\d\d\b/g) ?? []).length;
   const browserPassed = gates.find((gate) => gate.id === "K")?.status === "pass" ? 1 : 0;
+  const fullEntitlementFixtureReady = fixtureVerification.ok;
+  const entitledOwnerReadyState: "ready" | "unresolved" =
+    fullEntitlementFixtureReady && browserPassed ? "ready" : "unresolved";
+  const baselineEquivalence = readBaselineEquivalence();
+  const positiveEntitlementProven =
+    fullEntitlementFixtureReady &&
+    entitledOwnerReadyState === "ready" &&
+    !baselineEquivalence.unresolved;
   const reasons = [
     ...(failedGateCount ? [`${failedGateCount} required gates failed`] : []),
     ...(certificationEnabled && skippedGateCount ? [`${skippedGateCount} required gates skipped`] : []),
@@ -148,10 +200,14 @@ async function main(): Promise<void> {
     ...(!identity.workingTreeClean ? ["working tree is dirty"] : []),
     ...(!shaMatches ? ["build SHA mismatch"] : []),
     ...(!productionCertificationBlocked ? ["production certification is enabled"] : []),
+    ...(!fullEntitlementFixtureReady ? [`full entitlement fixture is not ready: ${fixtureVerification.detail ?? "verification failed"}`] : []),
+    ...(entitledOwnerReadyState !== "ready" ? ["entitled owner positive browser state is unresolved"] : []),
+    ...(baselineEquivalence.unresolved ? ["baseline equivalence is unresolved"] : []),
+    ...(!positiveEntitlementProven ? ["positive entitlement is not proven"] : []),
   ];
   const report: CertificationReport = {
     schemaVersion: 1,
-    phase: "6B",
+    phase: "6C-1",
     verdict: reasons.length === 0 ? "PASS" : "FAIL",
     createdAt: new Date().toISOString(),
     repository: identity.repository ?? "unknown",
@@ -186,6 +242,10 @@ async function main(): Promise<void> {
     productionCertificationBlocked,
     releaseEligible: reasons.length === 0,
     releaseEligibilityReasons: reasons,
+    fullEntitlementFixtureReady,
+    entitledOwnerReadyState,
+    positiveEntitlementProven,
+    baselineEquivalence,
   };
   const output = writeCertificationReport(
     resolve(packageDir, "artifacts", "project-intelligence-certification.json"),

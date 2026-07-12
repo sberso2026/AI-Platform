@@ -1,67 +1,108 @@
 import { expect, test } from "@playwright/test";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { requirePiFixturesManifest, type PiDenialFixture, type PiFixtureManifest, type PiUserFixture } from "../src/fixtures/env.js";
+import { signInAsFixtureUser } from "./auth.js";
 
 const enabled = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";
 const basePath = "/engineering/apps/project-intelligence";
 const describePi = enabled ? test.describe : test.describe.skip;
 
-async function assertNoUnexpected5xx(page: import("@playwright/test").Page, path: string) {
-  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
-  const status = response?.status() ?? 0;
-  expect(status, `unexpected status for ${path}`).toBeLessThan(500);
-  expect(status).not.toBe(0);
-  return status;
+function loadFixtures(): PiFixtureManifest {
+  return requirePiFixturesManifest();
 }
 
-describePi("Phase 6B Project Intelligence browser certification", () => {
-  test("A open PI shared shell", async ({ page }) => {
-    await assertNoUnexpected5xx(page, basePath);
-    const body = await page.locator("body").innerText();
-    expect(
-      /Project Intelligence|Sign in|Access denied|login/i.test(body),
-      "expected PI shell, login, or access denial",
-    ).toBe(true);
+function requireUser(fixtures: PiFixtureManifest, role: string): PiUserFixture {
+  const user = fixtures.baseline.users[role];
+  if (!user?.email) throw new Error(`Missing baseline.users.${role} fixture`);
+  return user;
+}
+
+async function expectPositiveOverview(page: import("@playwright/test").Page) {
+  await expect(page).toHaveURL(new RegExp(`${basePath}$`));
+  await expect(page.getByTestId("project-intelligence-ready")).toBeVisible();
+  await expect(page.getByTestId("project-intelligence-nav-overview")).toBeVisible();
+  await expect(page.getByTestId("login-page")).toHaveCount(0);
+  await expect(page.getByTestId("access-denied")).toHaveCount(0);
+}
+
+describePi("Phase 6C-1 Project Intelligence exact entitlement certification", () => {
+  test("A entitled owner opens Project Intelligence", async ({ page, context }) => {
+    const owner = requireUser(loadFixtures(), "owner");
+    await signInAsFixtureUser(context, owner.email);
+    await page.goto(basePath);
+    await expectPositiveOverview(page);
   });
 
-  for (const [label, path, needle] of [
-    ["B uninstalled denied", `${basePath}?certState=not-installed`, /not installed|Access denied|Sign in|login/i],
-    ["C suspended licence denied", `${basePath}?certState=licence-suspended`, /licence|license|Access denied|Sign in|login/i],
-    ["D removed seat denied", `${basePath}?certState=seat-unassigned`, /seat|Access denied|Sign in|login/i],
-    ["E workspace assignment enforced", `${basePath}?certState=workspace-unassigned`, /workspace|Access denied|Sign in|login/i],
-    ["F mapping review list", `${basePath}/migration`, /Migration|Access denied|Sign in|login/i],
-    ["G approve high-confidence", `${basePath}/migration`, /Approve|Access denied|Sign in|login|Migration/i],
-    ["H reject mapping", `${basePath}/migration`, /Reject|Defer|Access denied|Sign in|login|Migration/i],
-    ["I unresolved conflict pending", `${basePath}/migration`, /conflict|Migration|Access denied|Sign in|login/i],
-    ["J health page", `${basePath}/health`, /Health|Access denied|Sign in|login/i],
-    ["K AI read-only summary with evidence", basePath, /Project Intelligence|AI|Access denied|Sign in|login/i],
-  ] as const) {
-    test(label, async ({ page }) => {
-      await assertNoUnexpected5xx(page, path);
-      await expect(page.locator("body")).toContainText(needle);
+  test("B entitled engineer reads migration but cannot approve", async ({ page, context }) => {
+    const engineer = requireUser(loadFixtures(), "engineer");
+    await signInAsFixtureUser(context, engineer.email);
+    await page.goto(`${basePath}/migration`);
+    await expect(page.getByTestId("login-page")).toHaveCount(0);
+    await expect(page.getByTestId("access-denied")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Migration review" })).toBeVisible();
+
+    const approve = page.getByRole("button", { name: "Approve" }).first();
+    if (await approve.count()) {
+      const response = page.waitForResponse((candidate) =>
+        candidate.url().includes("/api/engineering/project-intelligence/mappings/") &&
+        candidate.request().method() === "PATCH",
+      );
+      await approve.click();
+      const api = await response;
+      expect(api.status()).toBe(403);
+      expect((await api.json()).error).toMatchObject({ code: "project_intelligence_migration_access_denied" });
+    }
+  });
+
+  test("C unauthenticated browser and API receive exact markers", async ({ page }) => {
+    await page.goto(basePath);
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByTestId("login-page")).toBeVisible();
+    const response = await page.request.get("/api/engineering/project-intelligence/mappings");
+    expect(response.status()).toBe(401);
+    expect((await response.json()).error).toMatchObject({ code: "unauthenticated" });
+  });
+
+  const denialScenarios: ReadonlyArray<{
+    label: string;
+    fixture: (manifest: PiFixtureManifest) => PiDenialFixture & { owner?: PiUserFixture; user?: PiUserFixture; userWithoutWorkspace?: PiUserFixture };
+  }> = [
+    { label: "notInstalled", fixture: (manifest) => manifest.denial.piNotInstalledTenant },
+    { label: "licenceSuspended", fixture: (manifest) => manifest.denial.suspendedLicence },
+    { label: "seatUnassigned", fixture: (manifest) => manifest.denial.seatNotAssigned },
+    { label: "workspaceUnassigned", fixture: (manifest) => manifest.denial.workspaceNotAssigned },
+  ];
+  for (const scenario of denialScenarios) {
+    test(`D–G ${scenario.label} is denied with exact browser and API codes`, async ({ page, context }) => {
+      const denial = scenario.fixture(loadFixtures());
+      const user = denial.owner ?? denial.user ?? denial.userWithoutWorkspace;
+      if (!user?.email) throw new Error(`Missing user for ${scenario.label} denial fixture`);
+      await signInAsFixtureUser(context, user.email);
+      await page.goto(basePath);
+
+      if (denial.expectedState) {
+        await expect(page.getByTestId(`project-intelligence-state-${denial.expectedState}`)).toBeVisible();
+      } else {
+        await expect(page.getByTestId(`access-denied-${denial.expectedReason}`)).toBeVisible();
+      }
+      const response = await page.request.get("/api/engineering/project-intelligence/mappings");
+      expect(response.status()).toBe(403);
+      expect((await response.json()).error).toMatchObject({
+        code: denial.expectedCode,
+        details: { reasonCode: expect.any(String) },
+      });
     });
   }
 
-  test("L accessibility", async ({ page }) => {
-    await assertNoUnexpected5xx(page, basePath);
-    await expect(page.locator("body")).toBeVisible();
-    const body = await page.locator("body").innerText();
-    expect(body.trim().length).toBeGreaterThan(0);
-  });
-
-  test("M responsive", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await assertNoUnexpected5xx(page, `${basePath}/migration`);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 8)).toBe(true);
-  });
-
-  test("fixtures provisioned when available", async () => {
-    const fixturesPath = resolve(process.cwd(), "../installation-certification/artifacts/cert-fixtures.json");
-    if (!existsSync(fixturesPath)) {
-      test.info().annotations.push({ type: "note", description: "fixtures absent; entitlement paths may redirect" });
-      return;
-    }
-    const fixtures = JSON.parse(readFileSync(fixturesPath, "utf8")) as { tenantA?: { users?: { owner?: { jwt?: string } } } };
-    expect(fixtures.tenantA?.users?.owner?.jwt).toBeTruthy();
+  test("H–I foreign mapping IDs are anti-enumerated", async ({ page, context }) => {
+    const fixtures = loadFixtures();
+    const owner = requireUser(fixtures, "owner");
+    const foreignMappingId = fixtures.baseline.foreignMappingId;
+    if (!foreignMappingId) throw new Error("Missing baseline.foreignMappingId fixture");
+    await signInAsFixtureUser(context, owner.email);
+    const response = await page.request.get(`/api/engineering/project-intelligence/mappings/${foreignMappingId}`);
+    expect(response.status()).toBe(404);
+    const body = await response.json();
+    expect(body.error).toMatchObject({ code: "mapping_not_found" });
+    expect(JSON.stringify(body)).not.toContain(foreignMappingId);
   });
 });

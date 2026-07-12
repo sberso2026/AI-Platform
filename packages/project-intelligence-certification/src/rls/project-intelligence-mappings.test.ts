@@ -24,12 +24,12 @@ describe.skipIf(!enabled)("Gate C — real-JWT Project Intelligence mapping RLS"
       expect([401, 403]).toContain(unauth.status);
     }
 
-    const fixturesPath = resolve(process.cwd(), "../installation-certification/artifacts/cert-fixtures.json");
-    expect(existsSync(fixturesPath), "installation certification must provision real JWT fixtures").toBe(true);
+    const fixturesPath = resolve(process.cwd(), "artifacts/pi-cert-fixtures.json");
+    expect(existsSync(fixturesPath), "PI certification must provision real JWT fixtures").toBe(true);
     const fixtures = JSON.parse(readFileSync(fixturesPath, "utf8")) as {
-      tenantA: { users: { owner: { jwt: string } } };
+      baseline: { users: { owner: { jwt: string } } };
     };
-    const jwt = fixtures.tenantA.users.owner.jwt;
+    const jwt = fixtures.baseline.users.owner.jwt;
     expect(jwt, "real certification JWT").toBeTruthy();
 
     const response = await fetch(`${url}/rest/v1/project_intelligence_project_mappings?select=id&limit=1`, {

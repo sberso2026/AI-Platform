@@ -1,5 +1,13 @@
 export type ProjectIntelligenceErrorCode =
   | "project_intelligence_access_denied"
+  /** The Project Intelligence application is not installed for this entitlement scope. */
+  | "project_intelligence_not_installed"
+  /** The entitlement licence is inactive, expired, revoked, or missing. */
+  | "licence_suspended"
+  /** The authenticated principal has no required Project Intelligence seat. */
+  | "seat_not_assigned"
+  /** The selected workspace is not assigned to Project Intelligence. */
+  | "workspace_not_assigned"
   | "project_intelligence_admin_required"
   | "project_intelligence_migration_access_denied"
   | "mapping_not_found"

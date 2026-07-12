@@ -5,7 +5,7 @@ import type { CertificationGateId } from "./gates.js";
 
 export interface CertificationReport {
   schemaVersion: 1;
-  phase: "6B";
+  phase: "6B" | "6C-1";
   verdict: "PASS" | "FAIL";
   createdAt: string;
   repository: string;
@@ -28,6 +28,14 @@ export interface CertificationReport {
   productionCertificationBlocked: boolean;
   releaseEligible: boolean;
   releaseEligibilityReasons: string[];
+  fullEntitlementFixtureReady?: boolean;
+  entitledOwnerReadyState?: "ready" | "unresolved";
+  positiveEntitlementProven?: boolean;
+  baselineEquivalence?: {
+    artifactPresent: boolean;
+    equivalent: boolean;
+    unresolved: boolean;
+  };
 }
 
 export function writeCertificationReport(path: string, report: CertificationReport): string {

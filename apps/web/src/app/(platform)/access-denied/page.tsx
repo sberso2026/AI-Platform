@@ -22,6 +22,13 @@ const REASON_MESSAGES: Record<string, { title: string; description: string; acti
     description: "A licence is active for your organisation, but no seat has been assigned to your account.",
     action: "Request access",
   },
+  application_not_installed: {
+    title: "Application not installed",
+    description: "Project Intelligence is not installed for this workspace.",
+    action: "Contact administrator",
+  },
+  // `assertCommercePolicyForPage` receives this commerce reason when an application
+  // is not installed/included in the current plan; PI APIs normalize it separately.
   application_not_in_plan: {
     title: "Application not included",
     description: "This application is not included in your current plan.",
@@ -57,14 +64,39 @@ const REASON_MESSAGES: Record<string, { title: string; description: string; acti
     description: "No valid licence exists for this product or application.",
     action: "Request access",
   },
+  licence_not_found: {
+    title: "No licence",
+    description: "No valid licence exists for this product or application.",
+    action: "Request access",
+  },
   licence_revoked: {
     title: "Licence revoked",
     description: "The licence for this resource has been revoked.",
     action: "Contact administrator",
   },
+  licence_suspended: {
+    title: "Licence suspended",
+    description: "The licence for this resource is suspended.",
+    action: "Contact administrator",
+  },
   workspace_not_entitled: {
     title: "Workspace not entitled",
     description: "This workspace is not entitled to use this application.",
+    action: "Contact administrator",
+  },
+  workspace_not_assigned: {
+    title: "Workspace not assigned",
+    description: "Select a workspace assigned to this application.",
+    action: "Select workspace",
+  },
+  installation_not_active: {
+    title: "Application installation inactive",
+    description: "This application installation is not active.",
+    action: "Contact administrator",
+  },
+  installation_not_found: {
+    title: "Application not installed",
+    description: "This application is not installed for the selected workspace.",
     action: "Contact administrator",
   },
   usage_limit_exceeded: {
@@ -97,21 +129,23 @@ export default async function AccessDeniedPage({
   };
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-      <h1 className="text-2xl font-semibold tracking-tight">{info.title}</h1>
-      <p className="mt-3 max-w-md text-muted-foreground">{info.description}</p>
-      <div className="mt-8 flex gap-3">
-        {params.return && (
-          <Link href={params.return} className={buttonVariants({ variant: "outline" })}>
-            Go back
+    <div data-testid="access-denied" className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+      <div {...(reason in REASON_MESSAGES ? { "data-testid": `access-denied-${reason}` } : {})}>
+        <h1 className="text-2xl font-semibold tracking-tight">{info.title}</h1>
+        <p className="mt-3 max-w-md text-muted-foreground">{info.description}</p>
+        <div className="mt-8 flex gap-3">
+          {params.return && (
+            <Link href={params.return} className={buttonVariants({ variant: "outline" })}>
+              Go back
+            </Link>
+          )}
+          <Link href="/system/products" className={buttonVariants()}>
+            View products
           </Link>
-        )}
-        <Link href="/system/products" className={buttonVariants()}>
-          View products
-        </Link>
-        <Link href="/system/subscriptions" className={buttonVariants({ variant: "secondary" })}>
-          Manage subscriptions
-        </Link>
+          <Link href="/system/subscriptions" className={buttonVariants({ variant: "secondary" })}>
+            Manage subscriptions
+          </Link>
+        </div>
       </div>
     </div>
   );

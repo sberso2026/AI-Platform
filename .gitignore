@@ -50,3 +50,8 @@ test-results/customer-administration/
 
 .tmp-pi-*/
 
+
+packages/project-intelligence-certification/artifacts/pi-cert-fixtures.json
+packages/project-intelligence-certification/artifacts/project-intelligence-certification.json
+packages/project-intelligence-certification/artifacts/playwright-report.json
+
