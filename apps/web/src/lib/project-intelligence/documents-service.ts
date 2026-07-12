@@ -578,7 +578,7 @@ export async function queryDocuments(
         engineeringDocumentIds: body.documentIds,
       },
       limit: 8,
-      scoreThreshold: 0.15,
+      scoreThreshold: 0.05,
     },
   );
 
