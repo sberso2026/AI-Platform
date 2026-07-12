@@ -6,7 +6,7 @@
   "scripts": {
     "ci-preflight": "tsx src/ci-preflight.ts",
     "certify": "tsx scripts/run-certification.ts",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run src/gates.test.ts src/build-identity.test.ts src/http/nested-error-contract.test.ts src/project-intelligence-domain.test.ts",
     "test:rls": "vitest run src/rls/project-intelligence-mappings.test.ts",
     "test:http": "vitest run src/http/nested-error-contract.test.ts",
     "test:e2e": "playwright test",
