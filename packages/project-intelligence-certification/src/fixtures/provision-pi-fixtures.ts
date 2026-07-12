@@ -246,6 +246,34 @@ export async function provisionPiFixtures(): Promise<PiFixtureManifest> {
   await addMembership(admin, baselineTenant.id, [], userWithoutWorkspace.id, "engineer");
 
   const entitlement = await seedEntitlements(admin, baselineTenant.id, workspaceA.id, owner.id);
+  // Also assign Engineering OS + PI to workspace B so multi-workspace principals
+  // never fail commercial workspace assignment when B is selected.
+  await existingOrInsert(
+    admin,
+    "commercial_workspace_product_assignments",
+    { workspace_id: workspaceB.id, installation_id: entitlement.installationId },
+    {
+      tenant_id: baselineTenant.id,
+      workspace_id: workspaceB.id,
+      installation_id: entitlement.installationId,
+      product_id: ENGINEERING_PRODUCT_ID,
+      assigned_by: owner.id,
+      status: "active",
+    },
+  );
+  await existingOrInsert(
+    admin,
+    "commercial_workspace_application_assignments",
+    { workspace_id: workspaceB.id, app_installation_id: entitlement.appInstallationId! },
+    {
+      tenant_id: baselineTenant.id,
+      workspace_id: workspaceB.id,
+      app_installation_id: entitlement.appInstallationId!,
+      application_key: "project_intelligence",
+      assigned_by: owner.id,
+      status: "active",
+    },
+  );
   const ownerSeat = await seedSeat(admin, baselineTenant.id, workspaceA.id, entitlement.subscriptionId, entitlement.licenceId, owner.id);
   const engineerSeat = await seedSeat(admin, baselineTenant.id, workspaceA.id, entitlement.subscriptionId, entitlement.licenceId, engineer.id);
   const project = await existingOrInsert(

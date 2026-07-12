@@ -27,13 +27,19 @@ function git(root: string, args: string[]): string | null {
 }
 
 function migrationChecksums(root: string): Record<string, string> {
-  const migration = resolve(root, "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql");
-  if (!existsSync(migration)) return {};
-  const hash = createFileHash("sha256");
-  // Keep this synchronous artifact helper deterministic and avoid a process-level file cache.
-  const content = readFileSync(migration);
-  hash.update(content);
-  return { "20260712000000_batch_34_project_intelligence_mappings.sql": hash.digest("hex") };
+  const files = [
+    "20260712000000_batch_34_project_intelligence_mappings.sql",
+    "20260712120000_batch_35_pi_mapping_identity_immutable.sql",
+  ];
+  const result: Record<string, string> = {};
+  for (const file of files) {
+    const migration = resolve(root, "supabase/migrations", file);
+    if (!existsSync(migration)) continue;
+    const hash = createFileHash("sha256");
+    hash.update(readFileSync(migration));
+    result[file] = hash.digest("hex");
+  }
+  return result;
 }
 
 export function createBuildIdentity(

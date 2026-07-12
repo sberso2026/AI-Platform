@@ -27,7 +27,13 @@ describe.skipIf(!enabled)("Phase 6C-1 — Project Intelligence real-JWT RLS matr
   let writableProjectId = "";
 
   function headers(jwt?: string, json = false): Record<string, string> {
-    return { apikey: anonKey!, ...(jwt && { Authorization: `Bearer ${jwt}` }), ...(json && { "Content-Type": "application/json", Prefer: "return=representation" }) };
+    const isServiceSecret = Boolean(jwt && jwt === serviceKey);
+    const apikey = isServiceSecret ? serviceKey! : anonKey!;
+    return {
+      apikey,
+      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+      ...(json ? { "Content-Type": "application/json", Prefer: "return=representation" } : {}),
+    };
   }
 
   async function rest(path: string, options: RequestInit = {}, jwt?: string): Promise<RestResult> {
@@ -113,8 +119,15 @@ describe.skipIf(!enabled)("Phase 6C-1 — Project Intelligence real-JWT RLS matr
       { workspace_id: manifest.baseline.workspaceBId },
     ]) {
       const result = await rest(`${table}?id=eq.${writableMappingId}`, { method: "PATCH", body: JSON.stringify(patch) }, actors.owner);
-      expect(result.status).toBe(403);
+      // Identity immutability trigger raises 400; RLS WITH CHECK denials may be 403.
+      expect([400, 403], `reassignment status for ${JSON.stringify(patch)}`).toContain(result.status);
       expect(result.body).toMatchObject({ message: expect.any(String) });
+      const verify = await rest(`${table}?select=tenant_id,workspace_id&id=eq.${writableMappingId}`, {}, actors.owner);
+      expect(verify.status).toBe(200);
+      expect((verify.body as Array<{ tenant_id: string; workspace_id: string }>)[0]).toMatchObject({
+        tenant_id: manifest.baseline.tenantId,
+        workspace_id: manifest.baseline.workspaceId,
+      });
     }
     const immutable = await rest(`${table}?id=eq.${writableMappingId}`, { method: "PATCH", body: JSON.stringify({ migration_source: "forbidden-after-approval" }) }, actors.owner);
     expect(immutable.status).toBe(400);
@@ -122,15 +135,48 @@ describe.skipIf(!enabled)("Phase 6C-1 — Project Intelligence real-JWT RLS matr
   });
 
   it("enforces retire/delete policy and records a service audit", async () => {
-    const retire = await rest(`${table}?id=eq.${writableMappingId}`, { method: "PATCH", body: JSON.stringify({ mapping_status: "retired" }) }, actors.owner);
+    // Use a fresh approved mapping so prior denied patches cannot poison this assertion.
+    const project = await rest("engineering_projects", {
+      method: "POST",
+      body: JSON.stringify({
+        tenant_id: manifest.baseline.tenantId,
+        workspace_id: manifest.baseline.workspaceId,
+        project_code: `PI-RLS-RETIRE-${Date.now()}`,
+        project_name: "PI RLS retire",
+        status: "active",
+        created_by: users.owner.id,
+      }),
+    }, actors.service);
+    expect(project.status).toBe(201);
+    const create = await rest(table, {
+      method: "POST",
+      body: JSON.stringify({
+        tenant_id: manifest.baseline.tenantId,
+        workspace_id: manifest.baseline.workspaceId,
+        engineering_project_id: ids(project.body)[0],
+        legacy_project_intelligence_project_id: `rls-retire-${Date.now()}`,
+        mapping_status: "approved",
+        migration_source: "rls-matrix-retire",
+        approved_by: users.owner.id,
+        approved_at: new Date().toISOString(),
+      }),
+    }, actors.owner);
+    expect(create.status).toBe(201);
+    const retireId = ids(create.body)[0]!;
+
+    const retire = await rest(`${table}?id=eq.${retireId}`, { method: "PATCH", body: JSON.stringify({ mapping_status: "retired" }) }, actors.owner);
     expect(retire.status).toBe(200);
     expect((retire.body as Array<{ mapping_status: string }>)[0]?.mapping_status).toBe("retired");
-    const deleteDenied = await rest(`${table}?id=eq.${writableMappingId}`, { method: "DELETE" }, actors.viewer);
-    expect(deleteDenied.status).toBe(200);
-    expect(deleteDenied.body).toEqual([]);
-    const deleted = await rest(`${table}?id=eq.${writableMappingId}`, { method: "DELETE", headers: { Prefer: "return=representation" } }, actors.owner);
-    expect(deleted.status).toBe(200);
-    expect(ids(deleted.body)).toEqual([writableMappingId]);
+    const deleteDenied = await rest(`${table}?id=eq.${retireId}`, { method: "DELETE" }, actors.viewer);
+    expect([200, 204]).toContain(deleteDenied.status);
+    if (deleteDenied.status === 200) expect(deleteDenied.body).toEqual([]);
+    const stillThere = await rest(`${table}?select=id&id=eq.${retireId}`, {}, actors.owner);
+    expect(ids(stillThere.body)).toEqual([retireId]);
+    const deleted = await rest(`${table}?id=eq.${retireId}`, { method: "DELETE", headers: { Prefer: "return=representation" } }, actors.owner);
+    expect([200, 204]).toContain(deleted.status);
+    if (deleted.status === 200) expect(ids(deleted.body)).toEqual([retireId]);
+    const gone = await rest(`${table}?select=id&id=eq.${retireId}`, {}, actors.owner);
+    expect(ids(gone.body)).toEqual([]);
 
     const audit = await rest(auditTable, { method: "POST", body: JSON.stringify({ tenant_id: manifest.baseline.tenantId, workspace_id: manifest.baseline.workspaceId, mapping_id: manifest.baseline.mappingId, actor_id: users.owner.id, action: "service_mutation", event_id: `pi-rls-${Date.now()}`, details: { source: "rls-matrix" } }) }, actors.service);
     expect(audit.status).toBe(201);

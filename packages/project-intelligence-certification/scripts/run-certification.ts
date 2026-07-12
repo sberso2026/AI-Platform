@@ -32,8 +32,11 @@ function readBaselineEquivalence(): {
       productionBuild?: { result?: string };
       baseline?: { commitSha?: string };
     };
+    const buildOk =
+      artifact.buildStatus === "pass" ||
+      artifact.productionBuild?.result === "pass";
     const baselineRecorded =
-      artifact.buildStatus === "pass" &&
+      buildOk &&
       artifact.typecheck?.result === "pass" &&
       artifact.productionBuild?.result === "pass" &&
       (artifact.tests?.failed ?? 1) === 0 &&

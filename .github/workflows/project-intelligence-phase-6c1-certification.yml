@@ -12,6 +12,7 @@ on:
       - "apps/web/src/app/(platform)/access-denied/**"
       - "apps/web/src/app/(auth)/login/**"
       - "supabase/migrations/20260712000000_batch_34_project_intelligence_mappings.sql"
+      - "supabase/migrations/20260712120000_batch_35_pi_mapping_identity_immutable.sql"
       - "docs/architecture/PROJECT_INTELLIGENCE*"
       - "docs/migration/PROJECT_INTELLIGENCE*"
       - "docs/testing/**"

@@ -74,16 +74,28 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   const membership = resolveMembershipRole(memberships ?? []);
   if (!membership) return null;
 
-  const [{ data: workspace }, { data: tenant }] = await Promise.all([
+  const [{ data: workspaceMemberships }, { data: tenant }] = await Promise.all([
     supabase
-      .from("workspaces")
-      .select("id")
-      .eq("tenant_id", membership.tenantId)
-      .eq("status", "active")
-      .limit(1)
-      .single(),
+      .from("workspace_memberships")
+      .select("workspace_id, workspaces!inner(id, slug, status, tenant_id)")
+      .eq("user_id", user.id)
+      .eq("workspaces.tenant_id", membership.tenantId)
+      .eq("workspaces.status", "active"),
     supabase.from("tenants").select("settings").eq("id", membership.tenantId).single(),
   ]);
+
+  // Prefer deterministic slug order so multi-workspace tenants resolve stably
+  // (for example PI cert workspace A before workspace B).
+  const workspace = [...(workspaceMemberships ?? [])]
+    .map((row) => {
+      const joined = row.workspaces as
+        | { id: string; slug: string }
+        | { id: string; slug: string }[]
+        | null;
+      return Array.isArray(joined) ? joined[0] : joined;
+    })
+    .filter((row): row is { id: string; slug: string } => Boolean(row?.id))
+    .sort((a, b) => a.slug.localeCompare(b.slug))[0];
 
   const kernel = createPlatformKernel(supabase);
   const engineering = createEngineeringOS(supabase, kernel);

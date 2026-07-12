@@ -8,6 +8,10 @@ export async function assertCommercePolicyForPage(
   policy: CommerceAccessPolicy,
   returnPath: string
 ) {
+  if (policy.workspaceRequired && !ctx.workspaceId) {
+    redirect(`/access-denied?reason=workspace_not_assigned&return=${encodeURIComponent(returnPath)}`);
+  }
+
   const decision = await ctx.commerce.entitlements.check({
     tenantId: ctx.tenantId,
     workspaceId: ctx.workspaceId,
