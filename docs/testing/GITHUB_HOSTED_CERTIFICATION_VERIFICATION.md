@@ -43,14 +43,27 @@ git rev-parse f781fa089670e2842327db1a6797f692f593afc1
 | Field | Value |
 |-------|--------|
 | Workflow | Project Intelligence Phase 6B Certification |
-| Commit | *pending — fill after successful CI on Phase 6B SHA* |
-| Run ID | *pending* |
-| Job results | *pending* |
-| Gates A–N | *pending* |
-| Browser tests | *pending* |
-| Required skips | *must be 0* |
-| Unexpected 5xx | *must be 0* |
-| Artifact commit match | CI SHA = artifact commitSha = buildIdentityCommitSha |
+| Commit | `25e5722b6f13b1b5cc717b3bba78073d689d7d9c` |
+| Run ID | **29181715110** |
+| Job results | preflight PASS · validate PASS · hosted-certification PASS · release-evidence PASS |
+| Gates A–N | 14/14 passed · 0 skipped |
+| Browser tests | Gate K PASS (Playwright suite) |
+| Required skips | `0` |
+| Unexpected 5xx | `0` |
+| Artifact commit match | CI SHA = artifact `commitSha` = `buildIdentityCommitSha` = `25e5722…` |
+| `releaseEligible` | `true` |
+| Production certification blocked | `true` |
+
+Historical Phase 6B attempts on earlier SHAs (not current evidence):
+
+| Run ID | SHA | Classification | Reason |
+|--------|-----|----------------|--------|
+| 29180879648 | `1ecae01…` | historical failure | Invalid workflow YAML |
+| 29180898810 | `7b9f96f…` | historical failure | Validate hosted tests without secrets |
+| 29181037224 | `823219b…` | historical failure | Next.js `.js` import resolution |
+| 29181238945 | `7f72bde…` | historical failure | Gate C anon 200 + Playwright skipIf |
+| 29181455364 | `b5dfe1f…` | historical failure | A11y main/nav on login page |
+| 29181715110 | `25e5722…` | **current successful run** | — |
 
 ### Historical Runs (Customer Admin)
 

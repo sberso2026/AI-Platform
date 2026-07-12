@@ -47,3 +47,6 @@ test-results/customer-administration/
 
 # TypeScript
 *.tsbuildinfo
+
+.tmp-pi-*/
+
