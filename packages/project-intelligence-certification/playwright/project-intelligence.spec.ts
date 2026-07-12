@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const enabled = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";
 const basePath = "/engineering/apps/project-intelligence";
+const describePi = enabled ? test.describe : test.describe.skip;
 
 async function assertNoUnexpected5xx(page: import("@playwright/test").Page, path: string) {
   const response = await page.goto(path, { waitUntil: "domcontentloaded" });
@@ -13,7 +14,7 @@ async function assertNoUnexpected5xx(page: import("@playwright/test").Page, path
   return status;
 }
 
-test.describe.skipIf(!enabled)("Phase 6B Project Intelligence browser certification", () => {
+describePi("Phase 6B Project Intelligence browser certification", () => {
   test("A open PI shared shell", async ({ page }) => {
     await assertNoUnexpected5xx(page, basePath);
     const body = await page.locator("body").innerText();

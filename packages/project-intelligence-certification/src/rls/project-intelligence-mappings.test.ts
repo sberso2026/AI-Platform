@@ -14,7 +14,15 @@ describe.skipIf(!enabled)("Gate C — real-JWT Project Intelligence mapping RLS"
     const unauth = await fetch(`${url}/rest/v1/project_intelligence_project_mappings?select=id&limit=1`, {
       headers: { apikey: anon },
     });
-    expect([401, 403]).toContain(unauth.status);
+    // Anon without user JWT must not return privileged rows; PostgREST may use 200/empty or 401/403.
+    expect(unauth.status).not.toBe(500);
+    if (unauth.status === 200) {
+      const rows = (await unauth.json()) as unknown[];
+      expect(Array.isArray(rows)).toBe(true);
+      expect(rows.length).toBe(0);
+    } else {
+      expect([401, 403]).toContain(unauth.status);
+    }
 
     const fixturesPath = resolve(process.cwd(), "../installation-certification/artifacts/cert-fixtures.json");
     expect(existsSync(fixturesPath), "installation certification must provision real JWT fixtures").toBe(true);

@@ -95,6 +95,8 @@ function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
 }
 
 async function main(): Promise<void> {
+  const identityAtStart = createBuildIdentity(undefined, undefined, root);
+  const workingTreeCleanAtStart = identityAtStart.workingTreeClean;
   const gates: CertificationReport["gates"] = [];
   for (const [id] of PROJECT_INTELLIGENCE_CERTIFICATION_GATES) {
     if (!certificationEnabled && ["B", "C", "K", "N"].includes(id)) {
@@ -119,7 +121,10 @@ async function main(): Promise<void> {
   }
   stopCertServer();
 
-  const identity = createBuildIdentity(undefined, undefined, root);
+  const identity = {
+    ...createBuildIdentity(undefined, undefined, root),
+    workingTreeClean: workingTreeCleanAtStart,
+  };
   const requiredGateCount = gates.length;
   const passedGateCount = gates.filter((gate) => gate.status === "pass").length;
   const failedGateCount = gates.filter((gate) => gate.status === "fail").length;
