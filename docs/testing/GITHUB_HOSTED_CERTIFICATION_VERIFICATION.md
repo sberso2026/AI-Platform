@@ -41,13 +41,14 @@
 | Field | Value |
 |-------|--------|
 | Workflow | Project Intelligence Phase 6C-1 Certification |
-| Commit | *fill after successful CI* |
-| Run ID | *pending* |
-| Jobs | preflight · validate · baseline-equivalence · hosted-certification · release-evidence |
-| Positive entitlement proven | required |
-| Baseline cases | 1892 passed at frozen tag |
-| Required skips | must be 0 |
-| Unexpected 5xx | must be 0 |
+| Commit (hosted PASS artifact) | `aef5d17765a59e75700421536554bf5164079cbd` |
+| Hosted run | **29185298419** (hosted-certification PASS; release-evidence path fix pending) |
+| Gates | 14/14 |
+| Positive entitlement proven | true |
+| Baseline cases | 1892 passed / 0 failed / 0 skipped |
+| Required skips | 0 |
+| Unexpected 5xx | 0 |
+| Baseline SHA | `ab1f44276715888123d9f669464987e6f7c39b6c` |
 
 ### Historical classification notes
 

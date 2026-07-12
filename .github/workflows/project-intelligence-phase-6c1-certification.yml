@@ -206,14 +206,19 @@ jobs:
           EXPECTED_SHA: ${{ github.sha }}
           EXPECTED_BASELINE_SHA: ${{ env.PI_BASELINE_SHA }}
         run: |
-          ARTIFACT="evidence/artifacts/project-intelligence-certification.json"
+          ARTIFACT="evidence/packages/project-intelligence-certification/artifacts/project-intelligence-certification.json"
           BASELINE="evidence/artifacts/project-intelligence-baseline-equivalence.json"
+          if [ ! -f "$BASELINE" ]; then
+            BASELINE="evidence/packages/project-intelligence-certification/artifacts/project-intelligence-baseline-equivalence.json"
+          fi
           test -f "$ARTIFACT"
           test -f "$BASELINE"
+          export ARTIFACT_PATH="$ARTIFACT"
+          export BASELINE_PATH="$BASELINE"
           node -e '
           const fs = require("fs");
-          const a = JSON.parse(fs.readFileSync("evidence/artifacts/project-intelligence-certification.json", "utf8"));
-          const b = JSON.parse(fs.readFileSync("evidence/artifacts/project-intelligence-baseline-equivalence.json", "utf8"));
+          const a = JSON.parse(fs.readFileSync(process.env.ARTIFACT_PATH, "utf8").replace(/^\uFEFF/, ""));
+          const b = JSON.parse(fs.readFileSync(process.env.BASELINE_PATH, "utf8").replace(/^\uFEFF/, ""));
           const expected = process.env.EXPECTED_SHA;
           const baselineSha = process.env.EXPECTED_BASELINE_SHA;
           const failures = [];
