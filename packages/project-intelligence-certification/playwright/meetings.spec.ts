@@ -312,13 +312,9 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
       expect(payload.error?.code ?? "").toMatch(/workspace|entitlement|permission|access/i);
 
       await page.goto(meetingsPath);
-      const denied = page.getByTestId(`access-denied-${denial.expectedReason ?? "workspace_not_assigned"}`);
-      const deniedGeneric = page.getByTestId("access-denied");
-      const shellDenied = page.getByTestId("project-intelligence-state-workspace-unassigned");
-      const clientDenied = page.getByRole("alert");
-      await expect(denied.or(deniedGeneric).or(shellDenied).or(clientDenied)).toBeVisible({
-        timeout: 20_000,
-      });
+      await expect(
+        page.getByTestId(`access-denied-${denial.expectedReason ?? "workspace_not_assigned"}`),
+      ).toBeVisible({ timeout: 20_000 });
       await expect(page.getByTestId("project-intelligence-meetings-ready")).toHaveCount(0);
     } finally {
       await context.close();
