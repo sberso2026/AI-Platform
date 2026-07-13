@@ -253,13 +253,12 @@ export class AzureDocumentIntelligenceParser implements ProjectIntelligenceDocum
       signal: AbortSignal.timeout(this.timeoutMs),
     });
     if (!start.ok) {
-      const detail = await start.text().catch(() => "");
       return {
         pages: [],
         parserProvider: this.provider,
         parserVersion: this.version,
         confidence: 0,
-        warnings: [`azure_analyze_failed:${start.status}`, detail.slice(0, 120)],
+        warnings: [`azure_analyze_failed:${start.status}`, `provider_http:${start.status}`],
       };
     }
 

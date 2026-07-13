@@ -164,8 +164,8 @@ async function main(): Promise<void> {
   const embeddingProvider = routing.provider === "none" ? "platform-staging-hash" : routing.provider;
   const hashDisabled = providerCert && !isHashEmbeddingProvider(embeddingProvider);
   const azureReady = presence.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT && presence.AZURE_DOCUMENT_INTELLIGENCE_KEY;
-  const advancedParserProvider = azureReady ? "azure-document-intelligence" : "unconfigured";
-  const ocrProvider = azureReady ? "azure-document-intelligence-ocr" : "unconfigured";
+  const advancedParserProvider = azureReady ? "Azure Document Intelligence" : "unconfigured";
+  const ocrProvider = azureReady ? "Azure Document Intelligence" : "unconfigured";
 
   const requiredGateCount = gates.length;
   const passedGateCount = gates.filter((gate) => gate.status === "pass").length;
@@ -184,8 +184,8 @@ async function main(): Promise<void> {
     hashDisabled
     && !isHashEmbeddingProvider(embeddingProvider)
     && azureReady
-    && advancedParserProvider === "azure-document-intelligence"
-    && ocrProvider === "azure-document-intelligence-ocr"
+    && advancedParserProvider === "Azure Document Intelligence"
+    && ocrProvider === "Azure Document Intelligence"
     && failedGateCount === 0
     && skippedGateCount === 0
     && notExecutedGateCount === 0

@@ -35,9 +35,9 @@ export function buildDigitalEngineeringPdf(lines: string[]): Uint8Array {
   return new TextEncoder().encode(pdf);
 }
 
-/** Image-only PDF page with no text operators — triggers OCR-required density path. */
+/** Image-only-style PDF: empty content stream triggers OCR-required density path. */
 export function buildScannedLikePdfPlaceholder(): Uint8Array {
-  // Empty content stream → insufficient extracted text for OCR routing.
+  // Minimal valid PDF with no text operators — lightweight extract yields insufficient text.
   const stream = "\n";
   const objects = [
     "1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n",
@@ -61,7 +61,21 @@ export function buildScannedLikePdfPlaceholder(): Uint8Array {
   return new TextEncoder().encode(pdf);
 }
 
-export function writeProviderFixtures(packageDir: string): { digitalPdf: string; scannedPdf: string; checksum: string } {
+/** Tiny PNG used for Azure OCR smoke when PDF has no raster layer. */
+export function buildOcrSmokePng(): Uint8Array {
+  // 1x1 white PNG
+  return Uint8Array.from(Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  ));
+}
+
+export function writeProviderFixtures(packageDir: string): {
+  digitalPdf: string;
+  scannedPdf: string;
+  ocrPng: string;
+  checksum: string;
+} {
   const dir = resolve(packageDir, "fixtures/providers");
   mkdirSync(dir, { recursive: true });
   const digital = buildDigitalEngineeringPdf([
@@ -71,10 +85,15 @@ export function writeProviderFixtures(packageDir: string): { digitalPdf: string;
     "Design pressure 16 bar g",
   ]);
   const scanned = buildScannedLikePdfPlaceholder();
+  const ocrPngBytes = buildOcrSmokePng();
   const digitalPdf = resolve(dir, "table-heavy-digital.pdf");
   const scannedPdf = resolve(dir, "scanned-empty-text.pdf");
+  const ocrPng = resolve(dir, "ocr-smoke.png");
   writeFileSync(digitalPdf, digital);
   writeFileSync(scannedPdf, scanned);
-  const checksum = createHash("sha256").update(Buffer.concat([Buffer.from(digital), Buffer.from(scanned)])).digest("hex");
-  return { digitalPdf, scannedPdf, checksum };
+  writeFileSync(ocrPng, ocrPngBytes);
+  const checksum = createHash("sha256")
+    .update(Buffer.concat([Buffer.from(digital), Buffer.from(scanned), Buffer.from(ocrPngBytes)]))
+    .digest("hex");
+  return { digitalPdf, scannedPdf, ocrPng, checksum };
 }
