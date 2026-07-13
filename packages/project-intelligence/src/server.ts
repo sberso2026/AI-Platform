@@ -28,4 +28,5 @@ export * from "./documents/parser-routing";
 export * from "./documents/runtime-mode";
 export * from "./documents/embedding-registry";
 export * from "./documents/cost-controls";
+export * from "./meetings";
 

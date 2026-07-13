@@ -10,3 +10,8 @@ export * from "./documents/storage-policy";
 export * from "./documents/grounded-answer";
 export * from "./documents/abstention";
 export * from "./documents/findings";
+export * from "./meetings/types";
+export * from "./meetings/errors";
+export * from "./meetings/meeting-state-machine";
+export * from "./meetings/consent-policy";
+export * from "./meetings/access";

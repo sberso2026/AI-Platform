@@ -46,6 +46,27 @@ AI Platform (current)
 └── Document Intelligence (dfcf6a1)   → required grounding dependency
 ```
 
+## Layered dependency graph (target integrated stack)
+
+```text
+UI (Engineering Apps / Project Intelligence / Meetings)
+  → Routes (/meetings, /new, /[id], /live, /transcript, /health)
+    → APIs (/api/engineering/project-intelligence/meetings/*)
+      → Access guard (tenant→…→feature meetings)
+        → Domain services (manual session, participants, transcript append)
+          → State machine + privacy/consent policy
+            → Repositories (Supabase client / RPCs)
+              → Tables (project_intelligence_meeting_*)
+              → Events / outbox / jobs (foundation; workers later)
+                → Realtime (deferred host; reconnect client later)
+                → AI (deferred Whisper / extraction)
+                → Storage (deferred audio blobs)
+                → Providers (manual certified_candidate; Teams/Zoom/Meet unavailable)
+                → Engineering Core adapters (deferred — no writes in 6C-3B)
+                → Document Intelligence (dfcf6a1) (deferred grounding — baseline unchanged)
+                → Certification (6C-3B gates A–S)
+```
+
 ## Related documents
 
 - `PROJECT_INTELLIGENCE_MEETING_CAPABILITY_INVENTORY.md`
