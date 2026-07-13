@@ -141,7 +141,7 @@ UI: `/engineering/apps/project-intelligence/migration`
 | PI `lessons_learned` vs Core lessons | High | Map + rename |
 | PI single-tenant profile vs Platform workspaces/seats | Critical | Identity/workspace redesign |
 | Direct OpenAI vs Platform Intelligence | High | Mandatory governance cutover |
-| `meeting_intelligence` registry app vs PI meetings module | Medium | Product decision |
+| `meeting_intelligence` registry app vs PI meetings module | Medium | **6C-3A locked:** Meetings is a PI feature; keep stub disabled until dependency sign-off — see `PROJECT_INTELLIGENCE_MEETING_INTEGRATION_DECISIONS.md` and `PROJECT_INTELLIGENCE_MEETING_STUB_DEPENDENCY_ANALYSIS.md` |
 | Dirty standalone git WIP | High | Freeze source revision |
 
 **No destructive migration or broad refactoring until these conflicts are accepted by stakeholders.**

@@ -97,7 +97,7 @@
 
 - Commit freeze for PI dirty git tree
 - Dual-DB vs single hosted Supabase strategy
-- Whether `meeting_intelligence` stays nested under PI or becomes sibling app
+- Whether `meeting_intelligence` stays nested under PI or becomes sibling app — **6C-3A:** nested as PI Meetings feature; stub retained disabled (`PROJECT_INTELLIGENCE_MEETING_INTEGRATION_DECISIONS.md`)
 - Forecast product scope
 - Production bot/Graph timeline
 
