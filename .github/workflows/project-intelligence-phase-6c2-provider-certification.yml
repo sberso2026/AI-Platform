@@ -302,9 +302,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Provision fixtures for release-evidence gate Q
-        run: pnpm --filter @rtb/project-intelligence-certification provision
-      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      # Gate Q already ran in browser-certification. Skip fixture re-provision: cleanup + recreate
+      # races hosted Auth sign-in, and is unnecessary when Gate Q is credited without Playwright.
       - name: Provider certification artifact
         env:
           PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
@@ -320,14 +319,10 @@ jobs:
           PLATFORM_EMBEDDING_PROVIDER: openai
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
-          # Browser job already certified; reuse base URL if certify Gate Q starts local server.
           PI_BROWSER_ALREADY_CERTIFIED: "1"
         run: |
           pnpm --filter @rtb/project-intelligence-certification certify:providers
           pnpm --filter @rtb/project-intelligence-certification secret-scan
-      - name: Cleanup PI fixtures
-        if: always()
-        run: pnpm --filter @rtb/project-intelligence-certification cleanup
       - uses: actions/upload-artifact@v4
         with:
           name: project-intelligence-provider-certification

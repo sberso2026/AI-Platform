@@ -74,9 +74,14 @@ async function getOrCreateUser(admin: Admin, email: string, password: string): P
 
 async function signInJwt(url: string, anonKey: string, email: string, password: string): Promise<string> {
   const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error } = await client.auth.signInWithPassword({ email, password });
-  if (error || !data.session?.access_token) throw new Error(`JWT sign-in failed for ${email}: ${error?.message}`);
-  return data.session.access_token;
+  let lastDetail = "unknown";
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (data.session?.access_token) return data.session.access_token;
+    lastDetail = error?.message || (error?.status != null ? String(error.status) : "no_session");
+    await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+  }
+  throw new Error(`JWT sign-in failed for ${email}: ${lastDetail}`);
 }
 
 async function tenantRole(admin: Admin, tenantId: string, slug: string): Promise<string> {

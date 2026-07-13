@@ -134,7 +134,13 @@ async function main(): Promise<void> {
       continue;
     }
     if (id === "Q" && process.env.PI_BROWSER_ALREADY_CERTIFIED === "1") {
-      return { ok: true, detail: "browser-certification job already passed; Gate Q credited without re-run" };
+      gates.push({
+        id,
+        status: "pass",
+        detail: "browser-certification job already passed; Gate Q credited without re-run",
+        command: commands[id],
+      });
+      continue;
     }
     if (id === "Q" && !serverStarted) {
       try {
