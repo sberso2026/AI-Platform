@@ -383,6 +383,7 @@ CREATE TABLE project_intelligence_meeting_outbox (
 );
 
 -- RLS
+-- Tables with tenant_id + workspace_id
 DO $$
 DECLARE
   t TEXT;
@@ -400,8 +401,6 @@ BEGIN
     'project_intelligence_meeting_minutes_versions',
     'project_intelligence_meeting_evidence',
     'project_intelligence_meeting_jobs',
-    'project_intelligence_meeting_job_attempts',
-    'project_intelligence_meeting_worker_leases',
     'project_intelligence_meeting_dead_letters',
     'project_intelligence_meeting_outbox'
   ]
@@ -420,11 +419,44 @@ BEGIN
       'CREATE POLICY %I ON %I FOR ALL TO authenticated USING (
          tenant_id = ANY(get_user_tenant_ids())
          AND has_permission(''engineering'', ''admin'', tenant_id)
+         AND workspace_id IN (
+           SELECT wm.workspace_id FROM workspace_memberships wm WHERE wm.user_id = auth.uid()
+         )
        ) WITH CHECK (
          tenant_id = ANY(get_user_tenant_ids())
          AND has_permission(''engineering'', ''admin'', tenant_id)
+         AND workspace_id IN (
+           SELECT wm.workspace_id FROM workspace_memberships wm WHERE wm.user_id = auth.uid()
+         )
        )',
       t || '_manage', t
     );
   END LOOP;
 END $$;
+
+-- job_attempts: tenant scoped, no workspace_id
+ALTER TABLE project_intelligence_meeting_job_attempts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY project_intelligence_meeting_job_attempts_select
+  ON project_intelligence_meeting_job_attempts FOR SELECT TO authenticated
+  USING (tenant_id = ANY(get_user_tenant_ids()));
+CREATE POLICY project_intelligence_meeting_job_attempts_manage
+  ON project_intelligence_meeting_job_attempts FOR ALL TO authenticated
+  USING (
+    tenant_id = ANY(get_user_tenant_ids())
+    AND has_permission('engineering', 'admin', tenant_id)
+  )
+  WITH CHECK (
+    tenant_id = ANY(get_user_tenant_ids())
+    AND has_permission('engineering', 'admin', tenant_id)
+  );
+
+-- worker_leases: optional tenant; deny authenticated by default (service role only)
+ALTER TABLE project_intelligence_meeting_worker_leases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY project_intelligence_meeting_worker_leases_select
+  ON project_intelligence_meeting_worker_leases FOR SELECT TO authenticated
+  USING (
+    tenant_id IS NOT NULL
+    AND tenant_id = ANY(get_user_tenant_ids())
+    AND has_permission('engineering', 'admin', tenant_id)
+  );
+
