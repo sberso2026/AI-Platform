@@ -40,7 +40,7 @@ export class PdfDocumentParser implements ProjectIntelligenceDocumentParser {
       ],
     };
   }
-
+}
 
 export class DocxDocumentParser implements ProjectIntelligenceDocumentParser {
   readonly provider = "docx-mammoth";
