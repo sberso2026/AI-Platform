@@ -22,11 +22,6 @@ function requireUser(fixtures: PiFixtureManifest, role: string): PiUserFixture {
   return user;
 }
 
-function authHeaders(user: PiUserFixture): Record<string, string> {
-  if (!user.jwt) throw new Error(`Missing JWT for ${user.email}`);
-  return { Authorization: `Bearer ${user.jwt}` };
-}
-
 async function expectMeetingsReady(page: import("@playwright/test").Page) {
   await expect(page.getByTestId("project-intelligence-meetings-ready")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("project-intelligence-nav-meetings")).toBeVisible({ timeout: 30_000 });
@@ -37,10 +32,8 @@ async function expectMeetingsReady(page: import("@playwright/test").Page) {
 async function createDraftMeeting(
   page: import("@playwright/test").Page,
   title: string,
-  user: PiUserFixture,
 ): Promise<string> {
   const create = await page.request.post("/api/engineering/project-intelligence/meetings", {
-    headers: authHeaders(user),
     data: {
       title,
       provider: "manual",
@@ -62,14 +55,10 @@ async function transitionViaApi(
   meetingId: string,
   toStatus: string,
   expectedStateVersion: number,
-  user: PiUserFixture,
 ) {
   const response = await page.request.post(
     `/api/engineering/project-intelligence/meetings/${meetingId}/transition`,
-    {
-      headers: authHeaders(user),
-      data: { toStatus, expectedStateVersion },
-    },
+    { data: { toStatus, expectedStateVersion } },
   );
   const text = await response.text();
   expect(response.status(), `transition ${toStatus}: ${text}`).toBeLessThan(500);
@@ -77,14 +66,9 @@ async function transitionViaApi(
   return (JSON.parse(text) as { data: { state_version: number; status: string } }).data;
 }
 
-async function getMeeting(
-  page: import("@playwright/test").Page,
-  meetingId: string,
-  user: PiUserFixture,
-) {
+async function getMeeting(page: import("@playwright/test").Page, meetingId: string) {
   const response = await page.request.get(
     `/api/engineering/project-intelligence/meetings/${meetingId}`,
-    { headers: authHeaders(user) },
   );
   expect(response.ok()).toBeTruthy();
   return (await response.json()) as { data: { id: string; status: string; state_version: number } };
@@ -93,12 +77,11 @@ async function getMeeting(
 async function advanceTo(
   page: import("@playwright/test").Page,
   meetingId: string,
-  user: PiUserFixture,
   statuses: readonly string[],
 ) {
-  let meeting = (await getMeeting(page, meetingId, user)).data;
+  let meeting = (await getMeeting(page, meetingId)).data;
   for (const status of statuses) {
-    meeting = await transitionViaApi(page, meetingId, status, meeting.state_version, user);
+    meeting = await transitionViaApi(page, meetingId, status, meeting.state_version);
   }
   return meeting;
 }
@@ -127,33 +110,33 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("C schedule meeting", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert schedule ${Date.now()}`, owner);
+    const meetingId = await createDraftMeeting(page, `Cert schedule ${Date.now()}`);
     await page.getByTestId("meeting-transition-scheduled").click();
     await expect(page.getByTestId("meeting-detail-status-scheduled")).toBeVisible({ timeout: 15_000 });
-    expect((await getMeeting(page, meetingId, owner)).data.status).toBe("scheduled");
+    expect((await getMeeting(page, meetingId)).data.status).toBe("scheduled");
   });
 
   test("D start manual meeting", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert start ${Date.now()}`, owner);
-    const meeting = await advanceTo(page, meetingId, owner, ["scheduled", "connecting"]);
+    const meetingId = await createDraftMeeting(page, `Cert start ${Date.now()}`);
+    const meeting = await advanceTo(page, meetingId, ["scheduled", "connecting"]);
     expect(meeting.status).toBe("connecting");
   });
 
   test("E mark connected", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert connected ${Date.now()}`, owner);
-    const meeting = await advanceTo(page, meetingId, owner, ["scheduled", "connecting", "connected"]);
+    const meetingId = await createDraftMeeting(page, `Cert connected ${Date.now()}`);
+    const meeting = await advanceTo(page, meetingId, ["scheduled", "connecting", "connected"]);
     expect(meeting.status).toBe("connected");
   });
 
   test("F start recording", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert recording ${Date.now()}`, owner);
-    const meeting = await advanceTo(page, meetingId, owner, [
+    const meetingId = await createDraftMeeting(page, `Cert recording ${Date.now()}`);
+    const meeting = await advanceTo(page, meetingId, [
       "scheduled",
       "connecting",
       "connected",
@@ -165,8 +148,8 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("G mark live", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert live ${Date.now()}`, owner);
-    await advanceTo(page, meetingId, owner, [
+    const meetingId = await createDraftMeeting(page, `Cert live ${Date.now()}`);
+    await advanceTo(page, meetingId, [
       "scheduled",
       "connecting",
       "connected",
@@ -181,7 +164,7 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("H add participant", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert participant ${Date.now()}`, owner);
+    const meetingId = await createDraftMeeting(page, `Cert participant ${Date.now()}`);
     page.once("dialog", (dialog) => dialog.accept("Cert Attendee"));
     await page.getByTestId("meeting-add-participant").click();
     await expect(page.getByTestId("meeting-participants-list")).toContainText("Cert Attendee", {
@@ -189,7 +172,6 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     });
     const participants = await page.request.get(
       `/api/engineering/project-intelligence/meetings/${meetingId}/participants`,
-      { headers: authHeaders(owner) },
     );
     expect(participants.ok()).toBeTruthy();
     expect((await participants.json()).data.length).toBeGreaterThan(0);
@@ -198,11 +180,10 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("I record consent", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert consent ${Date.now()}`, owner);
+    const meetingId = await createDraftMeeting(page, `Cert consent ${Date.now()}`);
     const add = await page.request.post(
       `/api/engineering/project-intelligence/meetings/${meetingId}/participants`,
       {
-        headers: authHeaders(owner),
         data: {
           displayName: "Consent Subject",
           externalParticipantId: `manual-consent-${Date.now()}`,
@@ -222,8 +203,8 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("J append transcript", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert transcript ${Date.now()}`, owner);
-    await advanceTo(page, meetingId, owner, [
+    const meetingId = await createDraftMeeting(page, `Cert transcript ${Date.now()}`);
+    await advanceTo(page, meetingId, [
       "scheduled",
       "connecting",
       "connected",
@@ -233,7 +214,7 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     const append = await page.request.post(
       `/api/engineering/project-intelligence/meetings/${meetingId}/transcript`,
       {
-        headers: authHeaders(owner),
+        
         data: {
           providerEventId: `ui-evt-${Date.now()}`,
           text: "Design pressure is 16 bar.",
@@ -253,8 +234,8 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("K revise transcript", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert revise ${Date.now()}`, owner);
-    await advanceTo(page, meetingId, owner, [
+    const meetingId = await createDraftMeeting(page, `Cert revise ${Date.now()}`);
+    await advanceTo(page, meetingId, [
       "scheduled",
       "connecting",
       "connected",
@@ -264,7 +245,7 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     const append = await page.request.post(
       `/api/engineering/project-intelligence/meetings/${meetingId}/transcript`,
       {
-        headers: authHeaders(owner),
+        
         data: {
           providerEventId: `evt-${Date.now()}`,
           text: "Original segment text",
@@ -290,8 +271,8 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("L pause and resume", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert pause ${Date.now()}`, owner);
-    const meeting = await advanceTo(page, meetingId, owner, [
+    const meetingId = await createDraftMeeting(page, `Cert pause ${Date.now()}`);
+    const meeting = await advanceTo(page, meetingId, [
       "scheduled",
       "connecting",
       "connected",
@@ -306,8 +287,8 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("M end meeting", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert end ${Date.now()}`, owner);
-    const meeting = await advanceTo(page, meetingId, owner, [
+    const meetingId = await createDraftMeeting(page, `Cert end ${Date.now()}`);
+    const meeting = await advanceTo(page, meetingId, [
       "scheduled",
       "connecting",
       "connected",
@@ -323,12 +304,11 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test("N invalid transition rejected", async ({ page, context }) => {
     const owner = requireUser(loadFixtures(), "owner");
     await signInAsFixtureUser(context, owner.email);
-    const meetingId = await createDraftMeeting(page, `Cert invalid ${Date.now()}`, owner);
-    const meeting = (await getMeeting(page, meetingId, owner)).data;
+    const meetingId = await createDraftMeeting(page, `Cert invalid ${Date.now()}`);
+    const meeting = (await getMeeting(page, meetingId)).data;
     const response = await page.request.post(
       `/api/engineering/project-intelligence/meetings/${meetingId}/transition`,
       {
-        headers: authHeaders(owner),
         data: { toStatus: "processing", expectedStateVersion: meeting.state_version },
       },
     );
@@ -351,9 +331,7 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     } else {
       await expect(page.getByTestId(`access-denied-${denial.expectedReason}`)).toBeVisible();
     }
-    const response = await page.request.get("/api/engineering/project-intelligence/meetings", {
-      headers: authHeaders(user),
-    });
+    const response = await page.request.get("/api/engineering/project-intelligence/meetings");
     expect(response.status()).toBe(403);
   });
 
@@ -363,11 +341,11 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     await page.goto(meetingsPath);
     await expectMeetingsReady(page);
     await expect(page.getByTestId("project-intelligence-meetings-providers-disabled")).toBeVisible();
-    const meetingId = await createDraftMeeting(page, `Cert providers ${Date.now()}`, owner);
+    const meetingId = await createDraftMeeting(page, `Cert providers ${Date.now()}`);
     await page.goto(`${meetingsPath}/${meetingId}/live`);
     await expect(page.getByTestId("external-providers-unavailable")).toBeVisible({ timeout: 30_000 });
     const createExternal = await page.request.post("/api/engineering/project-intelligence/meetings", {
-      headers: authHeaders(owner),
+      
       data: { title: "External attempt", provider: "zoom" },
     });
     expect(createExternal.status()).toBe(422);
