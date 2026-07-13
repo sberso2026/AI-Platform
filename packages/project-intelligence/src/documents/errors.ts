@@ -7,6 +7,8 @@ export type DocumentIntelligenceErrorCode =
   | "document_file_too_large"
   | "document_source_file_unavailable"
   | "document_parser_failed"
+  | "document_password_required"
+  | "document_parser_timeout"
   | "document_normalization_failed"
   | "document_chunking_failed"
   | "document_embedding_failed"
@@ -27,6 +29,8 @@ const STATUS_BY_CODE: Partial<Record<DocumentIntelligenceErrorCode, number>> = {
   document_file_too_large: 422,
   document_source_file_unavailable: 404,
   document_parser_failed: 500,
+  document_password_required: 422,
+  document_parser_timeout: 504,
   document_normalization_failed: 500,
   document_chunking_failed: 500,
   document_embedding_failed: 500,
@@ -72,6 +76,8 @@ export const PHASE_BRIEF_DOCUMENT_ERROR_CODES = [
   "document_file_too_large",
   "document_source_file_unavailable",
   "document_parser_failed",
+  "document_password_required",
+  "document_parser_timeout",
   "document_normalization_failed",
   "document_chunking_failed",
   "document_embedding_failed",

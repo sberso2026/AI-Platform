@@ -37,6 +37,8 @@ export interface DocumentParseInput {
   mimeType: string;
   fileName?: string;
   bytes: Uint8Array;
+  /** Safe request correlation for nested parser errors (never a secret). */
+  correlationId?: string;
 }
 
 export interface ProjectIntelligenceDocumentParser {

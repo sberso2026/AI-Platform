@@ -371,7 +371,7 @@ importers:
         specifier: ^1.12.0
         version: 1.12.0
       pdf-parse:
-        specifier: ^2.4.5
+        specifier: 2.4.5
         version: 2.4.5
       zod:
         specifier: ^3.25.36
@@ -380,9 +380,6 @@ importers:
       '@types/node':
         specifier: ^22.15.29
         version: 22.20.1
-      '@types/pdf-parse':
-        specifier: ^1.1.5
-        version: 1.1.5
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
@@ -1289,9 +1286,6 @@ packages:
 
   '@types/node@22.20.1':
     resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
-
-  '@types/pdf-parse@1.1.5':
-    resolution: {integrity: sha512-kBfrSXsloMnUJOKi25s3+hRmkycHfLK6A09eRGqF/N8BkQoPUmaCr+q8Cli5FnfohEz/rsv82zAiPz/LXtOGhA==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -3596,10 +3590,6 @@ snapshots:
   '@types/node@22.20.1':
     dependencies:
       undici-types: 6.21.0
-
-  '@types/pdf-parse@1.1.5':
-    dependencies:
-      '@types/node': 22.20.1
 
   '@types/react-dom@19.2.3(@types/react@19.2.17)':
     dependencies:

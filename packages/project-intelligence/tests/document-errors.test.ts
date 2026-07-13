@@ -13,6 +13,8 @@ describe("document errors", () => {
       "document_file_too_large",
       "document_source_file_unavailable",
       "document_parser_failed",
+      "document_password_required",
+      "document_parser_timeout",
       "document_normalization_failed",
       "document_chunking_failed",
       "document_embedding_failed",
