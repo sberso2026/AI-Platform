@@ -221,6 +221,15 @@ jobs:
     needs: multi-worker
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -235,13 +244,13 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Provision full PI entitlement fixture
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Verify fixture readiness
+        run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
       - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
       - name: Browser E2E documents
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
           PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PLATFORM_EMBEDDING_PROVIDER: openai
@@ -258,6 +267,9 @@ jobs:
           npx --yes wait-on http://127.0.0.1:3000
           pnpm --filter @rtb/project-intelligence-certification test:e2e:documents
           pnpm --filter @rtb/project-intelligence-certification secret-scan
+      - name: Cleanup PI fixtures
+        if: always()
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
 
   release-evidence:
     needs:
