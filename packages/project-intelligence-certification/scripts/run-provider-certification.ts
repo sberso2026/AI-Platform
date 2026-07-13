@@ -90,7 +90,7 @@ const commands: Record<string, string> = {
   J: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
   K: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
   L: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Provider failure contracts\"",
-  M: "pnpm --filter @rtb/project-intelligence-certification test:documents",
+  M: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/durable-runtime.test.ts",
   N: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/query-plans.test.ts",
   O: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-security.test.ts && pnpm --filter @rtb/project-intelligence-certification secret-scan",
   P: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate P\"",

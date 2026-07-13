@@ -215,7 +215,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PI_PROVIDER_CERTIFICATION: "1"
           PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
-        run: pnpm --filter @rtb/project-intelligence-certification test:documents
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/durable-runtime.test.ts
 
   browser-certification:
     needs: multi-worker

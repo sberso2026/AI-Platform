@@ -104,6 +104,16 @@ describe("Phase 6C-2 provider closure contracts", () => {
   });
 
   it("Gate L provider failure mapping stays stable", async () => {
+    // Under provider certification, constructing a hash provider must fail closed immediately.
+    if (process.env.PI_PROVIDER_CERTIFICATION === "1") {
+      expect(() => new GovernedEmbeddingAdapter({
+        runtimeMode: "unit_test",
+        allowStagingHashFallback: true,
+        providerKind: "platform-staging-hash",
+      })).toThrow(/hash embeddings are disabled|real governed embedding/i);
+      return;
+    }
+
     const adapter = new GovernedEmbeddingAdapter({
       runtimeMode: "unit_test",
       allowStagingHashFallback: true,
