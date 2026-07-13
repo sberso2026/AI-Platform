@@ -1,11 +1,15 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { BuildIdentity } from "./build-identity.js";
-import type { CertificationGateId, ProviderCertificationGateId } from "./gates.js";
+import type {
+  CertificationGateId,
+  MeetingFoundationCertificationGateId,
+  ProviderCertificationGateId,
+} from "./gates.js";
 
 export interface CertificationReport {
   schemaVersion: 1;
-  phase: "6B" | "6C-1" | "6C-2";
+  phase: "6B" | "6C-1" | "6C-2" | "6C-3B";
   verdict: "PASS" | "FAIL";
   createdAt: string;
   repository: string;
@@ -21,7 +25,12 @@ export interface CertificationReport {
   buildIdentity: BuildIdentity;
   environment: string;
   hostedStagingProjectRef: string | null;
-  gates: readonly { id: CertificationGateId | ProviderCertificationGateId; status: "pass" | "fail" | "skip" | "not_executed"; detail?: string; command?: string }[];
+  gates: readonly {
+    id: CertificationGateId | ProviderCertificationGateId | MeetingFoundationCertificationGateId;
+    status: "pass" | "fail" | "skip" | "not_executed";
+    detail?: string;
+    command?: string;
+  }[];
   requiredGateCount: number;
   passedGateCount: number;
   failedGateCount: number;

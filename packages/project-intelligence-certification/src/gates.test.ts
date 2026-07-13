@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PROJECT_INTELLIGENCE_CERTIFICATION_GATES,
+  PROJECT_INTELLIGENCE_MEETING_FOUNDATION_CERTIFICATION_GATES,
   PROJECT_INTELLIGENCE_PROVIDER_CERTIFICATION_GATES,
 } from "./gates.js";
 
@@ -11,5 +12,12 @@ describe("certification gates", () => {
 
   it("lists every required gate from A through R for provider closure", () => {
     expect(PROJECT_INTELLIGENCE_PROVIDER_CERTIFICATION_GATES.map(([id]) => id)).toEqual("ABCDEFGHIJKLMNOPQR".split(""));
+  });
+
+  it("lists every required gate from A through S for Meeting Intelligence foundation", () => {
+    expect(PROJECT_INTELLIGENCE_MEETING_FOUNDATION_CERTIFICATION_GATES.map(([id]) => id)).toEqual(
+      "ABCDEFGHIJKLMNOPQRS".split(""),
+    );
+    expect(PROJECT_INTELLIGENCE_MEETING_FOUNDATION_CERTIFICATION_GATES).toHaveLength(19);
   });
 });

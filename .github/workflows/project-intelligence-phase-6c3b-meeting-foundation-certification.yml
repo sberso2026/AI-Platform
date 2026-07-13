@@ -1,0 +1,280 @@
+name: Project Intelligence Phase 6C-3B Meeting Foundation Certification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/project-intelligence/src/meetings/**"
+      - "packages/project-intelligence/tests/meeting*"
+      - "packages/project-intelligence-certification/src/meetings/**"
+      - "packages/project-intelligence-certification/src/rls/meeting-rls-matrix.test.ts"
+      - "packages/project-intelligence-certification/src/gates.ts"
+      - "packages/project-intelligence-certification/src/gates.test.ts"
+      - "packages/project-intelligence-certification/scripts/run-meeting-foundation-certification.ts"
+      - "packages/project-intelligence-certification/playwright/meetings.spec.ts"
+      - "packages/project-intelligence-certification/package.json"
+      - "apps/web/src/app/**/project-intelligence/meetings/**"
+      - "apps/web/src/app/api/engineering/project-intelligence/meetings/**"
+      - "apps/web/src/lib/project-intelligence/**"
+      - "supabase/migrations/20260713120000_batch_38_project_intelligence_meeting_foundation.sql"
+      - "docs/architecture/PROJECT_INTELLIGENCE_MEETING*"
+      - "docs/migration/PROJECT_INTELLIGENCE_MEETING*"
+      - "docs/security/PROJECT_INTELLIGENCE_MEETING*"
+      - ".github/workflows/project-intelligence-phase-6c3b-meeting-foundation-certification.yml"
+
+concurrency:
+  group: project-intelligence-phase-6c3b-meeting-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PI_MEETING_FOUNDATION_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  DOCUMENT_INTELLIGENCE_BASELINE_SHA: dfcf6a1c69b6119ab8a34fcc1bfeae93ae34ee53
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI secret preflight (no Azure/OpenAI required for meeting foundation)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PI_PROVIDER_CERTIFICATION: "0"
+          PI_REQUIRE_AZURE_DI: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/web typecheck
+      - name: Offline unit tests (meeting + certification)
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "0"
+          PI_MEETING_FOUNDATION_CERTIFICATION: "0"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+        run: |
+          pnpm --filter @rtb/project-intelligence test
+          pnpm --filter @rtb/project-intelligence-certification test:unit
+          pnpm --filter @rtb/project-intelligence-certification test:meetings
+      - name: Document Intelligence baseline constant
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/baseline-unchanged.test.ts
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  hosted-schema:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted Batch 38 meeting schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+        run: pnpm --filter @rtb/project-intelligence-certification verify-hosted-meeting-schema
+
+  rls-certification:
+    needs: hosted-schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision PI entitlement fixtures
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Meeting real-JWT RLS matrix
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/meeting-rls-matrix.test.ts
+      - name: Cleanup PI fixtures
+        if: always()
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+
+  manual-workflow:
+    needs: rls-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lifecycle, entitlement, consent, providers, HTTP envelopes
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "0"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/lifecycle.test.ts
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/entitlement-isolation.test.ts
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/consent.test.ts
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/provider-unavailable.test.ts
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/nested-error.test.ts
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/service-surfaces.test.ts
+
+  browser-certification:
+    needs: manual-workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Provision full PI entitlement fixture
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Verify fixture readiness
+        run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
+      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Browser E2E meetings (flows A–R)
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PI_MEETING_FOUNDATION_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+        run: |
+          pnpm --filter @rtb/web start &
+          npx --yes wait-on http://127.0.0.1:3000
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:meetings
+      - name: Cleanup PI fixtures
+        if: always()
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+
+  release-evidence:
+    needs:
+      - preflight
+      - validate
+      - hosted-schema
+      - rls-certification
+      - manual-workflow
+      - browser-certification
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision fixtures for hosted gate re-verification
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Meeting foundation certification artifact
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PI_MEETING_FOUNDATION_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PI_BROWSER_ALREADY_CERTIFIED: "1"
+        run: pnpm --filter @rtb/project-intelligence-certification certify:meetings
+      - name: Cleanup PI fixtures
+        if: always()
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: project-intelligence-meeting-foundation-certification
+          path: packages/project-intelligence-certification/artifacts/project-intelligence-meeting-foundation-certification.json
+          if-no-files-found: warn

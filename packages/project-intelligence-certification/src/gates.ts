@@ -44,3 +44,29 @@ export const PROJECT_INTELLIGENCE_PROVIDER_CERTIFICATION_GATES = [
 ] as const;
 
 export type ProviderCertificationGateId = (typeof PROJECT_INTELLIGENCE_PROVIDER_CERTIFICATION_GATES)[number][0];
+
+/** Phase 6C-3B Meeting Intelligence foundation gates (A–S). */
+export const PROJECT_INTELLIGENCE_MEETING_FOUNDATION_CERTIFICATION_GATES = [
+  ["A", "tests, typecheck, production build"],
+  ["B", "hosted Batch 38 schema"],
+  ["C", "real-JWT RLS"],
+  ["D", "feature entitlement and access guard"],
+  ["E", "meeting lifecycle state machine"],
+  ["F", "manual meeting service"],
+  ["G", "participant service"],
+  ["H", "privacy and consent"],
+  ["I", "transcript durability and ordering"],
+  ["J", "transcript revisions"],
+  ["K", "events and audit"],
+  ["L", "exact HTTP contracts"],
+  ["M", "browser E2E"],
+  ["N", "accessibility and responsive"],
+  ["O", "provider unavailable contracts"],
+  ["P", "legacy stub isolation"],
+  ["Q", "build identity"],
+  ["R", "GitHub hosted certification verification"],
+  ["S", "Phase 6C-2 Document Intelligence baseline unchanged"],
+] as const;
+
+export type MeetingFoundationCertificationGateId =
+  (typeof PROJECT_INTELLIGENCE_MEETING_FOUNDATION_CERTIFICATION_GATES)[number][0];
