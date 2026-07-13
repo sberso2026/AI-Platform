@@ -96,10 +96,14 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
   test.describe("owner flows", () => {
     test.describe.configure({ mode: "serial" });
 
+    // Create storage once; override empty storageState so beforeAll does not
+    // inherit test.use() and try to read a file that does not exist yet.
     test.beforeAll(async ({ browser }) => {
       mkdirSync(dirname(ownerStoragePath), { recursive: true });
       const owner = requireUser(loadFixtures(), "owner");
-      const context = await browser.newContext();
+      const context = await browser.newContext({
+        storageState: { cookies: [], origins: [] },
+      });
       await signInAsFixtureUser(context, owner.email);
       await context.storageState({ path: ownerStoragePath });
       await context.close();
