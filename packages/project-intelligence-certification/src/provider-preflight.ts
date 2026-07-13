@@ -33,10 +33,12 @@ export function resolveEmbeddingSecretRouting(env: NodeJS.ProcessEnv = process.e
   baseUrl: string;
 } {
   const errors: string[] = [];
-  const hasPlatform = Boolean(env.PLATFORM_EMBEDDING_API_KEY?.trim());
-  const hasOpenAi = Boolean(env.OPENAI_API_KEY?.trim());
-  const baseUrl = (env.PLATFORM_EMBEDDING_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
-  const model = env.PLATFORM_EMBEDDING_MODEL ?? "text-embedding-3-small";
+  const platformKey = env.PLATFORM_EMBEDDING_API_KEY?.trim() ?? "";
+  const openAiKey = env.OPENAI_API_KEY?.trim() ?? "";
+  const hasPlatform = platformKey.length > 0;
+  const hasOpenAi = openAiKey.length > 0;
+  const baseUrl = (env.PLATFORM_EMBEDDING_BASE_URL?.trim() || "https://api.openai.com/v1").replace(/\/$/, "");
+  const model = env.PLATFORM_EMBEDDING_MODEL?.trim() || "text-embedding-3-small";
   const explicitProvider = env.PLATFORM_EMBEDDING_PROVIDER?.trim();
 
   if (!hasPlatform && !hasOpenAi) {

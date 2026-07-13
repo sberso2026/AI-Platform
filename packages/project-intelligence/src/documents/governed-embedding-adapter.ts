@@ -62,7 +62,11 @@ export class GovernedEmbeddingAdapter implements ProjectIntelligenceEmbeddingAda
     this.runtimeMode = options.runtimeMode ?? resolveProjectIntelligenceRuntimeMode();
     this.registryEntry = options.registryEntry ?? resolveActiveEmbeddingModel();
     this.baseUrl = (options.baseUrl ?? process.env.PLATFORM_EMBEDDING_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
-    this.apiKey = options.apiKey ?? process.env.PLATFORM_EMBEDDING_API_KEY ?? process.env.OPENAI_API_KEY;
+    // GitHub Actions maps missing secrets to "" — treat blank as unset so OPENAI_API_KEY can resolve.
+    this.apiKey = options.apiKey?.trim()
+      || process.env.PLATFORM_EMBEDDING_API_KEY?.trim()
+      || process.env.OPENAI_API_KEY?.trim()
+      || undefined;
     this.model = options.model ?? this.registryEntry.model;
     this.dimensions = options.dimensions ?? DOCUMENT_INTELLIGENCE_VECTOR_DIMENSION;
     assertEmbeddingDimensionCompatible(this.dimensions);
