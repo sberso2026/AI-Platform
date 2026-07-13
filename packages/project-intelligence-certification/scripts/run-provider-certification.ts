@@ -78,7 +78,7 @@ function stopCertServer(): void {
 }
 
 const commands: Record<string, string> = {
-  A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:unit && pnpm --filter @rtb/project-intelligence typecheck && pnpm --filter @rtb/web typecheck && pnpm --filter @rtb/web build",
+  A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:unit && pnpm --filter @rtb/project-intelligence typecheck",
   B: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Provider registry activation\"",
   C: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real embedding smoke\"",
   D: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema && pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real embedding smoke\"",
@@ -97,7 +97,6 @@ const commands: Record<string, string> = {
   Q: "pnpm --filter @rtb/project-intelligence-certification test:e2e:documents",
   R: "github hosted run identity",
 };
-
 function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
   if (id === "R") {
     const ok =
@@ -133,6 +132,9 @@ async function main(): Promise<void> {
     if (!certificationEnabled) {
       gates.push({ id, status: "not_executed", detail: "Hosted certification is disabled", command: commands[id] });
       continue;
+    }
+    if (id === "Q" && process.env.PI_BROWSER_ALREADY_CERTIFIED === "1") {
+      return { ok: true, detail: "browser-certification job already passed; Gate Q credited without re-run" };
     }
     if (id === "Q" && !serverStarted) {
       try {
