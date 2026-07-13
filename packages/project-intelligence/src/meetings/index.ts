@@ -3,3 +3,8 @@ export * from "./errors";
 export * from "./meeting-state-machine";
 export * from "./consent-policy";
 export * from "./access";
+export * from "./providers";
+export * from "./event-types";
+export * from "./manual-meeting-service";
+export * from "./meeting-participant-service";
+export * from "./transcript-append-service";

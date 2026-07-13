@@ -15,3 +15,8 @@ export * from "./meetings/errors";
 export * from "./meetings/meeting-state-machine";
 export * from "./meetings/consent-policy";
 export * from "./meetings/access";
+export * from "./meetings/providers";
+export * from "./meetings/event-types";
+export * from "./meetings/manual-meeting-service";
+export * from "./meetings/meeting-participant-service";
+export * from "./meetings/transcript-append-service";
