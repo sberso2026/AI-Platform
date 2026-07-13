@@ -158,6 +158,7 @@ async function main(): Promise<void> {
     }
     const result = evaluateGateSync(id);
     gates.push({ id, status: result.ok ? "pass" : "fail", detail: result.detail, command: commands[id] });
+    console.log(`[provider-certification] gate ${id}: ${result.ok ? "pass" : "fail"}${result.detail ? ` — ${result.detail.slice(0, 400)}` : ""}`);
   }
   stopCertServer();
 

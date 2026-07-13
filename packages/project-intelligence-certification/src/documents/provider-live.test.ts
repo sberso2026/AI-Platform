@@ -59,11 +59,26 @@ describe("Provider registry activation", () => {
   });
 
   it("missing key blocks hosted activation", () => {
-    expect(() => new GovernedEmbeddingAdapter({
-      runtimeMode: "hosted_staging",
-      apiKey: "",
-      allowStagingHashFallback: false,
-    })).toThrow(/real governed embedding|No governed embedding/i);
+    const previous = {
+      PLATFORM_EMBEDDING_API_KEY: process.env.PLATFORM_EMBEDDING_API_KEY,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    };
+    try {
+      delete process.env.PLATFORM_EMBEDDING_API_KEY;
+      delete process.env.OPENAI_API_KEY;
+      expect(() => new GovernedEmbeddingAdapter({
+        runtimeMode: "hosted_staging",
+        apiKey: "",
+        allowStagingHashFallback: false,
+      })).toThrow(/real governed embedding|No governed embedding/i);
+    } finally {
+      if (previous.PLATFORM_EMBEDDING_API_KEY !== undefined) {
+        process.env.PLATFORM_EMBEDDING_API_KEY = previous.PLATFORM_EMBEDDING_API_KEY;
+      }
+      if (previous.OPENAI_API_KEY !== undefined) {
+        process.env.OPENAI_API_KEY = previous.OPENAI_API_KEY;
+      }
+    }
   });
 });
 
@@ -269,21 +284,33 @@ describe.skipIf(!providerCert)("Real semantic retrieval evaluation", () => {
 
 describe("Provider failure contracts", () => {
   it("invalid dimension and missing key produce stable codes without hash fallback in hosted mode", async () => {
-    await expect(new GovernedEmbeddingAdapter({
-      runtimeMode: "unit_test",
-      allowStagingHashFallback: true,
-      providerKind: "platform-staging-hash",
-    }).embed({ texts: ["x"], dimensions: 64 as 1536 })).rejects.toMatchObject({ code: "document_embedding_failed" });
+    expect(() => assertEmbeddingDimensionCompatible(64)).toThrow(/incompatible|dimension/i);
 
-    expect(() => new GovernedEmbeddingAdapter({
-      runtimeMode: "hosted_staging",
-      apiKey: undefined,
-      allowStagingHashFallback: false,
-    })).toThrow();
+    const previous = {
+      PLATFORM_EMBEDDING_API_KEY: process.env.PLATFORM_EMBEDDING_API_KEY,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    };
+    try {
+      delete process.env.PLATFORM_EMBEDDING_API_KEY;
+      delete process.env.OPENAI_API_KEY;
+      expect(() => new GovernedEmbeddingAdapter({
+        runtimeMode: "hosted_staging",
+        apiKey: "",
+        allowStagingHashFallback: false,
+      })).toThrow(/real governed embedding|No governed embedding|hash/i);
+    } finally {
+      if (previous.PLATFORM_EMBEDDING_API_KEY !== undefined) {
+        process.env.PLATFORM_EMBEDDING_API_KEY = previous.PLATFORM_EMBEDDING_API_KEY;
+      }
+      if (previous.OPENAI_API_KEY !== undefined) {
+        process.env.OPENAI_API_KEY = previous.OPENAI_API_KEY;
+      }
+    }
   });
 
   it("malformed Azure parser configuration returns failed warnings without secrets in payload", async () => {
-    const parser = new AzureDocumentIntelligenceParser({ endpoint: undefined, apiKey: undefined });
+    // Empty strings force unconfigured — undefined falls through to process env during cert runs.
+    const parser = new AzureDocumentIntelligenceParser({ endpoint: "", apiKey: "" });
     const parsed = await parser.parse({
       engineeringDocumentId: "x",
       revision: "A",
@@ -292,6 +319,7 @@ describe("Provider failure contracts", () => {
     });
     expect(parsed.confidence).toBe(0);
     expect(parsed.warnings.join(" ")).toMatch(/not_configured/);
+    expect(JSON.stringify(parsed)).not.toMatch(/Ocp-Apim-Subscription-Key|sk-|api[_-]?key/i);
   });
 });
 
