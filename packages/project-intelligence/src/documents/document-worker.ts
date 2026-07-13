@@ -143,11 +143,17 @@ export class ProjectIntelligenceDocumentWorker {
     await this.checkpoint(job, "validate", "completed", { evidence_count: 1 });
 
     await this.transition(job, "validating", "parsing");
-    const extractedHint = typeof payload.fixtureText === "string" ? payload.fixtureText.length : bytes.byteLength;
+    // textDensity is characters-per-page style signal for PDF/image OCR routing — never raw
+    // fixture string length (short cert fixtures were falsely treated as scanned → Azure).
+    const textDensity = mimeType === "application/pdf" || mimeType.startsWith("image/")
+      ? (typeof payload.extractedTextLength === "number"
+        ? Number(payload.extractedTextLength)
+        : undefined)
+      : undefined;
     const route = selectDocumentParser(mimeType, undefined, {
       mimeType,
       fileName,
-      textDensity: extractedHint,
+      textDensity,
       tableComplexity: String(payload.documentClassification ?? "").includes("table") ? "complex" : "simple",
       documentClassification: typeof payload.documentClassification === "string"
         ? payload.documentClassification
@@ -289,6 +295,10 @@ export class ProjectIntelligenceDocumentWorker {
       evidence_count: chunks.length,
       output_checksum: contentChecksum(chunks.map((chunk) => chunk.contentHash).join("|")),
     });
+
+    if (!chunks.length) {
+      throw Object.assign(new Error("No chunks produced"), { code: "document_insufficient_evidence" });
+    }
 
     await this.transition(job, "chunking", "embedding");
     const embedded = await this.embeddings.embed({

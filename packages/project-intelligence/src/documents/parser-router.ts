@@ -596,11 +596,17 @@ export class ProjectIntelligenceParserRouter {
 
   route(characteristics: DocumentRoutingCharacteristics): ParserRouteDecision {
     const mime = characteristics.mimeType;
+    const azureEligible = mime === "application/pdf"
+      || mime.startsWith("image/")
+      || mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     const scanned = characteristics.scannedLikely
-      || (characteristics.textDensity !== undefined && characteristics.textDensity < 20)
+      || (azureEligible
+        && characteristics.textDensity !== undefined
+        && characteristics.textDensity < 20)
       || characteristics.imageContent === true;
 
-    if (scanned && this.azure.configured) {
+    // Never route text/plain fixtures to Azure: layout/OCR models expect PDF/image bytes.
+    if (scanned && azureEligible && this.azure.configured) {
       return {
         parser: this.azure,
         reason: "scanned_or_image_azure_layout",
