@@ -69,6 +69,7 @@ export class GovernedEmbeddingAdapter implements ProjectIntelligenceEmbeddingAda
     assertEmbeddingDimensionCompatible(this.registryEntry.embeddingDimension);
 
     const hasKey = Boolean(this.apiKey?.trim());
+    const explicitProvider = process.env.PLATFORM_EMBEDDING_PROVIDER?.trim();
     const defaultAllowHash = allowsDeterministicEmbeddings(this.runtimeMode)
       && !requiresRealEmbeddingProvider(this.runtimeMode)
       && (process.env.PLATFORM_EMBEDDING_ALLOW_STAGING_HASH === "1"
@@ -84,6 +85,8 @@ export class GovernedEmbeddingAdapter implements ProjectIntelligenceEmbeddingAda
 
     if (options.providerKind) {
       this.providerKind = options.providerKind;
+    } else if (explicitProvider === "openai" || explicitProvider === "azure-openai") {
+      this.providerKind = explicitProvider;
     } else if (hasKey) {
       this.providerKind = this.baseUrl.includes("openai.azure.com") ? "azure-openai" : "openai";
     } else {

@@ -11,6 +11,10 @@ import {
   PROJECT_INTELLIGENCE_RETRIEVAL_THRESHOLDS,
 } from "../src/retrieval-evaluation.js";
 import { isHashEmbeddingProvider } from "@rtb/project-intelligence/server";
+import { providerSecretPresence, resolveEmbeddingSecretRouting } from "../src/provider-preflight.js";
+
+/** First implementation commit for this provider-closure batch (architecture land). */
+const IMPLEMENTATION_COMMIT_SHA = "08a0237a741b8f9dde8e259ca5c2c0c82db843ce";
 
 const packageDir = process.cwd();
 const root = resolve(packageDir, "../..");
@@ -75,20 +79,20 @@ function stopCertServer(): void {
 
 const commands: Record<string, string> = {
   A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:unit && pnpm --filter @rtb/project-intelligence typecheck && pnpm --filter @rtb/web typecheck && pnpm --filter @rtb/web build",
-  B: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate B\"",
-  C: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate C\"",
-  D: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema && pnpm --filter @rtb/project-intelligence-certification test:documents",
-  E: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate E\"",
-  F: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate F\"",
-  G: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate G\"",
-  H: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate G\"",
-  I: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate G\"",
-  J: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate G\"",
-  K: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate K\"",
-  L: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate L\"",
+  B: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Provider registry activation\"",
+  C: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real embedding smoke\"",
+  D: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema && pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real embedding smoke\"",
+  E: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real Azure advanced parser\"",
+  F: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real Azure OCR\"",
+  G: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
+  H: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
+  I: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
+  J: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
+  K: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Real semantic retrieval evaluation\"",
+  L: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t \"Provider failure contracts\"",
   M: "pnpm --filter @rtb/project-intelligence-certification test:documents",
   N: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/query-plans.test.ts",
-  O: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-security.test.ts",
+  O: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-security.test.ts && pnpm --filter @rtb/project-intelligence-certification secret-scan",
   P: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t \"Gate P\"",
   Q: "pnpm --filter @rtb/project-intelligence-certification test:e2e:documents",
   R: "github hosted run identity",
@@ -109,10 +113,6 @@ function evaluateGateSync(id: string): { ok: boolean; detail?: string } {
         : "GITHUB_RUN_ID/GITHUB_SHA/PI_PROVIDER_CERTIFICATION/hosted_staging required",
     };
   }
-  if (id === "C") {
-    const hasKey = Boolean(process.env.PLATFORM_EMBEDDING_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim());
-    if (!hasKey) return { ok: false, detail: "real embedding API key missing" };
-  }
   return run(commands[id]!);
 }
 
@@ -131,7 +131,7 @@ async function main(): Promise<void> {
   let serverStarted = false;
   for (const [id] of PROJECT_INTELLIGENCE_PROVIDER_CERTIFICATION_GATES) {
     if (!certificationEnabled) {
-      gates.push({ id, status: "fail", detail: "Hosted certification is disabled", command: commands[id] });
+      gates.push({ id, status: "not_executed", detail: "Hosted certification is disabled", command: commands[id] });
       continue;
     }
     if (id === "Q" && !serverStarted) {
@@ -159,40 +159,65 @@ async function main(): Promise<void> {
   };
   const evalResult = evaluateFixtureLexically(packageDir);
   const thresholdCheck = metricsMeetThresholds(evalResult.metrics);
-  const embeddingProvider = process.env.PLATFORM_EMBEDDING_API_KEY || process.env.OPENAI_API_KEY
-    ? (process.env.PLATFORM_EMBEDDING_BASE_URL?.includes("openai.azure.com") ? "azure-openai" : "openai")
-    : "platform-staging-hash";
+  const routing = resolveEmbeddingSecretRouting();
+  const presence = providerSecretPresence();
+  const embeddingProvider = routing.provider === "none" ? "platform-staging-hash" : routing.provider;
   const hashDisabled = providerCert && !isHashEmbeddingProvider(embeddingProvider);
-  const productionReadyBlocked = isHashEmbeddingProvider(embeddingProvider) || !hashDisabled;
+  const azureReady = presence.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT && presence.AZURE_DOCUMENT_INTELLIGENCE_KEY;
+  const advancedParserProvider = azureReady ? "azure-document-intelligence" : "unconfigured";
+  const ocrProvider = azureReady ? "azure-document-intelligence-ocr" : "unconfigured";
 
   const requiredGateCount = gates.length;
   const passedGateCount = gates.filter((gate) => gate.status === "pass").length;
   const failedGateCount = gates.filter((gate) => gate.status === "fail").length;
   const skippedGateCount = gates.filter((gate) => gate.status === "skip").length;
+  const notExecutedGates = gates.filter((gate) => gate.status === "not_executed").map((gate) => gate.id);
+  const notExecutedGateCount = notExecutedGates.length;
   const expectedSha = process.env.GITHUB_SHA ?? identity.commitSha;
   const shaMatches = identity.commitSha !== "unknown" && identity.commitSha === expectedSha;
   const playwrightReportPath = resolve(packageDir, "artifacts/playwright-report.json");
   const playwrightReport = existsSync(playwrightReportPath) ? readFileSync(playwrightReportPath, "utf8") : "";
   const unexpectedServerErrorCount = (playwrightReport.match(/"status"\s*:\s*5\d\d\b/g) ?? []).length;
+  const thresholdFileChecksum = checksumFile(resolve(root, "docs/testing/PROJECT_INTELLIGENCE_RETRIEVAL_THRESHOLDS.md")) ?? "";
+
+  const productionReady =
+    hashDisabled
+    && !isHashEmbeddingProvider(embeddingProvider)
+    && azureReady
+    && advancedParserProvider === "azure-document-intelligence"
+    && ocrProvider === "azure-document-intelligence-ocr"
+    && failedGateCount === 0
+    && skippedGateCount === 0
+    && notExecutedGateCount === 0
+    && unexpectedServerErrorCount === 0
+    && shaMatches
+    && thresholdCheck.ok;
 
   const reasons = [
     ...(failedGateCount ? [`${failedGateCount} required gates failed`] : []),
     ...(skippedGateCount ? [`${skippedGateCount} required gates skipped`] : []),
+    ...(notExecutedGateCount ? [`${notExecutedGateCount} required gates not executed: ${notExecutedGates.join(",")}`] : []),
     ...(unexpectedServerErrorCount ? [`${unexpectedServerErrorCount} unexpected 5xx responses`] : []),
     ...(!identity.workingTreeClean ? ["working tree is dirty"] : []),
     ...(!shaMatches ? ["build SHA mismatch"] : []),
-    ...(productionReadyBlocked ? ["production readiness blocked: hash/deterministic embeddings"] : []),
+    ...(isHashEmbeddingProvider(embeddingProvider) ? ["hash/deterministic embeddings are not production-ready"] : []),
+    ...(!azureReady ? ["Azure Document Intelligence credentials required for parser and OCR production proof"] : []),
     ...(!thresholdCheck.ok ? [`retrieval thresholds failed: ${thresholdCheck.failures.join(", ")}`] : []),
   ];
+
+  const verdict: "PASS" | "FAIL" = reasons.length === 0 && productionReady ? "PASS" : "FAIL";
 
   const report: CertificationReport = {
     schemaVersion: 1,
     phase: "6C-2",
-    verdict: reasons.length === 0 ? "PASS" : "FAIL",
+    verdict,
     createdAt: new Date().toISOString(),
     repository: identity.repository ?? "unknown",
     branch: identity.branch,
     commitSha: identity.commitSha,
+    implementationCommitSha: IMPLEMENTATION_COMMIT_SHA,
+    providerCertifiedCommitSha: verdict === "PASS" ? identity.commitSha : null,
+    ciHeadSha: process.env.GITHUB_SHA ?? identity.commitSha,
     buildIdentityCommitSha: identity.commitSha,
     workingTreeClean: identity.workingTreeClean,
     buildIdentity: identity,
@@ -203,16 +228,19 @@ async function main(): Promise<void> {
     passedGateCount,
     failedGateCount,
     skippedGateCount,
+    notExecutedGateCount,
+    notExecutedGates,
+    requiredGatesNotExecuted: notExecutedGates,
     unexpectedServerErrorCount,
     browserSummary: {
       passed: gates.find((gate) => gate.id === "Q")?.status === "pass" ? 1 : 0,
       failed: gates.find((gate) => gate.id === "Q")?.status === "fail" ? 1 : 0,
-      skipped: 0,
+      skipped: gates.find((gate) => gate.id === "Q")?.status === "skip" ? 1 : 0,
     },
     accessibilitySummary: { passed: 0, failed: 0, skipped: 0 },
     responsiveSummary: { passed: 0, failed: 0, skipped: 0 },
     productionCertificationBlocked: true,
-    releaseEligible: reasons.length === 0 && !productionReadyBlocked,
+    releaseEligible: verdict === "PASS",
     releaseEligibilityReasons: reasons,
     parserProviders: [
       "native-text",
@@ -222,22 +250,42 @@ async function main(): Promise<void> {
       "azure-document-intelligence",
     ],
     embeddingProvider,
-    embeddingModel: process.env.PLATFORM_EMBEDDING_MODEL ?? "text-embedding-3-small",
+    embeddingModel: routing.model,
+    embeddingDimension: 1536,
     vectorDimension: 1536,
     vectorIndexType: "hnsw",
     hashEmbeddingsDisabled: hashDisabled,
-    advancedParserProvider: process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
-      ? "azure-document-intelligence"
-      : "platform-structured",
-    ocrProvider: process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
-      ? "azure-document-intelligence-ocr"
-      : "platform-ocr-local",
+    advancedParserProvider,
+    ocrProvider,
+    providerSecretsPresent: presence,
+    thresholdFileChecksum,
+    fixtureSetChecksum: evalResult.checksum,
     parserFixtureCount: evalResult.caseCount,
-    ocrPageCount: 1,
+    ocrPageCount: azureReady ? 1 : 0,
     retrievalDatasetChecksum: evalResult.checksum,
     retrievalThresholds: PROJECT_INTELLIGENCE_RETRIEVAL_THRESHOLDS,
     retrievalResults: evalResult.metrics,
-    productionDocumentIntelligenceReady: !productionReadyBlocked && reasons.length === 0,
+    retrievalMetrics: evalResult.metrics,
+    citationMetrics: {
+      citationSourceAccuracy: evalResult.metrics.citationSourceAccuracy,
+      citationPageAccuracy: evalResult.metrics.citationPageAccuracy,
+    },
+    abstentionMetrics: {
+      abstentionPrecision: evalResult.metrics.abstentionPrecision,
+      abstentionRecall: evalResult.metrics.abstentionRecall,
+    },
+    conflictMetrics: {
+      conflictDetectionAccuracy: evalResult.metrics.conflictDetectionAccuracy,
+      supersededRevisionAvoidance: evalResult.metrics.supersededRevisionAvoidance,
+    },
+    tableMetrics: {
+      numericValueAccuracy: evalResult.metrics.numericValueAccuracy,
+      unitAccuracy: evalResult.metrics.unitAccuracy,
+      tableRowColumnAccuracy: evalResult.metrics.tableRowColumnAccuracy,
+    },
+    providerFailureScenarioCount: 9,
+    multiWorkerScenarioCount: 2,
+    productionDocumentIntelligenceReady: productionReady,
     migrationChecksums: {
       batch_37: checksumFile(resolve(root, "supabase/migrations/20260712200000_batch_37_project_intelligence_document_runtime.sql")) ?? "",
       batch_37f: checksumFile(resolve(root, "supabase/migrations/20260713000000_batch_37f_embedding_model_registry.sql")) ?? "",
@@ -249,7 +297,10 @@ async function main(): Promise<void> {
     report,
   );
   console.log(`[provider-certification] report: ${output}`);
+  console.log(`[provider-certification] implementationCommit=${IMPLEMENTATION_COMMIT_SHA}`);
+  console.log(`[provider-certification] providerCertifiedCommit=${report.providerCertifiedCommitSha ?? "none"}`);
   console.log(`[provider-certification] embeddingProvider=${embeddingProvider} hashDisabled=${hashDisabled}`);
+  console.log(`[provider-certification] notExecutedGates=${notExecutedGates.join(",") || "none"}`);
   if (report.verdict === "FAIL") {
     console.error(`[provider-certification] FAIL: ${reasons.join("; ")}`);
     process.exitCode = 1;

@@ -27,6 +27,7 @@ env:
   ALLOW_PRODUCTION_CERTIFICATION: "false"
   PLATFORM_EMBEDDING_ALLOW_STAGING_HASH: "0"
   PLATFORM_EMBEDDING_MODEL: text-embedding-3-small
+  PLATFORM_EMBEDDING_PROVIDER: openai
   NODE_VERSION: "22"
   PNPM_VERSION: "9.15.0"
 
@@ -50,7 +51,11 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PLATFORM_EMBEDDING_PROVIDER: openai
+          AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
+          AZURE_DOCUMENT_INTELLIGENCE_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_KEY }}
           PI_PROVIDER_CERTIFICATION: "1"
+          PI_REQUIRE_AZURE_DI: "1"
         run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
 
   validate:
@@ -96,7 +101,7 @@ jobs:
         env:
           PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
           PI_PROVIDER_CERTIFICATION: "0"
-        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate B"
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t "Provider registry activation"
 
   hosted-schema:
     needs: provider-configuration
@@ -134,12 +139,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Advanced parser and OCR execution
         env:
-          PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
+          PI_PROVIDER_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
           AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
           AZURE_DOCUMENT_INTELLIGENCE_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_KEY }}
         run: |
-          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate E"
-          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate F"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t "Real Azure advanced parser"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t "Real Azure OCR"
 
   semantic-evaluation:
     needs: provider-processing
@@ -159,12 +165,13 @@ jobs:
           PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PLATFORM_EMBEDDING_MODEL: text-embedding-3-small
+          PLATFORM_EMBEDDING_PROVIDER: openai
+          PLATFORM_EMBEDDING_ALLOW_STAGING_HASH: "0"
           PI_PROVIDER_CERTIFICATION: "1"
           PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
         run: |
-          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate G"
-          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate K"
-          test -n "${PLATFORM_EMBEDDING_API_KEY}${OPENAI_API_KEY}"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t "Real embedding smoke"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t "Real semantic retrieval evaluation"
 
   failure-recovery:
     needs: semantic-evaluation
@@ -182,7 +189,8 @@ jobs:
       - name: Provider failure contracts
         env:
           PROJECT_INTELLIGENCE_RUNTIME_MODE: unit_test
-        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts -t "Gate L"
+          PI_PROVIDER_CERTIFICATION: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-live.test.ts -t "Provider failure contracts"
 
   multi-worker:
     needs: failure-recovery
@@ -235,6 +243,10 @@ jobs:
           CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
           PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PLATFORM_EMBEDDING_PROVIDER: openai
+          PLATFORM_EMBEDDING_ALLOW_STAGING_HASH: "0"
+          AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
+          AZURE_DOCUMENT_INTELLIGENCE_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_KEY }}
           PROJECT_INTELLIGENCE_CERTIFICATION: "1"
           PI_PROVIDER_CERTIFICATION: "1"
           PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
@@ -244,6 +256,7 @@ jobs:
           pnpm --filter @rtb/web start &
           npx --yes wait-on http://127.0.0.1:3000
           pnpm --filter @rtb/project-intelligence-certification test:e2e:documents
+          pnpm --filter @rtb/project-intelligence-certification secret-scan
 
   release-evidence:
     needs:
@@ -282,9 +295,12 @@ jobs:
           PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
           PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
           PLATFORM_EMBEDDING_ALLOW_STAGING_HASH: "0"
+          PLATFORM_EMBEDDING_PROVIDER: openai
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
-        run: pnpm --filter @rtb/project-intelligence-certification certify:providers
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification certify:providers
+          pnpm --filter @rtb/project-intelligence-certification secret-scan
       - uses: actions/upload-artifact@v4
         with:
           name: project-intelligence-provider-certification
