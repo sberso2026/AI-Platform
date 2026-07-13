@@ -25,14 +25,20 @@ async function expectMeetingsReady(page: import("@playwright/test").Page) {
 }
 
 async function createDraftMeeting(page: import("@playwright/test").Page, title: string): Promise<string> {
-  await page.goto(`${meetingsPath}/new`);
-  await expect(page.getByTestId("project-intelligence-meetings-new")).toBeVisible({ timeout: 30_000 });
-  await page.getByTestId("meeting-title-input").fill(title);
-  await page.getByTestId("meeting-create-submit").click();
+  const create = await page.request.post("/api/engineering/project-intelligence/meetings", {
+    data: {
+      title,
+      provider: "manual",
+      recordingNoticeRequired: "not_required",
+      consentStatus: "not_applicable",
+    },
+  });
+  const payload = await create.json();
+  expect(create.status(), JSON.stringify(payload)).toBe(201);
+  const meetingId = String(payload.data?.id ?? "");
+  expect(meetingId).toBeTruthy();
+  await page.goto(`${meetingsPath}/${meetingId}`);
   await expect(page.getByTestId("project-intelligence-meeting-detail")).toBeVisible({ timeout: 30_000 });
-  const url = page.url();
-  const meetingId = url.split("/meetings/")[1]?.split(/[/?#]/)[0];
-  if (!meetingId) throw new Error(`Could not parse meeting id from ${url}`);
   return meetingId;
 }
 
@@ -74,9 +80,10 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     await expectMeetingsReady(page);
     await page.getByTestId("project-intelligence-meetings-new-link").click();
     await expect(page.getByTestId("project-intelligence-meetings-new")).toBeVisible({ timeout: 30_000 });
-    const meetingId = await createDraftMeeting(page, `Cert draft ${Date.now()}`);
+    await page.getByTestId("meeting-title-input").fill(`Cert UI draft ${Date.now()}`);
+    await page.getByTestId("meeting-create-submit").click();
+    await expect(page.getByTestId("project-intelligence-meeting-detail")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("meeting-detail-status-draft")).toBeVisible();
-    expect(meetingId).toBeTruthy();
   });
 
   test("C schedule meeting", async ({ page, context }) => {

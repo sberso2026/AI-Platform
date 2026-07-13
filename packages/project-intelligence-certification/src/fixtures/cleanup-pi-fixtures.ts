@@ -61,11 +61,26 @@ export async function cleanupPiFixtures(): Promise<void> {
     }
   }
 
-  // Sweep leftover auth users with the cert email prefix (failed prior cleanups).
-  const { data: allUsers } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  for (const user of allUsers?.users ?? []) {
-    if (user.email?.startsWith(PI_CERT_SLUG_PREFIX) && user.email.endsWith("@rtb-cert.test")) {
-      await admin.auth.admin.deleteUser(user.id);
+  // Sweep leftover auth users for this run only (avoid deleting another concurrent cert run).
+  const runId = process.env.GITHUB_RUN_ID?.replace(/[^a-zA-Z0-9-]/g, "-");
+  if (runId) {
+    const { data: allUsers } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    for (const user of allUsers?.users ?? []) {
+      const email = user.email ?? "";
+      if (
+        email.startsWith(PI_CERT_SLUG_PREFIX)
+        && email.endsWith("@rtb-cert.test")
+        && email.includes(runId)
+      ) {
+        await admin.auth.admin.deleteUser(user.id);
+      }
+    }
+  } else {
+    const { data: allUsers } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    for (const user of allUsers?.users ?? []) {
+      if (user.email?.startsWith(PI_CERT_SLUG_PREFIX) && user.email.endsWith("@rtb-cert.test")) {
+        await admin.auth.admin.deleteUser(user.id);
+      }
     }
   }
 
