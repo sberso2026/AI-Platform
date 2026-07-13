@@ -24,9 +24,14 @@ function checksumFile(path: string): string | undefined {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
-function run(command: string): { ok: boolean; detail?: string } {
+function run(command: string, envOverrides: Record<string, string> = {}): { ok: boolean; detail?: string } {
   try {
-    execSync(command, { cwd: root, stdio: "pipe", encoding: "utf8", env: process.env });
+    execSync(command, {
+      cwd: root,
+      stdio: "pipe",
+      encoding: "utf8",
+      env: { ...process.env, ...envOverrides },
+    });
     return { ok: true };
   } catch (error) {
     const result = error as { stdout?: string; stderr?: string; message?: string };
@@ -74,7 +79,7 @@ function stopCertServer(): void {
 }
 
 const commands: Record<string, string> = {
-  A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:unit && pnpm --filter @rtb/project-intelligence typecheck && pnpm --filter @rtb/web typecheck && pnpm --filter @rtb/web build",
+  A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:meetings && pnpm --filter @rtb/project-intelligence typecheck && pnpm --filter @rtb/web typecheck && pnpm --filter @rtb/web build",
   B: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-meeting-schema",
   C: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/meeting-rls-matrix.test.ts",
   D: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/entitlement-isolation.test.ts",
