@@ -2,6 +2,8 @@ import {
   requireProjectIntelligenceAccess,
   requireProjectIntelligenceAdmin,
   requireProjectIntelligenceMigrationAccess,
+  requireProjectIntelligenceMeetingsAccess,
+  requireProjectIntelligenceMeetingsAdmin,
   type AccessContext,
 } from "@rtb/project-intelligence/server";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
@@ -57,4 +59,12 @@ export function requireProjectIntelligenceAdminAccess(context: CommerceHandlerCo
 
 export function requireProjectIntelligenceMigration(context: CommerceHandlerContext): void {
   requireProjectIntelligenceMigrationAccess(projectIntelligenceAccessContext(context));
+}
+
+export function requireMeetingsRead(context: CommerceHandlerContext): void {
+  requireProjectIntelligenceMeetingsAccess(projectIntelligenceAccessContext(context));
+}
+
+export function requireMeetingsAdmin(context: CommerceHandlerContext): void {
+  requireProjectIntelligenceMeetingsAdmin(projectIntelligenceAccessContext(context));
 }

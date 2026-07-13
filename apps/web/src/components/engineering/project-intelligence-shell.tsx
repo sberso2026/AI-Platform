@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Activity, ArrowRightLeft, BarChart3, FileText, Settings } from "lucide-react";
+import { Activity, ArrowRightLeft, BarChart3, FileText, Settings, Users } from "lucide-react";
 
 const tabs = [
   { href: "/engineering/apps/project-intelligence", label: "Overview", icon: BarChart3 },
   { href: "/engineering/apps/project-intelligence/documents", label: "Documents", icon: FileText },
+  { href: "/engineering/apps/project-intelligence/meetings", label: "Meetings", icon: Users },
   { href: "/engineering/apps/project-intelligence/migration", label: "Migration", icon: ArrowRightLeft },
   { href: "/engineering/apps/project-intelligence/health", label: "Health", icon: Activity },
   { href: "/engineering/apps/project-intelligence/settings", label: "Settings", icon: Settings },
@@ -39,6 +40,7 @@ const stateMessages: Record<Exclude<ProjectIntelligenceShellState, "ready">, str
 function navTestId(href: string): string | undefined {
   if (href === "/engineering/apps/project-intelligence") return "project-intelligence-nav-overview";
   if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
+  if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
   if (href.endsWith("/migration")) return "project-intelligence-nav-migration";
   return undefined;
 }

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 import { CommerceDomainError } from "@rtb/platform-commerce";
-import { ProjectIntelligenceError } from "@rtb/project-intelligence";
+import { ProjectIntelligenceError, MeetingIntelligenceError } from "@rtb/project-intelligence";
 import { DocumentIntelligenceError } from "@rtb/project-intelligence/server";
 
 export function resolveRequestId(request: Request): string {
@@ -50,6 +50,9 @@ export function handleCommerceDomainError(
 ): NextResponse<LifecycleErrorBody> {
   if (err instanceof CommerceDomainError) {
     return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId);
+  }
+  if (err instanceof MeetingIntelligenceError) {
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
   }
   if (err instanceof ProjectIntelligenceError) {
     return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
