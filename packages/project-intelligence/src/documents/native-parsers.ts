@@ -11,16 +11,23 @@ export class PdfDocumentParser implements ProjectIntelligenceDocumentParser {
 
   async parse(input: DocumentParseInput): Promise<ParsedDocument> {
     const mod = await import("pdf-parse");
-    const pdfParse = ((mod as { default?: unknown }).default ?? mod) as (buf: Buffer) => Promise<{ text?: string; numpages?: number }>;
-    const parsed = await pdfParse(Buffer.from(input.bytes));
-    const text = (parsed.text ?? "").trim();
+    const PDFParseCtor = (mod as { PDFParse?: new (opts: { data: Buffer }) => {
+      getText: () => Promise<{ text?: string; total?: number; pages?: Array<{ text?: string }> }>;
+    } }).PDFParse;
+    if (!PDFParseCtor) {
+      throw new Error("pdf-parse PDFParse export unavailable");
+    }
+    const parser = new PDFParseCtor({ data: Buffer.from(input.bytes) });
+    const extracted = await parser.getText();
+    const text = (extracted.text ?? "").replace(/\n\n-- \d+ of \d+ --\n\n/g, "\n").trim();
+    const pageCount = Math.max(extracted.total ?? extracted.pages?.length ?? 1, 1);
     const native = new NativeTextDocumentParser();
     const asText = await native.parse({
       ...input,
       mimeType: "text/plain",
       bytes: new TextEncoder().encode(text || " "),
     });
-    const charsPerPage = text.length / Math.max(parsed.numpages ?? 1, 1);
+    const charsPerPage = text.length / pageCount;
     const ocrLikely = text.length < 40 || charsPerPage < 20;
     return {
       ...asText,
@@ -33,7 +40,7 @@ export class PdfDocumentParser implements ProjectIntelligenceDocumentParser {
       ],
     };
   }
-}
+
 
 export class DocxDocumentParser implements ProjectIntelligenceDocumentParser {
   readonly provider = "docx-mammoth";
