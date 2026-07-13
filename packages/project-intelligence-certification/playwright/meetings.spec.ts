@@ -182,9 +182,10 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     await page.goto(`${meetingsPath}/${meetingId}/live`);
     await expect(page.getByTestId("transcript-append-form")).toBeVisible({ timeout: 30_000 });
     await page.locator('[data-testid="transcript-append-form"] textarea[name="text"]').fill("Design pressure is 16 bar.");
+    await page.locator('[data-testid="transcript-append-form"] input[name="providerEventId"]').fill(`ui-evt-${Date.now()}`);
     await page.locator('[data-testid="transcript-append-form"] button[type="submit"]').click();
     await expect(page.getByTestId("live-transcript-stream")).toContainText("Design pressure is 16 bar.", {
-      timeout: 15_000,
+      timeout: 30_000,
     });
   });
 

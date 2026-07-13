@@ -59,18 +59,19 @@ export default function MeetingLivePage() {
 
   async function onAppend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const response = await fetch(
       `/api/engineering/project-intelligence/meetings/${meetingId}/transcript`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          providerEventId: String(form.get("providerEventId") || `manual-${Date.now()}`),
-          text: String(form.get("text") ?? ""),
-          startTimeMs: Number(form.get("startTimeMs") ?? 0),
-          endTimeMs: Number(form.get("endTimeMs") ?? 1000),
-          speakerLabel: String(form.get("speakerLabel") ?? "") || null,
+          providerEventId: String(formData.get("providerEventId") || `manual-${Date.now()}`),
+          text: String(formData.get("text") ?? ""),
+          startTimeMs: Number(formData.get("startTimeMs") ?? 0),
+          endTimeMs: Number(formData.get("endTimeMs") ?? 1000),
+          speakerLabel: String(formData.get("speakerLabel") ?? "") || null,
         }),
       },
     );
@@ -79,7 +80,7 @@ export default function MeetingLivePage() {
       setError(payload.error?.message ?? "Append failed");
       return;
     }
-    event.currentTarget.reset();
+    form.reset();
     await reload();
   }
 
