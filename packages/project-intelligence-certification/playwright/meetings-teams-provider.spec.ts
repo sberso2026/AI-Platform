@@ -47,6 +47,12 @@ describeTeams("Phase 6C-3D Teams provider browser flows", () => {
 
     test.use({ storageState: ownerStoragePath });
 
+    test.beforeEach(async ({ context }) => {
+      // Refresh owner session before each flow to avoid auth cookie expiry mid-suite.
+      const owner = requireUser(loadFixtures(), "owner");
+      await signInAsFixtureUser(context, owner.email);
+    });
+
     test("A provider settings", async ({ page }) => {
       const api = await page.request.get(
         "/api/engineering/project-intelligence/meetings/providers",
