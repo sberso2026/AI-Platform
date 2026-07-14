@@ -12,6 +12,7 @@ export function eventTypeForTransition(
   if (to === "live") return "meeting.live";
   if (to === "paused") return "meeting.paused";
   if (to === "ended") return "meeting.ended";
+  if (to === "processing") return "meeting.processing_enqueued";
   if (to === "failed") return "meeting.failed";
   if (to === "cancelled") return "meeting.cancelled";
   if (to === "archived") return "meeting.archived";

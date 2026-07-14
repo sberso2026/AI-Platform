@@ -1,5 +1,6 @@
 import { MeetingIntelligenceError } from "./errors";
 import type { MeetingStatus } from "./types";
+import { MEETING_WORKER_OWNED_STATUSES } from "./types";
 
 /**
  * Full meeting lifecycle transitions.
@@ -21,7 +22,7 @@ const TRANSITIONS: Readonly<Record<MeetingStatus, readonly MeetingStatus[]>> = {
   review_pending: ["approved", "failed"],
   approved: ["completed", "failed"],
   completed: ["archived"],
-  failed: ["archived", "draft"],
+  failed: ["archived", "draft", "processing"],
   cancelled: ["archived"],
   archived: [],
 };
@@ -91,6 +92,42 @@ export function assertPhase6c3bManualTransition(from: MeetingStatus, to: Meeting
       "Meeting status transition is not available in Phase 6C-3B manual foundation",
       409,
       { from, to, phase: "6C-3B" },
+    );
+  }
+  assertUserCannotSetWorkerOwnedStatus(to);
+}
+
+/** Users enqueue processing; they must not assign worker-owned pipeline statuses directly. */
+export function assertUserCannotSetWorkerOwnedStatus(toStatus: MeetingStatus): void {
+  if ((MEETING_WORKER_OWNED_STATUSES as readonly string[]).includes(toStatus)) {
+    throw new MeetingIntelligenceError(
+      "meeting_worker_owned_transition",
+      "Users cannot set worker-owned meeting statuses; enqueue processing instead",
+      409,
+      { toStatus, workerOwned: MEETING_WORKER_OWNED_STATUSES },
+    );
+  }
+}
+
+/** Worker / processing-service transitions for Phase 6C-3C pipeline. */
+export const PHASE_6C3C_WORKER_TRANSITIONS: ReadonlyArray<readonly [MeetingStatus, MeetingStatus]> = [
+  ["ended", "processing"],
+  ["processing", "minutes_draft"],
+  ["processing", "failed"],
+  ["minutes_draft", "review_pending"],
+  ["minutes_draft", "failed"],
+  ["failed", "processing"],
+];
+
+export function assertWorkerMeetingTransition(from: MeetingStatus, to: MeetingStatus): void {
+  assertMeetingTransition(from, to);
+  const allowed = PHASE_6C3C_WORKER_TRANSITIONS.some(([a, b]) => a === from && b === to);
+  if (!allowed) {
+    throw new MeetingIntelligenceError(
+      "meeting_transition_invalid",
+      "Meeting status transition is not a Phase 6C-3C worker transition",
+      409,
+      { from, to, phase: "6C-3C-worker" },
     );
   }
 }

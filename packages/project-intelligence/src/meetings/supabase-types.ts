@@ -25,6 +25,10 @@ export type MeetingQueryBuilder = {
   delete: () => MeetingQueryBuilder;
   eq: (column: string, value: unknown) => MeetingQueryBuilder;
   neq: (column: string, value: unknown) => MeetingQueryBuilder;
+  gt: (column: string, value: unknown) => MeetingQueryBuilder;
+  gte: (column: string, value: unknown) => MeetingQueryBuilder;
+  lt: (column: string, value: unknown) => MeetingQueryBuilder;
+  lte: (column: string, value: unknown) => MeetingQueryBuilder;
   is: (column: string, value: unknown) => MeetingQueryBuilder;
   order: (column: string, options?: Record<string, unknown>) => MeetingQueryBuilder;
   limit: (count: number) => MeetingQueryBuilder;
@@ -34,6 +38,14 @@ export type MeetingQueryBuilder = {
 
 export type MeetingSupabaseClient = {
   from: (table: string) => MeetingQueryBuilder;
+};
+
+/** Worker client extends table access with SECURITY DEFINER RPCs. */
+export type MeetingWorkerClient = MeetingSupabaseClient & {
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: MeetingDbError }>;
 };
 
 export function asRecord(value: unknown): Record<string, unknown> {

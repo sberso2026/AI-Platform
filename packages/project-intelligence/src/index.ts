@@ -20,3 +20,8 @@ export * from "./meetings/event-types";
 export * from "./meetings/manual-meeting-service";
 export * from "./meetings/meeting-participant-service";
 export * from "./meetings/transcript-append-service";
+export * from "./meetings/meeting-processing-service";
+export * from "./meetings/meeting-job-worker";
+export * from "./meetings/meeting-review-service";
+export * from "./meetings/meeting-core-write-adapter";
+export * from "./meetings/deterministic-meeting-ai-adapter";

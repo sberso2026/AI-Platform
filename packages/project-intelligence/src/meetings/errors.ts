@@ -2,7 +2,7 @@ import { DocumentIntelligenceError } from "../documents/errors";
 
 /**
  * Meeting Intelligence domain errors reuse DocumentIntelligenceError envelope shape
- * for nested API contracts; codes are meeting_* namespaced.
+ * for nested API contracts; codes are meeting_* / proposal_* / minutes_* / processing_* namespaced.
  */
 export type MeetingIntelligenceErrorCode =
   | "meeting_not_found"
@@ -14,7 +14,25 @@ export type MeetingIntelligenceErrorCode =
   | "meeting_provider_unavailable"
   | "meeting_participant_conflict"
   | "meeting_transcript_conflict"
-  | "meeting_legal_hold";
+  | "meeting_legal_hold"
+  | "meeting_worker_owned_transition"
+  | "meeting_ai_cannot_approve"
+  | "proposal_not_found"
+  | "proposal_review_invalid"
+  | "proposal_not_approved"
+  | "proposal_already_converted"
+  | "proposal_evidence_missing"
+  | "proposal_conversion_failed"
+  | "minutes_not_found"
+  | "minutes_review_invalid"
+  | "minutes_already_issued"
+  | "minutes_immutable_version"
+  | "processing_not_found"
+  | "processing_invalid_state"
+  | "processing_already_active"
+  | "processing_retry_invalid"
+  | "processing_ai_unavailable"
+  | "processing_failed";
 
 const STATUS_BY_CODE: Record<MeetingIntelligenceErrorCode, number> = {
   meeting_not_found: 404,
@@ -27,6 +45,24 @@ const STATUS_BY_CODE: Record<MeetingIntelligenceErrorCode, number> = {
   meeting_participant_conflict: 409,
   meeting_transcript_conflict: 409,
   meeting_legal_hold: 409,
+  meeting_worker_owned_transition: 409,
+  meeting_ai_cannot_approve: 403,
+  proposal_not_found: 404,
+  proposal_review_invalid: 409,
+  proposal_not_approved: 409,
+  proposal_already_converted: 409,
+  proposal_evidence_missing: 422,
+  proposal_conversion_failed: 500,
+  minutes_not_found: 404,
+  minutes_review_invalid: 409,
+  minutes_already_issued: 409,
+  minutes_immutable_version: 409,
+  processing_not_found: 404,
+  processing_invalid_state: 409,
+  processing_already_active: 409,
+  processing_retry_invalid: 409,
+  processing_ai_unavailable: 503,
+  processing_failed: 500,
 };
 
 export class MeetingIntelligenceError extends Error {
@@ -68,4 +104,8 @@ export function asDocumentStyleError(error: MeetingIntelligenceError): DocumentI
     error.statusCode,
     { meetingCode: error.code, ...error.details },
   );
+}
+
+export function meetingErrorStatus(code: MeetingIntelligenceErrorCode): number {
+  return STATUS_BY_CODE[code] ?? 400;
 }

@@ -280,35 +280,33 @@ export class MeetingTranscriptIngestionService {
     const correlationId = actor.correlationId ?? randomUUID();
     const serverReceivedAt = new Date().toISOString();
 
-    const { data, error } = await awaitMutation(
-      this.supabase
-        .from("project_intelligence_transcript_segments")
-        .insert({
-          tenant_id: actor.tenantId,
-          workspace_id: actor.workspaceId,
-          engineering_project_id: meeting.engineering_project_id,
-          meeting_session_id: input.meetingId,
-          provider_event_id: input.providerEventId.trim(),
-          speaker_id: input.speakerId ?? null,
-          speaker_label: input.speakerLabel ?? null,
-          sequence_number: logicalSequence,
-          logical_sequence: logicalSequence,
-          provider_sequence: input.providerSequence ?? null,
-          provider_timestamp: input.providerTimestamp ?? null,
-          server_received_at: serverReceivedAt,
-          start_time_ms: input.startTimeMs,
-          end_time_ms: input.endTimeMs,
-          text,
-          confidence: input.confidence ?? null,
-          language: input.language ?? null,
-          revision_number: 1,
-          source: input.source ?? "manual",
-          status: "active",
-          correlation_id: correlationId,
-        })
-        .select("*")
-        .single(),
-    );
+    const { data, error } = await this.supabase
+      .from("project_intelligence_transcript_segments")
+      .insert({
+        tenant_id: actor.tenantId,
+        workspace_id: actor.workspaceId,
+        engineering_project_id: meeting.engineering_project_id,
+        meeting_session_id: input.meetingId,
+        provider_event_id: input.providerEventId.trim(),
+        speaker_id: input.speakerId ?? null,
+        speaker_label: input.speakerLabel ?? null,
+        sequence_number: logicalSequence,
+        logical_sequence: logicalSequence,
+        provider_sequence: input.providerSequence ?? null,
+        provider_timestamp: input.providerTimestamp ?? null,
+        server_received_at: serverReceivedAt,
+        start_time_ms: input.startTimeMs,
+        end_time_ms: input.endTimeMs,
+        text,
+        confidence: input.confidence ?? null,
+        language: input.language ?? null,
+        revision_number: 1,
+        source: input.source ?? "manual",
+        status: "active",
+        correlation_id: correlationId,
+      })
+      .select("*")
+      .single();
 
     if (error) {
       if (/unique|duplicate/i.test(error.message)) {
