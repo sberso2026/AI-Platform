@@ -430,10 +430,19 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
     });
 
     test("Q version history", async ({ page }) => {
+      const versions = await page.request.get(
+        `/api/engineering/project-intelligence/meetings/${meetingId}/minutes/versions`,
+      );
+      expect(versions.ok(), await versions.text()).toBeTruthy();
+      const rows = (await versions.json()).data ?? [];
+      expect(rows.length).toBeGreaterThan(0);
+      const firstVersion = Number(rows[0].version_number ?? 1);
+
       await page.goto(`${meetingsPath}/${meetingId}/minutes`);
       await expect(page.getByTestId("minutes-versions-list")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByTestId("minutes-version-1")).toBeVisible();
-      await page.getByTestId("minutes-version-1").click();
+      const versionButton = page.getByTestId(`minutes-version-${firstVersion}`);
+      await expect(versionButton).toBeVisible({ timeout: 30_000 });
+      await versionButton.click();
       await expect(page.getByTestId("minutes-version-body")).toBeVisible();
     });
 
