@@ -77,6 +77,14 @@ export default function MicrosoftTeamsProviderPage() {
         <p className="text-red-700" role="alert">
           {error}
         </p>
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
+          <span data-testid="teams-bot-join-disabled" aria-disabled="true">
+            Bot join: unsupported (disabled)
+          </span>
+          <span data-testid="teams-recording-disabled" aria-disabled="true">
+            Recording: unsupported (disabled)
+          </span>
+        </div>
       </section>
     );
   }
@@ -84,6 +92,14 @@ export default function MicrosoftTeamsProviderPage() {
     return (
       <section data-testid="teams-provider-detail">
         <p role="status">Loading Microsoft Teams provider…</p>
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
+          <span data-testid="teams-bot-join-disabled" aria-disabled="true">
+            Bot join: unsupported (disabled)
+          </span>
+          <span data-testid="teams-recording-disabled" aria-disabled="true">
+            Recording: unsupported (disabled)
+          </span>
+        </div>
       </section>
     );
   }

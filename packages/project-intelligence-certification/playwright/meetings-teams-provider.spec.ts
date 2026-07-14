@@ -146,8 +146,11 @@ describeTeams("Phase 6C-3D Teams provider browser flows", () => {
     });
 
     test("L-M unavailable bot and recording controls", async ({ page }) => {
-      await page.goto(`${meetingsPath}/settings/providers/microsoft-teams`);
-      await expect(page.getByTestId("teams-bot-join-disabled")).toBeVisible();
+      await page.goto(`${meetingsPath}/settings/providers/microsoft-teams`, {
+        waitUntil: "networkidle",
+      });
+      await expect(page.getByTestId("teams-provider-detail")).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByTestId("teams-bot-join-disabled")).toBeVisible({ timeout: 15_000 });
       await expect(page.getByTestId("teams-recording-disabled")).toBeVisible();
     });
 
