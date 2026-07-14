@@ -56,7 +56,6 @@ export class TeamsParticipantMappingService {
       const row = {
         tenant_id: input.tenantId,
         workspace_id: input.workspaceId,
-        engineering_project_id: input.engineeringProjectId,
         meeting_session_id: input.meetingSessionId,
         display_name: p.displayName,
         external_participant_id: p.providerParticipantId,
@@ -67,6 +66,7 @@ export class TeamsParticipantMappingService {
           identityResolved: false,
           correlationId: input.correlationId,
           mergePolicy: "provider_participant_id_only",
+          engineeringProjectId: input.engineeringProjectId,
         },
         updated_at: new Date().toISOString(),
       };
