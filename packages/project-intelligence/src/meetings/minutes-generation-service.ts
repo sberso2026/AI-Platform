@@ -237,6 +237,72 @@ export class MeetingMinutesGenerationService {
     };
   }
 
+  async listMinutes(actor: ManualMeetingActor, meetingId: string) {
+    await this.meetings.getMeeting(actor, meetingId);
+    const { data, error } = await awaitList(
+      this.supabase
+        .from("project_intelligence_meeting_minutes")
+        .select("*")
+        .eq("meeting_session_id", meetingId)
+        .eq("tenant_id", actor.tenantId)
+        .eq("workspace_id", actor.workspaceId)
+        .order("created_at", { ascending: true }),
+    );
+    if (error) {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        `Unable to list minutes: ${error.message}`,
+        500,
+      );
+    }
+    return (data ?? []).map((row) => asRecord(row));
+  }
+
+  async listMinutesVersions(actor: ManualMeetingActor, meetingId: string) {
+    await this.meetings.getMeeting(actor, meetingId);
+    const { data, error } = await awaitList(
+      this.supabase
+        .from("project_intelligence_meeting_minutes_versions")
+        .select("*")
+        .eq("meeting_session_id", meetingId)
+        .eq("tenant_id", actor.tenantId)
+        .eq("workspace_id", actor.workspaceId)
+        .order("version_number", { ascending: true }),
+    );
+    if (error) {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        `Unable to list minutes versions: ${error.message}`,
+        500,
+      );
+    }
+    return (data ?? []).map((row) => asRecord(row));
+  }
+
+  async getMinutesVersion(actor: ManualMeetingActor, versionId: string) {
+    const { data, error } = await this.supabase
+      .from("project_intelligence_meeting_minutes_versions")
+      .select("*")
+      .eq("id", versionId)
+      .eq("tenant_id", actor.tenantId)
+      .eq("workspace_id", actor.workspaceId)
+      .maybeSingle();
+    if (error) {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        `Unable to load minutes version: ${error.message}`,
+        500,
+      );
+    }
+    if (!data || Array.isArray(data)) {
+      throw new MeetingIntelligenceError("minutes_not_found", "Minutes version not found", 404, {
+        versionId,
+      });
+    }
+    await this.meetings.getMeeting(actor, String(asRecord(data).meeting_session_id));
+    return asRecord(data);
+  }
+
   async markReviewPending(minutesId: string, tenantId: string, workspaceId: string): Promise<void> {
     const minutes = await this.requireMinutes(minutesId, tenantId, workspaceId);
     assertMinutesStatusTransition(minutes.status as MeetingMinutesStatus, "review_pending");

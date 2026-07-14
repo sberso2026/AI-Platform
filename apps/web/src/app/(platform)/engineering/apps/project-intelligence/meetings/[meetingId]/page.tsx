@@ -30,6 +30,9 @@ const NEXT_ACTIONS: Record<string, string[]> = {
   ended: ["archived"],
   failed: ["archived"],
   cancelled: ["archived"],
+  review_pending: ["archived"],
+  approved: ["archived"],
+  completed: ["archived"],
 };
 
 export default function MeetingDetailPage() {
@@ -54,7 +57,11 @@ export default function MeetingDetailPage() {
     setMeeting(meetingPayload.data);
     setParticipants((await participantsRes.json()).data ?? []);
     setEvents((await eventsRes.json()).data ?? []);
-    setTranscriptCount(((await transcriptRes.json()).data ?? []).length);
+    const transcriptData = (await transcriptRes.json()).data;
+    const segments = Array.isArray(transcriptData)
+      ? transcriptData
+      : (transcriptData?.segments ?? []);
+    setTranscriptCount(segments.length);
   }, [meetingId]);
 
   useEffect(() => {
@@ -128,6 +135,12 @@ export default function MeetingDetailPage() {
           </Link>
           <Link className="text-cyan-700 hover:underline" href={`/engineering/apps/project-intelligence/meetings/${meetingId}/transcript`}>
             Transcript
+          </Link>
+          <Link className="text-cyan-700 hover:underline" href={`/engineering/apps/project-intelligence/meetings/${meetingId}/review`}>
+            Review
+          </Link>
+          <Link className="text-cyan-700 hover:underline" href={`/engineering/apps/project-intelligence/meetings/${meetingId}/minutes`}>
+            Minutes
           </Link>
         </div>
       </div>

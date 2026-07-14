@@ -1,12 +1,24 @@
+import { randomUUID } from "node:crypto";
 import {
   ManualMeetingService,
   MeetingParticipantService,
   TranscriptAppendService,
+  MeetingProcessingService,
+  MeetingReviewService,
+  MeetingMinutesGenerationService,
+  MeetingEngineeringCoreWriteAdapter,
+  MeetingTranscriptRecoveryService,
+  MeetingTranscriptIngestionService,
+  ProjectIntelligenceMeetingWorker,
   allMeetingProviderCapabilityReports,
+  buildResumeToken,
+  isMeetingJobType,
   type MeetingStatus,
   type ConsentStatus,
   type PrivacyClassification,
   type RecordingNoticeRequirement,
+  type MeetingJobType,
+  type MeetingProposalReviewState,
   MeetingIntelligenceError,
 } from "@rtb/project-intelligence/server";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
@@ -214,7 +226,14 @@ export async function updateParticipant(
 }
 
 export async function listTranscript(context: CommerceHandlerContext, meetingId: string) {
-  return new TranscriptAppendService(client()).listSegments(actor(context), meetingId);
+  const ordered = await new MeetingTranscriptIngestionService(client()).listOrdered(
+    actor(context),
+    meetingId,
+  );
+  return {
+    segments: ordered.segments,
+    gaps: ordered.gaps,
+  };
 }
 
 export async function appendTranscript(
@@ -257,22 +276,252 @@ export async function listMeetingEvents(context: CommerceHandlerContext, meeting
   return new ManualMeetingService(client()).listEvents(actor(context), meetingId);
 }
 
+export async function enqueueMeetingProcessing(
+  context: CommerceHandlerContext,
+  meetingId: string,
+) {
+  return new MeetingProcessingService(client()).enqueueProcessing(actor(context), meetingId);
+}
+
+export async function getMeetingProcessingStatus(
+  context: CommerceHandlerContext,
+  meetingId: string,
+) {
+  return new MeetingProcessingService(client()).getProcessingStatus(actor(context), meetingId);
+}
+
+export async function retryMeetingProcessing(
+  context: CommerceHandlerContext,
+  meetingId: string,
+) {
+  return new MeetingProcessingService(client()).retryProcessing(actor(context), meetingId);
+}
+
+export async function listMeetingProposals(
+  context: CommerceHandlerContext,
+  meetingId: string,
+) {
+  return new MeetingReviewService(client()).listProposals(actor(context), meetingId);
+}
+
+export async function getMeetingProposal(
+  context: CommerceHandlerContext,
+  proposalId: string,
+) {
+  return new MeetingReviewService(client()).getProposal(actor(context), proposalId);
+}
+
+export async function patchMeetingProposal(
+  context: CommerceHandlerContext,
+  proposalId: string,
+  body: Record<string, unknown>,
+) {
+  return new MeetingReviewService(client()).patchProposal(actor(context), proposalId, {
+    title: typeof body.title === "string" ? body.title : undefined,
+    description:
+      body.description === undefined ? undefined : (body.description as string | null),
+    notes: typeof body.notes === "string" ? body.notes : undefined,
+    reviewState:
+      typeof body.reviewState === "string"
+        ? (body.reviewState as MeetingProposalReviewState)
+        : undefined,
+  });
+}
+
+export async function approveMeetingProposal(
+  context: CommerceHandlerContext,
+  proposalId: string,
+  notes?: string,
+) {
+  return new MeetingReviewService(client()).approveProposal(actor(context), proposalId, notes);
+}
+
+export async function rejectMeetingProposal(
+  context: CommerceHandlerContext,
+  proposalId: string,
+  notes?: string,
+) {
+  return new MeetingReviewService(client()).rejectProposal(actor(context), proposalId, notes);
+}
+
+export async function requestMeetingProposalChanges(
+  context: CommerceHandlerContext,
+  proposalId: string,
+  notes?: string,
+) {
+  return new MeetingReviewService(client()).requestProposalChanges(
+    actor(context),
+    proposalId,
+    notes,
+  );
+}
+
+export async function convertProposalToCore(
+  context: CommerceHandlerContext,
+  proposalId: string,
+) {
+  return new MeetingEngineeringCoreWriteAdapter(client()).convertApprovedProposal(
+    actor(context),
+    proposalId,
+  );
+}
+
+export async function generateMinutes(
+  context: CommerceHandlerContext,
+  meetingId: string,
+  body: { processingRunId?: string } = {},
+) {
+  const act = actor(context);
+  let processingRunId = typeof body.processingRunId === "string" ? body.processingRunId : null;
+  if (!processingRunId) {
+    const status = await new MeetingProcessingService(client()).getProcessingStatus(
+      act,
+      meetingId,
+    );
+    processingRunId = status.processingRunId ?? randomUUID();
+  }
+  return new MeetingMinutesGenerationService(client()).generateFromTranscriptAndProposals({
+    actor: act,
+    meetingId,
+    processingRunId,
+  });
+}
+
+export async function listMinutes(context: CommerceHandlerContext, meetingId: string) {
+  return new MeetingMinutesGenerationService(client()).listMinutes(actor(context), meetingId);
+}
+
+export async function listMinutesVersions(context: CommerceHandlerContext, meetingId: string) {
+  return new MeetingMinutesGenerationService(client()).listMinutesVersions(
+    actor(context),
+    meetingId,
+  );
+}
+
+export async function getMinutesVersion(context: CommerceHandlerContext, versionId: string) {
+  return new MeetingMinutesGenerationService(client()).getMinutesVersion(
+    actor(context),
+    versionId,
+  );
+}
+
+export async function submitMinutesReview(
+  context: CommerceHandlerContext,
+  minutesId: string,
+) {
+  return new MeetingReviewService(client()).submitMinutesReview(actor(context), minutesId);
+}
+
+export async function approveMinutes(context: CommerceHandlerContext, minutesId: string) {
+  return new MeetingReviewService(client()).approveMinutes(actor(context), minutesId);
+}
+
+export async function requestMinutesChanges(
+  context: CommerceHandlerContext,
+  minutesId: string,
+  notes?: string,
+) {
+  return new MeetingReviewService(client()).requestMinutesChanges(
+    actor(context),
+    minutesId,
+    notes,
+  );
+}
+
+export async function issueMinutes(context: CommerceHandlerContext, minutesId: string) {
+  return new MeetingReviewService(client()).issueMinutes(actor(context), minutesId);
+}
+
+export async function listMeetingEvidence(
+  context: CommerceHandlerContext,
+  meetingId: string,
+) {
+  return new MeetingReviewService(client()).listEvidence(actor(context), meetingId);
+}
+
+export async function replayTranscript(
+  context: CommerceHandlerContext,
+  meetingId: string,
+  query: { cursor?: string | null; resumeToken?: string | null },
+) {
+  const token =
+    (typeof query.resumeToken === "string" && query.resumeToken.trim())
+    || (typeof query.cursor === "string" && query.cursor.trim())
+    || buildResumeToken({
+      meetingSessionId: meetingId,
+      lastAcknowledgedLogicalSequence: -1,
+    });
+  return new MeetingTranscriptRecoveryService(client()).replayFromCursor(actor(context), token);
+}
+
+export async function runMeetingWorkerOnce(options?: {
+  workerId?: string;
+  jobTypes?: MeetingJobType[];
+  batchSize?: number;
+}) {
+  const worker = new ProjectIntelligenceMeetingWorker(
+    client() as unknown as ConstructorParameters<typeof ProjectIntelligenceMeetingWorker>[0],
+    {
+      workerId: options?.workerId ?? `api-meeting-drain-${randomUUID().slice(0, 8)}`,
+      batchSize: options?.batchSize ?? 5,
+      allowDeterministicFallback: true,
+    },
+  );
+  const result = await worker.processBatch();
+  return {
+    ...result,
+    workerId: worker.identity,
+    jobTypeFilter: options?.jobTypes ?? null,
+  };
+}
+
+export function parseMeetingJobTypeFilter(raw: unknown): MeetingJobType[] | undefined {
+  if (raw == null) return undefined;
+  const values = Array.isArray(raw) ? raw : [raw];
+  const filtered: MeetingJobType[] = [];
+  for (const value of values) {
+    if (typeof value !== "string") {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        "jobTypes entries must be strings",
+        422,
+      );
+    }
+    if (!isMeetingJobType(value)) {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        `Unsupported meeting job type: ${value}`,
+        422,
+        { jobType: value },
+      );
+    }
+    filtered.push(value);
+  }
+  return filtered;
+}
+
 export function meetingsHealthPayload() {
   return {
-    schema: "batch_38_project_intelligence_meeting_foundation",
+    schema: "batch_38+39_project_intelligence_meeting_processing",
     rls: "enabled",
     accessGuard: "requireProjectIntelligenceMeetingsAccess",
     application: "project-intelligence",
     feature: "meetings",
     notApplication: "meeting_intelligence",
-    manualProvider: "certified_candidate",
+    manualProvider: "certified",
     transcriptPersistence: "project_intelligence_transcript_segments",
     events: "project_intelligence_meeting_events",
     privacyConfiguration: "recording_notice_required + consent_status + privacy_classification",
     providers: allMeetingProviderCapabilityReports(),
     externalJoinActionsEnabled: false,
-    minutesPages: false,
-    reviewPages: false,
-    aiExtraction: false,
+    processing: true,
+    jobQueue: "project_intelligence_meeting_jobs",
+    processingRuns: "project_intelligence_meeting_processing_runs",
+    minutesPages: true,
+    reviewPages: true,
+    aiExtraction: true,
+    coreWriteAdapter: "MeetingEngineeringCoreWriteAdapter",
+    transcriptOrdering: "logical_sequence",
+    transcriptReplay: true,
   };
 }

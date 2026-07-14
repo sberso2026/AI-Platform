@@ -1,18 +1,46 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 type Meeting = { id: string; title: string; status: string; state_version: number };
 type Participant = { id: string; display_name: string; speaker_id: string | null; consent_status: string };
 type Segment = {
   id: string;
-  sequence_number: number;
-  speaker_label: string | null;
+  logicalSequence?: number;
+  sequence_number?: number;
+  sequenceNumber?: number;
+  speaker_label?: string | null;
+  speakerLabel?: string | null;
   text: string;
-  start_time_ms: number;
-  end_time_ms: number;
+  start_time_ms?: number;
+  startTimeMs?: number;
+  end_time_ms?: number;
+  endTimeMs?: number;
 };
+type Gap = { afterLogicalSequence: number; beforeLogicalSequence: number; gapSize: number };
+type ProcessingStatus = {
+  meetingStatus: string;
+  processingRunStatus: string | null;
+  jobStatus: string | null;
+  canRetry: boolean;
+  lastErrorMessage: string | null;
+};
+
+type ConnectionStatus = "manual" | "polling" | "offline";
+
+function logicalSeq(segment: Segment): number {
+  return Number(segment.logicalSequence ?? segment.sequence_number ?? segment.sequenceNumber ?? 0);
+}
+
+function normalizeSegments(payload: unknown): { segments: Segment[]; gaps: Gap[] } {
+  if (Array.isArray(payload)) return { segments: payload, gaps: [] };
+  if (payload && typeof payload === "object") {
+    const record = payload as { segments?: Segment[]; gaps?: Gap[] };
+    return { segments: record.segments ?? [], gaps: record.gaps ?? [] };
+  }
+  return { segments: [], gaps: [] };
+}
 
 export default function MeetingLivePage() {
   const params = useParams<{ meetingId: string }>();
@@ -20,7 +48,12 @@ export default function MeetingLivePage() {
   const [meeting, setMeeting] = useState<Meeting>();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [gaps, setGaps] = useState<Gap[]>([]);
+  const [processing, setProcessing] = useState<ProcessingStatus>();
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("manual");
+  const [reconnectStatus, setReconnectStatus] = useState<"idle" | "retrying" | "recovered">("idle");
   const [error, setError] = useState<string>();
+  const pollAttempts = useRef(0);
 
   const reload = useCallback(async () => {
     const [m, p, t] = await Promise.all([
@@ -32,11 +65,58 @@ export default function MeetingLivePage() {
     if (!m.ok) throw new Error(meetingPayload.error?.message ?? "Load failed");
     setMeeting(meetingPayload.data);
     setParticipants((await p.json()).data ?? []);
-    setSegments((await t.json()).data ?? []);
+    const transcriptPayload = await t.json();
+    const normalized = normalizeSegments(transcriptPayload.data);
+    setSegments(normalized.segments);
+    setGaps(normalized.gaps);
+
+    if (
+      meetingPayload.data?.status === "ended"
+      || meetingPayload.data?.status === "processing"
+      || meetingPayload.data?.status === "failed"
+      || meetingPayload.data?.status === "minutes_draft"
+      || meetingPayload.data?.status === "review_pending"
+    ) {
+      const statusRes = await fetch(
+        `/api/engineering/project-intelligence/meetings/${meetingId}/processing-status`,
+      );
+      if (statusRes.ok) {
+        setProcessing((await statusRes.json()).data);
+      }
+    } else {
+      setProcessing(undefined);
+    }
   }, [meetingId]);
 
   useEffect(() => {
-    reload().catch((reason) => setError(reason.message));
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    async function tick() {
+      try {
+        await reload();
+        if (cancelled) return;
+        setReconnectStatus(pollAttempts.current > 0 ? "recovered" : "idle");
+        pollAttempts.current = 0;
+        setConnectionStatus("polling");
+        timer = setTimeout(tick, 4000);
+      } catch (reason) {
+        if (cancelled) return;
+        pollAttempts.current += 1;
+        setConnectionStatus("offline");
+        setReconnectStatus("retrying");
+        setError(reason instanceof Error ? reason.message : String(reason));
+        const delay = Math.min(15_000, 250 * 2 ** Math.min(pollAttempts.current, 6));
+        timer = setTimeout(tick, delay);
+      }
+    }
+
+    setConnectionStatus("manual");
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [reload]);
 
   async function transition(toStatus: string) {
@@ -52,6 +132,32 @@ export default function MeetingLivePage() {
     const payload = await response.json();
     if (!response.ok) {
       setError(payload.error?.message ?? "Transition failed");
+      return;
+    }
+    await reload();
+  }
+
+  async function enqueueProcess() {
+    const response = await fetch(
+      `/api/engineering/project-intelligence/meetings/${meetingId}/process`,
+      { method: "POST" },
+    );
+    const payload = await response.json();
+    if (!response.ok) {
+      setError(payload.error?.message ?? "Enqueue failed");
+      return;
+    }
+    await reload();
+  }
+
+  async function retryProcess() {
+    const response = await fetch(
+      `/api/engineering/project-intelligence/meetings/${meetingId}/retry-processing`,
+      { method: "POST" },
+    );
+    const payload = await response.json();
+    if (!response.ok) {
+      setError(payload.error?.message ?? "Retry failed");
       return;
     }
     await reload();
@@ -112,6 +218,21 @@ export default function MeetingLivePage() {
         Manual state: {meeting.status}. No fake realtime provider indicator.
       </p>
 
+      <div className="mt-3 flex flex-wrap gap-3 text-sm" data-testid="live-connection-panel">
+        <span data-testid={`connection-status-${connectionStatus}`}>
+          Connection: {connectionStatus}
+        </span>
+        <span data-testid={`reconnect-status-${reconnectStatus}`}>
+          Reconnect: {reconnectStatus}
+        </span>
+      </div>
+
+      {gaps.length > 0 && (
+        <p className="mt-3 text-amber-700" data-testid="live-sequence-gaps-warning" role="status">
+          Sequence gaps detected ({gaps.length}): after {gaps.map((g) => g.afterLogicalSequence).join(", ")}
+        </p>
+      )}
+
       <div className="mt-4 flex flex-wrap gap-2">
         {["connecting", "connected", "recording", "live", "paused", "ended"].map((status) => (
           <button
@@ -124,7 +245,37 @@ export default function MeetingLivePage() {
             {status}
           </button>
         ))}
+        {meeting.status === "ended" && (
+          <button
+            type="button"
+            className="rounded bg-cyan-700 px-3 py-1 text-sm text-white"
+            data-testid="live-enqueue-process"
+            onClick={enqueueProcess}
+          >
+            Enqueue processing
+          </button>
+        )}
+        {processing?.canRetry && (
+          <button
+            type="button"
+            className="rounded border border-amber-600 px-3 py-1 text-sm text-amber-800"
+            data-testid="live-retry-process"
+            onClick={retryProcess}
+          >
+            Retry processing
+          </button>
+        )}
       </div>
+
+      {processing && (
+        <div className="mt-3 rounded border border-slate-200 p-3 text-sm" data-testid="live-processing-status">
+          <p>Processing run: {processing.processingRunStatus ?? "—"}</p>
+          <p>Job: {processing.jobStatus ?? "—"}</p>
+          {processing.lastErrorMessage && (
+            <p className="text-red-700">{processing.lastErrorMessage}</p>
+          )}
+        </div>
+      )}
 
       <p className="mt-3 text-sm text-slate-500" data-testid="external-providers-unavailable">
         External provider controls unavailable
@@ -171,9 +322,10 @@ export default function MeetingLivePage() {
         <h3 className="font-semibold">Transcript stream</h3>
         <ol className="mt-2 space-y-1 text-sm" data-testid="live-transcript-stream">
           {segments.map((segment) => (
-            <li key={segment.id}>
-              #{segment.sequence_number} [{segment.start_time_ms}-{segment.end_time_ms}ms]{" "}
-              {segment.speaker_label ?? "speaker"}: {segment.text}
+            <li key={segment.id} data-testid={`live-segment-logical-${logicalSeq(segment)}`}>
+              #{logicalSeq(segment)} [{segment.startTimeMs ?? segment.start_time_ms}-
+              {segment.endTimeMs ?? segment.end_time_ms}ms]{" "}
+              {segment.speakerLabel ?? segment.speaker_label ?? "speaker"}: {segment.text}
             </li>
           ))}
         </ol>

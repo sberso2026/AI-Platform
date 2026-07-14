@@ -10,6 +10,7 @@ import {
 } from "./minutes-versioning";
 import {
   asRecord,
+  awaitList,
   awaitMutation,
   type MeetingSupabaseClient,
 } from "./supabase-types";
@@ -75,6 +76,136 @@ export class MeetingReviewService {
 
   constructor(private readonly supabase: MeetingSupabaseClient) {
     this.meetings = new ManualMeetingService(supabase);
+  }
+
+  async listProposals(actor: MeetingReviewActor, meetingId: string) {
+    await this.meetings.getMeeting(actor, meetingId);
+    const { data, error } = await awaitList(
+      this.supabase
+        .from("project_intelligence_meeting_proposals")
+        .select("*")
+        .eq("meeting_session_id", meetingId)
+        .eq("tenant_id", actor.tenantId)
+        .eq("workspace_id", actor.workspaceId)
+        .order("created_at", { ascending: true }),
+    );
+    if (error) {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        `Unable to list proposals: ${error.message}`,
+        500,
+      );
+    }
+    return (data ?? []).map((row) => asRecord(row));
+  }
+
+  async getProposal(actor: MeetingReviewActor, proposalId: string) {
+    return this.loadProposal(actor, proposalId);
+  }
+
+  async patchProposal(
+    actor: MeetingReviewActor,
+    proposalId: string,
+    patch: {
+      title?: string;
+      description?: string | null;
+      notes?: string;
+      reviewState?: MeetingProposalReviewState;
+    },
+  ) {
+    assertHumanActor(actor);
+    const proposal = await this.loadProposal(actor, proposalId);
+    const from = proposal.review_state as MeetingProposalReviewState;
+
+    if (patch.reviewState && patch.reviewState !== from) {
+      if (patch.reviewState === "approved") {
+        return this.approveProposal(actor, proposalId, patch.notes);
+      }
+      if (patch.reviewState === "rejected") {
+        return this.rejectProposal(actor, proposalId, patch.notes);
+      }
+      if (patch.reviewState === "changes_requested") {
+        return this.requestProposalChanges(actor, proposalId, patch.notes);
+      }
+      if (patch.reviewState === "under_review") {
+        return this.transitionProposal(
+          actor,
+          proposalId,
+          "under_review",
+          "proposal.updated",
+          patch.notes,
+        );
+      }
+      throw new MeetingIntelligenceError(
+        "proposal_review_invalid",
+        "Unsupported review_state patch",
+        422,
+        { reviewState: patch.reviewState },
+      );
+    }
+
+    if (!["proposed", "under_review", "changes_requested"].includes(from)) {
+      throw new MeetingIntelligenceError(
+        "proposal_review_invalid",
+        "Proposal content can only be patched before approval",
+        409,
+        { reviewState: from },
+      );
+    }
+
+    const nextPayload = {
+      ...asRecord(proposal.payload),
+      ...(patch.notes !== undefined ? { reviewNotes: patch.notes } : {}),
+    };
+    const { data, error } = await this.supabase
+      .from("project_intelligence_meeting_proposals")
+      .update({
+        ...(typeof patch.title === "string" ? { title: patch.title } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        payload: nextPayload,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", proposalId)
+      .eq("tenant_id", actor.tenantId)
+      .eq("workspace_id", actor.workspaceId)
+      .select("*")
+      .maybeSingle();
+
+    if (error || !data || Array.isArray(data)) {
+      throw new MeetingIntelligenceError(
+        "proposal_review_invalid",
+        `Unable to patch proposal: ${error?.message ?? "missing row"}`,
+        409,
+        { proposalId },
+      );
+    }
+
+    await this.insertAudit(actor, String(proposal.meeting_session_id), "proposal.updated", {
+      proposalId,
+      title: patch.title ?? null,
+    });
+    return asRecord(data);
+  }
+
+  async listEvidence(actor: MeetingReviewActor, meetingId: string) {
+    await this.meetings.getMeeting(actor, meetingId);
+    const { data, error } = await awaitList(
+      this.supabase
+        .from("project_intelligence_meeting_evidence")
+        .select("*")
+        .eq("meeting_session_id", meetingId)
+        .eq("tenant_id", actor.tenantId)
+        .eq("workspace_id", actor.workspaceId)
+        .order("created_at", { ascending: true }),
+    );
+    if (error) {
+      throw new MeetingIntelligenceError(
+        "meeting_validation_failed",
+        `Unable to list meeting evidence: ${error.message}`,
+        500,
+      );
+    }
+    return (data ?? []).map((row) => asRecord(row));
   }
 
   async approveProposal(actor: MeetingReviewActor, proposalId: string, notes?: string) {

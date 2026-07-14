@@ -30,6 +30,12 @@ export default function MeetingsHealthPage() {
         <li data-testid="health-transcript">Transcript: {String(health.transcriptPersistence)}</li>
         <li data-testid="health-events">Events: {String(health.events)}</li>
         <li data-testid="health-privacy">Privacy: {String(health.privacyConfiguration)}</li>
+        <li data-testid="health-processing">Processing: {String(health.processing)}</li>
+        <li data-testid="health-job-queue">Job queue: {String(health.jobQueue)}</li>
+        <li data-testid="health-minutes-pages">Minutes pages: {String(health.minutesPages)}</li>
+        <li data-testid="health-review-pages">Review pages: {String(health.reviewPages)}</li>
+        <li data-testid="health-ai-extraction">AI extraction: {String(health.aiExtraction)}</li>
+        <li data-testid="health-transcript-replay">Transcript replay: {String(health.transcriptReplay)}</li>
       </ul>
     </section>
   );
