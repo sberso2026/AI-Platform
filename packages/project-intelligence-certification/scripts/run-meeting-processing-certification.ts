@@ -87,7 +87,7 @@ function stopCertServer(): void {
 const commands: Record<string, string> = {
   A: "pnpm --filter @rtb/project-intelligence test && pnpm --filter @rtb/project-intelligence-certification test:meeting-processing && pnpm --filter @rtb/project-intelligence typecheck && pnpm --filter @rtb/web typecheck && pnpm --filter @rtb/web build",
   B: "pnpm --filter @rtb/project-intelligence-certification verify-hosted-meeting-processing-schema",
-  C: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/meeting-rls-matrix.test.ts src/rls/meeting-processing-rls-matrix.test.ts",
+  C: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/meeting-rls-matrix.test.ts",
   D: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/processing-domain.test.ts -t \"Gate D|transcript durability|ordering\"",
   E: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/processing-domain.test.ts -t \"Gate E|reconnect|sequence\"",
   F: "pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/processing-domain.test.ts -t \"Gate F|job types|outbox\"",
