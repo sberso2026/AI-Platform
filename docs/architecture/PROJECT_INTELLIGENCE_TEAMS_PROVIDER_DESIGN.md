@@ -1,60 +1,91 @@
 # Project Intelligence — Teams Provider Design
 
-**Phase:** 6C-3C  
-**Status:** Design only — **unavailable** in product  
+**Phase:** 6C-3D  
 **Product:** Engineering OS → Project Intelligence → Meetings  
+**Status:** Implementation — Microsoft Teams is the first external provider candidate
 
-## Verdict
+## Product placement
 
-Microsoft Teams is **not** certified for live meeting capture in Phase 6C-3C.  
-Manual provider remains the only certified path. This document locks the future Teams design so UI/API claims stay honest.
+Teams is a **provider** under the existing Meetings feature. It is not a separate commercial application and does not remove the certified manual path.
 
-## Scope
+## Capability model
 
-| In scope (design) | Out of scope (this phase) |
-|-------------------|---------------------------|
-| Bot join / Graph webhook contract sketch | Live Teams joins |
-| Identity + tenant mapping | Production Graph secrets in cert |
-| Transcript event durability model | Zoom / Google Meet deep design |
-| Failure and consent gates | Auto Core writes from Teams speech |
+Overall provider status reflects the **certified subset**, not an all-or-nothing label:
 
-## Target architecture (future)
-
-```text
-Teams meeting
-  → Graph / bot adapter (project_intelligence meeting provider = microsoft_teams)
-    → durable transcript ingest (provider_event_id + provider_sequence)
-      → same processing jobs as manual (normalize → proposals → minutes)
-        → human review → optional Core convert
+```json
+{
+  "provider": "microsoft_teams",
+  "status": "certified",
+  "capabilities": {
+    "meeting_url_validation": "certified",
+    "meeting_discovery": "certified",
+    "session_mapping": "certified",
+    "webhook_events": "certified",
+    "participant_metadata": "certified",
+    "transcript_retrieval": "certified",
+    "live_transcript": "unsupported",
+    "recording_access": "unsupported",
+    "bot_join": "unsupported",
+    "meeting_end_detection": "certified",
+    "subscription_renewal": "certified"
+  }
+}
 ```
 
-## Availability contract
+Capability status values: `unsupported` | `unconfigured` | `configured` | `experimental` | `certified`.
 
-| Surface | Required behaviour until live cert |
-|---------|-----------------------------------|
-| Provider status | `MEETING_PROVIDER_STATUS.microsoft_teams = "unavailable"` |
-| Create/schedule | Reject non-manual providers |
-| UI | Actions disabled; no “Connect Teams” enablement |
-| Marketing / release notes | Must not claim Teams readiness |
+## Architecture
 
-## Design constraints (when implementation starts)
+```text
+Microsoft Graph notification / admin configure
+  → validate (token, clientState, subscription, tenant)
+  → durable provider event (dedupe)
+  → resolve provider mapping
+  → PI meeting session / participants / transcript ingest
+  → existing processing jobs → minutes / proposals → human review → Core convert
+```
 
-1. **Same domain tables** — no parallel `meeting_sessions` namespace; use `project_intelligence_meeting_*`.
-2. **Persist before broadcast** — Teams webhooks write transcript rows before realtime fan-out.
-3. **Consent / recording notice** — must resolve before `live` / recording-class states.
-4. **No auto-approve** — Teams-sourced proposals follow the same human review gate.
-5. **Governed AI only** — Whisper / summarization through Platform adapters; fail closed with retry.
-6. **Multi-instance safe** — no in-process-only Graph dedupe.
+## Graph client modes
 
-## Open design questions (tracked)
+| Mode | Env | Use |
+|------|-----|-----|
+| `live` | `PI_TEAMS_GRAPH_MODE=live` + Microsoft secrets | Real staging tenant |
+| `fixture` | `PI_TEAMS_GRAPH_MODE=fixture` | Controlled Graph-shaped simulator for hosted staging certification |
 
-1. Application vs resource consent model for Graph
-2. Bot vs meeting artifact API for transcript quality
-3. Mapping Teams organizer identities to Platform profiles
-4. Retention of Teams media blobs vs transcript-only retention
+Fixture mode certifies RTB contracts and pipelines. It must not claim production Microsoft tenant readiness (`productionCertificationBlocked` remains true unless live evidence and gates agree).
 
-## Related
+## Transcript mode policy
 
-- `PROJECT_INTELLIGENCE_MEETING_INTEGRATION_DECISIONS.md` (D5 manual-first)
-- `PROJECT_INTELLIGENCE_MEETING_PROVIDER_STATUS.md`
-- `packages/project-intelligence/src/meetings/providers.ts`
+| Classification | Rule |
+|----------------|------|
+| realtime | Median segment latency within declared threshold during live cert |
+| near_realtime | Incremental delayed delivery |
+| post_meeting | Available only after completion (default certified path) |
+| unsupported | API/tenant policy blocks retrieval |
+
+UI must display the measured classification. Post-meeting must never be labelled live.
+
+## Bot join and recording
+
+Remain `unsupported` unless separately implemented and proven. Webhook or transcript access does **not** imply bot join or recording.
+
+## Configuration (server-only)
+
+Exact names:
+
+- `MICROSOFT_TENANT_ID`
+- `MICROSOFT_CLIENT_ID`
+- `MICROSOFT_CLIENT_SECRET`
+- `MICROSOFT_GRAPH_WEBHOOK_SECRET`
+- `MICROSOFT_GRAPH_NOTIFICATION_URL` (optional)
+- `MICROSOFT_GRAPH_LIFECYCLE_NOTIFICATION_URL` (optional)
+- `PI_TEAMS_GRAPH_MODE` (`live` \| `fixture`)
+
+Never exposed to browser builds. Never logged as values.
+
+## Related docs
+
+- `docs/migration/PROJECT_INTELLIGENCE_TEAMS_CAPABILITY_INVENTORY.md`
+- `docs/security/PROJECT_INTELLIGENCE_TEAMS_SECURITY.md`
+- `docs/security/PROJECT_INTELLIGENCE_TEAMS_GRAPH_PERMISSIONS.md`
+- `docs/operations/PROJECT_INTELLIGENCE_TEAMS_RUNBOOK.md`
