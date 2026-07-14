@@ -429,7 +429,10 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
       await expect(page.getByTestId("minutes-status-issued")).toBeVisible({ timeout: 30_000 });
     });
 
-    test("Q version history", async ({ page }) => {
+    test("Q version history", async ({ page, context }) => {
+      const owner = requireUser(loadFixtures(), "owner");
+      await signInAsFixtureUser(context, owner.email);
+
       const versions = await page.request.get(
         `/api/engineering/project-intelligence/meetings/${meetingId}/minutes/versions`,
       );
@@ -446,7 +449,10 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
       await expect(page.getByTestId("minutes-version-body")).toBeVisible();
     });
 
-    test("R providers unavailable", async ({ page }) => {
+    test("R providers unavailable", async ({ page, context }) => {
+      const owner = requireUser(loadFixtures(), "owner");
+      await signInAsFixtureUser(context, owner.email);
+
       await page.goto(meetingsPath);
       await expect(page.getByTestId("project-intelligence-meetings-ready")).toBeVisible({
         timeout: 45_000,
@@ -468,7 +474,9 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
 
     test.use({ storageState: ownerStoragePath });
 
-    test("T accessibility landmarks on processing pages", async ({ page }) => {
+    test("T accessibility landmarks on processing pages", async ({ page, context }) => {
+      const owner = requireUser(loadFixtures(), "owner");
+      await signInAsFixtureUser(context, owner.email);
       await page.goto(meetingsPath);
       await expect(page.getByTestId("project-intelligence-meetings-ready")).toBeVisible({
         timeout: 45_000,
@@ -477,7 +485,9 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
       await expect(page.getByRole("heading", { name: /Meetings/i })).toBeVisible();
     });
 
-    test("U responsive meetings processing shell", async ({ page }) => {
+    test("U responsive meetings processing shell", async ({ page, context }) => {
+      const owner = requireUser(loadFixtures(), "owner");
+      await signInAsFixtureUser(context, owner.email);
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(meetingsPath);
       await expect(page.getByTestId("project-intelligence-nav-meetings")).toBeVisible({
