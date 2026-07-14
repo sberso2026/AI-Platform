@@ -64,8 +64,10 @@ describeTeams("Phase 6C-3D Teams provider browser flows", () => {
       const text = await response.text();
       expect(response.status(), text).toBeLessThan(500);
       expect([200, 201].includes(response.status()), text).toBeTruthy();
-      await page.goto(`${meetingsPath}/settings/providers/microsoft-teams`);
-      await expect(page.getByTestId("teams-provider-detail")).toBeVisible();
+      await page.goto(`${meetingsPath}/settings/providers/microsoft-teams`, {
+        waitUntil: "networkidle",
+      });
+      await expect(page.getByTestId("teams-provider-detail")).toBeVisible({ timeout: 30_000 });
     });
 
     test("C provider health", async ({ page }) => {

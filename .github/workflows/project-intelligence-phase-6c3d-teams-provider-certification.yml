@@ -292,7 +292,15 @@ jobs:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: pnpm --filter @rtb/project-intelligence-certification provision
+        run: |
+          for attempt in 1 2 3; do
+            if pnpm --filter @rtb/project-intelligence-certification provision; then
+              exit 0
+            fi
+            echo "Provision attempt $attempt failed; retrying..."
+            sleep 5
+          done
+          exit 1
       - run: pnpm --filter @rtb/web build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

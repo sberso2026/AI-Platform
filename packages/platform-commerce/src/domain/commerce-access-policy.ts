@@ -96,7 +96,7 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
   "/engineering/apps/project-intelligence/meetings/new": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.write", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/meetings/health": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.read", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/meetings/settings/providers": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.read", seatRequired: true, workspaceRequired: true },
-  "/engineering/apps/project-intelligence/meetings/settings/providers/microsoft-teams": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.write", seatRequired: true, workspaceRequired: true },
+  "/engineering/apps/project-intelligence/meetings/settings/providers/microsoft-teams": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.read", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/meetings/[meetingId]/review": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.write", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/meetings/[meetingId]/minutes": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.write", seatRequired: true, workspaceRequired: true },
 };

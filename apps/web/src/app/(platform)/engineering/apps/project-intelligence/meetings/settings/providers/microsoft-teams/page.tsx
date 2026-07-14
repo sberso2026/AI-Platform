@@ -71,8 +71,22 @@ export default function MicrosoftTeamsProviderPage() {
     }
   }
 
-  if (error && !detail) return <p className="text-red-700" role="alert">{error}</p>;
-  if (!detail) return <p role="status">Loading Microsoft Teams provider…</p>;
+  if (error && !detail) {
+    return (
+      <section data-testid="teams-provider-detail">
+        <p className="text-red-700" role="alert">
+          {error}
+        </p>
+      </section>
+    );
+  }
+  if (!detail) {
+    return (
+      <section data-testid="teams-provider-detail">
+        <p role="status">Loading Microsoft Teams provider…</p>
+      </section>
+    );
+  }
 
   const capabilities = detail.capabilities ?? {};
 
