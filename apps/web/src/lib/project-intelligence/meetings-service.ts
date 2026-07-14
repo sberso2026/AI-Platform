@@ -444,13 +444,24 @@ export async function replayTranscript(
   meetingId: string,
   query: { cursor?: string | null; resumeToken?: string | null },
 ) {
+  const resume =
+    typeof query.resumeToken === "string" && query.resumeToken.trim()
+      ? query.resumeToken.trim()
+      : null;
+  const rawCursor = typeof query.cursor === "string" ? query.cursor.trim() : "";
+  const numericCursor = /^-?\d+$/.test(rawCursor) ? Number(rawCursor) : null;
   const token =
-    (typeof query.resumeToken === "string" && query.resumeToken.trim())
-    || (typeof query.cursor === "string" && query.cursor.trim())
-    || buildResumeToken({
-      meetingSessionId: meetingId,
-      lastAcknowledgedLogicalSequence: -1,
-    });
+    resume
+    || (numericCursor != null
+      ? buildResumeToken({
+          meetingSessionId: meetingId,
+          lastAcknowledgedLogicalSequence: numericCursor,
+        })
+      : rawCursor
+        || buildResumeToken({
+          meetingSessionId: meetingId,
+          lastAcknowledgedLogicalSequence: -1,
+        }));
   return new MeetingTranscriptRecoveryService(client()).replayFromCursor(actor(context), token);
 }
 
