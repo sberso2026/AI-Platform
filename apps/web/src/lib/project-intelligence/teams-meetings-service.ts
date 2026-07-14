@@ -281,6 +281,28 @@ export async function handleMicrosoftGraphWebhook(request: Request): Promise<Res
   const url = new URL(request.url);
   const correlationId =
     request.headers.get("x-correlation-id") ?? randomUUID();
+
+  // Graph validationToken handshake must succeed without auth and without requiring
+  // full Teams provider configuration. Never log the token.
+  const validationToken = url.searchParams.get("validationToken");
+  if (validationToken != null && validationToken.length > 0) {
+    return new Response(validationToken, {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  if (request.method === "GET") {
+    return Response.json(
+      { ok: true, route: "microsoft-graph-webhook" },
+      { status: 200 },
+    );
+  }
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204 });
+  }
+
   const config = readMicrosoftGraphConfig();
   if (!config) {
     return Response.json(
@@ -297,26 +319,6 @@ export async function handleMicrosoftGraphWebhook(request: Request): Promise<Res
 
   const db = client();
   const webhooks = new MicrosoftGraphWebhookService(db, config);
-  const validationToken = webhooks.validationHandshake(url);
-  if (validationToken) {
-    return new Response(validationToken, {
-      status: 200,
-      headers: { "content-type": "text/plain" },
-    });
-  }
-
-  if (request.method === "GET") {
-    return Response.json(
-      {
-        error: {
-          code: "teams_webhook_validation_failed",
-          message: "validationToken required for GET",
-          requestId: correlationId,
-        },
-      },
-      { status: 401 },
-    );
-  }
 
   const body = await request.json().catch(() => ({}));
   const notifications = Array.isArray((body as { value?: unknown }).value)
@@ -326,7 +328,37 @@ export async function handleMicrosoftGraphWebhook(request: Request): Promise<Res
       : [];
 
   if (!notifications.length) {
-    return Response.json({ data: { events: [], correlationId } });
+    return Response.json(
+      {
+        error: {
+          code: "teams_webhook_validation_failed",
+          message: "Graph notification payload required",
+          requestId: correlationId,
+        },
+      },
+      { status: 400 },
+    );
+  }
+
+  // Fail closed before side effects: every notification must present clientState.
+  for (const n of notifications) {
+    try {
+      webhooks.assertClientState(n.clientState);
+    } catch (error) {
+      if (error instanceof MeetingIntelligenceError) {
+        return Response.json(
+          {
+            error: {
+              code: (error.details?.teamsCode as string | undefined) ?? error.code,
+              message: error.message,
+              requestId: correlationId,
+            },
+          },
+          { status: error.statusCode },
+        );
+      }
+      throw error;
+    }
   }
 
   const firstSub = notifications[0]?.subscriptionId;
@@ -383,7 +415,7 @@ export async function handleMicrosoftGraphWebhook(request: Request): Promise<Res
       notifications,
       correlationId,
     });
-    return Response.json({ data: { events, correlationId } });
+    return Response.json({ data: { events, correlationId } }, { status: 202 });
   } catch (error) {
     if (error instanceof MeetingIntelligenceError) {
       return Response.json(
@@ -392,7 +424,6 @@ export async function handleMicrosoftGraphWebhook(request: Request): Promise<Res
             code: (error.details?.teamsCode as string | undefined) ?? error.code,
             message: error.message,
             requestId: correlationId,
-            details: error.details,
           },
         },
         { status: error.statusCode },
@@ -408,6 +439,26 @@ export async function handleMicrosoftGraphLifecycleWebhook(
   const url = new URL(request.url);
   const correlationId =
     request.headers.get("x-correlation-id") ?? randomUUID();
+
+  const validationToken = url.searchParams.get("validationToken");
+  if (validationToken != null && validationToken.length > 0) {
+    return new Response(validationToken, {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  if (request.method === "GET") {
+    return Response.json(
+      { ok: true, route: "microsoft-graph-lifecycle-webhook" },
+      { status: 200 },
+    );
+  }
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204 });
+  }
+
   const config = readMicrosoftGraphConfig();
   if (!config) {
     return Response.json(
@@ -424,18 +475,24 @@ export async function handleMicrosoftGraphLifecycleWebhook(
 
   const db = client();
   const webhooks = new MicrosoftGraphWebhookService(db, config);
-  const validationToken = webhooks.validationHandshake(url);
-  if (validationToken) {
-    return new Response(validationToken, {
-      status: 200,
-      headers: { "content-type": "text/plain" },
-    });
-  }
 
   const body = await request.json().catch(() => ({}));
   const notifications = Array.isArray((body as { value?: unknown }).value)
     ? ((body as { value: Array<{ subscriptionId?: string; lifecycleEvent?: string; clientState?: string }> }).value)
     : [];
+
+  if (!notifications.length) {
+    return Response.json(
+      {
+        error: {
+          code: "teams_webhook_validation_failed",
+          message: "Graph lifecycle payload required",
+          requestId: correlationId,
+        },
+      },
+      { status: 400 },
+    );
+  }
 
   const { graph } = new TeamsProviderConnectionService(db).resolveRuntime();
   const subs = new MicrosoftGraphSubscriptionService(db, graph, config);
@@ -451,7 +508,7 @@ export async function handleMicrosoftGraphLifecycleWebhook(
     }
   }
 
-  return Response.json({ data: { processed: notifications.length, correlationId } });
+  return Response.json({ data: { processed: notifications.length, correlationId } }, { status: 202 });
 }
 
 export async function runTeamsWorkerOnce(options?: {

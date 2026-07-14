@@ -5,10 +5,19 @@ import { MeetingIntelligenceError } from "@rtb/project-intelligence/server";
 
 /**
  * Microsoft Graph subscription lifecycle notifications.
+ * Canonical path is /api/webhooks/microsoft-graph/lifecycle — this path remains for compatibility.
  * Does not use user JWT — validates Graph validationToken / clientState.
  */
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   return handleMicrosoftGraphLifecycleWebhook(request);
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204 });
 }
 
 export async function POST(request: Request) {
@@ -23,7 +32,6 @@ export async function POST(request: Request) {
             code: (error.details?.teamsCode as string | undefined) ?? error.code,
             message: error.message,
             requestId: cid,
-            details: error.details,
           },
         },
         { status: error.statusCode },
@@ -33,7 +41,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: "internal_error",
-          message: error instanceof Error ? error.message : String(error),
+          message: "Microsoft Graph lifecycle webhook handling failed",
           requestId: cid,
         },
       },

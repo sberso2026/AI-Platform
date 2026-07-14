@@ -4,9 +4,8 @@ import {
 import { MeetingIntelligenceError } from "@rtb/project-intelligence/server";
 
 /**
- * Microsoft Graph change notifications for Project Intelligence meetings.
- * Canonical path is /api/webhooks/microsoft-graph — this path remains for compatibility.
- * Does not use user JWT — validates Graph validationToken / clientState.
+ * Canonical Microsoft Graph change-notification endpoint.
+ * Public for validationToken handshake; notifications still require clientState.
  */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

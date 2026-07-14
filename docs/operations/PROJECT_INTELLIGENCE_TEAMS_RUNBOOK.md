@@ -16,7 +16,8 @@
 | `PI_TEAMS_CLIENT_ID` | App registration |
 | `PI_TEAMS_CLIENT_SECRET` | Never log |
 | `PI_TEAMS_WEBHOOK_CLIENT_STATE` | Graph clientState |
-| `PI_TEAMS_WEBHOOK_BASE_URL` | Public notification base URL |
+| `PI_TEAMS_WEBHOOK_BASE_URL` | Public **origin** only (e.g. `https://pilot.rtbea.com.au`). Code appends `/api/webhooks/microsoft-graph`. |
+
 | `PI_TEAMS_TEST_MEETING_URL` | Non-confidential staging join URL |
 | `PI_TEAMS_TEST_TENANT_LABEL` | Label only (no secret) |
 | `PI_TEAMS_TEST_ORGANIZER_USER_ID` | Optional UPN/OID |

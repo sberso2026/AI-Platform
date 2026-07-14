@@ -126,7 +126,7 @@ describeTeams("Phase 6C-3D Teams provider browser flows", () => {
 
     test("G webhook validation token handshake", async ({ page }) => {
       const response = await page.request.get(
-        "/api/webhooks/microsoft-graph/project-intelligence-meetings?validationToken=tok-cert-123",
+        "/api/webhooks/microsoft-graph?validationToken=tok-cert-123",
       );
       expect(response.status()).toBe(200);
       expect(await response.text()).toBe("tok-cert-123");

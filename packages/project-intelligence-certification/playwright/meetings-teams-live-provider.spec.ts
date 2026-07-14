@@ -103,7 +103,7 @@ describeLive("Phase 6C-3E Live Teams provider browser flows", () => {
 
     test("webhook validationToken handshake", async ({ page }) => {
       const response = await page.request.get(
-        "/api/webhooks/microsoft-graph/project-intelligence-meetings?validationToken=live-tok-123",
+        "/api/webhooks/microsoft-graph?validationToken=live-tok-123",
       );
       expect(response.status()).toBe(200);
       expect(await response.text()).toBe("live-tok-123");

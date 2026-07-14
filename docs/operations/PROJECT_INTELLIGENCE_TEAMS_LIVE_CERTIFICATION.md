@@ -18,7 +18,8 @@ Phase 6C-3E PASS requires **real Graph calls** against a **staging Microsoft Ent
 | `PI_TEAMS_CLIENT_ID` | App registration |
 | `PI_TEAMS_CLIENT_SECRET` | Client secret (credential reference preferred in prod) |
 | `PI_TEAMS_WEBHOOK_CLIENT_STATE` | Graph clientState |
-| `PI_TEAMS_WEBHOOK_BASE_URL` | Public notification URL |
+| `PI_TEAMS_WEBHOOK_BASE_URL` | Public origin; resolves to `/api/webhooks/microsoft-graph` |
+
 | `PI_TEAMS_TEST_MEETING_URL` | Non-confidential staging meeting join URL |
 | `PI_TEAMS_TEST_TENANT_LABEL` | Human label only (no secrets) |
 | `PI_TEAMS_TEST_ORGANIZER_USER_ID` | Optional organizer UPN/OID |

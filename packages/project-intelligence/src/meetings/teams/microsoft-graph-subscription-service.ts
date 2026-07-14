@@ -70,7 +70,7 @@ export class MicrosoftGraphSubscriptionService {
 
     const notificationUrl =
       this.config.notificationUrl ??
-      "https://localhost/api/webhooks/microsoft-graph/project-intelligence-meetings";
+      "https://localhost/api/webhooks/microsoft-graph";
     const expiration = new Date(Date.now() + 50 * 60 * 60 * 1000).toISOString();
     let created;
     try {

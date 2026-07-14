@@ -24,6 +24,62 @@ function firstEnv(env: NodeJS.ProcessEnv, ...names: string[]): string | undefine
   return undefined;
 }
 
+/** Canonical Graph notification path under the web app. */
+export const MICROSOFT_GRAPH_WEBHOOK_PATH = "/api/webhooks/microsoft-graph";
+export const MICROSOFT_GRAPH_LIFECYCLE_WEBHOOK_PATH =
+  "/api/webhooks/microsoft-graph/lifecycle";
+
+/**
+ * Resolves absolute notification URLs from PI_TEAMS_WEBHOOK_BASE_URL.
+ * Accepts either an origin (https://pilot.example.com) or a full notification URL.
+ */
+export function resolveMicrosoftGraphWebhookUrls(baseOrFullUrl: string | null | undefined): {
+  notificationUrl: string | null;
+  lifecycleNotificationUrl: string | null;
+} {
+  const raw = baseOrFullUrl?.trim();
+  if (!raw) {
+    return { notificationUrl: null, lifecycleNotificationUrl: null };
+  }
+
+  const withoutTrailingSlash = raw.replace(/\/$/, "");
+  if (withoutTrailingSlash.endsWith(MICROSOFT_GRAPH_WEBHOOK_PATH)) {
+    return {
+      notificationUrl: withoutTrailingSlash,
+      lifecycleNotificationUrl: `${withoutTrailingSlash}/lifecycle`,
+    };
+  }
+  if (withoutTrailingSlash.endsWith(`${MICROSOFT_GRAPH_WEBHOOK_PATH}/lifecycle`)) {
+    const notificationUrl = withoutTrailingSlash.replace(/\/lifecycle$/, "");
+    return {
+      notificationUrl,
+      lifecycleNotificationUrl: withoutTrailingSlash,
+    };
+  }
+
+  // Base origin (or host without path) → append canonical routes.
+  try {
+    const parsed = new URL(withoutTrailingSlash);
+    const origin = parsed.origin;
+    // If caller already supplied a non-canonical path, keep it (compat).
+    if (parsed.pathname && parsed.pathname !== "/") {
+      return {
+        notificationUrl: withoutTrailingSlash,
+        lifecycleNotificationUrl: `${withoutTrailingSlash}/lifecycle`,
+      };
+    }
+    return {
+      notificationUrl: `${origin}${MICROSOFT_GRAPH_WEBHOOK_PATH}`,
+      lifecycleNotificationUrl: `${origin}${MICROSOFT_GRAPH_LIFECYCLE_WEBHOOK_PATH}`,
+    };
+  } catch {
+    return {
+      notificationUrl: `${withoutTrailingSlash}${MICROSOFT_GRAPH_WEBHOOK_PATH}`,
+      lifecycleNotificationUrl: `${withoutTrailingSlash}${MICROSOFT_GRAPH_LIFECYCLE_WEBHOOK_PATH}`,
+    };
+  }
+}
+
 /**
  * Reads Graph configuration.
  * Preferred names: PI_TEAMS_* (Phase 6C-3E). Legacy MICROSOFT_* aliases still accepted.
@@ -38,6 +94,9 @@ export function readMicrosoftGraphConfig(
     const webhookSecret =
       firstEnv(env, "PI_TEAMS_WEBHOOK_CLIENT_STATE", "MICROSOFT_GRAPH_WEBHOOK_SECRET") ||
       "fixture-webhook-client-state";
+    const webhookUrls = resolveMicrosoftGraphWebhookUrls(
+      firstEnv(env, "PI_TEAMS_WEBHOOK_BASE_URL", "MICROSOFT_GRAPH_NOTIFICATION_URL"),
+    );
     return {
       tenantId:
         firstEnv(env, "PI_TEAMS_TENANT_ID", "MICROSOFT_TENANT_ID") || "fixture-tenant",
@@ -45,13 +104,10 @@ export function readMicrosoftGraphConfig(
       clientSecret:
         firstEnv(env, "PI_TEAMS_CLIENT_SECRET", "MICROSOFT_CLIENT_SECRET") || "fixture-secret",
       webhookSecret,
-      notificationUrl:
-        firstEnv(env, "PI_TEAMS_WEBHOOK_BASE_URL", "MICROSOFT_GRAPH_NOTIFICATION_URL") || null,
+      notificationUrl: webhookUrls.notificationUrl,
       lifecycleNotificationUrl:
         env.MICROSOFT_GRAPH_LIFECYCLE_NOTIFICATION_URL?.trim() ||
-        (firstEnv(env, "PI_TEAMS_WEBHOOK_BASE_URL")
-          ? `${firstEnv(env, "PI_TEAMS_WEBHOOK_BASE_URL")}/lifecycle`
-          : null),
+        webhookUrls.lifecycleNotificationUrl,
       mode: "fixture",
       tenantLabel: env.PI_TEAMS_TEST_TENANT_LABEL?.trim() || "fixture",
       testOrganizer: env.PI_TEAMS_TEST_ORGANIZER_USER_ID?.trim() || null,
@@ -68,7 +124,9 @@ export function readMicrosoftGraphConfig(
     "PI_TEAMS_WEBHOOK_CLIENT_STATE",
     "MICROSOFT_GRAPH_WEBHOOK_SECRET",
   );
-  const webhookBase = firstEnv(env, "PI_TEAMS_WEBHOOK_BASE_URL", "MICROSOFT_GRAPH_NOTIFICATION_URL");
+  const webhookUrls = resolveMicrosoftGraphWebhookUrls(
+    firstEnv(env, "PI_TEAMS_WEBHOOK_BASE_URL", "MICROSOFT_GRAPH_NOTIFICATION_URL"),
+  );
 
   if (!tenantId || !clientId || !clientSecret || !webhookSecret) {
     return null;
@@ -92,10 +150,10 @@ export function readMicrosoftGraphConfig(
     clientId,
     clientSecret,
     webhookSecret,
-    notificationUrl: webhookBase || null,
+    notificationUrl: webhookUrls.notificationUrl,
     lifecycleNotificationUrl:
       env.MICROSOFT_GRAPH_LIFECYCLE_NOTIFICATION_URL?.trim() ||
-      (webhookBase ? `${webhookBase.replace(/\/$/, "")}/lifecycle` : null),
+      webhookUrls.lifecycleNotificationUrl,
     mode: "live",
     tenantLabel: env.PI_TEAMS_TEST_TENANT_LABEL?.trim() || null,
     testOrganizer: env.PI_TEAMS_TEST_ORGANIZER_USER_ID?.trim() || null,

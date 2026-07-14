@@ -1,19 +1,17 @@
 import {
-  handleMicrosoftGraphWebhook,
+  handleMicrosoftGraphLifecycleWebhook,
 } from "@/lib/project-intelligence/meetings-service";
 import { MeetingIntelligenceError } from "@rtb/project-intelligence/server";
 
 /**
- * Microsoft Graph change notifications for Project Intelligence meetings.
- * Canonical path is /api/webhooks/microsoft-graph — this path remains for compatibility.
- * Does not use user JWT — validates Graph validationToken / clientState.
+ * Canonical Microsoft Graph subscription lifecycle endpoint.
  */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: Request) {
-  return handleMicrosoftGraphWebhook(request);
+  return handleMicrosoftGraphLifecycleWebhook(request);
 }
 
 export async function OPTIONS() {
@@ -22,7 +20,7 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
-    return await handleMicrosoftGraphWebhook(request);
+    return await handleMicrosoftGraphLifecycleWebhook(request);
   } catch (error) {
     const cid = request.headers.get("x-correlation-id") ?? crypto.randomUUID();
     if (error instanceof MeetingIntelligenceError) {
@@ -41,7 +39,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: "internal_error",
-          message: "Microsoft Graph webhook handling failed",
+          message: "Microsoft Graph lifecycle webhook handling failed",
           requestId: cid,
         },
       },
