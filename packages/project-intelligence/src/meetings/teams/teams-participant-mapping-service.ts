@@ -121,7 +121,7 @@ export class TeamsParticipantMappingService {
         workspace_id: input.workspaceId,
         meeting_session_id: input.meetingSessionId,
         event_type: "teams.participants_synced",
-        actor_type: "system",
+        event_source: "microsoft_teams",
         correlation_id: input.correlationId,
         payload: { count: results.length },
       }),
