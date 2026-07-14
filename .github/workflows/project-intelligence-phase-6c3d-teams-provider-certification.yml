@@ -21,6 +21,7 @@ on:
       - "apps/web/src/app/api/webhooks/microsoft-graph/**"
       - "apps/web/src/app/api/platform/project-intelligence/teams-jobs/**"
       - "apps/web/src/lib/project-intelligence/**"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
       - "supabase/migrations/20260714140000_batch_40_project_intelligence_teams_provider.sql"
       - "docs/architecture/PROJECT_INTELLIGENCE_TEAMS*"
       - "docs/migration/PROJECT_INTELLIGENCE_TEAMS*"
