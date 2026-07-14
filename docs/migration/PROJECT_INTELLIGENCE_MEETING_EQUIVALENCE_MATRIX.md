@@ -1,6 +1,6 @@
 # Project Intelligence — Meeting Equivalence Matrix
 
-**Phase:** 6C-3A Discovery Lock  
+**Phase:** 6C-3A Discovery Lock → **6C-3C processing extensions**  
 **Frozen:** `ab1f44276715888123d9f669464987e6f7c39b6c`  
 **Target:** Integrated Project Intelligence Meetings feature (Engineering OS)
 
@@ -59,6 +59,20 @@ Maps frozen standalone capabilities to integrated target surfaces. Equivalence i
 | MoM reviewed | `review_pending` |
 | MoM approved | `approved` → `completed` |
 | — | `failed`, `cancelled`, `archived` |
+
+## Phase 6C-3C processing equivalence
+
+| Frozen / required behaviour | Target implementation | Status |
+|-----------------------------|----------------------|--------|
+| Stop → async MoM pipeline | `MeetingProcessingService.enqueueProcessing` + durable jobs | Domain services |
+| Deterministic cue extraction (`ACTION:`, `DECIDE:`, …) | `MeetingProposalExtractionService` + `DeterministicMeetingAiAdapter` | Domain services |
+| Deterministic MoM sections | `MeetingMinutesGenerationService` + minutes versioning | Domain services |
+| No auto-approve / no auto-issue | `MeetingReviewService` human-only gates | Domain services |
+| No Core write until approve | `MeetingEngineeringCoreWriteAdapter` + `assertProposalConvertible` | Domain services |
+| Document citations for grounded claims | `MeetingDocumentGroundingAdapter` (fail closed / abstain) | Domain services |
+| Job claim / retry / dead letter | `ProjectIntelligenceMeetingWorker` + Batch 39 RPCs | Domain services |
+| Persist before broadcast | Transcript ingest publisher (6C-3C) | Prior batch + preserved |
+| Teams / Zoom / Meet live | Explicit `unavailable` | Design only |
 
 ## Behavioural equivalence checklist (cert Gate R)
 
