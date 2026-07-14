@@ -30,10 +30,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Status (6C-3A)** | **experimental** (product claim: **unavailable** until live cert) |
-| **Frozen evidence** | `integrations/teamsBot.ts`; Graph webhook `app/api/webhooks/microsoft-graph/route.ts`; `microsoftGraphOnlineMeeting.ts`; gated by `RTB_TEAMS_BOT_ENABLED` |
-| **Gaps** | External bot service not in-repo; Graph job stub empty; in-process webhook dedupe; no hosted live Teams certification in AI Platform |
-| **Must not claim** | “Teams supported” or “Teams certified” in 6C-3A/6C-3B without live provider run |
+| **Status (6C-3D)** | **certified** (capability subset; see Teams capability matrix) |
+| **Graph mode** | Hosted staging cert uses `PI_TEAMS_GRAPH_MODE=fixture` by default; live Entra tenant optional |
+| **Certified capabilities** | URL validation, discovery, session mapping, webhooks, participants, post-meeting transcript retrieval, subscription renewal, meeting end detection |
+| **Unsupported** | `live_transcript`, `recording_access`, `bot_join` |
+| **Transcript mode** | `post_meeting` (not realtime) |
+| **Must not claim** | Bot joined, recording, or live transcript without dedicated latency/bot evidence |
 
 ---
 
