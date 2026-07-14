@@ -7,7 +7,7 @@ import {
   MeetingIntelligenceError,
 } from "@rtb/project-intelligence";
 
-describe("Gate O — provider unavailable contracts", () => {
+describe("Gate P — provider unavailable contracts", () => {
   it("marks only manual as certified", () => {
     expect(MEETING_PROVIDER_STATUS.manual).toBe("certified");
     expect(MEETING_PROVIDER_STATUS.microsoft_teams).toBe("unavailable");

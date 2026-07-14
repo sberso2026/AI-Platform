@@ -10,6 +10,8 @@ type Proposal = {
   description: string | null;
   review_state: string;
   confidence: number | null;
+  transcript_segment_ids?: string[] | null;
+  document_citations?: unknown;
 };
 
 export default function MeetingReviewPage() {
@@ -77,6 +79,21 @@ export default function MeetingReviewPage() {
                 </p>
                 <h3 className="font-semibold text-slate-900">{proposal.title}</h3>
                 <p className="mt-1 text-sm text-slate-700">{proposal.description ?? "—"}</p>
+                <p
+                  className="mt-2 text-xs text-slate-500"
+                  data-testid={`proposal-transcript-evidence-${proposal.id}`}
+                >
+                  Transcript evidence: {(proposal.transcript_segment_ids ?? []).length} segment(s)
+                </p>
+                <div
+                  className="mt-1 text-xs text-slate-500"
+                  data-testid={`proposal-document-citations-${proposal.id}`}
+                >
+                  Document citations:{" "}
+                  {Array.isArray(proposal.document_citations) && proposal.document_citations.length > 0
+                    ? `${proposal.document_citations.length} citation(s)`
+                    : "none (abstained or not grounded)"}
+                </div>
               </div>
               <div className="flex flex-wrap gap-2 text-sm">
                 <button

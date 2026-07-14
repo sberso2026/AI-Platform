@@ -69,6 +69,9 @@ UPDATE project_intelligence_meeting_proposals
 SET review_state = 'proposed'
 WHERE review_state = 'pending';
 
+ALTER TABLE project_intelligence_meeting_proposals
+  ALTER COLUMN review_state SET DEFAULT 'proposed';
+
 ALTER TABLE project_intelligence_meeting_minutes
   ADD COLUMN IF NOT EXISTS processing_run_id UUID REFERENCES project_intelligence_meeting_processing_runs(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS issued_at TIMESTAMPTZ,

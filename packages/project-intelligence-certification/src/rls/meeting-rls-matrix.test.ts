@@ -101,6 +101,12 @@ describe.skipIf(!enabled)("Phase 6C-3B — Meeting foundation real-JWT RLS matri
     }
   });
 
+  it("includes processing tables (proposals, minutes, jobs) in isolation matrix", () => {
+    expect(tables).toContain("project_intelligence_meeting_proposals");
+    expect(tables).toContain("project_intelligence_meeting_minutes");
+    expect(tables).toContain("project_intelligence_meeting_jobs");
+  });
+
   it("rejects anonymous inserts into meeting sessions", async () => {
     const result = await rest(
       "project_intelligence_meeting_sessions",
