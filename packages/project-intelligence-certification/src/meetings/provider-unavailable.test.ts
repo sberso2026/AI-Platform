@@ -8,8 +8,8 @@ import {
 } from "@rtb/project-intelligence";
 
 describe("Gate O — provider unavailable contracts", () => {
-  it("marks only manual as certified_candidate", () => {
-    expect(MEETING_PROVIDER_STATUS.manual).toBe("certified_candidate");
+  it("marks only manual as certified", () => {
+    expect(MEETING_PROVIDER_STATUS.manual).toBe("certified");
     expect(MEETING_PROVIDER_STATUS.microsoft_teams).toBe("unavailable");
     expect(MEETING_PROVIDER_STATUS.zoom).toBe("unavailable");
     expect(MEETING_PROVIDER_STATUS.google_meet).toBe("unavailable");

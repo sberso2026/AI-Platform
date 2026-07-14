@@ -4,10 +4,20 @@ import { MEETING_PROVIDER_STATUS, type MeetingProvider, isMeetingProvider } from
 export type MeetingProviderCapabilityReport = {
   provider: MeetingProvider;
   status: (typeof MEETING_PROVIDER_STATUS)[MeetingProvider];
+  availableCapabilities: string[];
+  authenticationConfigured: boolean;
+  webhookConfigured: boolean;
+  transcriptSupport: boolean;
+  realtimeSupport: boolean;
+  recordingSupport: boolean;
+  participantSupport: boolean;
   joinEnabled: boolean;
   botAvailable: boolean;
   realtimeClaimed: boolean;
+  limitations: string[];
+  lastHealthCheck: string | null;
   phase6c3bCertified: boolean;
+  phase6c3cCertified: boolean;
 };
 
 export function meetingProviderCapabilityReport(
@@ -18,10 +28,24 @@ export function meetingProviderCapabilityReport(
   return {
     provider,
     status,
+    availableCapabilities: manual
+      ? ["manual_session", "manual_transcript_append", "processing_enqueue", "minutes_review"]
+      : [],
+    authenticationConfigured: manual,
+    webhookConfigured: false,
+    transcriptSupport: manual,
+    realtimeSupport: manual,
+    recordingSupport: false,
+    participantSupport: manual,
     joinEnabled: false,
     botAvailable: false,
     realtimeClaimed: false,
-    phase6c3bCertified: manual && status === "certified_candidate",
+    limitations: manual
+      ? ["No live provider bot", "RTB-owned manual transcript events only"]
+      : ["Provider unavailable in Phase 6C-3C", "UI actions disabled"],
+    lastHealthCheck: null,
+    phase6c3bCertified: manual,
+    phase6c3cCertified: manual && status === "certified",
   };
 }
 
@@ -31,7 +55,7 @@ export function allMeetingProviderCapabilityReports(): MeetingProviderCapability
   );
 }
 
-/** Phase 6C-3B only accepts manual provider for create/schedule flows. */
+/** Phase 6C-3C still accepts only manual provider for create/schedule flows. */
 export function assertManualProviderOnly(provider: string): asserts provider is "manual" {
   if (!isMeetingProvider(provider)) {
     throw new MeetingIntelligenceError(
@@ -44,7 +68,7 @@ export function assertManualProviderOnly(provider: string): asserts provider is 
   if (provider !== "manual") {
     throw new MeetingIntelligenceError(
       "meeting_provider_unavailable",
-      "External meeting providers are unavailable in Phase 6C-3B",
+      "External meeting providers are unavailable in Phase 6C-3C",
       422,
       {
         provider,

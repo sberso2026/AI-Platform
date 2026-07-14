@@ -8,3 +8,5 @@ export * from "./event-types";
 export * from "./manual-meeting-service";
 export * from "./meeting-participant-service";
 export * from "./transcript-append-service";
+export * from "./transcript-ordering";
+export * from "./transcript-ingestion";
