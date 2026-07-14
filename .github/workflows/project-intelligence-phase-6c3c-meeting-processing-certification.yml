@@ -14,6 +14,8 @@ on:
       - "packages/project-intelligence-certification/scripts/run-meeting-processing-certification.ts"
       - "packages/project-intelligence-certification/playwright/meetings-processing.spec.ts"
       - "packages/project-intelligence-certification/package.json"
+      - "packages/project-intelligence-certification/src/fixtures/**"
+      - "packages/project-intelligence-certification/scripts/run-meeting-processing-certification.ts"
       - "apps/web/src/app/**/project-intelligence/meetings/**"
       - "apps/web/src/app/api/engineering/project-intelligence/meetings/**"
       - "apps/web/src/app/api/platform/project-intelligence/meeting-jobs/**"
