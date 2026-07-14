@@ -8,6 +8,7 @@ on:
       - "packages/project-intelligence/tests/teams*"
       - "packages/project-intelligence/tests/meeting-providers*"
       - "packages/project-intelligence-certification/src/meetings/teams*"
+      - "packages/project-intelligence-certification/src/meetings/provider-unavailable.test.ts"
       - "packages/project-intelligence-certification/src/rls/teams*"
       - "packages/project-intelligence-certification/src/gates.ts"
       - "packages/project-intelligence-certification/src/gates.test.ts"
@@ -34,8 +35,6 @@ concurrency:
 env:
   PROJECT_INTELLIGENCE_CERTIFICATION: "1"
   PI_TEAMS_PROVIDER_CERTIFICATION: "1"
-  PI_TEAMS_PROVIDER_ENABLED: "1"
-  PI_TEAMS_GRAPH_MODE: fixture
   PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
   PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
   PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
@@ -44,10 +43,6 @@ env:
   PNPM_VERSION: "9.15.0"
   DOCUMENT_INTELLIGENCE_BASELINE_SHA: dfcf6a1c69b6119ab8a34fcc1bfeae93ae34ee53
   MEETING_PROCESSING_BASELINE_SHA: daf3903c200690fcad4dd9bc9b2c8661e442c15e
-  MICROSOFT_TENANT_ID: fixture-tenant
-  MICROSOFT_CLIENT_ID: fixture-client
-  MICROSOFT_CLIENT_SECRET: fixture-secret
-  MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
 
 jobs:
   preflight:
@@ -127,6 +122,13 @@ jobs:
   provider-configuration:
     needs: hosted-schema
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -143,6 +145,13 @@ jobs:
   graph-auth-certification:
     needs: provider-configuration
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -159,6 +168,13 @@ jobs:
   webhook-certification:
     needs: graph-auth-certification
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -175,6 +191,13 @@ jobs:
   subscription-certification:
     needs: webhook-certification
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -191,6 +214,13 @@ jobs:
   transcript-certification:
     needs: subscription-certification
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -207,6 +237,13 @@ jobs:
   processing-regression:
     needs: transcript-certification
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -232,6 +269,13 @@ jobs:
   browser-certification:
     needs: processing-regression
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -282,6 +326,13 @@ jobs:
       - processing-regression
       - browser-certification
     runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_PROVIDER_ENABLED: "1"
+      PI_TEAMS_GRAPH_MODE: fixture
+      MICROSOFT_TENANT_ID: fixture-tenant
+      MICROSOFT_CLIENT_ID: fixture-client
+      MICROSOFT_CLIENT_SECRET: fixture-secret
+      MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
     steps:
       - uses: actions/checkout@v4
         with:
