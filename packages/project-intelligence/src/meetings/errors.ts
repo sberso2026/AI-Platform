@@ -3,6 +3,7 @@ import { DocumentIntelligenceError } from "../documents/errors";
 /**
  * Meeting Intelligence domain errors reuse DocumentIntelligenceError envelope shape
  * for nested API contracts; codes are meeting_* / proposal_* / minutes_* / processing_* namespaced.
+ * Teams-specific codes are not first-class here — throwTeamsError bridges them via details.teamsCode.
  */
 export type MeetingIntelligenceErrorCode =
   | "meeting_not_found"

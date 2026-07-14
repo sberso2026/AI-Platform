@@ -20,3 +20,4 @@ export * from "./meeting-job-worker";
 export * from "./meeting-review-service";
 export * from "./meeting-core-write-adapter";
 export * from "./meeting-document-grounding-adapter";
+export * from "./teams";

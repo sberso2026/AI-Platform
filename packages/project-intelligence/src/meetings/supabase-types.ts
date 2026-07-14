@@ -30,6 +30,7 @@ export type MeetingQueryBuilder = {
   lt: (column: string, value: unknown) => MeetingQueryBuilder;
   lte: (column: string, value: unknown) => MeetingQueryBuilder;
   is: (column: string, value: unknown) => MeetingQueryBuilder;
+  in: (column: string, values: unknown[]) => MeetingQueryBuilder;
   order: (column: string, options?: Record<string, unknown>) => MeetingQueryBuilder;
   limit: (count: number) => MeetingQueryBuilder;
   maybeSingle: () => Promise<MeetingQueryResult>;
@@ -76,4 +77,11 @@ export async function awaitMutation(
 ): Promise<{ error: MeetingDbError }> {
   const result = await (builder as unknown as Promise<{ error: MeetingDbError }>);
   return { error: result.error };
+}
+
+/** Await a `.single()` / `.maybeSingle()` terminal call. */
+export async function awaitSingle(
+  resultPromise: Promise<MeetingQueryResult>,
+): Promise<MeetingQueryResult> {
+  return resultPromise;
 }

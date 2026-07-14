@@ -7,7 +7,7 @@ import {
   assertPhase6c3bManualTransition,
   buildMeetingTransitionAudit,
 } from "./meeting-state-machine";
-import { assertManualProviderOnly } from "./providers";
+import { assertAllowedMeetingProvider } from "./providers";
 import {
   asRecord,
   awaitList,
@@ -231,7 +231,7 @@ export class ManualMeetingService {
       throw new MeetingIntelligenceError("meeting_validation_failed", "Title is required", 422);
     }
     const provider = input.provider ?? "manual";
-    assertManualProviderOnly(provider);
+    assertAllowedMeetingProvider(provider);
     validateEnums(input);
 
     const correlationId = actor.correlationId ?? randomUUID();

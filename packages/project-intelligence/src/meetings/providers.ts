@@ -1,9 +1,14 @@
 import { MeetingIntelligenceError } from "./errors";
+import {
+  CERTIFIED_TEAMS_CAPABILITY_SUBSET,
+  overallTeamsProviderStatus,
+} from "./teams/capability-contract";
+import { readMicrosoftGraphConfig } from "./teams/microsoft-graph-token-service";
 import { MEETING_PROVIDER_STATUS, type MeetingProvider, isMeetingProvider } from "./types";
 
 export type MeetingProviderCapabilityReport = {
   provider: MeetingProvider;
-  status: (typeof MEETING_PROVIDER_STATUS)[MeetingProvider];
+  status: "certified_candidate" | "unavailable" | "experimental" | "beta" | "certified";
   availableCapabilities: string[];
   authenticationConfigured: boolean;
   webhookConfigured: boolean;
@@ -20,43 +25,109 @@ export type MeetingProviderCapabilityReport = {
   phase6c3cCertified: boolean;
 };
 
+/** Teams is certified when explicitly enabled or Graph fixture/live config is present. */
+export function isMicrosoftTeamsProviderConfigured(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if ((env.PI_TEAMS_PROVIDER_ENABLED ?? "").trim() === "1") return true;
+  return readMicrosoftGraphConfig(env) != null;
+}
+
 export function meetingProviderCapabilityReport(
   provider: MeetingProvider,
+  env: NodeJS.ProcessEnv = process.env,
 ): MeetingProviderCapabilityReport {
-  const status = MEETING_PROVIDER_STATUS[provider];
-  const manual = provider === "manual";
+  if (provider === "manual") {
+    const status = MEETING_PROVIDER_STATUS.manual;
+    return {
+      provider,
+      status,
+      availableCapabilities: [
+        "manual_session",
+        "manual_transcript_append",
+        "processing_enqueue",
+        "minutes_review",
+      ],
+      authenticationConfigured: true,
+      webhookConfigured: false,
+      transcriptSupport: true,
+      realtimeSupport: true,
+      recordingSupport: false,
+      participantSupport: true,
+      joinEnabled: false,
+      botAvailable: false,
+      realtimeClaimed: false,
+      limitations: ["No live provider bot", "RTB-owned manual transcript events only"],
+      lastHealthCheck: null,
+      phase6c3bCertified: true,
+      phase6c3cCertified: status === "certified",
+    };
+  }
+
+  if (provider === "microsoft_teams" && isMicrosoftTeamsProviderConfigured(env)) {
+    const capabilities = { ...CERTIFIED_TEAMS_CAPABILITY_SUBSET };
+    const status = overallTeamsProviderStatus(capabilities);
+    const availableCapabilities = Object.entries(capabilities)
+      .filter(([, value]) => value === "certified")
+      .map(([name]) => name);
+    return {
+      provider,
+      status: status === "certified" ? "certified" : "experimental",
+      availableCapabilities,
+      authenticationConfigured: true,
+      webhookConfigured: true,
+      transcriptSupport: capabilities.transcript_retrieval === "certified",
+      realtimeSupport: false,
+      recordingSupport: false,
+      participantSupport: capabilities.participant_metadata === "certified",
+      joinEnabled: false,
+      botAvailable: false,
+      realtimeClaimed: false,
+      limitations: [
+        "live_transcript unsupported",
+        "recording_access unsupported",
+        "bot_join unsupported",
+        "Post-meeting transcript only",
+      ],
+      lastHealthCheck: null,
+      phase6c3bCertified: false,
+      phase6c3cCertified: false,
+    };
+  }
+
   return {
     provider,
-    status,
-    availableCapabilities: manual
-      ? ["manual_session", "manual_transcript_append", "processing_enqueue", "minutes_review"]
-      : [],
-    authenticationConfigured: manual,
+    status: "unavailable",
+    availableCapabilities: [],
+    authenticationConfigured: false,
     webhookConfigured: false,
-    transcriptSupport: manual,
-    realtimeSupport: manual,
+    transcriptSupport: false,
+    realtimeSupport: false,
     recordingSupport: false,
-    participantSupport: manual,
+    participantSupport: false,
     joinEnabled: false,
     botAvailable: false,
     realtimeClaimed: false,
-    limitations: manual
-      ? ["No live provider bot", "RTB-owned manual transcript events only"]
-      : ["Provider unavailable in Phase 6C-3C", "UI actions disabled"],
+    limitations: ["Provider unavailable", "UI actions disabled"],
     lastHealthCheck: null,
-    phase6c3bCertified: manual,
-    phase6c3cCertified: manual && status === "certified",
+    phase6c3bCertified: false,
+    phase6c3cCertified: false,
   };
 }
 
-export function allMeetingProviderCapabilityReports(): MeetingProviderCapabilityReport[] {
-  return (Object.keys(MEETING_PROVIDER_STATUS) as MeetingProvider[]).map(
-    meetingProviderCapabilityReport,
+export function allMeetingProviderCapabilityReports(
+  env: NodeJS.ProcessEnv = process.env,
+): MeetingProviderCapabilityReport[] {
+  return (Object.keys(MEETING_PROVIDER_STATUS) as MeetingProvider[]).map((provider) =>
+    meetingProviderCapabilityReport(provider, env),
   );
 }
 
-/** Phase 6C-3C still accepts only manual provider for create/schedule flows. */
-export function assertManualProviderOnly(provider: string): asserts provider is "manual" {
+/** Allows manual always; microsoft_teams when capability report status is certified. */
+export function assertAllowedMeetingProvider(
+  provider: string,
+  env: NodeJS.ProcessEnv = process.env,
+): asserts provider is MeetingProvider {
   if (!isMeetingProvider(provider)) {
     throw new MeetingIntelligenceError(
       "meeting_validation_failed",
@@ -65,19 +136,28 @@ export function assertManualProviderOnly(provider: string): asserts provider is 
       { provider },
     );
   }
-  if (provider !== "manual") {
+  const report = meetingProviderCapabilityReport(provider, env);
+  if (report.status !== "certified") {
     throw new MeetingIntelligenceError(
       "meeting_provider_unavailable",
-      "External meeting providers are unavailable in Phase 6C-3C",
+      "Meeting provider is unavailable unless certified",
       422,
       {
         provider,
-        status: MEETING_PROVIDER_STATUS[provider],
-        joinEnabled: false,
-        botAvailable: false,
+        status: report.status,
+        joinEnabled: report.joinEnabled,
+        botAvailable: report.botAvailable,
       },
     );
   }
+}
+
+/** @deprecated Prefer assertAllowedMeetingProvider. */
+export function assertManualProviderOnly(
+  provider: string,
+  env: NodeJS.ProcessEnv = process.env,
+): asserts provider is MeetingProvider {
+  assertAllowedMeetingProvider(provider, env);
 }
 
 export function assertExternalProvidersUnavailableInUi(labels: string[]): void {

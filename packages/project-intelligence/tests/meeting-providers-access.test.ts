@@ -4,7 +4,7 @@ import {
   assertMeetingsUsesProjectIntelligenceApp,
   assertConsentAllowsLifecycleTransition,
   assertExternalProvidersUnavailableInUi,
-  assertManualProviderOnly,
+  assertAllowedMeetingProvider,
   assertPhase6c3bManualTransition,
   canTransitionMeetingStatus,
   MEETING_PROVIDER_STATUS,
@@ -20,9 +20,22 @@ describe("meeting providers", () => {
     expect(MEETING_PROVIDER_STATUS.google_meet).toBe("unavailable");
   });
 
-  it("rejects external providers for create flows", () => {
-    expect(() => assertManualProviderOnly("zoom")).toThrow(MeetingIntelligenceError);
-    expect(() => assertManualProviderOnly("manual")).not.toThrow();
+  it("rejects unavailable providers for create flows", () => {
+    expect(() => assertAllowedMeetingProvider("zoom")).toThrow(MeetingIntelligenceError);
+    expect(() => assertAllowedMeetingProvider("manual")).not.toThrow();
+  });
+
+  it("reports Teams certified subset when enabled", () => {
+    const teams = meetingProviderCapabilityReport("microsoft_teams", {
+      PI_TEAMS_PROVIDER_ENABLED: "1",
+    });
+    expect(teams.status).toBe("certified");
+    expect(teams.availableCapabilities).toContain("meeting_url_validation");
+    expect(teams.joinEnabled).toBe(false);
+    expect(teams.botAvailable).toBe(false);
+    expect(() =>
+      assertAllowedMeetingProvider("microsoft_teams", { PI_TEAMS_PROVIDER_ENABLED: "1" }),
+    ).not.toThrow();
   });
 
   it("exposes capability reports without bot or join claims", () => {
