@@ -42,15 +42,21 @@ export default function MeetingDetailPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [events, setEvents] = useState<MeetingEvent[]>([]);
   const [transcriptCount, setTranscriptCount] = useState(0);
+  const [teamsStatus, setTeamsStatus] = useState<{
+    mapping: { mappingStatus: string; providerMeetingId: string } | null;
+    transcriptMode: string;
+    status: { status: string };
+  }>();
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
 
   const reload = useCallback(async () => {
-    const [meetingRes, participantsRes, eventsRes, transcriptRes] = await Promise.all([
+    const [meetingRes, participantsRes, eventsRes, transcriptRes, teamsRes] = await Promise.all([
       fetch(`/api/engineering/project-intelligence/meetings/${meetingId}`),
       fetch(`/api/engineering/project-intelligence/meetings/${meetingId}/participants`),
       fetch(`/api/engineering/project-intelligence/meetings/${meetingId}/events`),
       fetch(`/api/engineering/project-intelligence/meetings/${meetingId}/transcript`),
+      fetch(`/api/engineering/project-intelligence/meetings/${meetingId}/providers/microsoft-teams/status`),
     ]);
     const meetingPayload = await meetingRes.json();
     if (!meetingRes.ok) throw new Error(meetingPayload.error?.message ?? "Meeting load failed");
@@ -62,6 +68,9 @@ export default function MeetingDetailPage() {
       ? transcriptData
       : (transcriptData?.segments ?? []);
     setTranscriptCount(segments.length);
+    if (teamsRes.ok) {
+      setTeamsStatus((await teamsRes.json()).data);
+    }
   }, [meetingId]);
 
   useEffect(() => {
@@ -126,8 +135,19 @@ export default function MeetingDetailPage() {
           <p className="text-sm text-cyan-700">Lifecycle</p>
           <h2 className="text-2xl font-semibold text-slate-900">{meeting.title}</h2>
           <p className="mt-2 text-slate-600" data-testid={`meeting-detail-status-${meeting.status}`}>
-            Status: {meeting.status} · Provider: {meeting.provider} · v{meeting.state_version}
+            Status: {meeting.status} · Provider:{" "}
+            <span data-testid="meeting-provider-badge">{meeting.provider}</span> · v
+            {meeting.state_version}
           </p>
+          {teamsStatus && (
+            <p className="mt-1 text-sm text-slate-500">
+              Teams mapping: {teamsStatus.mapping?.mappingStatus ?? "unmapped"}
+              {" · "}
+              <span data-testid="teams-transcript-mode">
+                Transcript mode: {teamsStatus.transcriptMode}
+              </span>
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 text-sm">
           <Link className="text-cyan-700 hover:underline" href={`/engineering/apps/project-intelligence/meetings/${meetingId}/live`}>
@@ -204,6 +224,22 @@ export default function MeetingDetailPage() {
       <p className="mt-6 text-sm text-slate-500">
         External provider controls unavailable: Join Teams / Join Zoom / Join Google Meet.
       </p>
+      <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <span
+          className="rounded border border-slate-200 px-3 py-1 text-slate-400"
+          data-testid="teams-bot-join-disabled"
+          aria-disabled="true"
+        >
+          Bot join disabled
+        </span>
+        <span
+          className="rounded border border-slate-200 px-3 py-1 text-slate-400"
+          data-testid="teams-recording-disabled"
+          aria-disabled="true"
+        >
+          Recording disabled
+        </span>
+      </div>
     </section>
   );
 }

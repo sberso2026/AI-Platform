@@ -73,6 +73,13 @@ export default function MeetingsListPage() {
           >
             Health
           </Link>
+          <Link
+            className="text-cyan-700 hover:underline"
+            href="/engineering/apps/project-intelligence/meetings/settings/providers"
+            data-testid="meetings-providers-settings-link"
+          >
+            Providers
+          </Link>
         </div>
       </div>
 

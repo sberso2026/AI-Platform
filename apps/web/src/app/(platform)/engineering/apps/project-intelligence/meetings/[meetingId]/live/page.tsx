@@ -218,6 +218,25 @@ export default function MeetingLivePage() {
         Manual state: {meeting.status}. No fake realtime provider indicator.
       </p>
 
+      <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <span data-testid="meeting-provider-badge">Provider panel active</span>
+        <span
+          className="rounded border border-slate-200 px-2 py-0.5 text-slate-400"
+          data-testid="teams-bot-join-disabled"
+          aria-disabled="true"
+        >
+          Bot join disabled
+        </span>
+        <span
+          className="rounded border border-slate-200 px-2 py-0.5 text-slate-400"
+          data-testid="teams-recording-disabled"
+          aria-disabled="true"
+        >
+          Recording disabled
+        </span>
+        <span data-testid="teams-transcript-mode">Transcript mode: post_meeting or manual</span>
+      </div>
+
       <div className="mt-3 flex flex-wrap gap-3 text-sm" data-testid="live-connection-panel">
         <span data-testid={`connection-status-${connectionStatus}`}>
           Connection: {connectionStatus}

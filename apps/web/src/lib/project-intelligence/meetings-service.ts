@@ -11,6 +11,7 @@ import {
   MeetingTranscriptIngestionService,
   ProjectIntelligenceMeetingWorker,
   allMeetingProviderCapabilityReports,
+  meetingProviderCapabilityReport,
   buildResumeToken,
   isMeetingJobType,
   type MeetingStatus,
@@ -512,8 +513,9 @@ export function parseMeetingJobTypeFilter(raw: unknown): MeetingJobType[] | unde
 }
 
 export function meetingsHealthPayload() {
+  const teams = meetingProviderCapabilityReport("microsoft_teams");
   return {
-    schema: "batch_38+39_project_intelligence_meeting_processing",
+    schema: "batch_40_project_intelligence_teams_provider",
     rls: "enabled",
     accessGuard: "requireProjectIntelligenceMeetingsAccess",
     application: "project-intelligence",
@@ -524,6 +526,16 @@ export function meetingsHealthPayload() {
     events: "project_intelligence_meeting_events",
     privacyConfiguration: "recording_notice_required + consent_status + privacy_classification",
     providers: allMeetingProviderCapabilityReports(),
+    teamsProvider: {
+      status: teams.status,
+      transcriptMode: teams.transcriptSupport ? "post_meeting" : "unsupported",
+      botJoin: "unsupported",
+      recordingAccess: "unsupported",
+      availableCapabilities: teams.availableCapabilities,
+      limitations: teams.limitations,
+      authenticationConfigured: teams.authenticationConfigured,
+      webhookConfigured: teams.webhookConfigured,
+    },
     externalJoinActionsEnabled: false,
     processing: true,
     jobQueue: "project_intelligence_meeting_jobs",
@@ -536,3 +548,18 @@ export function meetingsHealthPayload() {
     transcriptReplay: true,
   };
 }
+
+export {
+  listMeetingProviders,
+  getMicrosoftTeamsProvider,
+  configureMicrosoftTeamsProvider,
+  revokeMicrosoftTeamsProvider,
+  testMicrosoftTeamsProvider,
+  getMicrosoftTeamsProviderHealth,
+  mapMicrosoftTeamsMeeting,
+  syncMicrosoftTeamsMeeting,
+  getMicrosoftTeamsMeetingStatus,
+  handleMicrosoftGraphWebhook,
+  handleMicrosoftGraphLifecycleWebhook,
+  runTeamsWorkerOnce,
+} from "./teams-meetings-service";
