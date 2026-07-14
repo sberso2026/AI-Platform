@@ -29,7 +29,7 @@ export const MEETING_PROVIDERS = [
 
 export type MeetingProvider = (typeof MEETING_PROVIDERS)[number];
 
-/** Phase 6C-3C: manual provider is certified; external providers remain unavailable. */
+/** Phase 6C-3D: manual provider certified; microsoft_teams certified via runtime capability report when configured; zoom/google unavailable. */
 export const MEETING_PROVIDER_STATUS = {
   manual: "certified",
   microsoft_teams: "unavailable",

@@ -9,6 +9,7 @@
     "certify:providers": "tsx scripts/run-provider-certification.ts",
     "certify:meetings": "tsx scripts/run-meeting-foundation-certification.ts",
     "certify:meeting-processing": "tsx scripts/run-meeting-processing-certification.ts",
+    "certify:teams-provider": "tsx scripts/run-teams-provider-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "update-fixture-checksums": "tsx scripts/update-fixture-checksums.ts",
     "provision": "tsx scripts/provision.ts",
@@ -17,6 +18,7 @@
     "test:unit": "vitest run src/gates.test.ts src/build-identity.test.ts src/provider-preflight.test.ts src/http/nested-error-contract.test.ts src/http/entitlement-error-codes.test.ts src/playwright-positive-path-regression.test.ts src/project-intelligence-domain.test.ts src/fixtures/validate-fixture-readiness.test.ts src/documents/durable-runtime.test.ts src/documents/grounded-answer-schema.test.ts src/documents/legacy-equivalence.test.ts src/documents/provider-closure.test.ts src/documents/provider-security.test.ts src/documents/query-plans.test.ts src/documents/state-contracts.test.ts src/documents/storage-policy.test.ts src/meetings/lifecycle.test.ts src/meetings/entitlement-isolation.test.ts src/meetings/provider-unavailable.test.ts src/meetings/consent.test.ts src/meetings/nested-error.test.ts src/meetings/baseline-unchanged.test.ts src/meetings/foundation-baseline.test.ts src/meetings/service-surfaces.test.ts src/meetings/processing-domain.test.ts src/meetings/legacy-equivalence.test.ts",
     "test:meetings": "vitest run src/meetings/lifecycle.test.ts src/meetings/entitlement-isolation.test.ts src/meetings/provider-unavailable.test.ts src/meetings/consent.test.ts src/meetings/nested-error.test.ts src/meetings/baseline-unchanged.test.ts src/meetings/service-surfaces.test.ts",
     "test:meeting-processing": "vitest run src/meetings/processing-domain.test.ts src/meetings/foundation-baseline.test.ts src/meetings/legacy-equivalence.test.ts src/meetings/provider-unavailable.test.ts src/meetings/consent.test.ts src/meetings/nested-error.test.ts src/meetings/baseline-unchanged.test.ts src/gates.test.ts",
+    "test:teams-provider": "vitest run src/meetings/teams-provider-domain.test.ts src/meetings/teams-baselines.test.ts src/gates.test.ts",
     "test:documents": "vitest run src/documents/durable-runtime.test.ts src/documents/grounded-answer-schema.test.ts src/documents/legacy-equivalence.test.ts src/documents/provider-closure.test.ts src/documents/provider-security.test.ts src/documents/query-plans.test.ts src/documents/state-contracts.test.ts src/documents/storage-policy.test.ts",
     "test:provider-live": "vitest run src/documents/provider-live.test.ts",
     "test:rls": "vitest run src/rls/",
@@ -25,11 +27,13 @@
     "test:e2e:documents": "playwright test playwright/documents.spec.ts",
     "test:e2e:meetings": "playwright test playwright/meetings.spec.ts",
     "test:e2e:meetings-processing": "playwright test playwright/meetings-processing.spec.ts",
+    "test:e2e:teams-provider": "playwright test playwright/meetings-teams-provider.spec.ts",
     "test:e2e:meetings:a11y": "playwright test playwright/meetings.spec.ts -g \"accessibility landmarks|responsive meetings\"",
     "test:e2e:a11y": "playwright test playwright/documents.spec.ts -g \"landmarks on documents|responsive documents\"",
     "verify-hosted-schema": "vitest run src/hosted-schema.test.ts",
     "verify-hosted-meeting-schema": "vitest run src/meetings/hosted-schema.test.ts",
-    "verify-hosted-meeting-processing-schema": "vitest run src/meetings/hosted-schema-processing.test.ts"
+    "verify-hosted-meeting-processing-schema": "vitest run src/meetings/hosted-schema-processing.test.ts",
+    "verify-hosted-teams-schema": "vitest run src/meetings/hosted-schema-teams.test.ts"
   },
   "dependencies": {
     "@rtb/project-intelligence": "workspace:*",

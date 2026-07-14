@@ -1,0 +1,320 @@
+name: Project Intelligence Phase 6C-3D Teams Provider Certification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/project-intelligence/src/meetings/**"
+      - "packages/project-intelligence/tests/teams*"
+      - "packages/project-intelligence/tests/meeting-providers*"
+      - "packages/project-intelligence-certification/src/meetings/teams*"
+      - "packages/project-intelligence-certification/src/rls/teams*"
+      - "packages/project-intelligence-certification/src/gates.ts"
+      - "packages/project-intelligence-certification/src/gates.test.ts"
+      - "packages/project-intelligence-certification/scripts/run-teams-provider-certification.ts"
+      - "packages/project-intelligence-certification/playwright/meetings-teams-provider.spec.ts"
+      - "packages/project-intelligence-certification/package.json"
+      - "packages/project-intelligence-certification/src/fixtures/**"
+      - "apps/web/src/app/**/project-intelligence/meetings/**"
+      - "apps/web/src/app/api/engineering/project-intelligence/meetings/**"
+      - "apps/web/src/app/api/webhooks/microsoft-graph/**"
+      - "apps/web/src/app/api/platform/project-intelligence/teams-jobs/**"
+      - "apps/web/src/lib/project-intelligence/**"
+      - "supabase/migrations/20260714140000_batch_40_project_intelligence_teams_provider.sql"
+      - "docs/architecture/PROJECT_INTELLIGENCE_TEAMS*"
+      - "docs/migration/PROJECT_INTELLIGENCE_TEAMS*"
+      - "docs/security/PROJECT_INTELLIGENCE_TEAMS*"
+      - "docs/operations/PROJECT_INTELLIGENCE_TEAMS*"
+      - ".github/workflows/project-intelligence-phase-6c3d-teams-provider-certification.yml"
+
+concurrency:
+  group: project-intelligence-phase-6c3d-teams-provider-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PI_TEAMS_PROVIDER_CERTIFICATION: "1"
+  PI_TEAMS_PROVIDER_ENABLED: "1"
+  PI_TEAMS_GRAPH_MODE: fixture
+  PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  DOCUMENT_INTELLIGENCE_BASELINE_SHA: dfcf6a1c69b6119ab8a34fcc1bfeae93ae34ee53
+  MEETING_PROCESSING_BASELINE_SHA: daf3903c200690fcad4dd9bc9b2c8661e442c15e
+  MICROSOFT_TENANT_ID: fixture-tenant
+  MICROSOFT_CLIENT_ID: fixture-client
+  MICROSOFT_CLIENT_SECRET: fixture-secret
+  MICROSOFT_GRAPH_WEBHOOK_SECRET: fixture-webhook-client-state
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI secret preflight (names only; Teams fixture mode allowed)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PI_PROVIDER_CERTIFICATION: "0"
+          PI_REQUIRE_AZURE_DI: "0"
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification ci-preflight
+          echo "Teams Graph mode: $PI_TEAMS_GRAPH_MODE"
+          echo "Microsoft secret names present (no values): tenant client webhook"
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/web typecheck
+      - name: Offline Teams provider unit tests
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "0"
+          PI_TEAMS_PROVIDER_CERTIFICATION: "0"
+        run: |
+          pnpm --filter @rtb/project-intelligence test
+          pnpm --filter @rtb/project-intelligence-certification test:unit
+          pnpm --filter @rtb/project-intelligence-certification test:teams-provider
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  hosted-schema:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted Batch 40 Teams provider schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification verify-hosted-teams-schema
+
+  provider-configuration:
+    needs: hosted-schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provider capability configuration contracts
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate E|Gate F|Gate L"
+
+  graph-auth-certification:
+    needs: provider-configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Graph auth and permissions
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate D|Gate E"
+
+  webhook-certification:
+    needs: graph-auth-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Webhook validation and dedupe
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate H|Gate I"
+
+  subscription-certification:
+    needs: webhook-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Subscription lifecycle
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate J"
+
+  transcript-certification:
+    needs: subscription-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Transcript classification and segments
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate K|Gate L|Gate M"
+
+  processing-regression:
+    needs: transcript-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Processing / review / baselines regression
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate N"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-baselines.test.ts
+      - name: RLS probe
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/teams-provider-rls-matrix.test.ts
+
+  browser-certification:
+    needs: processing-regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision PI fixtures
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Install Playwright browser
+        run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Start web and run Teams browser E2E
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+          RTB_TEST_BASE_URL: http://127.0.0.1:3000
+        run: |
+          pnpm --filter @rtb/web start &
+          for i in $(seq 1 90); do
+            if curl -sf http://127.0.0.1:3000 >/dev/null; then break; fi
+            sleep 2
+          done
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:teams-provider
+
+  release-evidence:
+    needs:
+      - validate
+      - hosted-schema
+      - provider-configuration
+      - graph-auth-certification
+      - webhook-certification
+      - subscription-certification
+      - transcript-certification
+      - processing-regression
+      - browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Produce Teams provider certification artifact
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTIONS: "true"
+          PI_BROWSER_ALREADY_CERTIFIED: "1"
+          RTB_TEST_BASE_URL: http://127.0.0.1:3000
+        run: |
+          # Credit browser gates from browser-certification job; run offline gates for artifact.
+          pnpm --filter @rtb/project-intelligence-certification certify:teams-provider
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-intelligence-teams-provider-certification
+          path: packages/project-intelligence-certification/artifacts/project-intelligence-teams-provider-certification.json
+      - name: Secret exposure scan
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification secret-scan

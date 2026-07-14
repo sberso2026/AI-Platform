@@ -10,6 +10,8 @@ const SECRET_ENV_NAMES = [
   "OPENAI_API_KEY",
   "AZURE_DOCUMENT_INTELLIGENCE_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
+  "MICROSOFT_CLIENT_SECRET",
+  "MICROSOFT_GRAPH_WEBHOOK_SECRET",
 ] as const;
 
 function collectFiles(dir: string, acc: string[] = []): string[] {
@@ -30,7 +32,13 @@ function collectFiles(dir: string, acc: string[] = []): string[] {
 function scan(): { ok: boolean; hits: string[] } {
   const needles = SECRET_ENV_NAMES
     .map((name) => process.env[name]?.trim())
-    .filter((value): value is string => Boolean(value) && value.length >= 12);
+    .filter((value): value is string => Boolean(value) && value.length >= 12)
+    .filter(
+      (value) =>
+        value !== "fixture-secret" &&
+        value !== "fixture-webhook-client-state" &&
+        !value.startsWith("fixture-"),
+    );
 
   // Never log needle values. Only compare presence of exact substrings in artifacts.
   const targets = [

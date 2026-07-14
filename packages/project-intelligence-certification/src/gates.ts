@@ -100,3 +100,34 @@ export const PROJECT_INTELLIGENCE_MEETING_PROCESSING_CERTIFICATION_GATES = [
 
 export type MeetingProcessingCertificationGateId =
   (typeof PROJECT_INTELLIGENCE_MEETING_PROCESSING_CERTIFICATION_GATES)[number][0];
+
+/** Phase 6C-3D Microsoft Teams provider certification gates (A–X). */
+export const PROJECT_INTELLIGENCE_TEAMS_PROVIDER_CERTIFICATION_GATES = [
+  ["A", "tests, typecheck, production build"],
+  ["B", "hosted provider schema"],
+  ["C", "provider connection RLS"],
+  ["D", "Graph authentication"],
+  ["E", "permission and consent validation"],
+  ["F", "Teams URL validation"],
+  ["G", "meeting discovery and mapping"],
+  ["H", "webhook validation"],
+  ["I", "notification deduplication"],
+  ["J", "subscription lifecycle"],
+  ["K", "participant mapping"],
+  ["L", "transcript capability and classification"],
+  ["M", "transcript ingestion into PI"],
+  ["N", "existing processing pipeline preserved"],
+  ["O", "human review and Core boundary preserved"],
+  ["P", "provider failure recovery"],
+  ["Q", "security and secret exposure"],
+  ["R", "browser E2E"],
+  ["S", "accessibility and responsive"],
+  ["T", "legacy equivalence"],
+  ["U", "build identity and GitHub evidence"],
+  ["V", "manual provider remains certified"],
+  ["W", "Document Intelligence baseline unchanged"],
+  ["X", "Meeting processing baseline preserved"],
+] as const;
+
+export type TeamsProviderCertificationGateId =
+  (typeof PROJECT_INTELLIGENCE_TEAMS_PROVIDER_CERTIFICATION_GATES)[number][0];
