@@ -155,6 +155,7 @@ export class TranscriptAppendService {
       ?? (existingSegments.reduce((max, s) => Math.max(max, s.sequence_number), 0) + 1);
 
     const correlationId = actor.correlationId ?? randomUUID();
+    const serverReceivedAt = new Date().toISOString();
     const row = {
       tenant_id: meeting.tenant_id,
       workspace_id: meeting.workspace_id,
@@ -164,6 +165,9 @@ export class TranscriptAppendService {
       speaker_id: input.speakerId ?? null,
       speaker_label: input.speakerLabel ?? null,
       sequence_number: nextSequence,
+      logical_sequence: nextSequence,
+      provider_sequence: input.sequenceNumber ?? null,
+      server_received_at: serverReceivedAt,
       start_time_ms: input.startTimeMs,
       end_time_ms: input.endTimeMs,
       text,
