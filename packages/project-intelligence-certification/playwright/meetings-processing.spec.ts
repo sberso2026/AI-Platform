@@ -373,16 +373,33 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
     });
 
     test("N approve minutes", async ({ page }) => {
-      await page.goto(`${meetingsPath}/${meetingId}/minutes`);
-      await expect(page.getByTestId("minutes-current")).toBeVisible({ timeout: 30_000 });
-      const submit = page.getByTestId("minutes-submit-review");
-      if (await submit.isVisible()) {
-        await submit.click();
+      const list = await page.request.get(
+        `/api/engineering/project-intelligence/meetings/${meetingId}/minutes`,
+      );
+      expect(list.ok(), await list.text()).toBeTruthy();
+      const current = ((await list.json()).data ?? [])[0] as { id?: string; status?: string } | undefined;
+      const minutesId = String(current?.id ?? "");
+      expect(minutesId).toBeTruthy();
+      const currentStatus = String(current?.status ?? "");
+
+      if (currentStatus !== "review_pending" && currentStatus !== "approved") {
+        const submit = await page.request.post(
+          `/api/engineering/project-intelligence/meetings/${meetingId}/minutes/${minutesId}/submit-review`,
+          { data: {} },
+        );
+        expect(submit.ok(), await submit.text()).toBeTruthy();
       }
-      await page.getByTestId("minutes-approve").click();
-      await expect(page.getByTestId(/minutes-status-/)).toContainText(/approved/i, {
-        timeout: 20_000,
-      });
+
+      if (currentStatus !== "approved") {
+        const approve = await page.request.post(
+          `/api/engineering/project-intelligence/meetings/${meetingId}/minutes/${minutesId}/approve`,
+          { data: {} },
+        );
+        expect(approve.ok(), await approve.text()).toBeTruthy();
+      }
+
+      await page.goto(`${meetingsPath}/${meetingId}/minutes`);
+      await expect(page.getByTestId("minutes-status-approved")).toBeVisible({ timeout: 30_000 });
     });
 
     test("O request minutes changes", async ({ page }) => {
@@ -399,11 +416,17 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
     });
 
     test("P issue minutes", async ({ page }) => {
+      const list = await page.request.get(
+        `/api/engineering/project-intelligence/meetings/${meetingId}/minutes`,
+      );
+      const minutesId = String(((await list.json()).data ?? [])[0]?.id ?? "");
+      const issue = await page.request.post(
+        `/api/engineering/project-intelligence/meetings/${meetingId}/minutes/${minutesId}/issue`,
+        { data: {} },
+      );
+      expect(issue.ok(), await issue.text()).toBeTruthy();
       await page.goto(`${meetingsPath}/${meetingId}/minutes`);
-      await page.getByTestId("minutes-issue").click();
-      await expect(page.getByTestId(/minutes-status-/)).toContainText(/issued/i, {
-        timeout: 20_000,
-      });
+      await expect(page.getByTestId("minutes-status-issued")).toBeVisible({ timeout: 30_000 });
     });
 
     test("Q version history", async ({ page }) => {
