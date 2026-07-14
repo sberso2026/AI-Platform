@@ -1,6 +1,6 @@
 # Project Intelligence — Teams Provider Design
 
-**Phase:** 6C-3D  
+**Phase:** 6C-3D / 6C-3E  
 **Product:** Engineering OS → Project Intelligence → Meetings  
 **Status:** Implementation — Microsoft Teams is the first external provider candidate
 
@@ -49,10 +49,12 @@ Microsoft Graph notification / admin configure
 
 | Mode | Env | Use |
 |------|-----|-----|
-| `live` | `PI_TEAMS_GRAPH_MODE=live` + Microsoft secrets | Real staging tenant |
-| `fixture` | `PI_TEAMS_GRAPH_MODE=fixture` | Controlled Graph-shaped simulator for hosted staging certification |
+| `live` | `PI_TEAMS_GRAPH_MODE=live` + `PI_TEAMS_*` / `MICROSOFT_*` secrets + `PI_TEAMS_LIVE_CERT_ENABLED=true` | Real staging Entra tenant (Phase 6C-3E) |
+| `fixture` | `PI_TEAMS_GRAPH_MODE=fixture` | Controlled Graph-shaped simulator (Phase 6C-3D regression only) |
 
-Fixture mode certifies RTB contracts and pipelines. It must not claim production Microsoft tenant readiness (`productionCertificationBlocked` remains true unless live evidence and gates agree).
+Live certification **must not** silently fall back to fixture. Missing live configuration fails with `TEAMS_GRAPH_LIVE_CONFIG_MISSING`.
+
+Fixture mode must not be used as Phase 6C-3E PASS evidence.
 
 ## Transcript mode policy
 

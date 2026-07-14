@@ -61,3 +61,12 @@ Every generated or approved artifact MUST reference:
 - Users enqueue processing; workers own `processing` → `minutes_draft`.
 - Humans own review, approval, issue, and Core conversion.
 - AI cannot approve, issue, or write Core.
+
+## Provider mapping axes (6C-3D / 6C-3E)
+
+Teams provider mappings attach to an existing PI meeting session without creating a second session axis:
+
+- Provider connection is tenant/workspace scoped.
+- `provider_meeting_id` maps idempotently onto `project_intelligence_meeting_sessions`.
+- Transcript ingest still respects `logical_sequence` → `revision_number` → `server_received_at`.
+- Live Entra certification does not bypass versioning, outbox, or human review boundaries.

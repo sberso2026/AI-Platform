@@ -23,21 +23,24 @@ Each frozen Teams/Graph surface was classified as: **preserve**, **adapt**, **mo
 | OCR / knowledge-graph Graph pkgs | `domain/knowledge-graph`, OCR Azure | **retire later** | Not Teams meeting providers |
 | Stub / incomplete bot join | Teams bot start/stop | **defer** | Remains unavailable until bot phase |
 
-## Target PI surfaces (6C-3D)
+## Target PI surfaces (6C-3D fixture / 6C-3E live)
 
-| Capability | Target status intent |
-|------------|----------------------|
-| meeting_url_validation | certified |
-| meeting_discovery | certified (fixture or live Graph) |
-| session_mapping | certified |
-| webhook_events | certified |
-| participant_metadata | certified |
-| transcript_retrieval | certified when Graph permissions + consent allow (post-meeting) |
-| live_transcript | unsupported (no latency proof) |
-| recording_access | unsupported |
-| bot_join | unsupported |
-| meeting_end_detection | certified via webhook/subscription |
-| subscription_renewal | certified |
+| Capability | Fixture (6C-3D) | Live Entra (6C-3E) |
+|------------|-----------------|--------------------|
+| meeting_url_validation | certified | required Gate H |
+| meeting_discovery | certified | required Gate I |
+| session_mapping | certified | required Gate I |
+| webhook_events | certified | required Gates J–L |
+| participant_metadata | certified | required Gate Q |
+| transcript_retrieval | certified (post-meeting) | required Gate S (or classified unavailable) |
+| live_transcript | unsupported | must remain unsupported |
+| recording_access | unsupported | must remain unsupported |
+| bot_join | unsupported | must remain unsupported |
+| meeting_end_detection | certified | required Gate R |
+| subscription_renewal | certified | required Gates M–P (create/renew/revoke) |
+
+Fixture PASS is **not** 6C-3E PASS evidence. Live Graph mode must report `graphMode=live`.
+
 
 ## Non-goals
 

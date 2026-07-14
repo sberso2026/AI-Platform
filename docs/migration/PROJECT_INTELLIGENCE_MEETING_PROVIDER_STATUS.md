@@ -30,12 +30,13 @@
 
 | Field | Value |
 |-------|-------|
-| **Status (6C-3D)** | **certified** (capability subset; see Teams capability matrix) |
-| **Graph mode** | Hosted staging cert uses `PI_TEAMS_GRAPH_MODE=fixture` by default; live Entra tenant optional |
-| **Certified capabilities** | URL validation, discovery, session mapping, webhooks, participants, post-meeting transcript retrieval, subscription renewal, meeting end detection |
+| **Status (6C-3D)** | **fixture-certified** subset @ `148223ec35768a9401a885071badb2a56e3ebb13` |
+| **Status (6C-3E)** | **live Entra required** — `productionTeamsProviderReady` only after live gates A–Z PASS |
+| **Graph mode** | `fixture` = regression only; `live` = Phase 6C-3E evidence (`PI_TEAMS_GRAPH_MODE=live`) |
+| **Certified capabilities (target live)** | URL validation, discovery, session mapping, webhooks, participants, post-meeting transcript retrieval, subscription create/renew/revoke, meeting end detection |
 | **Unsupported** | `live_transcript`, `recording_access`, `bot_join` |
 | **Transcript mode** | `post_meeting` (not realtime) |
-| **Must not claim** | Bot joined, recording, or live transcript without dedicated latency/bot evidence |
+| **Must not claim** | Live tenant ready from fixture evidence; bot join; recording; live transcript |
 
 ---
 

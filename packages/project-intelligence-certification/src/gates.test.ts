@@ -5,6 +5,7 @@ import {
   PROJECT_INTELLIGENCE_MEETING_PROCESSING_CERTIFICATION_GATES,
   PROJECT_INTELLIGENCE_PROVIDER_CERTIFICATION_GATES,
   PROJECT_INTELLIGENCE_TEAMS_PROVIDER_CERTIFICATION_GATES,
+  PROJECT_INTELLIGENCE_TEAMS_LIVE_PROVIDER_CERTIFICATION_GATES,
 } from "./gates.js";
 
 describe("certification gates", () => {
@@ -35,5 +36,12 @@ describe("certification gates", () => {
       "ABCDEFGHIJKLMNOPQRSTUVWX".split(""),
     );
     expect(PROJECT_INTELLIGENCE_TEAMS_PROVIDER_CERTIFICATION_GATES).toHaveLength(24);
+  });
+
+  it("lists every required gate from A through Z for live Teams provider certification", () => {
+    expect(PROJECT_INTELLIGENCE_TEAMS_LIVE_PROVIDER_CERTIFICATION_GATES.map(([id]) => id)).toEqual(
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+    );
+    expect(PROJECT_INTELLIGENCE_TEAMS_LIVE_PROVIDER_CERTIFICATION_GATES).toHaveLength(26);
   });
 });

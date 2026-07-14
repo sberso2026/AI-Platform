@@ -55,6 +55,10 @@ describe("Graph token fixture mode", () => {
       notificationUrl: null,
       lifecycleNotificationUrl: null,
       mode: "fixture",
+      tenantLabel: "fixture",
+      testOrganizer: null,
+      testMeetingUrl: null,
+      liveCertEnabled: false,
     });
     const token = await svc.getAccessToken("corr-1");
     expect(token.startsWith("fixture-token:")).toBe(true);

@@ -10,3 +10,7 @@ export * from "./teams-participant-mapping-service";
 export * from "./microsoft-teams-transcript-adapter";
 export * from "./teams-provider-health-service";
 export * from "./teams-job-worker";
+export * from "./teams-provider-readiness";
+export * from "./teams-latency";
+export * from "./microsoft-graph-permission-service";
+export * from "./teams-meeting-end-detection";

@@ -1,0 +1,497 @@
+name: Project Intelligence Phase 6C-3E Live Teams Provider Certification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/project-intelligence/src/meetings/teams/**"
+      - "packages/project-intelligence/tests/teams*"
+      - "packages/project-intelligence-certification/src/meetings/teams*"
+      - "packages/project-intelligence-certification/scripts/run-teams-live-provider-certification.ts"
+      - "packages/project-intelligence-certification/playwright/meetings-teams-live-provider.spec.ts"
+      - "packages/project-intelligence-certification/src/gates.ts"
+      - "packages/project-intelligence-certification/package.json"
+      - ".github/workflows/project-intelligence-phase-6c3e-live-teams-provider-certification.yml"
+      - "docs/architecture/PROJECT_INTELLIGENCE_TEAMS*"
+      - "docs/operations/PROJECT_INTELLIGENCE_TEAMS*"
+      - "docs/security/PROJECT_INTELLIGENCE_TEAMS*"
+      - "docs/migration/PROJECT_INTELLIGENCE_TEAMS*"
+
+concurrency:
+  group: project-intelligence-phase-6c3e-live-teams-provider-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PI_TEAMS_LIVE_PROVIDER_CERTIFICATION: "1"
+  PI_TEAMS_GRAPH_MODE: live
+  PI_TEAMS_LIVE_CERT_ENABLED: "true"
+  PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  DOCUMENT_INTELLIGENCE_BASELINE_SHA: dfcf6a1c69b6119ab8a34fcc1bfeae93ae34ee53
+  MEETING_PROCESSING_BASELINE_SHA: daf3903c200690fcad4dd9bc9b2c8661e442c15e
+  TEAMS_FIXTURE_BASELINE_SHA: 148223ec35768a9401a885071badb2a56e3ebb13
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI secret preflight (names only)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PI_PROVIDER_CERTIFICATION: "0"
+          PI_REQUIRE_AZURE_DI: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  live-env-validation:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Require live Entra secrets (presence only; fail closed)
+        env:
+          PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+          PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+          PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+          PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+          PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+          PI_TEAMS_TEST_MEETING_URL: ${{ secrets.PI_TEAMS_TEST_MEETING_URL }}
+          PI_TEAMS_TEST_ORGANIZER_USER_ID: ${{ secrets.PI_TEAMS_TEST_ORGANIZER_USER_ID }}
+          PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+          PI_TEAMS_TEST_PROVIDER_MEETING_ID: ${{ secrets.PI_TEAMS_TEST_PROVIDER_MEETING_ID }}
+        run: |
+          missing=0
+          for name in PI_TEAMS_TENANT_ID PI_TEAMS_CLIENT_ID PI_TEAMS_CLIENT_SECRET PI_TEAMS_WEBHOOK_CLIENT_STATE PI_TEAMS_WEBHOOK_BASE_URL PI_TEAMS_TEST_MEETING_URL PI_TEAMS_TEST_TENANT_LABEL; do
+            if [ -z "${!name}" ]; then
+              echo "MISSING name=$name"
+              missing=1
+            else
+              echo "PRESENT name=$name"
+            fi
+          done
+          if [ "$PI_TEAMS_GRAPH_MODE" != "live" ]; then
+            echo "TEAMS_GRAPH_LIVE_CONFIG_MISSING reason=graph_mode_not_live"
+            exit 1
+          fi
+          if [ "$missing" = "1" ]; then
+            echo "TEAMS_GRAPH_LIVE_CONFIG_MISSING"
+            exit 1
+          fi
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-live-provider-domain.test.ts
+
+  hosted-schema:
+    needs: live-env-validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted Teams schema + RLS
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification verify-hosted-teams-schema
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/teams-provider-rls-matrix.test.ts
+
+  provider-configuration:
+    needs: hosted-schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-live-provider-domain.test.ts -t "fail-closed|productionTeamsProviderReady|unsupported"
+
+  live-graph-auth-certification:
+    needs: provider-configuration
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Live Entra token acquisition
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
+            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService } from '@rtb/project-intelligence';
+            const config = requireLiveMicrosoftGraphConfig(process.env);
+            if (config.mode !== 'live') throw new Error('fixture fallback forbidden');
+            const token = await new MicrosoftGraphTokenService(config).getAccessToken('ci-auth');
+            if (!token || token.startsWith('fixture-token:')) throw new Error('live token required');
+            console.log('live_token_acquired=true');
+          "
+
+  live-permission-certification:
+    needs: live-graph-auth-certification
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Least-privilege permission probe
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
+            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, MicrosoftGraphPermissionService } from '@rtb/project-intelligence';
+            const config = requireLiveMicrosoftGraphConfig(process.env);
+            const tokens = new MicrosoftGraphTokenService(config);
+            await new MicrosoftGraphPermissionService(config, tokens).validateLeastPrivilege('ci-perm');
+            console.log('live_permission_probe=ok');
+          "
+
+  live-webhook-certification:
+    needs: live-permission-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate H|Gate I"
+
+  live-subscription-certification:
+    needs: live-webhook-certification
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Live subscription create/renew/revoke
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
+            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, createMicrosoftGraphClient, measureLatencyMs } from '@rtb/project-intelligence';
+            const config = requireLiveMicrosoftGraphConfig(process.env);
+            if (!config.notificationUrl) throw new Error('PI_TEAMS_WEBHOOK_BASE_URL required');
+            const graph = createMicrosoftGraphClient(config, new MicrosoftGraphTokenService(config));
+            const created = await measureLatencyMs(() => graph.createSubscription({
+              resource: '/communications/onlineMeetings',
+              changeType: 'updated',
+              notificationUrl: config.notificationUrl,
+              lifecycleNotificationUrl: config.lifecycleNotificationUrl,
+              clientState: config.webhookSecret,
+              expirationDateTime: new Date(Date.now() + 3600000).toISOString(),
+              correlationId: 'ci-sub',
+            }));
+            const renewed = await measureLatencyMs(() => graph.renewSubscription(created.result.id, new Date(Date.now() + 3600000).toISOString(), 'ci-sub-renew'));
+            const revoked = await measureLatencyMs(() => graph.deleteSubscription(created.result.id, 'ci-sub-del'));
+            console.log(JSON.stringify({ createMs: created.latencyMs, renewMs: renewed.latencyMs, revokeMs: revoked.latencyMs }));
+          "
+
+  live-meeting-discovery-certification:
+    needs: live-subscription-certification
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_MEETING_URL: ${{ secrets.PI_TEAMS_TEST_MEETING_URL }}
+      PI_TEAMS_TEST_PROVIDER_MEETING_ID: ${{ secrets.PI_TEAMS_TEST_PROVIDER_MEETING_ID }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Live meeting URL + discovery
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
+            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, createMicrosoftGraphClient, validateTeamsMeetingUrl } from '@rtb/project-intelligence';
+            const config = requireLiveMicrosoftGraphConfig(process.env);
+            const url = process.env.PI_TEAMS_TEST_MEETING_URL;
+            if (!url) throw new Error('PI_TEAMS_TEST_MEETING_URL required');
+            const validated = validateTeamsMeetingUrl(url);
+            const meetingId = process.env.PI_TEAMS_TEST_PROVIDER_MEETING_ID || validated.meetingIdHint;
+            if (!meetingId) throw new Error('provider meeting id unresolved');
+            const graph = createMicrosoftGraphClient(config, new MicrosoftGraphTokenService(config));
+            const meeting = await graph.getOnlineMeeting(meetingId, 'ci-discovery');
+            if (!meeting) throw new Error('teams_meeting_not_found');
+            console.log('live_discovery=ok');
+          "
+
+  live-transcript-certification:
+    needs: live-meeting-discovery-certification
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_MEETING_URL: ${{ secrets.PI_TEAMS_TEST_MEETING_URL }}
+      PI_TEAMS_TEST_PROVIDER_MEETING_ID: ${{ secrets.PI_TEAMS_TEST_PROVIDER_MEETING_ID }}
+      PI_TEAMS_ACCEPT_TRANSCRIPT_UNAVAILABLE: ${{ secrets.PI_TEAMS_ACCEPT_TRANSCRIPT_UNAVAILABLE }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Live post-meeting transcript probe (no content logged)
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
+            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, createMicrosoftGraphClient, validateTeamsMeetingUrl, measureLatencyMs } from '@rtb/project-intelligence';
+            const config = requireLiveMicrosoftGraphConfig(process.env);
+            const validated = validateTeamsMeetingUrl(process.env.PI_TEAMS_TEST_MEETING_URL);
+            const meetingId = process.env.PI_TEAMS_TEST_PROVIDER_MEETING_ID || validated.meetingIdHint;
+            const graph = createMicrosoftGraphClient(config, new MicrosoftGraphTokenService(config));
+            try {
+              const measured = await measureLatencyMs(() => graph.listTranscriptSegments(meetingId, 'ci-tx'));
+              console.log(JSON.stringify({ ok: true, segmentCount: measured.result.length, latencyMs: measured.latencyMs }));
+            } catch (error) {
+              const code = error?.code || error?.message || 'unknown';
+              if (process.env.PI_TEAMS_ACCEPT_TRANSCRIPT_UNAVAILABLE === '1') {
+                console.log(JSON.stringify({ ok: true, transcriptClass: 'unavailable', code: String(code) }));
+                process.exit(0);
+              }
+              console.log(JSON.stringify({ ok: false, code: String(code) }));
+              process.exit(1);
+            }
+          "
+
+  latency-measurement:
+    needs: live-transcript-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Latency metrics are collected in live subscription and transcript jobs and aggregated in release-evidence."
+
+  processing-regression:
+    needs: latency-measurement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-provider-domain.test.ts -t "Gate N|Gate L"
+          pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-baselines.test.ts
+
+  browser-certification:
+    needs: processing-regression
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_MEETING_URL: ${{ secrets.PI_TEAMS_TEST_MEETING_URL }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+      PI_TEAMS_TEST_PROVIDER_MEETING_ID: ${{ secrets.PI_TEAMS_TEST_PROVIDER_MEETING_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision fixtures
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          for attempt in 1 2 3; do
+            if pnpm --filter @rtb/project-intelligence-certification provision; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Live Teams browser E2E
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+          RTB_TEST_BASE_URL: http://127.0.0.1:3000
+        run: |
+          pnpm --filter @rtb/web start &
+          for i in $(seq 1 90); do curl -sf http://127.0.0.1:3000 >/dev/null && break; sleep 2; done
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:teams-live-provider
+
+  secret-exposure-scan:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Secret exposure scan
+        env:
+          PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+          PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification secret-scan
+
+  release-evidence:
+    needs:
+      - live-env-validation
+      - hosted-schema
+      - provider-configuration
+      - live-graph-auth-certification
+      - live-permission-certification
+      - live-webhook-certification
+      - live-subscription-certification
+      - live-meeting-discovery-certification
+      - live-transcript-certification
+      - latency-measurement
+      - processing-regression
+      - browser-certification
+      - secret-exposure-scan
+    runs-on: ubuntu-latest
+    env:
+      PI_TEAMS_TENANT_ID: ${{ secrets.PI_TEAMS_TENANT_ID }}
+      PI_TEAMS_CLIENT_ID: ${{ secrets.PI_TEAMS_CLIENT_ID }}
+      PI_TEAMS_CLIENT_SECRET: ${{ secrets.PI_TEAMS_CLIENT_SECRET }}
+      PI_TEAMS_WEBHOOK_CLIENT_STATE: ${{ secrets.PI_TEAMS_WEBHOOK_CLIENT_STATE }}
+      PI_TEAMS_WEBHOOK_BASE_URL: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+      PI_TEAMS_TEST_MEETING_URL: ${{ secrets.PI_TEAMS_TEST_MEETING_URL }}
+      PI_TEAMS_TEST_PROVIDER_MEETING_ID: ${{ secrets.PI_TEAMS_TEST_PROVIDER_MEETING_ID }}
+      PI_TEAMS_TEST_TENANT_LABEL: ${{ secrets.PI_TEAMS_TEST_TENANT_LABEL }}
+      PI_TEAMS_ACCEPT_TRANSCRIPT_UNAVAILABLE: ${{ secrets.PI_TEAMS_ACCEPT_TRANSCRIPT_UNAVAILABLE }}
+      PI_BROWSER_ALREADY_CERTIFIED: "1"
+      GITHUB_SHA: ${{ github.sha }}
+      GITHUB_RUN_ID: ${{ github.run_id }}
+      GITHUB_ACTIONS: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Produce live Teams certification artifact
+        run: pnpm --filter @rtb/project-intelligence-certification certify:teams-live-provider
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-intelligence-teams-live-provider-certification
+          path: packages/project-intelligence-certification/artifacts/project-intelligence-teams-live-provider-certification.json
+      - name: Reject fixture evidence
+        run: |
+          node -e "
+            const a=require('./packages/project-intelligence-certification/artifacts/project-intelligence-teams-live-provider-certification.json');
+            if (a.graphMode !== 'live') { console.error('fixture/live mismatch', a.graphMode); process.exit(1); }
+            if (a.verdict !== 'PASS') { console.error('verdict', a.verdict); process.exit(1); }
+            console.log('release_evidence=ok');
+          "

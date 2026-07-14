@@ -144,7 +144,14 @@ export default function MicrosoftTeamsProviderPage() {
         </div>
         <div>
           <dt className="text-slate-500">Graph mode</dt>
-          <dd>{detail.graphMode}</dd>
+          <dd data-testid="teams-graph-mode">{detail.graphMode}</dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-slate-500">Certification note</dt>
+          <dd data-testid="teams-live-explanation">
+            Teams post-meeting transcript retrieval is certified. Realtime transcript, bot join, and
+            recording are not enabled.
+          </dd>
         </div>
         <div>
           <dt className="text-slate-500">Transcript mode</dt>

@@ -131,3 +131,36 @@ export const PROJECT_INTELLIGENCE_TEAMS_PROVIDER_CERTIFICATION_GATES = [
 
 export type TeamsProviderCertificationGateId =
   (typeof PROJECT_INTELLIGENCE_TEAMS_PROVIDER_CERTIFICATION_GATES)[number][0];
+
+/** Phase 6C-3E Live Microsoft Entra Teams provider certification gates (A–Z). */
+export const PROJECT_INTELLIGENCE_TEAMS_LIVE_PROVIDER_CERTIFICATION_GATES = [
+  ["A", "repository preflight"],
+  ["B", "environment validation"],
+  ["C", "hosted schema and RLS"],
+  ["D", "provider configuration fail-closed behavior"],
+  ["E", "live Entra token acquisition"],
+  ["F", "least-privilege permission validation"],
+  ["G", "Teams provider connection"],
+  ["H", "Teams URL validation"],
+  ["I", "live meeting discovery/session mapping"],
+  ["J", "webhook validationToken handshake"],
+  ["K", "webhook clientState validation"],
+  ["L", "webhook replay protection"],
+  ["M", "subscription create"],
+  ["N", "subscription renew-due detection"],
+  ["O", "subscription renewal"],
+  ["P", "subscription revoke"],
+  ["Q", "participant metadata mapping"],
+  ["R", "meeting end detection"],
+  ["S", "post-meeting transcript availability/retrieval"],
+  ["T", "transcript persistence/order"],
+  ["U", "processing enqueue"],
+  ["V", "minutes/proposals/review regression"],
+  ["W", "UI unsupported capability enforcement"],
+  ["X", "browser E2E"],
+  ["Y", "secret exposure scan"],
+  ["Z", "release evidence and artifact commit match"],
+] as const;
+
+export type TeamsLiveProviderCertificationGateId =
+  (typeof PROJECT_INTELLIGENCE_TEAMS_LIVE_PROVIDER_CERTIFICATION_GATES)[number][0];

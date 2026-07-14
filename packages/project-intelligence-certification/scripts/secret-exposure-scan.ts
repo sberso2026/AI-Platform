@@ -12,6 +12,8 @@ const SECRET_ENV_NAMES = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "MICROSOFT_CLIENT_SECRET",
   "MICROSOFT_GRAPH_WEBHOOK_SECRET",
+  "PI_TEAMS_CLIENT_SECRET",
+  "PI_TEAMS_WEBHOOK_CLIENT_STATE",
 ] as const;
 
 function collectFiles(dir: string, acc: string[] = []): string[] {

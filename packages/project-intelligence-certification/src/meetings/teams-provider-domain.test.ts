@@ -34,6 +34,10 @@ describe("Phase 6C-3D Teams provider domain", () => {
       notificationUrl: null,
       lifecycleNotificationUrl: null,
       mode: "fixture",
+      tenantLabel: "fixture",
+      testOrganizer: null,
+      testMeetingUrl: null,
+      liveCertEnabled: false,
     });
     await expect(token.getAccessToken("corr")).resolves.toMatch(/^fixture-token:/);
   });
@@ -67,6 +71,10 @@ describe("Phase 6C-3D Teams provider domain", () => {
       notificationUrl: null,
       lifecycleNotificationUrl: null,
       mode: "fixture",
+      tenantLabel: "fixture",
+      testOrganizer: null,
+      testMeetingUrl: null,
+      liveCertEnabled: false,
     });
     expect(() => svc.assertClientState("expected")).not.toThrow();
     expect(() => svc.assertClientState("wrong")).toThrow();

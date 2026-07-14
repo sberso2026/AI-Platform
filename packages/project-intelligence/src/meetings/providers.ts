@@ -4,6 +4,7 @@ import {
   overallTeamsProviderStatus,
 } from "./teams/capability-contract";
 import { readMicrosoftGraphConfig } from "./teams/microsoft-graph-token-service";
+import { computeTeamsProviderReadiness } from "./teams/teams-provider-readiness";
 import { MEETING_PROVIDER_STATUS, type MeetingProvider, isMeetingProvider } from "./types";
 
 export type MeetingProviderCapabilityReport = {
@@ -23,6 +24,9 @@ export type MeetingProviderCapabilityReport = {
   lastHealthCheck: string | null;
   phase6c3bCertified: boolean;
   phase6c3cCertified: boolean;
+  phase6c3dFixtureCertified: boolean;
+  phase6c3eLiveCertified: boolean;
+  graphMode: "live" | "fixture" | "unconfigured";
 };
 
 /** Teams is certified when explicitly enabled or Graph fixture/live config is present. */
@@ -61,11 +65,25 @@ export function meetingProviderCapabilityReport(
       lastHealthCheck: null,
       phase6c3bCertified: true,
       phase6c3cCertified: status === "certified",
+      phase6c3dFixtureCertified: false,
+      phase6c3eLiveCertified: false,
+      graphMode: "unconfigured",
     };
   }
 
   if (provider === "microsoft_teams" && isMicrosoftTeamsProviderConfigured(env)) {
+    const config = readMicrosoftGraphConfig(env);
+    const graphMode = config?.mode ?? "unconfigured";
+    const readiness = computeTeamsProviderReadiness({
+      env,
+      liveTenantCertified: (env.PI_TEAMS_LIVE_TENANT_CERTIFIED ?? "").trim() === "1",
+      postMeetingTranscriptCertified:
+        (env.PI_TEAMS_POST_MEETING_TRANSCRIPT_CERTIFIED ?? "").trim() === "1",
+      capabilities: CERTIFIED_TEAMS_CAPABILITY_SUBSET,
+    });
     const capabilities = { ...CERTIFIED_TEAMS_CAPABILITY_SUBSET };
+    // Live mode without live cert still shows capabilities as configured-at-runtime via 6C-3D subset
+    // but phase6c3eLiveCertified remains false until evidence sets env flags.
     const status = overallTeamsProviderStatus(capabilities);
     const availableCapabilities = Object.entries(capabilities)
       .filter(([, value]) => value === "certified")
@@ -87,11 +105,19 @@ export function meetingProviderCapabilityReport(
         "live_transcript unsupported",
         "recording_access unsupported",
         "bot_join unsupported",
-        "Post-meeting transcript only",
+        graphMode === "live"
+          ? "Post-meeting transcript only (live Graph)"
+          : "Post-meeting transcript only (fixture Graph — not live)",
+        readiness.microsoftTeamsLiveTenantCertified
+          ? "Live tenant certified"
+          : "Live tenant not certified",
       ],
       lastHealthCheck: null,
       phase6c3bCertified: false,
       phase6c3cCertified: false,
+      phase6c3dFixtureCertified: graphMode === "fixture",
+      phase6c3eLiveCertified: readiness.microsoftTeamsLiveTenantCertified,
+      graphMode,
     };
   }
 
@@ -112,6 +138,9 @@ export function meetingProviderCapabilityReport(
     lastHealthCheck: null,
     phase6c3bCertified: false,
     phase6c3cCertified: false,
+    phase6c3dFixtureCertified: false,
+    phase6c3eLiveCertified: false,
+    graphMode: "unconfigured",
   };
 }
 
