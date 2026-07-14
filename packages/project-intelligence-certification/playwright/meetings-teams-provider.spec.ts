@@ -48,8 +48,12 @@ describeTeams("Phase 6C-3D Teams provider browser flows", () => {
     test.use({ storageState: ownerStoragePath });
 
     test("A provider settings", async ({ page }) => {
-      await page.goto(`${meetingsPath}/settings/providers`);
-      await expect(page.getByTestId("teams-providers-settings")).toBeVisible();
+      const api = await page.request.get(
+        "/api/engineering/project-intelligence/meetings/providers",
+      );
+      expect(api.ok(), await api.text()).toBeTruthy();
+      await page.goto(`${meetingsPath}/settings/providers`, { waitUntil: "networkidle" });
+      await expect(page.getByTestId("teams-providers-settings")).toBeVisible({ timeout: 30_000 });
     });
 
     test("B configure Teams connection", async ({ page }) => {

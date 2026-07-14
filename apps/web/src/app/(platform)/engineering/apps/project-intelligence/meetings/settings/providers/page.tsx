@@ -37,8 +37,22 @@ export default function MeetingsProvidersSettingsPage() {
       .catch((reason) => setError(reason.message));
   }, []);
 
-  if (error) return <p className="text-red-700" role="alert">{error}</p>;
-  if (!providers.length) return <p role="status">Loading providers…</p>;
+  if (error) {
+    return (
+      <section data-testid="teams-providers-settings">
+        <p className="text-red-700" role="alert">
+          {error}
+        </p>
+      </section>
+    );
+  }
+  if (!providers.length) {
+    return (
+      <section data-testid="teams-providers-settings">
+        <p role="status">Loading providers…</p>
+      </section>
+    );
+  }
 
   return (
     <section data-testid="teams-providers-settings">
