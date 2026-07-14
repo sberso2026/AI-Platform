@@ -146,13 +146,17 @@ export class MeetingEngineeringCoreWriteAdapter {
   ): Promise<{ proposalId: string; coreRecordId: string; coreRecordType: string; idempotent: boolean }> {
     const proposal = await this.loadProposal(actor, proposalId);
 
-    if (proposal.review_state === "converted_to_core" && proposal.core_record_id) {
-      return {
-        proposalId,
-        coreRecordId: String(proposal.core_record_id),
-        coreRecordType: String(proposal.core_record_type ?? "engineering_record"),
-        idempotent: true,
-      };
+    if (proposal.review_state === "converted_to_core" || proposal.core_record_id) {
+      throw new MeetingIntelligenceError(
+        "proposal_already_converted",
+        "Proposal was already converted to Engineering Core",
+        409,
+        {
+          proposalId,
+          reviewState: proposal.review_state,
+          coreRecordId: proposal.core_record_id,
+        },
+      );
     }
 
     const segmentIds = Array.isArray(proposal.transcript_segment_ids)
@@ -218,15 +222,19 @@ export class MeetingEngineeringCoreWriteAdapter {
       );
     }
     if (!data || Array.isArray(data)) {
-      // Concurrent conversion — reload for idempotent success
+      // Concurrent conversion — do not create a duplicate Core record.
       const again = await this.loadProposal(actor, proposalId);
-      if (again.review_state === "converted_to_core" && again.core_record_id) {
-        return {
-          proposalId,
-          coreRecordId: String(again.core_record_id),
-          coreRecordType: String(again.core_record_type ?? write.coreRecordType),
-          idempotent: true,
-        };
+      if (again.review_state === "converted_to_core" || again.core_record_id) {
+        throw new MeetingIntelligenceError(
+          "proposal_already_converted",
+          "Proposal was already converted to Engineering Core",
+          409,
+          {
+            proposalId,
+            reviewState: again.review_state,
+            coreRecordId: again.core_record_id,
+          },
+        );
       }
       throw new MeetingIntelligenceError(
         "proposal_conversion_failed",
