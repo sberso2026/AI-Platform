@@ -85,8 +85,17 @@ async function signInJwt(url: string, anonKey: string, email: string, password: 
 }
 
 async function tenantRole(admin: Admin, tenantId: string, slug: string): Promise<string> {
-  const role = await required<any>(admin.from("roles").select("id").eq("tenant_id", tenantId).eq("slug", slug).single(), `role ${slug}`);
-  return role!.id as string;
+  const { data, error } = await admin
+    .from("roles")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("slug", slug)
+    .order("id", { ascending: true })
+    .limit(1);
+  if (error) throw new Error(`role ${slug}: ${error.message}`);
+  const role = Array.isArray(data) ? data[0] : data;
+  if (!role?.id) throw new Error(`role ${slug}: not found for tenant ${tenantId}`);
+  return role.id as string;
 }
 
 async function addMembership(admin: Admin, tenantId: string, workspaceIds: string[], userId: string, role: string): Promise<void> {
