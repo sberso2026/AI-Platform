@@ -1,17 +1,32 @@
-import {
-  handleMicrosoftGraphLifecycleWebhook,
-} from "@/lib/project-intelligence/meetings-service";
 import { MeetingIntelligenceError } from "@rtb/project-intelligence/server";
 
 /**
  * Canonical Microsoft Graph subscription lifecycle endpoint.
+ * validationToken / GET health avoid heavy Document Intelligence imports.
  */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function validationTokenResponse(request: Request): Response | null {
+  const url = new URL(request.url);
+  const validationToken = url.searchParams.get("validationToken");
+  if (validationToken != null && validationToken.length > 0) {
+    return new Response(validationToken, {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+  return null;
+}
+
 export async function GET(request: Request) {
-  return handleMicrosoftGraphLifecycleWebhook(request);
+  const handshake = validationTokenResponse(request);
+  if (handshake) return handshake;
+  return Response.json(
+    { ok: true, route: "microsoft-graph-lifecycle-webhook" },
+    { status: 200 },
+  );
 }
 
 export async function OPTIONS() {
@@ -19,7 +34,13 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: Request) {
+  const handshake = validationTokenResponse(request);
+  if (handshake) return handshake;
+
   try {
+    const { handleMicrosoftGraphLifecycleWebhook } = await import(
+      "@/lib/project-intelligence/meetings-service"
+    );
     return await handleMicrosoftGraphLifecycleWebhook(request);
   } catch (error) {
     const cid = request.headers.get("x-correlation-id") ?? crypto.randomUUID();
