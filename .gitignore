@@ -64,3 +64,8 @@ packages/project-intelligence-certification/fixtures/providers/
 .tmp-cert-artifacts/
 
 .tmp-ci-artifacts/
+
+# Phase 6C-3E.0 deploy artifacts
+out/
+.vercel/
+
