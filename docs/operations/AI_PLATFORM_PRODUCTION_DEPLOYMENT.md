@@ -25,7 +25,7 @@ Browser / CI smoke
 | `engineering-os-pilot.rtbea.com.au` | Preferred custom domain (requires DNS CNAME to Vercel) |
 | `pilot.rtbea.com.au` | **Personal AI** — do not use for AI Platform webhooks |
 
-Set GitHub / Vercel secret `PI_TEAMS_WEBHOOK_BASE_URL` to the AI Platform **origin only** (no path). Code appends `/api/webhooks/microsoft-graph`.
+Set GitHub **variable** `PLATFORM_DEPLOYMENT_URL` and Vercel/GitHub `PI_TEAMS_WEBHOOK_BASE_URL` to the AI Platform **origin only** (no path). Code appends `/api/webhooks/microsoft-graph`. Prefer a repo variable for the public origin — storing it only as a secret can redact job outputs in GitHub Actions.
 
 ## Vercel
 
