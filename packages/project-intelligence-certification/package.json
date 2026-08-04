@@ -11,6 +11,7 @@
     "certify:meeting-processing": "tsx scripts/run-meeting-processing-certification.ts",
     "certify:teams-provider": "tsx scripts/run-teams-provider-certification.ts",
     "certify:teams-live-provider": "tsx scripts/run-teams-live-provider-certification.ts",
+    "certify:platform-deployment": "tsx scripts/run-platform-deployment-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "update-fixture-checksums": "tsx scripts/update-fixture-checksums.ts",
     "provision": "tsx scripts/provision.ts",

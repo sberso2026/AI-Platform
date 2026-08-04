@@ -123,7 +123,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/health|api/webhooks/microsoft-graph).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/health|api/webhooks/microsoft-graph|api/platform/build-identity|api/deployment|deployment).*)",
   ],
 };
 

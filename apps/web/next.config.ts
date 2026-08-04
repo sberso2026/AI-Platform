@@ -6,8 +6,11 @@ const nextConfig: NextConfig = {
     "@rtb/types",
     "@rtb/platform-core",
     "@rtb/platform-kernel",
+    "@rtb/platform-commerce",
     "@rtb/plugin-sdk",
     "@rtb/database",
+    "@rtb/engineering-os",
+    "@rtb/project-intelligence",
   ],
   experimental: {
     optimizePackageImports: ["lucide-react", "@rtb/ui"],

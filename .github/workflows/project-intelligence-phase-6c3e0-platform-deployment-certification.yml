@@ -1,0 +1,233 @@
+name: Project Intelligence Phase 6C-3E.0 Platform Deployment Certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: "Public HTTPS origin for AI Platform (no path)"
+        required: true
+        type: string
+  push:
+    paths:
+      - "apps/web/src/app/api/health/**"
+      - "apps/web/src/app/api/platform/build-identity/**"
+      - "apps/web/src/app/api/deployment/**"
+      - "apps/web/src/app/api/webhooks/microsoft-graph/**"
+      - "apps/web/src/app/deployment/**"
+      - "apps/web/vercel.json"
+      - "scripts/qa-platform-deployment-production.mjs"
+      - "scripts/qa-microsoft-graph-webhook-production.mjs"
+      - "packages/project-intelligence-certification/scripts/run-platform-deployment-certification.ts"
+      - ".github/workflows/project-intelligence-phase-6c3e0-platform-deployment-certification.yml"
+      - "docs/operations/AI_PLATFORM_PRODUCTION_DEPLOYMENT.md"
+
+concurrency:
+  group: project-intelligence-phase-6c3e0-platform-deployment-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PI_PLATFORM_DEPLOYMENT_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  DOCUMENT_INTELLIGENCE_BASELINE_SHA: dfcf6a1c69b6119ab8a34fcc1bfeae93ae34ee53
+  MEETING_PROCESSING_BASELINE_SHA: daf3903c200690fcad4dd9bc9b2c8661e442c15e
+  TEAMS_FIXTURE_BASELINE_SHA: 148223ec35768a9401a885071badb2a56e3ebb13
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web typecheck
+      - run: pnpm --filter @rtb/web exec vitest run src/__tests__/microsoft-graph-webhook-route.test.ts
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_url: ${{ steps.resolve.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        env:
+          INPUT_URL: ${{ github.event.inputs.deployment_url }}
+          SECRET_URL: ${{ secrets.PLATFORM_DEPLOYMENT_URL }}
+          TEAMS_BASE: ${{ secrets.PI_TEAMS_WEBHOOK_BASE_URL }}
+        run: |
+          url="${INPUT_URL:-}"
+          if [ -z "$url" ]; then url="${SECRET_URL:-}"; fi
+          if [ -z "$url" ]; then url="${TEAMS_BASE:-}"; fi
+          if [ -z "$url" ]; then
+            echo "PLATFORM_DEPLOYMENT_URL missing"
+            exit 1
+          fi
+          case "$url" in
+            https://*) ;;
+            *) echo "deployment URL must be https"; exit 1 ;;
+          esac
+          # Strip trailing slash; never print full URL with query
+          url="${url%/}"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          host=$(node -e "console.log(new URL(process.argv[1]).host)" "$url")
+          echo "Resolved deployment host=$host"
+
+  deployment:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: DNS + HTTPS + health + webhook smoke
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: node scripts/qa-platform-deployment-production.mjs
+
+  dns:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm host resolves via HTTPS fetch
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: |
+          node -e "
+            const base=process.env.SMOKE_BASE_URL;
+            fetch(base+'/api/health').then(r=>{if(!r.ok) process.exit(1); console.log('dns_https_ok host='+new URL(base).host);}).catch(e=>{console.error(e); process.exit(1);});
+          "
+
+  https:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require https scheme
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: |
+          node -e "const u=new URL(process.env.SMOKE_BASE_URL); if(u.protocol!=='https:') process.exit(1); console.log('https_ok');"
+
+  health:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Health endpoint
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: |
+          node -e "
+            fetch(process.env.SMOKE_BASE_URL+'/api/health').then(async r=>{
+              const j=await r.json();
+              if(r.status!==200 || j.status!=='healthy') process.exit(1);
+              console.log('health_ok');
+            });
+          "
+
+  build-identity:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build identity endpoint
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: |
+          node -e "
+            fetch(process.env.SMOKE_BASE_URL+'/api/platform/build-identity').then(async r=>{
+              const j=await r.json();
+              if(r.status!==200 || !j.ok || !j.commitSha) process.exit(1);
+              console.log('build_identity_ok commit='+String(j.commitSha).slice(0,12));
+            });
+          "
+
+  webhook:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Webhook smoke
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: node scripts/qa-microsoft-graph-webhook-production.mjs
+
+  environment:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Environment presence (names only)
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: |
+          node -e "
+            fetch(process.env.SMOKE_BASE_URL+'/api/deployment/status').then(async r=>{
+              const j=await r.json();
+              const missing=[...(j.environment?.publicMissing||[]), ...(j.environment?.serverMissingNames||[])];
+              if(r.status!==200 || missing.length){ console.error('missing='+missing.join(',')); process.exit(1);} 
+              console.log('environment_ok');
+            });
+          "
+
+  browser:
+    needs: [validate, deployment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment diagnostics page reachable
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+        run: |
+          node -e "
+            fetch(process.env.SMOKE_BASE_URL+'/deployment').then(r=>{
+              if(r.status===404 || r.status>=500) process.exit(1);
+              console.log('deployment_page_ok status='+r.status);
+            });
+          "
+
+  release-evidence:
+    needs:
+      [
+        preflight,
+        validate,
+        deployment,
+        dns,
+        https,
+        health,
+        build-identity,
+        webhook,
+        environment,
+        browser,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Write certification artifact
+        env:
+          SMOKE_BASE_URL: ${{ needs.validate.outputs.deployment_url }}
+          PLATFORM_DEPLOYMENT_URL: ${{ needs.validate.outputs.deployment_url }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: pnpm --filter @rtb/project-intelligence-certification certify:platform-deployment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-intelligence-platform-deployment-certification
+          path: packages/project-intelligence-certification/artifacts/project-intelligence-platform-deployment-certification.json
