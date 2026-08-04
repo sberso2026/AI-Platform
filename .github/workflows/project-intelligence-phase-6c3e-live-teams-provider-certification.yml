@@ -8,6 +8,7 @@ on:
       - "packages/project-intelligence/tests/teams*"
       - "packages/project-intelligence-certification/src/meetings/teams*"
       - "packages/project-intelligence-certification/scripts/run-teams-live-provider-certification.ts"
+      - "packages/project-intelligence-certification/scripts/probe-teams-live-*.ts"
       - "packages/project-intelligence-certification/playwright/meetings-teams-live-provider.spec.ts"
       - "packages/project-intelligence-certification/src/gates.ts"
       - "packages/project-intelligence-certification/package.json"
@@ -57,6 +58,8 @@ jobs:
           PI_PROVIDER_CERTIFICATION: "0"
           PI_REQUIRE_AZURE_DI: "0"
         run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+      - name: Workflow hygiene regression (no tsx -e top-level await)
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-live-workflow-hygiene.test.ts
 
   live-env-validation:
     needs: preflight
@@ -161,15 +164,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Live Entra token acquisition
-        run: |
-          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
-            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService } from '@rtb/project-intelligence';
-            const config = requireLiveMicrosoftGraphConfig(process.env);
-            if (config.mode !== 'live') throw new Error('fixture fallback forbidden');
-            const token = await new MicrosoftGraphTokenService(config).getAccessToken('ci-auth');
-            if (!token || token.startsWith('fixture-token:')) throw new Error('live token required');
-            console.log('live_token_acquired=true');
-          "
+        run: pnpm --filter @rtb/project-intelligence-certification exec tsx scripts/probe-teams-live-graph-auth.ts
 
   live-permission-certification:
     needs: live-graph-auth-certification
@@ -192,14 +187,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Least-privilege permission probe
-        run: |
-          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
-            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, MicrosoftGraphPermissionService } from '@rtb/project-intelligence';
-            const config = requireLiveMicrosoftGraphConfig(process.env);
-            const tokens = new MicrosoftGraphTokenService(config);
-            await new MicrosoftGraphPermissionService(config, tokens).validateLeastPrivilege('ci-perm');
-            console.log('live_permission_probe=ok');
-          "
+        run: pnpm --filter @rtb/project-intelligence-certification exec tsx scripts/probe-teams-live-permission.ts
 
   live-webhook-certification:
     needs: live-permission-certification
@@ -237,25 +225,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Live subscription create/renew/revoke
-        run: |
-          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
-            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, createMicrosoftGraphClient, measureLatencyMs } from '@rtb/project-intelligence';
-            const config = requireLiveMicrosoftGraphConfig(process.env);
-            if (!config.notificationUrl) throw new Error('PI_TEAMS_WEBHOOK_BASE_URL required');
-            const graph = createMicrosoftGraphClient(config, new MicrosoftGraphTokenService(config));
-            const created = await measureLatencyMs(() => graph.createSubscription({
-              resource: '/communications/onlineMeetings',
-              changeType: 'updated',
-              notificationUrl: config.notificationUrl,
-              lifecycleNotificationUrl: config.lifecycleNotificationUrl,
-              clientState: config.webhookSecret,
-              expirationDateTime: new Date(Date.now() + 3600000).toISOString(),
-              correlationId: 'ci-sub',
-            }));
-            const renewed = await measureLatencyMs(() => graph.renewSubscription(created.result.id, new Date(Date.now() + 3600000).toISOString(), 'ci-sub-renew'));
-            const revoked = await measureLatencyMs(() => graph.deleteSubscription(created.result.id, 'ci-sub-del'));
-            console.log(JSON.stringify({ createMs: created.latencyMs, renewMs: renewed.latencyMs, revokeMs: revoked.latencyMs }));
-          "
+        run: pnpm --filter @rtb/project-intelligence-certification exec tsx scripts/probe-teams-live-subscription.ts
 
   live-meeting-discovery-certification:
     needs: live-subscription-certification
@@ -280,20 +250,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Live meeting URL + discovery
-        run: |
-          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
-            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, createMicrosoftGraphClient, validateTeamsMeetingUrl } from '@rtb/project-intelligence';
-            const config = requireLiveMicrosoftGraphConfig(process.env);
-            const url = process.env.PI_TEAMS_TEST_MEETING_URL;
-            if (!url) throw new Error('PI_TEAMS_TEST_MEETING_URL required');
-            const validated = validateTeamsMeetingUrl(url);
-            const meetingId = process.env.PI_TEAMS_TEST_PROVIDER_MEETING_ID || validated.meetingIdHint;
-            if (!meetingId) throw new Error('provider meeting id unresolved');
-            const graph = createMicrosoftGraphClient(config, new MicrosoftGraphTokenService(config));
-            const meeting = await graph.getOnlineMeeting(meetingId, 'ci-discovery');
-            if (!meeting) throw new Error('teams_meeting_not_found');
-            console.log('live_discovery=ok');
-          "
+        run: pnpm --filter @rtb/project-intelligence-certification exec tsx scripts/probe-teams-live-meeting-discovery.ts
 
   live-transcript-certification:
     needs: live-meeting-discovery-certification
@@ -319,26 +276,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Live post-meeting transcript probe (no content logged)
-        run: |
-          pnpm --filter @rtb/project-intelligence-certification exec tsx -e "
-            import { requireLiveMicrosoftGraphConfig, MicrosoftGraphTokenService, createMicrosoftGraphClient, validateTeamsMeetingUrl, measureLatencyMs } from '@rtb/project-intelligence';
-            const config = requireLiveMicrosoftGraphConfig(process.env);
-            const validated = validateTeamsMeetingUrl(process.env.PI_TEAMS_TEST_MEETING_URL);
-            const meetingId = process.env.PI_TEAMS_TEST_PROVIDER_MEETING_ID || validated.meetingIdHint;
-            const graph = createMicrosoftGraphClient(config, new MicrosoftGraphTokenService(config));
-            try {
-              const measured = await measureLatencyMs(() => graph.listTranscriptSegments(meetingId, 'ci-tx'));
-              console.log(JSON.stringify({ ok: true, segmentCount: measured.result.length, latencyMs: measured.latencyMs }));
-            } catch (error) {
-              const code = error?.code || error?.message || 'unknown';
-              if (process.env.PI_TEAMS_ACCEPT_TRANSCRIPT_UNAVAILABLE === '1') {
-                console.log(JSON.stringify({ ok: true, transcriptClass: 'unavailable', code: String(code) }));
-                process.exit(0);
-              }
-              console.log(JSON.stringify({ ok: false, code: String(code) }));
-              process.exit(1);
-            }
-          "
+        run: pnpm --filter @rtb/project-intelligence-certification exec tsx scripts/probe-teams-live-transcript.ts
 
   latency-measurement:
     needs: live-transcript-certification

@@ -55,3 +55,19 @@ Silent fixture fallback during live certification is prohibited.
 `.github/workflows/project-intelligence-phase-6c3e-live-teams-provider-certification.yml`
 
 Configure the listed secrets on the GitHub repository before expecting PASS.
+
+Live Graph probes are checked-in scripts (async `main()` entry points; no `tsx -e` top-level await):
+
+- `scripts/probe-teams-live-graph-auth.ts`
+- `scripts/probe-teams-live-permission.ts`
+- `scripts/probe-teams-live-subscription.ts`
+- `scripts/probe-teams-live-meeting-discovery.ts`
+- `scripts/probe-teams-live-transcript.ts`
+
+Invoke with package-local tsx only:
+
+`pnpm --filter @rtb/project-intelligence-certification exec tsx scripts/<name>.ts`
+
+Artifact runner remains `certify:teams-live-provider` → `scripts/run-teams-live-provider-certification.ts`.
+
+Public webhook origin (6C-3E.0 PASS): `https://rtb-ai-platform-rtbea.vercel.app`
