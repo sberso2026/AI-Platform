@@ -107,7 +107,17 @@ export interface ModuleManifest extends ApplicationManifest {
   eventHandlers?: string[];
   /** When false, module is registered but not commercially enabled */
   enabled?: boolean;
-  status?: "registered" | "preview" | "ga" | "deprecated";
+  status?:
+    | "registered"
+    | "preview"
+    | "ga"
+    | "deprecated"
+    | "available"
+    | "coming_soon"
+    | "installing"
+    | "active"
+    | "suspended"
+    | "disabled";
 }
 
 export interface OperatingSystemManifest {
