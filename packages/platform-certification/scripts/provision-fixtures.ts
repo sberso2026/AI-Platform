@@ -87,7 +87,7 @@ async function ensureReferenceOsProduct(admin: SupabaseClient): Promise<void> {
       product_id: REFERENCE_OS_PRODUCT_ID,
       slug: "reference-os-cert",
       name: "Reference OS Certification",
-      edition: "certification",
+      edition: "custom",
       billing_model: "free",
       trial_days: 0,
     },

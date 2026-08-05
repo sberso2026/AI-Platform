@@ -32,8 +32,10 @@ VALUES (
   'c1000000-0000-4000-8000-000000000006',
   'reference-os-cert',
   'Reference OS Certification',
-  'certification',
+  'custom',
   'free',
   0
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  edition = EXCLUDED.edition,
+  billing_model = EXCLUDED.billing_model;
