@@ -318,7 +318,7 @@ export function buildEngineeringOsManifest(
 export const ENGINEERING_APPLICATIONS = ENGINEERING_MODULE_REGISTRATIONS.map((m) => ({
   app_key: m.commerceApplicationKey,
   name: m.name,
-  description: m.description,
+  description: m.description ?? "",
   version: m.version,
   status: m.status,
   enabled: Boolean(m.enabled),
