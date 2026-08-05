@@ -1,14 +1,24 @@
 # Project Intelligence Meeting Privacy Runtime
 
-Phase: 6C-3B Meeting Intelligence foundation.
+Phase: 6C-3B Meeting Intelligence foundation → **Phase 8D production closure**.
 
 ## Scope
 
-Runtime privacy boundaries for Project Intelligence Meetings feature
-(`application=project-intelligence`, `feature=meetings`).
+Runtime privacy boundaries for Project Intelligence Meeting Intelligence feature
+(`module=project_intelligence`, `feature=meeting_intelligence`).
 
 This document does **not** encode universal legal advice. Jurisdiction, retention,
 and consent policy values are tenant-configured metadata.
+
+## Phase 8D readiness notes
+
+- AI cannot override consent.
+- Deletion blocked by active legal hold (policy metadata).
+- Provider credentials never exposed to clients.
+- Retention/deletion automation beyond foundation controls remains explicitly
+  deferred where not implemented — no false production claims.
+- Teams live connector remains `conditionally_deferred` and is not required for
+  Meeting Intelligence production readiness.
 
 ## Recording notice
 

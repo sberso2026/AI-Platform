@@ -383,7 +383,7 @@ function main() {
   mkdirSync(outDir, { recursive: true });
   const outPath = resolve(outDir, "phase8c-document-intelligence-certification.json");
   writeFileSync(outPath, JSON.stringify(artifact, null, 2));
-  console.log(JSON.stringify({ reportPath: outPath, verdict: artifact.verdict, releaseEligible, productionDocumentIntelligenceReady }, null, 2));
+  console.log(JSON.stringify({ reportPath: outPath, verdict: artifact.verdict, releaseEligible, productionDocumentIntelligenceReady, failedGates: artifact.failedGates }, null, 2));
   if (!releaseEligible) process.exit(1);
 }
 

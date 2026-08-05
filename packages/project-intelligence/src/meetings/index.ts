@@ -20,4 +20,7 @@ export * from "./meeting-job-worker";
 export * from "./meeting-review-service";
 export * from "./meeting-core-write-adapter";
 export * from "./meeting-document-grounding-adapter";
+export * from "./shared-services-binding";
+export * from "./provider-neutral";
+export * from "./findings-handoff";
 export * from "./teams";

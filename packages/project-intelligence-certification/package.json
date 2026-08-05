@@ -13,6 +13,7 @@
     "certify:teams-live-provider": "tsx scripts/run-teams-live-provider-certification.ts",
     "certify:platform-deployment": "tsx scripts/run-platform-deployment-certification.ts",
     "certify:phase8c": "tsx scripts/run-phase8c-certification.ts",
+    "certify:phase8d": "tsx scripts/run-phase8d-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "update-fixture-checksums": "tsx scripts/update-fixture-checksums.ts",
     "provision": "tsx scripts/provision.ts",

@@ -29,6 +29,7 @@ function requireUser(fixtures: PiFixtureManifest, role: string): PiUserFixture {
 }
 
 async function expectMeetingsReady(page: import("@playwright/test").Page) {
+  await expect(page.getByTestId("meeting-intelligence-ready")).toBeVisible({ timeout: 45_000 });
   await expect(page.getByTestId("project-intelligence-meetings-ready")).toBeVisible({ timeout: 45_000 });
   await expect(page.getByTestId("project-intelligence-nav-meetings")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("login-page")).toHaveCount(0);

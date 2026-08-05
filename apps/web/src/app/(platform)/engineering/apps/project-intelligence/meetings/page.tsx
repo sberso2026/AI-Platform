@@ -50,16 +50,18 @@ export default function MeetingsListPage() {
   }
 
   return (
-    <section data-testid="project-intelligence-meetings-ready">
+    <section data-testid="meeting-intelligence-ready">
+      <div data-testid="project-intelligence-meetings-ready">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-cyan-700">Project Intelligence feature</p>
+          <p className="text-sm font-medium text-cyan-700">Meeting Intelligence</p>
           <h2 className="mt-1 text-2xl font-semibold text-slate-900">Meetings</h2>
           <p className="mt-2 text-slate-600">
-            Manual meeting foundation. External providers remain unavailable.
+            Provider-neutral Meeting Intelligence. Manual meetings are certified. Microsoft Teams
+            live remains conditionally deferred and is not required for production readiness.
           </p>
         </div>
-        <div className="flex gap-3 text-sm">
+        <div className="flex flex-wrap gap-3 text-sm">
           <Link
             className="rounded-md bg-slate-900 px-3 py-2 text-white"
             href="/engineering/apps/project-intelligence/meetings/new"
@@ -79,6 +81,9 @@ export default function MeetingsListPage() {
             data-testid="meetings-providers-settings-link"
           >
             Providers
+          </Link>
+          <Link className="text-cyan-700 hover:underline" href="/engineering/apps/project-intelligence/findings">
+            Findings handoff
           </Link>
         </div>
       </div>
@@ -132,8 +137,9 @@ export default function MeetingsListPage() {
       </div>
 
       <p className="mt-4 text-sm text-slate-500" data-testid="project-intelligence-meetings-providers-disabled">
-        Join Teams, Join Zoom, and Join Google Meet are unavailable.
+        Join Teams, Join Zoom, and Join Google Meet are unavailable. Teams live is not production-ready.
       </p>
+      </div>
     </section>
   );
 }

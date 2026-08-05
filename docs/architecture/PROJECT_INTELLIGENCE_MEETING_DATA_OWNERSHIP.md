@@ -1,7 +1,7 @@
 # Project Intelligence — Meeting Data Ownership
 
-**Phase:** 6C-3A Discovery Lock  
-**Related:** [PROJECT_INTELLIGENCE_DATA_OWNERSHIP.md](./PROJECT_INTELLIGENCE_DATA_OWNERSHIP.md)  
+**Phase:** 6C-3A Discovery Lock → **updated Phase 8D**  
+**Related:** [PROJECT_INTELLIGENCE_DATA_OWNERSHIP.md](./PROJECT_INTELLIGENCE_DATA_OWNERSHIP.md), [PROJECT_INTELLIGENCE_MEETING_PHASE_8D_RECONCILIATION.md](../migration/PROJECT_INTELLIGENCE_MEETING_PHASE_8D_RECONCILIATION.md)  
 **Frozen tables:** `meeting_sessions`, `meeting_transcripts`, `meeting_nlp_analyses`, `meeting_minutes`  
 **Target prefix:** `project_intelligence_meeting_*` / `project_intelligence_transcript_*`
 

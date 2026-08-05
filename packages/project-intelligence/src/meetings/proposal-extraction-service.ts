@@ -2,6 +2,10 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { DeterministicMeetingAiAdapter, type MeetingAiPort } from "./deterministic-meeting-ai-adapter";
 import { MeetingIntelligenceError } from "./errors";
+import {
+  assertMeetingFindingsHandoffCannotMutateCore,
+  createMeetingFindingsHandoff,
+} from "./findings-handoff";
 import type { ManualMeetingActor } from "./manual-meeting-service";
 import { ManualMeetingService } from "./manual-meeting-service";
 import {
@@ -227,6 +231,32 @@ export class MeetingProposalExtractionService {
         );
       }
 
+      const eventPayload: Record<string, unknown> = {
+        proposalId: id,
+        proposalType: draft.proposalType,
+      };
+      if (draft.proposalType === "finding") {
+        const handoff = createMeetingFindingsHandoff({
+          id,
+          meetingSessionId: meeting.id,
+          title: draft.title,
+          description: draft.description ?? undefined,
+          severitySuggestion:
+            draft.severity === "critical" ||
+            draft.severity === "high" ||
+            draft.severity === "medium" ||
+            draft.severity === "low"
+              ? draft.severity
+              : "medium",
+          confidence: draft.confidence ?? 0.5,
+          transcriptReferences: evidenceIds,
+          engineeringProjectId: meeting.engineering_project_id ?? undefined,
+          traceId: correlationId,
+        });
+        assertMeetingFindingsHandoffCannotMutateCore(handoff);
+        eventPayload.findingsHandoff = handoff;
+      }
+
       await awaitMutation(
         this.supabase.from("project_intelligence_meeting_events").insert({
           tenant_id: meeting.tenant_id,
@@ -238,7 +268,7 @@ export class MeetingProposalExtractionService {
           actor_user_id: input.actor.userId,
           previous_state: meeting.status,
           new_state: meeting.status,
-          payload: { proposalId: id, proposalType: draft.proposalType },
+          payload: eventPayload,
           correlation_id: correlationId,
           occurred_at: new Date().toISOString(),
         }),

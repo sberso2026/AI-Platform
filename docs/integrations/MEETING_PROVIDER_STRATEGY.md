@@ -22,11 +22,14 @@ All sources normalize into one transcript + evidence contract consumed by applic
 | Provider | Status |
 |----------|--------|
 | Manual | **Certified** — primary production path |
-| Microsoft Teams (fixture) | Preserved regression evidence |
+| Uploaded transcript (manual/RTB-owned events) | **Certified** via manual path |
+| Uploaded audio / video | **Not implemented** — unavailable until certified |
+| Microsoft Teams (fixture) | Preserved regression evidence (**certified** in fixture mode) |
 | Microsoft Teams (live Graph) | **conditionally_deferred** — see Teams connector status |
 | Zoom / Google Meet | Unavailable until live certification |
 
 Project Intelligence Meetings must remain usable without Teams.
+`productionMeetingIntelligenceReady` does **not** imply `productionTeamsProviderReady`.
 
 ## Non-blocking rule
 

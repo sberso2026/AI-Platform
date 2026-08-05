@@ -31,4 +31,7 @@ export * from "./meetings/meeting-job-worker";
 export * from "./meetings/meeting-review-service";
 export * from "./meetings/meeting-core-write-adapter";
 export * from "./meetings/deterministic-meeting-ai-adapter";
+export * from "./meetings/shared-services-binding";
+export * from "./meetings/provider-neutral";
+export * from "./meetings/findings-handoff";
 export * from "./meetings/teams";
