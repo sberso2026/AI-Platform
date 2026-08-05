@@ -205,17 +205,49 @@ jobs:
 
   accessibility:
     needs: browser-certification
+    if: always() && needs.browser-certification.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "Accessibility executed inside certify gate Q"
+      - uses: actions/download-artifact@v4
+        with:
+          name: platform-certification
+          path: artifacts
+      - name: Verify accessibility gate Q
+        run: |
+          node -e "
+            const fs=require('fs');
+            const path=fs.existsSync('artifacts/platform-certification.json')
+              ? 'artifacts/platform-certification.json'
+              : 'artifacts/artifacts/platform-certification.json';
+            const a=JSON.parse(fs.readFileSync(path,'utf8'));
+            const q=a.gates.find(g=>g.id==='Q');
+            if(!q || q.status!=='pass') { console.error(q); process.exit(1); }
+            console.log('accessibility gate Q pass');
+          "
 
   responsive:
     needs: browser-certification
+    if: always() && needs.browser-certification.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "Responsive executed inside certify gate R"
+      - uses: actions/download-artifact@v4
+        with:
+          name: platform-certification
+          path: artifacts
+      - name: Verify responsive gate R
+        run: |
+          node -e "
+            const fs=require('fs');
+            const path=fs.existsSync('artifacts/platform-certification.json')
+              ? 'artifacts/platform-certification.json'
+              : 'artifacts/artifacts/platform-certification.json';
+            const a=JSON.parse(fs.readFileSync(path,'utf8'));
+            const r=a.gates.find(g=>g.id==='R');
+            if(!r || r.status!=='pass') { console.error(r); process.exit(1); }
+            console.log('responsive gate R pass');
+          "
 
   cleanup-verification:
     needs: browser-certification

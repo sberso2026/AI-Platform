@@ -52,22 +52,22 @@ test.describe("Phase 7B accessibility", () => {
     await signInAs(context, m.users.owner.email);
     await page.goto("/reference-os");
     await expect(page.getByTestId("reference-os-ready")).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Reference OS/i })).toBeVisible();
+    await expect(page.getByTestId("reference-os-ready").locator("h1")).toContainText(/Reference OS/i);
   });
 
-  test("suspended state still exposes platform landmarks", async ({ page, context, request }) => {
+  test("suspended state still exposes platform landmarks", async ({ page, context }) => {
     const m = loadManifest();
     await signInAs(context, m.users.owner.email);
     const cookies = await context.cookies();
     const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
-    await request.post(`/api/platform/installations/${m.installations.engineering.id}/suspend`, {
+    await context.request.post(`/api/platform/installations/${m.installations.engineering.id}/suspend`, {
       headers: { Cookie: cookieHeader, "Content-Type": "application/json" },
       data: { reason: "a11y-suspend" },
     });
     await page.goto("/platform/home");
     await expect(page.getByTestId("rtb-ai-platform-ready")).toBeVisible();
     await expect(page.locator("main, [role='main']").first()).toBeVisible();
-    await request.post(`/api/platform/installations/${m.installations.engineering.id}/resume`, {
+    await context.request.post(`/api/platform/installations/${m.installations.engineering.id}/resume`, {
       headers: { Cookie: cookieHeader, "Content-Type": "application/json" },
       data: {},
     });
