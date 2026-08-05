@@ -335,6 +335,7 @@ export type NavGroup =
   | "engineering"
   | "engineering_registers"
   | "engineering_admin"
+  | "reference_os"
   | "kernel"
   | "operations"
   | "administration";

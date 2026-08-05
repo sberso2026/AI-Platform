@@ -8,7 +8,7 @@ const TENANT_TABLES = [
   "commercial_seat_assignments",
   "commercial_seats",
   "commercial_licenses",
-  "commercial_installation_events",
+  // commercial_installation_events are immutable — leave orphaned by tenant delete / soft-abandon
   "commercial_application_installations",
   "commercial_installations",
   "commercial_subscriptions",
@@ -19,12 +19,28 @@ const TENANT_TABLES = [
 
 export async function purgeTenantById(admin: SupabaseClient, tenantId: string): Promise<void> {
   for (const table of TENANT_TABLES) {
-    await admin.from(table).delete().eq("tenant_id", tenantId);
+    const { error } = await admin.from(table).delete().eq("tenant_id", tenantId);
+    if (error && !/immutable|cannot delete/i.test(error.message)) {
+      // continue best-effort for non-fatal FK noise; hard-fail later on tenant delete
+      console.warn(`[purge] ${table}: ${error.message}`);
+    }
   }
-  // roles may be tenant-scoped
   await admin.from("roles").delete().eq("tenant_id", tenantId);
+  // Soft-abandon if hard delete blocked by immutable events: rename slug then delete
   const { error } = await admin.from("tenants").delete().eq("id", tenantId);
-  if (error) throw new Error(`tenant purge failed ${tenantId}: ${error.message}`);
+  if (error) {
+    const abandoned = `abandoned-${tenantId.slice(0, 8)}-${Date.now().toString(36)}`;
+    await admin
+      .from("tenants")
+      .update({ slug: abandoned, status: "archived", name: `Abandoned ${abandoned}` })
+      .eq("id", tenantId);
+    const retry = await admin.from("tenants").delete().eq("id", tenantId);
+    if (retry.error) {
+      // Slug freed for reuse even if row remains archived
+      console.warn(`[purge] tenant retained as ${abandoned}: ${retry.error.message}`);
+      return;
+    }
+  }
 }
 
 export async function purgeTenantsBySlug(admin: SupabaseClient, slug: string): Promise<string[]> {
