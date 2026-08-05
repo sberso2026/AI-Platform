@@ -1,0 +1,70 @@
+{
+  "runId": "31024359460",
+  "tenantId": "a3280258-8e6f-4d43-8999-41229e0bec19",
+  "tenantSlug": "cert-platform-7b-31024359460",
+  "workspaces": [
+    {
+      "id": "06dd00f2-dd90-4c78-934c-452f07d4dd24",
+      "slug": "alpha-31024359460",
+      "name": "Workspace alpha 31024359460"
+    },
+    {
+      "id": "421ac749-7a37-4006-bc1d-132817ed90a4",
+      "slug": "beta-31024359460",
+      "name": "Workspace beta 31024359460"
+    }
+  ],
+  "users": {
+    "owner": {
+      "userId": "53d1d3a6-a7c7-469a-abdb-4779f6eb7cbe",
+      "email": "cert-7b-owner-31024359460@rtb-cert.test",
+      "role": "owner",
+      "jwt": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ijg5Nzg3ZjFjLWI5ZjctNDBmYS05YzY1LTYwNGVjYmJhODBjNyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3djeWRsaHFpcWR3Z29hcXJsZ2V0LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI1M2QxZDNhNi1hN2M3LTQ2OWEtYWJkYi00Nzc5ZjZlYjdjYmUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1OTUwMTc4LCJpYXQiOjE3ODU5NDY1NzgsImVtYWlsIjoiY2VydC03Yi1vd25lci0zMTAyNDM1OTQ2MEBydGItY2VydC50ZXN0IiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJjZXJ0X2ZpeHR1cmUiOnRydWUsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaGFzZSI6IjdCIiwicm9sZSI6Im93bmVyIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3ODU5NDY1Nzh9XSwic2Vzc2lvbl9pZCI6IjUyNDlmZmFiLTc4M2YtNGU1NS05YTczLWQyY2MwNjg2MjJlZiIsImlzX2Fub255bW91cyI6ZmFsc2V9.2VlUs1UCclNohUOLq5xcn4KSfMBHEoMQHdBNfFIBFZdFpwoQuN-plyhIrF7Dsc-29cMWbA3Ruf7l38tk6LFmuw"
+    },
+    "admin": {
+      "userId": "00d288fb-d8ed-4cc0-9b4b-5c4b0c21eedd",
+      "email": "cert-7b-admin-31024359460@rtb-cert.test",
+      "role": "admin",
+      "jwt": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ijg5Nzg3ZjFjLWI5ZjctNDBmYS05YzY1LTYwNGVjYmJhODBjNyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3djeWRsaHFpcWR3Z29hcXJsZ2V0LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwMGQyODhmYi1kOGVkLTRjYzAtOWI0Yi01YzRiMGMyMWVlZGQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1OTUwMTc5LCJpYXQiOjE3ODU5NDY1NzksImVtYWlsIjoiY2VydC03Yi1hZG1pbi0zMTAyNDM1OTQ2MEBydGItY2VydC50ZXN0IiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJjZXJ0X2ZpeHR1cmUiOnRydWUsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaGFzZSI6IjdCIiwicm9sZSI6ImFkbWluIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3ODU5NDY1Nzl9XSwic2Vzc2lvbl9pZCI6ImE5MGNkMTdmLTU2ZTctNDhlYy1hNGYxLTA5YzhlMjZlYTRjZiIsImlzX2Fub255bW91cyI6ZmFsc2V9.WduS2jlP9fvVA_Fx21wEqARZXTt2rkLOFRusZ3u3PQXjeKAqGpcuR7IWgvHlckmtSztfwiWOxe1JdvJYGMBQzQ"
+    },
+    "eng_admin": {
+      "userId": "1d742c51-de08-4d36-a0ad-30182d9a060a",
+      "email": "cert-7b-eng_admin-31024359460@rtb-cert.test",
+      "role": "eng_admin",
+      "jwt": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ijg5Nzg3ZjFjLWI5ZjctNDBmYS05YzY1LTYwNGVjYmJhODBjNyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3djeWRsaHFpcWR3Z29hcXJsZ2V0LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIxZDc0MmM1MS1kZTA4LTRkMzYtYTBhZC0zMDE4MmQ5YTA2MGEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1OTUwMTgwLCJpYXQiOjE3ODU5NDY1ODAsImVtYWlsIjoiY2VydC03Yi1lbmdfYWRtaW4tMzEwMjQzNTk0NjBAcnRiLWNlcnQudGVzdCIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiY2VydF9maXh0dXJlIjp0cnVlLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhhc2UiOiI3QiIsInJvbGUiOiJlbmdfYWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc4NTk0NjU4MH1dLCJzZXNzaW9uX2lkIjoiMDExYzAyYzAtMDRmMC00NWMyLWFhMWQtYmJiMjE5Njg1ZWM2IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.QTPLUlB5rKWBK8mol-Ro528Zn_Fw34MC-UL75di5qpdJ9nNF7ctgwVL4DliJJ6UHUusYouizfNvpE14EN3m3hg"
+    },
+    "engineer": {
+      "userId": "1cc51903-1d43-4ee5-9b51-e2f02ab2cbe7",
+      "email": "cert-7b-engineer-31024359460@rtb-cert.test",
+      "role": "engineer",
+      "jwt": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ijg5Nzg3ZjFjLWI5ZjctNDBmYS05YzY1LTYwNGVjYmJhODBjNyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3djeWRsaHFpcWR3Z29hcXJsZ2V0LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIxY2M1MTkwMy0xZDQzLTRlZTUtOWI1MS1lMmYwMmFiMmNiZTciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1OTUwMTgxLCJpYXQiOjE3ODU5NDY1ODEsImVtYWlsIjoiY2VydC03Yi1lbmdpbmVlci0zMTAyNDM1OTQ2MEBydGItY2VydC50ZXN0IiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJjZXJ0X2ZpeHR1cmUiOnRydWUsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaGFzZSI6IjdCIiwicm9sZSI6ImVuZ2luZWVyIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3ODU5NDY1ODF9XSwic2Vzc2lvbl9pZCI6IjdjOTZlMzgyLTZjMWItNGQwOC1iNjA2LWQxYjNiMDE2Y2IzZCIsImlzX2Fub255bW91cyI6ZmFsc2V9.HJlaKqAICH1a0VgLBpOPVim935NIU1QdHp6A0FaHZASH6Ay7Di4yQguLklMTMlxpPfjnU9XqGP76rBYDlbd41Q"
+    },
+    "viewer": {
+      "userId": "ee8fc5d8-11a7-468d-bbb5-b57596ea10f0",
+      "email": "cert-7b-viewer-31024359460@rtb-cert.test",
+      "role": "viewer",
+      "jwt": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ijg5Nzg3ZjFjLWI5ZjctNDBmYS05YzY1LTYwNGVjYmJhODBjNyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3djeWRsaHFpcWR3Z29hcXJsZ2V0LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlZThmYzVkOC0xMWE3LTQ2OGQtYmJiNS1iNTc1OTZlYTEwZjAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1OTUwMTgyLCJpYXQiOjE3ODU5NDY1ODIsImVtYWlsIjoiY2VydC03Yi12aWV3ZXItMzEwMjQzNTk0NjBAcnRiLWNlcnQudGVzdCIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiY2VydF9maXh0dXJlIjp0cnVlLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhhc2UiOiI3QiIsInJvbGUiOiJ2aWV3ZXIifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc4NTk0NjU4Mn1dLCJzZXNzaW9uX2lkIjoiMzE3MjhmZjItMjQ4Ni00NWRiLWI3NGUtMzlmOGI0NWVmNjYyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.BzrFmVKSAv1c065H7o8B7Jw3aq3f_tgSXuDcDvRg2UzlvYId-PaI2Vra_SZY45EGiAc4kSgqok0HhtxlC6_Qgw"
+    },
+    "unentitled": {
+      "userId": "5f0d9611-e309-423c-9c35-3450fc20bded",
+      "email": "cert-7b-unentitled-31024359460@rtb-cert.test",
+      "role": "unentitled",
+      "jwt": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ijg5Nzg3ZjFjLWI5ZjctNDBmYS05YzY1LTYwNGVjYmJhODBjNyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3djeWRsaHFpcWR3Z29hcXJsZ2V0LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI1ZjBkOTYxMS1lMzA5LTQyM2MtOWMzNS0zNDUwZmMyMGJkZWQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1OTUwMTgzLCJpYXQiOjE3ODU5NDY1ODMsImVtYWlsIjoiY2VydC03Yi11bmVudGl0bGVkLTMxMDI0MzU5NDYwQHJ0Yi1jZXJ0LnRlc3QiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImNlcnRfZml4dHVyZSI6dHJ1ZSwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBoYXNlIjoiN0IiLCJyb2xlIjoidW5lbnRpdGxlZCJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzg1OTQ2NTgzfV0sInNlc3Npb25faWQiOiIwODNlNzVkYS02YzFmLTQwZWMtOWI1Ni1hYzdmODliNDE2YzIiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.iwbUXNHzm9dnlKNEew8-N9YqhrlO1mEX-9LBW_2uOd2i_qVd6RUQcZiirAaUIvSm0a6nGbebjSSMriiJsalvsA"
+    }
+  },
+  "installations": {
+    "engineering": {
+      "id": "40fdeea2-51cd-4834-ad8e-6da1d335a189",
+      "productId": "c1000000-0000-4000-8000-000000000001",
+      "productSlug": "engineering-os",
+      "status": "active"
+    },
+    "referenceOs": {
+      "id": "0f6a4289-50e1-408b-b8a2-21ca7d1fb268",
+      "productId": "c1000000-0000-4000-8000-000000000006",
+      "productSlug": "reference-os",
+      "status": "active"
+    }
+  },
+  "createdAt": "2026-08-05T16:16:28.038Z"
+}

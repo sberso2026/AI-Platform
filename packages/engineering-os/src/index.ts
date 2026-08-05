@@ -1,4 +1,7 @@
 export * from "./manifest";
+export * from "./module-registry";
+export * from "./shared-services";
+export * from "./ai-framework";
 export * from "./permissions";
 export * from "./engineering-os";
 export {

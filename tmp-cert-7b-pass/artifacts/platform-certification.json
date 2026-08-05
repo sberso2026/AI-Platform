@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "platform-certification/2",
+  "phase": "7B",
+  "platformName": "RTB AI Platform",
+  "commercialBrand": "pending",
+  "verdict": "PASS",
+  "releaseEligible": true,
+  "ciHeadSha": "1a2c76f1536dfbc5af7a94ed8bded6ba3726b821",
+  "artifactCommitSha": "1a2c76f1536dfbc5af7a94ed8bded6ba3726b821",
+  "buildIdentitySha": "1a2c76f1536dfbc5af7a94ed8bded6ba3726b821",
+  "targetEnvironment": "hosted_staging",
+  "phase7aBaseline": "f4b74d208a913d522ab2fe00b06ea921cbee3ad9",
+  "phase7a1Baseline": "6428d51d2b548feb0928753d8fc616394c2cf72f",
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository and build identity",
+      "status": "pass",
+      "durationMs": 4
+    },
+    {
+      "id": "B",
+      "name": "Platform boundary / multi-OS unit regression",
+      "status": "pass",
+      "durationMs": 2052
+    },
+    {
+      "id": "C",
+      "name": "Hosted schema smoke (installation verify)",
+      "status": "pass",
+      "durationMs": 5572
+    },
+    {
+      "id": "D",
+      "name": "Real-JWT RLS (fixture JWTs issued)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "E",
+      "name": "Platform-only readiness marker",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "F",
+      "name": "Hosted fixture provision",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "G",
+      "name": "Engineering OS install fixture active",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "H",
+      "name": "Licence seat workspace assignment",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "I",
+      "name": "reference-os install",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "J",
+      "name": "Active multi-OS coexistence",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "K",
+      "name": "Engineering OS suspend/resume smoke",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "L",
+      "name": "reference-os suspend/resume (coexistence)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "M",
+      "name": "Engineering OS uninstall/reinstall (lifecycle unit)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "N",
+      "name": "Cross-OS isolation",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "O",
+      "name": "Route and navigation entitlement",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "P",
+      "name": "Browser E2E multi-OS",
+      "status": "pass",
+      "durationMs": 63038
+    },
+    {
+      "id": "Q",
+      "name": "Accessibility",
+      "status": "pass",
+      "durationMs": 13660
+    },
+    {
+      "id": "R",
+      "name": "Responsive layouts",
+      "status": "pass",
+      "durationMs": 16459
+    },
+    {
+      "id": "S",
+      "name": "Observability field contract",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "T",
+      "name": "Fixture cleanup",
+      "status": "pass",
+      "durationMs": 5791
+    },
+    {
+      "id": "U",
+      "name": "Secret exposure scan (source hygiene)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "V",
+      "name": "Artifact identity and release eligibility",
+      "status": "pass",
+      "durationMs": 0
+    }
+  ],
+  "requiredGates": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V"
+  ],
+  "failedGates": [],
+  "notExecutedGates": [],
+  "requiredTestsSkipped": 0,
+  "unexpected5xx": 0,
+  "secretExposureCount": 0,
+  "secretExposureDetected": false,
+  "platformOnlyReadiness": true,
+  "engineeringOsInstallProof": true,
+  "multiOsIsolationProof": true,
+  "microsoftTeamsLiveConnector": "conditionally_deferred",
+  "productionTeamsProviderReady": false,
+  "timestamp": "2026-08-05T17:00:52.692Z"
+}

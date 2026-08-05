@@ -91,9 +91,37 @@ export default function EngineeringCommandCenterPage() {
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
-        data-testid="engineering-command-center"
+        data-testid="engineering-os-shell"
       >
+        <div data-testid="engineering-command-center" className="contents">
         {error && <p className="mb-4 text-[0.9375rem] text-destructive">{error}</p>}
+
+        <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
+          <SectionHeader
+            title="Modules"
+            description="Engineering OS module host — Project Intelligence and future modules"
+          />
+          <div className="mt-3 flex flex-wrap gap-3 text-sm">
+            <Link
+              href="/engineering/modules"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Open module launcher
+            </Link>
+            <Link
+              href="/engineering/apps/project-intelligence"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Project Intelligence
+            </Link>
+            <Link
+              href="/engineering/search"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Global search
+            </Link>
+          </div>
+        </section>
 
         <section aria-label="Engineering KPIs" className="mb-8">
           <SectionHeader
@@ -287,6 +315,7 @@ export default function EngineeringCommandCenterPage() {
             )}
           />
         </section>
+        </div>
       </main>
     </>
   );

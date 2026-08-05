@@ -20,12 +20,17 @@ describe("Engineering OS installation seed", () => {
     expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it("registers eight future applications without implementing them", () => {
-    expect(ENGINEERING_APPLICATIONS).toHaveLength(8);
-    ENGINEERING_APPLICATIONS.forEach((app) => {
-      expect(app.enabled).toBe(false);
-      expect(app.status).toBe("registered");
-    });
+  it("registers Phase 8A initial modules via module registry bridge", () => {
+    expect(ENGINEERING_APPLICATIONS).toHaveLength(4);
+    const keys = ENGINEERING_APPLICATIONS.map((app) => app.app_key);
+    expect(keys).toEqual([
+      "project_intelligence",
+      "inspection_intelligence",
+      "project_controls",
+      "digital_twin",
+    ]);
+    const pi = ENGINEERING_APPLICATIONS.find((a) => a.app_key === "project_intelligence");
+    expect(pi?.enabled).toBe(true);
   });
 
   it("declares core capabilities", () => {

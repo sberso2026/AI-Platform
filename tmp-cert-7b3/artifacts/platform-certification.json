@@ -1,0 +1,200 @@
+{
+  "schemaVersion": "platform-certification/2",
+  "phase": "7B",
+  "platformName": "RTB AI Platform",
+  "commercialBrand": "pending",
+  "verdict": "FAIL",
+  "releaseEligible": false,
+  "ciHeadSha": "035898109b8145edd838ec38082c552e2296d461",
+  "artifactCommitSha": "035898109b8145edd838ec38082c552e2296d461",
+  "buildIdentitySha": "035898109b8145edd838ec38082c552e2296d461",
+  "targetEnvironment": "hosted_staging",
+  "phase7aBaseline": "f4b74d208a913d522ab2fe00b06ea921cbee3ad9",
+  "phase7a1Baseline": "6428d51d2b548feb0928753d8fc616394c2cf72f",
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository and build identity",
+      "status": "pass",
+      "durationMs": 4
+    },
+    {
+      "id": "B",
+      "name": "Platform boundary / multi-OS unit regression",
+      "status": "pass",
+      "durationMs": 1683
+    },
+    {
+      "id": "C",
+      "name": "Hosted schema smoke (installation verify)",
+      "status": "pass",
+      "durationMs": 8918
+    },
+    {
+      "id": "D",
+      "name": "Real-JWT RLS (fixture JWTs issued)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "E",
+      "name": "Platform-only readiness marker",
+      "status": "fail",
+      "durationMs": 0,
+      "error": "evidence incomplete"
+    },
+    {
+      "id": "F",
+      "name": "Hosted fixture provision",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "G",
+      "name": "Engineering OS install fixture active",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "H",
+      "name": "Licence seat workspace assignment",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "I",
+      "name": "reference-os install",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "J",
+      "name": "Active multi-OS coexistence",
+      "status": "fail",
+      "durationMs": 0,
+      "error": "evidence incomplete"
+    },
+    {
+      "id": "K",
+      "name": "Engineering OS suspend/resume smoke",
+      "status": "fail",
+      "durationMs": 0,
+      "error": "evidence incomplete"
+    },
+    {
+      "id": "L",
+      "name": "reference-os suspend/resume (coexistence)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "M",
+      "name": "Engineering OS uninstall/reinstall (lifecycle unit)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "N",
+      "name": "Cross-OS isolation",
+      "status": "fail",
+      "durationMs": 0,
+      "error": "evidence incomplete"
+    },
+    {
+      "id": "O",
+      "name": "Route and navigation entitlement",
+      "status": "fail",
+      "durationMs": 0,
+      "error": "evidence incomplete"
+    },
+    {
+      "id": "P",
+      "name": "Browser E2E multi-OS",
+      "status": "fail",
+      "durationMs": 39430,
+      "error": "  Error: expect(received).toBeLessThan(expected)\n\n    Expected: < 500\n    Received:   500\n\n      169 |       { force: true },\n      170 |     );\n    > 171 |     expect(uninstall.status()).toBeLessThan(500);\n          |                                ^\n      172 |     if (uninstall.status() >= 400) {\n      173 |       const body = await uninstall.json();\n      174 |       expect(body.error?.code).toBeTruthy();\n        at /home/runner/work/AI-Platform/AI-Platform/packages/platform-certification/playwright/multi-os.spec.ts:171:32\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    test-results/multi-os-Phase-7B-browser--09503-eference-reinstall-restores-chromium/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────\n    test-results/multi-os-Phase-7B-browser--09503-eference-reinstall-restores-chromium/video.webm\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    Error Context: test-results/multi-os-Phase-7B-browser--09503-eference-reinstall-restores-chromium/error-context.md\n\n    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────\n    test-results/multi-os-Phase-7B-browser--09503-eference-reinstall-restores-chromium/trace.zip\n    Usage:\n\n        pnpm exec playwright show-trace test-results/multi-os-Phase-7B-browser--09503-eference-reinstall-restores-chromium/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  3 failed\n    [chromium] › playwright/multi-os.spec.ts:80:3 › Phase 7B browser multi-OS flows › L-N Engineering suspend keeps reference-os; resume restores \n    [chromium] › playwright/multi-os.spec.ts:125:3 › Phase 7B browser multi-OS flows › O-P reference-os suspend keeps Engineering; resume restores \n    [chromium] › playwright/multi-os.spec.ts:156:3 › Phase 7B browser multi-OS flows › Q-S uninstall Engineering keeps platform+reference; reinstall restores \n  10 passed (38.5s)\nundefined\n/home/runner/work/AI-Platform/AI-Platform/packages/platform-certification:\n ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test playwright/multi-os.spec.ts\n\nCommand failed: pnpm --filter @rtb/platform-certification exec playwright test playwright/multi-os.spec.ts"
+    },
+    {
+      "id": "Q",
+      "name": "Accessibility",
+      "status": "fail",
+      "durationMs": 15399,
+      "error": "=\"text-xl font-semibold text-slate-900\">Reference OS</h1> aka getByTestId('reference-os-ready').getByRole('heading', { name: 'Reference OS' })\n\n    Call log:\n      - Expect \"toBeVisible\" with timeout 20000ms\n      - waiting for getByRole('heading', { name: /Reference OS/i })\n\n\n      53 |     await page.goto(\"/reference-os\");\n      54 |     await expect(page.getByTestId(\"reference-os-ready\")).toBeVisible();\n    > 55 |     await expect(page.getByRole(\"heading\", { name: /Reference OS/i })).toBeVisible();\n         |                                                                        ^\n      56 |   });\n      57 |\n      58 |   test(\"suspended state still exposes platform landmarks\", async ({ page, context, request }) => {\n        at /home/runner/work/AI-Platform/AI-Platform/packages/platform-certification/playwright/accessibility.spec.ts:55:72\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    test-results/accessibility-Phase-7B-acc-4e8a7-age-announces-status-region-chromium/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────\n    test-results/accessibility-Phase-7B-acc-4e8a7-age-announces-status-region-chromium/video.webm\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    Error Context: test-results/accessibility-Phase-7B-acc-4e8a7-age-announces-status-region-chromium/error-context.md\n\n    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────\n    test-results/accessibility-Phase-7B-acc-4e8a7-age-announces-status-region-chromium/trace.zip\n    Usage:\n\n        pnpm exec playwright show-trace test-results/accessibility-Phase-7B-acc-4e8a7-age-announces-status-region-chromium/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    [chromium] › playwright/accessibility.spec.ts:50:3 › Phase 7B accessibility › reference-os page announces status region \n  6 passed (14.6s)\nundefined\n/home/runner/work/AI-Platform/AI-Platform/packages/platform-certification:\n ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test playwright/accessibility.spec.ts\n\nCommand failed: pnpm --filter @rtb/platform-certification exec playwright test playwright/accessibility.spec.ts"
+    },
+    {
+      "id": "R",
+      "name": "Responsive layouts",
+      "status": "pass",
+      "durationMs": 14489
+    },
+    {
+      "id": "S",
+      "name": "Observability field contract",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "T",
+      "name": "Fixture cleanup",
+      "status": "pass",
+      "durationMs": 11247
+    },
+    {
+      "id": "U",
+      "name": "Secret exposure scan (source hygiene)",
+      "status": "pass",
+      "durationMs": 0
+    },
+    {
+      "id": "V",
+      "name": "Artifact identity and release eligibility",
+      "status": "fail",
+      "durationMs": 0
+    }
+  ],
+  "requiredGates": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V"
+  ],
+  "failedGates": [
+    "E",
+    "J",
+    "K",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "V"
+  ],
+  "notExecutedGates": [],
+  "requiredTestsSkipped": 0,
+  "unexpected5xx": 0,
+  "secretExposureCount": 0,
+  "secretExposureDetected": false,
+  "platformOnlyReadiness": false,
+  "engineeringOsInstallProof": true,
+  "multiOsIsolationProof": false,
+  "microsoftTeamsLiveConnector": "conditionally_deferred",
+  "productionTeamsProviderReady": false,
+  "timestamp": "2026-08-05T16:27:14.051Z"
+}

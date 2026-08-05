@@ -95,11 +95,12 @@ describe("Batch 2.07 — Sidebar scroll persistence contract", () => {
 });
 
 describe("Batch 2.08 — Collapsible sidebar sections", () => {
-  it("defines five sidebar sections including advanced tools", () => {
+  it("defines sidebar sections including Engineering, reference-os, and advanced tools", () => {
     expect(SIDEBAR_SECTIONS.map((s) => s.id)).toEqual([
       "engineering",
       "engineering_registers",
       "engineering_admin",
+      "reference_os",
       "platform_admin",
       "platform_advanced",
     ]);

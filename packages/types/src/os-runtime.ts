@@ -71,6 +71,10 @@ export interface FeatureManifest {
   capabilities?: CapabilityRegistration[];
 }
 
+/**
+ * Commerce / legacy installable unit under an OS.
+ * Prefer ModuleManifest for Engineering OS product language (Phase 8A).
+ */
 export interface ApplicationManifest {
   id: string;
   name: string;
@@ -84,6 +88,28 @@ export interface ApplicationManifest {
   agents?: AgentRegistration[];
 }
 
+/**
+ * Engineering OS Module (Phase 8A).
+ * Modules install under an Operating System. Commerce may still use application_key.
+ */
+export interface ModuleManifest extends ApplicationManifest {
+  /** Stable module key (maps to commerce application_key when installed). */
+  moduleKey: string;
+  /** Permissions required to use the module */
+  permissions?: OsManifestPermission[];
+  /** Workspace visibility rules */
+  workspaceVisibility?: "all" | "assigned" | "none";
+  /** Search provider ids contributed by this module */
+  searchProviders?: string[];
+  /** AI capability ids contributed by this module */
+  aiCapabilities?: string[];
+  /** Event handler type prefixes (namespaced) */
+  eventHandlers?: string[];
+  /** When false, module is registered but not commercially enabled */
+  enabled?: boolean;
+  status?: "registered" | "preview" | "ga" | "deprecated";
+}
+
 export interface OperatingSystemManifest {
   id: string;
   name: string;
@@ -94,7 +120,10 @@ export interface OperatingSystemManifest {
   certificationOnly?: boolean;
   catalogStatus?: OsCatalogStatus;
   permissions?: OsManifestPermission[];
+  /** @deprecated Prefer modules for Engineering OS; retained for commerce/compat. */
   applications?: ApplicationManifest[];
+  /** Phase 8A canonical installable units under this OS */
+  modules?: ModuleManifest[];
   routes?: RouteRegistration[];
   navigation?: NavigationRegistration[];
   capabilities?: CapabilityRegistration[];
@@ -116,7 +145,10 @@ export interface EntitlementContext {
   tenantId: string;
   userId: string;
   operatingSystemId: string;
+  /** @deprecated Prefer moduleKeys */
   applicationKeys: string[];
+  /** Phase 8A module keys (same values as commerce application_key when bridged) */
+  moduleKeys?: string[];
   featureKeys: string[];
   seatRole?: string;
 }
@@ -169,6 +201,18 @@ export function activeOperatingSystemIds(
     }
   }
   return [...ids];
+}
+
+export function resolveOsModules(manifest: OperatingSystemManifest): ModuleManifest[] {
+  if (manifest.modules?.length) return manifest.modules;
+  return (manifest.applications ?? []).map((app) => ({
+    ...app,
+    moduleKey: app.id,
+  }));
+}
+
+export function moduleKeyOf(module: ModuleManifest): string {
+  return module.moduleKey;
 }
 
 /** Engineering OS product key conventionally used in commerce. */

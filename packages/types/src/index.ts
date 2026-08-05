@@ -383,6 +383,8 @@ export * from "./engineering";
 export * from "./engineering-registers";
 export * from "./engineering-api-contracts";
 export * from "./engineering-event-contracts";
+export * from "./engineering-domain";
+export * from "./engineering-modules";
 export * from "./project-intelligence-integration";
 export * from "./commerce";
 export * from "./os-runtime";

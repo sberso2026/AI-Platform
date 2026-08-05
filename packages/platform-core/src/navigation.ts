@@ -446,6 +446,14 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "eng-modules",
+    label: "Modules",
+    icon: "AppWindow",
+    href: "/engineering/modules",
+    group: "engineering",
+    audience: "viewer",
+  },
+  {
     id: "eng-projects",
     label: "Projects",
     icon: "FolderKanban",

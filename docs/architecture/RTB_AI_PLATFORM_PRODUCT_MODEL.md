@@ -1,6 +1,6 @@
 # RTB AI Platform — Product Model
 
-**Phase:** 7A — Platform Core Separation and Production Closure  
+**Phase:** 8A — Engineering OS Core Architecture  
 **Platform name:** RTB AI Platform (commercial brand pending)
 
 ## Hierarchy (locked)
@@ -8,27 +8,31 @@
 ```text
 RTB AI Platform
   → Operating Systems
-      → Applications
+      → Modules
           → Features / agents / tools
 ```
+
+Commerce and installation lifecycle may still use the term `application_key` as a
+compatibility bridge. Engineering OS product language is **Module**.
 
 ### Examples
 
 ```text
 Engineering OS
-  → Project Intelligence
+  → Project Intelligence (module)
       → Documents
       → Meetings
       → Findings
       → Reports
-  → Inspection Intelligence (future)
-  → Project Controls (future)
+  → Inspection Intelligence (module)
+  → Project Controls (module)
+  → Digital Twin (module)
 
 Business OS
-  → future applications
+  → future modules
 
 Fleet OS
-  → future applications
+  → future modules
 ```
 
 ## Installation model
@@ -36,17 +40,18 @@ Fleet OS
 - One customer installs **one** RTB AI Platform tenant.
 - The same tenant may install **one or more** Operating Systems.
 - Do **not** create one platform instance per OS.
-- Applications install under an OS; features are not separate commercial platforms.
+- Modules install under an OS; features are not separate commercial platforms.
 
-## Non-goals (Phase 7A)
+## Non-goals
 
 - Building Business OS
-- Adding Engineering OS business features
-- Weakening Phase 5 commerce / installation / release governance
+- Weakening Phase 7B multi-OS certification
 - Making Microsoft Teams live Graph a platform release blocker
+- Reintroducing Cortex terminology
 
 ## Related docs
 
+- [ENGINEERING_OS_ARCHITECTURE_PHASE_8A.md](./ENGINEERING_OS_ARCHITECTURE_PHASE_8A.md)
 - [RTB_AI_PLATFORM_MULTI_OS_RUNTIME.md](./RTB_AI_PLATFORM_MULTI_OS_RUNTIME.md)
 - [RTB_AI_PLATFORM_DATA_OWNERSHIP.md](./RTB_AI_PLATFORM_DATA_OWNERSHIP.md)
 - [RTB_AI_PLATFORM_BOUNDARY_AUDIT.md](./RTB_AI_PLATFORM_BOUNDARY_AUDIT.md)
