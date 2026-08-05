@@ -3,11 +3,14 @@
  * Feature-specific intelligence services remain local; shared infra must not be forked.
  */
 import {
+  ENGINEERING_AI_CAPABILITY_IDS,
   ENGINEERING_SHARED_SERVICE_IDS,
+  createEngineeringAiFramework,
   createEngineeringSharedServicesFacade,
   type EngineeringSharedServiceId,
 } from "@rtb/engineering-os";
 import { assertProjectIntelligenceAiRuntime } from "../ai/shared-runtime";
+import { PROJECT_INTELLIGENCE_FEATURES, PROJECT_INTELLIGENCE_MODULE_KEY } from "../features/registry";
 
 export const DOCUMENT_INTELLIGENCE_SHARED_SERVICES = [
   "document_references",
@@ -62,5 +65,34 @@ export function assertNoPrivateAuditOrNotificationStack(flags: {
     throw new Error(
       "Document Intelligence must consume shared notification — private notification forbidden",
     );
+  }
+}
+
+/**
+ * Assert PI features consume shared Engineering infrastructure only.
+ */
+export function assertProjectIntelligenceSharedStack(): void {
+  const services = createEngineeringSharedServicesFacade();
+  const ai = createEngineeringAiFramework();
+
+  for (const feature of PROJECT_INTELLIGENCE_FEATURES) {
+    if (feature.implementsOwnAiStack) {
+      throw new Error(`Feature ${feature.id} must not implement an independent AI stack`);
+    }
+    ai.assertSharedStackOnly(`${PROJECT_INTELLIGENCE_MODULE_KEY}.${feature.id}`, false);
+
+    for (const serviceId of feature.sharedServices) {
+      if (!ENGINEERING_SHARED_SERVICE_IDS.includes(serviceId as never)) {
+        throw new Error(`Feature ${feature.id} references unknown shared service ${serviceId}`);
+      }
+      if (!services.has(serviceId as never)) {
+        throw new Error(`Feature ${feature.id} missing shared service ${serviceId}`);
+      }
+    }
+    for (const cap of feature.sharedAiCapabilities) {
+      if (!ENGINEERING_AI_CAPABILITY_IDS.includes(cap as never)) {
+        throw new Error(`Feature ${feature.id} references unknown AI capability ${cap}`);
+      }
+    }
   }
 }

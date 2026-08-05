@@ -1,4 +1,3 @@
-export * from "./index";
 export * from "./application/mapping-service";
 export * from "./security/access-guard";
 export * from "./adapters/engineering-core-adapters";
@@ -21,7 +20,6 @@ export * from "./documents/abstention";
 export * from "./documents/findings";
 export * from "./documents/findings-handoff";
 export * from "./documents/review-actions";
-export * from "./documents/shared-services-binding";
 export * from "./documents/jobs";
 export * from "./documents/durable-enqueue";
 export * from "./documents/governed-embedding-adapter";

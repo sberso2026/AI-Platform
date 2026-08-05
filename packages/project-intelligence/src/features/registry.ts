@@ -3,12 +3,6 @@
  * Features register under Engineering OS module project_intelligence.
  */
 import type { FeatureManifest, RouteRegistration, NavigationRegistration } from "@rtb/types";
-import {
-  ENGINEERING_AI_CAPABILITY_IDS,
-  ENGINEERING_SHARED_SERVICE_IDS,
-  createEngineeringAiFramework,
-  createEngineeringSharedServicesFacade,
-} from "@rtb/engineering-os";
 
 export type ProjectIntelligenceFeatureId =
   | "document_intelligence"
@@ -178,33 +172,4 @@ export function toFeatureManifests(): FeatureManifest[] {
     ({ routes: _r, navigation: _n, sharedServices: _s, sharedAiCapabilities: _a, implementsOwnAiStack: _i, moduleKey: _m, ...feature }) =>
       feature,
   );
-}
-
-/**
- * Assert PI features consume shared Engineering infrastructure only.
- */
-export function assertProjectIntelligenceSharedStack(): void {
-  const services = createEngineeringSharedServicesFacade();
-  const ai = createEngineeringAiFramework();
-
-  for (const feature of PROJECT_INTELLIGENCE_FEATURES) {
-    if (feature.implementsOwnAiStack) {
-      throw new Error(`Feature ${feature.id} must not implement an independent AI stack`);
-    }
-    ai.assertSharedStackOnly(`${PROJECT_INTELLIGENCE_MODULE_KEY}.${feature.id}`, false);
-
-    for (const serviceId of feature.sharedServices) {
-      if (!ENGINEERING_SHARED_SERVICE_IDS.includes(serviceId as never)) {
-        throw new Error(`Feature ${feature.id} references unknown shared service ${serviceId}`);
-      }
-      if (!services.has(serviceId as never)) {
-        throw new Error(`Feature ${feature.id} missing shared service ${serviceId}`);
-      }
-    }
-    for (const cap of feature.sharedAiCapabilities) {
-      if (!ENGINEERING_AI_CAPABILITY_IDS.includes(cap as never)) {
-        throw new Error(`Feature ${feature.id} references unknown AI capability ${cap}`);
-      }
-    }
-  }
 }
