@@ -36,7 +36,8 @@ export type MeetingAiMinutesOutput = {
 };
 
 /**
- * Local cert-safe meeting AI — no network. Used when governed AI is unavailable.
+ * Local cert-safe meeting AI port implementation — no network.
+ * Consumes Engineering Intelligence Framework ports; not an independent AI stack.
  * Does not fabricate document citations.
  */
 export interface MeetingAiPort {

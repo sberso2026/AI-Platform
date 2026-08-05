@@ -19,7 +19,7 @@ routes, permissions, workspace visibility, search, AI, or events.
 
 | Module key | Name | Status |
 |------------|------|--------|
-| `project_intelligence` | Project Intelligence | Available (foundation) |
+| `project_intelligence` | Project Intelligence | Production (Phase 8B) |
 | `inspection_intelligence` | Inspection Intelligence | Coming soon |
 | `project_controls` | Project Controls | Coming soon |
 | `digital_twin` | Digital Twin | Coming soon |
@@ -57,4 +57,5 @@ Modules consume shared AI interfaces — independent AI stacks are forbidden.
 ## Related
 
 - [RTB_AI_PLATFORM_PRODUCT_MODEL.md](./RTB_AI_PLATFORM_PRODUCT_MODEL.md)
+- [PROJECT_INTELLIGENCE_PHASE_8B.md](./PROJECT_INTELLIGENCE_PHASE_8B.md)
 - Package: `@rtb/engineering-os`

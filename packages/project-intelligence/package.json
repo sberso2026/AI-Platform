@@ -16,6 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@rtb/engineering-os": "workspace:*",
     "@rtb/types": "workspace:*",
     "@supabase/supabase-js": "^2.49.8",
     "mammoth": "^1.12.0",

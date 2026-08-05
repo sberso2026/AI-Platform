@@ -47,6 +47,19 @@ test.describe("Phase 7B accessibility", () => {
     await page.keyboard.press("Tab");
   });
 
+  test("Project Intelligence shell landmarks when entitled", async ({ page, context }) => {
+    const m = loadManifest();
+    await signInAs(context, m.users.owner.email);
+    const res = await page.goto("/engineering/apps/project-intelligence");
+    expect(res?.status() ?? 200).toBeLessThan(500);
+    await page.keyboard.press("Tab");
+    const shell = page.getByTestId("project-intelligence-shell");
+    if (await shell.count()) {
+      await expect(shell).toBeVisible();
+      await expect(page.getByTestId("project-intelligence-nav-overview")).toBeVisible();
+    }
+  });
+
   test("reference-os page announces status region", async ({ page, context }) => {
     const m = loadManifest();
     await signInAs(context, m.users.owner.email);

@@ -410,6 +410,9 @@ importers:
 
   packages/project-intelligence:
     dependencies:
+      '@rtb/engineering-os':
+        specifier: workspace:*
+        version: link:../engineering-os
       '@rtb/types':
         specifier: workspace:*
         version: link:../types

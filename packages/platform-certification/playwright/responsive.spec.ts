@@ -44,5 +44,17 @@ test.describe("Phase 7B responsive", () => {
       const overflowX = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
       expect(overflowX).toBe(false);
     });
+
+    test(`project intelligence ${vp.width}x${vp.height}`, async ({ page, context }) => {
+      const m = loadManifest();
+      await signInAs(context, m.users.owner.email);
+      await page.setViewportSize(vp);
+      const res = await page.goto("/engineering/apps/project-intelligence");
+      expect(res?.status() ?? 200).toBeLessThan(500);
+      const overflowX = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      );
+      expect(overflowX).toBe(false);
+    });
   }
 });
