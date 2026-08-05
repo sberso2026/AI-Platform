@@ -21,7 +21,7 @@
     "test:meetings": "vitest run src/meetings/lifecycle.test.ts src/meetings/entitlement-isolation.test.ts src/meetings/provider-unavailable.test.ts src/meetings/consent.test.ts src/meetings/nested-error.test.ts src/meetings/baseline-unchanged.test.ts src/meetings/service-surfaces.test.ts",
     "test:meeting-processing": "vitest run src/meetings/processing-domain.test.ts src/meetings/foundation-baseline.test.ts src/meetings/legacy-equivalence.test.ts src/meetings/provider-unavailable.test.ts src/meetings/consent.test.ts src/meetings/nested-error.test.ts src/meetings/baseline-unchanged.test.ts src/gates.test.ts",
     "test:teams-provider": "vitest run src/meetings/teams-provider-domain.test.ts src/meetings/teams-baselines.test.ts src/gates.test.ts",
-    "test:teams-live-provider": "vitest run src/meetings/teams-live-provider-domain.test.ts src/meetings/teams-live-workflow-hygiene.test.ts src/gates.test.ts",
+    "test:teams-live-provider": "vitest run src/meetings/teams-live-provider-domain.test.ts src/meetings/teams-live-workflow-hygiene.test.ts src/meetings/teams-graph-subscription-permission-hygiene.test.ts src/gates.test.ts",
     "test:documents": "vitest run src/documents/durable-runtime.test.ts src/documents/grounded-answer-schema.test.ts src/documents/legacy-equivalence.test.ts src/documents/provider-closure.test.ts src/documents/provider-security.test.ts src/documents/query-plans.test.ts src/documents/state-contracts.test.ts src/documents/storage-policy.test.ts",
     "test:provider-live": "vitest run src/documents/provider-live.test.ts",
     "test:rls": "vitest run src/rls/",

@@ -306,8 +306,28 @@ export class LiveMicrosoftGraphClient implements MicrosoftGraphClientPort {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: {
+          code?: string;
+          message?: string;
+          innerError?: { code?: string; "request-id"?: string; date?: string };
+        };
+      };
+      const graphError = payload.error;
       throw Object.assign(new Error("teams_subscription_failed"), {
         code: "teams_subscription_failed",
+        httpStatus: response.status,
+        graphCode: graphError?.code ?? null,
+        graphMessage: graphError?.message ?? null,
+        innerErrorCode: graphError?.innerError?.code ?? null,
+        requestId:
+          graphError?.innerError?.["request-id"] ??
+          response.headers.get("request-id") ??
+          null,
+        clientRequestId: response.headers.get("client-request-id") ?? input.correlationId,
+        resource: input.resource,
+        expirationDateTime: input.expirationDateTime,
+        lifecycleNotificationUrlSupplied: Boolean(input.lifecycleNotificationUrl),
       });
     }
     const json = (await response.json()) as Record<string, unknown>;

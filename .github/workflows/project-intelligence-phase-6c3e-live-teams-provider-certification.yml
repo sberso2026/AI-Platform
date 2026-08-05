@@ -59,7 +59,7 @@ jobs:
           PI_REQUIRE_AZURE_DI: "0"
         run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
       - name: Workflow hygiene regression (no tsx -e top-level await)
-        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-live-workflow-hygiene.test.ts
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/meetings/teams-live-workflow-hygiene.test.ts src/meetings/teams-graph-subscription-permission-hygiene.test.ts
 
   live-env-validation:
     needs: preflight

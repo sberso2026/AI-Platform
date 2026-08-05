@@ -99,6 +99,7 @@ export type TeamsErrorCode =
   | "teams_meeting_mapping_conflict"
   | "teams_tenant_mismatch"
   | "teams_subscription_failed"
+  | "teams_subscription_resource_unsupported"
   | "teams_subscription_expired"
   | "teams_webhook_validation_failed"
   | "teams_webhook_replay_detected"
@@ -117,6 +118,7 @@ const TEAMS_STATUS: Record<TeamsErrorCode, number> = {
   teams_meeting_mapping_conflict: 409,
   teams_tenant_mismatch: 403,
   teams_subscription_failed: 422,
+  teams_subscription_resource_unsupported: 422,
   teams_subscription_expired: 409,
   teams_webhook_validation_failed: 401,
   teams_webhook_replay_detected: 409,

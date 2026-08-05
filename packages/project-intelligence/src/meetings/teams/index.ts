@@ -14,3 +14,4 @@ export * from "./teams-provider-readiness";
 export * from "./teams-latency";
 export * from "./microsoft-graph-permission-service";
 export * from "./teams-meeting-end-detection";
+export * from "./teams-subscription-resource-permissions";

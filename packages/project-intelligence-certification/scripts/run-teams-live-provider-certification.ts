@@ -22,6 +22,7 @@ import {
   measureLatencyMs,
   TeamsMeetingEndDetectionService,
   redactMicrosoftTenantId,
+  CERTIFIED_TEAMS_TRANSCRIPT_SUBSCRIPTION_RESOURCE,
 } from "@rtb/project-intelligence";
 
 const packageDir = process.cwd();
@@ -236,8 +237,8 @@ async function main(): Promise<void> {
     const graph = createMicrosoftGraphClient(config, tokens);
     const { result, latencyMs } = await measureLatencyMs(() =>
       graph.createSubscription({
-        resource: "/communications/onlineMeetings",
-        changeType: "updated",
+        resource: CERTIFIED_TEAMS_TRANSCRIPT_SUBSCRIPTION_RESOURCE,
+        changeType: "created",
         notificationUrl: config.notificationUrl!,
         lifecycleNotificationUrl: config.lifecycleNotificationUrl,
         clientState: config.webhookSecret,

@@ -69,3 +69,11 @@ packages/project-intelligence-certification/fixtures/providers/
 out/
 .vercel/
 
+.vercel
+.env*
+
+# Operator scratch (never commit)
+secret value
+*.secret
+
+Ignore.txt
