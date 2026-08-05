@@ -10,7 +10,7 @@ const required = [
 export function main(): void {
   const target = process.env.PLATFORM_CERTIFICATION_TARGET ?? "hosted_staging";
   if (process.env.ALLOW_PRODUCTION_CERTIFICATION === "true") {
-    throw new Error("Production destructive certification is blocked for Phase 7A");
+    throw new Error("Production destructive certification is blocked for Phase 7B");
   }
   if (target !== "hosted_staging") {
     throw new Error(`Unsupported certification target: ${target}`);

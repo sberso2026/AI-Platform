@@ -150,6 +150,11 @@ export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolea
     if (!active.includes("engineering")) return false;
   }
 
+  if (item.group === "reference_os") {
+    const active = context.activeOperatingSystemIds ?? [];
+    if (!active.includes("reference-os")) return false;
+  }
+
   if (
     (item.id === "subscription-billing" ||
       item.id === "growth-credits") &&

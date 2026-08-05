@@ -20,6 +20,13 @@ export async function emitLifecycleObservation(
   events: CommerceEventService,
   input: LifecycleObservationInput
 ): Promise<void> {
+  const previousState = input.payload?.previousState ?? input.payload?.previous_state ?? null;
+  const nextState = input.payload?.nextState ?? input.payload?.next_state ?? null;
+  const durationMs = input.payload?.durationMs ?? input.payload?.duration_ms ?? null;
+  const operatingSystemKey =
+    input.payload?.operatingSystemKey ?? input.payload?.operating_system_key ?? null;
+  const requestId = input.payload?.requestId ?? input.payload?.request_id ?? input.correlationId ?? null;
+
   await events.emit({
     eventType: input.eventType,
     tenantId: input.tenantId,
@@ -36,10 +43,16 @@ export async function emitLifecycleObservation(
       actor_id: input.actorUserId ?? null,
       actor_role: input.actorRole ?? null,
       operation: input.operation,
+      action: input.operation,
       result: input.result,
       error_code: input.errorCode ?? null,
       timestamp: new Date().toISOString(),
       correlation_id: input.correlationId ?? null,
+      request_id: requestId,
+      operating_system_key: operatingSystemKey,
+      previous_state: previousState,
+      next_state: nextState,
+      duration_ms: durationMs,
     },
   });
 }

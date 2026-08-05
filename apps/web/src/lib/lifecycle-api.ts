@@ -18,7 +18,7 @@ export interface LifecycleErrorBody {
     code: string;
     message: string;
     requestId: string;
-    details?: Record<string, unknown>;
+    details: Record<string, unknown>;
   };
 }
 
@@ -29,7 +29,10 @@ export function lifecycleErrorResponse(
   requestId: string,
   details?: Record<string, unknown>,
 ): NextResponse<LifecycleErrorBody> {
-  return NextResponse.json({ error: { code, message, requestId, ...(details ? { details } : {}) } }, { status });
+  return NextResponse.json(
+    { error: { code, message, requestId, details: details ?? {} } },
+    { status },
+  );
 }
 
 export function unauthenticatedResponse(requestId: string): NextResponse<LifecycleErrorBody> {

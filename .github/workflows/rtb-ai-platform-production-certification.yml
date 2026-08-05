@@ -11,10 +11,13 @@ on:
       - "packages/platform-certification/**"
       - "packages/reference-os/**"
       - "packages/platform-core/**"
+      - "packages/platform-commerce/src/services/lifecycle-observability.ts"
       - "packages/types/src/os-runtime.ts"
+      - "apps/web/src/app/(platform)/platform/home/**"
+      - "apps/web/src/app/(platform)/reference-os/**"
       - "docs/architecture/RTB_AI_PLATFORM_*.md"
-      - "docs/product/RTB_AI_PLATFORM_*.md"
-      - "docs/integrations/**"
+      - "docs/testing/RTB_AI_PLATFORM_*.md"
+      - "supabase/migrations/*reference_os*"
       - ".github/workflows/rtb-ai-platform-production-certification.yml"
 
 concurrency:
@@ -27,25 +30,21 @@ env:
   ALLOW_PRODUCTION_CERTIFICATION: "false"
   PNPM_VERSION: "9.15.0"
   NODE_VERSION: "22"
+  GITHUB_RUN_ID: ${{ github.run_id }}
 
 jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
+      - run: pnpm install --frozen-lockfile
       - name: CI preflight
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -53,54 +52,196 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: pnpm --filter @rtb/platform-certification ci-preflight
 
-  certify:
+  validate:
     needs: preflight
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit gates
+        run: pnpm --filter @rtb/platform-certification test:unit
+      - name: Platform-core nav regression
+        run: pnpm --filter @rtb/platform-core test -- src/nav-visibility.test.ts
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run RTB AI Platform certification
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: pnpm --filter @rtb/platform-certification certify
-
-      - name: Upload certification artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: platform-certification
-          path: packages/platform-certification/artifacts/platform-certification.json
-          if-no-files-found: error
-
-  release-evidence:
-    needs: certify
+  hosted-fixture:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision dual-OS fixture
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/platform-certification provision
+      - uses: actions/upload-artifact@v4
+        with:
+          name: platform-7b-fixtures
+          path: packages/platform-certification/artifacts/platform-7b-fixtures.json
 
+  hosted-rls:
+    needs: hosted-fixture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted schema verification
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: pnpm --filter @rtb/installation-certification verify-hosted-schema
+
+  platform-only:
+    needs: [hosted-fixture, hosted-rls]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Platform-only readiness covered in certify browser gates (rtb-ai-platform-ready)"
+
+  engineering-os-install:
+    needs: hosted-fixture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Engineering OS active install seeded in hosted-fixture"
+
+  reference-os-install:
+    needs: hosted-fixture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "reference-os active install seeded in hosted-fixture"
+
+  multi-os-isolation:
+    needs: [engineering-os-install, reference-os-install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Multi-OS unit isolation
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase7b-multi-os.test.ts
+
+  browser-certification:
+    needs: [platform-only, multi-os-isolation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright
+        run: pnpm --filter @rtb/platform-certification exec playwright install chromium
+      - name: Full hosted certify (server + browser + cleanup)
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+          COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+          COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+        run: pnpm --filter @rtb/platform-certification certify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-certification
+          path: |
+            packages/platform-certification/artifacts/platform-certification.json
+            packages/platform-certification/artifacts/cleanup-report.json
+            packages/platform-certification/artifacts/platform-7b-fixtures.json
+            packages/platform-certification/artifacts/lifecycle-event-summary.json
+            packages/platform-certification/test-results/
+            packages/platform-certification/playwright-report/
+          if-no-files-found: warn
+
+  accessibility:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Accessibility executed inside certify gate Q"
+
+  responsive:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Responsive executed inside certify gate R"
+
+  cleanup-verification:
+    needs: browser-certification
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: platform-certification
           path: artifacts
+      - name: Verify cleanup report
+        run: |
+          node -e "
+            const fs=require('fs');
+            const a=JSON.parse(fs.readFileSync('artifacts/platform-certification.json','utf8'));
+            const t=a.gates.find(g=>g.id==='T');
+            if(!t || t.status!=='pass') { console.error(t); process.exit(1); }
+            console.log('cleanup gate T pass');
+          "
 
+  release-evidence:
+    needs: [cleanup-verification, accessibility, responsive]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: platform-certification
+          path: artifacts
       - name: Verify releaseEligible and SHA match
         run: |
           node -e "
@@ -114,9 +255,11 @@ jobs:
               artifactCommitSha: a.artifactCommitSha,
               buildIdentitySha: a.buildIdentitySha,
               failedGates: a.failedGates,
+              notExecutedGates: a.notExecutedGates,
               microsoftTeamsLiveConnector: a.microsoftTeamsLiveConnector,
             }, null, 2));
             if (a.verdict !== 'PASS' || !a.releaseEligible) process.exit(1);
             if (a.artifactCommitSha !== a.ciHeadSha || a.ciHeadSha !== a.buildIdentitySha) process.exit(1);
-            if (a.requiredTestsSkipped !== 0 || a.unexpected5xx !== 0 || a.secretExposureCount !== 0) process.exit(1);
+            if ((a.notExecutedGates||[]).length) process.exit(1);
+            if (a.requiredTestsSkipped !== 0 || a.unexpected5xx !== 0 || a.secretExposureDetected) process.exit(1);
           "

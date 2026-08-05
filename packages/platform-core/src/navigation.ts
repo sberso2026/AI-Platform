@@ -5,6 +5,7 @@ export const NAV_GROUP_ORDER = [
   "engineering",
   "engineering_registers",
   "engineering_admin",
+  "reference_os",
   "platform",
   "platform_advanced",
   "intelligence",
@@ -656,9 +657,22 @@ export const ADMIN_NAVIGATION: NavItem[] = [
   },
 ];
 
+/** Certification-only Reference OS nav — gated by activeOperatingSystemIds */
+export const REFERENCE_OS_NAVIGATION: NavItem[] = [
+  {
+    id: "reference-os-home",
+    label: "Reference Home",
+    icon: "Box",
+    href: "/reference-os",
+    group: "reference_os",
+    audience: "viewer",
+  },
+];
+
 /** All registered routes — engineering-first ordering */
 export const FULL_NAVIGATION: NavItem[] = [
   ...ENGINEERING_NAVIGATION,
+  ...REFERENCE_OS_NAVIGATION,
   ...PLATFORM_NAVIGATION,
   ...ADVANCED_SIDEBAR_NAVIGATION,
   ...LEGACY_PLATFORM_NAVIGATION,
@@ -707,6 +721,7 @@ export const NAV_GROUP_LABELS: Record<string, string> = {
   engineering: "Engineering OS",
   engineering_registers: "Engineering Registers",
   engineering_admin: "Engineering Administration",
+  reference_os: "Reference OS",
   platform: "System Administration",
   platform_advanced: "Advanced Platform Tools",
   intelligence: "Intelligence",
@@ -748,6 +763,12 @@ export const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     label: "Engineering Administration",
     groups: ["engineering_admin"],
     defaultExpanded: false,
+  },
+  {
+    id: "reference_os",
+    label: "Reference OS",
+    groups: ["reference_os"],
+    defaultExpanded: true,
   },
   {
     id: "platform_admin",

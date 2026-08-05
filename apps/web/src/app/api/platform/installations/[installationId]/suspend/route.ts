@@ -33,6 +33,13 @@ export async function POST(request: Request, { params }: Params) {
       correlationId: requestId,
       aggregateType: "installation",
       aggregateId: installationId,
+      payload: {
+        requestId,
+        previousState: "active",
+        nextState: "suspended",
+        operatingSystemKey: data?.product_id ?? null,
+        durationMs: 0,
+      },
     });
     return NextResponse.json({ data, requestId });
   } catch (err) {
