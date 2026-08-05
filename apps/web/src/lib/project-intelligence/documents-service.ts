@@ -8,12 +8,18 @@ import {
   DocumentIntelligenceError,
   GovernedEmbeddingAdapter,
   PostgresDocumentIndexAdapter,
+  ProjectIntelligenceDocumentComparisonService,
   ProjectIntelligenceDocumentRetrievalService,
   ProjectIntelligenceDocumentWorker,
+  applyDocumentReviewAction,
+  buildGroundedAnswer,
+  detectConflictingCitations,
   enqueueDocumentProcessing,
+  evaluateAbstention,
   isAuthoritativeAnswerAllowed,
   type AnswerStatus,
   type DocumentProcessingStatus,
+  type DocumentReviewAction,
   type GroundedAnswerContract,
 } from "@rtb/project-intelligence/server";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
@@ -538,7 +544,7 @@ export async function queryDocuments(
   const generatedAt = new Date().toISOString();
 
   if (body.abstain) {
-    return {
+    return buildGroundedAnswer({
       answerStatus: "abstained",
       confidence: 0.2,
       citations: [],
@@ -546,16 +552,16 @@ export async function queryDocuments(
       documentsUsed: [],
       retrievalTraceId,
       model: "governed",
-      promptVersion: "6c2-final-1",
+      promptVersion: "8c-document-1",
       processingVersions: ["1"],
       warnings: ["No authorized evidence met the governed confidence threshold"],
       reviewState: "pending",
       generatedAt,
-    };
+    });
   }
 
   if (body.conflict) {
-    return {
+    return buildGroundedAnswer({
       answerStatus: "conflicting_evidence",
       confidence: 0.45,
       citations: [],
@@ -563,12 +569,12 @@ export async function queryDocuments(
       documentsUsed: body.documentIds ?? [],
       retrievalTraceId,
       model: "governed",
-      promptVersion: "6c2-final-1",
+      promptVersion: "8c-document-1",
       processingVersions: ["1"],
       warnings: ["Material conflict between revisions requires human review"],
       reviewState: "pending",
       generatedAt,
-    };
+    });
   }
 
   const supabase = service();
@@ -592,37 +598,53 @@ export async function queryDocuments(
     },
   );
 
-  if (!result.citations.length) {
-    return {
-      answerStatus: "abstained",
-      confidence: 0.15,
-      citations: [],
-      evidence: [],
-      documentsUsed: body.documentIds ?? [],
+  const conflict = detectConflictingCitations(result.citations);
+  const confidence = Math.min(0.92, Math.max(0.15, result.maxScore));
+  const abstention = evaluateAbstention({
+    authorized: true,
+    citations: result.citations,
+    maxScore: result.maxScore,
+    scoreThreshold: 0.05,
+    confidence,
+    confidenceThreshold: 0.5,
+    conflictingEvidence: conflict,
+  });
+
+  if (abstention.shouldAbstain) {
+    return buildGroundedAnswer({
+      answerStatus: abstention.answerStatus,
+      confidence,
+      citations: result.citations,
+      evidence: result.citations,
+      documentsUsed: body.documentIds ?? [
+        ...new Set(result.citations.map((citation) => citation.engineeringDocumentId)),
+      ],
       retrievalTraceId: result.retrievalTraceId || retrievalTraceId,
+      model: embeddings.modelId,
+      promptVersion: "8c-document-1",
       processingVersions: ["1"],
-      warnings: ["Insufficient retrieval evidence for a grounded answer"],
+      warnings: [abstention.reason],
+      reviewState: conflict ? "pending" : "none",
       generatedAt,
-    };
+    });
   }
 
   const top = result.citations[0]!;
-  const answerStatus: AnswerStatus = "answered";
-  return {
-    answer: `Based on ${top.documentNumber ?? top.engineeringDocumentId} rev ${top.revision}: ${top.excerpt.slice(0, 200)}`,
-    answerStatus,
-    confidence: Math.min(0.92, Math.max(0.55, result.maxScore)),
+  return buildGroundedAnswer({
+    draftAnswer: `Based on ${top.documentNumber ?? top.engineeringDocumentId} rev ${top.revision}: ${top.excerpt.slice(0, 200)}`,
+    answerStatus: "answered" satisfies AnswerStatus,
+    confidence,
     citations: result.citations,
     evidence: result.citations,
     documentsUsed: [...new Set(result.citations.map((citation) => citation.engineeringDocumentId))],
     retrievalTraceId: result.retrievalTraceId || retrievalTraceId,
-    model: embeddings instanceof GovernedEmbeddingAdapter ? embeddings.modelId : "governed",
-    promptVersion: "6c2-final-1",
+    model: embeddings.modelId,
+    promptVersion: "8c-document-1",
     processingVersions: ["1"],
     warnings: [],
     reviewState: "none",
     generatedAt,
-  };
+  });
 }
 
 export async function compareDocuments(
@@ -635,15 +657,48 @@ export async function compareDocuments(
   }
   await getDocumentIntelligence(context, body.leftDocumentId);
   await getDocumentIntelligence(context, body.rightDocumentId);
+
+  const workspaceId = requireWorkspace(context);
+  const loadText = async (documentId: string) => {
+    const { data } = await context.ctx.supabase
+      .from("project_intelligence_document_chunks")
+      .select("content")
+      .eq("engineering_document_id", documentId)
+      .eq("tenant_id", context.ctx.tenantId)
+      .eq("workspace_id", workspaceId)
+      .is("deleted_at", null)
+      .order("chunk_index", { ascending: true })
+      .limit(200);
+    return (data ?? []).map((row) => String((row as { content?: string }).content ?? "")).join("\n");
+  };
+
+  const leftText = await loadText(body.leftDocumentId);
+  const rightText = await loadText(body.rightDocumentId);
+  const leftRevision = body.leftRevision ?? "A";
+  const rightRevision = body.rightRevision ?? "B";
+  const comparison = new ProjectIntelligenceDocumentComparisonService().compare({
+    engineeringDocumentId: body.rightDocumentId,
+    baseRevision: leftRevision,
+    targetRevision: rightRevision,
+    baseText: leftText,
+    targetText: rightText,
+  });
+
   return {
     leftDocumentId: body.leftDocumentId,
     rightDocumentId: body.rightDocumentId,
-    leftRevision: body.leftRevision ?? "A",
-    rightRevision: body.rightRevision ?? "B",
-    changes: [{ kind: "section", summary: "Revision comparison requires human review", leftExcerpt: "", rightExcerpt: "" }],
-    impactCandidates: ["Engineering impact must be confirmed by a human reviewer"],
-    reviewRequired: true,
+    leftRevision,
+    rightRevision,
+    changes: comparison.changes.map((change) => ({
+      kind: change.kind,
+      summary: change.excerpt.slice(0, 120),
+      leftExcerpt: change.kind === "removed" ? change.excerpt : "",
+      rightExcerpt: change.kind !== "removed" ? change.excerpt : "",
+    })),
+    impactCandidates: [...comparison.impactCandidates],
+    reviewRequired: true as const,
     comparisonId: randomUUID(),
+    evidence: comparison.evidence,
   };
 }
 
@@ -659,11 +714,64 @@ export async function listReviewQueue(context: CommerceHandlerContext) {
   return data ?? [];
 }
 
-export async function approveReview(context: CommerceHandlerContext, reviewId: string) {
+export async function decideReview(
+  context: CommerceHandlerContext,
+  reviewId: string,
+  body: {
+    action: DocumentReviewAction;
+    reasonCode?: string;
+    comment?: string;
+    assignedToUserId?: string;
+    evidenceIds?: string[];
+  },
+) {
   const workspaceId = requireWorkspace(context);
+  const decision = applyDocumentReviewAction({
+    action: body.action,
+    reviewerUserId: context.ctx.userId,
+    reasonCode: body.reasonCode,
+    comment: body.comment,
+    assignedToUserId: body.assignedToUserId,
+    evidenceIds: body.evidenceIds,
+  });
+
+  const { data: existing, error: loadError } = await context.ctx.supabase
+    .from("project_intelligence_document_review_items")
+    .select("metadata")
+    .eq("id", reviewId)
+    .eq("tenant_id", context.ctx.tenantId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle();
+  if (loadError || !existing) {
+    throw new DocumentIntelligenceError("document_not_found", "Review item was not found", 404);
+  }
+
+  const metadata = {
+    ...((existing.metadata as Record<string, unknown> | null) ?? {}),
+    ...decision.metadataPatch,
+    decisionHistory: [
+      ...((((existing.metadata as Record<string, unknown> | null)?.decisionHistory as unknown[]) ?? []) as unknown[]),
+      {
+        action: body.action,
+        reviewerUserId: decision.decidedBy,
+        at: decision.decidedAt,
+        reasonCode: decision.reasonCode,
+        comment: decision.decisionComment,
+      },
+    ],
+  };
+
   const { data, error } = await context.ctx.supabase
     .from("project_intelligence_document_review_items")
-    .update({ review_state: "approved", updated_at: new Date().toISOString() })
+    .update({
+      review_state: decision.reviewState,
+      decided_by: decision.decidedBy,
+      decided_at: decision.decidedAt,
+      decision_comment: decision.decisionComment ?? null,
+      assigned_to: decision.assignedTo ?? null,
+      metadata,
+      updated_at: decision.decidedAt,
+    })
     .eq("id", reviewId)
     .eq("tenant_id", context.ctx.tenantId)
     .eq("workspace_id", workspaceId)
@@ -672,23 +780,31 @@ export async function approveReview(context: CommerceHandlerContext, reviewId: s
   if (error || !data) {
     throw new DocumentIntelligenceError("document_not_found", "Review item was not found", 404);
   }
-  return { ...data, coreMutationApplied: false };
+
+  await context.ctx.supabase.from("project_intelligence_document_audit").insert({
+    tenant_id: context.ctx.tenantId,
+    workspace_id: workspaceId,
+    engineering_document_id: data.engineering_document_id,
+    actor_id: decision.decidedBy,
+    action: decision.auditEventType,
+    event_id: `${reviewId}:${body.action}:${decision.decidedAt}`,
+    details: {
+      reviewId,
+      action: body.action,
+      reasonCode: decision.reasonCode,
+      coreMutationApplied: false,
+    },
+  });
+
+  return { ...data, coreMutationApplied: false as const };
+}
+
+export async function approveReview(context: CommerceHandlerContext, reviewId: string) {
+  return decideReview(context, reviewId, { action: "approve" });
 }
 
 export async function rejectReview(context: CommerceHandlerContext, reviewId: string) {
-  const workspaceId = requireWorkspace(context);
-  const { data, error } = await context.ctx.supabase
-    .from("project_intelligence_document_review_items")
-    .update({ review_state: "rejected", updated_at: new Date().toISOString() })
-    .eq("id", reviewId)
-    .eq("tenant_id", context.ctx.tenantId)
-    .eq("workspace_id", workspaceId)
-    .select("*")
-    .maybeSingle();
-  if (error || !data) {
-    throw new DocumentIntelligenceError("document_not_found", "Review item was not found", 404);
-  }
-  return data;
+  return decideReview(context, reviewId, { action: "reject" });
 }
 
 export async function getProcessingHealth(context: CommerceHandlerContext) {

@@ -6,9 +6,9 @@ export default function FindingsIntelligencePage() {
       <p className="text-sm font-medium text-cyan-700">Findings Intelligence</p>
       <h2 className="mt-1 text-2xl font-semibold text-slate-900">Findings</h2>
       <p className="mt-2 max-w-2xl text-slate-600">
-        Consolidated findings from Document Intelligence and Meeting Intelligence. Findings never
-        mutate Engineering Core without human approval. Shared Engineering Domain remains the system
-        of record.
+        Consolidated findings from Document Intelligence and Meeting Intelligence. Document Intelligence
+        emits typed candidate findings only; Findings Intelligence owns lifecycle and disposition.
+        Findings never mutate Engineering Core without human approval.
       </p>
       <ul className="mt-8 space-y-3 text-sm text-slate-700">
         <li className="rounded-md border border-slate-200 px-4 py-3">

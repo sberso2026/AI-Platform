@@ -12,7 +12,9 @@ export type EngineeringSharedServiceId =
   | "version_history"
   | "audit"
   | "reporting"
-  | "ai_context";
+  | "ai_context"
+  | "activity"
+  | "notification";
 
 export const ENGINEERING_SHARED_SERVICE_IDS: EngineeringSharedServiceId[] = [
   "document_references",
@@ -24,6 +26,8 @@ export const ENGINEERING_SHARED_SERVICE_IDS: EngineeringSharedServiceId[] = [
   "audit",
   "reporting",
   "ai_context",
+  "activity",
+  "notification",
 ];
 
 export interface EngineeringSharedServiceDescriptor {
@@ -86,6 +90,18 @@ export const ENGINEERING_SHARED_SERVICES: EngineeringSharedServiceDescriptor[] =
     id: "ai_context",
     name: "AI Context",
     description: "Shared AI context assembly for modules",
+    owner: "engineering-os-core",
+  },
+  {
+    id: "activity",
+    name: "Activity",
+    description: "Shared engineering activity event recording",
+    owner: "engineering-os-core",
+  },
+  {
+    id: "notification",
+    name: "Notification",
+    description: "Shared notification dispatch for engineering workflows",
     owner: "engineering-os-core",
   },
 ];

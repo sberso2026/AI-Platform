@@ -1,0 +1,339 @@
+name: RTB AI Platform Phase 8C Document Intelligence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+    paths:
+      - "packages/project-intelligence/**"
+      - "packages/project-intelligence-certification/**"
+      - "packages/platform-certification/**"
+      - "packages/engineering-os/**"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/project-intelligence/documents/**"
+      - "apps/web/src/lib/project-intelligence/documents-service.ts"
+      - "apps/web/src/components/engineering/project-intelligence-shell.tsx"
+      - "docs/migration/PROJECT_INTELLIGENCE_DOCUMENT_PHASE_8C*"
+      - "docs/architecture/PROJECT_INTELLIGENCE_DOCUMENT*"
+      - "docs/testing/PROJECT_INTELLIGENCE_DOCUMENT_PRODUCTION_BASELINE.md"
+      - "supabase/migrations/*project_intelligence_document*"
+      - ".github/workflows/rtb-ai-platform-phase-8c-document-intelligence.yml"
+
+concurrency:
+  group: rtb-ai-platform-phase-8c-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  GITHUB_RUN_ID: ${{ github.run_id }}
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/platform-certification test:unit
+      - run: pnpm --filter @rtb/project-intelligence test
+      - run: pnpm --filter @rtb/engineering-os test
+
+  hosted-schema:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification verify-hosted-schema
+
+  rls-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Document RLS
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/document-rls-matrix.test.ts
+
+  durable-processing:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Durable runtime
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/durable-runtime.test.ts
+
+  provider-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/provider-closure.test.ts src/documents/provider-security.test.ts src/documents/storage-policy.test.ts
+
+  retrieval-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/retrieval-hybrid.test.ts
+      - run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/query-plans.test.ts
+
+  grounding-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/documents/grounded-answer-schema.test.ts
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/abstention-policy.test.ts tests/grounded-answer-citations.test.ts
+
+  revision-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/comparison-service.test.ts
+
+  findings-handoff:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/phase8c-document-integration.test.ts
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8c-document-intelligence-integration.test.ts
+
+  review-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/phase8c-document-integration.test.ts
+
+  browser-certification:
+    needs:
+      - hosted-schema
+      - rls-certification
+      - durable-processing
+      - provider-certification
+      - retrieval-certification
+      - grounding-certification
+      - revision-certification
+      - findings-handoff
+      - review-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Phase 8C certify (gates A–X)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CERTIFY_BROWSER: "0"
+        run: pnpm --filter @rtb/project-intelligence-certification certify:phase8c
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase8c-document-intelligence-certification
+          path: packages/project-intelligence-certification/artifacts/phase8c-document-intelligence-certification.json
+
+  accessibility:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8c-document-intelligence-certification
+          path: artifacts
+      - name: Verify accessibility gate T
+        run: |
+          node -e "const a=require('./artifacts/phase8c-document-intelligence-certification.json'); const g=a.gates.find(x=>x.id==='T'); if(!g||g.status!=='pass') { console.error(g); process.exit(1);} "
+
+  responsive:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8c-document-intelligence-certification
+          path: artifacts
+      - name: Verify responsive gate U
+        run: |
+          node -e "const a=require('./artifacts/phase8c-document-intelligence-certification.json'); const g=a.gates.find(x=>x.id==='U'); if(!g||g.status!=='pass') { console.error(g); process.exit(1);} "
+
+  performance:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8c-document-intelligence-certification
+          path: artifacts
+      - name: Verify performance gate V
+        run: |
+          node -e "const a=require('./artifacts/phase8c-document-intelligence-certification.json'); const g=a.gates.find(x=>x.id==='V'); if(!g||g.status!=='pass') { console.error(g); process.exit(1);} "
+
+  secret-scan:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8c-document-intelligence-certification
+          path: artifacts
+      - name: Verify secret gate W
+        run: |
+          node -e "const a=require('./artifacts/phase8c-document-intelligence-certification.json'); if(a.secretExposure) process.exit(1); const g=a.gates.find(x=>x.id==='W'); if(!g||g.status!=='pass') process.exit(1);"
+
+  release-evidence:
+    needs:
+      - accessibility
+      - responsive
+      - performance
+      - secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8c-document-intelligence-certification
+          path: artifacts
+      - name: Verify releaseEligible and productionDocumentIntelligenceReady
+        run: |
+          node -e "
+          const a=require('./artifacts/phase8c-document-intelligence-certification.json');
+          const sha=process.env.GITHUB_SHA;
+          console.log(JSON.stringify({verdict:a.verdict, releaseEligible:a.releaseEligible, productionDocumentIntelligenceReady:a.productionDocumentIntelligenceReady, ciHeadSha:a.ciHeadSha, artifactCommitSha:a.artifactCommitSha, buildIdentitySha:a.buildIdentitySha, failedGates:a.failedGates, notExecutedGates:a.notExecutedGates},null,2));
+          if(a.verdict!=='PASS') process.exit(1);
+          if(!a.releaseEligible) process.exit(1);
+          if(!a.productionDocumentIntelligenceReady) process.exit(1);
+          if(a.failedGateCount!==0 || a.notExecutedGateCount!==0 || a.skippedGateCount!==0) process.exit(1);
+          if(a.ciHeadSha!==sha || a.artifactCommitSha!==a.buildIdentitySha) process.exit(1);
+          "

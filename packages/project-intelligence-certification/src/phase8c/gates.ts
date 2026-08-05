@@ -1,0 +1,28 @@
+export const PHASE_8C_DOCUMENT_INTELLIGENCE_GATES = [
+  ["A", "Repository and build identity"],
+  ["B", "Phase 7B, 8A and 8B regression"],
+  ["C", "Hosted schema and migration identity"],
+  ["D", "Real-JWT RLS"],
+  ["E", "Feature registration"],
+  ["F", "Shared Engineering Services consumption"],
+  ["G", "Durable enqueue and outbox"],
+  ["H", "Multi-worker claim and recovery"],
+  ["I", "Parser and OCR providers"],
+  ["J", "Production embedding provider"],
+  ["K", "Persistent lexical and vector retrieval"],
+  ["L", "Grounded answers and citations"],
+  ["M", "Abstention and conflicting evidence"],
+  ["N", "Revision comparison"],
+  ["O", "Findings Intelligence handoff"],
+  ["P", "Review and human approval"],
+  ["Q", "Entitlement and workspace isolation"],
+  ["R", "HTTP contracts"],
+  ["S", "Browser E2E"],
+  ["T", "Accessibility"],
+  ["U", "Responsive layouts"],
+  ["V", "Performance baseline"],
+  ["W", "Secret exposure"],
+  ["X", "Artifact identity and release eligibility"],
+] as const;
+
+export type Phase8cGateId = (typeof PHASE_8C_DOCUMENT_INTELLIGENCE_GATES)[number][0];

@@ -52,24 +52,28 @@ export default function ProjectIntelligenceDocumentsPage() {
   }
 
   return (
-    <section data-testid="project-intelligence-documents-ready">
+    <section data-testid="document-intelligence-ready">
+      <div data-testid="project-intelligence-documents-ready">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-cyan-700">Document intelligence</p>
+          <p className="text-sm font-medium text-cyan-700">Document Intelligence</p>
           <h2 className="mt-1 text-2xl font-semibold text-slate-900">Documents</h2>
           <p className="mt-2 text-slate-600">
             Engineering Core remains the document register. Processing status below is Project Intelligence only.
           </p>
         </div>
-        <div className="flex gap-3 text-sm">
+        <div className="flex flex-wrap gap-3 text-sm">
           <Link className="text-cyan-700 hover:underline" href="/engineering/apps/project-intelligence/documents/query">
-            Query workspace
+            Ask documents
           </Link>
           <Link className="text-cyan-700 hover:underline" href="/engineering/apps/project-intelligence/documents/review">
             Review queue
           </Link>
+          <Link className="text-cyan-700 hover:underline" href="/engineering/apps/project-intelligence/findings">
+            Findings handoff
+          </Link>
           <Link className="text-cyan-700 hover:underline" href="/engineering/apps/project-intelligence/documents/health">
-            Processing health
+            Provider health
           </Link>
         </div>
       </div>
@@ -125,6 +129,7 @@ export default function ProjectIntelligenceDocumentsPage() {
             )}
           </tbody>
         </table>
+      </div>
       </div>
     </section>
   );

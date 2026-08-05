@@ -128,6 +128,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         capabilities: [
           { id: "document.intelligence.read" },
           { id: "document.intelligence.write" },
+          { id: "document.intelligence.query" },
         ],
       },
       {

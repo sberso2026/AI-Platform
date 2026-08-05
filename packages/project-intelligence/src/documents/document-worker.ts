@@ -375,7 +375,61 @@ export class ProjectIntelligenceDocumentWorker {
     await this.checkpoint(job, "index", "completed", { evidence_count: chunks.length });
 
     await this.transition(job, "indexing", "extracting");
-    await this.checkpoint(job, "extract", "completed", { evidence_count: 0 });
+    const extractTraceId = job.correlation_id ?? randomUUID();
+    let findingCount = 0;
+    if (parsed.warnings.length > 0) {
+      const findingId = randomUUID();
+      const evidenceExcerpt = chunks[0]?.content?.slice(0, 400) ?? parsed.warnings[0] ?? "parser_warning";
+      const { error: findingErr } = await this.supabase.from("project_intelligence_document_findings").insert({
+        id: findingId,
+        tenant_id: job.tenant_id,
+        workspace_id: job.workspace_id,
+        engineering_project_id: job.engineering_project_id,
+        engineering_document_id: job.engineering_document_id,
+        finding_type: "incomplete_document_set",
+        severity: "medium",
+        title: "Document processing warning requires review",
+        description: parsed.warnings.slice(0, 5).join("; "),
+        evidence: [
+          {
+            engineeringDocumentId: job.engineering_document_id,
+            excerpt: evidenceExcerpt,
+            evidenceScore: 0.5,
+            chunkId: chunks[0]?.id ?? null,
+          },
+        ],
+        affected_documents: [job.engineering_document_id],
+        suggested_review_action: "human_review",
+        review_state: "pending",
+        confidence: 0.55,
+        metadata: {
+          handoff: {
+            kind: "document_intelligence.candidate_finding",
+            targetFeatureKey: "findings_intelligence",
+            mayMutateEngineeringCore: false,
+            traceId: extractTraceId,
+          },
+        },
+        created_by: null,
+      });
+      if (!findingErr) {
+        findingCount = 1;
+        await this.supabase.from("project_intelligence_document_review_items").insert({
+          tenant_id: job.tenant_id,
+          workspace_id: job.workspace_id,
+          engineering_project_id: job.engineering_project_id,
+          engineering_document_id: job.engineering_document_id,
+          finding_id: findingId,
+          review_type: "document_finding",
+          title: "Review document processing warning",
+          description: parsed.warnings.slice(0, 3).join("; "),
+          review_state: "pending",
+          confidence: 0.55,
+          metadata: { source: "document_worker_extract", traceId: extractTraceId },
+        });
+      }
+    }
+    await this.checkpoint(job, "extract", "completed", { evidence_count: findingCount });
 
     await this.transition(job, "extracting", "validating_output");
     if (!chunks.length) {
