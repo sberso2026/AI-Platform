@@ -47,7 +47,7 @@ function classifySubscriptionFailure(error: GraphSubError): string {
   if (code.includes("unsupported") || message.includes("resource not supported")) {
     return "unsupported resource";
   }
-  if (status === 401 || status === 403 || code.includes("authorization") || code.includes("accessdenied")) {
+  if (status === 401 || status === 403 || code.includes("authorization") || code.includes("accessdenied") || code.includes("permission_missing") || code.includes("permission")) {
     return "permission";
   }
   if (message.includes("notificationurl") || message.includes("notification url")) {

@@ -170,6 +170,7 @@ export class LiveMicrosoftGraphClient implements MicrosoftGraphClientPort {
     path: string,
     correlationId: string,
     init?: RequestInit,
+    options?: { passThroughClientErrors?: boolean },
   ): Promise<Response> {
     const token = await this.tokenService.getAccessToken(correlationId);
     const response = await this.fetchImpl(`https://graph.microsoft.com/v1.0${path}`, {
@@ -182,11 +183,15 @@ export class LiveMicrosoftGraphClient implements MicrosoftGraphClientPort {
       },
     });
     if (response.status === 429) {
-      throw Object.assign(new Error("teams_rate_limited"), { code: "teams_rate_limited" });
+      throw Object.assign(new Error("teams_rate_limited"), { code: "teams_rate_limited", httpStatus: 429 });
     }
-    if (response.status === 401 || response.status === 403) {
+    if (
+      !options?.passThroughClientErrors &&
+      (response.status === 401 || response.status === 403)
+    ) {
       throw Object.assign(new Error("teams_provider_permission_missing"), {
         code: "teams_provider_permission_missing",
+        httpStatus: response.status,
       });
     }
     return response;
@@ -304,7 +309,7 @@ export class LiveMicrosoftGraphClient implements MicrosoftGraphClientPort {
     const response = await this.graphFetch("/subscriptions", input.correlationId, {
       method: "POST",
       body: JSON.stringify(body),
-    });
+    }, { passThroughClientErrors: true });
     if (!response.ok) {
       const payload = (await response.json().catch(() => ({}))) as {
         error?: {
