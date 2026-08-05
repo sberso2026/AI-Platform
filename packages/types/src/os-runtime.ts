@@ -1,5 +1,5 @@
 /**
- * Cortex AI / Platform OS runtime contracts (Phase 7A).
+ * RTB AI Platform OS runtime contracts (Phase 7A).
  * Lifecycle aligns with commerce ProductInstallationStatus — do not invent a competing machine.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Phase 7A Cortex AI platform certification — unit gates.
+ * Phase 7A / 7A.1 RTB AI Platform certification — unit gates.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
@@ -17,11 +17,11 @@ const ROOT = resolve(import.meta.dirname, "../../..");
 
 describe("Gate A/B — docs and product model", () => {
   const required = [
-    "docs/architecture/CORTEX_AI_PRODUCT_MODEL.md",
-    "docs/architecture/CORTEX_AI_MULTI_OS_RUNTIME.md",
-    "docs/architecture/CORTEX_AI_DATA_OWNERSHIP.md",
-    "docs/architecture/CORTEX_AI_PLATFORM_BOUNDARY_AUDIT.md",
-    "docs/product/CORTEX_AI_PACKAGING_AND_LICENSING.md",
+    "docs/architecture/RTB_AI_PLATFORM_PRODUCT_MODEL.md",
+    "docs/architecture/RTB_AI_PLATFORM_MULTI_OS_RUNTIME.md",
+    "docs/architecture/RTB_AI_PLATFORM_DATA_OWNERSHIP.md",
+    "docs/architecture/RTB_AI_PLATFORM_BOUNDARY_AUDIT.md",
+    "docs/product/RTB_AI_PLATFORM_PACKAGING_AND_LICENSING.md",
     "docs/integrations/MEETING_PROVIDER_STRATEGY.md",
     "docs/integrations/MICROSOFT_TEAMS_CONNECTOR_STATUS.md",
   ];
@@ -48,7 +48,7 @@ describe("Gate B — platform boundary", () => {
     expect(eng?.status).toBe("available");
   });
 
-  it("forbids Subscription.ReadWrite.All invention in cortex docs", () => {
+  it("forbids Subscription.ReadWrite.All invention in integration docs", () => {
     const docs = resolve(ROOT, "docs/integrations");
     for (const name of readdirSync(docs)) {
       const text = readFileSync(resolve(docs, name), "utf8");
@@ -92,12 +92,12 @@ describe("Gate D/E — OS runtime and platform-only nav", () => {
     expect(engDash && canSeeNavItem(engDash, ctx)).toBe(true);
   });
 
-  it("exposes cortex-platform-ready marker in platform home", () => {
+  it("exposes rtb-ai-platform-ready marker in platform home", () => {
     const page = readFileSync(
       resolve(ROOT, "apps/web/src/app/(platform)/platform/home/page.tsx"),
       "utf8",
     );
-    expect(page).toContain('data-testid="cortex-platform-ready"');
+    expect(page).toContain('data-testid="rtb-ai-platform-ready"');
   });
 });
 
@@ -136,8 +136,8 @@ describe("Gate N — connector fallback", () => {
 describe("Gate M — harmless platform admin agent contract", () => {
   it("registers a certification-only platform health summarizer contract", () => {
     const agent = {
-      id: "cortex-platform-health-summarizer",
-      name: "Cortex Platform Health Summarizer",
+      id: "rtb-ai-platform-health-summarizer",
+      name: "RTB AI Platform Health Summarizer",
       certificationOnly: true,
       mayModifyDomainData: false,
       mayApproveBusinessDecisions: false,

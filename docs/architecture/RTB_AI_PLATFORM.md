@@ -9,7 +9,7 @@ Batch 1.75 adds the Platform Intelligence Control Layer on top of the Phase 1.5 
 ## Hierarchy
 
 ```
-Cortex AI Platform (RTB AI Platform)
+RTB AI Platform
 ├── Platform Core          auth, tenants, workspaces, RBAC, audit
 ├── Platform Kernel        AI Director, events, jobs, workflows, plugins
 ├── Platform Intelligence  tools, policies, prompts, models, cost, evals…
@@ -19,7 +19,7 @@ Cortex AI Platform (RTB AI Platform)
     └── reference-os (certification only)
 ```
 
-See [CORTEX_AI_PRODUCT_MODEL.md](./CORTEX_AI_PRODUCT_MODEL.md).
+See [RTB_AI_PLATFORM_PRODUCT_MODEL.md](./RTB_AI_PLATFORM_PRODUCT_MODEL.md).
 
 ## Design Rules
 

@@ -1,5 +1,5 @@
 /**
- * Phase 7A Cortex AI platform certification runner.
+ * Phase 7A RTB AI Platform certification runner.
  * Produces release eligibility artifact from required gates.
  */
 import { execSync } from "node:child_process";
@@ -17,13 +17,13 @@ type Gate = {
 
 function runGate(id: string, name: string, cmd: string, cwd: string): Gate {
   const started = Date.now();
-  console.log(`[cortex:certify] Gate ${id}: ${name}`);
+  console.log(`[platform:certify] Gate ${id}: ${name}`);
   try {
     execSync(cmd, {
       cwd,
       encoding: "utf8",
       stdio: "pipe",
-      env: { ...process.env, CORTEX_PLATFORM_CERTIFICATION: "1", FORCE_COLOR: "0" },
+      env: { ...process.env, PLATFORM_CERTIFICATION: "1", FORCE_COLOR: "0" },
       maxBuffer: 32 * 1024 * 1024,
     });
     return { id, name, status: "pass", durationMs: Date.now() - started };
@@ -55,7 +55,7 @@ function main(): void {
     runGate(
       "B-E-L-M-N",
       "Platform boundary, runtime, platform-only, reference-os, AI agent, connector",
-      "pnpm --filter @rtb/cortex-platform-certification test:unit",
+      "pnpm --filter @rtb/platform-certification test:unit",
       root,
     ),
     runGate(
@@ -81,15 +81,16 @@ function main(): void {
     ciHeadSha !== "unknown";
 
   const artifact = {
-    schemaVersion: "cortex-platform-certification/1",
-    phase: "7A",
-    productName: "Cortex AI",
+    schemaVersion: "platform-certification/1",
+    phase: "7A.1",
+    platformName: "RTB AI Platform",
+    commercialBrand: "pending",
     verdict: failed.length === 0 ? "PASS" : "FAIL",
     releaseEligible,
     ciHeadSha,
     artifactCommitSha: ciHeadSha,
     buildIdentitySha,
-    targetEnvironment: process.env.CORTEX_PLATFORM_CERTIFICATION_TARGET ?? "hosted_staging",
+    targetEnvironment: process.env.PLATFORM_CERTIFICATION_TARGET ?? "hosted_staging",
     gates,
     requiredGates: gates.map((g) => g.id),
     failedGates: failed.map((g) => g.id),
@@ -107,7 +108,7 @@ function main(): void {
 
   const outDir = resolve(pkg, "artifacts");
   mkdirSync(outDir, { recursive: true });
-  const outPath = resolve(outDir, "cortex-platform-certification.json");
+  const outPath = resolve(outDir, "platform-certification.json");
   writeFileSync(outPath, JSON.stringify(artifact, null, 2), "utf8");
   console.log(JSON.stringify({ reportPath: outPath, verdict: artifact.verdict, releaseEligible }, null, 2));
 

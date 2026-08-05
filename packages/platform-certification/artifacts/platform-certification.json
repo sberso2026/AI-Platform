@@ -1,37 +1,38 @@
 {
-  "schemaVersion": "cortex-platform-certification/1",
-  "phase": "7A",
-  "productName": "Cortex AI",
+  "schemaVersion": "platform-certification/1",
+  "phase": "7A.1",
+  "platformName": "RTB AI Platform",
+  "commercialBrand": "pending",
   "verdict": "PASS",
   "releaseEligible": true,
-  "ciHeadSha": "ab4794ae2ca96183025d4a6531c3aa0337742437",
-  "artifactCommitSha": "ab4794ae2ca96183025d4a6531c3aa0337742437",
-  "buildIdentitySha": "ab4794ae2ca96183025d4a6531c3aa0337742437",
+  "ciHeadSha": "f4b74d208a913d522ab2fe00b06ea921cbee3ad9",
+  "artifactCommitSha": "f4b74d208a913d522ab2fe00b06ea921cbee3ad9",
+  "buildIdentitySha": "f4b74d208a913d522ab2fe00b06ea921cbee3ad9",
   "targetEnvironment": "hosted_staging",
   "gates": [
     {
       "id": "A",
       "name": "Repository and build identity",
       "status": "pass",
-      "durationMs": 36
+      "durationMs": 183
     },
     {
       "id": "B-E-L-M-N",
       "name": "Platform boundary, runtime, platform-only, reference-os, AI agent, connector",
       "status": "pass",
-      "durationMs": 6241
+      "durationMs": 7503
     },
     {
       "id": "G-lifecycle",
       "name": "Installation lifecycle unit (commerce-aligned)",
       "status": "pass",
-      "durationMs": 2531
+      "durationMs": 5498
     },
     {
       "id": "OS-runtime-types",
       "name": "Platform-core nav OS gating",
       "status": "pass",
-      "durationMs": 2663
+      "durationMs": 4739
     }
   ],
   "requiredGates": [
@@ -50,5 +51,5 @@
   "multiOsIsolationProof": true,
   "microsoftTeamsLiveConnector": "conditionally_deferred",
   "productionTeamsProviderReady": false,
-  "timestamp": "2026-08-05T15:18:52.159Z"
+  "timestamp": "2026-08-05T15:39:08.726Z"
 }

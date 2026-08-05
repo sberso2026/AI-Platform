@@ -1,4 +1,4 @@
-# Cortex AI — Platform Boundary Audit
+# RTB AI Platform — Platform Boundary Audit
 
 **Phase:** 7A  
 **Method:** Inventory classification only — no destructive data moves.
@@ -29,7 +29,7 @@
 | `packages/engineering-os` | Engineering OS | Domain OS |
 | `packages/project-intelligence` | Project Intelligence | Documents / Meetings |
 | `packages/reference-os` | Certification/Test | Cert-only second OS |
-| `packages/*-certification` | Certification/Test | Including `cortex-platform-certification` |
+| `packages/*-certification` | Certification/Test | Including `platform-certification` |
 | `apps/web` | Mixed | Platform shell + Eng + PI routes |
 
 ## Platform Core allowlist (services)

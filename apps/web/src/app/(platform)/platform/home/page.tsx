@@ -3,25 +3,25 @@ import { PageMain } from "@/components/layout/page-main";
 import Link from "next/link";
 
 /**
- * Cortex AI platform-only home. Valid when zero domain OS installations are active.
+ * RTB AI Platform platform-only home. Valid when zero domain OS installations are active.
  * Readiness marker required by Phase 7A certification.
  */
-export default function CortexPlatformHomePage() {
+export default function PlatformHomePage() {
   return (
     <>
       <Header
-        title="Cortex AI"
+        title="RTB AI Platform"
         description="Shared enterprise platform — install an Operating System to begin domain work"
         showEngineeringChrome={false}
       />
       <PageMain>
         <div
-          data-testid="cortex-platform-ready"
+          data-testid="rtb-ai-platform-ready"
           className="mx-auto max-w-2xl space-y-6 py-10"
         >
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Cortex AI Platform
+              RTB AI Platform
             </h1>
             <p className="text-sm text-slate-600">
               No domain Operating System is required to administer the platform. Browse the

@@ -1,11 +1,11 @@
 {
-  "name": "@rtb/cortex-platform-certification",
+  "name": "@rtb/platform-certification",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "cross-env CORTEX_PLATFORM_CERTIFICATION=1 vitest run",
-    "test:unit": "cross-env CORTEX_PLATFORM_CERTIFICATION=1 vitest run src",
+    "test": "cross-env PLATFORM_CERTIFICATION=1 vitest run",
+    "test:unit": "cross-env PLATFORM_CERTIFICATION=1 vitest run src",
     "certify": "tsx scripts/run-certification.ts",
     "ci-preflight": "tsx scripts/ci-preflight.ts"
   },

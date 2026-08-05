@@ -12,7 +12,7 @@ import {
 export const OPERATING_SYSTEMS: OperatingSystem[] = [
   {
     id: "platform",
-    name: "Cortex AI Platform",
+    name: "RTB AI Platform",
     description: "Core platform services and administration",
     icon: "Cpu",
     status: "installed",

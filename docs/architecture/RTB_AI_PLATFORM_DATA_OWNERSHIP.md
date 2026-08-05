@@ -1,4 +1,4 @@
-# Cortex AI — Data Ownership
+# RTB AI Platform — Data Ownership
 
 **Phase:** 7A  
 **Rule:** Cross-domain references use typed IDs and events. Do not duplicate authoritative records.

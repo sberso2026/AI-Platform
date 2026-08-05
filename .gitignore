@@ -39,6 +39,7 @@ packages/customer-administration-certification/test-results/
 packages/customer-administration-certification/.tmp/
 packages/installation-certification/artifacts/
 packages/installation-certification/test-results/
+packages/platform-certification/artifacts/
 packages/project-intelligence-certification/artifacts/
 packages/project-intelligence-certification/test-results/
 test-results/customer-administration/

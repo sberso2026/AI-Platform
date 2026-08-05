@@ -110,7 +110,7 @@ describe("Batch 2.12 — Simplified System Administration sidebar", () => {
   it("viewer cannot see System Administration items", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("viewer"));
     const platformItems = visible.filter((i) => i.group === "platform");
-    expect(platformItems.map((i) => i.id)).toEqual(["cortex-home"]);
+    expect(platformItems.map((i) => i.id)).toEqual(["platform-home"]);
   });
 
   it("engineer cannot see Advanced Platform Tools", () => {
@@ -253,7 +253,7 @@ describe("Batch 2.12 — Tier ordering", () => {
     expect(hasMinimumNavTier("viewer", "engineer")).toBe(false);
     const installedProducts = PLATFORM_NAVIGATION.find((i) => i.id === "installed-products")!;
     expect(canSeeNavItem(installedProducts, ctx("engineering_manager"))).toBe(false);
-    expect(canSeeNavItem(PLATFORM_NAVIGATION.find((i) => i.id === "cortex-home")!, ctx("engineering_manager"))).toBe(
+    expect(canSeeNavItem(PLATFORM_NAVIGATION.find((i) => i.id === "platform-home")!, ctx("engineering_manager"))).toBe(
       true,
     );
   });

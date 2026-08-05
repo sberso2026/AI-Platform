@@ -1,12 +1,12 @@
-# Cortex AI — Product Model
+# RTB AI Platform — Product Model
 
 **Phase:** 7A — Platform Core Separation and Production Closure  
-**Product name:** Cortex AI (provisional platform brand for the shared RTB AI Platform)
+**Platform name:** RTB AI Platform (commercial brand pending)
 
 ## Hierarchy (locked)
 
 ```text
-Cortex AI Platform
+RTB AI Platform
   → Operating Systems
       → Applications
           → Features / agents / tools
@@ -33,7 +33,7 @@ Fleet OS
 
 ## Installation model
 
-- One customer installs **one** Cortex AI Platform tenant.
+- One customer installs **one** RTB AI Platform tenant.
 - The same tenant may install **one or more** Operating Systems.
 - Do **not** create one platform instance per OS.
 - Applications install under an OS; features are not separate commercial platforms.
@@ -47,7 +47,7 @@ Fleet OS
 
 ## Related docs
 
-- [CORTEX_AI_MULTI_OS_RUNTIME.md](./CORTEX_AI_MULTI_OS_RUNTIME.md)
-- [CORTEX_AI_DATA_OWNERSHIP.md](./CORTEX_AI_DATA_OWNERSHIP.md)
-- [CORTEX_AI_PLATFORM_BOUNDARY_AUDIT.md](./CORTEX_AI_PLATFORM_BOUNDARY_AUDIT.md)
-- [CORTEX_AI_PACKAGING_AND_LICENSING.md](../product/CORTEX_AI_PACKAGING_AND_LICENSING.md)
+- [RTB_AI_PLATFORM_MULTI_OS_RUNTIME.md](./RTB_AI_PLATFORM_MULTI_OS_RUNTIME.md)
+- [RTB_AI_PLATFORM_DATA_OWNERSHIP.md](./RTB_AI_PLATFORM_DATA_OWNERSHIP.md)
+- [RTB_AI_PLATFORM_BOUNDARY_AUDIT.md](./RTB_AI_PLATFORM_BOUNDARY_AUDIT.md)
+- [RTB_AI_PLATFORM_PACKAGING_AND_LICENSING.md](../product/RTB_AI_PLATFORM_PACKAGING_AND_LICENSING.md)

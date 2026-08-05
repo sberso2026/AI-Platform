@@ -1,4 +1,4 @@
-# Cortex AI — Multi-OS Runtime
+# RTB AI Platform — Multi-OS Runtime
 
 **Phase:** 7A
 

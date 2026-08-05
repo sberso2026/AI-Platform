@@ -1,4 +1,4 @@
-# Cortex AI — Packaging and Licensing
+# RTB AI Platform — Packaging and Licensing
 
 **Phase:** 7A
 
@@ -6,7 +6,7 @@
 
 | Unit | Sold / installed as | Notes |
 |------|---------------------|-------|
-| Cortex AI Platform | Tenant foundation | Always present; no domain OS required |
+| RTB AI Platform | Tenant foundation | Always present; no domain OS required |
 | Operating System | Commerce product | Independently licensed |
 | Application | Child of OS product | Depends on parent OS installation |
 | Feature | Entitlement under application | e.g. PI `meetings` |
