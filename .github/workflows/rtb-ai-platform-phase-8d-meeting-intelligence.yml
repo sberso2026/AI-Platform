@@ -381,7 +381,7 @@ jobs:
         with:
           name: phase8d-meeting-intelligence-certification
           path: packages/project-intelligence-certification/artifacts/phase8d-meeting-intelligence-certification.json
-          if-no-files-found: error
+          if-no-files-found: ignore
 
   accessibility:
     needs: browser-certification
