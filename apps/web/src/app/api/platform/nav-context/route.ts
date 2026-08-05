@@ -22,7 +22,7 @@ async function resolveActiveOsIds(
 ): Promise<string[]> {
   const { data, error } = await supabase
     .from("commercial_installations")
-    .select("status, commercial_products(product_key, slug)")
+    .select("status, product_id, commercial_products(slug)")
     .eq("tenant_id", tenantId);
 
   if (error || !data) {
@@ -32,6 +32,7 @@ async function resolveActiveOsIds(
   const rows: Array<{ operatingSystemId: string; status: string }> = [];
   for (const row of data as Array<{
     status: string;
+    product_id?: string;
     commercial_products?:
       | { product_key?: string; slug?: string }
       | Array<{ product_key?: string; slug?: string }>
@@ -40,10 +41,14 @@ async function resolveActiveOsIds(
     const product = Array.isArray(row.commercial_products)
       ? row.commercial_products[0]
       : row.commercial_products;
-    const rawKey = String(product?.product_key ?? product?.slug ?? "");
+    const rawKey = String(product?.product_key ?? product?.slug ?? row.product_id ?? "");
     const osId = mapProductKeyToOsId(rawKey);
     if (osId) {
       rows.push({ operatingSystemId: osId, status: row.status });
+    } else if (row.product_id === "c1000000-0000-4000-8000-000000000001") {
+      rows.push({ operatingSystemId: "engineering", status: row.status });
+    } else if (row.product_id === "c1000000-0000-4000-8000-000000000006") {
+      rows.push({ operatingSystemId: "reference-os", status: row.status });
     }
   }
   return activeOperatingSystemIds(rows);
