@@ -28,6 +28,7 @@ type NavContextResponse = {
     tier: SidebarNavContext["tier"];
     showAdvancedPlatformTools: boolean;
     permissions: SidebarNavContext["permissions"];
+    activeOperatingSystemIds?: string[];
   };
 };
 
@@ -63,18 +64,20 @@ export function Sidebar() {
       .then((res) => (res.ok ? res.json() : null))
       .then((json: NavContextResponse | null) => {
         if (cancelled || !json?.data) return;
-        const { roleSlug, showAdvancedPlatformTools, permissions, tier } = json.data;
+        const { roleSlug, showAdvancedPlatformTools, permissions, tier, activeOperatingSystemIds } =
+          json.data;
         setNavContext({
           roleSlug,
           tier: tier ?? resolveNavTier(roleSlug),
           permissions: permissions ?? [],
           showAdvancedInSidebar: showAdvancedPlatformTools,
+          activeOperatingSystemIds: activeOperatingSystemIds ?? [],
           hasPermission: (resource, action) =>
             hasPermissionFromList(permissions ?? [], resource, action),
         });
       })
       .catch(() => {
-        // Fall back to engineering-only navigation
+        // Fall back to platform-only navigation until context loads
       });
     return () => {
       cancelled = true;
@@ -86,9 +89,7 @@ export function Sidebar() {
       return FULL_NAVIGATION.filter(
         (item) =>
           !item.sidebarHidden &&
-          (item.group === "engineering" ||
-            item.group === "engineering_registers" ||
-            item.group === "engineering_admin")
+          (item.group === "platform" || item.href === "/platform/home"),
       );
     }
     return filterSidebarNavigation(FULL_NAVIGATION, navContext);

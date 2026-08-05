@@ -17,6 +17,14 @@ export const NAV_GROUP_ORDER = [
 /** Phase 4 System Administration — tenant-facing customer administration portal */
 export const PLATFORM_NAVIGATION: NavItem[] = [
   {
+    id: "cortex-home",
+    label: "Home",
+    icon: "Home",
+    href: "/platform/home",
+    group: "platform",
+    audience: "viewer",
+  },
+  {
     id: "installed-products",
     label: "Installed Products",
     icon: "Boxes",

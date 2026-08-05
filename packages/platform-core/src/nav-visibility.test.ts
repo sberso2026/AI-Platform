@@ -49,6 +49,7 @@ function ctx(
     permissions,
     showAdvancedInSidebar: false,
     hasPermission,
+    activeOperatingSystemIds: ["engineering"],
     ...overrides,
   };
 }
@@ -73,6 +74,7 @@ describe("Batch 2.12 — Nav tier resolution", () => {
 describe("Batch 2.12 — Simplified System Administration sidebar", () => {
   it("exposes Phase 4 System Administration items", () => {
     expect(PLATFORM_NAVIGATION.map((i) => i.label)).toEqual([
+      "Home",
       "Installed Products",
       "Subscription & Billing",
       "Licences & Seats",
@@ -87,6 +89,15 @@ describe("Batch 2.12 — Simplified System Administration sidebar", () => {
     ]);
   });
 
+  it("hides Engineering navigation when no OS is active (platform-only)", () => {
+    const visible = filterSidebarNavigation(
+      FULL_NAVIGATION,
+      ctx("owner", { activeOperatingSystemIds: [] }),
+    );
+    expect(visible.some((i) => i.group === "engineering")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/home")).toBe(true);
+  });
+
   it("hides platform internals from default sidebar navigation", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("owner"));
     const hrefs = visible.map((i) => i.href);
@@ -99,7 +110,7 @@ describe("Batch 2.12 — Simplified System Administration sidebar", () => {
   it("viewer cannot see System Administration items", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("viewer"));
     const platformItems = visible.filter((i) => i.group === "platform");
-    expect(platformItems).toHaveLength(0);
+    expect(platformItems.map((i) => i.id)).toEqual(["cortex-home"]);
   });
 
   it("engineer cannot see Advanced Platform Tools", () => {
@@ -225,7 +236,7 @@ describe("Batch 2.12 — Sidebar section defaults", () => {
     expect(platformSection.groups).toEqual(["platform"]);
     const grouped = groupNavigation(filterSidebarNavigation(FULL_NAVIGATION, ctx("owner")));
     const items = itemsForSidebarSection(platformSection, grouped);
-    expect(items.length).toBe(11);
+    expect(items.length).toBe(12);
   });
 });
 
@@ -240,8 +251,10 @@ describe("Batch 2.12 — Tier ordering", () => {
   it("orders tiers correctly", () => {
     expect(hasMinimumNavTier("admin", "manager")).toBe(true);
     expect(hasMinimumNavTier("viewer", "engineer")).toBe(false);
-    expect(canSeeNavItem(PLATFORM_NAVIGATION[0]!, ctx("engineering_manager"))).toBe(
-      false
+    const installedProducts = PLATFORM_NAVIGATION.find((i) => i.id === "installed-products")!;
+    expect(canSeeNavItem(installedProducts, ctx("engineering_manager"))).toBe(false);
+    expect(canSeeNavItem(PLATFORM_NAVIGATION.find((i) => i.id === "cortex-home")!, ctx("engineering_manager"))).toBe(
+      true,
     );
   });
 });

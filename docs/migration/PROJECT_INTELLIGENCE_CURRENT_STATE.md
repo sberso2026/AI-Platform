@@ -217,7 +217,7 @@ Detailed matrix: [PROJECT_INTELLIGENCE_CAPABILITY_MATRIX.md](./PROJECT_INTELLIGE
 2. **Supabase data plane** — migrate PI tenants into AI Platform hosted project vs dual-DB sync period.  
 3. **Workspace model** — map PI single-tenant profile model onto AI Platform workspaces/seats.  
 4. **Register merge policy** — how to map PI `decisions` / `decision_actions` / `decision_risks` onto Engineering Core registers without silent merge.  
-5. **Meeting Intelligence vs Project Intelligence** — **6C-3A locked:** Meetings stay under Project Intelligence as a feature (`application: project-intelligence`, `feature: meetings`). Registry stub `meeting_intelligence` remains disabled; see `docs/architecture/PROJECT_INTELLIGENCE_MEETING_INTEGRATION_DECISIONS.md`.  
+5. **Meeting Intelligence vs Project Intelligence** — **6C-3A locked:** Meetings stay under Project Intelligence as a feature (`application: project-intelligence`, `feature: meetings`). Registry stub `meeting_intelligence` remains disabled; see `docs/architecture/PROJECT_INTELLIGENCE_MEETING_INTEGRATION_DECISIONS.md`. Discovery lock docs: `docs/migration/PROJECT_INTELLIGENCE_MEETING_CAPABILITY_INVENTORY.md` and related `PROJECT_INTELLIGENCE_MEETING_*` files.  
 6. **External bot production commitment** — keep deferred vs Phase 6B scope.
 
 Until these are resolved, implementation may scaffold adapters and mapping UI but must not run destructive data migration.

@@ -1,0 +1,26 @@
+{
+  "name": "@rtb/cortex-platform-certification",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "cross-env CORTEX_PLATFORM_CERTIFICATION=1 vitest run",
+    "test:unit": "cross-env CORTEX_PLATFORM_CERTIFICATION=1 vitest run src",
+    "certify": "tsx scripts/run-certification.ts",
+    "ci-preflight": "tsx scripts/ci-preflight.ts"
+  },
+  "dependencies": {
+    "@rtb/platform-core": "workspace:*",
+    "@rtb/platform-kernel": "workspace:*",
+    "@rtb/project-intelligence": "workspace:*",
+    "@rtb/reference-os": "workspace:*",
+    "@rtb/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

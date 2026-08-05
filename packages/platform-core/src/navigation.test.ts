@@ -151,7 +151,7 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
     expect(hrefs).toContain("/platform/users-permissions");
     expect(hrefs).not.toContain("/platform/ai-director");
     expect(hrefs).not.toContain("/system/commerce-audit");
-    expect(items.length).toBe(11);
+    expect(items.length).toBe(12);
   });
 
   it("keeps Engineering Administration routes without dropping them", () => {

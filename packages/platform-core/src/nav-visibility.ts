@@ -107,6 +107,8 @@ export interface SidebarNavContext {
   permissions: Permission[];
   showAdvancedInSidebar: boolean;
   hasPermission: (resource: string, action: string) => boolean;
+  /** Active domain OS ids (e.g. engineering). Empty = platform-only. */
+  activeOperatingSystemIds?: string[];
 }
 
 export function resolveNavTier(roleSlug: string): NavTier {
@@ -141,6 +143,12 @@ export function isOwnerOnlyCommerceRoute(pathname: string): boolean {
 
 export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolean {
   if (item.sidebarHidden) return false;
+
+  const engGroups = new Set(["engineering", "engineering_registers", "engineering_admin"]);
+  if (engGroups.has(item.group ?? "")) {
+    const active = context.activeOperatingSystemIds ?? [];
+    if (!active.includes("engineering")) return false;
+  }
 
   if (
     (item.id === "subscription-billing" ||

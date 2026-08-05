@@ -134,6 +134,40 @@ importers:
         specifier: ^3.2.1
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
 
+  packages/cortex-platform-certification:
+    dependencies:
+      '@rtb/platform-core':
+        specifier: workspace:*
+        version: link:../platform-core
+      '@rtb/platform-kernel':
+        specifier: workspace:*
+        version: link:../platform-kernel
+      '@rtb/project-intelligence':
+        specifier: workspace:*
+        version: link:../project-intelligence
+      '@rtb/reference-os':
+        specifier: workspace:*
+        version: link:../reference-os
+      '@rtb/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      tsx:
+        specifier: ^4.20.6
+        version: 4.23.0
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
   packages/customer-administration-certification:
     dependencies:
       '@rtb/platform-commerce':
@@ -408,6 +442,19 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.23.0
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
+  packages/reference-os:
+    dependencies:
+      '@rtb/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

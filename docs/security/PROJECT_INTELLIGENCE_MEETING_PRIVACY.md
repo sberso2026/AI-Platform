@@ -49,7 +49,7 @@ Illustrative only for 6C-3B schema design:
 
 - `display_name` vs `user_id` linkage
 - `consent_state` override
-- ` Speakers may remain labels until verified`
+- Speakers may remain labels until verified
 
 ## Processing rules
 

@@ -36,8 +36,8 @@ Meetings remain a **feature of Project Intelligence** inside Engineering OS. Thi
 | Minutes of Meeting editor | `app/meetings/[meetingId]/mom/page.tsx`, `components/mom/*` | modernize → `.../minutes` + review |
 | Transcript panel | `components/TranscriptPanel.tsx` | preserve with adapter |
 | Speaker UI | `components/meeting/Speaker*.tsx` | modernize (first-class participants) |
-| Chair assistant label (Thor text) | Live workspace “AI chair assistant” card | modernize (non-authoritative assist only) |
-| Welcome voice | `lib/meeting/meetingWelcomeVoice.ts` | modernize (+ consent/recording notice) |
+| Chair assistant label (Thor text) | Live workspace “AI chair assistant” card (`MeetingsLiveWorkspace.tsx`) | modernize (non-authoritative assist only) |
+| Chair / welcome voice | `lib/meeting/meetingWelcomeVoice.ts`; voice mode `chairAssist` in `types/voice.ts` + `services/voice/*` | modernize (+ consent/recording notice); TTS may defer vs manual cert |
 
 **Missing vs target:** `/meetings/new`, `/transcript`, `/review`, `/health`, Engineering Apps prefix.
 
@@ -118,7 +118,7 @@ Meetings remain a **feature of Project Intelligence** inside Engineering OS. Thi
 | MoM statuses | `types/mom.ts` (`draft`/`reviewed`/`approved`) | modernize (align session + review lifecycle) |
 | MoM evidence types | `types/momEvidence.ts`, evidence tests | modernize → meeting evidence + Doc Intelligence citations |
 | Meeting → decision draft | `services/ai/workflows/meetingToDecision.ts` | modernize (proposal only; Core on human approve) |
-| Action/risk extraction draft | `actionRiskExtraction.ts` | modernize |
+| Action/risk cue extraction | **No** standalone `actionRiskExtraction.ts` at freeze — cues live in `nlpEngine` / `momGenerator` / realtime pipeline | modernize (typed proposals) |
 | Issue / TQ / lesson extraction | not first-class in frozen meeting stack | modernize (new proposal types) |
 | Findings linkage | engineering findings exist; **no meeting glue** | defer |
 | MoM generation job | `jobs/mom/momGenerationJob.ts` | defer (empty stub) |
@@ -163,7 +163,7 @@ Meetings remain a **feature of Project Intelligence** inside Engineering OS. Thi
 | `OPENAI_API_KEY` / `OPENAI_WHISPER_MODEL` | Whisper | replace with Platform governed AI |
 | `GRAPH_WEBHOOK_*` | Graph webhook | experimental |
 | `MOM_*` export/attribution | MoM export | preserve with adapter |
-| `NEXT_PUBLIC_RTB_MEETING_WELCOME_VOICE` | Welcome voice | modernize (+ privacy) |
+| Welcome voice | `lib/meeting/meetingWelcomeVoice.ts` (`buildMeetingWelcomeScript`) — **no** `NEXT_PUBLIC_RTB_MEETING_WELCOME_VOICE` env gate at freeze | modernize (+ privacy / recording disclosure) |
 
 ---
 
@@ -197,7 +197,7 @@ See `docs/security/PROJECT_INTELLIGENCE_MEETING_PRIVACY.md`.
 
 | Category | Approx. count |
 |----------|----------------|
-| Meeting-related source files matched | ~152 |
+| Meeting-related source files matched | ~184 |
 | UI routes | 3 |
 | Meeting API route files | 9+ |
 | MoM API route files | 8 |

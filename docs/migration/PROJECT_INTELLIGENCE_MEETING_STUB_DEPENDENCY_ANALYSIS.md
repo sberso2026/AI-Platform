@@ -12,16 +12,17 @@
 | Safe to leave stub registered? | **Yes** |
 | Safe to delete stub casually? | **No** — update tests/docs/catalog; commerce `meetings` must remain untouched |
 | Safe to delete commerce `meetings`? | **No** — plan entitlements, guards, cert fixtures, usage metric |
+| Does live PI Meetings require the stub? | **No** — PI uses `project_intelligence` + feature `meetings` |
 
 ## Three namespaces (do not conflate)
 
-| Namespace | Key / route | Role today |
-|-----------|-------------|------------|
+| Namespace | Key / route | Role |
+|-----------|-------------|------|
 | Engineering OS registry stub | `meeting_intelligence` | Disabled catalog stub; route `/engineering/apps/meeting-intelligence` (**no page**) |
 | Commerce application entitlement | `meetings` | Plan entitlement + path guard for `/engineering/meetings` (**no page**) |
-| Future PI feature | `meetings` under application `project_intelligence` | Approved product model (6C-3A) |
+| PI feature (approved 6C-3A) | `meetings` under application `project_intelligence` | Live product path under `/engineering/apps/project-intelligence/meetings…` (implemented in later 6C-3 batches; still must not use the stub) |
 
-Runtime sync matches `application_key` → `app_key` exactly. Commerce `meetings` does **not** enable registry `meeting_intelligence`.
+Runtime sync matches `application_key` → `app_key` exactly. Commerce `meetings` does **not** enable registry `meeting_intelligence`. PI access helpers **reject** `meeting_intelligence` and `project-intelligence-meetings` as entitlement application keys.
 
 ## Dependency inventory
 
@@ -45,12 +46,18 @@ Runtime sync matches `application_key` → `app_key` exactly. Commerce `meetings
 | `supabase/migrations/20260208000002_batch_30_commerce_seed.sql` | Usage metric_key `meetings` |
 | `packages/commerce-certification/scripts/provision-fixtures.ts` | Negative fixtures use `application_key: "meetings"` |
 
-### Absent
+### Absent (stub-specific)
 
 - No Next.js pages for `/engineering/apps/meeting-intelligence` or `/engineering/meetings`
 - No `engineering_application_installations` / commercial installs keyed `meeting_intelligence`
 - No feature flag enabling the stub
-- No Playwright customer journeys for meetings UI in AI Platform
+- No nav entry for the stub route
+
+### Present elsewhere (not the stub)
+
+- Project Intelligence Meetings UI/APIs under `/engineering/apps/project-intelligence/meetings…`
+- Entitlement/actions keyed `project_intelligence` / `project-intelligence-meetings.*`
+- Cert regressions that **forbid** treating `meeting_intelligence` as the Meetings entitlement app
 
 ## Collision risks
 
@@ -73,4 +80,4 @@ Runtime sync matches `application_key` → `app_key` exactly. Commerce `meetings
 | Product detail “Available” Meeting Intelligence card | Low (intentional) |
 | Docs referencing stub | Docs only |
 | Commerce entitlements / usage / cert fixtures | **Unaffected** if `meetings` kept |
-| Live meetings product | None (no live product yet) |
+| Live PI Meetings product | None (product does not use stub; keep stub until GA retirement checklist) |

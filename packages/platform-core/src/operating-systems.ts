@@ -1,13 +1,22 @@
 import type { OperatingSystem, OperatingSystemId } from "@rtb/types";
+import {
+  activeOperatingSystemIds,
+  mapCommerceStatusToOsLifecycle,
+  type OperatingSystemLifecycleStatus,
+} from "@rtb/types";
 
+/**
+ * Catalog of OS products. Status here is catalog availability only —
+ * runtime “installed/active” is derived from commerce installations.
+ */
 export const OPERATING_SYSTEMS: OperatingSystem[] = [
   {
     id: "platform",
-    name: "RTB AI Platform",
+    name: "Cortex AI Platform",
     description: "Core platform services and administration",
     icon: "Cpu",
     status: "installed",
-    version: "0.2.0",
+    version: "0.3.0",
   },
   {
     id: "business",
@@ -21,7 +30,7 @@ export const OPERATING_SYSTEMS: OperatingSystem[] = [
     name: "Engineering Operating System",
     description: "Engineering design, analysis, and project management",
     icon: "Wrench",
-    status: "installed",
+    status: "available",
     version: "0.2.0",
   },
   {
@@ -72,6 +81,7 @@ export function getOperatingSystem(id: OperatingSystemId): OperatingSystem | und
   return OPERATING_SYSTEMS.find((os) => os.id === id);
 }
 
+/** @deprecated Prefer resolveActiveOperatingSystems from installations */
 export function getInstalledOperatingSystems(): OperatingSystem[] {
   return OPERATING_SYSTEMS.filter((os) => os.status === "installed");
 }
@@ -79,3 +89,21 @@ export function getInstalledOperatingSystems(): OperatingSystem[] {
 export function getAvailableOperatingSystems(): OperatingSystem[] {
   return OPERATING_SYSTEMS.filter((os) => os.status !== "coming_soon");
 }
+
+export function resolveActiveOperatingSystems(
+  installations: Array<{ operatingSystemId: string; status: string }>,
+): OperatingSystem[] {
+  const activeIds = new Set(activeOperatingSystemIds(installations));
+  return OPERATING_SYSTEMS.filter((os) => os.id !== "platform" && activeIds.has(os.id));
+}
+
+export function resolveOsLifecycleForCatalogId(
+  catalogId: string,
+  installations: Array<{ operatingSystemId: string; status: string }>,
+): OperatingSystemLifecycleStatus {
+  const match = installations.find((row) => row.operatingSystemId === catalogId);
+  if (!match) return "available";
+  return mapCommerceStatusToOsLifecycle(match.status);
+}
+
+export { activeOperatingSystemIds, mapCommerceStatusToOsLifecycle };

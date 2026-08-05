@@ -4,6 +4,17 @@
 **Frozen evidence commit:** `ab1f44276715888123d9f669464987e6f7c39b6c`  
 **Rule:** Do not claim live provider support without provider-specific live tests.
 
+## 6C-3A discovery lock (binding product claims)
+
+| Provider | Discovery status | Product claim until live cert |
+|----------|------------------|-------------------------------|
+| **Manual** | Target for Phase 6C-3 certification | May be certified when hosted manual gates pass |
+| **Microsoft Teams** | **experimental** (bot + Graph helpers at freeze) | **unavailable** |
+| **Zoom** | **experimental** | **unavailable** |
+| **Google Meet** | **experimental** | **unavailable** |
+
+Later batches may change Teams (or other) evidence **only** with provider-specific hosted certification artifacts. They do **not** rewrite this 6C-3A lock retrospectively without an explicit decision record.
+
 ## Status vocabulary
 
 | Status | Meaning |
@@ -19,7 +30,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Status (6C-3 target)** | **certified** (target for Phase 6C-3 certification) |
+| **Status (6C-3A / 6C-3 target)** | **certified** (target for Phase 6C-3 certification) |
 | **Frozen evidence** | `integrations/manualMeetingAdapter.ts`; default when bots disabled; start/stop without external API |
 | **Integrated plan** | Primary certification path: draft → live → transcript → minutes → human review → Core writes |
 | **Live tests required** | Hosted manual workflow E2E + durable transcript + review (no external bot) |
@@ -30,13 +41,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Status (6C-3D)** | **fixture-certified** subset @ `148223ec35768a9401a885071badb2a56e3ebb13` |
-| **Status (6C-3E)** | **live Entra required** — `productionTeamsProviderReady` only after live gates A–Z PASS |
-| **Graph mode** | `fixture` = regression only; `live` = Phase 6C-3E evidence (`PI_TEAMS_GRAPH_MODE=live`) |
-| **Certified capabilities (target live)** | URL validation, discovery, session mapping, webhooks, participants, post-meeting transcript retrieval, subscription create/renew/revoke, meeting end detection |
-| **Unsupported** | `live_transcript`, `recording_access`, `bot_join` |
-| **Transcript mode** | `post_meeting` (not realtime) |
-| **Must not claim** | Live tenant ready from fixture evidence; bot join; recording; live transcript |
+| **Status (6C-3A lock)** | **experimental** / product claim **unavailable** |
+| **Frozen evidence** | `integrations/teamsBot.ts`; `RTB_TEAMS_BOT_ENABLED`; Graph webhook helpers — **no** live cert evidence at freeze |
+| **Post-discovery note (non-binding on 6C-3A)** | Fixture / live Entra work may occur in later batches; `productionTeamsProviderReady` remains fail-closed until live gates PASS |
+| **Must not claim (6C-3A)** | Live Teams support; bot join; recording; live transcript |
 
 ---
 

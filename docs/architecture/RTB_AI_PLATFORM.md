@@ -9,25 +9,27 @@ Batch 1.75 adds the Platform Intelligence Control Layer on top of the Phase 1.5 
 ## Hierarchy
 
 ```
-RTB AI Platform
+Cortex AI Platform (RTB AI Platform)
 ├── Platform Core          auth, tenants, workspaces, RBAC, audit
 ├── Platform Kernel        AI Director, events, jobs, workflows, plugins
 ├── Platform Intelligence  tools, policies, prompts, models, cost, evals…
-└── Domain Operating Systems (installable apps / plugins)
-    ├── Engineering OS     (Batch 2.0 Core — installed)
-    ├── Industrial OS
-    ├── Fleet OS
-    └── …
+└── Domain Operating Systems (installable — not permanently pre-installed)
+    ├── Engineering OS
+    ├── Fleet OS / Business OS / …
+    └── reference-os (certification only)
 ```
+
+See [CORTEX_AI_PRODUCT_MODEL.md](./CORTEX_AI_PRODUCT_MODEL.md).
 
 ## Design Rules
 
 | Rule | Meaning |
 |------|---------|
 | Platform ≠ OS | Shared control plane; OSes are domain products |
-| Installable apps | Each OS is a plugin with capability bounds |
-| No fork | Domain logic lives in plugins, not core packages |
+| Installable apps | Each OS is installed via commerce lifecycle |
+| No fork | Domain logic lives in OS packages, not core |
 | Tenant isolation | RLS + `tenant_id` on domain tables |
+| Teams live | Conditionally deferred — not a platform release blocker |
 
 ## Packages
 
