@@ -280,8 +280,11 @@ describeMeetings("Phase 6C-3B Meeting Intelligence foundation browser certificat
     test("Q accessibility landmarks on meetings pages", async ({ page }) => {
       await page.goto(meetingsPath);
       await expectMeetingsReady(page);
-      await expect(page.getByRole("navigation", { name: "Project Intelligence" })).toBeVisible();
+      await expect(
+        page.getByRole("navigation", { name: "Project Intelligence features" }),
+      ).toBeVisible();
       await expect(page.getByRole("heading", { name: /Meetings/i })).toBeVisible();
+      await expect(page.getByTestId("meeting-intelligence-ready")).toBeVisible();
     });
 
     test("R responsive meetings shell", async ({ page }) => {
