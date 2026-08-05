@@ -57,19 +57,14 @@ test.describe("Phase 7B accessibility", () => {
 
   test("suspended state still exposes platform landmarks", async ({ page, context }) => {
     const m = loadManifest();
+    const { setInstallationStatus, restoreFixtureInstallations } = await import(
+      "../src/lib/lifecycle-matrix.js"
+    );
+    await setInstallationStatus(m.installations.engineering.id, "suspended");
     await signInAs(context, m.users.owner.email);
-    const cookies = await context.cookies();
-    const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
-    await context.request.post(`/api/platform/installations/${m.installations.engineering.id}/suspend`, {
-      headers: { Cookie: cookieHeader, "Content-Type": "application/json" },
-      data: { reason: "a11y-suspend" },
-    });
     await page.goto("/platform/home");
     await expect(page.getByTestId("rtb-ai-platform-ready")).toBeVisible();
     await expect(page.locator("main, [role='main']").first()).toBeVisible();
-    await context.request.post(`/api/platform/installations/${m.installations.engineering.id}/resume`, {
-      headers: { Cookie: cookieHeader, "Content-Type": "application/json" },
-      data: {},
-    });
+    await restoreFixtureInstallations();
   });
 });

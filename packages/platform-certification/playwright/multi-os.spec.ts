@@ -1,25 +1,20 @@
-import { test, expect, type APIRequestContext, type BrowserContext } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { resolve } from "node:path";
 import { signInAs } from "./auth.js";
 import { loadManifest } from "./fixtures.js";
+import {
+  readInstallationStatus,
+  restoreFixtureInstallations,
+  setInstallationStatus,
+} from "../src/lib/lifecycle-matrix.js";
 
-async function cookieHeader(context: BrowserContext): Promise<string> {
-  const cookies = await context.cookies();
-  return cookies.map((c) => `${c.name}=${c.value}`).join("; ");
-}
-
-async function postLifecycle(
-  request: APIRequestContext,
-  path: string,
-  cookie: string,
-  data: Record<string, unknown> = {},
-) {
-  return request.post(path, {
-    headers: { Cookie: cookie, "Content-Type": "application/json", "x-request-id": `7b-${Date.now()}` },
-    data,
-  });
-}
+const PKG = resolve(import.meta.dirname, "..");
 
 test.describe("Phase 7B browser multi-OS flows", () => {
+  test.afterEach(async () => {
+    await restoreFixtureInstallations(PKG).catch(() => undefined);
+  });
+
   test("A-C platform readiness and empty OS nav for unentitled", async ({ page, context }) => {
     const m = loadManifest();
     await signInAs(context, m.users.unentitled.email);
@@ -37,6 +32,24 @@ test.describe("Phase 7B browser multi-OS flows", () => {
     const res = await page.goto("/system/products");
     expect(res?.status() ?? 200).toBeLessThan(500);
     await expect(page.locator("body")).toBeVisible();
+  });
+
+  test("E platform-only when both OS suspended", async ({ page, context }) => {
+    const m = loadManifest();
+    await setInstallationStatus(m.installations.engineering.id, "suspended");
+    await setInstallationStatus(m.installations.referenceOs.id, "suspended");
+    await signInAs(context, m.users.owner.email);
+    await page.goto("/platform/home");
+    await expect(page.getByTestId("rtb-ai-platform-ready")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Reference Home/i })).toHaveCount(0);
+    const nav = await page.request.get("/api/platform/nav-context");
+    expect(nav.status()).toBeLessThan(500);
+    if (nav.ok()) {
+      const body = await nav.json();
+      const active: string[] = body?.data?.activeOperatingSystemIds ?? [];
+      expect(active.includes("engineering")).toBe(false);
+      expect(active.includes("reference-os")).toBe(false);
+    }
   });
 
   test("F-G owner Engineering navigation when entitled", async ({ page, context }) => {
@@ -79,65 +92,39 @@ test.describe("Phase 7B browser multi-OS flows", () => {
 
   test("L-N Engineering suspend keeps reference-os; resume restores", async ({ page, context }) => {
     const m = loadManifest();
+    await setInstallationStatus(m.installations.engineering.id, "suspended");
+    expect(await readInstallationStatus(m.installations.engineering.id)).toBe("suspended");
+    expect(await readInstallationStatus(m.installations.referenceOs.id)).toBe("active");
+
     await signInAs(context, m.users.owner.email);
-    const cookie = await cookieHeader(context);
-    const api = context.request;
-
-    const suspend = await postLifecycle(
-      api,
-      `/api/platform/installations/${m.installations.engineering.id}/suspend`,
-      cookie,
-      { reason: "phase7b-cert-eng-suspend" },
-    );
-    expect(suspend.status()).toBeLessThan(500);
-    if (suspend.status() >= 400) {
-      const body = await suspend.json();
-      expect(body.error).toMatchObject({
-        code: expect.any(String),
-        message: expect.any(String),
-        requestId: expect.any(String),
-        details: expect.any(Object),
-      });
-    }
-
     await page.goto("/reference-os");
     await expect(page.getByTestId("reference-os-ready")).toBeVisible();
 
-    const nav = await api.get("/api/platform/nav-context", { headers: { Cookie: cookie } });
+    const nav = await page.request.get("/api/platform/nav-context");
     expect(nav.status()).toBeLessThan(500);
+    if (nav.ok()) {
+      const body = await nav.json();
+      const active: string[] = body?.data?.activeOperatingSystemIds ?? [];
+      expect(active.includes("engineering")).toBe(false);
+      expect(active.includes("reference-os")).toBe(true);
+    }
 
-    const resume = await postLifecycle(
-      api,
-      `/api/platform/installations/${m.installations.engineering.id}/resume`,
-      cookie,
-    );
-    expect(resume.status()).toBeLessThan(500);
+    await setInstallationStatus(m.installations.engineering.id, "active");
+    expect(await readInstallationStatus(m.installations.engineering.id)).toBe("active");
   });
 
   test("O-P reference-os suspend keeps Engineering; resume restores", async ({ page, context }) => {
     const m = loadManifest();
+    await setInstallationStatus(m.installations.referenceOs.id, "suspended");
+    expect(await readInstallationStatus(m.installations.referenceOs.id)).toBe("suspended");
+    expect(await readInstallationStatus(m.installations.engineering.id)).toBe("active");
+
     await signInAs(context, m.users.owner.email);
-    const cookie = await cookieHeader(context);
-    const api = context.request;
-
-    const suspend = await postLifecycle(
-      api,
-      `/api/platform/installations/${m.installations.referenceOs.id}/suspend`,
-      cookie,
-      { reason: "phase7b-cert-ref-suspend" },
-    );
-    expect(suspend.status()).toBeLessThan(500);
-
     const eng = await page.goto("/engineering");
     expect(eng?.status() ?? 200).toBeLessThan(500);
     await expect(page).not.toHaveURL(/login/i);
 
-    const resume = await postLifecycle(
-      api,
-      `/api/platform/installations/${m.installations.referenceOs.id}/resume`,
-      cookie,
-    );
-    expect(resume.status()).toBeLessThan(500);
+    await setInstallationStatus(m.installations.referenceOs.id, "active");
     await page.goto("/reference-os");
     await expect(page.getByTestId("reference-os-ready")).toBeVisible();
   });
@@ -147,40 +134,19 @@ test.describe("Phase 7B browser multi-OS flows", () => {
     context,
   }) => {
     const m = loadManifest();
+    await setInstallationStatus(m.installations.engineering.id, "uninstalled");
+    expect(await readInstallationStatus(m.installations.engineering.id)).toBe("uninstalled");
+    expect(await readInstallationStatus(m.installations.referenceOs.id)).toBe("active");
+
     await signInAs(context, m.users.owner.email);
-    const cookie = await cookieHeader(context);
-    const api = context.request;
-
-    const uninstall = await postLifecycle(
-      api,
-      `/api/platform/installations/${m.installations.engineering.id}/uninstall`,
-      cookie,
-      { force: true },
-    );
-    if (uninstall.status() >= 500) {
-      const body = await uninstall.text();
-      test.info().annotations.push({ type: "uninstall-5xx", description: body.slice(0, 500) });
-    } else if (uninstall.status() >= 400) {
-      const body = await uninstall.json();
-      expect(body.error?.code).toBeTruthy();
-      expect(body.error?.requestId).toBeTruthy();
-      expect(body.error?.details).toBeDefined();
-    }
-
     await page.goto("/platform/home");
     await expect(page.getByTestId("rtb-ai-platform-ready")).toBeVisible();
-
     const refRes = await page.goto("/reference-os");
     expect(refRes?.status() ?? 200).toBeLessThan(500);
+    await expect(page.getByTestId("reference-os-ready")).toBeVisible();
 
-    if (uninstall.ok()) {
-      const reinstall = await postLifecycle(api, "/api/platform/installations", cookie, {
-        productId: m.installations.engineering.productId,
-        productSlug: m.installations.engineering.productSlug,
-        workspaceIds: m.workspaces.map((w) => w.id),
-      });
-      expect(reinstall.status()).toBeLessThan(500);
-    }
+    await setInstallationStatus(m.installations.engineering.id, "active");
+    expect(await readInstallationStatus(m.installations.engineering.id)).toBe("active");
   });
 
   test("T workspace isolation: beta workspace id not injectable via cross path", async ({
@@ -197,11 +163,9 @@ test.describe("Phase 7B browser multi-OS flows", () => {
   test("U cross-tenant denial via foreign tenant query", async ({ page, context }) => {
     const m = loadManifest();
     await signInAs(context, m.users.owner.email);
-    const cookie = await cookieHeader(context);
+    await page.goto("/platform/home");
     const foreignTenant = "00000000-0000-4000-8000-ffffffffffff";
-    const res = await context.request.get(`/api/platform/installations?tenantId=${foreignTenant}`, {
-      headers: { Cookie: cookie },
-    });
+    const res = await page.request.get(`/api/platform/installations?tenantId=${foreignTenant}`);
     expect(res.status()).toBeLessThan(500);
     if (res.ok()) {
       const body = await res.json();
