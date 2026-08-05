@@ -481,8 +481,11 @@ describeProcessing("Phase 6C-3C Meeting Intelligence processing browser certific
       await expect(page.getByTestId("project-intelligence-meetings-ready")).toBeVisible({
         timeout: 45_000,
       });
-      await expect(page.getByRole("navigation", { name: "Project Intelligence" })).toBeVisible();
+      await expect(
+        page.getByRole("navigation", { name: "Project Intelligence features" }),
+      ).toBeVisible();
       await expect(page.getByRole("heading", { name: /Meetings/i })).toBeVisible();
+      await expect(page.getByTestId("meeting-intelligence-ready")).toBeVisible();
     });
 
     test("U responsive meetings processing shell", async ({ page, context }) => {
