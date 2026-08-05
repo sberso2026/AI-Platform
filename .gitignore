@@ -78,3 +78,5 @@ secret value
 *.secret
 
 Ignore.txt
+
+tmp-cert-7b/
