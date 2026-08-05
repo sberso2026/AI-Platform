@@ -186,7 +186,6 @@ async function seedOsCommerce(
         status: "active",
         desired_state: "active",
         current_state: "active",
-        health_state: "healthy",
         installed_version: "1.0.0",
         requested_version: "1.0.0",
         started_at: now,
