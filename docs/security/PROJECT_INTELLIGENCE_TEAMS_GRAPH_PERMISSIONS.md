@@ -27,6 +27,18 @@ Creating a change-notification subscription requires the **application permissio
 
 Unknown resources fail closed with `TEAMS_SUBSCRIPTION_RESOURCE_UNSUPPORTED`.
 
+## Tenant prerequisite — Graph transcript API access
+
+Entra application roles alone are **not** sufficient. By default, Microsoft Teams tenants disable Graph API access to transcripts. Until a Teams administrator enables it, `POST /subscriptions` for transcript resources returns **403** (often `ExtensionError` / message containing “Graph API access to transcripts is disabled for this tenant”, or `innerError.code` = `GraphAccessToTranscriptsDisabled`).
+
+Enable via:
+
+1. **Teams admin center** → Meetings → Meeting settings → **Transcript API access** → turn **Microsoft Graph access** **On**  
+   (docs: [Meeting transcript API access](https://learn.microsoft.com/en-us/microsoftteams/meeting-transcript-api-access))
+2. Or PowerShell: `Set-CsTeamsMeetingConfiguration -EnableGraphTranscriptAccess $true -Identity Global`
+
+Certification classifies this failure as `tenant transcript access disabled` (not missing Entra consent).
+
 ## Explicitly not requested
 
 - Bot join / media access permissions

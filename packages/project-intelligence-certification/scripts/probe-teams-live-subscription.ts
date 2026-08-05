@@ -12,6 +12,7 @@ import {
   tokenRolesSatisfySubscriptionResource,
   normalizeGraphSubscriptionResource,
 } from "@rtb/project-intelligence";
+import { classifySubscriptionFailure } from "../src/meetings/teams-subscription-failure-classification";
 
 type GraphSubError = Error & {
   code?: string;
@@ -38,31 +39,6 @@ function decodeJwtRoles(token: string): string[] {
   } catch {
     return [];
   }
-}
-
-function classifySubscriptionFailure(error: GraphSubError): string {
-  const status = error.httpStatus ?? 0;
-  const code = (error.graphCode ?? error.code ?? "").toLowerCase();
-  const message = (error.graphMessage ?? error.message ?? "").toLowerCase();
-  if (code.includes("unsupported") || message.includes("resource not supported")) {
-    return "unsupported resource";
-  }
-  if (status === 401 || status === 403 || code.includes("authorization") || code.includes("accessdenied") || code.includes("permission_missing") || code.includes("permission")) {
-    return "permission";
-  }
-  if (message.includes("notificationurl") || message.includes("notification url")) {
-    return "invalid notification URL";
-  }
-  if (message.includes("lifecycle")) {
-    return "invalid lifecycle URL";
-  }
-  if (message.includes("expiration")) {
-    return "invalid expiration";
-  }
-  if (message.includes("transcript") && (message.includes("disabled") || message.includes("not enabled"))) {
-    return "tenant transcript access disabled";
-  }
-  return "product defect";
 }
 
 function reportFailure(error: unknown, resource: string, expirationDateTime: string, lifecycleSupplied: boolean): never {
