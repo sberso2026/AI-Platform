@@ -21,6 +21,7 @@ import {
   type Platform7bUserFixture,
   type Platform7bUserRole,
 } from "../src/lib/env.js";
+import { purgeTenantsBySlug } from "../src/lib/purge-tenant.js";
 
 const ROLES: Platform7bUserRole[] = [
   "owner",
@@ -255,18 +256,8 @@ export async function provisionPlatform7bFixtures(pkgDir = process.cwd()): Promi
   const tenantSlug = `${CERT_SLUG_PREFIX}${runId}`;
   log(`Creating tenant ${tenantSlug}`);
 
-  // Cleanup same-run leftovers for idempotent retry
-  const { data: existing } = await admin.from("tenants").select("id").eq("slug", tenantSlug);
-  for (const row of existing ?? []) {
-    const { data: memberships } = await admin
-      .from("tenant_memberships")
-      .select("user_id")
-      .eq("tenant_id", row.id);
-    for (const m of memberships ?? []) {
-      await admin.auth.admin.deleteUser(m.user_id as string).catch(() => undefined);
-    }
-    await admin.from("tenants").delete().eq("id", row.id);
-  }
+  // Cleanup same-run leftovers for idempotent retry (commerce children first)
+  await purgeTenantsBySlug(admin, tenantSlug);
 
   const tenant = await requireRow(
     "tenant",

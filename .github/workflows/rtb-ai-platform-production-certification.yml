@@ -171,8 +171,12 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: platform-7b-fixtures
+          path: packages/platform-certification/artifacts
       - name: Install Playwright
-        run: pnpm --filter @rtb/platform-certification exec playwright install chromium
+        run: pnpm --filter @rtb/platform-certification exec playwright install chromium --with-deps
       - name: Full hosted certify (server + browser + cleanup)
         env:
           GITHUB_SHA: ${{ github.sha }}
@@ -227,7 +231,10 @@ jobs:
         run: |
           node -e "
             const fs=require('fs');
-            const a=JSON.parse(fs.readFileSync('artifacts/platform-certification.json','utf8'));
+            const path=fs.existsSync('artifacts/platform-certification.json')
+              ? 'artifacts/platform-certification.json'
+              : 'artifacts/artifacts/platform-certification.json';
+            const a=JSON.parse(fs.readFileSync(path,'utf8'));
             const t=a.gates.find(g=>g.id==='T');
             if(!t || t.status!=='pass') { console.error(t); process.exit(1); }
             console.log('cleanup gate T pass');
@@ -246,7 +253,10 @@ jobs:
         run: |
           node -e "
             const fs = require('fs');
-            const a = JSON.parse(fs.readFileSync('artifacts/platform-certification.json','utf8'));
+            const path=fs.existsSync('artifacts/platform-certification.json')
+              ? 'artifacts/platform-certification.json'
+              : 'artifacts/artifacts/platform-certification.json';
+            const a = JSON.parse(fs.readFileSync(path,'utf8'));
             console.log(JSON.stringify({
               verdict: a.verdict,
               releaseEligible: a.releaseEligible,

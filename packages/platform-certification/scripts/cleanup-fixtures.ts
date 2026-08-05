@@ -12,6 +12,7 @@ import {
   resolveServiceRoleKey,
   resolveSupabaseUrl,
 } from "../src/lib/env.js";
+import { purgeTenantById, purgeTenantsBySlug } from "../src/lib/purge-tenant.js";
 
 function log(msg: string): void {
   console.log(`[platform-7b:cleanup] ${msg}`);
@@ -41,10 +42,13 @@ export async function cleanupPlatform7bFixtures(pkgDir = process.cwd()): Promise
     .limit(20);
   for (const row of stale ?? []) {
     if (manifest && row.id === manifest.tenantId) continue;
-    // Keep only current run; delete older cert tenants
     if (!manifest || row.slug !== manifest.tenantSlug) {
-      await admin.from("tenants").delete().eq("id", row.id);
-      orphans.push(row.slug as string);
+      try {
+        await purgeTenantById(admin, row.id as string);
+        orphans.push(row.slug as string);
+      } catch (e) {
+        log(`orphan purge warning ${row.slug}: ${e instanceof Error ? e.message : e}`);
+      }
     }
   }
 
@@ -57,7 +61,9 @@ export async function cleanupPlatform7bFixtures(pkgDir = process.cwd()): Promise
     usersDeleted += 1;
   }
 
-  await admin.from("tenants").delete().eq("id", manifest.tenantId);
+  await purgeTenantById(admin, manifest.tenantId);
+  // Also purge by slug in case id drifted
+  await purgeTenantsBySlug(admin, manifest.tenantSlug).catch(() => undefined);
 
   const path = fixturesManifestPath(pkgDir);
   if (existsSync(path)) unlinkSync(path);

@@ -8,6 +8,7 @@ import { main as preflight } from "./ci-preflight.js";
 import { provisionPlatform7bFixtures } from "./provision-fixtures.js";
 import { cleanupPlatform7bFixtures } from "./cleanup-fixtures.js";
 import { CertificationServer } from "../src/lib/cert-server.js";
+import { loadFixturesManifest, resolveRunId } from "../src/lib/env.js";
 
 type Gate = {
   id: string;
@@ -69,9 +70,22 @@ async function main(): Promise<void> {
     console.log("[platform:certify] Gate F: Hosted fixture provision");
     const t0 = Date.now();
     try {
-      await provisionPlatform7bFixtures(pkg);
-      provisioned = true;
-      gates.push({ id: "F", name: "Hosted fixture provision", status: "pass", durationMs: Date.now() - t0 });
+      const existing = loadFixturesManifest(pkg);
+      const runId = resolveRunId();
+      if (existing?.runId === runId && existing.tenantId && existing.users?.owner?.jwt) {
+        console.log(`[platform:certify] Reusing fixture manifest for run ${runId}`);
+        provisioned = true;
+        gates.push({
+          id: "F",
+          name: "Hosted fixture provision",
+          status: "pass",
+          durationMs: Date.now() - t0,
+        });
+      } else {
+        await provisionPlatform7bFixtures(pkg);
+        provisioned = true;
+        gates.push({ id: "F", name: "Hosted fixture provision", status: "pass", durationMs: Date.now() - t0 });
+      }
     } catch (e) {
       gates.push({
         id: "F",
@@ -102,35 +116,50 @@ async function main(): Promise<void> {
     );
 
     if (provisioned) {
-      await server.start();
-      const pwEnv = { RTB_TEST_BASE_URL: server.baseUrl };
-      gates.push(
-        runGate(
-          "P",
-          "Browser E2E multi-OS",
-          "pnpm --filter @rtb/platform-certification exec playwright test playwright/multi-os.spec.ts",
-          root,
-          pwEnv,
-        ),
-      );
-      gates.push(
-        runGate(
-          "Q",
-          "Accessibility",
-          "pnpm --filter @rtb/platform-certification exec playwright test playwright/accessibility.spec.ts",
-          root,
-          pwEnv,
-        ),
-      );
-      gates.push(
-        runGate(
-          "R",
-          "Responsive layouts",
-          "pnpm --filter @rtb/platform-certification exec playwright test playwright/responsive.spec.ts",
-          root,
-          pwEnv,
-        ),
-      );
+      try {
+        await server.start();
+      } catch (e) {
+        gates.push({
+          id: "P",
+          name: "Browser E2E multi-OS",
+          status: "fail",
+          durationMs: 0,
+          error: e instanceof Error ? e.message : String(e),
+        });
+        for (const id of ["Q", "R"]) {
+          gates.push({ id, name: `Skipped ${id} (server failed)`, status: "fail", durationMs: 0, error: "server failed" });
+        }
+      }
+      if (server.baseUrl && !gates.some((g) => g.id === "P")) {
+        const pwEnv = { RTB_TEST_BASE_URL: server.baseUrl };
+        gates.push(
+          runGate(
+            "P",
+            "Browser E2E multi-OS",
+            "pnpm --filter @rtb/platform-certification exec playwright test playwright/multi-os.spec.ts",
+            root,
+            pwEnv,
+          ),
+        );
+        gates.push(
+          runGate(
+            "Q",
+            "Accessibility",
+            "pnpm --filter @rtb/platform-certification exec playwright test playwright/accessibility.spec.ts",
+            root,
+            pwEnv,
+          ),
+        );
+        gates.push(
+          runGate(
+            "R",
+            "Responsive layouts",
+            "pnpm --filter @rtb/platform-certification exec playwright test playwright/responsive.spec.ts",
+            root,
+            pwEnv,
+          ),
+        );
+      }
     } else {
       for (const id of ["P", "Q", "R"]) {
         gates.push({ id, name: `Skipped ${id} (no fixture)`, status: "fail", durationMs: 0, error: "fixture missing" });
