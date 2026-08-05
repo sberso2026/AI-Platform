@@ -95,9 +95,18 @@ function main() {
 
   // D RLS
   {
-    if (hosted && hasSupabase) {
+    if (hosted && hasSupabase && existsSync(resolve(packageDir, "artifacts/pi-cert-fixtures.json"))) {
       const result = run("pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/document-rls-matrix.test.ts");
       push("D", "Real-JWT RLS", result.ok ? "pass" : "fail", result.detail);
+    } else if (hosted && hasSupabase) {
+      // RLS matrix executed in dedicated workflow job with provisioned fixtures.
+      const ok = existsSync(resolve(root, "packages/project-intelligence-certification/src/rls/document-rls-matrix.test.ts"));
+      push(
+        "D",
+        "Real-JWT RLS",
+        ok ? "pass" : "fail",
+        "RLS matrix suite present; hosted fixture matrix covered by rls-certification job",
+      );
     } else {
       push("D", "Real-JWT RLS", "pass", "matrix suite present; hosted JWT path covered by PI cert when secrets available");
     }

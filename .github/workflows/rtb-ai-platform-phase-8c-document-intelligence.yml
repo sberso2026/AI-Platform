@@ -269,11 +269,14 @@ jobs:
           PLATFORM_EMBEDDING_API_KEY: ${{ secrets.PLATFORM_EMBEDDING_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CERTIFY_BROWSER: "0"
+          GITHUB_SHA: ${{ github.sha }}
         run: pnpm --filter @rtb/project-intelligence-certification certify:phase8c
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: phase8c-document-intelligence-certification
           path: packages/project-intelligence-certification/artifacts/phase8c-document-intelligence-certification.json
+          if-no-files-found: error
 
   accessibility:
     needs: browser-certification
