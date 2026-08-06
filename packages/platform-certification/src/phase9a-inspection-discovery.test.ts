@@ -99,6 +99,6 @@ describe("Phase 9A Inspection Intelligence discovery boundaries", () => {
     expect(page).toContain('data-testid="inspection-intelligence-discovery-ready"');
     expect(
       readFileSync(resolve(ROOT, "packages/inspection-intelligence/src/version.ts"), "utf8"),
-    ).toMatch(/INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = false/);
+    ).toMatch(/INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence"/);
   });
 });

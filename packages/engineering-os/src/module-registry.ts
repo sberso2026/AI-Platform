@@ -221,8 +221,8 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
     commerceApplicationKey: "inspection_intelligence",
     name: "Inspection Intelligence",
     description:
-      "Reusable Engineering OS inspection framework (Phase 9A discovery lock — no commercial product features)",
-    version: "0.1.0-discovery",
+      "Reusable Engineering OS inspection engine — Phase 9B first vertical slice",
+    version: "0.2.0-vertical-slice",
     operatingSystemId: OS_ID,
     status: "registered",
     enabled: true,
@@ -231,7 +231,27 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       {
         path: "/engineering/apps/inspection-intelligence",
         title: "Inspection Intelligence",
-        component: "InspectionIntelligenceDiscovery",
+        component: "InspectionIntelligenceHome",
+      },
+      {
+        path: "/engineering/apps/inspection-intelligence/templates",
+        title: "Inspection Templates",
+        component: "InspectionTemplates",
+      },
+      {
+        path: "/engineering/apps/inspection-intelligence/plans",
+        title: "Inspection Plans",
+        component: "InspectionPlans",
+      },
+      {
+        path: "/engineering/apps/inspection-intelligence/sessions",
+        title: "Inspection Sessions",
+        component: "InspectionSessions",
+      },
+      {
+        path: "/engineering/apps/inspection-intelligence/review",
+        title: "Inspection Review",
+        component: "InspectionReview",
       },
     ],
     navigation: [
@@ -245,10 +265,32 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       },
     ],
     permissions: [{ resource: "engineering", action: "read" }],
-    searchProviders: ["inspection_intelligence.discovery"],
+    searchProviders: ["inspection_intelligence.sessions"],
     aiCapabilities: ["inspection_intelligence.assist"],
     eventHandlers: ["inspection_intelligence.*"],
-    features: [],
+    features: [
+      {
+        id: "inspection_planning",
+        name: "Inspection Planning",
+        description: "Templates and plans bound to Inspection Targets",
+        version: "0.2.0-vertical-slice",
+        capabilities: [{ id: "inspection.read" }, { id: "inspection.write" }],
+      },
+      {
+        id: "inspection_sessions",
+        name: "Inspection Sessions",
+        description: "Session execution happy path",
+        version: "0.2.0-vertical-slice",
+        capabilities: [{ id: "inspection.read" }, { id: "inspection.write" }],
+      },
+      {
+        id: "inspection_review_approval",
+        name: "Inspection Review",
+        description: "Human review workflow for submitted sessions",
+        version: "0.2.0-vertical-slice",
+        capabilities: [{ id: "inspection.review" }, { id: "inspection.approve" }],
+      },
+    ],
   },
   {
     id: "project_controls",

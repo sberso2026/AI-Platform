@@ -10,10 +10,10 @@ Reusable inspection engine inherited by every future inspection discipline. No c
 
 | Entity | Ownership | Notes |
 |--------|-----------|-------|
-| `inspection_plan` | Inspection Intelligence | Scope, assets refs, cadence |
+| `inspection_plan` | Inspection Intelligence | Scope via Inspection Targets, cadence |
 | `inspection_template` | Inspection Intelligence | Reusable checklist structure |
 | `inspection_template_revision` | Inspection Intelligence | Immutable revision history |
-| `inspection_session` | Inspection Intelligence | One execution instance |
+| `inspection_session` | Inspection Intelligence | One execution instance bound to targets |
 | `inspection_assignment` | Inspection Intelligence | Inspector / crew assignment |
 | `inspection_observation` | Inspection Intelligence | Qualitative / structured findings |
 | `measurement` | Inspection Intelligence | See measurement framework |

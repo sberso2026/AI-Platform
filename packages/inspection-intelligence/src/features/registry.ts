@@ -1,15 +1,19 @@
 export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
 
-/** Planned feature IDs — not implemented in Phase 9A. */
-export const INSPECTION_INTELLIGENCE_PLANNED_FEATURE_IDS = [
+export const INSPECTION_INTELLIGENCE_SLICE_FEATURE_IDS = [
   "inspection_planning",
   "inspection_sessions",
   "inspection_observations",
   "inspection_measurements",
   "inspection_evidence",
   "inspection_review_approval",
-  "inspection_reporting",
 ] as const;
 
-export type InspectionIntelligencePlannedFeatureId =
-  (typeof INSPECTION_INTELLIGENCE_PLANNED_FEATURE_IDS)[number];
+export type InspectionIntelligenceSliceFeatureId =
+  (typeof INSPECTION_INTELLIGENCE_SLICE_FEATURE_IDS)[number];
+
+/** Planned but not in first vertical slice depth. */
+export const INSPECTION_INTELLIGENCE_PLANNED_FEATURE_IDS = [
+  ...INSPECTION_INTELLIGENCE_SLICE_FEATURE_IDS,
+  "inspection_reporting",
+] as const;

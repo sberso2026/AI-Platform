@@ -1,4 +1,4 @@
-name: Phase 9A Inspection Intelligence Discovery
+name: Phase 9B Inspection Intelligence Vertical Slice
 
 on:
   workflow_dispatch:
@@ -12,19 +12,17 @@ on:
       - "packages/inspection-intelligence/**"
       - "packages/inspection-intelligence-certification/**"
       - "packages/engineering-os/src/module-registry.ts"
-      - "packages/platform-certification/src/phase9a*"
+      - "packages/platform-certification/src/phase9b*"
       - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
       - "apps/web/src/app/**/inspection-intelligence/**"
+      - "apps/web/src/app/api/engineering/inspection-intelligence/**"
       - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
-      - "apps/web/package.json"
+      - "supabase/migrations/*inspection_intelligence*"
       - "docs/architecture/INSPECTION_INTELLIGENCE*"
-      - "docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md"
-      - "docs/architecture/RTB_AI_PLATFORM_MONOREPO_STRUCTURE.md"
-      - "docs/architecture/rtb-ai-platform-package-inventory.json"
-      - ".github/workflows/phase-9a-inspection-intelligence-discovery.yml"
+      - ".github/workflows/phase-9b-inspection-intelligence-vertical-slice.yml"
 
 concurrency:
-  group: phase-9a-inspection-discovery-${{ github.ref }}
+  group: phase-9b-inspection-slice-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -54,20 +52,20 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Inspection Intelligence unit identity
+      - name: Inspection Intelligence unit + slice tests
         run: pnpm --filter @rtb/inspection-intelligence test
 
       - name: Architecture boundary tests
-        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9a-inspection-discovery.test.ts
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9b-inspection-vertical-slice.test.ts
 
-      - name: Phase 9A certification (gates A–S)
-        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9a
+      - name: Phase 9B certification (gates A–S)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9b
 
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
           const { readFileSync } = require("fs");
-          const path = "packages/inspection-intelligence-certification/artifacts/phase9a-inspection-intelligence-discovery-certification.json";
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9b-inspection-intelligence-vertical-slice-certification.json";
           const a = JSON.parse(readFileSync(path, "utf8"));
           const checks = [
             ["verdict", a.verdict === "PASS"],
@@ -78,9 +76,13 @@ jobs:
             ["secretExposureDetected", a.secretExposureDetected === false],
             ["releaseTagMoved", a.releaseTagMoved === false],
             ["releaseEligible", a.releaseEligible === true],
-            ["phase9BReady", a.phase9BReady === true],
-            ["inspectionProductFeaturesImplemented", typeof a.inspectionProductFeaturesImplemented === "boolean"],
-            ["inspectionPackageCreated", a.inspectionPackageCreated === true],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
+            ["verticalSliceReady", a.verticalSliceReady === true],
+            ["phase9CReady", a.phase9CReady === true],
+            ["architecturalReservationsLocked", a.architecturalReservationsLocked === true],
+            ["aiVisionImplemented", a.aiVisionImplemented === false],
+            ["predictiveImplemented", a.predictiveImplemented === false],
+            ["mobileProductImplemented", a.mobileProductImplemented === false],
             ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
             ["artifactMatch", a.artifactCommitSha === a.buildIdentitySha],
           ];
@@ -92,8 +94,8 @@ jobs:
           }
           console.log(JSON.stringify({
             verdict: a.verdict,
-            phase9BReady: a.phase9BReady,
-            releaseEligible: a.releaseEligible,
+            phase9CReady: a.phase9CReady,
+            verticalSliceReady: a.verticalSliceReady,
             version: a.version,
           }, null, 2));
           EOF
@@ -102,6 +104,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase9a-inspection-intelligence-discovery-certification
-          path: packages/inspection-intelligence-certification/artifacts/phase9a-inspection-intelligence-discovery-certification.json
+          name: phase9b-inspection-intelligence-vertical-slice-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9b-inspection-intelligence-vertical-slice-certification.json
           if-no-files-found: error

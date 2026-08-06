@@ -1,7 +1,15 @@
 "use client";
 
+const LINKS = [
+  { href: "/engineering/apps/inspection-intelligence", label: "Overview" },
+  { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
+  { href: "/engineering/apps/inspection-intelligence/plans", label: "Plans" },
+  { href: "/engineering/apps/inspection-intelligence/sessions", label: "Sessions" },
+  { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
+] as const;
+
 /**
- * Minimal Engineering OS shell for Inspection Intelligence discovery (Phase 9A).
+ * Engineering OS shell for Inspection Intelligence vertical slice (Phase 9B).
  */
 export function InspectionIntelligenceShell({ children }: { children: React.ReactNode }) {
   return (
@@ -12,15 +20,18 @@ export function InspectionIntelligenceShell({ children }: { children: React.Reac
         </p>
         <h2 className="text-lg font-semibold text-slate-900">Inspection Intelligence</h2>
         <nav
-          className="mt-3 flex gap-4 text-sm"
-          aria-label="Inspection Intelligence navigation"
+          className="mt-3 flex flex-wrap gap-4 text-sm"
+          aria-label="Inspection Intelligence features"
         >
-          <a
-            href="/engineering/apps/inspection-intelligence"
-            className="text-slate-800 underline-offset-2 hover:underline"
-          >
-            Discovery
-          </a>
+          {LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-slate-800 underline-offset-2 hover:underline"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
       </header>
       {children}

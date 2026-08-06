@@ -128,7 +128,7 @@ function main() {
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = false/,
+        /INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence"/,
       )
       ? "pass"
       : "fail",
@@ -308,14 +308,21 @@ function main() {
   push("R", "Artifact identity", artifactOk ? "pass" : "fail", `build=${buildIdentitySha}`);
 
   const failedBeforeS = gates.filter((g) => g.status === "fail");
-  const inspectionProductFeaturesImplemented = false;
+  const inspectionProductFeaturesImplemented = fileContains(
+    "packages/inspection-intelligence/src/version.ts",
+    /INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = true/,
+  );
   const phase9BReady =
     failedBeforeS.length === 0 &&
     !releaseTagMoved &&
-    inspectionProductFeaturesImplemented === false &&
     existsSync(resolve(root, "packages/inspection-intelligence"));
 
-  push("S", "Phase 9B readiness", phase9BReady ? "pass" : "fail", `phase9BReady=${phase9BReady}`);
+  push(
+    "S",
+    "Phase 9B readiness",
+    phase9BReady ? "pass" : "fail",
+    `phase9BReady=${phase9BReady}; featuresImplemented=${inspectionProductFeaturesImplemented}`,
+  );
 
   const all = [...gates];
   const finalFailed = all.filter((g) => g.status === "fail");
