@@ -286,6 +286,19 @@ function encodeText(value: string): Uint8Array {
   return new TextEncoder().encode(value);
 }
 
+/** Fresh ArrayBuffer slice acceptable to Web Crypto BufferSource under strict TS. */
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
+function randomIv(byteLength = 12): Uint8Array {
+  const iv = new Uint8Array(byteLength);
+  globalThis.crypto.getRandomValues(iv);
+  return iv;
+}
+
 export function assertEngineeringMobileOfflineSdkComplete(
   keys: readonly string[] = ENGINEERING_MOBILE_OFFLINE_CAPABILITY_KEYS,
 ): void {
@@ -349,10 +362,13 @@ export async function createCryptoKeyLifecycle(): Promise<OfflineCryptoKeyLifecy
     "encrypt",
     "decrypt",
   ]);
-  const iv = new Uint8Array(12);
-  globalThis.crypto.getRandomValues(iv);
+  const iv = randomIv(12);
   const wrapped = new Uint8Array(
-    await subtle.encrypt({ name: "AES-GCM", iv }, wrapKey, raw),
+    await subtle.encrypt(
+      { name: "AES-GCM", iv: toArrayBuffer(iv) },
+      wrapKey,
+      toArrayBuffer(raw),
+    ),
   );
   // Zeroize raw key buffer best-effort
   raw.fill(0);
@@ -388,10 +404,13 @@ export async function encryptOfflinePayload(
     "encrypt",
     "decrypt",
   ]);
-  const iv = new Uint8Array(12);
-  globalThis.crypto.getRandomValues(iv);
+  const iv = randomIv(12);
   const cipher = new Uint8Array(
-    await subtle.encrypt({ name: "AES-GCM", iv }, key, encodeText(plaintext)),
+    await subtle.encrypt(
+      { name: "AES-GCM", iv: toArrayBuffer(iv) },
+      key,
+      toArrayBuffer(encodeText(plaintext)),
+    ),
   );
   return {
     ciphertext: `${lifecycle.keyId}:${bytesToBase64(cipher)}`,
@@ -406,18 +425,22 @@ export async function integrityHash(
   const subtle = getSubtle();
   const key = await subtle.importKey(
     "raw",
-    encodeText(secret),
+    toArrayBuffer(encodeText(secret)),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
   );
-  const sig = new Uint8Array(await subtle.sign("HMAC", key, encodeText(payload)));
+  const sig = new Uint8Array(
+    await subtle.sign("HMAC", key, toArrayBuffer(encodeText(payload))),
+  );
   return Array.from(sig, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export async function contentHash(bytes: string): Promise<string> {
   const subtle = getSubtle();
-  const digest = new Uint8Array(await subtle.digest("SHA-256", encodeText(bytes)));
+  const digest = new Uint8Array(
+    await subtle.digest("SHA-256", toArrayBuffer(encodeText(bytes))),
+  );
   return Array.from(digest, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
