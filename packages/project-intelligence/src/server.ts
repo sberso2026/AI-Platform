@@ -32,4 +32,5 @@ export * from "./documents/cost-controls";
 export * from "./meetings";
 export * from "./findings";
 export * from "./reports";
+export * from "./knowledge";
 

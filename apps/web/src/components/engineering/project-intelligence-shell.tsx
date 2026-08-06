@@ -8,6 +8,7 @@ import {
   BarChart3,
   ClipboardList,
   FileText,
+  Network,
   SearchCheck,
   Settings,
   Users,
@@ -34,6 +35,11 @@ const primaryTabs = [
     href: "/engineering/apps/project-intelligence/reports",
     label: "Reporting Intelligence",
     icon: ClipboardList,
+  },
+  {
+    href: "/engineering/apps/project-intelligence/knowledge",
+    label: "Knowledge Intelligence",
+    icon: Network,
   },
 ] as const;
 
@@ -73,6 +79,7 @@ function navTestId(href: string): string | undefined {
   if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
   if (href.endsWith("/findings")) return "project-intelligence-nav-findings";
   if (href.endsWith("/reports")) return "project-intelligence-nav-reports";
+  if (href.endsWith("/knowledge")) return "project-intelligence-nav-knowledge";
   if (href.endsWith("/migration")) return "project-intelligence-nav-migration";
   if (href.endsWith("/health")) return "project-intelligence-nav-health";
   if (href.endsWith("/settings")) return "project-intelligence-nav-settings";
@@ -136,7 +143,7 @@ export function ProjectIntelligenceShell({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">Engineering OS</p>
         <h1 className="mt-2 text-xl font-semibold">Project Intelligence</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Production module — documents, meetings, findings, and reporting.
+          Production module — documents, meetings, findings, reporting, and knowledge search.
         </p>
         <nav className="mt-8 space-y-1" aria-label="Project Intelligence features">
           {primaryTabs.map((tab) => (

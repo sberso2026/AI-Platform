@@ -1,0 +1,303 @@
+name: RTB AI Platform Phase 8G Knowledge Intelligence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+    paths:
+      - "packages/project-intelligence/**"
+      - "packages/project-intelligence-certification/**"
+      - "packages/platform-certification/**"
+      - "packages/engineering-os/**"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/project-intelligence/knowledge/**"
+      - "apps/web/src/lib/project-intelligence/knowledge-search-service.ts"
+      - "apps/web/src/components/engineering/project-intelligence-shell.tsx"
+      - "docs/migration/PROJECT_INTELLIGENCE_KNOWLEDGE_PHASE_8G*"
+      - "docs/architecture/PROJECT_INTELLIGENCE_KNOWLEDGE*"
+      - "docs/testing/PROJECT_INTELLIGENCE_KNOWLEDGE_PRODUCTION_BASELINE.md"
+      - "supabase/migrations/*project_intelligence_knowledge*"
+      - ".github/workflows/rtb-ai-platform-phase-8g-knowledge-intelligence.yml"
+
+concurrency:
+  group: rtb-ai-platform-phase-8g-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  GITHUB_RUN_ID: ${{ github.run_id }}
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/platform-certification test:unit
+      - run: pnpm --filter @rtb/project-intelligence test
+      - run: pnpm --filter @rtb/engineering-os test
+
+  hosted-schema:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted knowledge schema identity
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification verify-hosted-knowledge-schema
+
+  rls-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision PI fixtures
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Document findings RLS (source isolation baseline)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/document-rls-matrix.test.ts
+      - name: Cleanup PI fixtures
+        if: always()
+        continue-on-error: true
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+
+  graph-search-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/phase8g-knowledge-integration.test.ts
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8g-knowledge-intelligence-integration.test.ts
+
+  browser-certification:
+    needs:
+      - hosted-schema
+      - rls-certification
+      - graph-search-certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Provision full PI entitlement fixture
+        run: |
+          set +e
+          pnpm --filter @rtb/project-intelligence-certification cleanup || true
+          pnpm --filter @rtb/project-intelligence-certification provision
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "Provision failed once; cleanup and retry"
+            pnpm --filter @rtb/project-intelligence-certification cleanup || true
+            pnpm --filter @rtb/project-intelligence-certification provision
+            status=$?
+          fi
+          exit $status
+      - name: Verify fixture readiness
+        run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
+      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Browser E2E knowledge (CERTIFY_BROWSER=1)
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          PROJECT_INTELLIGENCE_RUNTIME_MODE: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+          PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+          CERTIFY_BROWSER: "1"
+        run: |
+          pnpm --filter @rtb/web start &
+          npx --yes wait-on http://127.0.0.1:3000
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:knowledge
+      - name: Phase 8G certify (gates A–S, CERTIFY_BROWSER=1)
+        env:
+          CERTIFY_BROWSER: "1"
+          BROWSER_E2E_ALREADY_PASSED: "1"
+          GITHUB_SHA: ${{ github.sha }}
+        run: pnpm --filter @rtb/project-intelligence-certification certify:phase8g
+      - name: Cleanup PI fixtures
+        if: always()
+        continue-on-error: true
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase8g-knowledge-intelligence-certification
+          path: packages/project-intelligence-certification/artifacts/phase8g-knowledge-intelligence-certification.json
+          if-no-files-found: ignore
+
+  accessibility:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8g-knowledge-intelligence-certification
+          path: artifacts
+      - name: Verify accessibility gate O
+        run: |
+          node -e "const a=require('./artifacts/phase8g-knowledge-intelligence-certification.json'); const g=a.gates.find(x=>x.id==='O'); if(!g||g.status!=='pass') { console.error(g); process.exit(1);} "
+
+  responsive:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8g-knowledge-intelligence-certification
+          path: artifacts
+      - name: Verify responsive gate P
+        run: |
+          node -e "const a=require('./artifacts/phase8g-knowledge-intelligence-certification.json'); const g=a.gates.find(x=>x.id==='P'); if(!g||g.status!=='pass') { console.error(g); process.exit(1);} "
+
+  performance:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8g-knowledge-intelligence-certification
+          path: artifacts
+      - name: Verify performance gate Q
+        run: |
+          node -e "const a=require('./artifacts/phase8g-knowledge-intelligence-certification.json'); const g=a.gates.find(x=>x.id==='Q'); if(!g||g.status!=='pass') { console.error(g); process.exit(1);} "
+
+  secret-scan:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8g-knowledge-intelligence-certification
+          path: artifacts
+      - name: Verify secret gate R
+        run: |
+          node -e "const a=require('./artifacts/phase8g-knowledge-intelligence-certification.json'); if(a.secretExposure) process.exit(1); const g=a.gates.find(x=>x.id==='R'); if(!g||g.status!=='pass') process.exit(1);"
+
+  release-evidence:
+    needs:
+      - accessibility
+      - responsive
+      - performance
+      - secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8g-knowledge-intelligence-certification
+          path: artifacts
+      - name: Verify releaseEligible and productionKnowledgeIntelligenceReady
+        run: |
+          node -e "
+          const a=require('./artifacts/phase8g-knowledge-intelligence-certification.json');
+          const sha=process.env.GITHUB_SHA;
+          console.log(JSON.stringify({verdict:a.verdict, releaseEligible:a.releaseEligible, productionKnowledgeIntelligenceReady:a.productionKnowledgeIntelligenceReady, productionFindingsIntelligenceReady:a.productionFindingsIntelligenceReady, productionDocumentIntelligenceReady:a.productionDocumentIntelligenceReady, productionMeetingIntelligenceReady:a.productionMeetingIntelligenceReady, productionReportingIntelligenceReady:a.productionReportingIntelligenceReady, productionTeamsProviderReady:a.productionTeamsProviderReady, certifyBrowser:a.certifyBrowser, duplicateOwnershipDetected:a.duplicateOwnershipDetected, ciHeadSha:a.ciHeadSha, artifactCommitSha:a.artifactCommitSha, buildIdentitySha:a.buildIdentitySha, failedGates:a.failedGates},null,2));
+          if(a.verdict!=='PASS') process.exit(1);
+          if(!a.releaseEligible) process.exit(1);
+          if(!a.productionKnowledgeIntelligenceReady) process.exit(1);
+          if(a.productionDocumentIntelligenceReady!==true) process.exit(1);
+          if(a.productionMeetingIntelligenceReady!==true) process.exit(1);
+          if(a.productionFindingsIntelligenceReady!==true) process.exit(1);
+          if(a.productionReportingIntelligenceReady!==true) process.exit(1);
+          if(a.productionTeamsProviderReady!==false) process.exit(1);
+          if(a.duplicateOwnershipDetected!==false) process.exit(1);
+          if(a.certifyBrowser!==true) process.exit(1);
+          if(a.failedGateCount!==0 || a.notExecutedGateCount!==0 || a.skippedGateCount!==0) process.exit(1);
+          if(a.ciHeadSha!==sha || a.artifactCommitSha!==a.buildIdentitySha) process.exit(1);
+          "

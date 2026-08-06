@@ -8,7 +8,8 @@ export type ProjectIntelligenceFeatureId =
   | "document_intelligence"
   | "meeting_intelligence"
   | "findings_intelligence"
-  | "reporting_intelligence";
+  | "reporting_intelligence"
+  | "knowledge_intelligence";
 
 export const PROJECT_INTELLIGENCE_MODULE_KEY = "project_intelligence" as const;
 
@@ -203,6 +204,50 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
       "notification",
     ],
     sharedAiCapabilities: ["citations", "human_approval", "cost_controls", "prompt_registry"],
+    implementsOwnAiStack: false,
+  },
+  {
+    id: "knowledge_intelligence",
+    moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    name: "Knowledge Intelligence",
+    description: "Unified knowledge graph and hybrid intelligence search with cited retrieval",
+    version: "0.1.0",
+    capabilities: [
+      { id: "knowledge.intelligence.read" },
+      { id: "knowledge.intelligence.write" },
+    ],
+    routes: [
+      {
+        path: "/engineering/apps/project-intelligence/knowledge",
+        title: "Knowledge Intelligence",
+        component: "KnowledgeIntelligenceHome",
+      },
+    ],
+    navigation: [
+      {
+        id: "pi-feature-knowledge",
+        label: "Knowledge Intelligence",
+        path: "/engineering/apps/project-intelligence/knowledge",
+        icon: "Network",
+        group: "engineering",
+        order: 5,
+      },
+    ],
+    sharedServices: [
+      "document_references",
+      "engineering_timelines",
+      "ai_context",
+      "audit",
+      "reporting",
+      "activity",
+      "approvals",
+    ],
+    sharedAiCapabilities: [
+      "knowledge_retrieval",
+      "evidence_grounding",
+      "citations",
+      "prompt_registry",
+    ],
     implementsOwnAiStack: false,
   },
 ];

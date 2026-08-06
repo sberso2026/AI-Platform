@@ -22,8 +22,8 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
     moduleKey: "project_intelligence",
     commerceApplicationKey: "project_intelligence",
     name: "Project Intelligence",
-    description: "Documents, meetings, findings, and project decision support",
-    version: "0.2.0",
+    description: "Documents, meetings, findings, reporting, and knowledge search",
+    version: "0.3.0",
     operatingSystemId: OS_ID,
     status: "registered",
     enabled: true,
@@ -37,18 +37,21 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       "project_intelligence.meetings",
       "project_intelligence.findings",
       "project_intelligence.reports",
+      "project_intelligence.knowledge",
     ],
     aiCapabilities: [
       "project_intelligence.grounded_answers",
       "project_intelligence.meeting_minutes",
       "project_intelligence.findings_synthesis",
       "project_intelligence.reporting",
+      "project_intelligence.knowledge_retrieval",
     ],
     eventHandlers: [
       "project_intelligence.document.*",
       "project_intelligence.meeting.*",
       "project_intelligence.findings.*",
       "project_intelligence.reporting.*",
+      "project_intelligence.knowledge.*",
     ],
     routes: [
       {
@@ -75,6 +78,11 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         path: "/engineering/apps/project-intelligence/reports",
         title: "Reporting Intelligence",
         component: "ReportingIntelligenceHome",
+      },
+      {
+        path: "/engineering/apps/project-intelligence/knowledge",
+        title: "Knowledge Intelligence",
+        component: "KnowledgeIntelligenceHome",
       },
     ],
     navigation: [
@@ -118,6 +126,14 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         group: "engineering",
         order: 24,
       },
+      {
+        id: "pi-feature-knowledge",
+        label: "Knowledge Intelligence",
+        path: "/engineering/apps/project-intelligence/knowledge",
+        icon: "Network",
+        group: "engineering",
+        order: 25,
+      },
     ],
     features: [
       {
@@ -159,6 +175,16 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         capabilities: [
           { id: "reporting.intelligence.read" },
           { id: "reporting.intelligence.write" },
+        ],
+      },
+      {
+        id: "knowledge_intelligence",
+        name: "Knowledge Intelligence",
+        description: "Unified knowledge graph and hybrid intelligence search",
+        version: "0.1.0",
+        capabilities: [
+          { id: "knowledge.intelligence.read" },
+          { id: "knowledge.intelligence.write" },
         ],
       },
     ],

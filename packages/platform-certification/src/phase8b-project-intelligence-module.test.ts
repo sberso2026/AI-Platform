@@ -45,7 +45,7 @@ describe("Phase 8B Project Intelligence production module", () => {
     expect(doc.toLowerCase()).not.toMatch(/cortex/);
   });
 
-  it("registers Project Intelligence as Engineering OS module with four features", () => {
+  it("registers Project Intelligence as Engineering OS module with five features", () => {
     const mod = defaultEngineeringModuleRegistry.get(PROJECT_INTELLIGENCE_MODULE_KEY);
     expect(mod).toBeDefined();
     expect(mod!.enabled).toBe(true);
@@ -54,6 +54,7 @@ describe("Phase 8B Project Intelligence production module", () => {
       [
         "document_intelligence",
         "findings_intelligence",
+        "knowledge_intelligence",
         "meeting_intelligence",
         "reporting_intelligence",
       ].sort(),
@@ -63,6 +64,7 @@ describe("Phase 8B Project Intelligence production module", () => {
     expect(routes).toContain("/engineering/apps/project-intelligence/meetings");
     expect(routes).toContain("/engineering/apps/project-intelligence/findings");
     expect(routes).toContain("/engineering/apps/project-intelligence/reports");
+    expect(routes).toContain("/engineering/apps/project-intelligence/knowledge");
     expect(mod!.navigation?.some((n) => n.id === "pi-feature-documents")).toBe(true);
   });
 
@@ -100,8 +102,12 @@ describe("Phase 8B Project Intelligence production module", () => {
     expect(ENGINEERING_PAGE_POLICIES["/engineering/apps/project-intelligence/reports"]?.action).toBe(
       "reporting.intelligence.read",
     );
+    expect(ENGINEERING_PAGE_POLICIES["/engineering/apps/project-intelligence/knowledge"]?.action).toBe(
+      "knowledge.intelligence.read",
+    );
     expect(ENGINEERING_API_POLICIES["project-intelligence-findings.read"]?.workspaceRequired).toBe(true);
     expect(ENGINEERING_API_POLICIES["project-intelligence-reports.read"]?.workspaceRequired).toBe(true);
+    expect(ENGINEERING_API_POLICIES["project-intelligence-knowledge.read"]?.workspaceRequired).toBe(true);
   });
 
   it("does not claim Engineering Domain ownership", () => {
