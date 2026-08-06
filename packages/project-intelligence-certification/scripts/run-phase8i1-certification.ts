@@ -171,7 +171,7 @@ function main() {
         }>;
       };
       ok =
-        inv.inspectionPackagesCreated === false &&
+        typeof inv.inspectionPackagesCreated === "boolean" &&
         Array.isArray(inv.packages) &&
         inv.packages.length >= 16 &&
         inv.packages.every(
@@ -242,14 +242,15 @@ function main() {
     const ok =
       fileContains("docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md", /Document Intelligence/) &&
       fileContains("docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md", /Engineering Reasoning Assistant/) &&
-      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/) &&
-      !existsSync(resolve(root, "packages/inspection-intelligence"));
+      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
     push("J", "Project Intelligence boundary", ok ? "pass" : "fail");
   }
 
-  // K — Future Inspection Intelligence boundary
+  // K — Inspection Intelligence placement lock (absent in 8I.1; present at locked paths after 9A+)
   {
-    const ok =
+    const ii = existsSync(resolve(root, "packages/inspection-intelligence"));
+    const iic = existsSync(resolve(root, "packages/inspection-intelligence-certification"));
+    const docsOk =
       fileContains(
         "docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md",
         /packages\/inspection-intelligence/,
@@ -257,14 +258,13 @@ function main() {
       fileContains(
         "docs/architecture/RTB_AI_PLATFORM_MONOREPO_STRUCTURE.md",
         /inspection-intelligence-certification/,
-      ) &&
-      !existsSync(resolve(root, "packages/inspection-intelligence")) &&
-      !existsSync(resolve(root, "packages/inspection-intelligence-certification"));
+      );
+    const placementOk = !ii && !iic ? true : ii && iic;
     push(
       "K",
       "Future Inspection Intelligence boundary",
-      ok ? "pass" : "fail",
-      "locked locations; packages not created",
+      docsOk && placementOk ? "pass" : "fail",
+      ii ? "locked locations; packages created after 8I.1" : "locked locations; packages not created",
     );
   }
 
@@ -390,8 +390,7 @@ function main() {
     !runtimeChangeIntroduced &&
     !schemaChangeIntroduced &&
     !secretExposureDetected &&
-    !circularDependencyDetected &&
-    !existsSync(resolve(root, "packages/inspection-intelligence"));
+    !circularDependencyDetected;
 
   push(
     "S",
@@ -438,7 +437,7 @@ function main() {
     runtimeChangeIntroduced,
     schemaChangeIntroduced,
     packagesMoved: [],
-    inspectionPackagesCreated: false,
+    inspectionPackagesCreated: existsSync(resolve(root, "packages/inspection-intelligence")),
     inspectionIntelligenceClassification: "Engineering OS module",
     futureInspectionPackage: "packages/inspection-intelligence",
     futureInspectionCertificationPackage: "packages/inspection-intelligence-certification",

@@ -247,7 +247,7 @@ function main() {
     ) &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /0\.1\.0-discovery/,
+      /INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence"/,
     ) &&
     fileContains(
       "packages/engineering-os/src/module-registry.ts",
