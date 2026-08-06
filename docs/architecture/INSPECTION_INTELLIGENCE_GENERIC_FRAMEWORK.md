@@ -26,7 +26,10 @@ Reusable inspection engine inherited by every future inspection discipline. No c
 
 ## Canonical references (never owned here)
 
-Every entity that needs context references Engineering OS shared-domain IDs:
+Inspections couple through **Inspection Target** + **AssetReference** interfaces.
+Direct project/asset ids may appear only as denormalized indexes derived from targets.
+
+Shared-domain IDs still used inside references:
 
 - `project_id`, `asset_id`, `location_id`, `document_id`, `document_revision_id`
 - `company_id`, `person_id` / `user_id`, `equipment_id`, `tag_id`, `package_id`, `discipline_id`

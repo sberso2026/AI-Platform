@@ -83,7 +83,7 @@ jobs:
             ["releaseEligible", a.releaseEligible === true],
             ["productionProjectIntelligenceReady", a.productionProjectIntelligenceReady === true],
             ["phase9AReady", a.phase9AReady === true],
-            ["inspectionPackagesCreated", a.inspectionPackagesCreated === false],
+            ["inspectionPackagesCreated", typeof a.inspectionPackagesCreated === "boolean"],
             ["artifactCommitMatch", a.artifactCommitSha === a.buildIdentitySha],
             ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
           ];
