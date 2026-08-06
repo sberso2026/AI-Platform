@@ -1,7 +1,8 @@
 /**
  * Phase 8G — Knowledge node / edge reference types (no duplicate business records).
+ * Edge types align with PROJECT_INTELLIGENCE_KG_RELATIONSHIPS in @rtb/types
+ * (defined locally to avoid ESM named-export issues through the server barrel).
  */
-import { PROJECT_INTELLIGENCE_KG_RELATIONSHIPS } from "@rtb/types";
 
 export const KNOWLEDGE_SOURCE_OWNERS = [
   "engineering_core",
@@ -34,7 +35,14 @@ export const KNOWLEDGE_ENTITY_KINDS = [
 
 export type KnowledgeEntityKind = (typeof KNOWLEDGE_ENTITY_KINDS)[number];
 
-export const KNOWLEDGE_EDGE_TYPES = PROJECT_INTELLIGENCE_KG_RELATIONSHIPS;
+export const KNOWLEDGE_EDGE_TYPES = [
+  "contains",
+  "references",
+  "supports",
+  "mitigates",
+  "creates",
+  "derived_from",
+] as const;
 
 export type KnowledgeEdgeType = (typeof KNOWLEDGE_EDGE_TYPES)[number];
 
