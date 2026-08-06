@@ -2,7 +2,9 @@
  * Engineering Mobile SDK — reusable mobile/field primitives for all Engineering OS modules.
  * Contains no Inspection Intelligence business rules.
  */
-export const ENGINEERING_MOBILE_SDK_VERSION = "0.6.0" as const;
+export * from "./offline";
+
+export const ENGINEERING_MOBILE_SDK_VERSION = "0.7.0" as const;
 
 export type MobileViewportClass = "desktop" | "tablet_landscape" | "tablet_portrait" | "phone";
 
@@ -267,36 +269,27 @@ export type MobileSyncReadiness =
   | "local_draft_warning"
   | "server_confirmed";
 
-/** Phase 9G reserved — full offline engine not implemented. */
+/** @deprecated Use MOBILE_OFFLINE_ENGINE_IMPLEMENTED from offline.ts (Phase 9G). */
 export type MobileSyncReadinessReserved = {
-  durableLocalCommandQueue: false;
-  backgroundSynchronization: false;
-  multiDeviceConflictResolution: false;
-  mergeStrategy: false;
-  versionReconciliation: false;
-  offlineTemplatePackageDownload: false;
-  offlineEntitlementSnapshot: false;
+  durableLocalCommandQueue: true;
+  backgroundSynchronization: true;
+  multiDeviceConflictResolution: true;
+  mergeStrategy: true;
+  versionReconciliation: true;
+  offlineTemplatePackageDownload: true;
+  offlineEntitlementSnapshot: true;
 };
 
+/** Phase 9G — offline engine implemented. */
 export const MOBILE_SYNC_READINESS_RESERVED: MobileSyncReadinessReserved = {
-  durableLocalCommandQueue: false,
-  backgroundSynchronization: false,
-  multiDeviceConflictResolution: false,
-  mergeStrategy: false,
-  versionReconciliation: false,
-  offlineTemplatePackageDownload: false,
-  offlineEntitlementSnapshot: false,
+  durableLocalCommandQueue: true,
+  backgroundSynchronization: true,
+  multiDeviceConflictResolution: true,
+  mergeStrategy: true,
+  versionReconciliation: true,
+  offlineTemplatePackageDownload: true,
+  offlineEntitlementSnapshot: true,
 };
-
-export type MobileDraftState =
-  | "local_draft"
-  | "media_staged"
-  | "upload_pending"
-  | "uploading"
-  | "uploaded"
-  | "server_confirmed"
-  | "failed"
-  | "cancelled";
 
 export type MobileMediaStage = {
   stageId: string;
@@ -304,7 +297,7 @@ export type MobileMediaStage = {
   mimeType: string;
   byteLength: number;
   contentHash?: string;
-  state: MobileDraftState;
+  state: import("./offline").MobileDraftState;
   createdAt: string;
 };
 
@@ -415,7 +408,15 @@ export type MobileEventType =
   | "engineering.mobile.annotation_created"
   | "engineering.mobile.attestation_recorded"
   | "engineering.mobile.upload_failed"
-  | "engineering.mobile.permission_denied";
+  | "engineering.mobile.permission_denied"
+  | "engineering.mobile.sync.started"
+  | "engineering.mobile.sync.completed"
+  | "engineering.mobile.sync.failed"
+  | "engineering.mobile.sync.conflict_resolved"
+  | "engineering.mobile.sync.package_downloaded"
+  | "engineering.mobile.sync.entitlement_expired"
+  | "engineering.mobile.sync.purged"
+  | "engineering.mobile.sync.storage_pressure";
 
 export type MobileSdkEvent = {
   type: MobileEventType;
@@ -460,7 +461,7 @@ export function createEngineeringMobileSdkSkeleton() {
     validateScanFormat,
     createMobileSdkEvent,
     createInProcessMobileEventBus,
-    syncReadinessReserved: MOBILE_SYNC_READINESS_RESERVED,
+    offlineEngineImplemented: MOBILE_SYNC_READINESS_RESERVED,
     minTouchTargetPx: MOBILE_MIN_TOUCH_TARGET_PX,
   };
 }

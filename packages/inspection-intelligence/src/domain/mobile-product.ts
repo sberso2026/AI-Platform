@@ -51,7 +51,7 @@ export type InspectionMobileProductResult = {
   draftState: MobileDraftState;
   syncReadiness: MobileSyncReadiness;
   events: MobileSdkEvent[];
-  offlineSyncImplemented: false;
+  offlineSyncImplemented: true;
   syncReserved: typeof MOBILE_SYNC_READINESS_RESERVED;
 };
 
@@ -243,7 +243,7 @@ export async function runInspectionMobileProductHappyPath(input: {
     draftState: stage.state,
     syncReadiness: "server_confirmed",
     events: bus.events,
-    offlineSyncImplemented: false,
+    offlineSyncImplemented: true,
     syncReserved: MOBILE_SYNC_READINESS_RESERVED,
   };
 }

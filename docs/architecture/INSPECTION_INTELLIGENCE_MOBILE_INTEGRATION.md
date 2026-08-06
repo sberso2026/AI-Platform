@@ -23,4 +23,4 @@ Marker: `data-testid="inspection-intelligence-mobile-ready"`.
 
 ## Offline
 
-`offlineSyncImplemented = false`. Connectivity and draft states are sync-ready for Phase 9G.
+`offlineSyncImplemented = true` (Phase 9G). See [INSPECTION_INTELLIGENCE_PHASE_9G_OFFLINE_SYNC.md](./INSPECTION_INTELLIGENCE_PHASE_9G_OFFLINE_SYNC.md).

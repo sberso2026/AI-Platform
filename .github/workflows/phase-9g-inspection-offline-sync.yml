@@ -1,4 +1,4 @@
-name: Phase 9F Inspection Intelligence Mobile Product
+name: Phase 9G Inspection Intelligence Offline Sync
 
 on:
   workflow_dispatch:
@@ -14,20 +14,18 @@ on:
       - "packages/engineering-os/src/mobile-sdk/**"
       - "packages/engineering-os/src/index.ts"
       - "packages/engineering-os/src/module-registry.ts"
-      - "packages/platform-certification/src/phase9f*"
+      - "packages/platform-certification/src/phase9g*"
       - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
       - "apps/web/src/app/**/inspection-intelligence/**"
       - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
       - "supabase/migrations/*inspection_intelligence*"
-      - "docs/architecture/ENGINEERING_MOBILE_SDK.md"
-      - "docs/architecture/INSPECTION_INTELLIGENCE_MOBILE*"
-      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9F*"
-      - "docs/security/INSPECTION_INTELLIGENCE_MOBILE_PRIVACY.md"
-      - "docs/testing/INSPECTION_INTELLIGENCE_MOBILE_BASELINE.md"
-      - ".github/workflows/phase-9f-inspection-mobile-product.yml"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9G*"
+      - "docs/security/INSPECTION_INTELLIGENCE_OFFLINE*"
+      - "docs/testing/INSPECTION_INTELLIGENCE_OFFLINE*"
+      - ".github/workflows/phase-9g-inspection-offline-sync.yml"
 
 concurrency:
-  group: phase-9f-inspection-mobile-${{ github.ref }}
+  group: phase-9g-inspection-offline-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -39,6 +37,7 @@ env:
 jobs:
   certify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,16 +59,16 @@ jobs:
           pnpm --filter @rtb/engineering-os test
           pnpm --filter @rtb/inspection-intelligence test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9f-inspection-mobile-product.test.ts
-      - name: Phase 9F certification (gates A–AF)
-        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9f
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9g-inspection-offline-sync.test.ts
+      - name: Phase 9G certification (gates A–AC)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9g
         env:
           CERTIFY_BROWSER: "1"
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
           const { readFileSync } = require("fs");
-          const path = "packages/inspection-intelligence-certification/artifacts/phase9f-inspection-intelligence-mobile-product-certification.json";
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9g-inspection-intelligence-offline-sync-certification.json";
           const a = JSON.parse(readFileSync(path, "utf8"));
           const checks = [
             ["verdict", a.verdict === "PASS"],
@@ -80,13 +79,12 @@ jobs:
             ["secretExposureDetected", a.secretExposureDetected === false],
             ["releaseTagMoved", a.releaseTagMoved === false],
             ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
-            ["priorInspectionArchitectureIntact", a.priorInspectionArchitectureIntact === true],
             ["releaseEligible", a.releaseEligible === true],
             ["mobileProductImplemented", a.mobileProductImplemented === true],
             ["offlineSyncImplemented", a.offlineSyncImplemented === true],
-            ["phase9GReady", a.phase9GReady === true],
-            ["aiVisionImplementationIntroduced", a.aiVisionImplementationIntroduced === false],
-            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 32],
+            ["phase9HReady", a.phase9HReady === true],
+            ["aiVisionImplemented", a.aiVisionImplemented === false],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 29],
           ];
           const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
           if (failed.length) {
@@ -95,14 +93,14 @@ jobs:
           }
           console.log(JSON.stringify({
             verdict: a.verdict,
-            mobileProductImplemented: a.mobileProductImplemented,
-            phase9GReady: a.phase9GReady,
+            offlineSyncImplemented: a.offlineSyncImplemented,
+            phase9HReady: a.phase9HReady,
           }, null, 2));
           EOF
       - name: Upload certification artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase9f-inspection-intelligence-mobile-product-certification
-          path: packages/inspection-intelligence-certification/artifacts/phase9f-inspection-intelligence-mobile-product-certification.json
+          name: phase9g-inspection-intelligence-offline-sync-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9g-inspection-intelligence-offline-sync-certification.json
           if-no-files-found: warn

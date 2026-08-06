@@ -39,7 +39,7 @@ describe("Phase 9F Inspection Intelligence mobile product", () => {
       "utf8",
     );
     expect(version).toMatch(/INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/);
-    expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/);
+    expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false/);
     expect(

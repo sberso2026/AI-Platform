@@ -242,7 +242,7 @@ function main() {
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
       )
       ? "pass"
       : "fail",

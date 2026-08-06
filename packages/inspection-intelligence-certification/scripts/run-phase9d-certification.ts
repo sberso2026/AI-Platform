@@ -213,7 +213,7 @@ function main() {
     ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
@@ -295,7 +295,7 @@ function main() {
     ) &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+      /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
     );
   const phase9EReady =
     artifactOk && engineeringDomainComplete && architecturalReservationsIntact && !releaseTagMoved;

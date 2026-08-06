@@ -21,4 +21,6 @@ export * from "./domain/operational-workflows";
 export * from "./domain/reporting-preparation";
 export * from "./domain/mobile-product";
 export * from "./domain/pack-mobile-forms";
+export * from "./domain/offline-sync";
+export * from "./domain/mobile-reporting";
 export * from "./pack-sdk";

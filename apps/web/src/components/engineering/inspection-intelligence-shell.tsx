@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/engineering/apps/inspection-intelligence/workflows", label: "Workflows" },
   { href: "/engineering/apps/inspection-intelligence/assignments", label: "Assignments" },
   { href: "/engineering/apps/inspection-intelligence/field", label: "Field" },
+  { href: "/engineering/apps/inspection-intelligence/sync", label: "Sync" },
   { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },
   { href: "/engineering/apps/inspection-intelligence/actions", label: "Actions" },
   { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
@@ -48,7 +49,7 @@ export function InspectionIntelligenceShell({ children }: { children: React.Reac
       data-touch-optimized="true"
       data-min-touch-target="44"
       data-sync-readiness="online_ready"
-      data-offline-sync="false"
+      data-offline-sync="true"
     >
       <header className="mb-6 border-b border-slate-200 pb-4">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -60,7 +61,7 @@ export function InspectionIntelligenceShell({ children }: { children: React.Reac
           data-testid="inspection-sync-readiness"
           aria-live="polite"
         >
-          Connectivity: online · Offline sync: reserved (Phase 9G)
+          Connectivity: online · Offline sync: enabled
         </p>
         <nav
           className="mt-3 flex flex-wrap gap-4 text-sm"

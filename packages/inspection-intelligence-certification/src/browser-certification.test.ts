@@ -1,5 +1,5 @@
 /**
- * Browser certification for Phase 9F — source-level markers + Playwright suite presence.
+ * Browser certification for Phase 9G — offline sync markers + Playwright suite presence.
  */
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("Phase 9F browser certification (source)", () => {
-  it("covers mobile-ready markers and field surfaces", () => {
+describe("Phase 9G browser certification (source)", () => {
+  it("covers offline-sync-ready markers and sync surface", () => {
     const overview = readFileSync(
       resolve(
         ROOT,
@@ -17,8 +17,8 @@ describe("Phase 9F browser certification (source)", () => {
       ),
       "utf8",
     );
-    expect(overview).toContain("inspection-intelligence-operational-workflows-ready");
     expect(overview).toContain("inspection-intelligence-mobile-ready");
+    expect(overview).toContain("inspection-intelligence-offline-sync-ready");
     for (const page of [
       "templates",
       "plans",
@@ -30,6 +30,7 @@ describe("Phase 9F browser certification (source)", () => {
       "assignments",
       "my-work",
       "field",
+      "sync",
     ]) {
       const text = readFileSync(
         resolve(
@@ -44,16 +45,13 @@ describe("Phase 9F browser certification (source)", () => {
       resolve(ROOT, "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"),
       "utf8",
     );
-    expect(shell).toContain("data-touch-optimized");
-    expect(shell).toContain("data-offline-sync");
+    expect(shell).toContain('data-offline-sync="true"');
 
-    const mobileSpec = resolve(
+    const offlineSpec = resolve(
       ROOT,
-      "packages/inspection-intelligence-certification/playwright/mobile-product.spec.ts",
+      "packages/inspection-intelligence-certification/playwright/offline-sync.spec.ts",
     );
-    expect(existsSync(mobileSpec)).toBe(true);
-    const specText = readFileSync(mobileSpec, "utf8");
-    expect(specText).toMatch(/390.*844|tablet|accessibility|landmark/i);
-    expect(specText).toMatch(/768.*1024/);
+    expect(existsSync(offlineSpec)).toBe(true);
+    expect(readFileSync(offlineSpec, "utf8")).toMatch(/390.*844|offline|permanently offline/i);
   });
 });

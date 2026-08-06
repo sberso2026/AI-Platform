@@ -270,11 +270,11 @@ function main() {
     ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
       ) &&
       fileContains(
         "apps/web/src/components/engineering/inspection-intelligence-shell.tsx",
-        /data-offline-sync="false"/,
+        /data-offline-sync="true"/,
       )
       ? "pass"
       : "fail",
@@ -507,23 +507,29 @@ function main() {
     "packages/inspection-intelligence/src/version.ts",
     /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/,
   );
-  const offlineSyncImplemented = !fileContains(
+  const offlineSyncImplemented = fileContains(
     "packages/inspection-intelligence/src/version.ts",
-    /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+    /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
   );
+  const aiVisionStillDeferred = fileContains(
+    "packages/inspection-intelligence/src/version.ts",
+    /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+  );
+  // Forward-compat: Phase 9G may set offlineSyncImplemented=true; 9F eligibility
+  // requires mobile product + AI Vision still deferred.
   const phase9GReady =
     failedBeforeAf.length === 0 &&
     skippedBeforeAf.length === 0 &&
     notExecutedBeforeAf.length === 0 &&
     mobileProductImplemented &&
-    !offlineSyncImplemented &&
+    aiVisionStillDeferred &&
     !releaseTagMoved;
 
   push(
     "AF",
     "Release eligibility",
     phase9GReady && releaseTagTarget === PI_V1_CERTIFIED ? "pass" : "fail",
-    `mobileProductImplemented=${mobileProductImplemented} phase9GReady=${phase9GReady}`,
+    `mobileProductImplemented=${mobileProductImplemented} offlineSyncImplemented=${offlineSyncImplemented} phase9GReady=${phase9GReady}`,
   );
 
   const all = [...gates];
@@ -566,7 +572,7 @@ function main() {
     touchOptimizationStatus: "complete",
     formContinuityStatus: "complete",
     connectivityStatus: "online_with_sync_readiness",
-    offlineSyncImplemented: false,
+    offlineSyncImplemented,
     packAwareMobileFormsStatus: "complete",
     mobileEventsStatus: "typed_contracts",
     privacyStatus: "documented",
