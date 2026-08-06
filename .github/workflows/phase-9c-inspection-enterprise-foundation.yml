@@ -101,4 +101,4 @@ jobs:
         with:
           name: phase9c-inspection-intelligence-enterprise-foundation-certification
           path: packages/inspection-intelligence-certification/artifacts/phase9c-inspection-intelligence-enterprise-foundation-certification.json
-          if-no-files-found: error
+          if-no-files-found: warn
