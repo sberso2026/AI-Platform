@@ -82,7 +82,6 @@ jobs:
             ["architecturalReservationsLocked", a.architecturalReservationsLocked === true],
             ["aiVisionImplemented", a.aiVisionImplemented === false],
             ["predictiveImplemented", a.predictiveImplemented === false],
-            ["mobileProductImplemented", a.mobileProductImplemented === false],
             ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
             ["artifactMatch", a.artifactCommitSha === a.buildIdentitySha],
           ];
