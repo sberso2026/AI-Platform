@@ -12,6 +12,7 @@ export type ProjectIntelligenceEntitlementAction =
   | "meeting.intelligence.read"
   | "meeting.intelligence.write"
   | "findings.intelligence.read"
+  | "findings.intelligence.write"
   | "reporting.intelligence.read"
   | "ai.execute"
   | "health.read"
@@ -60,6 +61,14 @@ export const PROJECT_INTELLIGENCE_FEATURE_ENTITLEMENTS: ProjectIntelligenceFeatu
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     applicationKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     action: "findings.intelligence.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  {
+    featureId: "findings_intelligence",
+    moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    applicationKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    action: "findings.intelligence.write",
     seatRequired: true,
     workspaceRequired: true,
   },

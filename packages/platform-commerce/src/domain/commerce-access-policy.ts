@@ -58,6 +58,7 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "project-intelligence-meetings.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.read", seatRequired: true, workspaceRequired: true },
   "project-intelligence-meetings.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "meeting.intelligence.write", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
   "project-intelligence-findings.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "findings.intelligence.read", seatRequired: true, workspaceRequired: true },
+  "project-intelligence-findings.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "findings.intelligence.write", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
   "project-intelligence-reports.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reporting.intelligence.read", seatRequired: true, workspaceRequired: true },
 };
 

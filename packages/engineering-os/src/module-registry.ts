@@ -146,7 +146,10 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         name: "Findings Intelligence",
         description: "Cross-document and meeting findings consolidation",
         version: "0.1.0",
-        capabilities: [{ id: "findings.intelligence.read" }],
+        capabilities: [
+          { id: "findings.intelligence.read" },
+          { id: "findings.intelligence.write" },
+        ],
       },
       {
         id: "reporting_intelligence",

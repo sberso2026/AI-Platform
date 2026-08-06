@@ -117,7 +117,10 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     name: "Findings Intelligence",
     description: "Cross-document and meeting findings consolidation",
     version: "0.1.0",
-    capabilities: [{ id: "findings.intelligence.read" }],
+    capabilities: [
+      { id: "findings.intelligence.read" },
+      { id: "findings.intelligence.write" },
+    ],
     routes: [
       {
         path: "/engineering/apps/project-intelligence/findings",
@@ -135,8 +138,26 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
         order: 3,
       },
     ],
-    sharedServices: ["document_references", "engineering_timelines", "ai_context", "reporting"],
-    sharedAiCapabilities: ["evidence_grounding", "citations", "capability_registry"],
+    sharedServices: [
+      "activity",
+      "engineering_timelines",
+      "comments",
+      "approvals",
+      "attachments",
+      "document_references",
+      "version_history",
+      "audit",
+      "notification",
+      "ai_context",
+      "reporting",
+    ],
+    sharedAiCapabilities: [
+      "evidence_grounding",
+      "citations",
+      "capability_registry",
+      "human_approval",
+      "prompt_registry",
+    ],
     implementsOwnAiStack: false,
   },
   {
