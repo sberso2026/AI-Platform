@@ -41,6 +41,7 @@ packages/installation-certification/artifacts/
 packages/installation-certification/test-results/
 packages/platform-certification/artifacts/
 packages/project-intelligence-certification/artifacts/
+packages/inspection-intelligence-certification/artifacts/
 packages/project-intelligence-certification/test-results/
 test-results/customer-administration/
 .tmp/customer-administration/
