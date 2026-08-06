@@ -15,6 +15,7 @@ on:
       - "packages/engineering-os/**"
       - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
       - "apps/web/src/app/**/project-intelligence/**"
+      - "apps/web/src/lib/project-intelligence/**"
       - "apps/web/src/components/engineering/project-intelligence-shell.tsx"
       - "docs/release/PROJECT_INTELLIGENCE_V1*"
       - "docs/runbooks/PROJECT_INTELLIGENCE_V1*"
@@ -405,6 +406,8 @@ jobs:
       - secret-scan
       - legacy-analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
