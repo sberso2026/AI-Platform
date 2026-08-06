@@ -156,7 +156,10 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         name: "Reporting Intelligence",
         description: "Module reports over shared Engineering reporting services",
         version: "0.1.0",
-        capabilities: [{ id: "reporting.intelligence.read" }],
+        capabilities: [
+          { id: "reporting.intelligence.read" },
+          { id: "reporting.intelligence.write" },
+        ],
       },
     ],
   },

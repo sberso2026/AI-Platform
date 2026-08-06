@@ -31,4 +31,5 @@ export * from "./documents/embedding-registry";
 export * from "./documents/cost-controls";
 export * from "./meetings";
 export * from "./findings";
+export * from "./reports";
 

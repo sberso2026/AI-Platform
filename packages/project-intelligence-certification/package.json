@@ -33,6 +33,7 @@
     "test:e2e:documents": "playwright test playwright/documents.spec.ts",
     "test:e2e:meetings": "playwright test playwright/meetings.spec.ts",
     "test:e2e:findings": "playwright test playwright/findings.spec.ts",
+    "test:e2e:executive-dashboard": "playwright test playwright/executive-dashboard.spec.ts",
     "test:e2e:meetings-processing": "playwright test playwright/meetings-processing.spec.ts",
     "test:e2e:teams-provider": "playwright test playwright/meetings-teams-provider.spec.ts",
     "test:e2e:teams-live-provider": "playwright test playwright/meetings-teams-live-provider.spec.ts",

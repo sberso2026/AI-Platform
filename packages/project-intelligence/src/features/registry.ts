@@ -166,12 +166,20 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     name: "Reporting Intelligence",
     description: "Module reports over shared Engineering reporting services",
     version: "0.1.0",
-    capabilities: [{ id: "reporting.intelligence.read" }],
+    capabilities: [
+      { id: "reporting.intelligence.read" },
+      { id: "reporting.intelligence.write" },
+    ],
     routes: [
       {
         path: "/engineering/apps/project-intelligence/reports",
         title: "Reporting Intelligence",
         component: "ReportingIntelligenceHome",
+      },
+      {
+        path: "/engineering/apps/project-intelligence/reports/executive",
+        title: "Executive Intelligence Dashboard",
+        component: "ExecutiveIntelligenceDashboard",
       },
     ],
     navigation: [
@@ -184,8 +192,17 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
         order: 4,
       },
     ],
-    sharedServices: ["reporting", "audit", "ai_context"],
-    sharedAiCapabilities: ["citations", "human_approval", "cost_controls"],
+    sharedServices: [
+      "reporting",
+      "audit",
+      "ai_context",
+      "activity",
+      "engineering_timelines",
+      "approvals",
+      "document_references",
+      "notification",
+    ],
+    sharedAiCapabilities: ["citations", "human_approval", "cost_controls", "prompt_registry"],
     implementsOwnAiStack: false,
   },
 ];

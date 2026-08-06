@@ -1,0 +1,93 @@
+name: RTB AI Platform Executive Intelligence Dashboard
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+    paths:
+      - "packages/project-intelligence/src/reports/**"
+      - "packages/project-intelligence/tests/executive-dashboard.test.ts"
+      - "packages/project-intelligence-certification/playwright/executive-dashboard.spec.ts"
+      - "apps/web/src/app/**/project-intelligence/reports/**"
+      - "apps/web/src/lib/project-intelligence/executive-dashboard-service.ts"
+      - "apps/web/src/app/api/engineering/project-intelligence/reports/**"
+      - ".github/workflows/rtb-ai-platform-executive-dashboard.yml"
+
+concurrency:
+  group: rtb-ai-platform-executive-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/executive-dashboard.test.ts
+      - run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  browser-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - run: pnpm --filter @rtb/project-intelligence-certification provision
+      - run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
+      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Browser E2E executive dashboard
+        env:
+          PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+          CERTIFY_BROWSER: "1"
+        run: |
+          pnpm --filter @rtb/web start &
+          npx --yes wait-on http://127.0.0.1:3000
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:executive-dashboard
+      - name: Cleanup
+        if: always()
+        continue-on-error: true
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup

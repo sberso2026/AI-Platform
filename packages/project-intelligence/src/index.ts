@@ -47,3 +47,7 @@ export * from "./findings/core-conversion";
 export * from "./findings/patterns";
 export * from "./findings/reporting-handoff";
 export * from "./findings/shared-services-binding";
+export * from "./reports/executive-widgets";
+export * from "./reports/executive-dashboard";
+export * from "./reports/executive-summary";
+export * from "./reports/shared-services-binding";
