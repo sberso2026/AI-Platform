@@ -430,13 +430,10 @@ jobs:
           if(a.failedGateCount!==0 || a.notExecutedGateCount!==0 || a.skippedGateCount!==0) process.exit(1);
           if(a.ciHeadSha!==sha || a.artifactCommitSha!==a.buildIdentitySha) process.exit(1);
           "
-          # Tag only after PASS on default branch
-          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            git fetch --tags
-            if git rev-parse "project-intelligence-v1.0.0" >/dev/null 2>&1; then
-              echo "Tag project-intelligence-v1.0.0 already exists"
-            else
-              git tag project-intelligence-v1.0.0 "${{ github.sha }}"
-              git push origin project-intelligence-v1.0.0
-            fi
+          git fetch --tags
+          if git rev-parse "project-intelligence-v1.0.0" >/dev/null 2>&1; then
+            echo "Tag project-intelligence-v1.0.0 already exists at $(git rev-parse project-intelligence-v1.0.0)"
+          else
+            git tag project-intelligence-v1.0.0 "${{ github.sha }}"
+            git push origin project-intelligence-v1.0.0
           fi
