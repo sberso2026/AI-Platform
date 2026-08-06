@@ -249,7 +249,7 @@ export const MOBILE_OFFLINE_ENGINE_IMPLEMENTED: MobileOfflineEngineImplemented =
   offlineEntitlementSnapshot: true,
 };
 
-function getSubtle(): SubtleCrypto {
+function getSubtle() {
   const cryptoObj = globalThis.crypto;
   if (!cryptoObj?.subtle) {
     throw new Error("web_crypto_subtle_unavailable");
@@ -282,8 +282,8 @@ function base64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
-function textEncoder(): TextEncoder {
-  return new TextEncoder();
+function encodeText(value: string): Uint8Array {
+  return new TextEncoder().encode(value);
 }
 
 export function assertEngineeringMobileOfflineSdkComplete(
@@ -391,7 +391,7 @@ export async function encryptOfflinePayload(
   const iv = new Uint8Array(12);
   globalThis.crypto.getRandomValues(iv);
   const cipher = new Uint8Array(
-    await subtle.encrypt({ name: "AES-GCM", iv }, key, textEncoder().encode(plaintext)),
+    await subtle.encrypt({ name: "AES-GCM", iv }, key, encodeText(plaintext)),
   );
   return {
     ciphertext: `${lifecycle.keyId}:${bytesToBase64(cipher)}`,
@@ -406,18 +406,18 @@ export async function integrityHash(
   const subtle = getSubtle();
   const key = await subtle.importKey(
     "raw",
-    textEncoder().encode(secret),
+    encodeText(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
   );
-  const sig = new Uint8Array(await subtle.sign("HMAC", key, textEncoder().encode(payload)));
+  const sig = new Uint8Array(await subtle.sign("HMAC", key, encodeText(payload)));
   return Array.from(sig, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export async function contentHash(bytes: string): Promise<string> {
   const subtle = getSubtle();
-  const digest = new Uint8Array(await subtle.digest("SHA-256", textEncoder().encode(bytes)));
+  const digest = new Uint8Array(await subtle.digest("SHA-256", encodeText(bytes)));
   return Array.from(digest, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
