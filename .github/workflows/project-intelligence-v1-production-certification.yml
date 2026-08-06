@@ -1,0 +1,442 @@
+name: Project Intelligence V1.0 Production Certification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/project-intelligence/**"
+      - "packages/project-intelligence-certification/**"
+      - "packages/platform-certification/**"
+      - "packages/engineering-os/**"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/project-intelligence/**"
+      - "apps/web/src/components/engineering/project-intelligence-shell.tsx"
+      - "docs/release/PROJECT_INTELLIGENCE_V1*"
+      - "docs/runbooks/PROJECT_INTELLIGENCE_V1*"
+      - "supabase/migrations/*project_intelligence*"
+      - ".github/workflows/project-intelligence-v1-production-certification.yml"
+
+concurrency:
+  group: project-intelligence-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION: "1"
+  PROJECT_INTELLIGENCE_CERTIFICATION_TARGET: hosted_staging
+  PROJECT_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  ALLOW_PRODUCTION_CERTIFICATION: "false"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  GITHUB_RUN_ID: ${{ github.run_id }}
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CI preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification ci-preflight
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence typecheck
+      - run: pnpm --filter @rtb/project-intelligence test
+      - run: pnpm --filter @rtb/engineering-os test
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8b-project-intelligence-module.test.ts src/phase8g-knowledge-intelligence-integration.test.ts
+
+  schema-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted PI V1 schema (batch 41/42 required)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/project-intelligence-certification verify-hosted-pi-v1-schema
+
+  rls-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Provision PI fixtures
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set +e
+          pnpm --filter @rtb/project-intelligence-certification cleanup || true
+          pnpm --filter @rtb/project-intelligence-certification provision
+          status=$?
+          if [ $status -ne 0 ]; then
+            pnpm --filter @rtb/project-intelligence-certification cleanup || true
+            pnpm --filter @rtb/project-intelligence-certification provision
+            status=$?
+          fi
+          exit $status
+      - run: pnpm --filter @rtb/project-intelligence-certification exec vitest run src/rls/document-rls-matrix.test.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - if: always()
+        continue-on-error: true
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  platform-regression:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase7b-multi-os.test.ts
+
+  engineering-os-regression:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/engineering-os test
+
+  document-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8c-document-intelligence-integration.test.ts
+
+  meeting-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8d-meeting-intelligence-integration.test.ts
+
+  findings-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8e-findings-intelligence-integration.test.ts
+
+  reporting-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/executive-dashboard.test.ts
+
+  knowledge-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/phase8g-knowledge-integration.test.ts
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8g-knowledge-intelligence-integration.test.ts
+
+  reasoning-assistant-certification:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/project-intelligence exec vitest run tests/deterministic-reasoning-pipeline.test.ts
+
+  cross-feature-certification:
+    needs:
+      - document-certification
+      - meeting-certification
+      - findings-certification
+      - reporting-certification
+      - knowledge-certification
+      - reasoning-assistant-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8b-project-intelligence-module.test.ts
+
+  browser-certification:
+    needs:
+      - schema-certification
+      - rls-certification
+      - platform-regression
+      - engineering-os-regression
+      - cross-feature-certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+      COMMERCE_AUTH_SECRET: ${{ secrets.COMMERCE_AUTH_SECRET }}
+      COMMERCE_SCHEDULER_SECRET: ${{ secrets.COMMERCE_SCHEDULER_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Provision full PI entitlement fixture
+        run: |
+          set +e
+          pnpm --filter @rtb/project-intelligence-certification cleanup || true
+          pnpm --filter @rtb/project-intelligence-certification provision
+          status=$?
+          if [ $status -ne 0 ]; then
+            pnpm --filter @rtb/project-intelligence-certification cleanup || true
+            pnpm --filter @rtb/project-intelligence-certification provision
+            status=$?
+          fi
+          exit $status
+      - run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
+      - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
+      - name: Browser E2E knowledge + reasoning (CERTIFY_BROWSER=1)
+        env:
+          CERTIFY_BROWSER: "1"
+        run: |
+          pnpm --filter @rtb/web start &
+          npx --yes wait-on http://127.0.0.1:3000
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:knowledge
+          pnpm --filter @rtb/project-intelligence-certification test:e2e:reasoning
+      - name: Phase 8I certify (gates A–AD)
+        env:
+          CERTIFY_BROWSER: "1"
+          BROWSER_E2E_ALREADY_PASSED: "1"
+          GITHUB_SHA: ${{ github.sha }}
+        run: pnpm --filter @rtb/project-intelligence-certification certify:phase8i
+      - if: always()
+        continue-on-error: true
+        run: pnpm --filter @rtb/project-intelligence-certification cleanup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase8i-project-intelligence-v1-certification
+          path: packages/project-intelligence-certification/artifacts/phase8i-project-intelligence-v1-certification.json
+          if-no-files-found: ignore
+
+  accessibility:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8i-project-intelligence-v1-certification
+          path: artifacts
+      - run: node -e "const a=require('./artifacts/phase8i-project-intelligence-v1-certification.json'); const g=a.gates.find(x=>x.id==='X'); if(!g||g.status!=='pass') process.exit(1);"
+
+  responsive:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8i-project-intelligence-v1-certification
+          path: artifacts
+      - run: node -e "const a=require('./artifacts/phase8i-project-intelligence-v1-certification.json'); const g=a.gates.find(x=>x.id==='Y'); if(!g||g.status!=='pass') process.exit(1);"
+
+  performance:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8i-project-intelligence-v1-certification
+          path: artifacts
+      - run: node -e "const a=require('./artifacts/phase8i-project-intelligence-v1-certification.json'); const g=a.gates.find(x=>x.id==='Z'); if(!g||g.status!=='pass') process.exit(1);"
+
+  secret-scan:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8i-project-intelligence-v1-certification
+          path: artifacts
+      - run: node -e "const a=require('./artifacts/phase8i-project-intelligence-v1-certification.json'); if(a.secretExposureDetected||a.secretExposure) process.exit(1); const g=a.gates.find(x=>x.id==='AB'); if(!g||g.status!=='pass') process.exit(1);"
+
+  legacy-analysis:
+    needs: browser-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -f docs/release/PROJECT_INTELLIGENCE_V1_LEGACY_RETIREMENT.md
+
+  release-evidence:
+    needs:
+      - accessibility
+      - responsive
+      - performance
+      - secret-scan
+      - legacy-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase8i-project-intelligence-v1-certification
+          path: artifacts
+      - name: Verify releaseEligible and create tag when PASS
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node -e "
+          const a=require('./artifacts/phase8i-project-intelligence-v1-certification.json');
+          const sha=process.env.GITHUB_SHA;
+          console.log(JSON.stringify({verdict:a.verdict, releaseEligible:a.releaseEligible, productionProjectIntelligenceReady:a.productionProjectIntelligenceReady, version:a.version, failedGates:a.failedGates},null,2));
+          if(a.verdict!=='PASS') process.exit(1);
+          if(!a.releaseEligible) process.exit(1);
+          if(!a.productionProjectIntelligenceReady) process.exit(1);
+          if(a.version!=='1.0.0') process.exit(1);
+          if(a.productionTeamsProviderReady!==false) process.exit(1);
+          if(a.duplicateOwnershipDetected!==false) process.exit(1);
+          if(a.migrationDriftDetected!==false) process.exit(1);
+          if(a.certifyBrowser!==true) process.exit(1);
+          if(a.failedGateCount!==0 || a.notExecutedGateCount!==0 || a.skippedGateCount!==0) process.exit(1);
+          if(a.ciHeadSha!==sha || a.artifactCommitSha!==a.buildIdentitySha) process.exit(1);
+          "
+          # Tag only after PASS on default branch
+          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            git fetch --tags
+            if git rev-parse "project-intelligence-v1.0.0" >/dev/null 2>&1; then
+              echo "Tag project-intelligence-v1.0.0 already exists"
+            else
+              git tag project-intelligence-v1.0.0 "${{ github.sha }}"
+              git push origin project-intelligence-v1.0.0
+            fi
+          fi

@@ -8,9 +8,18 @@ import {
   drillDownPathFor,
   generateKnowledgeGroundedAnswer,
   hybridSearchNodes,
+  runDeterministicReasoningPipeline,
+  type DeterministicReasoningResult,
   type KnowledgeNodeRef,
   type UnifiedSearchResult,
 } from "@rtb/project-intelligence";
+
+export function buildDemoKnowledgeGraph(scope: {
+  tenantId: string;
+  workspaceId: string;
+}): EngineeringKnowledgeGraph {
+  return demoGraph(scope);
+}
 
 function demoGraph(scope: { tenantId: string; workspaceId: string }): EngineeringKnowledgeGraph {
   const g = new EngineeringKnowledgeGraph();
@@ -177,4 +186,45 @@ export function analyzeKnowledgeImpact(input: {
     }, 1),
     duplicateOwnership: false as const,
   };
+}
+
+export function runKnowledgeReasoningPipeline(input: {
+  question: string;
+  tenantId: string;
+  workspaceId: string;
+  seatAssigned?: boolean;
+  workspaceAssigned?: boolean;
+  canReadKnowledge?: boolean;
+  seedRefIds?: readonly string[];
+}): DeterministicReasoningResult {
+  assertKnowledgeIntelligenceSharedServices();
+  assertNoKnowledgePrivateInfrastructure({
+    implementsPrivateAudit: false,
+    implementsPrivateNotification: false,
+    implementsPrivateAiRuntime: false,
+    implementsPrivateEmbeddingClient: false,
+    storesDuplicateBusinessRecords: false,
+  });
+
+  const graph = demoGraph({ tenantId: input.tenantId, workspaceId: input.workspaceId });
+  const nodes = graph.listNodes({ tenantId: input.tenantId, workspaceId: input.workspaceId });
+  const vectorBoosts = new Map<string, number>();
+  for (const n of nodes) {
+    if (n.kind === "document" && /valve|leak|spec/i.test(`${n.title} ${n.snippet ?? ""}`)) {
+      vectorBoosts.set(n.refId, 0.72);
+    }
+  }
+
+  return runDeterministicReasoningPipeline({
+    question: input.question,
+    permissions: {
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      seatAssigned: input.seatAssigned !== false,
+      workspaceAssigned: input.workspaceAssigned !== false,
+      canReadKnowledge: input.canReadKnowledge !== false,
+    },
+    seedRefIds: input.seedRefIds,
+    vectorBoosts,
+  });
 }

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { collectHealthChecks } from "@rtb/project-intelligence";
+import {
+  PROJECT_INTELLIGENCE_VERSION,
+  collectHealthChecks,
+  getProjectIntelligenceVersionDeclaration,
+} from "@rtb/project-intelligence";
 import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { requireProjectIntelligenceRead } from "@/lib/project-intelligence/access";
 import { handleCommerceDomainError } from "@/lib/lifecycle-api";
@@ -19,7 +23,16 @@ export const GET = withEngineeringApi("project-intelligence-health", async (cont
       workspace: async () =>
         context.ctx.workspaceId ? "healthy" : { status: "degraded", message: "No assigned workspace" },
     });
-    return NextResponse.json({ data: report });
+    const version = getProjectIntelligenceVersionDeclaration();
+    return NextResponse.json({
+      data: {
+        ...report,
+        version: PROJECT_INTELLIGENCE_VERSION,
+        moduleKey: version.moduleKey,
+        releaseTag: version.releaseTag,
+        productName: version.productName,
+      },
+    });
   } catch (error) {
     return handleCommerceDomainError(error, context.correlationId);
   }

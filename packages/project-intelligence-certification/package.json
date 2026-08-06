@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-intelligence-certification",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "certify:phase8d": "tsx scripts/run-phase8d-certification.ts",
     "certify:phase8e": "tsx scripts/run-phase8e-certification.ts",
     "certify:phase8g": "tsx scripts/run-phase8g-certification.ts",
+    "certify:phase8i": "tsx scripts/run-phase8i-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "update-fixture-checksums": "tsx scripts/update-fixture-checksums.ts",
     "provision": "tsx scripts/provision.ts",
@@ -35,6 +36,7 @@
     "test:e2e:meetings": "playwright test playwright/meetings.spec.ts",
     "test:e2e:findings": "playwright test playwright/findings.spec.ts",
     "test:e2e:knowledge": "playwright test playwright/knowledge.spec.ts",
+    "test:e2e:reasoning": "playwright test playwright/reasoning.spec.ts",
     "test:e2e:executive-dashboard": "playwright test playwright/executive-dashboard.spec.ts",
     "test:e2e:meetings-processing": "playwright test playwright/meetings-processing.spec.ts",
     "test:e2e:teams-provider": "playwright test playwright/meetings-teams-provider.spec.ts",
@@ -46,7 +48,8 @@
     "verify-hosted-meeting-processing-schema": "vitest run src/meetings/hosted-schema-processing.test.ts",
     "verify-hosted-teams-schema": "vitest run src/meetings/hosted-schema-teams.test.ts",
     "verify-hosted-findings-schema": "vitest run src/findings/hosted-schema.test.ts",
-    "verify-hosted-knowledge-schema": "vitest run src/knowledge/hosted-schema.test.ts"
+    "verify-hosted-knowledge-schema": "vitest run src/knowledge/hosted-schema.test.ts",
+    "verify-hosted-pi-v1-schema": "vitest run src/v1/hosted-schema.test.ts"
   },
   "dependencies": {
     "@rtb/project-intelligence": "workspace:*",

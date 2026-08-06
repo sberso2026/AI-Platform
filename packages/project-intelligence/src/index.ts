@@ -1,4 +1,5 @@
 export * from "./types/mapping";
+export * from "./version";
 export * from "./domain/errors";
 export * from "./domain/mapping-state-machine";
 export * from "./events/project-intelligence-events";
@@ -57,4 +58,7 @@ export * from "./knowledge/graph";
 export * from "./knowledge/hybrid-search";
 export * from "./knowledge/grounded-answer";
 export * from "./knowledge/ownership";
+export * from "./knowledge/reasoning-types";
+export * from "./knowledge/reasoning-stages";
+export * from "./knowledge/reasoning-pipeline";
 export * from "./knowledge/shared-services-binding";

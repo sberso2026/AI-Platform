@@ -45,14 +45,16 @@ describe("Phase 8B Project Intelligence production module", () => {
     expect(doc.toLowerCase()).not.toMatch(/cortex/);
   });
 
-  it("registers Project Intelligence as Engineering OS module with five features", () => {
+  it("registers Project Intelligence as Engineering OS module with six V1 features", () => {
     const mod = defaultEngineeringModuleRegistry.get(PROJECT_INTELLIGENCE_MODULE_KEY);
     expect(mod).toBeDefined();
     expect(mod!.enabled).toBe(true);
     expect(mod!.workspaceVisibility).toBe("assigned");
+    expect(mod!.version).toBe("1.0.0");
     expect(mod!.features?.map((f) => f.id).sort()).toEqual(
       [
         "document_intelligence",
+        "engineering_reasoning_assistant",
         "findings_intelligence",
         "knowledge_intelligence",
         "meeting_intelligence",
@@ -65,6 +67,7 @@ describe("Phase 8B Project Intelligence production module", () => {
     expect(routes).toContain("/engineering/apps/project-intelligence/findings");
     expect(routes).toContain("/engineering/apps/project-intelligence/reports");
     expect(routes).toContain("/engineering/apps/project-intelligence/knowledge");
+    expect(routes).toContain("/engineering/apps/project-intelligence/reasoning");
     expect(mod!.navigation?.some((n) => n.id === "pi-feature-documents")).toBe(true);
   });
 

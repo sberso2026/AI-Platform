@@ -22,8 +22,8 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
     moduleKey: "project_intelligence",
     commerceApplicationKey: "project_intelligence",
     name: "Project Intelligence",
-    description: "Documents, meetings, findings, reporting, and knowledge search",
-    version: "0.3.0",
+    description: "Documents, meetings, findings, reporting, knowledge search, and reasoning",
+    version: "1.0.0",
     operatingSystemId: OS_ID,
     status: "registered",
     enabled: true,
@@ -38,6 +38,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       "project_intelligence.findings",
       "project_intelligence.reports",
       "project_intelligence.knowledge",
+      "project_intelligence.reasoning",
     ],
     aiCapabilities: [
       "project_intelligence.grounded_answers",
@@ -45,6 +46,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       "project_intelligence.findings_synthesis",
       "project_intelligence.reporting",
       "project_intelligence.knowledge_retrieval",
+      "project_intelligence.reasoning_assistant",
     ],
     eventHandlers: [
       "project_intelligence.document.*",
@@ -52,6 +54,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       "project_intelligence.findings.*",
       "project_intelligence.reporting.*",
       "project_intelligence.knowledge.*",
+      "project_intelligence.reasoning.*",
     ],
     routes: [
       {
@@ -83,6 +86,11 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         path: "/engineering/apps/project-intelligence/knowledge",
         title: "Knowledge Intelligence",
         component: "KnowledgeIntelligenceHome",
+      },
+      {
+        path: "/engineering/apps/project-intelligence/reasoning",
+        title: "Engineering Reasoning Assistant",
+        component: "EngineeringReasoningAssistantHome",
       },
     ],
     navigation: [
@@ -134,13 +142,21 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         group: "engineering",
         order: 25,
       },
+      {
+        id: "pi-feature-reasoning",
+        label: "Reasoning Assistant",
+        path: "/engineering/apps/project-intelligence/reasoning",
+        icon: "Sparkles",
+        group: "engineering",
+        order: 26,
+      },
     ],
     features: [
       {
         id: "document_intelligence",
         name: "Document Intelligence",
         description: "Ingestion, retrieval, grounded answers, and document review",
-        version: "0.1.0",
+        version: "1.0.0",
         capabilities: [
           { id: "document.intelligence.read" },
           { id: "document.intelligence.write" },
@@ -151,7 +167,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         id: "meeting_intelligence",
         name: "Meeting Intelligence",
         description: "Meeting capture, minutes, review, and provider integrations",
-        version: "0.1.0",
+        version: "1.0.0",
         capabilities: [
           { id: "meeting.intelligence.read" },
           { id: "meeting.intelligence.write" },
@@ -161,7 +177,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         id: "findings_intelligence",
         name: "Findings Intelligence",
         description: "Cross-document and meeting findings consolidation",
-        version: "0.1.0",
+        version: "1.0.0",
         capabilities: [
           { id: "findings.intelligence.read" },
           { id: "findings.intelligence.write" },
@@ -171,7 +187,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         id: "reporting_intelligence",
         name: "Reporting Intelligence",
         description: "Module reports over shared Engineering reporting services",
-        version: "0.1.0",
+        version: "1.0.0",
         capabilities: [
           { id: "reporting.intelligence.read" },
           { id: "reporting.intelligence.write" },
@@ -181,10 +197,20 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         id: "knowledge_intelligence",
         name: "Knowledge Intelligence",
         description: "Unified knowledge graph and hybrid intelligence search",
-        version: "0.1.0",
+        version: "1.0.0",
         capabilities: [
           { id: "knowledge.intelligence.read" },
           { id: "knowledge.intelligence.write" },
+        ],
+      },
+      {
+        id: "engineering_reasoning_assistant",
+        name: "Engineering Reasoning Assistant",
+        description: "Deterministic grounded reasoning with citations and abstention",
+        version: "1.0.0",
+        capabilities: [
+          { id: "reasoning.assistant.read" },
+          { id: "reasoning.assistant.execute" },
         ],
       },
     ],

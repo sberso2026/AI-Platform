@@ -3,6 +3,7 @@ import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { requireProjectIntelligenceRead } from "@/lib/project-intelligence/access";
 import {
   analyzeKnowledgeImpact,
+  runKnowledgeReasoningPipeline,
   runUnifiedKnowledgeSearch,
 } from "@/lib/project-intelligence/knowledge-search-service";
 import { handleCommerceDomainError } from "@/lib/lifecycle-api";
@@ -26,6 +27,37 @@ export const POST = withEngineeringApi("project-intelligence-knowledge", async (
         },
         { status: 400 },
       );
+    }
+
+    if (action === "reason") {
+      const question =
+        typeof body.question === "string"
+          ? body.question.trim()
+          : typeof body.query === "string"
+            ? body.query.trim()
+            : "";
+      if (!question) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "knowledge_question_required",
+              message: "question is required for reasoning",
+              requestId: context.correlationId,
+              details: {},
+            },
+          },
+          { status: 400 },
+        );
+      }
+      const data = runKnowledgeReasoningPipeline({
+        question,
+        tenantId,
+        workspaceId,
+        seedRefIds: Array.isArray(body.seedRefIds)
+          ? body.seedRefIds.filter((id: unknown): id is string => typeof id === "string")
+          : undefined,
+      });
+      return NextResponse.json({ data, correlationId: context.correlationId });
     }
 
     if (action === "impact") {
@@ -83,6 +115,7 @@ export const GET = withEngineeringApi("project-intelligence-knowledge", async (c
         feature: "knowledge_intelligence",
         ready: true,
         hybrid: true,
+        deterministicReasoningPipeline: true,
         duplicateOwnership: false,
         usesPlatformAiRuntime: true,
       },
