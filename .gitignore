@@ -80,3 +80,9 @@ secret value
 Ignore.txt
 
 tmp-cert-7b/
+tmp-cert-*/
+
+# Generated test / coverage reports (repo root and packages)
+playwright-report/
+test-results/
+coverage/

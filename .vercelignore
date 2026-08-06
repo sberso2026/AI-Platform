@@ -1,0 +1,26 @@
+# Phase 8I.1 — deployment exclusions (certification / local / generated)
+.tmp-cert-artifacts
+.tmp-ci-artifacts
+.tmp-pi-baseline
+.tmp-pi-*
+tmp-cert-*
+coverage
+playwright-report
+test-results
+.turbo
+.pnpm-store
+**/.env*
+**/secret value
+Ignore.txt
+
+# Certification-only packages (not required at Vercel runtime composition)
+packages/reference-os
+packages/platform-certification
+packages/project-intelligence-certification
+packages/installation-certification
+packages/commerce-certification
+packages/customer-administration-certification
+
+# Local certification artifacts
+packages/*/artifacts
+packages/*/fixtures/providers

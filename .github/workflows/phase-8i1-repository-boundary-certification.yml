@@ -1,0 +1,111 @@
+name: Phase 8I.1 Repository Boundary Certification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/**/package.json"
+      - "packages/platform-certification/src/phase8i1*"
+      - "packages/project-intelligence-certification/scripts/run-phase8i1*"
+      - "packages/project-intelligence-certification/src/phase8i1/**"
+      - "packages/project-intelligence/src/version.ts"
+      - "apps/web/package.json"
+      - "apps/web/src/app/**/project-intelligence/reasoning/**"
+      - "docs/architecture/**"
+      - "docs/release/PROJECT_INTELLIGENCE_V1_POST_RELEASE*"
+      - "docs/release/PROJECT_INTELLIGENCE_V1_MARKER*"
+      - "docs/testing/GENERATED_ARTIFACT*"
+      - ".gitignore"
+      - ".vercelignore"
+      - ".github/workflows/phase-8i1-repository-boundary-certification.yml"
+
+concurrency:
+  group: phase-8i1-boundary-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch release tags
+        run: git fetch --tags --force
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Architecture boundary tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase8i1-repository-boundary.test.ts
+
+      - name: Phase 8I.1 certification (gates A–S)
+        run: pnpm --filter @rtb/project-intelligence-certification certify:phase8i1
+
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const { readFileSync } = require("fs");
+          const path = "packages/project-intelligence-certification/artifacts/phase8i1-repository-boundary-certification.json";
+          const a = JSON.parse(readFileSync(path, "utf8"));
+          const checks = [
+            ["verdict", a.verdict === "PASS"],
+            ["failedGateCount", a.failedGateCount === 0],
+            ["skippedGateCount", a.skippedGateCount === 0],
+            ["notExecutedGateCount", a.notExecutedGateCount === 0],
+            ["requiredTestsSkipped", a.requiredTestsSkipped === 0],
+            ["unexpected5xx", a.unexpected5xx === 0],
+            ["secretExposureDetected", a.secretExposureDetected === false],
+            ["circularDependencyDetected", a.circularDependencyDetected === false],
+            ["boundaryViolationDetected", a.boundaryViolationDetected === false],
+            ["releaseTagMoved", a.releaseTagMoved === false],
+            ["runtimeChangeIntroduced", a.runtimeChangeIntroduced === false],
+            ["schemaChangeIntroduced", a.schemaChangeIntroduced === false],
+            ["releaseEligible", a.releaseEligible === true],
+            ["productionProjectIntelligenceReady", a.productionProjectIntelligenceReady === true],
+            ["phase9AReady", a.phase9AReady === true],
+            ["inspectionPackagesCreated", a.inspectionPackagesCreated === false],
+            ["artifactCommitMatch", a.artifactCommitSha === a.buildIdentitySha],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify(a, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            phase9AReady: a.phase9AReady,
+            releaseTagTarget: a.releaseTagTarget,
+            releaseTagMoved: a.releaseTagMoved,
+            failedGateCount: a.failedGateCount,
+          }, null, 2));
+          EOF
+
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase8i1-repository-boundary-certification
+          path: packages/project-intelligence-certification/artifacts/phase8i1-repository-boundary-certification.json
+          if-no-files-found: error

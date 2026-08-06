@@ -17,6 +17,7 @@
     "certify:phase8e": "tsx scripts/run-phase8e-certification.ts",
     "certify:phase8g": "tsx scripts/run-phase8g-certification.ts",
     "certify:phase8i": "tsx scripts/run-phase8i-certification.ts",
+    "certify:phase8i1": "tsx scripts/run-phase8i1-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "update-fixture-checksums": "tsx scripts/update-fixture-checksums.ts",
     "provision": "tsx scripts/provision.ts",
