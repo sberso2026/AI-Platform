@@ -61,9 +61,17 @@ describeReports("Executive Intelligence Dashboard browser certification", () => 
 
     test("B executive dashboard widgets and live aggregation", async ({ page }) => {
       await page.goto(executivePath);
-      await expect(page.getByTestId("executive-intelligence-dashboard-ready")).toBeVisible({
+      await expect(page.getByTestId("reporting-intelligence-ready")).toBeVisible({
         timeout: 45_000,
       });
+      // Prefer ready; accept error panel so entitlement/API failures are visible in CI logs.
+      const ready = page.getByTestId("executive-intelligence-dashboard-ready");
+      const errored = page.getByTestId("executive-intelligence-dashboard-error");
+      await expect(ready.or(errored)).toBeVisible({ timeout: 60_000 });
+      if (await errored.isVisible().catch(() => false)) {
+        const message = await errored.locator("[role=alert]").innerText();
+        throw new Error(`Executive dashboard failed to load: ${message}`);
+      }
       await expect(page.getByTestId("executive-dashboard-live-flag")).toContainText(
         "liveAggregation=true",
       );

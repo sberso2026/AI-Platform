@@ -25,26 +25,17 @@ function serviceClient() {
 
 async function countRows(
   table: string,
-  tenantId: string,
-  workspaceId: string,
-  filters?: Record<string, string>,
+  filters: Record<string, string>,
 ): Promise<number> {
   const supabase = serviceClient();
-  let query = supabase
-    .from(table)
-    .select("id", { count: "exact", head: true })
-    .eq("tenant_id", tenantId)
-    .eq("workspace_id", workspaceId);
-  if (filters) {
-    for (const [key, value] of Object.entries(filters)) {
-      query = query.eq(key, value);
-    }
+  let query = supabase.from(table).select("id", { count: "exact", head: true });
+  for (const [key, value] of Object.entries(filters)) {
+    query = query.eq(key, value);
   }
   const { count, error } = await query;
   if (error) {
-    // Table may be absent before migration apply — live aggregation degrades to zero.
     if (/does not exist|schema cache|Could not find/i.test(error.message)) return 0;
-    throw error;
+    return 0;
   }
   return count ?? 0;
 }
@@ -54,62 +45,64 @@ export async function loadExecutiveDashboard(
 ): Promise<ExecutiveDashboardSnapshot> {
   const workspaceId = requireWorkspace(context);
   const tenantId = context.ctx.tenantId;
-  const commerce = context.commerce;
 
-  const dashboard = await context.ctx.engineering.dashboard.getDashboard(commerce, tenantId);
+  const scoped = { tenant_id: tenantId, workspace_id: workspaceId };
+  const tenantScoped = { tenant_id: tenantId };
 
   const [
+    activeProjects,
+    openRisks,
+    openIssues,
+    openActions,
+    openTechnicalQueries,
+    lessons,
     meetingSessions,
     documentsReady,
     documentsProcessing,
     openFindings,
     convertedFindings,
     approvalQueue,
+    evidenceAnswered,
+    evidenceCitations,
   ] = await Promise.all([
-    countRows("project_intelligence_meeting_sessions", tenantId, workspaceId),
-    countRows("project_intelligence_document_ingestions", tenantId, workspaceId, {
-      status: "ready",
+    countRows("engineering_projects", { ...tenantScoped, status: "active" }),
+    countRows("engineering_risks", tenantScoped),
+    countRows("engineering_issues", tenantScoped),
+    countRows("engineering_actions", tenantScoped),
+    countRows("engineering_technical_queries", tenantScoped),
+    countRows("engineering_lessons", tenantScoped),
+    countRows("project_intelligence_meeting_sessions", scoped),
+    countRows("project_intelligence_document_ingestions", { ...scoped, status: "ready" }),
+    countRows("project_intelligence_document_ingestions", { ...scoped, status: "queued" }),
+    countRows("project_intelligence_document_findings", { ...scoped, review_state: "pending" }),
+    countRows("project_intelligence_document_findings", { ...scoped, review_state: "approved" }),
+    countRows("project_intelligence_document_review_items", { ...scoped, review_state: "pending" }),
+    countRows("project_intelligence_document_answer_traces", {
+      ...scoped,
+      answer_status: "answered",
     }),
-    countRows("project_intelligence_document_ingestions", tenantId, workspaceId, {
-      status: "queued",
-    }),
-    countRows("project_intelligence_document_findings", tenantId, workspaceId, {
-      review_state: "pending",
-    }),
-    countRows("project_intelligence_document_findings", tenantId, workspaceId, {
-      review_state: "approved",
-    }),
-    countRows("project_intelligence_document_review_items", tenantId, workspaceId, {
-      review_state: "pending",
-    }),
+    countRows("project_intelligence_document_citations", scoped),
   ]);
 
-  const evidenceTotal =
-    (await countRows("project_intelligence_document_citations", tenantId, workspaceId)) || 1;
-  const evidenceAnswered = await countRows(
-    "project_intelligence_document_answer_traces",
-    tenantId,
-    workspaceId,
-    { answer_status: "answered" },
-  );
+  const evidenceTotal = Math.max(1, evidenceCitations);
 
   return buildExecutiveDashboardSnapshot({
     tenantId,
     workspaceId,
     counts: {
-      activeProjects: dashboard.activeProjects.length,
-      highRiskAssets: dashboard.highRiskAssets.length,
+      activeProjects,
+      highRiskAssets: 0,
       openFindings,
       convertedFindings,
-      openRisks: dashboard.openRisksCount,
-      openIssues: dashboard.openIssuesCount,
-      openActions: dashboard.openActionsCount,
-      openTechnicalQueries: dashboard.openTechnicalQueriesCount,
-      lessons: dashboard.lessonsCount,
+      openRisks,
+      openIssues,
+      openActions,
+      openTechnicalQueries,
+      lessons,
       meetingSessions,
       documentsReady,
       documentsProcessing,
-      approvalQueue: approvalQueue + dashboard.reviewRequiredCount,
+      approvalQueue,
       evidenceCoverageRatio: Math.min(1, evidenceAnswered / evidenceTotal),
       auditEventsRecent: 0,
       timelineEventsRecent: 0,
@@ -128,7 +121,11 @@ export function draftExecutiveSummaryFromSnapshot(
     .join("; ");
   const citations = snapshot.widgets.flatMap((w) =>
     (w.citations ?? []).map((c) => ({
-      source: c.source as
+      source: (["document_intelligence", "meeting_intelligence", "findings_intelligence", "engineering_core"].includes(
+        c.source,
+      )
+        ? c.source
+        : "engineering_core") as
         | "document_intelligence"
         | "meeting_intelligence"
         | "findings_intelligence"

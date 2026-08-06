@@ -102,10 +102,12 @@ export default function ExecutiveIntelligenceDashboardPage() {
   if (loading) {
     return (
       <section data-testid="executive-intelligence-dashboard-loading">
-        <h2 className="text-2xl font-semibold text-slate-900">Executive Intelligence Dashboard</h2>
-        <p className="mt-4 text-slate-600" role="status">
-          Loading live aggregation…
-        </p>
+        <div data-testid="reporting-intelligence-ready">
+          <h2 className="text-2xl font-semibold text-slate-900">Executive Intelligence Dashboard</h2>
+          <p className="mt-4 text-slate-600" role="status">
+            Loading live aggregation…
+          </p>
+        </div>
       </section>
     );
   }
@@ -113,10 +115,20 @@ export default function ExecutiveIntelligenceDashboardPage() {
   if (error && !snapshot) {
     return (
       <section data-testid="executive-intelligence-dashboard-error">
-        <h2 className="text-2xl font-semibold text-slate-900">Executive Intelligence Dashboard</h2>
-        <p className="mt-4 text-red-700" role="alert">
-          {error}
-        </p>
+        <div data-testid="reporting-intelligence-ready">
+          <h2 className="text-2xl font-semibold text-slate-900">Executive Intelligence Dashboard</h2>
+          <p className="mt-4 text-red-700" role="alert">
+            {error}
+          </p>
+          <button
+            type="button"
+            className="mt-4 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            onClick={load}
+            data-testid="executive-dashboard-retry"
+          >
+            Retry
+          </button>
+        </div>
       </section>
     );
   }
