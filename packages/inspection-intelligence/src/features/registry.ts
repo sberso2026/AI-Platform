@@ -1,5 +1,3 @@
-export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
-
 export const INSPECTION_INTELLIGENCE_SLICE_FEATURE_IDS = [
   "inspection_planning",
   "inspection_sessions",
