@@ -217,6 +217,7 @@ export function runKnowledgeReasoningPipeline(input: {
 
   return runDeterministicReasoningPipeline({
     question: input.question,
+    graph,
     permissions: {
       tenantId: input.tenantId,
       workspaceId: input.workspaceId,
