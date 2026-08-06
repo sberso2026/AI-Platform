@@ -76,7 +76,11 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      - run: pnpm --filter @rtb/project-intelligence-certification provision
+      - name: Provision full PI entitlement fixture
+        run: |
+          pnpm --filter @rtb/project-intelligence-certification provision || \
+          (sleep 15 && pnpm --filter @rtb/project-intelligence-certification cleanup || true && \
+           sleep 5 && pnpm --filter @rtb/project-intelligence-certification provision)
       - run: pnpm --filter @rtb/project-intelligence-certification verify-fixture
       - run: pnpm --filter @rtb/project-intelligence-certification exec playwright install chromium
       - name: Browser E2E executive dashboard
