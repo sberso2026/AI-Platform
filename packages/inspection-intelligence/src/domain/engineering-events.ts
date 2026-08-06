@@ -10,7 +10,13 @@ export type InspectionEngineeringEventType =
   | "FindingCreated"
   | "RecommendationIssued"
   | "TemplateVersionCreated"
-  | "PackRegistered";
+  | "PackRegistered"
+  | "WorkflowStarted"
+  | "WorkflowTransitioned"
+  | "WorkflowCompleted"
+  | "AssignmentCreated"
+  | "VerificationCompleted"
+  | "SlaBreached";
 
 export type InspectionEngineeringEvent = {
   type: InspectionEngineeringEventType;

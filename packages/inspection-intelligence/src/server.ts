@@ -16,4 +16,7 @@ export * from "./domain/compliance";
 export * from "./domain/kpis";
 export * from "./domain/risk-adapter";
 export * from "./domain/engineering-domain-completion";
+export * from "./domain/operational-workflow-definition";
+export * from "./domain/operational-workflows";
+export * from "./domain/reporting-preparation";
 export * from "./pack-sdk";

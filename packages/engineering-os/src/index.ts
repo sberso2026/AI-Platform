@@ -2,6 +2,7 @@ export * from "./manifest";
 export * from "./module-registry";
 export * from "./module-sdk";
 export * from "./domain-sdk";
+export * from "./workflow-sdk";
 export * from "./shared-services";
 export * from "./ai-framework";
 export * from "./permissions";

@@ -20,7 +20,17 @@ describe("Phase 9C browser certification (source)", () => {
     );
     expect(overview).toContain("inspection-intelligence-enterprise-foundation-ready");
     expect(overview).toContain("inspection-intelligence-engineering-domain-ready");
-    for (const page of ["templates", "plans", "sessions", "review", "defects", "actions"]) {
+    expect(overview).toContain("inspection-intelligence-operational-workflows-ready");
+    for (const page of [
+      "templates",
+      "plans",
+      "sessions",
+      "review",
+      "defects",
+      "actions",
+      "workflows",
+      "assignments",
+    ]) {
       const text = readFileSync(
         resolve(
           ROOT,
