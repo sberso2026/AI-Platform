@@ -5,9 +5,10 @@ import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 export const GET = withEngineeringApi("inspection-intelligence-slice", async (context) => {
   return NextResponse.json({
     moduleKey: "inspection_intelligence",
-    version: "0.3.0-enterprise-foundation",
+    version: "0.4.0-engineering-domain",
     verticalSliceReady: true,
     enterpriseFoundationReady: true,
+    engineeringDomainComplete: true,
     couplesVia: "inspection_target",
     tenantId: context.ctx.tenantId,
     workspaceId: context.ctx.workspaceId,

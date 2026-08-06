@@ -1,78 +1,56 @@
 import { describe, expect, it } from "vitest";
 import {
-  INSPECTION_ENTERPRISE_FOUNDATION_READY,
   INSPECTION_INTELLIGENCE_VERSION,
+  INSPECTION_ENGINEERING_DOMAIN_COMPLETE,
   INSPECTION_AI_VISION_IMPLEMENTED,
-  INSPECTION_OFFLINE_SYNC_IMPLEMENTED,
-  getInspectionIntelligenceEnterpriseDeclaration,
-  CONDITION_RATING_RESERVED,
-  DEFECT_TAXONOMY_RESERVED,
-  OFFLINE_SYNC_CONTRACTS_RESERVED,
-  PLATFORM_EVENT_PIPELINE,
-  createMeasurementEngine,
-  InspectionPackSdk,
-  COATINGS_PACK_SCAFFOLD,
-  GENERIC_INSPECTION_PACK_SDK,
-  runEnterpriseFoundationHappyPath,
-  canTransition,
+  INSPECTION_MOBILE_PRODUCT_IMPLEMENTED,
+  INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED,
+  getInspectionIntelligenceDomainDeclaration,
+  runEngineeringDomainCompletionHappyPath,
+  INSPECTION_KPI_DEFINITIONS,
+  createInProcessRiskRegisterAdapter,
 } from "../src";
 import {
-  createEngineeringModuleSdkSkeleton,
-  ENGINEERING_MODULE_SDK_FUTURE_CONSUMERS,
-  ENGINEERING_MODULE_SDK_VERSION,
+  assertEngineeringDomainSdkComplete,
+  ENGINEERING_DOMAIN_SDK_VERSION,
+  ENGINEERING_DOMAIN_SDK_CONTRACT_KEYS,
 } from "@rtb/engineering-os";
 
-describe("Phase 9C enterprise foundation", () => {
-  it("locks enterprise identity and reservations", () => {
-    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("0.3.0-enterprise-foundation");
-    expect(INSPECTION_ENTERPRISE_FOUNDATION_READY).toBe(true);
+describe("Phase 9D engineering domain completion", () => {
+  it("locks domain identity without mobile or AI Vision", () => {
+    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("0.4.0-engineering-domain");
+    expect(INSPECTION_ENGINEERING_DOMAIN_COMPLETE).toBe(true);
     expect(INSPECTION_AI_VISION_IMPLEMENTED).toBe(false);
-    expect(INSPECTION_OFFLINE_SYNC_IMPLEMENTED).toBe(false);
-    expect(CONDITION_RATING_RESERVED).toBe(true);
-    expect(DEFECT_TAXONOMY_RESERVED).toBe(true);
-    expect(OFFLINE_SYNC_CONTRACTS_RESERVED.mobileProductImplemented).toBe(false);
-    expect(PLATFORM_EVENT_PIPELINE[0]).toBe("inspection");
-    expect(PLATFORM_EVENT_PIPELINE.at(-1)).toBe("executive_dashboard");
-    const decl = getInspectionIntelligenceEnterpriseDeclaration();
-    expect(decl.usesEngineeringModuleSdk).toBe(true);
-    expect(decl.usesInspectionPackSdk).toBe(true);
-    expect(decl.couplesVia).toBe("inspection_target");
+    expect(INSPECTION_MOBILE_PRODUCT_IMPLEMENTED).toBe(false);
+    expect(INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED).toBe(true);
+    const decl = getInspectionIntelligenceDomainDeclaration();
+    expect(decl.usesEngineeringDomainSdk).toBe(true);
+    expect(decl.engineeringDomainComplete).toBe(true);
+    expect(decl.closeOutLifecycleImplemented).toBe(true);
   });
 
-  it("exposes Engineering Module SDK and Inspection Pack SDK", () => {
-    expect(ENGINEERING_MODULE_SDK_VERSION).toBe("0.3.0");
-    expect(ENGINEERING_MODULE_SDK_FUTURE_CONSUMERS).toContain("asset_intelligence");
-    const sdk = createEngineeringModuleSdkSkeleton({
-      moduleKey: "inspection_intelligence",
-      version: "0.3.0-enterprise-foundation",
-      displayName: "Inspection Intelligence",
-      routePrefix: "/engineering/apps/inspection-intelligence",
-      commerceApplicationKey: "inspection_intelligence",
-      lifecycle: "active",
-    });
-    expect(sdk.ai.executeAssist).toBeTypeOf("function");
-    const packs = new InspectionPackSdk();
-    packs.register(COATINGS_PACK_SCAFFOLD);
-    expect(packs.get("generic")?.packId).toBe(GENERIC_INSPECTION_PACK_SDK.packId);
-    expect(packs.get("coatings")?.featureFlags.commercial).toBe(false);
+  it("exposes complete Engineering Domain SDK contracts", () => {
+    expect(ENGINEERING_DOMAIN_SDK_VERSION).toBe("0.4.0");
+    expect(ENGINEERING_DOMAIN_SDK_CONTRACT_KEYS).toContain("defects");
+    expect(ENGINEERING_DOMAIN_SDK_CONTRACT_KEYS).toContain("knowledgeGraph");
+    expect(() => assertEngineeringDomainSdkComplete()).not.toThrow();
   });
 
-  it("runs durable persistence happy path with immutable templates/evidence and events", async () => {
-    const store = await runEnterpriseFoundationHappyPath({
+  it("runs defect → recommendation → CA → assessment → verification → close-out → compliance → risk → KPIs", async () => {
+    const result = await runEngineeringDomainCompletionHappyPath({
       tenantId: "t1",
       workspaceId: "w1",
+      sessionId: "s1",
       actorUserId: "u1",
     });
-    expect(store.templateVersions.length).toBeGreaterThanOrEqual(2);
-    expect(store.templateVersions.every((v) => v.immutable)).toBe(true);
-    expect(store.targets.length).toBeGreaterThan(0);
-    expect(store.sessions[0]?.status).toBe("approved");
-    expect(store.evidence[0]?.immutable).toBe(true);
-    expect(store.approvals).toHaveLength(1);
-    expect(store.events.some((e) => e.type === "ReviewApproved")).toBe(true);
-    expect(store.packRegistry.some((p) => p.packId === "generic")).toBe(true);
-    expect(canTransition("started", "completed")).toBe(true);
-    const engine = createMeasurementEngine();
-    expect(engine.reservedFormulaLibrary).toBe(true);
+    expect(result.sessionStatus).toBe("closed");
+    expect(result.closeOutAllowed).toBe(true);
+    expect(result.riskId).toMatch(/^risk_/);
+    expect(result.kpis.some((k) => k.key === "verification_pass_rate" && k.value === 1)).toBe(
+      true,
+    );
+    expect(INSPECTION_KPI_DEFINITIONS.length).toBeGreaterThanOrEqual(8);
+    const adapter = createInProcessRiskRegisterAdapter();
+    expect(adapter.linkOrCreate).toBeTypeOf("function");
   });
 });

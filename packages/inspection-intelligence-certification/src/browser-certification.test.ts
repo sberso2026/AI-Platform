@@ -19,7 +19,8 @@ describe("Phase 9C browser certification (source)", () => {
       "utf8",
     );
     expect(overview).toContain("inspection-intelligence-enterprise-foundation-ready");
-    for (const page of ["templates", "plans", "sessions", "review"]) {
+    expect(overview).toContain("inspection-intelligence-engineering-domain-ready");
+    for (const page of ["templates", "plans", "sessions", "review", "defects", "actions"]) {
       const text = readFileSync(
         resolve(
           ROOT,

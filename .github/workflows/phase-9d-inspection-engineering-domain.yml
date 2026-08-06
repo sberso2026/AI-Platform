@@ -1,0 +1,99 @@
+name: Phase 9D Inspection Intelligence Engineering Domain
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/inspection-intelligence/**"
+      - "packages/inspection-intelligence-certification/**"
+      - "packages/engineering-os/src/domain-sdk/**"
+      - "packages/engineering-os/src/index.ts"
+      - "packages/engineering-os/src/module-registry.ts"
+      - "packages/platform-certification/src/phase9d*"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/inspection-intelligence/**"
+      - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
+      - "supabase/migrations/*inspection_intelligence*"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9D*"
+      - ".github/workflows/phase-9d-inspection-engineering-domain.yml"
+
+concurrency:
+  group: phase-9d-inspection-domain-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: |
+          pnpm --filter @rtb/engineering-os test
+          pnpm --filter @rtb/inspection-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9d-inspection-engineering-domain.test.ts
+      - name: Phase 9D certification (gates A–S)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9d
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const { readFileSync } = require("fs");
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9d-inspection-intelligence-engineering-domain-certification.json";
+          const a = JSON.parse(readFileSync(path, "utf8"));
+          const checks = [
+            ["verdict", a.verdict === "PASS"],
+            ["failedGateCount", a.failedGateCount === 0],
+            ["skippedGateCount", a.skippedGateCount === 0],
+            ["notExecutedGateCount", a.notExecutedGateCount === 0],
+            ["unexpected5xx", a.unexpected5xx === 0],
+            ["secretExposureDetected", a.secretExposureDetected === false],
+            ["releaseTagMoved", a.releaseTagMoved === false],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
+            ["architecturalReservationsIntact", a.architecturalReservationsIntact === true],
+            ["releaseEligible", a.releaseEligible === true],
+            ["engineeringDomainComplete", a.engineeringDomainComplete === true],
+            ["phase9EReady", a.phase9EReady === true],
+            ["mobileImplementationIntroduced", a.mobileImplementationIntroduced === false],
+            ["aiVisionImplementationIntroduced", a.aiVisionImplementationIntroduced === false],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            engineeringDomainComplete: a.engineeringDomainComplete,
+            phase9EReady: a.phase9EReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase9d-inspection-intelligence-engineering-domain-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9d-inspection-intelligence-engineering-domain-certification.json
+          if-no-files-found: warn

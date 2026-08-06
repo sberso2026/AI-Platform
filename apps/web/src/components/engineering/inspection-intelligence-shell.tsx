@@ -5,6 +5,8 @@ const LINKS = [
   { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
   { href: "/engineering/apps/inspection-intelligence/plans", label: "Plans" },
   { href: "/engineering/apps/inspection-intelligence/sessions", label: "Sessions" },
+  { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },
+  { href: "/engineering/apps/inspection-intelligence/actions", label: "Actions" },
   { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
 ] as const;
 
