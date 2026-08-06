@@ -17,6 +17,7 @@ Ignore.txt
 packages/reference-os
 packages/platform-certification
 packages/project-intelligence-certification
+packages/inspection-intelligence-certification
 packages/installation-certification
 packages/commerce-certification
 packages/customer-administration-certification

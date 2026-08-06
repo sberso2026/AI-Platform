@@ -1,8 +1,8 @@
 {
   "schemaVersion": "rtb-ai-platform-package-inventory/1",
-  "phase": "8I.1",
-  "generatedFor": "repository-boundary-certification",
-  "inspectionPackagesCreated": false,
+  "phase": "9A",
+  "generatedFor": "inspection-intelligence-discovery",
+  "inspectionPackagesCreated": true,
   "futurePackagesLocked": [
     "packages/inspection-intelligence",
     "packages/inspection-intelligence-certification"
@@ -26,98 +26,66 @@
         "@rtb/platform-kernel",
         "@rtb/plugin-sdk",
         "@rtb/project-intelligence",
+        "@rtb/inspection-intelligence",
         "@rtb/types",
         "@rtb/ui"
       ],
-      "dependents": []
+      "dependents": [],
+      "version": "0.1.0"
     },
     {
-      "name": "@rtb/platform-core",
-      "path": "packages/platform-core",
-      "classification": "Platform Core",
+      "name": "@rtb/commerce-certification",
+      "path": "packages/commerce-certification",
+      "classification": "Certification",
+      "owner": "platform",
+      "runtimeStatus": "certification",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "node",
+      "certificationStatus": "harness",
+      "publicExports": [],
+      "dependencies": [],
+      "dependents": [],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/customer-administration-certification",
+      "path": "packages/customer-administration-certification",
+      "classification": "Certification",
+      "owner": "platform",
+      "runtimeStatus": "certification",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "node",
+      "certificationStatus": "harness",
+      "publicExports": [],
+      "dependencies": [
+        "@rtb/platform-commerce",
+        "@rtb/platform-core"
+      ],
+      "dependents": [],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/database",
+      "path": "packages/database",
+      "classification": "Shared Library",
       "owner": "platform",
       "runtimeStatus": "production",
       "deprecationStatus": "active",
-      "browserServerBoundary": "server-preferred",
+      "browserServerBoundary": "universal",
       "certificationStatus": "production",
       "publicExports": [],
       "dependencies": [
-        "@rtb/database",
         "@rtb/types"
       ],
       "dependents": [
         "@rtb/web",
-        "@rtb/customer-administration-certification",
-        "@rtb/platform-certification",
+        "@rtb/engineering-os",
         "@rtb/platform-commerce",
-        "@rtb/platform-kernel"
-      ]
-    },
-    {
-      "name": "@rtb/platform-kernel",
-      "path": "packages/platform-kernel",
-      "classification": "Platform Core",
-      "owner": "platform",
-      "runtimeStatus": "production",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "server",
-      "certificationStatus": "production",
-      "publicExports": [],
-      "dependencies": [
-        "@rtb/database",
         "@rtb/platform-core",
         "@rtb/platform-intelligence",
-        "@rtb/types"
-      ],
-      "dependents": [
-        "@rtb/web",
-        "@rtb/engineering-os",
-        "@rtb/platform-certification"
-      ]
-    },
-    {
-      "name": "@rtb/platform-commerce",
-      "path": "packages/platform-commerce",
-      "classification": "Platform Service",
-      "owner": "platform",
-      "runtimeStatus": "production",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "mixed",
-      "certificationStatus": "production",
-      "publicExports": [
-        ".",
-        "./server"
-      ],
-      "dependencies": [
-        "@rtb/database",
-        "@rtb/platform-core",
-        "@rtb/types"
-      ],
-      "dependents": [
-        "@rtb/web",
-        "@rtb/customer-administration-certification",
-        "@rtb/engineering-os",
-        "@rtb/platform-certification"
-      ]
-    },
-    {
-      "name": "@rtb/platform-intelligence",
-      "path": "packages/platform-intelligence",
-      "classification": "Platform Service",
-      "owner": "platform",
-      "runtimeStatus": "production",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "server",
-      "certificationStatus": "production",
-      "publicExports": [],
-      "dependencies": [
-        "@rtb/database",
-        "@rtb/types"
-      ],
-      "dependents": [
-        "@rtb/engineering-os",
         "@rtb/platform-kernel"
-      ]
+      ],
+      "version": "0.1.0"
     },
     {
       "name": "@rtb/engineering-os",
@@ -142,24 +110,24 @@
       ],
       "dependents": [
         "@rtb/web",
+        "@rtb/inspection-intelligence",
         "@rtb/platform-certification",
         "@rtb/project-intelligence"
-      ]
+      ],
+      "version": "0.2.1"
     },
     {
-      "name": "@rtb/project-intelligence",
-      "path": "packages/project-intelligence",
+      "name": "@rtb/inspection-intelligence",
+      "path": "packages/inspection-intelligence",
       "classification": "Engineering OS Module",
       "owner": "engineering",
-      "runtimeStatus": "production",
-      "version": "1.0.0",
+      "runtimeStatus": "discovery",
       "deprecationStatus": "active",
       "browserServerBoundary": "mixed",
-      "certificationStatus": "certified-v1.0.0",
+      "certificationStatus": "discovery-0.1.0",
       "publicExports": [
         ".",
         "./server",
-        "./client",
         "./version"
       ],
       "dependencies": [
@@ -168,105 +136,39 @@
       ],
       "dependents": [
         "@rtb/web",
-        "@rtb/platform-certification",
-        "@rtb/project-intelligence-certification"
-      ]
+        "@rtb/inspection-intelligence-certification"
+      ],
+      "version": "0.1.0-discovery"
     },
     {
-      "name": "@rtb/types",
-      "path": "packages/types",
-      "classification": "Shared Library",
-      "owner": "platform",
-      "runtimeStatus": "production",
+      "name": "@rtb/inspection-intelligence-certification",
+      "path": "packages/inspection-intelligence-certification",
+      "classification": "Certification",
+      "owner": "engineering",
+      "runtimeStatus": "certification",
       "deprecationStatus": "active",
-      "browserServerBoundary": "universal",
-      "certificationStatus": "production",
+      "browserServerBoundary": "node",
+      "certificationStatus": "harness",
+      "publicExports": [],
+      "dependencies": [
+        "@rtb/inspection-intelligence"
+      ],
+      "dependents": [],
+      "version": "0.1.0-discovery"
+    },
+    {
+      "name": "@rtb/installation-certification",
+      "path": "packages/installation-certification",
+      "classification": "Certification",
+      "owner": "platform",
+      "runtimeStatus": "certification",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "node",
+      "certificationStatus": "harness",
       "publicExports": [],
       "dependencies": [],
-      "dependents": [
-        "@rtb/web",
-        "@rtb/database",
-        "@rtb/engineering-os",
-        "@rtb/platform-certification",
-        "@rtb/platform-commerce",
-        "@rtb/platform-core",
-        "@rtb/platform-intelligence",
-        "@rtb/platform-kernel",
-        "@rtb/plugin-sdk",
-        "@rtb/project-intelligence",
-        "@rtb/reference-os"
-      ]
-    },
-    {
-      "name": "@rtb/database",
-      "path": "packages/database",
-      "classification": "Shared Library",
-      "owner": "platform",
-      "runtimeStatus": "production",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "server",
-      "certificationStatus": "production",
-      "publicExports": [],
-      "dependencies": [
-        "@rtb/types"
-      ],
-      "dependents": [
-        "@rtb/web",
-        "@rtb/engineering-os",
-        "@rtb/platform-commerce",
-        "@rtb/platform-core",
-        "@rtb/platform-intelligence",
-        "@rtb/platform-kernel"
-      ]
-    },
-    {
-      "name": "@rtb/plugin-sdk",
-      "path": "packages/plugin-sdk",
-      "classification": "Shared Library",
-      "owner": "platform",
-      "runtimeStatus": "production",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "universal",
-      "certificationStatus": "production",
-      "publicExports": [],
-      "dependencies": [
-        "@rtb/types"
-      ],
-      "dependents": [
-        "@rtb/web"
-      ]
-    },
-    {
-      "name": "@rtb/ui",
-      "path": "packages/ui",
-      "classification": "Shared Library",
-      "owner": "platform",
-      "runtimeStatus": "production",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "browser",
-      "certificationStatus": "production",
-      "publicExports": [],
-      "dependencies": [],
-      "dependents": [
-        "@rtb/web"
-      ]
-    },
-    {
-      "name": "@rtb/reference-os",
-      "path": "packages/reference-os",
-      "classification": "Reference/Test",
-      "owner": "platform",
-      "runtimeStatus": "certification-only",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "universal",
-      "certificationStatus": "certification-only",
-      "publicExports": [],
-      "dependencies": [
-        "@rtb/types"
-      ],
-      "dependents": [
-        "@rtb/platform-certification"
-      ]
+      "dependents": [],
+      "version": "0.1.0"
     },
     {
       "name": "@rtb/platform-certification",
@@ -287,7 +189,144 @@
         "@rtb/reference-os",
         "@rtb/types"
       ],
-      "dependents": []
+      "dependents": [],
+      "version": "0.2.0"
+    },
+    {
+      "name": "@rtb/platform-commerce",
+      "path": "packages/platform-commerce",
+      "classification": "Platform Service",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "mixed",
+      "certificationStatus": "production",
+      "publicExports": [
+        ".",
+        "./server"
+      ],
+      "dependencies": [
+        "@rtb/database",
+        "@rtb/platform-core",
+        "@rtb/types"
+      ],
+      "dependents": [
+        "@rtb/web",
+        "@rtb/customer-administration-certification",
+        "@rtb/engineering-os",
+        "@rtb/platform-certification"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/platform-core",
+      "path": "packages/platform-core",
+      "classification": "Platform Core",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "server",
+      "certificationStatus": "production",
+      "publicExports": [],
+      "dependencies": [
+        "@rtb/database",
+        "@rtb/types"
+      ],
+      "dependents": [
+        "@rtb/web",
+        "@rtb/customer-administration-certification",
+        "@rtb/platform-certification",
+        "@rtb/platform-commerce",
+        "@rtb/platform-kernel"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/platform-intelligence",
+      "path": "packages/platform-intelligence",
+      "classification": "Platform Service",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "mixed",
+      "certificationStatus": "production",
+      "publicExports": [],
+      "dependencies": [
+        "@rtb/database",
+        "@rtb/types"
+      ],
+      "dependents": [
+        "@rtb/engineering-os",
+        "@rtb/platform-kernel"
+      ],
+      "version": "0.1.75"
+    },
+    {
+      "name": "@rtb/platform-kernel",
+      "path": "packages/platform-kernel",
+      "classification": "Platform Core",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "server",
+      "certificationStatus": "production",
+      "publicExports": [],
+      "dependencies": [
+        "@rtb/database",
+        "@rtb/platform-core",
+        "@rtb/platform-intelligence",
+        "@rtb/types"
+      ],
+      "dependents": [
+        "@rtb/web",
+        "@rtb/engineering-os",
+        "@rtb/platform-certification"
+      ],
+      "version": "0.1.5"
+    },
+    {
+      "name": "@rtb/plugin-sdk",
+      "path": "packages/plugin-sdk",
+      "classification": "Shared Library",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "universal",
+      "certificationStatus": "production",
+      "publicExports": [],
+      "dependencies": [
+        "@rtb/types"
+      ],
+      "dependents": [
+        "@rtb/web"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/project-intelligence",
+      "path": "packages/project-intelligence",
+      "classification": "Engineering OS Module",
+      "owner": "engineering",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "mixed",
+      "certificationStatus": "certified-v1.0.0",
+      "publicExports": [
+        ".",
+        "./server",
+        "./client",
+        "./version"
+      ],
+      "dependencies": [
+        "@rtb/engineering-os",
+        "@rtb/types"
+      ],
+      "dependents": [
+        "@rtb/web",
+        "@rtb/platform-certification",
+        "@rtb/project-intelligence-certification"
+      ],
+      "version": "1.0.0"
     },
     {
       "name": "@rtb/project-intelligence-certification",
@@ -302,49 +341,69 @@
       "dependencies": [
         "@rtb/project-intelligence"
       ],
-      "dependents": []
+      "dependents": [],
+      "version": "1.0.0"
     },
     {
-      "name": "@rtb/installation-certification",
-      "path": "packages/installation-certification",
-      "classification": "Certification",
+      "name": "@rtb/reference-os",
+      "path": "packages/reference-os",
+      "classification": "Reference/Test",
       "owner": "platform",
-      "runtimeStatus": "certification",
+      "runtimeStatus": "certification-only",
       "deprecationStatus": "active",
-      "browserServerBoundary": "node",
-      "certificationStatus": "harness",
-      "publicExports": [],
-      "dependencies": [],
-      "dependents": []
-    },
-    {
-      "name": "@rtb/commerce-certification",
-      "path": "packages/commerce-certification",
-      "classification": "Certification",
-      "owner": "platform",
-      "runtimeStatus": "certification",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "node",
-      "certificationStatus": "harness",
-      "publicExports": [],
-      "dependencies": [],
-      "dependents": []
-    },
-    {
-      "name": "@rtb/customer-administration-certification",
-      "path": "packages/customer-administration-certification",
-      "classification": "Certification",
-      "owner": "platform",
-      "runtimeStatus": "certification",
-      "deprecationStatus": "active",
-      "browserServerBoundary": "node",
-      "certificationStatus": "harness",
+      "browserServerBoundary": "universal",
+      "certificationStatus": "certification-only",
       "publicExports": [],
       "dependencies": [
-        "@rtb/platform-commerce",
-        "@rtb/platform-core"
+        "@rtb/types"
       ],
-      "dependents": []
+      "dependents": [
+        "@rtb/platform-certification"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/types",
+      "path": "packages/types",
+      "classification": "Shared Library",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "universal",
+      "certificationStatus": "production",
+      "publicExports": [],
+      "dependencies": [],
+      "dependents": [
+        "@rtb/web",
+        "@rtb/database",
+        "@rtb/engineering-os",
+        "@rtb/inspection-intelligence",
+        "@rtb/platform-certification",
+        "@rtb/platform-commerce",
+        "@rtb/platform-core",
+        "@rtb/platform-intelligence",
+        "@rtb/platform-kernel",
+        "@rtb/plugin-sdk",
+        "@rtb/project-intelligence",
+        "@rtb/reference-os"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "@rtb/ui",
+      "path": "packages/ui",
+      "classification": "Shared Library",
+      "owner": "platform",
+      "runtimeStatus": "production",
+      "deprecationStatus": "active",
+      "browserServerBoundary": "universal",
+      "certificationStatus": "production",
+      "publicExports": [],
+      "dependencies": [],
+      "dependents": [
+        "@rtb/web"
+      ],
+      "version": "0.1.0"
     }
   ]
 }

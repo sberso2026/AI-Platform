@@ -73,6 +73,13 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
   "/engineering/projects": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
   "/engineering/documents": { productKey: ENGINEERING_PRODUCT, applicationKey: "documents", action: "access", seatRequired: true },
   "/engineering/inspection": { productKey: ENGINEERING_PRODUCT, applicationKey: "inspection_intelligence", action: "access", seatRequired: true },
+  "/engineering/apps/inspection-intelligence": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "access",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
   "/engineering/project-controls": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_controls", action: "access", seatRequired: true },
   "/engineering/meetings": { productKey: ENGINEERING_PRODUCT, applicationKey: "meetings", action: "access", seatRequired: true },
   "/engineering/structural-intelligence": { productKey: ENGINEERING_PRODUCT, applicationKey: "structural_intelligence", action: "access", seatRequired: true },

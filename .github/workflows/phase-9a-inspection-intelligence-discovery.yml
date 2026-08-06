@@ -1,0 +1,107 @@
+name: Phase 9A Inspection Intelligence Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/inspection-intelligence/**"
+      - "packages/inspection-intelligence-certification/**"
+      - "packages/engineering-os/src/module-registry.ts"
+      - "packages/platform-certification/src/phase9a*"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/inspection-intelligence/**"
+      - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
+      - "apps/web/package.json"
+      - "docs/architecture/INSPECTION_INTELLIGENCE*"
+      - "docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md"
+      - "docs/architecture/RTB_AI_PLATFORM_MONOREPO_STRUCTURE.md"
+      - "docs/architecture/rtb-ai-platform-package-inventory.json"
+      - ".github/workflows/phase-9a-inspection-intelligence-discovery.yml"
+
+concurrency:
+  group: phase-9a-inspection-discovery-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch release tags
+        run: git fetch --tags --force
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Inspection Intelligence unit identity
+        run: pnpm --filter @rtb/inspection-intelligence test
+
+      - name: Architecture boundary tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9a-inspection-discovery.test.ts
+
+      - name: Phase 9A certification (gates A–S)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9a
+
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const { readFileSync } = require("fs");
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9a-inspection-intelligence-discovery-certification.json";
+          const a = JSON.parse(readFileSync(path, "utf8"));
+          const checks = [
+            ["verdict", a.verdict === "PASS"],
+            ["failedGateCount", a.failedGateCount === 0],
+            ["skippedGateCount", a.skippedGateCount === 0],
+            ["notExecutedGateCount", a.notExecutedGateCount === 0],
+            ["requiredTestsSkipped", a.requiredTestsSkipped === 0],
+            ["secretExposureDetected", a.secretExposureDetected === false],
+            ["releaseTagMoved", a.releaseTagMoved === false],
+            ["releaseEligible", a.releaseEligible === true],
+            ["phase9BReady", a.phase9BReady === true],
+            ["inspectionProductFeaturesImplemented", a.inspectionProductFeaturesImplemented === false],
+            ["inspectionPackageCreated", a.inspectionPackageCreated === true],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
+            ["artifactMatch", a.artifactCommitSha === a.buildIdentitySha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify(a, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            phase9BReady: a.phase9BReady,
+            releaseEligible: a.releaseEligible,
+            version: a.version,
+          }, null, 2));
+          EOF
+
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase9a-inspection-intelligence-discovery-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9a-inspection-intelligence-discovery-certification.json
+          if-no-files-found: error

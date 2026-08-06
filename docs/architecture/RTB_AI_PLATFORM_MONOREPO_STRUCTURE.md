@@ -1,7 +1,7 @@
 # RTB AI Platform — Monorepo Structure Lock
 
 **Root:** `C:\Users\sbers\OneDrive\Documents\RTB Eng\01_Apps\AI Platform`  
-**Phase:** 8I.1
+**Phase:** 9A (updated from 8I.1)
 
 ## Intended hierarchy
 
@@ -13,18 +13,13 @@ packages/platform-kernel          → Platform Kernel
 packages/platform-commerce        → Commerce / entitlement
 packages/platform-intelligence    → Platform AI / intelligence services
 packages/engineering-os           → Engineering OS shell, shared domain, module contracts
-packages/project-intelligence     → Project Intelligence module + features
+packages/project-intelligence     → Project Intelligence module + features (v1.0.0 frozen)
 packages/project-intelligence-certification → PI certification only
+packages/inspection-intelligence  → Inspection Intelligence module (0.1.0-discovery)
+packages/inspection-intelligence-certification → II certification only
 packages/reference-os             → Certification-only reference OS
 packages/types | database | ui | plugin-sdk → Shared libraries
 packages/*-certification          → Certification harnesses
-```
-
-## Future (not created in 8I.1)
-
-```
-packages/inspection-intelligence
-packages/inspection-intelligence-certification
 ```
 
 ## Layer rules
@@ -37,4 +32,4 @@ packages/inspection-intelligence-certification
 | Platform packages | other platform/shared libs — **not** modules |
 | Certification | production packages + reference-os as needed |
 
-Inspection Intelligence, when started in Phase 9A, is an Engineering OS module in this monorepo — not a separate repository or app host.
+Inspection Intelligence is an Engineering OS module in this monorepo — not a separate repository or app host.

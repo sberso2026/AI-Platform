@@ -23,6 +23,9 @@ importers:
       '@rtb/engineering-os':
         specifier: workspace:*
         version: link:../../packages/engineering-os
+      '@rtb/inspection-intelligence':
+        specifier: workspace:*
+        version: link:../../packages/inspection-intelligence
       '@rtb/platform-commerce':
         specifier: workspace:*
         version: link:../../packages/platform-commerce
@@ -211,6 +214,44 @@ importers:
       '@types/node':
         specifier: ^22.15.29
         version: 22.20.1
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
+  packages/inspection-intelligence:
+    dependencies:
+      '@rtb/engineering-os':
+        specifier: workspace:*
+        version: link:../engineering-os
+      '@rtb/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
+  packages/inspection-intelligence-certification:
+    dependencies:
+      '@rtb/inspection-intelligence':
+        specifier: workspace:*
+        version: link:../inspection-intelligence
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      tsx:
+        specifier: ^4.20.6
+        version: 4.23.0
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

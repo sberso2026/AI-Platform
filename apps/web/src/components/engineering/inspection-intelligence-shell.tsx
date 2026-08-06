@@ -1,0 +1,29 @@
+"use client";
+
+/**
+ * Minimal Engineering OS shell for Inspection Intelligence discovery (Phase 9A).
+ */
+export function InspectionIntelligenceShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-6" data-testid="inspection-intelligence-shell">
+      <header className="mb-6 border-b border-slate-200 pb-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          Engineering OS
+        </p>
+        <h2 className="text-lg font-semibold text-slate-900">Inspection Intelligence</h2>
+        <nav
+          className="mt-3 flex gap-4 text-sm"
+          aria-label="Inspection Intelligence navigation"
+        >
+          <a
+            href="/engineering/apps/inspection-intelligence"
+            className="text-slate-800 underline-offset-2 hover:underline"
+          >
+            Discovery
+          </a>
+        </nav>
+      </header>
+      {children}
+    </div>
+  );
+}

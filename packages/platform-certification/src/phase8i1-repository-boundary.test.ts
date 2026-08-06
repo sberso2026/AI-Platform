@@ -50,13 +50,22 @@ function hasCycle(graph: Map<string, string[]>): string | null {
 describe("Phase 8I.1 package boundary architecture", () => {
   const inventory = JSON.parse(
     readFileSync(resolve(ROOT, "docs/architecture/rtb-ai-platform-package-inventory.json"), "utf8"),
-  ) as { inspectionPackagesCreated: boolean; packages: Array<{ name: string; path: string }> };
+  ) as {
+    inspectionPackagesCreated: boolean;
+    futurePackagesLocked?: string[];
+    packages: Array<{ name: string; path: string }>;
+  };
 
-  it("keeps inspection packages uncreated and inventory present", () => {
-    expect(inventory.inspectionPackagesCreated).toBe(false);
-    expect(existsSync(resolve(ROOT, "packages/inspection-intelligence"))).toBe(false);
-    expect(existsSync(resolve(ROOT, "packages/inspection-intelligence-certification"))).toBe(false);
-    expect(inventory.packages.length).toBeGreaterThanOrEqual(16);
+  it("places inspection packages at locked paths when created (Phase 9A+)", () => {
+    const iiExists = existsSync(resolve(ROOT, "packages/inspection-intelligence"));
+    const iicExists = existsSync(resolve(ROOT, "packages/inspection-intelligence-certification"));
+    // After Phase 9A both must exist at locked placement; before 9A both were absent.
+    if (iiExists || iicExists) {
+      expect(iiExists).toBe(true);
+      expect(iicExists).toBe(true);
+      expect(readPkg("packages/inspection-intelligence").name).toBe("@rtb/inspection-intelligence");
+    }
+    expect(inventory.futurePackagesLocked).toContain("packages/inspection-intelligence");
   });
 
   it("enforces allowed dependency direction", () => {
@@ -97,6 +106,7 @@ describe("Phase 8I.1 package boundary architecture", () => {
       "packages/platform-commerce",
       "packages/engineering-os",
       "packages/project-intelligence",
+      "packages/inspection-intelligence",
       "apps/web",
     ];
     const nameByPath = new Map<string, string>();
@@ -151,13 +161,11 @@ describe("Phase 8I.1 package boundary architecture", () => {
     expect(markerDoc).toMatch(/deprecated compatibility alias/i);
   });
 
-  it("lists only known packages under packages/", () => {
+  it("lists packages under packages/ without forbidding locked inspection placement", () => {
     const dirs = readdirSync(resolve(ROOT, "packages"), { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
       .sort();
-    expect(dirs).not.toContain("inspection-intelligence");
-    expect(dirs).not.toContain("inspection-intelligence-certification");
     expect(dirs).toContain("project-intelligence");
     expect(dirs).toContain("engineering-os");
   });

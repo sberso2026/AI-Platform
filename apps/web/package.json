@@ -18,6 +18,7 @@
     "@rtb/platform-kernel": "workspace:*",
     "@rtb/plugin-sdk": "workspace:*",
     "@rtb/project-intelligence": "workspace:*",
+    "@rtb/inspection-intelligence": "workspace:*",
     "@rtb/types": "workspace:*",
     "@rtb/ui": "workspace:*",
     "@supabase/ssr": "^0.6.1",

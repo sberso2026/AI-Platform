@@ -1,6 +1,6 @@
 # Engineering OS — Module Boundaries
 
-**Phase:** 8I.1
+**Phase:** 9A (updated from 8I.1)
 
 ## Project Intelligence (certified v1.0.0)
 
@@ -15,23 +15,25 @@ Owns:
 
 Does **not** own canonical Engineering Core registers.
 
-## Future Inspection Intelligence (locked placement, not created)
+## Inspection Intelligence (Phase 9A discovery lock — `0.1.0-discovery`)
 
-Will own:
+Owns (framework — product features not implemented yet):
 - inspection plans, templates, checklist definitions
 - inspection sessions, observations, measurements
 - inspection evidence links, defects, recommendations
 - inspection review, approvals, reporting derivatives
 
-Will **not** own:
+Does **not** own:
 - canonical projects or assets
 - separate identity, workspace, AI runtime, or commerce lifecycle
 - a separate repository or application host
 
+`inspectionProductFeaturesImplemented = false` in Phase 9A.
+
 ## Classification
 
-| Module | Type | Package (when created) |
-|--------|------|------------------------|
+| Module | Type | Package |
+|--------|------|---------|
 | Project Intelligence | Engineering OS module | `packages/project-intelligence` |
 | Inspection Intelligence | Engineering OS module | `packages/inspection-intelligence` |
 | Inspection certification | Certification only | `packages/inspection-intelligence-certification` |

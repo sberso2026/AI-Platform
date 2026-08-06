@@ -220,17 +220,18 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
     moduleKey: "inspection_intelligence",
     commerceApplicationKey: "inspection_intelligence",
     name: "Inspection Intelligence",
-    description: "Inspection planning and findings management",
-    version: "0.0.0",
+    description:
+      "Reusable Engineering OS inspection framework (Phase 9A discovery lock — no commercial product features)",
+    version: "0.1.0-discovery",
     operatingSystemId: OS_ID,
-    status: "coming_soon",
-    enabled: false,
+    status: "registered",
+    enabled: true,
     workspaceVisibility: "assigned",
     routes: [
       {
         path: "/engineering/apps/inspection-intelligence",
         title: "Inspection Intelligence",
-        component: "InspectionIntelligenceHome",
+        component: "InspectionIntelligenceDiscovery",
       },
     ],
     navigation: [
@@ -244,9 +245,10 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       },
     ],
     permissions: [{ resource: "engineering", action: "read" }],
-    searchProviders: ["inspection_intelligence.findings"],
+    searchProviders: ["inspection_intelligence.discovery"],
     aiCapabilities: ["inspection_intelligence.assist"],
     eventHandlers: ["inspection_intelligence.*"],
+    features: [],
   },
   {
     id: "project_controls",
