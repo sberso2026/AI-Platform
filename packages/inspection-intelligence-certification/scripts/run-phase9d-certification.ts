@@ -206,18 +206,18 @@ function main() {
 
   push(
     "N",
-    "No mobile / no AI Vision",
+    "No offline / no AI Vision",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
     ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+        /INSPECTION_ENGINEERING_DOMAIN_COMPLETE = true/,
       )
       ? "pass"
       : "fail",
@@ -295,7 +295,7 @@ function main() {
     ) &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/,
+      /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
     );
   const phase9EReady =
     artifactOk && engineeringDomainComplete && architecturalReservationsIntact && !releaseTagMoved;
@@ -345,7 +345,10 @@ function main() {
     complianceFrameworkStatus: "complete",
     kpiFrameworkStatus: "complete",
     riskIntegrationStatus: "typed_adapter_only",
-    mobileImplementationIntroduced: false,
+    mobileImplementationIntroduced: fileContains(
+      "packages/inspection-intelligence/src/version.ts",
+      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/,
+    ),
     aiVisionImplementationIntroduced: false,
     architecturalReservationsIntact,
     engineeringDomainComplete: pass && engineeringDomainComplete,

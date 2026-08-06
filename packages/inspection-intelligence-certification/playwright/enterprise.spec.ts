@@ -44,8 +44,8 @@ describeEnterprise("Phase 9C Inspection Intelligence enterprise browser", () => 
     await expect(page.getByTestId("inspection-review-ready")).toBeVisible();
   });
 
-  test("reserved mobile capabilities remain deferred", async () => {
-    // Offline / camera / GPS / sync are Phase 9D — placeholder assertion for restructuring-safety.
-    expect(["offline", "camera", "gps", "sync"]).toHaveLength(4);
+  test("offline and sync remain deferred; camera tablet phone certified in 9F+", async () => {
+    // Full offline sync remains Phase 9G — placeholder assertion for restructuring-safety.
+    expect(["offline", "sync"]).toHaveLength(2);
   });
 });

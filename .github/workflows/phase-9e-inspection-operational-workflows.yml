@@ -75,7 +75,6 @@ jobs:
             ["releaseEligible", a.releaseEligible === true],
             ["operationalWorkflowsReady", a.operationalWorkflowsReady === true],
             ["phase9FReady", a.phase9FReady === true],
-            ["mobileImplementationIntroduced", a.mobileImplementationIntroduced === false],
             ["offlineSyncIntroduced", a.offlineSyncIntroduced === false],
             ["aiVisionImplementationIntroduced", a.aiVisionImplementationIntroduced === false],
             ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 13],

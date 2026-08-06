@@ -45,12 +45,11 @@ describe("Phase 9E Inspection Intelligence operational workflows", () => {
     expect(migration).toContain("inspection_reporting_outputs");
   });
 
-  it("forbids mobile, offline, and AI Vision while marking operational ready", () => {
+  it("forbids offline and AI Vision while allowing mobile product after 9F", () => {
     const version = readFileSync(
       resolve(ROOT, "packages/inspection-intelligence/src/version.ts"),
       "utf8",
     );
-    expect(version).toMatch(/INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_OPERATIONAL_WORKFLOWS_READY = true/);

@@ -1,6 +1,6 @@
 /**
- * Phase 9D reservations — mobile/offline/AI Vision/Asset Intelligence remain deferred.
- * Defect and recommendation frameworks are implemented in domain/* (no longer reserved-only).
+ * Phase 9D reservations — offline/AI Vision/Asset Intelligence remain deferred.
+ * Mobile product capabilities are implemented in Phase 9F (camera/tablet/phone); full offline sync remains reserved.
  */
 export type ConditionRatingReserved = {
   conditionRating?: number;
@@ -21,7 +21,8 @@ export type OfflineSyncContractsReserved = {
   uploadQueue: true;
   syncStatus: true;
   versionResolution: true;
-  mobileProductImplemented: false;
+  /** Full offline engine deferred to 9G; mobile product may exist without offline sync. */
+  mobileProductImplemented: true;
 };
 
 export const CONDITION_RATING_RESERVED = true as const;
@@ -33,7 +34,7 @@ export const OFFLINE_SYNC_CONTRACTS_RESERVED: OfflineSyncContractsReserved = {
   uploadQueue: true,
   syncStatus: true,
   versionResolution: true,
-  mobileProductImplemented: false,
+  mobileProductImplemented: true,
 };
 
 /** @deprecated Defect taxonomy is implemented in domain/defects.ts */

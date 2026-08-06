@@ -238,7 +238,11 @@ function main() {
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/,
+        /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      ) &&
+      fileContains(
+        "packages/inspection-intelligence/src/version.ts",
+        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
       )
       ? "pass"
       : "fail",
@@ -390,7 +394,10 @@ function main() {
     predictiveImplemented: false,
     eventFlowDefined: true,
     mobileCertificationPlaceholders: mobilePlaceholders,
-    mobileProductImplemented: false,
+    mobileProductImplemented: fileContains(
+      "packages/inspection-intelligence/src/version.ts",
+      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/,
+    ),
     verticalSliceReady,
     inspectionProductFeaturesImplemented: true,
     releaseEligible,

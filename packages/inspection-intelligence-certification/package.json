@@ -1,6 +1,6 @@
 {
   "name": "@rtb/inspection-intelligence-certification",
-  "version": "0.5.0-operational-workflows",
+  "version": "0.6.0-mobile-product",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,8 +9,10 @@
     "certify:phase9c": "tsx scripts/run-phase9c-certification.ts",
     "certify:phase9d": "tsx scripts/run-phase9d-certification.ts",
     "certify:phase9e": "tsx scripts/run-phase9e-certification.ts",
+    "certify:phase9f": "tsx scripts/run-phase9f-certification.ts",
     "test:browser-cert": "vitest run src/browser-certification.test.ts",
     "test:e2e:enterprise": "playwright test playwright/enterprise.spec.ts",
+    "test:e2e:mobile": "playwright test playwright/mobile-product.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "test:unit": "vitest run src"
   },

@@ -43,12 +43,12 @@ describe("Phase 9D Inspection Intelligence engineering domain", () => {
     expect(migration).toContain("inspection_risk_links");
   });
 
-  it("forbids mobile and AI Vision and preserves PI v1", () => {
+  it("forbids offline and AI Vision and preserves domain complete + PI v1", () => {
     const version = readFileSync(
       resolve(ROOT, "packages/inspection-intelligence/src/version.ts"),
       "utf8",
     );
-    expect(version).toMatch(/INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/);
+    expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_ENGINEERING_DOMAIN_COMPLETE = true/);
     expect(

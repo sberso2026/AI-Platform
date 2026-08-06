@@ -1,6 +1,6 @@
 {
   "name": "@rtb/inspection-intelligence",
-  "version": "0.5.0-operational-workflows",
+  "version": "0.6.0-mobile-product",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

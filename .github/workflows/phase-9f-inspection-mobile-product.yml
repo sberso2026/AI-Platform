@@ -1,4 +1,4 @@
-name: Phase 9D Inspection Intelligence Engineering Domain
+name: Phase 9F Inspection Intelligence Mobile Product
 
 on:
   workflow_dispatch:
@@ -11,23 +11,28 @@ on:
     paths:
       - "packages/inspection-intelligence/**"
       - "packages/inspection-intelligence-certification/**"
-      - "packages/engineering-os/src/domain-sdk/**"
+      - "packages/engineering-os/src/mobile-sdk/**"
       - "packages/engineering-os/src/index.ts"
       - "packages/engineering-os/src/module-registry.ts"
-      - "packages/platform-certification/src/phase9d*"
+      - "packages/platform-certification/src/phase9f*"
       - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
       - "apps/web/src/app/**/inspection-intelligence/**"
       - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
       - "supabase/migrations/*inspection_intelligence*"
-      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9D*"
-      - ".github/workflows/phase-9d-inspection-engineering-domain.yml"
+      - "docs/architecture/ENGINEERING_MOBILE_SDK.md"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_MOBILE*"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9F*"
+      - "docs/security/INSPECTION_INTELLIGENCE_MOBILE_PRIVACY.md"
+      - "docs/testing/INSPECTION_INTELLIGENCE_MOBILE_BASELINE.md"
+      - ".github/workflows/phase-9f-inspection-mobile-product.yml"
 
 concurrency:
-  group: phase-9d-inspection-domain-${{ github.ref }}
+  group: phase-9f-inspection-mobile-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
   NODE_VERSION: "22"
   PNPM_VERSION: "9.15.0"
 
@@ -48,19 +53,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm --filter @rtb/inspection-intelligence-certification exec playwright install chromium --with-deps
       - name: Unit tests
         run: |
           pnpm --filter @rtb/engineering-os test
           pnpm --filter @rtb/inspection-intelligence test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9d-inspection-engineering-domain.test.ts
-      - name: Phase 9D certification (gates A–S)
-        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9d
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9f-inspection-mobile-product.test.ts
+      - name: Phase 9F certification (gates A–AF)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9f
+        env:
+          CERTIFY_BROWSER: "1"
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
           const { readFileSync } = require("fs");
-          const path = "packages/inspection-intelligence-certification/artifacts/phase9d-inspection-intelligence-engineering-domain-certification.json";
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9f-inspection-intelligence-mobile-product-certification.json";
           const a = JSON.parse(readFileSync(path, "utf8"));
           const checks = [
             ["verdict", a.verdict === "PASS"],
@@ -71,12 +80,13 @@ jobs:
             ["secretExposureDetected", a.secretExposureDetected === false],
             ["releaseTagMoved", a.releaseTagMoved === false],
             ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
-            ["architecturalReservationsIntact", a.architecturalReservationsIntact === true],
+            ["priorInspectionArchitectureIntact", a.priorInspectionArchitectureIntact === true],
             ["releaseEligible", a.releaseEligible === true],
-            ["engineeringDomainComplete", a.engineeringDomainComplete === true],
-            ["phase9EReady", a.phase9EReady === true],
+            ["mobileProductImplemented", a.mobileProductImplemented === true],
+            ["offlineSyncImplemented", a.offlineSyncImplemented === false],
+            ["phase9GReady", a.phase9GReady === true],
             ["aiVisionImplementationIntroduced", a.aiVisionImplementationIntroduced === false],
-            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 32],
           ];
           const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
           if (failed.length) {
@@ -85,14 +95,14 @@ jobs:
           }
           console.log(JSON.stringify({
             verdict: a.verdict,
-            engineeringDomainComplete: a.engineeringDomainComplete,
-            phase9EReady: a.phase9EReady,
+            mobileProductImplemented: a.mobileProductImplemented,
+            phase9GReady: a.phase9GReady,
           }, null, 2));
           EOF
       - name: Upload certification artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase9d-inspection-intelligence-engineering-domain-certification
-          path: packages/inspection-intelligence-certification/artifacts/phase9d-inspection-intelligence-engineering-domain-certification.json
+          name: phase9f-inspection-intelligence-mobile-product-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9f-inspection-intelligence-mobile-product-certification.json
           if-no-files-found: warn

@@ -152,18 +152,18 @@ function main() {
 
   push(
     "H",
-    "No mobile / offline / AI Vision",
+    "No offline / no AI Vision",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
     ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
+        /INSPECTION_OPERATIONAL_WORKFLOWS_READY = true/,
       )
       ? "pass"
       : "fail",
@@ -242,10 +242,6 @@ function main() {
     ) &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false/,
-    ) &&
-    fileContains(
-      "packages/inspection-intelligence/src/version.ts",
       /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false/,
     );
   const phase9FReady =
@@ -290,7 +286,10 @@ function main() {
     operationalWorkflowsStatus: "complete",
     reportingPreparationStatus: "complete",
     workflowEventIntegrationStatus: "typed_contracts",
-    mobileImplementationIntroduced: false,
+    mobileImplementationIntroduced: fileContains(
+      "packages/inspection-intelligence/src/version.ts",
+      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/,
+    ),
     offlineSyncIntroduced: false,
     aiVisionImplementationIntroduced: false,
     architecturalReservationsIntact,

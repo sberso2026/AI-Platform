@@ -19,4 +19,6 @@ export * from "./domain/engineering-domain-completion";
 export * from "./domain/operational-workflow-definition";
 export * from "./domain/operational-workflows";
 export * from "./domain/reporting-preparation";
+export * from "./domain/mobile-product";
+export * from "./domain/pack-mobile-forms";
 export * from "./pack-sdk";

@@ -1,9 +1,9 @@
 /**
- * Phase 9E — Inspection Intelligence operational workflows identity.
+ * Phase 9F — Inspection Intelligence mobile product identity.
  */
 export const INSPECTION_INTELLIGENCE_PRODUCT_NAME = "Inspection Intelligence" as const;
 export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
-export const INSPECTION_INTELLIGENCE_VERSION = "0.5.0-operational-workflows" as const;
+export const INSPECTION_INTELLIGENCE_VERSION = "0.6.0-mobile-product" as const;
 export const INSPECTION_INTELLIGENCE_ROUTE_PREFIX =
   "/engineering/apps/inspection-intelligence" as const;
 
@@ -12,10 +12,10 @@ export const INSPECTION_VERTICAL_SLICE_READY = true as const;
 export const INSPECTION_ENTERPRISE_FOUNDATION_READY = true as const;
 export const INSPECTION_ENGINEERING_DOMAIN_COMPLETE = true as const;
 export const INSPECTION_OPERATIONAL_WORKFLOWS_READY = true as const;
+export const INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true as const;
 export const INSPECTION_AI_VISION_IMPLEMENTED = false as const;
 export const INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false as const;
 export const INSPECTION_PREDICTIVE_IMPLEMENTED = false as const;
-export const INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = false as const;
 export const INSPECTION_CONDITION_RATING_IMPLEMENTED = false as const;
 export const INSPECTION_OFFLINE_SYNC_IMPLEMENTED = false as const;
 export const INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED = true as const;
@@ -46,6 +46,8 @@ export const INSPECTION_INTELLIGENCE_CORE_ENTITIES = [
   "inspection_observation",
   "measurement",
   "inspection_evidence",
+  "inspection_evidence_annotation",
+  "inspection_attestation",
   "defect",
   "recommendation",
   "corrective_action",
@@ -72,10 +74,10 @@ export function getInspectionIntelligenceDomainDeclaration() {
     enterpriseFoundationReady: INSPECTION_ENTERPRISE_FOUNDATION_READY,
     engineeringDomainComplete: INSPECTION_ENGINEERING_DOMAIN_COMPLETE,
     operationalWorkflowsReady: INSPECTION_OPERATIONAL_WORKFLOWS_READY,
+    mobileProductImplemented: INSPECTION_MOBILE_PRODUCT_IMPLEMENTED,
     aiVisionImplemented: INSPECTION_AI_VISION_IMPLEMENTED,
     assetIntelligenceImplemented: INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED,
     predictiveImplemented: INSPECTION_PREDICTIVE_IMPLEMENTED,
-    mobileProductImplemented: INSPECTION_MOBILE_PRODUCT_IMPLEMENTED,
     conditionRatingImplemented: INSPECTION_CONDITION_RATING_IMPLEMENTED,
     offlineSyncImplemented: INSPECTION_OFFLINE_SYNC_IMPLEMENTED,
     defectFrameworkImplemented: INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED,
@@ -90,16 +92,19 @@ export function getInspectionIntelligenceDomainDeclaration() {
     usesEngineeringDomainSdk: true as const,
     usesEngineeringModuleSdk: true as const,
     usesEngineeringWorkflowSdk: true as const,
+    usesEngineeringMobileSdk: true as const,
     usesInspectionPackSdk: true as const,
     plannedEntitlements: INSPECTION_INTELLIGENCE_PLANNED_ENTITLEMENTS,
     coreEntities: INSPECTION_INTELLIGENCE_CORE_ENTITIES,
     assetOwnership: "engineering_os_shared_domain" as const,
     couplesVia: "inspection_target" as const,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Inspection Intelligence → Inspection Packs → Features" as const,
+      "RTB AI Platform → Engineering OS → Shared Engineering SDKs → Engineering Mobile SDK → Inspection Intelligence → Inspection Packs → Mobile Field Features" as const,
   };
 }
 
+export const getInspectionIntelligenceMobileDeclaration =
+  getInspectionIntelligenceDomainDeclaration;
 export const getInspectionIntelligenceOperationalDeclaration =
   getInspectionIntelligenceDomainDeclaration;
 export const getInspectionIntelligenceEnterpriseDeclaration =

@@ -1,6 +1,5 @@
 /**
- * Browser certification for Phase 9C — source-level desktop/tablet/touch/a11y/workflow markers.
- * Playwright e2e is optional when CERTIFY_BROWSER=1.
+ * Browser certification for Phase 9F — source-level markers + Playwright suite presence.
  */
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
@@ -9,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("Phase 9C browser certification (source)", () => {
-  it("covers desktop/tablet/touch/responsive/accessibility/workflow/review markers", () => {
+describe("Phase 9F browser certification (source)", () => {
+  it("covers mobile-ready markers and field surfaces", () => {
     const overview = readFileSync(
       resolve(
         ROOT,
@@ -18,9 +17,8 @@ describe("Phase 9C browser certification (source)", () => {
       ),
       "utf8",
     );
-    expect(overview).toContain("inspection-intelligence-enterprise-foundation-ready");
-    expect(overview).toContain("inspection-intelligence-engineering-domain-ready");
     expect(overview).toContain("inspection-intelligence-operational-workflows-ready");
+    expect(overview).toContain("inspection-intelligence-mobile-ready");
     for (const page of [
       "templates",
       "plans",
@@ -30,6 +28,8 @@ describe("Phase 9C browser certification (source)", () => {
       "actions",
       "workflows",
       "assignments",
+      "my-work",
+      "field",
     ]) {
       const text = readFileSync(
         resolve(
@@ -44,18 +44,16 @@ describe("Phase 9C browser certification (source)", () => {
       resolve(ROOT, "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"),
       "utf8",
     );
-    expect(shell).toContain("Inspection Intelligence features");
-    expect(shell).toContain("templates");
-    expect(shell).toContain("review");
+    expect(shell).toContain("data-touch-optimized");
+    expect(shell).toContain("data-offline-sync");
 
-    const spec = resolve(
+    const mobileSpec = resolve(
       ROOT,
-      "packages/inspection-intelligence-certification/playwright/enterprise.spec.ts",
+      "packages/inspection-intelligence-certification/playwright/mobile-product.spec.ts",
     );
-    expect(existsSync(spec)).toBe(true);
-    const specText = readFileSync(spec, "utf8");
-    expect(specText).toMatch(/tablet|iPad|390|touch/i);
-    expect(specText).toMatch(/accessib|landmark/i);
-    expect(specText).toMatch(/offline|camera|gps|sync/i);
+    expect(existsSync(mobileSpec)).toBe(true);
+    const specText = readFileSync(mobileSpec, "utf8");
+    expect(specText).toMatch(/390.*844|tablet|accessibility|landmark/i);
+    expect(specText).toMatch(/768.*1024/);
   });
 });
