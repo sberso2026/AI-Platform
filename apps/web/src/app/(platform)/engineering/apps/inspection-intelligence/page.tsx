@@ -1,5 +1,5 @@
 /**
- * Phase 9B overview — keeps discovery marker and adds vertical-slice ready marker.
+ * Phase 9C overview — enterprise foundation ready markers.
  */
 export default function InspectionIntelligenceOverviewPage() {
   return (
@@ -8,20 +8,23 @@ export default function InspectionIntelligenceOverviewPage() {
       aria-labelledby="ii-overview-title"
     >
       <div data-testid="inspection-intelligence-vertical-slice-ready">
-        <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
-          Inspection Intelligence
-        </h1>
-        <p className="mt-2 max-w-2xl text-slate-600">
-          First vertical slice (0.2.0-vertical-slice). Inspections bind to Inspection Targets;
-          Measurement Engine, immutable evidence, Inspection Packs, AI Vision / predictive /
-          mobile interfaces are reserved per Phase 9B architectural lock.
-        </p>
-        <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
-          <li>Coupling model: Inspection Target (not direct project/asset ownership)</li>
-          <li>AssetReference interfaces only — Asset Intelligence not implemented</li>
-          <li>Generic pack active; industry packs plug in without forking the engine</li>
-          <li>Event fan-out: Asset Timeline → Digital Twin → Knowledge Graph → Executive Dashboard</li>
-        </ul>
+        <div data-testid="inspection-intelligence-enterprise-foundation-ready">
+          <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
+            Inspection Intelligence
+          </h1>
+          <p className="mt-2 max-w-2xl text-slate-600">
+            Enterprise foundation (0.3.0-enterprise-foundation). Durable persistence, Engineering
+            Module SDK, Inspection Pack SDK, immutable templates/evidence, authorized state
+            machine, and typed event pipeline are locked. AI Vision, offline/mobile, and condition
+            rating remain reserved.
+          </p>
+          <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <li>Inspection Target abstraction + AssetReference contracts</li>
+            <li>Packs extend the engine — coatings scaffold only</li>
+            <li>Events only between modules — no direct cross-module calls</li>
+            <li>Future modules reuse Engineering Module SDK</li>
+          </ul>
+        </div>
       </div>
     </section>
   );

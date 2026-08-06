@@ -5,6 +5,14 @@ export type InspectionTargetKind =
   | "asset"
   | "location"
   | "equipment"
+  | "building"
+  | "structure"
+  | "component"
+  | "room"
+  | "zone"
+  | "grid"
+  | "drawing_region"
+  | "digital_twin_node"
   | "custom"
   | "pack_extension";
 

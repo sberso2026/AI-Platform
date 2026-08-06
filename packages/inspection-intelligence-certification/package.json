@@ -1,11 +1,14 @@
 {
   "name": "@rtb/inspection-intelligence-certification",
-  "version": "0.2.0-vertical-slice",
+  "version": "0.3.0-enterprise-foundation",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase9a": "tsx scripts/run-phase9a-certification.ts",
     "certify:phase9b": "tsx scripts/run-phase9b-certification.ts",
+    "certify:phase9c": "tsx scripts/run-phase9c-certification.ts",
+    "test:browser-cert": "vitest run src/browser-certification.test.ts",
+    "test:e2e:enterprise": "playwright test playwright/enterprise.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "test:unit": "vitest run src"
   },
@@ -13,6 +16,7 @@
     "@rtb/inspection-intelligence": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.29",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3",

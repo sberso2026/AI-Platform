@@ -1,6 +1,6 @@
 {
   "name": "@rtb/inspection-intelligence",
-  "version": "0.2.0-vertical-slice",
+  "version": "0.3.0-enterprise-foundation",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

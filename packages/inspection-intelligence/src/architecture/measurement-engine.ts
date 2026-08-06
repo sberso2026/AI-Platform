@@ -50,12 +50,23 @@ export type MeasurementEngine = {
   reservedTrends: true;
   /** Reserved: live sensor adapters */
   reservedSensorIntegration: true;
+  /** Reserved enterprise expansion surfaces */
+  reservedFormulaLibrary: true;
+  reservedDerivedMeasurements: true;
+  reservedUnitConversions: true;
+  reservedStatisticalFunctions: true;
+  reservedCalibrationHistory: true;
 };
 
 export function createMeasurementEngine(): MeasurementEngine {
   return {
     reservedTrends: true,
     reservedSensorIntegration: true,
+    reservedFormulaLibrary: true,
+    reservedDerivedMeasurements: true,
+    reservedUnitConversions: true,
+    reservedStatisticalFunctions: true,
+    reservedCalibrationHistory: true,
     evaluate(input, criteria): MeasurementEvaluation {
       if (!criteria) return { status: "unknown", detail: "no_criteria" };
       if (criteria.mode === "equals") {

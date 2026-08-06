@@ -7,3 +7,5 @@ export * from "./inspection-pack";
 export * from "./predictive";
 export * from "./event-flow";
 export * from "./mobile-certification";
+export * from "./enterprise-reservations";
+export * from "./reporting";
