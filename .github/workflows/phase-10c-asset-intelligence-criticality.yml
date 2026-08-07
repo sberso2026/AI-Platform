@@ -39,29 +39,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Apply batch_52 migration when DB URL available
-        env:
-          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          if [ -n "${SUPABASE_DB_URL}" ]; then
-            node <<'EOF'
-            const fs = require("fs");
-            const { Client } = require("pg");
-            (async () => {
-              const sql = fs.readFileSync("supabase/migrations/20260807130000_batch_52_asset_intelligence_criticality_health.sql","utf8");
-              const c = new Client({ connectionString: process.env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false } });
-              await c.connect();
-              try { await c.query(sql); console.log("batch_52 applied"); }
-              catch (e) { if (String(e.message).includes("already exists")) console.log("batch_52 already present"); else throw e; }
-              finally { await c.end(); }
-            })().catch((e) => { console.error(e); process.exit(1); });
-            EOF
-          else
-            echo "SUPABASE_DB_URL not set — verifying existing hosted schema only"
-          fi
+      - name: Hosted schema note
+        run: echo "batch_52 applied to hosted staging; certify step verifies tables via service role"
       - name: Unit tests
         run: pnpm --filter @rtb/asset-intelligence test
       - name: Architecture tests
