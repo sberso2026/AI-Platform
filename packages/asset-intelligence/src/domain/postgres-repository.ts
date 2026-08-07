@@ -9,6 +9,7 @@ import type { AssetIdentityReference } from "../architecture/identity-state";
 import type { AssetHealthIndexState } from "./health-index";
 import type { AssetIntelligenceEvent } from "./events";
 import type { IntelligenceTimelineEntry } from "./timeline";
+import type { TaxonomyEntryKind } from "./failure-taxonomy";
 import type {
   AssetIntelligenceRepositoryPort,
   IdempotencyRecord,
@@ -16,6 +17,14 @@ import type {
   PersistedConditionState,
   PersistedCriticalityState,
   PersistedEvidenceConfidence,
+  PersistedFailureCauseState,
+  PersistedFailureConsequenceState,
+  PersistedFailureEffectState,
+  PersistedFailureMechanismState,
+  PersistedFailureModeState,
+  PersistedFailureRelationship,
+  PersistedFailureReview,
+  PersistedFailureTaxonomyEntry,
   PersistedHealthIndexState,
   PersistedHealthProfile,
   PersistedReliabilityState,
@@ -659,6 +668,356 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     }
     return current + 1;
   }
+
+  async saveFailureMode(state: PersistedFailureModeState): Promise<PersistedFailureModeState> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_modes").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      taxonomy_version: state.taxonomyVersion,
+      failure_mode_code: state.failureModeCode,
+      failure_mode_label: state.failureModeLabel,
+      status: state.status,
+      review_status: state.reviewStatus,
+      assessment_type: state.assessmentType,
+      confidence: state.confidence ?? null,
+      method: state.method ?? null,
+      evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+      evidence_refs: state.evidenceRefs ?? [],
+      source_refs: state.sourceRefs ?? [],
+      detection_method_code: state.detectionMethodCode ?? null,
+      review_instance_id: state.reviewInstanceId ?? null,
+      source_type: state.sourceType ?? "manual_engineering_assessment",
+      detected_at: state.detectedAt ?? null,
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      evidence_confidence: state.evidenceConfidence ?? null,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      payload: {
+        probabilityOfFailureCertified: false,
+        accuracyClaimsCertified: false,
+        rulClaimsCertified: false,
+        aiMayPublishForbidden: true,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`failure_mode_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestFailureMode(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedFailureModeState | undefined> {
+    let q = this.supabase
+      .from("asset_intelligence_failure_modes")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (asOf) q = q.lte("recorded_at", asOf);
+    const { data, error } = await q.maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapFailureModeRow(data) : undefined;
+  }
+
+  async nextFailureModeVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestFailureMode(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async listFailureModeHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFailureModeState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_failure_modes")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapFailureModeRow);
+  }
+
+  async saveFailureMechanism(
+    state: PersistedFailureMechanismState,
+  ): Promise<PersistedFailureMechanismState> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_mechanisms").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      taxonomy_version: state.taxonomyVersion,
+      mechanism_code: state.mechanismCode,
+      mechanism_label: state.mechanismLabel,
+      mechanism_category: state.mechanismCategory ?? null,
+      related_failure_mode_codes: state.relatedFailureModeCodes ?? [],
+      confidence: state.confidence ?? null,
+      method: state.method ?? null,
+      evidence_refs: state.evidenceRefs ?? [],
+      evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+      source_refs: state.sourceRefs ?? [],
+      review_status: state.reviewStatus,
+      source_type: state.sourceType ?? "manual_engineering_assessment",
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      evidence_confidence: state.evidenceConfidence ?? null,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      payload: { probabilityOfFailureCertified: false },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`failure_mechanism_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestFailureMechanism(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedFailureMechanismState | undefined> {
+    let q = this.supabase
+      .from("asset_intelligence_failure_mechanisms")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (asOf) q = q.lte("recorded_at", asOf);
+    const { data, error } = await q.maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapFailureMechanismRow(data) : undefined;
+  }
+
+  async saveFailureRelationship(
+    record: PersistedFailureRelationship,
+  ): Promise<PersistedFailureRelationship> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_relationships").insert({
+      id: record.relationshipId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      asset_id: record.assetId,
+      version: record.version,
+      taxonomy_version: record.taxonomyVersion,
+      relationship_type: record.relationshipType,
+      from_kind: record.fromKind,
+      from_code: record.fromCode,
+      to_kind: record.toKind,
+      to_code: record.toCode,
+      recorded_at: record.recordedAt,
+      payload: {},
+    });
+    if (error) {
+      if (error.code === "23505") return record;
+      throw new Error(`failure_relationship_persist_failed:${error.message}`);
+    }
+    return record;
+  }
+
+  async saveFailureCause(state: PersistedFailureCauseState): Promise<PersistedFailureCauseState> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_causes").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      taxonomy_version: state.taxonomyVersion,
+      cause_code: state.causeCode,
+      cause_label: state.causeLabel,
+      classification: state.classification,
+      related_failure_mode_codes: state.relatedFailureModeCodes ?? [],
+      related_mechanism_codes: state.relatedMechanismCodes ?? [],
+      confidence: state.confidence ?? null,
+      method: state.method ?? null,
+      evidence_refs: state.evidenceRefs ?? [],
+      evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+      alternative_causes: state.alternativeCauses ?? [],
+      root_cause_confidence: state.rootCauseConfidence ?? null,
+      root_cause_method: state.rootCauseMethod ?? null,
+      supporting_evidence: state.supportingEvidence ?? [],
+      review_status: state.reviewStatus,
+      source_type: state.sourceType ?? "manual_engineering_assessment",
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      payload: {
+        rootCauseRequiresHumanApproval: true,
+        aiAutonomousRootCauseForbidden: true,
+        probabilityOfFailureCertified: false,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`failure_cause_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async saveFailureEffect(
+    state: PersistedFailureEffectState,
+  ): Promise<PersistedFailureEffectState> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_effects").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      taxonomy_version: state.taxonomyVersion,
+      effect_code: state.effectCode,
+      effect_label: state.effectLabel,
+      effect_kind: state.effectKind,
+      related_failure_mode_codes: state.relatedFailureModeCodes ?? [],
+      review_status: state.reviewStatus,
+      source_type: state.sourceType ?? "manual_engineering_assessment",
+      assessed_at: state.assessedAt,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      recorded_at: state.recordedAt,
+      payload: {},
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`failure_effect_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async saveFailureConsequence(
+    state: PersistedFailureConsequenceState,
+  ): Promise<PersistedFailureConsequenceState> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_consequences").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      taxonomy_version: state.taxonomyVersion,
+      consequence_code: state.consequenceCode,
+      consequence_label: state.consequenceLabel,
+      dimensions: state.dimensions ?? [],
+      related_failure_mode_codes: state.relatedFailureModeCodes ?? [],
+      creates_canonical_risk_record: false,
+      review_status: state.reviewStatus,
+      source_type: state.sourceType ?? "manual_engineering_assessment",
+      assessed_at: state.assessedAt,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      recorded_at: state.recordedAt,
+      payload: {},
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`failure_consequence_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async saveFailureReview(
+    record: PersistedFailureReviewRecord,
+  ): Promise<PersistedFailureReviewRecord> {
+    const { error } = await this.supabase.from("asset_intelligence_failure_reviews").insert({
+      id: record.id,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      asset_id: record.assetId,
+      failure_mode_id: record.failureModeId,
+      review_instance_id: record.reviewInstanceId ?? null,
+      action: record.action,
+      reviewer_id: record.reviewerId ?? null,
+      reason: record.reason ?? null,
+      state_version: record.stateVersion,
+      taxonomy_version: record.taxonomyVersion,
+      evidence_confidence: record.evidenceConfidence ?? null,
+      content_hash: record.contentHash ?? null,
+      correlation_id: record.correlationId ?? null,
+      created_at: record.createdAt,
+    });
+    if (error) throw new Error(`failure_review_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async upsertFailureTaxonomy(
+    entry: PersistedFailureTaxonomyEntry,
+  ): Promise<PersistedFailureTaxonomyEntry> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_failure_taxonomy")
+      .upsert(
+        {
+          taxonomy_id: entry.taxonomyId,
+          taxonomy_version: entry.taxonomyVersion,
+          kind: entry.kind,
+          code: entry.code,
+          name: entry.name,
+          description: entry.description ?? "",
+          category: entry.category ?? null,
+          parent_code: entry.parentCode ?? null,
+          applicable_asset_classes: entry.applicableAssetClasses ?? ["*"],
+          source_standard: entry.sourceStandard ?? null,
+          pack_owner: entry.packOwner,
+          status: entry.status,
+          effective_from: entry.effectiveFrom,
+          deprecated_at: entry.deprecatedAt ?? null,
+          replacement_code: entry.replacementCode ?? null,
+          payload: {},
+        },
+        { onConflict: "kind,code,taxonomy_version" },
+      )
+      .select("*")
+      .single();
+    if (error) throw new Error(`failure_taxonomy_persist_failed:${error.message}`);
+    return mapFailureTaxonomyRow(data);
+  }
+
+  async listFailureTaxonomy(
+    kind?: TaxonomyEntryKind,
+    packOwner?: string,
+  ): Promise<PersistedFailureTaxonomyEntry[]> {
+    let q = this.supabase.from("asset_intelligence_failure_taxonomy").select("*");
+    if (kind) q = q.eq("kind", kind);
+    if (packOwner) q = q.eq("pack_owner", packOwner);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapFailureTaxonomyRow);
+  }
 }
 
 export function createPostgresAssetIntelligenceRepository(
@@ -905,6 +1264,115 @@ function mapEvidenceRow(row: Record<string, unknown>): PersistedEvidenceConfiden
     assessedAt: String(row.assessed_at),
     reasons: (row.reasons as string[]) ?? [],
     engineeringCorrectnessClaimed: false,
+  };
+}
+
+function mapFailureModeRow(row: Record<string, unknown>): PersistedFailureModeState {
+  return {
+    kind: "failure_mode",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedFailureModeState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    failureModeCode: String(row.failure_mode_code),
+    failureModeLabel: String(row.failure_mode_label),
+    taxonomyVersion: String(row.taxonomy_version),
+    status: row.status as PersistedFailureModeState["status"],
+    confidence:
+      row.confidence === null || row.confidence === undefined ? undefined : Number(row.confidence),
+    method: row.method ? String(row.method) : undefined,
+    evidenceConfidenceRef: row.evidence_confidence_ref
+      ? String(row.evidence_confidence_ref)
+      : undefined,
+    evidenceRefs: (row.evidence_refs as string[]) ?? [],
+    sourceRefs: (row.source_refs as string[]) ?? [],
+    detectionMethodCode: row.detection_method_code ? String(row.detection_method_code) : undefined,
+    assessmentType: row.assessment_type as PersistedFailureModeState["assessmentType"],
+    reviewStatus: row.review_status as PersistedFailureModeState["reviewStatus"],
+    reviewInstanceId: row.review_instance_id ? String(row.review_instance_id) : undefined,
+    detectedAt: row.detected_at ? String(row.detected_at) : undefined,
+    assessedAt: String(row.assessed_at ?? row.recorded_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    limitations: (row.limitations as string[]) ?? [],
+    supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+    evidenceConfidence:
+      (row.evidence_confidence as PersistedFailureModeState["evidenceConfidence"]) ?? undefined,
+    probabilityOfFailureCertified: false,
+    accuracyClaimsCertified: false,
+    rulClaimsCertified: false,
+    aiMayPublishForbidden: true,
+    sourceType: row.source_type ? String(row.source_type) : undefined,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+  };
+}
+
+function mapFailureMechanismRow(row: Record<string, unknown>): PersistedFailureMechanismState {
+  return {
+    kind: "failure_mechanism",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedFailureMechanismState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    mechanismCode: String(row.mechanism_code),
+    mechanismLabel: String(row.mechanism_label),
+    mechanismCategory: row.mechanism_category ? String(row.mechanism_category) : undefined,
+    taxonomyVersion: String(row.taxonomy_version),
+    relatedFailureModeCodes: (row.related_failure_mode_codes as string[]) ?? [],
+    confidence:
+      row.confidence === null || row.confidence === undefined ? undefined : Number(row.confidence),
+    method: row.method ? String(row.method) : undefined,
+    evidenceRefs: (row.evidence_refs as string[]) ?? [],
+    evidenceConfidenceRef: row.evidence_confidence_ref
+      ? String(row.evidence_confidence_ref)
+      : undefined,
+    sourceRefs: (row.source_refs as string[]) ?? [],
+    reviewStatus: row.review_status as PersistedFailureMechanismState["reviewStatus"],
+    limitations: (row.limitations as string[]) ?? [],
+    assessedAt: String(row.assessed_at ?? row.recorded_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    evidenceConfidence:
+      (row.evidence_confidence as PersistedFailureMechanismState["evidenceConfidence"]) ??
+      undefined,
+    probabilityOfFailureCertified: false,
+    sourceType: row.source_type ? String(row.source_type) : undefined,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+    supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+  };
+}
+
+function mapFailureTaxonomyRow(row: Record<string, unknown>): PersistedFailureTaxonomyEntry {
+  return {
+    taxonomyId: String(row.taxonomy_id),
+    taxonomyVersion: String(row.taxonomy_version),
+    kind: row.kind as PersistedFailureTaxonomyEntry["kind"],
+    code: String(row.code),
+    name: String(row.name),
+    description: String(row.description ?? ""),
+    category: row.category ? String(row.category) : undefined,
+    parentCode: row.parent_code ? String(row.parent_code) : undefined,
+    applicableAssetClasses: (row.applicable_asset_classes as string[]) ?? ["*"],
+    sourceStandard: row.source_standard ? String(row.source_standard) : undefined,
+    packOwner: String(row.pack_owner),
+    status: row.status as PersistedFailureTaxonomyEntry["status"],
+    effectiveFrom: String(row.effective_from),
+    deprecatedAt: row.deprecated_at ? String(row.deprecated_at) : undefined,
+    replacementCode: row.replacement_code ? String(row.replacement_code) : undefined,
   };
 }
 

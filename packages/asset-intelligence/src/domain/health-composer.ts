@@ -25,13 +25,20 @@ export type HealthCompositionMethod =
   | "compose_from_condition_v1"
   | "compose_condition_reliability_v2"
   | "compose_condition_criticality_reliability_v1"
+  /** Reserved — not enabled in Phase 10E (FAILURE_CONTRIBUTION_TO_HEALTH_ENABLED = false). */
+  | "compose_condition_reliability_failure_v3"
   | "abstain_insufficient_evidence";
 
-/** Default for new compositions in Phase 10D. */
+/** Default for new compositions in Phase 10D+. */
 export const DEFAULT_HEALTH_COMPOSITION_METHOD: HealthCompositionMethod =
   "compose_condition_reliability_v2";
 
 export const CRITICALITY_IS_HEALTH_FACTOR_V2 = false as const;
+
+/** Phase 10E — failure does not contribute to Health Index until explicitly enabled via v3. */
+export const FAILURE_CONTRIBUTION_TO_HEALTH_ENABLED = false as const;
+export const FAILURE_HEALTH_COMPOSITION_METHOD_RESERVED =
+  "compose_condition_reliability_failure_v3" as const;
 
 export type HealthCompositionInput = {
   assetId: string;
@@ -88,6 +95,14 @@ export class HealthCompositionEngine implements HealthComposer {
   compose(input: HealthCompositionInput): HealthCompositionResult {
     const method =
       input.compositionMethod ?? DEFAULT_HEALTH_COMPOSITION_METHOD;
+
+    if (method === "compose_condition_reliability_failure_v3") {
+      if (!FAILURE_CONTRIBUTION_TO_HEALTH_ENABLED) {
+        throw new Error("failure_health_contribution_disabled");
+      }
+      // Reserved for a later certified composition — unreachable while disabled.
+      throw new Error("failure_health_composition_v3_not_implemented");
+    }
 
     if (
       method === "compose_condition_criticality_v1" ||

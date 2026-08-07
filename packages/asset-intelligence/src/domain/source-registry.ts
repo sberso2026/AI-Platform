@@ -14,7 +14,13 @@ export type IntelligenceSourceOwnership =
 
 export type TrustTier = "frozen_public_contract" | "shared_contract" | "read_only_identity" | "future";
 
-export type AllowedStateKind = "condition" | "health_index" | "criticality" | "reliability" | "risk_intelligence";
+export type AllowedStateKind =
+  | "condition"
+  | "health_index"
+  | "criticality"
+  | "reliability"
+  | "failure"
+  | "risk_intelligence";
 
 export type IntelligenceSourceEntry = {
   sourceKey: string;
@@ -46,7 +52,7 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
     contractVersion: "1",
     ownership: "asset_intelligence",
     trustTier: "shared_contract",
-    allowedStateKinds: ["criticality", "health_index", "reliability"],
+    allowedStateKinds: ["criticality", "health_index", "reliability", "failure"],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
     status: "active",
@@ -57,7 +63,7 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
     contractVersion: "1",
     ownership: "asset_intelligence",
     trustTier: "shared_contract",
-    allowedStateKinds: ["criticality", "health_index", "reliability"],
+    allowedStateKinds: ["criticality", "health_index", "reliability", "failure"],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
     status: "active",

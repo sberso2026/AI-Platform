@@ -88,3 +88,5 @@ tmp-cert-*/
 playwright-report/
 test-results/
 coverage/
+
+tmp/

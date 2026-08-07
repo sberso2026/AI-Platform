@@ -15,6 +15,15 @@ import type { AssetReliabilityStateRecord } from "./reliability";
 import type { IntelligenceTimelineEntry } from "./timeline";
 import type { AssetIntelligenceEvent } from "./events";
 import type { AssetSnapshot } from "./snapshot";
+import type {
+  AssetFailureCauseState,
+  AssetFailureConsequenceState,
+  AssetFailureEffectState,
+  AssetFailureMechanismState,
+  AssetFailureModeState,
+  FailureRelationship,
+} from "./failure";
+import type { FailureTaxonomyEntry, TaxonomyEntryKind } from "./failure-taxonomy";
 
 export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
 
@@ -70,6 +79,75 @@ export type PersistedEvidenceConfidence = EvidenceConfidenceAssessment & {
 
 export type PersistedHealthProfile = AssetHealthProfile & {
   version: number;
+};
+
+/** Phase 10E — Failure Intelligence persisted state types. */
+export type PersistedFailureModeState = AssetFailureModeState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  sourceType?: string;
+  createdBy?: string;
+  supersedesId?: string;
+};
+
+export type PersistedFailureMechanismState = AssetFailureMechanismState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  failureModeStateId?: string;
+};
+
+export type PersistedFailureCauseState = AssetFailureCauseState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  failureModeStateId?: string;
+};
+
+export type PersistedFailureEffectState = AssetFailureEffectState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  failureModeStateId?: string;
+};
+
+export type PersistedFailureConsequenceState = AssetFailureConsequenceState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  failureModeStateId?: string;
+};
+
+export type PersistedFailureRelationship = FailureRelationship & {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  failureModeStateId?: string;
+};
+
+export type PersistedFailureReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  failureModeStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  taxonomyVersion: string;
+  evidenceConfidenceRef?: string;
+  contentHash?: string;
+  correlationId?: string;
+  createdAt: string;
+};
+
+/** Shared + pack-extensible registry entries — optionally tenant/workspace scoped. */
+export type PersistedFailureTaxonomyEntry = FailureTaxonomyEntry & {
+  tenantId?: string;
+  workspaceId?: string;
 };
 
 export type PersistedSnapshotRecord = {
@@ -223,6 +301,50 @@ export type AssetIntelligenceRepositoryPort = {
     assetId: string,
     expectedCurrentVersion?: number,
   ): Promise<number>;
+  /** Optimistic concurrency: returns next version or throws on conflict. */
+  nextFailureModeVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveFailureMode(state: PersistedFailureModeState): Promise<PersistedFailureModeState>;
+  latestFailureMode(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedFailureModeState | undefined>;
+  listFailureModeHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFailureModeState[]>;
+  saveFailureMechanism(
+    state: PersistedFailureMechanismState,
+  ): Promise<PersistedFailureMechanismState>;
+  latestFailureMechanism(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedFailureMechanismState | undefined>;
+  saveFailureCause(state: PersistedFailureCauseState): Promise<PersistedFailureCauseState>;
+  saveFailureEffect(state: PersistedFailureEffectState): Promise<PersistedFailureEffectState>;
+  saveFailureConsequence(
+    state: PersistedFailureConsequenceState,
+  ): Promise<PersistedFailureConsequenceState>;
+  saveFailureRelationship(
+    relationship: PersistedFailureRelationship,
+  ): Promise<PersistedFailureRelationship>;
+  saveFailureReview(review: PersistedFailureReview): Promise<PersistedFailureReview>;
+  upsertFailureTaxonomy(
+    entry: PersistedFailureTaxonomyEntry,
+  ): Promise<PersistedFailureTaxonomyEntry>;
+  listFailureTaxonomy(
+    kind?: TaxonomyEntryKind,
+    packOwner?: string,
+  ): Promise<PersistedFailureTaxonomyEntry[]>;
 };
 
 export type DurableAssetIntelligenceStore = {
@@ -239,6 +361,14 @@ export type DurableAssetIntelligenceStore = {
   idempotency: IdempotencyRecord[];
   outbox: OutboxEventRecord[];
   identityCache: AssetIdentityReference[];
+  failureModes: PersistedFailureModeState[];
+  failureMechanisms: PersistedFailureMechanismState[];
+  failureCauses: PersistedFailureCauseState[];
+  failureEffects: PersistedFailureEffectState[];
+  failureConsequences: PersistedFailureConsequenceState[];
+  failureRelationships: PersistedFailureRelationship[];
+  failureReviews: PersistedFailureReview[];
+  failureTaxonomy: PersistedFailureTaxonomyEntry[];
 };
 
 export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelligenceStore {
@@ -256,6 +386,14 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     idempotency: [],
     outbox: [],
     identityCache: [],
+    failureModes: [],
+    failureMechanisms: [],
+    failureCauses: [],
+    failureEffects: [],
+    failureConsequences: [],
+    failureRelationships: [],
+    failureReviews: [],
+    failureTaxonomy: [],
   };
 }
 
@@ -570,6 +708,128 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
       throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
     }
     return current + 1;
+  }
+
+  async nextFailureModeVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestFailureMode(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
+  }
+
+  async saveFailureMode(state: PersistedFailureModeState): Promise<PersistedFailureModeState> {
+    this.store.failureModes.push(state);
+    return state;
+  }
+
+  async latestFailureMode(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedFailureModeState | undefined> {
+    return latestAsOf(
+      this.store.failureModes.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+      asOf,
+    );
+  }
+
+  async listFailureModeHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFailureModeState[]> {
+    return this.store.failureModes
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveFailureMechanism(
+    state: PersistedFailureMechanismState,
+  ): Promise<PersistedFailureMechanismState> {
+    this.store.failureMechanisms.push(state);
+    return state;
+  }
+
+  async latestFailureMechanism(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedFailureMechanismState | undefined> {
+    return latestAsOf(
+      this.store.failureMechanisms.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+      asOf,
+    );
+  }
+
+  async saveFailureCause(state: PersistedFailureCauseState): Promise<PersistedFailureCauseState> {
+    this.store.failureCauses.push(state);
+    return state;
+  }
+
+  async saveFailureEffect(
+    state: PersistedFailureEffectState,
+  ): Promise<PersistedFailureEffectState> {
+    this.store.failureEffects.push(state);
+    return state;
+  }
+
+  async saveFailureConsequence(
+    state: PersistedFailureConsequenceState,
+  ): Promise<PersistedFailureConsequenceState> {
+    this.store.failureConsequences.push(state);
+    return state;
+  }
+
+  async saveFailureRelationship(
+    relationship: PersistedFailureRelationship,
+  ): Promise<PersistedFailureRelationship> {
+    this.store.failureRelationships.push(relationship);
+    return relationship;
+  }
+
+  async saveFailureReview(review: PersistedFailureReview): Promise<PersistedFailureReview> {
+    this.store.failureReviews.push(review);
+    return review;
+  }
+
+  async upsertFailureTaxonomy(
+    entry: PersistedFailureTaxonomyEntry,
+  ): Promise<PersistedFailureTaxonomyEntry> {
+    const idx = this.store.failureTaxonomy.findIndex(
+      (e) => e.kind === entry.kind && e.code === entry.code && e.taxonomyVersion === entry.taxonomyVersion,
+    );
+    if (idx >= 0) this.store.failureTaxonomy[idx] = entry;
+    else this.store.failureTaxonomy.push(entry);
+    return entry;
+  }
+
+  async listFailureTaxonomy(
+    kind?: TaxonomyEntryKind,
+    packOwner?: string,
+  ): Promise<PersistedFailureTaxonomyEntry[]> {
+    return this.store.failureTaxonomy.filter(
+      (e) => (!kind || e.kind === kind) && (!packOwner || e.packOwner === packOwner),
+    );
   }
 
   getStore(): DurableAssetIntelligenceStore {

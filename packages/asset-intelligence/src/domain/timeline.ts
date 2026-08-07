@@ -7,6 +7,12 @@ export type TimelineStateKind =
   | "health_index"
   | "criticality"
   | "reliability"
+  | "failure_mode"
+  | "failure_mechanism"
+  | "failure_cause"
+  | "failure_review"
+  | "failure_published"
+  | "failure_superseded"
   | "risk_intelligence"
   | "lifecycle_intelligence";
 

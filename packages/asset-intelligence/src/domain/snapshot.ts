@@ -1,5 +1,5 @@
 /**
- * Phase 10B — Asset Snapshot (composed read view; not a registry).
+ * Phase 10B / 10E — Asset Snapshot (composed read view; not a registry).
  */
 
 import type {
@@ -9,9 +9,18 @@ import type {
   Provenance,
 } from "../architecture/identity-state";
 import type { AssetHealthIndexState } from "./health-index";
+import type { AssetFailureMechanismState, AssetFailureModeState } from "./failure";
+import type { EvidenceConfidenceAssessment } from "./evidence-confidence";
 
 export type SnapshotIntelligenceContribution = {
-  kind: "condition" | "health_index" | "criticality";
+  kind:
+    | "condition"
+    | "health_index"
+    | "criticality"
+    | "reliability"
+    | "failure_mode"
+    | "failure_mechanism"
+    | "evidence_confidence";
   stateId: string;
   recordedAt: string;
   provenance: Provenance;
@@ -26,6 +35,9 @@ export type AssetSnapshot = {
   condition?: AssetConditionState;
   healthIndex?: AssetHealthIndexState;
   criticality?: AssetCriticalityState;
+  failureModes?: AssetFailureModeState[];
+  failureMechanisms?: AssetFailureMechanismState[];
+  evidenceConfidenceRef?: string;
   contributions: SnapshotIntelligenceContribution[];
   isAssetRegistry: false;
   mutatesIdentity: false;
@@ -38,6 +50,9 @@ export function composeAssetSnapshot(input: {
   condition?: AssetConditionState;
   healthIndex?: AssetHealthIndexState;
   criticality?: AssetCriticalityState;
+  failureModes?: AssetFailureModeState[];
+  failureMechanisms?: AssetFailureMechanismState[];
+  evidenceConfidence?: EvidenceConfidenceAssessment;
 }): AssetSnapshot {
   const contributions: SnapshotIntelligenceContribution[] = [];
   if (input.condition) {
@@ -67,6 +82,37 @@ export function composeAssetSnapshot(input: {
       mutatesIdentity: false,
     });
   }
+  for (const mode of input.failureModes ?? []) {
+    contributions.push({
+      kind: "failure_mode",
+      stateId: mode.stateId,
+      recordedAt: mode.recordedAt,
+      provenance: mode.provenance,
+      mutatesIdentity: false,
+    });
+  }
+  for (const mech of input.failureMechanisms ?? []) {
+    contributions.push({
+      kind: "failure_mechanism",
+      stateId: mech.stateId,
+      recordedAt: mech.recordedAt,
+      provenance: mech.provenance,
+      mutatesIdentity: false,
+    });
+  }
+  if (input.evidenceConfidence) {
+    contributions.push({
+      kind: "evidence_confidence",
+      stateId: input.evidenceConfidence.assessmentId,
+      recordedAt: input.evidenceConfidence.assessedAt,
+      provenance: {
+        sourceSystem: "evidence_confidence_engine",
+        observedAt: input.evidenceConfidence.assessedAt,
+        method: input.evidenceConfidence.method,
+      },
+      mutatesIdentity: false,
+    });
+  }
   return {
     identity: input.identity,
     asOf: input.asOf,
@@ -74,6 +120,9 @@ export function composeAssetSnapshot(input: {
     condition: input.condition,
     healthIndex: input.healthIndex,
     criticality: input.criticality,
+    failureModes: input.failureModes,
+    failureMechanisms: input.failureMechanisms,
+    evidenceConfidenceRef: input.evidenceConfidence?.assessmentId,
     contributions,
     isAssetRegistry: false,
     mutatesIdentity: false,
