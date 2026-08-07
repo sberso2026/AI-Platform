@@ -66,7 +66,13 @@ export type FailureCapability =
   | "predictive_readiness.submit"
   | "predictive_readiness.review"
   | "predictive_readiness.approve"
-  | "predictive_readiness.publish";
+  | "predictive_readiness.publish"
+  | "predictive_governance.read"
+  | "predictive_governance.assess"
+  | "predictive_governance.submit"
+  | "predictive_governance.review"
+  | "predictive_governance.approve"
+  | "predictive_governance.publish";
 
 /** Phase 10H — capabilities whose approval/publication is segregated from assessment. */
 export const PHASE_10H_READ_CAPABILITIES = [
@@ -125,6 +131,28 @@ export const PHASE_10I_PUBLISH_CAPABILITIES = [
   "predictive_readiness.publish",
 ] as const satisfies readonly FailureCapability[];
 
+/**
+ * Phase 10J — predictive method governance. Publishing a qualified method is a
+ * governance act only: it never grants certified production execution.
+ */
+export const PHASE_10J_READ_CAPABILITIES = [
+  "predictive_governance.read",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10J_ASSESS_CAPABILITIES = [
+  "predictive_governance.assess",
+  "predictive_governance.submit",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10J_REVIEW_CAPABILITIES = [
+  "predictive_governance.review",
+  "predictive_governance.approve",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10J_PUBLISH_CAPABILITIES = [
+  "predictive_governance.publish",
+] as const satisfies readonly FailureCapability[];
+
 /** Approving or publishing these is forbidden for the engineer who assessed them. */
 export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly FailureCapability[] = [
   "failure.approve",
@@ -137,6 +165,8 @@ export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly FailureCapability[] =
   ...PHASE_10H_PUBLISH_CAPABILITIES,
   ...PHASE_10I_REVIEW_CAPABILITIES.filter((c) => c.endsWith(".approve")),
   ...PHASE_10I_PUBLISH_CAPABILITIES,
+  ...PHASE_10J_REVIEW_CAPABILITIES.filter((c) => c.endsWith(".approve")),
+  ...PHASE_10J_PUBLISH_CAPABILITIES,
 ];
 
 export const FAILURE_ROLE_CAPABILITIES: Record<
@@ -153,6 +183,7 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.read",
     ...PHASE_10H_READ_CAPABILITIES,
     ...PHASE_10I_READ_CAPABILITIES,
+    ...PHASE_10J_READ_CAPABILITIES,
   ],
   engineer: [
     "failure.read",
@@ -174,6 +205,8 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10H_ASSESS_CAPABILITIES,
     ...PHASE_10I_READ_CAPABILITIES,
     ...PHASE_10I_ASSESS_CAPABILITIES,
+    ...PHASE_10J_READ_CAPABILITIES,
+    ...PHASE_10J_ASSESS_CAPABILITIES,
   ],
   reviewer: [
     "failure.read",
@@ -193,6 +226,8 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10H_REVIEW_CAPABILITIES,
     ...PHASE_10I_READ_CAPABILITIES,
     ...PHASE_10I_REVIEW_CAPABILITIES,
+    ...PHASE_10J_READ_CAPABILITIES,
+    ...PHASE_10J_REVIEW_CAPABILITIES,
   ],
   manager: [
     "failure.read",
@@ -227,6 +262,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10I_ASSESS_CAPABILITIES,
     ...PHASE_10I_REVIEW_CAPABILITIES,
     ...PHASE_10I_PUBLISH_CAPABILITIES,
+    ...PHASE_10J_READ_CAPABILITIES,
+    ...PHASE_10J_ASSESS_CAPABILITIES,
+    ...PHASE_10J_REVIEW_CAPABILITIES,
+    ...PHASE_10J_PUBLISH_CAPABILITIES,
   ],
   owner: [
     "failure.read",
@@ -261,6 +300,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10I_ASSESS_CAPABILITIES,
     ...PHASE_10I_REVIEW_CAPABILITIES,
     ...PHASE_10I_PUBLISH_CAPABILITIES,
+    ...PHASE_10J_READ_CAPABILITIES,
+    ...PHASE_10J_ASSESS_CAPABILITIES,
+    ...PHASE_10J_REVIEW_CAPABILITIES,
+    ...PHASE_10J_PUBLISH_CAPABILITIES,
   ],
   admin: [
     "failure.read",
@@ -295,6 +338,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10I_ASSESS_CAPABILITIES,
     ...PHASE_10I_REVIEW_CAPABILITIES,
     ...PHASE_10I_PUBLISH_CAPABILITIES,
+    ...PHASE_10J_READ_CAPABILITIES,
+    ...PHASE_10J_ASSESS_CAPABILITIES,
+    ...PHASE_10J_REVIEW_CAPABILITIES,
+    ...PHASE_10J_PUBLISH_CAPABILITIES,
   ],
 };
 

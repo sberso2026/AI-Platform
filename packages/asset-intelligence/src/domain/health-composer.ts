@@ -49,6 +49,11 @@ export const RISK_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const PRIORITY_HEALTH_CONTRIBUTION_ENABLED = false as const;
 /** Phase 10I — multi-source fusion is a separate composition; must not contribute to Health Index. */
 export const FUSION_HEALTH_CONTRIBUTION_ENABLED = false as const;
+/**
+ * Phase 10J — predictive governance records (objective readiness, method
+ * candidates, qualifications) are never Health Index factors.
+ */
+export const PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 
 export type HealthCompositionInput = {
   assetId: string;

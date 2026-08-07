@@ -12,6 +12,9 @@ import {
   RUL_CLAIMS_CERTIFIED,
   PREDICTIVE_ML_ENABLED,
   PREDICTIVE_METHODS_CERTIFIED,
+  PRODUCTION_PREDICTIVE_EXECUTION_ENABLED,
+  PROBABILITY_OF_FAILURE_CERTIFIED,
+  PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED,
 } from "../version";
 
 export type DomainOwner =
@@ -66,6 +69,12 @@ export const ASSET_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
   { concern: "multi_source_fusion", owner: "asset_intelligence", notes: "published-slice fusion; not a Health factor" },
   { concern: "source_reconciliation", owner: "asset_intelligence", notes: "conflict records; autonomous resolution forbidden" },
   { concern: "predictive_readiness", owner: "asset_intelligence", notes: "readiness only; predictive ML not enabled" },
+  { concern: "predictive_objective_registry", owner: "asset_intelligence", notes: "reserved objectives; none certified" },
+  { concern: "predictive_method_registry", owner: "asset_intelligence", notes: "documented methodologies; no method certified" },
+  { concern: "predictive_method_eligibility", owner: "asset_intelligence", notes: "candidacy judgement; never a predicted value" },
+  { concern: "predictive_method_qualification", owner: "asset_intelligence", notes: "fixture-bounded acceptability; not certification" },
+  { concern: "predictive_validation_metrics", owner: "asset_intelligence", notes: "measurement definitions; imply no certified claim" },
+  { concern: "predictive_governance", owner: "asset_intelligence", notes: "predictive_execution_forbidden_in_phase_10j" },
   { concern: "project_knowledge", owner: "project_intelligence", notes: "PI owns knowledge derivatives" },
 ] as const;
 
@@ -80,6 +89,9 @@ export function assertOwnershipLock(): {
   rulClaimsCertified: false;
   predictiveMlEnabled: false;
   predictiveMethodsCertified: false;
+  productionPredictiveExecutionEnabled: false;
+  probabilityOfFailureCertified: false;
+  predictiveHealthContributionEnabled: false;
 } {
   if (ASSET_IDENTITY_OWNERSHIP !== "engineering_os_shared_domain") {
     throw new Error("identity_must_be_shared_domain");
@@ -97,6 +109,12 @@ export function assertOwnershipLock(): {
   if (PREDICTIVE_ML_ENABLED || PREDICTIVE_METHODS_CERTIFIED) {
     throw new Error("predictive_execution_forbidden_in_phase_10i");
   }
+  if (PRODUCTION_PREDICTIVE_EXECUTION_ENABLED || PROBABILITY_OF_FAILURE_CERTIFIED) {
+    throw new Error("predictive_execution_forbidden_in_phase_10j");
+  }
+  if (PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED) {
+    throw new Error("predictive_governance_is_not_a_health_factor");
+  }
   const identityOwners = ASSET_OWNERSHIP_MATRIX.filter((r) => r.concern === "asset_identity");
   if (identityOwners.some((r) => r.owner !== "engineering_os_shared_domain")) {
     throw new Error("duplicate_or_wrong_identity_owner");
@@ -112,5 +130,8 @@ export function assertOwnershipLock(): {
     rulClaimsCertified: false,
     predictiveMlEnabled: false,
     predictiveMethodsCertified: false,
+    productionPredictiveExecutionEnabled: false,
+    probabilityOfFailureCertified: false,
+    predictiveHealthContributionEnabled: false,
   };
 }

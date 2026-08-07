@@ -30,7 +30,8 @@ export type AllowedStateKind =
   | "maintenance_recommendation"
   | "priority"
   | "fusion"
-  | "predictive_readiness";
+  | "predictive_readiness"
+  | "predictive_governance";
 
 export type IntelligenceSourceEntry = {
   sourceKey: string;
@@ -77,6 +78,7 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "priority",
       "fusion",
       "predictive_readiness",
+      "predictive_governance",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
@@ -103,6 +105,7 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "priority",
       "fusion",
       "predictive_readiness",
+      "predictive_governance",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,

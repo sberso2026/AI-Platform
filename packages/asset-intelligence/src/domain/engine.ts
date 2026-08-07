@@ -57,6 +57,25 @@ import {
   type SourceReconciliationEngine,
 } from "./reconciliation-engine";
 import type { FusionSourceInput } from "./fusion";
+import {
+  createObjectivePredictiveReadinessAssessor,
+  type ObjectivePredictiveReadinessAssessor,
+  type ObjectiveReadinessInput,
+} from "./predictive-readiness-objective";
+import {
+  createPredictiveMethodEligibilityEngine,
+  type PredictiveEligibilityInput,
+  type PredictiveMethodEligibilityEngine,
+} from "./predictive-eligibility-engine";
+import {
+  createQualificationDraft,
+  evaluateAgainstAcceptanceCriteria,
+  type ObservedMetricValue,
+  type QualificationDraftInput,
+} from "./predictive-qualification";
+import { PREDICTIVE_GOVERNANCE_LOCKS } from "./predictive-governance";
+import { listMethodsForObjective } from "./predictive-methods";
+import type { PredictiveObjectiveId } from "./predictive-objectives";
 import { createEngineeringTimeSeries } from "./time-series";
 import type { FailureAssessmentBundle } from "./failure";
 import type { TrendDegradationBundle } from "./degradation";
@@ -94,6 +113,8 @@ import {
   transitionFusionReview,
   startPredictiveReadinessReview,
   transitionPredictiveReadinessReview,
+  startPredictiveMethodReview,
+  transitionPredictiveMethodReview,
 } from "./review-workflow";
 import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
 import { assertRegisteredActiveSource } from "./source-registry";
@@ -122,6 +143,9 @@ import type {
   PersistedFusionState,
   PersistedReconciliationRecord,
   PersistedPredictiveReadinessState,
+  PersistedObjectivePredictiveReadinessState,
+  PersistedPredictiveMethodCandidate,
+  PersistedPredictiveMethodQualification,
 } from "./persistence";
 
 /** Governed slices are consumable only once published or approved. */
@@ -758,6 +782,197 @@ export type EngineFusionBundleResult = FusionGovernanceFlags & {
   predictiveAllowed: false;
 };
 
+/**
+ * Phase 10J — predictive governance flags. Every predictive governance result
+ * carries these unchanged: the phase establishes the prerequisites for
+ * prediction, it never performs one.
+ */
+export type PredictiveGovernanceFlags = {
+  identityMutated: false;
+  healthMutated: false;
+  isHealthFactor: false;
+  predictiveHealthContributionEnabled: false;
+  createsCoreRisk: false;
+  createsWorkOrder: false;
+  mutatesCanonicalLifecycle: false;
+  productionPredictiveExecutionEnabled: false;
+  predictiveMlEnabled: false;
+  predictiveMlExecuted: false;
+  predictiveMethodsCertified: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+  accuracyClaimsCertified: false;
+  containsPredictionOutput: false;
+  autonomousExecutionForbidden: true;
+  aiMayPublishForbidden: true;
+};
+
+const PREDICTIVE_GOVERNANCE_FLAGS: PredictiveGovernanceFlags = {
+  identityMutated: false,
+  healthMutated: false,
+  isHealthFactor: false,
+  predictiveHealthContributionEnabled: false,
+  createsCoreRisk: false,
+  createsWorkOrder: false,
+  mutatesCanonicalLifecycle: false,
+  productionPredictiveExecutionEnabled: false,
+  predictiveMlEnabled: false,
+  predictiveMlExecuted: false,
+  predictiveMethodsCertified: false,
+  probabilityOfFailureCertified: false,
+  rulClaimsCertified: false,
+  accuracyClaimsCertified: false,
+  containsPredictionOutput: false,
+  autonomousExecutionForbidden: true,
+  aiMayPublishForbidden: true,
+};
+
+export type AssessObjectivePredictiveReadinessCommand = AssessFusionCommand & {
+  objectiveId: PredictiveObjectiveId | string;
+  fusionStateId?: string;
+  declaredInputs?: ObjectiveReadinessInput["declaredInputs"];
+  observationCount?: number;
+  observationWindowDays?: number;
+  largestObservationGapDays?: number;
+  evidenceAgeDays?: number;
+  freshnessPolicy?: ObjectiveReadinessInput["freshnessPolicy"];
+  trendConfidence?: import("./trend-confidence").TrendConfidenceAssessment;
+};
+
+export type EngineObjectivePredictiveReadinessResult = PredictiveGovernanceFlags & {
+  identityOwner: "engineering_os_shared_domain";
+  objectiveReadiness: PersistedObjectivePredictiveReadinessState;
+  fusionState: PersistedFusionState;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay?: boolean;
+  predictiveAllowed: false;
+};
+
+export type EvaluateMethodEligibilityCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  objectiveId: PredictiveObjectiveId | string;
+  methodId: string;
+  readinessStateId?: string;
+  readiness?: PersistedObjectivePredictiveReadinessState;
+  assertedAssumptions?: readonly string[];
+  violatedAssumptions?: readonly string[];
+  satisfiedApplicabilityConditions?: readonly string[];
+  freshnessPolicy?: PredictiveEligibilityInput["freshnessPolicy"];
+  evidenceConfidence?: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  trendConfidence?: import("./trend-confidence").TrendConfidenceAssessment;
+  qualificationRef?: string;
+  qualificationPassed?: boolean;
+  sourceKey?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  createdBy?: string;
+  actorRole?: FailureIntelligenceRole;
+  startReview?: boolean;
+  expectedVersion?: number;
+};
+
+export type EngineMethodCandidateResult = PredictiveGovernanceFlags & {
+  identityOwner: "engineering_os_shared_domain";
+  candidate: PersistedPredictiveMethodCandidate;
+  objectiveReadiness: PersistedObjectivePredictiveReadinessState;
+  eligibility: PersistedPredictiveMethodCandidate["eligibility"];
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay?: boolean;
+  executionAllowed: false;
+};
+
+export type StartMethodQualificationCommand = Omit<
+  QualificationDraftInput,
+  "tenantId" | "workspaceId" | "id" | "version"
+> & {
+  tenantId: string;
+  workspaceId: string;
+  assetId?: string;
+  observedMetrics?: readonly ObservedMetricValue[];
+  evaluatorId?: string;
+  reproducible?: boolean;
+  observedFixtureSetHash?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  createdBy?: string;
+  actorRole?: FailureIntelligenceRole;
+  startReview?: boolean;
+  expectedVersion?: number;
+};
+
+export type EngineMethodQualificationResult = PredictiveGovernanceFlags & {
+  qualification: PersistedPredictiveMethodQualification;
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  idempotentReplay?: boolean;
+  /** Qualification never grants certification or production execution. */
+  certificationGranted: false;
+  executionAllowed: false;
+};
+
+export type ReviewMethodQualificationCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId?: string;
+  qualificationId: string;
+  methodId: string;
+  objectiveId: PredictiveObjectiveId | string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+  reviewerId: string;
+  reason?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  publish?: boolean;
+  actorRole?: FailureIntelligenceRole;
+};
+
+export type EngineMethodQualificationReviewResult = PredictiveGovernanceFlags & {
+  qualification: PersistedPredictiveMethodQualification;
+  workflowInstance: EngineeringWorkflowInstance;
+  /** True once a passed qualification is published — still not certification. */
+  qualified: boolean;
+  certificationGranted: false;
+  executionAllowed: false;
+};
+
+export type AssessPredictiveGovernanceBundleCommand = AssessObjectivePredictiveReadinessCommand & {
+  methodIds?: readonly string[];
+};
+
+export type EnginePredictiveGovernanceBundleResult = PredictiveGovernanceFlags & {
+  identityOwner: "engineering_os_shared_domain";
+  objectiveReadiness: PersistedObjectivePredictiveReadinessState;
+  candidates: PersistedPredictiveMethodCandidate[];
+  fusionState: PersistedFusionState;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventIds: string[];
+  objectiveReadinessReviewInstanceId?: string;
+  abstained: boolean;
+  abstentionReason?: string;
+  predictiveAllowed: false;
+  executionAllowed: false;
+};
+
 const FUSION_GOVERNANCE_FLAGS: FusionGovernanceFlags = {
   identityMutated: false,
   healthMutated: false,
@@ -792,6 +1007,8 @@ export type AssetIntelligenceEngineDeps = {
   multiSourceFusionEngine?: MultiSourceFusionEngine;
   sourceReconciliationEngine?: SourceReconciliationEngine;
   predictiveReadinessAssessor?: PredictiveReadinessAssessor;
+  objectivePredictiveReadinessAssessor?: ObjectivePredictiveReadinessAssessor;
+  predictiveMethodEligibilityEngine?: PredictiveMethodEligibilityEngine;
 };
 
 export class AssetIntelligenceEngine {
@@ -807,6 +1024,8 @@ export class AssetIntelligenceEngine {
   private readonly multiSourceFusionEngine: MultiSourceFusionEngine;
   private readonly sourceReconciliationEngine: SourceReconciliationEngine;
   private readonly predictiveReadinessAssessor: PredictiveReadinessAssessor;
+  private readonly objectivePredictiveReadinessAssessor: ObjectivePredictiveReadinessAssessor;
+  private readonly predictiveMethodEligibilityEngine: PredictiveMethodEligibilityEngine;
 
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
@@ -855,6 +1074,16 @@ export class AssetIntelligenceEngine {
     this.predictiveReadinessAssessor =
       deps.predictiveReadinessAssessor ??
       createPredictiveReadinessAssessor({ newId: (p) => this.deps.repository.newId(p) });
+    this.objectivePredictiveReadinessAssessor =
+      deps.objectivePredictiveReadinessAssessor ??
+      createObjectivePredictiveReadinessAssessor({
+        newId: (p) => this.deps.repository.newId(p),
+      });
+    this.predictiveMethodEligibilityEngine =
+      deps.predictiveMethodEligibilityEngine ??
+      createPredictiveMethodEligibilityEngine({
+        newId: (p) => this.deps.repository.newId(p),
+      });
   }
 
   private async resolveIdentity(cmd: {
@@ -5149,6 +5378,751 @@ export class AssetIntelligenceEngine {
       abstentionReason: fusion.abstentionReason ?? readiness.abstentionReason,
       predictiveAllowed: false,
     };
+  }
+
+  /**
+   * Phase 10J — readiness for one named objective. Probability of failure and
+   * remaining useful life are structurally `not_ready` and therefore always
+   * abstain.
+   */
+  async assessObjectivePredictiveReadiness(
+    cmd: AssessObjectivePredictiveReadinessCommand,
+  ): Promise<EngineObjectivePredictiveReadinessResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "predictive_governance.assess");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "predictive_governance");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineObjectivePredictiveReadinessResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const base = await this.assessPredictiveReadiness({
+      ...cmd,
+      recordedAt,
+      idempotencyKey: undefined,
+      startReview: false,
+    });
+
+    const reconciliation = base.reconciliation;
+    const assessed = this.objectivePredictiveReadinessAssessor.assessObjective({
+      objectiveId: cmd.objectiveId,
+      fusion: base.fusionState,
+      reconciliation,
+      evidenceConfidence: base.evidenceConfidence,
+      trendConfidence: cmd.trendConfidence,
+      declaredInputs: cmd.declaredInputs,
+      observationCount: cmd.observationCount,
+      observationWindowDays: cmd.observationWindowDays,
+      largestObservationGapDays: cmd.largestObservationGapDays,
+      evidenceAgeDays: cmd.evidenceAgeDays,
+      freshnessPolicy: cmd.freshnessPolicy,
+      globalReadinessRef: base.predictiveReadiness.id,
+      assessedAt: recordedAt,
+    });
+
+    const abstained =
+      assessed.readiness.readinessClass === "insufficient" ||
+      assessed.readiness.readinessClass === "conflicting" ||
+      assessed.readiness.readinessClass === "not_ready";
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!abstained && cmd.startReview !== false) {
+      const review = startPredictiveMethodReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        subjectId: assessed.readiness.id,
+        subjectKind: "objective_readiness",
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      assessed.readiness.reviewInstanceId = reviewInstanceId;
+      assessed.readiness.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextObjectivePredictiveReadinessVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      assessed.readiness.objectiveId,
+      cmd.expectedVersion,
+    );
+    const objectiveReadiness: PersistedObjectivePredictiveReadinessState = {
+      ...assessed.readiness,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+      globalReadinessRef: base.predictiveReadiness.id,
+    };
+    await this.deps.repository.saveObjectivePredictiveReadiness(objectiveReadiness);
+
+    const timelineEntries = [
+      ...base.timelineEntries,
+      ...(await this.appendStateTimelines({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        recordedAt,
+        sourceKey,
+        provenance: {
+          sourceSystem: sourceKey,
+          observedAt: cmd.observedAt ?? recordedAt,
+          method: "objective_predictive_readiness_v1",
+          evidenceRefs: cmd.evidenceRefs ?? [],
+          policyId: "asset_intelligence.predictive_governance.assess.v1",
+        },
+        correlationId: cmd.correlationId,
+        items: [
+          { kind: "predictive_objective_readiness", stateId: objectiveReadiness.id },
+        ],
+      })),
+    ];
+
+    const outboxEventId = await this.emitPredictiveGovernanceEvent({
+      type: "engineering.asset.predictive_objective_readiness.assessed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: objectiveReadiness.id,
+      recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        sourceKey,
+        kind: `predictive_objective_readiness:${objectiveReadiness.objectiveId}`,
+        status: objectiveReadiness.readinessClass,
+      },
+    });
+
+    const result: EngineObjectivePredictiveReadinessResult = {
+      ...PREDICTIVE_GOVERNANCE_FLAGS,
+      identityOwner: "engineering_os_shared_domain",
+      objectiveReadiness,
+      fusionState: base.fusionState,
+      evidenceConfidence: base.evidenceConfidence,
+      timelineEntries,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      abstained,
+      abstentionReason: abstained ? objectiveReadiness.readinessRationale[0] : undefined,
+      predictiveAllowed: false,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_objective_predictive_readiness",
+        resourceId: objectiveReadiness.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  /**
+   * Phase 10J — decides whether a method could be considered, and records that
+   * judgement as a candidate. The candidate never holds a predicted value.
+   */
+  async evaluateMethodEligibility(
+    cmd: EvaluateMethodEligibilityCommand,
+  ): Promise<EngineMethodCandidateResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "predictive_governance.submit");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "predictive_governance");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineMethodCandidateResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const readiness =
+      cmd.readiness ??
+      (await this.deps.repository.latestObjectivePredictiveReadiness(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        String(cmd.objectiveId),
+      ));
+    if (!readiness) throw new Error("objective_predictive_readiness_not_found");
+    if (cmd.readinessStateId && readiness.id !== cmd.readinessStateId) {
+      throw new Error("objective_predictive_readiness_state_mismatch");
+    }
+
+    const evaluated = this.predictiveMethodEligibilityEngine.evaluate({
+      objectiveId: String(cmd.objectiveId),
+      methodId: cmd.methodId,
+      readiness,
+      evidenceConfidence: cmd.evidenceConfidence,
+      trendConfidence: cmd.trendConfidence,
+      assertedAssumptions: cmd.assertedAssumptions,
+      violatedAssumptions: cmd.violatedAssumptions,
+      satisfiedApplicabilityConditions: cmd.satisfiedApplicabilityConditions,
+      freshnessPolicy: cmd.freshnessPolicy,
+      qualificationRef: cmd.qualificationRef,
+      qualificationPassed: cmd.qualificationPassed,
+      proposedAt: recordedAt,
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!evaluated.abstained && cmd.startReview !== false) {
+      const review = startPredictiveMethodReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        subjectId: evaluated.candidate.id,
+        subjectKind: "method_candidate",
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      evaluated.candidate.reviewInstanceId = reviewInstanceId;
+      evaluated.candidate.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextPredictiveMethodCandidateVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      evaluated.candidate.objectiveId,
+      evaluated.candidate.methodId,
+      cmd.expectedVersion,
+    );
+    const candidate: PersistedPredictiveMethodCandidate = {
+      ...evaluated.candidate,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.savePredictiveMethodCandidate(candidate);
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey,
+      provenance: {
+        sourceSystem: sourceKey,
+        observedAt: recordedAt,
+        method: "predictive_method_candidate_v1",
+        policyId: "asset_intelligence.predictive_governance.submit.v1",
+      },
+      correlationId: cmd.correlationId,
+      items: [{ kind: "predictive_method_candidate", stateId: candidate.id }],
+    });
+
+    const outboxEventId = await this.emitPredictiveGovernanceEvent({
+      type: "engineering.asset.predictive_method_candidate.proposed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: candidate.id,
+      recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        sourceKey,
+        kind: `predictive_method_candidate:${candidate.objectiveId}:${candidate.methodId}`,
+        status: candidate.eligibility,
+      },
+    });
+
+    const result: EngineMethodCandidateResult = {
+      ...PREDICTIVE_GOVERNANCE_FLAGS,
+      identityOwner: "engineering_os_shared_domain",
+      candidate,
+      objectiveReadiness: readiness,
+      eligibility: candidate.eligibility,
+      timelineEntries,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      abstained: evaluated.abstained,
+      abstentionReason: evaluated.abstained ? candidate.unmetRequirements[0] : undefined,
+      executionAllowed: false,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "evaluate_method_eligibility",
+        resourceId: candidate.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  /** Alias for {@link evaluateMethodEligibility} — a candidate is its output. */
+  async createMethodCandidate(
+    cmd: EvaluateMethodEligibilityCommand,
+  ): Promise<EngineMethodCandidateResult> {
+    return this.evaluateMethodEligibility(cmd);
+  }
+
+  /**
+   * Phase 10J — qualify a method against a frozen fixture set. Passing is
+   * fixture-bounded acceptability, never certification.
+   */
+  async startMethodQualification(
+    cmd: StartMethodQualificationCommand,
+  ): Promise<EngineMethodQualificationResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "predictive_governance.submit");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineMethodQualificationResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const version = await this.deps.repository.nextPredictiveMethodQualificationVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.methodId,
+      String(cmd.objectiveId),
+      cmd.expectedVersion,
+    );
+    const draft = createQualificationDraft({
+      ...cmd,
+      id: this.deps.repository.newId("pred_qual"),
+      version,
+      createdAt: recordedAt,
+    });
+    const evaluated = cmd.observedMetrics
+      ? evaluateAgainstAcceptanceCriteria(draft, cmd.observedMetrics, {
+          evaluatedAt: recordedAt,
+          evaluatorId: cmd.evaluatorId ?? cmd.createdBy,
+          reproducible: cmd.reproducible,
+          observedFixtureSetHash: cmd.observedFixtureSetHash,
+        })
+      : draft;
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (cmd.startReview !== false && evaluated.qualificationStatus !== "draft") {
+      const review = startPredictiveMethodReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        subjectId: evaluated.id,
+        subjectKind: "method_qualification",
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      evaluated.reviewInstanceId = reviewInstanceId;
+      evaluated.reviewStatus = "pending_review";
+    }
+
+    const qualification: PersistedPredictiveMethodQualification = {
+      ...evaluated,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.savePredictiveMethodQualification(qualification);
+
+    const timelineEntries = cmd.assetId
+      ? await this.appendStateTimelines({
+          tenantId: cmd.tenantId,
+          workspaceId: cmd.workspaceId,
+          assetId: cmd.assetId,
+          recordedAt,
+          sourceKey: "manual.engineering_assessment",
+          provenance: {
+            sourceSystem: "manual.engineering_assessment",
+            observedAt: recordedAt,
+            method: "predictive_method_qualification_v1",
+            policyId: "asset_intelligence.predictive_governance.submit.v1",
+          },
+          correlationId: cmd.correlationId,
+          items: [{ kind: "predictive_method_qualification", stateId: qualification.id }],
+        })
+      : [];
+
+    const outboxEventId = await this.emitPredictiveGovernanceEvent({
+      type: cmd.observedMetrics
+        ? "engineering.asset.predictive_method_qualification.evaluated"
+        : "engineering.asset.predictive_method_qualification.started",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: qualification.id,
+      recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        kind: `predictive_method_qualification:${qualification.methodId}:${qualification.objectiveId}`,
+        status: qualification.qualificationStatus,
+      },
+    });
+
+    const result: EngineMethodQualificationResult = {
+      ...PREDICTIVE_GOVERNANCE_FLAGS,
+      qualification,
+      timelineEntries,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      certificationGranted: false,
+      executionAllowed: false,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "start_method_qualification",
+        resourceId: qualification.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  /**
+   * Phase 10J — governed review of a qualification. Publishing a passed
+   * qualification marks the method qualified; it does not certify it and does
+   * not enable production predictive execution.
+   */
+  async reviewMethodQualification(
+    cmd: ReviewMethodQualificationCommand,
+  ): Promise<EngineMethodQualificationReviewResult> {
+    const capability =
+      cmd.action === "approve"
+        ? "predictive_governance.approve"
+        : cmd.publish
+          ? "predictive_governance.publish"
+          : "predictive_governance.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+
+    const latest = await this.deps.repository.latestPredictiveMethodQualification(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.methodId,
+      String(cmd.objectiveId),
+    );
+    if (!latest || latest.id !== cmd.qualificationId) {
+      throw new Error("predictive_method_qualification_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_predictive_method_qualification_immutable");
+    }
+    if (latest.createdBy && latest.createdBy === cmd.reviewerId && cmd.action === "approve") {
+      throw new Error("segregation_of_duties_violation");
+    }
+
+    const workflowInstance = transitionPredictiveMethodReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextPredictiveMethodQualificationVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.methodId,
+      String(cmd.objectiveId),
+      latest.version,
+    );
+    const qualification: PersistedPredictiveMethodQualification = {
+      ...latest,
+      id: this.deps.repository.newId("pred_qual"),
+      version,
+      reviewStatus: nextStatus,
+      reviewInstanceId: workflowInstance.instanceId,
+      supersedesId: latest.id,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+        certificationGranted: false,
+        productionExecutionEnabled: false,
+      },
+      certificationGranted: false,
+      productionExecutionEnabled: false,
+    };
+    await this.deps.repository.savePredictiveMethodQualification(qualification);
+    await this.deps.repository.savePredictiveReview({
+      id: this.deps.repository.newId("pred_review"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      subjectKind: "method_qualification",
+      subjectId: qualification.id,
+      subjectVersion: version,
+      objectiveId: qualification.objectiveId,
+      methodId: qualification.methodId,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+      grantsProductionExecution: false,
+      grantsCertification: false,
+    });
+
+    const qualified =
+      nextStatus === "published" && qualification.qualificationStatus === "passed";
+    if (cmd.assetId) {
+      await this.appendStateTimelines({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        recordedAt,
+        sourceKey: "asset_intelligence.review",
+        provenance: {
+          sourceSystem: "asset_intelligence.review",
+          observedAt: recordedAt,
+          method: "predictive_method_qualification_v1",
+          reviewedBy: cmd.reviewerId,
+        },
+        correlationId: cmd.correlationId,
+        items: [
+          {
+            kind: qualified
+              ? "predictive_method_qualified"
+              : "predictive_method_qualification_review",
+            stateId: qualification.id,
+          },
+        ],
+      });
+    }
+
+    await this.emitPredictiveGovernanceEvent({
+      type: qualified
+        ? "engineering.asset.predictive_method_qualification.qualified"
+        : cmd.to === "rejected"
+          ? "engineering.asset.predictive_method_qualification.rejected"
+          : "engineering.asset.predictive_method_qualification.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: qualification.id,
+      recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        kind: `predictive_method_qualification:${qualification.methodId}:${qualification.objectiveId}`,
+        status: nextStatus,
+      },
+      withOutbox: false,
+    });
+
+    return {
+      ...PREDICTIVE_GOVERNANCE_FLAGS,
+      qualification,
+      workflowInstance,
+      qualified,
+      certificationGranted: false,
+      executionAllowed: false,
+    };
+  }
+
+  /**
+   * Phase 10J orchestration: objective readiness → method eligibility →
+   * candidates. The bundle deliberately stops before execution: it produces no
+   * prediction and grants no permission to make one.
+   */
+  async assessPredictiveGovernanceBundle(
+    cmd: AssessPredictiveGovernanceBundleCommand,
+  ): Promise<EnginePredictiveGovernanceBundleResult> {
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const readinessResult = await this.assessObjectivePredictiveReadiness({
+      ...cmd,
+      recordedAt,
+    });
+
+    const methodIds =
+      cmd.methodIds ??
+      listMethodsForObjective(readinessResult.objectiveReadiness.objectiveId).map(
+        (m) => m.methodId,
+      );
+
+    const candidates: PersistedPredictiveMethodCandidate[] = [];
+    const timelineEntries = [...readinessResult.timelineEntries];
+    const outboxEventIds = [readinessResult.outboxEventId];
+
+    for (const methodId of methodIds) {
+      const candidateResult = await this.evaluateMethodEligibility({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        objectiveId: readinessResult.objectiveReadiness.objectiveId,
+        methodId,
+        readiness: readinessResult.objectiveReadiness,
+        evidenceConfidence: readinessResult.evidenceConfidence,
+        trendConfidence: cmd.trendConfidence,
+        freshnessPolicy: cmd.freshnessPolicy,
+        sourceKey: cmd.sourceKey,
+        correlationId: cmd.correlationId,
+        recordedAt,
+        createdBy: cmd.createdBy,
+        actorRole: cmd.actorRole,
+        startReview: false,
+        idempotencyKey: cmd.idempotencyKey
+          ? `${cmd.idempotencyKey}:candidate:${methodId}`
+          : undefined,
+      });
+      candidates.push(candidateResult.candidate);
+      timelineEntries.push(...candidateResult.timelineEntries);
+      outboxEventIds.push(candidateResult.outboxEventId);
+    }
+
+    return {
+      ...PREDICTIVE_GOVERNANCE_FLAGS,
+      identityOwner: "engineering_os_shared_domain",
+      objectiveReadiness: readinessResult.objectiveReadiness,
+      candidates,
+      fusionState: readinessResult.fusionState,
+      evidenceConfidence: readinessResult.evidenceConfidence,
+      timelineEntries,
+      outboxEventIds,
+      objectiveReadinessReviewInstanceId: readinessResult.reviewInstanceId,
+      abstained:
+        readinessResult.abstained || candidates.every((c) => c.eligibility === "ineligible"),
+      abstentionReason: readinessResult.abstentionReason,
+      predictiveAllowed: false,
+      executionAllowed: false,
+    };
+  }
+
+  async listObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState[]> {
+    return this.deps.repository.listObjectivePredictiveReadiness(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+  }
+
+  async listPredictiveMethodCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedPredictiveMethodCandidate[]> {
+    return this.deps.repository.listPredictiveMethodCandidates(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+  }
+
+  async listPredictiveMethodQualifications(
+    tenantId: string,
+    workspaceId: string,
+    methodId?: string,
+  ): Promise<PersistedPredictiveMethodQualification[]> {
+    return this.deps.repository.listPredictiveMethodQualifications(
+      tenantId,
+      workspaceId,
+      methodId,
+    );
+  }
+
+  /** Single read point for the Phase 10J execution posture. */
+  readPredictiveGovernanceLocks(): typeof PREDICTIVE_GOVERNANCE_LOCKS {
+    return PREDICTIVE_GOVERNANCE_LOCKS;
+  }
+
+  private async emitPredictiveGovernanceEvent(input: {
+    type: Parameters<typeof createAssetIntelligenceEvent>[0]["type"];
+    tenantId: string;
+    workspaceId: string;
+    assetId?: string;
+    stateId: string;
+    recordedAt: string;
+    correlationId?: string;
+    payload: { sourceKey?: string; kind?: string; status?: string };
+    withOutbox?: boolean;
+  }): Promise<string> {
+    const payload = {
+      sourceKey: input.payload.sourceKey,
+      kind: input.payload.kind,
+      status: input.payload.status,
+      silentIdentityMutationForbidden: true as const,
+      rawEvidenceForbidden: true as const,
+      secretsForbidden: true as const,
+    };
+    let outboxEventId = "";
+    if (input.withOutbox !== false && input.assetId) {
+      outboxEventId = this.deps.repository.newId("outbox");
+      await this.deps.repository.appendOutbox({
+        id: outboxEventId,
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        assetId: input.assetId,
+        eventType: input.type,
+        payload,
+        correlationId: input.correlationId,
+        stateId: input.stateId,
+        published: false,
+        createdAt: input.recordedAt,
+      });
+    }
+    const ev = createAssetIntelligenceEvent({
+      type: input.type,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      assetId: input.assetId ?? input.stateId,
+      stateId: input.stateId,
+      occurredAt: input.recordedAt,
+      correlationId: input.correlationId,
+      payload,
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    if (outboxEventId) {
+      await this.deps.repository.markOutboxPublished(outboxEventId, input.recordedAt);
+    }
+    return outboxEventId;
   }
 
   private async appendStateTimelines(input: {

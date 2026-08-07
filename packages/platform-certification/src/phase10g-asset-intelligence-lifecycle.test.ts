@@ -25,7 +25,7 @@ describe("Phase 10G Asset Intelligence Lifecycle architecture lock", () => {
       "utf8",
     );
     expect(version).toMatch(
-      /ASSET_INTELLIGENCE_VERSION = "0\.[789]\.0-(lifecycle|risk-priority|fusion-readiness)"/,
+      /ASSET_INTELLIGENCE_VERSION = "0\.(7|8|9|10)\.0-(lifecycle|risk-priority|fusion-readiness|predictive-governance)"/,
     );
     expect(version).toMatch(/LIFECYCLE_CONTEXT_ENGINE_READY = true/);
     expect(version).toMatch(/LIFECYCLE_TAXONOMY_REGISTRY_READY = true/);

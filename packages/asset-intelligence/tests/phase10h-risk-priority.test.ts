@@ -85,7 +85,7 @@ function memoryEngine() {
 
 describe("Phase 10H readiness locks", () => {
   it("locks version, engine readiness, and governance flags", () => {
-    expect(["0.8.0-risk-priority", "0.9.0-fusion-readiness"]).toContain(ASSET_INTELLIGENCE_VERSION);
+    expect(["0.8.0-risk-priority", "0.9.0-fusion-readiness", "0.10.0-predictive-governance"]).toContain(ASSET_INTELLIGENCE_VERSION);
     expect(ASSET_DECISION_CONTEXT_ENGINE_READY).toBe(true);
     expect(RISK_SIGNAL_ENGINE_READY).toBe(true);
     expect(MAINTENANCE_RECOMMENDATION_ENGINE_READY).toBe(true);

@@ -27,6 +27,11 @@ import type {
   AssessPredictiveReadinessCommand,
   ReviewFusionCommand,
   ReviewPredictiveReadinessCommand,
+  AssessObjectivePredictiveReadinessCommand,
+  AssessPredictiveGovernanceBundleCommand,
+  EvaluateMethodEligibilityCommand,
+  ReviewMethodQualificationCommand,
+  StartMethodQualificationCommand,
 } from "./engine";
 
 export class AssetConditionService {
@@ -185,6 +190,69 @@ export class AssetPredictiveReadinessService {
   }
 }
 
+/**
+ * Phase 10J — predictive governance facade. Nothing here executes a predictive
+ * method or returns a predicted value.
+ */
+export class AssetPredictiveGovernanceService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assessObjectiveReadiness(cmd: AssessObjectivePredictiveReadinessCommand) {
+    return this.engine.assessObjectivePredictiveReadiness(cmd);
+  }
+
+  evaluateMethodEligibility(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.evaluateMethodEligibility(cmd);
+  }
+
+  createMethodCandidate(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.createMethodCandidate(cmd);
+  }
+
+  startQualification(cmd: StartMethodQualificationCommand) {
+    return this.engine.startMethodQualification(cmd);
+  }
+
+  reviewQualification(cmd: ReviewMethodQualificationCommand) {
+    return this.engine.reviewMethodQualification(cmd);
+  }
+
+  assessBundle(cmd: AssessPredictiveGovernanceBundleCommand) {
+    return this.engine.assessPredictiveGovernanceBundle(cmd);
+  }
+
+  listObjectiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ) {
+    return this.engine.listObjectivePredictiveReadiness(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+  }
+
+  listCandidates(tenantId: string, workspaceId: string, assetId: string, objectiveId?: string) {
+    return this.engine.listPredictiveMethodCandidates(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+  }
+
+  listQualifications(tenantId: string, workspaceId: string, methodId?: string) {
+    return this.engine.listPredictiveMethodQualifications(tenantId, workspaceId, methodId);
+  }
+
+  readLocks() {
+    return this.engine.readPredictiveGovernanceLocks();
+  }
+}
+
 export class AssetHealthIndexService {
   constructor(private readonly engine: AssetIntelligenceEngine) {}
 
@@ -214,6 +282,7 @@ export class AssetIntelligenceService {
   readonly priority: AssetPriorityService;
   readonly fusion: AssetFusionService;
   readonly predictiveReadiness: AssetPredictiveReadinessService;
+  readonly predictiveGovernance: AssetPredictiveGovernanceService;
   readonly health: AssetHealthIndexService;
   readonly timeline: AssetTimelineService;
 
@@ -230,6 +299,7 @@ export class AssetIntelligenceService {
     this.priority = new AssetPriorityService(engine);
     this.fusion = new AssetFusionService(engine);
     this.predictiveReadiness = new AssetPredictiveReadinessService(engine);
+    this.predictiveGovernance = new AssetPredictiveGovernanceService(engine);
     this.health = new AssetHealthIndexService(engine);
     this.timeline = new AssetTimelineService(engine);
   }
@@ -284,6 +354,30 @@ export class AssetIntelligenceService {
 
   assessFusionBundle(cmd: AssessFusionBundleCommand) {
     return this.engine.assessFusionBundle(cmd);
+  }
+
+  assessObjectivePredictiveReadiness(cmd: AssessObjectivePredictiveReadinessCommand) {
+    return this.engine.assessObjectivePredictiveReadiness(cmd);
+  }
+
+  evaluateMethodEligibility(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.evaluateMethodEligibility(cmd);
+  }
+
+  createMethodCandidate(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.createMethodCandidate(cmd);
+  }
+
+  startMethodQualification(cmd: StartMethodQualificationCommand) {
+    return this.engine.startMethodQualification(cmd);
+  }
+
+  reviewMethodQualification(cmd: ReviewMethodQualificationCommand) {
+    return this.engine.reviewMethodQualification(cmd);
+  }
+
+  assessPredictiveGovernanceBundle(cmd: AssessPredictiveGovernanceBundleCommand) {
+    return this.engine.assessPredictiveGovernanceBundle(cmd);
   }
 
   assessConditionFromInspection(cmd: AssessConditionCommand) {

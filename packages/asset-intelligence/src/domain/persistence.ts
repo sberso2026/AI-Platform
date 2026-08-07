@@ -43,6 +43,15 @@ import type {
   PredictiveReadinessState,
   SourceReconciliationRecord,
 } from "./fusion";
+import type {
+  ObjectivePredictiveReadinessState,
+  PredictiveMethodCandidate,
+  PredictiveMethodQualificationState,
+  PredictiveReviewRecord,
+} from "./predictive-governance";
+import type { PredictiveObjectiveDefinition } from "./predictive-objectives";
+import type { PredictiveMethodDefinition } from "./predictive-methods";
+import type { ValidationMetricDefinition } from "./predictive-validation-metrics";
 
 export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
 
@@ -397,6 +406,63 @@ export type PersistedPredictiveReadinessReview = {
   contentHash?: string;
   correlationId?: string;
   createdAt: string;
+};
+
+/**
+ * Phase 10J — predictive method governance (batch_59). Every record here is a
+ * governance artefact: none carries a predicted engineering value.
+ */
+export type PersistedPredictiveObjective = PredictiveObjectiveDefinition & {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  createdBy?: string;
+  registeredAt: string;
+};
+
+export type PersistedObjectivePredictiveReadinessState =
+  ObjectivePredictiveReadinessState & {
+    tenantId: string;
+    workspaceId: string;
+    version: number;
+    createdBy?: string;
+    globalReadinessRef?: string;
+  };
+
+export type PersistedPredictiveMethod = PredictiveMethodDefinition & {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  createdBy?: string;
+  registeredAt: string;
+};
+
+export type PersistedPredictiveMethodCandidate = PredictiveMethodCandidate & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedPredictiveMethodQualification =
+  PredictiveMethodQualificationState & {
+    tenantId: string;
+    workspaceId: string;
+    version: number;
+    createdBy?: string;
+  };
+
+export type PersistedPredictiveValidationMetric = ValidationMetricDefinition & {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  createdBy?: string;
+  registeredAt: string;
+};
+
+export type PersistedPredictiveReview = PredictiveReviewRecord & {
+  tenantId: string;
+  workspaceId: string;
 };
 
 export type PersistedSnapshotRecord = {
@@ -814,6 +880,105 @@ export type AssetIntelligenceRepositoryPort = {
   savePredictiveReadinessReview(
     review: PersistedPredictiveReadinessReview,
   ): Promise<PersistedPredictiveReadinessReview>;
+  /**
+   * Phase 10J — predictive method governance. Readiness, candidates and
+   * qualifications are versioned per (objective, method) so that supersession
+   * is auditable; none of them may hold a predicted value.
+   */
+  registerPredictiveObjective(
+    objective: PersistedPredictiveObjective,
+  ): Promise<PersistedPredictiveObjective>;
+  listPredictiveObjectives(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveObjective[]>;
+  nextObjectivePredictiveReadinessVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveObjectivePredictiveReadiness(
+    state: PersistedObjectivePredictiveReadinessState,
+  ): Promise<PersistedObjectivePredictiveReadinessState>;
+  latestObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState | undefined>;
+  listObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState[]>;
+  registerPredictiveMethod(
+    method: PersistedPredictiveMethod,
+  ): Promise<PersistedPredictiveMethod>;
+  listPredictiveMethods(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveMethod[]>;
+  nextPredictiveMethodCandidateVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    methodId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  savePredictiveMethodCandidate(
+    candidate: PersistedPredictiveMethodCandidate,
+  ): Promise<PersistedPredictiveMethodCandidate>;
+  latestPredictiveMethodCandidate(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    methodId: string,
+  ): Promise<PersistedPredictiveMethodCandidate | undefined>;
+  listPredictiveMethodCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedPredictiveMethodCandidate[]>;
+  nextPredictiveMethodQualificationVersion(
+    tenantId: string,
+    workspaceId: string,
+    methodId: string,
+    objectiveId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  savePredictiveMethodQualification(
+    qualification: PersistedPredictiveMethodQualification,
+  ): Promise<PersistedPredictiveMethodQualification>;
+  latestPredictiveMethodQualification(
+    tenantId: string,
+    workspaceId: string,
+    methodId: string,
+    objectiveId: string,
+  ): Promise<PersistedPredictiveMethodQualification | undefined>;
+  listPredictiveMethodQualifications(
+    tenantId: string,
+    workspaceId: string,
+    methodId?: string,
+  ): Promise<PersistedPredictiveMethodQualification[]>;
+  registerPredictiveValidationMetric(
+    metric: PersistedPredictiveValidationMetric,
+  ): Promise<PersistedPredictiveValidationMetric>;
+  listPredictiveValidationMetrics(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveValidationMetric[]>;
+  savePredictiveReview(review: PersistedPredictiveReview): Promise<PersistedPredictiveReview>;
+  listPredictiveReviews(
+    tenantId: string,
+    workspaceId: string,
+    subjectId?: string,
+  ): Promise<PersistedPredictiveReview[]>;
 };
 
 export type DurableAssetIntelligenceStore = {
@@ -862,6 +1027,13 @@ export type DurableAssetIntelligenceStore = {
   reconciliationRecords: PersistedReconciliationRecord[];
   predictiveReadinessStates: PersistedPredictiveReadinessState[];
   predictiveReadinessReviews: PersistedPredictiveReadinessReview[];
+  predictiveObjectives: PersistedPredictiveObjective[];
+  objectivePredictiveReadiness: PersistedObjectivePredictiveReadinessState[];
+  predictiveMethods: PersistedPredictiveMethod[];
+  predictiveMethodCandidates: PersistedPredictiveMethodCandidate[];
+  predictiveMethodQualifications: PersistedPredictiveMethodQualification[];
+  predictiveValidationMetrics: PersistedPredictiveValidationMetric[];
+  predictiveReviews: PersistedPredictiveReview[];
 };
 
 export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelligenceStore {
@@ -911,6 +1083,13 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     reconciliationRecords: [],
     predictiveReadinessStates: [],
     predictiveReadinessReviews: [],
+    predictiveObjectives: [],
+    objectivePredictiveReadiness: [],
+    predictiveMethods: [],
+    predictiveMethodCandidates: [],
+    predictiveMethodQualifications: [],
+    predictiveValidationMetrics: [],
+    predictiveReviews: [],
   };
 }
 
@@ -1904,6 +2083,282 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
   ): Promise<PersistedPredictiveReadinessReview> {
     this.store.predictiveReadinessReviews.push(review);
     return review;
+  }
+
+  async registerPredictiveObjective(
+    objective: PersistedPredictiveObjective,
+  ): Promise<PersistedPredictiveObjective> {
+    const existing = this.store.predictiveObjectives.findIndex(
+      (o) =>
+        o.tenantId === objective.tenantId &&
+        o.workspaceId === objective.workspaceId &&
+        o.objectiveId === objective.objectiveId &&
+        o.version === objective.version,
+    );
+    if (existing >= 0) {
+      this.store.predictiveObjectives[existing] = objective;
+      return objective;
+    }
+    this.store.predictiveObjectives.push(objective);
+    return objective;
+  }
+
+  async listPredictiveObjectives(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveObjective[]> {
+    return this.store.predictiveObjectives
+      .filter((o) => o.tenantId === tenantId && o.workspaceId === workspaceId)
+      .sort((a, b) => a.objectiveId.localeCompare(b.objectiveId));
+  }
+
+  async nextObjectivePredictiveReadinessVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestObjectivePredictiveReadiness(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveObjectivePredictiveReadiness(
+    state: PersistedObjectivePredictiveReadinessState,
+  ): Promise<PersistedObjectivePredictiveReadinessState> {
+    this.store.objectivePredictiveReadiness.push(state);
+    return state;
+  }
+
+  async latestObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState | undefined> {
+    const history = await this.listObjectivePredictiveReadiness(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+    return history[history.length - 1];
+  }
+
+  async listObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState[]> {
+    return this.store.objectivePredictiveReadiness
+      .filter(
+        (s) =>
+          s.tenantId === tenantId &&
+          s.workspaceId === workspaceId &&
+          s.assetId === assetId &&
+          (objectiveId === undefined || s.objectiveId === objectiveId),
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async registerPredictiveMethod(
+    method: PersistedPredictiveMethod,
+  ): Promise<PersistedPredictiveMethod> {
+    const existing = this.store.predictiveMethods.findIndex(
+      (m) =>
+        m.tenantId === method.tenantId &&
+        m.workspaceId === method.workspaceId &&
+        m.methodId === method.methodId &&
+        m.version === method.version,
+    );
+    if (existing >= 0) {
+      this.store.predictiveMethods[existing] = method;
+      return method;
+    }
+    this.store.predictiveMethods.push(method);
+    return method;
+  }
+
+  async listPredictiveMethods(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveMethod[]> {
+    return this.store.predictiveMethods
+      .filter((m) => m.tenantId === tenantId && m.workspaceId === workspaceId)
+      .sort((a, b) => a.methodId.localeCompare(b.methodId));
+  }
+
+  async nextPredictiveMethodCandidateVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    methodId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPredictiveMethodCandidate(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+      methodId,
+    );
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePredictiveMethodCandidate(
+    candidate: PersistedPredictiveMethodCandidate,
+  ): Promise<PersistedPredictiveMethodCandidate> {
+    this.store.predictiveMethodCandidates.push(candidate);
+    return candidate;
+  }
+
+  async latestPredictiveMethodCandidate(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    methodId: string,
+  ): Promise<PersistedPredictiveMethodCandidate | undefined> {
+    const history = this.store.predictiveMethodCandidates
+      .filter(
+        (c) =>
+          c.tenantId === tenantId &&
+          c.workspaceId === workspaceId &&
+          c.assetId === assetId &&
+          c.objectiveId === objectiveId &&
+          c.methodId === methodId,
+      )
+      .sort((a, b) => a.version - b.version);
+    return history[history.length - 1];
+  }
+
+  async listPredictiveMethodCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedPredictiveMethodCandidate[]> {
+    return this.store.predictiveMethodCandidates
+      .filter(
+        (c) =>
+          c.tenantId === tenantId &&
+          c.workspaceId === workspaceId &&
+          c.assetId === assetId &&
+          (objectiveId === undefined || c.objectiveId === objectiveId),
+      )
+      .sort((a, b) => a.proposedAt.localeCompare(b.proposedAt));
+  }
+
+  async nextPredictiveMethodQualificationVersion(
+    tenantId: string,
+    workspaceId: string,
+    methodId: string,
+    objectiveId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPredictiveMethodQualification(
+      tenantId,
+      workspaceId,
+      methodId,
+      objectiveId,
+    );
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePredictiveMethodQualification(
+    qualification: PersistedPredictiveMethodQualification,
+  ): Promise<PersistedPredictiveMethodQualification> {
+    this.store.predictiveMethodQualifications.push(qualification);
+    return qualification;
+  }
+
+  async latestPredictiveMethodQualification(
+    tenantId: string,
+    workspaceId: string,
+    methodId: string,
+    objectiveId: string,
+  ): Promise<PersistedPredictiveMethodQualification | undefined> {
+    const history = this.store.predictiveMethodQualifications
+      .filter(
+        (q) =>
+          q.tenantId === tenantId &&
+          q.workspaceId === workspaceId &&
+          q.methodId === methodId &&
+          q.objectiveId === objectiveId,
+      )
+      .sort((a, b) => a.version - b.version);
+    return history[history.length - 1];
+  }
+
+  async listPredictiveMethodQualifications(
+    tenantId: string,
+    workspaceId: string,
+    methodId?: string,
+  ): Promise<PersistedPredictiveMethodQualification[]> {
+    return this.store.predictiveMethodQualifications
+      .filter(
+        (q) =>
+          q.tenantId === tenantId &&
+          q.workspaceId === workspaceId &&
+          (methodId === undefined || q.methodId === methodId),
+      )
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async registerPredictiveValidationMetric(
+    metric: PersistedPredictiveValidationMetric,
+  ): Promise<PersistedPredictiveValidationMetric> {
+    const existing = this.store.predictiveValidationMetrics.findIndex(
+      (m) =>
+        m.tenantId === metric.tenantId &&
+        m.workspaceId === metric.workspaceId &&
+        m.metricId === metric.metricId &&
+        m.version === metric.version,
+    );
+    if (existing >= 0) {
+      this.store.predictiveValidationMetrics[existing] = metric;
+      return metric;
+    }
+    this.store.predictiveValidationMetrics.push(metric);
+    return metric;
+  }
+
+  async listPredictiveValidationMetrics(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveValidationMetric[]> {
+    return this.store.predictiveValidationMetrics
+      .filter((m) => m.tenantId === tenantId && m.workspaceId === workspaceId)
+      .sort((a, b) => a.metricId.localeCompare(b.metricId));
+  }
+
+  async savePredictiveReview(
+    review: PersistedPredictiveReview,
+  ): Promise<PersistedPredictiveReview> {
+    this.store.predictiveReviews.push(review);
+    return review;
+  }
+
+  async listPredictiveReviews(
+    tenantId: string,
+    workspaceId: string,
+    subjectId?: string,
+  ): Promise<PersistedPredictiveReview[]> {
+    return this.store.predictiveReviews
+      .filter(
+        (r) =>
+          r.tenantId === tenantId &&
+          r.workspaceId === workspaceId &&
+          (subjectId === undefined || r.subjectId === subjectId),
+      )
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
   getStore(): DurableAssetIntelligenceStore {

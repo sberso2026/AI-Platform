@@ -33,6 +33,12 @@ export * from "./domain/priority";
 export * from "./domain/fusion";
 export * from "./domain/fusion-engine";
 export * from "./domain/reconciliation-engine";
+export * from "./domain/predictive-objectives";
+export * from "./domain/predictive-validation-metrics";
+export * from "./domain/predictive-governance";
+export * from "./domain/predictive-readiness-objective";
+export * from "./domain/predictive-eligibility-engine";
+export * from "./domain/predictive-qualification";
 export * from "./domain/role-matrix";
 export * from "./domain/review-workflow";
 export * from "./domain/snapshot";
@@ -57,5 +63,29 @@ export {
   RISK_HEALTH_CONTRIBUTION_ENABLED,
   PRIORITY_HEALTH_CONTRIBUTION_ENABLED,
   FUSION_HEALTH_CONTRIBUTION_ENABLED,
+  PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED,
   PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
 } from "./version";
+
+// Phase 10J — `predictive-methods` and `predictive-objectives` both name a
+// method-class type; the method registry module owns the richer definitions, so
+// export it explicitly with the objective-side type kept as the star export.
+export {
+  PREDICTIVE_METHOD_REGISTRY,
+  PREDICTIVE_METHOD_CLASS_REGISTRY,
+  PREDICTIVE_METHOD_IDS,
+  QUALIFIABLE_METHOD_STATUSES,
+  BLOCKED_METHOD_STATUSES,
+  RESERVED_ML_GOVERNANCE,
+  getPredictiveMethod,
+  assertRegisteredMethod,
+  getPredictiveMethodClass,
+  listMethodsByClass,
+  listMethodsForObjective,
+  isMethodBlocked,
+  assertNoCertifiedMethods,
+  type PredictiveMethodStatus,
+  type PredictiveMethodClassEntry,
+  type PredictiveMlGovernance,
+  type PredictiveMethodDefinition,
+} from "./domain/predictive-methods";

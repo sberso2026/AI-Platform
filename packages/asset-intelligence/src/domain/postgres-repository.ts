@@ -55,6 +55,13 @@ import type {
   PersistedReconciliationRecord,
   PersistedPredictiveReadinessState,
   PersistedPredictiveReadinessReview,
+  PersistedPredictiveObjective,
+  PersistedObjectivePredictiveReadinessState,
+  PersistedPredictiveMethod,
+  PersistedPredictiveMethodCandidate,
+  PersistedPredictiveMethodQualification,
+  PersistedPredictiveValidationMetric,
+  PersistedPredictiveReview,
   SourceProvenanceRecord,
 } from "./persistence";
 import { assertProductionRepositorySafe } from "./persistence";
@@ -2353,6 +2360,801 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     if (error) throw new Error(`predictive_readiness_review_persist_failed:${error.message}`);
     return review;
   }
+
+  async registerPredictiveObjective(
+    objective: PersistedPredictiveObjective,
+  ): Promise<PersistedPredictiveObjective> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_predictive_objectives")
+      .upsert(
+        {
+          id: objective.id,
+          tenant_id: objective.tenantId,
+          workspace_id: objective.workspaceId,
+          objective_id: objective.objectiveId,
+          objective_version: objective.version,
+          description: objective.description,
+          required_inputs: objective.requiredInputs ?? [],
+          minimum_evidence: objective.minimumEvidence ?? {},
+          minimum_time_window: objective.minimumTimeWindow ?? {},
+          required_confidence: objective.requiredConfidence ?? {},
+          required_governance: objective.requiredGovernance ?? {},
+          allowed_method_classes: objective.allowedMethodClasses ?? [],
+          prohibited_uses: objective.prohibitedUses ?? [],
+          status: objective.status,
+          certified: false,
+          production_execution_enabled: false,
+          predictive_ml_enabled: false,
+          probability_of_failure_certified: false,
+          rul_claims_certified: false,
+          is_health_factor: false,
+          autonomous_execution_forbidden: true,
+          created_at: objective.registeredAt,
+          created_by: objective.createdBy ?? null,
+          payload: { governanceRecordOnly: true, containsPredictionOutput: false },
+        },
+        { onConflict: "tenant_id,workspace_id,objective_id,objective_version" },
+      );
+    if (error) throw new Error(`predictive_objective_persist_failed:${error.message}`);
+    return objective;
+  }
+
+  async listPredictiveObjectives(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveObjective[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_objectives")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .order("objective_id", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveObjectiveRow);
+  }
+
+  async nextObjectivePredictiveReadinessVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestObjectivePredictiveReadiness(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveObjectivePredictiveReadiness(
+    state: PersistedObjectivePredictiveReadinessState,
+  ): Promise<PersistedObjectivePredictiveReadinessState> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_objective_predictive_readiness")
+      .insert({
+        id: state.id,
+        tenant_id: state.tenantId,
+        workspace_id: state.workspaceId,
+        asset_id: state.assetId,
+        objective_id: state.objectiveId,
+        objective_version: state.objectiveVersion,
+        version: state.version,
+        readiness_class: state.readinessClass,
+        readiness_rationale: state.readinessRationale ?? [],
+        satisfied_requirements: state.satisfiedRequirements ?? [],
+        unmet_requirements: state.unmetRequirements ?? [],
+        evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+        trend_confidence_ref: state.trendConfidenceRef ?? null,
+        fusion_provenance: state.fusionProvenance ?? {},
+        global_readiness_ref:
+          state.globalReadinessRef ?? state.fusionProvenance?.globalReadinessRef ?? null,
+        freshness_policy_ref: state.freshnessPolicyRef,
+        freshness_state: state.freshnessState,
+        observation_count: state.observationCount ?? null,
+        observation_window_days: state.observationWindowDays ?? null,
+        method: state.method,
+        method_version: state.methodVersion,
+        review_status: state.reviewStatus,
+        review_instance_id: state.reviewInstanceId ?? null,
+        assessed_at: state.assessedAt,
+        reviewed_at: state.reviewedAt ?? null,
+        published_at: state.publishedAt ?? null,
+        created_by: state.createdBy ?? null,
+        supersedes_id: state.supersedesId ?? null,
+        provenance: state.provenance ?? {},
+        limitations: state.limitations ?? [],
+        predictive_ml_enabled: false,
+        predictive_methods_certified: false,
+        predictive_ml_executed: false,
+        production_execution_enabled: false,
+        probability_of_failure_certified: false,
+        rul_claims_certified: false,
+        is_health_factor: false,
+        contains_prediction_output: false,
+        autonomous_execution_forbidden: true,
+        payload: { governanceRecordOnly: true, aiMayPublishForbidden: true },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`objective_predictive_readiness_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_objective_predictive_readiness")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .eq("objective_id", objectiveId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapObjectivePredictiveReadinessRow(data) : undefined;
+  }
+
+  async listObjectivePredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedObjectivePredictiveReadinessState[]> {
+    let query = this.supabase
+      .from("asset_intelligence_objective_predictive_readiness")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId);
+    if (objectiveId) query = query.eq("objective_id", objectiveId);
+    const { data, error } = await query.order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapObjectivePredictiveReadinessRow);
+  }
+
+  async registerPredictiveMethod(
+    method: PersistedPredictiveMethod,
+  ): Promise<PersistedPredictiveMethod> {
+    const { error } = await this.supabase.from("asset_intelligence_predictive_methods").upsert(
+      {
+        id: method.id,
+        tenant_id: method.tenantId,
+        workspace_id: method.workspaceId,
+        method_id: method.methodId,
+        method_definition_version: method.version,
+        name: method.name,
+        description: method.description,
+        method_class: method.methodClass,
+        applicable_objectives: method.applicableObjectives ?? [],
+        required_inputs: method.requiredInputs ?? [],
+        assumptions: method.assumptions ?? [],
+        applicability_conditions: method.applicabilityConditions ?? [],
+        limitations: method.limitations ?? [],
+        prohibited_uses: method.prohibitedUses ?? [],
+        validation_metric_ids: method.validationMetricIds ?? [],
+        ml_governance: method.mlGovernance ?? {},
+        status: method.status,
+        // ML methods must remain suspended while predictive ML is disabled.
+        suspended_from_execution:
+          method.methodClass === "machine_learning" ? true : method.suspendedFromExecution,
+        qualification_ref: method.qualificationRef ?? null,
+        certification_ref: method.certificationRef ?? null,
+        certified: false,
+        predictive_methods_certified: false,
+        production_execution_enabled: false,
+        predictive_ml_enabled: false,
+        probability_of_failure_certified: false,
+        rul_claims_certified: false,
+        is_health_factor: false,
+        autonomous_execution_forbidden: true,
+        created_at: method.registeredAt,
+        created_by: method.createdBy ?? null,
+        payload: { governanceRecordOnly: true, containsPredictionOutput: false },
+      },
+      { onConflict: "tenant_id,workspace_id,method_id,method_definition_version" },
+    );
+    if (error) throw new Error(`predictive_method_persist_failed:${error.message}`);
+    return method;
+  }
+
+  async listPredictiveMethods(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveMethod[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_methods")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .order("method_id", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveMethodRow);
+  }
+
+  async nextPredictiveMethodCandidateVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    methodId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPredictiveMethodCandidate(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+      methodId,
+    );
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePredictiveMethodCandidate(
+    candidate: PersistedPredictiveMethodCandidate,
+  ): Promise<PersistedPredictiveMethodCandidate> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_predictive_method_candidates")
+      .insert({
+        id: candidate.id,
+        tenant_id: candidate.tenantId,
+        workspace_id: candidate.workspaceId,
+        asset_id: candidate.assetId,
+        objective_id: candidate.objectiveId,
+        method_id: candidate.methodId,
+        method_definition_version: candidate.methodDefinitionVersion,
+        method_class: candidate.methodClass,
+        version: candidate.version,
+        eligibility: candidate.eligibility,
+        eligibility_rationale: candidate.eligibilityRationale ?? [],
+        outstanding_conditions: candidate.outstandingConditions ?? [],
+        unmet_requirements: candidate.unmetRequirements ?? [],
+        assumptions_asserted: candidate.assumptionsAsserted ?? [],
+        assumptions_violated: candidate.assumptionsViolated ?? [],
+        readiness_state_id: candidate.readinessStateRef ?? null,
+        readiness_state_ref: candidate.readinessStateRef ?? null,
+        readiness_class: candidate.readinessClass,
+        fusion_provenance: candidate.fusionProvenance ?? {},
+        freshness_policy_ref: candidate.freshnessPolicyRef,
+        freshness_state: candidate.freshnessState,
+        qualification_ref: candidate.qualificationRef ?? null,
+        method: candidate.method,
+        method_version: candidate.methodVersion,
+        review_status: candidate.reviewStatus,
+        review_instance_id: candidate.reviewInstanceId ?? null,
+        provenance: candidate.provenance ?? {},
+        limitations: candidate.limitations ?? [],
+        proposed_at: candidate.proposedAt,
+        reviewed_at: candidate.reviewedAt ?? null,
+        created_by: candidate.createdBy ?? null,
+        supersedes_id: candidate.supersedesId ?? null,
+        contains_prediction_output: false,
+        predictive_ml_executed: false,
+        predictive_methods_certified: false,
+        production_execution_enabled: false,
+        probability_of_failure_certified: false,
+        rul_claims_certified: false,
+        is_health_factor: false,
+        autonomous_execution_forbidden: true,
+        payload: { governanceRecordOnly: true, containsPredictionOutput: false },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`predictive_method_candidate_persist_failed:${error.message}`);
+    }
+    return candidate;
+  }
+
+  async latestPredictiveMethodCandidate(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId: string,
+    methodId: string,
+  ): Promise<PersistedPredictiveMethodCandidate | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_method_candidates")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .eq("objective_id", objectiveId)
+      .eq("method_id", methodId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapPredictiveMethodCandidateRow(data) : undefined;
+  }
+
+  async listPredictiveMethodCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ): Promise<PersistedPredictiveMethodCandidate[]> {
+    let query = this.supabase
+      .from("asset_intelligence_predictive_method_candidates")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId);
+    if (objectiveId) query = query.eq("objective_id", objectiveId);
+    const { data, error } = await query.order("proposed_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveMethodCandidateRow);
+  }
+
+  async nextPredictiveMethodQualificationVersion(
+    tenantId: string,
+    workspaceId: string,
+    methodId: string,
+    objectiveId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPredictiveMethodQualification(
+      tenantId,
+      workspaceId,
+      methodId,
+      objectiveId,
+    );
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePredictiveMethodQualification(
+    qualification: PersistedPredictiveMethodQualification,
+  ): Promise<PersistedPredictiveMethodQualification> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_predictive_method_qualifications")
+      .insert({
+        id: qualification.id,
+        tenant_id: qualification.tenantId,
+        workspace_id: qualification.workspaceId,
+        method_id: qualification.methodId,
+        method_definition_version: qualification.methodDefinitionVersion,
+        method_class: qualification.methodClass,
+        method_status_at_qualification: qualification.methodStatusAtQualification,
+        objective_id: qualification.objectiveId,
+        version: qualification.version,
+        qualification_status: qualification.qualificationStatus,
+        fixture_set_ref: qualification.fixtureSetRef,
+        fixture_set_hash: qualification.fixtureSetHash,
+        fixture_count: qualification.fixtureCount,
+        applicability_domain: qualification.applicabilityDomain ?? [],
+        acceptance_criteria: qualification.acceptanceCriteria ?? [],
+        results: qualification.results ?? [],
+        failed_mandatory_metric_ids: qualification.failedMandatoryMetricIds ?? [],
+        reproducible: qualification.reproducible,
+        evaluated_at: qualification.evaluatedAt ?? null,
+        evaluator_id: qualification.evaluatorId ?? null,
+        review_status: qualification.reviewStatus,
+        review_instance_id: qualification.reviewInstanceId ?? null,
+        provenance: qualification.provenance ?? {},
+        limitations: qualification.limitations ?? [],
+        created_at: qualification.createdAt,
+        created_by: qualification.createdBy ?? null,
+        supersedes_id: qualification.supersedesId ?? null,
+        certification_granted: false,
+        production_execution_enabled: false,
+        predictive_ml_enabled: false,
+        predictive_methods_certified: false,
+        probability_of_failure_certified: false,
+        rul_claims_certified: false,
+        is_health_factor: false,
+        contains_prediction_output: false,
+        autonomous_execution_forbidden: true,
+        payload: { fixtureBoundedOnly: true, certificationGranted: false },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`predictive_method_qualification_persist_failed:${error.message}`);
+    }
+    return qualification;
+  }
+
+  async latestPredictiveMethodQualification(
+    tenantId: string,
+    workspaceId: string,
+    methodId: string,
+    objectiveId: string,
+  ): Promise<PersistedPredictiveMethodQualification | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_method_qualifications")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("method_id", methodId)
+      .eq("objective_id", objectiveId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapPredictiveMethodQualificationRow(data) : undefined;
+  }
+
+  async listPredictiveMethodQualifications(
+    tenantId: string,
+    workspaceId: string,
+    methodId?: string,
+  ): Promise<PersistedPredictiveMethodQualification[]> {
+    let query = this.supabase
+      .from("asset_intelligence_predictive_method_qualifications")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (methodId) query = query.eq("method_id", methodId);
+    const { data, error } = await query.order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveMethodQualificationRow);
+  }
+
+  async registerPredictiveValidationMetric(
+    metric: PersistedPredictiveValidationMetric,
+  ): Promise<PersistedPredictiveValidationMetric> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_predictive_validation_metrics")
+      .upsert(
+        {
+          id: metric.id,
+          tenant_id: metric.tenantId,
+          workspace_id: metric.workspaceId,
+          metric_id: metric.metricId,
+          metric_version: metric.version,
+          name: metric.name,
+          family: metric.family,
+          description: metric.description,
+          direction: metric.direction,
+          unit: metric.unit,
+          target_value: metric.targetValue ?? null,
+          applicable_method_classes: metric.applicableMethodClasses ?? [],
+          applicability_note: metric.applicabilityNote,
+          requires_ground_truth: metric.requiresGroundTruth,
+          requires_interval_output: metric.requiresIntervalOutput,
+          requires_probabilistic_output: metric.requiresProbabilisticOutput,
+          interpretation_limits: metric.interpretationLimits ?? [],
+          status: metric.status,
+          acceptance_threshold_defined: false,
+          certification_implied: false,
+          probability_of_failure_certified: false,
+          rul_claims_certified: false,
+          is_health_factor: false,
+          autonomous_execution_forbidden: true,
+          created_at: metric.registeredAt,
+          created_by: metric.createdBy ?? null,
+          payload: { registrationOnly: true, certificationImplied: false },
+        },
+        { onConflict: "tenant_id,workspace_id,metric_id,metric_version" },
+      );
+    if (error) throw new Error(`predictive_validation_metric_persist_failed:${error.message}`);
+    return metric;
+  }
+
+  async listPredictiveValidationMetrics(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedPredictiveValidationMetric[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_validation_metrics")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .order("metric_id", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveValidationMetricRow);
+  }
+
+  async savePredictiveReview(
+    review: PersistedPredictiveReview,
+  ): Promise<PersistedPredictiveReview> {
+    const { error } = await this.supabase.from("asset_intelligence_predictive_reviews").insert({
+      id: review.id,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      asset_id: review.assetId ?? null,
+      subject_kind: review.subjectKind,
+      subject_id: review.subjectId,
+      subject_version: review.subjectVersion,
+      objective_id: review.objectiveId ?? null,
+      method_id: review.methodId ?? null,
+      review_instance_id: review.reviewInstanceId,
+      action: review.action,
+      reviewer_id: review.reviewerId,
+      reason: review.reason ?? null,
+      evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+      content_hash: review.contentHash ?? null,
+      correlation_id: review.correlationId ?? null,
+      created_at: review.createdAt,
+      grants_production_execution: false,
+      grants_certification: false,
+      autonomous_execution_forbidden: true,
+      payload: { grantsProductionExecution: false, grantsCertification: false },
+    });
+    if (error) throw new Error(`predictive_review_persist_failed:${error.message}`);
+    return review;
+  }
+
+  async listPredictiveReviews(
+    tenantId: string,
+    workspaceId: string,
+    subjectId?: string,
+  ): Promise<PersistedPredictiveReview[]> {
+    let query = this.supabase
+      .from("asset_intelligence_predictive_reviews")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (subjectId) query = query.eq("subject_id", subjectId);
+    const { data, error } = await query.order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveReviewRow);
+  }
+}
+
+function mapPredictiveObjectiveRow(row: Record<string, unknown>): PersistedPredictiveObjective {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    objectiveId: row.objective_id as PersistedPredictiveObjective["objectiveId"],
+    version: String(row.objective_version),
+    description: String(row.description),
+    requiredInputs: (row.required_inputs ??
+      []) as PersistedPredictiveObjective["requiredInputs"],
+    minimumEvidence: (row.minimum_evidence ??
+      {}) as PersistedPredictiveObjective["minimumEvidence"],
+    minimumTimeWindow: (row.minimum_time_window ??
+      {}) as PersistedPredictiveObjective["minimumTimeWindow"],
+    requiredConfidence: (row.required_confidence ??
+      {}) as PersistedPredictiveObjective["requiredConfidence"],
+    requiredGovernance: (row.required_governance ??
+      {}) as PersistedPredictiveObjective["requiredGovernance"],
+    allowedMethodClasses: (row.allowed_method_classes ??
+      []) as PersistedPredictiveObjective["allowedMethodClasses"],
+    prohibitedUses: strArray(row.prohibited_uses),
+    status: row.status as PersistedPredictiveObjective["status"],
+    certified: false,
+    createdBy: strOrUndefined(row.created_by),
+    registeredAt: String(row.created_at),
+  };
+}
+
+function mapObjectivePredictiveReadinessRow(
+  row: Record<string, unknown>,
+): PersistedObjectivePredictiveReadinessState {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    objectiveId:
+      row.objective_id as PersistedObjectivePredictiveReadinessState["objectiveId"],
+    objectiveVersion: String(row.objective_version),
+    version: Number(row.version),
+    readinessClass:
+      row.readiness_class as PersistedObjectivePredictiveReadinessState["readinessClass"],
+    readinessRationale: strArray(row.readiness_rationale),
+    satisfiedRequirements: strArray(row.satisfied_requirements),
+    unmetRequirements: strArray(row.unmet_requirements),
+    evidenceConfidenceRef: strOrUndefined(row.evidence_confidence_ref),
+    trendConfidenceRef: strOrUndefined(row.trend_confidence_ref),
+    fusionProvenance: (row.fusion_provenance ??
+      {}) as PersistedObjectivePredictiveReadinessState["fusionProvenance"],
+    globalReadinessRef: strOrUndefined(row.global_readiness_ref),
+    freshnessPolicyRef: String(row.freshness_policy_ref),
+    freshnessState:
+      row.freshness_state as PersistedObjectivePredictiveReadinessState["freshnessState"],
+    observationCount: numOrUndefined(row.observation_count),
+    observationWindowDays: numOrUndefined(row.observation_window_days),
+    method: "objective_predictive_readiness_v1",
+    methodVersion: "1",
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    assessedAt: String(row.assessed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    publishedAt: strOrUndefined(row.published_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    predictiveMlEnabled: false,
+    predictiveMethodsCertified: false,
+    predictiveMlExecuted: false,
+    productionExecutionEnabled: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    isHealthFactor: false,
+    containsPredictionOutput: false,
+    autonomousExecutionForbidden: true,
+  };
+}
+
+function mapPredictiveMethodRow(row: Record<string, unknown>): PersistedPredictiveMethod {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    methodId: String(row.method_id),
+    version: String(row.method_definition_version),
+    name: String(row.name),
+    description: String(row.description),
+    methodClass: row.method_class as PersistedPredictiveMethod["methodClass"],
+    applicableObjectives: (row.applicable_objectives ??
+      []) as PersistedPredictiveMethod["applicableObjectives"],
+    requiredInputs: strArray(row.required_inputs),
+    assumptions: strArray(row.assumptions),
+    applicabilityConditions: strArray(row.applicability_conditions),
+    limitations: strArray(row.limitations),
+    prohibitedUses: strArray(row.prohibited_uses),
+    validationMetricIds: strArray(row.validation_metric_ids),
+    status: row.status as PersistedPredictiveMethod["status"],
+    mlGovernance: (row.ml_governance ?? {}) as PersistedPredictiveMethod["mlGovernance"],
+    suspendedFromExecution: Boolean(row.suspended_from_execution),
+    qualificationRef: strOrUndefined(row.qualification_ref),
+    certificationRef: strOrUndefined(row.certification_ref),
+    certified: false,
+    productionExecutionEnabled: false,
+    autonomousExecutionForbidden: true,
+    isHealthFactor: false,
+    createdBy: strOrUndefined(row.created_by),
+    registeredAt: String(row.created_at),
+  };
+}
+
+function mapPredictiveMethodCandidateRow(
+  row: Record<string, unknown>,
+): PersistedPredictiveMethodCandidate {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    objectiveId: row.objective_id as PersistedPredictiveMethodCandidate["objectiveId"],
+    methodId: String(row.method_id),
+    methodDefinitionVersion: String(row.method_definition_version),
+    methodClass: row.method_class as PersistedPredictiveMethodCandidate["methodClass"],
+    version: Number(row.version),
+    eligibility: row.eligibility as PersistedPredictiveMethodCandidate["eligibility"],
+    eligibilityRationale: strArray(row.eligibility_rationale),
+    outstandingConditions: strArray(row.outstanding_conditions),
+    unmetRequirements: strArray(row.unmet_requirements),
+    assumptionsAsserted: strArray(row.assumptions_asserted),
+    assumptionsViolated: strArray(row.assumptions_violated),
+    readinessStateRef: strOrUndefined(row.readiness_state_ref ?? row.readiness_state_id),
+    readinessClass: row.readiness_class as PersistedPredictiveMethodCandidate["readinessClass"],
+    fusionProvenance: (row.fusion_provenance ??
+      {}) as PersistedPredictiveMethodCandidate["fusionProvenance"],
+    freshnessPolicyRef: String(row.freshness_policy_ref),
+    freshnessState: row.freshness_state as PersistedPredictiveMethodCandidate["freshnessState"],
+    qualificationRef: strOrUndefined(row.qualification_ref),
+    method: "predictive_method_candidate_v1",
+    methodVersion: "1",
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    proposedAt: String(row.proposed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    containsPredictionOutput: false,
+    predictiveMlExecuted: false,
+    predictiveMethodsCertified: false,
+    productionExecutionEnabled: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    isHealthFactor: false,
+    autonomousExecutionForbidden: true,
+  };
+}
+
+function mapPredictiveMethodQualificationRow(
+  row: Record<string, unknown>,
+): PersistedPredictiveMethodQualification {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    methodId: String(row.method_id),
+    methodDefinitionVersion: String(row.method_definition_version),
+    methodClass: row.method_class as PersistedPredictiveMethodQualification["methodClass"],
+    methodStatusAtQualification:
+      row.method_status_at_qualification as PersistedPredictiveMethodQualification["methodStatusAtQualification"],
+    objectiveId: row.objective_id as PersistedPredictiveMethodQualification["objectiveId"],
+    version: Number(row.version),
+    qualificationStatus:
+      row.qualification_status as PersistedPredictiveMethodQualification["qualificationStatus"],
+    fixtureSetRef: String(row.fixture_set_ref),
+    fixtureSetHash: String(row.fixture_set_hash),
+    fixtureCount: Number(row.fixture_count),
+    applicabilityDomain: strArray(row.applicability_domain),
+    acceptanceCriteria: (row.acceptance_criteria ??
+      []) as PersistedPredictiveMethodQualification["acceptanceCriteria"],
+    results: (row.results ?? []) as PersistedPredictiveMethodQualification["results"],
+    failedMandatoryMetricIds: strArray(row.failed_mandatory_metric_ids),
+    reproducible: Boolean(row.reproducible),
+    evaluatedAt: strOrUndefined(row.evaluated_at),
+    evaluatorId: strOrUndefined(row.evaluator_id),
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    createdAt: String(row.created_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    certificationGranted: false,
+    productionExecutionEnabled: false,
+    predictiveMlEnabled: false,
+    predictiveMethodsCertified: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    isHealthFactor: false,
+    autonomousExecutionForbidden: true,
+  };
+}
+
+function mapPredictiveValidationMetricRow(
+  row: Record<string, unknown>,
+): PersistedPredictiveValidationMetric {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    metricId: String(row.metric_id),
+    version: String(row.metric_version),
+    name: String(row.name),
+    family: row.family as PersistedPredictiveValidationMetric["family"],
+    description: String(row.description),
+    direction: row.direction as PersistedPredictiveValidationMetric["direction"],
+    unit: row.unit as PersistedPredictiveValidationMetric["unit"],
+    targetValue: numOrUndefined(row.target_value),
+    applicableMethodClasses: (row.applicable_method_classes ??
+      []) as PersistedPredictiveValidationMetric["applicableMethodClasses"],
+    applicabilityNote: String(row.applicability_note),
+    requiresGroundTruth: Boolean(row.requires_ground_truth),
+    requiresIntervalOutput: Boolean(row.requires_interval_output),
+    requiresProbabilisticOutput: Boolean(row.requires_probabilistic_output),
+    interpretationLimits: strArray(row.interpretation_limits),
+    status: row.status as PersistedPredictiveValidationMetric["status"],
+    acceptanceThresholdDefined: false,
+    certificationImplied: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    createdBy: strOrUndefined(row.created_by),
+    registeredAt: String(row.created_at),
+  };
+}
+
+function mapPredictiveReviewRow(row: Record<string, unknown>): PersistedPredictiveReview {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: strOrUndefined(row.asset_id),
+    subjectKind: row.subject_kind as PersistedPredictiveReview["subjectKind"],
+    subjectId: String(row.subject_id),
+    subjectVersion: Number(row.subject_version),
+    objectiveId: row.objective_id as PersistedPredictiveReview["objectiveId"],
+    methodId: strOrUndefined(row.method_id),
+    reviewInstanceId: String(row.review_instance_id),
+    action: String(row.action),
+    reviewerId: String(row.reviewer_id),
+    reason: strOrUndefined(row.reason),
+    evidenceConfidenceRef: strOrUndefined(row.evidence_confidence_ref),
+    contentHash: strOrUndefined(row.content_hash),
+    correlationId: strOrUndefined(row.correlation_id),
+    createdAt: String(row.created_at),
+    grantsProductionExecution: false,
+    grantsCertification: false,
+  };
 }
 
 function mapFusionStateRow(row: Record<string, unknown>): PersistedFusionState {

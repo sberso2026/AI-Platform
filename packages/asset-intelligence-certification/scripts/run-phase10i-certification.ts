@@ -223,7 +223,10 @@ async function main() {
     "A",
     "Repository/build identity",
     existsSync(resolve(root, "pnpm-workspace.yaml")) &&
-      fileOk(VERSION, /ASSET_INTELLIGENCE_VERSION = "0\.9\.0-fusion-readiness"/)
+      fileOk(
+        VERSION,
+        /ASSET_INTELLIGENCE_VERSION = "(0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance)"/,
+      )
       ? "pass"
       : "fail",
   );

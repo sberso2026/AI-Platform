@@ -54,7 +54,38 @@ export type AssetIntelligenceEventType =
   | "engineering.asset.predictive_readiness.assessed"
   | "engineering.asset.predictive_readiness.reviewed"
   | "engineering.asset.predictive_readiness.published"
-  | "engineering.asset.predictive_readiness.superseded";
+  | "engineering.asset.predictive_readiness.superseded"
+  | "engineering.asset.predictive_objective_readiness.assessed"
+  | "engineering.asset.predictive_objective_readiness.reviewed"
+  | "engineering.asset.predictive_objective_readiness.published"
+  | "engineering.asset.predictive_objective_readiness.superseded"
+  | "engineering.asset.predictive_method_candidate.proposed"
+  | "engineering.asset.predictive_method_candidate.reviewed"
+  | "engineering.asset.predictive_method_candidate.superseded"
+  | "engineering.asset.predictive_method_qualification.started"
+  | "engineering.asset.predictive_method_qualification.evaluated"
+  | "engineering.asset.predictive_method_qualification.reviewed"
+  | "engineering.asset.predictive_method_qualification.qualified"
+  | "engineering.asset.predictive_method_qualification.rejected";
+
+/**
+ * Phase 10J events describe governance decisions only. No event carries a
+ * predicted value, and no event grants production predictive execution.
+ */
+export const PHASE_10J_PREDICTIVE_GOVERNANCE_EVENT_TYPES = [
+  "engineering.asset.predictive_objective_readiness.assessed",
+  "engineering.asset.predictive_objective_readiness.reviewed",
+  "engineering.asset.predictive_objective_readiness.published",
+  "engineering.asset.predictive_objective_readiness.superseded",
+  "engineering.asset.predictive_method_candidate.proposed",
+  "engineering.asset.predictive_method_candidate.reviewed",
+  "engineering.asset.predictive_method_candidate.superseded",
+  "engineering.asset.predictive_method_qualification.started",
+  "engineering.asset.predictive_method_qualification.evaluated",
+  "engineering.asset.predictive_method_qualification.reviewed",
+  "engineering.asset.predictive_method_qualification.qualified",
+  "engineering.asset.predictive_method_qualification.rejected",
+] as const satisfies readonly AssetIntelligenceEventType[];
 
 export type AssetIntelligenceEvent = {
   type: AssetIntelligenceEventType;

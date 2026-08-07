@@ -41,7 +41,15 @@ export type TimelineStateKind =
   | "reconciliation_record"
   | "predictive_readiness"
   | "predictive_readiness_review"
-  | "predictive_readiness_published";
+  | "predictive_readiness_published"
+  | "predictive_objective_readiness"
+  | "predictive_objective_readiness_review"
+  | "predictive_objective_readiness_published"
+  | "predictive_method_candidate"
+  | "predictive_method_candidate_review"
+  | "predictive_method_qualification"
+  | "predictive_method_qualification_review"
+  | "predictive_method_qualified";
 
 export type IntelligenceTimelineEntry = {
   entryId: string;

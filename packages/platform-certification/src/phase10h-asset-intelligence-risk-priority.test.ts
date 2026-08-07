@@ -23,7 +23,7 @@ describe("Phase 10H Asset Intelligence Risk/Priority architecture lock", () => {
       "utf8",
     );
     expect(version).toMatch(
-      /ASSET_INTELLIGENCE_VERSION = "(0\.8\.0-risk-priority|0\.9\.0-fusion-readiness)"/,
+      /ASSET_INTELLIGENCE_VERSION = "(0\.8\.0-risk-priority|0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance)"/,
     );
     expect(version).toMatch(/ASSET_DECISION_CONTEXT_ENGINE_READY = true/);
     expect(version).toMatch(/RISK_SIGNAL_ENGINE_READY = true/);

@@ -1,6 +1,6 @@
 {
   "name": "@rtb/asset-intelligence",
-  "version": "0.9.0-fusion-readiness",
+  "version": "0.10.0-predictive-governance",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

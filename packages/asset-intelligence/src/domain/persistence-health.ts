@@ -19,6 +19,13 @@ export type AssetIntelligencePersistenceHealth = {
   fusionStore: "ok" | "failed";
   reconciliationStore: "ok" | "failed";
   predictiveReadinessStore: "ok" | "failed";
+  predictiveObjectiveStore: "ok" | "failed";
+  objectivePredictiveReadinessStore: "ok" | "failed";
+  predictiveMethodStore: "ok" | "failed";
+  predictiveMethodCandidateStore: "ok" | "failed";
+  predictiveMethodQualificationStore: "ok" | "failed";
+  predictiveValidationMetricStore: "ok" | "failed";
+  predictiveReviewStore: "ok" | "failed";
   taxonomyRegistry: "ok" | "failed";
   reviewWorkflow: "ok" | "failed";
   evidenceConfidence: "ok" | "failed";
@@ -69,6 +76,13 @@ export async function collectAssetIntelligencePersistenceHealth(input: {
     fusionStore: "ok",
     reconciliationStore: "ok",
     predictiveReadinessStore: "ok",
+    predictiveObjectiveStore: "ok",
+    objectivePredictiveReadinessStore: "ok",
+    predictiveMethodStore: "ok",
+    predictiveMethodCandidateStore: "ok",
+    predictiveMethodQualificationStore: "ok",
+    predictiveValidationMetricStore: "ok",
+    predictiveReviewStore: "ok",
     taxonomyRegistry: "ok",
     reviewWorkflow: "ok",
     evidenceConfidence: "ok",

@@ -1,10 +1,10 @@
 /**
- * Phase 10I — version and readiness locks.
+ * Phase 10J — version and readiness locks.
  */
 export const ASSET_INTELLIGENCE_PRODUCT_NAME = "Asset Intelligence" as const;
 export const ASSET_INTELLIGENCE_MODULE_KEY = "asset_intelligence" as const;
-export const ASSET_INTELLIGENCE_VERSION = "0.9.0-fusion-readiness" as const;
-export const ASSET_INTELLIGENCE_STATUS = "fusion_readiness" as const;
+export const ASSET_INTELLIGENCE_VERSION = "0.10.0-predictive-governance" as const;
+export const ASSET_INTELLIGENCE_STATUS = "predictive_governance" as const;
 
 export const ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const CANONICAL_ASSET_LIFECYCLE_OWNERSHIP = "engineering_os_shared_domain" as const;
@@ -14,6 +14,7 @@ export const ASSET_RISK_SIGNAL_OWNERSHIP = "asset_intelligence" as const;
 export const MAINTENANCE_RECOMMENDATION_INTELLIGENCE_OWNERSHIP = "asset_intelligence" as const;
 export const ASSET_PRIORITY_CONTEXT_OWNERSHIP = "asset_intelligence" as const;
 export const ASSET_FUSION_OWNERSHIP = "asset_intelligence" as const;
+export const ASSET_PREDICTIVE_GOVERNANCE_OWNERSHIP = "asset_intelligence" as const;
 export const CANONICAL_ENGINEERING_RISK_OWNERSHIP = "engineering_core" as const;
 export const CMMS_WORK_ORDER_OWNERSHIP = "none_in_asset_intelligence" as const;
 
@@ -38,8 +39,14 @@ export const ASSET_PRIORITY_ENGINE_READY = true as const;
 export const MULTI_SOURCE_FUSION_READY = true as const;
 export const SOURCE_RECONCILIATION_ENGINE_READY = true as const;
 export const PREDICTIVE_READINESS_ASSESSOR_READY = true as const;
+export const PREDICTIVE_OBJECTIVE_REGISTRY_READY = true as const;
+export const PREDICTIVE_METHOD_REGISTRY_READY = true as const;
+export const PREDICTIVE_METHOD_ELIGIBILITY_ENGINE_READY = true as const;
+export const PREDICTIVE_METHOD_QUALIFICATION_FRAMEWORK_READY = true as const;
+export const PREDICTIVE_VALIDATION_METRIC_REGISTRY_READY = true as const;
 export const HEALTH_COMPOSITION_ENGINE_READY = true as const;
 export const EVIDENCE_CONFIDENCE_ENGINE_READY = true as const;
+
 export const CRITICALITY_IS_HEALTH_FACTOR = false as const;
 export const FAILURE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const DEGRADATION_HEALTH_CONTRIBUTION_ENABLED = false as const;
@@ -47,6 +54,7 @@ export const LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const RISK_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const PRIORITY_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const FUSION_HEALTH_CONTRIBUTION_ENABLED = false as const;
+export const PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const RISK_CORE_AUTO_MUTATION_ALLOWED = false as const;
 export const HOSTED_ASSET_INTELLIGENCE_PERSISTENCE_READY = true as const;
 export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
@@ -58,7 +66,10 @@ export const PROBABILITY_OF_FAILURE_CERTIFIED = false as const;
 export const QUANTITATIVE_RELIABILITY_CERTIFIED = false as const;
 export const PREDICTIVE_ML_ENABLED = false as const;
 export const PREDICTIVE_METHODS_CERTIFIED = false as const;
+export const PRODUCTION_PREDICTIVE_EXECUTION_ENABLED = false as const;
 export const NUMERIC_PRIORITY_SCORE_REQUIRED = false as const;
+/** Reserved — not implemented in 10J. */
+export const SOURCE_TRUST_MODEL_READY = false as const;
 
 export const INSPECTION_INTELLIGENCE_V1_CONTRACTS_CONSUMED = "1.0.0" as const;
 export const INSPECTION_INTELLIGENCE_V1_TAG = "inspection-intelligence-v1.0.0" as const;
@@ -78,6 +89,8 @@ export const PHASE_10G_CERTIFIED_COMMIT = "f81d6ef1e322b49b823b04fc0464c5272c850
 export const PHASE_10G_HOSTED_RUN = "31153833355" as const;
 export const PHASE_10H_CERTIFIED_COMMIT = "acec6ce63f9e6eb6968d0f899a61cf442c35ec90" as const;
 export const PHASE_10H_HOSTED_RUN = "31158369645" as const;
+export const PHASE_10I_CERTIFIED_COMMIT = "27fed4e975f015ff01b60a41dd76ab06ea2886a9" as const;
+export const PHASE_10I_HOSTED_RUN = "31163563401" as const;
 
 export function getAssetIntelligenceCoreDeclaration() {
   return {
@@ -94,6 +107,7 @@ export function getAssetIntelligenceCoreDeclaration() {
       MAINTENANCE_RECOMMENDATION_INTELLIGENCE_OWNERSHIP,
     assetPriorityContextOwnership: ASSET_PRIORITY_CONTEXT_OWNERSHIP,
     assetFusionOwnership: ASSET_FUSION_OWNERSHIP,
+    assetPredictiveGovernanceOwnership: ASSET_PREDICTIVE_GOVERNANCE_OWNERSHIP,
     canonicalEngineeringRiskOwnership: CANONICAL_ENGINEERING_RISK_OWNERSHIP,
     cmmsWorkOrderOwnership: CMMS_WORK_ORDER_OWNERSHIP,
     riskCoreAutoMutationAllowed: RISK_CORE_AUTO_MUTATION_ALLOWED,
@@ -118,6 +132,12 @@ export function getAssetIntelligenceCoreDeclaration() {
     multiSourceFusionReady: MULTI_SOURCE_FUSION_READY,
     sourceReconciliationEngineReady: SOURCE_RECONCILIATION_ENGINE_READY,
     predictiveReadinessAssessorReady: PREDICTIVE_READINESS_ASSESSOR_READY,
+    predictiveObjectiveRegistryReady: PREDICTIVE_OBJECTIVE_REGISTRY_READY,
+    predictiveMethodRegistryReady: PREDICTIVE_METHOD_REGISTRY_READY,
+    predictiveMethodEligibilityEngineReady: PREDICTIVE_METHOD_ELIGIBILITY_ENGINE_READY,
+    predictiveMethodQualificationFrameworkReady:
+      PREDICTIVE_METHOD_QUALIFICATION_FRAMEWORK_READY,
+    predictiveValidationMetricRegistryReady: PREDICTIVE_VALIDATION_METRIC_REGISTRY_READY,
     healthCompositionEngineReady: HEALTH_COMPOSITION_ENGINE_READY,
     evidenceConfidenceEngineReady: EVIDENCE_CONFIDENCE_ENGINE_READY,
     criticalityIsHealthFactor: CRITICALITY_IS_HEALTH_FACTOR,
@@ -127,6 +147,7 @@ export function getAssetIntelligenceCoreDeclaration() {
     riskHealthContributionEnabled: RISK_HEALTH_CONTRIBUTION_ENABLED,
     priorityHealthContributionEnabled: PRIORITY_HEALTH_CONTRIBUTION_ENABLED,
     fusionHealthContributionEnabled: FUSION_HEALTH_CONTRIBUTION_ENABLED,
+    predictiveHealthContributionEnabled: PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED,
     hostedAssetIntelligencePersistenceReady: HOSTED_ASSET_INTELLIGENCE_PERSISTENCE_READY,
     productionMemoryRepositoryAllowed: PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
     productionAssetIntelligenceReady: PRODUCTION_ASSET_INTELLIGENCE_READY,
@@ -137,6 +158,8 @@ export function getAssetIntelligenceCoreDeclaration() {
     quantitativeReliabilityCertified: QUANTITATIVE_RELIABILITY_CERTIFIED,
     predictiveMlEnabled: PREDICTIVE_ML_ENABLED,
     predictiveMethodsCertified: PREDICTIVE_METHODS_CERTIFIED,
+    productionPredictiveExecutionEnabled: PRODUCTION_PREDICTIVE_EXECUTION_ENABLED,
+    sourceTrustModelReady: SOURCE_TRUST_MODEL_READY,
     numericPriorityScoreRequired: NUMERIC_PRIORITY_SCORE_REQUIRED,
     inspectionIntelligenceContractsConsumed: INSPECTION_INTELLIGENCE_V1_CONTRACTS_CONSUMED,
     hierarchy:
