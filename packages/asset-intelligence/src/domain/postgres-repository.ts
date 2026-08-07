@@ -5,7 +5,7 @@
 
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AssetCriticalityState, AssetIdentityReference } from "../architecture/identity-state";
+import type { AssetIdentityReference } from "../architecture/identity-state";
 import type { AssetHealthIndexState } from "./health-index";
 import type { AssetIntelligenceEvent } from "./events";
 import type { IntelligenceTimelineEntry } from "./timeline";
@@ -14,6 +14,8 @@ import type {
   IdempotencyRecord,
   OutboxEventRecord,
   PersistedConditionState,
+  PersistedCriticalityState,
+  PersistedHealthIndexState,
   PersistedSnapshotRecord,
   SourceProvenanceRecord,
 } from "./persistence";
@@ -23,17 +25,15 @@ type AnyClient = SupabaseClient<any, "public", any>;
 
 export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRepositoryPort {
   readonly adapterKind = "postgres" as const;
-  private healthCache = new Map<string, AssetHealthIndexState>();
-  private criticalityCache = new Map<string, AssetCriticalityState>();
-  private identityCache: AssetIdentityReference[] = [];
   private eventLog: AssetIntelligenceEvent[] = [];
+  private identityCache: AssetIdentityReference[] = [];
 
   constructor(private readonly supabase: AnyClient) {
     assertProductionRepositorySafe("postgres");
   }
 
-  newId(prefix: string): string {
-    return `${prefix}_${randomUUID()}`;
+  newId(_prefix: string): string {
+    return randomUUID();
   }
 
   async saveCondition(state: PersistedConditionState): Promise<PersistedConditionState> {
@@ -128,36 +128,128 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     return (data ?? []).map(mapConditionRow);
   }
 
-  async saveHealthIndex(state: AssetHealthIndexState): Promise<AssetHealthIndexState> {
-    this.healthCache.set(`${state.assetId}:${state.stateId}`, state);
+  async saveHealthIndex(state: PersistedHealthIndexState): Promise<PersistedHealthIndexState> {
+    const { error } = await this.supabase.from("asset_intelligence_health_indexes").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      status: state.status,
+      health_index: state.healthIndex ?? null,
+      health_class: state.healthClass ?? null,
+      health_confidence: state.healthConfidence ?? null,
+      health_trend: state.healthTrend ?? null,
+      health_method: state.healthMethod ?? null,
+      health_source_refs: state.healthSourceRefs ?? [],
+      factors_used: state.factorsUsed ?? [],
+      composed_by: "health_composition_engine",
+      evidence_sufficiency: state.evidenceSufficiency ?? null,
+      provenance: state.provenance,
+      recorded_at: state.recordedAt,
+      health_payload: {
+        distinctFromConditionRating: true,
+        distinctFromCriticalityRating: true,
+        distinctFromReliabilityRating: true,
+        accuracyClaimsCertified: false,
+        rulClaimsCertified: false,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`health_persist_failed:${error.message}`);
+    }
     return state;
   }
 
   async latestHealthIndex(
+    tenantId: string,
+    workspaceId: string,
     assetId: string,
     asOf?: string,
-  ): Promise<AssetHealthIndexState | undefined> {
-    const items = [...this.healthCache.values()]
-      .filter((s) => s.assetId === assetId)
-      .filter((s) => !asOf || s.recordedAt <= asOf)
-      .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
-    return items[items.length - 1];
+  ): Promise<PersistedHealthIndexState | undefined> {
+    let q = this.supabase
+      .from("asset_intelligence_health_indexes")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (asOf) q = q.lte("recorded_at", asOf);
+    const { data, error } = await q.maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapHealthRow(data) : undefined;
   }
 
-  async saveCriticality(state: AssetCriticalityState): Promise<AssetCriticalityState> {
-    this.criticalityCache.set(state.stateId, state);
+  async saveCriticality(state: PersistedCriticalityState): Promise<PersistedCriticalityState> {
+    const { error } = await this.supabase.from("asset_intelligence_criticality_states").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      status: state.status,
+      review_status: state.reviewStatus,
+      criticality_rating: state.criticalityRating ?? null,
+      safety_criticality: state.safetyCriticality ?? null,
+      production_criticality: state.productionCriticality ?? null,
+      environmental_criticality: state.environmentalCriticality ?? null,
+      financial_criticality: state.financialCriticality ?? null,
+      operational_criticality: state.operationalCriticality ?? null,
+      regulatory_criticality: state.regulatoryCriticality ?? null,
+      criticality_method: state.criticalityMethod ?? null,
+      criticality_confidence: state.criticalityConfidence ?? null,
+      source_type: state.sourceType,
+      source_reference: state.sourceReference ?? null,
+      provenance: state.provenance,
+      review_instance_id: state.reviewInstanceId ?? null,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      criticality_payload: {},
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`criticality_persist_failed:${error.message}`);
+    }
     return state;
   }
 
   async latestCriticality(
+    tenantId: string,
+    workspaceId: string,
     assetId: string,
     asOf?: string,
-  ): Promise<AssetCriticalityState | undefined> {
-    const items = [...this.criticalityCache.values()]
-      .filter((s) => s.assetId === assetId)
-      .filter((s) => !asOf || s.recordedAt <= asOf)
-      .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
-    return items[items.length - 1];
+  ): Promise<PersistedCriticalityState | undefined> {
+    let q = this.supabase
+      .from("asset_intelligence_criticality_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (asOf) q = q.lte("recorded_at", asOf);
+    const { data, error } = await q.maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapCriticalityRow(data) : undefined;
+  }
+
+  async nextCriticalityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestCriticality(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
   }
 
   async appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry> {
@@ -457,6 +549,94 @@ function mapSnapshotRow(row: Record<string, unknown>): PersistedSnapshotRecord {
 
 function mapTimelineEventType(kind: string): string {
   if (kind === "condition") return "condition_observed";
+  if (kind === "criticality") return "condition_calculated";
   if (kind === "health_index") return "snapshot_created";
   return kind;
+}
+
+function mapHealthRow(row: Record<string, unknown>): PersistedHealthIndexState {
+  return {
+    kind: "health_index",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    status: row.status as PersistedHealthIndexState["status"],
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedHealthIndexState["provenance"]) ?? {
+      sourceSystem: "health_composition_engine",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    healthIndex:
+      row.health_index === null || row.health_index === undefined
+        ? undefined
+        : Number(row.health_index),
+    healthClass: row.health_class ? String(row.health_class) : undefined,
+    healthConfidence:
+      row.health_confidence === null || row.health_confidence === undefined
+        ? undefined
+        : Number(row.health_confidence),
+    healthTrend: row.health_trend ? String(row.health_trend) : undefined,
+    healthMethod: row.health_method ? String(row.health_method) : undefined,
+    healthSourceRefs: (row.health_source_refs as string[]) ?? [],
+    factorsUsed: (row.factors_used as PersistedHealthIndexState["factorsUsed"]) ?? [],
+    composedBy: "health_composition_engine",
+    evidenceSufficiency:
+      (row.evidence_sufficiency as PersistedHealthIndexState["evidenceSufficiency"]) ?? undefined,
+    distinctFromConditionRating: true,
+    distinctFromCriticalityRating: true,
+    distinctFromReliabilityRating: true,
+    accuracyClaimsCertified: false,
+    rulClaimsCertified: false,
+  };
+}
+
+function mapCriticalityRow(row: Record<string, unknown>): PersistedCriticalityState {
+  return {
+    kind: "criticality",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    status: row.status as PersistedCriticalityState["status"],
+    reviewStatus: row.review_status as PersistedCriticalityState["reviewStatus"],
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedCriticalityState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    criticalityRating: row.criticality_rating ? String(row.criticality_rating) : undefined,
+    safetyCriticality: row.safety_criticality ? String(row.safety_criticality) : undefined,
+    productionCriticality: row.production_criticality
+      ? String(row.production_criticality)
+      : undefined,
+    environmentalCriticality: row.environmental_criticality
+      ? String(row.environmental_criticality)
+      : undefined,
+    financialCriticality: row.financial_criticality
+      ? String(row.financial_criticality)
+      : undefined,
+    operationalCriticality: row.operational_criticality
+      ? String(row.operational_criticality)
+      : undefined,
+    regulatoryCriticality: row.regulatory_criticality
+      ? String(row.regulatory_criticality)
+      : undefined,
+    criticalityMethod: row.criticality_method ? String(row.criticality_method) : undefined,
+    criticalityConfidence:
+      row.criticality_confidence === null || row.criticality_confidence === undefined
+        ? undefined
+        : Number(row.criticality_confidence),
+    sourceType: String(row.source_type),
+    sourceReference: row.source_reference ? String(row.source_reference) : undefined,
+    reviewInstanceId: row.review_instance_id ? String(row.review_instance_id) : undefined,
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+    supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+  };
 }

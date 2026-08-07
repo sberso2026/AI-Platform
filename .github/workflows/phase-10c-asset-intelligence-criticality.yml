@@ -1,0 +1,104 @@
+name: Phase 10C Asset Intelligence Criticality
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/asset-intelligence/**"
+      - "packages/asset-intelligence-certification/**"
+      - "packages/platform-certification/src/phase10c*"
+      - "supabase/migrations/*asset_intelligence*"
+      - "apps/web/src/app/api/engineering/asset-intelligence/**"
+      - ".github/workflows/phase-10c-asset-intelligence-criticality.yml"
+
+concurrency:
+  group: phase-10c-asset-intelligence-criticality-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  ASSET_INTELLIGENCE_CERTIFICATION: "1"
+  ASSET_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply batch_52 migration when DB URL available
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -n "${SUPABASE_DB_URL}" ]; then
+            node <<'EOF'
+            const fs = require("fs");
+            const { Client } = require("pg");
+            (async () => {
+              const sql = fs.readFileSync("supabase/migrations/20260807130000_batch_52_asset_intelligence_criticality_health.sql","utf8");
+              const c = new Client({ connectionString: process.env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false } });
+              await c.connect();
+              try { await c.query(sql); console.log("batch_52 applied"); }
+              catch (e) { if (String(e.message).includes("already exists")) console.log("batch_52 already present"); else throw e; }
+              finally { await c.end(); }
+            })().catch((e) => { console.error(e); process.exit(1); });
+            EOF
+          else
+            echo "SUPABASE_DB_URL not set — verifying existing hosted schema only"
+          fi
+      - name: Unit tests
+        run: pnpm --filter @rtb/asset-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase10c-asset-intelligence-criticality.test.ts
+      - name: Phase 10C certification (gates A–T)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: pnpm --filter @rtb/asset-intelligence-certification certify:phase10c
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/asset-intelligence-certification/artifacts/phase10c-asset-intelligence-criticality-certification.json","utf8"));
+          const checks = [
+            a.verdict==="PASS",
+            a.failedGateCount===0,
+            a.skippedGateCount===0,
+            a.notExecutedGateCount===0,
+            a.hostedAssetIntelligencePersistenceReady===true,
+            a.healthCompositionEngineReady===true,
+            a.productionMemoryRepositoryAllowed===false,
+            a.productionAssetIntelligenceReady===false,
+            a.accuracyClaimsCertified===false,
+            a.rulClaimsCertified===false,
+            a.releaseEligible===true,
+            a.phase10DReady===true,
+            a.requiredGates.length===20,
+          ];
+          if (checks.some(x=>!x)) { console.error(a); process.exit(1); }
+          console.log(JSON.stringify({verdict:a.verdict, healthComposer:a.healthCompositionEngineReady},null,2));
+          EOF
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase10c-asset-intelligence-criticality-certification
+          path: packages/asset-intelligence-certification/artifacts/phase10c-asset-intelligence-criticality-certification.json
+          if-no-files-found: warn

@@ -1,12 +1,13 @@
 {
   "name": "@rtb/asset-intelligence-certification",
-  "version": "0.2.1-hosted-persistence",
+  "version": "0.3.0-criticality",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase10a": "tsx scripts/run-phase10a-certification.ts",
     "certify:phase10b": "tsx scripts/run-phase10b-certification.ts",
     "certify:phase10b1": "tsx scripts/run-phase10b1-certification.ts",
+    "certify:phase10c": "tsx scripts/run-phase10c-certification.ts",
     "apply:hosted-migration": "tsx scripts/apply-hosted-migration.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "test:unit": "vitest run src"

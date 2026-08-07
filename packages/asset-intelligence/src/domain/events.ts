@@ -4,6 +4,8 @@
 
 export type AssetIntelligenceEventType =
   | "engineering.asset.condition.updated"
+  | "engineering.asset.criticality.updated"
+  | "engineering.asset.criticality.reviewed"
   | "engineering.asset.health_index.updated"
   | "engineering.asset.intelligence_timeline.appended";
 

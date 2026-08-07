@@ -114,6 +114,9 @@ importers:
 
   packages/asset-intelligence:
     dependencies:
+      '@rtb/engineering-os':
+        specifier: workspace:*
+        version: link:../engineering-os
       '@rtb/inspection-intelligence':
         specifier: workspace:*
         version: link:../inspection-intelligence

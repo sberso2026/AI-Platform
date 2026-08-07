@@ -1,13 +1,13 @@
 /**
- * Phase 10B.1 — Asset Intelligence repository port (infrastructure-independent).
+ * Phase 10B.1 / 10C — Asset Intelligence repository port (infrastructure-independent).
  */
 
 import { randomUUID } from "node:crypto";
 import type {
   AssetConditionState,
-  AssetCriticalityState,
   AssetIdentityReference,
 } from "../architecture/identity-state";
+import type { AssetCriticalityStateRecord } from "./criticality";
 import type { AssetHealthIndexState } from "./health-index";
 import type { IntelligenceTimelineEntry } from "./timeline";
 import type { AssetIntelligenceEvent } from "./events";
@@ -28,6 +28,25 @@ export type PersistedConditionState = AssetConditionState & {
   publishedAt?: string;
   createdBy?: string;
   supersedesId?: string;
+};
+
+export type PersistedCriticalityState = AssetCriticalityStateRecord & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  status: ConditionLifecycleStatus;
+  sourceType: string;
+  sourceReference?: string;
+  createdBy?: string;
+  supersedesId?: string;
+  reviewedAt?: string;
+  publishedAt?: string;
+};
+
+export type PersistedHealthIndexState = AssetHealthIndexState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
 };
 
 export type PersistedSnapshotRecord = {
@@ -103,10 +122,26 @@ export type AssetIntelligenceRepositoryPort = {
     workspaceId: string,
     assetId: string,
   ): Promise<PersistedConditionState[]>;
-  saveHealthIndex(state: AssetHealthIndexState): Promise<AssetHealthIndexState>;
-  latestHealthIndex(assetId: string, asOf?: string): Promise<AssetHealthIndexState | undefined>;
-  saveCriticality(state: AssetCriticalityState): Promise<AssetCriticalityState>;
-  latestCriticality(assetId: string, asOf?: string): Promise<AssetCriticalityState | undefined>;
+  saveHealthIndex(state: PersistedHealthIndexState): Promise<PersistedHealthIndexState>;
+  latestHealthIndex(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedHealthIndexState | undefined>;
+  saveCriticality(state: PersistedCriticalityState): Promise<PersistedCriticalityState>;
+  latestCriticality(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedCriticalityState | undefined>;
+  nextCriticalityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
   appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry>;
   listTimeline(assetId: string, asOf?: string): Promise<IntelligenceTimelineEntry[]>;
   saveSnapshot(record: PersistedSnapshotRecord): Promise<PersistedSnapshotRecord>;
@@ -142,8 +177,8 @@ export type AssetIntelligenceRepositoryPort = {
 
 export type DurableAssetIntelligenceStore = {
   conditionStates: PersistedConditionState[];
-  healthIndexStates: AssetHealthIndexState[];
-  criticalityStates: AssetCriticalityState[];
+  healthIndexStates: PersistedHealthIndexState[];
+  criticalityStates: PersistedCriticalityState[];
   timeline: IntelligenceTimelineEntry[];
   events: AssetIntelligenceEvent[];
   snapshots: PersistedSnapshotRecord[];
@@ -192,8 +227,8 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
 
   constructor(private readonly store: DurableAssetIntelligenceStore) {}
 
-  newId(prefix: string): string {
-    return `${prefix}_${randomUUID()}`;
+  newId(_prefix: string): string {
+    return randomUUID();
   }
 
   async saveCondition(state: PersistedConditionState): Promise<PersistedConditionState> {
@@ -241,34 +276,60 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
       .sort((a, b) => a.version - b.version);
   }
 
-  async saveHealthIndex(state: AssetHealthIndexState): Promise<AssetHealthIndexState> {
+  async saveHealthIndex(state: PersistedHealthIndexState): Promise<PersistedHealthIndexState> {
     this.store.healthIndexStates.push(state);
     return state;
   }
 
   async latestHealthIndex(
+    tenantId: string,
+    workspaceId: string,
     assetId: string,
     asOf?: string,
-  ): Promise<AssetHealthIndexState | undefined> {
+  ): Promise<PersistedHealthIndexState | undefined> {
     return latestAsOf(
-      this.store.healthIndexStates.filter((s) => s.assetId === assetId),
+      this.store.healthIndexStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
       asOf,
     );
   }
 
-  async saveCriticality(state: AssetCriticalityState): Promise<AssetCriticalityState> {
+  async saveCriticality(state: PersistedCriticalityState): Promise<PersistedCriticalityState> {
     this.store.criticalityStates.push(state);
     return state;
   }
 
   async latestCriticality(
+    tenantId: string,
+    workspaceId: string,
     assetId: string,
     asOf?: string,
-  ): Promise<AssetCriticalityState | undefined> {
+  ): Promise<PersistedCriticalityState | undefined> {
     return latestAsOf(
-      this.store.criticalityStates.filter((s) => s.assetId === assetId),
+      this.store.criticalityStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
       asOf,
     );
+  }
+
+  async nextCriticalityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestCriticality(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
   }
 
   async appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry> {

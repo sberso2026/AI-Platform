@@ -1,10 +1,20 @@
 /**
- * Phase 10B / 10B.1 — Asset Intelligence Engine with hosted-ready persistence.
+ * Phase 10C — Asset Intelligence Engine.
+ * Orchestrates condition, criticality, review, and Health Composition Engine.
+ * Scoring math lives in HealthCompositionEngine — not inline here or on Health Index.
  */
 
 import type { Provenance } from "../architecture/identity-state";
 import { assertOwnershipLock } from "../architecture/ownership-lock";
-import { deriveAdvisoryHealthIndex, type AssetHealthIndexState } from "./health-index";
+import {
+  assessCriticality,
+  type AssetCriticalityStateRecord,
+} from "./criticality";
+import {
+  createHealthCompositionEngine,
+  type HealthCompositionEngine,
+} from "./health-composer";
+import type { AssetHealthIndexState } from "./health-index";
 import {
   createInMemorySharedDomainIdentityPort,
   type SharedDomainAssetIdentityPort,
@@ -21,10 +31,14 @@ import {
 import type {
   AssetIntelligenceRepositoryPort,
   PersistedConditionState,
+  PersistedCriticalityState,
+  PersistedHealthIndexState,
 } from "./persistence";
+import { startCriticalityReview, transitionCriticalityReview } from "./review-workflow";
 import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
 import { assertRegisteredActiveSource } from "./source-registry";
 import { createTimelineEntry, type IntelligenceTimelineEntry } from "./timeline";
+import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
 
 export type AssessConditionCommand = {
   tenantId: string;
@@ -40,34 +54,180 @@ export type AssessConditionCommand = {
   status?: PersistedConditionState["status"];
 };
 
+export type AssessCriticalityCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey?: string;
+  criticalityRating?: string;
+  safetyCriticality?: string;
+  productionCriticality?: string;
+  environmentalCriticality?: string;
+  financialCriticality?: string;
+  operationalCriticality?: string;
+  regulatoryCriticality?: string;
+  criticalityMethod?: string;
+  criticalityConfidence?: number;
+  evidenceRefs?: string[];
+  observedAt?: string;
+  startReview?: boolean;
+  reviewedBy?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  expectedVersion?: number;
+  createdBy?: string;
+  status?: PersistedCriticalityState["status"];
+};
+
+export type ReviewCriticalityCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  criticalityStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+  reviewerId?: string;
+  correlationId?: string;
+  recordedAt?: string;
+};
+
 export type EngineAssessResult = {
   identityOwner: "engineering_os_shared_domain";
   condition: PersistedConditionState;
-  healthIndex: AssetHealthIndexState;
+  healthIndex: PersistedHealthIndexState;
   timelineEntries: IntelligenceTimelineEntry[];
   snapshot: AssetSnapshot;
   snapshotId: string;
   outboxEventId: string;
   identityMutated: false;
   idempotentReplay?: boolean;
+  healthComposedBy: "health_composition_engine";
+};
+
+export type EngineCriticalityResult = {
+  identityOwner: "engineering_os_shared_domain";
+  criticality: PersistedCriticalityState;
+  healthIndex: PersistedHealthIndexState;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  identityMutated: false;
+  idempotentReplay?: boolean;
+  healthComposedBy: "health_composition_engine";
+};
+
+export type EngineReviewResult = {
+  identityOwner: "engineering_os_shared_domain";
+  criticality: PersistedCriticalityState;
+  workflowInstance: EngineeringWorkflowInstance;
+  healthIndex: PersistedHealthIndexState;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  identityMutated: false;
+  healthComposedBy: "health_composition_engine";
 };
 
 export type AssetIntelligenceEngineDeps = {
   identityPort: SharedDomainAssetIdentityPort;
   repository: AssetIntelligenceRepositoryPort;
   events: AssetIntelligenceEventPublishPort;
+  healthComposer?: HealthCompositionEngine;
 };
 
 export class AssetIntelligenceEngine {
+  private readonly healthComposer: HealthCompositionEngine;
+
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
     assertIiPublicContractConsumption();
+    this.healthComposer = deps.healthComposer ?? createHealthCompositionEngine();
+  }
+
+  private async resolveIdentity(cmd: {
+    tenantId: string;
+    workspaceId: string;
+    assetId: string;
+  }) {
+    const identity = await this.deps.identityPort.resolve(cmd);
+    if (!identity) throw new Error("shared_domain_identity_not_found");
+    if (identity.owner !== "engineering_os_shared_domain") {
+      throw new Error("identity_owner_must_be_shared_domain");
+    }
+    if (identity.assetId !== cmd.assetId) throw new Error("identity_asset_id_mismatch");
+    return identity;
+  }
+
+  private async composeAndPersistHealth(input: {
+    tenantId: string;
+    workspaceId: string;
+    assetId: string;
+    recordedAt: string;
+    provenance: Provenance;
+    sourceKeys: string[];
+  }): Promise<PersistedHealthIndexState> {
+    const condition = await this.deps.repository.latestCondition(
+      input.tenantId,
+      input.workspaceId,
+      input.assetId,
+      input.recordedAt,
+    );
+    const criticality = await this.deps.repository.latestCriticality(
+      input.tenantId,
+      input.workspaceId,
+      input.assetId,
+      input.recordedAt,
+    );
+
+    const composed = this.healthComposer.compose({
+      assetId: input.assetId,
+      stateId: this.deps.repository.newId("health"),
+      recordedAt: input.recordedAt,
+      provenance: input.provenance,
+      sourceKeys: input.sourceKeys,
+      condition: condition
+        ? {
+            rating: condition.conditionRating,
+            index: condition.conditionIndex,
+            confidence: condition.conditionConfidence,
+            trend: condition.conditionTrend,
+            stateId: condition.stateId,
+            evidenceRefs: condition.provenance.evidenceRefs,
+            observedAt: condition.provenance.observedAt,
+          }
+        : undefined,
+      criticality: criticality
+        ? {
+            rating: criticality.criticalityRating,
+            confidence: criticality.criticalityConfidence,
+            stateId: criticality.stateId,
+            reviewStatus: criticality.reviewStatus,
+            evidenceRefs: criticality.provenance.evidenceRefs,
+          }
+        : undefined,
+    });
+
+    const prior = await this.deps.repository.latestHealthIndex(
+      input.tenantId,
+      input.workspaceId,
+      input.assetId,
+    );
+    const persisted: PersistedHealthIndexState = {
+      ...composed,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      version: (prior?.version ?? 0) + 1,
+    };
+    await this.deps.repository.saveHealthIndex(persisted);
+    return persisted;
   }
 
   /**
-   * Transactional condition flow:
-   * II input → validate → identity → idempotency → derive → persist condition →
-   * snapshot → timeline → outbox → publish event → mark published
+   * Transactional condition flow with Health Composition Engine.
    */
   async assessConditionFromInspection(cmd: AssessConditionCommand): Promise<EngineAssessResult> {
     const sourceKey = cmd.sourceKey ?? "inspection_intelligence.public_contracts";
@@ -87,17 +247,7 @@ export class AssetIntelligenceEngine {
       }
     }
 
-    const identity = await this.deps.identityPort.resolve({
-      tenantId: cmd.tenantId,
-      workspaceId: cmd.workspaceId,
-      assetId: cmd.assetId,
-    });
-    if (!identity) throw new Error("shared_domain_identity_not_found");
-    if (identity.owner !== "engineering_os_shared_domain") {
-      throw new Error("identity_owner_must_be_shared_domain");
-    }
-    if (identity.assetId !== cmd.assetId) throw new Error("identity_asset_id_mismatch");
-
+    const identity = await this.resolveIdentity(cmd);
     const ii = toConditionIngestFromPublicSummary(cmd.ii);
     if (ii.assetReference.identity.assetId !== cmd.assetId) {
       throw new Error("ii_asset_reference_mismatch");
@@ -151,8 +301,14 @@ export class AssetIntelligenceEngine {
       conditionTrend: ii.conditionTrend,
       conditionSource: sourceKey,
       observedAt: ii.observedAt,
-      calculatedAt: status === "calculated" || status === "reviewed" || status === "published" ? recordedAt : undefined,
-      reviewedAt: status === "reviewed" || status === "published" ? ii.approvedAt ?? recordedAt : undefined,
+      calculatedAt:
+        status === "calculated" || status === "reviewed" || status === "published"
+          ? recordedAt
+          : undefined,
+      reviewedAt:
+        status === "reviewed" || status === "published"
+          ? (ii.approvedAt ?? recordedAt)
+          : undefined,
       publishedAt: status === "published" ? recordedAt : undefined,
       createdBy: cmd.createdBy,
     };
@@ -173,59 +329,41 @@ export class AssetIntelligenceEngine {
       metadata: { evidenceRefs: provenance.evidenceRefs },
     });
 
-    const healthIndex = deriveAdvisoryHealthIndex({
-      assetId: cmd.assetId,
-      stateId: this.deps.repository.newId("health"),
-      recordedAt,
-      provenance: { ...provenance, method: "compose_from_condition_v1" },
-      conditionRating: condition.conditionRating,
-      conditionIndex: condition.conditionIndex,
-      conditionConfidence: condition.conditionConfidence,
-      conditionTrend: condition.conditionTrend,
-      conditionStateId: condition.stateId,
-    });
     assertRegisteredActiveSource(sourceKey, "health_index");
-    await this.deps.repository.saveHealthIndex(healthIndex);
+    const healthIndex = await this.composeAndPersistHealth({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: { ...provenance, method: "health_composition_engine" },
+      sourceKeys: [sourceKey],
+    });
 
-    const timelineEntries: IntelligenceTimelineEntry[] = [];
-    for (const [kind, stateId, eventType] of [
-      ["condition", condition.stateId, `condition_${status}`],
-      ["health_index", healthIndex.stateId, "snapshot_created"],
-    ] as const) {
-      const entry = createTimelineEntry({
-        entryId: this.deps.repository.newId("tl"),
-        assetId: cmd.assetId,
-        tenantId: cmd.tenantId,
-        workspaceId: cmd.workspaceId,
-        stateId,
-        kind,
-        recordedAt,
-        sourceKey,
-        provenance,
-      });
-      void eventType;
-      await this.deps.repository.appendTimeline(entry);
-      timelineEntries.push(entry);
-      const tlEvent = createAssetIntelligenceEvent({
-        type: "engineering.asset.intelligence_timeline.appended",
-        tenantId: cmd.tenantId,
-        workspaceId: cmd.workspaceId,
-        assetId: cmd.assetId,
-        stateId,
-        entryId: entry.entryId,
-        occurredAt: recordedAt,
-        correlationId: cmd.correlationId,
-        payload: { sourceKey, kind },
-      });
-      await this.deps.events.publish(tlEvent);
-      await this.deps.repository.appendEvent(tlEvent);
-    }
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey,
+      provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        { kind: "condition", stateId: condition.stateId },
+        { kind: "health_index", stateId: healthIndex.stateId },
+      ],
+    });
 
     const snapshot = composeAssetSnapshot({
       identity,
       asOf: recordedAt,
       condition,
       healthIndex,
+      criticality: await this.deps.repository.latestCriticality(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
     });
     const snapshotId = this.deps.repository.newId("snap");
     await this.deps.repository.saveSnapshot({
@@ -244,22 +382,21 @@ export class AssetIntelligenceEngine {
     });
 
     const outboxEventId = this.deps.repository.newId("outbox");
-    const outboxPayload = {
-      sourceKey,
-      kind: "condition",
-      status: condition.status,
-      version: condition.version,
-      silentIdentityMutationForbidden: true,
-      rawEvidenceForbidden: true,
-      secretsForbidden: true,
-    };
     await this.deps.repository.appendOutbox({
       id: outboxEventId,
       tenantId: cmd.tenantId,
       workspaceId: cmd.workspaceId,
       assetId: cmd.assetId,
       eventType: "engineering.asset.condition.updated",
-      payload: outboxPayload,
+      payload: {
+        sourceKey,
+        kind: "condition",
+        status: condition.status,
+        version: condition.version,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
       correlationId: cmd.correlationId,
       stateId: condition.stateId,
       published: false,
@@ -302,6 +439,7 @@ export class AssetIntelligenceEngine {
       snapshotId,
       outboxEventId,
       identityMutated: false,
+      healthComposedBy: "health_composition_engine",
     };
 
     if (cmd.idempotencyKey) {
@@ -316,6 +454,405 @@ export class AssetIntelligenceEngine {
     }
 
     return result;
+  }
+
+  async assessCriticality(cmd: AssessCriticalityCommand): Promise<EngineCriticalityResult> {
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "criticality");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineCriticalityResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const version = await this.deps.repository.nextCriticalityVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+
+    const provenance: Provenance = {
+      sourceSystem: sourceKey,
+      observedAt: cmd.observedAt ?? recordedAt,
+      method: cmd.criticalityMethod ?? "governed_criticality_v1",
+      confidence: cmd.criticalityConfidence,
+      evidenceRefs: cmd.evidenceRefs ?? [],
+      reviewedBy: cmd.reviewedBy,
+      policyId: "asset_intelligence.criticality.assess.v1",
+    };
+
+    const assessed: AssetCriticalityStateRecord = assessCriticality({
+      assetId: cmd.assetId,
+      stateId: this.deps.repository.newId("crit"),
+      recordedAt,
+      provenance,
+      criticalityRating: cmd.criticalityRating,
+      safetyCriticality: cmd.safetyCriticality,
+      productionCriticality: cmd.productionCriticality,
+      environmentalCriticality: cmd.environmentalCriticality,
+      financialCriticality: cmd.financialCriticality,
+      operationalCriticality: cmd.operationalCriticality,
+      regulatoryCriticality: cmd.regulatoryCriticality,
+      criticalityMethod: cmd.criticalityMethod,
+      criticalityConfidence: cmd.criticalityConfidence,
+      reviewStatus: cmd.startReview === false ? "draft" : "pending_review",
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (cmd.startReview !== false && assessed.criticalityRating) {
+      const review = startCriticalityReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        criticalityStateId: assessed.stateId,
+        startedBy: cmd.createdBy ?? cmd.reviewedBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      assessed.reviewInstanceId = reviewInstanceId;
+      assessed.reviewStatus = "pending_review";
+    }
+
+    const status = cmd.status ?? (assessed.reviewStatus === "approved" ? "published" : "calculated");
+    const criticality: PersistedCriticalityState = {
+      ...assessed,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      status,
+      sourceType: "manual_engineering_assessment",
+      sourceReference: assessed.stateId,
+      createdBy: cmd.createdBy,
+    };
+
+    await this.deps.repository.saveCriticality(criticality);
+    await this.deps.repository.cacheIdentity(identity);
+    await this.deps.repository.registerSourceProvenance({
+      id: this.deps.repository.newId("src"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      sourceKey,
+      sourceType: "manual_engineering_assessment",
+      ownership: "asset_intelligence",
+      createdAt: recordedAt,
+      metadata: { reviewInstanceId },
+    });
+
+    const healthIndex = await this.composeAndPersistHealth({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: { ...provenance, method: "health_composition_engine" },
+      sourceKeys: [sourceKey, "inspection_intelligence.public_contracts"],
+    });
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey,
+      provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        { kind: "criticality", stateId: criticality.stateId },
+        { kind: "health_index", stateId: healthIndex.stateId },
+      ],
+    });
+
+    const condition = await this.deps.repository.latestCondition(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const snapshot = composeAssetSnapshot({
+      identity,
+      asOf: recordedAt,
+      condition,
+      healthIndex,
+      criticality,
+    });
+    const snapshotId = this.deps.repository.newId("snap");
+    await this.deps.repository.saveSnapshot({
+      id: snapshotId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: condition?.stateId,
+      healthIndex,
+      identityReference: identity,
+      sourceSet: [sourceKey],
+      timelinePosition: timelineEntries[timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.criticality.updated",
+      payload: {
+        sourceKey,
+        kind: "criticality",
+        status: criticality.status,
+        version: criticality.version,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: criticality.stateId,
+      published: false,
+      createdAt: recordedAt,
+    });
+
+    const critEvent = createAssetIntelligenceEvent({
+      type: "engineering.asset.criticality.updated",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: criticality.stateId,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { sourceKey, kind: "criticality", status: criticality.reviewStatus },
+    });
+    await this.deps.events.publish(critEvent);
+    await this.deps.repository.appendEvent(critEvent);
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const healthEvent = createAssetIntelligenceEvent({
+      type: "engineering.asset.health_index.updated",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: healthIndex.stateId,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { sourceKey, kind: "health_index", status: healthIndex.status },
+    });
+    await this.deps.events.publish(healthEvent);
+    await this.deps.repository.appendEvent(healthEvent);
+
+    const result: EngineCriticalityResult = {
+      identityOwner: "engineering_os_shared_domain",
+      criticality,
+      healthIndex,
+      timelineEntries,
+      snapshot,
+      snapshotId,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      identityMutated: false,
+      healthComposedBy: "health_composition_engine",
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_criticality",
+        resourceId: criticality.stateId,
+        responsePayload: { result },
+      });
+    }
+
+    return result;
+  }
+
+  async reviewCriticality(cmd: ReviewCriticalityCommand): Promise<EngineReviewResult> {
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const current = await this.deps.repository.latestCriticality(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!current || current.stateId !== cmd.criticalityStateId) {
+      throw new Error("criticality_state_not_found");
+    }
+
+    const workflowInstance = transitionCriticalityReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+
+    const reviewStatus =
+      cmd.to === "approved"
+        ? "approved"
+        : cmd.to === "rejected"
+          ? "rejected"
+          : cmd.to === "changes_requested"
+            ? "changes_requested"
+            : "pending_review";
+
+    const version = await this.deps.repository.nextCriticalityVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    const criticality: PersistedCriticalityState = {
+      ...current,
+      stateId: this.deps.repository.newId("crit"),
+      version,
+      supersedesId: current.stateId,
+      recordedAt,
+      reviewStatus,
+      status: reviewStatus === "approved" ? "published" : "reviewed",
+      reviewedAt: recordedAt,
+      publishedAt: reviewStatus === "approved" ? recordedAt : undefined,
+      provenance: {
+        ...current.provenance,
+        reviewedBy: cmd.reviewerId ?? current.provenance.reviewedBy,
+        approvedAt: reviewStatus === "approved" ? recordedAt : current.provenance.approvedAt,
+      },
+      reviewInstanceId: workflowInstance.instanceId,
+    } as PersistedCriticalityState;
+
+    await this.deps.repository.saveCriticality(criticality);
+
+    const healthIndex = await this.composeAndPersistHealth({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: {
+        sourceSystem: "asset_intelligence.review",
+        observedAt: recordedAt,
+        method: "health_composition_engine",
+        reviewedBy: cmd.reviewerId,
+      },
+      sourceKeys: ["asset_intelligence.review", "manual.engineering_assessment"],
+    });
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: criticality.provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        { kind: "criticality", stateId: criticality.stateId },
+        { kind: "health_index", stateId: healthIndex.stateId },
+      ],
+    });
+
+    const condition = await this.deps.repository.latestCondition(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const snapshot = composeAssetSnapshot({
+      identity,
+      asOf: recordedAt,
+      condition,
+      healthIndex,
+      criticality,
+    });
+    await this.deps.repository.saveSnapshot({
+      id: this.deps.repository.newId("snap"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: condition?.stateId,
+      healthIndex,
+      identityReference: identity,
+      sourceSet: ["asset_intelligence.review"],
+      timelinePosition: timelineEntries[timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const reviewEvent = createAssetIntelligenceEvent({
+      type: "engineering.asset.criticality.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: criticality.stateId,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "criticality", status: reviewStatus },
+    });
+    await this.deps.events.publish(reviewEvent);
+    await this.deps.repository.appendEvent(reviewEvent);
+
+    return {
+      identityOwner: "engineering_os_shared_domain",
+      criticality,
+      workflowInstance,
+      healthIndex,
+      timelineEntries,
+      snapshot,
+      identityMutated: false,
+      healthComposedBy: "health_composition_engine",
+    };
+  }
+
+  private async appendStateTimelines(input: {
+    tenantId: string;
+    workspaceId: string;
+    assetId: string;
+    recordedAt: string;
+    sourceKey: string;
+    provenance: Provenance;
+    correlationId?: string;
+    items: Array<{ kind: IntelligenceTimelineEntry["kind"]; stateId: string }>;
+  }): Promise<IntelligenceTimelineEntry[]> {
+    const entries: IntelligenceTimelineEntry[] = [];
+    for (const item of input.items) {
+      const entry = createTimelineEntry({
+        entryId: this.deps.repository.newId("tl"),
+        assetId: input.assetId,
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        stateId: item.stateId,
+        kind: item.kind,
+        recordedAt: input.recordedAt,
+        sourceKey: input.sourceKey,
+        provenance: input.provenance,
+      });
+      await this.deps.repository.appendTimeline(entry);
+      entries.push(entry);
+      const tlEvent = createAssetIntelligenceEvent({
+        type: "engineering.asset.intelligence_timeline.appended",
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        assetId: input.assetId,
+        stateId: item.stateId,
+        entryId: entry.entryId,
+        occurredAt: input.recordedAt,
+        correlationId: input.correlationId,
+        payload: { sourceKey: input.sourceKey, kind: item.kind },
+      });
+      await this.deps.events.publish(tlEvent);
+      await this.deps.repository.appendEvent(tlEvent);
+    }
+    return entries;
   }
 
   async getSnapshot(input: {
@@ -341,8 +878,18 @@ export class AssetIntelligenceEngine {
         input.assetId,
         input.asOf,
       ),
-      healthIndex: await this.deps.repository.latestHealthIndex(input.assetId, input.asOf),
-      criticality: await this.deps.repository.latestCriticality(input.assetId, input.asOf),
+      healthIndex: await this.deps.repository.latestHealthIndex(
+        input.tenantId,
+        input.workspaceId,
+        input.assetId,
+        input.asOf,
+      ),
+      criticality: await this.deps.repository.latestCriticality(
+        input.tenantId,
+        input.workspaceId,
+        input.assetId,
+        input.asOf,
+      ),
     });
   }
 
@@ -351,10 +898,12 @@ export class AssetIntelligenceEngine {
   }
 
   async getHealthIndex(
+    tenantId: string,
+    workspaceId: string,
     assetId: string,
     asOf?: string,
   ): Promise<AssetHealthIndexState | undefined> {
-    return this.deps.repository.latestHealthIndex(assetId, asOf);
+    return this.deps.repository.latestHealthIndex(tenantId, workspaceId, assetId, asOf);
   }
 
   async getCondition(
@@ -364,6 +913,15 @@ export class AssetIntelligenceEngine {
     asOf?: string,
   ): Promise<PersistedConditionState | undefined> {
     return this.deps.repository.latestCondition(tenantId, workspaceId, assetId, asOf);
+  }
+
+  async getCriticality(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedCriticalityState | undefined> {
+    return this.deps.repository.latestCriticality(tenantId, workspaceId, assetId, asOf);
   }
 }
 

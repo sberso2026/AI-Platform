@@ -6,6 +6,7 @@ export type IntelligenceSourceOwnership =
   | "inspection_intelligence"
   | "project_intelligence"
   | "engineering_os_shared_domain"
+  | "asset_intelligence"
   | "shm"
   | "digital_twin"
   | "maintenance"
@@ -35,6 +36,28 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
     ownership: "inspection_intelligence",
     trustTier: "frozen_public_contract",
     allowedStateKinds: ["condition", "health_index"],
+    evidenceDuplicationForbidden: true,
+    writeBackToSharedDomainIdentityForbidden: true,
+    status: "active",
+  },
+  {
+    sourceKey: "manual.engineering_assessment",
+    contractFamily: "asset_intelligence.manual_assessment",
+    contractVersion: "1",
+    ownership: "asset_intelligence",
+    trustTier: "shared_contract",
+    allowedStateKinds: ["criticality", "health_index"],
+    evidenceDuplicationForbidden: true,
+    writeBackToSharedDomainIdentityForbidden: true,
+    status: "active",
+  },
+  {
+    sourceKey: "asset_intelligence.review",
+    contractFamily: "asset_intelligence.governed_review",
+    contractVersion: "1",
+    ownership: "asset_intelligence",
+    trustTier: "shared_contract",
+    allowedStateKinds: ["criticality", "health_index"],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
     status: "active",

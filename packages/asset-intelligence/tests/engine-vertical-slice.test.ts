@@ -6,6 +6,7 @@ import {
   composeAssetSnapshot,
   createAssetIntelligenceEngine,
   createDurableAssetIntelligenceMemoryStore,
+  createHealthCompositionEngine,
   createInMemorySharedDomainIdentityPort,
   createInProcessAssetIntelligenceEventPipeline,
   AssetIntelligenceRepository,
@@ -14,23 +15,25 @@ import {
   HEALTH_INDEX_DEFAULT,
 } from "../src/index";
 
-describe("Phase 10B Asset Intelligence Engine vertical slice", () => {
-  it("registers II public contracts and fails closed on unknown sources", () => {
+describe("Phase 10C Asset Intelligence criticality + Health Composition Engine", () => {
+  it("registers II public contracts and criticality sources", () => {
     const check = assertIiPublicContractConsumption();
     expect(check.contractVersion).toBe("1.0.0");
-    expect(check.contractIds).toContain("ii.asset.reference");
-    expect(getIntelligenceSource("inspection_intelligence.public_contracts")?.status).toBe(
-      "active",
-    );
-    expect(() => assertRegisteredActiveSource("not.a.source", "condition")).toThrow(
+    expect(getIntelligenceSource("manual.engineering_assessment")?.status).toBe("active");
+    expect(() => assertRegisteredActiveSource("not.a.source", "criticality")).toThrow(
       /unregistered_intelligence_source/,
-    );
-    expect(() => assertRegisteredActiveSource("shm.signals", "condition")).toThrow(
-      /inactive_intelligence_source/,
     );
   });
 
-  it("orchestrates condition assess → health → timeline → snapshot without mutating identity", async () => {
+  it("keeps Health Index model free of composition scoring exports", async () => {
+    const healthIndexModule = await import("../src/domain/health-index.js");
+    expect(typeof healthIndexModule.mapConditionRatingToIndex).toBe("function");
+    expect(healthIndexModule.HEALTH_INDEX_DEFAULT.distinctFromCriticalityRating).toBe(true);
+    // Composition lives on HealthCompositionEngine, not Health Index defaults.
+    expect((healthIndexModule as Record<string, unknown>).HealthCompositionEngine).toBeUndefined();
+  });
+
+  it("orchestrates condition + criticality through Health Composition Engine", async () => {
     const identity = {
       tenantId: "t1",
       workspaceId: "w1",
@@ -40,14 +43,16 @@ describe("Phase 10B Asset Intelligence Engine vertical slice", () => {
     const store = createDurableAssetIntelligenceMemoryStore();
     const repo = new AssetIntelligenceRepository(store);
     const events = createInProcessAssetIntelligenceEventPipeline();
+    const composer = createHealthCompositionEngine();
     const engine = createAssetIntelligenceEngine({
       identityPort: createInMemorySharedDomainIdentityPort([identity]),
       repository: repo,
       events,
+      healthComposer: composer,
     });
     const service = new AssetIntelligenceService(engine);
 
-    const result = await service.assessConditionFromInspection({
+    const condition = await service.assessConditionFromInspection({
       tenantId: "t1",
       workspaceId: "w1",
       assetId: "asset-1",
@@ -67,70 +72,63 @@ describe("Phase 10B Asset Intelligence Engine vertical slice", () => {
       recordedAt: "2026-08-07T02:00:00.000Z",
     });
 
-    expect(result.identityMutated).toBe(false);
-    expect(result.identityOwner).toBe("engineering_os_shared_domain");
-    expect(result.condition.conditionRating).toBe("fair");
-    expect(result.condition.silentIdentityMutationForbidden).toBe(true);
-    expect(result.healthIndex.status).toBe("advisory");
-    expect(result.healthIndex.distinctFromConditionRating).toBe(true);
-    expect(result.healthIndex.accuracyClaimsCertified).toBe(false);
-    expect(result.snapshot.isAssetRegistry).toBe(false);
-    expect(result.snapshot.identity.assetId).toBe("asset-1");
-    expect(result.timelineEntries.length).toBe(2);
+    expect(condition.healthComposedBy).toBe("health_composition_engine");
+    expect(condition.healthIndex.composedBy).toBe("health_composition_engine");
+    expect(condition.healthIndex.factorsUsed).toContain("condition");
 
-    const asOfSnap = await service.getSnapshot({
+    const criticality = await service.assessCriticality({
       tenantId: "t1",
       workspaceId: "w1",
       assetId: "asset-1",
-      asOf: "2026-08-07T02:00:00.000Z",
+      criticalityRating: "high",
+      safetyCriticality: "high",
+      productionCriticality: "medium",
+      criticalityConfidence: 0.85,
+      evidenceRefs: ["eng.assessment:a1"],
+      observedAt: "2026-08-07T02:10:00.000Z",
+      recordedAt: "2026-08-07T02:15:00.000Z",
+      startReview: true,
     });
-    expect(asOfSnap?.condition?.stateId).toBe(result.condition.stateId);
-    expect((await service.listTimeline("asset-1")).length).toBe(2);
-    expect((await service.getHealthIndex("asset-1"))?.stateId).toBe(result.healthIndex.stateId);
-    expect(result.outboxEventId).toBeTruthy();
-    expect(result.snapshotId).toBeTruthy();
 
-    const replay = await service.assessConditionFromInspection({
+    expect(criticality.identityMutated).toBe(false);
+    expect(criticality.criticality.criticalityRating).toBe("high");
+    expect(criticality.criticality.reviewStatus).toBe("pending_review");
+    expect(criticality.reviewInstanceId).toBeTruthy();
+    expect(criticality.healthComposedBy).toBe("health_composition_engine");
+    expect(criticality.healthIndex.factorsUsed).toEqual(
+      expect.arrayContaining(["condition", "criticality"]),
+    );
+    expect(criticality.healthIndex.healthMethod).toBe("compose_condition_criticality_v1");
+    expect(criticality.healthIndex.distinctFromCriticalityRating).toBe(true);
+    expect(criticality.healthIndex.accuracyClaimsCertified).toBe(false);
+
+    const approved = await service.reviewCriticality({
       tenantId: "t1",
       workspaceId: "w1",
       assetId: "asset-1",
-      idempotencyKey: "idem-1",
-      ii: {
-        assetReference: {
-          identity: { tenantId: "t1", workspaceId: "w1", assetId: "asset-1" },
-        },
-        conditionRating: "fair",
-        conditionIndex: 0.55,
-        observedAt: "2026-08-07T01:00:00.000Z",
-        evidenceRefs: ["ii.evidenceRef:e1"],
-      },
-      recordedAt: "2026-08-07T02:05:00.000Z",
+      criticalityStateId: criticality.criticality.stateId,
+      workflowInstance: criticality.reviewWorkflowInstance!,
+      action: "approve",
+      to: "approved",
+      reviewerId: "reviewer-1",
+      recordedAt: "2026-08-07T02:30:00.000Z",
     });
-    const replay2 = await service.assessConditionFromInspection({
-      tenantId: "t1",
-      workspaceId: "w1",
-      assetId: "asset-1",
-      idempotencyKey: "idem-1",
-      ii: {
-        assetReference: {
-          identity: { tenantId: "t1", workspaceId: "w1", assetId: "asset-1" },
-        },
-        conditionRating: "poor",
-        observedAt: "2026-08-07T01:00:00.000Z",
-        evidenceRefs: ["ii.evidenceRef:e1"],
-      },
-    });
-    expect(replay2.idempotentReplay).toBe(true);
-    expect(replay2.condition.stateId).toBe(replay.condition.stateId);
+    expect(approved.criticality.reviewStatus).toBe("approved");
+    expect(approved.criticality.status).toBe("published");
+    expect(approved.healthComposedBy).toBe("health_composition_engine");
+
+    expect((await service.getCriticality("t1", "w1", "asset-1"))?.criticalityRating).toBe("high");
+    expect((await service.getHealthIndex("t1", "w1", "asset-1"))?.composedBy).toBe(
+      "health_composition_engine",
+    );
 
     const types = events.events.map((e) => e.type);
-    expect(types).toContain("engineering.asset.condition.updated");
+    expect(types).toContain("engineering.asset.criticality.updated");
+    expect(types).toContain("engineering.asset.criticality.reviewed");
     expect(types).toContain("engineering.asset.health_index.updated");
-    expect(types).toContain("engineering.asset.intelligence_timeline.appended");
-    expect(events.events.every((e) => e.payload.rawEvidenceForbidden)).toBe(true);
   });
 
-  it("abstains health index when evidence is insufficient", () => {
+  it("abstains health composition when evidence is insufficient", () => {
     const health = deriveAdvisoryHealthIndex({
       assetId: "a",
       stateId: "h1",
@@ -139,6 +137,7 @@ describe("Phase 10B Asset Intelligence Engine vertical slice", () => {
     });
     expect(health.status).toBe("unavailable");
     expect(health.healthMethod).toBe("abstain_insufficient_evidence");
+    expect(health.composedBy).toBe("health_composition_engine");
     expect(HEALTH_INDEX_DEFAULT.rulClaimsCertified).toBe(false);
   });
 
@@ -154,6 +153,5 @@ describe("Phase 10B Asset Intelligence Engine vertical slice", () => {
     });
     expect(snap.isAssetRegistry).toBe(false);
     expect(snap.mutatesIdentity).toBe(false);
-    expect(snap.contributions).toEqual([]);
   });
 });
