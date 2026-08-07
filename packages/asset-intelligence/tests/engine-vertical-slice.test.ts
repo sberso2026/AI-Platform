@@ -95,10 +95,8 @@ describe("Phase 10C Asset Intelligence criticality + Health Composition Engine",
     expect(criticality.criticality.reviewStatus).toBe("pending_review");
     expect(criticality.reviewInstanceId).toBeTruthy();
     expect(criticality.healthComposedBy).toBe("health_composition_engine");
-    expect(criticality.healthIndex.factorsUsed).toEqual(
-      expect.arrayContaining(["condition", "criticality"]),
-    );
-    expect(criticality.healthIndex.healthMethod).toBe("compose_condition_criticality_v1");
+    expect(criticality.healthIndex.factorsUsed ?? []).not.toContain("criticality");
+    expect(criticality.healthIndex.healthMethod).toBe("compose_condition_reliability_v2");
     expect(criticality.healthIndex.distinctFromCriticalityRating).toBe(true);
     expect(criticality.healthIndex.accuracyClaimsCertified).toBe(false);
 

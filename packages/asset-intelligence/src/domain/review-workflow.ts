@@ -28,8 +28,8 @@ export const CRITICALITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
   ],
 };
 
-/** Reserved definition — do not drive reliability assessment in Phase 10C. */
-export const RELIABILITY_REVIEW_WORKFLOW_RESERVED: EngineeringWorkflowDefinition = {
+/** Phase 10D — Reliability review via Engineering Workflow SDK. */
+export const RELIABILITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
   slug: "asset_intelligence.reliability_review",
   displayName: "Asset Reliability Review",
   moduleKey: "asset_intelligence",
@@ -44,6 +44,9 @@ export const RELIABILITY_REVIEW_WORKFLOW_RESERVED: EngineeringWorkflowDefinition
     { from: "changes_requested", to: "pending_review", action: "resubmit" },
   ],
 };
+
+/** @deprecated Prefer RELIABILITY_REVIEW_WORKFLOW */
+export const RELIABILITY_REVIEW_WORKFLOW_RESERVED = RELIABILITY_REVIEW_WORKFLOW;
 
 export function startCriticalityReview(input: {
   tenantId: string;
@@ -63,6 +66,33 @@ export function startCriticalityReview(input: {
   const submitted = transitionWorkflowInstance({
     instance,
     definition: CRITICALITY_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({
+    instanceId: submitted.instanceId,
+  });
+  return { instance: submitted, review };
+}
+
+export function startReliabilityReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  reliabilityStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: RELIABILITY_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_reliability_state",
+    entityId: input.reliabilityStateId,
+    startedBy: input.startedBy,
+    context: { kind: "reliability" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: RELIABILITY_REVIEW_WORKFLOW,
     action: "submit",
     to: "pending_review",
   });

@@ -9,6 +9,9 @@ import type {
 } from "../architecture/identity-state";
 import type { AssetCriticalityStateRecord } from "./criticality";
 import type { AssetHealthIndexState } from "./health-index";
+import type { AssetHealthProfile } from "./health-profile";
+import type { EvidenceConfidenceAssessment } from "./evidence-confidence";
+import type { AssetReliabilityStateRecord } from "./reliability";
 import type { IntelligenceTimelineEntry } from "./timeline";
 import type { AssetIntelligenceEvent } from "./events";
 import type { AssetSnapshot } from "./snapshot";
@@ -46,6 +49,26 @@ export type PersistedCriticalityState = AssetCriticalityStateRecord & {
 export type PersistedHealthIndexState = AssetHealthIndexState & {
   tenantId: string;
   workspaceId: string;
+  version: number;
+};
+
+export type PersistedReliabilityState = AssetReliabilityStateRecord & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  status: ConditionLifecycleStatus;
+  sourceType: string;
+  createdBy?: string;
+  supersedesId?: string;
+};
+
+export type PersistedEvidenceConfidence = EvidenceConfidenceAssessment & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+};
+
+export type PersistedHealthProfile = AssetHealthProfile & {
   version: number;
 };
 
@@ -142,6 +165,33 @@ export type AssetIntelligenceRepositoryPort = {
     assetId: string,
     expectedCurrentVersion?: number,
   ): Promise<number>;
+  saveReliability(state: PersistedReliabilityState): Promise<PersistedReliabilityState>;
+  latestReliability(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedReliabilityState | undefined>;
+  nextReliabilityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveEvidenceConfidence(
+    record: PersistedEvidenceConfidence,
+  ): Promise<PersistedEvidenceConfidence>;
+  latestEvidenceConfidence(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedEvidenceConfidence | undefined>;
+  saveHealthProfile(profile: PersistedHealthProfile): Promise<PersistedHealthProfile>;
+  latestHealthProfile(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedHealthProfile | undefined>;
   appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry>;
   listTimeline(assetId: string, asOf?: string): Promise<IntelligenceTimelineEntry[]>;
   saveSnapshot(record: PersistedSnapshotRecord): Promise<PersistedSnapshotRecord>;
@@ -179,6 +229,9 @@ export type DurableAssetIntelligenceStore = {
   conditionStates: PersistedConditionState[];
   healthIndexStates: PersistedHealthIndexState[];
   criticalityStates: PersistedCriticalityState[];
+  reliabilityStates: PersistedReliabilityState[];
+  evidenceConfidence: PersistedEvidenceConfidence[];
+  healthProfiles: PersistedHealthProfile[];
   timeline: IntelligenceTimelineEntry[];
   events: AssetIntelligenceEvent[];
   snapshots: PersistedSnapshotRecord[];
@@ -193,6 +246,9 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     conditionStates: [],
     healthIndexStates: [],
     criticalityStates: [],
+    reliabilityStates: [],
+    evidenceConfidence: [],
+    healthProfiles: [],
     timeline: [],
     events: [],
     snapshots: [],
@@ -330,6 +386,76 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
       );
     }
     return current + 1;
+  }
+
+  async saveReliability(state: PersistedReliabilityState): Promise<PersistedReliabilityState> {
+    this.store.reliabilityStates.push(state);
+    return state;
+  }
+
+  async latestReliability(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedReliabilityState | undefined> {
+    return latestAsOf(
+      this.store.reliabilityStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+      asOf,
+    );
+  }
+
+  async nextReliabilityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestReliability(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
+  }
+
+  async saveEvidenceConfidence(
+    record: PersistedEvidenceConfidence,
+  ): Promise<PersistedEvidenceConfidence> {
+    this.store.evidenceConfidence.push(record);
+    return record;
+  }
+
+  async latestEvidenceConfidence(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedEvidenceConfidence | undefined> {
+    const items = this.store.evidenceConfidence.filter(
+      (e) => e.assetId === assetId && e.tenantId === tenantId && e.workspaceId === workspaceId,
+    );
+    return items[items.length - 1];
+  }
+
+  async saveHealthProfile(profile: PersistedHealthProfile): Promise<PersistedHealthProfile> {
+    this.store.healthProfiles.push(profile);
+    return profile;
+  }
+
+  async latestHealthProfile(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedHealthProfile | undefined> {
+    const items = this.store.healthProfiles.filter(
+      (p) => p.assetId === assetId && p.tenantId === tenantId && p.workspaceId === workspaceId,
+    );
+    return items[items.length - 1];
   }
 
   async appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry> {

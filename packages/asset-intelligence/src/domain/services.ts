@@ -6,6 +6,7 @@ import type {
   AssetIntelligenceEngine,
   AssessConditionCommand,
   AssessCriticalityCommand,
+  AssessReliabilityCommand,
   ReviewCriticalityCommand,
 } from "./engine";
 
@@ -37,6 +38,14 @@ export class AssetCriticalityService {
   }
 }
 
+export class AssetReliabilityService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessReliabilityCommand) {
+    return this.engine.assessReliability(cmd);
+  }
+}
+
 export class AssetHealthIndexService {
   constructor(private readonly engine: AssetIntelligenceEngine) {}
 
@@ -56,12 +65,14 @@ export class AssetTimelineService {
 export class AssetIntelligenceService {
   readonly condition: AssetConditionService;
   readonly criticality: AssetCriticalityService;
+  readonly reliability: AssetReliabilityService;
   readonly health: AssetHealthIndexService;
   readonly timeline: AssetTimelineService;
 
   constructor(private readonly engine: AssetIntelligenceEngine) {
     this.condition = new AssetConditionService(engine);
     this.criticality = new AssetCriticalityService(engine);
+    this.reliability = new AssetReliabilityService(engine);
     this.health = new AssetHealthIndexService(engine);
     this.timeline = new AssetTimelineService(engine);
   }
@@ -72,6 +83,10 @@ export class AssetIntelligenceService {
 
   assessCriticality(cmd: AssessCriticalityCommand) {
     return this.engine.assessCriticality(cmd);
+  }
+
+  assessReliability(cmd: AssessReliabilityCommand) {
+    return this.engine.assessReliability(cmd);
   }
 
   reviewCriticality(cmd: ReviewCriticalityCommand) {

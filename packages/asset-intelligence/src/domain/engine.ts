@@ -16,6 +16,11 @@ import {
 } from "./health-composer";
 import type { AssetHealthIndexState } from "./health-index";
 import {
+  createEvidenceConfidenceEngine,
+  type EvidenceConfidenceEngine,
+} from "./evidence-confidence";
+import { assessReliability, type AssetReliabilityStateRecord } from "./reliability";
+import {
   createInMemorySharedDomainIdentityPort,
   type SharedDomainAssetIdentityPort,
 } from "./identity-port";
@@ -28,17 +33,18 @@ import {
   createAssetIntelligenceEvent,
   type AssetIntelligenceEventPublishPort,
 } from "./events";
+import { startCriticalityReview, transitionCriticalityReview, startReliabilityReview } from "./review-workflow";
+import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
+import { assertRegisteredActiveSource } from "./source-registry";
+import { createTimelineEntry, type IntelligenceTimelineEntry } from "./timeline";
+import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
 import type {
   AssetIntelligenceRepositoryPort,
   PersistedConditionState,
   PersistedCriticalityState,
   PersistedHealthIndexState,
+  PersistedReliabilityState,
 } from "./persistence";
-import { startCriticalityReview, transitionCriticalityReview } from "./review-workflow";
-import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
-import { assertRegisteredActiveSource } from "./source-registry";
-import { createTimelineEntry, type IntelligenceTimelineEntry } from "./timeline";
-import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
 
 export type AssessConditionCommand = {
   tenantId: string;
@@ -132,20 +138,68 @@ export type EngineReviewResult = {
   healthComposedBy: "health_composition_engine";
 };
 
+export type AssessReliabilityCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey?: string;
+  assessmentType?: AssetReliabilityStateRecord["assessmentType"];
+  reliabilityClass?: string;
+  reliabilityScore?: number;
+  reliabilityConfidence?: number;
+  reliabilityMethod?: string;
+  evidenceWindow?: string;
+  operatingWindow?: string;
+  evidenceRefs?: string[];
+  inspectionRefs?: string[];
+  failureHistoryRefs?: string[];
+  observedAt?: string;
+  startReview?: boolean;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  expectedVersion?: number;
+  createdBy?: string;
+};
+
+export type EngineReliabilityResult = {
+  identityOwner: "engineering_os_shared_domain";
+  reliability: PersistedReliabilityState;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  healthIndex: PersistedHealthIndexState;
+  healthProfileId?: string;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  identityMutated: false;
+  idempotentReplay?: boolean;
+  healthComposedBy: "health_composition_engine";
+  quantitativeReliabilityCertified: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+};
+
 export type AssetIntelligenceEngineDeps = {
   identityPort: SharedDomainAssetIdentityPort;
   repository: AssetIntelligenceRepositoryPort;
   events: AssetIntelligenceEventPublishPort;
   healthComposer?: HealthCompositionEngine;
+  evidenceConfidenceEngine?: EvidenceConfidenceEngine;
 };
 
 export class AssetIntelligenceEngine {
   private readonly healthComposer: HealthCompositionEngine;
+  private readonly evidenceConfidenceEngine: EvidenceConfidenceEngine;
 
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
     assertIiPublicContractConsumption();
     this.healthComposer = deps.healthComposer ?? createHealthCompositionEngine();
+    this.evidenceConfidenceEngine =
+      deps.evidenceConfidenceEngine ?? createEvidenceConfidenceEngine();
   }
 
   private async resolveIdentity(cmd: {
@@ -169,6 +223,7 @@ export class AssetIntelligenceEngine {
     recordedAt: string;
     provenance: Provenance;
     sourceKeys: string[];
+    compositionMethod?: import("./health-composer").HealthCompositionMethod;
   }): Promise<PersistedHealthIndexState> {
     const condition = await this.deps.repository.latestCondition(
       input.tenantId,
@@ -182,13 +237,49 @@ export class AssetIntelligenceEngine {
       input.assetId,
       input.recordedAt,
     );
+    const reliability = await this.deps.repository.latestReliability(
+      input.tenantId,
+      input.workspaceId,
+      input.assetId,
+      input.recordedAt,
+    );
+
+    const evidenceRefs = [
+      ...(condition?.provenance.evidenceRefs ?? []),
+      ...(reliability?.sourceRefs ?? []),
+      ...(reliability?.inspectionRefs ?? []),
+    ];
+    const evidence = this.evidenceConfidenceEngine.assess({
+          assessmentId: this.deps.repository.newId("ec"),
+          assetId: input.assetId,
+          tenantId: input.tenantId,
+          workspaceId: input.workspaceId,
+          scope: "health_composition",
+          evidenceRefs,
+          sourceKeys: input.sourceKeys,
+          observedAt: condition?.provenance.observedAt ?? input.provenance.observedAt,
+          asOf: input.recordedAt,
+          reviewStatus: reliability?.reviewStatus ?? criticality?.reviewStatus,
+          confidenceHint: condition?.conditionConfidence,
+        });
+    await this.deps.repository.saveEvidenceConfidence({
+      ...evidence,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      version: 1,
+    });
 
     const composed = this.healthComposer.compose({
       assetId: input.assetId,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
       stateId: this.deps.repository.newId("health"),
+      profileId: this.deps.repository.newId("hprof"),
       recordedAt: input.recordedAt,
       provenance: input.provenance,
+      compositionMethod: input.compositionMethod,
       sourceKeys: input.sourceKeys,
+      evidenceConfidence: evidence,
       condition: condition
         ? {
             rating: condition.conditionRating,
@@ -209,20 +300,40 @@ export class AssetIntelligenceEngine {
             evidenceRefs: criticality.provenance.evidenceRefs,
           }
         : undefined,
+      reliability: reliability
+        ? {
+            rating: reliability.reliabilityClass,
+            continuity: reliability.reliabilityScore,
+            confidence: reliability.reliabilityConfidence,
+            stateId: reliability.stateId,
+            reviewStatus: reliability.reviewStatus,
+            evidenceRefs: reliability.sourceRefs,
+            evidenceSufficient:
+              reliability.evidenceConfidence?.dataSufficiency === "sufficient" ||
+              reliability.evidenceConfidence?.dataSufficiency === "limited",
+          }
+        : undefined,
     });
 
+    const healthIndexState = composed.healthIndex;
     const prior = await this.deps.repository.latestHealthIndex(
       input.tenantId,
       input.workspaceId,
       input.assetId,
     );
     const persisted: PersistedHealthIndexState = {
-      ...composed,
+      ...healthIndexState,
       tenantId: input.tenantId,
       workspaceId: input.workspaceId,
       version: (prior?.version ?? 0) + 1,
     };
     await this.deps.repository.saveHealthIndex(persisted);
+    await this.deps.repository.saveHealthProfile({
+      ...composed.healthProfile,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      version: (prior?.version ?? 0) + 1,
+    });
     return persisted;
   }
 
@@ -811,6 +922,254 @@ export class AssetIntelligenceEngine {
       identityMutated: false,
       healthComposedBy: "health_composition_engine",
     };
+  }
+
+  async assessReliability(cmd: AssessReliabilityCommand): Promise<EngineReliabilityResult> {
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "reliability");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineReliabilityResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const evidenceRefs = [
+      ...(cmd.evidenceRefs ?? []),
+      ...(cmd.inspectionRefs ?? []),
+      ...(cmd.failureHistoryRefs ?? []),
+    ];
+    const evidenceConfidence = this.evidenceConfidenceEngine.assess({
+      assessmentId: this.deps.repository.newId("ec"),
+      assetId: cmd.assetId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      scope: "reliability",
+      evidenceRefs,
+      sourceKeys: [sourceKey],
+      observedAt: cmd.observedAt ?? recordedAt,
+      asOf: recordedAt,
+      confidenceHint: cmd.reliabilityConfidence,
+    });
+    await this.deps.repository.saveEvidenceConfidence({
+      ...evidenceConfidence,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: 1,
+    });
+
+    const version = await this.deps.repository.nextReliabilityVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+
+    const assessed = assessReliability({
+      assetId: cmd.assetId,
+      stateId: this.deps.repository.newId("rel"),
+      recordedAt,
+      provenance: {
+        sourceSystem: sourceKey,
+        observedAt: cmd.observedAt ?? recordedAt,
+        method: cmd.reliabilityMethod ?? "governed_reliability_v1",
+        confidence: cmd.reliabilityConfidence,
+        evidenceRefs,
+        policyId: "asset_intelligence.reliability.assess.v1",
+      },
+      assessmentType: cmd.assessmentType ?? "qualitative",
+      reliabilityClass: cmd.reliabilityClass,
+      reliabilityScore:
+        cmd.assessmentType === "qualitative" ? undefined : cmd.reliabilityScore,
+      reliabilityConfidence: cmd.reliabilityConfidence,
+      reliabilityMethod: cmd.reliabilityMethod,
+      evidenceWindow: cmd.evidenceWindow,
+      operatingWindow: cmd.operatingWindow,
+      sourceRefs: cmd.evidenceRefs,
+      inspectionRefs: cmd.inspectionRefs,
+      failureHistoryRefs: cmd.failureHistoryRefs,
+      evidenceConfidence,
+      reviewStatus: cmd.startReview === false ? "draft" : "pending_review",
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (cmd.startReview !== false && assessed.reliabilityClass) {
+      const review = startReliabilityReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        reliabilityStateId: assessed.stateId,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      assessed.reviewInstanceId = reviewInstanceId;
+      assessed.reviewStatus = "pending_review";
+    }
+
+    const reliability: PersistedReliabilityState = {
+      ...assessed,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      status: assessed.reviewStatus === "published" ? "published" : "calculated",
+      sourceType: "manual_engineering_assessment",
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveReliability(reliability);
+    await this.deps.repository.cacheIdentity(identity);
+
+    const healthIndex = await this.composeAndPersistHealth({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: {
+        sourceSystem: sourceKey,
+        observedAt: recordedAt,
+        method: "health_composition_engine",
+      },
+      sourceKeys: [sourceKey, "inspection_intelligence.public_contracts"],
+    });
+
+    const profile = await this.deps.repository.latestHealthProfile(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey,
+      provenance: reliability.provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        { kind: "reliability", stateId: reliability.stateId },
+        { kind: "health_index", stateId: healthIndex.stateId },
+      ],
+    });
+
+    const condition = await this.deps.repository.latestCondition(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const criticality = await this.deps.repository.latestCriticality(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const snapshot = composeAssetSnapshot({
+      identity,
+      asOf: recordedAt,
+      condition,
+      healthIndex,
+      criticality,
+    });
+    const snapshotId = this.deps.repository.newId("snap");
+    await this.deps.repository.saveSnapshot({
+      id: snapshotId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: condition?.stateId,
+      healthIndex,
+      identityReference: identity,
+      sourceSet: [sourceKey],
+      timelinePosition: timelineEntries[timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.reliability.assessed",
+      payload: {
+        sourceKey,
+        kind: "reliability",
+        status: reliability.reviewStatus,
+        version: reliability.version,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: reliability.stateId,
+      published: false,
+      createdAt: recordedAt,
+    });
+
+    for (const type of [
+      "engineering.asset.reliability.assessed",
+      "engineering.asset.evidence_confidence.assessed",
+      "engineering.asset.health.composed",
+    ] as const) {
+      const ev = createAssetIntelligenceEvent({
+        type,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: reliability.stateId,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: { sourceKey, kind: type.includes("health") ? "health_index" : "reliability" },
+      });
+      await this.deps.events.publish(ev);
+      await this.deps.repository.appendEvent(ev);
+    }
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EngineReliabilityResult = {
+      identityOwner: "engineering_os_shared_domain",
+      reliability,
+      evidenceConfidence,
+      healthIndex,
+      healthProfileId: profile?.profileId,
+      timelineEntries,
+      snapshot,
+      snapshotId,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      identityMutated: false,
+      healthComposedBy: "health_composition_engine",
+      quantitativeReliabilityCertified: false,
+      probabilityOfFailureCertified: false,
+      rulClaimsCertified: false,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_reliability",
+        resourceId: reliability.stateId,
+        responsePayload: { result },
+      });
+    }
+
+    return result;
   }
 
   private async appendStateTimelines(input: {

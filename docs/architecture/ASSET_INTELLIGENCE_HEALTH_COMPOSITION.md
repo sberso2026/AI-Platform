@@ -5,20 +5,22 @@
 | Component | Owns |
 |-----------|------|
 | **Health Index** (`health-index.ts`) | State model / fields / distinctness invariants |
-| **Health Composition Engine** (`health-composer.ts`) | Multi-factor scoring, abstention, method tagging |
+| **Health Composition Engine** (`health-composer.ts`) | Versioned multi-factor scoring, abstention, method tagging |
+| **Asset Health Profile** | Dimensional health contract (condition / reliability / criticality context) |
 | **Asset Intelligence Engine** | Commands, persistence, timeline, review, events — calls the composer |
 
-Do **not** embed composition algorithm in the Health Index module.
+## Versioned methods
 
-## Factors (Phase 10C)
+| Method | Status |
+|--------|--------|
+| `compose_condition_criticality_v1` | Historical Phase 10C — preserved for audit/replay |
+| `compose_condition_reliability_v2` | **Default Phase 10D** — condition + reliability + evidence confidence |
 
-- Condition (required evidence path for advisory health)
-- Criticality (weighted into composite when assessed)
-- Reliability — **reserved** factor slot for Phase 10D (not assessed in 10C)
+In v2, criticality is **context only** (`criticalityIsHealthFactor = false`).
 
 ## Claims
 
 - Advisory only
 - `accuracyClaimsCertified = false`
 - `rulClaimsCertified = false`
-- Health class remains distinct from conditionRating and criticalityRating
+- `probabilityOfFailureCertified = false`

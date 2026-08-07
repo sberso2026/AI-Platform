@@ -15,7 +15,10 @@ import type {
   OutboxEventRecord,
   PersistedConditionState,
   PersistedCriticalityState,
+  PersistedEvidenceConfidence,
   PersistedHealthIndexState,
+  PersistedHealthProfile,
+  PersistedReliabilityState,
   PersistedSnapshotRecord,
   SourceProvenanceRecord,
 } from "./persistence";
@@ -250,6 +253,195 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
       throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
     }
     return current + 1;
+  }
+
+  async saveReliability(state: PersistedReliabilityState): Promise<PersistedReliabilityState> {
+    const { error } = await this.supabase.from("asset_intelligence_reliability_states").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      status: state.status,
+      review_status: state.reviewStatus,
+      assessment_type: state.assessmentType,
+      reliability_class: state.reliabilityClass ?? null,
+      reliability_score: state.reliabilityScore ?? null,
+      reliability_confidence: state.reliabilityConfidence ?? null,
+      reliability_method: state.reliabilityMethod ?? null,
+      evidence_window: state.evidenceWindow ?? null,
+      operating_window: state.operatingWindow ?? null,
+      source_type: state.sourceType,
+      provenance: state.provenance,
+      review_instance_id: state.reviewInstanceId ?? null,
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      limitations: state.limitations,
+      metrics: state.metrics,
+      evidence_confidence: state.evidenceConfidence ?? null,
+      reliability_payload: {
+        qualitativeAsProbabilityForbidden: true,
+        quantitativeReliabilityCertified: false,
+        probabilityOfFailureCertified: false,
+        rulClaimsCertified: false,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`reliability_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestReliability(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedReliabilityState | undefined> {
+    let q = this.supabase
+      .from("asset_intelligence_reliability_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (asOf) q = q.lte("recorded_at", asOf);
+    const { data, error } = await q.maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapReliabilityRow(data) : undefined;
+  }
+
+  async nextReliabilityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestReliability(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveEvidenceConfidence(
+    record: PersistedEvidenceConfidence,
+  ): Promise<PersistedEvidenceConfidence> {
+    const { error } = await this.supabase.from("asset_intelligence_evidence_confidence").insert({
+      id: record.assessmentId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      asset_id: record.assetId,
+      version: record.version,
+      scope: record.scope,
+      score: record.score,
+      confidence_class: record.confidenceClass,
+      confidence: record.confidence,
+      source_count: record.sourceCount,
+      source_diversity: record.sourceDiversity,
+      freshness: record.freshness,
+      review_completeness: record.reviewCompleteness,
+      conflict_state: record.conflictState,
+      lineage_integrity: record.lineageIntegrity,
+      data_sufficiency: record.dataSufficiency,
+      abstention_reason: record.abstentionReason ?? null,
+      method: record.method,
+      method_version: record.methodVersion,
+      assessed_at: record.assessedAt,
+      reasons: record.reasons,
+      payload: { engineeringCorrectnessClaimed: false },
+    });
+    if (error && error.code !== "23505") {
+      throw new Error(`evidence_confidence_persist_failed:${error.message}`);
+    }
+    return record;
+  }
+
+  async latestEvidenceConfidence(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedEvidenceConfidence | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_evidence_confidence")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("assessed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapEvidenceRow(data) : undefined;
+  }
+
+  async saveHealthProfile(profile: PersistedHealthProfile): Promise<PersistedHealthProfile> {
+    const { error } = await this.supabase.from("asset_intelligence_health_profiles").insert({
+      id: profile.profileId,
+      tenant_id: profile.tenantId,
+      workspace_id: profile.workspaceId,
+      asset_id: profile.assetId,
+      version: profile.version,
+      snapshot_id: profile.snapshotId ?? null,
+      composition_method: profile.compositionMethod,
+      composition_version: profile.compositionVersion,
+      condition_state_ref: profile.conditionStateRef ?? null,
+      condition_contribution: profile.conditionContribution ?? null,
+      reliability_state_ref: profile.reliabilityStateRef ?? null,
+      reliability_contribution:
+        profile.reliabilityContribution === "unavailable"
+          ? null
+          : (profile.reliabilityContribution ?? null),
+      reliability_unavailable: profile.reliabilityContribution === "unavailable",
+      evidence_confidence_ref: profile.evidenceConfidenceRef ?? null,
+      overall_health: profile.overallHealth ?? null,
+      overall_health_class: profile.overallHealthClass ?? null,
+      overall_health_confidence: profile.overallHealthConfidence ?? null,
+      criticality_state_ref: profile.criticalityStateRef ?? null,
+      criticality_context: profile.criticalityContext ?? null,
+      criticality_is_health_factor: false,
+      limitations: profile.limitations,
+      review_status: profile.reviewStatus,
+      calculated_at: profile.calculatedAt,
+      published_at: profile.publishedAt ?? null,
+      provenance: profile.provenance,
+      evidence_confidence: profile.evidenceConfidence ?? null,
+      profile_payload: {
+        accuracyClaimsCertified: false,
+        rulClaimsCertified: false,
+        probabilityOfFailureCertified: false,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`health_profile_persist_failed:${error.message}`);
+    }
+    return profile;
+  }
+
+  async latestHealthProfile(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedHealthProfile | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_health_profiles")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapHealthProfileRow(data) : undefined;
   }
 
   async appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry> {
@@ -638,5 +830,135 @@ function mapCriticalityRow(row: Record<string, unknown>): PersistedCriticalitySt
     publishedAt: row.published_at ? String(row.published_at) : undefined,
     createdBy: row.created_by ? String(row.created_by) : undefined,
     supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+  };
+}
+
+function mapReliabilityRow(row: Record<string, unknown>): PersistedReliabilityState {
+  return {
+    kind: "reliability",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    status: row.status as PersistedReliabilityState["status"],
+    reviewStatus: row.review_status as PersistedReliabilityState["reviewStatus"],
+    assessmentType: row.assessment_type as PersistedReliabilityState["assessmentType"],
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedReliabilityState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    reliabilityClass: row.reliability_class ? String(row.reliability_class) : undefined,
+    reliabilityScore:
+      row.reliability_score === null || row.reliability_score === undefined
+        ? undefined
+        : Number(row.reliability_score),
+    reliabilityConfidence:
+      row.reliability_confidence === null || row.reliability_confidence === undefined
+        ? undefined
+        : Number(row.reliability_confidence),
+    reliabilityMethod: row.reliability_method ? String(row.reliability_method) : undefined,
+    evidenceWindow: row.evidence_window ? String(row.evidence_window) : undefined,
+    operatingWindow: row.operating_window ? String(row.operating_window) : undefined,
+    sourceType: String(row.source_type),
+    reviewInstanceId: row.review_instance_id ? String(row.review_instance_id) : undefined,
+    assessedAt: String(row.assessed_at ?? row.recorded_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+    supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+    limitations: (row.limitations as string[]) ?? [],
+    metrics: (row.metrics as PersistedReliabilityState["metrics"]) ?? [],
+    evidenceConfidence:
+      (row.evidence_confidence as PersistedReliabilityState["evidenceConfidence"]) ?? undefined,
+    qualitativeAsProbabilityForbidden: true,
+    quantitativeReliabilityCertified: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    accuracyClaimsCertified: false,
+  };
+}
+
+function mapEvidenceRow(row: Record<string, unknown>): PersistedEvidenceConfidence {
+  return {
+    assessmentId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version ?? 1),
+    scope: String(row.scope),
+    score: Number(row.score),
+    confidenceClass: row.confidence_class as PersistedEvidenceConfidence["confidenceClass"],
+    confidence: Number(row.confidence),
+    sourceCount: Number(row.source_count),
+    sourceDiversity: Number(row.source_diversity),
+    freshness: Number(row.freshness),
+    reviewCompleteness: Number(row.review_completeness),
+    conflictState: row.conflict_state as PersistedEvidenceConfidence["conflictState"],
+    lineageIntegrity: row.lineage_integrity as PersistedEvidenceConfidence["lineageIntegrity"],
+    dataSufficiency: row.data_sufficiency as PersistedEvidenceConfidence["dataSufficiency"],
+    abstentionReason: row.abstention_reason ? String(row.abstention_reason) : undefined,
+    method: "evidence_confidence_v1",
+    methodVersion: "1",
+    assessedAt: String(row.assessed_at),
+    reasons: (row.reasons as string[]) ?? [],
+    engineeringCorrectnessClaimed: false,
+  };
+}
+
+function mapHealthProfileRow(row: Record<string, unknown>): PersistedHealthProfile {
+  return {
+    profileId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    snapshotId: row.snapshot_id ? String(row.snapshot_id) : undefined,
+    compositionMethod: row.composition_method as PersistedHealthProfile["compositionMethod"],
+    compositionVersion: String(row.composition_version),
+    conditionStateRef: row.condition_state_ref ? String(row.condition_state_ref) : undefined,
+    conditionContribution:
+      row.condition_contribution === null || row.condition_contribution === undefined
+        ? undefined
+        : Number(row.condition_contribution),
+    reliabilityStateRef: row.reliability_state_ref ? String(row.reliability_state_ref) : undefined,
+    reliabilityContribution: row.reliability_unavailable
+      ? "unavailable"
+      : row.reliability_contribution === null || row.reliability_contribution === undefined
+        ? undefined
+        : Number(row.reliability_contribution),
+    evidenceConfidenceRef: row.evidence_confidence_ref
+      ? String(row.evidence_confidence_ref)
+      : undefined,
+    evidenceConfidence:
+      (row.evidence_confidence as PersistedHealthProfile["evidenceConfidence"]) ?? undefined,
+    overallHealth:
+      row.overall_health === null || row.overall_health === undefined
+        ? undefined
+        : Number(row.overall_health),
+    overallHealthClass: row.overall_health_class ? String(row.overall_health_class) : undefined,
+    overallHealthConfidence:
+      row.overall_health_confidence === null || row.overall_health_confidence === undefined
+        ? undefined
+        : Number(row.overall_health_confidence),
+    criticalityStateRef: row.criticality_state_ref ? String(row.criticality_state_ref) : undefined,
+    criticalityContext:
+      (row.criticality_context as PersistedHealthProfile["criticalityContext"]) ?? undefined,
+    priorityContext: { reserved: true, engine: "AssetPriorityEngine" },
+    limitations: (row.limitations as string[]) ?? [],
+    calculatedAt: String(row.calculated_at),
+    reviewStatus: row.review_status as PersistedHealthProfile["reviewStatus"],
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    provenance: (row.provenance as PersistedHealthProfile["provenance"]) ?? {
+      sourceSystem: "health_composition_engine",
+      observedAt: String(row.calculated_at),
+    },
+    silentIdentityMutationForbidden: true,
+    accuracyClaimsCertified: false,
+    rulClaimsCertified: false,
+    probabilityOfFailureCertified: false,
+    criticalityIsHealthFactor: false,
   };
 }
