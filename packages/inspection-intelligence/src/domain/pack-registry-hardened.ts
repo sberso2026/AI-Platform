@@ -35,7 +35,7 @@ export const HARDENED_PACK_REGISTRY: readonly HardenedPackRegistration[] = [
   {
     manifest: GENERIC_INSPECTION_PACK_SDK,
     compatibility: {
-      moduleVersionRange: ">=1.0.0-ii-release <2.0.0",
+      moduleVersionRange: ">=1.0.0 <2.0.0",
       packSdkVersionRange: ">=0.6.0 <1.0.0",
       providerCompatibility: ["vision_provider_approved_v1"],
     },
@@ -51,7 +51,7 @@ export const HARDENED_PACK_REGISTRY: readonly HardenedPackRegistration[] = [
   {
     manifest: COATINGS_PACK_SCAFFOLD,
     compatibility: {
-      moduleVersionRange: ">=1.0.0-ii-release <2.0.0",
+      moduleVersionRange: ">=1.0.0 <2.0.0",
       packSdkVersionRange: ">=0.6.0 <1.0.0",
       providerCompatibility: ["vision_provider_approved_v1"],
     },
@@ -67,7 +67,7 @@ export const HARDENED_PACK_REGISTRY: readonly HardenedPackRegistration[] = [
   {
     manifest: STRUCTURAL_CONDITION_PACK_SDK,
     compatibility: {
-      moduleVersionRange: ">=1.0.0-ii-release <2.0.0",
+      moduleVersionRange: ">=1.0.0 <2.0.0",
       packSdkVersionRange: ">=0.6.0 <1.0.0",
       providerCompatibility: ["vision_provider_approved_v1"],
     },

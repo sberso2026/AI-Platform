@@ -40,4 +40,8 @@ export * from "./domain/operational-health-metrics";
 export * from "./domain/versioning-compatibility";
 export * from "./domain/consumer-contracts";
 export * from "./domain/module-release-product";
+export * from "./domain/provider-assurance-pins";
+export * from "./domain/registry-drift";
+export * from "./domain/slo-catalog";
+export * from "./domain/ga-closure-product";
 export * from "./pack-sdk";

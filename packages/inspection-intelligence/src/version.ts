@@ -1,11 +1,13 @@
 /**
- * Phase 9J — Inspection Intelligence module release closure identity.
+ * Phase 9K — Inspection Intelligence V1.0 Production GA identity.
  */
 export const INSPECTION_INTELLIGENCE_PRODUCT_NAME = "Inspection Intelligence" as const;
 export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
-export const INSPECTION_INTELLIGENCE_VERSION = "1.0.0-ii-release" as const;
+/** GA baseline — authoritative module version. */
+export const INSPECTION_INTELLIGENCE_VERSION = "1.0.0" as const;
 export const INSPECTION_INTELLIGENCE_ROUTE_PREFIX =
   "/engineering/apps/inspection-intelligence" as const;
+export const INSPECTION_INTELLIGENCE_RELEASE_TAG = "inspection-intelligence-v1.0.0" as const;
 
 export const INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = true as const;
 export const INSPECTION_VERTICAL_SLICE_READY = true as const;
@@ -26,6 +28,10 @@ export const INSPECTION_PACK_REGISTRY_HARDENED = true as const;
 export const INSPECTION_MODULE_MANIFEST_GENERATED = true as const;
 export const INSPECTION_OPERATIONAL_HEALTH_METRICS_EXPOSED = true as const;
 export const INSPECTION_VERSIONING_COMPATIBILITY_FORMALIZED = true as const;
+export const INSPECTION_CROSS_MODULE_CONSUMER_CONTRACTS_CERTIFIED = true as const;
+export const INSPECTION_MODULE_REGISTRY_DRIFT_DETECTED = false as const;
+export const INSPECTION_INTELLIGENCE_V1_FROZEN = true as const;
+export const INSPECTION_PRODUCTION_READY = true as const;
 /** Asset Intelligence / Twin remaining-life product remains unimplemented. */
 export const INSPECTION_PREDICTIVE_IMPLEMENTED = false as const;
 export const INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false as const;
@@ -92,6 +98,7 @@ export function getInspectionIntelligenceDomainDeclaration() {
     productName: INSPECTION_INTELLIGENCE_PRODUCT_NAME,
     moduleKey: INSPECTION_INTELLIGENCE_MODULE_KEY,
     version: INSPECTION_INTELLIGENCE_VERSION,
+    releaseTag: INSPECTION_INTELLIGENCE_RELEASE_TAG,
     routePrefix: INSPECTION_INTELLIGENCE_ROUTE_PREFIX,
     inspectionProductFeaturesImplemented: INSPECTION_PRODUCT_FEATURES_IMPLEMENTED,
     verticalSliceReady: INSPECTION_VERTICAL_SLICE_READY,
@@ -112,6 +119,10 @@ export function getInspectionIntelligenceDomainDeclaration() {
     moduleManifestGenerated: INSPECTION_MODULE_MANIFEST_GENERATED,
     operationalHealthMetricsExposed: INSPECTION_OPERATIONAL_HEALTH_METRICS_EXPOSED,
     versioningCompatibilityFormalized: INSPECTION_VERSIONING_COMPATIBILITY_FORMALIZED,
+    crossModuleConsumerContractsCertified: INSPECTION_CROSS_MODULE_CONSUMER_CONTRACTS_CERTIFIED,
+    moduleRegistryDriftDetected: INSPECTION_MODULE_REGISTRY_DRIFT_DETECTED,
+    inspectionIntelligenceV1Frozen: INSPECTION_INTELLIGENCE_V1_FROZEN,
+    productionInspectionIntelligenceReady: INSPECTION_PRODUCTION_READY,
     predictiveImplemented: INSPECTION_PREDICTIVE_IMPLEMENTED,
     assetIntelligenceImplemented: INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED,
     defectFrameworkImplemented: INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED,
@@ -134,7 +145,7 @@ export function getInspectionIntelligenceDomainDeclaration() {
     assetOwnership: "engineering_os_shared_domain" as const,
     couplesVia: "inspection_target" as const,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Shared Engineering SDKs → Inspection Intelligence → Release Closure / Public Contracts / Registries / Manifest → AI Vision (advisory) / Condition / Predictive / Packs → Offline Sync" as const,
+      "RTB AI Platform → Engineering OS → Inspection Intelligence V1.0 (GA) / Project Intelligence / future Asset Intelligence / Project Controls / Digital Twin" as const,
   };
 }
 

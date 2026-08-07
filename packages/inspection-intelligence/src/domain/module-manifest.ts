@@ -47,7 +47,7 @@ export function generateInspectionModuleManifest(): InspectionModuleManifest {
     routePrefix: INSPECTION_INTELLIGENCE_ROUTE_PREFIX,
     capabilities: INSPECTION_CAPABILITY_CATALOG.map((c) => c.id),
     services: INSPECTION_SERVICE_REGISTRY.map((s) => s.serviceId),
-    publicContracts: INSPECTION_PUBLIC_MODULE_CONTRACTS.map((c) => c.id),
+    publicContracts: INSPECTION_PUBLIC_MODULE_CONTRACTS.map((c) => c.contractId),
     dependencies: {
       sdksConsumed: [
         "engineering-module-sdk",
@@ -101,6 +101,10 @@ export function generateInspectionModuleManifest(): InspectionModuleManifest {
       moduleManifestGenerated: true,
       operationalHealthMetricsExposed: true,
       versioningCompatibilityFormalized: true,
+      crossModuleConsumerContractsCertified: true,
+      moduleRegistryDriftDetected: false,
+      inspectionIntelligenceV1Frozen: true,
+      productionInspectionIntelligenceReady: true,
       assetIntelligenceOwnership: false,
       digitalTwinOwnership: false,
     },

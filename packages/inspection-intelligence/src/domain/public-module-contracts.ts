@@ -1,10 +1,9 @@
 /**
- * Phase 9J — versioned public module contracts for external consumers.
- * No new transport stack; contracts describe existing platform surfaces.
+ * Phase 9K — frozen public module contracts v1 (logical APIs for external consumers).
  */
-
 export const PUBLIC_MODULE_CONTRACT_VERSION = "1.0.0" as const;
 export const PUBLIC_MODULE_CONTRACT_COMPATIBILITY = ">=1.0.0 <2.0.0" as const;
+export const PUBLIC_MODULE_CONTRACT_OWNER = "inspection_intelligence" as const;
 
 export type ContractKind =
   | "api"
@@ -13,136 +12,176 @@ export type ContractKind =
   | "event"
   | "reporting"
   | "ai"
-  | "search";
+  | "search"
+  | "observation_feed"
+  | "asset_reference";
 
 export type PublicModuleContract = {
-  id: string;
+  contractId: string;
   kind: ContractKind;
-  version: string;
+  version: typeof PUBLIC_MODULE_CONTRACT_VERSION;
+  owner: typeof PUBLIC_MODULE_CONTRACT_OWNER;
   compatibilityRange: string;
   deprecated: boolean;
   deprecationNotice: string | null;
   description: string;
+  requestSchema: string;
+  responseSchema: string;
+  errorSchema: string;
+  permissions: readonly string[];
+  tenantWorkspaceContextRequired: true;
   authorityRequired: boolean;
   idempotencyKeyRequired: boolean;
+  auditRequired: boolean;
   tenantIsolated: true;
   emitsEvidencePayload: false;
   silentMutationForbidden: true;
+  privatePersistenceExposed: false;
 };
 
-export const INSPECTION_PUBLIC_MODULE_CONTRACTS: readonly PublicModuleContract[] = [
-  {
-    id: "ii.api.slice",
-    kind: "api",
+function base(
+  partial: Omit<
+    PublicModuleContract,
+    | "version"
+    | "owner"
+    | "compatibilityRange"
+    | "deprecated"
+    | "deprecationNotice"
+    | "tenantWorkspaceContextRequired"
+    | "tenantIsolated"
+    | "emitsEvidencePayload"
+    | "silentMutationForbidden"
+    | "privatePersistenceExposed"
+    | "errorSchema"
+  > & { deprecationNotice?: string | null },
+): PublicModuleContract {
+  return {
     version: PUBLIC_MODULE_CONTRACT_VERSION,
+    owner: PUBLIC_MODULE_CONTRACT_OWNER,
     compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
     deprecated: false,
-    deprecationNotice: null,
-    description: "HTTP slice status API under /api/engineering/inspection-intelligence/slice",
-    authorityRequired: true,
-    idempotencyKeyRequired: false,
+    deprecationNotice: partial.deprecationNotice ?? null,
+    tenantWorkspaceContextRequired: true,
     tenantIsolated: true,
     emitsEvidencePayload: false,
     silentMutationForbidden: true,
-  },
-  {
-    id: "ii.command.session.write",
+    privatePersistenceExposed: false,
+    errorSchema: "ii.error.v1",
+    ...partial,
+  };
+}
+
+export const INSPECTION_PUBLIC_MODULE_CONTRACTS: readonly PublicModuleContract[] = [
+  base({
+    contractId: "ii.api.slice",
+    kind: "api",
+    description: "HTTP slice status API",
+    requestSchema: "ii.api.slice.request.v1",
+    responseSchema: "ii.api.slice.response.v1",
+    permissions: ["inspection.read"],
+    authorityRequired: true,
+    idempotencyKeyRequired: false,
+    auditRequired: false,
+  }),
+  base({
+    contractId: "ii.command.session.write",
     kind: "command",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
-    description: "Write intents for inspection sessions with audit and idempotency",
+    description: "Write intents for inspection sessions",
+    requestSchema: "ii.command.session.write.request.v1",
+    responseSchema: "ii.command.session.write.response.v1",
+    permissions: ["inspection.write"],
     authorityRequired: true,
     idempotencyKeyRequired: true,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
-  {
-    id: "ii.query.session.read",
+    auditRequired: true,
+  }),
+  base({
+    contractId: "ii.query.session.read",
     kind: "query",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
     description: "Tenant/workspace-isolated session read models",
+    requestSchema: "ii.query.session.read.request.v1",
+    responseSchema: "ii.query.session.read.response.v1",
+    permissions: ["inspection.read"],
     authorityRequired: true,
     idempotencyKeyRequired: false,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
-  {
-    id: "ii.event.inspection",
+    auditRequired: false,
+  }),
+  base({
+    contractId: "ii.event.inspection",
     kind: "event",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
-    description: "engineering.inspection.* identifiers/status/governance metadata only",
+    description: "engineering.inspection.* identifiers/status/governance only",
+    requestSchema: "ii.event.envelope.v1",
+    responseSchema: "ii.event.ack.v1",
+    permissions: ["inspection.read"],
     authorityRequired: false,
     idempotencyKeyRequired: false,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
-  {
-    id: "ii.reporting.preparation",
+    auditRequired: true,
+  }),
+  base({
+    contractId: "ii.reporting.preparation",
     kind: "reporting",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
-    description: "Report prep inputs/outputs; no silent mutation of published reports",
-    authorityRequired: true,
-    idempotencyKeyRequired: false,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
-  {
-    id: "ii.ai.vision.advisory",
-    kind: "ai",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
-    description: "Advisory vision envelopes with provider/policy pins and abstention",
+    description: "Report prep inputs/outputs; no silent mutation",
+    requestSchema: "ii.reporting.preparation.request.v1",
+    responseSchema: "ii.reporting.preparation.response.v1",
+    permissions: ["inspection.report"],
     authorityRequired: true,
     idempotencyKeyRequired: true,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
-  {
-    id: "ii.ai.predictive.advisory",
+    auditRequired: true,
+  }),
+  base({
+    contractId: "ii.ai.vision.advisory",
     kind: "ai",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
-    description: "Advisory predictive envelopes; fail-closed providers; no RUL claims",
+    description: "Advisory vision envelopes with provider/policy pins and abstention",
+    requestSchema: "ii.ai.vision.request.v1",
+    responseSchema: "ii.ai.vision.response.v1",
+    permissions: ["inspection.review"],
+    authorityRequired: true,
+    idempotencyKeyRequired: true,
+    auditRequired: true,
+  }),
+  base({
+    contractId: "ii.ai.predictive.advisory",
+    kind: "ai",
+    description: "Advisory predictive envelopes; fail-closed; no RUL claims",
+    requestSchema: "ii.ai.predictive.request.v1",
+    responseSchema: "ii.ai.predictive.response.v1",
+    permissions: ["inspection.review"],
     authorityRequired: true,
     idempotencyKeyRequired: false,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
-  {
-    id: "ii.search.sessions",
+    auditRequired: true,
+  }),
+  base({
+    contractId: "ii.search.sessions",
     kind: "search",
-    version: PUBLIC_MODULE_CONTRACT_VERSION,
-    compatibilityRange: PUBLIC_MODULE_CONTRACT_COMPATIBILITY,
-    deprecated: false,
-    deprecationNotice: null,
     description: "Discoverable session fields; no cross-tenant leakage",
+    requestSchema: "ii.search.sessions.request.v1",
+    responseSchema: "ii.search.sessions.response.v1",
+    permissions: ["inspection.read"],
     authorityRequired: true,
     idempotencyKeyRequired: false,
-    tenantIsolated: true,
-    emitsEvidencePayload: false,
-    silentMutationForbidden: true,
-  },
+    auditRequired: false,
+  }),
+  base({
+    contractId: "ii.observation.feed",
+    kind: "observation_feed",
+    description: "Cross-module observation feed (consume-only)",
+    requestSchema: "ii.observation.feed.request.v1",
+    responseSchema: "ii.observation.feed.response.v1",
+    permissions: ["inspection.read"],
+    authorityRequired: true,
+    idempotencyKeyRequired: false,
+    auditRequired: true,
+  }),
+  base({
+    contractId: "ii.asset.reference",
+    kind: "asset_reference",
+    description: "AssetReference projection for cross-module consumers (no asset ownership)",
+    requestSchema: "ii.asset.reference.request.v1",
+    responseSchema: "ii.asset.reference.response.v1",
+    permissions: ["inspection.read"],
+    authorityRequired: true,
+    idempotencyKeyRequired: false,
+    auditRequired: true,
+  }),
 ] as const;
 
 export function listPublicModuleContracts(): readonly PublicModuleContract[] {
@@ -150,13 +189,14 @@ export function listPublicModuleContracts(): readonly PublicModuleContract[] {
 }
 
 export function getPublicModuleContract(id: string): PublicModuleContract | undefined {
-  return INSPECTION_PUBLIC_MODULE_CONTRACTS.find((c) => c.id === id);
+  return INSPECTION_PUBLIC_MODULE_CONTRACTS.find((c) => c.contractId === id);
 }
 
 export function assertPublicContractsMachineCheckable(): {
   ok: true;
   contractCount: number;
   kinds: ContractKind[];
+  frozenVersion: typeof PUBLIC_MODULE_CONTRACT_VERSION;
 } {
   const kinds = [...new Set(INSPECTION_PUBLIC_MODULE_CONTRACTS.map((c) => c.kind))];
   const required: ContractKind[] = [
@@ -167,14 +207,22 @@ export function assertPublicContractsMachineCheckable(): {
     "reporting",
     "ai",
     "search",
+    "observation_feed",
+    "asset_reference",
   ];
   for (const kind of required) {
     if (!kinds.includes(kind)) throw new Error(`missing_contract_kind:${kind}`);
   }
   for (const c of INSPECTION_PUBLIC_MODULE_CONTRACTS) {
-    if (c.emitsEvidencePayload) throw new Error(`evidence_in_contract:${c.id}`);
-    if (!c.silentMutationForbidden) throw new Error(`silent_mutation_allowed:${c.id}`);
-    if (!c.tenantIsolated) throw new Error(`tenant_isolation_missing:${c.id}`);
+    if (c.version !== "1.0.0") throw new Error(`contract_not_frozen:${c.contractId}`);
+    if (c.emitsEvidencePayload) throw new Error(`evidence_in_contract:${c.contractId}`);
+    if (c.privatePersistenceExposed) throw new Error(`private_schema_exposed:${c.contractId}`);
+    if (!c.silentMutationForbidden) throw new Error(`silent_mutation_allowed:${c.contractId}`);
   }
-  return { ok: true, contractCount: INSPECTION_PUBLIC_MODULE_CONTRACTS.length, kinds };
+  return {
+    ok: true,
+    contractCount: INSPECTION_PUBLIC_MODULE_CONTRACTS.length,
+    kinds,
+    frozenVersion: PUBLIC_MODULE_CONTRACT_VERSION,
+  };
 }

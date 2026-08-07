@@ -18,7 +18,7 @@ export type VersionCompatibilityPolicy = {
 };
 
 export const INSPECTION_VERSIONING_POLICY: VersionCompatibilityPolicy = {
-  moduleSemver: "1.0.0-ii-release",
+  moduleSemver: "1.0.0",
   packSemver: "pack major aligned to compatibility matrix",
   publicContractSemver: "1.0.0 with range >=1.0.0 <2.0.0",
   serviceSemver: "1.0.0 per service entry",
@@ -79,7 +79,7 @@ export function assertVersioningFormalized(): {
   if (deprecated.outcome !== "deprecated_signalled") {
     throw new Error("expected_deprecation_signal");
   }
-  const rolled = rollbackModulePin("1.0.1-ii-release", "1.0.0-ii-release");
+  const rolled = rollbackModulePin("1.0.1", "1.0.0");
   if (rolled.outcome !== "rolled_back") throw new Error("expected_module_rollback");
   return { ok: true, policyVersion: INSPECTION_SEMVER_POLICY_VERSION };
 }

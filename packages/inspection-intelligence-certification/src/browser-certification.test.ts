@@ -1,5 +1,5 @@
 /**
- * Browser certification for Phase 9J — module release markers.
+ * Browser certification for Phase 9K — V1 GA markers.
  */
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("Phase 9J browser certification (source)", () => {
-  it("covers release and prior markers and surfaces", () => {
+describe("Phase 9K browser certification (source)", () => {
+  it("covers v1 and prior markers", () => {
     const overview = readFileSync(
       resolve(
         ROOT,
@@ -17,9 +17,10 @@ describe("Phase 9J browser certification (source)", () => {
       ),
       "utf8",
     );
+    expect(overview).toContain("inspection-intelligence-v1-ready");
     expect(overview).toContain("inspection-intelligence-release-ready");
     expect(overview).toContain("inspection-intelligence-ai-vision-ready");
-    expect(overview).toContain("inspection-intelligence-condition-predictive-ready");
+    expect(overview).toContain("inspection-intelligence-mobile-ready");
     for (const page of ["release", "vision", "condition", "predictive", "sync"]) {
       expect(
         existsSync(
@@ -32,10 +33,7 @@ describe("Phase 9J browser certification (source)", () => {
     }
     expect(
       existsSync(
-        resolve(
-          ROOT,
-          "packages/inspection-intelligence-certification/playwright/module-release.spec.ts",
-        ),
+        resolve(ROOT, "packages/inspection-intelligence-certification/playwright/v1-ga.spec.ts"),
       ),
     ).toBe(true);
   });

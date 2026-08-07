@@ -1,5 +1,5 @@
 /**
- * Phase 9J overview — module release closure, registries and manifest.
+ * Phase 9K overview — Inspection Intelligence V1.0 GA.
  */
 export default function InspectionIntelligenceOverviewPage() {
   return (
@@ -16,24 +16,25 @@ export default function InspectionIntelligenceOverviewPage() {
                   <div data-testid="inspection-intelligence-condition-predictive-ready">
                     <div data-testid="inspection-intelligence-ai-vision-ready">
                       <div data-testid="inspection-intelligence-release-ready">
-                        <h1
-                          id="ii-overview-title"
-                          className="text-2xl font-semibold text-slate-900"
-                        >
-                          Inspection Intelligence
-                        </h1>
-                        <p className="mt-2 max-w-2xl text-slate-600">
-                          Module release closure (1.0.0-ii-release): public contracts, capability and
-                          service registries, hardened pack registry, machine-readable manifest, and
-                          operational health metrics. No Asset Intelligence or Digital Twin
-                          ownership.
-                        </p>
-                        <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                          <li>Versioned public APIs, commands, queries, events, reporting, AI, search</li>
-                          <li>Capability / Service / Pack registries with upgrade and rollback policy</li>
-                          <li>Governed publication with audit; consumer contracts are consume-only</li>
-                          <li>AI Vision remains advisory and human-validated</li>
-                        </ul>
+                        <div data-testid="inspection-intelligence-v1-ready">
+                          <h1
+                            id="ii-overview-title"
+                            className="text-2xl font-semibold text-slate-900"
+                          >
+                            Inspection Intelligence
+                          </h1>
+                          <p className="mt-2 max-w-2xl text-slate-600">
+                            Version 1.0.0 Production GA: frozen public contracts, registries,
+                            manifest, operations and commercial packaging. AI Vision remains
+                            advisory. No Asset Intelligence or Digital Twin ownership.
+                          </p>
+                          <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                            <li>Public contracts v1.0.0 frozen for cross-module consumers</li>
+                            <li>Drift detection keeps manifest and registries consistent</li>
+                            <li>Provider/model/policy pins fail closed</li>
+                            <li>Server-authoritative entitlements and revocation</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </div>

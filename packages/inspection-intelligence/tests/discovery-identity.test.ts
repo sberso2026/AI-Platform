@@ -1,51 +1,46 @@
 import { describe, expect, it } from "vitest";
 import {
   INSPECTION_INTELLIGENCE_VERSION,
+  INSPECTION_INTELLIGENCE_V1_FROZEN,
+  INSPECTION_PRODUCTION_READY,
   INSPECTION_AI_VISION_IMPLEMENTED,
-  INSPECTION_INTELLIGENCE_RELEASE_CLOSED,
   INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED,
+  INSPECTION_MODULE_REGISTRY_DRIFT_DETECTED,
   getInspectionIntelligenceDomainDeclaration,
-  runModuleReleaseHappyPath,
+  runInspectionV1GaClosure,
+  detectModuleRegistryDrift,
   assertPublicContractsMachineCheckable,
-  assertCapabilityCatalogComplete,
-  assertServiceRegistryComplete,
-  assertHardenedPackRegistry,
-  generateInspectionModuleManifest,
-  STRUCTURAL_CONDITION_PACK_SDK,
+  listCrossModuleConsumerFixtures,
 } from "../src";
 
-describe("Phase 9J module release closure", () => {
-  it("locks release identity without Twin ownership", () => {
-    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("1.0.0-ii-release");
-    expect(INSPECTION_INTELLIGENCE_RELEASE_CLOSED).toBe(true);
+describe("Phase 9K Inspection Intelligence V1 GA", () => {
+  it("locks GA 1.0.0 identity", () => {
+    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("1.0.0");
+    expect(INSPECTION_INTELLIGENCE_V1_FROZEN).toBe(true);
+    expect(INSPECTION_PRODUCTION_READY).toBe(true);
     expect(INSPECTION_AI_VISION_IMPLEMENTED).toBe(true);
     expect(INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED).toBe(false);
+    expect(INSPECTION_MODULE_REGISTRY_DRIFT_DETECTED).toBe(false);
     const decl = getInspectionIntelligenceDomainDeclaration();
-    expect(decl.inspectionIntelligenceReleaseClosed).toBe(true);
-    expect(decl.publicModuleContractsPublished).toBe(true);
-    expect(decl.capabilityRegistryIntegrated).toBe(true);
-    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.aiVision).toBe(true);
+    expect(decl.inspectionIntelligenceV1Frozen).toBe(true);
+    expect(decl.crossModuleConsumerContractsCertified).toBe(true);
   });
 
-  it("runs contracts → registries → manifest → health → publication audit", () => {
-    expect(assertPublicContractsMachineCheckable().ok).toBe(true);
-    expect(assertCapabilityCatalogComplete().ok).toBe(true);
-    expect(assertServiceRegistryComplete().failClosedServices).toContain("vision");
-    expect(assertHardenedPackRegistry().incompatibleDenied).toBe(true);
-    const manifest = generateInspectionModuleManifest();
-    expect(manifest.version).toBe("1.0.0-ii-release");
-    expect(manifest.assetIntelligenceOwnership).toBe(false);
+  it("runs GA closure with drift-free registries and cross-module fixtures", () => {
+    expect(assertPublicContractsMachineCheckable().frozenVersion).toBe("1.0.0");
+    expect(detectModuleRegistryDrift().moduleRegistryDriftDetected).toBe(false);
+    expect(listCrossModuleConsumerFixtures()).toHaveLength(3);
 
-    const result = runModuleReleaseHappyPath({
-      actorUserId: "u-admin",
-      reason: "phase9j_release_closure",
+    const result = runInspectionV1GaClosure({
+      actorUserId: "u-ga",
+      reason: "phase9k_v1_ga_closure",
     });
-    expect(result.inspectionIntelligenceReleaseClosed).toBe(true);
-    expect(result.publicationPath.authorityAudit.silentMutation).toBe(false);
-    expect(result.consumerContracts.digitalTwinOwnership).toBe(false);
-    expect(result.aiVisionRemainsAdvisory).toBe(true);
-    expect(result.events).toContain("engineering.inspection.release.closed");
-    // Preserve 9H operational hardening marker: abstain paths remain part of product surface.
+    expect(result.version).toBe("1.0.0");
+    expect(result.productionInspectionIntelligenceReady).toBe(true);
+    expect(result.humanAuthority.aiCannotMutateConditionRating).toBe(true);
+    expect(result.providerAssurance.trainingUse).toBe("forbidden");
+    expect(result.moduleRegistryDriftDetected).toBe(false);
+    // Preserve 9H operational hardening marker: abstain remains part of product surface.
     expect("abstain" in { abstain: true }).toBe(true);
   });
 });

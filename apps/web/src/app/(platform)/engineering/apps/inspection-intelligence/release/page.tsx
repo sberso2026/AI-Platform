@@ -43,6 +43,16 @@ export default function InspectionReleasePage() {
             No Asset Intelligence or Digital Twin ownership
           </dd>
         </div>
+        <div>
+          <dt className="font-medium">GA version</dt>
+          <dd data-testid="inspection-release-ga-version">1.0.0 — inspection-intelligence-v1-ready</dd>
+        </div>
+        <div>
+          <dt className="font-medium">Provider / model / policy</dt>
+          <dd data-testid="inspection-release-pins">
+            vision_provider_approved_v1 / ii_vision_detector@1.0.0 / vision_policy_v1
+          </dd>
+        </div>
       </dl>
     </section>
   );

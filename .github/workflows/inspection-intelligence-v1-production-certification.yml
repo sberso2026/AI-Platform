@@ -1,0 +1,111 @@
+name: Inspection Intelligence V1.0 Production Certification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/inspection-intelligence/**"
+      - "packages/inspection-intelligence-certification/**"
+      - "packages/engineering-os/src/module-registry.ts"
+      - "packages/platform-certification/src/phase9k*"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/inspection-intelligence/**"
+      - "docs/runbooks/INSPECTION_INTELLIGENCE_V1*"
+      - "docs/commercial/INSPECTION_INTELLIGENCE_V1*"
+      - "docs/contracts/INSPECTION_INTELLIGENCE*"
+      - "docs/release/INSPECTION_INTELLIGENCE*"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9K*"
+      - "docs/security/INSPECTION_INTELLIGENCE_V1*"
+      - "docs/testing/INSPECTION_INTELLIGENCE_V1*"
+      - ".github/workflows/inspection-intelligence-v1-production-certification.yml"
+
+concurrency:
+  group: inspection-intelligence-v1-ga-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm --filter @rtb/inspection-intelligence-certification exec playwright install chromium --with-deps
+      - name: Unit tests
+        run: |
+          pnpm --filter @rtb/engineering-os test
+          pnpm --filter @rtb/inspection-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9k-inspection-v1-ga.test.ts
+      - name: Phase 9K certification (gates A–AG)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9k
+        env:
+          CERTIFY_BROWSER: "1"
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const { readFileSync } = require("fs");
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9k-inspection-intelligence-v1-ga-certification.json";
+          const a = JSON.parse(readFileSync(path, "utf8"));
+          const checks = [
+            ["verdict", a.verdict === "PASS"],
+            ["version", a.version === "1.0.0"],
+            ["failedGateCount", a.failedGateCount === 0],
+            ["skippedGateCount", a.skippedGateCount === 0],
+            ["notExecutedGateCount", a.notExecutedGateCount === 0],
+            ["requiredTestsSkipped", a.requiredTestsSkipped === 0],
+            ["unexpected5xx", a.unexpected5xx === 0],
+            ["secretExposureDetected", a.secretExposureDetected === false],
+            ["moduleRegistryDriftDetected", a.moduleRegistryDriftDetected === false],
+            ["duplicateOwnershipDetected", a.duplicateOwnershipDetected === false],
+            ["assetIntelligenceOwnership", a.assetIntelligenceOwnership === false],
+            ["digitalTwinOwnership", a.digitalTwinOwnership === false],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
+            ["releaseEligible", a.releaseEligible === true],
+            ["productionInspectionIntelligenceReady", a.productionInspectionIntelligenceReady === true],
+            ["inspectionIntelligenceV1Frozen", a.inspectionIntelligenceV1Frozen === true],
+            ["phase10AReady", a.phase10AReady === true],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 33],
+            ["identity", a.artifactCommitSha === a.ciHeadSha && a.ciHeadSha === a.buildIdentitySha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            phase10AReady: a.phase10AReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase9k-inspection-intelligence-v1-ga-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9k-inspection-intelligence-v1-ga-certification.json
+          if-no-files-found: warn
