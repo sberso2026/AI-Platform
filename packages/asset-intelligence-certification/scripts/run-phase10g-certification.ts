@@ -207,7 +207,7 @@ async function main() {
     "K",
     "Ownership lock",
     fileOk(VERSION, /ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain"/) &&
-      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = false/)
+      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/)
       ? "pass"
       : "fail",
   );

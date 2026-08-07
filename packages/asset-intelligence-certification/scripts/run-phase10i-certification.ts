@@ -225,7 +225,7 @@ async function main() {
     existsSync(resolve(root, "pnpm-workspace.yaml")) &&
       fileOk(
         VERSION,
-        /ASSET_INTELLIGENCE_VERSION = "(0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance)"/,
+        /ASSET_INTELLIGENCE_VERSION = "(0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance|1\.0\.0)"/,
       )
       ? "pass"
       : "fail",
@@ -286,7 +286,7 @@ async function main() {
       fileOk(VERSION, /ASSET_FUSION_OWNERSHIP = "asset_intelligence"/) &&
       fileOk(VERSION, /CANONICAL_ENGINEERING_RISK_OWNERSHIP = "engineering_core"/) &&
       fileOk(VERSION, /CMMS_WORK_ORDER_OWNERSHIP = "none_in_asset_intelligence"/) &&
-      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = false/) &&
+      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/) &&
       fileOk(OWNERSHIP_LOCK, /multi_source_fusion/) &&
       fileOk(OWNERSHIP_LOCK, /source_reconciliation/) &&
       fileOk(OWNERSHIP_LOCK, /predictive_readiness/) &&
@@ -645,7 +645,7 @@ async function main() {
     "AW",
     "No memory production",
     fileOk(VERSION, /PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false/) &&
-      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = false/)
+      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/)
       ? "pass"
       : "fail",
   );

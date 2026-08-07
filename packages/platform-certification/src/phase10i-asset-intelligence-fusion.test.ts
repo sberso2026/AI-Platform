@@ -27,7 +27,7 @@ describe("Phase 10I Asset Intelligence Fusion architecture lock", () => {
   it("exports fusion readiness and pins the authoritative Phase 10H baseline", () => {
     const version = read(`${AI}/version.ts`);
     expect(version).toMatch(
-      /ASSET_INTELLIGENCE_VERSION = "(0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance)"/,
+      /ASSET_INTELLIGENCE_VERSION = "(0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance|1\.0\.0)"/,
     );
     expect(version).toMatch(/MULTI_SOURCE_FUSION_READY = true/);
     expect(version).toMatch(/SOURCE_RECONCILIATION_ENGINE_READY = true/);
@@ -47,7 +47,7 @@ describe("Phase 10I Asset Intelligence Fusion architecture lock", () => {
     expect(version).toMatch(/RUL_CLAIMS_CERTIFIED = false/);
     expect(version).toMatch(/ACCURACY_CLAIMS_CERTIFIED = false/);
     expect(version).toMatch(/PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false/);
-    expect(version).toMatch(/PRODUCTION_ASSET_INTELLIGENCE_READY = false/);
+    expect(version).toMatch(/PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/);
 
     const ownershipLock = read(`${AI}/architecture/ownership-lock.ts`);
     expect(ownershipLock).toMatch(/predictive_execution_forbidden_in_phase_10i/);

@@ -108,7 +108,7 @@ async function main() {
     "F",
     "Ownership lock",
     has("packages/asset-intelligence/src/version.ts", /ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain"/) &&
-      has("packages/asset-intelligence/src/version.ts", /PRODUCTION_ASSET_INTELLIGENCE_READY = false/)
+      has("packages/asset-intelligence/src/version.ts", /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/)
       ? "pass"
       : "fail",
   );

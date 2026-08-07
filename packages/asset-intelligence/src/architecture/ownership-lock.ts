@@ -6,6 +6,7 @@ import {
   ASSET_IDENTITY_OWNERSHIP,
   ASSET_INTELLIGENCE_OWNERSHIP,
   ASSET_INTELLIGENCE_IMPLEMENTED,
+  ASSET_INTELLIGENCE_V1_GA_CERTIFIED,
   DUPLICATE_ASSET_OWNERSHIP_DETECTED,
   PRODUCTION_ASSET_INTELLIGENCE_READY,
   ACCURACY_CLAIMS_CERTIFIED,
@@ -83,7 +84,8 @@ export function assertOwnershipLock(): {
   assetIdentityOwnership: typeof ASSET_IDENTITY_OWNERSHIP;
   assetIntelligenceOwnership: typeof ASSET_INTELLIGENCE_OWNERSHIP;
   duplicateAssetOwnershipDetected: false;
-  productionAssetIntelligenceReady: false;
+  productionAssetIntelligenceReady: typeof PRODUCTION_ASSET_INTELLIGENCE_READY;
+  assetIntelligenceV1GaCertified: typeof ASSET_INTELLIGENCE_V1_GA_CERTIFIED;
   assetIntelligenceImplemented: typeof ASSET_INTELLIGENCE_IMPLEMENTED;
   accuracyClaimsCertified: false;
   rulClaimsCertified: false;
@@ -100,7 +102,9 @@ export function assertOwnershipLock(): {
     throw new Error("intelligence_owner_mismatch");
   }
   if (DUPLICATE_ASSET_OWNERSHIP_DETECTED) throw new Error("duplicate_ownership");
-  if (PRODUCTION_ASSET_INTELLIGENCE_READY) {
+  // Phase 10K is the explicit GA phase: production readiness is only legitimate once
+  // the V1.0 contract freeze has been certified.
+  if (PRODUCTION_ASSET_INTELLIGENCE_READY && !ASSET_INTELLIGENCE_V1_GA_CERTIFIED) {
     throw new Error("full_module_ga_forbidden_until_explicit_phase");
   }
   if (ACCURACY_CLAIMS_CERTIFIED || RUL_CLAIMS_CERTIFIED) {
@@ -124,7 +128,8 @@ export function assertOwnershipLock(): {
     assetIdentityOwnership: ASSET_IDENTITY_OWNERSHIP,
     assetIntelligenceOwnership: ASSET_INTELLIGENCE_OWNERSHIP,
     duplicateAssetOwnershipDetected: false,
-    productionAssetIntelligenceReady: false,
+    productionAssetIntelligenceReady: PRODUCTION_ASSET_INTELLIGENCE_READY,
+    assetIntelligenceV1GaCertified: ASSET_INTELLIGENCE_V1_GA_CERTIFIED,
     assetIntelligenceImplemented: ASSET_INTELLIGENCE_IMPLEMENTED,
     accuracyClaimsCertified: false,
     rulClaimsCertified: false,

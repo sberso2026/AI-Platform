@@ -96,7 +96,7 @@ function memoryEngine() {
 
 describe("Phase 10I readiness locks", () => {
   it("locks version, fusion readiness, and predictive governance flags", () => {
-    expect(["0.9.0-fusion-readiness", "0.10.0-predictive-governance"]).toContain(
+    expect(["0.9.0-fusion-readiness", "0.10.0-predictive-governance", "1.0.0"]).toContain(
       ASSET_INTELLIGENCE_VERSION,
     );
     expect(MULTI_SOURCE_FUSION_READY).toBe(true);

@@ -141,7 +141,7 @@ function memoryEngine() {
 
 describe("Phase 10J readiness locks", () => {
   it("locks version and every predictive execution flag", () => {
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.10.0-predictive-governance");
+    expect(["0.10.0-predictive-governance", "1.0.0"]).toContain(ASSET_INTELLIGENCE_VERSION);
     expect(PRODUCTION_PREDICTIVE_EXECUTION_ENABLED).toBe(false);
     expect(PREDICTIVE_ML_ENABLED).toBe(false);
     expect(PREDICTIVE_METHODS_CERTIFIED).toBe(false);

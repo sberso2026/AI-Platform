@@ -173,7 +173,7 @@ async function main() {
     "J",
     "Ownership lock",
     fileOk("packages/asset-intelligence/src/version.ts", /ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain"/) &&
-      fileOk("packages/asset-intelligence/src/version.ts", /PRODUCTION_ASSET_INTELLIGENCE_READY = false/)
+      fileOk("packages/asset-intelligence/src/version.ts", /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/)
       ? "pass"
       : "fail",
   );

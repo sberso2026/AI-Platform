@@ -1,6 +1,6 @@
 {
   "name": "@rtb/asset-intelligence-certification",
-  "version": "0.10.0-predictive-governance",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,8 +15,10 @@
     "certify:phase10h": "tsx scripts/run-phase10h-certification.ts",
     "certify:phase10i": "tsx scripts/run-phase10i-certification.ts",
     "certify:phase10j": "tsx scripts/run-phase10j-certification.ts",
+    "certify:phase10k": "tsx scripts/run-phase10k-certification.ts",
     "apply:hosted-migration": "tsx scripts/apply-hosted-migration.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
+    "test:e2e:v1": "playwright test playwright/v1-ga.spec.ts",
     "test:unit": "vitest run src"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
     "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.29",
     "pg": "^8.16.0",
     "tsx": "^4.20.6",

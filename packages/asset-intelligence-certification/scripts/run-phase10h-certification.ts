@@ -268,7 +268,7 @@ async function main() {
       fileOk(VERSION, /ASSET_RISK_SIGNAL_OWNERSHIP = "asset_intelligence"/) &&
       fileOk(VERSION, /MAINTENANCE_RECOMMENDATION_INTELLIGENCE_OWNERSHIP = "asset_intelligence"/) &&
       fileOk(VERSION, /ASSET_PRIORITY_CONTEXT_OWNERSHIP = "asset_intelligence"/) &&
-      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = false/) &&
+      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/) &&
       fileOk(OWNERSHIP_LOCK, /risk_signal_intelligence/) &&
       fileOk(OWNERSHIP_LOCK, /asset_priority_context/)
       ? "pass"

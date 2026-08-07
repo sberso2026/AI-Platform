@@ -54,6 +54,13 @@ export * from "./domain/ii-consumption";
 export * from "./domain/engine";
 export * from "./domain/capabilities";
 export * from "./domain/services";
+// Phase 10K — frozen V1.0 module registries.
+export * from "./domain/capability-registry";
+export * from "./domain/service-registry";
+export * from "./domain/event-contracts";
+export * from "./domain/unavailable-capabilities";
+export * from "./domain/module-manifest";
+export * from "./domain/registry-drift";
 
 // version.ts is the single authority for these locks; several domain modules
 // re-declare them locally for gate visibility, so disambiguate the star exports.

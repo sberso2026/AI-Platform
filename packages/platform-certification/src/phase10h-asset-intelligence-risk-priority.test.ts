@@ -23,7 +23,7 @@ describe("Phase 10H Asset Intelligence Risk/Priority architecture lock", () => {
       "utf8",
     );
     expect(version).toMatch(
-      /ASSET_INTELLIGENCE_VERSION = "(0\.8\.0-risk-priority|0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance)"/,
+      /ASSET_INTELLIGENCE_VERSION = "(0\.8\.0-risk-priority|0\.9\.0-fusion-readiness|0\.10\.0-predictive-governance|1\.0\.0)"/,
     );
     expect(version).toMatch(/ASSET_DECISION_CONTEXT_ENGINE_READY = true/);
     expect(version).toMatch(/RISK_SIGNAL_ENGINE_READY = true/);
@@ -44,7 +44,7 @@ describe("Phase 10H Asset Intelligence Risk/Priority architecture lock", () => {
     expect(version).toMatch(/RUL_CLAIMS_CERTIFIED = false/);
     expect(version).toMatch(/ACCURACY_CLAIMS_CERTIFIED = false/);
     expect(version).toMatch(/PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false/);
-    expect(version).toMatch(/PRODUCTION_ASSET_INTELLIGENCE_READY = false/);
+    expect(version).toMatch(/PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/);
     expect(version).toMatch(
       /PHASE_10G_CERTIFIED_COMMIT = "f81d6ef1e322b49b823b04fc0464c5272c850e82"/,
     );

@@ -398,7 +398,7 @@ function main() {
     ) &&
       fileContains(
         "packages/asset-intelligence/src/version.ts",
-        /PRODUCTION_ASSET_INTELLIGENCE_READY = false/,
+        /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/,
       )
       ? "pass"
       : "fail",
@@ -435,7 +435,7 @@ function main() {
     !iiMoved &&
     fileContains(
       "packages/asset-intelligence/src/version.ts",
-      /PRODUCTION_ASSET_INTELLIGENCE_READY = false/,
+      /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/,
     );
 
   push(

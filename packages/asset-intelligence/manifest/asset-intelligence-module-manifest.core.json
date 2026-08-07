@@ -41,5 +41,7 @@
     "historical_intelligence_timeline",
     "condition_vertical_slice"
   ],
-  "note": "Core foundation + condition vertical slice — not full module GA."
+  "note": "Core foundation + condition vertical slice — not full module GA.",
+  "supersededBy": "asset-intelligence-module-manifest.json",
+  "supersededAtVersion": "1.0.0"
 }

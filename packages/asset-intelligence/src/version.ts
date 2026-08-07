@@ -1,10 +1,20 @@
 /**
- * Phase 10J — version and readiness locks.
+ * Phase 10K — Asset Intelligence V1.0 GA. Single authoritative version source.
+ *
+ * Everything that publishes an Asset Intelligence version (manifest, registries,
+ * docs, certification, UI) reads from here. Nothing may hard-code a second one.
  */
 export const ASSET_INTELLIGENCE_PRODUCT_NAME = "Asset Intelligence" as const;
 export const ASSET_INTELLIGENCE_MODULE_KEY = "asset_intelligence" as const;
-export const ASSET_INTELLIGENCE_VERSION = "0.10.0-predictive-governance" as const;
-export const ASSET_INTELLIGENCE_STATUS = "predictive_governance" as const;
+export const ASSET_INTELLIGENCE_VERSION = "1.0.0" as const;
+export const ASSET_INTELLIGENCE_STATUS = "ga" as const;
+export const ASSET_INTELLIGENCE_ROUTE_PREFIX = "/engineering/apps/asset-intelligence" as const;
+export const ASSET_INTELLIGENCE_API_PREFIX = "/api/engineering/asset-intelligence" as const;
+export const ASSET_INTELLIGENCE_RELEASE_TAG = "asset-intelligence-v1.0.0" as const;
+export const ASSET_INTELLIGENCE_READINESS_MARKER = "asset-intelligence-v1-ready" as const;
+export const ASSET_INTELLIGENCE_PUBLIC_CONTRACT_VERSION = "1.0.0" as const;
+/** Version this GA release upgraded from — used by the upgrade certification gate. */
+export const ASSET_INTELLIGENCE_PREVIOUS_VERSION = "0.10.0-predictive-governance" as const;
 
 export const ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const CANONICAL_ASSET_LIFECYCLE_OWNERSHIP = "engineering_os_shared_domain" as const;
@@ -58,7 +68,7 @@ export const PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const RISK_CORE_AUTO_MUTATION_ALLOWED = false as const;
 export const HOSTED_ASSET_INTELLIGENCE_PERSISTENCE_READY = true as const;
 export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
-export const PRODUCTION_ASSET_INTELLIGENCE_READY = false as const;
+export const PRODUCTION_ASSET_INTELLIGENCE_READY = true as const;
 export const DUPLICATE_ASSET_OWNERSHIP_DETECTED = false as const;
 export const ACCURACY_CLAIMS_CERTIFIED = false as const;
 export const RUL_CLAIMS_CERTIFIED = false as const;
@@ -68,8 +78,38 @@ export const PREDICTIVE_ML_ENABLED = false as const;
 export const PREDICTIVE_METHODS_CERTIFIED = false as const;
 export const PRODUCTION_PREDICTIVE_EXECUTION_ENABLED = false as const;
 export const NUMERIC_PRIORITY_SCORE_REQUIRED = false as const;
-/** Reserved — not implemented in 10J. */
+/** Reserved — not implemented in V1.0. */
 export const SOURCE_TRUST_MODEL_READY = false as const;
+
+/**
+ * Phase 10K — V1.0 GA closure markers. These describe *release* state only;
+ * they never widen a predictive, PoF, RUL or health-contribution lock.
+ */
+export const ASSET_INTELLIGENCE_V1_GA_CERTIFIED = true as const;
+export const ASSET_INTELLIGENCE_V1_FROZEN = true as const;
+export const ASSET_INTELLIGENCE_RELEASE_CLOSED = true as const;
+export const ASSET_INTELLIGENCE_PUBLIC_CONTRACTS_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_CAPABILITY_REGISTRY_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_SERVICE_REGISTRY_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_EVENT_CONTRACTS_FROZEN = true as const;
+export const ASSET_INTELLIGENCE_MODULE_MANIFEST_GENERATED = true as const;
+export const ASSET_INTELLIGENCE_UNAVAILABLE_MATRIX_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_COMMERCIAL_PACKAGING_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_OPERATIONS_RUNBOOKS_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_BACKUP_RESTORE_CERTIFIED = true as const;
+export const ASSET_INTELLIGENCE_UPGRADE_CERTIFIED = true as const;
+export const ASSET_INTELLIGENCE_PERFORMANCE_BASELINE_PUBLISHED = true as const;
+export const ASSET_INTELLIGENCE_MODULE_REGISTRY_DRIFT_DETECTED = false as const;
+
+export const ASSET_INTELLIGENCE_V1_ENTITLEMENTS = [
+  "asset_intelligence.read",
+  "asset_intelligence.assess",
+  "asset_intelligence.submit",
+  "asset_intelligence.review",
+  "asset_intelligence.approve",
+  "asset_intelligence.publish",
+  "asset_intelligence.admin",
+] as const;
 
 export const INSPECTION_INTELLIGENCE_V1_CONTRACTS_CONSUMED = "1.0.0" as const;
 export const INSPECTION_INTELLIGENCE_V1_TAG = "inspection-intelligence-v1.0.0" as const;
@@ -91,6 +131,9 @@ export const PHASE_10H_CERTIFIED_COMMIT = "acec6ce63f9e6eb6968d0f899a61cf442c35e
 export const PHASE_10H_HOSTED_RUN = "31158369645" as const;
 export const PHASE_10I_CERTIFIED_COMMIT = "27fed4e975f015ff01b60a41dd76ab06ea2886a9" as const;
 export const PHASE_10I_HOSTED_RUN = "31163563401" as const;
+/** Authoritative Phase 10J baseline this GA release closes over. */
+export const PHASE_10J_CERTIFIED_COMMIT = "94ba3eccd5b42d9afbc96962bbf7572470485746" as const;
+export const PHASE_10J_HOSTED_RUN = "31170793948" as const;
 
 export function getAssetIntelligenceCoreDeclaration() {
   return {
@@ -98,6 +141,12 @@ export function getAssetIntelligenceCoreDeclaration() {
     moduleKey: ASSET_INTELLIGENCE_MODULE_KEY,
     version: ASSET_INTELLIGENCE_VERSION,
     status: ASSET_INTELLIGENCE_STATUS,
+    routePrefix: ASSET_INTELLIGENCE_ROUTE_PREFIX,
+    apiPrefix: ASSET_INTELLIGENCE_API_PREFIX,
+    releaseTag: ASSET_INTELLIGENCE_RELEASE_TAG,
+    readinessMarker: ASSET_INTELLIGENCE_READINESS_MARKER,
+    publicContractVersion: ASSET_INTELLIGENCE_PUBLIC_CONTRACT_VERSION,
+    previousVersion: ASSET_INTELLIGENCE_PREVIOUS_VERSION,
     assetIdentityOwnership: ASSET_IDENTITY_OWNERSHIP,
     canonicalAssetLifecycleOwnership: CANONICAL_ASSET_LIFECYCLE_OWNERSHIP,
     assetIntelligenceOwnership: ASSET_INTELLIGENCE_OWNERSHIP,
@@ -161,6 +210,22 @@ export function getAssetIntelligenceCoreDeclaration() {
     productionPredictiveExecutionEnabled: PRODUCTION_PREDICTIVE_EXECUTION_ENABLED,
     sourceTrustModelReady: SOURCE_TRUST_MODEL_READY,
     numericPriorityScoreRequired: NUMERIC_PRIORITY_SCORE_REQUIRED,
+    assetIntelligenceV1GaCertified: ASSET_INTELLIGENCE_V1_GA_CERTIFIED,
+    assetIntelligenceV1Frozen: ASSET_INTELLIGENCE_V1_FROZEN,
+    assetIntelligenceReleaseClosed: ASSET_INTELLIGENCE_RELEASE_CLOSED,
+    publicModuleContractsPublished: ASSET_INTELLIGENCE_PUBLIC_CONTRACTS_PUBLISHED,
+    capabilityRegistryPublished: ASSET_INTELLIGENCE_CAPABILITY_REGISTRY_PUBLISHED,
+    serviceRegistryPublished: ASSET_INTELLIGENCE_SERVICE_REGISTRY_PUBLISHED,
+    eventContractsFrozen: ASSET_INTELLIGENCE_EVENT_CONTRACTS_FROZEN,
+    moduleManifestGenerated: ASSET_INTELLIGENCE_MODULE_MANIFEST_GENERATED,
+    unavailableCapabilityMatrixPublished: ASSET_INTELLIGENCE_UNAVAILABLE_MATRIX_PUBLISHED,
+    commercialPackagingPublished: ASSET_INTELLIGENCE_COMMERCIAL_PACKAGING_PUBLISHED,
+    operationsRunbooksPublished: ASSET_INTELLIGENCE_OPERATIONS_RUNBOOKS_PUBLISHED,
+    backupRestoreCertified: ASSET_INTELLIGENCE_BACKUP_RESTORE_CERTIFIED,
+    upgradeCertified: ASSET_INTELLIGENCE_UPGRADE_CERTIFIED,
+    performanceBaselinePublished: ASSET_INTELLIGENCE_PERFORMANCE_BASELINE_PUBLISHED,
+    moduleRegistryDriftDetected: ASSET_INTELLIGENCE_MODULE_REGISTRY_DRIFT_DETECTED,
+    entitlements: ASSET_INTELLIGENCE_V1_ENTITLEMENTS,
     inspectionIntelligenceContractsConsumed: INSPECTION_INTELLIGENCE_V1_CONTRACTS_CONSUMED,
     hierarchy:
       "RTB AI Platform → Engineering OS → Shared Asset Domain (canonical identity) → Asset Intelligence (intelligence about assets)" as const,
@@ -172,4 +237,9 @@ export function getAssetIntelligenceDiscoveryDeclaration() {
     ...getAssetIntelligenceCoreDeclaration(),
     status: ASSET_INTELLIGENCE_STATUS,
   };
+}
+
+/** V1.0 GA declaration — same authoritative source, named for release consumers. */
+export function getAssetIntelligenceGaDeclaration() {
+  return getAssetIntelligenceCoreDeclaration();
 }

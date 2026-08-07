@@ -27,8 +27,10 @@ describe("Phase 10J Asset Intelligence Predictive Governance architecture lock",
 
   it("exports predictive governance readiness and pins the Phase 10I baseline", () => {
     const version = read(`${AI}/version.ts`);
-    expect(version).toMatch(/ASSET_INTELLIGENCE_VERSION = "0\.10\.0-predictive-governance"/);
-    expect(version).toMatch(/ASSET_INTELLIGENCE_STATUS = "predictive_governance"/);
+    expect(version).toMatch(
+      /ASSET_INTELLIGENCE_VERSION = "(0\.10\.0-predictive-governance|1\.0\.0)"/,
+    );
+    expect(version).toMatch(/ASSET_INTELLIGENCE_STATUS = "(predictive_governance|ga)"/);
     expect(version).toMatch(/PREDICTIVE_OBJECTIVE_REGISTRY_READY = true/);
     expect(version).toMatch(/PREDICTIVE_METHOD_REGISTRY_READY = true/);
     expect(version).toMatch(/PREDICTIVE_METHOD_ELIGIBILITY_ENGINE_READY = true/);
@@ -52,7 +54,7 @@ describe("Phase 10J Asset Intelligence Predictive Governance architecture lock",
     expect(version).toMatch(/PREDICTIVE_HEALTH_CONTRIBUTION_ENABLED = false/);
     expect(version).toMatch(/SOURCE_TRUST_MODEL_READY = false/);
     expect(version).toMatch(/PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false/);
-    expect(version).toMatch(/PRODUCTION_ASSET_INTELLIGENCE_READY = false/);
+    expect(version).toMatch(/PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/);
 
     const ownershipLock = read(`${AI}/architecture/ownership-lock.ts`);
     expect(ownershipLock).toMatch(/predictive_execution_forbidden_in_phase_10j/);

@@ -21,5 +21,7 @@
   "draftServices": true,
   "draftContracts": "0.1.0-draft",
   "inspectionIntelligenceContractsConsumed": "1.0.0",
-  "note": "Discovery only — not production-ready."
+  "note": "Discovery only — not production-ready.",
+  "supersededBy": "asset-intelligence-module-manifest.json",
+  "supersededAtVersion": "1.0.0"
 }

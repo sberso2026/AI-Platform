@@ -121,7 +121,7 @@ function main() {
       ) &&
       fileContains(
         "packages/asset-intelligence/src/version.ts",
-        /PRODUCTION_ASSET_INTELLIGENCE_READY = false/,
+        /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/,
       )
       ? "pass"
       : "fail",
@@ -315,7 +315,7 @@ function main() {
     "No full module GA claim",
     fileContains(
       "packages/asset-intelligence/src/version.ts",
-      /PRODUCTION_ASSET_INTELLIGENCE_READY = false/,
+      /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/,
     )
       ? "pass"
       : "fail",

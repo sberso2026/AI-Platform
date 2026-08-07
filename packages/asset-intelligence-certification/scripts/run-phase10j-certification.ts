@@ -237,8 +237,11 @@ async function main() {
     "A",
     "Repository/build identity",
     existsSync(resolve(root, "pnpm-workspace.yaml")) &&
-      fileOk(VERSION, /ASSET_INTELLIGENCE_VERSION = "0\.10\.0-predictive-governance"/) &&
-      fileOk(VERSION, /ASSET_INTELLIGENCE_STATUS = "predictive_governance"/)
+      fileOk(
+        VERSION,
+        /ASSET_INTELLIGENCE_VERSION = "(0\.10\.0-predictive-governance|1\.0\.0)"/,
+      ) &&
+      fileOk(VERSION, /ASSET_INTELLIGENCE_STATUS = "(predictive_governance|ga)"/)
       ? "pass"
       : "fail",
   );
@@ -306,7 +309,7 @@ async function main() {
       fileOk(VERSION, /ASSET_PREDICTIVE_GOVERNANCE_OWNERSHIP = "asset_intelligence"/) &&
       fileOk(VERSION, /CANONICAL_ENGINEERING_RISK_OWNERSHIP = "engineering_core"/) &&
       fileOk(VERSION, /CMMS_WORK_ORDER_OWNERSHIP = "none_in_asset_intelligence"/) &&
-      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = false/) &&
+      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/) &&
       fileOk(OWNERSHIP_LOCK, /predictive_execution_forbidden_in_phase_10j/) &&
       fileOk(OWNERSHIP_LOCK, /PRODUCTION_PREDICTIVE_EXECUTION_ENABLED/) &&
       fileOk(OWNERSHIP_LOCK, /predictive_governance_is_not_a_health_factor/)
@@ -753,7 +756,7 @@ async function main() {
     "BB",
     "No production memory",
     fileOk(VERSION, /PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false/) &&
-      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = false/) &&
+      fileOk(VERSION, /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/) &&
       fileOk(PERSISTENCE, /assertProductionRepositorySafe/)
       ? "pass"
       : "fail",

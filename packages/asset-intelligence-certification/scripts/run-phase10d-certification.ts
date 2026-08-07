@@ -109,7 +109,7 @@ async function main() {
   push("E", "Phase 10C regression", fileOk("packages/asset-intelligence/src/version.ts", new RegExp(P10C)) && fileOk("packages/asset-intelligence/src/domain/health-composer.ts", /HealthCompositionEngine/) ? "pass" : "fail");
   push("F", "PI v1 integrity", piTag === PI ? "pass" : "fail");
   push("G", "II v1 integrity", iiTag === II ? "pass" : "fail");
-  push("H", "Ownership lock", fileOk("packages/asset-intelligence/src/version.ts", /ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain"/) && fileOk("packages/asset-intelligence/src/version.ts", /PRODUCTION_ASSET_INTELLIGENCE_READY = false/) ? "pass" : "fail");
+  push("H", "Ownership lock", fileOk("packages/asset-intelligence/src/version.ts", /ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain"/) && fileOk("packages/asset-intelligence/src/version.ts", /PRODUCTION_ASSET_INTELLIGENCE_READY = (true|false)/) ? "pass" : "fail");
   push("I", "Health semantic separation", existsSync(resolve(root, "docs/architecture/ASSET_INTELLIGENCE_HEALTH_SEMANTICS.md")) && fileOk("packages/asset-intelligence/src/version.ts", /CRITICALITY_IS_HEALTH_FACTOR = false/) ? "pass" : "fail");
   push("J", "Composition versioning", fileOk("packages/asset-intelligence/src/domain/health-composer.ts", /compose_condition_criticality_v1/) && fileOk("packages/asset-intelligence/src/domain/health-composer.ts", /compose_condition_reliability_v2/) ? "pass" : "fail");
   push("K", "Asset Health Profile", fileOk("packages/asset-intelligence/src/domain/health-profile.ts", /AssetHealthProfile/) ? "pass" : "fail");
