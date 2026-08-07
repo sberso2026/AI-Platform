@@ -29,7 +29,13 @@ export type FailureCapability =
   | "degradation.submit"
   | "degradation.review"
   | "degradation.approve"
-  | "degradation.publish";
+  | "degradation.publish"
+  | "lifecycle.read"
+  | "lifecycle.assess"
+  | "lifecycle.submit"
+  | "lifecycle.review"
+  | "lifecycle.approve"
+  | "lifecycle.publish";
 
 export const FAILURE_ROLE_CAPABILITIES: Record<
   FailureIntelligenceRole,
@@ -42,6 +48,7 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "timeseries.read",
     "trend.read",
     "degradation.read",
+    "lifecycle.read",
   ],
   engineer: [
     "failure.read",
@@ -56,6 +63,9 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "degradation.read",
     "degradation.assess",
     "degradation.submit",
+    "lifecycle.read",
+    "lifecycle.assess",
+    "lifecycle.submit",
   ],
   reviewer: [
     "failure.read",
@@ -68,6 +78,9 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "degradation.read",
     "degradation.review",
     "degradation.approve",
+    "lifecycle.read",
+    "lifecycle.review",
+    "lifecycle.approve",
   ],
   manager: [
     "failure.read",
@@ -88,6 +101,12 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "degradation.review",
     "degradation.approve",
     "degradation.publish",
+    "lifecycle.read",
+    "lifecycle.assess",
+    "lifecycle.submit",
+    "lifecycle.review",
+    "lifecycle.approve",
+    "lifecycle.publish",
   ],
   owner: [
     "failure.read",
@@ -108,6 +127,12 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "degradation.review",
     "degradation.approve",
     "degradation.publish",
+    "lifecycle.read",
+    "lifecycle.assess",
+    "lifecycle.submit",
+    "lifecycle.review",
+    "lifecycle.approve",
+    "lifecycle.publish",
   ],
   admin: [
     "failure.read",
@@ -128,6 +153,12 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "degradation.review",
     "degradation.approve",
     "degradation.publish",
+    "lifecycle.read",
+    "lifecycle.assess",
+    "lifecycle.submit",
+    "lifecycle.review",
+    "lifecycle.approve",
+    "lifecycle.publish",
   ],
 };
 
@@ -155,7 +186,9 @@ export function assertFailureCapability(
     (capability === "failure.approve" ||
       capability === "failure.publish" ||
       capability === "degradation.approve" ||
-      capability === "degradation.publish")
+      capability === "degradation.publish" ||
+      capability === "lifecycle.approve" ||
+      capability === "lifecycle.publish")
   ) {
     throw new Error("engineer_self_approve_forbidden");
   }

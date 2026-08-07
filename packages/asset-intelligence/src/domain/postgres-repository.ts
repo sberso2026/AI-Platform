@@ -10,6 +10,8 @@ import type { AssetHealthIndexState } from "./health-index";
 import type { AssetIntelligenceEvent } from "./events";
 import type { IntelligenceTimelineEntry } from "./timeline";
 import type { TaxonomyEntryKind } from "./failure-taxonomy";
+import type { LifecycleTaxonomyKind } from "./lifecycle-taxonomy";
+import type { AssetLifecycleReference } from "./lifecycle-reference";
 import type {
   AssetIntelligenceRepositoryPort,
   IdempotencyRecord,
@@ -35,6 +37,10 @@ import type {
   PersistedTrendState,
   PersistedDegradationState,
   PersistedDegradationReview,
+  PersistedLifecycleIntelligenceState,
+  PersistedLifecycleReview,
+  PersistedLifecycleTransitionCandidate,
+  PersistedLifecycleTaxonomyEntry,
   SourceProvenanceRecord,
 } from "./persistence";
 import { assertProductionRepositorySafe } from "./persistence";
@@ -1325,6 +1331,231 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     if (error) throw new Error(`degradation_review_persist_failed:${error.message}`);
     return review;
   }
+
+  async nextLifecycleVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestLifecycleState(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveLifecycleState(
+    state: PersistedLifecycleIntelligenceState,
+  ): Promise<PersistedLifecycleIntelligenceState> {
+    const { error } = await this.supabase.from("asset_intelligence_lifecycle_states").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      canonical_lifecycle_stage: state.canonicalLifecycleRef.canonicalLifecycleStage,
+      canonical_lifecycle_version: state.canonicalLifecycleRef.stageVersion,
+      canonical_lifecycle_effective_at: state.canonicalLifecycleRef.effectiveAt ?? null,
+      canonical_source_owner: state.canonicalLifecycleRef.sourceOwner,
+      lifecycle_context_class: state.lifecycleContextClass,
+      lifecycle_context_code: state.lifecycleContextCode,
+      lifecycle_context_rationale: state.lifecycleContextRationale,
+      operating_state: state.operatingState ?? null,
+      maintenance_state: state.maintenanceState ?? null,
+      condition_state_ref: state.conditionStateRef ?? null,
+      reliability_state_ref: state.reliabilityStateRef ?? null,
+      failure_state_refs: state.failureStateRefs ?? [],
+      trend_state_refs: state.trendStateRefs ?? [],
+      degradation_state_refs: state.degradationStateRefs ?? [],
+      contributing_slices: state.contributingSlices ?? [],
+      missing_slices: state.missingSlices ?? [],
+      conflicting_slices: state.conflictingSlices ?? [],
+      evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+      trend_confidence_ref: state.trendConfidenceRef ?? null,
+      confidence: state.confidence ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      review_status: state.reviewStatus,
+      review_instance_id: state.reviewInstanceId ?? null,
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      service_age_context: state.serviceAgeContext ?? null,
+      evidence_confidence: state.evidenceConfidence ?? null,
+      trend_confidence: state.trendConfidence ?? null,
+      mutates_canonical_lifecycle: false,
+      is_health_factor: false,
+      payload: {
+        sourceReference: state.canonicalLifecycleRef.sourceReference ?? null,
+        writeBackForbidden: true,
+        predictiveMlUsed: false,
+        probabilityOfFailureCertified: false,
+        rulClaimsCertified: false,
+        accuracyClaimsCertified: false,
+        aiMayPublishForbidden: true,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`lifecycle_state_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestLifecycleState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleIntelligenceState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_lifecycle_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapLifecycleRow(data) : undefined;
+  }
+
+  async listLifecycleHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleIntelligenceState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_lifecycle_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapLifecycleRow);
+  }
+
+  async saveLifecycleReview(
+    review: PersistedLifecycleReview,
+  ): Promise<PersistedLifecycleReview> {
+    const { error } = await this.supabase.from("asset_intelligence_lifecycle_reviews").insert({
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      asset_id: review.assetId,
+      lifecycle_state_id: review.lifecycleStateId,
+      review_instance_id: review.reviewInstanceId,
+      action: review.action,
+      reviewer_id: review.reviewerId,
+      reason: review.reason ?? null,
+      state_version: review.stateVersion,
+      canonical_lifecycle_version: review.canonicalLifecycleVersion ?? null,
+      evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+      trend_confidence_ref: review.trendConfidenceRef ?? null,
+      correlation_id: review.correlationId ?? null,
+      created_at: review.createdAt,
+    });
+    if (error) throw new Error(`lifecycle_review_persist_failed:${error.message}`);
+    return review;
+  }
+
+  async saveLifecycleTransitionCandidate(
+    candidate: PersistedLifecycleTransitionCandidate,
+  ): Promise<PersistedLifecycleTransitionCandidate> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_lifecycle_transition_candidates")
+      .insert({
+        id: candidate.candidateId,
+        tenant_id: candidate.tenantId,
+        workspace_id: candidate.workspaceId,
+        asset_id: candidate.assetId,
+        lifecycle_state_id: candidate.lifecycleIntelligenceStateId,
+        code: candidate.code,
+        label: candidate.label,
+        rationale: candidate.rationale,
+        recommended_review: candidate.recommendedReview ?? null,
+        status: candidate.status,
+        mutates_canonical_lifecycle: false,
+        created_at: candidate.createdAt,
+        decided_at: candidate.decidedAt ?? null,
+        decided_by: candidate.decidedBy ?? null,
+        decision_reason: candidate.decisionReason ?? null,
+        payload: {},
+      });
+    if (error) {
+      throw new Error(`lifecycle_transition_candidate_persist_failed:${error.message}`);
+    }
+    return candidate;
+  }
+
+  async listLifecycleTransitionCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleTransitionCandidate[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_lifecycle_transition_candidates")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapLifecycleTransitionCandidateRow);
+  }
+
+  async upsertLifecycleTaxonomy(
+    entry: PersistedLifecycleTaxonomyEntry,
+  ): Promise<PersistedLifecycleTaxonomyEntry> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_lifecycle_taxonomy")
+      .upsert(
+        {
+          taxonomy_id: entry.taxonomyId,
+          taxonomy_version: entry.taxonomyVersion,
+          kind: entry.kind,
+          code: entry.code,
+          name: entry.name,
+          description: entry.description ?? "",
+          category: entry.category ?? null,
+          applicable_asset_classes: entry.applicableAssetClasses ?? ["*"],
+          status: entry.status,
+          source_standard: entry.sourceStandard ?? null,
+          pack_owner: entry.packOwner,
+          effective_from: entry.effectiveFrom,
+          deprecated_at: entry.deprecatedAt ?? null,
+          replacement_code: entry.replacementCode ?? null,
+          tenant_id: entry.tenantId ?? null,
+          workspace_id: entry.workspaceId ?? null,
+          payload: {},
+        },
+        { onConflict: "kind,code,taxonomy_version" },
+      )
+      .select("*")
+      .single();
+    if (error) throw new Error(`lifecycle_taxonomy_persist_failed:${error.message}`);
+    return mapLifecycleTaxonomyRow(data);
+  }
+
+  async listLifecycleTaxonomy(
+    kind?: LifecycleTaxonomyKind,
+    packOwner?: string,
+  ): Promise<PersistedLifecycleTaxonomyEntry[]> {
+    let q = this.supabase.from("asset_intelligence_lifecycle_taxonomy").select("*");
+    if (kind) q = q.eq("kind", kind);
+    if (packOwner) q = q.eq("pack_owner", packOwner);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapLifecycleTaxonomyRow);
+  }
 }
 
 export function createPostgresAssetIntelligenceRepository(
@@ -1851,5 +2082,128 @@ function mapDegradationRow(row: Record<string, unknown>): PersistedDegradationSt
     accuracyClaimsCertified: false,
     aiMayPublishForbidden: true,
     isFailureModeClaim: false,
+  };
+}
+
+function mapLifecycleRow(row: Record<string, unknown>): PersistedLifecycleIntelligenceState {
+  const payload = (row.payload as Record<string, unknown> | null) ?? {};
+  const canonicalLifecycleRef: AssetLifecycleReference = {
+    kind: "canonical_lifecycle_reference",
+    assetId: String(row.asset_id),
+    canonicalLifecycleStage: row.canonical_lifecycle_stage as AssetLifecycleReference["canonicalLifecycleStage"],
+    stageVersion: Number(row.canonical_lifecycle_version),
+    effectiveAt: row.canonical_lifecycle_effective_at
+      ? String(row.canonical_lifecycle_effective_at)
+      : String(row.recorded_at),
+    sourceOwner: "engineering_os_shared_domain",
+    sourceReference: payload.sourceReference ? String(payload.sourceReference) : undefined,
+    writeBackForbidden: true,
+  };
+  return {
+    kind: "lifecycle_intelligence",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedLifecycleIntelligenceState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    canonicalLifecycleRef,
+    lifecycleContextClass:
+      row.lifecycle_context_class as PersistedLifecycleIntelligenceState["lifecycleContextClass"],
+    lifecycleContextCode: String(row.lifecycle_context_code),
+    lifecycleContextRationale: (row.lifecycle_context_rationale as string[]) ?? [],
+    operatingState: row.operating_state
+      ? (String(row.operating_state) as PersistedLifecycleIntelligenceState["operatingState"])
+      : undefined,
+    maintenanceState: row.maintenance_state
+      ? (String(row.maintenance_state) as PersistedLifecycleIntelligenceState["maintenanceState"])
+      : undefined,
+    conditionStateRef: row.condition_state_ref ? String(row.condition_state_ref) : undefined,
+    reliabilityStateRef: row.reliability_state_ref ? String(row.reliability_state_ref) : undefined,
+    failureStateRefs: (row.failure_state_refs as string[]) ?? [],
+    trendStateRefs: (row.trend_state_refs as string[]) ?? [],
+    degradationStateRefs: (row.degradation_state_refs as string[]) ?? [],
+    contributingSlices:
+      (row.contributing_slices as PersistedLifecycleIntelligenceState["contributingSlices"]) ?? [],
+    missingSlices: (row.missing_slices as string[]) ?? [],
+    conflictingSlices: (row.conflicting_slices as string[]) ?? [],
+    evidenceConfidenceRef: row.evidence_confidence_ref ? String(row.evidence_confidence_ref) : undefined,
+    trendConfidenceRef: row.trend_confidence_ref ? String(row.trend_confidence_ref) : undefined,
+    confidence:
+      row.confidence === null || row.confidence === undefined ? undefined : Number(row.confidence),
+    method: String(row.method),
+    methodVersion: String(row.method_version ?? "1"),
+    reviewStatus: row.review_status as PersistedLifecycleIntelligenceState["reviewStatus"],
+    reviewInstanceId: row.review_instance_id ? String(row.review_instance_id) : undefined,
+    evidenceConfidence:
+      (row.evidence_confidence as PersistedLifecycleIntelligenceState["evidenceConfidence"]) ??
+      undefined,
+    trendConfidence:
+      (row.trend_confidence as PersistedLifecycleIntelligenceState["trendConfidence"]) ?? undefined,
+    assessedAt: String(row.assessed_at ?? row.recorded_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    limitations: (row.limitations as string[]) ?? [],
+    supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+    serviceAgeContext:
+      (row.service_age_context as PersistedLifecycleIntelligenceState["serviceAgeContext"]) ??
+      undefined,
+    mutatesCanonicalLifecycle: false,
+    isHealthFactor: false,
+    predictiveMlUsed: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    accuracyClaimsCertified: false,
+    aiMayPublishForbidden: true,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+  };
+}
+
+function mapLifecycleTransitionCandidateRow(
+  row: Record<string, unknown>,
+): PersistedLifecycleTransitionCandidate {
+  return {
+    kind: "lifecycle_transition_candidate",
+    candidateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    code: String(row.code),
+    label: String(row.label),
+    rationale: (row.rationale as string[]) ?? [],
+    lifecycleIntelligenceStateId: String(row.lifecycle_state_id ?? ""),
+    recommendedReview: row.recommended_review ? String(row.recommended_review) : undefined,
+    status: row.status as PersistedLifecycleTransitionCandidate["status"],
+    mutatesCanonicalLifecycle: false,
+    createdAt: String(row.created_at),
+    decidedAt: row.decided_at ? String(row.decided_at) : undefined,
+    decidedBy: row.decided_by ? String(row.decided_by) : undefined,
+    decisionReason: row.decision_reason ? String(row.decision_reason) : undefined,
+  };
+}
+
+function mapLifecycleTaxonomyRow(row: Record<string, unknown>): PersistedLifecycleTaxonomyEntry {
+  return {
+    taxonomyId: String(row.taxonomy_id),
+    taxonomyVersion: String(row.taxonomy_version),
+    kind: row.kind as PersistedLifecycleTaxonomyEntry["kind"],
+    code: String(row.code),
+    name: String(row.name),
+    description: String(row.description ?? ""),
+    category: row.category ? String(row.category) : undefined,
+    applicableAssetClasses: (row.applicable_asset_classes as string[]) ?? ["*"],
+    status: row.status as PersistedLifecycleTaxonomyEntry["status"],
+    sourceStandard: row.source_standard ? String(row.source_standard) : undefined,
+    packOwner: String(row.pack_owner),
+    effectiveFrom: String(row.effective_from),
+    deprecatedAt: row.deprecated_at ? String(row.deprecated_at) : undefined,
+    replacementCode: row.replacement_code ? String(row.replacement_code) : undefined,
+    tenantId: row.tenant_id ? String(row.tenant_id) : undefined,
+    workspaceId: row.workspace_id ? String(row.workspace_id) : undefined,
   };
 }

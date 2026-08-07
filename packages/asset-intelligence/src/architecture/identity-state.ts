@@ -78,7 +78,13 @@ export type AssetRiskState = AssetIntelligenceStateBase & {
   canonicalRiskRegisterOwnedBy: "engineering_core";
 };
 
-export type AssetLifecycleIntelligenceState = AssetIntelligenceStateBase & {
+/**
+ * @deprecated Phase 10A reserved stub, superseded by the authoritative
+ * Phase 10G `AssetLifecycleIntelligenceState` in `domain/lifecycle.ts`.
+ * Kept only for historical union-shape reference; not exported from the
+ * package entrypoint to avoid colliding with the real domain type.
+ */
+export type ReservedAssetLifecycleStageStateStub = AssetIntelligenceStateBase & {
   kind: "lifecycle_intelligence";
   stage:
     | "design"
@@ -100,4 +106,4 @@ export type AssetIntelligenceState =
   | AssetCriticalityState
   | AssetReliabilityState
   | AssetRiskState
-  | AssetLifecycleIntelligenceState;
+  | ReservedAssetLifecycleStageStateStub;

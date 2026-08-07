@@ -28,9 +28,14 @@ import {
   createAssetTrendIntelligenceEngine,
   type AssetTrendIntelligenceEngine,
 } from "./degradation-engine";
+import {
+  createLifecycleContextEngine,
+  type LifecycleContextEngine,
+} from "./lifecycle-engine";
 import { createEngineeringTimeSeries } from "./time-series";
 import type { FailureAssessmentBundle } from "./failure";
 import type { TrendDegradationBundle } from "./degradation";
+import type { AssetLifecycleReference, MaintenanceState, OperatingState } from "./lifecycle-reference";
 import {
   createInMemorySharedDomainIdentityPort,
   type SharedDomainAssetIdentityPort,
@@ -52,6 +57,8 @@ import {
   transitionFailureReview,
   startDegradationReview,
   transitionDegradationReview,
+  startLifecycleReview,
+  transitionLifecycleReview,
 } from "./review-workflow";
 import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
 import { assertRegisteredActiveSource } from "./source-registry";
@@ -68,6 +75,8 @@ import type {
   PersistedDegradationState,
   PersistedFailureModeState,
   PersistedHealthIndexState,
+  PersistedLifecycleIntelligenceState,
+  PersistedLifecycleTransitionCandidate,
   PersistedReliabilityState,
   PersistedTrendState,
 } from "./persistence";
@@ -336,6 +345,69 @@ export type ReviewDegradationCommand = {
   actorRole?: FailureIntelligenceRole;
 };
 
+export type AssessLifecycleCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey?: string;
+  /** Read-only canonical lifecycle reference from Shared Domain — required. */
+  canonicalLifecycle: AssetLifecycleReference;
+  /** Optimistic check against the canonical reference's stageVersion (not our own version). */
+  expectedCanonicalLifecycleVersion?: number;
+  operatingState?: OperatingState;
+  maintenanceState?: MaintenanceState;
+  commissionedAt?: string;
+  designLifeReference?: string;
+  evidenceRefs?: string[];
+  observedAt?: string;
+  startReview?: boolean;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  expectedVersion?: number;
+  createdBy?: string;
+  actorRole?: FailureIntelligenceRole;
+};
+
+export type EngineLifecycleResult = {
+  identityOwner: "engineering_os_shared_domain";
+  lifecycle: PersistedLifecycleIntelligenceState;
+  transitionCandidates: PersistedLifecycleTransitionCandidate[];
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  identityMutated: false;
+  idempotentReplay?: boolean;
+  healthMutated: false;
+  lifecycleHealthContributionEnabled: false;
+  mutatesCanonicalLifecycle: false;
+  predictiveMlUsed: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+  accuracyClaimsCertified: false;
+  aiMayPublishForbidden: true;
+};
+
+export type ReviewLifecycleCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  lifecycleStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+  reviewerId: string;
+  reason?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  publish?: boolean;
+  actorRole?: FailureIntelligenceRole;
+};
+
 export type AssetIntelligenceEngineDeps = {
   identityPort: SharedDomainAssetIdentityPort;
   repository: AssetIntelligenceRepositoryPort;
@@ -344,6 +416,7 @@ export type AssetIntelligenceEngineDeps = {
   evidenceConfidenceEngine?: EvidenceConfidenceEngine;
   failureIntelligenceEngine?: AssetFailureIntelligenceEngine;
   trendIntelligenceEngine?: AssetTrendIntelligenceEngine;
+  lifecycleContextEngine?: LifecycleContextEngine;
 };
 
 export class AssetIntelligenceEngine {
@@ -351,6 +424,7 @@ export class AssetIntelligenceEngine {
   private readonly evidenceConfidenceEngine: EvidenceConfidenceEngine;
   private readonly failureIntelligence: AssetFailureIntelligenceEngine;
   private readonly trendIntelligence: AssetTrendIntelligenceEngine;
+  private readonly lifecycleContextEngine: LifecycleContextEngine;
 
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
@@ -367,6 +441,11 @@ export class AssetIntelligenceEngine {
     this.trendIntelligence =
       deps.trendIntelligenceEngine ??
       createAssetTrendIntelligenceEngine({
+        newId: (p) => this.deps.repository.newId(p),
+      });
+    this.lifecycleContextEngine =
+      deps.lifecycleContextEngine ??
+      createLifecycleContextEngine({
         newId: (p) => this.deps.repository.newId(p),
       });
   }
@@ -2146,6 +2225,434 @@ export class AssetIntelligenceEngine {
     await this.deps.repository.appendEvent(ev);
     return {
       degradation,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  async assessLifecycle(cmd: AssessLifecycleCommand): Promise<EngineLifecycleResult> {
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, "lifecycle.assess");
+    }
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "lifecycle");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineLifecycleResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+
+    if (
+      cmd.expectedCanonicalLifecycleVersion !== undefined &&
+      cmd.expectedCanonicalLifecycleVersion !== cmd.canonicalLifecycle.stageVersion
+    ) {
+      throw new Error("canonical_lifecycle_version_conflict");
+    }
+
+    const evidenceRefs = cmd.evidenceRefs ?? [];
+    const evidenceConfidence = this.evidenceConfidenceEngine.assess({
+      assessmentId: this.deps.repository.newId("ec"),
+      assetId: cmd.assetId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      scope: "lifecycle_intelligence",
+      evidenceRefs,
+      sourceKeys: [sourceKey],
+      observedAt: cmd.observedAt ?? recordedAt,
+      asOf: recordedAt,
+    });
+    await this.deps.repository.saveEvidenceConfidence({
+      ...evidenceConfidence,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: 1,
+    });
+
+    const isPublished = (status?: string) => status === "published" || status === "approved";
+
+    const [condition, reliability, criticality, failureMode, trend, degradation] =
+      await Promise.all([
+        this.deps.repository.latestCondition(cmd.tenantId, cmd.workspaceId, cmd.assetId, recordedAt),
+        this.deps.repository.latestReliability(
+          cmd.tenantId,
+          cmd.workspaceId,
+          cmd.assetId,
+          recordedAt,
+        ),
+        this.deps.repository.latestCriticality(
+          cmd.tenantId,
+          cmd.workspaceId,
+          cmd.assetId,
+          recordedAt,
+        ),
+        this.deps.repository.latestFailureMode(
+          cmd.tenantId,
+          cmd.workspaceId,
+          cmd.assetId,
+          recordedAt,
+        ),
+        this.deps.repository.latestTrendState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+        this.deps.repository.latestDegradationState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      ]);
+
+    // Only published/approved slices are forwarded — draft/rejected work must not shape lifecycle context.
+    const bundle = this.lifecycleContextEngine.compose({
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: {
+        sourceSystem: sourceKey,
+        observedAt: cmd.observedAt ?? recordedAt,
+        method: "lifecycle_context_v1",
+        evidenceRefs,
+        policyId: "asset_intelligence.lifecycle.assess.v1",
+      },
+      canonicalLifecycle: cmd.canonicalLifecycle,
+      operatingState: cmd.operatingState,
+      maintenanceState: cmd.maintenanceState,
+      condition:
+        condition && isPublished(condition.status)
+          ? { stateId: condition.stateId, reviewStatus: condition.status, rating: condition.conditionRating }
+          : undefined,
+      reliability:
+        reliability && isPublished(reliability.reviewStatus)
+          ? {
+              stateId: reliability.stateId,
+              reviewStatus: reliability.reviewStatus,
+              rating: reliability.reliabilityClass,
+            }
+          : undefined,
+      criticality:
+        criticality && isPublished(criticality.reviewStatus)
+          ? {
+              stateId: criticality.stateId,
+              reviewStatus: criticality.reviewStatus,
+              rating: criticality.criticalityRating,
+            }
+          : undefined,
+      failures:
+        failureMode && isPublished(failureMode.reviewStatus)
+          ? [
+              {
+                stateId: failureMode.stateId,
+                reviewStatus: failureMode.reviewStatus,
+                code: failureMode.failureModeCode,
+              },
+            ]
+          : [],
+      trends:
+        trend && isPublished(trend.reviewStatus)
+          ? [
+              {
+                stateId: trend.stateId,
+                reviewStatus: trend.reviewStatus,
+                direction: trend.trendDirection,
+                trendConfidence: trend.trendConfidence,
+              },
+            ]
+          : [],
+      degradations:
+        degradation && isPublished(degradation.reviewStatus)
+          ? [
+              {
+                stateId: degradation.stateId,
+                reviewStatus: degradation.reviewStatus,
+                direction: degradation.degradationDirection,
+              },
+            ]
+          : [],
+      evidenceConfidence,
+      commissionedAt: cmd.commissionedAt,
+      designLifeReference: cmd.designLifeReference,
+      startReview: cmd.startReview,
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!bundle.abstained && cmd.startReview !== false) {
+      const review = startLifecycleReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        lifecycleStateId: bundle.lifecycle.stateId,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      bundle.lifecycle.reviewInstanceId = reviewInstanceId;
+      bundle.lifecycle.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextLifecycleVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+    const lifecycle: PersistedLifecycleIntelligenceState = {
+      ...bundle.lifecycle,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveLifecycleState(lifecycle);
+    await this.deps.repository.cacheIdentity(identity);
+
+    const transitionCandidates: PersistedLifecycleTransitionCandidate[] = [];
+    for (const candidate of bundle.transitionCandidates) {
+      const persistedCandidate: PersistedLifecycleTransitionCandidate = {
+        ...candidate,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+      };
+      await this.deps.repository.saveLifecycleTransitionCandidate(persistedCandidate);
+      transitionCandidates.push(persistedCandidate);
+    }
+
+    const timelineItems: Array<{ kind: IntelligenceTimelineEntry["kind"]; stateId: string }> = [
+      { kind: "lifecycle_intelligence", stateId: lifecycle.stateId },
+    ];
+    for (const candidate of transitionCandidates) {
+      timelineItems.push({ kind: "lifecycle_transition_candidate", stateId: candidate.candidateId });
+    }
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey,
+      provenance: lifecycle.provenance,
+      correlationId: cmd.correlationId,
+      items: timelineItems,
+    });
+
+    const healthIndex = await this.deps.repository.latestHealthIndex(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const snapshot = composeAssetSnapshot({
+      identity,
+      asOf: recordedAt,
+      condition,
+      healthIndex,
+      criticality,
+      evidenceConfidence,
+    });
+    const snapshotId = this.deps.repository.newId("snap");
+    await this.deps.repository.saveSnapshot({
+      id: snapshotId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: condition?.stateId,
+      healthIndex,
+      identityReference: identity,
+      sourceSet: [sourceKey],
+      timelinePosition: timelineEntries[timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.lifecycle.assessed",
+      payload: {
+        sourceKey,
+        kind: "lifecycle_intelligence",
+        status: lifecycle.reviewStatus,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: lifecycle.stateId,
+      published: false,
+      createdAt: recordedAt,
+    });
+
+    const eventTypes: Array<import("./events").AssetIntelligenceEventType> = [
+      "engineering.asset.lifecycle.assessed",
+      "engineering.asset.evidence_confidence.assessed",
+    ];
+    if (transitionCandidates.length > 0) {
+      eventTypes.push("engineering.asset.lifecycle.transition_candidate.proposed");
+    }
+    for (const type of eventTypes) {
+      const ev = createAssetIntelligenceEvent({
+        type,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: lifecycle.stateId,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: { sourceKey, kind: "lifecycle_intelligence", status: lifecycle.reviewStatus },
+      });
+      await this.deps.events.publish(ev);
+      await this.deps.repository.appendEvent(ev);
+    }
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EngineLifecycleResult = {
+      identityOwner: "engineering_os_shared_domain",
+      lifecycle,
+      transitionCandidates,
+      evidenceConfidence,
+      timelineEntries,
+      snapshot,
+      snapshotId,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      lifecycleHealthContributionEnabled: false,
+      mutatesCanonicalLifecycle: false,
+      predictiveMlUsed: false,
+      probabilityOfFailureCertified: false,
+      rulClaimsCertified: false,
+      accuracyClaimsCertified: false,
+      aiMayPublishForbidden: true,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_lifecycle",
+        resourceId: lifecycle.stateId,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewLifecycle(cmd: ReviewLifecycleCommand): Promise<{
+    lifecycle: PersistedLifecycleIntelligenceState;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve"
+        ? "lifecycle.approve"
+        : cmd.publish
+          ? "lifecycle.publish"
+          : "lifecycle.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestLifecycleState(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.stateId !== cmd.lifecycleStateId) {
+      throw new Error("lifecycle_state_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_lifecycle_immutable");
+    }
+    const workflowInstance = transitionLifecycleReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextLifecycleVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const lifecycle: PersistedLifecycleIntelligenceState = {
+      ...latest,
+      stateId: this.deps.repository.newId("life"),
+      version,
+      reviewStatus: nextStatus as PersistedLifecycleIntelligenceState["reviewStatus"],
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.stateId,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+      },
+    };
+    await this.deps.repository.saveLifecycleState(lifecycle);
+    await this.deps.repository.saveLifecycleReview({
+      reviewId: this.deps.repository.newId("lrev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      lifecycleStateId: lifecycle.stateId,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      canonicalLifecycleVersion: lifecycle.canonicalLifecycleRef.stageVersion,
+      evidenceConfidenceRef: lifecycle.evidenceConfidenceRef,
+      trendConfidenceRef: lifecycle.trendConfidenceRef,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: lifecycle.provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind: nextStatus === "published" ? "lifecycle_published" : "lifecycle_review",
+          stateId: lifecycle.stateId,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.lifecycle.published"
+          : "engineering.asset.lifecycle.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: lifecycle.stateId,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "lifecycle_intelligence", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    return {
+      lifecycle,
       workflowInstance,
       identityMutated: false,
       healthMutated: false,

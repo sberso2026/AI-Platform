@@ -25,7 +25,7 @@ import {
 
 describe("Phase 10F time series / trend / degradation", () => {
   it("locks version and readiness flags", () => {
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.6.0-timeseries");
+    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.7.0-lifecycle");
     expect(ENGINEERING_TIME_SERIES_READY).toBe(true);
     expect(CHANGE_DETECTION_ENGINE_READY).toBe(true);
     expect(TREND_CONFIDENCE_ENGINE_READY).toBe(true);

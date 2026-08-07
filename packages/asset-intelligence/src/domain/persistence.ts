@@ -28,6 +28,11 @@ import type { EngineeringTimeSeries } from "./time-series";
 import type { TrendConfidenceAssessment } from "./trend-confidence";
 import type { ChangeDetectionResult } from "./change-detection";
 import type { AssetDegradationState, AssetTrendState } from "./degradation";
+import type {
+  AssetLifecycleIntelligenceState,
+  LifecycleTransitionCandidate,
+} from "./lifecycle";
+import type { LifecycleTaxonomyEntry, LifecycleTaxonomyKind } from "./lifecycle-taxonomy";
 
 export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
 
@@ -196,6 +201,43 @@ export type PersistedDegradationReview = {
   stateVersion: number;
   correlationId?: string;
   createdAt: string;
+};
+
+/** Phase 10G — Lifecycle Intelligence persisted state types. */
+export type PersistedLifecycleIntelligenceState = AssetLifecycleIntelligenceState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedLifecycleReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  lifecycleStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  canonicalLifecycleVersion?: number;
+  evidenceConfidenceRef?: string;
+  trendConfidenceRef?: string;
+  correlationId?: string;
+  createdAt: string;
+};
+
+export type PersistedLifecycleTransitionCandidate = LifecycleTransitionCandidate & {
+  tenantId: string;
+  workspaceId: string;
+};
+
+/** Shared + pack-extensible registry entries — optionally tenant/workspace scoped. */
+export type PersistedLifecycleTaxonomyEntry = LifecycleTaxonomyEntry & {
+  tenantId?: string;
+  workspaceId?: string;
 };
 
 export type PersistedSnapshotRecord = {
@@ -441,6 +483,42 @@ export type AssetIntelligenceRepositoryPort = {
   saveDegradationReview(
     review: PersistedDegradationReview,
   ): Promise<PersistedDegradationReview>;
+  /** Optimistic concurrency: returns next version or throws on conflict. */
+  nextLifecycleVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveLifecycleState(
+    state: PersistedLifecycleIntelligenceState,
+  ): Promise<PersistedLifecycleIntelligenceState>;
+  latestLifecycleState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleIntelligenceState | undefined>;
+  listLifecycleHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleIntelligenceState[]>;
+  saveLifecycleReview(review: PersistedLifecycleReview): Promise<PersistedLifecycleReview>;
+  saveLifecycleTransitionCandidate(
+    candidate: PersistedLifecycleTransitionCandidate,
+  ): Promise<PersistedLifecycleTransitionCandidate>;
+  listLifecycleTransitionCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleTransitionCandidate[]>;
+  upsertLifecycleTaxonomy(
+    entry: PersistedLifecycleTaxonomyEntry,
+  ): Promise<PersistedLifecycleTaxonomyEntry>;
+  listLifecycleTaxonomy(
+    kind?: LifecycleTaxonomyKind,
+    packOwner?: string,
+  ): Promise<PersistedLifecycleTaxonomyEntry[]>;
 };
 
 export type DurableAssetIntelligenceStore = {
@@ -471,6 +549,10 @@ export type DurableAssetIntelligenceStore = {
   trendStates: PersistedTrendState[];
   degradationStates: PersistedDegradationState[];
   degradationReviews: PersistedDegradationReview[];
+  lifecycleStates: PersistedLifecycleIntelligenceState[];
+  lifecycleReviews: PersistedLifecycleReview[];
+  lifecycleTransitionCandidates: PersistedLifecycleTransitionCandidate[];
+  lifecycleTaxonomy: PersistedLifecycleTaxonomyEntry[];
 };
 
 export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelligenceStore {
@@ -502,6 +584,10 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     trendStates: [],
     degradationStates: [],
     degradationReviews: [],
+    lifecycleStates: [],
+    lifecycleReviews: [],
+    lifecycleTransitionCandidates: [],
+    lifecycleTaxonomy: [],
   };
 }
 
@@ -1080,6 +1166,103 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
   ): Promise<PersistedDegradationReview> {
     this.store.degradationReviews.push(review);
     return review;
+  }
+
+  async nextLifecycleVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestLifecycleState(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
+  }
+
+  async saveLifecycleState(
+    state: PersistedLifecycleIntelligenceState,
+  ): Promise<PersistedLifecycleIntelligenceState> {
+    this.store.lifecycleStates.push(state);
+    return state;
+  }
+
+  async latestLifecycleState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleIntelligenceState | undefined> {
+    return latestAsOf(
+      this.store.lifecycleStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+    );
+  }
+
+  async listLifecycleHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleIntelligenceState[]> {
+    return this.store.lifecycleStates
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveLifecycleReview(
+    review: PersistedLifecycleReview,
+  ): Promise<PersistedLifecycleReview> {
+    this.store.lifecycleReviews.push(review);
+    return review;
+  }
+
+  async saveLifecycleTransitionCandidate(
+    candidate: PersistedLifecycleTransitionCandidate,
+  ): Promise<PersistedLifecycleTransitionCandidate> {
+    this.store.lifecycleTransitionCandidates.push(candidate);
+    return candidate;
+  }
+
+  async listLifecycleTransitionCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedLifecycleTransitionCandidate[]> {
+    return this.store.lifecycleTransitionCandidates.filter(
+      (c) =>
+        c.assetId === assetId && c.tenantId === tenantId && c.workspaceId === workspaceId,
+    );
+  }
+
+  async upsertLifecycleTaxonomy(
+    entry: PersistedLifecycleTaxonomyEntry,
+  ): Promise<PersistedLifecycleTaxonomyEntry> {
+    const idx = this.store.lifecycleTaxonomy.findIndex(
+      (e) =>
+        e.kind === entry.kind &&
+        e.code === entry.code &&
+        e.taxonomyVersion === entry.taxonomyVersion,
+    );
+    if (idx >= 0) this.store.lifecycleTaxonomy[idx] = entry;
+    else this.store.lifecycleTaxonomy.push(entry);
+    return entry;
+  }
+
+  async listLifecycleTaxonomy(
+    kind?: LifecycleTaxonomyKind,
+    packOwner?: string,
+  ): Promise<PersistedLifecycleTaxonomyEntry[]> {
+    return this.store.lifecycleTaxonomy.filter(
+      (e) => (!kind || e.kind === kind) && (!packOwner || e.packOwner === packOwner),
+    );
   }
 
   getStore(): DurableAssetIntelligenceStore {

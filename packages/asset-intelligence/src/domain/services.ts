@@ -8,10 +8,12 @@ import type {
   AssessCriticalityCommand,
   AssessDegradationCommand,
   AssessFailureCommand,
+  AssessLifecycleCommand,
   AssessReliabilityCommand,
   ReviewCriticalityCommand,
   ReviewDegradationCommand,
   ReviewFailureCommand,
+  ReviewLifecycleCommand,
 } from "./engine";
 
 export class AssetConditionService {
@@ -74,6 +76,18 @@ export class AssetDegradationService {
   }
 }
 
+export class AssetLifecycleService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessLifecycleCommand) {
+    return this.engine.assessLifecycle(cmd);
+  }
+
+  review(cmd: ReviewLifecycleCommand) {
+    return this.engine.reviewLifecycle(cmd);
+  }
+}
+
 export class AssetHealthIndexService {
   constructor(private readonly engine: AssetIntelligenceEngine) {}
 
@@ -96,6 +110,7 @@ export class AssetIntelligenceService {
   readonly reliability: AssetReliabilityService;
   readonly failure: AssetFailureService;
   readonly degradation: AssetDegradationService;
+  readonly lifecycle: AssetLifecycleService;
   readonly health: AssetHealthIndexService;
   readonly timeline: AssetTimelineService;
 
@@ -105,6 +120,7 @@ export class AssetIntelligenceService {
     this.reliability = new AssetReliabilityService(engine);
     this.failure = new AssetFailureService(engine);
     this.degradation = new AssetDegradationService(engine);
+    this.lifecycle = new AssetLifecycleService(engine);
     this.health = new AssetHealthIndexService(engine);
     this.timeline = new AssetTimelineService(engine);
   }
@@ -131,6 +147,14 @@ export class AssetIntelligenceService {
 
   reviewDegradation(cmd: ReviewDegradationCommand) {
     return this.engine.reviewDegradation(cmd);
+  }
+
+  assessLifecycle(cmd: AssessLifecycleCommand) {
+    return this.engine.assessLifecycle(cmd);
+  }
+
+  reviewLifecycle(cmd: ReviewLifecycleCommand) {
+    return this.engine.reviewLifecycle(cmd);
   }
 
   reviewFailure(cmd: ReviewFailureCommand) {

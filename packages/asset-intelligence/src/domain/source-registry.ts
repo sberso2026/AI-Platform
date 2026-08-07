@@ -23,7 +23,8 @@ export type AllowedStateKind =
   | "time_series"
   | "trend"
   | "degradation"
-  | "risk_intelligence";
+  | "risk_intelligence"
+  | "lifecycle";
 
 export type IntelligenceSourceEntry = {
   sourceKey: string;
@@ -63,6 +64,7 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "time_series",
       "trend",
       "degradation",
+      "lifecycle",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
@@ -82,6 +84,7 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "time_series",
       "trend",
       "degradation",
+      "lifecycle",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,

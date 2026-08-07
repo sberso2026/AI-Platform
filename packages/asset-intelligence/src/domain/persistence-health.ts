@@ -11,6 +11,7 @@ export type AssetIntelligencePersistenceHealth = {
   migrationIdentity?: string;
   conditionStore: "ok" | "failed";
   failureStore: "ok" | "failed";
+  lifecycleStore: "ok" | "failed";
   taxonomyRegistry: "ok" | "failed";
   reviewWorkflow: "ok" | "failed";
   evidenceConfidence: "ok" | "failed";
@@ -53,6 +54,7 @@ export async function collectAssetIntelligencePersistenceHealth(input: {
     migrationIdentity,
     conditionStore: "ok",
     failureStore: "ok",
+    lifecycleStore: "ok",
     taxonomyRegistry: "ok",
     reviewWorkflow: "ok",
     evidenceConfidence: "ok",

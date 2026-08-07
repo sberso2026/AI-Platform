@@ -41,6 +41,8 @@ export const FAILURE_HEALTH_COMPOSITION_METHOD_RESERVED =
   "compose_condition_reliability_failure_v3" as const;
 /** Phase 10F — degradation/trend must not contribute to Health Index yet. */
 export const DEGRADATION_HEALTH_CONTRIBUTION_ENABLED = false as const;
+/** Phase 10G — lifecycle context is advisory only; must not contribute to Health Index. */
+export const LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 
 export type HealthCompositionInput = {
   assetId: string;

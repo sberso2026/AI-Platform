@@ -216,6 +216,63 @@ export function transitionDegradationReview(input: {
   });
 }
 
+/** Phase 10G — Lifecycle context review via Engineering Workflow SDK. */
+export const LIFECYCLE_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.lifecycle_review",
+  displayName: "Asset Lifecycle Intelligence Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+export function startLifecycleReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  lifecycleStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: LIFECYCLE_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_lifecycle_intelligence_state",
+    entityId: input.lifecycleStateId,
+    startedBy: input.startedBy,
+    context: { kind: "lifecycle_intelligence" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: LIFECYCLE_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({
+    instanceId: submitted.instanceId,
+  });
+  return { instance: submitted, review };
+}
+
+export function transitionLifecycleReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: LIFECYCLE_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
 export function transitionCriticalityReview(input: {
   instance: EngineeringWorkflowInstance;
   action: "approve" | "reject" | "request_changes" | "resubmit";

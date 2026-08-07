@@ -1,6 +1,6 @@
 {
   "name": "@rtb/asset-intelligence-certification",
-  "version": "0.6.0-timeseries",
+  "version": "0.7.0-lifecycle",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
     "certify:phase10d": "tsx scripts/run-phase10d-certification.ts",
     "certify:phase10e": "tsx scripts/run-phase10e-certification.ts",
     "certify:phase10f": "tsx scripts/run-phase10f-certification.ts",
+    "certify:phase10g": "tsx scripts/run-phase10g-certification.ts",
     "apply:hosted-migration": "tsx scripts/apply-hosted-migration.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "test:unit": "vitest run src"

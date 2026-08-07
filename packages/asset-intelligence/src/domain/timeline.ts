@@ -20,7 +20,10 @@ export type TimelineStateKind =
   | "degradation_review"
   | "degradation_published"
   | "risk_intelligence"
-  | "lifecycle_intelligence";
+  | "lifecycle_intelligence"
+  | "lifecycle_review"
+  | "lifecycle_published"
+  | "lifecycle_transition_candidate";
 
 export type IntelligenceTimelineEntry = {
   entryId: string;

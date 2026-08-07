@@ -26,7 +26,12 @@ export type AssetIntelligenceEventType =
   | "engineering.asset.health.composed"
   | "engineering.asset.health.published"
   | "engineering.asset.health_index.updated"
-  | "engineering.asset.intelligence_timeline.appended";
+  | "engineering.asset.intelligence_timeline.appended"
+  | "engineering.asset.lifecycle.assessed"
+  | "engineering.asset.lifecycle.reviewed"
+  | "engineering.asset.lifecycle.published"
+  | "engineering.asset.lifecycle.superseded"
+  | "engineering.asset.lifecycle.transition_candidate.proposed";
 
 export type AssetIntelligenceEvent = {
   type: AssetIntelligenceEventType;

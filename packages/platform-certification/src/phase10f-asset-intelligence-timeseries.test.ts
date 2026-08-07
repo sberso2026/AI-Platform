@@ -10,7 +10,8 @@ describe("Phase 10F Asset Intelligence Time Series architecture lock", () => {
       resolve(root, "packages/asset-intelligence/src/version.ts"),
       "utf8",
     );
-    expect(version).toMatch(/ASSET_INTELLIGENCE_VERSION = "0\.6\.0-timeseries"/);
+    // Version advances in later phases; 10F readiness locks must remain true.
+    expect(version).toMatch(/ASSET_INTELLIGENCE_VERSION = "0\.[67]\.0-(timeseries|lifecycle)"/);
     expect(version).toMatch(/ENGINEERING_TIME_SERIES_READY = true/);
     expect(version).toMatch(/CHANGE_DETECTION_ENGINE_READY = true/);
     expect(version).toMatch(/TREND_CONFIDENCE_ENGINE_READY = true/);
