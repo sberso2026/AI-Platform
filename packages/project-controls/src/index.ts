@@ -4,6 +4,9 @@ export * from "./domain/reserved-providers";
 export * from "./domain/progress";
 export * from "./domain/progress-confidence";
 export * from "./domain/progress-engine";
+export * from "./domain/schedule";
+export * from "./domain/schedule-confidence";
+export * from "./domain/schedule-engine";
 export * from "./domain/project-context-engine";
 export * from "./domain/review-workflow";
 export * from "./domain/events";
@@ -22,6 +25,11 @@ export {
   type PersistedProgressReview,
   type PersistedProgressSnapshot,
   type PersistedProgressTimelineEvent,
+  type PersistedScheduleAssessment,
+  type PersistedScheduleEvidence,
+  type PersistedScheduleReview,
+  type PersistedScheduleSnapshot,
+  type PersistedScheduleTimelineEvent,
   type PersistedProjectProfile,
   type ProjectControlsRepositoryPort,
   type RepositoryFactoryOptions,

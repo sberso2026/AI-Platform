@@ -1,5 +1,5 @@
 /**
- * Phase 11B — Project Controls persistence port and memory adapter.
+ * Phase 11C — Project Controls persistence port and memory adapter.
  *
  * The memory adapter exists for tests and certification units only;
  * `assertProductionRepositorySafe` makes choosing it in production a throw
@@ -17,6 +17,13 @@ import type {
   ProjectScopeRef,
 } from "./progress";
 import { scopeKey } from "./progress";
+import type {
+  ScheduleAssessmentState,
+  ScheduleEvidence,
+  ScheduleReviewRecord,
+  ScheduleSnapshot,
+  ScheduleTimelineEvent,
+} from "./schedule";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -35,6 +42,21 @@ export type PersistedProgressReview = ProgressReviewRecord;
 export type PersistedProgressSnapshot = ProgressSnapshot;
 export type PersistedProgressTimelineEvent = ProgressTimelineEvent;
 export type PersistedProjectProfile = ProjectProfile;
+
+export type PersistedScheduleEvidence = ScheduleEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scope: ProjectScopeRef;
+  assessmentStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedScheduleAssessment = ScheduleAssessmentState;
+export type PersistedScheduleReview = ScheduleReviewRecord;
+export type PersistedScheduleSnapshot = ScheduleSnapshot;
+export type PersistedScheduleTimelineEvent = ScheduleTimelineEvent;
 
 export type IdempotencyRecord = {
   tenantId: string;
@@ -122,6 +144,64 @@ export type ProjectControlsRepositoryPort = {
     projectId: string,
   ): Promise<PersistedProgressTimelineEvent[]>;
 
+  saveScheduleAssessment(
+    state: PersistedScheduleAssessment,
+  ): Promise<PersistedScheduleAssessment>;
+  getScheduleAssessmentById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedScheduleAssessment | null>;
+  latestScheduleAssessment(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    asOf?: string,
+  ): Promise<PersistedScheduleAssessment | undefined>;
+  listScheduleAssessments(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleAssessment[]>;
+  nextScheduleAssessmentVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    expectedVersion?: number,
+  ): Promise<number>;
+
+  saveScheduleEvidence(
+    evidence: readonly PersistedScheduleEvidence[],
+  ): Promise<PersistedScheduleEvidence[]>;
+  listScheduleEvidence(
+    tenantId: string,
+    workspaceId: string,
+    assessmentStateId: string,
+  ): Promise<PersistedScheduleEvidence[]>;
+
+  saveScheduleReview(review: PersistedScheduleReview): Promise<PersistedScheduleReview>;
+  listScheduleReviews(
+    tenantId: string,
+    workspaceId: string,
+    assessmentStateId?: string,
+  ): Promise<PersistedScheduleReview[]>;
+
+  saveScheduleSnapshot(snapshot: PersistedScheduleSnapshot): Promise<PersistedScheduleSnapshot>;
+  listScheduleSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleSnapshot[]>;
+
+  appendScheduleTimeline(
+    entry: PersistedScheduleTimelineEvent,
+  ): Promise<PersistedScheduleTimelineEvent>;
+  listScheduleTimeline(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleTimelineEvent[]>;
+
   saveProjectProfile(profile: PersistedProjectProfile): Promise<PersistedProjectProfile>;
   latestProjectProfile(
     tenantId: string,
@@ -151,6 +231,11 @@ export type DurableProjectControlsStore = {
   progressReviews: PersistedProgressReview[];
   progressSnapshots: PersistedProgressSnapshot[];
   progressTimeline: PersistedProgressTimelineEvent[];
+  scheduleAssessments: PersistedScheduleAssessment[];
+  scheduleEvidence: PersistedScheduleEvidence[];
+  scheduleReviews: PersistedScheduleReview[];
+  scheduleSnapshots: PersistedScheduleSnapshot[];
+  scheduleTimeline: PersistedScheduleTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
   idempotency: IdempotencyRecord[];
   outbox: OutboxEventRecord[];
@@ -164,6 +249,11 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     progressReviews: [],
     progressSnapshots: [],
     progressTimeline: [],
+    scheduleAssessments: [],
+    scheduleEvidence: [],
+    scheduleReviews: [],
+    scheduleSnapshots: [],
+    scheduleTimeline: [],
     projectProfiles: [],
     idempotency: [],
     outbox: [],
@@ -348,6 +438,158 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
     projectId: string,
   ): Promise<PersistedProgressTimelineEvent[]> {
     return this.store.progressTimeline.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async saveScheduleAssessment(
+    state: PersistedScheduleAssessment,
+  ): Promise<PersistedScheduleAssessment> {
+    const clash = this.store.scheduleAssessments.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        scopeKey(row.scope) === scopeKey(state.scope) &&
+        row.version === state.version,
+    );
+    if (clash) {
+      throw new Error(`optimistic_lock_conflict:version=${state.version}`);
+    }
+    this.store.scheduleAssessments.push(state);
+    return state;
+  }
+
+  async getScheduleAssessmentById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedScheduleAssessment | null> {
+    return (
+      this.store.scheduleAssessments.find(
+        (row) =>
+          row.stateId === stateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestScheduleAssessment(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    asOf?: string,
+  ): Promise<PersistedScheduleAssessment | undefined> {
+    return latestAsOf(
+      this.store.scheduleAssessments.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          scopeKey(row.scope) === scopeKey(scope),
+      ),
+      asOf,
+    );
+  }
+
+  async listScheduleAssessments(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleAssessment[]> {
+    return this.store.scheduleAssessments.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async nextScheduleAssessmentVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestScheduleAssessment(tenantId, workspaceId, scope);
+    const current = latest?.version ?? 0;
+    assertNextVersion(current, expectedVersion);
+    return current + 1;
+  }
+
+  async saveScheduleEvidence(
+    evidence: readonly PersistedScheduleEvidence[],
+  ): Promise<PersistedScheduleEvidence[]> {
+    this.store.scheduleEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listScheduleEvidence(
+    tenantId: string,
+    workspaceId: string,
+    assessmentStateId: string,
+  ): Promise<PersistedScheduleEvidence[]> {
+    return this.store.scheduleEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.assessmentStateId === assessmentStateId,
+    );
+  }
+
+  async saveScheduleReview(review: PersistedScheduleReview): Promise<PersistedScheduleReview> {
+    this.store.scheduleReviews.push(review);
+    return review;
+  }
+
+  async listScheduleReviews(
+    tenantId: string,
+    workspaceId: string,
+    assessmentStateId?: string,
+  ): Promise<PersistedScheduleReview[]> {
+    return this.store.scheduleReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!assessmentStateId || row.assessmentStateId === assessmentStateId),
+    );
+  }
+
+  async saveScheduleSnapshot(
+    snapshot: PersistedScheduleSnapshot,
+  ): Promise<PersistedScheduleSnapshot> {
+    this.store.scheduleSnapshots.push(snapshot);
+    return snapshot;
+  }
+
+  async listScheduleSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleSnapshot[]> {
+    return this.store.scheduleSnapshots.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async appendScheduleTimeline(
+    entry: PersistedScheduleTimelineEvent,
+  ): Promise<PersistedScheduleTimelineEvent> {
+    this.store.scheduleTimeline.push(entry);
+    return entry;
+  }
+
+  async listScheduleTimeline(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleTimelineEvent[]> {
+    return this.store.scheduleTimeline.filter(
       (row) =>
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&

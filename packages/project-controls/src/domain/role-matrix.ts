@@ -1,9 +1,8 @@
 /**
- * Phase 11B — Project Controls capability matrix.
+ * Phase 11C — Project Controls capability matrix.
  *
- * Segregation of duties: the role that assesses progress cannot approve or
- * publish it. Capabilities for reserved concerns (cost, schedule, earned value)
- * are deliberately absent — there is nothing to grant.
+ * Segregation of duties: the role that assesses cannot approve or publish.
+ * CPM / cost / earned value capabilities remain absent.
  */
 
 export const PROJECT_CONTROLS_ROLES = [
@@ -24,24 +23,35 @@ export const PROJECT_CONTROLS_CAPABILITIES = [
   "progress.approve",
   "progress.publish",
   "progress.reject",
+  "schedule.read",
+  "schedule.assess",
+  "schedule.submit_review",
+  "schedule.review",
+  "schedule.approve",
+  "schedule.publish",
+  "schedule.reject",
   "profile.read",
   "profile.compose",
 ] as const;
 
 export type ProjectControlsCapability = (typeof PROJECT_CONTROLS_CAPABILITIES)[number];
 
-/** Capabilities an actor may never exercise on their own assessment. */
 export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly ProjectControlsCapability[] = [
   "progress.approve",
   "progress.publish",
+  "schedule.approve",
+  "schedule.publish",
 ] as const;
 
 const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> = {
-  viewer: ["progress.read", "profile.read"],
+  viewer: ["progress.read", "schedule.read", "profile.read"],
   project_controls_engineer: [
     "progress.read",
     "progress.assess",
     "progress.submit_review",
+    "schedule.read",
+    "schedule.assess",
+    "schedule.submit_review",
     "profile.read",
     "profile.compose",
   ],
@@ -49,6 +59,9 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "progress.read",
     "progress.review",
     "progress.reject",
+    "schedule.read",
+    "schedule.review",
+    "schedule.reject",
     "profile.read",
   ],
   approver: [
@@ -57,6 +70,11 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "progress.approve",
     "progress.publish",
     "progress.reject",
+    "schedule.read",
+    "schedule.review",
+    "schedule.approve",
+    "schedule.publish",
+    "schedule.reject",
     "profile.read",
   ],
   admin: [...PROJECT_CONTROLS_CAPABILITIES],
@@ -90,9 +108,9 @@ export function assertProjectControlsCapability(
   }
 }
 
-/** No capability grants access to a reserved concern. */
+/** CPM / cost / EV capabilities must never appear in the matrix. */
 export function assertNoReservedCapabilities(): { ok: true } {
-  const forbidden = /(cost|schedule|earned_value|forecast|change|contingency|productivity)/;
+  const forbidden = /(cost|earned_value|forecast|change|contingency|productivity|cpm|float)/;
   for (const capability of PROJECT_CONTROLS_CAPABILITIES) {
     if (forbidden.test(capability)) {
       throw new Error(`reserved_capability_must_not_be_granted:${capability}`);

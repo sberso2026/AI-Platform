@@ -1,5 +1,5 @@
 /**
- * Phase 11B — Project Controls ownership lock.
+ * Phase 11C — Project Controls ownership lock.
  *
  * The matrix below is the machine-readable twin of
  * `docs/architecture/PROJECT_CONTROLS_OWNERSHIP_MATRIX.md`. It exists so a
@@ -13,7 +13,9 @@
 
 import {
   AI_MAY_PUBLISH_PROGRESS_FORBIDDEN,
+  AI_MAY_PUBLISH_SCHEDULE_FORBIDDEN,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
+  AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   BUDGET_LEDGER_IMPLEMENTED,
   CANONICAL_ASSET_IDENTITY_OWNERSHIP,
   CANONICAL_ASSET_LIFECYCLE_OWNERSHIP,
@@ -30,6 +32,7 @@ import {
   DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
   DUPLICATE_PROJECT_OWNERSHIP_INTRODUCED,
   EARNED_VALUE_IMPLEMENTED,
+  FLOAT_COMPUTATION_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
   PRODUCTION_PROJECT_CONTROLS_READY,
   PROGRESS_INTELLIGENCE_OWNERSHIP,
@@ -46,6 +49,10 @@ import {
   RESOURCE_LEVELING_IMPLEMENTED,
   RISK_CORE_AUTO_MUTATION_ALLOWED,
   SCHEDULE_EXECUTION_IMPLEMENTED,
+  SCHEDULE_INTELLIGENCE_IS_ADVISORY_ONLY,
+  SCHEDULE_INTELLIGENCE_IS_CPM,
+  SCHEDULE_INTELLIGENCE_OWNERSHIP,
+  SCHEDULE_INTELLIGENCE_READY,
   SHARED_PROJECT_DOMAIN_READY,
 } from "../version";
 
@@ -127,7 +134,8 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "schedule_controls_intelligence",
     owner: "project_controls",
     relation: "owns",
-    notes: "Reserved provider interface only; no CPM or schedule execution in 11B",
+    notes:
+      "Implemented in 11C as advisory, evidence-driven schedule intelligence — not CPM or execution",
   },
   {
     concern: "change_controls_intelligence",
@@ -223,9 +231,11 @@ export function assertOwnershipLock(): {
   canonicalAssetIdentityOwnership: typeof CANONICAL_ASSET_IDENTITY_OWNERSHIP;
   canonicalEngineeringRiskOwnership: typeof CANONICAL_ENGINEERING_RISK_OWNERSHIP;
   progressIntelligenceOwnership: typeof PROGRESS_INTELLIGENCE_OWNERSHIP;
+  scheduleIntelligenceOwnership: typeof SCHEDULE_INTELLIGENCE_OWNERSHIP;
   sharedProjectDomainReady: true;
   projectContextEngineReady: true;
   progressIntelligenceReady: true;
+  scheduleIntelligenceReady: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
   duplicateAssetOwnershipIntroduced: false;
@@ -267,11 +277,12 @@ export function assertOwnershipLock(): {
     throw new Error("canonical_risk_must_be_engineering_core");
   }
   if (PROJECT_CONTROLS_IMPLEMENTED || PRODUCTION_PROJECT_CONTROLS_READY) {
-    throw new Error("project_controls_product_forbidden_in_phase_11b");
+    throw new Error("project_controls_product_forbidden_in_phase_11c");
   }
   if (
     EARNED_VALUE_IMPLEMENTED ||
     CPM_SCHEDULING_IMPLEMENTED ||
+    FLOAT_COMPUTATION_IMPLEMENTED ||
     COST_ENGINE_IMPLEMENTED ||
     BUDGET_LEDGER_IMPLEMENTED ||
     SCHEDULE_EXECUTION_IMPLEMENTED ||
@@ -280,13 +291,21 @@ export function assertOwnershipLock(): {
     CHANGE_CONTROL_IMPLEMENTED ||
     CONTINGENCY_MANAGEMENT_IMPLEMENTED
   ) {
-    throw new Error("project_controls_engines_forbidden_in_phase_11b");
+    throw new Error("project_controls_engines_forbidden_in_phase_11c");
   }
   if (PROGRESS_MEASUREMENT_IS_EARNED_VALUE || !PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY) {
     throw new Error("progress_intelligence_must_stay_advisory_not_earned_value");
   }
-  if (!SHARED_PROJECT_DOMAIN_READY || !PROJECT_CONTEXT_ENGINE_READY || !PROGRESS_INTELLIGENCE_READY) {
-    throw new Error("phase_11b_capabilities_must_be_ready");
+  if (SCHEDULE_INTELLIGENCE_IS_CPM || !SCHEDULE_INTELLIGENCE_IS_ADVISORY_ONLY) {
+    throw new Error("schedule_intelligence_must_stay_advisory_not_cpm");
+  }
+  if (
+    !SHARED_PROJECT_DOMAIN_READY ||
+    !PROJECT_CONTEXT_ENGINE_READY ||
+    !PROGRESS_INTELLIGENCE_READY ||
+    !SCHEDULE_INTELLIGENCE_READY
+  ) {
+    throw new Error("phase_11c_capabilities_must_be_ready");
   }
   if (
     DUPLICATE_ASSET_OWNERSHIP_INTRODUCED ||
@@ -303,6 +322,20 @@ export function assertOwnershipLock(): {
   }
   if (AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED || !AI_MAY_PUBLISH_PROGRESS_FORBIDDEN) {
     throw new Error("autonomous_progress_publication_forbidden");
+  }
+  if (AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED || !AI_MAY_PUBLISH_SCHEDULE_FORBIDDEN) {
+    throw new Error("autonomous_schedule_publication_forbidden");
+  }
+
+  const scheduleRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "schedule_controls_intelligence",
+  );
+  if (
+    scheduleRows.length !== 1 ||
+    scheduleRows[0].owner !== "project_controls" ||
+    scheduleRows[0].relation !== "owns"
+  ) {
+    throw new Error("schedule_controls_intelligence_must_be_owned_by_project_controls");
   }
 
   const identityRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
@@ -343,9 +376,11 @@ export function assertOwnershipLock(): {
     canonicalAssetIdentityOwnership: CANONICAL_ASSET_IDENTITY_OWNERSHIP,
     canonicalEngineeringRiskOwnership: CANONICAL_ENGINEERING_RISK_OWNERSHIP,
     progressIntelligenceOwnership: PROGRESS_INTELLIGENCE_OWNERSHIP,
+    scheduleIntelligenceOwnership: SCHEDULE_INTELLIGENCE_OWNERSHIP,
     sharedProjectDomainReady: true,
     projectContextEngineReady: true,
     progressIntelligenceReady: true,
+    scheduleIntelligenceReady: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,
     duplicateAssetOwnershipIntroduced: false,

@@ -1,10 +1,10 @@
 /**
- * Phase 11B — reserved Project Controls provider interfaces.
+ * Phase 11C — reserved Project Controls provider interfaces.
  *
- * These are *shapes only*. They exist so that later phases have a stable seam
- * to implement against, and so that the certification can prove nothing behind
- * the seam is wired up. Every factory returns an implementation whose every
- * method throws `not_implemented`.
+ * These are *shapes only*. Schedule Intelligence (11C) is advisory evidence
+ * assessment — it is NOT the ScheduleProvider below. ScheduleProvider covers
+ * CPM primitives (baseline, activity network, critical path) and every factory
+ * returns an implementation whose every method throws `not_implemented`.
  *
  * If a future phase implements one of these, it must flip the corresponding
  * `*_IMPLEMENTED` flag in `version.ts` and add its own certification gates.
@@ -65,7 +65,7 @@ export type ScheduleProvider = {
   readonly implemented: false;
   getBaseline(query: ReservedProviderQuery): Promise<never>;
   getActivityNetwork(query: ReservedProviderQuery): Promise<never>;
-  /** Critical path is reserved. 11B never computes float or a longest path. */
+  /** Critical path is reserved. 11C Schedule Intelligence never computes float or a longest path. */
   getCriticalPath(query: ReservedProviderQuery): Promise<never>;
 };
 
@@ -187,7 +187,7 @@ export function createReservedProviderSet(): ReservedProviderSet {
   };
 }
 
-/** Every reserved provider must stay unimplemented for Phase 11B to certify. */
+/** Every reserved provider must stay unimplemented for Phase 11C to certify. CPM stays false. */
 export function assertReservedProvidersUnimplemented(): {
   ok: true;
   reservedProviderKeys: typeof RESERVED_PROVIDER_KEYS;

@@ -1,9 +1,8 @@
 /**
- * Phase 11B — Project Controls domain events.
+ * Phase 11C — Project Controls domain events.
  *
- * Event payloads carry the governance flags so a downstream consumer cannot
- * mistake advisory progress intelligence for earned value or for a change to
- * canonical project identity.
+ * Identifiers only — no evidence payloads. Governance flags prevent mistaking
+ * advisory schedule/progress intelligence for CPM or earned value.
  */
 
 import type {
@@ -11,11 +10,15 @@ import type {
   ProjectProfile,
   ProjectScopeRef,
 } from "./progress";
+import type { ScheduleAssessmentState } from "./schedule";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
   "engineering.project.progress.reviewed",
   "engineering.project.progress.published",
+  "engineering.project.schedule.updated",
+  "engineering.project.schedule.reviewed",
+  "engineering.project.schedule.published",
   "engineering.project.profile.updated",
 ] as const;
 
@@ -25,6 +28,7 @@ export type ProjectControlsEventGovernance = {
   advisoryOnly: true;
   earnedValueComputed: false;
   criticalPathComputed: false;
+  floatComputed: false;
   costIntegrated: false;
   forecastProduced: false;
   mutatesProjectIdentity: false;
@@ -35,6 +39,7 @@ export const PROJECT_CONTROLS_EVENT_GOVERNANCE: ProjectControlsEventGovernance =
   advisoryOnly: true,
   earnedValueComputed: false,
   criticalPathComputed: false,
+  floatComputed: false,
   costIntegrated: false,
   forecastProduced: false,
   mutatesProjectIdentity: false,
@@ -96,7 +101,21 @@ export function progressEventPayload(state: ProgressAssessmentState): Record<str
   };
 }
 
-/** Identifiers only — no evidence payloads or progress values. */
+/** Identifiers only — no evidence payloads, dates or postures. */
+export function scheduleEventPayload(state: ScheduleAssessmentState): Record<string, unknown> {
+  return {
+    assessmentStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    scopeKind: state.scope.kind,
+    scopeReferenceId: state.scope.referenceId,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+  };
+}
+
+/** Identifiers only — no evidence payloads or progress/schedule values. */
 export function profileEventPayload(profile: ProjectProfile): Record<string, unknown> {
   return {
     profileId: profile.profileId,
@@ -105,6 +124,8 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     scopesAssessed: profile.progress.scopesAssessed,
     scopesAbstained: profile.progress.scopesAbstained,
     publishedScopes: profile.progress.publishedScopes,
+    scheduleScopesAssessed: profile.schedule?.scopesAssessed ?? 0,
+    scheduleScopesAbstained: profile.schedule?.scopesAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
@@ -116,7 +137,6 @@ export type ProjectControlsEventPublishPort = {
   published(): readonly ProjectControlsEvent[];
 };
 
-/** In-process pipeline for tests, certification units and the advisory HTTP surface. */
 export function createInProcessProjectControlsEventPipeline(): ProjectControlsEventPublishPort {
   const log: ProjectControlsEvent[] = [];
   return {

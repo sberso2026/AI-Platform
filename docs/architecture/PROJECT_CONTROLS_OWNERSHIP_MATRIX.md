@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: progress_intelligence · Module version: `0.2.0-progress-intelligence` · Phase: 11B
+Status: schedule_intelligence · Module version: `0.3.0-schedule-intelligence` · Phase: 11C
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in
@@ -18,9 +18,9 @@ rows.
 | Project documents | `project_intelligence` | consumes | Document intelligence derivatives |
 | Meeting intelligence | `project_intelligence` | consumes | Meeting derivatives; PC may cite them as progress evidence |
 | Project Controls — progress | `project_controls` | **owns** | **Implemented in 11B** — advisory, evidence-driven, not earned value |
-| Project profile composition | `project_controls` | **owns** | **Implemented in 11B** — Project Context Engine |
-| Project Controls — cost | `project_controls` | owns | Reserved provider interface only; no cost engine in 11B |
-| Project Controls — schedule | `project_controls` | owns | Reserved provider interface only; no CPM or schedule execution in 11B |
+| Project profile composition | `project_controls` | **owns** | **Implemented in 11B/11C** — Project Context Engine (progress + schedule) |
+| Project Controls — cost | `project_controls` | owns | Reserved provider interface only; no cost engine |
+| Project Controls — schedule | `project_controls` | **owns** | **Implemented in 11C** — advisory schedule intelligence; not CPM or execution |
 | Project Controls — change | `project_controls` | owns | Reserved provider interface only; no change workflow in 11B |
 | Project Controls — contingency | `project_controls` | owns | Reserved provider interface only; no drawdown in 11B |
 | Earned Value | `project_controls` | reserved / forbidden | Reserved to PC by domain; forbidden to implement |

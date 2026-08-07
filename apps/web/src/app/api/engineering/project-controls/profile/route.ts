@@ -1,8 +1,8 @@
 /**
- * Minimum Project Controls Project Profile HTTP API (Phase 11B).
+ * Minimum Project Controls Project Profile HTTP API (Phase 11C).
  *
  * Reads the Project Context Engine output. Advisory only: the profile carries
- * progress intelligence plus a list of reserved contributors that are not yet
+ * progress and schedule intelligence plus reserved contributors not yet
  * implemented. It never becomes a second source of project identity.
  */
 import { NextResponse } from "next/server";
@@ -18,11 +18,10 @@ function err(
   return NextResponse.json({ error: { code, message, requestId, details } }, { status });
 }
 
-const ACTIVE_CONTRIBUTORS = ["progress_intelligence"] as const;
+const ACTIVE_CONTRIBUTORS = ["progress_intelligence", "schedule_intelligence"] as const;
 
 const RESERVED_CONTRIBUTORS = [
   "cost_intelligence",
-  "schedule_intelligence",
   "change_intelligence",
   "contingency_intelligence",
   "productivity_intelligence",
@@ -33,10 +32,13 @@ const RESERVED_CONTRIBUTORS = [
 const GOVERNANCE_FLAGS = {
   earnedValueImplemented: false,
   cpmImplemented: false,
+  floatComputationImplemented: false,
   costEngineImplemented: false,
   forecastingImplemented: false,
+  scheduleExecutionImplemented: false,
   productionProjectControlsReady: false,
   progressIntelligenceReady: true,
+  scheduleIntelligenceReady: true,
   sharedProjectDomainReady: true,
   projectContextEngineReady: true,
   canonicalProjectIdentityOwnership: "engineering_os_shared_project_domain",

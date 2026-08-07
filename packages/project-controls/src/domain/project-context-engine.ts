@@ -1,10 +1,9 @@
 /**
- * Phase 11B — Project Context Engine.
+ * Phase 11C — Project Context Engine.
  *
- * Composes a `ProjectProfile` from the intelligence Project Controls owns. In
- * 11B the only active contributor is progress intelligence; cost, schedule,
- * change, contingency, productivity, earned value and forecast are declared as
- * reserved so the profile shape is stable while the values stay absent.
+ * Composes a `ProjectProfile` from the intelligence Project Controls owns.
+ * Active contributors: progress intelligence (11B) and schedule intelligence (11C).
+ * Cost, change, contingency, productivity, earned value and forecast stay reserved.
  *
  * The engine reads a `ProjectReference` for identity fields. It never writes
  * identity and never re-derives it from its own tables.
@@ -21,12 +20,15 @@ import {
   type ProjectProfileContributor,
   type ProjectProfileContributorKey,
 } from "./progress";
+import {
+  dominantMilestonePosture,
+  type MilestonePosture,
+  type ScheduleAssessmentState,
+  type ScheduleConfidenceClass,
+  type ScheduleEvidenceSufficiency,
+} from "./schedule";
 import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
 
-/**
- * The full contributor set. Order is stable so the profile is diffable, and
- * `status` is the single source of truth for what 11B actually composes.
- */
 export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
   {
     key: "progress_intelligence",
@@ -35,16 +37,17 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
     notes: "Advisory, evidence-driven progress assessments. Implemented in Phase 11B.",
   },
   {
+    key: "schedule_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory, evidence-driven schedule / milestone posture. Implemented in Phase 11C. Not CPM.",
+  },
+  {
     key: "cost_intelligence",
     status: "reserved",
     ownedBy: "project_controls",
     notes: "Reserved. No cost engine exists; financial ledgers stay with platform_commerce_finance.",
-  },
-  {
-    key: "schedule_intelligence",
-    status: "reserved",
-    ownedBy: "project_controls",
-    notes: "Reserved. No CPM, float or schedule execution.",
   },
   {
     key: "change_intelligence",
@@ -68,7 +71,7 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
     key: "earned_value",
     status: "reserved",
     ownedBy: "project_controls",
-    notes: "Reserved and forbidden to implement. Progress intelligence is not earned value.",
+    notes: "Reserved and forbidden to implement.",
   },
   {
     key: "forecast",
@@ -88,8 +91,8 @@ export type ProjectContextComposeInput = {
   tenantId: string;
   workspaceId: string;
   projectReference: ProjectReference;
-  /** Every progress assessment the caller wants reflected in the profile. */
   progress: readonly ProgressAssessmentState[];
+  schedule?: readonly ScheduleAssessmentState[];
   version?: number;
   asOf?: string;
   createdBy?: string;
@@ -106,7 +109,18 @@ export type ProjectContextEngineDeps = {
   newId?: (prefix: string) => string;
 };
 
-const CONFIDENCE_ORDER: ProgressConfidenceClass[] = ["unavailable", "low", "medium", "high"];
+const PROGRESS_CONFIDENCE_ORDER: ProgressConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const SCHEDULE_CONFIDENCE_ORDER: ScheduleConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
 
 export class ProjectContextEngine {
   readonly kind = "project_context_engine" as const;
@@ -127,54 +141,67 @@ export class ProjectContextEngine {
     }
     if (reference.projectId === "") throw new Error("project_id_required");
 
-    const relevant = input.progress.filter(
+    const progress = (input.progress ?? []).filter(
       (state) =>
         state.projectId === reference.projectId &&
         state.tenantId === input.tenantId &&
         state.workspaceId === input.workspaceId,
     );
+    const schedule = (input.schedule ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+
     const reasons: string[] = [];
-    if (relevant.length < input.progress.length) reasons.push("out_of_scope_progress_ignored");
+    const progressAssessed = progress.filter((state) => !state.abstained);
+    const progressAbstained = progress.filter((state) => state.abstained);
+    const progressPublished = progress.filter((state) => state.status === "published");
+    const scheduleAssessed = schedule.filter((state) => !state.abstained);
+    const scheduleAbstained = schedule.filter((state) => state.abstained);
+    const schedulePublished = schedule.filter((state) => state.status === "published");
 
-    const assessed = relevant.filter((state) => !state.abstained);
-    const abstainedStates = relevant.filter((state) => state.abstained);
-    const published = relevant.filter((state) => state.status === "published");
-
-    const projectScope = relevant
+    const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
       .sort((a, b) => Date.parse(b.assessedAt) - Date.parse(a.assessedAt))[0];
-
-    const lowestConfidenceClass = lowestConfidence(relevant);
-    const dominantSufficiency = dominant(relevant);
 
     let abstained = false;
     let abstentionReason: string | undefined;
     let profileClass: ProjectProfile["profileClass"] = "composed";
 
-    if (relevant.length === 0) {
+    if (progress.length === 0 && schedule.length === 0) {
       abstained = true;
-      abstentionReason = "no_progress_intelligence_available";
+      abstentionReason = "no_project_controls_intelligence_available";
       profileClass = "abstained";
-      reasons.push("no_progress_intelligence_available");
-    } else if (assessed.length === 0) {
+      reasons.push("no_project_controls_intelligence_available");
+    } else if (progressAssessed.length === 0 && scheduleAssessed.length === 0) {
       abstained = true;
-      abstentionReason = "all_progress_assessments_abstained";
+      abstentionReason = "all_intelligence_assessments_abstained";
       profileClass = "abstained";
-      reasons.push("all_progress_assessments_abstained");
-    } else if (abstainedStates.length > 0 || published.length === 0) {
+      reasons.push("all_intelligence_assessments_abstained");
+    } else if (
+      progressAbstained.length > 0 ||
+      scheduleAbstained.length > 0 ||
+      progressPublished.length === 0 ||
+      (schedule.length > 0 && schedulePublished.length === 0)
+    ) {
       profileClass = "partially_composed";
-      if (abstainedStates.length > 0) reasons.push("some_scopes_abstained");
-      if (published.length === 0) reasons.push("no_published_progress_yet");
+      if (progressAbstained.length > 0) reasons.push("some_progress_scopes_abstained");
+      if (scheduleAbstained.length > 0) reasons.push("some_schedule_scopes_abstained");
+      if (progressPublished.length === 0 && progress.length > 0) {
+        reasons.push("no_published_progress_yet");
+      }
+      if (schedule.length > 0 && schedulePublished.length === 0) {
+        reasons.push("no_published_schedule_yet");
+      }
     }
 
-    reasons.push(
-      `reserved_contributors:${RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS.join("|")}`,
-    );
+    reasons.push(`reserved_contributors:${RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS.join("|")}`);
 
-    const projectScopeIndication =
-      projectScope && !projectScope.abstained ? projectScope.indicatedCompletion : undefined;
-    const projectScopeBand: ProgressBand | undefined =
-      projectScope && !projectScope.abstained ? projectScope.band : undefined;
+    const schedulePostures = scheduleAssessed
+      .map((state) => state.milestonePosture)
+      .filter((value): value is MilestonePosture => typeof value === "string");
 
     const profile: ProjectProfile = {
       profileId: this.newId("pcprofile"),
@@ -190,14 +217,29 @@ export class ProjectContextEngine {
       projectPhase: reference.projectPhase,
       projectStatus: reference.status,
       progress: {
-        scopesAssessed: assessed.length,
-        scopesAbstained: abstainedStates.length,
-        publishedScopes: published.length,
-        projectScopeIndication,
-        projectScopeBand,
-        lowestConfidenceClass,
-        dominantSufficiency,
-        latestAssessmentAt: latestAssessedAt(relevant),
+        scopesAssessed: progressAssessed.length,
+        scopesAbstained: progressAbstained.length,
+        publishedScopes: progressPublished.length,
+        projectScopeIndication:
+          projectProgress && !projectProgress.abstained
+            ? projectProgress.indicatedCompletion
+            : undefined,
+        projectScopeBand:
+          projectProgress && !projectProgress.abstained
+            ? (projectProgress.band as ProgressBand | undefined)
+            : undefined,
+        lowestConfidenceClass: lowestProgressConfidence(progress),
+        dominantSufficiency: dominantProgress(progress),
+        latestAssessmentAt: latestAt(progress.map((s) => s.assessedAt)),
+      },
+      schedule: {
+        scopesAssessed: scheduleAssessed.length,
+        scopesAbstained: scheduleAbstained.length,
+        publishedScopes: schedulePublished.length,
+        dominantMilestonePosture: dominantMilestonePosture(schedulePostures),
+        lowestConfidenceClass: lowestScheduleConfidence(schedule),
+        dominantSufficiency: dominantSchedule(schedule),
+        latestAssessmentAt: latestAt(schedule.map((s) => s.assessedAt)),
       },
       contributors: PROJECT_PROFILE_CONTRIBUTORS,
       activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
@@ -209,6 +251,7 @@ export class ProjectContextEngine {
       supersedesId: input.supersedesId,
       earnedValueComputed: false,
       criticalPathComputed: false,
+      floatComputed: false,
       costIntegrated: false,
       forecastProduced: false,
       advisoryOnly: true,
@@ -226,7 +269,6 @@ export function createProjectContextEngine(
   return new ProjectContextEngine(deps);
 }
 
-/** Certification helper: the contributor list must cover every declared key. */
 export function assertProjectProfileContributorsComplete(): {
   ok: true;
   activeContributorKeys: readonly ProjectProfileContributorKey[];
@@ -240,11 +282,14 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 1) {
-    throw new Error("phase_11b_must_have_exactly_one_active_contributor");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 2) {
+    throw new Error("phase_11c_must_have_exactly_two_active_contributors");
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS[0] !== "progress_intelligence") {
-    throw new Error("phase_11b_active_contributor_must_be_progress_intelligence");
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
+    throw new Error("progress_intelligence_must_stay_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("schedule_intelligence")) {
+    throw new Error("schedule_intelligence_must_be_active");
   }
   for (const key of ["earned_value", "forecast"] as const) {
     const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
@@ -259,18 +304,35 @@ export function assertProjectProfileContributorsComplete(): {
   };
 }
 
-function lowestConfidence(
+function lowestProgressConfidence(
   states: readonly ProgressAssessmentState[],
 ): ProgressConfidenceClass {
   if (states.length === 0) return "unavailable";
   return states
     .map((state) => state.confidence.confidenceClass)
     .reduce((lowest, current) =>
-      CONFIDENCE_ORDER.indexOf(current) < CONFIDENCE_ORDER.indexOf(lowest) ? current : lowest,
+      PROGRESS_CONFIDENCE_ORDER.indexOf(current) < PROGRESS_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
     );
 }
 
-function dominant(states: readonly ProgressAssessmentState[]): ProgressEvidenceSufficiency {
+function lowestScheduleConfidence(
+  states: readonly ScheduleAssessmentState[],
+): ScheduleConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      SCHEDULE_CONFIDENCE_ORDER.indexOf(current) < SCHEDULE_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantProgress(
+  states: readonly ProgressAssessmentState[],
+): ProgressEvidenceSufficiency {
   if (states.length === 0) return "insufficient";
   const counts = new Map<ProgressEvidenceSufficiency, number>();
   for (const state of states) {
@@ -280,9 +342,19 @@ function dominant(states: readonly ProgressAssessmentState[]): ProgressEvidenceS
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
-function latestAssessedAt(states: readonly ProgressAssessmentState[]): string | undefined {
-  if (states.length === 0) return undefined;
-  return states
-    .map((state) => state.assessedAt)
-    .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+function dominantSchedule(
+  states: readonly ScheduleAssessmentState[],
+): ScheduleEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ScheduleEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function latestAt(values: string[]): string | undefined {
+  if (values.length === 0) return undefined;
+  return values.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
 }

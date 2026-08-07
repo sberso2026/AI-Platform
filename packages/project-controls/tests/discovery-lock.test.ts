@@ -22,11 +22,13 @@ import {
   DUPLICATE_ASSET_OWNERSHIP_INTRODUCED,
   DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
   EARNED_VALUE_IMPLEMENTED,
+  FLOAT_COMPUTATION_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
   getProjectControlsDeclaration,
   INSPECTION_INTELLIGENCE_V1_COMMIT,
   PHASE_11A_CERTIFIED_COMMIT,
   PHASE_11A_HOSTED_RUN,
+  PHASE_11B_CERTIFIED_COMMIT,
   PHYSICAL_PERCENT_COMPLETE_CERTIFIED,
   PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
   PRODUCTION_PROJECT_CONTROLS_READY,
@@ -48,6 +50,8 @@ import {
   PROJECT_CONTROLS_PRODUCT_UI_IMPLEMENTED,
   PROJECT_CONTROLS_PROGRESS_TABLES,
   PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED,
+  PROJECT_CONTROLS_SCHEDULE_TABLES,
+  PROJECT_CONTROLS_SCHEDULE_TABLES_INTRODUCED,
   PROJECT_CONTROLS_STATUS,
   PROJECT_CONTROLS_VERSION,
   PROJECT_IDENTITY_MUTATION_BY_PROJECT_CONTROLS_ALLOWED,
@@ -58,34 +62,39 @@ import {
   RESOURCE_LEVELING_IMPLEMENTED,
   RISK_CORE_AUTO_MUTATION_ALLOWED,
   SCHEDULE_EXECUTION_IMPLEMENTED,
+  SCHEDULE_INTELLIGENCE_READY,
   SHARED_PROJECT_DOMAIN_READY,
   WORK_PACKAGING_UI_IMPLEMENTED,
   createReservedProviderSet,
 } from "../src/index";
 
-describe("Phase 11B Project Controls ownership and forbid locks", () => {
-  it("declares the progress intelligence module identity", () => {
+describe("Phase 11C Project Controls ownership and forbid locks", () => {
+  it("declares the schedule intelligence module identity", () => {
     expect(PROJECT_CONTROLS_PRODUCT_NAME).toBe("Project Controls");
     expect(PROJECT_CONTROLS_MODULE_KEY).toBe("project_controls");
-    expect(PROJECT_CONTROLS_VERSION).toBe("0.2.0-progress-intelligence");
-    expect(PROJECT_CONTROLS_STATUS).toBe("progress_intelligence");
-    expect(PROJECT_CONTROLS_PHASE).toBe("11B");
+    expect(PROJECT_CONTROLS_VERSION).toBe("0.3.0-schedule-intelligence");
+    expect(PROJECT_CONTROLS_STATUS).toBe("schedule_intelligence");
+    expect(PROJECT_CONTROLS_PHASE).toBe("11C");
     expect(PROJECT_CONTROLS_IMPLEMENTED).toBe(false);
     expect(PRODUCTION_PROJECT_CONTROLS_READY).toBe(false);
     expect(PHASE_11A_CERTIFIED_COMMIT).toBe("b9a3a6091ec4af1eb1ebdd9749da497ce5af9700");
     expect(PHASE_11A_HOSTED_RUN).toBe("31179910364");
+    expect(PHASE_11B_CERTIFIED_COMMIT).toBe("336707d4baaf63b6a4e5f4ef4255f9ca8d7e4dd6");
   });
 
-  it("flips only the Phase 11B capability flags", () => {
+  it("flips Phase 11B and 11C capability flags", () => {
     expect(SHARED_PROJECT_DOMAIN_READY).toBe(true);
     expect(PROJECT_CONTEXT_ENGINE_READY).toBe(true);
     expect(PROGRESS_INTELLIGENCE_READY).toBe(true);
+    expect(SCHEDULE_INTELLIGENCE_READY).toBe(true);
     expect(PROGRESS_CONFIDENCE_ENGINE_READY).toBe(true);
     expect(PROGRESS_MEASUREMENT_IMPLEMENTED).toBe(true);
     expect(PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY).toBe(true);
     expect(PROGRESS_MEASUREMENT_IS_EARNED_VALUE).toBe(false);
     expect(PHYSICAL_PERCENT_COMPLETE_CERTIFIED).toBe(false);
     expect(PRODUCTION_MEMORY_REPOSITORY_ALLOWED).toBe(false);
+    expect(FLOAT_COMPUTATION_IMPLEMENTED).toBe(false);
+    expect(CPM_SCHEDULING_IMPLEMENTED).toBe(false);
   });
 
   it("moves canonical project identity to the shared project domain", () => {
@@ -97,6 +106,8 @@ describe("Phase 11B Project Controls ownership and forbid locks", () => {
     expect(lock.canonicalAssetIdentityOwnership).toBe("engineering_os_shared_domain");
     expect(lock.canonicalEngineeringRiskOwnership).toBe("engineering_core");
     expect(lock.progressIntelligenceOwnership).toBe("project_controls");
+    expect(lock.scheduleIntelligenceOwnership).toBe("project_controls");
+    expect(lock.scheduleIntelligenceReady).toBe(true);
     expect(PROJECT_CONTROLS_OWNERSHIP).toBe("project_controls");
     expect(PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
     expect(CANONICAL_PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
@@ -136,6 +147,7 @@ describe("Phase 11B Project Controls ownership and forbid locks", () => {
     );
     expect(owns.every((row) => row.owner === "project_controls")).toBe(true);
     expect(owns.some((row) => row.concern === "progress_controls_intelligence")).toBe(true);
+    expect(owns.some((row) => row.concern === "schedule_controls_intelligence")).toBe(true);
     expect(owns.some((row) => row.concern === "project_profile_composition")).toBe(true);
     expect(forbidden.some((row) => row.concern === "earned_value")).toBe(true);
   });
@@ -144,6 +156,7 @@ describe("Phase 11B Project Controls ownership and forbid locks", () => {
     for (const [name, flag] of [
       ["earned value", EARNED_VALUE_IMPLEMENTED],
       ["CPM", CPM_SCHEDULING_IMPLEMENTED],
+      ["float", FLOAT_COMPUTATION_IMPLEMENTED],
       ["cost engine", COST_ENGINE_IMPLEMENTED],
       ["budget ledger", BUDGET_LEDGER_IMPLEMENTED],
       ["schedule execution", SCHEDULE_EXECUTION_IMPLEMENTED],
@@ -189,12 +202,13 @@ describe("Phase 11B Project Controls ownership and forbid locks", () => {
     await expect(providers.productivity.getUnitRates(query)).rejects.toThrow(/not_implemented/);
   });
 
-  it("introduces progress tables and nothing else", () => {
+  it("introduces progress and schedule tables", () => {
     expect(PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED).toBe(true);
-    expect(PROJECT_CONTROLS_PROGRESS_TABLES).toContain("project_controls_progress_assessments");
-    expect(PROJECT_CONTROLS_PROGRESS_TABLES).toContain("project_controls_project_profiles");
+    expect(PROJECT_CONTROLS_SCHEDULE_TABLES_INTRODUCED).toBe(true);
     expect(PROJECT_CONTROLS_PROGRESS_TABLES.length).toBe(8);
-    for (const table of PROJECT_CONTROLS_PROGRESS_TABLES) {
+    expect(PROJECT_CONTROLS_SCHEDULE_TABLES.length).toBe(5);
+    expect(PROJECT_CONTROLS_SCHEDULE_TABLES).toContain("project_controls_schedule_assessments");
+    for (const table of [...PROJECT_CONTROLS_PROGRESS_TABLES, ...PROJECT_CONTROLS_SCHEDULE_TABLES]) {
       expect(table.startsWith("project_controls_")).toBe(true);
     }
   });
@@ -214,18 +228,18 @@ describe("Phase 11B Project Controls ownership and forbid locks", () => {
 
   it("exposes a coherent declaration", () => {
     const declaration = getProjectControlsDeclaration();
-    expect(declaration.version).toBe("0.2.0-progress-intelligence");
-    expect(declaration.status).toBe("progress_intelligence");
-    expect(declaration.phase).toBe("11B");
+    expect(declaration.version).toBe("0.3.0-schedule-intelligence");
+    expect(declaration.status).toBe("schedule_intelligence");
+    expect(declaration.phase).toBe("11C");
     expect(declaration.productionProjectControlsReady).toBe(false);
     expect(declaration.sharedProjectDomainReady).toBe(true);
     expect(declaration.projectContextEngineReady).toBe(true);
     expect(declaration.progressIntelligenceReady).toBe(true);
+    expect(declaration.scheduleIntelligenceReady).toBe(true);
     expect(declaration.canonicalProjectIdentityOwnership).toBe(
       "engineering_os_shared_project_domain",
     );
-    expect(declaration.projectControlsConsumesProjectReferenceOnly).toBe(true);
-    expect(declaration.hierarchy).toContain("Engineering Shared Project Domain");
+    expect(declaration.hierarchy).toContain("progress + schedule intelligence");
     expect(declaration.hierarchy).toContain("advisory only");
   });
 });

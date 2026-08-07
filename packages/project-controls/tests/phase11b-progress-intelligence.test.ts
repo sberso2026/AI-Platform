@@ -305,9 +305,12 @@ describe("Phase 11B progress confidence engine", () => {
 });
 
 describe("Phase 11B project context engine", () => {
-  it("lists exactly one active contributor and keeps EV/forecast reserved", () => {
+  it("lists exactly two active contributors and keeps EV/forecast reserved", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toEqual(["progress_intelligence"]);
+    expect(check.activeContributorKeys).toEqual([
+      "progress_intelligence",
+      "schedule_intelligence",
+    ]);
     expect(check.reservedContributorKeys).toContain("earned_value");
     expect(check.reservedContributorKeys).toContain("forecast");
     expect(check.reservedContributorKeys).toContain("cost_intelligence");
@@ -327,7 +330,7 @@ describe("Phase 11B project context engine", () => {
       progress: [],
     });
     expect(outcome.abstained).toBe(true);
-    expect(outcome.abstentionReason).toBe("no_progress_intelligence_available");
+    expect(outcome.abstentionReason).toBe("no_project_controls_intelligence_available");
     expect(outcome.profile.profileClass).toBe("abstained");
     expect(outcome.profile.progress.projectScopeIndication).toBeUndefined();
     expect(outcome.profile.earnedValueComputed).toBe(false);
@@ -362,7 +365,11 @@ describe("Phase 11B project context engine", () => {
     expect(outcome.profile.progress.scopesAssessed).toBe(1);
     expect(outcome.profile.progress.projectScopeBand).toBe("in_progress");
     expect(outcome.profile.profileClass).toBe("partially_composed");
-    expect(outcome.profile.activeContributorKeys).toEqual(["progress_intelligence"]);
+    expect(outcome.profile.activeContributorKeys).toEqual([
+      "progress_intelligence",
+      "schedule_intelligence",
+    ]);
+    expect(outcome.profile.floatComputed).toBe(false);
     expect(outcome.profile.mutatesProjectIdentity).toBe(false);
   });
 
@@ -428,11 +435,14 @@ describe("Phase 11B role matrix and review workflow", () => {
     expect(published.state).toBe("published");
   });
 
-  it("enumerates exactly the four Phase 11B events", () => {
+  it("enumerates all seven Phase 11C domain events", () => {
     expect(PROJECT_CONTROLS_EVENTS).toEqual([
       "engineering.project.progress.updated",
       "engineering.project.progress.reviewed",
       "engineering.project.progress.published",
+      "engineering.project.schedule.updated",
+      "engineering.project.schedule.reviewed",
+      "engineering.project.schedule.published",
       "engineering.project.profile.updated",
     ]);
   });

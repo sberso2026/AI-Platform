@@ -1,7 +1,7 @@
 /**
- * Phase 11B — Project Controls engine facade.
+ * Phase 11C — Project Controls engine facade.
  *
- * Orchestrates the progress intelligence slice end to end:
+ * Orchestrates the progress and schedule intelligence slices end to end:
  * capability check → identity resolution → confidence → assessment → review
  * start → versioned persistence → snapshot → timeline → outbox → events.
  *
@@ -20,6 +20,7 @@ import {
   createProjectControlsEvent,
   profileEventPayload,
   progressEventPayload,
+  scheduleEventPayload,
   type ProjectControlsEventPublishPort,
 } from "./events";
 import {
@@ -30,6 +31,7 @@ import {
 import type {
   IdempotencyRecord,
   PersistedProgressEvidence,
+  PersistedScheduleEvidence,
   ProjectControlsRepositoryPort,
 } from "./persistence";
 import {
@@ -52,12 +54,29 @@ import {
   type ProjectContextEngine,
 } from "./project-context-engine";
 import {
+  createScheduleIntelligenceEngine,
+  type ScheduleIntelligenceEngine,
+} from "./schedule-engine";
+import {
   assertPublishable,
+  assertSchedulePublishable,
   startProgressReview,
+  startScheduleReview,
   transitionProgressReview,
+  transitionScheduleReview,
   type ProgressReviewAction,
   type ProgressReviewTargetState,
+  type ScheduleReviewAction,
+  type ScheduleReviewTargetState,
 } from "./review-workflow";
+import {
+  type ScheduleAssessmentState,
+  type ScheduleEvidence,
+  type ScheduleReviewOutcome,
+  type ScheduleReviewRecord,
+  type ScheduleSnapshot,
+  type ScheduleTimelineEvent,
+} from "./schedule";
 import { assertReservedProvidersUnimplemented } from "./reserved-providers";
 
 export type AssessProgressCommand = {
@@ -118,6 +137,65 @@ export type ReviewProgressResult = {
   projectIdentityMutated: false;
 };
 
+export type AssessScheduleCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scope: ProjectScopeRef;
+  evidence: readonly ScheduleEvidence[];
+  actorRole: ProjectControlsRole;
+  actorId?: string;
+  narrative?: string;
+  asOf?: string;
+  expectedVersion?: number;
+  idempotencyKey?: string;
+  correlationId?: string;
+  startReview?: boolean;
+  freshnessHorizonHours?: number;
+  sufficiencyThreshold?: number;
+  disagreementThresholdDays?: number;
+  minimumEvidenceCount?: number;
+};
+
+export type AssessScheduleResult = {
+  assessment: ScheduleAssessmentState;
+  snapshotId: string;
+  workflowInstance?: EngineeringWorkflowInstance;
+  review?: ScheduleReviewRecord;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay: boolean;
+  projectIdentityMutated: false;
+  earnedValueComputed: false;
+  criticalPathComputed: false;
+  floatComputed: false;
+};
+
+export type ReviewScheduleCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: ScheduleReviewAction;
+  to: ScheduleReviewTargetState;
+  reviewerId: string;
+  actorRole: ProjectControlsRole;
+  notes?: string;
+  publish?: boolean;
+  asOf?: string;
+  correlationId?: string;
+  idempotencyKey?: string;
+};
+
+export type ReviewScheduleResult = {
+  assessment: ScheduleAssessmentState;
+  review: ScheduleReviewRecord;
+  workflowInstance: EngineeringWorkflowInstance;
+  published: boolean;
+  projectIdentityMutated: false;
+};
+
 export type ComposeProjectProfileCommand = {
   tenantId: string;
   workspaceId: string;
@@ -141,13 +219,16 @@ export type ProjectControlsEngineDeps = {
   repository: ProjectControlsRepositoryPort;
   events: ProjectControlsEventPublishPort;
   progressEngine?: ProgressIntelligenceEngine;
+  scheduleEngine?: ScheduleIntelligenceEngine;
   contextEngine?: ProjectContextEngine;
 };
 
-const SOURCE_KEY = "project_controls.progress_intelligence" as const;
+const PROGRESS_SOURCE_KEY = "project_controls.progress_intelligence" as const;
+const SCHEDULE_SOURCE_KEY = "project_controls.schedule_intelligence" as const;
 
 export class ProjectControlsEngine {
   private readonly progressEngine: ProgressIntelligenceEngine;
+  private readonly scheduleEngine: ScheduleIntelligenceEngine;
   private readonly contextEngine: ProjectContextEngine;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
@@ -156,6 +237,9 @@ export class ProjectControlsEngine {
     this.progressEngine =
       deps.progressEngine ??
       createProgressIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
+    this.scheduleEngine =
+      deps.scheduleEngine ??
+      createScheduleIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
     this.contextEngine =
       deps.contextEngine ?? createProjectContextEngine({ newId: (p) => deps.repository.newId(p) });
   }
@@ -382,6 +466,225 @@ export class ProjectControlsEngine {
     };
   }
 
+  async assessSchedule(command: AssessScheduleCommand): Promise<AssessScheduleResult> {
+    this.requireCapability(command.actorRole, "schedule.assess");
+    const replay = await this.replay<AssessScheduleResult>(command, "assess_schedule");
+    if (replay) return replay;
+
+    const reference = await this.resolveProject(command);
+    const asOf = command.asOf ?? new Date().toISOString();
+
+    const previous = await this.deps.repository.latestScheduleAssessment(
+      command.tenantId,
+      command.workspaceId,
+      command.scope,
+    );
+    const version = await this.deps.repository.nextScheduleAssessmentVersion(
+      command.tenantId,
+      command.workspaceId,
+      command.scope,
+      command.expectedVersion,
+    );
+
+    const outcome = this.scheduleEngine.assess({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      scope: command.scope,
+      evidence: command.evidence,
+      version,
+      asOf,
+      narrative: command.narrative,
+      createdBy: command.actorId,
+      supersedesId: previous?.stateId,
+      freshnessHorizonHours: command.freshnessHorizonHours,
+      sufficiencyThreshold: command.sufficiencyThreshold,
+      disagreementThresholdDays: command.disagreementThresholdDays,
+      minimumEvidenceCount: command.minimumEvidenceCount,
+    });
+
+    let assessment = outcome.assessment;
+    let workflowInstance: EngineeringWorkflowInstance | undefined;
+    let review: ScheduleReviewRecord | undefined;
+
+    if (!outcome.abstained && command.startReview !== false) {
+      const started = startScheduleReview({
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        assessmentStateId: assessment.stateId,
+        startedBy: command.actorId,
+      });
+      workflowInstance = started.instance;
+      assessment = {
+        ...assessment,
+        status: "pending_review",
+        workflowInstanceId: started.instance.instanceId,
+      };
+      review = {
+        reviewId: started.review.reviewId,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        assessmentStateId: assessment.stateId,
+        workflowInstanceId: started.instance.instanceId,
+        workflowState: started.instance.state,
+        createdAt: started.review.createdAt,
+        selfApproved: false,
+      };
+    }
+
+    const saved = await this.deps.repository.saveScheduleAssessment(assessment);
+    await this.deps.repository.saveScheduleEvidence(
+      command.evidence.map<PersistedScheduleEvidence>((item) => ({
+        ...item,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        scope: command.scope,
+        assessmentStateId: saved.stateId,
+        recordedAt: asOf,
+        createdBy: command.actorId,
+      })),
+    );
+    if (review) await this.deps.repository.saveScheduleReview(review);
+
+    const snapshot = await this.captureScheduleSnapshot(saved, asOf);
+    await this.appendScheduleTimeline(
+      saved,
+      outcome.abstained ? "schedule_abstained" : "schedule_assessed",
+      { actorId: command.actorId, recordedAt: asOf, detail: outcome.abstentionReason },
+    );
+    await this.emitSchedule("engineering.project.schedule.updated", saved, command.correlationId);
+
+    const result: AssessScheduleResult = {
+      assessment: saved,
+      snapshotId: snapshot.snapshotId,
+      workflowInstance,
+      review,
+      abstained: outcome.abstained,
+      abstentionReason: outcome.abstentionReason,
+      idempotentReplay: false,
+      projectIdentityMutated: false,
+      earnedValueComputed: false,
+      criticalPathComputed: false,
+      floatComputed: false,
+    };
+    await this.recordIdempotency(command, "assess_schedule", saved.stateId, result);
+    return result;
+  }
+
+  async reviewSchedule(command: ReviewScheduleCommand): Promise<ReviewScheduleResult> {
+    const latest = await this.deps.repository.getScheduleAssessmentById(
+      command.tenantId,
+      command.workspaceId,
+      command.assessmentStateId,
+    );
+    if (!latest) throw new Error("schedule_assessment_not_found");
+    if (latest.status === "published") {
+      throw new Error("published_schedule_assessment_immutable");
+    }
+    if (latest.abstained) {
+      throw new Error("abstained_schedule_assessment_not_reviewable");
+    }
+
+    const capability: ProjectControlsCapability =
+      command.action === "approve" ? "schedule.approve" : "schedule.review";
+    assertProjectControlsCapability(command.actorRole, capability, {
+      actorId: command.reviewerId,
+      assessedBy: latest.createdBy,
+    });
+
+    const asOf = command.asOf ?? new Date().toISOString();
+    let instance = transitionScheduleReview({
+      instance: command.workflowInstance,
+      action: command.action,
+      to: command.to,
+    });
+
+    const publish = command.publish === true && command.to === "approved";
+    if (publish) {
+      assertProjectControlsCapability(command.actorRole, "schedule.publish", {
+        actorId: command.reviewerId,
+        assessedBy: latest.createdBy,
+      });
+      assertSchedulePublishable({
+        workflowState: instance.state,
+        reviewerId: command.reviewerId,
+        assessedBy: latest.createdBy,
+      });
+      instance = transitionScheduleReview({
+        instance,
+        action: "publish",
+        to: "published",
+      });
+    }
+
+    const nextStatus: ScheduleAssessmentState["status"] = publish
+      ? "published"
+      : command.to === "approved"
+        ? "reviewed"
+        : command.to === "rejected"
+          ? "rejected"
+          : command.to === "changes_requested"
+            ? "changes_requested"
+            : "pending_review";
+
+    const version = await this.deps.repository.nextScheduleAssessmentVersion(
+      command.tenantId,
+      command.workspaceId,
+      latest.scope,
+    );
+    const next: ScheduleAssessmentState = {
+      ...latest,
+      stateId: this.deps.repository.newId("pcsched"),
+      version,
+      status: nextStatus,
+      recordedAt: asOf,
+      reviewedAt: asOf,
+      publishedAt: publish ? asOf : latest.publishedAt,
+      supersedesId: latest.stateId,
+      workflowInstanceId: instance.instanceId,
+    };
+    const saved = await this.deps.repository.saveScheduleAssessment(next);
+
+    const review: ScheduleReviewRecord = {
+      reviewId: this.deps.repository.newId("pcschedreview"),
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: command.projectId,
+      assessmentStateId: saved.stateId,
+      workflowInstanceId: instance.instanceId,
+      workflowState: instance.state,
+      outcome: scheduleReviewOutcomeFor(command.action),
+      reviewerId: command.reviewerId,
+      notes: command.notes,
+      createdAt: asOf,
+      completedAt: command.action === "resubmit" ? undefined : asOf,
+      selfApproved: false,
+    };
+    await this.deps.repository.saveScheduleReview(review);
+
+    await this.captureScheduleSnapshot(saved, asOf);
+    await this.appendScheduleTimeline(
+      saved,
+      publish ? "schedule_published" : command.to === "rejected" ? "schedule_rejected" : "schedule_reviewed",
+      { actorId: command.reviewerId, recordedAt: asOf, detail: command.notes },
+    );
+    await this.emitSchedule("engineering.project.schedule.reviewed", saved, command.correlationId);
+    if (publish) {
+      await this.emitSchedule("engineering.project.schedule.published", saved, command.correlationId);
+    }
+
+    return {
+      assessment: saved,
+      review,
+      workflowInstance: instance,
+      published: publish,
+      projectIdentityMutated: false,
+    };
+  }
+
   async composeProjectProfile(
     command: ComposeProjectProfileCommand,
   ): Promise<ComposeProjectProfileResult> {
@@ -390,6 +693,11 @@ export class ProjectControlsEngine {
     const asOf = command.asOf ?? new Date().toISOString();
 
     const progress = await this.deps.repository.listProgressAssessments(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
+    const schedule = await this.deps.repository.listScheduleAssessments(
       command.tenantId,
       command.workspaceId,
       reference.projectId,
@@ -410,6 +718,7 @@ export class ProjectControlsEngine {
       workspaceId: command.workspaceId,
       projectReference: reference,
       progress: latestPerScope(progress),
+      schedule: latestPerScopeSchedule(schedule),
       version,
       asOf,
       createdBy: command.actorId,
@@ -432,7 +741,7 @@ export class ProjectControlsEngine {
         kind: "project_profile_composed",
         eventType: "engineering.project.profile.updated",
         recordedAt: asOf,
-        sourceKey: SOURCE_KEY,
+        sourceKey: PROGRESS_SOURCE_KEY,
         actorId: command.actorId,
         governance: {
           advisoryOnly: true,
@@ -484,6 +793,22 @@ export class ProjectControlsEngine {
   }): Promise<ProgressAssessmentState | undefined> {
     this.requireCapability(input.actorRole, "progress.read");
     return this.deps.repository.latestProgressAssessment(
+      input.tenantId,
+      input.workspaceId,
+      input.scope,
+      input.asOf,
+    );
+  }
+
+  async getLatestSchedule(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<ScheduleAssessmentState | undefined> {
+    this.requireCapability(input.actorRole, "schedule.read");
+    return this.deps.repository.latestScheduleAssessment(
       input.tenantId,
       input.workspaceId,
       input.scope,
@@ -601,7 +926,7 @@ export class ProjectControlsEngine {
       kind,
       eventType: `engineering.project.progress.${kind === "progress_published" ? "published" : kind === "progress_reviewed" ? "reviewed" : "updated"}`,
       recordedAt: options.recordedAt,
-      sourceKey: SOURCE_KEY,
+      sourceKey: PROGRESS_SOURCE_KEY,
       actorId: options.actorId,
       detail: options.detail,
       governance: {
@@ -647,6 +972,97 @@ export class ProjectControlsEngine {
     });
     await this.deps.events.publish(event);
   }
+
+  private async captureScheduleSnapshot(
+    state: ScheduleAssessmentState,
+    asOf: string,
+  ): Promise<ScheduleSnapshot> {
+    const snapshot: ScheduleSnapshot = {
+      snapshotId: this.deps.repository.newId("pcschedsnap"),
+      schemaVersion: "project_controls_schedule_snapshot/1",
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      scope: state.scope,
+      capturedAt: asOf,
+      assessmentStateId: state.stateId,
+      status: state.status,
+      assessmentClass: state.assessmentClass,
+      milestonePosture: state.milestonePosture,
+      confidenceClass: state.confidence.confidenceClass,
+      dataSufficiency: state.confidence.dataSufficiency,
+      evidenceRefs: state.evidenceRefs,
+      projectReferenceResolved: true,
+      isProjectRegistry: false,
+      mutatesProjectIdentity: false,
+      criticalPathComputed: false,
+      floatComputed: false,
+    };
+    return this.deps.repository.saveScheduleSnapshot(snapshot);
+  }
+
+  private async appendScheduleTimeline(
+    state: ScheduleAssessmentState,
+    kind: ScheduleTimelineEvent["kind"],
+    options: { actorId?: string; recordedAt: string; detail?: string },
+  ): Promise<void> {
+    await this.deps.repository.appendScheduleTimeline({
+      entryId: this.deps.repository.newId("pcschedtimeline"),
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      scope: state.scope,
+      stateId: state.stateId,
+      kind,
+      eventType: `engineering.project.schedule.${kind === "schedule_published" ? "published" : kind === "schedule_reviewed" ? "reviewed" : "updated"}`,
+      recordedAt: options.recordedAt,
+      sourceKey: SCHEDULE_SOURCE_KEY,
+      actorId: options.actorId,
+      detail: options.detail,
+      governance: {
+        advisoryOnly: true,
+        earnedValueComputed: false,
+        criticalPathComputed: false,
+        floatComputed: false,
+        mutatesProjectIdentity: false,
+      },
+    });
+  }
+
+  private async emitSchedule(
+    eventType:
+      | "engineering.project.schedule.updated"
+      | "engineering.project.schedule.reviewed"
+      | "engineering.project.schedule.published",
+    state: ScheduleAssessmentState,
+    correlationId?: string,
+  ): Promise<void> {
+    const event = createProjectControlsEvent({
+      eventId: this.deps.repository.newId("pcevent"),
+      eventType,
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      scope: state.scope,
+      stateId: state.stateId,
+      occurredAt: state.recordedAt,
+      correlationId,
+      payload: scheduleEventPayload(state),
+    });
+    await this.deps.repository.enqueueOutbox({
+      outboxId: this.deps.repository.newId("pcoutbox"),
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      eventType,
+      payload: event.payload,
+      correlationId,
+      stateId: state.stateId,
+      published: false,
+      createdAt: state.recordedAt,
+    });
+    await this.deps.events.publish(event);
+  }
 }
 
 export function createProjectControlsEngine(
@@ -665,6 +1081,23 @@ function reviewOutcomeFor(action: ProgressReviewAction): ProgressReviewOutcome {
       return "changes_requested";
     case "resubmit":
       return "resubmitted";
+    case "publish":
+      return "approved";
+  }
+}
+
+function scheduleReviewOutcomeFor(action: ScheduleReviewAction): ScheduleReviewOutcome {
+  switch (action) {
+    case "approve":
+      return "approved";
+    case "reject":
+      return "rejected";
+    case "request_changes":
+      return "changes_requested";
+    case "resubmit":
+      return "resubmitted";
+    case "publish":
+      return "approved";
   }
 }
 
@@ -673,6 +1106,18 @@ function latestPerScope(
   states: readonly ProgressAssessmentState[],
 ): ProgressAssessmentState[] {
   const byScope = new Map<string, ProgressAssessmentState>();
+  for (const state of states) {
+    const key = scopeKey(state.scope);
+    const current = byScope.get(key);
+    if (!current || state.version > current.version) byScope.set(key, state);
+  }
+  return [...byScope.values()];
+}
+
+function latestPerScopeSchedule(
+  states: readonly ScheduleAssessmentState[],
+): ScheduleAssessmentState[] {
+  const byScope = new Map<string, ScheduleAssessmentState>();
   for (const state of states) {
     const key = scopeKey(state.scope);
     const current = byScope.get(key);

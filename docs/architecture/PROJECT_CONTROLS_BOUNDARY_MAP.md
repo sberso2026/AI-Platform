@@ -1,6 +1,6 @@
 # Project Controls — boundary map (discovery)
 
-Status: discovery · Module version: `0.1.0-discovery` · Phase: 11A
+Status: schedule_intelligence · Module version: `0.3.0-schedule-intelligence` · Phase: 11C
 
 Three relations, and nothing in between: Project Controls **owns** a concern,
 **consumes** it through a public contract, or is **forbidden** from it. The
@@ -31,7 +31,7 @@ flowchart TB
     CMMS["CMMS work orders"]
   end
 
-  PC["Project Controls 0.1.0-discovery<br/>controls intelligence ABOUT projects<br/>cost · schedule · progress · change · contingency"]
+  PC["Project Controls 0.3.0-schedule-intelligence<br/>progress + schedule intelligence ABOUT projects<br/>cost · change · contingency reserved"]
 
   CORE -->|consumes projectId, WBS nodes| PC
   PI -->|consumes knowledge derivatives| PC

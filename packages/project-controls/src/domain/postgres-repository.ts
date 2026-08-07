@@ -1,9 +1,10 @@
 /**
- * Phase 11B — production PostgreSQL/Supabase Project Controls repository.
+ * Phase 11C — production PostgreSQL/Supabase Project Controls repository.
  * Supabase hosts Postgres; the domain API stays infrastructure-independent.
  *
- * Every table written here is created by batch_62. `project_id` is a foreign key
- * into `engineering_projects`, which this repository never writes.
+ * Progress tables are created by batch_62; schedule tables by batch_63.
+ * `project_id` is a foreign key into `engineering_projects`, which this
+ * repository never writes.
  */
 
 import { randomUUID } from "node:crypto";
@@ -18,6 +19,11 @@ import {
   type PersistedProgressSnapshot,
   type PersistedProgressTimelineEvent,
   type PersistedProjectProfile,
+  type PersistedScheduleAssessment,
+  type PersistedScheduleEvidence,
+  type PersistedScheduleReview,
+  type PersistedScheduleSnapshot,
+  type PersistedScheduleTimelineEvent,
   type ProjectControlsRepositoryPort,
 } from "./persistence";
 import type { ProjectScopeRef } from "./progress";
@@ -29,6 +35,11 @@ const EVIDENCE = "project_controls_progress_evidence";
 const REVIEWS = "project_controls_progress_reviews";
 const SNAPSHOTS = "project_controls_progress_snapshots";
 const TIMELINE = "project_controls_progress_timeline";
+const SCHEDULE_ASSESSMENTS = "project_controls_schedule_assessments";
+const SCHEDULE_EVIDENCE = "project_controls_schedule_evidence";
+const SCHEDULE_REVIEWS = "project_controls_schedule_reviews";
+const SCHEDULE_SNAPSHOTS = "project_controls_schedule_snapshots";
+const SCHEDULE_TIMELINE = "project_controls_schedule_timeline";
 const PROFILES = "project_controls_project_profiles";
 const IDEMPOTENCY = "project_controls_idempotency";
 const OUTBOX = "project_controls_outbox_events";
@@ -348,6 +359,314 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
     return (data ?? []).map(mapTimelineRow);
   }
 
+  // --------------------------------------------------------------- schedule
+
+  async saveScheduleAssessment(
+    state: PersistedScheduleAssessment,
+  ): Promise<PersistedScheduleAssessment> {
+    const row = {
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      project_id: state.projectId,
+      scope_kind: state.scope.kind,
+      scope_reference_id: state.scope.referenceId ?? null,
+      version: state.version,
+      status: state.status,
+      assessment_class: state.assessmentClass,
+      milestone_posture: state.milestonePosture ?? null,
+      declared_baseline_date: state.declaredBaselineDate ?? null,
+      declared_current_date: state.declaredCurrentDate ?? null,
+      declared_date_delta_days: state.declaredDateDeltaDays ?? null,
+      confidence_class: state.confidence.confidenceClass,
+      confidence_score: state.confidence.score,
+      data_sufficiency: state.confidence.dataSufficiency,
+      confidence_payload: state.confidence,
+      evidence_refs: state.evidenceRefs,
+      reasons: state.reasons,
+      abstained: state.abstained,
+      abstention_reason: state.abstentionReason ?? null,
+      narrative: state.narrative ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      assessed_at: state.assessedAt,
+      recorded_at: state.recordedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      workflow_instance_id: state.workflowInstanceId ?? null,
+      earned_value_computed: false,
+      critical_path_computed: false,
+      float_computed: false,
+      forward_backward_pass_computed: false,
+      cost_integrated: false,
+      forecast_produced: false,
+      schedule_executed: false,
+      resource_levelled: false,
+      advisory_only: true,
+      mutates_project_identity: false,
+      mutates_activity_identity: false,
+    };
+    const { data, error } = await this.supabase
+      .from(SCHEDULE_ASSESSMENTS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) {
+      if (error.code === "23505" || /duplicate key/i.test(error.message)) {
+        throw new Error(`optimistic_lock_conflict:${error.message}`);
+      }
+      throw new Error(`schedule_assessment_persist_failed:${error.message}`);
+    }
+    return mapScheduleAssessmentRow(data);
+  }
+
+  async getScheduleAssessmentById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedScheduleAssessment | null> {
+    const { data, error } = await this.supabase
+      .from(SCHEDULE_ASSESSMENTS)
+      .select("*")
+      .eq("id", stateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`schedule_assessment_read_failed:${error.message}`);
+    return data ? mapScheduleAssessmentRow(data) : null;
+  }
+
+  async latestScheduleAssessment(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    asOf?: string,
+  ): Promise<PersistedScheduleAssessment | undefined> {
+    let query = this.supabase
+      .from(SCHEDULE_ASSESSMENTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", scope.projectId)
+      .eq("scope_kind", scope.kind)
+      .order("version", { ascending: false })
+      .limit(1);
+    query = scope.referenceId
+      ? query.eq("scope_reference_id", scope.referenceId)
+      : query.is("scope_reference_id", null);
+    if (asOf) query = query.lte("recorded_at", asOf);
+    const { data, error } = await query;
+    if (error) throw new Error(`schedule_assessment_read_failed:${error.message}`);
+    const row = (data ?? [])[0];
+    return row ? mapScheduleAssessmentRow(row) : undefined;
+  }
+
+  async listScheduleAssessments(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleAssessment[]> {
+    const { data, error } = await this.supabase
+      .from(SCHEDULE_ASSESSMENTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: false });
+    if (error) throw new Error(`schedule_assessment_list_failed:${error.message}`);
+    return (data ?? []).map(mapScheduleAssessmentRow);
+  }
+
+  async nextScheduleAssessmentVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestScheduleAssessment(tenantId, workspaceId, scope);
+    const current = latest?.version ?? 0;
+    if (expectedVersion !== undefined && expectedVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedVersion};actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveScheduleEvidence(
+    evidence: readonly PersistedScheduleEvidence[],
+  ): Promise<PersistedScheduleEvidence[]> {
+    if (evidence.length === 0) return [];
+    const rows = evidence.map((item) => ({
+      id: item.evidenceId,
+      tenant_id: item.tenantId,
+      workspace_id: item.workspaceId,
+      project_id: item.projectId,
+      assessment_id: item.assessmentStateId,
+      scope_kind: item.scope.kind,
+      scope_reference_id: item.scope.referenceId ?? null,
+      evidence_kind: item.kind,
+      source_type: item.sourceType,
+      source_key: item.sourceKey,
+      source_reference: item.sourceReference ?? null,
+      observed_at: item.observedAt ?? null,
+      narrative: item.narrative ?? null,
+      declared_baseline_date: item.declaredBaselineDate ?? null,
+      declared_current_date: item.declaredCurrentDate ?? null,
+      declared_posture: item.declaredPosture ?? null,
+      weight: item.weight ?? null,
+      review_status: item.reviewStatus ?? "unreviewed",
+      revoked: item.revoked ?? false,
+      conflicts_with: item.conflictsWith ?? [],
+      recorded_at: item.recordedAt,
+      created_by: item.createdBy ?? null,
+      derived_from_cpm: false,
+      derived_from_float: false,
+      derived_from_earned_value: false,
+      mutates_activity_identity: false,
+    }));
+    const { data, error } = await this.supabase.from(SCHEDULE_EVIDENCE).insert(rows).select("*");
+    if (error) throw new Error(`schedule_evidence_persist_failed:${error.message}`);
+    return (data ?? []).map(mapScheduleEvidenceRow);
+  }
+
+  async listScheduleEvidence(
+    tenantId: string,
+    workspaceId: string,
+    assessmentStateId: string,
+  ): Promise<PersistedScheduleEvidence[]> {
+    const { data, error } = await this.supabase
+      .from(SCHEDULE_EVIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("assessment_id", assessmentStateId);
+    if (error) throw new Error(`schedule_evidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapScheduleEvidenceRow);
+  }
+
+  async saveScheduleReview(review: PersistedScheduleReview): Promise<PersistedScheduleReview> {
+    const row = {
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      project_id: review.projectId,
+      assessment_id: review.assessmentStateId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+    };
+    const { data, error } = await this.supabase.from(SCHEDULE_REVIEWS).insert(row).select("*").single();
+    if (error) throw new Error(`schedule_review_persist_failed:${error.message}`);
+    return mapScheduleReviewRow(data);
+  }
+
+  async listScheduleReviews(
+    tenantId: string,
+    workspaceId: string,
+    assessmentStateId?: string,
+  ): Promise<PersistedScheduleReview[]> {
+    let query = this.supabase
+      .from(SCHEDULE_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (assessmentStateId) query = query.eq("assessment_id", assessmentStateId);
+    const { data, error } = await query;
+    if (error) throw new Error(`schedule_review_read_failed:${error.message}`);
+    return (data ?? []).map(mapScheduleReviewRow);
+  }
+
+  async saveScheduleSnapshot(
+    snapshot: PersistedScheduleSnapshot,
+  ): Promise<PersistedScheduleSnapshot> {
+    const row = {
+      id: snapshot.snapshotId,
+      tenant_id: snapshot.tenantId,
+      workspace_id: snapshot.workspaceId,
+      project_id: snapshot.projectId,
+      schema_version: snapshot.schemaVersion,
+      scope_kind: snapshot.scope.kind,
+      scope_reference_id: snapshot.scope.referenceId ?? null,
+      captured_at: snapshot.capturedAt,
+      assessment_id: snapshot.assessmentStateId,
+      status: snapshot.status,
+      assessment_class: snapshot.assessmentClass,
+      milestone_posture: snapshot.milestonePosture ?? null,
+      confidence_class: snapshot.confidenceClass,
+      data_sufficiency: snapshot.dataSufficiency,
+      evidence_refs: snapshot.evidenceRefs,
+      is_project_registry: false,
+      mutates_project_identity: false,
+      critical_path_computed: false,
+      float_computed: false,
+    };
+    const { data, error } = await this.supabase.from(SCHEDULE_SNAPSHOTS).insert(row).select("*").single();
+    if (error) throw new Error(`schedule_snapshot_persist_failed:${error.message}`);
+    return mapScheduleSnapshotRow(data);
+  }
+
+  async listScheduleSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleSnapshot[]> {
+    const { data, error } = await this.supabase
+      .from(SCHEDULE_SNAPSHOTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("captured_at", { ascending: false });
+    if (error) throw new Error(`schedule_snapshot_read_failed:${error.message}`);
+    return (data ?? []).map(mapScheduleSnapshotRow);
+  }
+
+  async appendScheduleTimeline(
+    entry: PersistedScheduleTimelineEvent,
+  ): Promise<PersistedScheduleTimelineEvent> {
+    const row = {
+      tenant_id: entry.tenantId,
+      workspace_id: entry.workspaceId,
+      project_id: entry.projectId,
+      entry_id: entry.entryId,
+      state_id: entry.stateId ?? null,
+      scope_kind: entry.scope.kind,
+      scope_reference_id: entry.scope.referenceId ?? null,
+      kind: entry.kind,
+      event_type: entry.eventType,
+      recorded_at: entry.recordedAt,
+      source_key: entry.sourceKey,
+      actor_id: entry.actorId ?? null,
+      detail: entry.detail ?? null,
+      governance: entry.governance,
+    };
+    const { data, error } = await this.supabase.from(SCHEDULE_TIMELINE).insert(row).select("*").single();
+    if (error) throw new Error(`schedule_timeline_persist_failed:${error.message}`);
+    return mapScheduleTimelineRow(data);
+  }
+
+  async listScheduleTimeline(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScheduleTimelineEvent[]> {
+    const { data, error } = await this.supabase
+      .from(SCHEDULE_TIMELINE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: true });
+    if (error) throw new Error(`schedule_timeline_read_failed:${error.message}`);
+    return (data ?? []).map(mapScheduleTimelineRow);
+  }
+
   // ---------------------------------------------------------------- profiles
 
   async saveProjectProfile(profile: PersistedProjectProfile): Promise<PersistedProjectProfile> {
@@ -365,6 +684,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       project_phase: profile.projectPhase,
       project_status: profile.projectStatus,
       progress_summary: profile.progress,
+      schedule_summary: profile.schedule ?? {},
       contributors: profile.contributors,
       active_contributor_keys: profile.activeContributorKeys,
       reserved_contributor_keys: profile.reservedContributorKeys,
@@ -666,6 +986,7 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     projectPhase: row.project_phase,
     projectStatus: row.project_status,
     progress: row.progress_summary,
+    schedule: row.schedule_summary ?? undefined,
     contributors: row.contributors ?? [],
     activeContributorKeys: row.active_contributor_keys ?? [],
     reservedContributorKeys: row.reserved_contributor_keys ?? [],
@@ -676,10 +997,152 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     supersedesId: row.supersedes_id ?? undefined,
     earnedValueComputed: false,
     criticalPathComputed: false,
+    floatComputed: false,
     costIntegrated: false,
     forecastProduced: false,
     advisoryOnly: true,
     mutatesProjectIdentity: false,
     isProjectRegistry: false,
+  };
+}
+
+function mapScheduleAssessmentRow(row: any): PersistedScheduleAssessment {
+  return {
+    stateId: row.id,
+    assessmentId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scope: scopeFromRow(row),
+    version: row.version,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    milestonePosture: row.milestone_posture ?? undefined,
+    declaredBaselineDate: row.declared_baseline_date ?? undefined,
+    declaredCurrentDate: row.declared_current_date ?? undefined,
+    declaredDateDeltaDays: row.declared_date_delta_days ?? undefined,
+    confidence: row.confidence_payload,
+    evidenceRefs: row.evidence_refs ?? [],
+    reasons: row.reasons ?? [],
+    abstained: row.abstained,
+    abstentionReason: row.abstention_reason ?? undefined,
+    narrative: row.narrative ?? undefined,
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    reviewedAt: row.reviewed_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    workflowInstanceId: row.workflow_instance_id ?? undefined,
+    earnedValueComputed: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+    forwardBackwardPassComputed: false,
+    costIntegrated: false,
+    forecastProduced: false,
+    scheduleExecuted: false,
+    resourceLevelled: false,
+    advisoryOnly: true,
+    mutatesProjectIdentity: false,
+    mutatesActivityIdentity: false,
+    autonomousPublication: false,
+  };
+}
+
+function mapScheduleEvidenceRow(row: any): PersistedScheduleEvidence {
+  return {
+    evidenceId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    assessmentStateId: row.assessment_id,
+    scope: scopeFromRow(row),
+    kind: row.evidence_kind,
+    sourceType: row.source_type,
+    sourceKey: row.source_key,
+    sourceReference: row.source_reference ?? undefined,
+    observedAt: row.observed_at ?? undefined,
+    narrative: row.narrative ?? undefined,
+    declaredBaselineDate: row.declared_baseline_date ?? undefined,
+    declaredCurrentDate: row.declared_current_date ?? undefined,
+    declaredPosture: row.declared_posture ?? undefined,
+    weight: row.weight ?? undefined,
+    reviewStatus: row.review_status ?? undefined,
+    revoked: row.revoked ?? false,
+    conflictsWith: row.conflicts_with ?? [],
+    recordedAt: row.recorded_at,
+    createdBy: row.created_by ?? undefined,
+    derivedFromCpm: false,
+    derivedFromFloat: false,
+    derivedFromEarnedValue: false,
+    mutatesActivityIdentity: false,
+  };
+}
+
+function mapScheduleReviewRow(row: any): PersistedScheduleReview {
+  return {
+    reviewId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    assessmentStateId: row.assessment_id,
+    workflowInstanceId: row.workflow_instance_id,
+    workflowState: row.workflow_state,
+    outcome: row.outcome ?? undefined,
+    reviewerId: row.reviewer_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    selfApproved: false,
+  };
+}
+
+function mapScheduleSnapshotRow(row: any): PersistedScheduleSnapshot {
+  return {
+    snapshotId: row.id,
+    schemaVersion: row.schema_version,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scope: scopeFromRow(row),
+    capturedAt: row.captured_at,
+    assessmentStateId: row.assessment_id,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    milestonePosture: row.milestone_posture ?? undefined,
+    confidenceClass: row.confidence_class,
+    dataSufficiency: row.data_sufficiency,
+    evidenceRefs: row.evidence_refs ?? [],
+    projectReferenceResolved: true,
+    isProjectRegistry: false,
+    mutatesProjectIdentity: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+  };
+}
+
+function mapScheduleTimelineRow(row: any): PersistedScheduleTimelineEvent {
+  return {
+    entryId: row.entry_id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scope: scopeFromRow(row),
+    stateId: row.state_id ?? undefined,
+    kind: row.kind,
+    eventType: row.event_type,
+    recordedAt: row.recorded_at,
+    sourceKey: row.source_key,
+    actorId: row.actor_id ?? undefined,
+    detail: row.detail ?? undefined,
+    governance: {
+      advisoryOnly: true,
+      earnedValueComputed: false,
+      criticalPathComputed: false,
+      floatComputed: false,
+      mutatesProjectIdentity: false,
+    },
   };
 }

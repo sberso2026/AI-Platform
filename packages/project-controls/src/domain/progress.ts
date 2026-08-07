@@ -332,6 +332,19 @@ export type ProjectProfile = {
     dominantSufficiency: ProgressEvidenceSufficiency;
     latestAssessmentAt?: string;
   };
+  /**
+   * Schedule rollups from Phase 11C. Absent/empty when no schedule assessments
+   * were supplied. Never includes CPM, float or a critical path.
+   */
+  schedule?: {
+    scopesAssessed: number;
+    scopesAbstained: number;
+    publishedScopes: number;
+    dominantMilestonePosture?: import("./schedule").MilestonePosture;
+    lowestConfidenceClass: import("./schedule").ScheduleConfidenceClass;
+    dominantSufficiency: import("./schedule").ScheduleEvidenceSufficiency;
+    latestAssessmentAt?: string;
+  };
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];
@@ -343,6 +356,7 @@ export type ProjectProfile = {
   // ---- Forbid locks ----
   earnedValueComputed: false;
   criticalPathComputed: false;
+  floatComputed: false;
   costIntegrated: false;
   forecastProduced: false;
   advisoryOnly: true;
