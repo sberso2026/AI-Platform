@@ -1,0 +1,104 @@
+name: Phase 9H Inspection Intelligence Condition Predictive
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/inspection-intelligence/**"
+      - "packages/inspection-intelligence-certification/**"
+      - "packages/engineering-os/src/module-registry.ts"
+      - "packages/platform-certification/src/phase9h*"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "apps/web/src/app/**/inspection-intelligence/**"
+      - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
+      - "supabase/migrations/*condition_predictive*"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9H*"
+      - "docs/security/INSPECTION_INTELLIGENCE_CONDITION*"
+      - "docs/testing/INSPECTION_INTELLIGENCE_CONDITION*"
+      - ".github/workflows/phase-9h-inspection-condition-predictive.yml"
+
+concurrency:
+  group: phase-9h-inspection-condition-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm --filter @rtb/inspection-intelligence-certification exec playwright install chromium --with-deps
+      - name: Unit tests
+        run: |
+          pnpm --filter @rtb/engineering-os test
+          pnpm --filter @rtb/inspection-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9h-inspection-condition-predictive.test.ts
+      - name: Phase 9H certification (gates A–X)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9h
+        env:
+          CERTIFY_BROWSER: "1"
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const { readFileSync } = require("fs");
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9h-inspection-intelligence-condition-predictive-certification.json";
+          const a = JSON.parse(readFileSync(path, "utf8"));
+          const checks = [
+            ["verdict", a.verdict === "PASS"],
+            ["failedGateCount", a.failedGateCount === 0],
+            ["skippedGateCount", a.skippedGateCount === 0],
+            ["notExecutedGateCount", a.notExecutedGateCount === 0],
+            ["conditionRatingImplemented", a.conditionRatingImplemented === true],
+            ["predictiveSignalsScaffolded", a.predictiveSignalsScaffolded === true],
+            ["packExpansionImplemented", a.packExpansionImplemented === true],
+            ["offlineSyncImplemented", a.offlineSyncImplemented === true],
+            ["mobileProductImplemented", a.mobileProductImplemented === true],
+            ["aiVisionImplemented", a.aiVisionImplemented === false],
+            ["remainingUsefulLifeClaimed", a.remainingUsefulLifeClaimed === false],
+            ["releaseEligible", a.releaseEligible === true],
+            ["phase9IReady", a.phase9IReady === true],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 24],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            packDelivered: a.packDelivered,
+            phase9IReady: a.phase9IReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase9h-inspection-intelligence-condition-predictive-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9h-inspection-intelligence-condition-predictive-certification.json
+          if-no-files-found: warn

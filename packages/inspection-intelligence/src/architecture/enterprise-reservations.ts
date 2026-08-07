@@ -1,17 +1,13 @@
 /**
- * Phase 9G reservations — AI Vision / Asset Intelligence / predictive remain deferred.
- * Offline sync and mobile product are implemented.
+ * Phase 9H — AI Vision / Asset Intelligence remain deferred.
+ * Condition rating and II predictive signal scaffolding are implemented in domain/*.
  */
 export type ConditionRatingReserved = {
-  conditionRating?: number;
-  healthIndex?: number;
-  riskLevel?: "low" | "medium" | "high" | "critical";
-  confidence?: number;
-  priority?: number;
-  remainingLife?: number;
-  conditionTrend?: "improving" | "stable" | "declining";
-  reserved: true;
+  /** @deprecated Use domain/condition-rating.ts */
+  reserved: false;
 };
+
+export const CONDITION_RATING_RESERVED = false as const;
 
 /** @deprecated Symbol retained for Phase 9C gate; offline engine implemented in 9G. */
 export type OfflineSyncContractsReserved = {
@@ -26,7 +22,6 @@ export type OfflineSyncContractsReserved = {
   offlineSyncImplemented: true;
 };
 
-export const CONDITION_RATING_RESERVED = true as const;
 export const OFFLINE_SYNC_CONTRACTS_RESERVED: OfflineSyncContractsReserved = {
   offlineQueue: true,
   conflictResolver: true,

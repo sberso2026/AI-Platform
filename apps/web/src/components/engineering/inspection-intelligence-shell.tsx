@@ -12,6 +12,8 @@ const LINKS = [
   { href: "/engineering/apps/inspection-intelligence/assignments", label: "Assignments" },
   { href: "/engineering/apps/inspection-intelligence/field", label: "Field" },
   { href: "/engineering/apps/inspection-intelligence/sync", label: "Sync" },
+  { href: "/engineering/apps/inspection-intelligence/condition", label: "Condition" },
+  { href: "/engineering/apps/inspection-intelligence/predictive", label: "Predictive" },
   { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },
   { href: "/engineering/apps/inspection-intelligence/actions", label: "Actions" },
   { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },

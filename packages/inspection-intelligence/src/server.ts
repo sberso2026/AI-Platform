@@ -23,4 +23,8 @@ export * from "./domain/mobile-product";
 export * from "./domain/pack-mobile-forms";
 export * from "./domain/offline-sync";
 export * from "./domain/mobile-reporting";
+export * from "./domain/condition-rating";
+export * from "./domain/condition-aggregation";
+export * from "./domain/predictive-signals";
+export * from "./domain/condition-predictive-product";
 export * from "./pack-sdk";

@@ -64,11 +64,50 @@ export const COATINGS_PACK_SCAFFOLD = toPackSdkManifest(
   },
 );
 
+/** Phase 9H — Structural condition inspection pack (certified expansion beyond generic + coatings). */
+export const STRUCTURAL_CONDITION_PACK_SDK = toPackSdkManifest(
+  {
+    packId: "structural_condition",
+    version: "1.0.0",
+    displayName: "Structural Condition Inspection Pack",
+    taxonomyExtensions: ["structural", "girder", "deck", "bearing", "crack", "corrosion"],
+    checklistItemTypes: ["visual_structural", "ordinal_condition", "photo_required"],
+    measurementMethods: ["visual_ordinal", "crack_width_mm"],
+    evidenceTypes: ["photo", "sketch", "measurement_log"],
+    targetKinds: ["asset", "structure", "component"],
+    visionAdapters: [],
+    predictiveAdapters: ["rule_defect_recurrence_v1", "stat_condition_trend_v1"],
+  },
+  {
+    supportedInspectionTypes: ["structural_visual", "structural_condition"],
+    templateLibrary: ["structural_visual_v1", "structural_condition_v1"],
+    measurementLibrary: ["ordinal_1_5", "crack_width_mm"],
+    acceptanceCriteriaLibrary: ["structural_ordinal_accept_v1"],
+    reportTemplates: ["condition_rating_snapshot", "structural_executive_summary"],
+    permissions: ["inspection.read", "inspection.write", "inspection.review", "inspection.approve"],
+    migrationVersion: "batch_49_structural",
+    featureFlags: {
+      reporting: true,
+      aiVision: false,
+      conditionRating: true,
+      predictiveSignals: true,
+      offlineCompatible: true,
+      commercial: false,
+    },
+  },
+);
+
 export class InspectionPackSdk {
   private registry: InspectionPackRegistry;
   private manifests = new Map<string, InspectionPackSdkManifest>();
 
-  constructor(initial: InspectionPackSdkManifest[] = [GENERIC_INSPECTION_PACK_SDK]) {
+  constructor(
+    initial: InspectionPackSdkManifest[] = [
+      GENERIC_INSPECTION_PACK_SDK,
+      COATINGS_PACK_SCAFFOLD,
+      STRUCTURAL_CONDITION_PACK_SDK,
+    ],
+  ) {
     this.registry = new InspectionPackRegistry([]);
     for (const m of initial) this.register(m);
   }
@@ -103,4 +142,4 @@ export class InspectionPackSdk {
   }
 }
 
-export const INSPECTION_PACK_SDK_VERSION = "0.3.0" as const;
+export const INSPECTION_PACK_SDK_VERSION = "0.4.0" as const;

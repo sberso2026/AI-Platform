@@ -3,77 +3,94 @@ import {
   INSPECTION_INTELLIGENCE_VERSION,
   INSPECTION_MOBILE_PRODUCT_IMPLEMENTED,
   INSPECTION_OFFLINE_SYNC_IMPLEMENTED,
+  INSPECTION_CONDITION_RATING_IMPLEMENTED,
+  INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED,
+  INSPECTION_PACK_EXPANSION_IMPLEMENTED,
+  INSPECTION_PREDICTIVE_IMPLEMENTED,
   INSPECTION_AI_VISION_IMPLEMENTED,
   getInspectionIntelligenceDomainDeclaration,
-  runInspectionOfflineSyncHappyPath,
-  denyExpiredEntitlement,
-  buildPackAwareMobileReports,
-  GENERIC_INSPECTION_PACK_SDK,
-  COATINGS_PACK_SCAFFOLD,
+  runConditionPredictiveHappyPath,
+  STRUCTURAL_CONDITION_PACK_SDK,
+  executeMlProviderReserved,
+  aggregateComponentRatings,
+  createObservedConditionRating,
+  STRUCTURAL_ORDINAL_SCHEME_V1,
 } from "../src";
-import {
-  assertEngineeringMobileOfflineSdkComplete,
-  ENGINEERING_MOBILE_OFFLINE_SDK_VERSION,
-  MOBILE_OFFLINE_ENGINE_IMPLEMENTED,
-  ENGINEERING_MOBILE_SDK_VERSION,
-} from "@rtb/engineering-os";
 
-describe("Phase 9G offline synchronization", () => {
-  it("locks offline identity without AI Vision", () => {
-    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("0.7.0-offline-sync");
+describe("Phase 9H condition rating and predictive signals", () => {
+  it("locks condition/predictive identity without AI Vision or Twin ownership", () => {
+    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("0.8.0-condition-predictive");
     expect(INSPECTION_MOBILE_PRODUCT_IMPLEMENTED).toBe(true);
     expect(INSPECTION_OFFLINE_SYNC_IMPLEMENTED).toBe(true);
+    expect(INSPECTION_CONDITION_RATING_IMPLEMENTED).toBe(true);
+    expect(INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED).toBe(true);
+    expect(INSPECTION_PACK_EXPANSION_IMPLEMENTED).toBe(true);
+    expect(INSPECTION_PREDICTIVE_IMPLEMENTED).toBe(false);
     expect(INSPECTION_AI_VISION_IMPLEMENTED).toBe(false);
     const decl = getInspectionIntelligenceDomainDeclaration();
-    expect(decl.offlineSyncImplemented).toBe(true);
-    expect(decl.mobileReportingImplemented).toBe(true);
+    expect(decl.conditionRatingImplemented).toBe(true);
+    expect(decl.predictiveSignalsScaffolded).toBe(true);
+    expect(decl.assetOwnership).toBe("engineering_os_shared_domain");
   });
 
-  it("exposes implemented Engineering Mobile Offline SDK", () => {
-    expect(ENGINEERING_MOBILE_SDK_VERSION).toBe("0.7.0");
-    expect(ENGINEERING_MOBILE_OFFLINE_SDK_VERSION).toBe("0.7.0");
-    expect(MOBILE_OFFLINE_ENGINE_IMPLEMENTED.durableLocalCommandQueue).toBe(true);
-    expect(() => assertEngineeringMobileOfflineSdkComplete()).not.toThrow();
+  it("certifies structural pack expansion", () => {
+    expect(STRUCTURAL_CONDITION_PACK_SDK.packId).toBe("structural_condition");
+    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.conditionRating).toBe(true);
+    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.offlineCompatible).toBe(true);
+    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.aiVision).toBe(false);
   });
 
-  it("runs offline package → queue → sync → conflict → entitlement → purge", async () => {
-    const result = await runInspectionOfflineSyncHappyPath({
+  it("runs condition → override → publish → aggregate → predictive → reporting", async () => {
+    const result = await runConditionPredictiveHappyPath({
       tenantId: "t1",
       workspaceId: "w1",
-      userId: "u1",
-      deviceId: "d1",
       sessionId: "s1",
+      assessorUserId: "u1",
+      authorityUserId: "u2",
+      targetRef: "structure:bridge-1",
     });
-    expect(result.offlineSyncImplemented).toBe(true);
-    expect(result.store.encrypted).toBe(true);
-    expect(result.store.schemaVersion).toBe(2);
-    expect(result.packages).toHaveLength(2);
-    expect(result.commands[0]?.state).toBe("succeeded");
-    expect(result.evidenceQueue[0]?.originalPreserved).toBe(true);
-    expect(result.connectivity.state).toBe("online_verified");
-    expect(result.conflicts.every((c) => c.lastWriteWinsForbidden)).toBe(true);
-    expect(result.events.some((e) => e.type === "engineering.mobile.sync.completed")).toBe(true);
-    await expect(denyExpiredEntitlement(result.entitlement)).rejects.toThrow(/expired/);
+    expect(result.conditionRatingImplemented).toBe(true);
+    expect(result.predictiveSignalsScaffolded).toBe(true);
+    expect(result.packExpansionImplemented).toBe(true);
+    expect(result.ratings[0]?.overrides[0]?.previousValue.ordinalCode).toBe("3");
+    expect(result.ratings[0]?.published?.layer).toBe("published");
+    expect(result.aggregation.abstained).toBe(false);
+    expect(result.signals.every((s) => s.advisory && !s.claimsRemainingUsefulLife)).toBe(true);
+    expect(result.mlAbstention.abstained).toBe(true);
+    expect(result.reportingOutputs.some((o) => o.kind === "condition_rating_snapshot")).toBe(true);
+    expect(result.conditionEvents.some((e) => e.type.includes("condition"))).toBe(true);
+    expect(result.operationalHardeningChecks.overridePreservesHistory).toBe(true);
 
-    const genericReports = buildPackAwareMobileReports({
+    const ml = executeMlProviderReserved({
       tenantId: "t1",
       workspaceId: "w1",
-      sessionId: "s1",
-      pack: GENERIC_INSPECTION_PACK_SDK,
-      evidenceVersions: ["1"],
-      offlineOrigin: true,
-      synchronizationStatus: "synced",
+      targetRef: "x",
     });
-    const coatingsReports = buildPackAwareMobileReports({
-      tenantId: "t1",
-      workspaceId: "w1",
-      sessionId: "s1",
-      pack: COATINGS_PACK_SCAFFOLD,
-      evidenceVersions: ["1"],
-      offlineOrigin: false,
-      synchronizationStatus: "published",
+    expect(ml.claimsProductionMlAccuracy).toBe(false);
+
+    expect(() =>
+      createObservedConditionRating({
+        tenantId: "t1",
+        workspaceId: "w1",
+        sessionId: "s1",
+        componentScope: "x",
+        inspectionScope: "y",
+        observationIds: [],
+        scheme: STRUCTURAL_ORDINAL_SCHEME_V1,
+        ordinalCode: "2",
+        confidence: 0.1,
+        uncertainty: 0.9,
+        evidenceSufficiency: "abstain",
+        assessorUserId: "u1",
+        packId: "structural_condition",
+      }),
+    ).toThrow(/abstain/);
+
+    const emptyAgg = aggregateComponentRatings({
+      ratings: [],
+      weighting: { weightingId: "w", version: "1", weights: {} },
+      requiredComponents: ["girder"],
     });
-    expect(genericReports.every((r) => r.mobileReady)).toBe(true);
-    expect(coatingsReports[0]?.packId).toBe("coatings");
+    expect(emptyAgg.abstained).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 /**
- * Predictive Inspection interfaces — reserved for Asset Intelligence,
- * Digital Twin, and condition monitoring. Not implemented in 9B.
+ * Predictive Inspection adapters for Asset Intelligence / Digital Twin — still reserved.
+ * Inspection Intelligence advisory signals are implemented in domain/predictive-signals.ts.
  */
 
 export type PredictiveInspectionSignal = {
@@ -22,4 +22,5 @@ export type PredictiveInspectionAdapter = {
   reserved: true;
 };
 
+/** Asset Intelligence / Twin remaining-life adapters remain reserved (not II ownership). */
 export const PREDICTIVE_INSPECTION_RESERVED = true as const;

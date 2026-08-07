@@ -1,4 +1,4 @@
-/** Phase 9G — mobile certification including offline sync. */
+/** Phase 9H — mobile + offline + condition/predictive certification. */
 
 export const MOBILE_CERTIFICATION_PLACEHOLDERS = [
   { id: "mobile.offline", status: "certified" as const },
@@ -12,6 +12,8 @@ export const MOBILE_CERTIFICATION_PLACEHOLDERS = [
   { id: "mobile.annotation", status: "certified" as const },
   { id: "mobile.attestation", status: "certified" as const },
   { id: "mobile.reporting", status: "certified" as const },
+  { id: "mobile.condition", status: "certified" as const },
+  { id: "mobile.predictive", status: "certified" as const },
 ] as const;
 
 export type MobileCertificationPlaceholderId =

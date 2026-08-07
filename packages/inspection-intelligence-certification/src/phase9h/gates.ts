@@ -1,0 +1,28 @@
+export const PHASE_9H_INSPECTION_CONDITION_PREDICTIVE_GATES = [
+  ["A", "Repository and build identity"],
+  ["B", "Prior phase regression"],
+  ["C", "Project Intelligence v1 tag integrity"],
+  ["D", "Condition rating model"],
+  ["E", "Condition aggregation"],
+  ["F", "Override and publication authority"],
+  ["G", "Predictive signals scaffolding"],
+  ["H", "Fail-closed providers and no RUL/ML claims"],
+  ["I", "Structural pack expansion"],
+  ["J", "Offline continuity for ratings/signals"],
+  ["K", "Reporting and KPI continuity"],
+  ["L", "Operational hardening scenarios"],
+  ["M", "Events and metrics contracts"],
+  ["N", "Condition and predictive UI"],
+  ["O", "Unit and architecture tests"],
+  ["P", "Tenant isolation and entitlements"],
+  ["Q", "Threat model and limitations"],
+  ["R", "Browser E2E"],
+  ["S", "Device evidence documentation"],
+  ["T", "No AI Vision"],
+  ["U", "No Asset Intelligence / Digital Twin ownership"],
+  ["V", "Secret exposure"],
+  ["W", "Artifact identity"],
+  ["X", "Release eligibility and phase9I readiness"],
+] as const;
+
+export type Phase9hGateId = (typeof PHASE_9H_INSPECTION_CONDITION_PREDICTIVE_GATES)[number][0];

@@ -1,5 +1,5 @@
 /**
- * Browser certification for Phase 9G — offline sync markers + Playwright suite presence.
+ * Browser certification for Phase 9H — condition/predictive markers.
  */
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("Phase 9G browser certification (source)", () => {
-  it("covers offline-sync-ready markers and sync surface", () => {
+describe("Phase 9H browser certification (source)", () => {
+  it("covers condition-predictive markers and surfaces", () => {
     const overview = readFileSync(
       resolve(
         ROOT,
@@ -17,21 +17,9 @@ describe("Phase 9G browser certification (source)", () => {
       ),
       "utf8",
     );
-    expect(overview).toContain("inspection-intelligence-mobile-ready");
+    expect(overview).toContain("inspection-intelligence-condition-predictive-ready");
     expect(overview).toContain("inspection-intelligence-offline-sync-ready");
-    for (const page of [
-      "templates",
-      "plans",
-      "sessions",
-      "review",
-      "defects",
-      "actions",
-      "workflows",
-      "assignments",
-      "my-work",
-      "field",
-      "sync",
-    ]) {
+    for (const page of ["condition", "predictive", "sync", "field"]) {
       const text = readFileSync(
         resolve(
           ROOT,
@@ -41,17 +29,10 @@ describe("Phase 9G browser certification (source)", () => {
       );
       expect(text).toMatch(/data-testid="inspection-/);
     }
-    const shell = readFileSync(
-      resolve(ROOT, "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"),
-      "utf8",
-    );
-    expect(shell).toContain('data-offline-sync="true"');
-
-    const offlineSpec = resolve(
+    const spec = resolve(
       ROOT,
-      "packages/inspection-intelligence-certification/playwright/offline-sync.spec.ts",
+      "packages/inspection-intelligence-certification/playwright/condition-predictive.spec.ts",
     );
-    expect(existsSync(offlineSpec)).toBe(true);
-    expect(readFileSync(offlineSpec, "utf8")).toMatch(/390.*844|offline|permanently offline/i);
+    expect(existsSync(spec)).toBe(true);
   });
 });

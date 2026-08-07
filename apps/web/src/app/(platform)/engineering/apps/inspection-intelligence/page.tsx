@@ -1,5 +1,5 @@
 /**
- * Phase 9G overview — offline sync + mobile reporting markers.
+ * Phase 9H overview — condition rating, predictive signals, structural pack.
  */
 export default function InspectionIntelligenceOverviewPage() {
   return (
@@ -13,21 +13,22 @@ export default function InspectionIntelligenceOverviewPage() {
             <div data-testid="inspection-intelligence-operational-workflows-ready">
               <div data-testid="inspection-intelligence-mobile-ready">
                 <div data-testid="inspection-intelligence-offline-sync-ready">
-                  <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
-                    Inspection Intelligence
-                  </h1>
-                  <p className="mt-2 max-w-2xl text-slate-600">
-                    Offline synchronization (0.7.0-offline-sync). Durable encrypted offline store,
-                    command and evidence queues, conflict reconciliation, and pack-aware mobile
-                    reporting. AI Vision remains deferred.
-                  </p>
-                  <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                    <li>Offline packages with checksum, expiry, and revocation</li>
-                    <li>Idempotent command and evidence queues</li>
-                    <li>Deterministic conflict policies (no last-write-wins for governed records)</li>
-                    <li>Entitlement snapshots expire and deny after TTL</li>
-                    <li>Browser limitation: cannot guarantee wipe of a permanently offline device</li>
-                  </ul>
+                  <div data-testid="inspection-intelligence-condition-predictive-ready">
+                    <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
+                      Inspection Intelligence
+                    </h1>
+                    <p className="mt-2 max-w-2xl text-slate-600">
+                      Condition rating, predictive signals, and structural pack expansion
+                      (0.8.0-condition-predictive). Advisory signals fail closed; AI Vision remains
+                      deferred. Not an Asset Intelligence or Digital Twin authority.
+                    </p>
+                    <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      <li>Governed condition ratings with override history and scheme versioning</li>
+                      <li>Aggregation with uncertainty, missing evidence, and abstention</li>
+                      <li>Deterministic predictive signals — advisory only, no RUL claim</li>
+                      <li>Structural condition pack with offline and mobile compatibility</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>

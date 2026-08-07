@@ -1,6 +1,6 @@
 {
   "name": "@rtb/inspection-intelligence",
-  "version": "0.7.0-offline-sync",
+  "version": "0.8.0-condition-predictive",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
