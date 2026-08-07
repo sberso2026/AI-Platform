@@ -274,6 +274,22 @@ importers:
         specifier: ^3.2.1
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
 
+  packages/engineering-shared-project-domain:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
   packages/inspection-intelligence:
     dependencies:
       '@rtb/engineering-os':
@@ -506,6 +522,16 @@ importers:
         version: 5.9.3
 
   packages/project-controls:
+    dependencies:
+      '@rtb/engineering-os':
+        specifier: workspace:*
+        version: link:../engineering-os
+      '@rtb/engineering-shared-project-domain':
+        specifier: workspace:*
+        version: link:../engineering-shared-project-domain
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -519,9 +545,15 @@ importers:
 
   packages/project-controls-certification:
     dependencies:
+      '@rtb/engineering-shared-project-domain':
+        specifier: workspace:*
+        version: link:../engineering-shared-project-domain
       '@rtb/project-controls':
         specifier: workspace:*
         version: link:../project-controls
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
     devDependencies:
       '@types/node':
         specifier: ^22.15.29

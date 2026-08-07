@@ -1,0 +1,109 @@
+name: Phase 11B Project Controls Progress Intelligence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/project-controls/**"
+      - "packages/project-controls-certification/**"
+      - "packages/engineering-shared-project-domain/**"
+      - "packages/platform-certification/src/phase11b*"
+      - "supabase/migrations/*batch_61*"
+      - "supabase/migrations/*batch_62*"
+      - "apps/web/src/app/api/engineering/project-controls/**"
+      - "docs/architecture/ENGINEERING_SHARED_PROJECT_DOMAIN.md"
+      - "docs/architecture/PROJECT_CONTROLS_*"
+      - ".github/workflows/phase-11b-project-controls-progress.yml"
+
+concurrency:
+  group: phase-11b-project-controls-progress-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Shared project domain unit tests
+        run: pnpm --filter @rtb/engineering-shared-project-domain test
+      - name: Project Controls unit tests
+        run: pnpm --filter @rtb/project-controls test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase11b-project-controls-progress.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/project-controls-certification secret-scan
+      - name: Phase 11B certification (gates A–AS)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/project-controls-certification certify:phase11b
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/project-controls-certification/artifacts/phase11b-project-controls-progress-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===45],
+            ["version", a.version==="0.2.0-progress-intelligence"],
+            ["status", a.status==="progress_intelligence"],
+            ["sharedProjectDomainReady", a.sharedProjectDomainReady===true],
+            ["projectContextEngineReady", a.projectContextEngineReady===true],
+            ["progressIntelligenceReady", a.progressIntelligenceReady===true],
+            ["productionProjectControlsReady", a.productionProjectControlsReady===false],
+            ["productionMemoryRepositoryAllowed", a.productionMemoryRepositoryAllowed===false],
+            ["duplicateProjectOwnershipDetected", a.duplicateProjectOwnershipDetected===false],
+            ["canonicalProjectIdentityOwnership", a.canonicalProjectIdentityOwnership==="engineering_os_shared_project_domain"],
+            ["assetIntelligenceV1Intact", a.assetIntelligenceV1Intact===true],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact===true],
+            ["inspectionIntelligenceV1Intact", a.inspectionIntelligenceV1Intact===true],
+            ["earnedValueImplemented", a.earnedValueImplemented===false],
+            ["cpmSchedulingImplemented", a.cpmSchedulingImplemented===false],
+            ["costEngineImplemented", a.costEngineImplemented===false],
+            ["phase11CReady", a.phase11CReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates, hostedDetail: a.hostedDetail }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            phase11CReady: a.phase11CReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase11b-project-controls-progress-certification
+          path: packages/project-controls-certification/artifacts/phase11b-project-controls-progress-certification.json
+          if-no-files-found: warn

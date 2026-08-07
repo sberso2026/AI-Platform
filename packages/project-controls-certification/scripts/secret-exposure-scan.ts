@@ -21,6 +21,7 @@ const SECRET_ENV_NAMES = [
 const SCAN_ROOTS = [
   resolve(root, "packages/project-controls"),
   resolve(root, "packages/project-controls-certification"),
+  resolve(root, "packages/engineering-shared-project-domain"),
 ];
 
 const SCAN_DOCS = [
@@ -29,6 +30,9 @@ const SCAN_DOCS = [
   "docs/architecture/PROJECT_CONTROLS_OWNERSHIP_MATRIX.md",
   "docs/architecture/PROJECT_CONTROLS_BOUNDARY_MAP.md",
   "docs/architecture/PROJECT_CONTROLS_PHASE_11A_DISCOVERY.md",
+  "docs/architecture/ENGINEERING_SHARED_PROJECT_DOMAIN.md",
+  "docs/architecture/PROJECT_CONTROLS_PROGRESS_INTELLIGENCE.md",
+  "docs/architecture/PROJECT_CONTROLS_PROJECT_CONTEXT_ENGINE.md",
 ].map((rel) => resolve(root, rel));
 
 function collectFiles(dir: string, acc: string[] = []): string[] {

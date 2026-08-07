@@ -82,8 +82,8 @@ Concerns Project Controls reads through a public contract and never owns.
 
 | Concern key | Owner |
 | --- | --- |
-| `project_identity_canonical` | `engineering_core` |
-| `project_hierarchy_wbs_canonical` | `engineering_core` |
+| `project_identity_canonical` | `engineering_os_shared_project_domain` (11A: `engineering_core`) |
+| `project_hierarchy_wbs_canonical` | `engineering_os_shared_project_domain` (11A: `engineering_core`) |
 | `project_knowledge` | `project_intelligence` |
 | `project_documents` | `project_intelligence` |
 | `meeting_intelligence` | `project_intelligence` |
@@ -91,6 +91,12 @@ Concerns Project Controls reads through a public contract and never owns.
 | `asset_intelligence` | `asset_intelligence` (frozen V1) |
 | `inspection_intelligence` | `inspection_intelligence` |
 | `entitlements_seats_licensing` | `platform_commerce_finance` |
+
+Phase 11B re-spelled the two project rows to
+`engineering_os_shared_project_domain`, matching the granularity of the asset
+identity owner. The relation is unchanged — Project Controls still only consumes.
+See `PROJECT_CONTROLS_OWNERSHIP_MATRIX.md` and
+`ENGINEERING_SHARED_PROJECT_DOMAIN.md`.
 
 Consumption rules:
 

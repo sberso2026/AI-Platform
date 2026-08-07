@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: discovery · Module version: `0.1.0-discovery` · Phase: 11A
+Status: progress_intelligence · Module version: `0.2.0-progress-intelligence` · Phase: 11B
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in
@@ -12,21 +12,22 @@ rows.
 
 | Concern | Owner | PC relation | Notes |
 | --- | --- | --- | --- |
-| Project identity (canonical) | `engineering_core` | consumes | Locked — see the decision section below |
-| Project hierarchy / WBS (canonical) | `engineering_core` | consumes | PC joins on canonical nodes; it defines no competing hierarchy |
+| Project identity (canonical) | `engineering_os_shared_project_domain` | consumes | Locked 11B — see the decision section below |
+| Project hierarchy / WBS (canonical) | `engineering_os_shared_project_domain` | consumes | Phases, WBS nodes, work packages, activities, milestones are identity refs |
 | Project Intelligence | `project_intelligence` | consumes | Docs, findings, meetings — knowledge ABOUT projects |
 | Project documents | `project_intelligence` | consumes | Document intelligence derivatives |
-| Meeting intelligence | `project_intelligence` | consumes | Meeting derivatives |
-| Project Controls — cost | `project_controls` | owns | Future; no cost engine in 11A |
-| Project Controls — schedule | `project_controls` | owns | Future; no CPM or schedule execution in 11A |
-| Project Controls — progress | `project_controls` | owns | Future; no progress measurement in 11A |
-| Project Controls — change | `project_controls` | owns | Future; no change workflow in 11A |
-| Project Controls — contingency | `project_controls` | owns | Future; no drawdown in 11A |
-| Earned Value | `project_controls` | reserved / forbidden | Reserved to PC by domain; forbidden to implement in 11A |
+| Meeting intelligence | `project_intelligence` | consumes | Meeting derivatives; PC may cite them as progress evidence |
+| Project Controls — progress | `project_controls` | **owns** | **Implemented in 11B** — advisory, evidence-driven, not earned value |
+| Project profile composition | `project_controls` | **owns** | **Implemented in 11B** — Project Context Engine |
+| Project Controls — cost | `project_controls` | owns | Reserved provider interface only; no cost engine in 11B |
+| Project Controls — schedule | `project_controls` | owns | Reserved provider interface only; no CPM or schedule execution in 11B |
+| Project Controls — change | `project_controls` | owns | Reserved provider interface only; no change workflow in 11B |
+| Project Controls — contingency | `project_controls` | owns | Reserved provider interface only; no drawdown in 11B |
+| Earned Value | `project_controls` | reserved / forbidden | Reserved to PC by domain; forbidden to implement |
 | Asset identity (canonical) | `engineering_os_shared_domain` | consumes | PC never owns canonical asset identity |
 | Asset lifecycle (canonical) | `engineering_os_shared_domain` | forbidden | PC never mutates canonical asset lifecycle |
 | Asset Intelligence | `asset_intelligence` | consumes | Frozen V1 — public contracts only |
-| Inspection Intelligence | `inspection_intelligence` | consumes | PC is a documented future consumer of II contracts |
+| Inspection Intelligence | `inspection_intelligence` | consumes | PC may cite inspection results as progress evidence |
 | Canonical Risk register | `engineering_core` | forbidden | PC may reference; auto-mutation forbidden |
 | Financial ledgers / billing | `platform_commerce_finance` | forbidden | Commerce and finance own money movement |
 | Entitlements / seats / licensing | `platform_commerce_finance` | consumes | Existing PC entitlements stay entitlement-only |
@@ -36,70 +37,102 @@ rows.
 
 ## Identity ownership decision
 
-The open question entering Phase 11A was whether canonical project identity
-belongs to `engineering_os_shared_domain` (the spelling Asset Intelligence uses
-for canonical asset identity) or to `engineering_core`.
+**Decision: `engineering_os_shared_project_domain`. Locked for Phase 11B.**
+`CANONICAL_PROJECT_IDENTITY_OWNERSHIP = "engineering_os_shared_project_domain"`.
 
-**Decision: `engineering_core`. Locked for Phase 11A.**
+### Phase 11A position and why it changed
 
-Evidence from existing repository patterns:
+Phase 11A locked canonical project identity to `engineering_core`, on the evidence
+that Project Intelligence attributes active projects and every other canonical
+register to `engineering_core`:
 
-- `packages/project-intelligence/src/reports/executive-dashboard.ts` cites
-  active projects as `{ source: "engineering_core", refId: "projects.active" }`.
+- `packages/project-intelligence/src/reports/executive-dashboard.ts` cites active
+  projects as `{ source: "engineering_core", refId: "projects.active" }`.
 - `packages/project-intelligence/src/reports/executive-widgets.ts` declares the
-  `project_health` widget with `owner: "engineering_core"` and the description
-  "Active projects and high-criticality assets from Engineering Core".
-- Every other canonical register that Project Intelligence reads — risks,
-  issues, actions, technical queries, lessons — is attributed to
-  `engineering_core` in the same file.
+  `project_health` widget with `owner: "engineering_core"`.
 
-Asset Intelligence uses `engineering_os_shared_domain` for asset identity and
-`engineering_core` for the canonical risk register, so both spellings already
-coexist in the frozen V1 surface. They denote the same Engineering OS canonical
-layer at different granularity. Phase 11A does **not** attempt to unify the two
-spellings, because doing so would require editing the frozen Asset Intelligence
-V1 files. That unification is recorded as
+That was a correct reading of the repository but a placeholder as an ownership
+statement, because Asset Intelligence already used the narrower
+`engineering_os_shared_domain` spelling for canonical asset identity. Phase 11A
+deferred reconciling the two as
 `PROJECT_IDENTITY_OWNER_SPELLING_UNIFICATION = "deferred_to_phase_11b"`.
 
-Consequence, and the point of the decision: **Project Controls does not claim
-canonical project identity.** This is asserted in code by
-`CANONICAL_PROJECT_IDENTITY_CLAIMED_BY_PROJECT_CONTROLS = false` and enforced by
-`assertOwnershipLock()`, which throws
-`project_controls_may_not_claim_canonical_project_identity`.
+Phase 11B resolves it: identity ownership is now spelled at the same granularity
+as its asset sibling, and
+`PROJECT_IDENTITY_OWNER_SPELLING_UNIFICATION = "unified_in_phase_11b"`.
+
+### Spelling unification
+
+| Concern | Owner | Physical store |
+| --- | --- | --- |
+| Canonical asset identity | `engineering_os_shared_domain` | `engineering_assets` |
+| Canonical project identity | `engineering_os_shared_project_domain` | `engineering_projects` |
+| Canonical engineering risk | `engineering_core` | `engineering_risks` |
+
+`engineering_core` is retained for the canonical **risk** register, which is
+genuinely Core-owned, and Asset Intelligence V1 is not touched.
+
+### Logical owner vs physical store
+
+The Engineering Shared Project Domain
+(`packages/engineering-shared-project-domain`) is the **logical identity layer**.
+`engineering_projects` (batch_20) remains the **physical store** and is not
+modified, replaced or forked. Batch_61 adds hierarchy reference tables beside it.
+There is exactly one project record and exactly one logical owner.
+
+Phase 11A's core consequence is unchanged and strengthened: **Project Controls
+does not claim canonical project identity.** PC consumes `ProjectReference` only,
+asserted by `CANONICAL_PROJECT_IDENTITY_CLAIMED_BY_PROJECT_CONTROLS = false`,
+`PROJECT_IDENTITY_MUTATION_BY_PROJECT_CONTROLS_ALLOWED = false` and
+`PROJECT_CONTROLS_CONSUMES_PROJECT_REFERENCE_ONLY = true`. The resolution port
+exposes no write method, so mutation is impossible rather than merely forbidden.
 
 ## What Project Controls does NOT own
 
 Stated explicitly, because these are the boundaries most likely to be eroded:
 
 - **Asset Intelligence.** Frozen at V1.0.0 (`asset-intelligence-v1.0.0`,
-  `925e2ed74025cac6a145c346c17c53320efb8757`). Project Controls consumes its
-  public contracts and owns none of it. Phase 11A does not modify the Asset
-  Intelligence surface at all.
-- **Inspection Intelligence.** II owns inspection records and findings. II's own
-  consumer fixture already forbids `project_controls_ownership_via_ii`.
-- **Project Intelligence identity and knowledge.** PI owns knowledge derivatives
-  about projects — documents, meetings, findings. Project Controls does not
+  `925e2ed74025cac6a145c346c17c53320efb8757`). PC consumes public contracts and
+  owns none of it. Phase 11B does not modify the AI surface.
+- **Project Intelligence.** Frozen at V1.0.0 (`project-intelligence-v1.0.0`,
+  `34975b1...`). PI owns knowledge derivatives about projects; PC does not
   re-derive them.
-- **Canonical asset identity and canonical asset lifecycle.** Owned by
-  `engineering_os_shared_domain`. Project Controls introduces no second asset
-  owner; `DUPLICATE_ASSET_OWNERSHIP_INTRODUCED = false` is a certification gate.
-- **Canonical project identity.** Owned by `engineering_core`, per the decision
-  above.
-- **Canonical Risk.** Owned by `engineering_core`. Project Controls may
-  reference a risk; it may never auto-create or auto-mutate one
+- **Inspection Intelligence.** Frozen at V1.0.0 (`inspection-intelligence-v1.0.0`,
+  `d47c4ff...`). II's consumer fixture forbids `project_controls_ownership_via_ii`.
+- **Canonical asset identity and lifecycle.** Owned by
+  `engineering_os_shared_domain`; `DUPLICATE_ASSET_OWNERSHIP_INTRODUCED = false`.
+- **Canonical project identity and hierarchy.** Owned by
+  `engineering_os_shared_project_domain`;
+  `DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false`.
+- **Canonical Risk.** Owned by `engineering_core`
   (`RISK_CORE_AUTO_MUTATION_ALLOWED = false`).
-- **Financial ledgers and billing.** Owned by platform commerce and finance.
-  A cost position inside Project Controls is a control artefact, not a
-  financial record of account.
+- **Financial ledgers and billing.** Owned by platform commerce and finance. A
+  cost position inside Project Controls would be a control artefact, not a record
+  of account — and no cost position exists in 11B.
+- **Earned value.** Reserved to the PC domain but forbidden to implement.
+  Progress Intelligence is advisory and evidence-based; see
+  `PROJECT_CONTROLS_PROGRESS_INTELLIGENCE.md`.
 - **CMMS work orders, Digital Twin and SHM.** Out of scope entirely.
+
+## Product status
+
+Owning progress intelligence is not owning a Project Controls product.
+`PROJECT_CONTROLS_IMPLEMENTED = false`,
+`PRODUCTION_PROJECT_CONTROLS_READY = false`, and the Engineering OS module
+registry entry stays `coming_soon`. `assertOwnershipLock()` throws
+`project_controls_product_forbidden_in_phase_11b` if either flag is flipped.
 
 ## Enforcement points
 
 | Statement | Enforced by |
 | --- | --- |
-| PC does not claim canonical project identity | `assertOwnershipLock()`; gate E |
-| PC owns no asset identity row | `assertOwnershipLock()`; gate Z |
-| PC never mutates canonical lifecycle | version lock; gate AA |
-| PC never auto-mutates Core Risk | version lock; gate AB |
-| PC entitlements stay entitlement-only | gate P |
-| Asset Intelligence V1 untouched | gates B, U, AE |
+| Canonical project identity is shared-domain owned | `assertOwnershipLock()`; batch_61 `identity_owner` CHECK |
+| PC does not claim or mutate project identity | `assertOwnershipLock()`; write-free resolution port |
+| PC consumes ProjectReference only | `PROJECT_CONTROLS_CONSUMES_PROJECT_REFERENCE_ONLY`; FK to `engineering_projects` |
+| Progress is advisory, never earned value | `assertNoEarnedValue()`; batch_62 CHECK constraints |
+| PC engines (cost/schedule/EV/forecast) unimplemented | `assertReservedProvidersUnimplemented()` |
+| PC owns no asset identity row | `assertOwnershipLock()` |
+| PC never mutates canonical lifecycle | version lock |
+| PC never auto-mutates Core Risk | version lock |
+| No autonomous progress publication | `assertOwnershipLock()`; `assertPublishable()` |
+| AI / PI / II V1 untouched | Phase 11B V1-intact gates |

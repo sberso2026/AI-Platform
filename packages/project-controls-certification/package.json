@@ -1,14 +1,17 @@
 {
   "name": "@rtb/project-controls-certification",
-  "version": "0.1.0-discovery",
+  "version": "0.2.0-progress-intelligence",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase11a": "tsx scripts/run-phase11a-certification.ts",
+    "certify:phase11b": "tsx scripts/run-phase11b-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {
-    "@rtb/project-controls": "workspace:*"
+    "@rtb/engineering-shared-project-domain": "workspace:*",
+    "@rtb/project-controls": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assertOwnershipLock,
+  assertReservedProvidersUnimplemented,
   listConcernsByRelation,
   ASSET_INTELLIGENCE_V1_COMMIT,
   ASSET_INTELLIGENCE_V1_INTACT,
@@ -8,54 +9,102 @@ import {
   ASSET_INTELLIGENCE_V1_VERSION,
   BUDGET_LEDGER_IMPLEMENTED,
   CANONICAL_LIFECYCLE_MUTATION_ALLOWED,
+  CANONICAL_PROJECT_HIERARCHY_OWNERSHIP,
   CANONICAL_PROJECT_IDENTITY_CLAIMED_BY_PROJECT_CONTROLS,
+  CANONICAL_PROJECT_IDENTITY_OWNERSHIP,
+  CANONICAL_PROJECT_IDENTITY_PHYSICAL_STORE,
+  CASH_FLOW_IMPLEMENTED,
+  CHANGE_CONTROL_IMPLEMENTED,
+  CLAIMS_ANALYSIS_IMPLEMENTED,
+  CONTINGENCY_MANAGEMENT_IMPLEMENTED,
   COST_ENGINE_IMPLEMENTED,
   CPM_SCHEDULING_IMPLEMENTED,
   DUPLICATE_ASSET_OWNERSHIP_INTRODUCED,
+  DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
   EARNED_VALUE_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
-  getProjectControlsDiscoveryDeclaration,
+  getProjectControlsDeclaration,
+  INSPECTION_INTELLIGENCE_V1_COMMIT,
+  PHASE_11A_CERTIFIED_COMMIT,
+  PHASE_11A_HOSTED_RUN,
+  PHYSICAL_PERCENT_COMPLETE_CERTIFIED,
+  PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
   PRODUCTION_PROJECT_CONTROLS_READY,
-  PROJECT_CONTROLS_DISCOVERY_CONCEPTS,
-  PROJECT_CONTROLS_DISCOVERY_IMPLEMENTED,
+  PRODUCTIVITY_ANALYSIS_IMPLEMENTED,
+  PROGRESS_CONFIDENCE_ENGINE_READY,
+  PROGRESS_INTELLIGENCE_READY,
+  PROGRESS_MEASUREMENT_IMPLEMENTED,
+  PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY,
+  PROGRESS_MEASUREMENT_IS_EARNED_VALUE,
+  PROJECT_CONTEXT_ENGINE_READY,
+  PROJECT_CONTROLS_COST_SCHEDULE_TABLES_INTRODUCED,
   PROJECT_CONTROLS_IMPLEMENTED,
   PROJECT_CONTROLS_MODULE_KEY,
   PROJECT_CONTROLS_MODULE_REGISTRY_STATUS,
   PROJECT_CONTROLS_OWNERSHIP,
   PROJECT_CONTROLS_OWNERSHIP_MATRIX,
+  PROJECT_CONTROLS_PHASE,
   PROJECT_CONTROLS_PRODUCT_NAME,
-  PROJECT_CONTROLS_PRODUCT_TABLES_INTRODUCED,
   PROJECT_CONTROLS_PRODUCT_UI_IMPLEMENTED,
+  PROJECT_CONTROLS_PROGRESS_TABLES,
+  PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED,
   PROJECT_CONTROLS_STATUS,
   PROJECT_CONTROLS_VERSION,
+  PROJECT_IDENTITY_MUTATION_BY_PROJECT_CONTROLS_ALLOWED,
+  PROJECT_IDENTITY_OWNER_SPELLING_UNIFICATION,
   PROJECT_IDENTITY_OWNERSHIP,
+  PROJECT_INTELLIGENCE_V1_COMMIT,
+  RESERVED_PROVIDER_KEYS,
+  RESOURCE_LEVELING_IMPLEMENTED,
   RISK_CORE_AUTO_MUTATION_ALLOWED,
   SCHEDULE_EXECUTION_IMPLEMENTED,
+  SHARED_PROJECT_DOMAIN_READY,
   WORK_PACKAGING_UI_IMPLEMENTED,
+  createReservedProviderSet,
 } from "../src/index";
 
-describe("Phase 11A Project Controls discovery lock", () => {
-  it("declares a discovery-only module identity", () => {
+describe("Phase 11B Project Controls ownership and forbid locks", () => {
+  it("declares the progress intelligence module identity", () => {
     expect(PROJECT_CONTROLS_PRODUCT_NAME).toBe("Project Controls");
     expect(PROJECT_CONTROLS_MODULE_KEY).toBe("project_controls");
-    expect(PROJECT_CONTROLS_VERSION).toBe("0.1.0-discovery");
-    expect(PROJECT_CONTROLS_STATUS).toBe("discovery");
+    expect(PROJECT_CONTROLS_VERSION).toBe("0.2.0-progress-intelligence");
+    expect(PROJECT_CONTROLS_STATUS).toBe("progress_intelligence");
+    expect(PROJECT_CONTROLS_PHASE).toBe("11B");
     expect(PROJECT_CONTROLS_IMPLEMENTED).toBe(false);
-    expect(PROJECT_CONTROLS_DISCOVERY_IMPLEMENTED).toBe(true);
     expect(PRODUCTION_PROJECT_CONTROLS_READY).toBe(false);
+    expect(PHASE_11A_CERTIFIED_COMMIT).toBe("b9a3a6091ec4af1eb1ebdd9749da497ce5af9700");
+    expect(PHASE_11A_HOSTED_RUN).toBe("31179910364");
   });
 
-  it("locks ownership without claiming canonical project identity", () => {
+  it("flips only the Phase 11B capability flags", () => {
+    expect(SHARED_PROJECT_DOMAIN_READY).toBe(true);
+    expect(PROJECT_CONTEXT_ENGINE_READY).toBe(true);
+    expect(PROGRESS_INTELLIGENCE_READY).toBe(true);
+    expect(PROGRESS_CONFIDENCE_ENGINE_READY).toBe(true);
+    expect(PROGRESS_MEASUREMENT_IMPLEMENTED).toBe(true);
+    expect(PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY).toBe(true);
+    expect(PROGRESS_MEASUREMENT_IS_EARNED_VALUE).toBe(false);
+    expect(PHYSICAL_PERCENT_COMPLETE_CERTIFIED).toBe(false);
+    expect(PRODUCTION_MEMORY_REPOSITORY_ALLOWED).toBe(false);
+  });
+
+  it("moves canonical project identity to the shared project domain", () => {
     const lock = assertOwnershipLock();
     expect(lock.ok).toBe(true);
-    expect(lock.projectControlsOwnership).toBe("project_controls");
-    expect(lock.projectIdentityOwnership).toBe("engineering_core");
+    expect(lock.projectIdentityOwnership).toBe("engineering_os_shared_project_domain");
+    expect(lock.canonicalProjectIdentityOwnership).toBe("engineering_os_shared_project_domain");
     expect(lock.canonicalProjectIdentityClaimedByProjectControls).toBe(false);
     expect(lock.canonicalAssetIdentityOwnership).toBe("engineering_os_shared_domain");
     expect(lock.canonicalEngineeringRiskOwnership).toBe("engineering_core");
+    expect(lock.progressIntelligenceOwnership).toBe("project_controls");
     expect(PROJECT_CONTROLS_OWNERSHIP).toBe("project_controls");
-    expect(PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_core");
+    expect(PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
+    expect(CANONICAL_PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
+    expect(CANONICAL_PROJECT_HIERARCHY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
+    expect(CANONICAL_PROJECT_IDENTITY_PHYSICAL_STORE).toBe("engineering_projects");
     expect(CANONICAL_PROJECT_IDENTITY_CLAIMED_BY_PROJECT_CONTROLS).toBe(false);
+    expect(PROJECT_IDENTITY_MUTATION_BY_PROJECT_CONTROLS_ALLOWED).toBe(false);
+    expect(PROJECT_IDENTITY_OWNER_SPELLING_UNIFICATION).toBe("unified_in_phase_11b");
   });
 
   it("never assigns Asset, Inspection or Project Intelligence to Project Controls", () => {
@@ -67,11 +116,12 @@ describe("Phase 11A Project Controls discovery lock", () => {
         "inspection_intelligence",
         "project_knowledge",
         "project_identity_canonical",
+        "project_hierarchy_wbs_canonical",
         "canonical_risk_register",
         "financial_ledgers_billing",
       ].includes(row.concern),
     );
-    expect(foreign.length).toBe(8);
+    expect(foreign.length).toBe(9);
     for (const row of foreign) {
       expect(row.owner, row.concern).not.toBe("project_controls");
     }
@@ -85,22 +135,30 @@ describe("Phase 11A Project Controls discovery lock", () => {
       PROJECT_CONTROLS_OWNERSHIP_MATRIX.length,
     );
     expect(owns.every((row) => row.owner === "project_controls")).toBe(true);
-    expect(owns.length).toBeGreaterThanOrEqual(5);
+    expect(owns.some((row) => row.concern === "progress_controls_intelligence")).toBe(true);
+    expect(owns.some((row) => row.concern === "project_profile_composition")).toBe(true);
     expect(forbidden.some((row) => row.concern === "earned_value")).toBe(true);
   });
 
-  it("keeps every Project Controls product capability unimplemented", () => {
+  it("keeps every reserved Project Controls capability unimplemented", () => {
     for (const [name, flag] of [
       ["earned value", EARNED_VALUE_IMPLEMENTED],
       ["CPM", CPM_SCHEDULING_IMPLEMENTED],
       ["cost engine", COST_ENGINE_IMPLEMENTED],
-      ["schedule execution", SCHEDULE_EXECUTION_IMPLEMENTED],
       ["budget ledger", BUDGET_LEDGER_IMPLEMENTED],
-      ["work packaging UI", WORK_PACKAGING_UI_IMPLEMENTED],
+      ["schedule execution", SCHEDULE_EXECUTION_IMPLEMENTED],
       ["forecasting", FORECASTING_IMPLEMENTED],
-      ["product tables", PROJECT_CONTROLS_PRODUCT_TABLES_INTRODUCED],
+      ["resource leveling", RESOURCE_LEVELING_IMPLEMENTED],
+      ["work packaging UI", WORK_PACKAGING_UI_IMPLEMENTED],
+      ["change control", CHANGE_CONTROL_IMPLEMENTED],
+      ["contingency management", CONTINGENCY_MANAGEMENT_IMPLEMENTED],
+      ["productivity analysis", PRODUCTIVITY_ANALYSIS_IMPLEMENTED],
+      ["claims analysis", CLAIMS_ANALYSIS_IMPLEMENTED],
+      ["cash flow", CASH_FLOW_IMPLEMENTED],
+      ["cost/schedule tables", PROJECT_CONTROLS_COST_SCHEDULE_TABLES_INTRODUCED],
       ["product UI", PROJECT_CONTROLS_PRODUCT_UI_IMPLEMENTED],
       ["duplicate asset ownership", DUPLICATE_ASSET_OWNERSHIP_INTRODUCED],
+      ["duplicate project ownership", DUPLICATE_PROJECT_OWNERSHIP_DETECTED],
       ["canonical lifecycle mutation", CANONICAL_LIFECYCLE_MUTATION_ALLOWED],
       ["core risk auto mutation", RISK_CORE_AUTO_MUTATION_ALLOWED],
     ] as const) {
@@ -108,41 +166,66 @@ describe("Phase 11A Project Controls discovery lock", () => {
     }
   });
 
-  it("references the frozen Asset Intelligence V1 tag without depending on it", () => {
+  it("rejects every reserved provider call with not_implemented", async () => {
+    const guard = assertReservedProvidersUnimplemented();
+    expect(guard.ok).toBe(true);
+    expect(guard.reservedProviderKeys).toEqual(RESERVED_PROVIDER_KEYS);
+
+    const providers = createReservedProviderSet();
+    const query = {
+      tenantId: "t1",
+      workspaceId: "w1",
+      scope: { kind: "project" as const, projectId: "p1" },
+    };
+    await expect(providers.earnedValue.getEarnedValue(query)).rejects.toThrow(
+      /not_implemented:earned_value\.getEarnedValue/,
+    );
+    await expect(providers.schedule.getCriticalPath(query)).rejects.toThrow(
+      /not_implemented:schedule\.getCriticalPath/,
+    );
+    await expect(providers.cost.getBudget(query)).rejects.toThrow(/not_implemented:cost\.getBudget/);
+    await expect(providers.forecast.getCostForecast(query)).rejects.toThrow(/not_implemented/);
+    await expect(providers.change.getChangeImpact(query)).rejects.toThrow(/not_implemented/);
+    await expect(providers.productivity.getUnitRates(query)).rejects.toThrow(/not_implemented/);
+  });
+
+  it("introduces progress tables and nothing else", () => {
+    expect(PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED).toBe(true);
+    expect(PROJECT_CONTROLS_PROGRESS_TABLES).toContain("project_controls_progress_assessments");
+    expect(PROJECT_CONTROLS_PROGRESS_TABLES).toContain("project_controls_project_profiles");
+    expect(PROJECT_CONTROLS_PROGRESS_TABLES.length).toBe(8);
+    for (const table of PROJECT_CONTROLS_PROGRESS_TABLES) {
+      expect(table.startsWith("project_controls_")).toBe(true);
+    }
+  });
+
+  it("references the frozen V1 baselines", () => {
     expect(ASSET_INTELLIGENCE_V1_TAG).toBe("asset-intelligence-v1.0.0");
     expect(ASSET_INTELLIGENCE_V1_COMMIT).toBe("925e2ed74025cac6a145c346c17c53320efb8757");
     expect(ASSET_INTELLIGENCE_V1_VERSION).toBe("1.0.0");
     expect(ASSET_INTELLIGENCE_V1_INTACT).toBe(true);
+    expect(PROJECT_INTELLIGENCE_V1_COMMIT).toBe("34975b1cf660580d46287f24e746b8915903f768");
+    expect(INSPECTION_INTELLIGENCE_V1_COMMIT).toBe("d47c4ffa4c7147d3e2053b0764dfe5c80b56eb09");
   });
 
   it("keeps the Engineering OS module registry entry coming_soon", () => {
     expect(PROJECT_CONTROLS_MODULE_REGISTRY_STATUS).toBe("coming_soon");
   });
 
-  it("publishes discovery concepts only", () => {
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("cost");
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("schedule");
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("progress");
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("change");
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("contingency");
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("earned_value_reserved");
-    expect(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).toContain("wbs_consumption");
-    expect(new Set(PROJECT_CONTROLS_DISCOVERY_CONCEPTS).size).toBe(
-      PROJECT_CONTROLS_DISCOVERY_CONCEPTS.length,
-    );
-  });
-
-  it("exposes a coherent discovery declaration", () => {
-    const declaration = getProjectControlsDiscoveryDeclaration();
-    expect(declaration.version).toBe("0.1.0-discovery");
-    expect(declaration.status).toBe("discovery");
-    expect(declaration.phase).toBe("11A");
+  it("exposes a coherent declaration", () => {
+    const declaration = getProjectControlsDeclaration();
+    expect(declaration.version).toBe("0.2.0-progress-intelligence");
+    expect(declaration.status).toBe("progress_intelligence");
+    expect(declaration.phase).toBe("11B");
     expect(declaration.productionProjectControlsReady).toBe(false);
-    expect(declaration.projectControlsImplemented).toBe(false);
-    expect(declaration.discoveryImplemented).toBe(true);
-    expect(declaration.projectIdentityOwnership).toBe("engineering_core");
-    expect(declaration.assetIntelligenceV1Intact).toBe(true);
-    expect(declaration.hierarchy).toContain("Project Controls");
-    expect(declaration.hierarchy).toContain("discovery only");
+    expect(declaration.sharedProjectDomainReady).toBe(true);
+    expect(declaration.projectContextEngineReady).toBe(true);
+    expect(declaration.progressIntelligenceReady).toBe(true);
+    expect(declaration.canonicalProjectIdentityOwnership).toBe(
+      "engineering_os_shared_project_domain",
+    );
+    expect(declaration.projectControlsConsumesProjectReferenceOnly).toBe(true);
+    expect(declaration.hierarchy).toContain("Engineering Shared Project Domain");
+    expect(declaration.hierarchy).toContain("advisory only");
   });
 });

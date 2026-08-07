@@ -1,6 +1,6 @@
 {
-  "name": "@rtb/project-controls",
-  "version": "0.2.0-progress-intelligence",
+  "name": "@rtb/engineering-shared-project-domain",
+  "version": "0.1.0-shared-project-domain",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -14,8 +14,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@rtb/engineering-os": "workspace:*",
-    "@rtb/engineering-shared-project-domain": "workspace:*",
     "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
