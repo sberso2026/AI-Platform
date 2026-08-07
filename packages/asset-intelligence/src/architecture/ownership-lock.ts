@@ -65,7 +65,7 @@ export function assertOwnershipLock(): {
   assetIntelligenceOwnership: typeof ASSET_INTELLIGENCE_OWNERSHIP;
   duplicateAssetOwnershipDetected: false;
   productionAssetIntelligenceReady: false;
-  assetIntelligenceImplemented: false;
+  assetIntelligenceImplemented: typeof ASSET_INTELLIGENCE_IMPLEMENTED;
   accuracyClaimsCertified: false;
   rulClaimsCertified: false;
 } {
@@ -76,8 +76,8 @@ export function assertOwnershipLock(): {
     throw new Error("intelligence_owner_mismatch");
   }
   if (DUPLICATE_ASSET_OWNERSHIP_DETECTED) throw new Error("duplicate_ownership");
-  if (ASSET_INTELLIGENCE_IMPLEMENTED || PRODUCTION_ASSET_INTELLIGENCE_READY) {
-    throw new Error("production_claim_forbidden_in_10a");
+  if (PRODUCTION_ASSET_INTELLIGENCE_READY) {
+    throw new Error("full_module_ga_forbidden_until_explicit_phase");
   }
   if (ACCURACY_CLAIMS_CERTIFIED || RUL_CLAIMS_CERTIFIED) {
     throw new Error("unsupported_claims_forbidden");
@@ -92,7 +92,7 @@ export function assertOwnershipLock(): {
     assetIntelligenceOwnership: ASSET_INTELLIGENCE_OWNERSHIP,
     duplicateAssetOwnershipDetected: false,
     productionAssetIntelligenceReady: false,
-    assetIntelligenceImplemented: false,
+    assetIntelligenceImplemented: ASSET_INTELLIGENCE_IMPLEMENTED,
     accuracyClaimsCertified: false,
     rulClaimsCertified: false,
   };

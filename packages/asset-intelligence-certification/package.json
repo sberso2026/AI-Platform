@@ -1,10 +1,11 @@
 {
   "name": "@rtb/asset-intelligence-certification",
-  "version": "0.1.0-discovery",
+  "version": "0.2.0-core",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase10a": "tsx scripts/run-phase10a-certification.ts",
+    "certify:phase10b": "tsx scripts/run-phase10b-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "test:unit": "vitest run src"
   },

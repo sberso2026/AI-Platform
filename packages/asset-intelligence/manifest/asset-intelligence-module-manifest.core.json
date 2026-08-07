@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "asset-intelligence-module-manifest-core/1",
+  "moduleKey": "asset_intelligence",
+  "commercialName": "Asset Intelligence",
+  "version": "0.2.0-core",
+  "status": "core",
+  "osOwner": "engineering",
+  "assetIdentityOwnership": "engineering_os_shared_domain",
+  "assetIntelligenceOwnership": "asset_intelligence",
+  "productionAssetIntelligenceReady": false,
+  "coreConditionSliceReady": true,
+  "assetIntelligenceImplemented": true,
+  "accuracyClaimsCertified": false,
+  "rulClaimsCertified": false,
+  "duplicateAssetOwnershipDetected": false,
+  "sharedDomainDependencies": ["engineering_assets", "engineering_asset_types"],
+  "sdkDependencies": [
+    "engineering-module-sdk",
+    "engineering-domain-sdk",
+    "engineering-workflow-sdk"
+  ],
+  "capabilities": [
+    "asset.condition.read",
+    "asset.condition.assess",
+    "asset.intelligence.read",
+    "asset.health.read"
+  ],
+  "services": [
+    "AssetIntelligenceService",
+    "AssetConditionService",
+    "AssetHealthIndexService",
+    "AssetTimelineService"
+  ],
+  "contracts": "0.1.0-draft",
+  "inspectionIntelligenceContractsConsumed": "1.0.0",
+  "engine": "AssetIntelligenceEngine",
+  "features": [
+    "asset_snapshot",
+    "health_index_abstraction",
+    "intelligence_source_registry",
+    "historical_intelligence_timeline",
+    "condition_vertical_slice"
+  ],
+  "note": "Core foundation + condition vertical slice — not full module GA."
+}

@@ -12,7 +12,8 @@ export type AssetIdentityReference = {
   locationId?: string;
 };
 
-export type AssetSnapshot = {
+/** @deprecated Prefer composeAssetSnapshot / domain AssetSnapshot (Phase 10B). */
+export type AssetSnapshotIdentityOnly = {
   identity: AssetIdentityReference;
   asOf: string;
   registerVersion?: string;

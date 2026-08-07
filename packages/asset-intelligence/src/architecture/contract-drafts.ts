@@ -64,6 +64,8 @@ export const DRAFT_SERVICES = [
 
 export const DRAFT_EVENTS = [
   "engineering.asset.condition.updated",
+  "engineering.asset.health_index.updated",
+  "engineering.asset.intelligence_timeline.appended",
   "engineering.asset.criticality.updated",
   "engineering.asset.reliability.updated",
   "engineering.asset.failure_signal.created",
