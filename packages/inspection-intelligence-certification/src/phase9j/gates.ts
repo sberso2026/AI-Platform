@@ -1,0 +1,28 @@
+export const PHASE_9J_INSPECTION_MODULE_RELEASE_GATES = [
+  ["A", "Repository and build identity"],
+  ["B", "Prior phase regression"],
+  ["C", "Project Intelligence v1 tag integrity"],
+  ["D", "Module release closure and publication authority"],
+  ["E", "Public module contracts"],
+  ["F", "Capability Registry integration"],
+  ["G", "Service Registry publication"],
+  ["H", "Hardened Inspection Pack Registry"],
+  ["I", "Module manifest"],
+  ["J", "Operational health metrics"],
+  ["K", "Versioning and compatibility"],
+  ["L", "Consumer contracts non-owning"],
+  ["M", "Release UI"],
+  ["N", "Events"],
+  ["O", "Unit and architecture tests"],
+  ["P", "Tenant isolation and commerce"],
+  ["Q", "Threat model"],
+  ["R", "Browser E2E"],
+  ["S", "Device evidence"],
+  ["T", "No Asset Intelligence / Digital Twin ownership"],
+  ["U", "No accuracy or RUL claims"],
+  ["V", "Secret exposure"],
+  ["W", "Artifact identity"],
+  ["X", "Release eligibility and next-phase readiness"],
+] as const;
+
+export type Phase9jGateId = (typeof PHASE_9J_INSPECTION_MODULE_RELEASE_GATES)[number][0];

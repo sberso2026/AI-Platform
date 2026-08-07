@@ -1,5 +1,5 @@
 /**
- * Phase 9I overview — AI Vision evidence analysis (advisory, human-validated).
+ * Phase 9J overview — module release closure, registries and manifest.
  */
 export default function InspectionIntelligenceOverviewPage() {
   return (
@@ -15,20 +15,26 @@ export default function InspectionIntelligenceOverviewPage() {
                 <div data-testid="inspection-intelligence-offline-sync-ready">
                   <div data-testid="inspection-intelligence-condition-predictive-ready">
                     <div data-testid="inspection-intelligence-ai-vision-ready">
-                      <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
-                        Inspection Intelligence
-                      </h1>
-                      <p className="mt-2 max-w-2xl text-slate-600">
-                        AI Vision evidence analysis (0.9.0-ai-vision): advisory overlays, immutable
-                        originals, provider governance, and human validation. No Asset Intelligence
-                        or Digital Twin ownership.
-                      </p>
-                      <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                        <li>Originals immutable; derivatives hashed and lineage-tracked</li>
-                        <li>Tenant allowlist providers with fail-closed outage/policy denial</li>
-                        <li>Human accept/reject/adjust with reason before condition linkage</li>
-                        <li>Pack adapters for generic, coatings, and structural_condition</li>
-                      </ul>
+                      <div data-testid="inspection-intelligence-release-ready">
+                        <h1
+                          id="ii-overview-title"
+                          className="text-2xl font-semibold text-slate-900"
+                        >
+                          Inspection Intelligence
+                        </h1>
+                        <p className="mt-2 max-w-2xl text-slate-600">
+                          Module release closure (1.0.0-ii-release): public contracts, capability and
+                          service registries, hardened pack registry, machine-readable manifest, and
+                          operational health metrics. No Asset Intelligence or Digital Twin
+                          ownership.
+                        </p>
+                        <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                          <li>Versioned public APIs, commands, queries, events, reporting, AI, search</li>
+                          <li>Capability / Service / Pack registries with upgrade and rollback policy</li>
+                          <li>Governed publication with audit; consumer contracts are consume-only</li>
+                          <li>AI Vision remains advisory and human-validated</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>

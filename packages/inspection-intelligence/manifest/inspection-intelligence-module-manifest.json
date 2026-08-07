@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "inspection-intelligence-module-manifest/1",
+  "moduleKey": "inspection_intelligence",
+  "productName": "Inspection Intelligence",
+  "version": "1.0.0-ii-release",
+  "routePrefix": "/engineering/apps/inspection-intelligence",
+  "generatedBy": "domain/module-manifest.ts#generateInspectionModuleManifest",
+  "note": "Authoritative runtime manifest is generated in TypeScript; this file is the checked-in snapshot for discovery."
+}

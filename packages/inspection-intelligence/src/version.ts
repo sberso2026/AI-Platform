@@ -1,9 +1,9 @@
 /**
- * Phase 9I — Inspection Intelligence AI Vision evidence analysis identity.
+ * Phase 9J — Inspection Intelligence module release closure identity.
  */
 export const INSPECTION_INTELLIGENCE_PRODUCT_NAME = "Inspection Intelligence" as const;
 export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
-export const INSPECTION_INTELLIGENCE_VERSION = "0.9.0-ai-vision" as const;
+export const INSPECTION_INTELLIGENCE_VERSION = "1.0.0-ii-release" as const;
 export const INSPECTION_INTELLIGENCE_ROUTE_PREFIX =
   "/engineering/apps/inspection-intelligence" as const;
 
@@ -18,6 +18,14 @@ export const INSPECTION_CONDITION_RATING_IMPLEMENTED = true as const;
 export const INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED = true as const;
 export const INSPECTION_PACK_EXPANSION_IMPLEMENTED = true as const;
 export const INSPECTION_AI_VISION_IMPLEMENTED = true as const;
+export const INSPECTION_INTELLIGENCE_RELEASE_CLOSED = true as const;
+export const INSPECTION_PUBLIC_MODULE_CONTRACTS_PUBLISHED = true as const;
+export const INSPECTION_CAPABILITY_REGISTRY_INTEGRATED = true as const;
+export const INSPECTION_SERVICE_REGISTRY_PUBLISHED = true as const;
+export const INSPECTION_PACK_REGISTRY_HARDENED = true as const;
+export const INSPECTION_MODULE_MANIFEST_GENERATED = true as const;
+export const INSPECTION_OPERATIONAL_HEALTH_METRICS_EXPOSED = true as const;
+export const INSPECTION_VERSIONING_COMPATIBILITY_FORMALIZED = true as const;
 /** Asset Intelligence / Twin remaining-life product remains unimplemented. */
 export const INSPECTION_PREDICTIVE_IMPLEMENTED = false as const;
 export const INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false as const;
@@ -61,6 +69,9 @@ export const INSPECTION_INTELLIGENCE_CORE_ENTITIES = [
   "inspection_vision_analysis",
   "inspection_vision_derivative",
   "inspection_vision_validation",
+  "inspection_module_manifest",
+  "inspection_public_contract",
+  "inspection_service_registry",
   "defect",
   "recommendation",
   "corrective_action",
@@ -93,6 +104,14 @@ export function getInspectionIntelligenceDomainDeclaration() {
     predictiveSignalsScaffolded: INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED,
     packExpansionImplemented: INSPECTION_PACK_EXPANSION_IMPLEMENTED,
     aiVisionImplemented: INSPECTION_AI_VISION_IMPLEMENTED,
+    inspectionIntelligenceReleaseClosed: INSPECTION_INTELLIGENCE_RELEASE_CLOSED,
+    publicModuleContractsPublished: INSPECTION_PUBLIC_MODULE_CONTRACTS_PUBLISHED,
+    capabilityRegistryIntegrated: INSPECTION_CAPABILITY_REGISTRY_INTEGRATED,
+    serviceRegistryPublished: INSPECTION_SERVICE_REGISTRY_PUBLISHED,
+    inspectionPackRegistryHardened: INSPECTION_PACK_REGISTRY_HARDENED,
+    moduleManifestGenerated: INSPECTION_MODULE_MANIFEST_GENERATED,
+    operationalHealthMetricsExposed: INSPECTION_OPERATIONAL_HEALTH_METRICS_EXPOSED,
+    versioningCompatibilityFormalized: INSPECTION_VERSIONING_COMPATIBILITY_FORMALIZED,
     predictiveImplemented: INSPECTION_PREDICTIVE_IMPLEMENTED,
     assetIntelligenceImplemented: INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED,
     defectFrameworkImplemented: INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED,
@@ -115,7 +134,7 @@ export function getInspectionIntelligenceDomainDeclaration() {
     assetOwnership: "engineering_os_shared_domain" as const,
     couplesVia: "inspection_target" as const,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Shared Engineering SDKs → Inspection Intelligence → AI Vision (advisory) / Condition / Predictive / Packs → Offline Sync" as const,
+      "RTB AI Platform → Engineering OS → Shared Engineering SDKs → Inspection Intelligence → Release Closure / Public Contracts / Registries / Manifest → AI Vision (advisory) / Condition / Predictive / Packs → Offline Sync" as const,
   };
 }
 

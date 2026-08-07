@@ -1,6 +1,6 @@
 {
   "name": "@rtb/inspection-intelligence",
-  "version": "0.9.0-ai-vision",
+  "version": "1.0.0-ii-release",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
