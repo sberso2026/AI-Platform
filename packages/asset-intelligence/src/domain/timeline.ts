@@ -23,7 +23,18 @@ export type TimelineStateKind =
   | "lifecycle_intelligence"
   | "lifecycle_review"
   | "lifecycle_published"
-  | "lifecycle_transition_candidate";
+  | "lifecycle_transition_candidate"
+  | "decision_context"
+  | "risk_signal"
+  | "risk_review"
+  | "risk_published"
+  | "risk_candidate"
+  | "maintenance_recommendation"
+  | "maintenance_recommendation_review"
+  | "maintenance_recommendation_published"
+  | "priority_profile"
+  | "priority_review"
+  | "priority_published";
 
 export type IntelligenceTimelineEntry = {
   entryId: string;

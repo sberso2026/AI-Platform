@@ -12,6 +12,10 @@ export type AssetIntelligencePersistenceHealth = {
   conditionStore: "ok" | "failed";
   failureStore: "ok" | "failed";
   lifecycleStore: "ok" | "failed";
+  decisionContextStore: "ok" | "failed";
+  riskSignalStore: "ok" | "failed";
+  maintenanceRecommendationStore: "ok" | "failed";
+  priorityStore: "ok" | "failed";
   taxonomyRegistry: "ok" | "failed";
   reviewWorkflow: "ok" | "failed";
   evidenceConfidence: "ok" | "failed";
@@ -55,6 +59,10 @@ export async function collectAssetIntelligencePersistenceHealth(input: {
     conditionStore: "ok",
     failureStore: "ok",
     lifecycleStore: "ok",
+    decisionContextStore: "ok",
+    riskSignalStore: "ok",
+    maintenanceRecommendationStore: "ok",
+    priorityStore: "ok",
     taxonomyRegistry: "ok",
     reviewWorkflow: "ok",
     evidenceConfidence: "ok",

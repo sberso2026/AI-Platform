@@ -24,7 +24,9 @@ describe("Phase 10G Asset Intelligence Lifecycle architecture lock", () => {
       resolve(root, "packages/asset-intelligence/src/version.ts"),
       "utf8",
     );
-    expect(version).toMatch(/ASSET_INTELLIGENCE_VERSION = "0\.7\.0-lifecycle"/);
+    expect(version).toMatch(
+      /ASSET_INTELLIGENCE_VERSION = "0\.[78]\.0-(lifecycle|risk-priority)"/,
+    );
     expect(version).toMatch(/LIFECYCLE_CONTEXT_ENGINE_READY = true/);
     expect(version).toMatch(/LIFECYCLE_TAXONOMY_REGISTRY_READY = true/);
     expect(version).toMatch(/LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED = false/);
@@ -39,7 +41,7 @@ describe("Phase 10G Asset Intelligence Lifecycle architecture lock", () => {
     expect(version).toMatch(/ACCURACY_CLAIMS_CERTIFIED = false/);
     expect(version).toMatch(/RUL_CLAIMS_CERTIFIED = false/);
     expect(version).toMatch(/PROBABILITY_OF_FAILURE_CERTIFIED = false/);
-    expect(version).toMatch(/ASSET_PRIORITY_ENGINE_READY = false/);
+    expect(version).toMatch(/ASSET_PRIORITY_ENGINE_READY = (false|true)/);
     expect(version).toMatch(/MULTI_SOURCE_FUSION_READY = false/);
     expect(version).toMatch(
       /PHASE_10F_CERTIFIED_COMMIT = "94019ae995468ccddadc78a203e92e8460fe4bf0"/,

@@ -31,7 +31,21 @@ export type AssetIntelligenceEventType =
   | "engineering.asset.lifecycle.reviewed"
   | "engineering.asset.lifecycle.published"
   | "engineering.asset.lifecycle.superseded"
-  | "engineering.asset.lifecycle.transition_candidate.proposed";
+  | "engineering.asset.lifecycle.transition_candidate.proposed"
+  | "engineering.asset.decision_context.composed"
+  | "engineering.asset.risk_signal.assessed"
+  | "engineering.asset.risk_signal.reviewed"
+  | "engineering.asset.risk_signal.published"
+  | "engineering.asset.risk_signal.superseded"
+  | "engineering.asset.risk_candidate.proposed"
+  | "engineering.asset.maintenance_recommendation.assessed"
+  | "engineering.asset.maintenance_recommendation.reviewed"
+  | "engineering.asset.maintenance_recommendation.published"
+  | "engineering.asset.maintenance_recommendation.superseded"
+  | "engineering.asset.priority.assessed"
+  | "engineering.asset.priority.reviewed"
+  | "engineering.asset.priority.published"
+  | "engineering.asset.priority.superseded";
 
 export type AssetIntelligenceEvent = {
   type: AssetIntelligenceEventType;

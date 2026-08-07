@@ -33,6 +33,11 @@ import type {
   LifecycleTransitionCandidate,
 } from "./lifecycle";
 import type { LifecycleTaxonomyEntry, LifecycleTaxonomyKind } from "./lifecycle-taxonomy";
+import type { AssetDecisionContext } from "./decision-context";
+import type { AssetRiskCandidate, AssetRiskSignalState } from "./risk";
+import type { AssetMaintenanceRecommendationState } from "./maintenance-recommendation";
+import type { MaintenanceTaxonomyEntry } from "./maintenance-taxonomy";
+import type { AssetPriorityProfile } from "./priority";
 
 export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
 
@@ -238,6 +243,100 @@ export type PersistedLifecycleTransitionCandidate = LifecycleTransitionCandidate
 export type PersistedLifecycleTaxonomyEntry = LifecycleTaxonomyEntry & {
   tenantId?: string;
   workspaceId?: string;
+};
+
+/** Phase 10H — Decision Context / Risk / Maintenance Recommendation / Priority. */
+export type PersistedDecisionContext = AssetDecisionContext & {
+  tenantId: string;
+  workspaceId: string;
+  createdBy?: string;
+};
+
+export type PersistedRiskSignalState = AssetRiskSignalState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedRiskReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  riskSignalStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  evidenceConfidenceRef?: string;
+  trendConfidenceRef?: string;
+  contentHash?: string;
+  correlationId?: string;
+  createdAt: string;
+};
+
+export type PersistedRiskCandidate = AssetRiskCandidate & {
+  tenantId: string;
+  workspaceId: string;
+};
+
+export type PersistedMaintenanceRecommendationState =
+  AssetMaintenanceRecommendationState & {
+    tenantId: string;
+    workspaceId: string;
+    version: number;
+    createdBy?: string;
+  };
+
+export type PersistedMaintenanceRecommendationReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  recommendationStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  evidenceConfidenceRef?: string;
+  trendConfidenceRef?: string;
+  contentHash?: string;
+  correlationId?: string;
+  createdAt: string;
+};
+
+/** Shared + pack-extensible registry entries — optionally tenant/workspace scoped. */
+export type PersistedMaintenanceTaxonomyEntry = MaintenanceTaxonomyEntry & {
+  tenantId?: string;
+  workspaceId?: string;
+};
+
+export type PersistedPriorityProfile = AssetPriorityProfile & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedPriorityReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  priorityProfileId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  evidenceConfidenceRef?: string;
+  trendConfidenceRef?: string;
+  contentHash?: string;
+  correlationId?: string;
+  createdAt: string;
 };
 
 export type PersistedSnapshotRecord = {
@@ -519,6 +618,92 @@ export type AssetIntelligenceRepositoryPort = {
     kind?: LifecycleTaxonomyKind,
     packOwner?: string,
   ): Promise<PersistedLifecycleTaxonomyEntry[]>;
+  /** Phase 10H — Decision Context (composed from published slices only). */
+  saveDecisionContext(context: PersistedDecisionContext): Promise<PersistedDecisionContext>;
+  latestDecisionContext(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDecisionContext | undefined>;
+  listDecisionContexts(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDecisionContext[]>;
+  /** Optimistic concurrency: returns next version or throws on conflict. */
+  nextRiskVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveRiskSignal(state: PersistedRiskSignalState): Promise<PersistedRiskSignalState>;
+  latestRiskSignal(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskSignalState | undefined>;
+  listRiskHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskSignalState[]>;
+  saveRiskReview(review: PersistedRiskReview): Promise<PersistedRiskReview>;
+  saveRiskCandidate(candidate: PersistedRiskCandidate): Promise<PersistedRiskCandidate>;
+  listRiskCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskCandidate[]>;
+  /** Optimistic concurrency: returns next version or throws on conflict. */
+  nextMaintenanceRecommendationVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveMaintenanceRecommendation(
+    state: PersistedMaintenanceRecommendationState,
+  ): Promise<PersistedMaintenanceRecommendationState>;
+  latestMaintenanceRecommendation(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedMaintenanceRecommendationState | undefined>;
+  listMaintenanceRecommendationHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedMaintenanceRecommendationState[]>;
+  saveMaintenanceRecommendationReview(
+    review: PersistedMaintenanceRecommendationReview,
+  ): Promise<PersistedMaintenanceRecommendationReview>;
+  upsertMaintenanceTaxonomy(
+    entry: PersistedMaintenanceTaxonomyEntry,
+  ): Promise<PersistedMaintenanceTaxonomyEntry>;
+  listMaintenanceTaxonomy(
+    category?: string,
+    packOwner?: string,
+  ): Promise<PersistedMaintenanceTaxonomyEntry[]>;
+  /** Optimistic concurrency: returns next version or throws on conflict. */
+  nextPriorityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  savePriorityProfile(profile: PersistedPriorityProfile): Promise<PersistedPriorityProfile>;
+  latestPriorityProfile(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPriorityProfile | undefined>;
+  listPriorityHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPriorityProfile[]>;
+  savePriorityReview(review: PersistedPriorityReview): Promise<PersistedPriorityReview>;
 };
 
 export type DurableAssetIntelligenceStore = {
@@ -553,6 +738,15 @@ export type DurableAssetIntelligenceStore = {
   lifecycleReviews: PersistedLifecycleReview[];
   lifecycleTransitionCandidates: PersistedLifecycleTransitionCandidate[];
   lifecycleTaxonomy: PersistedLifecycleTaxonomyEntry[];
+  decisionContexts: PersistedDecisionContext[];
+  riskSignals: PersistedRiskSignalState[];
+  riskReviews: PersistedRiskReview[];
+  riskCandidates: PersistedRiskCandidate[];
+  maintenanceRecommendations: PersistedMaintenanceRecommendationState[];
+  maintenanceRecommendationReviews: PersistedMaintenanceRecommendationReview[];
+  maintenanceTaxonomy: PersistedMaintenanceTaxonomyEntry[];
+  priorityProfiles: PersistedPriorityProfile[];
+  priorityReviews: PersistedPriorityReview[];
 };
 
 export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelligenceStore {
@@ -588,6 +782,15 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     lifecycleReviews: [],
     lifecycleTransitionCandidates: [],
     lifecycleTaxonomy: [],
+    decisionContexts: [],
+    riskSignals: [],
+    riskReviews: [],
+    riskCandidates: [],
+    maintenanceRecommendations: [],
+    maintenanceRecommendationReviews: [],
+    maintenanceTaxonomy: [],
+    priorityProfiles: [],
+    priorityReviews: [],
   };
 }
 
@@ -607,6 +810,15 @@ function latestAsOf<T extends { recordedAt?: string; capturedAt?: string }>(
       return ta.localeCompare(tb);
     });
   return filtered[filtered.length - 1];
+}
+
+function assertNextVersion(current: number, expectedCurrentVersion?: number): number {
+  if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+    throw new Error(
+      `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+    );
+  }
+  return current + 1;
 }
 
 /** Test/certification unit adapter only — not for production. */
@@ -1263,6 +1475,207 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
     return this.store.lifecycleTaxonomy.filter(
       (e) => (!kind || e.kind === kind) && (!packOwner || e.packOwner === packOwner),
     );
+  }
+
+  async saveDecisionContext(
+    context: PersistedDecisionContext,
+  ): Promise<PersistedDecisionContext> {
+    this.store.decisionContexts.push(context);
+    return context;
+  }
+
+  async latestDecisionContext(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDecisionContext | undefined> {
+    const scoped = await this.listDecisionContexts(tenantId, workspaceId, assetId);
+    return scoped[scoped.length - 1];
+  }
+
+  async listDecisionContexts(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDecisionContext[]> {
+    return this.store.decisionContexts
+      .filter(
+        (c) =>
+          c.assetId === assetId && c.tenantId === tenantId && c.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.calculatedAt.localeCompare(b.calculatedAt));
+  }
+
+  async nextRiskVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestRiskSignal(tenantId, workspaceId, assetId);
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveRiskSignal(state: PersistedRiskSignalState): Promise<PersistedRiskSignalState> {
+    this.store.riskSignals.push(state);
+    return state;
+  }
+
+  async latestRiskSignal(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskSignalState | undefined> {
+    const history = await this.listRiskHistory(tenantId, workspaceId, assetId);
+    return history[history.length - 1];
+  }
+
+  async listRiskHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskSignalState[]> {
+    return this.store.riskSignals
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveRiskReview(review: PersistedRiskReview): Promise<PersistedRiskReview> {
+    this.store.riskReviews.push(review);
+    return review;
+  }
+
+  async saveRiskCandidate(candidate: PersistedRiskCandidate): Promise<PersistedRiskCandidate> {
+    this.store.riskCandidates.push(candidate);
+    return candidate;
+  }
+
+  async listRiskCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskCandidate[]> {
+    return this.store.riskCandidates.filter(
+      (c) => c.assetId === assetId && c.tenantId === tenantId && c.workspaceId === workspaceId,
+    );
+  }
+
+  async nextMaintenanceRecommendationVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestMaintenanceRecommendation(tenantId, workspaceId, assetId);
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveMaintenanceRecommendation(
+    state: PersistedMaintenanceRecommendationState,
+  ): Promise<PersistedMaintenanceRecommendationState> {
+    this.store.maintenanceRecommendations.push(state);
+    return state;
+  }
+
+  async latestMaintenanceRecommendation(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedMaintenanceRecommendationState | undefined> {
+    const history = await this.listMaintenanceRecommendationHistory(
+      tenantId,
+      workspaceId,
+      assetId,
+    );
+    return history[history.length - 1];
+  }
+
+  async listMaintenanceRecommendationHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedMaintenanceRecommendationState[]> {
+    return this.store.maintenanceRecommendations
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveMaintenanceRecommendationReview(
+    review: PersistedMaintenanceRecommendationReview,
+  ): Promise<PersistedMaintenanceRecommendationReview> {
+    this.store.maintenanceRecommendationReviews.push(review);
+    return review;
+  }
+
+  async upsertMaintenanceTaxonomy(
+    entry: PersistedMaintenanceTaxonomyEntry,
+  ): Promise<PersistedMaintenanceTaxonomyEntry> {
+    const idx = this.store.maintenanceTaxonomy.findIndex(
+      (e) => e.code === entry.code && e.version === entry.version,
+    );
+    if (idx >= 0) this.store.maintenanceTaxonomy[idx] = entry;
+    else this.store.maintenanceTaxonomy.push(entry);
+    return entry;
+  }
+
+  async listMaintenanceTaxonomy(
+    category?: string,
+    packOwner?: string,
+  ): Promise<PersistedMaintenanceTaxonomyEntry[]> {
+    return this.store.maintenanceTaxonomy.filter(
+      (e) =>
+        (!category || e.category === category) && (!packOwner || e.packOwner === packOwner),
+    );
+  }
+
+  async nextPriorityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPriorityProfile(tenantId, workspaceId, assetId);
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePriorityProfile(
+    profile: PersistedPriorityProfile,
+  ): Promise<PersistedPriorityProfile> {
+    this.store.priorityProfiles.push(profile);
+    return profile;
+  }
+
+  async latestPriorityProfile(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPriorityProfile | undefined> {
+    const history = await this.listPriorityHistory(tenantId, workspaceId, assetId);
+    return history[history.length - 1];
+  }
+
+  async listPriorityHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPriorityProfile[]> {
+    return this.store.priorityProfiles
+      .filter(
+        (p) =>
+          p.assetId === assetId && p.tenantId === tenantId && p.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async savePriorityReview(review: PersistedPriorityReview): Promise<PersistedPriorityReview> {
+    this.store.priorityReviews.push(review);
+    return review;
   }
 
   getStore(): DurableAssetIntelligenceStore {

@@ -35,7 +35,70 @@ export type FailureCapability =
   | "lifecycle.submit"
   | "lifecycle.review"
   | "lifecycle.approve"
-  | "lifecycle.publish";
+  | "lifecycle.publish"
+  | "decision_context.read"
+  | "risk.read"
+  | "risk.assess"
+  | "risk.submit"
+  | "risk.review"
+  | "risk.approve"
+  | "risk.publish"
+  | "maintenance_recommendation.read"
+  | "maintenance_recommendation.assess"
+  | "maintenance_recommendation.submit"
+  | "maintenance_recommendation.review"
+  | "maintenance_recommendation.approve"
+  | "maintenance_recommendation.publish"
+  | "priority.read"
+  | "priority.assess"
+  | "priority.submit"
+  | "priority.review"
+  | "priority.approve"
+  | "priority.publish";
+
+/** Phase 10H — capabilities whose approval/publication is segregated from assessment. */
+export const PHASE_10H_READ_CAPABILITIES = [
+  "decision_context.read",
+  "risk.read",
+  "maintenance_recommendation.read",
+  "priority.read",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10H_ASSESS_CAPABILITIES = [
+  "risk.assess",
+  "risk.submit",
+  "maintenance_recommendation.assess",
+  "maintenance_recommendation.submit",
+  "priority.assess",
+  "priority.submit",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10H_REVIEW_CAPABILITIES = [
+  "risk.review",
+  "risk.approve",
+  "maintenance_recommendation.review",
+  "maintenance_recommendation.approve",
+  "priority.review",
+  "priority.approve",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10H_PUBLISH_CAPABILITIES = [
+  "risk.publish",
+  "maintenance_recommendation.publish",
+  "priority.publish",
+] as const satisfies readonly FailureCapability[];
+
+/** Approving or publishing these is forbidden for the engineer who assessed them. */
+export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly FailureCapability[] = [
+  "failure.approve",
+  "failure.publish",
+  "degradation.approve",
+  "degradation.publish",
+  "lifecycle.approve",
+  "lifecycle.publish",
+  ...PHASE_10H_REVIEW_CAPABILITIES.filter((c) => c.endsWith(".approve")),
+  ...PHASE_10H_PUBLISH_CAPABILITIES,
+];
 
 export const FAILURE_ROLE_CAPABILITIES: Record<
   FailureIntelligenceRole,
@@ -49,6 +112,7 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "trend.read",
     "degradation.read",
     "lifecycle.read",
+    ...PHASE_10H_READ_CAPABILITIES,
   ],
   engineer: [
     "failure.read",
@@ -66,6 +130,8 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.read",
     "lifecycle.assess",
     "lifecycle.submit",
+    ...PHASE_10H_READ_CAPABILITIES,
+    ...PHASE_10H_ASSESS_CAPABILITIES,
   ],
   reviewer: [
     "failure.read",
@@ -81,6 +147,8 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.read",
     "lifecycle.review",
     "lifecycle.approve",
+    ...PHASE_10H_READ_CAPABILITIES,
+    ...PHASE_10H_REVIEW_CAPABILITIES,
   ],
   manager: [
     "failure.read",
@@ -107,6 +175,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.review",
     "lifecycle.approve",
     "lifecycle.publish",
+    ...PHASE_10H_READ_CAPABILITIES,
+    ...PHASE_10H_ASSESS_CAPABILITIES,
+    ...PHASE_10H_REVIEW_CAPABILITIES,
+    ...PHASE_10H_PUBLISH_CAPABILITIES,
   ],
   owner: [
     "failure.read",
@@ -133,6 +205,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.review",
     "lifecycle.approve",
     "lifecycle.publish",
+    ...PHASE_10H_READ_CAPABILITIES,
+    ...PHASE_10H_ASSESS_CAPABILITIES,
+    ...PHASE_10H_REVIEW_CAPABILITIES,
+    ...PHASE_10H_PUBLISH_CAPABILITIES,
   ],
   admin: [
     "failure.read",
@@ -159,6 +235,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.review",
     "lifecycle.approve",
     "lifecycle.publish",
+    ...PHASE_10H_READ_CAPABILITIES,
+    ...PHASE_10H_ASSESS_CAPABILITIES,
+    ...PHASE_10H_REVIEW_CAPABILITIES,
+    ...PHASE_10H_PUBLISH_CAPABILITIES,
   ],
 };
 
@@ -183,12 +263,7 @@ export function assertFailureCapability(
   if (
     ENGINEER_SELF_APPROVE_FORBIDDEN &&
     role === "engineer" &&
-    (capability === "failure.approve" ||
-      capability === "failure.publish" ||
-      capability === "degradation.approve" ||
-      capability === "degradation.publish" ||
-      capability === "lifecycle.approve" ||
-      capability === "lifecycle.publish")
+    SELF_APPROVE_FORBIDDEN_CAPABILITIES.includes(capability)
   ) {
     throw new Error("engineer_self_approve_forbidden");
   }
@@ -199,7 +274,7 @@ export function assertFailureCapability(
     opts?.actorId &&
     opts.subjectActorId &&
     opts.actorId === opts.subjectActorId &&
-    (capability === "failure.approve" || capability === "failure.publish") &&
+    SELF_APPROVE_FORBIDDEN_CAPABILITIES.includes(capability) &&
     role === "engineer"
   ) {
     throw new Error("segregation_of_duties_violation");

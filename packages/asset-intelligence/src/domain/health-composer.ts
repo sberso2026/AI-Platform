@@ -43,6 +43,10 @@ export const FAILURE_HEALTH_COMPOSITION_METHOD_RESERVED =
 export const DEGRADATION_HEALTH_CONTRIBUTION_ENABLED = false as const;
 /** Phase 10G — lifecycle context is advisory only; must not contribute to Health Index. */
 export const LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED = false as const;
+/** Phase 10H — risk signals are advisory only; must not contribute to Health Index. */
+export const RISK_HEALTH_CONTRIBUTION_ENABLED = false as const;
+/** Phase 10H — priority context is decision support only; must not contribute to Health Index. */
+export const PRIORITY_HEALTH_CONTRIBUTION_ENABLED = false as const;
 
 export type HealthCompositionInput = {
   assetId: string;

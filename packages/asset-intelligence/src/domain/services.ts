@@ -9,11 +9,19 @@ import type {
   AssessDegradationCommand,
   AssessFailureCommand,
   AssessLifecycleCommand,
+  AssessMaintenanceRecommendationCommand,
+  AssessPriorityCommand,
   AssessReliabilityCommand,
+  AssessRiskCommand,
+  AssessRiskPriorityBundleCommand,
+  ComposeDecisionContextCommand,
   ReviewCriticalityCommand,
   ReviewDegradationCommand,
   ReviewFailureCommand,
   ReviewLifecycleCommand,
+  ReviewMaintenanceRecommendationCommand,
+  ReviewPriorityCommand,
+  ReviewRiskCommand,
 } from "./engine";
 
 export class AssetConditionService {
@@ -88,6 +96,50 @@ export class AssetLifecycleService {
   }
 }
 
+export class AssetDecisionContextService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  compose(cmd: ComposeDecisionContextCommand) {
+    return this.engine.composeDecisionContext(cmd);
+  }
+}
+
+export class AssetRiskService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessRiskCommand) {
+    return this.engine.assessRisk(cmd);
+  }
+
+  review(cmd: ReviewRiskCommand) {
+    return this.engine.reviewRisk(cmd);
+  }
+}
+
+export class AssetMaintenanceRecommendationService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessMaintenanceRecommendationCommand) {
+    return this.engine.assessMaintenanceRecommendation(cmd);
+  }
+
+  review(cmd: ReviewMaintenanceRecommendationCommand) {
+    return this.engine.reviewMaintenanceRecommendation(cmd);
+  }
+}
+
+export class AssetPriorityService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessPriorityCommand) {
+    return this.engine.assessPriority(cmd);
+  }
+
+  review(cmd: ReviewPriorityCommand) {
+    return this.engine.reviewPriority(cmd);
+  }
+}
+
 export class AssetHealthIndexService {
   constructor(private readonly engine: AssetIntelligenceEngine) {}
 
@@ -111,6 +163,10 @@ export class AssetIntelligenceService {
   readonly failure: AssetFailureService;
   readonly degradation: AssetDegradationService;
   readonly lifecycle: AssetLifecycleService;
+  readonly decisionContext: AssetDecisionContextService;
+  readonly risk: AssetRiskService;
+  readonly maintenanceRecommendation: AssetMaintenanceRecommendationService;
+  readonly priority: AssetPriorityService;
   readonly health: AssetHealthIndexService;
   readonly timeline: AssetTimelineService;
 
@@ -121,8 +177,44 @@ export class AssetIntelligenceService {
     this.failure = new AssetFailureService(engine);
     this.degradation = new AssetDegradationService(engine);
     this.lifecycle = new AssetLifecycleService(engine);
+    this.decisionContext = new AssetDecisionContextService(engine);
+    this.risk = new AssetRiskService(engine);
+    this.maintenanceRecommendation = new AssetMaintenanceRecommendationService(engine);
+    this.priority = new AssetPriorityService(engine);
     this.health = new AssetHealthIndexService(engine);
     this.timeline = new AssetTimelineService(engine);
+  }
+
+  composeDecisionContext(cmd: ComposeDecisionContextCommand) {
+    return this.engine.composeDecisionContext(cmd);
+  }
+
+  assessRisk(cmd: AssessRiskCommand) {
+    return this.engine.assessRisk(cmd);
+  }
+
+  reviewRisk(cmd: ReviewRiskCommand) {
+    return this.engine.reviewRisk(cmd);
+  }
+
+  assessMaintenanceRecommendation(cmd: AssessMaintenanceRecommendationCommand) {
+    return this.engine.assessMaintenanceRecommendation(cmd);
+  }
+
+  reviewMaintenanceRecommendation(cmd: ReviewMaintenanceRecommendationCommand) {
+    return this.engine.reviewMaintenanceRecommendation(cmd);
+  }
+
+  assessPriority(cmd: AssessPriorityCommand) {
+    return this.engine.assessPriority(cmd);
+  }
+
+  reviewPriority(cmd: ReviewPriorityCommand) {
+    return this.engine.reviewPriority(cmd);
+  }
+
+  assessRiskPriorityBundle(cmd: AssessRiskPriorityBundleCommand) {
+    return this.engine.assessRiskPriorityBundle(cmd);
   }
 
   assessConditionFromInspection(cmd: AssessConditionCommand) {

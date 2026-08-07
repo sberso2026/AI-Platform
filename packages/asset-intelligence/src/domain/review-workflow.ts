@@ -273,6 +273,168 @@ export function transitionLifecycleReview(input: {
   });
 }
 
+/** Phase 10H — Risk Signal review via Engineering Workflow SDK. */
+export const RISK_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.risk_review",
+  displayName: "Asset Risk Signal Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+/** Phase 10H — Maintenance Recommendation review (advisory; never a work order). */
+export const MAINTENANCE_RECOMMENDATION_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.maintenance_recommendation_review",
+  displayName: "Asset Maintenance Recommendation Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+/** Phase 10H — Asset Priority Context review. */
+export const PRIORITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.priority_review",
+  displayName: "Asset Priority Context Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+export function startRiskReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  riskSignalStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: RISK_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_risk_signal_state",
+    entityId: input.riskSignalStateId,
+    startedBy: input.startedBy,
+    context: { kind: "risk_signal" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: RISK_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  return { instance: submitted, review: createReviewRecord({ instanceId: submitted.instanceId }) };
+}
+
+export function transitionRiskReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: RISK_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function startMaintenanceRecommendationReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  recommendationStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: MAINTENANCE_RECOMMENDATION_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_maintenance_recommendation_state",
+    entityId: input.recommendationStateId,
+    startedBy: input.startedBy,
+    context: { kind: "maintenance_recommendation" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: MAINTENANCE_RECOMMENDATION_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  return { instance: submitted, review: createReviewRecord({ instanceId: submitted.instanceId }) };
+}
+
+export function transitionMaintenanceRecommendationReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: MAINTENANCE_RECOMMENDATION_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function startPriorityReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  priorityProfileId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: PRIORITY_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_priority_profile",
+    entityId: input.priorityProfileId,
+    startedBy: input.startedBy,
+    context: { kind: "priority" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: PRIORITY_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  return { instance: submitted, review: createReviewRecord({ instanceId: submitted.instanceId }) };
+}
+
+export function transitionPriorityReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: PRIORITY_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
 export function transitionCriticalityReview(input: {
   instance: EngineeringWorkflowInstance;
   action: "approve" | "reject" | "request_changes" | "resubmit";

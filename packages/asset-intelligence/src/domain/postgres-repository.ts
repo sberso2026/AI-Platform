@@ -41,6 +41,15 @@ import type {
   PersistedLifecycleReview,
   PersistedLifecycleTransitionCandidate,
   PersistedLifecycleTaxonomyEntry,
+  PersistedDecisionContext,
+  PersistedRiskSignalState,
+  PersistedRiskReview,
+  PersistedRiskCandidate,
+  PersistedMaintenanceRecommendationState,
+  PersistedMaintenanceRecommendationReview,
+  PersistedMaintenanceTaxonomyEntry,
+  PersistedPriorityProfile,
+  PersistedPriorityReview,
   SourceProvenanceRecord,
 } from "./persistence";
 import { assertProductionRepositorySafe } from "./persistence";
@@ -1556,6 +1565,756 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     if (error) throw new Error(error.message);
     return (data ?? []).map(mapLifecycleTaxonomyRow);
   }
+
+  async saveDecisionContext(
+    context: PersistedDecisionContext,
+  ): Promise<PersistedDecisionContext> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_decision_contexts")
+      .insert({
+        id: context.id,
+        tenant_id: context.tenantId,
+        workspace_id: context.workspaceId,
+        asset_id: context.assetId,
+        snapshot_id: context.snapshotId ?? null,
+        health_profile_ref: context.healthProfileRef ?? null,
+        criticality_state_ref: context.criticalityStateRef ?? null,
+        condition_state_ref: context.conditionStateRef ?? null,
+        reliability_state_ref: context.reliabilityStateRef ?? null,
+        failure_state_refs: context.failureStateRefs ?? [],
+        trend_state_refs: context.trendStateRefs ?? [],
+        degradation_state_refs: context.degradationStateRefs ?? [],
+        lifecycle_intelligence_ref: context.lifecycleIntelligenceRef ?? null,
+        evidence_confidence_ref: context.evidenceConfidenceRef ?? null,
+        trend_confidence_ref: context.trendConfidenceRef ?? null,
+        available_dimensions: context.availableDimensions ?? [],
+        missing_dimensions: context.missingDimensions ?? [],
+        conflicting_dimensions: context.conflictingDimensions ?? [],
+        contributing_slices: context.contributingSlices ?? [],
+        decision_context_class: context.decisionContextClass,
+        method: context.method,
+        method_version: context.methodVersion,
+        confidence: context.confidence ?? null,
+        limitations: context.limitations ?? [],
+        provenance: context.provenance ?? {},
+        evidence_confidence: context.evidenceConfidence ?? null,
+        trend_confidence: context.trendConfidence ?? null,
+        calculated_at: context.calculatedAt,
+        created_by: context.createdBy ?? null,
+        autonomous_decision_authority: false,
+        creates_core_risk: false,
+        creates_work_order: false,
+        calculates_pof: false,
+        calculates_rul: false,
+        is_health_factor: false,
+        payload: { publishedSlicePolicy: "published_or_approved_only" },
+      });
+    if (error) throw new Error(`decision_context_persist_failed:${error.message}`);
+    return context;
+  }
+
+  async latestDecisionContext(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDecisionContext | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_decision_contexts")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("calculated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapDecisionContextRow(data) : undefined;
+  }
+
+  async listDecisionContexts(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDecisionContext[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_decision_contexts")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("calculated_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapDecisionContextRow);
+  }
+
+  async nextRiskVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestRiskSignal(tenantId, workspaceId, assetId);
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveRiskSignal(state: PersistedRiskSignalState): Promise<PersistedRiskSignalState> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_risk_signal_states")
+      .insert({
+        id: state.id,
+        tenant_id: state.tenantId,
+        workspace_id: state.workspaceId,
+        asset_id: state.assetId,
+        version: state.version,
+        risk_signal_class: state.riskSignalClass,
+        risk_signal_category: state.riskSignalCategory,
+        decision_context_ref: state.decisionContextRef,
+        health_context_ref: state.healthContextRef ?? null,
+        criticality_context_ref: state.criticalityContextRef ?? null,
+        failure_context_refs: state.failureContextRefs ?? [],
+        degradation_context_refs: state.degradationContextRefs ?? [],
+        lifecycle_context_ref: state.lifecycleContextRef ?? null,
+        evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+        trend_confidence_ref: state.trendConfidenceRef ?? null,
+        consequence_context: state.consequenceContext ?? null,
+        exposure_context: state.exposureContext ?? null,
+        confidence: state.confidence ?? null,
+        method: state.method,
+        method_version: state.methodVersion,
+        review_status: state.reviewStatus,
+        review_instance_id: state.reviewInstanceId ?? null,
+        assessed_at: state.assessedAt,
+        reviewed_at: state.reviewedAt ?? null,
+        published_at: state.publishedAt ?? null,
+        created_by: state.createdBy ?? null,
+        supersedes_id: state.supersedesId ?? null,
+        provenance: state.provenance ?? {},
+        limitations: state.limitations ?? [],
+        evidence_confidence: state.evidenceConfidence ?? null,
+        trend_confidence: state.trendConfidence ?? null,
+        probability_of_failure_certified: false,
+        creates_core_risk: false,
+        is_health_factor: false,
+        mutates_canonical_lifecycle: false,
+        payload: {
+          canonicalEngineeringRiskOwnership: "engineering_core",
+          riskCoreAutoMutationAllowed: false,
+          aiMayPublishForbidden: true,
+        },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`risk_signal_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestRiskSignal(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskSignalState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_risk_signal_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapRiskSignalRow(data) : undefined;
+  }
+
+  async listRiskHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskSignalState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_risk_signal_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapRiskSignalRow);
+  }
+
+  async saveRiskReview(review: PersistedRiskReview): Promise<PersistedRiskReview> {
+    const { error } = await this.supabase.from("asset_intelligence_risk_reviews").insert({
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      asset_id: review.assetId,
+      risk_signal_id: review.riskSignalStateId,
+      review_instance_id: review.reviewInstanceId,
+      action: review.action,
+      reviewer_id: review.reviewerId,
+      reason: review.reason ?? null,
+      state_version: review.stateVersion,
+      evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+      trend_confidence_ref: review.trendConfidenceRef ?? null,
+      content_hash: review.contentHash ?? null,
+      correlation_id: review.correlationId ?? null,
+      created_at: review.createdAt,
+    });
+    if (error) throw new Error(`risk_review_persist_failed:${error.message}`);
+    return review;
+  }
+
+  async saveRiskCandidate(candidate: PersistedRiskCandidate): Promise<PersistedRiskCandidate> {
+    const { error } = await this.supabase.from("asset_intelligence_risk_candidates").insert({
+      tenant_id: candidate.tenantId,
+      workspace_id: candidate.workspaceId,
+      asset_id: candidate.assetId,
+      candidate_id: candidate.candidateId,
+      risk_signal_ref: candidate.riskSignalRef,
+      title: candidate.title,
+      description: candidate.description,
+      consequence_context: candidate.consequenceContext ?? null,
+      evidence_refs: candidate.evidenceRefs ?? [],
+      confidence: candidate.confidence ?? null,
+      limitations: candidate.limitations ?? [],
+      status: candidate.status,
+      auto_mutates_core_risk: false,
+      requires_human_gated_adapter: true,
+      created_at: candidate.createdAt,
+      payload: { canonicalEngineeringRiskOwnership: "engineering_core" },
+    });
+    if (error) throw new Error(`risk_candidate_persist_failed:${error.message}`);
+    return candidate;
+  }
+
+  async listRiskCandidates(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedRiskCandidate[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_risk_candidates")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapRiskCandidateRow);
+  }
+
+  async nextMaintenanceRecommendationVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestMaintenanceRecommendation(tenantId, workspaceId, assetId);
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveMaintenanceRecommendation(
+    state: PersistedMaintenanceRecommendationState,
+  ): Promise<PersistedMaintenanceRecommendationState> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_maintenance_recommendation_states")
+      .insert({
+        id: state.id,
+        tenant_id: state.tenantId,
+        workspace_id: state.workspaceId,
+        asset_id: state.assetId,
+        version: state.version,
+        recommendation_code: state.recommendationCode,
+        recommendation_class: state.recommendationClass,
+        decision_context_ref: state.decisionContextRef,
+        risk_signal_ref: state.riskSignalRef ?? null,
+        rationale: state.rationale ?? [],
+        evidence_refs: state.evidenceRefs ?? [],
+        confidence: state.confidence ?? null,
+        urgency_context: state.urgencyContext ?? null,
+        review_status: state.reviewStatus,
+        review_instance_id: state.reviewInstanceId ?? null,
+        method: state.method,
+        method_version: state.methodVersion,
+        assessed_at: state.assessedAt,
+        reviewed_at: state.reviewedAt ?? null,
+        published_at: state.publishedAt ?? null,
+        created_by: state.createdBy ?? null,
+        supersedes_id: state.supersedesId ?? null,
+        provenance: state.provenance ?? {},
+        limitations: state.limitations ?? [],
+        evidence_confidence: state.evidenceConfidence ?? null,
+        trend_confidence: state.trendConfidence ?? null,
+        creates_work_order: false,
+        is_health_factor: false,
+        calculates_rul: false,
+        mutates_canonical_lifecycle: false,
+        payload: { cmmsWorkOrderOwnership: "none_in_asset_intelligence" },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`maintenance_recommendation_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestMaintenanceRecommendation(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedMaintenanceRecommendationState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_maintenance_recommendation_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapMaintenanceRecommendationRow(data) : undefined;
+  }
+
+  async listMaintenanceRecommendationHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedMaintenanceRecommendationState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_maintenance_recommendation_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapMaintenanceRecommendationRow);
+  }
+
+  async saveMaintenanceRecommendationReview(
+    review: PersistedMaintenanceRecommendationReview,
+  ): Promise<PersistedMaintenanceRecommendationReview> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_maintenance_recommendation_reviews")
+      .insert({
+        id: review.reviewId,
+        tenant_id: review.tenantId,
+        workspace_id: review.workspaceId,
+        asset_id: review.assetId,
+        recommendation_id: review.recommendationStateId,
+        review_instance_id: review.reviewInstanceId,
+        action: review.action,
+        reviewer_id: review.reviewerId,
+        reason: review.reason ?? null,
+        state_version: review.stateVersion,
+        evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+        trend_confidence_ref: review.trendConfidenceRef ?? null,
+        content_hash: review.contentHash ?? null,
+        correlation_id: review.correlationId ?? null,
+        created_at: review.createdAt,
+      });
+    if (error) {
+      throw new Error(`maintenance_recommendation_review_persist_failed:${error.message}`);
+    }
+    return review;
+  }
+
+  async upsertMaintenanceTaxonomy(
+    entry: PersistedMaintenanceTaxonomyEntry,
+  ): Promise<PersistedMaintenanceTaxonomyEntry> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_maintenance_recommendation_taxonomy")
+      .upsert(
+        {
+          code: entry.code,
+          name: entry.name,
+          description: entry.description ?? "",
+          category: entry.category ?? null,
+          version: entry.version,
+          status: entry.status,
+          applicable_asset_classes: entry.applicableAssetClasses ?? ["*"],
+          pack_owner: entry.packOwner,
+          replacement_code: entry.replacementCode ?? null,
+          redefines_shared_semantics: false,
+          tenant_id: entry.tenantId ?? null,
+          workspace_id: entry.workspaceId ?? null,
+          payload: {},
+        },
+        { onConflict: "code,version" },
+      )
+      .select("*")
+      .single();
+    if (error) throw new Error(`maintenance_taxonomy_persist_failed:${error.message}`);
+    return mapMaintenanceTaxonomyRow(data);
+  }
+
+  async listMaintenanceTaxonomy(
+    category?: string,
+    packOwner?: string,
+  ): Promise<PersistedMaintenanceTaxonomyEntry[]> {
+    let q = this.supabase
+      .from("asset_intelligence_maintenance_recommendation_taxonomy")
+      .select("*");
+    if (category) q = q.eq("category", category);
+    if (packOwner) q = q.eq("pack_owner", packOwner);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapMaintenanceTaxonomyRow);
+  }
+
+  async nextPriorityVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPriorityProfile(tenantId, workspaceId, assetId);
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePriorityProfile(
+    profile: PersistedPriorityProfile,
+  ): Promise<PersistedPriorityProfile> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_priority_profiles")
+      .insert({
+        id: profile.id,
+        tenant_id: profile.tenantId,
+        workspace_id: profile.workspaceId,
+        asset_id: profile.assetId,
+        version: profile.version,
+        snapshot_id: profile.snapshotId ?? null,
+        health_ref: profile.healthRef ?? null,
+        criticality_ref: profile.criticalityRef ?? null,
+        risk_signal_ref: profile.riskSignalRef ?? null,
+        failure_refs: profile.failureRefs ?? [],
+        degradation_refs: profile.degradationRefs ?? [],
+        lifecycle_ref: profile.lifecycleRef ?? null,
+        maintenance_recommendation_refs: profile.maintenanceRecommendationRefs ?? [],
+        decision_context_ref: profile.decisionContextRef,
+        dimension_states: profile.dimensionStates ?? [],
+        missing_dimensions: profile.missingDimensions ?? [],
+        conflicting_dimensions: profile.conflictingDimensions ?? [],
+        priority_class: profile.priorityClass,
+        priority_rationale: profile.priorityRationale ?? [],
+        priority_confidence: profile.priorityConfidence ?? null,
+        method: profile.method,
+        method_version: profile.methodVersion,
+        review_status: profile.reviewStatus,
+        review_instance_id: profile.reviewInstanceId ?? null,
+        assessed_at: profile.assessedAt,
+        reviewed_at: profile.reviewedAt ?? null,
+        published_at: profile.publishedAt ?? null,
+        created_by: profile.createdBy ?? null,
+        supersedes_id: profile.supersedesId ?? null,
+        provenance: profile.provenance ?? {},
+        limitations: profile.limitations ?? [],
+        evidence_confidence: profile.evidenceConfidence ?? null,
+        trend_confidence: profile.trendConfidence ?? null,
+        is_health_factor: false,
+        implies_pof: false,
+        creates_work_order: false,
+        mutates_canonical_lifecycle: false,
+        payload: { numericPriorityScoreRequired: false, dimensionsPreserved: true },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`priority_profile_persist_failed:${error.message}`);
+    }
+    return profile;
+  }
+
+  async latestPriorityProfile(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPriorityProfile | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_priority_profiles")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapPriorityProfileRow(data) : undefined;
+  }
+
+  async listPriorityHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPriorityProfile[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_priority_profiles")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPriorityProfileRow);
+  }
+
+  async savePriorityReview(review: PersistedPriorityReview): Promise<PersistedPriorityReview> {
+    const { error } = await this.supabase.from("asset_intelligence_priority_reviews").insert({
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      asset_id: review.assetId,
+      priority_profile_id: review.priorityProfileId,
+      review_instance_id: review.reviewInstanceId,
+      action: review.action,
+      reviewer_id: review.reviewerId,
+      reason: review.reason ?? null,
+      state_version: review.stateVersion,
+      evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+      trend_confidence_ref: review.trendConfidenceRef ?? null,
+      content_hash: review.contentHash ?? null,
+      correlation_id: review.correlationId ?? null,
+      created_at: review.createdAt,
+    });
+    if (error) throw new Error(`priority_review_persist_failed:${error.message}`);
+    return review;
+  }
+}
+
+function nextVersionOrConflict(current: number, expectedCurrentVersion?: number): number {
+  if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+    throw new Error(
+      `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+    );
+  }
+  return current + 1;
+}
+
+function strOrUndefined(value: unknown): string | undefined {
+  return value === null || value === undefined ? undefined : String(value);
+}
+
+function numOrUndefined(value: unknown): number | undefined {
+  return value === null || value === undefined ? undefined : Number(value);
+}
+
+function strArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((v) => String(v)) : [];
+}
+
+function mapDecisionContextRow(row: Record<string, unknown>): PersistedDecisionContext {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    snapshotId: strOrUndefined(row.snapshot_id),
+    healthProfileRef: strOrUndefined(row.health_profile_ref),
+    criticalityStateRef: strOrUndefined(row.criticality_state_ref),
+    conditionStateRef: strOrUndefined(row.condition_state_ref),
+    reliabilityStateRef: strOrUndefined(row.reliability_state_ref),
+    failureStateRefs: strArray(row.failure_state_refs),
+    trendStateRefs: strArray(row.trend_state_refs),
+    degradationStateRefs: strArray(row.degradation_state_refs),
+    lifecycleIntelligenceRef: strOrUndefined(row.lifecycle_intelligence_ref),
+    evidenceConfidenceRef: strOrUndefined(row.evidence_confidence_ref),
+    trendConfidenceRef: strOrUndefined(row.trend_confidence_ref),
+    availableDimensions: (row.available_dimensions ??
+      []) as PersistedDecisionContext["availableDimensions"],
+    missingDimensions: (row.missing_dimensions ??
+      []) as PersistedDecisionContext["missingDimensions"],
+    conflictingDimensions: (row.conflicting_dimensions ??
+      []) as PersistedDecisionContext["conflictingDimensions"],
+    contributingSlices: (row.contributing_slices ??
+      []) as PersistedDecisionContext["contributingSlices"],
+    decisionContextClass:
+      row.decision_context_class as PersistedDecisionContext["decisionContextClass"],
+    method: "decision_context_compose_v1",
+    methodVersion: "1",
+    confidence: numOrUndefined(row.confidence),
+    limitations: strArray(row.limitations),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    evidenceConfidence: (row.evidence_confidence ??
+      undefined) as PersistedDecisionContext["evidenceConfidence"],
+    trendConfidence: (row.trend_confidence ??
+      undefined) as PersistedDecisionContext["trendConfidence"],
+    calculatedAt: String(row.calculated_at),
+    createdBy: strOrUndefined(row.created_by),
+    autonomousDecisionAuthority: false,
+    mutatesCanonicalLifecycle: false,
+    createsCoreRisk: false,
+    createsWorkOrder: false,
+    calculatesPoF: false,
+    calculatesRul: false,
+    isHealthFactor: false,
+  };
+}
+
+function mapRiskSignalRow(row: Record<string, unknown>): PersistedRiskSignalState {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    version: Number(row.version),
+    riskSignalClass: row.risk_signal_class as PersistedRiskSignalState["riskSignalClass"],
+    riskSignalCategory: "advisory_context",
+    decisionContextRef: String(row.decision_context_ref),
+    healthContextRef: strOrUndefined(row.health_context_ref),
+    criticalityContextRef: strOrUndefined(row.criticality_context_ref),
+    failureContextRefs: strArray(row.failure_context_refs),
+    degradationContextRefs: strArray(row.degradation_context_refs),
+    lifecycleContextRef: strOrUndefined(row.lifecycle_context_ref),
+    evidenceConfidenceRef: strOrUndefined(row.evidence_confidence_ref),
+    trendConfidenceRef: strOrUndefined(row.trend_confidence_ref),
+    consequenceContext: strOrUndefined(row.consequence_context),
+    exposureContext: strOrUndefined(row.exposure_context),
+    confidence: numOrUndefined(row.confidence),
+    method: "risk_signal_compose_v1",
+    methodVersion: "1",
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    assessedAt: String(row.assessed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    publishedAt: strOrUndefined(row.published_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    evidenceConfidence: (row.evidence_confidence ??
+      undefined) as PersistedRiskSignalState["evidenceConfidence"],
+    trendConfidence: (row.trend_confidence ??
+      undefined) as PersistedRiskSignalState["trendConfidence"],
+    probabilityOfFailureCertified: false,
+    createsCoreRisk: false,
+    isHealthFactor: false,
+    mutatesCanonicalLifecycle: false,
+  };
+}
+
+function mapRiskCandidateRow(row: Record<string, unknown>): PersistedRiskCandidate {
+  return {
+    candidateId: String(row.candidate_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    riskSignalRef: String(row.risk_signal_ref),
+    title: String(row.title),
+    description: String(row.description),
+    consequenceContext: strOrUndefined(row.consequence_context),
+    evidenceRefs: strArray(row.evidence_refs),
+    confidence: numOrUndefined(row.confidence),
+    limitations: strArray(row.limitations),
+    createdAt: String(row.created_at),
+    status: row.status as PersistedRiskCandidate["status"],
+    autoMutatesCoreRisk: false,
+    requiresHumanGatedAdapter: true,
+  };
+}
+
+function mapMaintenanceRecommendationRow(
+  row: Record<string, unknown>,
+): PersistedMaintenanceRecommendationState {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    version: Number(row.version),
+    recommendationCode: String(row.recommendation_code),
+    recommendationClass: String(row.recommendation_class),
+    decisionContextRef: String(row.decision_context_ref),
+    riskSignalRef: strOrUndefined(row.risk_signal_ref),
+    rationale: strArray(row.rationale),
+    evidenceRefs: strArray(row.evidence_refs),
+    confidence: numOrUndefined(row.confidence),
+    urgencyContext: strOrUndefined(row.urgency_context),
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    method: "maintenance_recommendation_compose_v1",
+    methodVersion: "1",
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    assessedAt: String(row.assessed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    publishedAt: strOrUndefined(row.published_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    evidenceConfidence: (row.evidence_confidence ??
+      undefined) as PersistedMaintenanceRecommendationState["evidenceConfidence"],
+    trendConfidence: (row.trend_confidence ??
+      undefined) as PersistedMaintenanceRecommendationState["trendConfidence"],
+    createsWorkOrder: false,
+    isHealthFactor: false,
+    calculatesRul: false,
+    mutatesCanonicalLifecycle: false,
+  };
+}
+
+function mapMaintenanceTaxonomyRow(
+  row: Record<string, unknown>,
+): PersistedMaintenanceTaxonomyEntry {
+  return {
+    code: String(row.code),
+    name: String(row.name),
+    description: String(row.description ?? ""),
+    category: (row.category ?? "assessment") as PersistedMaintenanceTaxonomyEntry["category"],
+    version: String(row.version),
+    status: row.status as PersistedMaintenanceTaxonomyEntry["status"],
+    applicableAssetClasses: strArray(row.applicable_asset_classes),
+    packOwner: String(row.pack_owner),
+    replacementCode: strOrUndefined(row.replacement_code),
+    redefinesSharedSemantics: false,
+    tenantId: strOrUndefined(row.tenant_id),
+    workspaceId: strOrUndefined(row.workspace_id),
+  };
+}
+
+function mapPriorityProfileRow(row: Record<string, unknown>): PersistedPriorityProfile {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    version: Number(row.version),
+    snapshotId: strOrUndefined(row.snapshot_id),
+    healthRef: strOrUndefined(row.health_ref),
+    criticalityRef: strOrUndefined(row.criticality_ref),
+    riskSignalRef: strOrUndefined(row.risk_signal_ref),
+    failureRefs: strArray(row.failure_refs),
+    degradationRefs: strArray(row.degradation_refs),
+    lifecycleRef: strOrUndefined(row.lifecycle_ref),
+    maintenanceRecommendationRefs: strArray(row.maintenance_recommendation_refs),
+    decisionContextRef: String(row.decision_context_ref),
+    dimensionStates: (row.dimension_states ??
+      []) as PersistedPriorityProfile["dimensionStates"],
+    missingDimensions: strArray(row.missing_dimensions),
+    conflictingDimensions: strArray(row.conflicting_dimensions),
+    priorityClass: row.priority_class as PersistedPriorityProfile["priorityClass"],
+    priorityRationale: strArray(row.priority_rationale),
+    priorityConfidence: numOrUndefined(row.priority_confidence),
+    method: "priority_context_compose_v1",
+    methodVersion: "1",
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    assessedAt: String(row.assessed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    publishedAt: strOrUndefined(row.published_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    evidenceConfidence: (row.evidence_confidence ??
+      undefined) as PersistedPriorityProfile["evidenceConfidence"],
+    trendConfidence: (row.trend_confidence ??
+      undefined) as PersistedPriorityProfile["trendConfidence"],
+    isHealthFactor: false,
+    impliesPoF: false,
+    createsWorkOrder: false,
+    mutatesCanonicalLifecycle: false,
+  };
 }
 
 export function createPostgresAssetIntelligenceRepository(

@@ -4,7 +4,7 @@
  * Scoring math lives in HealthCompositionEngine — not inline here or on Health Index.
  */
 
-import type { Provenance } from "../architecture/identity-state";
+import type { AssetIdentityReference, Provenance } from "../architecture/identity-state";
 import { assertOwnershipLock } from "../architecture/ownership-lock";
 import {
   assessCriticality,
@@ -32,6 +32,20 @@ import {
   createLifecycleContextEngine,
   type LifecycleContextEngine,
 } from "./lifecycle-engine";
+import {
+  createAssetDecisionContextEngine,
+  type AssetDecisionContextEngine,
+} from "./decision-context-engine";
+import type { AssetDecisionContext } from "./decision-context";
+import { createRiskSignalEngine, type RiskSignalEngine } from "./risk-engine";
+import {
+  createMaintenanceRecommendationEngine,
+  type MaintenanceRecommendationEngine,
+} from "./maintenance-recommendation";
+import {
+  createAssetPriorityContextEngine,
+  type AssetPriorityContextEngine,
+} from "./priority";
 import { createEngineeringTimeSeries } from "./time-series";
 import type { FailureAssessmentBundle } from "./failure";
 import type { TrendDegradationBundle } from "./degradation";
@@ -59,6 +73,12 @@ import {
   transitionDegradationReview,
   startLifecycleReview,
   transitionLifecycleReview,
+  startRiskReview,
+  transitionRiskReview,
+  startMaintenanceRecommendationReview,
+  transitionMaintenanceRecommendationReview,
+  startPriorityReview,
+  transitionPriorityReview,
 } from "./review-workflow";
 import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
 import { assertRegisteredActiveSource } from "./source-registry";
@@ -79,7 +99,17 @@ import type {
   PersistedLifecycleTransitionCandidate,
   PersistedReliabilityState,
   PersistedTrendState,
+  PersistedDecisionContext,
+  PersistedRiskSignalState,
+  PersistedRiskCandidate,
+  PersistedMaintenanceRecommendationState,
+  PersistedPriorityProfile,
 } from "./persistence";
+
+/** Governed slices are consumable only once published or approved. */
+function isPublishedStatus(status?: string): boolean {
+  return status === "published" || status === "approved";
+}
 
 export type AssessConditionCommand = {
   tenantId: string;
@@ -408,6 +438,190 @@ export type ReviewLifecycleCommand = {
   actorRole?: FailureIntelligenceRole;
 };
 
+/** Phase 10H — Decision Context / Risk / Maintenance Recommendation / Priority commands. */
+export type ComposeDecisionContextCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey?: string;
+  evidenceRefs?: string[];
+  observedAt?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  createdBy?: string;
+  actorRole?: FailureIntelligenceRole;
+};
+
+export type EngineDecisionContextResult = {
+  identityOwner: "engineering_os_shared_domain";
+  decisionContext: PersistedDecisionContext;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  abstained: boolean;
+  abstentionReason?: string;
+  identityMutated: false;
+  healthMutated: false;
+  idempotentReplay?: boolean;
+  autonomousDecisionAuthority: false;
+  createsCoreRisk: false;
+  createsWorkOrder: false;
+  mutatesCanonicalLifecycle: false;
+};
+
+export type AssessRiskCommand = ComposeDecisionContextCommand & {
+  startReview?: boolean;
+  expectedVersion?: number;
+  decisionContextId?: string;
+};
+
+export type EngineRiskResult = {
+  identityOwner: "engineering_os_shared_domain";
+  decisionContext: PersistedDecisionContext;
+  riskSignal: PersistedRiskSignalState;
+  riskCandidates: PersistedRiskCandidate[];
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  identityMutated: false;
+  healthMutated: false;
+  idempotentReplay?: boolean;
+  riskHealthContributionEnabled: false;
+  createsCoreRisk: false;
+  riskCoreAutoMutationAllowed: false;
+  canonicalEngineeringRiskOwnership: "engineering_core";
+  createsWorkOrder: false;
+  mutatesCanonicalLifecycle: false;
+  predictiveMlUsed: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+  accuracyClaimsCertified: false;
+  aiMayPublishForbidden: true;
+};
+
+export type ReviewRiskCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  riskSignalStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+  reviewerId: string;
+  reason?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  publish?: boolean;
+  actorRole?: FailureIntelligenceRole;
+};
+
+export type AssessMaintenanceRecommendationCommand = AssessRiskCommand & {
+  riskSignalStateId?: string;
+};
+
+export type EngineMaintenanceRecommendationResult = {
+  identityOwner: "engineering_os_shared_domain";
+  decisionContext: PersistedDecisionContext;
+  recommendation: PersistedMaintenanceRecommendationState;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  identityMutated: false;
+  healthMutated: false;
+  idempotentReplay?: boolean;
+  createsWorkOrder: false;
+  cmmsWorkOrderOwnership: "none_in_asset_intelligence";
+  mutatesCanonicalLifecycle: false;
+  rulClaimsCertified: false;
+  aiMayPublishForbidden: true;
+};
+
+export type ReviewMaintenanceRecommendationCommand = Omit<
+  ReviewRiskCommand,
+  "riskSignalStateId"
+> & {
+  recommendationStateId: string;
+};
+
+export type AssessPriorityCommand = AssessRiskCommand & {
+  riskSignalStateId?: string;
+  maintenanceRecommendationStateId?: string;
+};
+
+export type EnginePriorityResult = {
+  identityOwner: "engineering_os_shared_domain";
+  decisionContext: PersistedDecisionContext;
+  priorityProfile: PersistedPriorityProfile;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  identityMutated: false;
+  healthMutated: false;
+  idempotentReplay?: boolean;
+  priorityHealthContributionEnabled: false;
+  numericPriorityScoreRequired: false;
+  createsWorkOrder: false;
+  impliesPoF: false;
+  mutatesCanonicalLifecycle: false;
+  aiMayPublishForbidden: true;
+};
+
+export type ReviewPriorityCommand = Omit<ReviewRiskCommand, "riskSignalStateId"> & {
+  priorityProfileId: string;
+};
+
+export type AssessRiskPriorityBundleCommand = AssessRiskCommand;
+
+export type EngineRiskPriorityBundleResult = {
+  identityOwner: "engineering_os_shared_domain";
+  decisionContext: PersistedDecisionContext;
+  riskSignal: PersistedRiskSignalState;
+  riskCandidates: PersistedRiskCandidate[];
+  recommendation: PersistedMaintenanceRecommendationState;
+  priorityProfile: PersistedPriorityProfile;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventIds: string[];
+  riskReviewInstanceId?: string;
+  maintenanceReviewInstanceId?: string;
+  priorityReviewInstanceId?: string;
+  abstained: boolean;
+  abstentionReason?: string;
+  identityMutated: false;
+  healthMutated: false;
+  idempotentReplay?: boolean;
+  riskHealthContributionEnabled: false;
+  priorityHealthContributionEnabled: false;
+  createsCoreRisk: false;
+  riskCoreAutoMutationAllowed: false;
+  canonicalEngineeringRiskOwnership: "engineering_core";
+  createsWorkOrder: false;
+  cmmsWorkOrderOwnership: "none_in_asset_intelligence";
+  mutatesCanonicalLifecycle: false;
+  predictiveMlUsed: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+  accuracyClaimsCertified: false;
+  numericPriorityScoreRequired: false;
+  aiMayPublishForbidden: true;
+};
+
 export type AssetIntelligenceEngineDeps = {
   identityPort: SharedDomainAssetIdentityPort;
   repository: AssetIntelligenceRepositoryPort;
@@ -417,6 +631,10 @@ export type AssetIntelligenceEngineDeps = {
   failureIntelligenceEngine?: AssetFailureIntelligenceEngine;
   trendIntelligenceEngine?: AssetTrendIntelligenceEngine;
   lifecycleContextEngine?: LifecycleContextEngine;
+  decisionContextEngine?: AssetDecisionContextEngine;
+  riskSignalEngine?: RiskSignalEngine;
+  maintenanceRecommendationEngine?: MaintenanceRecommendationEngine;
+  priorityContextEngine?: AssetPriorityContextEngine;
 };
 
 export class AssetIntelligenceEngine {
@@ -425,6 +643,10 @@ export class AssetIntelligenceEngine {
   private readonly failureIntelligence: AssetFailureIntelligenceEngine;
   private readonly trendIntelligence: AssetTrendIntelligenceEngine;
   private readonly lifecycleContextEngine: LifecycleContextEngine;
+  private readonly decisionContextEngine: AssetDecisionContextEngine;
+  private readonly riskSignalEngine: RiskSignalEngine;
+  private readonly maintenanceRecommendationEngine: MaintenanceRecommendationEngine;
+  private readonly priorityContextEngine: AssetPriorityContextEngine;
 
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
@@ -448,6 +670,22 @@ export class AssetIntelligenceEngine {
       createLifecycleContextEngine({
         newId: (p) => this.deps.repository.newId(p),
       });
+    this.decisionContextEngine =
+      deps.decisionContextEngine ??
+      createAssetDecisionContextEngine({
+        newId: (p) => this.deps.repository.newId(p),
+      });
+    this.riskSignalEngine =
+      deps.riskSignalEngine ??
+      createRiskSignalEngine({ newId: (p) => this.deps.repository.newId(p) });
+    this.maintenanceRecommendationEngine =
+      deps.maintenanceRecommendationEngine ??
+      createMaintenanceRecommendationEngine({
+        newId: (p) => this.deps.repository.newId(p),
+      });
+    this.priorityContextEngine =
+      deps.priorityContextEngine ??
+      createAssetPriorityContextEngine({ newId: (p) => this.deps.repository.newId(p) });
   }
 
   private async resolveIdentity(cmd: {
@@ -2656,6 +2894,1208 @@ export class AssetIntelligenceEngine {
       workflowInstance,
       identityMutated: false,
       healthMutated: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  /**
+   * Phase 10H — compose Decision Context from published/approved slices only.
+   * Draft, rejected, superseded, and revoked slices never shape the context.
+   */
+  private async prepareDecisionContext(cmd: {
+    tenantId: string;
+    workspaceId: string;
+    assetId: string;
+    sourceKey: string;
+    scope: string;
+    evidenceRefs?: string[];
+    observedAt?: string;
+    recordedAt: string;
+    correlationId?: string;
+    createdBy?: string;
+  }): Promise<{
+    identity: AssetIdentityReference;
+    context: PersistedDecisionContext;
+    domainContext: AssetDecisionContext;
+    evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+    abstained: boolean;
+    abstentionReason?: string;
+    timelineEntries: IntelligenceTimelineEntry[];
+    healthIndex?: PersistedHealthIndexState;
+    condition?: PersistedConditionState;
+    criticality?: PersistedCriticalityState;
+  }> {
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt;
+    const evidenceRefs = cmd.evidenceRefs ?? [];
+
+    const [
+      condition,
+      reliability,
+      criticality,
+      failureMode,
+      trend,
+      degradation,
+      lifecycle,
+      healthProfile,
+      healthIndex,
+    ] = await Promise.all([
+      this.deps.repository.latestCondition(cmd.tenantId, cmd.workspaceId, cmd.assetId, recordedAt),
+      this.deps.repository.latestReliability(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+      this.deps.repository.latestCriticality(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+      this.deps.repository.latestFailureMode(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+      this.deps.repository.latestTrendState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestDegradationState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestLifecycleState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestHealthProfile(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestHealthIndex(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+    ]);
+
+    const evidenceConfidence = this.evidenceConfidenceEngine.assess({
+      assessmentId: this.deps.repository.newId("ec"),
+      assetId: cmd.assetId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      scope: cmd.scope,
+      evidenceRefs,
+      sourceKeys: [cmd.sourceKey],
+      observedAt: cmd.observedAt ?? recordedAt,
+      asOf: recordedAt,
+      reviewStatus: healthProfile?.reviewStatus ?? condition?.status,
+      confidenceHint: condition?.conditionConfidence,
+    });
+    await this.deps.repository.saveEvidenceConfidence({
+      ...evidenceConfidence,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: 1,
+    });
+
+    // Only published/approved slices are forwarded — draft/rejected work must not shape decision context.
+    const composed = this.decisionContextEngine.compose({
+      assetId: cmd.assetId,
+      snapshotId: healthProfile?.snapshotId,
+      healthProfileRef: isPublishedStatus(healthProfile?.reviewStatus)
+        ? healthProfile?.profileId
+        : undefined,
+      condition: condition
+        ? { stateId: condition.stateId, reviewStatus: condition.status }
+        : undefined,
+      reliability: reliability
+        ? { stateId: reliability.stateId, reviewStatus: reliability.reviewStatus }
+        : undefined,
+      criticality: criticality
+        ? { stateId: criticality.stateId, reviewStatus: criticality.reviewStatus }
+        : undefined,
+      lifecycle: lifecycle
+        ? { stateId: lifecycle.stateId, reviewStatus: lifecycle.reviewStatus }
+        : undefined,
+      failures: failureMode
+        ? [{ stateId: failureMode.stateId, reviewStatus: failureMode.reviewStatus }]
+        : [],
+      trends: trend
+        ? [
+            {
+              stateId: trend.stateId,
+              reviewStatus: trend.reviewStatus,
+              trendConfidence: trend.trendConfidence,
+            },
+          ]
+        : [],
+      degradations: degradation
+        ? [{ stateId: degradation.stateId, reviewStatus: degradation.reviewStatus }]
+        : [],
+      evidenceConfidence,
+      assessedAt: recordedAt,
+    });
+
+    const context: PersistedDecisionContext = {
+      ...composed.context,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveDecisionContext(context);
+    await this.deps.repository.cacheIdentity(identity);
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: cmd.sourceKey,
+      provenance: {
+        sourceSystem: cmd.sourceKey,
+        observedAt: cmd.observedAt ?? recordedAt,
+        method: "decision_context_compose_v1",
+        evidenceRefs,
+        policyId: "asset_intelligence.decision_context.compose.v1",
+      },
+      correlationId: cmd.correlationId,
+      items: [{ kind: "decision_context", stateId: context.id }],
+    });
+
+    return {
+      identity,
+      context,
+      domainContext: composed.context,
+      evidenceConfidence,
+      abstained: composed.abstained,
+      abstentionReason: composed.abstentionReason,
+      timelineEntries,
+      healthIndex,
+      condition,
+      criticality,
+    };
+  }
+
+  async composeDecisionContext(
+    cmd: ComposeDecisionContextCommand,
+  ): Promise<EngineDecisionContextResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "decision_context.read");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "decision_context");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineDecisionContextResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const prepared = await this.prepareDecisionContext({
+      ...cmd,
+      sourceKey,
+      scope: "decision_context",
+      recordedAt,
+    });
+
+    const ev = createAssetIntelligenceEvent({
+      type: "engineering.asset.decision_context.composed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: prepared.context.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        sourceKey,
+        kind: "decision_context",
+        status: prepared.context.decisionContextClass,
+      },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+
+    const result: EngineDecisionContextResult = {
+      identityOwner: "engineering_os_shared_domain",
+      decisionContext: prepared.context,
+      evidenceConfidence: prepared.evidenceConfidence,
+      timelineEntries: prepared.timelineEntries,
+      abstained: prepared.abstained,
+      abstentionReason: prepared.abstentionReason,
+      identityMutated: false,
+      healthMutated: false,
+      autonomousDecisionAuthority: false,
+      createsCoreRisk: false,
+      createsWorkOrder: false,
+      mutatesCanonicalLifecycle: false,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "compose_decision_context",
+        resourceId: prepared.context.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async assessRisk(cmd: AssessRiskCommand): Promise<EngineRiskResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "risk.assess");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "risk");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineRiskResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const prepared = await this.prepareDecisionContext({
+      ...cmd,
+      sourceKey,
+      scope: "risk_signal",
+      recordedAt,
+    });
+
+    const assessed = this.riskSignalEngine.assess({
+      decisionContext: prepared.domainContext,
+      evidenceConfidence: prepared.evidenceConfidence,
+      trendConfidence: prepared.domainContext.trendConfidence,
+      assessedAt: recordedAt,
+      actorId: cmd.createdBy,
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!assessed.abstained && cmd.startReview !== false) {
+      const review = startRiskReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        riskSignalStateId: assessed.riskSignal.id,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      assessed.riskSignal.reviewInstanceId = reviewInstanceId;
+      assessed.riskSignal.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextRiskVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+    const riskSignal: PersistedRiskSignalState = {
+      ...assessed.riskSignal,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveRiskSignal(riskSignal);
+
+    const riskCandidates: PersistedRiskCandidate[] = [];
+    if (assessed.riskCandidate) {
+      const candidate: PersistedRiskCandidate = {
+        ...assessed.riskCandidate,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+      };
+      await this.deps.repository.saveRiskCandidate(candidate);
+      riskCandidates.push(candidate);
+    }
+
+    const timelineItems: Array<{ kind: IntelligenceTimelineEntry["kind"]; stateId: string }> = [
+      { kind: "risk_signal", stateId: riskSignal.id },
+    ];
+    for (const candidate of riskCandidates) {
+      timelineItems.push({ kind: "risk_candidate", stateId: candidate.candidateId });
+    }
+    const timelineEntries = [
+      ...prepared.timelineEntries,
+      ...(await this.appendStateTimelines({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        recordedAt,
+        sourceKey,
+        provenance: {
+          sourceSystem: sourceKey,
+          observedAt: cmd.observedAt ?? recordedAt,
+          method: "risk_signal_compose_v1",
+          evidenceRefs: cmd.evidenceRefs ?? [],
+          policyId: "asset_intelligence.risk.assess.v1",
+        },
+        correlationId: cmd.correlationId,
+        items: timelineItems,
+      })),
+    ];
+
+    const snapshot = composeAssetSnapshot({
+      identity: prepared.identity,
+      asOf: recordedAt,
+      condition: prepared.condition,
+      healthIndex: prepared.healthIndex,
+      criticality: prepared.criticality,
+      evidenceConfidence: prepared.evidenceConfidence,
+    });
+    const snapshotId = this.deps.repository.newId("snap");
+    await this.deps.repository.saveSnapshot({
+      id: snapshotId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: prepared.condition?.stateId,
+      healthIndex: prepared.healthIndex,
+      identityReference: prepared.identity,
+      sourceSet: [sourceKey],
+      timelinePosition: timelineEntries[timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.risk_signal.assessed",
+      payload: {
+        sourceKey,
+        kind: "risk_signal",
+        status: riskSignal.reviewStatus,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: riskSignal.id,
+      published: false,
+      createdAt: recordedAt,
+    });
+
+    const eventTypes: Array<import("./events").AssetIntelligenceEventType> = [
+      "engineering.asset.risk_signal.assessed",
+      "engineering.asset.evidence_confidence.assessed",
+    ];
+    if (riskCandidates.length > 0) {
+      eventTypes.push("engineering.asset.risk_candidate.proposed");
+    }
+    for (const type of eventTypes) {
+      const ev = createAssetIntelligenceEvent({
+        type,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: riskSignal.id,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: { sourceKey, kind: "risk_signal", status: riskSignal.reviewStatus },
+      });
+      await this.deps.events.publish(ev);
+      await this.deps.repository.appendEvent(ev);
+    }
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EngineRiskResult = {
+      identityOwner: "engineering_os_shared_domain",
+      decisionContext: prepared.context,
+      riskSignal,
+      riskCandidates,
+      evidenceConfidence: prepared.evidenceConfidence,
+      timelineEntries,
+      snapshot,
+      snapshotId,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      abstained: assessed.abstained,
+      abstentionReason: assessed.abstentionReason,
+      identityMutated: false,
+      healthMutated: false,
+      riskHealthContributionEnabled: false,
+      createsCoreRisk: false,
+      riskCoreAutoMutationAllowed: false,
+      canonicalEngineeringRiskOwnership: "engineering_core",
+      createsWorkOrder: false,
+      mutatesCanonicalLifecycle: false,
+      predictiveMlUsed: false,
+      probabilityOfFailureCertified: false,
+      rulClaimsCertified: false,
+      accuracyClaimsCertified: false,
+      aiMayPublishForbidden: true,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_risk",
+        resourceId: riskSignal.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewRisk(cmd: ReviewRiskCommand): Promise<{
+    riskSignal: PersistedRiskSignalState;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    createsCoreRisk: false;
+    riskCoreAutoMutationAllowed: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve" ? "risk.approve" : cmd.publish ? "risk.publish" : "risk.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestRiskSignal(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.id !== cmd.riskSignalStateId) {
+      throw new Error("risk_signal_state_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_risk_signal_immutable");
+    }
+    const workflowInstance = transitionRiskReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextRiskVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const riskSignal: PersistedRiskSignalState = {
+      ...latest,
+      id: this.deps.repository.newId("risk_signal"),
+      version,
+      reviewStatus: nextStatus,
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.id,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+        riskCoreAutoMutationAllowed: false,
+      },
+    };
+    await this.deps.repository.saveRiskSignal(riskSignal);
+    await this.deps.repository.saveRiskReview({
+      reviewId: this.deps.repository.newId("rrev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      riskSignalStateId: riskSignal.id,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      evidenceConfidenceRef: riskSignal.evidenceConfidenceRef,
+      trendConfidenceRef: riskSignal.trendConfidenceRef,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: {
+        sourceSystem: "asset_intelligence.review",
+        observedAt: recordedAt,
+        method: "risk_signal_compose_v1",
+        reviewedBy: cmd.reviewerId,
+      },
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind: nextStatus === "published" ? "risk_published" : "risk_review",
+          stateId: riskSignal.id,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.risk_signal.published"
+          : "engineering.asset.risk_signal.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: riskSignal.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "risk_signal", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    return {
+      riskSignal,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      createsCoreRisk: false,
+      riskCoreAutoMutationAllowed: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  async assessMaintenanceRecommendation(
+    cmd: AssessMaintenanceRecommendationCommand,
+  ): Promise<EngineMaintenanceRecommendationResult> {
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, "maintenance_recommendation.assess");
+    }
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "maintenance_recommendation");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineMaintenanceRecommendationResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const prepared = await this.prepareDecisionContext({
+      ...cmd,
+      sourceKey,
+      scope: "maintenance_recommendation",
+      recordedAt,
+    });
+    const riskSignal = await this.deps.repository.latestRiskSignal(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+
+    const assessed = this.maintenanceRecommendationEngine.assess({
+      decisionContext: prepared.domainContext,
+      riskSignal,
+      evidenceConfidence: prepared.evidenceConfidence,
+      trendConfidence: prepared.domainContext.trendConfidence,
+      assessedAt: recordedAt,
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!assessed.abstained && cmd.startReview !== false) {
+      const review = startMaintenanceRecommendationReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        recommendationStateId: assessed.recommendation.id,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      assessed.recommendation.reviewInstanceId = reviewInstanceId;
+      assessed.recommendation.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextMaintenanceRecommendationVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+    const recommendation: PersistedMaintenanceRecommendationState = {
+      ...assessed.recommendation,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveMaintenanceRecommendation(recommendation);
+
+    const timelineEntries = [
+      ...prepared.timelineEntries,
+      ...(await this.appendStateTimelines({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        recordedAt,
+        sourceKey,
+        provenance: {
+          sourceSystem: sourceKey,
+          observedAt: cmd.observedAt ?? recordedAt,
+          method: "maintenance_recommendation_compose_v1",
+          evidenceRefs: cmd.evidenceRefs ?? [],
+          policyId: "asset_intelligence.maintenance_recommendation.assess.v1",
+        },
+        correlationId: cmd.correlationId,
+        items: [{ kind: "maintenance_recommendation", stateId: recommendation.id }],
+      })),
+    ];
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.maintenance_recommendation.assessed",
+      payload: {
+        sourceKey,
+        kind: "maintenance_recommendation",
+        status: recommendation.reviewStatus,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: recommendation.id,
+      published: false,
+      createdAt: recordedAt,
+    });
+    const ev = createAssetIntelligenceEvent({
+      type: "engineering.asset.maintenance_recommendation.assessed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: recommendation.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        sourceKey,
+        kind: "maintenance_recommendation",
+        status: recommendation.reviewStatus,
+      },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EngineMaintenanceRecommendationResult = {
+      identityOwner: "engineering_os_shared_domain",
+      decisionContext: prepared.context,
+      recommendation,
+      evidenceConfidence: prepared.evidenceConfidence,
+      timelineEntries,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      abstained: assessed.abstained,
+      abstentionReason: assessed.abstentionReason,
+      identityMutated: false,
+      healthMutated: false,
+      createsWorkOrder: false,
+      cmmsWorkOrderOwnership: "none_in_asset_intelligence",
+      mutatesCanonicalLifecycle: false,
+      rulClaimsCertified: false,
+      aiMayPublishForbidden: true,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_maintenance_recommendation",
+        resourceId: recommendation.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewMaintenanceRecommendation(
+    cmd: ReviewMaintenanceRecommendationCommand,
+  ): Promise<{
+    recommendation: PersistedMaintenanceRecommendationState;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    createsWorkOrder: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve"
+        ? "maintenance_recommendation.approve"
+        : cmd.publish
+          ? "maintenance_recommendation.publish"
+          : "maintenance_recommendation.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestMaintenanceRecommendation(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.id !== cmd.recommendationStateId) {
+      throw new Error("maintenance_recommendation_state_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_maintenance_recommendation_immutable");
+    }
+    const workflowInstance = transitionMaintenanceRecommendationReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextMaintenanceRecommendationVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const recommendation: PersistedMaintenanceRecommendationState = {
+      ...latest,
+      id: this.deps.repository.newId("maint_rec"),
+      version,
+      reviewStatus: nextStatus,
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.id,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+        createsWorkOrder: false,
+      },
+    };
+    await this.deps.repository.saveMaintenanceRecommendation(recommendation);
+    await this.deps.repository.saveMaintenanceRecommendationReview({
+      reviewId: this.deps.repository.newId("mrev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recommendationStateId: recommendation.id,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: {
+        sourceSystem: "asset_intelligence.review",
+        observedAt: recordedAt,
+        method: "maintenance_recommendation_compose_v1",
+        reviewedBy: cmd.reviewerId,
+      },
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind:
+            nextStatus === "published"
+              ? "maintenance_recommendation_published"
+              : "maintenance_recommendation_review",
+          stateId: recommendation.id,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.maintenance_recommendation.published"
+          : "engineering.asset.maintenance_recommendation.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: recommendation.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "maintenance_recommendation", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    return {
+      recommendation,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      createsWorkOrder: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  async assessPriority(cmd: AssessPriorityCommand): Promise<EnginePriorityResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "priority.assess");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "priority");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EnginePriorityResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const prepared = await this.prepareDecisionContext({
+      ...cmd,
+      sourceKey,
+      scope: "priority_context",
+      recordedAt,
+    });
+    const [riskSignal, recommendation] = await Promise.all([
+      this.deps.repository.latestRiskSignal(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestMaintenanceRecommendation(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+      ),
+    ]);
+
+    const composed = this.priorityContextEngine.compose({
+      decisionContext: prepared.domainContext,
+      riskSignal,
+      maintenanceRecommendations: recommendation ? [recommendation] : [],
+      evidenceConfidence: prepared.evidenceConfidence,
+      trendConfidence: prepared.domainContext.trendConfidence,
+      assessedAt: recordedAt,
+    });
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!composed.abstained && cmd.startReview !== false) {
+      const review = startPriorityReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        priorityProfileId: composed.profile.id,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      composed.profile.reviewInstanceId = reviewInstanceId;
+      composed.profile.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextPriorityVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+    const priorityProfile: PersistedPriorityProfile = {
+      ...composed.profile,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.savePriorityProfile(priorityProfile);
+
+    const timelineEntries = [
+      ...prepared.timelineEntries,
+      ...(await this.appendStateTimelines({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        recordedAt,
+        sourceKey,
+        provenance: {
+          sourceSystem: sourceKey,
+          observedAt: cmd.observedAt ?? recordedAt,
+          method: "priority_context_compose_v1",
+          evidenceRefs: cmd.evidenceRefs ?? [],
+          policyId: "asset_intelligence.priority.assess.v1",
+        },
+        correlationId: cmd.correlationId,
+        items: [{ kind: "priority_profile", stateId: priorityProfile.id }],
+      })),
+    ];
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.priority.assessed",
+      payload: {
+        sourceKey,
+        kind: "priority",
+        status: priorityProfile.reviewStatus,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: priorityProfile.id,
+      published: false,
+      createdAt: recordedAt,
+    });
+    const ev = createAssetIntelligenceEvent({
+      type: "engineering.asset.priority.assessed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: priorityProfile.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { sourceKey, kind: "priority", status: priorityProfile.reviewStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EnginePriorityResult = {
+      identityOwner: "engineering_os_shared_domain",
+      decisionContext: prepared.context,
+      priorityProfile,
+      evidenceConfidence: prepared.evidenceConfidence,
+      timelineEntries,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      abstained: composed.abstained,
+      abstentionReason: composed.abstentionReason,
+      identityMutated: false,
+      healthMutated: false,
+      priorityHealthContributionEnabled: false,
+      numericPriorityScoreRequired: false,
+      createsWorkOrder: false,
+      impliesPoF: false,
+      mutatesCanonicalLifecycle: false,
+      aiMayPublishForbidden: true,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_priority",
+        resourceId: priorityProfile.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewPriority(cmd: ReviewPriorityCommand): Promise<{
+    priorityProfile: PersistedPriorityProfile;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    priorityHealthContributionEnabled: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve"
+        ? "priority.approve"
+        : cmd.publish
+          ? "priority.publish"
+          : "priority.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestPriorityProfile(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.id !== cmd.priorityProfileId) {
+      throw new Error("priority_profile_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_priority_immutable");
+    }
+    const workflowInstance = transitionPriorityReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextPriorityVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const priorityProfile: PersistedPriorityProfile = {
+      ...latest,
+      id: this.deps.repository.newId("priority"),
+      version,
+      reviewStatus: nextStatus,
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.id,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+        isHealthFactor: false,
+      },
+    };
+    await this.deps.repository.savePriorityProfile(priorityProfile);
+    await this.deps.repository.savePriorityReview({
+      reviewId: this.deps.repository.newId("prev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      priorityProfileId: priorityProfile.id,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: {
+        sourceSystem: "asset_intelligence.review",
+        observedAt: recordedAt,
+        method: "priority_context_compose_v1",
+        reviewedBy: cmd.reviewerId,
+      },
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind: nextStatus === "published" ? "priority_published" : "priority_review",
+          stateId: priorityProfile.id,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.priority.published"
+          : "engineering.asset.priority.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: priorityProfile.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "priority", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    return {
+      priorityProfile,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      priorityHealthContributionEnabled: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  /**
+   * Phase 10H — orchestrated Decision Context → Risk → Maintenance Recommendation → Priority.
+   * Never creates Core Risk or work orders; every state is persisted and review-gated.
+   */
+  async assessRiskPriorityBundle(
+    cmd: AssessRiskPriorityBundleCommand,
+  ): Promise<EngineRiskPriorityBundleResult> {
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const risk = await this.assessRisk({ ...cmd, recordedAt });
+    const recommendation = await this.assessMaintenanceRecommendation({
+      ...cmd,
+      recordedAt,
+      idempotencyKey: cmd.idempotencyKey ? `${cmd.idempotencyKey}:maintenance` : undefined,
+    });
+    const priority = await this.assessPriority({
+      ...cmd,
+      recordedAt,
+      idempotencyKey: cmd.idempotencyKey ? `${cmd.idempotencyKey}:priority` : undefined,
+    });
+
+    return {
+      identityOwner: "engineering_os_shared_domain",
+      decisionContext: risk.decisionContext,
+      riskSignal: risk.riskSignal,
+      riskCandidates: risk.riskCandidates,
+      recommendation: recommendation.recommendation,
+      priorityProfile: priority.priorityProfile,
+      evidenceConfidence: risk.evidenceConfidence,
+      timelineEntries: [
+        ...risk.timelineEntries,
+        ...recommendation.timelineEntries,
+        ...priority.timelineEntries,
+      ],
+      snapshot: risk.snapshot,
+      snapshotId: risk.snapshotId,
+      outboxEventIds: [
+        risk.outboxEventId,
+        recommendation.outboxEventId,
+        priority.outboxEventId,
+      ],
+      riskReviewInstanceId: risk.reviewInstanceId,
+      maintenanceReviewInstanceId: recommendation.reviewInstanceId,
+      priorityReviewInstanceId: priority.reviewInstanceId,
+      abstained: risk.abstained || recommendation.abstained || priority.abstained,
+      abstentionReason:
+        risk.abstentionReason ?? recommendation.abstentionReason ?? priority.abstentionReason,
+      identityMutated: false,
+      healthMutated: false,
+      riskHealthContributionEnabled: false,
+      priorityHealthContributionEnabled: false,
+      createsCoreRisk: false,
+      riskCoreAutoMutationAllowed: false,
+      canonicalEngineeringRiskOwnership: "engineering_core",
+      createsWorkOrder: false,
+      cmmsWorkOrderOwnership: "none_in_asset_intelligence",
+      mutatesCanonicalLifecycle: false,
+      predictiveMlUsed: false,
+      probabilityOfFailureCertified: false,
+      rulClaimsCertified: false,
+      accuracyClaimsCertified: false,
+      numericPriorityScoreRequired: false,
       aiMayPublishForbidden: true,
     };
   }

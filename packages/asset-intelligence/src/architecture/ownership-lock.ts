@@ -56,6 +56,11 @@ export const ASSET_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
   { concern: "cost_schedule", owner: "project_controls", notes: "future PC" },
   { concern: "lifecycle_identity", owner: "engineering_os_shared_domain", notes: "canonical stage identity" },
   { concern: "lifecycle_intelligence", owner: "asset_intelligence", notes: "analytics/recommendations" },
+  { concern: "decision_context", owner: "asset_intelligence", notes: "published-slice context; no autonomous authority" },
+  { concern: "risk_signal_intelligence", owner: "asset_intelligence", notes: "advisory signals; Core owns canonical risk" },
+  { concern: "risk_candidate_handoff", owner: "asset_intelligence", notes: "human-gated Core adapter only" },
+  { concern: "maintenance_recommendation_intelligence", owner: "asset_intelligence", notes: "advisory; not CMMS work orders" },
+  { concern: "asset_priority_context", owner: "asset_intelligence", notes: "dimensional attention; not a Health factor" },
   { concern: "project_knowledge", owner: "project_intelligence", notes: "PI owns knowledge derivatives" },
 ] as const;
 

@@ -19,7 +19,7 @@ import {
 
 describe("Phase 10G lifecycle context intelligence", () => {
   it("locks version and readiness flags", () => {
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.7.0-lifecycle");
+    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.8.0-risk-priority");
     expect(LIFECYCLE_CONTEXT_ENGINE_READY).toBe(true);
     expect(LIFECYCLE_TAXONOMY_REGISTRY_READY).toBe(true);
     expect(LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED).toBe(false);

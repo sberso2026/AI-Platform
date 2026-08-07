@@ -26,7 +26,7 @@ import { resolve } from "node:path";
 
 describe("Phase 10E failure intelligence", () => {
   it("locks version and claim flags", () => {
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.7.0-lifecycle");
+    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.8.0-risk-priority");
     expect(FAILURE_TAXONOMY_REGISTRY_READY).toBe(true);
     expect(FAILURE_INTELLIGENCE_READY).toBe(true);
     expect(CRITICALITY_IS_HEALTH_FACTOR).toBe(false);

@@ -24,7 +24,11 @@ export type AllowedStateKind =
   | "trend"
   | "degradation"
   | "risk_intelligence"
-  | "lifecycle";
+  | "lifecycle"
+  | "decision_context"
+  | "risk"
+  | "maintenance_recommendation"
+  | "priority";
 
 export type IntelligenceSourceEntry = {
   sourceKey: string;
@@ -65,6 +69,10 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "trend",
       "degradation",
       "lifecycle",
+      "decision_context",
+      "risk",
+      "maintenance_recommendation",
+      "priority",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
@@ -85,6 +93,10 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "trend",
       "degradation",
       "lifecycle",
+      "decision_context",
+      "risk",
+      "maintenance_recommendation",
+      "priority",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,

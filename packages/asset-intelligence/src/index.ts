@@ -23,6 +23,13 @@ export * from "./domain/lifecycle-reference";
 export * from "./domain/lifecycle";
 export * from "./domain/lifecycle-taxonomy";
 export * from "./domain/lifecycle-engine";
+export * from "./domain/decision-context";
+export * from "./domain/decision-context-engine";
+export * from "./domain/risk";
+export * from "./domain/risk-engine";
+export * from "./domain/maintenance-taxonomy";
+export * from "./domain/maintenance-recommendation";
+export * from "./domain/priority";
 export * from "./domain/role-matrix";
 export * from "./domain/review-workflow";
 export * from "./domain/snapshot";
@@ -38,3 +45,13 @@ export * from "./domain/ii-consumption";
 export * from "./domain/engine";
 export * from "./domain/capabilities";
 export * from "./domain/services";
+
+// version.ts is the single authority for these locks; several domain modules
+// re-declare them locally for gate visibility, so disambiguate the star exports.
+export {
+  DEGRADATION_HEALTH_CONTRIBUTION_ENABLED,
+  LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED,
+  RISK_HEALTH_CONTRIBUTION_ENABLED,
+  PRIORITY_HEALTH_CONTRIBUTION_ENABLED,
+  PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
+} from "./version";
