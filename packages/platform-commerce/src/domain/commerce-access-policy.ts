@@ -201,6 +201,13 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     seatRequired: true,
     workspaceRequired: true,
   },
+  "/engineering/apps/inspection-intelligence/vision": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "inspection.review",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
   "/engineering/project-controls": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_controls", action: "access", seatRequired: true },
   "/engineering/meetings": { productKey: ENGINEERING_PRODUCT, applicationKey: "meetings", action: "access", seatRequired: true },
   "/engineering/structural-intelligence": { productKey: ENGINEERING_PRODUCT, applicationKey: "structural_intelligence", action: "access", seatRequired: true },

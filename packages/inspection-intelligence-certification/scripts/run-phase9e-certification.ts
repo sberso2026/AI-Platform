@@ -155,7 +155,7 @@ function main() {
     "No offline / no AI Vision",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
     ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
@@ -238,7 +238,7 @@ function main() {
   const architecturalReservationsIntact =
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
     ) &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",

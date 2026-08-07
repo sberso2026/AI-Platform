@@ -78,7 +78,7 @@ jobs:
             ["packExpansionImplemented", a.packExpansionImplemented === true],
             ["offlineSyncImplemented", a.offlineSyncImplemented === true],
             ["mobileProductImplemented", a.mobileProductImplemented === true],
-            ["aiVisionImplemented", a.aiVisionImplemented === false],
+            ["aiVisionImplemented", a.aiVisionImplemented === true],
             ["remainingUsefulLifeClaimed", a.remainingUsefulLifeClaimed === false],
             ["releaseEligible", a.releaseEligible === true],
             ["phase9IReady", a.phase9IReady === true],

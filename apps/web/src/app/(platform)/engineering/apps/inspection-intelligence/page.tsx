@@ -1,5 +1,5 @@
 /**
- * Phase 9H overview — condition rating, predictive signals, structural pack.
+ * Phase 9I overview — AI Vision evidence analysis (advisory, human-validated).
  */
 export default function InspectionIntelligenceOverviewPage() {
   return (
@@ -14,20 +14,22 @@ export default function InspectionIntelligenceOverviewPage() {
               <div data-testid="inspection-intelligence-mobile-ready">
                 <div data-testid="inspection-intelligence-offline-sync-ready">
                   <div data-testid="inspection-intelligence-condition-predictive-ready">
-                    <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
-                      Inspection Intelligence
-                    </h1>
-                    <p className="mt-2 max-w-2xl text-slate-600">
-                      Condition rating, predictive signals, and structural pack expansion
-                      (0.8.0-condition-predictive). Advisory signals fail closed; AI Vision remains
-                      deferred. Not an Asset Intelligence or Digital Twin authority.
-                    </p>
-                    <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                      <li>Governed condition ratings with override history and scheme versioning</li>
-                      <li>Aggregation with uncertainty, missing evidence, and abstention</li>
-                      <li>Deterministic predictive signals — advisory only, no RUL claim</li>
-                      <li>Structural condition pack with offline and mobile compatibility</li>
-                    </ul>
+                    <div data-testid="inspection-intelligence-ai-vision-ready">
+                      <h1 id="ii-overview-title" className="text-2xl font-semibold text-slate-900">
+                        Inspection Intelligence
+                      </h1>
+                      <p className="mt-2 max-w-2xl text-slate-600">
+                        AI Vision evidence analysis (0.9.0-ai-vision): advisory overlays, immutable
+                        originals, provider governance, and human validation. No Asset Intelligence
+                        or Digital Twin ownership.
+                      </p>
+                      <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                        <li>Originals immutable; derivatives hashed and lineage-tracked</li>
+                        <li>Tenant allowlist providers with fail-closed outage/policy denial</li>
+                        <li>Human accept/reject/adjust with reason before condition linkage</li>
+                        <li>Pack adapters for generic, coatings, and structural_condition</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>

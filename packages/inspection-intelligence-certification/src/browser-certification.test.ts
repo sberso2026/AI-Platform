@@ -1,5 +1,5 @@
 /**
- * Browser certification for Phase 9H — condition/predictive markers.
+ * Browser certification for Phase 9I — AI Vision markers.
  */
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("Phase 9H browser certification (source)", () => {
-  it("covers condition-predictive markers and surfaces", () => {
+describe("Phase 9I browser certification (source)", () => {
+  it("covers AI Vision markers and surfaces", () => {
     const overview = readFileSync(
       resolve(
         ROOT,
@@ -17,22 +17,25 @@ describe("Phase 9H browser certification (source)", () => {
       ),
       "utf8",
     );
+    expect(overview).toContain("inspection-intelligence-ai-vision-ready");
     expect(overview).toContain("inspection-intelligence-condition-predictive-ready");
-    expect(overview).toContain("inspection-intelligence-offline-sync-ready");
-    for (const page of ["condition", "predictive", "sync", "field"]) {
-      const text = readFileSync(
+    for (const page of ["vision", "condition", "predictive", "sync"]) {
+      expect(
+        existsSync(
+          resolve(
+            ROOT,
+            `apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/${page}/page.tsx`,
+          ),
+        ),
+      ).toBe(true);
+    }
+    expect(
+      existsSync(
         resolve(
           ROOT,
-          `apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/${page}/page.tsx`,
+          "packages/inspection-intelligence-certification/playwright/ai-vision.spec.ts",
         ),
-        "utf8",
-      );
-      expect(text).toMatch(/data-testid="inspection-/);
-    }
-    const spec = resolve(
-      ROOT,
-      "packages/inspection-intelligence-certification/playwright/condition-predictive.spec.ts",
-    );
-    expect(existsSync(spec)).toBe(true);
+      ),
+    ).toBe(true);
   });
 });

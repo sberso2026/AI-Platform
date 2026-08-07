@@ -1,96 +1,59 @@
 import { describe, expect, it } from "vitest";
 import {
   INSPECTION_INTELLIGENCE_VERSION,
-  INSPECTION_MOBILE_PRODUCT_IMPLEMENTED,
-  INSPECTION_OFFLINE_SYNC_IMPLEMENTED,
-  INSPECTION_CONDITION_RATING_IMPLEMENTED,
-  INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED,
-  INSPECTION_PACK_EXPANSION_IMPLEMENTED,
-  INSPECTION_PREDICTIVE_IMPLEMENTED,
   INSPECTION_AI_VISION_IMPLEMENTED,
+  INSPECTION_CONDITION_RATING_IMPLEMENTED,
+  INSPECTION_OFFLINE_SYNC_IMPLEMENTED,
+  INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED,
   getInspectionIntelligenceDomainDeclaration,
-  runConditionPredictiveHappyPath,
+  runAiVisionHappyPath,
+  CERTIFIED_VISION_PACK_ADAPTERS,
+  executeVisionProvider,
+  defaultVisionPolicy,
   STRUCTURAL_CONDITION_PACK_SDK,
-  executeMlProviderReserved,
-  aggregateComponentRatings,
-  createObservedConditionRating,
-  STRUCTURAL_ORDINAL_SCHEME_V1,
 } from "../src";
 
-describe("Phase 9H condition rating and predictive signals", () => {
-  it("locks condition/predictive identity without AI Vision or Twin ownership", () => {
-    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("0.8.0-condition-predictive");
-    expect(INSPECTION_MOBILE_PRODUCT_IMPLEMENTED).toBe(true);
-    expect(INSPECTION_OFFLINE_SYNC_IMPLEMENTED).toBe(true);
+describe("Phase 9I AI Vision evidence analysis", () => {
+  it("locks AI Vision identity without Twin ownership or accuracy claims", () => {
+    expect(INSPECTION_INTELLIGENCE_VERSION).toBe("0.9.0-ai-vision");
+    expect(INSPECTION_AI_VISION_IMPLEMENTED).toBe(true);
     expect(INSPECTION_CONDITION_RATING_IMPLEMENTED).toBe(true);
-    expect(INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED).toBe(true);
-    expect(INSPECTION_PACK_EXPANSION_IMPLEMENTED).toBe(true);
-    expect(INSPECTION_PREDICTIVE_IMPLEMENTED).toBe(false);
-    expect(INSPECTION_AI_VISION_IMPLEMENTED).toBe(false);
+    expect(INSPECTION_OFFLINE_SYNC_IMPLEMENTED).toBe(true);
+    expect(INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED).toBe(false);
     const decl = getInspectionIntelligenceDomainDeclaration();
-    expect(decl.conditionRatingImplemented).toBe(true);
-    expect(decl.predictiveSignalsScaffolded).toBe(true);
-    expect(decl.assetOwnership).toBe("engineering_os_shared_domain");
+    expect(decl.aiVisionImplemented).toBe(true);
+    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.aiVision).toBe(true);
+    expect(CERTIFIED_VISION_PACK_ADAPTERS).toHaveLength(3);
   });
 
-  it("certifies structural pack expansion", () => {
-    expect(STRUCTURAL_CONDITION_PACK_SDK.packId).toBe("structural_condition");
-    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.conditionRating).toBe(true);
-    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.offlineCompatible).toBe(true);
-    expect(STRUCTURAL_CONDITION_PACK_SDK.featureFlags.aiVision).toBe(false);
-  });
-
-  it("runs condition → override → publish → aggregate → predictive → reporting", async () => {
-    const result = await runConditionPredictiveHappyPath({
+  it("runs preprocess → provider governance → inference → human validation → condition link", async () => {
+    const result = await runAiVisionHappyPath({
       tenantId: "t1",
       workspaceId: "w1",
       sessionId: "s1",
-      assessorUserId: "u1",
-      authorityUserId: "u2",
-      targetRef: "structure:bridge-1",
+      evidenceId: "ev1",
+      evidenceContentHash: "hash_original_abc",
+      packId: "structural_condition",
+      reviewerUserId: "u2",
     });
-    expect(result.conditionRatingImplemented).toBe(true);
-    expect(result.predictiveSignalsScaffolded).toBe(true);
-    expect(result.packExpansionImplemented).toBe(true);
-    expect(result.ratings[0]?.overrides[0]?.previousValue.ordinalCode).toBe("3");
-    expect(result.ratings[0]?.published?.layer).toBe("published");
-    expect(result.aggregation.abstained).toBe(false);
-    expect(result.signals.every((s) => s.advisory && !s.claimsRemainingUsefulLife)).toBe(true);
-    expect(result.mlAbstention.abstained).toBe(true);
-    expect(result.reportingOutputs.some((o) => o.kind === "condition_rating_snapshot")).toBe(true);
-    expect(result.conditionEvents.some((e) => e.type.includes("condition"))).toBe(true);
-    expect(result.operationalHardeningChecks.overridePreservesHistory).toBe(true);
+    expect(result.aiVisionImplemented).toBe(true);
+    expect(result.analysis.advisory).toBe(true);
+    expect(result.analysis.claimsAccuracy).toBe(false);
+    expect(result.analysis.derivative.originalImmutable).toBe(true);
+    expect(result.analysis.preprocess.exifLocationRemoved).toBe(true);
+    expect(result.validation.state).toBe("accepted");
+    expect(result.conditionLink.observationSeed.analysisId).toBe(result.analysis.analysisId);
+    expect(result.events.some((e) => e.type === "engineering.inspection.vision.validated")).toBe(
+      true,
+    );
+    expect(result.operationalChecks.unapprovedProviderDenied).toBe(true);
+    expect(result.adaptersCertified).toContain("vision_structural_v1");
 
-    const ml = executeMlProviderReserved({
-      tenantId: "t1",
-      workspaceId: "w1",
-      targetRef: "x",
+    const denied = executeVisionProvider({
+      providerId: "evil",
+      policy: defaultVisionPolicy(["vision_provider_approved_v1"]),
+      evidenceSupported: true,
     });
-    expect(ml.claimsProductionMlAccuracy).toBe(false);
-
-    expect(() =>
-      createObservedConditionRating({
-        tenantId: "t1",
-        workspaceId: "w1",
-        sessionId: "s1",
-        componentScope: "x",
-        inspectionScope: "y",
-        observationIds: [],
-        scheme: STRUCTURAL_ORDINAL_SCHEME_V1,
-        ordinalCode: "2",
-        confidence: 0.1,
-        uncertainty: 0.9,
-        evidenceSufficiency: "abstain",
-        assessorUserId: "u1",
-        packId: "structural_condition",
-      }),
-    ).toThrow(/abstain/);
-
-    const emptyAgg = aggregateComponentRatings({
-      ratings: [],
-      weighting: { weightingId: "w", version: "1", weights: {} },
-      requiredComponents: ["girder"],
-    });
-    expect(emptyAgg.abstained).toBe(true);
+    expect(denied.outcome).toBe("denied_unapproved");
   });
 });

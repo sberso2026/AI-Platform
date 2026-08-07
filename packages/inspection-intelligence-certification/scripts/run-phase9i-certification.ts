@@ -1,23 +1,23 @@
 /**
- * Phase 9H — Inspection Intelligence condition rating / predictive / pack expansion certification.
+ * Phase 9I — Inspection Intelligence AI Vision certification.
  */
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  PHASE_9H_INSPECTION_CONDITION_PREDICTIVE_GATES,
-  type Phase9hGateId,
-} from "../src/phase9h/gates.js";
+  PHASE_9I_INSPECTION_AI_VISION_GATES,
+  type Phase9iGateId,
+} from "../src/phase9i/gates.js";
 
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const root = resolve(packageDir, "../..");
 const PI_V1_CERTIFIED = "34975b1cf660580d46287f24e746b8915903f768";
 const PI_V1_TAG = "project-intelligence-v1.0.0";
-const PHASE_9G_CERTIFIED = "00223fc3d6d7b8afdc515f3bf1e50fff9697496e";
+const PHASE_9H_CERTIFIED = "d6e536119dfdc2ba13c2e6d197af1ba255381fe9";
 
 type GateStatus = "pass" | "fail" | "skip" | "not_executed";
-type GateResult = { id: Phase9hGateId; name: string; status: GateStatus; detail?: string };
+type GateResult = { id: Phase9iGateId; name: string; status: GateStatus; detail?: string };
 
 function run(cmd: string, env?: NodeJS.ProcessEnv): { ok: boolean; detail: string } {
   try {
@@ -36,7 +36,6 @@ function run(cmd: string, env?: NodeJS.ProcessEnv): { ok: boolean; detail: strin
     };
   }
 }
-
 function sha(): string {
   return execSync("git rev-parse HEAD", { cwd: root, encoding: "utf8" }).trim();
 }
@@ -58,7 +57,7 @@ function main() {
   const ciHeadSha = process.env.GITHUB_SHA || sha();
   const buildIdentitySha = sha();
   const gates: GateResult[] = [];
-  const push = (id: Phase9hGateId, name: string, status: GateStatus, detail?: string) =>
+  const push = (id: Phase9iGateId, name: string, status: GateStatus, detail?: string) =>
     gates.push({ id, name, status, detail });
 
   push(
@@ -69,14 +68,14 @@ function main() {
 
   {
     const prior = run("pnpm --filter @rtb/engineering-os test");
-    const offline = fileContains(
+    const condition = fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
+      /INSPECTION_CONDITION_RATING_IMPLEMENTED = true/,
     );
     push(
       "B",
       "Prior phase regression",
-      prior.ok && offline && PHASE_9G_CERTIFIED.startsWith("00223fc") ? "pass" : "fail",
+      prior.ok && condition && PHASE_9H_CERTIFIED.startsWith("d6e5361") ? "pass" : "fail",
       prior.detail,
     );
   }
@@ -95,18 +94,14 @@ function main() {
 
   push(
     "D",
-    "Condition rating model",
+    "Vision analysis contract",
     fileContains(
-      "packages/inspection-intelligence/src/domain/condition-rating.ts",
-      /createObservedConditionRating/,
+      "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+      /VisionAnalysisResult/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/condition-rating.ts",
-        /human_approved/,
-      ) &&
-      fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_CONDITION_RATING_IMPLEMENTED = true/,
+        /INSPECTION_AI_VISION_IMPLEMENTED = true/,
       )
       ? "pass"
       : "fail",
@@ -114,14 +109,14 @@ function main() {
 
   push(
     "E",
-    "Condition aggregation",
+    "Immutable evidence and derivative lineage",
     fileContains(
-      "packages/inspection-intelligence/src/domain/condition-aggregation.ts",
-      /aggregateComponentRatings/,
+      "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+      /assertOriginalImmutable/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/condition-aggregation.ts",
-        /abstained: true/,
+        "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+        /originalImmutable: true/,
       )
       ? "pass"
       : "fail",
@@ -129,14 +124,14 @@ function main() {
 
   push(
     "F",
-    "Override and publication authority",
+    "Privacy and preprocessing",
     fileContains(
-      "packages/inspection-intelligence/src/domain/condition-rating.ts",
-      /overrideConditionRating/,
+      "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+      /exifLocationRemoved/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/condition-rating.ts",
-        /condition_publish_unauthorised/,
+        "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+        /submittedDerivativeHash/,
       )
       ? "pass"
       : "fail",
@@ -144,14 +139,14 @@ function main() {
 
   push(
     "G",
-    "Predictive signals scaffolding",
+    "Provider governance and fail-closed",
     fileContains(
-      "packages/inspection-intelligence/src/domain/predictive-signals.ts",
-      /generateDeterministicPredictiveSignals/,
+      "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+      /denied_unapproved/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED = true/,
+        "packages/inspection-intelligence/src/domain/ai-vision-product.ts",
+        /expected_unapproved_provider_denial/,
       )
       ? "pass"
       : "fail",
@@ -159,18 +154,14 @@ function main() {
 
   push(
     "H",
-    "Fail-closed providers and no RUL/ML claims",
+    "Model assurance",
     fileContains(
-      "packages/inspection-intelligence/src/domain/predictive-signals.ts",
-      /claimsRemainingUsefulLife: false/,
+      "packages/inspection-intelligence/src/domain/ai-vision-assurance.ts",
+      /createModelAssurance/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/predictive-signals.ts",
-        /ml_provider_not_certified/,
-      ) &&
-      fileContains(
-        "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_PREDICTIVE_IMPLEMENTED = false/,
+        "packages/inspection-intelligence/src/domain/ai-vision-assurance.ts",
+        /claimsAccuracy: false/,
       )
       ? "pass"
       : "fail",
@@ -178,14 +169,14 @@ function main() {
 
   push(
     "I",
-    "Structural pack expansion",
+    "Human validation",
     fileContains(
-      "packages/inspection-intelligence/src/pack-sdk/index.ts",
-      /STRUCTURAL_CONDITION_PACK_SDK/,
+      "packages/inspection-intelligence/src/domain/ai-vision-assurance.ts",
+      /validateVisionAnalysis/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_PACK_EXPANSION_IMPLEMENTED = true/,
+        "packages/inspection-intelligence/src/domain/ai-vision-assurance.ts",
+        /vision_bulk_validation_forbidden/,
       )
       ? "pass"
       : "fail",
@@ -193,14 +184,14 @@ function main() {
 
   push(
     "J",
-    "Offline continuity for ratings/signals",
+    "Governed condition linkage",
     fileContains(
-      "packages/inspection-intelligence/src/domain/condition-predictive-product.ts",
-      /offlineOrigin: true/,
+      "packages/inspection-intelligence/src/domain/ai-vision-assurance.ts",
+      /linkValidatedVisionToConditionObservedInput/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/condition-predictive-product.ts",
-        /offlineDraftUnpublished/,
+        "packages/inspection-intelligence/src/domain/ai-vision-assurance.ts",
+        /vision_condition_link_requires_explicit_reviewer_action/,
       )
       ? "pass"
       : "fail",
@@ -208,14 +199,14 @@ function main() {
 
   push(
     "K",
-    "Reporting and KPI continuity",
+    "Pack-aware adapters",
     fileContains(
-      "packages/inspection-intelligence/src/domain/reporting-preparation.ts",
-      /condition_rating_snapshot/,
+      "packages/inspection-intelligence/src/domain/ai-vision-pack-adapters.ts",
+      /STRUCTURAL_VISION_ADAPTER/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/reporting-preparation.ts",
-        /buildConditionPredictiveReportingOutputs/,
+        "packages/inspection-intelligence/src/domain/ai-vision-pack-adapters.ts",
+        /executableCodeForbidden: true/,
       )
       ? "pass"
       : "fail",
@@ -223,14 +214,14 @@ function main() {
 
   push(
     "L",
-    "Operational hardening scenarios",
+    "Mobile and offline continuity",
     fileContains(
-      "packages/inspection-intelligence/src/domain/condition-predictive-product.ts",
-      /incompatibleSchemeBlocked/,
+      "packages/inspection-intelligence/src/domain/ai-vision-product.ts",
+      /offlineQueuedOnly/,
     ) &&
       fileContains(
-        "packages/inspection-intelligence/tests/discovery-identity.test.ts",
-        /abstain/,
+        "packages/inspection-intelligence/src/domain/ai-vision-product.ts",
+        /queued_must_not_claim_inference/,
       )
       ? "pass"
       : "fail",
@@ -238,18 +229,16 @@ function main() {
 
   push(
     "M",
-    "Events and metrics contracts",
-    fileContains(
-      "packages/inspection-intelligence/src/domain/condition-rating.ts",
-      /engineering\.inspection\.condition\./,
+    "Vision UI",
+    existsSync(
+      resolve(
+        root,
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/vision/page.tsx",
+      ),
     ) &&
       fileContains(
-        "packages/inspection-intelligence/src/domain/predictive-signals.ts",
-        /engineering\.inspection\.predictive\./,
-      ) &&
-      fileContains(
-        "packages/inspection-intelligence/src/domain/condition-predictive-product.ts",
-        /engineering\.inspection\.pack\./,
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        /inspection-intelligence-ai-vision-ready/,
       )
       ? "pass"
       : "fail",
@@ -257,23 +246,11 @@ function main() {
 
   push(
     "N",
-    "Condition and predictive UI",
-    existsSync(
-      resolve(
-        root,
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/condition/page.tsx",
-      ),
-    ) &&
-      existsSync(
-        resolve(
-          root,
-          "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/predictive/page.tsx",
-        ),
-      ) &&
-      fileContains(
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
-        /inspection-intelligence-condition-predictive-ready/,
-      )
+    "Events",
+    fileContains(
+      "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+      /engineering\.inspection\.vision\./,
+    )
       ? "pass"
       : "fail",
   );
@@ -281,7 +258,7 @@ function main() {
   {
     const unit = run("pnpm --filter @rtb/inspection-intelligence test");
     const arch = run(
-      "pnpm --filter @rtb/platform-certification exec vitest run src/phase9h-inspection-condition-predictive.test.ts",
+      "pnpm --filter @rtb/platform-certification exec vitest run src/phase9i-inspection-ai-vision.test.ts",
       { PLATFORM_CERTIFICATION: "1" },
     );
     push(
@@ -294,14 +271,14 @@ function main() {
 
   push(
     "P",
-    "Tenant isolation and entitlements",
+    "Tenant isolation",
     fileContains(
-      "supabase/migrations/20260807020000_batch_49_inspection_intelligence_condition_predictive.sql",
+      "supabase/migrations/20260807030000_batch_50_inspection_intelligence_ai_vision.sql",
       /tenant_isolation/,
     ) &&
       fileContains(
         "packages/platform-commerce/src/domain/commerce-access-policy.ts",
-        /inspection-intelligence\/condition/,
+        /inspection-intelligence\/vision/,
       )
       ? "pass"
       : "fail",
@@ -309,12 +286,10 @@ function main() {
 
   push(
     "Q",
-    "Threat model and limitations",
-    existsSync(
-      resolve(root, "docs/security/INSPECTION_INTELLIGENCE_CONDITION_PREDICTIVE_THREAT_MODEL.md"),
-    ) &&
+    "Threat model",
+    existsSync(resolve(root, "docs/security/INSPECTION_INTELLIGENCE_AI_VISION_THREAT_MODEL.md")) &&
       fileContains(
-        "docs/security/INSPECTION_INTELLIGENCE_CONDITION_PREDICTIVE_THREAT_MODEL.md",
+        "docs/security/INSPECTION_INTELLIGENCE_AI_VISION_THREAT_MODEL.md",
         /advisory/,
       )
       ? "pass"
@@ -329,7 +304,7 @@ function main() {
     let playwrightDetail = "source-browser-cert";
     if (process.env.CERTIFY_BROWSER === "1") {
       const pw = run(
-        "pnpm --filter @rtb/inspection-intelligence-certification exec playwright test playwright/condition-predictive.spec.ts",
+        "pnpm --filter @rtb/inspection-intelligence-certification exec playwright test playwright/ai-vision.spec.ts",
         { CERTIFY_BROWSER: "1" },
       );
       playwrightOk = pw.ok;
@@ -345,12 +320,10 @@ function main() {
 
   push(
     "S",
-    "Device evidence documentation",
-    existsSync(
-      resolve(root, "docs/testing/INSPECTION_INTELLIGENCE_CONDITION_DEVICE_EVIDENCE.md"),
-    ) &&
+    "Device evidence",
+    existsSync(resolve(root, "docs/testing/INSPECTION_INTELLIGENCE_AI_VISION_DEVICE_EVIDENCE.md")) &&
       fileContains(
-        "docs/testing/INSPECTION_INTELLIGENCE_CONDITION_DEVICE_EVIDENCE.md",
+        "docs/testing/INSPECTION_INTELLIGENCE_AI_VISION_DEVICE_EVIDENCE.md",
         /not claim/,
       )
       ? "pass"
@@ -359,17 +332,6 @@ function main() {
 
   push(
     "T",
-    "No AI Vision",
-    fileContains(
-      "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
-    )
-      ? "pass"
-      : "fail",
-  );
-
-  push(
-    "U",
     "No Asset Intelligence / Digital Twin ownership",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
@@ -383,46 +345,65 @@ function main() {
       : "fail",
   );
 
+  push(
+    "U",
+    "No accuracy or RUL claims",
+    fileContains(
+      "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+      /claimsAccuracy: false/,
+    ) &&
+      fileContains(
+        "packages/inspection-intelligence/src/domain/ai-vision-analysis.ts",
+        /claimsRemainingUsefulLife: false/,
+      )
+      ? "pass"
+      : "fail",
+  );
+
   {
     const secret = run("pnpm --filter @rtb/inspection-intelligence-certification secret-scan");
     push("V", "Secret exposure", secret.ok ? "pass" : "fail", secret.detail);
   }
 
-  {
-    const identityOk =
-      buildIdentitySha === ciHeadSha || process.env.GITHUB_ACTIONS === "true";
-    push("W", "Artifact identity", identityOk ? "pass" : "fail");
-  }
+  push(
+    "W",
+    "Artifact identity",
+    buildIdentitySha === ciHeadSha || process.env.GITHUB_ACTIONS === "true" ? "pass" : "fail",
+  );
 
   const failedBeforeX = gates.filter((g) => g.status === "fail");
   const skippedBeforeX = gates.filter((g) => g.status === "skip");
   const notExecutedBeforeX = gates.filter((g) => g.status === "not_executed");
-  const conditionRatingImplemented = fileContains(
+  const aiVisionImplemented = fileContains(
     "packages/inspection-intelligence/src/version.ts",
-    /INSPECTION_CONDITION_RATING_IMPLEMENTED = true/,
+    /INSPECTION_AI_VISION_IMPLEMENTED = true/,
   );
-  const predictiveSignalsScaffolded = fileContains(
-    "packages/inspection-intelligence/src/version.ts",
-    /INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED = true/,
-  );
-  const packExpansionImplemented = fileContains(
-    "packages/inspection-intelligence/src/version.ts",
-    /INSPECTION_PACK_EXPANSION_IMPLEMENTED = true/,
-  );
-  const phase9IReady =
+  const priorFlags =
+    fileContains(
+      "packages/inspection-intelligence/src/version.ts",
+      /INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/,
+    ) &&
+    fileContains(
+      "packages/inspection-intelligence/src/version.ts",
+      /INSPECTION_CONDITION_RATING_IMPLEMENTED = true/,
+    ) &&
+    fileContains(
+      "packages/inspection-intelligence/src/version.ts",
+      /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/,
+    );
+  const phase9JReady =
     failedBeforeX.length === 0 &&
     skippedBeforeX.length === 0 &&
     notExecutedBeforeX.length === 0 &&
-    conditionRatingImplemented &&
-    predictiveSignalsScaffolded &&
-    packExpansionImplemented &&
+    aiVisionImplemented &&
+    priorFlags &&
     !releaseTagMoved;
 
   push(
     "X",
-    "Release eligibility and phase9I readiness",
-    phase9IReady && releaseTagTarget === PI_V1_CERTIFIED ? "pass" : "fail",
-    `conditionRatingImplemented=${conditionRatingImplemented} phase9IReady=${phase9IReady}`,
+    "Release eligibility and next-phase readiness",
+    phase9JReady && releaseTagTarget === PI_V1_CERTIFIED ? "pass" : "fail",
+    `aiVisionImplemented=${aiVisionImplemented} phase9JReady=${phase9JReady}`,
   );
 
   const all = [...gates];
@@ -434,14 +415,14 @@ function main() {
   const releaseEligible = releaseTagTarget === PI_V1_CERTIFIED && !releaseTagMoved && pass;
 
   const artifact = {
-    schemaVersion: "phase9h-inspection-intelligence-condition-predictive/1",
-    phase: "9H",
+    schemaVersion: "phase9i-inspection-intelligence-ai-vision/1",
+    phase: "9I",
     platformName: "RTB AI Platform",
     operatingSystem: "Engineering OS",
     moduleKey: "inspection_intelligence",
-    version: "0.8.0-condition-predictive",
+    version: "0.9.0-ai-vision",
     title:
-      "Inspection Intelligence Condition Rating, Predictive Signals, Pack Expansion and Operational Hardening",
+      "Inspection Intelligence AI Vision Evidence Analysis, Model Assurance and Human Validation",
     repository: process.env.GITHUB_REPOSITORY || "sberso2026/AI-Platform",
     workflow: process.env.GITHUB_WORKFLOW || "local",
     runId: process.env.GITHUB_RUN_ID || null,
@@ -453,36 +434,33 @@ function main() {
     releaseTag: PI_V1_TAG,
     releaseTagTarget,
     releaseTagMoved,
-    phase9gBaseline: PHASE_9G_CERTIFIED,
-    packDelivered: "structural_condition@1.0.0",
-    conditionRatingStatus: "complete",
-    predictiveSignalsStatus: "scaffolded_advisory_fail_closed",
-    packExpansionStatus: "structural_condition_certified",
-    performanceBaselinesDocumented: true,
+    phase9hBaseline: PHASE_9H_CERTIFIED,
+    providerModelAssurance: "vision_provider_approved_v1 / ii_vision_detector@1.0.0",
+    visionStatus: "advisory_human_validated",
     physicalDeviceEvidence: "documented_separate_from_emulation",
     emulationEvidence: "playwright_phone_tablet",
     mobileProductImplemented: true,
     offlineSyncImplemented: true,
-    conditionRatingImplemented: pass && conditionRatingImplemented,
-    predictiveSignalsScaffolded: pass && predictiveSignalsScaffolded,
-    packExpansionImplemented: pass && packExpansionImplemented,
-    aiVisionImplemented: true,
+    conditionRatingImplemented: true,
+    predictiveSignalsScaffolded: true,
+    packExpansionImplemented: true,
+    aiVisionImplemented: pass && aiVisionImplemented,
     assetIntelligenceOwnership: false,
     digitalTwinOwnership: false,
     remainingUsefulLifeClaimed: false,
     productionMlAccuracyClaimed: false,
     priorInspectionArchitectureIntact: true,
-    architecturalReservationsIntact: true,
     releaseEligible,
     projectIntelligenceV1Intact: releaseTagTarget === PI_V1_CERTIFIED && !releaseTagMoved,
     secretExposureDetected: gates.some((g) => g.id === "V" && g.status === "fail"),
     unexpected5xx: 0,
     requiredTestsSkipped: finalSkipped.length,
-    phase9IReady: pass && phase9IReady,
+    phase9JReady: pass && phase9JReady,
+    nextPhaseReady: pass && phase9JReady,
     certifyBrowser: process.env.CERTIFY_BROWSER === "1",
     verdict: pass ? "PASS" : "FAIL",
     gates: all,
-    requiredGates: PHASE_9H_INSPECTION_CONDITION_PREDICTIVE_GATES.map(([id]) => id),
+    requiredGates: PHASE_9I_INSPECTION_AI_VISION_GATES.map(([id]) => id),
     failedGateCount: finalFailed.length,
     skippedGateCount: finalSkipped.length,
     notExecutedGateCount: finalNotExecuted.length,
@@ -492,7 +470,7 @@ function main() {
   mkdirSync(outDir, { recursive: true });
   const outPath = resolve(
     outDir,
-    "phase9h-inspection-intelligence-condition-predictive-certification.json",
+    "phase9i-inspection-intelligence-ai-vision-certification.json",
   );
   writeFileSync(outPath, JSON.stringify(artifact, null, 2), "utf8");
   console.log(
@@ -500,8 +478,8 @@ function main() {
       {
         reportPath: outPath,
         verdict: artifact.verdict,
-        conditionRatingImplemented: artifact.conditionRatingImplemented,
-        phase9IReady: artifact.phase9IReady,
+        aiVisionImplemented: artifact.aiVisionImplemented,
+        phase9JReady: artifact.phase9JReady,
         failedGates: finalFailed.map((g) => g.id),
       },
       null,

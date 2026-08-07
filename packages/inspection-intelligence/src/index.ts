@@ -27,4 +27,8 @@ export * from "./domain/condition-rating";
 export * from "./domain/condition-aggregation";
 export * from "./domain/predictive-signals";
 export * from "./domain/condition-predictive-product";
+export * from "./domain/ai-vision-analysis";
+export * from "./domain/ai-vision-assurance";
+export * from "./domain/ai-vision-pack-adapters";
+export * from "./domain/ai-vision-product";
 export * from "./pack-sdk";

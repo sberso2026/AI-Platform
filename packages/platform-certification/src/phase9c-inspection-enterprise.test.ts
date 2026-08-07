@@ -52,7 +52,7 @@ describe("Phase 9C Inspection Intelligence enterprise foundation", () => {
     ).toMatch(/PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
     expect(
       readFileSync(resolve(ROOT, "packages/inspection-intelligence/src/version.ts"), "utf8"),
-    ).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
+    ).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
     expect(
       readFileSync(
         resolve(ROOT, "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9C_ENTERPRISE_FOUNDATION.md"),

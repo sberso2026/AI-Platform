@@ -34,12 +34,15 @@ export function toPackSdkManifest(
     aiPromptTemplates: extras?.aiPromptTemplates ?? [],
     reportTemplates: extras?.reportTemplates ?? ["executive_summary"],
     permissions: extras?.permissions ?? ["inspection.read", "inspection.write"],
-    featureFlags: extras?.featureFlags ?? { reporting: true, aiVision: false },
+    featureFlags: extras?.featureFlags ?? { reporting: true, aiVision: true },
     migrationVersion: extras?.migrationVersion ?? "batch_44",
   };
 }
 
-export const GENERIC_INSPECTION_PACK_SDK = toPackSdkManifest(GENERIC_INSPECTION_PACK);
+export const GENERIC_INSPECTION_PACK_SDK = toPackSdkManifest({
+  ...GENERIC_INSPECTION_PACK,
+  visionAdapters: ["vision_generic_v1"],
+});
 
 /** Scaffold only — not a commercial industry pack. */
 export const COATINGS_PACK_SCAFFOLD = toPackSdkManifest(
@@ -52,7 +55,7 @@ export const COATINGS_PACK_SCAFFOLD = toPackSdkManifest(
     measurementMethods: ["dft_gauge"],
     evidenceTypes: ["photo", "dft_log"],
     targetKinds: ["asset", "equipment"],
-    visionAdapters: [],
+    visionAdapters: ["vision_coatings_v1"],
     predictiveAdapters: [],
   },
   {
@@ -60,7 +63,7 @@ export const COATINGS_PACK_SCAFFOLD = toPackSdkManifest(
     templateLibrary: ["coating_visual_v1"],
     measurementLibrary: ["dft_micron"],
     migrationVersion: "batch_44_scaffold",
-    featureFlags: { reporting: true, aiVision: false, commercial: false },
+    featureFlags: { reporting: true, aiVision: true, commercial: false },
   },
 );
 
@@ -75,7 +78,7 @@ export const STRUCTURAL_CONDITION_PACK_SDK = toPackSdkManifest(
     measurementMethods: ["visual_ordinal", "crack_width_mm"],
     evidenceTypes: ["photo", "sketch", "measurement_log"],
     targetKinds: ["asset", "structure", "component"],
-    visionAdapters: [],
+    visionAdapters: ["vision_structural_v1"],
     predictiveAdapters: ["rule_defect_recurrence_v1", "stat_condition_trend_v1"],
   },
   {
@@ -88,7 +91,7 @@ export const STRUCTURAL_CONDITION_PACK_SDK = toPackSdkManifest(
     migrationVersion: "batch_49_structural",
     featureFlags: {
       reporting: true,
-      aiVision: false,
+      aiVision: true,
       conditionRating: true,
       predictiveSignals: true,
       offlineCompatible: true,
@@ -142,4 +145,4 @@ export class InspectionPackSdk {
   }
 }
 
-export const INSPECTION_PACK_SDK_VERSION = "0.4.0" as const;
+export const INSPECTION_PACK_SDK_VERSION = "0.5.0" as const;

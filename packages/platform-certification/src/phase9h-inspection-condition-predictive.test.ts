@@ -39,7 +39,7 @@ describe("Phase 9H Inspection Intelligence condition rating and predictive signa
     expect(version).toMatch(/INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED = true/);
     expect(version).toMatch(/INSPECTION_PACK_EXPANSION_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_PREDICTIVE_IMPLEMENTED = false/);
-    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
+    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false/);
     expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/);
   });

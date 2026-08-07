@@ -80,7 +80,7 @@ jobs:
             ["verticalSliceReady", a.verticalSliceReady === true],
             ["phase9CReady", a.phase9CReady === true],
             ["architecturalReservationsLocked", a.architecturalReservationsLocked === true],
-            ["aiVisionImplemented", a.aiVisionImplemented === false],
+            ["aiVisionImplemented", a.aiVisionImplemented === true],
             ["predictiveImplemented", a.predictiveImplemented === false],
             ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 19],
             ["artifactMatch", a.artifactCommitSha === a.buildIdentitySha],

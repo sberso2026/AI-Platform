@@ -174,7 +174,7 @@ function main() {
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+        /INSPECTION_AI_VISION_IMPLEMENTED = true/,
       )
       ? "pass"
       : "fail",
@@ -238,7 +238,7 @@ function main() {
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+        /INSPECTION_AI_VISION_IMPLEMENTED = true/,
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
@@ -338,7 +338,7 @@ function main() {
     !releaseTagMoved &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
     );
 
   push(
@@ -389,7 +389,7 @@ function main() {
     assetReferenceInterfacesOnly: true,
     measurementEngineSeparated: true,
     evidenceImmutable: true,
-    aiVisionImplemented: false,
+    aiVisionImplemented: true,
     inspectionPackArchitecture: true,
     predictiveImplemented: false,
     eventFlowDefined: true,

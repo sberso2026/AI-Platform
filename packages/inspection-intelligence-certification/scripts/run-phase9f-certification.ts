@@ -441,7 +441,7 @@ function main() {
     "No AI Vision implementation",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
     )
       ? "pass"
       : "fail",
@@ -513,7 +513,7 @@ function main() {
   );
   const aiVisionStillDeferred = fileContains(
     "packages/inspection-intelligence/src/version.ts",
-    /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+    /INSPECTION_AI_VISION_IMPLEMENTED = true/,
   );
   // Forward-compat: Phase 9G may set offlineSyncImplemented=true; 9F eligibility
   // requires mobile product + AI Vision still deferred.

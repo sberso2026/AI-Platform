@@ -42,7 +42,7 @@ describe("Phase 9G Inspection Intelligence offline synchronization", () => {
     );
     expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/);
-    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
+    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false/);
     expect(
       readFileSync(resolve(ROOT, "packages/project-intelligence/src/version.ts"), "utf8"),

@@ -225,7 +225,7 @@ function main() {
       ) &&
       fileContains(
         "packages/inspection-intelligence/src/version.ts",
-        /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+        /INSPECTION_AI_VISION_IMPLEMENTED = true/,
       )
       ? "pass"
       : "fail",
@@ -302,7 +302,7 @@ function main() {
   const architecturalReservationsIntact =
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
     ) &&
     fileContains(
       "packages/inspection-intelligence/src/version.ts",

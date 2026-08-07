@@ -1,9 +1,9 @@
 /**
- * Phase 9H — Inspection Intelligence condition rating, predictive signals, pack expansion.
+ * Phase 9I — Inspection Intelligence AI Vision evidence analysis identity.
  */
 export const INSPECTION_INTELLIGENCE_PRODUCT_NAME = "Inspection Intelligence" as const;
 export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
-export const INSPECTION_INTELLIGENCE_VERSION = "0.8.0-condition-predictive" as const;
+export const INSPECTION_INTELLIGENCE_VERSION = "0.9.0-ai-vision" as const;
 export const INSPECTION_INTELLIGENCE_ROUTE_PREFIX =
   "/engineering/apps/inspection-intelligence" as const;
 
@@ -17,9 +17,9 @@ export const INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true as const;
 export const INSPECTION_CONDITION_RATING_IMPLEMENTED = true as const;
 export const INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED = true as const;
 export const INSPECTION_PACK_EXPANSION_IMPLEMENTED = true as const;
+export const INSPECTION_AI_VISION_IMPLEMENTED = true as const;
 /** Asset Intelligence / Twin remaining-life product remains unimplemented. */
 export const INSPECTION_PREDICTIVE_IMPLEMENTED = false as const;
-export const INSPECTION_AI_VISION_IMPLEMENTED = false as const;
 export const INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false as const;
 export const INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED = true as const;
 export const INSPECTION_RECOMMENDATION_FRAMEWORK_IMPLEMENTED = true as const;
@@ -58,6 +58,9 @@ export const INSPECTION_INTELLIGENCE_CORE_ENTITIES = [
   "inspection_condition_rating",
   "inspection_condition_aggregation",
   "inspection_predictive_signal",
+  "inspection_vision_analysis",
+  "inspection_vision_derivative",
+  "inspection_vision_validation",
   "defect",
   "recommendation",
   "corrective_action",
@@ -89,8 +92,8 @@ export function getInspectionIntelligenceDomainDeclaration() {
     conditionRatingImplemented: INSPECTION_CONDITION_RATING_IMPLEMENTED,
     predictiveSignalsScaffolded: INSPECTION_PREDICTIVE_SIGNALS_SCAFFOLDED,
     packExpansionImplemented: INSPECTION_PACK_EXPANSION_IMPLEMENTED,
-    predictiveImplemented: INSPECTION_PREDICTIVE_IMPLEMENTED,
     aiVisionImplemented: INSPECTION_AI_VISION_IMPLEMENTED,
+    predictiveImplemented: INSPECTION_PREDICTIVE_IMPLEMENTED,
     assetIntelligenceImplemented: INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED,
     defectFrameworkImplemented: INSPECTION_DEFECT_FRAMEWORK_IMPLEMENTED,
     recommendationFrameworkImplemented: INSPECTION_RECOMMENDATION_FRAMEWORK_IMPLEMENTED,
@@ -112,7 +115,7 @@ export function getInspectionIntelligenceDomainDeclaration() {
     assetOwnership: "engineering_os_shared_domain" as const,
     couplesVia: "inspection_target" as const,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Shared Engineering SDKs → Inspection Intelligence → Condition Rating / Predictive Signals / Packs → Offline Sync" as const,
+      "RTB AI Platform → Engineering OS → Shared Engineering SDKs → Inspection Intelligence → AI Vision (advisory) / Condition / Predictive / Packs → Offline Sync" as const,
   };
 }
 

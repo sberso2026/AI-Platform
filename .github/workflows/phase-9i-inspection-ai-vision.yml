@@ -1,4 +1,4 @@
-name: Phase 9G Inspection Intelligence Offline Sync
+name: Phase 9I Inspection Intelligence AI Vision
 
 on:
   workflow_dispatch:
@@ -11,21 +11,19 @@ on:
     paths:
       - "packages/inspection-intelligence/**"
       - "packages/inspection-intelligence-certification/**"
-      - "packages/engineering-os/src/mobile-sdk/**"
-      - "packages/engineering-os/src/index.ts"
       - "packages/engineering-os/src/module-registry.ts"
-      - "packages/platform-certification/src/phase9g*"
+      - "packages/platform-certification/src/phase9i*"
       - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
       - "apps/web/src/app/**/inspection-intelligence/**"
       - "apps/web/src/components/engineering/inspection-intelligence-shell.tsx"
-      - "supabase/migrations/*inspection_intelligence*"
-      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9G*"
-      - "docs/security/INSPECTION_INTELLIGENCE_OFFLINE*"
-      - "docs/testing/INSPECTION_INTELLIGENCE_OFFLINE*"
-      - ".github/workflows/phase-9g-inspection-offline-sync.yml"
+      - "supabase/migrations/*ai_vision*"
+      - "docs/architecture/INSPECTION_INTELLIGENCE_PHASE_9I*"
+      - "docs/security/INSPECTION_INTELLIGENCE_AI_VISION*"
+      - "docs/testing/INSPECTION_INTELLIGENCE_AI_VISION*"
+      - ".github/workflows/phase-9i-inspection-ai-vision.yml"
 
 concurrency:
-  group: phase-9g-inspection-offline-${{ github.ref }}
+  group: phase-9i-inspection-ai-vision-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -59,32 +57,31 @@ jobs:
           pnpm --filter @rtb/engineering-os test
           pnpm --filter @rtb/inspection-intelligence test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9g-inspection-offline-sync.test.ts
-      - name: Phase 9G certification (gates A–AC)
-        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9g
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase9i-inspection-ai-vision.test.ts
+      - name: Phase 9I certification (gates A–X)
+        run: pnpm --filter @rtb/inspection-intelligence-certification certify:phase9i
         env:
           CERTIFY_BROWSER: "1"
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
           const { readFileSync } = require("fs");
-          const path = "packages/inspection-intelligence-certification/artifacts/phase9g-inspection-intelligence-offline-sync-certification.json";
+          const path = "packages/inspection-intelligence-certification/artifacts/phase9i-inspection-intelligence-ai-vision-certification.json";
           const a = JSON.parse(readFileSync(path, "utf8"));
           const checks = [
             ["verdict", a.verdict === "PASS"],
             ["failedGateCount", a.failedGateCount === 0],
             ["skippedGateCount", a.skippedGateCount === 0],
             ["notExecutedGateCount", a.notExecutedGateCount === 0],
-            ["unexpected5xx", a.unexpected5xx === 0],
-            ["secretExposureDetected", a.secretExposureDetected === false],
-            ["releaseTagMoved", a.releaseTagMoved === false],
-            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
-            ["releaseEligible", a.releaseEligible === true],
-            ["mobileProductImplemented", a.mobileProductImplemented === true],
-            ["offlineSyncImplemented", a.offlineSyncImplemented === true],
-            ["phase9HReady", a.phase9HReady === true],
             ["aiVisionImplemented", a.aiVisionImplemented === true],
-            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 29],
+            ["conditionRatingImplemented", a.conditionRatingImplemented === true],
+            ["offlineSyncImplemented", a.offlineSyncImplemented === true],
+            ["mobileProductImplemented", a.mobileProductImplemented === true],
+            ["assetIntelligenceOwnership", a.assetIntelligenceOwnership === false],
+            ["productionMlAccuracyClaimed", a.productionMlAccuracyClaimed === false],
+            ["releaseEligible", a.releaseEligible === true],
+            ["phase9JReady", a.phase9JReady === true],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 24],
           ];
           const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
           if (failed.length) {
@@ -93,14 +90,14 @@ jobs:
           }
           console.log(JSON.stringify({
             verdict: a.verdict,
-            offlineSyncImplemented: a.offlineSyncImplemented,
-            phase9HReady: a.phase9HReady,
+            providerModelAssurance: a.providerModelAssurance,
+            phase9JReady: a.phase9JReady,
           }, null, 2));
           EOF
       - name: Upload certification artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase9g-inspection-intelligence-offline-sync-certification
-          path: packages/inspection-intelligence-certification/artifacts/phase9g-inspection-intelligence-offline-sync-certification.json
+          name: phase9i-inspection-intelligence-ai-vision-certification
+          path: packages/inspection-intelligence-certification/artifacts/phase9i-inspection-intelligence-ai-vision-certification.json
           if-no-files-found: warn

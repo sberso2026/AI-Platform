@@ -51,7 +51,7 @@ describe("Phase 9E Inspection Intelligence operational workflows", () => {
       "utf8",
     );
     expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/);
-    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
+    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_OPERATIONAL_WORKFLOWS_READY = true/);
     expect(version).toMatch(/INSPECTION_ENGINEERING_DOMAIN_COMPLETE = true/);
     expect(

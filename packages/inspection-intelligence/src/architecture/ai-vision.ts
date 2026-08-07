@@ -1,6 +1,6 @@
 /**
- * AI Vision extension interfaces — reserved only.
- * No computer vision implementation in Phase 9B.
+ * AI Vision — Phase 9I implements advisory evidence analysis in domain/ai-vision-*.
+ * Legacy reserved observation/finding shapes kept for compatibility.
  */
 
 export type BoundingBox = {
@@ -18,7 +18,8 @@ export type VisionObservation = {
   modelId?: string;
   runtimeRunId?: string;
   observedAt: string;
-  reserved: true;
+  /** @deprecated Use domain/ai-vision-analysis.ts VisionAnalysisResult */
+  reserved: false;
 };
 
 export type VisionFinding = {
@@ -27,7 +28,9 @@ export type VisionFinding = {
   label: string;
   confidence: number;
   boundingBoxes: BoundingBox[];
-  reserved: true;
+  /** @deprecated Use domain VisionAnalysisResult regions/labels */
+  reserved: false;
 };
 
-export const AI_VISION_EXTENSION_RESERVED = true as const;
+/** Symbol retained for Phase 9C gate; product implemented in 9I domain modules. */
+export const AI_VISION_EXTENSION_RESERVED = false as const;

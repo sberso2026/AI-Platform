@@ -49,7 +49,7 @@ describe("Phase 9D Inspection Intelligence engineering domain", () => {
       "utf8",
     );
     expect(version).toMatch(/INSPECTION_OFFLINE_SYNC_IMPLEMENTED = true/);
-    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = false/);
+    expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_ENGINEERING_DOMAIN_COMPLETE = true/);
     expect(
       readFileSync(resolve(ROOT, "packages/project-intelligence/src/version.ts"), "utf8"),

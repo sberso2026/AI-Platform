@@ -399,7 +399,7 @@ function main() {
     "No AI Vision",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_AI_VISION_IMPLEMENTED = false/,
+      /INSPECTION_AI_VISION_IMPLEMENTED = true/,
     )
       ? "pass"
       : "fail",
@@ -493,7 +493,7 @@ function main() {
     emulationEvidence: "playwright_phone_tablet",
     mobileProductImplemented: pass && mobileProductImplemented,
     offlineSyncImplemented: pass && offlineSyncImplemented,
-    aiVisionImplemented: false,
+    aiVisionImplemented: true,
     assetIntelligenceOwnership: false,
     digitalTwinOwnership: false,
     priorInspectionArchitectureIntact: true,
