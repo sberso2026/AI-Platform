@@ -24,7 +24,13 @@ import {
   createAssetFailureIntelligenceEngine,
   type AssetFailureIntelligenceEngine,
 } from "./failure-engine";
+import {
+  createAssetTrendIntelligenceEngine,
+  type AssetTrendIntelligenceEngine,
+} from "./degradation-engine";
+import { createEngineeringTimeSeries } from "./time-series";
 import type { FailureAssessmentBundle } from "./failure";
+import type { TrendDegradationBundle } from "./degradation";
 import {
   createInMemorySharedDomainIdentityPort,
   type SharedDomainAssetIdentityPort,
@@ -44,6 +50,8 @@ import {
   startReliabilityReview,
   startFailureReview,
   transitionFailureReview,
+  startDegradationReview,
+  transitionDegradationReview,
 } from "./review-workflow";
 import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
 import { assertRegisteredActiveSource } from "./source-registry";
@@ -57,9 +65,11 @@ import type {
   AssetIntelligenceRepositoryPort,
   PersistedConditionState,
   PersistedCriticalityState,
+  PersistedDegradationState,
   PersistedFailureModeState,
   PersistedHealthIndexState,
   PersistedReliabilityState,
+  PersistedTrendState,
 } from "./persistence";
 
 export type AssessConditionCommand = {
@@ -263,6 +273,69 @@ export type ReviewFailureCommand = {
   actorRole?: FailureIntelligenceRole;
 };
 
+export type AssessDegradationCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey?: string;
+  attributeKey: string;
+  attributeLabel?: string;
+  unit: string;
+  orientation?: import("./time-series").TimeSeriesOrientation;
+  points: import("./time-series").EngineeringTimeSeriesPoint[];
+  evidenceRefs?: string[];
+  relatedFailureModeCodes?: string[];
+  mechanismContext?: string;
+  observedAt?: string;
+  startReview?: boolean;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  expectedSeriesVersion?: number;
+  expectedTrendVersion?: number;
+  expectedDegradationVersion?: number;
+  createdBy?: string;
+  actorRole?: FailureIntelligenceRole;
+};
+
+export type EngineDegradationResult = {
+  identityOwner: "engineering_os_shared_domain";
+  bundle: TrendDegradationBundle;
+  trend: PersistedTrendState;
+  degradation: PersistedDegradationState;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  identityMutated: false;
+  idempotentReplay?: boolean;
+  healthMutated: false;
+  degradationHealthContributionEnabled: false;
+  predictiveMlUsed: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+  accuracyClaimsCertified: false;
+  aiMayPublishForbidden: true;
+};
+
+export type ReviewDegradationCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  degradationStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+  reviewerId: string;
+  reason?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  publish?: boolean;
+  actorRole?: FailureIntelligenceRole;
+};
+
 export type AssetIntelligenceEngineDeps = {
   identityPort: SharedDomainAssetIdentityPort;
   repository: AssetIntelligenceRepositoryPort;
@@ -270,12 +343,14 @@ export type AssetIntelligenceEngineDeps = {
   healthComposer?: HealthCompositionEngine;
   evidenceConfidenceEngine?: EvidenceConfidenceEngine;
   failureIntelligenceEngine?: AssetFailureIntelligenceEngine;
+  trendIntelligenceEngine?: AssetTrendIntelligenceEngine;
 };
 
 export class AssetIntelligenceEngine {
   private readonly healthComposer: HealthCompositionEngine;
   private readonly evidenceConfidenceEngine: EvidenceConfidenceEngine;
   private readonly failureIntelligence: AssetFailureIntelligenceEngine;
+  private readonly trendIntelligence: AssetTrendIntelligenceEngine;
 
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
@@ -287,6 +362,11 @@ export class AssetIntelligenceEngine {
       deps.failureIntelligenceEngine ??
       createAssetFailureIntelligenceEngine({
         evidenceConfidenceEngine: this.evidenceConfidenceEngine,
+        newId: (p) => this.deps.repository.newId(p),
+      });
+    this.trendIntelligence =
+      deps.trendIntelligenceEngine ??
+      createAssetTrendIntelligenceEngine({
         newId: (p) => this.deps.repository.newId(p),
       });
   }
@@ -1671,6 +1751,401 @@ export class AssetIntelligenceEngine {
 
     return {
       failureMode,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  async assessDegradation(cmd: AssessDegradationCommand): Promise<EngineDegradationResult> {
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, "degradation.assess");
+    }
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "degradation");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineDegradationResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const evidenceRefs = cmd.evidenceRefs ?? [];
+
+    const evidenceConfidence = this.evidenceConfidenceEngine.assess({
+      assessmentId: this.deps.repository.newId("ec"),
+      assetId: cmd.assetId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      scope: "degradation_analysis",
+      evidenceRefs,
+      sourceKeys: [sourceKey],
+      observedAt: cmd.observedAt ?? recordedAt,
+      asOf: recordedAt,
+    });
+    await this.deps.repository.saveEvidenceConfidence({
+      ...evidenceConfidence,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: 1,
+    });
+
+    const seriesVersion = await this.deps.repository.nextTimeSeriesVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.attributeKey,
+      cmd.expectedSeriesVersion,
+    );
+    const series = createEngineeringTimeSeries({
+      seriesId: this.deps.repository.newId("ts"),
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: {
+        sourceSystem: sourceKey,
+        observedAt: cmd.observedAt ?? recordedAt,
+        method: "engineering_time_series_v1",
+        evidenceRefs,
+      },
+      attributeKey: cmd.attributeKey,
+      attributeLabel: cmd.attributeLabel,
+      unit: cmd.unit,
+      orientation: cmd.orientation,
+      points: cmd.points,
+      sourceRefs: [sourceKey],
+      evidenceRefs,
+      version: seriesVersion,
+      status: "ingested",
+    });
+    await this.deps.repository.saveTimeSeries({
+      ...series,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+    });
+
+    const bundle = this.trendIntelligence.assess({
+      assetId: cmd.assetId,
+      recordedAt,
+      provenance: {
+        sourceSystem: sourceKey,
+        observedAt: cmd.observedAt ?? recordedAt,
+        method: "governed_trend_v1",
+        evidenceRefs,
+        policyId: "asset_intelligence.degradation.assess.v1",
+      },
+      series,
+      evidenceRefs,
+      sourceRefs: [sourceKey],
+      relatedFailureModeCodes: cmd.relatedFailureModeCodes,
+      mechanismContext: cmd.mechanismContext,
+      startReview: cmd.startReview,
+      evidenceConfidenceRef: evidenceConfidence.assessmentId,
+    });
+
+    await this.deps.repository.saveTrendConfidence({
+      ...bundle.trendConfidence,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+    });
+    await this.deps.repository.saveChangeDetection({
+      ...bundle.changeDetection,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+    });
+
+    const trendVersion = await this.deps.repository.nextTrendVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedTrendVersion,
+    );
+    const degradationVersion = await this.deps.repository.nextDegradationVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedDegradationVersion,
+    );
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!bundle.abstained && cmd.startReview !== false) {
+      const review = startDegradationReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        degradationStateId: bundle.degradation.stateId,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      bundle.degradation.reviewInstanceId = reviewInstanceId;
+      bundle.degradation.reviewStatus = "pending_review";
+      bundle.trend.reviewStatus = "pending_review";
+    }
+
+    const trend: PersistedTrendState = {
+      ...bundle.trend,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: trendVersion,
+    };
+    const degradation: PersistedDegradationState = {
+      ...bundle.degradation,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: degradationVersion,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveTrendState(trend);
+    await this.deps.repository.saveDegradationState(degradation);
+    await this.deps.repository.cacheIdentity(identity);
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey,
+      provenance: degradation.provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        { kind: "time_series", stateId: series.seriesId },
+        { kind: "change_detection", stateId: bundle.changeDetection.detectionId },
+        { kind: "trend", stateId: trend.stateId },
+        { kind: "degradation", stateId: degradation.stateId },
+      ],
+    });
+
+    const condition = await this.deps.repository.latestCondition(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const criticality = await this.deps.repository.latestCriticality(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const healthIndex = await this.deps.repository.latestHealthIndex(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      recordedAt,
+    );
+    const snapshot = composeAssetSnapshot({
+      identity,
+      asOf: recordedAt,
+      condition,
+      healthIndex,
+      criticality,
+      evidenceConfidence,
+    });
+    const snapshotId = this.deps.repository.newId("snap");
+    await this.deps.repository.saveSnapshot({
+      id: snapshotId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: condition?.stateId,
+      healthIndex,
+      identityReference: identity,
+      sourceSet: [sourceKey],
+      timelinePosition: timelineEntries[timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.degradation.assessed",
+      payload: {
+        sourceKey,
+        kind: "degradation",
+        status: degradation.reviewStatus,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: degradation.stateId,
+      published: false,
+      createdAt: recordedAt,
+    });
+
+    for (const type of [
+      "engineering.asset.time_series.ingested",
+      "engineering.asset.change.detected",
+      "engineering.asset.trend.assessed",
+      "engineering.asset.degradation.assessed",
+    ] as const) {
+      const ev = createAssetIntelligenceEvent({
+        type,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: degradation.stateId,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: { sourceKey, kind: "degradation", status: degradation.reviewStatus },
+      });
+      await this.deps.events.publish(ev);
+      await this.deps.repository.appendEvent(ev);
+    }
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EngineDegradationResult = {
+      identityOwner: "engineering_os_shared_domain",
+      bundle,
+      trend,
+      degradation,
+      timelineEntries,
+      snapshot,
+      snapshotId,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      degradationHealthContributionEnabled: false,
+      predictiveMlUsed: false,
+      probabilityOfFailureCertified: false,
+      rulClaimsCertified: false,
+      accuracyClaimsCertified: false,
+      aiMayPublishForbidden: true,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_degradation",
+        resourceId: degradation.stateId,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewDegradation(cmd: ReviewDegradationCommand): Promise<{
+    degradation: PersistedDegradationState;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve"
+        ? "degradation.approve"
+        : cmd.publish
+          ? "degradation.publish"
+          : "degradation.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestDegradationState(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.stateId !== cmd.degradationStateId) {
+      throw new Error("degradation_state_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_degradation_immutable");
+    }
+    const workflowInstance = transitionDegradationReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus =
+      cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextDegradationVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const degradation: PersistedDegradationState = {
+      ...latest,
+      stateId: this.deps.repository.newId("deg"),
+      version,
+      reviewStatus: nextStatus as PersistedDegradationState["reviewStatus"],
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.stateId,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+      },
+    };
+    await this.deps.repository.saveDegradationState(degradation);
+    await this.deps.repository.saveDegradationReview({
+      reviewId: this.deps.repository.newId("drev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      degradationStateId: degradation.stateId,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: degradation.provenance,
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind: nextStatus === "published" ? "degradation_published" : "degradation_review",
+          stateId: degradation.stateId,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.degradation.published"
+          : "engineering.asset.degradation.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: degradation.stateId,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "degradation", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    return {
+      degradation,
       workflowInstance,
       identityMutated: false,
       healthMutated: false,

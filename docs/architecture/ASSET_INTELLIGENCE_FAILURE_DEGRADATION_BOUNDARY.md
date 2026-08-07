@@ -1,16 +1,34 @@
-# Asset Intelligence — Failure / Degradation Boundary
+# Asset Intelligence — Failure / Time Series / Degradation / RUL Boundaries
 
 ## Failure Intelligence (Phase 10E)
 
 Answers: **what failure mode/mechanism exists or is supported by evidence?**
 
-## Degradation Intelligence (future Phase 10F+)
+## Engineering Time Series + Trend Intelligence (Phase 10F)
 
-Answers: **how is deterioration progressing over time?**
+Answers:
 
-## Locked boundary
+- what ordered observations exist?
+- what change signals are supported?
+- what trend direction/shape is supported over a window?
 
-- Phase 10E does **not** implement degradation rate prediction
-- Phase 10E does **not** implement predictive ML or certified RUL
-- Failure presence must not be silently converted into degradation trend
-- HealthCompositionEngine may only consume **reviewed/published** failure intelligence, and only via a new composition version if/when contribution is enabled
+## Governed Degradation Analysis (Phase 10F)
+
+Answers: **how is deterioration progressing over time (advisory)?**
+
+## Future RUL / Predictive (out of scope)
+
+Answers: remaining useful life / forecast claims — **not certified in 10F**.
+
+## Locked boundaries
+
+- Failure presence must not silently become a degradation trend
+- Change detection is not predictive ML
+- Trend slope hints are not certified rate predictions
+- Degradation analysis is not RUL
+- Observed condition ≠ trend ≠ degradation ≠ RUL ≠ certified PoF
+- HealthCompositionEngine may only consume reviewed/published states, and only via an explicit composition version when contribution is enabled
+- Phase 10F prefers degradation/trend health contribution **disabled**
+- `probabilityOfFailureCertified = false`
+- `rulClaimsCertified = false`
+- `accuracyClaimsCertified = false`

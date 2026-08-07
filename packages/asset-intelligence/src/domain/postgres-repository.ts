@@ -29,6 +29,12 @@ import type {
   PersistedHealthProfile,
   PersistedReliabilityState,
   PersistedSnapshotRecord,
+  PersistedTimeSeries,
+  PersistedTrendConfidence,
+  PersistedChangeDetection,
+  PersistedTrendState,
+  PersistedDegradationState,
+  PersistedDegradationReview,
   SourceProvenanceRecord,
 } from "./persistence";
 import { assertProductionRepositorySafe } from "./persistence";
@@ -1018,6 +1024,307 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     if (error) throw new Error(error.message);
     return (data ?? []).map(mapFailureTaxonomyRow);
   }
+
+  async nextTimeSeriesVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    attributeKey: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestTimeSeries(tenantId, workspaceId, assetId, attributeKey);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveTimeSeries(series: PersistedTimeSeries): Promise<PersistedTimeSeries> {
+    const { error } = await this.supabase.from("asset_intelligence_time_series").insert({
+      id: series.seriesId,
+      tenant_id: series.tenantId,
+      workspace_id: series.workspaceId,
+      asset_id: series.assetId,
+      version: series.version,
+      attribute_key: series.attributeKey,
+      attribute_label: series.attributeLabel ?? null,
+      unit: series.unit,
+      orientation: series.orientation,
+      points: series.points,
+      window_start: series.windowStart ?? null,
+      window_end: series.windowEnd ?? null,
+      sampling_hint: series.samplingHint ?? null,
+      status: series.status,
+      source_refs: series.sourceRefs ?? [],
+      evidence_refs: series.evidenceRefs ?? [],
+      provenance: series.provenance,
+      limitations: series.limitations,
+      recorded_at: series.recordedAt,
+      payload: { isSensorRegistry: false, isShmRuntime: false },
+    });
+    if (error) throw new Error(`time_series_persist_failed:${error.message}`);
+    return series;
+  }
+
+  async latestTimeSeries(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    attributeKey: string,
+  ): Promise<PersistedTimeSeries | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_time_series")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .eq("attribute_key", attributeKey)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapTimeSeriesRow(data) : undefined;
+  }
+
+  async saveTrendConfidence(
+    record: PersistedTrendConfidence,
+  ): Promise<PersistedTrendConfidence> {
+    const { error } = await this.supabase.from("asset_intelligence_trend_confidence").insert({
+      id: record.assessmentId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      asset_id: record.assetId,
+      series_id: record.seriesId ?? null,
+      scope: record.scope,
+      score: record.score,
+      confidence_class: record.confidenceClass,
+      point_count: record.pointCount,
+      window_coverage: record.windowCoverage,
+      freshness: record.freshness,
+      source_diversity: record.sourceDiversity,
+      conflict_state: record.conflictState,
+      data_sufficiency: record.dataSufficiency,
+      abstention_reason: record.abstentionReason ?? null,
+      method: record.method,
+      assessed_at: record.assessedAt,
+      reasons: record.reasons,
+      payload: { predictiveMlUsed: false, rulClaimsCertified: false },
+    });
+    if (error) throw new Error(`trend_confidence_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async saveChangeDetection(
+    record: PersistedChangeDetection,
+  ): Promise<PersistedChangeDetection> {
+    const { error } = await this.supabase.from("asset_intelligence_change_detections").insert({
+      id: record.detectionId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      asset_id: record.assetId,
+      series_id: null, // logical seriesId retained in payload; avoid FK type friction in cert inserts
+      signals: record.signals,
+      method: record.method,
+      trend_confidence_ref: record.trendConfidenceRef ?? null,
+      abstained: record.abstained,
+      abstention_reason: record.abstentionReason ?? null,
+      assessed_at: record.assessedAt,
+      payload: {
+        seriesId: record.seriesId,
+        predictiveMlUsed: false,
+        probabilityOfFailureCertified: false,
+        rulClaimsCertified: false,
+        limitations: record.limitations,
+      },
+    });
+    if (error) throw new Error(`change_detection_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async nextTrendVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestTrendState(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveTrendState(state: PersistedTrendState): Promise<PersistedTrendState> {
+    const { error } = await this.supabase.from("asset_intelligence_trend_states").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      series_id: state.seriesId,
+      attribute_key: state.attributeKey,
+      trend_direction: state.trendDirection,
+      trend_class: state.trendClass,
+      slope_hint: state.slopeHint ?? null,
+      window_start: state.windowStart ?? null,
+      window_end: state.windowEnd ?? null,
+      method: state.method,
+      confidence: state.confidence ?? null,
+      trend_confidence_ref: state.trendConfidenceRef ?? null,
+      change_detection_ref: state.changeDetectionRef ?? null,
+      evidence_refs: state.evidenceRefs ?? [],
+      source_refs: state.sourceRefs ?? [],
+      review_status: state.reviewStatus,
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      recorded_at: state.recordedAt,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      payload: {
+        predictiveMlUsed: false,
+        probabilityOfFailureCertified: false,
+        rulClaimsCertified: false,
+        aiMayPublishForbidden: true,
+      },
+    });
+    if (error) throw new Error(`trend_state_persist_failed:${error.message}`);
+    return state;
+  }
+
+  async latestTrendState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedTrendState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_trend_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapTrendRow(data) : undefined;
+  }
+
+  async nextDegradationVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestDegradationState(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveDegradationState(
+    state: PersistedDegradationState,
+  ): Promise<PersistedDegradationState> {
+    const { error } = await this.supabase.from("asset_intelligence_degradation_states").insert({
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      series_id: state.seriesId ?? null,
+      trend_state_id: state.trendStateId ?? null,
+      change_detection_id: state.changeDetectionId ?? null,
+      related_failure_mode_codes: state.relatedFailureModeCodes ?? [],
+      degradation_direction: state.degradationDirection,
+      degradation_class: state.degradationClass,
+      severity_hint: state.severityHint ?? null,
+      mechanism_context: state.mechanismContext ?? null,
+      method: state.method,
+      confidence: state.confidence ?? null,
+      trend_confidence_ref: state.trendConfidenceRef ?? null,
+      evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+      evidence_refs: state.evidenceRefs ?? [],
+      source_refs: state.sourceRefs ?? [],
+      review_status: state.reviewStatus,
+      review_instance_id: state.reviewInstanceId ?? null,
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      recorded_at: state.recordedAt,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      provenance: state.provenance,
+      limitations: state.limitations,
+      payload: {
+        predictiveMlUsed: false,
+        probabilityOfFailureCertified: false,
+        rulClaimsCertified: false,
+        aiMayPublishForbidden: true,
+        isFailureModeClaim: false,
+      },
+    });
+    if (error) throw new Error(`degradation_persist_failed:${error.message}`);
+    return state;
+  }
+
+  async latestDegradationState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDegradationState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_degradation_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapDegradationRow(data) : undefined;
+  }
+
+  async listDegradationHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDegradationState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_degradation_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapDegradationRow);
+  }
+
+  async saveDegradationReview(
+    review: PersistedDegradationReview,
+  ): Promise<PersistedDegradationReview> {
+    const { error } = await this.supabase.from("asset_intelligence_degradation_reviews").insert({
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      asset_id: review.assetId,
+      degradation_state_id: review.degradationStateId,
+      review_instance_id: review.reviewInstanceId,
+      action: review.action,
+      reviewer_id: review.reviewerId,
+      reason: review.reason ?? null,
+      state_version: review.stateVersion,
+      correlation_id: review.correlationId ?? null,
+      created_at: review.createdAt,
+    });
+    if (error) throw new Error(`degradation_review_persist_failed:${error.message}`);
+    return review;
+  }
 }
 
 export function createPostgresAssetIntelligenceRepository(
@@ -1428,5 +1735,121 @@ function mapHealthProfileRow(row: Record<string, unknown>): PersistedHealthProfi
     rulClaimsCertified: false,
     probabilityOfFailureCertified: false,
     criticalityIsHealthFactor: false,
+  };
+}
+
+function mapTimeSeriesRow(row: Record<string, unknown>): PersistedTimeSeries {
+  return {
+    kind: "engineering_time_series",
+    seriesId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedTimeSeries["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    attributeKey: String(row.attribute_key),
+    attributeLabel: row.attribute_label ? String(row.attribute_label) : undefined,
+    unit: String(row.unit),
+    orientation: row.orientation as PersistedTimeSeries["orientation"],
+    points: (row.points as PersistedTimeSeries["points"]) ?? [],
+    windowStart: row.window_start ? String(row.window_start) : undefined,
+    windowEnd: row.window_end ? String(row.window_end) : undefined,
+    samplingHint: row.sampling_hint ? String(row.sampling_hint) : undefined,
+    sourceRefs: (row.source_refs as string[]) ?? [],
+    evidenceRefs: (row.evidence_refs as string[]) ?? [],
+    status: row.status as PersistedTimeSeries["status"],
+    version: Number(row.version),
+    limitations: (row.limitations as string[]) ?? [],
+    isSensorRegistry: false,
+    isShmRuntime: false,
+  };
+}
+
+function mapTrendRow(row: Record<string, unknown>): PersistedTrendState {
+  return {
+    kind: "trend",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedTrendState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    seriesId: String(row.series_id ?? ""),
+    attributeKey: String(row.attribute_key),
+    trendDirection: row.trend_direction as PersistedTrendState["trendDirection"],
+    trendClass: row.trend_class as PersistedTrendState["trendClass"],
+    slopeHint: row.slope_hint === null || row.slope_hint === undefined ? undefined : Number(row.slope_hint),
+    windowStart: row.window_start ? String(row.window_start) : undefined,
+    windowEnd: row.window_end ? String(row.window_end) : undefined,
+    method: String(row.method ?? "governed_trend_v1"),
+    confidence: row.confidence === null || row.confidence === undefined ? undefined : Number(row.confidence),
+    trendConfidenceRef: row.trend_confidence_ref ? String(row.trend_confidence_ref) : undefined,
+    changeDetectionRef: row.change_detection_ref ? String(row.change_detection_ref) : undefined,
+    evidenceRefs: (row.evidence_refs as string[]) ?? [],
+    sourceRefs: (row.source_refs as string[]) ?? [],
+    reviewStatus: row.review_status as PersistedTrendState["reviewStatus"],
+    assessedAt: String(row.assessed_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    limitations: (row.limitations as string[]) ?? [],
+    predictiveMlUsed: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    accuracyClaimsCertified: false,
+    aiMayPublishForbidden: true,
+  };
+}
+
+function mapDegradationRow(row: Record<string, unknown>): PersistedDegradationState {
+  return {
+    kind: "degradation",
+    stateId: String(row.id),
+    assetId: String(row.asset_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    version: Number(row.version),
+    recordedAt: String(row.recorded_at),
+    provenance: (row.provenance as PersistedDegradationState["provenance"]) ?? {
+      sourceSystem: "manual.engineering_assessment",
+      observedAt: String(row.recorded_at),
+    },
+    silentIdentityMutationForbidden: true,
+    seriesId: row.series_id ? String(row.series_id) : undefined,
+    trendStateId: row.trend_state_id ? String(row.trend_state_id) : undefined,
+    changeDetectionId: row.change_detection_id ? String(row.change_detection_id) : undefined,
+    relatedFailureModeCodes: (row.related_failure_mode_codes as string[]) ?? [],
+    degradationDirection: row.degradation_direction as PersistedDegradationState["degradationDirection"],
+    degradationClass: row.degradation_class as PersistedDegradationState["degradationClass"],
+    severityHint: row.severity_hint as PersistedDegradationState["severityHint"],
+    mechanismContext: row.mechanism_context ? String(row.mechanism_context) : undefined,
+    method: String(row.method ?? "governed_trend_v1"),
+    confidence: row.confidence === null || row.confidence === undefined ? undefined : Number(row.confidence),
+    trendConfidenceRef: row.trend_confidence_ref ? String(row.trend_confidence_ref) : undefined,
+    evidenceConfidenceRef: row.evidence_confidence_ref ? String(row.evidence_confidence_ref) : undefined,
+    evidenceRefs: (row.evidence_refs as string[]) ?? [],
+    sourceRefs: (row.source_refs as string[]) ?? [],
+    reviewStatus: row.review_status as PersistedDegradationState["reviewStatus"],
+    reviewInstanceId: row.review_instance_id ? String(row.review_instance_id) : undefined,
+    assessedAt: String(row.assessed_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : undefined,
+    publishedAt: row.published_at ? String(row.published_at) : undefined,
+    limitations: (row.limitations as string[]) ?? [],
+    supersedesId: row.supersedes_id ? String(row.supersedes_id) : undefined,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+    predictiveMlUsed: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    accuracyClaimsCertified: false,
+    aiMayPublishForbidden: true,
+    isFailureModeClaim: false,
   };
 }

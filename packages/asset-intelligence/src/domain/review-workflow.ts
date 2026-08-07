@@ -159,6 +159,63 @@ export function transitionFailureReview(input: {
   });
 }
 
+/** Phase 10F — Degradation / trend review via Engineering Workflow SDK. */
+export const DEGRADATION_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.degradation_review",
+  displayName: "Asset Degradation Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+export function startDegradationReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  degradationStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: DEGRADATION_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_degradation_state",
+    entityId: input.degradationStateId,
+    startedBy: input.startedBy,
+    context: { kind: "degradation" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: DEGRADATION_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({
+    instanceId: submitted.instanceId,
+  });
+  return { instance: submitted, review };
+}
+
+export function transitionDegradationReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: DEGRADATION_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
 export function transitionCriticalityReview(input: {
   instance: EngineeringWorkflowInstance;
   action: "approve" | "reject" | "request_changes" | "resubmit";

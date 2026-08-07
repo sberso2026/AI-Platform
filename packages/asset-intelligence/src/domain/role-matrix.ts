@@ -19,19 +19,43 @@ export type FailureCapability =
   | "failure.approve"
   | "failure.publish"
   | "failure.taxonomy.query"
-  | "failure.history.read";
+  | "failure.history.read"
+  | "timeseries.read"
+  | "timeseries.ingest"
+  | "trend.read"
+  | "trend.assess"
+  | "degradation.read"
+  | "degradation.assess"
+  | "degradation.submit"
+  | "degradation.review"
+  | "degradation.approve"
+  | "degradation.publish";
 
 export const FAILURE_ROLE_CAPABILITIES: Record<
   FailureIntelligenceRole,
   readonly FailureCapability[]
 > = {
-  viewer: ["failure.read", "failure.taxonomy.query", "failure.history.read"],
+  viewer: [
+    "failure.read",
+    "failure.taxonomy.query",
+    "failure.history.read",
+    "timeseries.read",
+    "trend.read",
+    "degradation.read",
+  ],
   engineer: [
     "failure.read",
     "failure.assess",
     "failure.submit",
     "failure.taxonomy.query",
     "failure.history.read",
+    "timeseries.read",
+    "timeseries.ingest",
+    "trend.read",
+    "trend.assess",
+    "degradation.read",
+    "degradation.assess",
+    "degradation.submit",
   ],
   reviewer: [
     "failure.read",
@@ -39,6 +63,11 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "failure.approve",
     "failure.taxonomy.query",
     "failure.history.read",
+    "timeseries.read",
+    "trend.read",
+    "degradation.read",
+    "degradation.review",
+    "degradation.approve",
   ],
   manager: [
     "failure.read",
@@ -49,6 +78,16 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "failure.publish",
     "failure.taxonomy.query",
     "failure.history.read",
+    "timeseries.read",
+    "timeseries.ingest",
+    "trend.read",
+    "trend.assess",
+    "degradation.read",
+    "degradation.assess",
+    "degradation.submit",
+    "degradation.review",
+    "degradation.approve",
+    "degradation.publish",
   ],
   owner: [
     "failure.read",
@@ -59,6 +98,16 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "failure.publish",
     "failure.taxonomy.query",
     "failure.history.read",
+    "timeseries.read",
+    "timeseries.ingest",
+    "trend.read",
+    "trend.assess",
+    "degradation.read",
+    "degradation.assess",
+    "degradation.submit",
+    "degradation.review",
+    "degradation.approve",
+    "degradation.publish",
   ],
   admin: [
     "failure.read",
@@ -69,6 +118,16 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "failure.publish",
     "failure.taxonomy.query",
     "failure.history.read",
+    "timeseries.read",
+    "timeseries.ingest",
+    "trend.read",
+    "trend.assess",
+    "degradation.read",
+    "degradation.assess",
+    "degradation.submit",
+    "degradation.review",
+    "degradation.approve",
+    "degradation.publish",
   ],
 };
 
@@ -93,7 +152,10 @@ export function assertFailureCapability(
   if (
     ENGINEER_SELF_APPROVE_FORBIDDEN &&
     role === "engineer" &&
-    (capability === "failure.approve" || capability === "failure.publish")
+    (capability === "failure.approve" ||
+      capability === "failure.publish" ||
+      capability === "degradation.approve" ||
+      capability === "degradation.publish")
   ) {
     throw new Error("engineer_self_approve_forbidden");
   }

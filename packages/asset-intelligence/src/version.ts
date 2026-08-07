@@ -1,10 +1,10 @@
 /**
- * Phase 10E — version and readiness locks.
+ * Phase 10F — version and readiness locks.
  */
 export const ASSET_INTELLIGENCE_PRODUCT_NAME = "Asset Intelligence" as const;
 export const ASSET_INTELLIGENCE_MODULE_KEY = "asset_intelligence" as const;
-export const ASSET_INTELLIGENCE_VERSION = "0.5.0-failure" as const;
-export const ASSET_INTELLIGENCE_STATUS = "failure" as const;
+export const ASSET_INTELLIGENCE_VERSION = "0.6.0-timeseries" as const;
+export const ASSET_INTELLIGENCE_STATUS = "timeseries" as const;
 
 export const ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const ASSET_INTELLIGENCE_OWNERSHIP = "asset_intelligence" as const;
@@ -15,11 +15,16 @@ export const CORE_CRITICALITY_SLICE_READY = true as const;
 export const CORE_RELIABILITY_SLICE_READY = true as const;
 export const FAILURE_TAXONOMY_REGISTRY_READY = true as const;
 export const FAILURE_INTELLIGENCE_READY = true as const;
+export const ENGINEERING_TIME_SERIES_READY = true as const;
+export const CHANGE_DETECTION_ENGINE_READY = true as const;
+export const TREND_CONFIDENCE_ENGINE_READY = true as const;
+export const TREND_INTELLIGENCE_READY = true as const;
+export const DEGRADATION_ANALYSIS_READY = true as const;
 export const HEALTH_COMPOSITION_ENGINE_READY = true as const;
 export const EVIDENCE_CONFIDENCE_ENGINE_READY = true as const;
 export const CRITICALITY_IS_HEALTH_FACTOR = false as const;
-/** Failure may not contribute to health until a certified v3 composition exists. */
 export const FAILURE_HEALTH_CONTRIBUTION_ENABLED = false as const;
+export const DEGRADATION_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const HOSTED_ASSET_INTELLIGENCE_PERSISTENCE_READY = true as const;
 export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
 export const PRODUCTION_ASSET_INTELLIGENCE_READY = false as const;
@@ -38,6 +43,7 @@ export const PHASE_10B_CERTIFIED_COMMIT = "ef7268e6dd3873f8941885a87a2723130a6bb
 export const PHASE_10B1_CERTIFIED_COMMIT = "e72822434a38e66a409da3c8a291e68f006888c3" as const;
 export const PHASE_10C_CERTIFIED_COMMIT = "10b0259134995f55bfe889dba2386edd653d9c2b" as const;
 export const PHASE_10D_CERTIFIED_COMMIT = "ef6981e1c42f80cbb12337c21e6830eb22c3fdbf" as const;
+export const PHASE_10E_CERTIFIED_COMMIT = "ed127cd85901f8053d09155f7c4053f0b22b8a5f" as const;
 
 export function getAssetIntelligenceCoreDeclaration() {
   return {
@@ -53,10 +59,16 @@ export function getAssetIntelligenceCoreDeclaration() {
     coreReliabilitySliceReady: CORE_RELIABILITY_SLICE_READY,
     failureTaxonomyRegistryReady: FAILURE_TAXONOMY_REGISTRY_READY,
     failureIntelligenceReady: FAILURE_INTELLIGENCE_READY,
+    engineeringTimeSeriesReady: ENGINEERING_TIME_SERIES_READY,
+    changeDetectionEngineReady: CHANGE_DETECTION_ENGINE_READY,
+    trendConfidenceEngineReady: TREND_CONFIDENCE_ENGINE_READY,
+    trendIntelligenceReady: TREND_INTELLIGENCE_READY,
+    degradationAnalysisReady: DEGRADATION_ANALYSIS_READY,
     healthCompositionEngineReady: HEALTH_COMPOSITION_ENGINE_READY,
     evidenceConfidenceEngineReady: EVIDENCE_CONFIDENCE_ENGINE_READY,
     criticalityIsHealthFactor: CRITICALITY_IS_HEALTH_FACTOR,
     failureHealthContributionEnabled: FAILURE_HEALTH_CONTRIBUTION_ENABLED,
+    degradationHealthContributionEnabled: DEGRADATION_HEALTH_CONTRIBUTION_ENABLED,
     hostedAssetIntelligencePersistenceReady: HOSTED_ASSET_INTELLIGENCE_PERSISTENCE_READY,
     productionMemoryRepositoryAllowed: PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
     productionAssetIntelligenceReady: PRODUCTION_ASSET_INTELLIGENCE_READY,

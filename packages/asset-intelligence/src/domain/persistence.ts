@@ -24,6 +24,10 @@ import type {
   FailureRelationship,
 } from "./failure";
 import type { FailureTaxonomyEntry, TaxonomyEntryKind } from "./failure-taxonomy";
+import type { EngineeringTimeSeries } from "./time-series";
+import type { TrendConfidenceAssessment } from "./trend-confidence";
+import type { ChangeDetectionResult } from "./change-detection";
+import type { AssetDegradationState, AssetTrendState } from "./degradation";
 
 export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
 
@@ -148,6 +152,50 @@ export type PersistedFailureReview = {
 export type PersistedFailureTaxonomyEntry = FailureTaxonomyEntry & {
   tenantId?: string;
   workspaceId?: string;
+};
+
+/** Phase 10F — Time series / trend / degradation. */
+export type PersistedTimeSeries = EngineeringTimeSeries & {
+  tenantId: string;
+  workspaceId: string;
+};
+
+export type PersistedTrendConfidence = TrendConfidenceAssessment & {
+  tenantId: string;
+  workspaceId: string;
+};
+
+export type PersistedChangeDetection = ChangeDetectionResult & {
+  tenantId: string;
+  workspaceId: string;
+};
+
+export type PersistedTrendState = AssetTrendState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+};
+
+export type PersistedDegradationState = AssetDegradationState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedDegradationReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  degradationStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  correlationId?: string;
+  createdAt: string;
 };
 
 export type PersistedSnapshotRecord = {
@@ -345,6 +393,54 @@ export type AssetIntelligenceRepositoryPort = {
     kind?: TaxonomyEntryKind,
     packOwner?: string,
   ): Promise<PersistedFailureTaxonomyEntry[]>;
+  nextTimeSeriesVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    attributeKey: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveTimeSeries(series: PersistedTimeSeries): Promise<PersistedTimeSeries>;
+  latestTimeSeries(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    attributeKey: string,
+  ): Promise<PersistedTimeSeries | undefined>;
+  saveTrendConfidence(record: PersistedTrendConfidence): Promise<PersistedTrendConfidence>;
+  saveChangeDetection(record: PersistedChangeDetection): Promise<PersistedChangeDetection>;
+  nextTrendVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveTrendState(state: PersistedTrendState): Promise<PersistedTrendState>;
+  latestTrendState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedTrendState | undefined>;
+  nextDegradationVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveDegradationState(state: PersistedDegradationState): Promise<PersistedDegradationState>;
+  latestDegradationState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDegradationState | undefined>;
+  listDegradationHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDegradationState[]>;
+  saveDegradationReview(
+    review: PersistedDegradationReview,
+  ): Promise<PersistedDegradationReview>;
 };
 
 export type DurableAssetIntelligenceStore = {
@@ -369,6 +465,12 @@ export type DurableAssetIntelligenceStore = {
   failureRelationships: PersistedFailureRelationship[];
   failureReviews: PersistedFailureReview[];
   failureTaxonomy: PersistedFailureTaxonomyEntry[];
+  timeSeries: PersistedTimeSeries[];
+  trendConfidence: PersistedTrendConfidence[];
+  changeDetections: PersistedChangeDetection[];
+  trendStates: PersistedTrendState[];
+  degradationStates: PersistedDegradationState[];
+  degradationReviews: PersistedDegradationReview[];
 };
 
 export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelligenceStore {
@@ -394,6 +496,12 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     failureRelationships: [],
     failureReviews: [],
     failureTaxonomy: [],
+    timeSeries: [],
+    trendConfidence: [],
+    changeDetections: [],
+    trendStates: [],
+    degradationStates: [],
+    degradationReviews: [],
   };
 }
 
@@ -830,6 +938,148 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
     return this.store.failureTaxonomy.filter(
       (e) => (!kind || e.kind === kind) && (!packOwner || e.packOwner === packOwner),
     );
+  }
+
+  async nextTimeSeriesVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    attributeKey: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestTimeSeries(tenantId, workspaceId, assetId, attributeKey);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
+  }
+
+  async saveTimeSeries(series: PersistedTimeSeries): Promise<PersistedTimeSeries> {
+    this.store.timeSeries.push(series);
+    return series;
+  }
+
+  async latestTimeSeries(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    attributeKey: string,
+  ): Promise<PersistedTimeSeries | undefined> {
+    const items = this.store.timeSeries.filter(
+      (s) =>
+        s.tenantId === tenantId &&
+        s.workspaceId === workspaceId &&
+        s.assetId === assetId &&
+        s.attributeKey === attributeKey,
+    );
+    return items.sort((a, b) => a.version - b.version)[items.length - 1];
+  }
+
+  async saveTrendConfidence(
+    record: PersistedTrendConfidence,
+  ): Promise<PersistedTrendConfidence> {
+    this.store.trendConfidence.push(record);
+    return record;
+  }
+
+  async saveChangeDetection(
+    record: PersistedChangeDetection,
+  ): Promise<PersistedChangeDetection> {
+    this.store.changeDetections.push(record);
+    return record;
+  }
+
+  async nextTrendVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestTrendState(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
+  }
+
+  async saveTrendState(state: PersistedTrendState): Promise<PersistedTrendState> {
+    this.store.trendStates.push(state);
+    return state;
+  }
+
+  async latestTrendState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedTrendState | undefined> {
+    return latestAsOf(
+      this.store.trendStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+    );
+  }
+
+  async nextDegradationVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestDegradationState(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(
+        `optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`,
+      );
+    }
+    return current + 1;
+  }
+
+  async saveDegradationState(
+    state: PersistedDegradationState,
+  ): Promise<PersistedDegradationState> {
+    this.store.degradationStates.push(state);
+    return state;
+  }
+
+  async latestDegradationState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDegradationState | undefined> {
+    return latestAsOf(
+      this.store.degradationStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+    );
+  }
+
+  async listDegradationHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedDegradationState[]> {
+    return this.store.degradationStates
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveDegradationReview(
+    review: PersistedDegradationReview,
+  ): Promise<PersistedDegradationReview> {
+    this.store.degradationReviews.push(review);
+    return review;
   }
 
   getStore(): DurableAssetIntelligenceStore {

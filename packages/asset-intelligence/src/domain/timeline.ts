@@ -13,6 +13,12 @@ export type TimelineStateKind =
   | "failure_review"
   | "failure_published"
   | "failure_superseded"
+  | "time_series"
+  | "change_detection"
+  | "trend"
+  | "degradation"
+  | "degradation_review"
+  | "degradation_published"
   | "risk_intelligence"
   | "lifecycle_intelligence";
 
