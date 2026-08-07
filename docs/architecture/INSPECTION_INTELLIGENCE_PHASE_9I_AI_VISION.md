@@ -23,3 +23,11 @@ pack adapters for generic / coatings / structural_condition.
 | Model | `ii_vision_detector@1.0.0` |
 | Policy | `vision_policy_v1` (training use forbidden) |
 | Coordinate system | `normalized_v1` |
+
+## Next-phase readiness (`phase9JReady=true`)
+
+Phase 9J is ready: Inspection Intelligence module release closure, cross-module consumer
+contracts (Asset Intelligence / Digital Twin as *consumers only*), publication hardening,
+and production operational SLOs — without transferring Asset Intelligence or Digital Twin
+ownership into Inspection Intelligence.
+

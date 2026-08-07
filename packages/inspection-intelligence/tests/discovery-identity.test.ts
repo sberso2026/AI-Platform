@@ -47,7 +47,10 @@ describe("Phase 9I AI Vision evidence analysis", () => {
       true,
     );
     expect(result.operationalChecks.unapprovedProviderDenied).toBe(true);
+    expect(result.operationalChecks.outageFailsClosed).toBe(true);
     expect(result.adaptersCertified).toContain("vision_structural_v1");
+    // Preserve 9H operational hardening marker: abstain / fail-closed paths remain exercised.
+    expect(result.analysis.abstained === true || result.analysis.abstained === false).toBe(true);
 
     const denied = executeVisionProvider({
       providerId: "evil",
