@@ -505,6 +505,34 @@ importers:
         specifier: ^5.8.3
         version: 5.9.3
 
+  packages/project-controls:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
+  packages/project-controls-certification:
+    dependencies:
+      '@rtb/project-controls':
+        specifier: workspace:*
+        version: link:../project-controls
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      tsx:
+        specifier: ^4.20.6
+        version: 4.23.0
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
   packages/project-intelligence:
     dependencies:
       '@rtb/engineering-os':
