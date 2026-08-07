@@ -54,7 +54,19 @@ export type FailureCapability =
   | "priority.submit"
   | "priority.review"
   | "priority.approve"
-  | "priority.publish";
+  | "priority.publish"
+  | "fusion.read"
+  | "fusion.assess"
+  | "fusion.submit"
+  | "fusion.review"
+  | "fusion.approve"
+  | "fusion.publish"
+  | "predictive_readiness.read"
+  | "predictive_readiness.assess"
+  | "predictive_readiness.submit"
+  | "predictive_readiness.review"
+  | "predictive_readiness.approve"
+  | "predictive_readiness.publish";
 
 /** Phase 10H — capabilities whose approval/publication is segregated from assessment. */
 export const PHASE_10H_READ_CAPABILITIES = [
@@ -88,6 +100,31 @@ export const PHASE_10H_PUBLISH_CAPABILITIES = [
   "priority.publish",
 ] as const satisfies readonly FailureCapability[];
 
+/** Phase 10I — fusion and predictive readiness follow the same segregation model. */
+export const PHASE_10I_READ_CAPABILITIES = [
+  "fusion.read",
+  "predictive_readiness.read",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10I_ASSESS_CAPABILITIES = [
+  "fusion.assess",
+  "fusion.submit",
+  "predictive_readiness.assess",
+  "predictive_readiness.submit",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10I_REVIEW_CAPABILITIES = [
+  "fusion.review",
+  "fusion.approve",
+  "predictive_readiness.review",
+  "predictive_readiness.approve",
+] as const satisfies readonly FailureCapability[];
+
+export const PHASE_10I_PUBLISH_CAPABILITIES = [
+  "fusion.publish",
+  "predictive_readiness.publish",
+] as const satisfies readonly FailureCapability[];
+
 /** Approving or publishing these is forbidden for the engineer who assessed them. */
 export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly FailureCapability[] = [
   "failure.approve",
@@ -98,6 +135,8 @@ export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly FailureCapability[] =
   "lifecycle.publish",
   ...PHASE_10H_REVIEW_CAPABILITIES.filter((c) => c.endsWith(".approve")),
   ...PHASE_10H_PUBLISH_CAPABILITIES,
+  ...PHASE_10I_REVIEW_CAPABILITIES.filter((c) => c.endsWith(".approve")),
+  ...PHASE_10I_PUBLISH_CAPABILITIES,
 ];
 
 export const FAILURE_ROLE_CAPABILITIES: Record<
@@ -113,6 +152,7 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "degradation.read",
     "lifecycle.read",
     ...PHASE_10H_READ_CAPABILITIES,
+    ...PHASE_10I_READ_CAPABILITIES,
   ],
   engineer: [
     "failure.read",
@@ -132,6 +172,8 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.submit",
     ...PHASE_10H_READ_CAPABILITIES,
     ...PHASE_10H_ASSESS_CAPABILITIES,
+    ...PHASE_10I_READ_CAPABILITIES,
+    ...PHASE_10I_ASSESS_CAPABILITIES,
   ],
   reviewer: [
     "failure.read",
@@ -149,6 +191,8 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     "lifecycle.approve",
     ...PHASE_10H_READ_CAPABILITIES,
     ...PHASE_10H_REVIEW_CAPABILITIES,
+    ...PHASE_10I_READ_CAPABILITIES,
+    ...PHASE_10I_REVIEW_CAPABILITIES,
   ],
   manager: [
     "failure.read",
@@ -179,6 +223,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10H_ASSESS_CAPABILITIES,
     ...PHASE_10H_REVIEW_CAPABILITIES,
     ...PHASE_10H_PUBLISH_CAPABILITIES,
+    ...PHASE_10I_READ_CAPABILITIES,
+    ...PHASE_10I_ASSESS_CAPABILITIES,
+    ...PHASE_10I_REVIEW_CAPABILITIES,
+    ...PHASE_10I_PUBLISH_CAPABILITIES,
   ],
   owner: [
     "failure.read",
@@ -209,6 +257,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10H_ASSESS_CAPABILITIES,
     ...PHASE_10H_REVIEW_CAPABILITIES,
     ...PHASE_10H_PUBLISH_CAPABILITIES,
+    ...PHASE_10I_READ_CAPABILITIES,
+    ...PHASE_10I_ASSESS_CAPABILITIES,
+    ...PHASE_10I_REVIEW_CAPABILITIES,
+    ...PHASE_10I_PUBLISH_CAPABILITIES,
   ],
   admin: [
     "failure.read",
@@ -239,6 +291,10 @@ export const FAILURE_ROLE_CAPABILITIES: Record<
     ...PHASE_10H_ASSESS_CAPABILITIES,
     ...PHASE_10H_REVIEW_CAPABILITIES,
     ...PHASE_10H_PUBLISH_CAPABILITIES,
+    ...PHASE_10I_READ_CAPABILITIES,
+    ...PHASE_10I_ASSESS_CAPABILITIES,
+    ...PHASE_10I_REVIEW_CAPABILITIES,
+    ...PHASE_10I_PUBLISH_CAPABILITIES,
   ],
 };
 

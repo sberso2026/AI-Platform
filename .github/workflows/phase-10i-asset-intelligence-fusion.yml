@@ -1,4 +1,4 @@
-name: Phase 10H Asset Intelligence Risk Priority
+name: Phase 10I Asset Intelligence Fusion
 
 on:
   workflow_dispatch:
@@ -7,15 +7,14 @@ on:
     paths:
       - "packages/asset-intelligence/**"
       - "packages/asset-intelligence-certification/**"
-      - "packages/platform-certification/src/phase10h*"
+      - "packages/platform-certification/src/phase10i*"
       - "supabase/migrations/*asset_intelligence*"
       - "apps/web/src/app/api/engineering/asset-intelligence/**"
-      - ".github/workflows/phase-10h-asset-intelligence-risk-priority.yml"
-      - "docs/architecture/ASSET_INTELLIGENCE_RISK_MAINTENANCE_PRIORITY*"
-      - "docs/architecture/ASSET_INTELLIGENCE_CROSS_MODULE_CONTRACT_DRAFTS_10H*"
+      - ".github/workflows/phase-10i-asset-intelligence-fusion.yml"
+      - "docs/architecture/ASSET_INTELLIGENCE_MULTI_SOURCE_FUSION*"
 
 concurrency:
-  group: phase-10h-asset-intelligence-risk-priority-${{ github.ref }}
+  group: phase-10i-asset-intelligence-fusion-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -44,8 +43,8 @@ jobs:
       - name: Unit tests
         run: pnpm --filter @rtb/asset-intelligence test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase10h-asset-intelligence-risk-priority.test.ts
-      - name: Phase 10H certification (gates A–BG)
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase10i-asset-intelligence-fusion.test.ts
+      - name: Phase 10I certification (gates A–AZ)
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -53,51 +52,54 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
-        run: pnpm --filter @rtb/asset-intelligence-certification certify:phase10h
+        run: pnpm --filter @rtb/asset-intelligence-certification certify:phase10i
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
-          const a = JSON.parse(require("fs").readFileSync("packages/asset-intelligence-certification/artifacts/phase10h-asset-intelligence-risk-priority-certification.json","utf8"));
+          const a = JSON.parse(require("fs").readFileSync("packages/asset-intelligence-certification/artifacts/phase10i-asset-intelligence-fusion-certification.json","utf8"));
           const checks = [
             a.verdict==="PASS",
             a.failedGateCount===0,
             a.skippedGateCount===0,
             a.notExecutedGateCount===0,
-            a.requiredGates.length===59,
-            a.version==="0.8.0-risk-priority",
-            a.assetDecisionContextEngineReady===true,
-            a.riskSignalEngineReady===true,
-            a.maintenanceRecommendationEngineReady===true,
-            a.maintenanceRecommendationTaxonomyReady===true,
-            a.assetPriorityEngineReady===true,
+            a.requiredGates.length===52,
+            a.version==="0.9.0-fusion-readiness",
+            a.multiSourceFusionReady===true,
+            a.sourceReconciliationEngineReady===true,
+            a.predictiveReadinessAssessorReady===true,
+            a.predictiveMlEnabled===false,
+            a.predictiveMethodsCertified===false,
+            a.predictiveMlExecuted===false,
+            a.autonomousReconciliationForbidden===true,
+            a.fusionHealthContributionEnabled===false,
             a.riskHealthContributionEnabled===false,
             a.priorityHealthContributionEnabled===false,
-            a.riskCoreAutoMutationAllowed===false,
-            a.createsCoreRisk===false,
-            a.createsWorkOrder===false,
-            a.numericPriorityScoreRequired===false,
-            a.canonicalEngineeringRiskOwnership==="engineering_core",
-            a.cmmsWorkOrderOwnership==="none_in_asset_intelligence",
-            a.canonicalAssetLifecycleOwnership==="engineering_os_shared_domain",
-            a.mutatesCanonicalLifecycle===false,
-            a.productionMemoryRepositoryAllowed===false,
             a.probabilityOfFailureCertified===false,
             a.rulClaimsCertified===false,
             a.accuracyClaimsCertified===false,
-            a.predictiveMlEnabled===false,
-            a.predictiveMethodsCertified===false,
-            a.migrationLineage.includes("20260807180000_batch_57_asset_intelligence_risk_priority.sql"),
+            a.createsCoreRisk===false,
+            a.createsWorkOrder===false,
+            a.mutatesCanonicalLifecycle===false,
+            a.assetFusionOwnership==="asset_intelligence",
+            a.canonicalEngineeringRiskOwnership==="engineering_core",
+            a.cmmsWorkOrderOwnership==="none_in_asset_intelligence",
+            a.canonicalAssetLifecycleOwnership==="engineering_os_shared_domain",
+            a.productionMemoryRepositoryAllowed===false,
+            a.authoritativePhase10HBaseline==="acec6ce63f9e6eb6968d0f899a61cf442c35ec90",
+            a.phase10HHostedRun==="31158369645",
+            a.migrationLineage.includes("20260807190000_batch_58_asset_intelligence_fusion.sql"),
+            a.migrationLineage.length===5,
             a.releaseEligible===true,
-            a.phase10IReady===true,
+            a.phase10JReady===true,
             a.unexpected5xx===0,
             a.secretExposureDetected===false,
           ];
           if (checks.some(x=>!x)) { console.error(a); process.exit(1); }
-          console.log(JSON.stringify({verdict:a.verdict, version:a.version, phase10IReady:a.phase10IReady},null,2));
+          console.log(JSON.stringify({verdict:a.verdict, version:a.version, phase10JReady:a.phase10JReady},null,2));
           EOF
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase10h-asset-intelligence-risk-priority-certification
-          path: packages/asset-intelligence-certification/artifacts/phase10h-asset-intelligence-risk-priority-certification.json
+          name: phase10i-asset-intelligence-fusion-certification
+          path: packages/asset-intelligence-certification/artifacts/phase10i-asset-intelligence-fusion-certification.json
           if-no-files-found: warn

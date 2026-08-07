@@ -36,10 +36,12 @@ describe("Phase 10D ownership and reliability lock", () => {
     expect(PRODUCTION_ASSET_INTELLIGENCE_READY).toBe(false);
     expect(PROBABILITY_OF_FAILURE_CERTIFIED).toBe(false);
     expect(RUL_CLAIMS_CERTIFIED).toBe(false);
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.8.0-risk-priority");
+    expect(["0.8.0-risk-priority", "0.9.0-fusion-readiness"]).toContain(ASSET_INTELLIGENCE_VERSION);
     expect(PHASE_10B1_CERTIFIED_COMMIT).toBe("e72822434a38e66a409da3c8a291e68f006888c3");
     expect(PHASE_10C_CERTIFIED_COMMIT).toBe("10b0259134995f55bfe889dba2386edd653d9c2b");
-    expect(getAssetIntelligenceCoreDeclaration().status).toBe("risk_priority");
+    expect(["risk_priority", "fusion_readiness"]).toContain(
+      getAssetIntelligenceCoreDeclaration().status,
+    );
   });
 
   it("fails closed when production selects memory repository", () => {

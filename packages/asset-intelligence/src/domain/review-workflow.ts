@@ -435,6 +435,114 @@ export function transitionPriorityReview(input: {
   });
 }
 
+/** Phase 10I — Multi-source fusion review via Engineering Workflow SDK. */
+export const FUSION_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.fusion_review",
+  displayName: "Asset Multi-Source Fusion Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+/** Phase 10I — Predictive readiness review (readiness only; never predictive execution). */
+export const PREDICTIVE_READINESS_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: "asset_intelligence.predictive_readiness_review",
+  displayName: "Asset Predictive Readiness Review",
+  moduleKey: "asset_intelligence",
+  version: 1,
+  initialState: "draft",
+  states: ["draft", "pending_review", "changes_requested", "approved", "rejected"] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+  ],
+};
+
+export function startFusionReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  fusionStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: FUSION_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_fusion_state",
+    entityId: input.fusionStateId,
+    startedBy: input.startedBy,
+    context: { kind: "fusion" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: FUSION_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  return { instance: submitted, review: createReviewRecord({ instanceId: submitted.instanceId }) };
+}
+
+export function transitionFusionReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: FUSION_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function startPredictiveReadinessReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  readinessStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: PREDICTIVE_READINESS_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: "asset_predictive_readiness_state",
+    entityId: input.readinessStateId,
+    startedBy: input.startedBy,
+    context: { kind: "predictive_readiness" },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: PREDICTIVE_READINESS_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  return { instance: submitted, review: createReviewRecord({ instanceId: submitted.instanceId }) };
+}
+
+export function transitionPredictiveReadinessReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: PREDICTIVE_READINESS_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
 export function transitionCriticalityReview(input: {
   instance: EngineeringWorkflowInstance;
   action: "approve" | "reject" | "request_changes" | "resubmit";

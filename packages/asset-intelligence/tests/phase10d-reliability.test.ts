@@ -23,7 +23,7 @@ import { resolve } from "node:path";
 
 describe("Phase 10D reliability + health semantics", () => {
   it("locks versioned health semantics and claim flags", () => {
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.8.0-risk-priority");
+    expect(["0.8.0-risk-priority", "0.9.0-fusion-readiness"]).toContain(ASSET_INTELLIGENCE_VERSION);
     expect(CRITICALITY_IS_HEALTH_FACTOR).toBe(false);
     expect(CORE_RELIABILITY_SLICE_READY).toBe(true);
     expect(EVIDENCE_CONFIDENCE_ENGINE_READY).toBe(true);

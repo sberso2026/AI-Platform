@@ -47,6 +47,8 @@ export const LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED = false as const;
 export const RISK_HEALTH_CONTRIBUTION_ENABLED = false as const;
 /** Phase 10H — priority context is decision support only; must not contribute to Health Index. */
 export const PRIORITY_HEALTH_CONTRIBUTION_ENABLED = false as const;
+/** Phase 10I — multi-source fusion is a separate composition; must not contribute to Health Index. */
+export const FUSION_HEALTH_CONTRIBUTION_ENABLED = false as const;
 
 export type HealthCompositionInput = {
   assetId: string;

@@ -46,6 +46,17 @@ import {
   createAssetPriorityContextEngine,
   type AssetPriorityContextEngine,
 } from "./priority";
+import {
+  createMultiSourceFusionEngine,
+  type MultiSourceFusionEngine,
+} from "./fusion-engine";
+import {
+  createPredictiveReadinessAssessor,
+  createSourceReconciliationEngine,
+  type PredictiveReadinessAssessor,
+  type SourceReconciliationEngine,
+} from "./reconciliation-engine";
+import type { FusionSourceInput } from "./fusion";
 import { createEngineeringTimeSeries } from "./time-series";
 import type { FailureAssessmentBundle } from "./failure";
 import type { TrendDegradationBundle } from "./degradation";
@@ -79,6 +90,10 @@ import {
   transitionMaintenanceRecommendationReview,
   startPriorityReview,
   transitionPriorityReview,
+  startFusionReview,
+  transitionFusionReview,
+  startPredictiveReadinessReview,
+  transitionPredictiveReadinessReview,
 } from "./review-workflow";
 import { composeAssetSnapshot, type AssetSnapshot } from "./snapshot";
 import { assertRegisteredActiveSource } from "./source-registry";
@@ -104,6 +119,9 @@ import type {
   PersistedRiskCandidate,
   PersistedMaintenanceRecommendationState,
   PersistedPriorityProfile,
+  PersistedFusionState,
+  PersistedReconciliationRecord,
+  PersistedPredictiveReadinessState,
 } from "./persistence";
 
 /** Governed slices are consumable only once published or approved. */
@@ -622,6 +640,142 @@ export type EngineRiskPriorityBundleResult = {
   aiMayPublishForbidden: true;
 };
 
+/** Phase 10I — Multi-source fusion / reconciliation / predictive readiness commands. */
+export type AssessFusionCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey?: string;
+  evidenceRefs?: string[];
+  observedAt?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  idempotencyKey?: string;
+  createdBy?: string;
+  actorRole?: FailureIntelligenceRole;
+  startReview?: boolean;
+  expectedVersion?: number;
+  /** Inspection Intelligence public contract version — only "1.0.0" may be fused. */
+  inspectionIntelligenceContractVersion?: string;
+  inspectionIntelligenceStateId?: string;
+  /** Project Intelligence shared/public contract version — approved contracts only. */
+  projectIntelligenceContractVersion?: string;
+  projectIntelligenceStateId?: string;
+};
+
+/** Phase 10I governance flags shared by every fusion-family engine result. */
+export type FusionGovernanceFlags = {
+  identityMutated: false;
+  healthMutated: false;
+  fusionHealthContributionEnabled: false;
+  isHealthFactor: false;
+  createsCoreRisk: false;
+  createsWorkOrder: false;
+  mutatesCanonicalLifecycle: false;
+  predictiveMlEnabled: false;
+  predictiveMethodsCertified: false;
+  predictiveMlExecuted: false;
+  probabilityOfFailureCertified: false;
+  rulClaimsCertified: false;
+  accuracyClaimsCertified: false;
+  autonomousReconciliationForbidden: true;
+  aiMayPublishForbidden: true;
+};
+
+export type EngineFusionResult = FusionGovernanceFlags & {
+  identityOwner: "engineering_os_shared_domain";
+  fusionState: PersistedFusionState;
+  reconciliation: PersistedReconciliationRecord;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay?: boolean;
+};
+
+export type ReviewFusionCommand = {
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  fusionStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: "approve" | "reject" | "request_changes" | "resubmit";
+  to: "approved" | "rejected" | "changes_requested" | "pending_review";
+  reviewerId: string;
+  reason?: string;
+  correlationId?: string;
+  recordedAt?: string;
+  publish?: boolean;
+  actorRole?: FailureIntelligenceRole;
+};
+
+export type AssessPredictiveReadinessCommand = AssessFusionCommand & {
+  fusionStateId?: string;
+};
+
+export type EnginePredictiveReadinessResult = FusionGovernanceFlags & {
+  identityOwner: "engineering_os_shared_domain";
+  fusionState: PersistedFusionState;
+  reconciliation?: PersistedReconciliationRecord;
+  predictiveReadiness: PersistedPredictiveReadinessState;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  outboxEventId: string;
+  reviewInstanceId?: string;
+  reviewWorkflowInstance?: EngineeringWorkflowInstance;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay?: boolean;
+  predictiveAllowed: false;
+};
+
+export type ReviewPredictiveReadinessCommand = Omit<ReviewFusionCommand, "fusionStateId"> & {
+  readinessStateId: string;
+};
+
+export type AssessFusionBundleCommand = AssessFusionCommand;
+
+export type EngineFusionBundleResult = FusionGovernanceFlags & {
+  identityOwner: "engineering_os_shared_domain";
+  fusionState: PersistedFusionState;
+  reconciliation: PersistedReconciliationRecord;
+  predictiveReadiness: PersistedPredictiveReadinessState;
+  evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+  timelineEntries: IntelligenceTimelineEntry[];
+  snapshot: AssetSnapshot;
+  snapshotId: string;
+  outboxEventIds: string[];
+  fusionReviewInstanceId?: string;
+  predictiveReadinessReviewInstanceId?: string;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay?: boolean;
+  predictiveAllowed: false;
+};
+
+const FUSION_GOVERNANCE_FLAGS: FusionGovernanceFlags = {
+  identityMutated: false,
+  healthMutated: false,
+  fusionHealthContributionEnabled: false,
+  isHealthFactor: false,
+  createsCoreRisk: false,
+  createsWorkOrder: false,
+  mutatesCanonicalLifecycle: false,
+  predictiveMlEnabled: false,
+  predictiveMethodsCertified: false,
+  predictiveMlExecuted: false,
+  probabilityOfFailureCertified: false,
+  rulClaimsCertified: false,
+  accuracyClaimsCertified: false,
+  autonomousReconciliationForbidden: true,
+  aiMayPublishForbidden: true,
+};
+
 export type AssetIntelligenceEngineDeps = {
   identityPort: SharedDomainAssetIdentityPort;
   repository: AssetIntelligenceRepositoryPort;
@@ -635,6 +789,9 @@ export type AssetIntelligenceEngineDeps = {
   riskSignalEngine?: RiskSignalEngine;
   maintenanceRecommendationEngine?: MaintenanceRecommendationEngine;
   priorityContextEngine?: AssetPriorityContextEngine;
+  multiSourceFusionEngine?: MultiSourceFusionEngine;
+  sourceReconciliationEngine?: SourceReconciliationEngine;
+  predictiveReadinessAssessor?: PredictiveReadinessAssessor;
 };
 
 export class AssetIntelligenceEngine {
@@ -647,6 +804,9 @@ export class AssetIntelligenceEngine {
   private readonly riskSignalEngine: RiskSignalEngine;
   private readonly maintenanceRecommendationEngine: MaintenanceRecommendationEngine;
   private readonly priorityContextEngine: AssetPriorityContextEngine;
+  private readonly multiSourceFusionEngine: MultiSourceFusionEngine;
+  private readonly sourceReconciliationEngine: SourceReconciliationEngine;
+  private readonly predictiveReadinessAssessor: PredictiveReadinessAssessor;
 
   constructor(private readonly deps: AssetIntelligenceEngineDeps) {
     assertOwnershipLock();
@@ -686,6 +846,15 @@ export class AssetIntelligenceEngine {
     this.priorityContextEngine =
       deps.priorityContextEngine ??
       createAssetPriorityContextEngine({ newId: (p) => this.deps.repository.newId(p) });
+    this.multiSourceFusionEngine =
+      deps.multiSourceFusionEngine ??
+      createMultiSourceFusionEngine({ newId: (p) => this.deps.repository.newId(p) });
+    this.sourceReconciliationEngine =
+      deps.sourceReconciliationEngine ??
+      createSourceReconciliationEngine({ newId: (p) => this.deps.repository.newId(p) });
+    this.predictiveReadinessAssessor =
+      deps.predictiveReadinessAssessor ??
+      createPredictiveReadinessAssessor({ newId: (p) => this.deps.repository.newId(p) });
   }
 
   private async resolveIdentity(cmd: {
@@ -4100,6 +4269,888 @@ export class AssetIntelligenceEngine {
     };
   }
 
+  /**
+   * Phase 10I — load published slices, fuse, reconcile, and persist.
+   * Fusion never executes predictive ML and never resolves conflicts autonomously.
+   */
+  private async prepareFusion(cmd: AssessFusionCommand & { sourceKey: string; recordedAt: string }): Promise<{
+    identity: AssetIdentityReference;
+    fusionState: PersistedFusionState;
+    reconciliation: PersistedReconciliationRecord;
+    evidenceConfidence: import("./evidence-confidence").EvidenceConfidenceAssessment;
+    timelineEntries: IntelligenceTimelineEntry[];
+    abstained: boolean;
+    abstentionReason?: string;
+    reviewInstanceId?: string;
+    reviewWorkflowInstance?: EngineeringWorkflowInstance;
+    healthIndex?: PersistedHealthIndexState;
+    condition?: PersistedConditionState;
+    criticality?: PersistedCriticalityState;
+  }> {
+    const identity = await this.resolveIdentity(cmd);
+    const recordedAt = cmd.recordedAt;
+    const evidenceRefs = cmd.evidenceRefs ?? [];
+
+    const [
+      condition,
+      reliability,
+      criticality,
+      failureMode,
+      trend,
+      degradation,
+      lifecycle,
+      decisionContext,
+      riskSignal,
+      recommendation,
+      priorityProfile,
+      healthProfile,
+      healthIndex,
+    ] = await Promise.all([
+      this.deps.repository.latestCondition(cmd.tenantId, cmd.workspaceId, cmd.assetId, recordedAt),
+      this.deps.repository.latestReliability(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+      this.deps.repository.latestCriticality(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+      this.deps.repository.latestFailureMode(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+      this.deps.repository.latestTrendState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestDegradationState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestLifecycleState(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestDecisionContext(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestRiskSignal(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestMaintenanceRecommendation(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+      ),
+      this.deps.repository.latestPriorityProfile(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestHealthProfile(cmd.tenantId, cmd.workspaceId, cmd.assetId),
+      this.deps.repository.latestHealthIndex(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+        recordedAt,
+      ),
+    ]);
+
+    const evidenceConfidence = this.evidenceConfidenceEngine.assess({
+      assessmentId: this.deps.repository.newId("ec"),
+      assetId: cmd.assetId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      scope: "multi_source_fusion",
+      evidenceRefs,
+      sourceKeys: [cmd.sourceKey],
+      observedAt: cmd.observedAt ?? recordedAt,
+      asOf: recordedAt,
+      reviewStatus: healthProfile?.reviewStatus ?? condition?.status,
+      confidenceHint: condition?.conditionConfidence,
+    });
+    await this.deps.repository.saveEvidenceConfidence({
+      ...evidenceConfidence,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version: 1,
+    });
+
+    // Only published/approved slices are forwarded — draft/rejected work must not shape fusion.
+    const sources: FusionSourceInput[] = [];
+    const add = (
+      kind: FusionSourceInput["kind"],
+      stateId: string | undefined,
+      reviewStatus: string | undefined,
+      extra: Partial<FusionSourceInput> = {},
+    ) => {
+      if (!stateId) return;
+      sources.push({ kind, stateId, reviewStatus: reviewStatus ?? "draft", ...extra });
+    };
+
+    add("condition", condition?.stateId, condition?.status, { authorityRank: 3 });
+    add("reliability", reliability?.stateId, reliability?.reviewStatus, { authorityRank: 3 });
+    add("criticality", criticality?.stateId, criticality?.reviewStatus, { authorityRank: 2 });
+    add("health", healthProfile?.profileId, healthProfile?.reviewStatus, { authorityRank: 3 });
+    add("failure", failureMode?.stateId, failureMode?.reviewStatus, { authorityRank: 2 });
+    add("trend", trend?.stateId, trend?.reviewStatus, {
+      authorityRank: 1,
+      trendConfidence: trend?.trendConfidence,
+    });
+    add("degradation", degradation?.stateId, degradation?.reviewStatus, { authorityRank: 2 });
+    add("lifecycle", lifecycle?.stateId, lifecycle?.reviewStatus, { authorityRank: 2 });
+    add(
+      "decision_context",
+      decisionContext?.id,
+      decisionContext && decisionContext.decisionContextClass !== "abstained"
+        ? "published"
+        : "draft",
+      { authorityRank: 1 },
+    );
+    add("risk_signal", riskSignal?.id, riskSignal?.reviewStatus, { authorityRank: 2 });
+    add("maintenance_recommendation", recommendation?.id, recommendation?.reviewStatus, {
+      authorityRank: 1,
+    });
+    add("priority", priorityProfile?.id, priorityProfile?.reviewStatus, { authorityRank: 1 });
+    if (cmd.inspectionIntelligenceStateId) {
+      sources.push({
+        kind: "inspection_intelligence_public",
+        stateId: cmd.inspectionIntelligenceStateId,
+        contractVersion: cmd.inspectionIntelligenceContractVersion,
+        reviewStatus: "published",
+        authorityRank: 3,
+      });
+    }
+    if (cmd.projectIntelligenceStateId) {
+      sources.push({
+        kind: "project_intelligence_public",
+        stateId: cmd.projectIntelligenceStateId,
+        contractVersion: cmd.projectIntelligenceContractVersion,
+        reviewStatus: "published",
+        authorityRank: 1,
+      });
+    }
+
+    const composed = this.multiSourceFusionEngine.compose({
+      assetId: cmd.assetId,
+      sources,
+      evidenceConfidence,
+      assessedAt: recordedAt,
+    });
+
+    const reconciled = this.sourceReconciliationEngine.reconcile(composed.fusion);
+    composed.fusion.reconciliationRef = reconciled.id;
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!composed.abstained && cmd.startReview !== false) {
+      const review = startFusionReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        fusionStateId: composed.fusion.id,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      composed.fusion.reviewInstanceId = reviewInstanceId;
+      composed.fusion.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextFusionVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+    const fusionState: PersistedFusionState = {
+      ...composed.fusion,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.saveFusionState(fusionState);
+
+    const reconciliation: PersistedReconciliationRecord = {
+      ...reconciled,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+    };
+    await this.deps.repository.saveReconciliationRecord(reconciliation);
+    await this.deps.repository.cacheIdentity(identity);
+
+    const timelineEntries = await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: cmd.sourceKey,
+      provenance: {
+        sourceSystem: cmd.sourceKey,
+        observedAt: cmd.observedAt ?? recordedAt,
+        method: "multi_source_fusion_v1",
+        evidenceRefs,
+        policyId: "asset_intelligence.fusion.assess.v1",
+      },
+      correlationId: cmd.correlationId,
+      items: [
+        { kind: "fusion_state", stateId: fusionState.id },
+        { kind: "reconciliation_record", stateId: reconciliation.id },
+      ],
+    });
+
+    const reconciliationEvent = createAssetIntelligenceEvent({
+      type: "engineering.asset.reconciliation.recorded",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: reconciliation.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        sourceKey: cmd.sourceKey,
+        kind: "reconciliation_record",
+        status: reconciliation.conflicts.length > 0 ? "conflicts_detected" : "aligned",
+      },
+    });
+    await this.deps.events.publish(reconciliationEvent);
+    await this.deps.repository.appendEvent(reconciliationEvent);
+
+    return {
+      identity,
+      fusionState,
+      reconciliation,
+      evidenceConfidence,
+      timelineEntries,
+      abstained: composed.abstained,
+      abstentionReason: composed.abstentionReason,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      healthIndex,
+      condition,
+      criticality,
+    };
+  }
+
+  async assessFusion(cmd: AssessFusionCommand): Promise<EngineFusionResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "fusion.assess");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "fusion");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EngineFusionResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const prepared = await this.prepareFusion({ ...cmd, sourceKey, recordedAt });
+
+    const snapshot = composeAssetSnapshot({
+      identity: prepared.identity,
+      asOf: recordedAt,
+      condition: prepared.condition,
+      healthIndex: prepared.healthIndex,
+      criticality: prepared.criticality,
+      evidenceConfidence: prepared.evidenceConfidence,
+    });
+    const snapshotId = this.deps.repository.newId("snap");
+    await this.deps.repository.saveSnapshot({
+      id: snapshotId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      schemaVersion: "asset_snapshot/1",
+      capturedAt: recordedAt,
+      conditionStateId: prepared.condition?.stateId,
+      healthIndex: prepared.healthIndex,
+      identityReference: prepared.identity,
+      sourceSet: [sourceKey],
+      timelinePosition:
+        prepared.timelineEntries[prepared.timelineEntries.length - 1]?.entryId,
+      snapshot,
+    });
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.fusion.assessed",
+      payload: {
+        sourceKey,
+        kind: "fusion_state",
+        status: prepared.fusionState.reviewStatus,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: prepared.fusionState.id,
+      published: false,
+      createdAt: recordedAt,
+    });
+
+    for (const type of [
+      "engineering.asset.fusion.assessed",
+      "engineering.asset.evidence_confidence.assessed",
+    ] as const) {
+      const ev = createAssetIntelligenceEvent({
+        type,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: prepared.fusionState.id,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: {
+          sourceKey,
+          kind: "fusion_state",
+          status: prepared.fusionState.reviewStatus,
+        },
+      });
+      await this.deps.events.publish(ev);
+      await this.deps.repository.appendEvent(ev);
+    }
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EngineFusionResult = {
+      ...FUSION_GOVERNANCE_FLAGS,
+      identityOwner: "engineering_os_shared_domain",
+      fusionState: prepared.fusionState,
+      reconciliation: prepared.reconciliation,
+      evidenceConfidence: prepared.evidenceConfidence,
+      timelineEntries: prepared.timelineEntries,
+      snapshot,
+      snapshotId,
+      outboxEventId,
+      reviewInstanceId: prepared.reviewInstanceId,
+      reviewWorkflowInstance: prepared.reviewWorkflowInstance,
+      abstained: prepared.abstained,
+      abstentionReason: prepared.abstentionReason,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_fusion",
+        resourceId: prepared.fusionState.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewFusion(cmd: ReviewFusionCommand): Promise<{
+    fusionState: PersistedFusionState;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    fusionHealthContributionEnabled: false;
+    predictiveMlExecuted: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve"
+        ? "fusion.approve"
+        : cmd.publish
+          ? "fusion.publish"
+          : "fusion.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestFusionState(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.id !== cmd.fusionStateId) {
+      throw new Error("fusion_state_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_fusion_immutable");
+    }
+    const workflowInstance = transitionFusionReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextFusionVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const fusionState: PersistedFusionState = {
+      ...latest,
+      id: this.deps.repository.newId("fusion"),
+      version,
+      reviewStatus: nextStatus,
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.id,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+        predictiveMlExecuted: false,
+      },
+    };
+    await this.deps.repository.saveFusionState(fusionState);
+    await this.deps.repository.saveFusionReview({
+      reviewId: this.deps.repository.newId("frev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      fusionStateId: fusionState.id,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      evidenceConfidenceRef: fusionState.evidenceConfidenceRef,
+      trendConfidenceRef: fusionState.trendConfidenceRef,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: {
+        sourceSystem: "asset_intelligence.review",
+        observedAt: recordedAt,
+        method: "multi_source_fusion_v1",
+        reviewedBy: cmd.reviewerId,
+      },
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind: nextStatus === "published" ? "fusion_published" : "fusion_review",
+          stateId: fusionState.id,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.fusion.published"
+          : "engineering.asset.fusion.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: fusionState.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "fusion_state", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    if (fusionState.supersedesId) {
+      const superseded = createAssetIntelligenceEvent({
+        type: "engineering.asset.fusion.superseded",
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: fusionState.supersedesId,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: { kind: "fusion_state", status: "superseded" },
+      });
+      await this.deps.events.publish(superseded);
+      await this.deps.repository.appendEvent(superseded);
+    }
+    return {
+      fusionState,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      fusionHealthContributionEnabled: false,
+      predictiveMlExecuted: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  async assessPredictiveReadiness(
+    cmd: AssessPredictiveReadinessCommand,
+  ): Promise<EnginePredictiveReadinessResult> {
+    if (cmd.actorRole) assertFailureCapability(cmd.actorRole, "predictive_readiness.assess");
+    const sourceKey = cmd.sourceKey ?? "manual.engineering_assessment";
+    assertRegisteredActiveSource(sourceKey, "predictive_readiness");
+
+    if (cmd.idempotencyKey) {
+      const existing = await this.deps.repository.findIdempotency(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.idempotencyKey,
+      );
+      if (existing?.responsePayload?.result) {
+        return {
+          ...(existing.responsePayload.result as EnginePredictiveReadinessResult),
+          idempotentReplay: true,
+        };
+      }
+    }
+
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const history = await this.deps.repository.listFusionHistory(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    let fusionState = cmd.fusionStateId
+      ? history.find((f) => f.id === cmd.fusionStateId)
+      : history[history.length - 1];
+    let reconciliation: PersistedReconciliationRecord | undefined;
+    let evidenceConfidence = fusionState?.evidenceConfidence;
+    let timelineEntries: IntelligenceTimelineEntry[] = [];
+
+    if (!fusionState) {
+      const prepared = await this.prepareFusion({
+        ...cmd,
+        sourceKey,
+        recordedAt,
+        startReview: false,
+      });
+      fusionState = prepared.fusionState;
+      reconciliation = prepared.reconciliation;
+      evidenceConfidence = prepared.evidenceConfidence;
+      timelineEntries = prepared.timelineEntries;
+    } else {
+      const records = await this.deps.repository.listReconciliationRecords(
+        cmd.tenantId,
+        cmd.workspaceId,
+        cmd.assetId,
+      );
+      reconciliation = records.filter((r) => r.fusionStateRef === fusionState!.id).pop();
+    }
+
+    if (!evidenceConfidence) {
+      evidenceConfidence = this.evidenceConfidenceEngine.assess({
+        assessmentId: this.deps.repository.newId("ec"),
+        assetId: cmd.assetId,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        scope: "predictive_readiness",
+        evidenceRefs: cmd.evidenceRefs ?? [],
+        sourceKeys: [sourceKey],
+        observedAt: cmd.observedAt ?? recordedAt,
+        asOf: recordedAt,
+        reviewStatus: fusionState.reviewStatus,
+      });
+      await this.deps.repository.saveEvidenceConfidence({
+        ...evidenceConfidence,
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        version: 1,
+      });
+    }
+
+    // Readiness only — Phase 10I never executes predictive methods.
+    const assessed = this.predictiveReadinessAssessor.assess({
+      fusion: fusionState,
+      reconciliation,
+      evidenceConfidence,
+      assessedAt: recordedAt,
+    });
+    const abstained =
+      assessed.readiness.readinessClass === "insufficient" ||
+      assessed.readiness.readinessClass === "conflicting" ||
+      assessed.readiness.readinessClass === "not_ready";
+
+    let reviewInstanceId: string | undefined;
+    let reviewWorkflowInstance: EngineeringWorkflowInstance | undefined;
+    if (!abstained && cmd.startReview !== false) {
+      const review = startPredictiveReadinessReview({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        readinessStateId: assessed.readiness.id,
+        startedBy: cmd.createdBy,
+      });
+      reviewInstanceId = review.instance.instanceId;
+      reviewWorkflowInstance = review.instance;
+      assessed.readiness.reviewInstanceId = reviewInstanceId;
+      assessed.readiness.reviewStatus = "pending_review";
+    }
+
+    const version = await this.deps.repository.nextPredictiveReadinessVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      cmd.expectedVersion,
+    );
+    const predictiveReadiness: PersistedPredictiveReadinessState = {
+      ...assessed.readiness,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      version,
+      createdBy: cmd.createdBy,
+    };
+    await this.deps.repository.savePredictiveReadiness(predictiveReadiness);
+
+    timelineEntries = [
+      ...timelineEntries,
+      ...(await this.appendStateTimelines({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        recordedAt,
+        sourceKey,
+        provenance: {
+          sourceSystem: sourceKey,
+          observedAt: cmd.observedAt ?? recordedAt,
+          method: "predictive_readiness_v1",
+          evidenceRefs: cmd.evidenceRefs ?? [],
+          policyId: "asset_intelligence.predictive_readiness.assess.v1",
+        },
+        correlationId: cmd.correlationId,
+        items: [{ kind: "predictive_readiness", stateId: predictiveReadiness.id }],
+      })),
+    ];
+
+    const outboxEventId = this.deps.repository.newId("outbox");
+    await this.deps.repository.appendOutbox({
+      id: outboxEventId,
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      eventType: "engineering.asset.predictive_readiness.assessed",
+      payload: {
+        sourceKey,
+        kind: "predictive_readiness",
+        status: predictiveReadiness.readinessClass,
+        silentIdentityMutationForbidden: true,
+        rawEvidenceForbidden: true,
+        secretsForbidden: true,
+      },
+      correlationId: cmd.correlationId,
+      stateId: predictiveReadiness.id,
+      published: false,
+      createdAt: recordedAt,
+    });
+    const ev = createAssetIntelligenceEvent({
+      type: "engineering.asset.predictive_readiness.assessed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: predictiveReadiness.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: {
+        sourceKey,
+        kind: "predictive_readiness",
+        status: predictiveReadiness.readinessClass,
+      },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    await this.deps.repository.markOutboxPublished(outboxEventId, recordedAt);
+
+    const result: EnginePredictiveReadinessResult = {
+      ...FUSION_GOVERNANCE_FLAGS,
+      identityOwner: "engineering_os_shared_domain",
+      fusionState,
+      reconciliation,
+      predictiveReadiness,
+      evidenceConfidence,
+      timelineEntries,
+      outboxEventId,
+      reviewInstanceId,
+      reviewWorkflowInstance,
+      abstained,
+      abstentionReason: abstained
+        ? predictiveReadiness.readinessRationale[0]
+        : undefined,
+      predictiveAllowed: false,
+    };
+
+    if (cmd.idempotencyKey) {
+      await this.deps.repository.saveIdempotency({
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        idempotencyKey: cmd.idempotencyKey,
+        operation: "assess_predictive_readiness",
+        resourceId: predictiveReadiness.id,
+        responsePayload: { result },
+      });
+    }
+    return result;
+  }
+
+  async reviewPredictiveReadiness(cmd: ReviewPredictiveReadinessCommand): Promise<{
+    predictiveReadiness: PersistedPredictiveReadinessState;
+    workflowInstance: EngineeringWorkflowInstance;
+    identityMutated: false;
+    healthMutated: false;
+    predictiveMlEnabled: false;
+    predictiveMethodsCertified: false;
+    aiMayPublishForbidden: true;
+  }> {
+    const capability =
+      cmd.action === "approve"
+        ? "predictive_readiness.approve"
+        : cmd.publish
+          ? "predictive_readiness.publish"
+          : "predictive_readiness.review";
+    if (cmd.actorRole) {
+      assertFailureCapability(cmd.actorRole, capability, { actorId: cmd.reviewerId });
+    }
+    const latest = await this.deps.repository.latestPredictiveReadiness(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+    );
+    if (!latest || latest.id !== cmd.readinessStateId) {
+      throw new Error("predictive_readiness_state_not_found");
+    }
+    if (latest.reviewStatus === "published") {
+      throw new Error("published_predictive_readiness_immutable");
+    }
+    const workflowInstance = transitionPredictiveReadinessReview({
+      instance: cmd.workflowInstance,
+      action: cmd.action,
+      to: cmd.to,
+    });
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const nextStatus = cmd.publish && cmd.to === "approved" ? "published" : cmd.to;
+    const version = await this.deps.repository.nextPredictiveReadinessVersion(
+      cmd.tenantId,
+      cmd.workspaceId,
+      cmd.assetId,
+      latest.version,
+    );
+    const predictiveReadiness: PersistedPredictiveReadinessState = {
+      ...latest,
+      id: this.deps.repository.newId("pred_ready"),
+      version,
+      reviewStatus: nextStatus,
+      reviewedAt: recordedAt,
+      publishedAt: nextStatus === "published" ? recordedAt : latest.publishedAt,
+      supersedesId: latest.id,
+      provenance: {
+        ...latest.provenance,
+        reviewedBy: cmd.reviewerId,
+        approvedAt: cmd.to === "approved" ? recordedAt : undefined,
+        predictiveMlEnabled: false,
+        predictiveMethodsCertified: false,
+      },
+    };
+    await this.deps.repository.savePredictiveReadiness(predictiveReadiness);
+    await this.deps.repository.savePredictiveReadinessReview({
+      reviewId: this.deps.repository.newId("prrev"),
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      readinessStateId: predictiveReadiness.id,
+      reviewInstanceId: workflowInstance.instanceId,
+      action: cmd.action,
+      reviewerId: cmd.reviewerId,
+      reason: cmd.reason,
+      stateVersion: version,
+      evidenceConfidenceRef: predictiveReadiness.evidenceConfidenceRef,
+      correlationId: cmd.correlationId,
+      createdAt: recordedAt,
+    });
+    await this.appendStateTimelines({
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      recordedAt,
+      sourceKey: "asset_intelligence.review",
+      provenance: {
+        sourceSystem: "asset_intelligence.review",
+        observedAt: recordedAt,
+        method: "predictive_readiness_v1",
+        reviewedBy: cmd.reviewerId,
+      },
+      correlationId: cmd.correlationId,
+      items: [
+        {
+          kind:
+            nextStatus === "published"
+              ? "predictive_readiness_published"
+              : "predictive_readiness_review",
+          stateId: predictiveReadiness.id,
+        },
+      ],
+    });
+    const ev = createAssetIntelligenceEvent({
+      type:
+        nextStatus === "published"
+          ? "engineering.asset.predictive_readiness.published"
+          : "engineering.asset.predictive_readiness.reviewed",
+      tenantId: cmd.tenantId,
+      workspaceId: cmd.workspaceId,
+      assetId: cmd.assetId,
+      stateId: predictiveReadiness.id,
+      occurredAt: recordedAt,
+      correlationId: cmd.correlationId,
+      payload: { kind: "predictive_readiness", status: nextStatus },
+    });
+    await this.deps.events.publish(ev);
+    await this.deps.repository.appendEvent(ev);
+    if (predictiveReadiness.supersedesId) {
+      const superseded = createAssetIntelligenceEvent({
+        type: "engineering.asset.predictive_readiness.superseded",
+        tenantId: cmd.tenantId,
+        workspaceId: cmd.workspaceId,
+        assetId: cmd.assetId,
+        stateId: predictiveReadiness.supersedesId,
+        occurredAt: recordedAt,
+        correlationId: cmd.correlationId,
+        payload: { kind: "predictive_readiness", status: "superseded" },
+      });
+      await this.deps.events.publish(superseded);
+      await this.deps.repository.appendEvent(superseded);
+    }
+    return {
+      predictiveReadiness,
+      workflowInstance,
+      identityMutated: false,
+      healthMutated: false,
+      predictiveMlEnabled: false,
+      predictiveMethodsCertified: false,
+      aiMayPublishForbidden: true,
+    };
+  }
+
+  /**
+   * Phase 10I orchestration: published slices → fuse → reconcile → readiness →
+   * persist → governed reviews → timeline → snapshot refs → outbox.
+   */
+  async assessFusionBundle(cmd: AssessFusionBundleCommand): Promise<EngineFusionBundleResult> {
+    const recordedAt = cmd.recordedAt ?? new Date().toISOString();
+    const fusion = await this.assessFusion({ ...cmd, recordedAt });
+    const readiness = await this.assessPredictiveReadiness({
+      ...cmd,
+      recordedAt,
+      fusionStateId: fusion.fusionState.id,
+      idempotencyKey: cmd.idempotencyKey ? `${cmd.idempotencyKey}:readiness` : undefined,
+    });
+
+    return {
+      ...FUSION_GOVERNANCE_FLAGS,
+      identityOwner: "engineering_os_shared_domain",
+      fusionState: fusion.fusionState,
+      reconciliation: fusion.reconciliation,
+      predictiveReadiness: readiness.predictiveReadiness,
+      evidenceConfidence: fusion.evidenceConfidence,
+      timelineEntries: [...fusion.timelineEntries, ...readiness.timelineEntries],
+      snapshot: fusion.snapshot,
+      snapshotId: fusion.snapshotId,
+      outboxEventIds: [fusion.outboxEventId, readiness.outboxEventId],
+      fusionReviewInstanceId: fusion.reviewInstanceId,
+      predictiveReadinessReviewInstanceId: readiness.reviewInstanceId,
+      abstained: fusion.abstained || readiness.abstained,
+      abstentionReason: fusion.abstentionReason ?? readiness.abstentionReason,
+      predictiveAllowed: false,
+    };
+  }
+
   private async appendStateTimelines(input: {
     tenantId: string;
     workspaceId: string;
@@ -4209,6 +5260,38 @@ export class AssetIntelligenceEngine {
     asOf?: string,
   ): Promise<PersistedCriticalityState | undefined> {
     return this.deps.repository.latestCriticality(tenantId, workspaceId, assetId, asOf);
+  }
+
+  async getFusionState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState | undefined> {
+    return this.deps.repository.latestFusionState(tenantId, workspaceId, assetId);
+  }
+
+  async listFusionHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState[]> {
+    return this.deps.repository.listFusionHistory(tenantId, workspaceId, assetId);
+  }
+
+  async listReconciliationRecords(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedReconciliationRecord[]> {
+    return this.deps.repository.listReconciliationRecords(tenantId, workspaceId, assetId);
+  }
+
+  async getPredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState | undefined> {
+    return this.deps.repository.latestPredictiveReadiness(tenantId, workspaceId, assetId);
   }
 }
 

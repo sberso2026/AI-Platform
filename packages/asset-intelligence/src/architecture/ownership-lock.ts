@@ -10,6 +10,8 @@ import {
   PRODUCTION_ASSET_INTELLIGENCE_READY,
   ACCURACY_CLAIMS_CERTIFIED,
   RUL_CLAIMS_CERTIFIED,
+  PREDICTIVE_ML_ENABLED,
+  PREDICTIVE_METHODS_CERTIFIED,
 } from "../version";
 
 export type DomainOwner =
@@ -61,6 +63,9 @@ export const ASSET_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
   { concern: "risk_candidate_handoff", owner: "asset_intelligence", notes: "human-gated Core adapter only" },
   { concern: "maintenance_recommendation_intelligence", owner: "asset_intelligence", notes: "advisory; not CMMS work orders" },
   { concern: "asset_priority_context", owner: "asset_intelligence", notes: "dimensional attention; not a Health factor" },
+  { concern: "multi_source_fusion", owner: "asset_intelligence", notes: "published-slice fusion; not a Health factor" },
+  { concern: "source_reconciliation", owner: "asset_intelligence", notes: "conflict records; autonomous resolution forbidden" },
+  { concern: "predictive_readiness", owner: "asset_intelligence", notes: "readiness only; predictive ML not enabled" },
   { concern: "project_knowledge", owner: "project_intelligence", notes: "PI owns knowledge derivatives" },
 ] as const;
 
@@ -73,6 +78,8 @@ export function assertOwnershipLock(): {
   assetIntelligenceImplemented: typeof ASSET_INTELLIGENCE_IMPLEMENTED;
   accuracyClaimsCertified: false;
   rulClaimsCertified: false;
+  predictiveMlEnabled: false;
+  predictiveMethodsCertified: false;
 } {
   if (ASSET_IDENTITY_OWNERSHIP !== "engineering_os_shared_domain") {
     throw new Error("identity_must_be_shared_domain");
@@ -87,6 +94,9 @@ export function assertOwnershipLock(): {
   if (ACCURACY_CLAIMS_CERTIFIED || RUL_CLAIMS_CERTIFIED) {
     throw new Error("unsupported_claims_forbidden");
   }
+  if (PREDICTIVE_ML_ENABLED || PREDICTIVE_METHODS_CERTIFIED) {
+    throw new Error("predictive_execution_forbidden_in_phase_10i");
+  }
   const identityOwners = ASSET_OWNERSHIP_MATRIX.filter((r) => r.concern === "asset_identity");
   if (identityOwners.some((r) => r.owner !== "engineering_os_shared_domain")) {
     throw new Error("duplicate_or_wrong_identity_owner");
@@ -100,5 +110,7 @@ export function assertOwnershipLock(): {
     assetIntelligenceImplemented: ASSET_INTELLIGENCE_IMPLEMENTED,
     accuracyClaimsCertified: false,
     rulClaimsCertified: false,
+    predictiveMlEnabled: false,
+    predictiveMethodsCertified: false,
   };
 }

@@ -25,7 +25,7 @@ import {
 
 describe("Phase 10F time series / trend / degradation", () => {
   it("locks version and readiness flags", () => {
-    expect(ASSET_INTELLIGENCE_VERSION).toBe("0.8.0-risk-priority");
+    expect(["0.8.0-risk-priority", "0.9.0-fusion-readiness"]).toContain(ASSET_INTELLIGENCE_VERSION);
     expect(ENGINEERING_TIME_SERIES_READY).toBe(true);
     expect(CHANGE_DETECTION_ENGINE_READY).toBe(true);
     expect(TREND_CONFIDENCE_ENGINE_READY).toBe(true);

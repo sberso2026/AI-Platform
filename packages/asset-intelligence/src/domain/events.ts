@@ -45,7 +45,16 @@ export type AssetIntelligenceEventType =
   | "engineering.asset.priority.assessed"
   | "engineering.asset.priority.reviewed"
   | "engineering.asset.priority.published"
-  | "engineering.asset.priority.superseded";
+  | "engineering.asset.priority.superseded"
+  | "engineering.asset.fusion.assessed"
+  | "engineering.asset.fusion.reviewed"
+  | "engineering.asset.fusion.published"
+  | "engineering.asset.fusion.superseded"
+  | "engineering.asset.reconciliation.recorded"
+  | "engineering.asset.predictive_readiness.assessed"
+  | "engineering.asset.predictive_readiness.reviewed"
+  | "engineering.asset.predictive_readiness.published"
+  | "engineering.asset.predictive_readiness.superseded";
 
 export type AssetIntelligenceEvent = {
   type: AssetIntelligenceEventType;

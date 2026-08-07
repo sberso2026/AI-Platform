@@ -34,7 +34,14 @@ export type TimelineStateKind =
   | "maintenance_recommendation_published"
   | "priority_profile"
   | "priority_review"
-  | "priority_published";
+  | "priority_published"
+  | "fusion_state"
+  | "fusion_review"
+  | "fusion_published"
+  | "reconciliation_record"
+  | "predictive_readiness"
+  | "predictive_readiness_review"
+  | "predictive_readiness_published";
 
 export type IntelligenceTimelineEntry = {
   entryId: string;

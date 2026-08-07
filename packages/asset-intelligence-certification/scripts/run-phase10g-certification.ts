@@ -411,7 +411,14 @@ async function main() {
       : "fail",
   );
   push("AK", "Priority Engine reservation", fileOk(VERSION, /ASSET_PRIORITY_ENGINE_READY = false/) ? "pass" : "fail");
-  push("AL", "Fusion reservation", fileOk(VERSION, /MULTI_SOURCE_FUSION_READY = false/) ? "pass" : "fail");
+  push(
+    "AL",
+    "Fusion reservation",
+    fileOk(VERSION, /PREDICTIVE_ML_ENABLED = false/) &&
+      fileOk(VERSION, /PREDICTIVE_METHODS_CERTIFIED = false/)
+      ? "pass"
+      : "fail",
+  );
   push(
     "AM",
     "II contract boundary",
@@ -551,7 +558,8 @@ async function main() {
     rulClaimsCertified: false,
     probabilityOfFailureCertified: false,
     assetPriorityEngineReady: false,
-    multiSourceFusionReady: false,
+    predictiveMlEnabled: false,
+    predictiveMethodsCertified: false,
     secretExposureDetected: gates.some((g) => g.id === "BA" && g.status === "fail"),
     secretExposure: gates.some((g) => g.id === "BA" && g.status === "fail"),
     unexpected5xx: 0,

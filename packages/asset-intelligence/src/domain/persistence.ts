@@ -38,6 +38,11 @@ import type { AssetRiskCandidate, AssetRiskSignalState } from "./risk";
 import type { AssetMaintenanceRecommendationState } from "./maintenance-recommendation";
 import type { MaintenanceTaxonomyEntry } from "./maintenance-taxonomy";
 import type { AssetPriorityProfile } from "./priority";
+import type {
+  AssetFusionState,
+  PredictiveReadinessState,
+  SourceReconciliationRecord,
+} from "./fusion";
 
 export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
 
@@ -334,6 +339,61 @@ export type PersistedPriorityReview = {
   stateVersion: number;
   evidenceConfidenceRef?: string;
   trendConfidenceRef?: string;
+  contentHash?: string;
+  correlationId?: string;
+  createdAt: string;
+};
+
+/** Phase 10I — Multi-source fusion / reconciliation / predictive readiness. */
+export type PersistedFusionState = AssetFusionState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedFusionReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  fusionStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  evidenceConfidenceRef?: string;
+  trendConfidenceRef?: string;
+  contentHash?: string;
+  correlationId?: string;
+  createdAt: string;
+};
+
+export type PersistedReconciliationRecord = SourceReconciliationRecord & {
+  tenantId: string;
+  workspaceId: string;
+};
+
+export type PersistedPredictiveReadinessState = PredictiveReadinessState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  createdBy?: string;
+};
+
+export type PersistedPredictiveReadinessReview = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  readinessStateId: string;
+  reviewInstanceId: string;
+  action: string;
+  reviewerId: string;
+  reason?: string;
+  stateVersion: number;
+  evidenceConfidenceRef?: string;
   contentHash?: string;
   correlationId?: string;
   createdAt: string;
@@ -704,6 +764,56 @@ export type AssetIntelligenceRepositoryPort = {
     assetId: string,
   ): Promise<PersistedPriorityProfile[]>;
   savePriorityReview(review: PersistedPriorityReview): Promise<PersistedPriorityReview>;
+  /** Phase 10I — Multi-source fusion. Optimistic concurrency via expectedCurrentVersion. */
+  nextFusionVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  saveFusionState(state: PersistedFusionState): Promise<PersistedFusionState>;
+  latestFusionState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState | undefined>;
+  listFusionHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState[]>;
+  saveFusionReview(review: PersistedFusionReview): Promise<PersistedFusionReview>;
+  saveReconciliationRecord(
+    record: PersistedReconciliationRecord,
+  ): Promise<PersistedReconciliationRecord>;
+  listReconciliationRecords(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedReconciliationRecord[]>;
+  /** Phase 10I — Predictive readiness (readiness only; never predictive execution). */
+  nextPredictiveReadinessVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+  savePredictiveReadiness(
+    state: PersistedPredictiveReadinessState,
+  ): Promise<PersistedPredictiveReadinessState>;
+  latestPredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState | undefined>;
+  listPredictiveReadinessHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState[]>;
+  savePredictiveReadinessReview(
+    review: PersistedPredictiveReadinessReview,
+  ): Promise<PersistedPredictiveReadinessReview>;
 };
 
 export type DurableAssetIntelligenceStore = {
@@ -747,6 +857,11 @@ export type DurableAssetIntelligenceStore = {
   maintenanceTaxonomy: PersistedMaintenanceTaxonomyEntry[];
   priorityProfiles: PersistedPriorityProfile[];
   priorityReviews: PersistedPriorityReview[];
+  fusionStates: PersistedFusionState[];
+  fusionReviews: PersistedFusionReview[];
+  reconciliationRecords: PersistedReconciliationRecord[];
+  predictiveReadinessStates: PersistedPredictiveReadinessState[];
+  predictiveReadinessReviews: PersistedPredictiveReadinessReview[];
 };
 
 export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelligenceStore {
@@ -791,6 +906,11 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     maintenanceTaxonomy: [],
     priorityProfiles: [],
     priorityReviews: [],
+    fusionStates: [],
+    fusionReviews: [],
+    reconciliationRecords: [],
+    predictiveReadinessStates: [],
+    predictiveReadinessReviews: [],
   };
 }
 
@@ -1675,6 +1795,114 @@ export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepos
 
   async savePriorityReview(review: PersistedPriorityReview): Promise<PersistedPriorityReview> {
     this.store.priorityReviews.push(review);
+    return review;
+  }
+
+  async nextFusionVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestFusionState(tenantId, workspaceId, assetId);
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveFusionState(state: PersistedFusionState): Promise<PersistedFusionState> {
+    this.store.fusionStates.push(state);
+    return state;
+  }
+
+  async latestFusionState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState | undefined> {
+    const history = await this.listFusionHistory(tenantId, workspaceId, assetId);
+    return history[history.length - 1];
+  }
+
+  async listFusionHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState[]> {
+    return this.store.fusionStates
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveFusionReview(review: PersistedFusionReview): Promise<PersistedFusionReview> {
+    this.store.fusionReviews.push(review);
+    return review;
+  }
+
+  async saveReconciliationRecord(
+    record: PersistedReconciliationRecord,
+  ): Promise<PersistedReconciliationRecord> {
+    this.store.reconciliationRecords.push(record);
+    return record;
+  }
+
+  async listReconciliationRecords(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedReconciliationRecord[]> {
+    return this.store.reconciliationRecords
+      .filter(
+        (r) =>
+          r.assetId === assetId && r.tenantId === tenantId && r.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.reconciledAt.localeCompare(b.reconciledAt));
+  }
+
+  async nextPredictiveReadinessVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPredictiveReadiness(tenantId, workspaceId, assetId);
+    return assertNextVersion(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePredictiveReadiness(
+    state: PersistedPredictiveReadinessState,
+  ): Promise<PersistedPredictiveReadinessState> {
+    this.store.predictiveReadinessStates.push(state);
+    return state;
+  }
+
+  async latestPredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState | undefined> {
+    const history = await this.listPredictiveReadinessHistory(tenantId, workspaceId, assetId);
+    return history[history.length - 1];
+  }
+
+  async listPredictiveReadinessHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState[]> {
+    return this.store.predictiveReadinessStates
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async savePredictiveReadinessReview(
+    review: PersistedPredictiveReadinessReview,
+  ): Promise<PersistedPredictiveReadinessReview> {
+    this.store.predictiveReadinessReviews.push(review);
     return review;
   }
 

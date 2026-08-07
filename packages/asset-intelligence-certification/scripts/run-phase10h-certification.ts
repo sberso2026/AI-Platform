@@ -663,7 +663,8 @@ async function main() {
   push(
     "BB",
     "No predictive ML",
-    fileOk(VERSION, /MULTI_SOURCE_FUSION_READY = false/) &&
+    fileOk(VERSION, /PREDICTIVE_ML_ENABLED = false/) &&
+      fileOk(VERSION, /PREDICTIVE_METHODS_CERTIFIED = false/) &&
       fileOk(RISK_ROUTE, /predictiveMlUsed: false/)
       ? "pass"
       : "fail",
@@ -782,7 +783,8 @@ async function main() {
     accuracyClaimsCertified: false,
     rulClaimsCertified: false,
     probabilityOfFailureCertified: false,
-    multiSourceFusionReady: false,
+    predictiveMlEnabled: false,
+    predictiveMethodsCertified: false,
     secretExposureDetected: gates.some((g) => g.id === "BE" && g.status === "fail"),
     secretExposure: gates.some((g) => g.id === "BE" && g.status === "fail"),
     unexpected5xx: 0,

@@ -22,6 +22,11 @@ import type {
   ReviewMaintenanceRecommendationCommand,
   ReviewPriorityCommand,
   ReviewRiskCommand,
+  AssessFusionCommand,
+  AssessFusionBundleCommand,
+  AssessPredictiveReadinessCommand,
+  ReviewFusionCommand,
+  ReviewPredictiveReadinessCommand,
 } from "./engine";
 
 export class AssetConditionService {
@@ -140,6 +145,46 @@ export class AssetPriorityService {
   }
 }
 
+export class AssetFusionService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessFusionCommand) {
+    return this.engine.assessFusion(cmd);
+  }
+
+  review(cmd: ReviewFusionCommand) {
+    return this.engine.reviewFusion(cmd);
+  }
+
+  read(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.getFusionState(tenantId, workspaceId, assetId);
+  }
+
+  history(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.listFusionHistory(tenantId, workspaceId, assetId);
+  }
+
+  reconciliations(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.listReconciliationRecords(tenantId, workspaceId, assetId);
+  }
+}
+
+export class AssetPredictiveReadinessService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessPredictiveReadinessCommand) {
+    return this.engine.assessPredictiveReadiness(cmd);
+  }
+
+  review(cmd: ReviewPredictiveReadinessCommand) {
+    return this.engine.reviewPredictiveReadiness(cmd);
+  }
+
+  read(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.getPredictiveReadiness(tenantId, workspaceId, assetId);
+  }
+}
+
 export class AssetHealthIndexService {
   constructor(private readonly engine: AssetIntelligenceEngine) {}
 
@@ -167,6 +212,8 @@ export class AssetIntelligenceService {
   readonly risk: AssetRiskService;
   readonly maintenanceRecommendation: AssetMaintenanceRecommendationService;
   readonly priority: AssetPriorityService;
+  readonly fusion: AssetFusionService;
+  readonly predictiveReadiness: AssetPredictiveReadinessService;
   readonly health: AssetHealthIndexService;
   readonly timeline: AssetTimelineService;
 
@@ -181,6 +228,8 @@ export class AssetIntelligenceService {
     this.risk = new AssetRiskService(engine);
     this.maintenanceRecommendation = new AssetMaintenanceRecommendationService(engine);
     this.priority = new AssetPriorityService(engine);
+    this.fusion = new AssetFusionService(engine);
+    this.predictiveReadiness = new AssetPredictiveReadinessService(engine);
     this.health = new AssetHealthIndexService(engine);
     this.timeline = new AssetTimelineService(engine);
   }
@@ -215,6 +264,26 @@ export class AssetIntelligenceService {
 
   assessRiskPriorityBundle(cmd: AssessRiskPriorityBundleCommand) {
     return this.engine.assessRiskPriorityBundle(cmd);
+  }
+
+  assessFusion(cmd: AssessFusionCommand) {
+    return this.engine.assessFusion(cmd);
+  }
+
+  reviewFusion(cmd: ReviewFusionCommand) {
+    return this.engine.reviewFusion(cmd);
+  }
+
+  assessPredictiveReadiness(cmd: AssessPredictiveReadinessCommand) {
+    return this.engine.assessPredictiveReadiness(cmd);
+  }
+
+  reviewPredictiveReadiness(cmd: ReviewPredictiveReadinessCommand) {
+    return this.engine.reviewPredictiveReadiness(cmd);
+  }
+
+  assessFusionBundle(cmd: AssessFusionBundleCommand) {
+    return this.engine.assessFusionBundle(cmd);
   }
 
   assessConditionFromInspection(cmd: AssessConditionCommand) {

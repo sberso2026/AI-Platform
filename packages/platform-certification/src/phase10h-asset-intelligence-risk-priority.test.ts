@@ -22,7 +22,9 @@ describe("Phase 10H Asset Intelligence Risk/Priority architecture lock", () => {
       resolve(root, "packages/asset-intelligence/src/version.ts"),
       "utf8",
     );
-    expect(version).toMatch(/ASSET_INTELLIGENCE_VERSION = "0\.8\.0-risk-priority"/);
+    expect(version).toMatch(
+      /ASSET_INTELLIGENCE_VERSION = "(0\.8\.0-risk-priority|0\.9\.0-fusion-readiness)"/,
+    );
     expect(version).toMatch(/ASSET_DECISION_CONTEXT_ENGINE_READY = true/);
     expect(version).toMatch(/RISK_SIGNAL_ENGINE_READY = true/);
     expect(version).toMatch(/MAINTENANCE_RECOMMENDATION_ENGINE_READY = true/);
@@ -32,7 +34,8 @@ describe("Phase 10H Asset Intelligence Risk/Priority architecture lock", () => {
     expect(version).toMatch(/PRIORITY_HEALTH_CONTRIBUTION_ENABLED = false/);
     expect(version).toMatch(/RISK_CORE_AUTO_MUTATION_ALLOWED = false/);
     expect(version).toMatch(/NUMERIC_PRIORITY_SCORE_REQUIRED = false/);
-    expect(version).toMatch(/MULTI_SOURCE_FUSION_READY = false/);
+    expect(version).toMatch(/PREDICTIVE_ML_ENABLED = false/);
+    expect(version).toMatch(/PREDICTIVE_METHODS_CERTIFIED = false/);
     expect(version).toMatch(
       /CANONICAL_ENGINEERING_RISK_OWNERSHIP = "engineering_core"/,
     );

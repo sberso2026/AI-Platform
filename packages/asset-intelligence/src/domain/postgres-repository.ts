@@ -50,6 +50,11 @@ import type {
   PersistedMaintenanceTaxonomyEntry,
   PersistedPriorityProfile,
   PersistedPriorityReview,
+  PersistedFusionState,
+  PersistedFusionReview,
+  PersistedReconciliationRecord,
+  PersistedPredictiveReadinessState,
+  PersistedPredictiveReadinessReview,
   SourceProvenanceRecord,
 } from "./persistence";
 import { assertProductionRepositorySafe } from "./persistence";
@@ -2081,6 +2086,367 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
     if (error) throw new Error(`priority_review_persist_failed:${error.message}`);
     return review;
   }
+
+  async nextFusionVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestFusionState(tenantId, workspaceId, assetId);
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async saveFusionState(state: PersistedFusionState): Promise<PersistedFusionState> {
+    const { error } = await this.supabase.from("asset_intelligence_fusion_states").insert({
+      id: state.id,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      asset_id: state.assetId,
+      version: state.version,
+      contributing_sources: state.contributingSources ?? [],
+      missing_sources: state.missingSources ?? [],
+      conflicting_sources: state.conflictingSources ?? [],
+      reconciliation_ref: state.reconciliationRef ?? null,
+      predictive_readiness_ref: state.predictiveReadinessRef ?? null,
+      evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+      trend_confidence_ref: state.trendConfidenceRef ?? null,
+      fusion_class: state.fusionClass,
+      method: state.method,
+      method_version: state.methodVersion,
+      confidence: state.confidence ?? null,
+      review_status: state.reviewStatus,
+      review_instance_id: state.reviewInstanceId ?? null,
+      assessed_at: state.assessedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      provenance: state.provenance ?? {},
+      limitations: state.limitations ?? [],
+      evidence_confidence: state.evidenceConfidence ?? null,
+      trend_confidence: state.trendConfidence ?? null,
+      predictive_ml_executed: false,
+      probability_of_failure_certified: false,
+      rul_claims_certified: false,
+      is_health_factor: false,
+      creates_core_risk: false,
+      creates_work_order: false,
+      mutates_canonical_lifecycle: false,
+      payload: {
+        fusionHealthContributionEnabled: false,
+        predictiveMlEnabled: false,
+        predictiveMethodsCertified: false,
+        aiMayPublishForbidden: true,
+      },
+    });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`fusion_state_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestFusionState(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_fusion_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapFusionStateRow(data) : undefined;
+  }
+
+  async listFusionHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedFusionState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_fusion_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapFusionStateRow);
+  }
+
+  async saveFusionReview(review: PersistedFusionReview): Promise<PersistedFusionReview> {
+    const { error } = await this.supabase.from("asset_intelligence_fusion_reviews").insert({
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      asset_id: review.assetId,
+      fusion_state_id: review.fusionStateId,
+      review_instance_id: review.reviewInstanceId,
+      action: review.action,
+      reviewer_id: review.reviewerId,
+      reason: review.reason ?? null,
+      state_version: review.stateVersion,
+      evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+      trend_confidence_ref: review.trendConfidenceRef ?? null,
+      content_hash: review.contentHash ?? null,
+      correlation_id: review.correlationId ?? null,
+      created_at: review.createdAt,
+    });
+    if (error) throw new Error(`fusion_review_persist_failed:${error.message}`);
+    return review;
+  }
+
+  async saveReconciliationRecord(
+    record: PersistedReconciliationRecord,
+  ): Promise<PersistedReconciliationRecord> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_reconciliation_records")
+      .insert({
+        id: record.id,
+        tenant_id: record.tenantId,
+        workspace_id: record.workspaceId,
+        asset_id: record.assetId,
+        fusion_state_ref: record.fusionStateRef,
+        conflicts: record.conflicts ?? [],
+        method: record.method,
+        method_version: record.methodVersion,
+        reconciled_at: record.reconciledAt,
+        limitations: record.limitations ?? [],
+        autonomous_resolution_forbidden: true,
+        payload: { autonomousResolutionForbidden: true },
+      });
+    if (error) throw new Error(`reconciliation_record_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async listReconciliationRecords(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedReconciliationRecord[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_reconciliation_records")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("reconciled_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapReconciliationRow);
+  }
+
+  async nextPredictiveReadinessVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestPredictiveReadiness(tenantId, workspaceId, assetId);
+    return nextVersionOrConflict(latest?.version ?? 0, expectedCurrentVersion);
+  }
+
+  async savePredictiveReadiness(
+    state: PersistedPredictiveReadinessState,
+  ): Promise<PersistedPredictiveReadinessState> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_predictive_readiness_states")
+      .insert({
+        id: state.id,
+        tenant_id: state.tenantId,
+        workspace_id: state.workspaceId,
+        asset_id: state.assetId,
+        version: state.version,
+        fusion_state_ref: state.fusionStateRef,
+        reconciliation_ref: state.reconciliationRef ?? null,
+        readiness_class: state.readinessClass,
+        readiness_rationale: state.readinessRationale ?? [],
+        evidence_confidence_ref: state.evidenceConfidenceRef ?? null,
+        trend_confidence_ref: state.trendConfidenceRef ?? null,
+        method: state.method,
+        method_version: state.methodVersion,
+        review_status: state.reviewStatus,
+        review_instance_id: state.reviewInstanceId ?? null,
+        assessed_at: state.assessedAt,
+        reviewed_at: state.reviewedAt ?? null,
+        published_at: state.publishedAt ?? null,
+        created_by: state.createdBy ?? null,
+        supersedes_id: state.supersedesId ?? null,
+        provenance: state.provenance ?? {},
+        limitations: state.limitations ?? [],
+        predictive_ml_enabled: false,
+        predictive_methods_certified: false,
+        predictive_ml_executed: false,
+        probability_of_failure_certified: false,
+        rul_claims_certified: false,
+        is_health_factor: false,
+        payload: { predictiveReadinessOnly: true, aiMayPublishForbidden: true },
+      });
+    if (error) {
+      if (error.code === "23505") throw new Error(`idempotent_or_version_conflict:${error.message}`);
+      throw new Error(`predictive_readiness_persist_failed:${error.message}`);
+    }
+    return state;
+  }
+
+  async latestPredictiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState | undefined> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_readiness_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapPredictiveReadinessRow(data) : undefined;
+  }
+
+  async listPredictiveReadinessHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedPredictiveReadinessState[]> {
+    const { data, error } = await this.supabase
+      .from("asset_intelligence_predictive_readiness_states")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("asset_id", assetId)
+      .order("version", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(mapPredictiveReadinessRow);
+  }
+
+  async savePredictiveReadinessReview(
+    review: PersistedPredictiveReadinessReview,
+  ): Promise<PersistedPredictiveReadinessReview> {
+    const { error } = await this.supabase
+      .from("asset_intelligence_predictive_readiness_reviews")
+      .insert({
+        id: review.reviewId,
+        tenant_id: review.tenantId,
+        workspace_id: review.workspaceId,
+        asset_id: review.assetId,
+        readiness_state_id: review.readinessStateId,
+        review_instance_id: review.reviewInstanceId,
+        action: review.action,
+        reviewer_id: review.reviewerId,
+        reason: review.reason ?? null,
+        state_version: review.stateVersion,
+        evidence_confidence_ref: review.evidenceConfidenceRef ?? null,
+        content_hash: review.contentHash ?? null,
+        correlation_id: review.correlationId ?? null,
+        created_at: review.createdAt,
+      });
+    if (error) throw new Error(`predictive_readiness_review_persist_failed:${error.message}`);
+    return review;
+  }
+}
+
+function mapFusionStateRow(row: Record<string, unknown>): PersistedFusionState {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    version: Number(row.version),
+    contributingSources: (row.contributing_sources ??
+      []) as PersistedFusionState["contributingSources"],
+    missingSources: (row.missing_sources ?? []) as PersistedFusionState["missingSources"],
+    conflictingSources: (row.conflicting_sources ??
+      []) as PersistedFusionState["conflictingSources"],
+    reconciliationRef: strOrUndefined(row.reconciliation_ref),
+    predictiveReadinessRef: strOrUndefined(row.predictive_readiness_ref),
+    evidenceConfidenceRef: strOrUndefined(row.evidence_confidence_ref),
+    trendConfidenceRef: strOrUndefined(row.trend_confidence_ref),
+    fusionClass: row.fusion_class as PersistedFusionState["fusionClass"],
+    method: "multi_source_fusion_v1",
+    methodVersion: "1",
+    confidence: numOrUndefined(row.confidence),
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    assessedAt: String(row.assessed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    publishedAt: strOrUndefined(row.published_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    evidenceConfidence: (row.evidence_confidence ??
+      undefined) as PersistedFusionState["evidenceConfidence"],
+    trendConfidence: (row.trend_confidence ??
+      undefined) as PersistedFusionState["trendConfidence"],
+    predictiveMlExecuted: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    isHealthFactor: false,
+    createsCoreRisk: false,
+    createsWorkOrder: false,
+    mutatesCanonicalLifecycle: false,
+  };
+}
+
+function mapReconciliationRow(row: Record<string, unknown>): PersistedReconciliationRecord {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    fusionStateRef: String(row.fusion_state_ref),
+    conflicts: (row.conflicts ?? []) as PersistedReconciliationRecord["conflicts"],
+    method: "source_reconciliation_v1",
+    methodVersion: "1",
+    reconciledAt: String(row.reconciled_at),
+    limitations: strArray(row.limitations),
+    autonomousResolutionForbidden: true,
+  };
+}
+
+function mapPredictiveReadinessRow(
+  row: Record<string, unknown>,
+): PersistedPredictiveReadinessState {
+  return {
+    id: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    assetId: String(row.asset_id),
+    version: Number(row.version),
+    fusionStateRef: String(row.fusion_state_ref),
+    reconciliationRef: strOrUndefined(row.reconciliation_ref),
+    readinessClass: row.readiness_class as PersistedPredictiveReadinessState["readinessClass"],
+    readinessRationale: strArray(row.readiness_rationale),
+    evidenceConfidenceRef: strOrUndefined(row.evidence_confidence_ref),
+    trendConfidenceRef: strOrUndefined(row.trend_confidence_ref),
+    method: "predictive_readiness_v1",
+    methodVersion: "1",
+    reviewStatus: String(row.review_status),
+    reviewInstanceId: strOrUndefined(row.review_instance_id),
+    provenance: (row.provenance ?? {}) as Record<string, unknown>,
+    limitations: strArray(row.limitations),
+    assessedAt: String(row.assessed_at),
+    reviewedAt: strOrUndefined(row.reviewed_at),
+    publishedAt: strOrUndefined(row.published_at),
+    createdBy: strOrUndefined(row.created_by),
+    supersedesId: strOrUndefined(row.supersedes_id),
+    predictiveMlEnabled: false,
+    predictiveMethodsCertified: false,
+    predictiveMlExecuted: false,
+    probabilityOfFailureCertified: false,
+    rulClaimsCertified: false,
+    isHealthFactor: false,
+  };
 }
 
 function nextVersionOrConflict(current: number, expectedCurrentVersion?: number): number {

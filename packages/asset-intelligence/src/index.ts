@@ -30,6 +30,9 @@ export * from "./domain/risk-engine";
 export * from "./domain/maintenance-taxonomy";
 export * from "./domain/maintenance-recommendation";
 export * from "./domain/priority";
+export * from "./domain/fusion";
+export * from "./domain/fusion-engine";
+export * from "./domain/reconciliation-engine";
 export * from "./domain/role-matrix";
 export * from "./domain/review-workflow";
 export * from "./domain/snapshot";
@@ -53,5 +56,6 @@ export {
   LIFECYCLE_HEALTH_CONTRIBUTION_ENABLED,
   RISK_HEALTH_CONTRIBUTION_ENABLED,
   PRIORITY_HEALTH_CONTRIBUTION_ENABLED,
+  FUSION_HEALTH_CONTRIBUTION_ENABLED,
   PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
 } from "./version";

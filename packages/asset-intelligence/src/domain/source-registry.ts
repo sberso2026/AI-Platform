@@ -28,7 +28,9 @@ export type AllowedStateKind =
   | "decision_context"
   | "risk"
   | "maintenance_recommendation"
-  | "priority";
+  | "priority"
+  | "fusion"
+  | "predictive_readiness";
 
 export type IntelligenceSourceEntry = {
   sourceKey: string;
@@ -73,6 +75,8 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "risk",
       "maintenance_recommendation",
       "priority",
+      "fusion",
+      "predictive_readiness",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
@@ -97,6 +101,8 @@ export const INTELLIGENCE_SOURCE_REGISTRY: readonly IntelligenceSourceEntry[] = 
       "risk",
       "maintenance_recommendation",
       "priority",
+      "fusion",
+      "predictive_readiness",
     ],
     evidenceDuplicationForbidden: true,
     writeBackToSharedDomainIdentityForbidden: true,
