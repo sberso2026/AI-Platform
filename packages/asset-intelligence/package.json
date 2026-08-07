@@ -1,6 +1,6 @@
 {
   "name": "@rtb/asset-intelligence",
-  "version": "0.2.0-core",
+  "version": "0.2.1-hosted-persistence",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@rtb/inspection-intelligence": "workspace:*"
+    "@rtb/inspection-intelligence": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

@@ -1,5 +1,5 @@
 /**
- * Phase 10B — thin service facades over the Asset Intelligence Engine.
+ * Thin service facades over the Asset Intelligence Engine.
  */
 
 import type { AssetIntelligenceEngine, AssessConditionCommand } from "./engine";
@@ -11,8 +11,8 @@ export class AssetConditionService {
     return this.engine.assessConditionFromInspection(cmd);
   }
 
-  read(assetId: string, asOf?: string) {
-    return this.engine.getCondition(assetId, asOf);
+  read(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getCondition(tenantId, workspaceId, assetId, asOf);
   }
 }
 
@@ -64,7 +64,7 @@ export class AssetIntelligenceService {
     return this.engine.getHealthIndex(assetId, asOf);
   }
 
-  getCondition(assetId: string, asOf?: string) {
-    return this.engine.getCondition(assetId, asOf);
+  getCondition(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getCondition(tenantId, workspaceId, assetId, asOf);
   }
 }

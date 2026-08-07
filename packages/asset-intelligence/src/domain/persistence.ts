@@ -1,6 +1,5 @@
 /**
- * Phase 10B — hosted persistence for Asset Intelligence states (memory adapter).
- * Host may later wire Supabase; certification uses durable memory store.
+ * Phase 10B.1 — Asset Intelligence repository port (infrastructure-independent).
  */
 
 import { randomUUID } from "node:crypto";
@@ -12,14 +11,145 @@ import type {
 import type { AssetHealthIndexState } from "./health-index";
 import type { IntelligenceTimelineEntry } from "./timeline";
 import type { AssetIntelligenceEvent } from "./events";
+import type { AssetSnapshot } from "./snapshot";
+
+export type ConditionLifecycleStatus = "observed" | "calculated" | "reviewed" | "published";
+
+export type PersistedConditionState = AssetConditionState & {
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  status: ConditionLifecycleStatus;
+  sourceType: string;
+  sourceReference?: string;
+  observedAt?: string;
+  calculatedAt?: string;
+  reviewedAt?: string;
+  publishedAt?: string;
+  createdBy?: string;
+  supersedesId?: string;
+};
+
+export type PersistedSnapshotRecord = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  schemaVersion: string;
+  capturedAt: string;
+  conditionStateId?: string;
+  healthIndex?: AssetHealthIndexState;
+  identityReference: AssetIdentityReference;
+  sourceSet: string[];
+  timelinePosition?: string;
+  snapshot: AssetSnapshot;
+};
+
+export type SourceProvenanceRecord = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  sourceKey: string;
+  sourceType: string;
+  contractFamily?: string;
+  contractVersion?: string;
+  ownership: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type IdempotencyRecord = {
+  tenantId: string;
+  workspaceId: string;
+  idempotencyKey: string;
+  operation: string;
+  resourceId?: string;
+  requestHash?: string;
+  responsePayload: Record<string, unknown>;
+};
+
+export type OutboxEventRecord = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  assetId: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  correlationId?: string;
+  stateId?: string;
+  published: boolean;
+  createdAt: string;
+  publishedAt?: string;
+};
+
+export type AssetIntelligenceRepositoryPort = {
+  readonly adapterKind: "memory" | "postgres";
+  newId(prefix: string): string;
+  saveCondition(state: PersistedConditionState): Promise<PersistedConditionState>;
+  getConditionById(
+    tenantId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<PersistedConditionState | null>;
+  latestCondition(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedConditionState | undefined>;
+  listConditionHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedConditionState[]>;
+  saveHealthIndex(state: AssetHealthIndexState): Promise<AssetHealthIndexState>;
+  latestHealthIndex(assetId: string, asOf?: string): Promise<AssetHealthIndexState | undefined>;
+  saveCriticality(state: AssetCriticalityState): Promise<AssetCriticalityState>;
+  latestCriticality(assetId: string, asOf?: string): Promise<AssetCriticalityState | undefined>;
+  appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry>;
+  listTimeline(assetId: string, asOf?: string): Promise<IntelligenceTimelineEntry[]>;
+  saveSnapshot(record: PersistedSnapshotRecord): Promise<PersistedSnapshotRecord>;
+  getSnapshot(
+    tenantId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<PersistedSnapshotRecord | null>;
+  latestSnapshot(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedSnapshotRecord | undefined>;
+  registerSourceProvenance(record: SourceProvenanceRecord): Promise<SourceProvenanceRecord>;
+  findIdempotency(
+    tenantId: string,
+    workspaceId: string,
+    key: string,
+  ): Promise<IdempotencyRecord | null>;
+  saveIdempotency(record: IdempotencyRecord): Promise<IdempotencyRecord>;
+  appendOutbox(event: OutboxEventRecord): Promise<OutboxEventRecord>;
+  markOutboxPublished(id: string, publishedAt: string): Promise<void>;
+  appendEvent(event: AssetIntelligenceEvent): Promise<AssetIntelligenceEvent>;
+  cacheIdentity(identity: AssetIdentityReference): Promise<void>;
+  /** Optimistic concurrency: returns next version or throws on conflict. */
+  nextConditionVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number>;
+};
 
 export type DurableAssetIntelligenceStore = {
-  conditionStates: AssetConditionState[];
+  conditionStates: PersistedConditionState[];
   healthIndexStates: AssetHealthIndexState[];
   criticalityStates: AssetCriticalityState[];
   timeline: IntelligenceTimelineEntry[];
   events: AssetIntelligenceEvent[];
-  /** Cached identity refs resolved from Shared Domain — never authoritative register. */
+  snapshots: PersistedSnapshotRecord[];
+  sourceProvenance: SourceProvenanceRecord[];
+  idempotency: IdempotencyRecord[];
+  outbox: OutboxEventRecord[];
   identityCache: AssetIdentityReference[];
 };
 
@@ -30,43 +160,207 @@ export function createDurableAssetIntelligenceMemoryStore(): DurableAssetIntelli
     criticalityStates: [],
     timeline: [],
     events: [],
+    snapshots: [],
+    sourceProvenance: [],
+    idempotency: [],
+    outbox: [],
     identityCache: [],
   };
 }
 
-export class AssetIntelligenceRepository {
+function latestAsOf<T extends { recordedAt?: string; capturedAt?: string }>(
+  items: T[],
+  asOf?: string,
+  field: "recordedAt" | "capturedAt" = "recordedAt",
+): T | undefined {
+  const filtered = items
+    .filter((i) => {
+      const ts = (i as Record<string, string | undefined>)[field];
+      return !asOf || !ts || ts <= asOf;
+    })
+    .sort((a, b) => {
+      const ta = (a as Record<string, string | undefined>)[field] ?? "";
+      const tb = (b as Record<string, string | undefined>)[field] ?? "";
+      return ta.localeCompare(tb);
+    });
+  return filtered[filtered.length - 1];
+}
+
+/** Test/certification unit adapter only — not for production. */
+export class MemoryAssetIntelligenceRepository implements AssetIntelligenceRepositoryPort {
+  readonly adapterKind = "memory" as const;
+
   constructor(private readonly store: DurableAssetIntelligenceStore) {}
 
   newId(prefix: string): string {
     return `${prefix}_${randomUUID()}`;
   }
 
-  saveCondition(state: AssetConditionState): AssetConditionState {
+  async saveCondition(state: PersistedConditionState): Promise<PersistedConditionState> {
     this.store.conditionStates.push(state);
     return state;
   }
 
-  saveHealthIndex(state: AssetHealthIndexState): AssetHealthIndexState {
+  async getConditionById(
+    tenantId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<PersistedConditionState | null> {
+    return (
+      this.store.conditionStates.find(
+        (s) => s.stateId === id && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestCondition(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    asOf?: string,
+  ): Promise<PersistedConditionState | undefined> {
+    return latestAsOf(
+      this.store.conditionStates.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+      asOf,
+    );
+  }
+
+  async listConditionHistory(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedConditionState[]> {
+    return this.store.conditionStates
+      .filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      )
+      .sort((a, b) => a.version - b.version);
+  }
+
+  async saveHealthIndex(state: AssetHealthIndexState): Promise<AssetHealthIndexState> {
     this.store.healthIndexStates.push(state);
     return state;
   }
 
-  saveCriticality(state: AssetCriticalityState): AssetCriticalityState {
+  async latestHealthIndex(
+    assetId: string,
+    asOf?: string,
+  ): Promise<AssetHealthIndexState | undefined> {
+    return latestAsOf(
+      this.store.healthIndexStates.filter((s) => s.assetId === assetId),
+      asOf,
+    );
+  }
+
+  async saveCriticality(state: AssetCriticalityState): Promise<AssetCriticalityState> {
     this.store.criticalityStates.push(state);
     return state;
   }
 
-  appendTimeline(entry: IntelligenceTimelineEntry): IntelligenceTimelineEntry {
+  async latestCriticality(
+    assetId: string,
+    asOf?: string,
+  ): Promise<AssetCriticalityState | undefined> {
+    return latestAsOf(
+      this.store.criticalityStates.filter((s) => s.assetId === assetId),
+      asOf,
+    );
+  }
+
+  async appendTimeline(entry: IntelligenceTimelineEntry): Promise<IntelligenceTimelineEntry> {
     this.store.timeline.push(entry);
     return entry;
   }
 
-  appendEvent(event: AssetIntelligenceEvent): AssetIntelligenceEvent {
+  async listTimeline(assetId: string, asOf?: string): Promise<IntelligenceTimelineEntry[]> {
+    return this.store.timeline
+      .filter((e) => e.assetId === assetId)
+      .filter((e) => !asOf || e.recordedAt <= asOf)
+      .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+  }
+
+  async saveSnapshot(record: PersistedSnapshotRecord): Promise<PersistedSnapshotRecord> {
+    this.store.snapshots.push(record);
+    return record;
+  }
+
+  async getSnapshot(
+    tenantId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<PersistedSnapshotRecord | null> {
+    return (
+      this.store.snapshots.find(
+        (s) => s.id === id && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestSnapshot(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+  ): Promise<PersistedSnapshotRecord | undefined> {
+    return latestAsOf(
+      this.store.snapshots.filter(
+        (s) =>
+          s.assetId === assetId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ),
+      undefined,
+      "capturedAt",
+    );
+  }
+
+  async registerSourceProvenance(
+    record: SourceProvenanceRecord,
+  ): Promise<SourceProvenanceRecord> {
+    this.store.sourceProvenance.push(record);
+    return record;
+  }
+
+  async findIdempotency(
+    tenantId: string,
+    workspaceId: string,
+    key: string,
+  ): Promise<IdempotencyRecord | null> {
+    return (
+      this.store.idempotency.find(
+        (r) =>
+          r.tenantId === tenantId &&
+          r.workspaceId === workspaceId &&
+          r.idempotencyKey === key,
+      ) ?? null
+    );
+  }
+
+  async saveIdempotency(record: IdempotencyRecord): Promise<IdempotencyRecord> {
+    this.store.idempotency.push(record);
+    return record;
+  }
+
+  async appendOutbox(event: OutboxEventRecord): Promise<OutboxEventRecord> {
+    this.store.outbox.push(event);
+    return event;
+  }
+
+  async markOutboxPublished(id: string, publishedAt: string): Promise<void> {
+    const row = this.store.outbox.find((e) => e.id === id);
+    if (row) {
+      row.published = true;
+      row.publishedAt = publishedAt;
+    }
+  }
+
+  async appendEvent(event: AssetIntelligenceEvent): Promise<AssetIntelligenceEvent> {
     this.store.events.push(event);
     return event;
   }
 
-  cacheIdentity(identity: AssetIdentityReference): void {
+  async cacheIdentity(identity: AssetIdentityReference): Promise<void> {
     const idx = this.store.identityCache.findIndex(
       (i) =>
         i.tenantId === identity.tenantId &&
@@ -77,32 +371,18 @@ export class AssetIntelligenceRepository {
     else this.store.identityCache.push(identity);
   }
 
-  latestCondition(assetId: string, asOf?: string): AssetConditionState | undefined {
-    return latestAsOf(
-      this.store.conditionStates.filter((s) => s.assetId === assetId),
-      asOf,
-    );
-  }
-
-  latestHealthIndex(assetId: string, asOf?: string): AssetHealthIndexState | undefined {
-    return latestAsOf(
-      this.store.healthIndexStates.filter((s) => s.assetId === assetId),
-      asOf,
-    );
-  }
-
-  latestCriticality(assetId: string, asOf?: string): AssetCriticalityState | undefined {
-    return latestAsOf(
-      this.store.criticalityStates.filter((s) => s.assetId === assetId),
-      asOf,
-    );
-  }
-
-  listTimeline(assetId: string, asOf?: string): IntelligenceTimelineEntry[] {
-    return this.store.timeline
-      .filter((e) => e.assetId === assetId)
-      .filter((e) => !asOf || e.recordedAt <= asOf)
-      .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+  async nextConditionVersion(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    expectedCurrentVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestCondition(tenantId, workspaceId, assetId);
+    const current = latest?.version ?? 0;
+    if (expectedCurrentVersion !== undefined && expectedCurrentVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedCurrentVersion}:actual=${current}`);
+    }
+    return current + 1;
   }
 
   getStore(): DurableAssetIntelligenceStore {
@@ -110,12 +390,23 @@ export class AssetIntelligenceRepository {
   }
 }
 
-function latestAsOf<T extends { recordedAt: string }>(
-  items: T[],
-  asOf?: string,
-): T | undefined {
-  const filtered = items
-    .filter((i) => !asOf || i.recordedAt <= asOf)
-    .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
-  return filtered[filtered.length - 1];
+/** @deprecated Prefer MemoryAssetIntelligenceRepository — kept for 10B test compatibility. */
+export class AssetIntelligenceRepository extends MemoryAssetIntelligenceRepository {}
+
+export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
+
+export type RepositoryFactoryOptions = {
+  adapter?: "memory" | "postgres";
+  nodeEnv?: string;
+  supabase?: unknown;
+  memoryStore?: DurableAssetIntelligenceStore;
+};
+
+export function assertProductionRepositorySafe(
+  adapterKind: "memory" | "postgres",
+  nodeEnv = process.env.NODE_ENV,
+): void {
+  if (nodeEnv === "production" && adapterKind === "memory") {
+    throw new Error("production_memory_repository_forbidden");
+  }
 }

@@ -85,8 +85,43 @@ describe("Phase 10B Asset Intelligence Engine vertical slice", () => {
       asOf: "2026-08-07T02:00:00.000Z",
     });
     expect(asOfSnap?.condition?.stateId).toBe(result.condition.stateId);
-    expect(service.listTimeline("asset-1").length).toBe(2);
-    expect(service.getHealthIndex("asset-1")?.stateId).toBe(result.healthIndex.stateId);
+    expect((await service.listTimeline("asset-1")).length).toBe(2);
+    expect((await service.getHealthIndex("asset-1"))?.stateId).toBe(result.healthIndex.stateId);
+    expect(result.outboxEventId).toBeTruthy();
+    expect(result.snapshotId).toBeTruthy();
+
+    const replay = await service.assessConditionFromInspection({
+      tenantId: "t1",
+      workspaceId: "w1",
+      assetId: "asset-1",
+      idempotencyKey: "idem-1",
+      ii: {
+        assetReference: {
+          identity: { tenantId: "t1", workspaceId: "w1", assetId: "asset-1" },
+        },
+        conditionRating: "fair",
+        conditionIndex: 0.55,
+        observedAt: "2026-08-07T01:00:00.000Z",
+        evidenceRefs: ["ii.evidenceRef:e1"],
+      },
+      recordedAt: "2026-08-07T02:05:00.000Z",
+    });
+    const replay2 = await service.assessConditionFromInspection({
+      tenantId: "t1",
+      workspaceId: "w1",
+      assetId: "asset-1",
+      idempotencyKey: "idem-1",
+      ii: {
+        assetReference: {
+          identity: { tenantId: "t1", workspaceId: "w1", assetId: "asset-1" },
+        },
+        conditionRating: "poor",
+        observedAt: "2026-08-07T01:00:00.000Z",
+        evidenceRefs: ["ii.evidenceRef:e1"],
+      },
+    });
+    expect(replay2.idempotentReplay).toBe(true);
+    expect(replay2.condition.stateId).toBe(replay.condition.stateId);
 
     const types = events.events.map((e) => e.type);
     expect(types).toContain("engineering.asset.condition.updated");
