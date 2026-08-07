@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "asset-intelligence-module-manifest-discovery/1",
+  "moduleKey": "asset_intelligence",
+  "commercialName": "Asset Intelligence",
+  "version": "0.1.0-discovery",
+  "status": "discovery",
+  "osOwner": "engineering",
+  "assetIdentityOwnership": "engineering_os_shared_domain",
+  "assetIntelligenceOwnership": "asset_intelligence",
+  "productionAssetIntelligenceReady": false,
+  "assetIntelligenceImplemented": false,
+  "accuracyClaimsCertified": false,
+  "rulClaimsCertified": false,
+  "sharedDomainDependencies": ["engineering_assets", "engineering_asset_types"],
+  "sdkDependencies": [
+    "engineering-module-sdk",
+    "engineering-domain-sdk",
+    "engineering-workflow-sdk"
+  ],
+  "draftCapabilities": true,
+  "draftServices": true,
+  "draftContracts": "0.1.0-draft",
+  "inspectionIntelligenceContractsConsumed": "1.0.0",
+  "note": "Discovery only — not production-ready."
+}

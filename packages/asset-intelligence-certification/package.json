@@ -1,0 +1,20 @@
+{
+  "name": "@rtb/asset-intelligence-certification",
+  "version": "0.1.0-discovery",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "certify:phase10a": "tsx scripts/run-phase10a-certification.ts",
+    "secret-scan": "tsx scripts/secret-exposure-scan.ts",
+    "test:unit": "vitest run src"
+  },
+  "dependencies": {
+    "@rtb/asset-intelligence": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}
