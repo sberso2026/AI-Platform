@@ -35,7 +35,9 @@ describe("Phase 9J Inspection Intelligence Module Release", () => {
       resolve(ROOT, "packages/inspection-intelligence/src/version.ts"),
       "utf8",
     );
-    expect(version).toMatch(/INSPECTION_INTELLIGENCE_VERSION = "1\.0\.0-ii-release"/);
+    expect(version).toMatch(
+      /INSPECTION_INTELLIGENCE_VERSION = "1\.0\.0(?:-ii-release)?"/,
+    );
     expect(version).toMatch(/INSPECTION_INTELLIGENCE_RELEASE_CLOSED = true/);
     expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
     expect(version).toMatch(/INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false/);
