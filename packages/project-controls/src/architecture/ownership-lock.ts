@@ -82,6 +82,8 @@ import {
   FLOAT_COMPUTATION_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
   PRODUCTION_PROJECT_CONTROLS_READY,
+  PROJECT_CONTROLS_V1_FROZEN,
+  PROJECT_CONTROLS_V1_GA_CERTIFIED,
   PROGRESS_INTELLIGENCE_OWNERSHIP,
   PROGRESS_INTELLIGENCE_READY,
   PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY,
@@ -398,8 +400,8 @@ export function assertOwnershipLock(): {
   organizationalLearningIntelligenceReady: true;
   organizationalLearningIntelligenceIsAdvisoryOnly: true;
   projectContextCompositionReady: true;
-  projectControlsImplemented: false;
-  productionProjectControlsReady: false;
+  projectControlsImplemented: true;
+  productionProjectControlsReady: true;
   duplicateAssetOwnershipIntroduced: false;
   duplicateProjectOwnershipDetected: false;
   canonicalLifecycleMutationAllowed: false;
@@ -462,8 +464,11 @@ export function assertOwnershipLock(): {
   if (String(CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP) === "project_controls") {
     throw new Error("project_controls_may_not_hold_contractual_change_authority");
   }
-  if (PROJECT_CONTROLS_IMPLEMENTED || PRODUCTION_PROJECT_CONTROLS_READY) {
-    throw new Error("project_controls_product_forbidden_in_phase_11f");
+  if (!PROJECT_CONTROLS_IMPLEMENTED || !PRODUCTION_PROJECT_CONTROLS_READY) {
+    throw new Error("project_controls_v1_ga_requires_production_ready");
+  }
+  if (!PROJECT_CONTROLS_V1_GA_CERTIFIED || !PROJECT_CONTROLS_V1_FROZEN) {
+    throw new Error("project_controls_v1_ga_frozen_flags_required");
   }
   if (
     EARNED_VALUE_IMPLEMENTED ||

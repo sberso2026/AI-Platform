@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: organizational_learning · Module version: `0.13.0-organizational-learning` · Phase: 11M
+Status: ga · Module version: `1.0.0` · Phase: 11N
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in

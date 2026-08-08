@@ -46,7 +46,7 @@ describe("Phase 11G Project Controls forecast intelligence", () => {
     expect(version).toMatch(/PREDICTIVE_SCHEDULING_IMPLEMENTED = false/);
     expect(version).toMatch(/FORECAST_EXECUTION_IMPLEMENTED = false/);
     expect(version).toMatch(/PHASE_11H_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships forecast domain surface and batch 67 migration", () => {

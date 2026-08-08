@@ -48,7 +48,7 @@ const GOVERNANCE_FLAGS = {
   projectContextEngineReady: true,
   financialLedgerOwnership: "external_finance_or_future_finance_domain",
   costIntelligenceOwnership: "project_controls",
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   mutatesProjectIdentity: false,
   advisoryOnly: true,
   aiMayPublishCostForbidden: true,

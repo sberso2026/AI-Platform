@@ -50,7 +50,7 @@ const GOVERNANCE_FLAGS = {
   sharedProjectDomainReady: true,
   projectContextEngineReady: true,
   forecastIntelligenceOwnership: "project_controls",
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   mutatesProjectIdentity: false,
   mutatesUpstreamContributors: false,
   advisoryOnly: true,

@@ -29,13 +29,14 @@ const SCOPE_KINDS = new Set([
 
 const GOVERNANCE_FLAGS = {
   earnedValueImplemented: false,
+  cpmSchedulingImplemented: false,
   cpmImplemented: false,
   floatComputationImplemented: false,
   costEngineImplemented: false,
   forecastingImplemented: false,
   scheduleExecutionImplemented: false,
   resourceLevelingImplemented: false,
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   scheduleIntelligenceReady: true,
   progressIntelligenceReady: true,
   sharedProjectDomainReady: true,

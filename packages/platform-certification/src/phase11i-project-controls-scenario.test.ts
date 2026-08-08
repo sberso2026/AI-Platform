@@ -47,7 +47,7 @@ describe("Phase 11I Project Controls scenario intelligence", () => {
     expect(version).toMatch(/PROJECT_CONTEXT_COMPOSITION_READY = true/);
     expect(version).toMatch(/AUTOMATIC_SCENARIO_EXECUTION_ENABLED = false/);
     expect(version).toMatch(/PHASE_11J_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships scenario domain surface and batch 69 migration", () => {

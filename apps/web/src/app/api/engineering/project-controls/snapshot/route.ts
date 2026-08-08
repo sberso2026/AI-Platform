@@ -31,7 +31,7 @@ const GOVERNANCE_FLAGS = {
   cpmImplemented: false,
   costEngineImplemented: false,
   financialPostingImplemented: false,
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   canonicalProjectIdentityOwnership: "engineering_os_shared_project_domain",
   mutatesProjectIdentity: false,
   isProjectRegistry: false,

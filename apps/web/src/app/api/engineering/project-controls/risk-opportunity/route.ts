@@ -63,7 +63,7 @@ const GOVERNANCE_FLAGS = {
   projectContextEngineReady: true,
   riskOpportunityIntelligenceOwnership: "project_controls",
   projectDecisionOwnership: "human_only",
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   mutatesProjectIdentity: false,
   mutatesUpstreamContributors: false,
   advisoryOnly: true,

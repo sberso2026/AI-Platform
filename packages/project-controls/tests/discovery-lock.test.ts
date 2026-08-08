@@ -88,11 +88,11 @@ describe("Phase 11E Project Controls ownership and forbid locks", () => {
   it("declares the decision support module identity", () => {
     expect(PROJECT_CONTROLS_PRODUCT_NAME).toBe("Project Controls");
     expect(PROJECT_CONTROLS_MODULE_KEY).toBe("project_controls");
-    expect(PROJECT_CONTROLS_VERSION).toBe("0.13.0-organizational-learning");
-    expect(PROJECT_CONTROLS_STATUS).toBe("organizational_learning");
-    expect(PROJECT_CONTROLS_PHASE).toBe("11M");
-    expect(PROJECT_CONTROLS_IMPLEMENTED).toBe(false);
-    expect(PRODUCTION_PROJECT_CONTROLS_READY).toBe(false);
+    expect(PROJECT_CONTROLS_VERSION).toBe("1.0.0");
+    expect(PROJECT_CONTROLS_STATUS).toBe("ga");
+    expect(PROJECT_CONTROLS_PHASE).toBe("11N");
+    expect(PROJECT_CONTROLS_IMPLEMENTED).toBe(true);
+    expect(PRODUCTION_PROJECT_CONTROLS_READY).toBe(true);
     expect(PHASE_11A_CERTIFIED_COMMIT).toBe("b9a3a6091ec4af1eb1ebdd9749da497ce5af9700");
     expect(PHASE_11A_HOSTED_RUN).toBe("31179910364");
     expect(PHASE_11B_CERTIFIED_COMMIT).toBe("336707d4baaf63b6a4e5f4ef4255f9ca8d7e4dd6");
@@ -266,16 +266,16 @@ describe("Phase 11E Project Controls ownership and forbid locks", () => {
     expect(INSPECTION_INTELLIGENCE_V1_COMMIT).toBe("d47c4ffa4c7147d3e2053b0764dfe5c80b56eb09");
   });
 
-  it("keeps the Engineering OS module registry entry coming_soon", () => {
-    expect(PROJECT_CONTROLS_MODULE_REGISTRY_STATUS).toBe("coming_soon");
+  it("registers Project Controls as GA in the module registry", () => {
+    expect(PROJECT_CONTROLS_MODULE_REGISTRY_STATUS).toBe("ga");
   });
 
   it("exposes a coherent declaration", () => {
     const declaration = getProjectControlsDeclaration();
-    expect(declaration.version).toBe("0.13.0-organizational-learning");
-    expect(declaration.status).toBe("organizational_learning");
-    expect(declaration.phase).toBe("11M");
-    expect(declaration.productionProjectControlsReady).toBe(false);
+    expect(declaration.version).toBe("1.0.0");
+    expect(declaration.status).toBe("ga");
+    expect(declaration.phase).toBe("11N");
+    expect(declaration.productionProjectControlsReady).toBe(true);
     expect(declaration.sharedProjectDomainReady).toBe(true);
     expect(declaration.projectContextEngineReady).toBe(true);
     expect(declaration.progressIntelligenceReady).toBe(true);

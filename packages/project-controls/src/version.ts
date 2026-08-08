@@ -1,10 +1,12 @@
 /**
- * Phase 11M — Project Controls Organizational Learning Intelligence.
- * Single authoritative version source.
+ * Phase 11N — Project Controls V1.0 GA. Single authoritative version source.
+ *
+ * Everything that publishes a Project Controls version (manifest, registries,
+ * docs, certification, UI) reads from here. Nothing may hard-code a second one.
  *
  * Project Controls owns *intelligence ABOUT projects*. It never owns project
- * identity. Phase 11M adds Organizational Learning Intelligence as a twelfth contributor
- * to the Project Context Engine. Progress (11B) through Explainability (11L) stay intact.
+ * identity. Phase 11N closes V1.0 GA over the 11M baseline — twelve contributors
+ * frozen at 1.0.0 with advisory-only intelligence surfaces.
  *
  * Scenario Intelligence produces exploratory advisory scenario comparisons from
  * published composed contributors, forecast intelligence, and decision support.
@@ -16,9 +18,13 @@
  */
 export const PROJECT_CONTROLS_PRODUCT_NAME = "Project Controls" as const;
 export const PROJECT_CONTROLS_MODULE_KEY = "project_controls" as const;
-export const PROJECT_CONTROLS_VERSION = "0.13.0-organizational-learning" as const;
-export const PROJECT_CONTROLS_STATUS = "organizational_learning" as const;
-export const PROJECT_CONTROLS_PHASE = "11M" as const;
+export const PROJECT_CONTROLS_VERSION = "1.0.0" as const;
+export const PROJECT_CONTROLS_STATUS = "ga" as const;
+export const PROJECT_CONTROLS_PHASE = "11N" as const;
+export const PROJECT_CONTROLS_PREVIOUS_VERSION = "0.13.0-organizational-learning" as const;
+export const PROJECT_CONTROLS_RELEASE_TAG = "project-controls-v1.0.0" as const;
+export const PROJECT_CONTROLS_READINESS_MARKER = "project-controls-v1-ready" as const;
+export const PROJECT_CONTROLS_PUBLIC_CONTRACT_VERSION = "1.0.0" as const;
 
 export const PROJECT_CONTROLS_ROUTE_PREFIX = "/engineering/apps/project-controls" as const;
 export const PROJECT_CONTROLS_API_PREFIX = "/api/engineering/project-controls" as const;
@@ -115,12 +121,18 @@ export const PHASE_11L_CERTIFIED_COMMIT =
 export const PHASE_11L_HOSTED_RUN = "31249492990" as const;
 export const PHASE_11L_VERSION = "0.12.0-explainability-intelligence" as const;
 
+/** Authoritative Phase 11M baseline this GA release closes over. */
+export const PHASE_11M_CERTIFIED_COMMIT =
+  "c115329127266022a6233481671b77dee15ae1d7" as const;
+export const PHASE_11M_HOSTED_RUN = "31250607668" as const;
+export const PHASE_11M_VERSION = "0.13.0-organizational-learning" as const;
+
 // ---------------------------------------------------------------------------
 // Implementation state
 // ---------------------------------------------------------------------------
 
-export const PROJECT_CONTROLS_IMPLEMENTED = false as const;
-export const PRODUCTION_PROJECT_CONTROLS_READY = false as const;
+export const PROJECT_CONTROLS_IMPLEMENTED = true as const;
+export const PRODUCTION_PROJECT_CONTROLS_READY = true as const;
 export const PROJECT_CONTROLS_DISCOVERY_IMPLEMENTED = true as const;
 
 export const SHARED_PROJECT_DOMAIN_READY = true as const;
@@ -363,10 +375,41 @@ export const DECISION_ENGINE_IMPLEMENTED = false as const;
 export const DECISION_EXECUTION_IMPLEMENTED = false as const;
 export const PROJECT_CONTROLS_COST_SCHEDULE_TABLES_INTRODUCED = false as const;
 export const PROJECT_CONTROLS_PRODUCT_UI_IMPLEMENTED = false as const;
-export const PROJECT_CONTROLS_MODULE_REGISTRY_STATUS = "coming_soon" as const;
-export const PROJECT_CONTROLS_MODULE_REGISTRY_VERSION = "0.0.0" as const;
-export const PROJECT_CONTROLS_MODULE_GA = false as const;
+export const PROJECT_CONTROLS_MODULE_REGISTRY_STATUS = "ga" as const;
+export const PROJECT_CONTROLS_MODULE_REGISTRY_VERSION = "1.0.0" as const;
+export const PROJECT_CONTROLS_MODULE_GA = true as const;
 export const PROJECT_CONTROLS_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
+
+/**
+ * Phase 11N — V1.0 GA closure markers. These describe *release* state only;
+ * they never widen CPM, EV, financial posting or autonomous decision locks.
+ */
+export const PROJECT_CONTROLS_V1_GA_CERTIFIED = true as const;
+export const PROJECT_CONTROLS_V1_FROZEN = true as const;
+export const PROJECT_CONTROLS_RELEASE_CLOSED = true as const;
+export const PROJECT_CONTROLS_PUBLIC_CONTRACTS_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_CAPABILITY_REGISTRY_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_SERVICE_REGISTRY_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_EVENT_CONTRACTS_FROZEN = true as const;
+export const PROJECT_CONTROLS_MODULE_MANIFEST_GENERATED = true as const;
+export const PROJECT_CONTROLS_UNAVAILABLE_MATRIX_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_COMMERCIAL_PACKAGING_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_OPERATIONS_RUNBOOKS_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_BACKUP_RESTORE_CERTIFIED = true as const;
+export const PROJECT_CONTROLS_UPGRADE_CERTIFIED = true as const;
+export const PROJECT_CONTROLS_PERFORMANCE_BASELINE_PUBLISHED = true as const;
+export const PROJECT_CONTROLS_MODULE_REGISTRY_DRIFT_DETECTED = false as const;
+export const PHASE_11N_COMPLETE = true as const;
+
+export const PROJECT_CONTROLS_V1_ENTITLEMENTS = [
+  "project_controls.read",
+  "project_controls.assess",
+  "project_controls.submit",
+  "project_controls.review",
+  "project_controls.approve",
+  "project_controls.publish",
+  "project_controls.admin",
+] as const;
 
 export const DUPLICATE_ASSET_OWNERSHIP_INTRODUCED = false as const;
 export const DUPLICATE_PROJECT_OWNERSHIP_INTRODUCED = false as const;
@@ -822,7 +865,25 @@ export function getProjectControlsDeclaration() {
     sharedProjectTables: PROJECT_CONTROLS_SHARED_PROJECT_TABLES,
     hierarchy:
       "RTB AI Platform → Engineering OS → Engineering Shared Project Domain (canonical project identity) → Project Controls (progress + schedule + change + cost + productivity + forecast + decision support + scenario + risk/opportunity + assurance + explainability + organizational learning intelligence about projects — advisory only)" as const,
+    releaseTag: PROJECT_CONTROLS_RELEASE_TAG,
+    readinessMarker: PROJECT_CONTROLS_READINESS_MARKER,
+    publicContractVersion: PROJECT_CONTROLS_PUBLIC_CONTRACT_VERSION,
+    previousVersion: PROJECT_CONTROLS_PREVIOUS_VERSION,
+    projectControlsV1GaCertified: PROJECT_CONTROLS_V1_GA_CERTIFIED,
+    projectControlsV1Frozen: PROJECT_CONTROLS_V1_FROZEN,
+    projectControlsReleaseClosed: PROJECT_CONTROLS_RELEASE_CLOSED,
+    projectControlsBackupRestoreCertified: PROJECT_CONTROLS_BACKUP_RESTORE_CERTIFIED,
+    moduleRegistryDriftDetected: PROJECT_CONTROLS_MODULE_REGISTRY_DRIFT_DETECTED,
+    phase11nComplete: PHASE_11N_COMPLETE,
+    phase11mCertifiedCommit: PHASE_11M_CERTIFIED_COMMIT,
+    phase11mHostedRun: PHASE_11M_HOSTED_RUN,
+    entitlements: PROJECT_CONTROLS_V1_ENTITLEMENTS,
   };
+}
+
+/** V1.0 GA declaration — same authoritative source, named for release consumers. */
+export function getProjectControlsGaDeclaration() {
+  return getProjectControlsDeclaration();
 }
 
 /** @deprecated Phase 11A name; kept so 11A consumers keep compiling. */

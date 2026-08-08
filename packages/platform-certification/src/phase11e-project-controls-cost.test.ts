@@ -55,7 +55,7 @@ describe("Phase 11E Project Controls cost intelligence", () => {
     expect(version).toMatch(/FORECAST_ENGINE_IMPLEMENTED = false/);
     expect(version).toMatch(/PHASE_11F_READY = true/);
     expect(version).toMatch(/PHASE_11G_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships cost domain surface and batch 65 migration", () => {

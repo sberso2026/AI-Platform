@@ -35,7 +35,7 @@ const GOVERNANCE_FLAGS = {
   forecastingImplemented: false,
   scheduleExecutionImplemented: false,
   resourceLevelingImplemented: false,
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   progressIntelligenceReady: true,
   sharedProjectDomainReady: true,
   projectContextEngineReady: true,

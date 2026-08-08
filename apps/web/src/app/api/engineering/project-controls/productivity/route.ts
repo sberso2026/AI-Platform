@@ -48,7 +48,7 @@ const GOVERNANCE_FLAGS = {
   sharedProjectDomainReady: true,
   projectContextEngineReady: true,
   productivityIntelligenceOwnership: "project_controls",
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   mutatesProjectIdentity: false,
   advisoryOnly: true,
   aiMayPublishProductivityForbidden: true,

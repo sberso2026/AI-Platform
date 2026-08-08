@@ -48,7 +48,7 @@ describe("Phase 11H Project Controls decision support", () => {
     expect(version).toMatch(/FORECAST_EXECUTION_IMPLEMENTED = false/);
     expect(version).toMatch(/AUTOMATIC_DECISION_EXECUTION_ENABLED = false/);
     expect(version).toMatch(/PHASE_11I_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships decision domain surface and batch 68 migration", () => {

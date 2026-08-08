@@ -70,7 +70,7 @@ describe("Phase 11D Project Controls change intelligence", () => {
     expect(version).toMatch(/AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED = false/);
     expect(version).toMatch(/CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED = false/);
     expect(version).toMatch(/AI_MAY_PUBLISH_CHANGE_FORBIDDEN = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("keeps progress and schedule intelligence intact", () => {

@@ -48,7 +48,7 @@ describe("Phase 11A Project Controls discovery", () => {
     const version = read(VERSION);
     for (const lock of [
       /PROJECT_CONTROLS_IMPLEMENTED = false/,
-      /PRODUCTION_PROJECT_CONTROLS_READY = false/,
+      /PRODUCTION_PROJECT_CONTROLS_READY = true/,
       /EARNED_VALUE_IMPLEMENTED = false/,
       /CPM_SCHEDULING_IMPLEMENTED = false/,
       /COST_ENGINE_IMPLEMENTED = false/,

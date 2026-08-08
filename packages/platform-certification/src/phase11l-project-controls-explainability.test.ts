@@ -57,7 +57,7 @@ describe("Phase 11L Project Controls explainability intelligence", () => {
     expect(version).toMatch(/AUTOMATIC_EVIDENCE_CREATION_ENABLED = false/);
     expect(version).toMatch(/DUPLICATE_EXPLAINABILITY_OWNERSHIP_DETECTED = false/);
     expect(version).toMatch(/PHASE_11M_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships explainability domain surface and batch 72 migration", () => {

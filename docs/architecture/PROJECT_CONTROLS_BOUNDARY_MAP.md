@@ -1,6 +1,6 @@
 # Project Controls — boundary map (discovery)
 
-Status: organizational_learning · Module version: `0.13.0-organizational-learning` · Phase: 11M
+Status: ga · Module version: `1.0.0` · Phase: 11N (closes 11M baseline `0.13.0-organizational-learning`)
 
 Three relations, and nothing in between: Project Controls **owns** a concern,
 **consumes** it through a public contract, or is **forbidden** from it. The

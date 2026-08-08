@@ -64,6 +64,18 @@ import type {
   ReviewAssuranceCommand,
   ReviewAssuranceResult,
 } from "./engine-assurance";
+import type {
+  AssessExplainabilityCommand,
+  AssessExplainabilityResult,
+  ReviewExplainabilityCommand,
+  ReviewExplainabilityResult,
+} from "./engine-explainability";
+import type {
+  AssessOrganizationalLearningCommand,
+  AssessOrganizationalLearningResult,
+  ReviewOrganizationalLearningCommand,
+  ReviewOrganizationalLearningResult,
+} from "./engine-organizational-learning";
 import type { ProgressAssessmentState, ProjectProfile, ProjectScopeRef } from "./progress";
 import type { ScheduleAssessmentState } from "./schedule";
 import type {
@@ -80,6 +92,8 @@ import type { DecisionAssessmentState } from "./decision";
 import type { ScenarioAssessmentState } from "./scenario";
 import type { RiskOpportunityAssessmentState } from "./risk-opportunity";
 import type { AssuranceAssessmentState } from "./assurance";
+import type { ExplainabilityAssessmentState } from "./explainability";
+import type { OrganizationalLearningAssessmentState } from "./organizational-learning";
 import type { ProjectControlsRole } from "./role-matrix";
 
 export class ProgressIntelligenceService {
@@ -418,6 +432,56 @@ export class AssuranceIntelligenceService {
   }
 }
 
+export class ExplainabilityIntelligenceService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(command: AssessExplainabilityCommand): Promise<AssessExplainabilityResult> {
+    return this.engine.assessExplainability(command);
+  }
+
+  review(command: ReviewExplainabilityCommand): Promise<ReviewExplainabilityResult> {
+    return this.engine.reviewExplainability(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    explainabilityUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<ExplainabilityAssessmentState | undefined> {
+    return this.engine.getLatestExplainability(input);
+  }
+}
+
+export class OrganizationalLearningIntelligenceService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(
+    command: AssessOrganizationalLearningCommand,
+  ): Promise<AssessOrganizationalLearningResult> {
+    return this.engine.assessOrganizationalLearning(command);
+  }
+
+  review(
+    command: ReviewOrganizationalLearningCommand,
+  ): Promise<ReviewOrganizationalLearningResult> {
+    return this.engine.reviewOrganizationalLearning(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    organizationalLearningUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<OrganizationalLearningAssessmentState | undefined> {
+    return this.engine.getLatestOrganizationalLearning(input);
+  }
+}
+
 export class ProjectSnapshotService {
   constructor(private readonly engine: ProjectControlsEngine) {}
 
@@ -472,6 +536,8 @@ export class ProjectControlsService {
   readonly scenario: ScenarioIntelligenceService;
   readonly riskOpportunity: RiskOpportunityIntelligenceService;
   readonly assurance: AssuranceIntelligenceService;
+  readonly explainability: ExplainabilityIntelligenceService;
+  readonly organizationalLearning: OrganizationalLearningIntelligenceService;
   readonly snapshot: ProjectSnapshotService;
   readonly context: ProjectContextService;
 
@@ -486,6 +552,8 @@ export class ProjectControlsService {
     this.scenario = new ScenarioIntelligenceService(engine);
     this.riskOpportunity = new RiskOpportunityIntelligenceService(engine);
     this.assurance = new AssuranceIntelligenceService(engine);
+    this.explainability = new ExplainabilityIntelligenceService(engine);
+    this.organizationalLearning = new OrganizationalLearningIntelligenceService(engine);
     this.snapshot = new ProjectSnapshotService(engine);
     this.context = new ProjectContextService(engine);
   }

@@ -47,7 +47,7 @@ describe("Phase 11F Project Controls productivity intelligence", () => {
     expect(version).toMatch(/LABOUR_COST_ENGINE_IMPLEMENTED = false/);
     expect(version).toMatch(/PRODUCTIVITY_ANALYSIS_IMPLEMENTED = false/);
     expect(version).toMatch(/PHASE_11G_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships productivity domain surface and batch 66 migration", () => {

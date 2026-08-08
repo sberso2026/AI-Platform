@@ -55,7 +55,7 @@ describe("Phase 11C Project Controls schedule intelligence", () => {
     expect(version).toMatch(/CPM_SCHEDULING_IMPLEMENTED = false/);
     expect(version).toMatch(/FLOAT_COMPUTATION_IMPLEMENTED = false/);
     expect(version).toMatch(/SCHEDULE_EXECUTION_IMPLEMENTED = false/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
     expect(read(OWNERSHIP_LOCK)).toMatch(/schedule_controls_intelligence/);
     expect(read(OWNERSHIP_LOCK)).toMatch(/SCHEDULE_INTELLIGENCE_READY/);
   });

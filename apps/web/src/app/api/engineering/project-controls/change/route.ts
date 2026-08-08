@@ -69,7 +69,7 @@ const GOVERNANCE_FLAGS = {
   floatComputationImplemented: false,
   forecastingImplemented: false,
   contingencyManagementImplemented: false,
-  productionProjectControlsReady: false,
+  productionProjectControlsReady: true,
   progressIntelligenceReady: true,
   scheduleIntelligenceReady: true,
   sharedProjectDomainReady: true,

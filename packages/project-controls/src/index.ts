@@ -176,3 +176,12 @@ export * from "./domain/postgres-repository";
 export { createProjectControlsRepository } from "./domain/repository-factory";
 export * from "./domain/engine";
 export * from "./domain/services";
+// Phase 11N — frozen V1.0 module registries.
+export * from "./domain/capability-registry";
+export * from "./domain/service-registry";
+export * from "./domain/event-contracts";
+export * from "./domain/public-contracts";
+export * from "./domain/unavailable-capabilities";
+export * from "./domain/module-manifest";
+export * from "./domain/registry-drift";
+export * from "./domain/ga-closure";

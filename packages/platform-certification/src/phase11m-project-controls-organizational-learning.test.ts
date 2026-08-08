@@ -25,18 +25,19 @@ describe("Phase 11M Project Controls organizational learning intelligence", () =
     expect(ids[ids.length - 1]).toBe("BC");
   });
 
-  it("declares the organizational learning version and Phase 11L baseline", () => {
+  it("declares GA over the organizational learning baseline", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/PROJECT_CONTROLS_VERSION = "0\.13\.0-organizational-learning"/);
-    expect(version).toMatch(/PROJECT_CONTROLS_STATUS = "organizational_learning"/);
-    expect(version).toMatch(/PROJECT_CONTROLS_PHASE = "11M"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_VERSION = "1\.0\.0"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_STATUS = "ga"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_PHASE = "11N"/);
+    expect(version).toMatch(/PHASE_11M_VERSION = "0\.13\.0-organizational-learning"/);
+    expect(version).toMatch(
+      /PHASE_11M_CERTIFIED_COMMIT = "c115329127266022a6233481671b77dee15ae1d7"/,
+    );
     expect(version).toMatch(
       /PHASE_11L_CERTIFIED_COMMIT =\s*\r?\n?\s*"5176bed8168ad39cca4de43b2f95737aab6569aa"/,
     );
-    expect(version).toMatch(/PHASE_11L_HOSTED_RUN = "31249492990"/);
-    expect(read(`${PC}/package.json`)).toMatch(
-      /"version": "0\.13\.0-organizational-learning"/,
-    );
+    expect(read(`${PC}/package.json`)).toMatch(/"version": "1\.0\.0"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase11m/);
   });
 
@@ -51,7 +52,7 @@ describe("Phase 11M Project Controls organizational learning intelligence", () =
     expect(version).toMatch(/AUTOMATIC_KNOWLEDGE_MUTATION_ENABLED = false/);
     expect(version).toMatch(/DUPLICATE_KNOWLEDGE_OWNERSHIP_DETECTED = false/);
     expect(version).toMatch(/PHASE_11N_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships organizational learning domain surface and batch 73 migration", () => {

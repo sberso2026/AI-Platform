@@ -117,6 +117,13 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     seatRequired: true,
     workspaceRequired: true,
   },
+  "/engineering/apps/project-controls": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "project_controls",
+    action: "access",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
   "/engineering/apps/inspection-intelligence/templates": {
     productKey: ENGINEERING_PRODUCT,
     applicationKey: "inspection_intelligence",

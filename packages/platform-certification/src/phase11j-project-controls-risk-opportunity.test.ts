@@ -49,7 +49,7 @@ describe("Phase 11J Project Controls risk & opportunity intelligence", () => {
     expect(version).toMatch(/AUTOMATIC_RISK_REGISTER_MUTATION_ENABLED = false/);
     expect(version).toMatch(/DUPLICATE_RISK_OWNERSHIP_DETECTED = false/);
     expect(version).toMatch(/PHASE_11K_READY = true/);
-    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = false/);
+    expect(version).toMatch(/PRODUCTION_PROJECT_CONTROLS_READY = true/);
   });
 
   it("ships risk/opportunity domain surface and batch 70 migration", () => {
