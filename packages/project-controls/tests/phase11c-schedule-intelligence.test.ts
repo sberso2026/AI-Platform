@@ -163,6 +163,7 @@ describe("Phase 11C project context with schedule", () => {
       "schedule_intelligence",
       "change_intelligence",
       "cost_intelligence",
+      "productivity_intelligence",
     ]);
   });
 

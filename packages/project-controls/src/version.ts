@@ -1,25 +1,25 @@
 /**
- * Phase 11E — Project Controls Cost Intelligence.
+ * Phase 11F — Project Controls Productivity Intelligence.
  * Single authoritative version source.
  *
  * Project Controls owns *intelligence ABOUT projects*. It never owns project
- * identity. Phase 11E adds Cost Intelligence as a fourth contributor to the
- * Project Context Engine. Progress (11B), Schedule (11C) and Change (11D) stay
- * intact.
+ * identity. Phase 11F adds Productivity Intelligence as a fifth contributor to
+ * the Project Context Engine. Progress (11B), Schedule (11C), Change (11D) and
+ * Cost (11E) stay intact.
  *
- * Cost Intelligence assesses what the evidence supports about cost posture. It is
- * NOT a budget ledger: it never posts, never mutates a budget, never computes
- * earned value, and never produces a forecast.
+ * Productivity Intelligence assesses what the evidence supports about execution
+ * efficiency posture. It is NOT workforce management, NOT payroll/timesheets,
+ * NOT labour productivity %, and NOT a forecast.
  *
- * Still forbidden: cost engine, budget ledger, financial posting, earned value,
- * CPM/critical path, float, schedule execution, change execution, forecasting,
- * contingency drawdown, resource levelling.
+ * Still forbidden: workforce mgmt, payroll, timesheets, resource planning,
+ * labour costing, labour productivity %, forecasting, EV/CPI/SPI, CPM, financial
+ * posting, cost engine execution.
  */
 export const PROJECT_CONTROLS_PRODUCT_NAME = "Project Controls" as const;
 export const PROJECT_CONTROLS_MODULE_KEY = "project_controls" as const;
-export const PROJECT_CONTROLS_VERSION = "0.5.0-cost-intelligence" as const;
-export const PROJECT_CONTROLS_STATUS = "cost_intelligence" as const;
-export const PROJECT_CONTROLS_PHASE = "11E" as const;
+export const PROJECT_CONTROLS_VERSION = "0.6.0-productivity-intelligence" as const;
+export const PROJECT_CONTROLS_STATUS = "productivity_intelligence" as const;
+export const PROJECT_CONTROLS_PHASE = "11F" as const;
 
 export const PROJECT_CONTROLS_ROUTE_PREFIX = "/engineering/apps/project-controls" as const;
 export const PROJECT_CONTROLS_API_PREFIX = "/api/engineering/project-controls" as const;
@@ -31,6 +31,8 @@ export const PROJECT_CONTROLS_CHANGE_API_ROUTE =
   "/api/engineering/project-controls/change" as const;
 export const PROJECT_CONTROLS_COST_API_ROUTE =
   "/api/engineering/project-controls/cost" as const;
+export const PROJECT_CONTROLS_PRODUCTIVITY_API_ROUTE =
+  "/api/engineering/project-controls/productivity" as const;
 export const PROJECT_CONTROLS_SNAPSHOT_API_ROUTE =
   "/api/engineering/project-controls/snapshot" as const;
 export const PROJECT_CONTROLS_PROFILE_API_ROUTE =
@@ -59,6 +61,11 @@ export const PHASE_11D_CERTIFIED_COMMIT =
   "3a27fde6bb15fd6298feafca121438dddb2087af" as const;
 export const PHASE_11D_HOSTED_RUN = "31231309349" as const;
 export const PHASE_11D_VERSION = "0.4.0-change-intelligence" as const;
+
+export const PHASE_11E_CERTIFIED_COMMIT =
+  "83edd1302a621560511255eb8071d4ad5c9343a9" as const;
+export const PHASE_11E_HOSTED_RUN = "31232558080" as const;
+export const PHASE_11E_VERSION = "0.5.0-cost-intelligence" as const;
 
 // ---------------------------------------------------------------------------
 // Implementation state
@@ -98,6 +105,13 @@ export const COST_CONFIDENCE_ENGINE_READY = true as const;
 export const COST_REVIEW_WORKFLOW_READY = true as const;
 export const COST_PERSISTENCE_READY = true as const;
 export const COST_INTELLIGENCE_IS_ADVISORY_ONLY = true as const;
+
+/** Phase 11F capabilities that are genuinely implemented. */
+export const PRODUCTIVITY_INTELLIGENCE_READY = true as const;
+export const PRODUCTIVITY_CONFIDENCE_ENGINE_READY = true as const;
+export const PRODUCTIVITY_REVIEW_WORKFLOW_READY = true as const;
+export const PRODUCTIVITY_PERSISTENCE_READY = true as const;
+export const PRODUCTIVITY_INTELLIGENCE_IS_ADVISORY_ONLY = true as const;
 
 export const PROGRESS_MEASUREMENT_IMPLEMENTED = true as const;
 export const PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY = true as const;
@@ -142,6 +156,7 @@ export const PROGRESS_INTELLIGENCE_OWNERSHIP = "project_controls" as const;
 export const SCHEDULE_INTELLIGENCE_OWNERSHIP = "project_controls" as const;
 export const CHANGE_INTELLIGENCE_OWNERSHIP = "project_controls" as const;
 export const COST_INTELLIGENCE_OWNERSHIP = "project_controls" as const;
+export const PRODUCTIVITY_INTELLIGENCE_OWNERSHIP = "project_controls" as const;
 
 export const CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP = "reserved_not_project_controls" as const;
 export const CONTRACTUAL_CHANGE_AUTHORITY_CANDIDATE_OWNERS = [
@@ -174,9 +189,10 @@ export const INSPECTION_INTELLIGENCE_V1_INTACT = true as const;
 export const PROGRESS_INTELLIGENCE_11B_INTACT = true as const;
 export const SCHEDULE_INTELLIGENCE_11C_INTACT = true as const;
 export const CHANGE_INTELLIGENCE_11D_INTACT = true as const;
+export const COST_INTELLIGENCE_11E_INTACT = true as const;
 
 // ---------------------------------------------------------------------------
-// Forbidden locks — ledger / EV / CPM / execution stay false in 11E
+// Forbidden locks — workforce / EV / CPM / execution stay false in 11F
 // ---------------------------------------------------------------------------
 
 export const EARNED_VALUE_IMPLEMENTED = false as const;
@@ -195,6 +211,11 @@ export const CHANGE_CONTROL_IMPLEMENTED = false as const;
 export const CONTINGENCY_MANAGEMENT_IMPLEMENTED = false as const;
 export const BASELINE_PROVIDER_IMPLEMENTED = false as const;
 export const PRODUCTIVITY_ANALYSIS_IMPLEMENTED = false as const;
+export const PRODUCTIVITY_INTELLIGENCE_IMPLEMENTED = true as const;
+export const RESOURCE_PLANNING_IMPLEMENTED = false as const;
+export const TIMESHEET_SYSTEM_IMPLEMENTED = false as const;
+export const PAYROLL_IMPLEMENTED = false as const;
+export const LABOUR_COST_ENGINE_IMPLEMENTED = false as const;
 export const CLAIMS_ANALYSIS_IMPLEMENTED = false as const;
 export const CASH_FLOW_IMPLEMENTED = false as const;
 export const COMMITMENT_TRACKING_IMPLEMENTED = false as const;
@@ -206,6 +227,7 @@ export const PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_SCHEDULE_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_CHANGE_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_COST_TABLES_INTRODUCED = true as const;
+export const PROJECT_CONTROLS_PRODUCTIVITY_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_COST_SCHEDULE_TABLES_INTRODUCED = false as const;
 export const PROJECT_CONTROLS_PRODUCT_UI_IMPLEMENTED = false as const;
 export const PROJECT_CONTROLS_MODULE_REGISTRY_STATUS = "coming_soon" as const;
@@ -226,10 +248,14 @@ export const AI_MAY_PUBLISH_CHANGE_FORBIDDEN = true as const;
 export const AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED = false as const;
 export const AI_MAY_PUBLISH_COST_FORBIDDEN = true as const;
 export const AUTONOMOUS_COST_PUBLICATION_ALLOWED = false as const;
+export const AI_MAY_PUBLISH_PRODUCTIVITY_FORBIDDEN = true as const;
+export const AUTONOMOUS_PRODUCTIVITY_PUBLICATION_ALLOWED = false as const;
 export const CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED = false as const;
 
-/** Phase 11F readiness flag only — Phase 11F is not implemented in 11E. */
+/** Phase 11F certified — remains true for profile route compatibility. */
 export const PHASE_11F_READY = true as const;
+/** Phase 11G readiness flag only — Phase 11G is not implemented in 11F. */
+export const PHASE_11G_READY = true as const;
 
 // ---------------------------------------------------------------------------
 // Migrations
@@ -245,6 +271,8 @@ export const PROJECT_CONTROLS_CHANGE_MIGRATION =
   "supabase/migrations/20260808040000_batch_64_project_controls_change_intelligence.sql" as const;
 export const PROJECT_CONTROLS_COST_MIGRATION =
   "supabase/migrations/20260808050000_batch_65_project_controls_cost_intelligence.sql" as const;
+export const PROJECT_CONTROLS_PRODUCTIVITY_MIGRATION =
+  "supabase/migrations/20260808060000_batch_66_project_controls_productivity_intelligence.sql" as const;
 
 export const PROJECT_CONTROLS_PROGRESS_TABLES = [
   "project_controls_progress_assessments",
@@ -280,6 +308,13 @@ export const PROJECT_CONTROLS_COST_TABLES = [
   "project_controls_cost_confidence",
 ] as const;
 
+export const PROJECT_CONTROLS_PRODUCTIVITY_TABLES = [
+  "project_controls_productivity_states",
+  "project_controls_productivity_evidence",
+  "project_controls_productivity_reviews",
+  "project_controls_productivity_confidence",
+] as const;
+
 export const PROJECT_CONTROLS_SHARED_PROJECT_TABLES = [
   "project_controls_project_snapshots",
   "project_controls_project_timeline",
@@ -294,6 +329,7 @@ export const PROJECT_CONTROLS_IMPLEMENTED_CONCEPTS = [
   "schedule",
   "change",
   "cost",
+  "productivity",
   "project_profile",
 ] as const;
 
@@ -301,7 +337,6 @@ export const PROJECT_CONTROLS_RESERVED_CONCEPTS = [
   "contingency",
   "earned_value_reserved",
   "commitment",
-  "productivity",
   "resource_demand",
   "baseline_network",
   "variance_earned",
@@ -345,6 +380,7 @@ export function getProjectControlsDeclaration() {
     apiPrefix: PROJECT_CONTROLS_API_PREFIX,
     changeApiRoute: PROJECT_CONTROLS_CHANGE_API_ROUTE,
     costApiRoute: PROJECT_CONTROLS_COST_API_ROUTE,
+    productivityApiRoute: PROJECT_CONTROLS_PRODUCTIVITY_API_ROUTE,
     snapshotApiRoute: PROJECT_CONTROLS_SNAPSHOT_API_ROUTE,
     phase11aCertifiedCommit: PHASE_11A_CERTIFIED_COMMIT,
     phase11aHostedRun: PHASE_11A_HOSTED_RUN,
@@ -356,6 +392,9 @@ export function getProjectControlsDeclaration() {
     phase11dCertifiedCommit: PHASE_11D_CERTIFIED_COMMIT,
     phase11dHostedRun: PHASE_11D_HOSTED_RUN,
     phase11dVersion: PHASE_11D_VERSION,
+    phase11eCertifiedCommit: PHASE_11E_CERTIFIED_COMMIT,
+    phase11eHostedRun: PHASE_11E_HOSTED_RUN,
+    phase11eVersion: PHASE_11E_VERSION,
     projectControlsImplemented: PROJECT_CONTROLS_IMPLEMENTED,
     productionProjectControlsReady: PRODUCTION_PROJECT_CONTROLS_READY,
     sharedProjectDomainReady: SHARED_PROJECT_DOMAIN_READY,
@@ -381,7 +420,14 @@ export function getProjectControlsDeclaration() {
     costPersistenceReady: COST_PERSISTENCE_READY,
     costIntelligenceIsAdvisoryOnly: COST_INTELLIGENCE_IS_ADVISORY_ONLY,
     aiMayPublishCostForbidden: AI_MAY_PUBLISH_COST_FORBIDDEN,
+    productivityIntelligenceReady: PRODUCTIVITY_INTELLIGENCE_READY,
+    productivityConfidenceEngineReady: PRODUCTIVITY_CONFIDENCE_ENGINE_READY,
+    productivityReviewWorkflowReady: PRODUCTIVITY_REVIEW_WORKFLOW_READY,
+    productivityPersistenceReady: PRODUCTIVITY_PERSISTENCE_READY,
+    productivityIntelligenceIsAdvisoryOnly: PRODUCTIVITY_INTELLIGENCE_IS_ADVISORY_ONLY,
+    aiMayPublishProductivityForbidden: AI_MAY_PUBLISH_PRODUCTIVITY_FORBIDDEN,
     phase11fReady: PHASE_11F_READY,
+    phase11gReady: PHASE_11G_READY,
     progressMeasurementImplemented: PROGRESS_MEASUREMENT_IMPLEMENTED,
     progressMeasurementIsAdvisoryOnly: PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY,
     progressMeasurementIsEarnedValue: PROGRESS_MEASUREMENT_IS_EARNED_VALUE,
@@ -392,6 +438,7 @@ export function getProjectControlsDeclaration() {
     scheduleIntelligenceOwnership: SCHEDULE_INTELLIGENCE_OWNERSHIP,
     changeIntelligenceOwnership: CHANGE_INTELLIGENCE_OWNERSHIP,
     costIntelligenceOwnership: COST_INTELLIGENCE_OWNERSHIP,
+    productivityIntelligenceOwnership: PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
     contractualChangeAuthorityOwnership: CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
     financialLedgerOwnership: FINANCIAL_LEDGER_OWNERSHIP,
     projectIntelligenceOwnership: PROJECT_INTELLIGENCE_OWNERSHIP,
@@ -404,6 +451,7 @@ export function getProjectControlsDeclaration() {
     progressIntelligence11bIntact: PROGRESS_INTELLIGENCE_11B_INTACT,
     scheduleIntelligence11cIntact: SCHEDULE_INTELLIGENCE_11C_INTACT,
     changeIntelligence11dIntact: CHANGE_INTELLIGENCE_11D_INTACT,
+    costIntelligence11eIntact: COST_INTELLIGENCE_11E_INTACT,
     earnedValueImplemented: EARNED_VALUE_IMPLEMENTED,
     cpmSchedulingImplemented: CPM_SCHEDULING_IMPLEMENTED,
     floatComputationImplemented: FLOAT_COMPUTATION_IMPLEMENTED,
@@ -415,11 +463,18 @@ export function getProjectControlsDeclaration() {
     forecastEngineImplemented: FORECAST_ENGINE_IMPLEMENTED,
     contingencyManagementImplemented: CONTINGENCY_MANAGEMENT_IMPLEMENTED,
     resourceLevelingImplemented: RESOURCE_LEVELING_IMPLEMENTED,
+    resourcePlanningImplemented: RESOURCE_PLANNING_IMPLEMENTED,
+    timesheetSystemImplemented: TIMESHEET_SYSTEM_IMPLEMENTED,
+    payrollImplemented: PAYROLL_IMPLEMENTED,
+    labourCostEngineImplemented: LABOUR_COST_ENGINE_IMPLEMENTED,
+    productivityAnalysisImplemented: PRODUCTIVITY_ANALYSIS_IMPLEMENTED,
+    productivityIntelligenceImplemented: PRODUCTIVITY_INTELLIGENCE_IMPLEMENTED,
     duplicateProjectOwnershipDetected: DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
     projectControlsProgressTablesIntroduced: PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED,
     projectControlsScheduleTablesIntroduced: PROJECT_CONTROLS_SCHEDULE_TABLES_INTRODUCED,
     projectControlsChangeTablesIntroduced: PROJECT_CONTROLS_CHANGE_TABLES_INTRODUCED,
     projectControlsCostTablesIntroduced: PROJECT_CONTROLS_COST_TABLES_INTRODUCED,
+    projectControlsProductivityTablesIntroduced: PROJECT_CONTROLS_PRODUCTIVITY_TABLES_INTRODUCED,
     moduleRegistryStatus: PROJECT_CONTROLS_MODULE_REGISTRY_STATUS,
     moduleGa: PROJECT_CONTROLS_MODULE_GA,
     implementedConcepts: PROJECT_CONTROLS_IMPLEMENTED_CONCEPTS,
@@ -428,9 +483,10 @@ export function getProjectControlsDeclaration() {
     scheduleTables: PROJECT_CONTROLS_SCHEDULE_TABLES,
     changeTables: PROJECT_CONTROLS_CHANGE_TABLES,
     costTables: PROJECT_CONTROLS_COST_TABLES,
+    productivityTables: PROJECT_CONTROLS_PRODUCTIVITY_TABLES,
     sharedProjectTables: PROJECT_CONTROLS_SHARED_PROJECT_TABLES,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Engineering Shared Project Domain (canonical project identity) → Project Controls (progress + schedule + change + cost intelligence about projects — advisory only)" as const,
+      "RTB AI Platform → Engineering OS → Engineering Shared Project Domain (canonical project identity) → Project Controls (progress + schedule + change + cost + productivity intelligence about projects — advisory only)" as const,
   };
 }
 

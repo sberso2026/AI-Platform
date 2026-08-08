@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: cost_intelligence · Module version: `0.5.0-cost-intelligence` · Phase: 11E
+Status: productivity_intelligence · Module version: `0.6.0-productivity-intelligence` · Phase: 11F
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in

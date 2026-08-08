@@ -33,6 +33,9 @@ import {
   COST_INTELLIGENCE_IS_ADVISORY_ONLY,
   COST_INTELLIGENCE_OWNERSHIP,
   COST_INTELLIGENCE_READY,
+  PRODUCTIVITY_INTELLIGENCE_IS_ADVISORY_ONLY,
+  PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
+  PRODUCTIVITY_INTELLIGENCE_READY,
   CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
   FINANCIAL_LEDGER_OWNERSHIP,
   FINANCIAL_POSTING_IMPLEMENTED,
@@ -65,6 +68,11 @@ import {
   PROJECT_IDENTITY_MUTATION_BY_PROJECT_CONTROLS_ALLOWED,
   PROJECT_IDENTITY_OWNER_SPELLING_UNIFICATION,
   PROJECT_IDENTITY_OWNERSHIP,
+  LABOUR_COST_ENGINE_IMPLEMENTED,
+  PAYROLL_IMPLEMENTED,
+  PRODUCTIVITY_ANALYSIS_IMPLEMENTED,
+  RESOURCE_PLANNING_IMPLEMENTED,
+  TIMESHEET_SYSTEM_IMPLEMENTED,
   RESOURCE_LEVELING_IMPLEMENTED,
   RISK_CORE_AUTO_MUTATION_ALLOWED,
   SCHEDULE_EXECUTION_IMPLEMENTED,
@@ -151,6 +159,13 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     relation: "owns",
     notes:
       "Implemented in 11E as advisory, evidence-driven cost intelligence — not a budget ledger, not financial posting, not earned value",
+  },
+  {
+    concern: "productivity_controls_intelligence",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Implemented in 11F as advisory, evidence-driven productivity intelligence — not workforce management, payroll, timesheets or labour %",
   },
   {
     concern: "schedule_controls_intelligence",
@@ -272,6 +287,7 @@ export function assertOwnershipLock(): {
   scheduleIntelligenceOwnership: typeof SCHEDULE_INTELLIGENCE_OWNERSHIP;
   changeIntelligenceOwnership: typeof CHANGE_INTELLIGENCE_OWNERSHIP;
   costIntelligenceOwnership: typeof COST_INTELLIGENCE_OWNERSHIP;
+  productivityIntelligenceOwnership: typeof PRODUCTIVITY_INTELLIGENCE_OWNERSHIP;
   contractualChangeAuthorityOwnership: typeof CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP;
   financialLedgerOwnership: typeof FINANCIAL_LEDGER_OWNERSHIP;
   sharedProjectDomainReady: true;
@@ -282,6 +298,8 @@ export function assertOwnershipLock(): {
   changeIntelligenceIsContractualAuthority: false;
   costIntelligenceReady: true;
   costIntelligenceIsAdvisoryOnly: true;
+  productivityIntelligenceReady: true;
+  productivityIntelligenceIsAdvisoryOnly: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
   duplicateAssetOwnershipIntroduced: false;
@@ -334,11 +352,20 @@ export function assertOwnershipLock(): {
   if (!COST_INTELLIGENCE_READY || !COST_INTELLIGENCE_IS_ADVISORY_ONLY) {
     throw new Error("cost_intelligence_flags_invalid");
   }
+  if (PRODUCTIVITY_INTELLIGENCE_OWNERSHIP !== "project_controls") {
+    throw new Error("productivity_intelligence_must_be_owned_by_project_controls");
+  }
+  if (!PRODUCTIVITY_INTELLIGENCE_READY || !PRODUCTIVITY_INTELLIGENCE_IS_ADVISORY_ONLY) {
+    throw new Error("productivity_intelligence_flags_invalid");
+  }
+  if (PRODUCTIVITY_ANALYSIS_IMPLEMENTED) {
+    throw new Error("productivity_provider_unit_rates_must_stay_unimplemented");
+  }
   if (String(CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP) === "project_controls") {
     throw new Error("project_controls_may_not_hold_contractual_change_authority");
   }
   if (PROJECT_CONTROLS_IMPLEMENTED || PRODUCTION_PROJECT_CONTROLS_READY) {
-    throw new Error("project_controls_product_forbidden_in_phase_11e");
+    throw new Error("project_controls_product_forbidden_in_phase_11f");
   }
   if (
     EARNED_VALUE_IMPLEMENTED ||
@@ -347,6 +374,10 @@ export function assertOwnershipLock(): {
     COST_ENGINE_IMPLEMENTED ||
     BUDGET_LEDGER_IMPLEMENTED ||
     FINANCIAL_POSTING_IMPLEMENTED ||
+    RESOURCE_PLANNING_IMPLEMENTED ||
+    TIMESHEET_SYSTEM_IMPLEMENTED ||
+    PAYROLL_IMPLEMENTED ||
+    LABOUR_COST_ENGINE_IMPLEMENTED ||
     SCHEDULE_EXECUTION_IMPLEMENTED ||
     FORECASTING_IMPLEMENTED ||
     RESOURCE_LEVELING_IMPLEMENTED ||
@@ -373,9 +404,11 @@ export function assertOwnershipLock(): {
     !PROJECT_CONTEXT_ENGINE_READY ||
     !PROGRESS_INTELLIGENCE_READY ||
     !SCHEDULE_INTELLIGENCE_READY ||
-    !CHANGE_INTELLIGENCE_READY
+    !CHANGE_INTELLIGENCE_READY ||
+    !COST_INTELLIGENCE_READY ||
+    !PRODUCTIVITY_INTELLIGENCE_READY
   ) {
-    throw new Error("phase_11d_capabilities_must_be_ready");
+    throw new Error("phase_11f_capabilities_must_be_ready");
   }
   if (
     DUPLICATE_ASSET_OWNERSHIP_INTRODUCED ||
@@ -434,6 +467,17 @@ export function assertOwnershipLock(): {
     costRows[0].relation !== "owns"
   ) {
     throw new Error("cost_controls_intelligence_must_be_owned_by_project_controls");
+  }
+
+  const productivityRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "productivity_controls_intelligence",
+  );
+  if (
+    productivityRows.length !== 1 ||
+    productivityRows[0].owner !== "project_controls" ||
+    productivityRows[0].relation !== "owns"
+  ) {
+    throw new Error("productivity_controls_intelligence_must_be_owned_by_project_controls");
   }
 
   const authorityRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
@@ -499,6 +543,7 @@ export function assertOwnershipLock(): {
     scheduleIntelligenceOwnership: SCHEDULE_INTELLIGENCE_OWNERSHIP,
     changeIntelligenceOwnership: CHANGE_INTELLIGENCE_OWNERSHIP,
     costIntelligenceOwnership: COST_INTELLIGENCE_OWNERSHIP,
+    productivityIntelligenceOwnership: PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
     contractualChangeAuthorityOwnership: CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
     financialLedgerOwnership: FINANCIAL_LEDGER_OWNERSHIP,
     sharedProjectDomainReady: true,
@@ -509,6 +554,8 @@ export function assertOwnershipLock(): {
     changeIntelligenceIsContractualAuthority: false,
     costIntelligenceReady: true,
     costIntelligenceIsAdvisoryOnly: true,
+    productivityIntelligenceReady: true,
+    productivityIntelligenceIsAdvisoryOnly: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,
     duplicateAssetOwnershipIntroduced: false,

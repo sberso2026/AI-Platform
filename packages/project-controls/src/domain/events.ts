@@ -20,6 +20,7 @@ import type {
 import type {
   CostIntelligenceState,
 } from "./cost";
+import type { ProductivityAssessmentState } from "./productivity";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -39,6 +40,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.cost.published",
   "engineering.project.cost.superseded",
   "engineering.project.cost.variance_attributed",
+  "engineering.project.productivity.updated",
+  "engineering.project.productivity.reviewed",
+  "engineering.project.productivity.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -59,6 +63,12 @@ export const PROJECT_CONTROLS_COST_EVENTS = [
   "engineering.project.cost.published",
   "engineering.project.cost.superseded",
   "engineering.project.cost.variance_attributed",
+] as const;
+
+export const PROJECT_CONTROLS_PRODUCTIVITY_EVENTS = [
+  "engineering.project.productivity.updated",
+  "engineering.project.productivity.reviewed",
+  "engineering.project.productivity.published",
 ] as const;
 
 export type ProjectControlsEventGovernance = {
@@ -171,6 +181,8 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     changesAbstained: profile.change?.changesAbstained ?? 0,
     costsAssessed: profile.cost?.costsAssessed ?? 0,
     costsAbstained: profile.cost?.costsAbstained ?? 0,
+    productivityAssessed: profile.productivity?.productivityAssessed ?? 0,
+    productivityAbstained: profile.productivity?.productivityAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
@@ -236,6 +248,27 @@ export function changeCandidateEventPayload(
   };
 }
 
+/** Identifiers only — no labour % or workforce metrics. */
+export function productivityEventPayload(
+  state: ProductivityAssessmentState,
+): Record<string, unknown> {
+  return {
+    productivityStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    productivityPosture: state.productivityPosture,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    controlUnitId: state.controlContext.controlUnitId,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    factorCount: state.factors.length,
+    labourProductivityPercentClaimed: false,
+    workforceManagementClaimed: false,
+  };
+}
+
 /** Identifiers and counts only — a snapshot event carries no state content. */
 export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, unknown> {
   return {
@@ -246,6 +279,7 @@ export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, 
     scheduleStateCount: snapshot.scheduleStateIds.length,
     changeStateCount: snapshot.changeStateIds.length,
     costStateCount: snapshot.costStateIds.length,
+    productivityStateCount: snapshot.productivityStateIds.length,
     capturedAt: snapshot.capturedAt,
     immutable: true,
     containsEvidencePayloads: false,

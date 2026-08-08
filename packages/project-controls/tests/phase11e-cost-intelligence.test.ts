@@ -188,10 +188,11 @@ describe("Phase 11E cost review workflow", () => {
 });
 
 describe("Phase 11E project context with cost", () => {
-  it("lists four active contributors including cost_intelligence", () => {
+  it("lists five active contributors including productivity_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(4);
+    expect(check.activeContributorKeys).toHaveLength(5);
     expect(check.activeContributorKeys).toContain("cost_intelligence");
+    expect(check.activeContributorKeys).toContain("productivity_intelligence");
   });
 
   it("composes a profile carrying the cost rollup", () => {

@@ -19,6 +19,15 @@ export {
   assertNoFinancialPosting,
   assertNoForecastEngine,
 } from "./domain/cost-engine";
+export * from "./domain/productivity";
+export * from "./domain/productivity-confidence";
+export {
+  ProductivityIntelligenceEngine,
+  createProductivityIntelligenceEngine,
+  assertNoWorkforceManagement,
+  assertNoLabourProductivityMetrics,
+  assertNoForecastOrEarnedValue as assertNoForecastOrEarnedValueInProductivityIntelligence,
+} from "./domain/productivity-engine";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
 export * from "./domain/review-workflow";
@@ -52,6 +61,10 @@ export {
   type PersistedCostEvidence,
   type PersistedCostReview,
   type PersistedCostConfidence,
+  type PersistedProductivityState,
+  type PersistedProductivityEvidence,
+  type PersistedProductivityReview,
+  type PersistedProductivityConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

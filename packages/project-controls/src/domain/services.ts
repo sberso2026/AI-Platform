@@ -10,6 +10,8 @@ import type {
   AssessChangeResult,
   AssessCostCommand,
   AssessCostResult,
+  AssessProductivityCommand,
+  AssessProductivityResult,
   AssessProgressCommand,
   AssessProgressResult,
   AssessScheduleCommand,
@@ -25,6 +27,8 @@ import type {
   ReviewChangeResult,
   ReviewCostCommand,
   ReviewCostResult,
+  ReviewProductivityCommand,
+  ReviewProductivityResult,
   ReviewProgressCommand,
   ReviewProgressResult,
   ReviewScheduleCommand,
@@ -40,6 +44,7 @@ import type {
   ProjectTimelineEvent,
 } from "./change";
 import type { CostIntelligenceState } from "./cost";
+import type { ProductivityAssessmentState } from "./productivity";
 import type { ProjectControlsRole } from "./role-matrix";
 
 export class ProgressIntelligenceService {
@@ -173,6 +178,42 @@ export class CostIntelligenceService {
   }
 }
 
+/**
+ * Advisory productivity intelligence. Nothing on this service manages workforce,
+ * payroll, timesheets or labour productivity %.
+ */
+export class ProductivityIntelligenceService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(command: AssessProductivityCommand): Promise<AssessProductivityResult> {
+    return this.engine.assessProductivity(command);
+  }
+
+  review(command: ReviewProductivityCommand): Promise<ReviewProductivityResult> {
+    return this.engine.reviewProductivity(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    controlUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<ProductivityAssessmentState | undefined> {
+    return this.engine.getLatestProductivity(input);
+  }
+
+  history(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ProductivityAssessmentState[]> {
+    return this.engine.listProductivityHistory(input);
+  }
+}
+
 export class ProjectSnapshotService {
   constructor(private readonly engine: ProjectControlsEngine) {}
 
@@ -221,6 +262,7 @@ export class ProjectControlsService {
   readonly schedule: ScheduleIntelligenceService;
   readonly change: ChangeIntelligenceService;
   readonly cost: CostIntelligenceService;
+  readonly productivity: ProductivityIntelligenceService;
   readonly snapshot: ProjectSnapshotService;
   readonly context: ProjectContextService;
 
@@ -229,6 +271,7 @@ export class ProjectControlsService {
     this.schedule = new ScheduleIntelligenceService(engine);
     this.change = new ChangeIntelligenceService(engine);
     this.cost = new CostIntelligenceService(engine);
+    this.productivity = new ProductivityIntelligenceService(engine);
     this.snapshot = new ProjectSnapshotService(engine);
     this.context = new ProjectContextService(engine);
   }
@@ -269,6 +312,14 @@ export class ProjectControlsService {
 
   reviewCost(command: ReviewCostCommand): Promise<ReviewCostResult> {
     return this.engine.reviewCost(command);
+  }
+
+  assessProductivity(command: AssessProductivityCommand): Promise<AssessProductivityResult> {
+    return this.engine.assessProductivity(command);
+  }
+
+  reviewProductivity(command: ReviewProductivityCommand): Promise<ReviewProductivityResult> {
+    return this.engine.reviewProductivity(command);
   }
 
   createProjectSnapshot(

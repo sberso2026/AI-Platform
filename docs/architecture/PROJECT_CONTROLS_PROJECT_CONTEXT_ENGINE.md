@@ -1,16 +1,16 @@
 # Project Controls Project Context Engine
 
-Phase 11E. `packages/project-controls/src/domain/project-context-engine.ts`.
+Phase 11F. `packages/project-controls/src/domain/project-context-engine.ts`.
 `PROJECT_CONTEXT_ENGINE_READY = true`.
 
 ## Purpose
 
 The Project Context Engine composes a `ProjectProfile`: one project-level view of
 the intelligence Project Controls owns, built from per-scope progress, schedule,
-change and cost assessments plus a resolved `ProjectReference`.
+change and cost assessments plus productivity assessments and a resolved `ProjectReference`.
 
 Its value is as much structural as functional. It fixes the *shape* of the
-profile now, with four of eight contributors active and four declared
+profile now, with five of eight contributors active and three declared
 `reserved`, so later phases add values into an existing contract instead of
 renegotiating it.
 
@@ -37,16 +37,16 @@ cleanly.
 | `schedule_intelligence` | **active** | Advisory schedule posture; not CPM or execution |
 | `change_intelligence` | **active** | Advisory change assessment; never contractual approval |
 | `cost_intelligence` | **active** | Advisory cost posture and variance attribution; no ledger or posting |
+| `productivity_intelligence` | **active** | Advisory execution efficiency posture; no workforce mgmt or labour % |
 | `contingency_intelligence` | reserved | No contingency drawdown |
-| `productivity_intelligence` | reserved | No unit rates or productivity factors |
 | `earned_value` | reserved | Reserved **and forbidden** to implement |
 | `forecast` | reserved | Reserved **and forbidden** to implement |
 
 `assertProjectProfileContributorsComplete()` proves the list covers every declared
-key, that Phase 11E has exactly four active contributors
+key, that Phase 11F has exactly five active contributors
 (`progress_intelligence`, `schedule_intelligence`, `change_intelligence`,
-`cost_intelligence`), and that `earned_value` and `forecast` are still
-reserved. Every composed profile echoes `activeContributorKeys` and
+`cost_intelligence`, `productivity_intelligence`), and that `earned_value` and
+`forecast` are still reserved. Every composed profile echoes `activeContributorKeys` and
 `reservedContributorKeys`, so a consumer can tell absent-because-reserved from
 absent-because-no-data.
 
@@ -93,5 +93,5 @@ latest intelligence per scope, composes, and emits
 `activeContributors`, `reservedContributors` and the governance flags
 (`earnedValueImplemented: false`, `cpmImplemented: false`,
 `costEngineImplemented: false`, `financialPostingImplemented: false`,
-`costIntelligenceReady: true`, `phase11fReady: true`,
+`costIntelligenceReady: true`, `productivityIntelligenceReady: true`, `phase11fReady: true`, `phase11gReady: true`,
 `productionProjectControlsReady: false`).

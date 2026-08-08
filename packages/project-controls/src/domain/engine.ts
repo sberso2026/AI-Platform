@@ -25,6 +25,7 @@ import {
   changeEventPayload,
   costEventPayload,
   createProjectControlsEvent,
+  productivityEventPayload,
   profileEventPayload,
   progressEventPayload,
   scheduleEventPayload,
@@ -40,6 +41,7 @@ import type {
   IdempotencyRecord,
   PersistedChangeEvidence,
   PersistedCostEvidence,
+  PersistedProductivityEvidence,
   PersistedProgressEvidence,
   PersistedScheduleEvidence,
   ProjectControlsRepositoryPort,
@@ -75,6 +77,18 @@ import {
   type CostIntelligenceEngine,
 } from "./cost-engine";
 import {
+  productivityStateKey,
+  type ProductivityAssessmentState,
+  type ProductivityControlContext,
+  type ProductivityEvidence,
+  type ProductivityReviewOutcome,
+  type ProductivityReviewRecord,
+} from "./productivity";
+import {
+  createProductivityIntelligenceEngine,
+  type ProductivityIntelligenceEngine,
+} from "./productivity-engine";
+import {
   scopeKey,
   type ProgressAssessmentState,
   type ProgressEvidence,
@@ -100,20 +114,25 @@ import {
 import {
   assertChangePublishable,
   assertCostPublishable,
+  assertProductivityPublishable,
   assertPublishable,
   assertSchedulePublishable,
   startChangeReview,
   startCostReview,
+  startProductivityReview,
   startProgressReview,
   startScheduleReview,
   transitionChangeReview,
   transitionCostReview,
+  transitionProductivityReview,
   transitionProgressReview,
   transitionScheduleReview,
   type ChangeReviewAction,
   type ChangeReviewTargetState,
   type CostReviewAction,
   type CostReviewTargetState,
+  type ProductivityReviewAction,
+  type ProductivityReviewTargetState,
   type ProgressReviewAction,
   type ProgressReviewTargetState,
   type ScheduleReviewAction,
@@ -395,6 +414,64 @@ export type ReviewCostResult = {
   financialPostingClaimed: false;
 };
 
+export type AssessProductivityCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  controlContext: ProductivityControlContext;
+  evidence: readonly ProductivityEvidence[];
+  actorRole: ProjectControlsRole;
+  actorId?: string;
+  narrative?: string;
+  asOf?: string;
+  expectedVersion?: number;
+  idempotencyKey?: string;
+  correlationId?: string;
+  startReview?: boolean;
+  freshnessHorizonHours?: number;
+  sufficiencyThreshold?: number;
+  minimumEvidenceCount?: number;
+};
+
+export type AssessProductivityResult = {
+  state: ProductivityAssessmentState;
+  workflowInstance?: EngineeringWorkflowInstance;
+  review?: ProductivityReviewRecord;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay: boolean;
+  projectIdentityMutated: false;
+  workforceManagementPerformed: false;
+  labourProductivityPercentComputed: false;
+  forecastProduced: false;
+};
+
+export type ReviewProductivityCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  productivityStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: ProductivityReviewAction;
+  to: ProductivityReviewTargetState;
+  reviewerId: string;
+  actorRole: ProjectControlsRole;
+  notes?: string;
+  publish?: boolean;
+  asOf?: string;
+  correlationId?: string;
+  idempotencyKey?: string;
+};
+
+export type ReviewProductivityResult = {
+  state: ProductivityAssessmentState;
+  review: ProductivityReviewRecord;
+  workflowInstance: EngineeringWorkflowInstance;
+  published: boolean;
+  projectIdentityMutated: false;
+  workforceManagementClaimed: false;
+};
+
 export type CreateProjectSnapshotCommand = {
   tenantId: string;
   workspaceId: string;
@@ -437,6 +514,7 @@ export type ProjectControlsEngineDeps = {
   scheduleEngine?: ScheduleIntelligenceEngine;
   changeEngine?: ChangeIntelligenceEngine;
   costEngine?: CostIntelligenceEngine;
+  productivityEngine?: ProductivityIntelligenceEngine;
   contextEngine?: ProjectContextEngine;
 };
 
@@ -444,6 +522,7 @@ const PROGRESS_SOURCE_KEY = "project_controls.progress_intelligence" as const;
 const SCHEDULE_SOURCE_KEY = "project_controls.schedule_intelligence" as const;
 const CHANGE_SOURCE_KEY = "project_controls.change_intelligence" as const;
 const COST_SOURCE_KEY = "project_controls.cost_intelligence" as const;
+const PRODUCTIVITY_SOURCE_KEY = "project_controls.productivity_intelligence" as const;
 
 const PROJECT_TIMELINE_GOVERNANCE = {
   advisoryOnly: true,
@@ -460,6 +539,7 @@ export class ProjectControlsEngine {
   private readonly scheduleEngine: ScheduleIntelligenceEngine;
   private readonly changeEngine: ChangeIntelligenceEngine;
   private readonly costEngine: CostIntelligenceEngine;
+  private readonly productivityEngine: ProductivityIntelligenceEngine;
   private readonly contextEngine: ProjectContextEngine;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
@@ -477,6 +557,9 @@ export class ProjectControlsEngine {
     this.costEngine =
       deps.costEngine ??
       createCostIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
+    this.productivityEngine =
+      deps.productivityEngine ??
+      createProductivityIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
     this.contextEngine =
       deps.contextEngine ?? createProjectContextEngine({ newId: (p) => deps.repository.newId(p) });
   }
@@ -1508,6 +1591,260 @@ export class ProjectControlsEngine {
     };
   }
 
+  async assessProductivity(command: AssessProductivityCommand): Promise<AssessProductivityResult> {
+    this.requireCapability(command.actorRole, "productivity.assess");
+    const replay = await this.replay<AssessProductivityResult>(command, "assess_productivity");
+    if (replay) return replay;
+
+    const reference = await this.resolveProject(command);
+    const asOf = command.asOf ?? new Date().toISOString();
+    const scope = command.controlContext.scope;
+    const controlUnitId = command.controlContext.controlUnitId;
+
+    const previous = await this.deps.repository.latestProductivityState(
+      command.tenantId,
+      command.workspaceId,
+      scope,
+      controlUnitId,
+    );
+    const version = await this.deps.repository.nextProductivityStateVersion(
+      command.tenantId,
+      command.workspaceId,
+      scope,
+      controlUnitId,
+      command.expectedVersion,
+    );
+
+    const outcome = this.productivityEngine.assess({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      controlContext: command.controlContext,
+      evidence: command.evidence,
+      version,
+      asOf,
+      narrative: command.narrative,
+      createdBy: command.actorId,
+      supersedesId: previous?.stateId,
+      freshnessHorizonHours: command.freshnessHorizonHours,
+      sufficiencyThreshold: command.sufficiencyThreshold,
+      minimumEvidenceCount: command.minimumEvidenceCount,
+    });
+
+    let state = outcome.state;
+    let workflowInstance: EngineeringWorkflowInstance | undefined;
+    let review: ProductivityReviewRecord | undefined;
+
+    if (!outcome.abstained && command.startReview !== false) {
+      const started = startProductivityReview({
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        assessmentStateId: state.stateId,
+        startedBy: command.actorId,
+      });
+      workflowInstance = started.instance;
+      state = {
+        ...state,
+        status: "pending_review",
+        workflowInstanceId: started.instance.instanceId,
+      };
+      review = {
+        reviewId: started.review.reviewId,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        productivityStateId: state.stateId,
+        workflowInstanceId: started.instance.instanceId,
+        workflowState: started.instance.state,
+        createdAt: started.review.createdAt,
+        selfApproved: false,
+        workforceManagementClaimed: false,
+      };
+    }
+
+    const saved = await this.deps.repository.saveProductivityState(state);
+    await this.deps.repository.saveProductivityEvidence(
+      command.evidence.map<PersistedProductivityEvidence>((item) => ({
+        ...item,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        productivityStateId: saved.stateId,
+        recordedAt: asOf,
+        createdBy: command.actorId,
+      })),
+    );
+    await this.deps.repository.saveProductivityConfidence({
+      ...outcome.confidence,
+      productivityStateId: saved.stateId,
+      recordedAt: asOf,
+    });
+    if (review) await this.deps.repository.saveProductivityReview(review);
+
+    await this.appendProjectTimeline({
+      tenantId: saved.tenantId,
+      workspaceId: saved.workspaceId,
+      projectId: saved.projectId,
+      stateId: saved.stateId,
+      kind: outcome.abstained ? "productivity_abstained" : "productivity_updated",
+      eventType: "engineering.project.productivity.updated",
+      recordedAt: asOf,
+      actorId: command.actorId,
+      detail: outcome.abstentionReason,
+      sourceKey: PRODUCTIVITY_SOURCE_KEY,
+    });
+    await this.emitProductivityState(
+      "engineering.project.productivity.updated",
+      saved,
+      command.correlationId,
+    );
+
+    const result: AssessProductivityResult = {
+      state: saved,
+      workflowInstance,
+      review,
+      abstained: outcome.abstained,
+      abstentionReason: outcome.abstentionReason,
+      idempotentReplay: false,
+      projectIdentityMutated: false,
+      workforceManagementPerformed: false,
+      labourProductivityPercentComputed: false,
+      forecastProduced: false,
+    };
+    await this.recordIdempotency(command, "assess_productivity", saved.stateId, result);
+    return result;
+  }
+
+  async reviewProductivity(command: ReviewProductivityCommand): Promise<ReviewProductivityResult> {
+    const latest = await this.deps.repository.getProductivityStateById(
+      command.tenantId,
+      command.workspaceId,
+      command.productivityStateId,
+    );
+    if (!latest) throw new Error("productivity_state_not_found");
+    if (latest.status === "published") throw new Error("published_productivity_state_immutable");
+    if (latest.abstained) throw new Error("abstained_productivity_state_not_reviewable");
+
+    const capability: ProjectControlsCapability =
+      command.action === "approve" ? "productivity.approve" : "productivity.review";
+    assertProjectControlsCapability(command.actorRole, capability, {
+      actorId: command.reviewerId,
+      assessedBy: latest.createdBy,
+    });
+
+    const asOf = command.asOf ?? new Date().toISOString();
+    let instance = transitionProductivityReview({
+      instance: command.workflowInstance,
+      action: command.action,
+      to: command.to,
+    });
+
+    const publish = command.publish === true && command.to === "approved";
+    if (publish) {
+      assertProjectControlsCapability(command.actorRole, "productivity.publish", {
+        actorId: command.reviewerId,
+        assessedBy: latest.createdBy,
+      });
+      assertProductivityPublishable({
+        workflowState: instance.state,
+        reviewerId: command.reviewerId,
+        assessedBy: latest.createdBy,
+        workforceManagementClaimed: false,
+      });
+      instance = transitionProductivityReview({ instance, action: "publish", to: "published" });
+    }
+
+    const nextStatus: ProductivityAssessmentState["status"] = publish
+      ? "published"
+      : command.to === "approved"
+        ? "reviewed"
+        : command.to === "rejected"
+          ? "rejected"
+          : command.to === "changes_requested"
+            ? "changes_requested"
+            : "pending_review";
+
+    const version = await this.deps.repository.nextProductivityStateVersion(
+      command.tenantId,
+      command.workspaceId,
+      latest.controlContext.scope,
+      latest.controlContext.controlUnitId,
+    );
+    const nextId = this.deps.repository.newId("pcprod");
+    const next: ProductivityAssessmentState = {
+      ...latest,
+      id: nextId,
+      stateId: nextId,
+      version,
+      status: nextStatus,
+      recordedAt: asOf,
+      reviewedAt: asOf,
+      publishedAt: publish ? asOf : latest.publishedAt,
+      supersedesId: latest.stateId,
+      workflowInstanceId: instance.instanceId,
+    };
+    const saved = await this.deps.repository.saveProductivityState(next);
+
+    const review: ProductivityReviewRecord = {
+      reviewId: this.deps.repository.newId("pcprodreview"),
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: command.projectId,
+      productivityStateId: saved.stateId,
+      workflowInstanceId: instance.instanceId,
+      workflowState: instance.state,
+      outcome: productivityReviewOutcomeFor(command.action),
+      reviewerId: command.reviewerId,
+      notes: command.notes,
+      createdAt: asOf,
+      completedAt: command.action === "resubmit" ? undefined : asOf,
+      selfApproved: false,
+      workforceManagementClaimed: false,
+    };
+    await this.deps.repository.saveProductivityReview(review);
+
+    await this.appendProjectTimeline({
+      tenantId: saved.tenantId,
+      workspaceId: saved.workspaceId,
+      projectId: saved.projectId,
+      stateId: saved.stateId,
+      kind: publish
+        ? "productivity_published"
+        : command.to === "rejected"
+          ? "productivity_rejected"
+          : "productivity_reviewed",
+      eventType: publish
+        ? "engineering.project.productivity.published"
+        : "engineering.project.productivity.reviewed",
+      recordedAt: asOf,
+      actorId: command.reviewerId,
+      detail: command.notes,
+      sourceKey: PRODUCTIVITY_SOURCE_KEY,
+    });
+    await this.emitProductivityState(
+      "engineering.project.productivity.reviewed",
+      saved,
+      command.correlationId,
+    );
+    if (publish) {
+      await this.emitProductivityState(
+        "engineering.project.productivity.published",
+        saved,
+        command.correlationId,
+      );
+    }
+
+    return {
+      state: saved,
+      review,
+      workflowInstance: instance,
+      published: publish,
+      projectIdentityMutated: false,
+      workforceManagementClaimed: false,
+    };
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -1520,7 +1857,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost] = await Promise.all([
+    const [progress, schedule, change, cost, productivity] = await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
         command.workspaceId,
@@ -1537,6 +1874,11 @@ export class ProjectControlsEngine {
         reference.projectId,
       ),
       this.deps.repository.listCostStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
+      this.deps.repository.listProductivityStates(
         command.tenantId,
         command.workspaceId,
         reference.projectId,
@@ -1565,6 +1907,7 @@ export class ProjectControlsEngine {
       scheduleStateIds: latestPerScopeSchedule(schedule).map((state) => state.stateId),
       changeStateIds: latestPerChangeThread(change).map((state) => state.stateId),
       costStateIds: latestPerCostThread(cost).map((state) => state.stateId),
+      productivityStateIds: latestPerProductivityThread(productivity).map((state) => state.stateId),
       createdBy: command.actorId,
       immutable: true,
       containsEvidencePayloads: false,
@@ -1628,6 +1971,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const productivity = await this.deps.repository.listProductivityStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -1652,6 +2000,7 @@ export class ProjectControlsEngine {
       schedule: latestPerScopeSchedule(schedule),
       change: latestPerChangeThread(change),
       cost: latestPerCostThread(cost),
+      productivity: latestPerProductivityThread(productivity),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,
@@ -1822,6 +2171,38 @@ export class ProjectControlsEngine {
   }): Promise<CostIntelligenceState[]> {
     this.requireCapability(input.actorRole, "cost.read");
     return this.deps.repository.listCostStates(
+      input.tenantId,
+      input.workspaceId,
+      input.projectId,
+    );
+  }
+
+  async getLatestProductivity(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    controlUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<ProductivityAssessmentState | undefined> {
+    this.requireCapability(input.actorRole, "productivity.read");
+    return this.deps.repository.latestProductivityState(
+      input.tenantId,
+      input.workspaceId,
+      input.scope,
+      input.controlUnitId,
+      input.asOf,
+    );
+  }
+
+  async listProductivityHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ProductivityAssessmentState[]> {
+    this.requireCapability(input.actorRole, "productivity.read");
+    return this.deps.repository.listProductivityStates(
       input.tenantId,
       input.workspaceId,
       input.projectId,
@@ -2282,6 +2663,68 @@ export class ProjectControlsEngine {
     });
     await this.deps.events.publish(event);
   }
+
+  private async emitProductivityState(
+    eventType:
+      | "engineering.project.productivity.updated"
+      | "engineering.project.productivity.reviewed"
+      | "engineering.project.productivity.published",
+    state: ProductivityAssessmentState,
+    correlationId?: string,
+  ): Promise<void> {
+    await this.emitProductivityEvent({
+      eventType,
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      scope: state.controlContext.scope,
+      stateId: state.stateId,
+      occurredAt: state.recordedAt,
+      correlationId,
+      payload: productivityEventPayload(state),
+    });
+  }
+
+  private async emitProductivityEvent(input: {
+    eventType:
+      | "engineering.project.productivity.updated"
+      | "engineering.project.productivity.reviewed"
+      | "engineering.project.productivity.published";
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    scope?: ProjectScopeRef;
+    stateId: string;
+    occurredAt: string;
+    correlationId?: string;
+    payload: Record<string, unknown>;
+  }): Promise<void> {
+    const event = createProjectControlsEvent({
+      eventId: this.deps.repository.newId("pcevent"),
+      eventType: input.eventType,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      scope: input.scope,
+      stateId: input.stateId,
+      occurredAt: input.occurredAt,
+      correlationId: input.correlationId,
+      payload: input.payload,
+    });
+    await this.deps.repository.enqueueOutbox({
+      outboxId: this.deps.repository.newId("pcoutbox"),
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      eventType: input.eventType,
+      payload: event.payload,
+      correlationId: input.correlationId,
+      stateId: input.stateId,
+      published: false,
+      createdAt: input.occurredAt,
+    });
+    await this.deps.events.publish(event);
+  }
 }
 
 export function createProjectControlsEngine(
@@ -2402,4 +2845,34 @@ function costReviewOutcomeFor(action: CostReviewAction): CostReviewOutcome {
     case "publish":
       return "approved";
   }
+}
+
+function productivityReviewOutcomeFor(action: ProductivityReviewAction): ProductivityReviewOutcome {
+  switch (action) {
+    case "approve":
+      return "approved";
+    case "reject":
+      return "rejected";
+    case "request_changes":
+      return "changes_requested";
+    case "resubmit":
+      return "resubmitted";
+    case "publish":
+      return "approved";
+  }
+}
+
+function latestPerProductivityThread(
+  states: readonly ProductivityAssessmentState[],
+): ProductivityAssessmentState[] {
+  const byThread = new Map<string, ProductivityAssessmentState>();
+  for (const state of states) {
+    const key = productivityStateKey(
+      state.controlContext.scope,
+      state.controlContext.controlUnitId,
+    );
+    const current = byThread.get(key);
+    if (!current || state.version > current.version) byThread.set(key, state);
+  }
+  return [...byThread.values()];
 }

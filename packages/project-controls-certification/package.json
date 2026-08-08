@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls-certification",
-  "version": "0.5.0-cost-intelligence",
+  "version": "0.6.0-productivity-intelligence",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "certify:phase11c": "tsx scripts/run-phase11c-certification.ts",
     "certify:phase11d": "tsx scripts/run-phase11d-certification.ts",
     "certify:phase11e": "tsx scripts/run-phase11e-certification.ts",
+    "certify:phase11f": "tsx scripts/run-phase11f-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

@@ -1,10 +1,10 @@
 /**
- * Phase 11E — Project Context Engine.
+ * Phase 11F — Project Context Engine.
  *
  * Composes a `ProjectProfile` from the intelligence Project Controls owns.
  * Active contributors: progress intelligence (11B), schedule intelligence (11C),
- * change intelligence (11D) and cost intelligence (11E). Contingency,
- * productivity, earned value and forecast stay reserved.
+ * change intelligence (11D), cost intelligence (11E) and productivity
+ * intelligence (11F). Contingency, earned value and forecast stay reserved.
  *
  * The engine reads a `ProjectReference` for identity fields. It never writes
  * identity and never re-derives it from its own tables.
@@ -45,6 +45,14 @@ import {
   type CostProfileContribution,
   type CostVarianceAttribution,
 } from "./cost";
+import {
+  dominantProductivityPosture,
+  type ProductivityAssessmentState,
+  type ProductivityConfidenceClass,
+  type ProductivityEvidenceSufficiency,
+  type ProductivityPosture,
+  type ProductivityProfileContribution,
+} from "./productivity";
 import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
 
 export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
@@ -76,16 +84,17 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
       "Advisory, evidence-driven cost posture assessment. Implemented in Phase 11E. Not a budget ledger or financial posting.",
   },
   {
+    key: "productivity_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory, evidence-driven execution efficiency assessment. Implemented in Phase 11F. Not workforce management or labour %.",
+  },
+  {
     key: "contingency_intelligence",
     status: "reserved",
     ownedBy: "project_controls",
     notes: "Reserved. No contingency drawdown.",
-  },
-  {
-    key: "productivity_intelligence",
-    status: "reserved",
-    ownedBy: "project_controls",
-    notes: "Reserved. No unit rates or productivity factors.",
   },
   {
     key: "earned_value",
@@ -115,6 +124,7 @@ export type ProjectContextComposeInput = {
   schedule?: readonly ScheduleAssessmentState[];
   change?: readonly ChangeIntelligenceState[];
   cost?: readonly CostIntelligenceState[];
+  productivity?: readonly ProductivityAssessmentState[];
   /** Number of open change candidates; a candidate is never an approved change. */
   changeCandidateCount?: number;
   version?: number;
@@ -152,6 +162,12 @@ const CHANGE_CONFIDENCE_ORDER: ChangeConfidenceClass[] = [
   "high",
 ];
 const COST_CONFIDENCE_ORDER: CostConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const PRODUCTIVITY_CONFIDENCE_ORDER: ProductivityConfidenceClass[] = [
   "unavailable",
   "low",
   "medium",
@@ -201,6 +217,12 @@ export class ProjectContextEngine {
         state.tenantId === input.tenantId &&
         state.workspaceId === input.workspaceId,
     );
+    const productivity = (input.productivity ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
 
     const reasons: string[] = [];
     const progressAssessed = progress.filter((state) => !state.abstained);
@@ -215,6 +237,9 @@ export class ProjectContextEngine {
     const costAssessed = cost.filter((state) => !state.abstained);
     const costAbstained = cost.filter((state) => state.abstained);
     const costPublished = cost.filter((state) => state.status === "published");
+    const productivityAssessed = productivity.filter((state) => !state.abstained);
+    const productivityAbstained = productivity.filter((state) => state.abstained);
+    const productivityPublished = productivity.filter((state) => state.status === "published");
 
     const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
@@ -224,7 +249,13 @@ export class ProjectContextEngine {
     let abstentionReason: string | undefined;
     let profileClass: ProjectProfile["profileClass"] = "composed";
 
-    if (progress.length === 0 && schedule.length === 0 && change.length === 0 && cost.length === 0) {
+    if (
+      progress.length === 0 &&
+      schedule.length === 0 &&
+      change.length === 0 &&
+      cost.length === 0 &&
+      productivity.length === 0
+    ) {
       abstained = true;
       abstentionReason = "no_project_controls_intelligence_available";
       profileClass = "abstained";
@@ -233,7 +264,8 @@ export class ProjectContextEngine {
       progressAssessed.length === 0 &&
       scheduleAssessed.length === 0 &&
       changeAssessed.length === 0 &&
-      costAssessed.length === 0
+      costAssessed.length === 0 &&
+      productivityAssessed.length === 0
     ) {
       abstained = true;
       abstentionReason = "all_intelligence_assessments_abstained";
@@ -244,16 +276,19 @@ export class ProjectContextEngine {
       scheduleAbstained.length > 0 ||
       changeAbstained.length > 0 ||
       costAbstained.length > 0 ||
+      productivityAbstained.length > 0 ||
       progressPublished.length === 0 ||
       (schedule.length > 0 && schedulePublished.length === 0) ||
       (change.length > 0 && changePublished.length === 0) ||
-      (cost.length > 0 && costPublished.length === 0)
+      (cost.length > 0 && costPublished.length === 0) ||
+      (productivity.length > 0 && productivityPublished.length === 0)
     ) {
       profileClass = "partially_composed";
       if (progressAbstained.length > 0) reasons.push("some_progress_scopes_abstained");
       if (scheduleAbstained.length > 0) reasons.push("some_schedule_scopes_abstained");
       if (changeAbstained.length > 0) reasons.push("some_change_assessments_abstained");
       if (costAbstained.length > 0) reasons.push("some_cost_assessments_abstained");
+      if (productivityAbstained.length > 0) reasons.push("some_productivity_assessments_abstained");
       if (progressPublished.length === 0 && progress.length > 0) {
         reasons.push("no_published_progress_yet");
       }
@@ -265,6 +300,9 @@ export class ProjectContextEngine {
       }
       if (cost.length > 0 && costPublished.length === 0) {
         reasons.push("no_published_cost_assessment_yet");
+      }
+      if (productivity.length > 0 && productivityPublished.length === 0) {
+        reasons.push("no_published_productivity_assessment_yet");
       }
     }
 
@@ -353,6 +391,27 @@ export class ProjectContextEngine {
         latestAssessmentAt: latestAt(cost.map((s) => s.assessedAt)),
         financialPostingClaimed: false,
       } satisfies CostProfileContribution,
+      productivity: {
+        productivityAssessed: productivityAssessed.length,
+        productivityAbstained: productivityAbstained.length,
+        publishedProductivity: productivityPublished.length,
+        improvingCount: countProductivityPosture(productivityAssessed, "improving"),
+        stableCount: countProductivityPosture(productivityAssessed, "stable"),
+        decliningCount: countProductivityPosture(productivityAssessed, "declining"),
+        constrainedCount: countProductivityPosture(productivityAssessed, "constrained"),
+        recoveringCount: countProductivityPosture(productivityAssessed, "recovering"),
+        dominantPosture: dominantProductivityPosture(
+          productivityAssessed.map((state) => state.productivityPosture),
+        ),
+        factorPresenceCount: productivityAssessed.reduce(
+          (sum, state) => sum + state.factors.filter((f) => f.present).length,
+          0,
+        ),
+        lowestConfidenceClass: lowestProductivityConfidence(productivity),
+        dominantSufficiency: dominantProductivity(productivity),
+        latestAssessmentAt: latestAt(productivity.map((s) => s.assessedAt)),
+        labourProductivityPercentClaimed: false,
+      } satisfies ProductivityProfileContribution,
       contributors: PROJECT_PROFILE_CONTRIBUTORS,
       activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
       reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
@@ -396,8 +455,8 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 4) {
-    throw new Error("phase_11e_must_have_exactly_four_active_contributors");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 5) {
+    throw new Error("phase_11f_must_have_exactly_five_active_contributors");
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
     throw new Error("progress_intelligence_must_stay_active");
@@ -411,12 +470,10 @@ export function assertProjectProfileContributorsComplete(): {
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("cost_intelligence")) {
     throw new Error("cost_intelligence_must_be_active");
   }
-  for (const key of [
-    "contingency_intelligence",
-    "productivity_intelligence",
-    "earned_value",
-    "forecast",
-  ] as const) {
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("productivity_intelligence")) {
+    throw new Error("productivity_intelligence_must_be_active");
+  }
+  for (const key of ["contingency_intelligence", "earned_value", "forecast"] as const) {
     const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
     if (!row || row.status !== "reserved") {
       throw new Error(`contributor_must_stay_reserved:${key}`);
@@ -557,4 +614,37 @@ function dominantVarianceAttribution(
     counts.set(state.varianceAttribution, (counts.get(state.varianceAttribution) ?? 0) + 1);
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function lowestProductivityConfidence(
+  states: readonly ProductivityAssessmentState[],
+): ProductivityConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      PRODUCTIVITY_CONFIDENCE_ORDER.indexOf(current) <
+      PRODUCTIVITY_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantProductivity(
+  states: readonly ProductivityAssessmentState[],
+): ProductivityEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ProductivityEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countProductivityPosture(
+  states: readonly ProductivityAssessmentState[],
+  posture: ProductivityPosture,
+): number {
+  return states.filter((state) => state.productivityPosture === posture).length;
 }

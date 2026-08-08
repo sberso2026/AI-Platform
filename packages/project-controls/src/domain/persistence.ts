@@ -42,6 +42,13 @@ import type {
   CostReviewRecord,
 } from "./cost";
 import { costStateKey } from "./cost";
+import type {
+  ProductivityAssessmentState,
+  ProductivityConfidence,
+  ProductivityEvidence,
+  ProductivityReviewRecord,
+} from "./productivity";
+import { productivityStateKey } from "./productivity";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -107,6 +114,22 @@ export type PersistedCostState = CostIntelligenceState;
 export type PersistedCostReview = CostReviewRecord;
 export type PersistedCostConfidence = CostConfidence & {
   costStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedProductivityEvidence = ProductivityEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  productivityStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedProductivityState = ProductivityAssessmentState;
+export type PersistedProductivityReview = ProductivityReviewRecord;
+export type PersistedProductivityConfidence = ProductivityConfidence & {
+  productivityStateId: string;
   recordedAt: string;
 };
 
@@ -369,6 +392,54 @@ export type ProjectControlsRepositoryPort = {
     costStateId: string,
   ): Promise<PersistedCostConfidence[]>;
 
+  saveProductivityState(state: PersistedProductivityState): Promise<PersistedProductivityState>;
+  getProductivityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedProductivityState | null>;
+  latestProductivityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    controlUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedProductivityState | undefined>;
+  listProductivityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProductivityState[]>;
+  nextProductivityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    controlUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveProductivityEvidence(
+    evidence: readonly PersistedProductivityEvidence[],
+  ): Promise<PersistedProductivityEvidence[]>;
+  listProductivityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    productivityStateId: string,
+  ): Promise<PersistedProductivityEvidence[]>;
+  saveProductivityReview(review: PersistedProductivityReview): Promise<PersistedProductivityReview>;
+  listProductivityReviews(
+    tenantId: string,
+    workspaceId: string,
+    productivityStateId?: string,
+  ): Promise<PersistedProductivityReview[]>;
+  saveProductivityConfidence(
+    confidence: PersistedProductivityConfidence,
+  ): Promise<PersistedProductivityConfidence>;
+  listProductivityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    productivityStateId: string,
+  ): Promise<PersistedProductivityConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -433,6 +504,10 @@ export type DurableProjectControlsStore = {
   costEvidence: PersistedCostEvidence[];
   costReviews: PersistedCostReview[];
   costConfidence: PersistedCostConfidence[];
+  productivityStates: PersistedProductivityState[];
+  productivityEvidence: PersistedProductivityEvidence[];
+  productivityReviews: PersistedProductivityReview[];
+  productivityConfidence: PersistedProductivityConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -462,6 +537,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     costEvidence: [],
     costReviews: [],
     costConfidence: [],
+    productivityStates: [],
+    productivityEvidence: [],
+    productivityReviews: [],
+    productivityConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -1107,6 +1186,141 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.costStateId === costStateId,
+    );
+  }
+
+  async saveProductivityState(state: PersistedProductivityState): Promise<PersistedProductivityState> {
+    const controlUnitId = state.controlContext.controlUnitId;
+    const clash = this.store.productivityStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        productivityStateKey(row.controlContext.scope, row.controlContext.controlUnitId) ===
+          productivityStateKey(state.controlContext.scope, controlUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) {
+      throw new Error(`optimistic_lock_conflict:productivity_version=${state.version}`);
+    }
+    this.store.productivityStates.push(state);
+    return state;
+  }
+
+  async getProductivityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedProductivityState | null> {
+    return (
+      this.store.productivityStates.find(
+        (row) =>
+          row.stateId === stateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestProductivityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    controlUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedProductivityState | undefined> {
+    return latestAsOf(
+      this.store.productivityStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          productivityStateKey(row.controlContext.scope, row.controlContext.controlUnitId) ===
+            productivityStateKey(scope, controlUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listProductivityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProductivityState[]> {
+    return this.store.productivityStates.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async nextProductivityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    controlUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestProductivityState(tenantId, workspaceId, scope, controlUnitId);
+    const current = latest?.version ?? 0;
+    assertNextVersion(current, expectedVersion);
+    return current + 1;
+  }
+
+  async saveProductivityEvidence(
+    evidence: readonly PersistedProductivityEvidence[],
+  ): Promise<PersistedProductivityEvidence[]> {
+    this.store.productivityEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listProductivityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    productivityStateId: string,
+  ): Promise<PersistedProductivityEvidence[]> {
+    return this.store.productivityEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.productivityStateId === productivityStateId,
+    );
+  }
+
+  async saveProductivityReview(review: PersistedProductivityReview): Promise<PersistedProductivityReview> {
+    this.store.productivityReviews.push(review);
+    return review;
+  }
+
+  async listProductivityReviews(
+    tenantId: string,
+    workspaceId: string,
+    productivityStateId?: string,
+  ): Promise<PersistedProductivityReview[]> {
+    return this.store.productivityReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!productivityStateId || row.productivityStateId === productivityStateId),
+    );
+  }
+
+  async saveProductivityConfidence(
+    confidence: PersistedProductivityConfidence,
+  ): Promise<PersistedProductivityConfidence> {
+    this.store.productivityConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listProductivityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    productivityStateId: string,
+  ): Promise<PersistedProductivityConfidence[]> {
+    return this.store.productivityConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.productivityStateId === productivityStateId,
     );
   }
 

@@ -352,6 +352,8 @@ export type ProjectProfile = {
   change?: import("./change").ChangeProfileContribution;
   /** Cost rollups from Phase 11E. Counts and postures only — never a ledger balance. */
   cost?: import("./cost").CostProfileContribution;
+  /** Productivity rollups from Phase 11F. Postures and factors only — never labour %. */
+  productivity?: import("./productivity").ProductivityProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];
