@@ -22,6 +22,7 @@ import {
   AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED,
   AUTONOMOUS_COST_PUBLICATION_ALLOWED,
   AUTONOMOUS_PRODUCTIVITY_PUBLICATION_ALLOWED,
+  AUTONOMOUS_FORECAST_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
@@ -603,5 +604,119 @@ export function assertProductivityPublishable(input: {
   }
   if (input.assessedBy && input.assessedBy === input.reviewerId) {
     throw new Error("productivity_self_approval_forbidden");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Forecast review (Phase 11G)
+// ---------------------------------------------------------------------------
+
+export const FORECAST_REVIEW_WORKFLOW_SLUG = "project_controls.forecast_review" as const;
+
+export const FORECAST_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: FORECAST_REVIEW_WORKFLOW_SLUG,
+  displayName: "Project Controls Forecast Assessment Review",
+  moduleKey: "project_controls",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+  ],
+};
+
+export const FORECAST_REVIEW_ENTITY_TYPE = "project_controls_forecast_assessment" as const;
+
+export type ForecastReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type ForecastReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startForecastReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: FORECAST_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: FORECAST_REVIEW_ENTITY_TYPE,
+    entityId: input.assessmentStateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "forecast_intelligence",
+      projectId: input.projectId,
+      advisoryOnly: true,
+      completionDatePredicted: false,
+      costForecastComputed: false,
+      mutatesUpstreamContributors: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: FORECAST_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionForecastReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: ForecastReviewAction;
+  to: ForecastReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: FORECAST_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function assertForecastPublishable(input: {
+  workflowState: string;
+  reviewerId?: string;
+  assessedBy?: string;
+  completionDateClaimed?: boolean;
+}): void {
+  if (AUTONOMOUS_FORECAST_PUBLICATION_ALLOWED) {
+    throw new Error("autonomous_forecast_publication_forbidden");
+  }
+  if (input.completionDateClaimed === true) {
+    throw new Error("forecast_assessment_approval_is_not_completion_date_prediction");
+  }
+  if (input.workflowState !== "approved") {
+    throw new Error("forecast_publish_requires_approved_review");
+  }
+  if (!input.reviewerId) {
+    throw new Error("forecast_publish_requires_reviewer");
+  }
+  if (input.assessedBy && input.assessedBy === input.reviewerId) {
+    throw new Error("forecast_self_approval_forbidden");
   }
 }

@@ -24,13 +24,10 @@ const ACTIVE_CONTRIBUTORS = [
   "change_intelligence",
   "cost_intelligence",
   "productivity_intelligence",
-] as const;
-
-const RESERVED_CONTRIBUTORS = [
-  "contingency_intelligence",
-  "earned_value",
   "forecast",
 ] as const;
+
+const RESERVED_CONTRIBUTORS = ["contingency_intelligence", "earned_value"] as const;
 
 const GOVERNANCE_FLAGS = {
   earnedValueImplemented: false,
@@ -39,6 +36,8 @@ const GOVERNANCE_FLAGS = {
   costEngineImplemented: false,
   financialPostingImplemented: false,
   forecastingImplemented: false,
+  forecastEngineImplemented: false,
+  predictiveSchedulingImplemented: false,
   scheduleExecutionImplemented: false,
   changeExecutionImplemented: false,
   productionProjectControlsReady: false,
@@ -47,15 +46,18 @@ const GOVERNANCE_FLAGS = {
   changeIntelligenceReady: true,
   costIntelligenceReady: true,
   productivityIntelligenceReady: true,
+  forecastIntelligenceReady: true,
+  projectContextCompositionReady: true,
   costIntelligenceIsAdvisoryOnly: true,
   productivityIntelligenceIsAdvisoryOnly: true,
+  forecastIntelligenceIsAdvisoryOnly: true,
   resourcePlanningImplemented: false,
   timesheetSystemImplemented: false,
   payrollImplemented: false,
   labourCostEngineImplemented: false,
-  forecastEngineImplemented: false,
   phase11fReady: true,
   phase11gReady: true,
+  phase11hReady: true,
   projectSnapshotReady: true,
   projectTimelineReady: true,
   contractualAuthority: false,

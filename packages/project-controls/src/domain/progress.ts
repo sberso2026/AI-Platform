@@ -354,6 +354,8 @@ export type ProjectProfile = {
   cost?: import("./cost").CostProfileContribution;
   /** Productivity rollups from Phase 11F. Postures and factors only — never labour %. */
   productivity?: import("./productivity").ProductivityProfileContribution;
+  /** Forecast rollups from Phase 11G. Postures only — never dates or cost forecasts. */
+  forecast?: import("./forecast").ForecastProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];

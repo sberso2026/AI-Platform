@@ -147,6 +147,20 @@ import {
   type ScheduleTimelineEvent,
 } from "./schedule";
 import { assertReservedProvidersUnimplemented } from "./reserved-providers";
+import {
+  createForecastOrchestration,
+  type AssessForecastCommand,
+  type AssessForecastResult,
+  type ReviewForecastCommand,
+  type ReviewForecastResult,
+} from "./engine-forecast";
+
+export type {
+  AssessForecastCommand,
+  AssessForecastResult,
+  ReviewForecastCommand,
+  ReviewForecastResult,
+} from "./engine-forecast";
 
 export type AssessProgressCommand = {
   tenantId: string;
@@ -541,6 +555,7 @@ export class ProjectControlsEngine {
   private readonly costEngine: CostIntelligenceEngine;
   private readonly productivityEngine: ProductivityIntelligenceEngine;
   private readonly contextEngine: ProjectContextEngine;
+  private readonly forecastOrchestration: ReturnType<typeof createForecastOrchestration>;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
     assertOwnershipLock();
@@ -562,6 +577,12 @@ export class ProjectControlsEngine {
       createProductivityIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
     this.contextEngine =
       deps.contextEngine ?? createProjectContextEngine({ newId: (p) => deps.repository.newId(p) });
+    this.forecastOrchestration = createForecastOrchestration({
+      projectDomainPort: deps.projectDomainPort,
+      repository: deps.repository,
+      events: deps.events,
+      appendTimeline: (input) => this.appendProjectTimeline(input),
+    });
   }
 
   async assessProgress(command: AssessProgressCommand): Promise<AssessProgressResult> {
@@ -1845,6 +1866,40 @@ export class ProjectControlsEngine {
     };
   }
 
+  async assessForecast(command: AssessForecastCommand): Promise<AssessForecastResult> {
+    this.requireCapability(command.actorRole, "forecast.assess");
+    return this.forecastOrchestration.assessForecast(command);
+  }
+
+  async reviewForecast(command: ReviewForecastCommand): Promise<ReviewForecastResult> {
+    this.requireCapability(
+      command.publish ? command.actorRole : command.actorRole,
+      command.publish ? "forecast.publish" : "forecast.review",
+    );
+    return this.forecastOrchestration.reviewForecast(command);
+  }
+
+  async getLatestForecast(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: import("./progress").ProjectScopeRef;
+    trajectoryUnitId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "forecast.read");
+    return this.forecastOrchestration.getLatestForecast(input);
+  }
+
+  async listForecastHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "forecast.read");
+    return this.forecastOrchestration.listForecastHistory(input);
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -1857,7 +1912,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost, productivity] = await Promise.all([
+    const [progress, schedule, change, cost, productivity, forecast] = await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
         command.workspaceId,
@@ -1879,6 +1934,11 @@ export class ProjectControlsEngine {
         reference.projectId,
       ),
       this.deps.repository.listProductivityStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
+      this.deps.repository.listForecastStates(
         command.tenantId,
         command.workspaceId,
         reference.projectId,
@@ -1908,6 +1968,9 @@ export class ProjectControlsEngine {
       changeStateIds: latestPerChangeThread(change).map((state) => state.stateId),
       costStateIds: latestPerCostThread(cost).map((state) => state.stateId),
       productivityStateIds: latestPerProductivityThread(productivity).map((state) => state.stateId),
+      forecastStateIds: this.forecastOrchestration.latestPerForecastThread(forecast).map(
+        (state) => state.stateId,
+      ),
       createdBy: command.actorId,
       immutable: true,
       containsEvidencePayloads: false,
@@ -1976,6 +2039,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const forecast = await this.deps.repository.listForecastStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -2001,6 +2069,7 @@ export class ProjectControlsEngine {
       change: latestPerChangeThread(change),
       cost: latestPerCostThread(cost),
       productivity: latestPerProductivityThread(productivity),
+      forecast: this.forecastOrchestration.latestPerForecastThread(forecast),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,

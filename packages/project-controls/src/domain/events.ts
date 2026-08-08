@@ -21,6 +21,7 @@ import type {
   CostIntelligenceState,
 } from "./cost";
 import type { ProductivityAssessmentState } from "./productivity";
+import type { ForecastAssessmentState } from "./forecast";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -43,6 +44,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.productivity.updated",
   "engineering.project.productivity.reviewed",
   "engineering.project.productivity.published",
+  "engineering.project.forecast.updated",
+  "engineering.project.forecast.reviewed",
+  "engineering.project.forecast.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -69,6 +73,12 @@ export const PROJECT_CONTROLS_PRODUCTIVITY_EVENTS = [
   "engineering.project.productivity.updated",
   "engineering.project.productivity.reviewed",
   "engineering.project.productivity.published",
+] as const;
+
+export const PROJECT_CONTROLS_FORECAST_EVENTS = [
+  "engineering.project.forecast.updated",
+  "engineering.project.forecast.reviewed",
+  "engineering.project.forecast.published",
 ] as const;
 
 export type ProjectControlsEventGovernance = {
@@ -183,6 +193,8 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     costsAbstained: profile.cost?.costsAbstained ?? 0,
     productivityAssessed: profile.productivity?.productivityAssessed ?? 0,
     productivityAbstained: profile.productivity?.productivityAbstained ?? 0,
+    forecastsAssessed: profile.forecast?.forecastsAssessed ?? 0,
+    forecastsAbstained: profile.forecast?.forecastsAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
@@ -269,6 +281,27 @@ export function productivityEventPayload(
   };
 }
 
+/** Identifiers only — no completion dates or cost forecasts. */
+export function forecastEventPayload(state: ForecastAssessmentState): Record<string, unknown> {
+  return {
+    forecastStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    forecastPosture: state.forecastPosture,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    trajectoryUnitId: state.controlContext.trajectoryUnitId,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    contributorCount: state.contributingContributors.length,
+    composedContextId: state.composedContextId,
+    completionDateClaimed: false,
+    costForecastClaimed: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
 /** Identifiers and counts only — a snapshot event carries no state content. */
 export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, unknown> {
   return {
@@ -280,6 +313,7 @@ export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, 
     changeStateCount: snapshot.changeStateIds.length,
     costStateCount: snapshot.costStateIds.length,
     productivityStateCount: snapshot.productivityStateIds.length,
+    forecastStateCount: snapshot.forecastStateIds.length,
     capturedAt: snapshot.capturedAt,
     immutable: true,
     containsEvidencePayloads: false,

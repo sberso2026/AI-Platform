@@ -53,6 +53,13 @@ export const PROJECT_CONTROLS_CAPABILITIES = [
   "productivity.approve",
   "productivity.publish",
   "productivity.reject",
+  "forecast.read",
+  "forecast.assess",
+  "forecast.submit_review",
+  "forecast.review",
+  "forecast.approve",
+  "forecast.publish",
+  "forecast.reject",
   "profile.read",
   "profile.compose",
   "snapshot.read",
@@ -72,6 +79,8 @@ export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly ProjectControlsCapabi
   "cost.publish",
   "productivity.approve",
   "productivity.publish",
+  "forecast.approve",
+  "forecast.publish",
 ] as const;
 
 const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> = {
@@ -81,6 +90,7 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "change.read",
     "cost.read",
     "productivity.read",
+    "forecast.read",
     "profile.read",
     "snapshot.read",
   ],
@@ -100,6 +110,9 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "productivity.read",
     "productivity.assess",
     "productivity.submit_review",
+    "forecast.read",
+    "forecast.assess",
+    "forecast.submit_review",
     "profile.read",
     "profile.compose",
     "snapshot.read",
@@ -121,6 +134,9 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "productivity.read",
     "productivity.review",
     "productivity.reject",
+    "forecast.read",
+    "forecast.review",
+    "forecast.reject",
     "profile.read",
     "snapshot.read",
   ],
@@ -150,6 +166,11 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "productivity.approve",
     "productivity.publish",
     "productivity.reject",
+    "forecast.read",
+    "forecast.review",
+    "forecast.approve",
+    "forecast.publish",
+    "forecast.reject",
     "profile.read",
     "snapshot.read",
   ],
@@ -187,10 +208,12 @@ export function assertProjectControlsCapability(
 /**
  * Reserved capabilities must never appear in the matrix. `change.*` and `cost.*`
  * are implemented *assessment* capability sets; earned value, CPM, float,
- * forecast, contingency and financial posting stay forbidden.
+ * contingency and financial posting stay forbidden. Forecast intelligence
+ * assessment capabilities (forecast.*) are implemented in Phase 11G; the
+ * predictive ForecastProvider stays reserved.
  */
 export function assertNoReservedCapabilities(): { ok: true } {
-  const forbidden = /^(earned_value|cpm|float|forecast|contingency|posting)/;
+  const forbidden = /^(earned_value|cpm|float|contingency|posting)/;
   for (const capability of PROJECT_CONTROLS_CAPABILITIES) {
     if (forbidden.test(capability)) {
       throw new Error(`reserved_capability_must_not_be_granted:${capability}`);

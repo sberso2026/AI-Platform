@@ -49,6 +49,13 @@ import type {
   ProductivityReviewRecord,
 } from "./productivity";
 import { productivityStateKey } from "./productivity";
+import type {
+  ForecastAssessmentState,
+  ForecastConfidence,
+  ForecastEvidence,
+  ForecastReviewRecord,
+} from "./forecast";
+import { forecastStateKey } from "./forecast";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -130,6 +137,22 @@ export type PersistedProductivityState = ProductivityAssessmentState;
 export type PersistedProductivityReview = ProductivityReviewRecord;
 export type PersistedProductivityConfidence = ProductivityConfidence & {
   productivityStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedForecastEvidence = ForecastEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  forecastStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedForecastState = ForecastAssessmentState;
+export type PersistedForecastReview = ForecastReviewRecord;
+export type PersistedForecastConfidence = ForecastConfidence & {
+  forecastStateId: string;
   recordedAt: string;
 };
 
@@ -440,6 +463,54 @@ export type ProjectControlsRepositoryPort = {
     productivityStateId: string,
   ): Promise<PersistedProductivityConfidence[]>;
 
+  saveForecastState(state: PersistedForecastState): Promise<PersistedForecastState>;
+  getForecastStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedForecastState | null>;
+  latestForecastState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    trajectoryUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedForecastState | undefined>;
+  listForecastStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedForecastState[]>;
+  nextForecastStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    trajectoryUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveForecastEvidence(
+    evidence: readonly PersistedForecastEvidence[],
+  ): Promise<PersistedForecastEvidence[]>;
+  listForecastEvidence(
+    tenantId: string,
+    workspaceId: string,
+    forecastStateId: string,
+  ): Promise<PersistedForecastEvidence[]>;
+  saveForecastReview(review: PersistedForecastReview): Promise<PersistedForecastReview>;
+  listForecastReviews(
+    tenantId: string,
+    workspaceId: string,
+    forecastStateId?: string,
+  ): Promise<PersistedForecastReview[]>;
+  saveForecastConfidence(
+    confidence: PersistedForecastConfidence,
+  ): Promise<PersistedForecastConfidence>;
+  listForecastConfidence(
+    tenantId: string,
+    workspaceId: string,
+    forecastStateId: string,
+  ): Promise<PersistedForecastConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -508,6 +579,10 @@ export type DurableProjectControlsStore = {
   productivityEvidence: PersistedProductivityEvidence[];
   productivityReviews: PersistedProductivityReview[];
   productivityConfidence: PersistedProductivityConfidence[];
+  forecastStates: PersistedForecastState[];
+  forecastEvidence: PersistedForecastEvidence[];
+  forecastReviews: PersistedForecastReview[];
+  forecastConfidence: PersistedForecastConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -541,6 +616,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     productivityEvidence: [],
     productivityReviews: [],
     productivityConfidence: [],
+    forecastStates: [],
+    forecastEvidence: [],
+    forecastReviews: [],
+    forecastConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -1321,6 +1400,139 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.productivityStateId === productivityStateId,
+    );
+  }
+
+  async saveForecastState(state: PersistedForecastState): Promise<PersistedForecastState> {
+    const trajectoryUnitId = state.controlContext.trajectoryUnitId;
+    const clash = this.store.forecastStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        forecastStateKey(row.controlContext.scope, row.controlContext.trajectoryUnitId) ===
+          forecastStateKey(state.controlContext.scope, trajectoryUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:forecast_version=${state.version}`);
+    this.store.forecastStates.push(state);
+    return state;
+  }
+
+  async getForecastStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedForecastState | null> {
+    return (
+      this.store.forecastStates.find(
+        (row) =>
+          row.stateId === stateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestForecastState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    trajectoryUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedForecastState | undefined> {
+    return latestAsOf(
+      this.store.forecastStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          forecastStateKey(row.controlContext.scope, row.controlContext.trajectoryUnitId) ===
+            forecastStateKey(scope, trajectoryUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listForecastStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedForecastState[]> {
+    return this.store.forecastStates.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId,
+    );
+  }
+
+  async nextForecastStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    trajectoryUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestForecastState(tenantId, workspaceId, scope, trajectoryUnitId);
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && expectedVersion !== next - 1) {
+      throw new Error(`optimistic_lock_conflict:forecast_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveForecastEvidence(
+    evidence: readonly PersistedForecastEvidence[],
+  ): Promise<PersistedForecastEvidence[]> {
+    this.store.forecastEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listForecastEvidence(
+    tenantId: string,
+    workspaceId: string,
+    forecastStateId: string,
+  ): Promise<PersistedForecastEvidence[]> {
+    return this.store.forecastEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.forecastStateId === forecastStateId,
+    );
+  }
+
+  async saveForecastReview(review: PersistedForecastReview): Promise<PersistedForecastReview> {
+    this.store.forecastReviews.push(review);
+    return review;
+  }
+
+  async listForecastReviews(
+    tenantId: string,
+    workspaceId: string,
+    forecastStateId?: string,
+  ): Promise<PersistedForecastReview[]> {
+    return this.store.forecastReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!forecastStateId || row.forecastStateId === forecastStateId),
+    );
+  }
+
+  async saveForecastConfidence(
+    confidence: PersistedForecastConfidence,
+  ): Promise<PersistedForecastConfidence> {
+    this.store.forecastConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listForecastConfidence(
+    tenantId: string,
+    workspaceId: string,
+    forecastStateId: string,
+  ): Promise<PersistedForecastConfidence[]> {
+    return this.store.forecastConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.forecastStateId === forecastStateId,
     );
   }
 

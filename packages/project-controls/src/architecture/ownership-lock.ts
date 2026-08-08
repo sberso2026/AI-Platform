@@ -36,6 +36,11 @@ import {
   PRODUCTIVITY_INTELLIGENCE_IS_ADVISORY_ONLY,
   PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
   PRODUCTIVITY_INTELLIGENCE_READY,
+  FORECAST_INTELLIGENCE_OWNERSHIP,
+  FORECAST_INTELLIGENCE_READY,
+  FORECAST_INTELLIGENCE_IS_ADVISORY_ONLY,
+  PROJECT_CONTEXT_COMPOSITION_READY,
+  projectContextCompositionOwnership,
   CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
   FINANCIAL_LEDGER_OWNERSHIP,
   FINANCIAL_POSTING_IMPLEMENTED,
@@ -288,6 +293,8 @@ export function assertOwnershipLock(): {
   changeIntelligenceOwnership: typeof CHANGE_INTELLIGENCE_OWNERSHIP;
   costIntelligenceOwnership: typeof COST_INTELLIGENCE_OWNERSHIP;
   productivityIntelligenceOwnership: typeof PRODUCTIVITY_INTELLIGENCE_OWNERSHIP;
+  forecastIntelligenceOwnership: typeof FORECAST_INTELLIGENCE_OWNERSHIP;
+  projectContextCompositionOwnership: typeof projectContextCompositionOwnership;
   contractualChangeAuthorityOwnership: typeof CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP;
   financialLedgerOwnership: typeof FINANCIAL_LEDGER_OWNERSHIP;
   sharedProjectDomainReady: true;
@@ -300,6 +307,9 @@ export function assertOwnershipLock(): {
   costIntelligenceIsAdvisoryOnly: true;
   productivityIntelligenceReady: true;
   productivityIntelligenceIsAdvisoryOnly: true;
+  forecastIntelligenceReady: true;
+  forecastIntelligenceIsAdvisoryOnly: true;
+  projectContextCompositionReady: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
   duplicateAssetOwnershipIntroduced: false;
@@ -544,6 +554,8 @@ export function assertOwnershipLock(): {
     changeIntelligenceOwnership: CHANGE_INTELLIGENCE_OWNERSHIP,
     costIntelligenceOwnership: COST_INTELLIGENCE_OWNERSHIP,
     productivityIntelligenceOwnership: PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
+    forecastIntelligenceOwnership: FORECAST_INTELLIGENCE_OWNERSHIP,
+    projectContextCompositionOwnership: projectContextCompositionOwnership,
     contractualChangeAuthorityOwnership: CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
     financialLedgerOwnership: FINANCIAL_LEDGER_OWNERSHIP,
     sharedProjectDomainReady: true,
@@ -556,6 +568,9 @@ export function assertOwnershipLock(): {
     costIntelligenceIsAdvisoryOnly: true,
     productivityIntelligenceReady: true,
     productivityIntelligenceIsAdvisoryOnly: true,
+    forecastIntelligenceReady: true,
+    forecastIntelligenceIsAdvisoryOnly: true,
+    projectContextCompositionReady: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,
     duplicateAssetOwnershipIntroduced: false,

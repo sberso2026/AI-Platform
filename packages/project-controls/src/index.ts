@@ -26,8 +26,18 @@ export {
   createProductivityIntelligenceEngine,
   assertNoWorkforceManagement,
   assertNoLabourProductivityMetrics,
-  assertNoForecastOrEarnedValue as assertNoForecastOrEarnedValueInProductivityIntelligence,
+  assertNoForecastOrEarnedValue as   assertNoForecastOrEarnedValueInProductivityIntelligence,
 } from "./domain/productivity-engine";
+export * from "./domain/forecast";
+export * from "./domain/forecast-confidence";
+export {
+  ForecastIntelligenceEngine,
+  createForecastIntelligenceEngine,
+  assertNoPredictiveScheduling,
+  assertNoEarnedValueOrCpm,
+  assertAdvisoryOnly as assertForecastAdvisoryOnly,
+} from "./domain/forecast-engine";
+export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
 export * from "./domain/review-workflow";
@@ -65,6 +75,10 @@ export {
   type PersistedProductivityEvidence,
   type PersistedProductivityReview,
   type PersistedProductivityConfidence,
+  type PersistedForecastState,
+  type PersistedForecastEvidence,
+  type PersistedForecastReview,
+  type PersistedForecastConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,
