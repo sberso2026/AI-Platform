@@ -9,13 +9,13 @@ on:
       - "packages/project-controls-certification/**"
       - "packages/engineering-shared-project-domain/**"
       - "packages/platform-certification/src/phase11h*"
-      - "supabase/migrations/*batch_67*"
+      - "supabase/migrations/*batch_68*"
       - "apps/web/src/app/api/engineering/project-controls/**"
       - "docs/architecture/PROJECT_CONTROLS_*"
-      - ".github/workflows/phase-11h-project-controls-decision.yml"
+      - ".github/workflows/phase-11h-project-controls-decision-support.yml"
 
 concurrency:
-  group: phase-11h-project-controls-decision-${{ github.ref }}
+  group: phase-11h-project-controls-decision-support-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -46,7 +46,7 @@ jobs:
       - name: Project Controls unit tests
         run: pnpm --filter @rtb/project-controls test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase11h-project-controls-decision.test.ts
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase11h-project-controls-decision-support.test.ts
       - name: Secret scan
         run: pnpm --filter @rtb/project-controls-certification secret-scan
       - name: Phase 11H certification (gates A–BC)
@@ -75,9 +75,11 @@ jobs:
             ["changeIntelligenceReady", a.changeIntelligenceReady===true],
             ["costIntelligenceReady", a.costIntelligenceReady===true],
             ["productivityIntelligenceReady", a.productivityIntelligenceReady===true],
-            ["decisionIntelligenceReady", a.decisionIntelligenceReady===true],
+            ["forecastIntelligenceReady", a.forecastIntelligenceReady===true],
             ["projectContextCompositionReady", a.projectContextCompositionReady===true],
-            ["decisionIntelligenceIsAdvisoryOnly", a.decisionIntelligenceIsAdvisoryOnly===true],
+            ["decisionSupportReady", a.decisionSupportReady===true],
+            ["DecisionSupportReady", a.DecisionSupportReady===true],
+            ["decisionSupportIsAdvisoryOnly", a.decisionSupportIsAdvisoryOnly===true],
             ["projectSnapshotReady", a.projectSnapshotReady===true],
             ["projectTimelineReady", a.projectTimelineReady===true],
             ["progressIntelligence11bIntact", a.progressIntelligence11bIntact===true],
@@ -85,12 +87,15 @@ jobs:
             ["costIntelligence11eIntact", a.costIntelligence11eIntact===true],
             ["productivityIntelligence11fIntact", a.productivityIntelligence11fIntact===true],
             ["productionProjectControlsReady", a.productionProjectControlsReady===false],
+            ["automaticDecisionExecutionEnabled", a.automaticDecisionExecutionEnabled===false],
+            ["automaticScheduleChangeEnabled", a.automaticScheduleChangeEnabled===false],
+            ["automaticCostChangeEnabled", a.automaticCostChangeEnabled===false],
+            ["automaticContractInstructionEnabled", a.automaticContractInstructionEnabled===false],
             ["resourcePlanningImplemented", a.resourcePlanningImplemented===false],
             ["earnedValueImplemented", a.earnedValueImplemented===false],
-            ["decisionEngineImplemented", a.decisionEngineImplemented===false],
             ["predictiveSchedulingImplemented", a.predictiveSchedulingImplemented===false],
-            ["phase11fReady", a.phase11fReady===true],
-            ["phase11iReady", a.phase11iReady===true],
+            ["productionMemoryRepositoryAllowed", a.productionMemoryRepositoryAllowed===false],
+            ["duplicateProjectOwnershipDetected", a.duplicateProjectOwnershipDetected===false],
             ["phase11iReady", a.phase11iReady===true],
             ["releaseEligible", a.releaseEligible===true],
             ["requiredTestsSkipped", a.requiredTestsSkipped===false],
@@ -105,7 +110,8 @@ jobs:
           console.log(JSON.stringify({
             verdict: a.verdict,
             version: a.version,
-            decisionIntelligenceReady: a.decisionIntelligenceReady,
+            decisionSupportReady: a.decisionSupportReady,
+            forecastIntelligenceReady: a.forecastIntelligenceReady,
             projectContextCompositionReady: a.projectContextCompositionReady,
             phase11iReady: a.phase11iReady,
           }, null, 2));

@@ -1264,6 +1264,7 @@ async function main() {
     automaticContractInstructionEnabled: false,
     projectDecisionOwnership: "human_only",
     projectSnapshotReady: true,
+    projectTimelineReady: true,
     productionProjectControlsReady: false,
     projectControlsImplemented: false,
     productionMemoryRepositoryAllowed: false,
