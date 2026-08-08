@@ -653,6 +653,7 @@ async function main() {
     automaticObservedStatePublicationEnabled: false,
     liveTelemetryImplemented: false,
     highFrequencyTelemetryImplemented: false,
+    shmRuntimeImplemented: false,
     simulationExecutionImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,
