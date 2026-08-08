@@ -9,7 +9,9 @@ import type { TwinIdentity } from "./identity";
 import type { TwinRepresentationReference } from "./representation";
 import type { TwinRelationship } from "./relationships";
 import type { DigitalThreadLink } from "./thread";
-import type { TwinStateReference } from "./state";
+import type { TwinStateReference, TwinState, TwinStateVersion, TwinStateSnapshot } from "./state";
+import type { RepresentationVersion } from "./representation-versioning";
+import type { TwinTimelineEvent } from "./timeline";
 import type { DigitalTwinEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -22,6 +24,22 @@ export type PersistedTwinRelationship = TwinRelationship;
 export type PersistedThreadLink = DigitalThreadLink;
 
 export type PersistedStateReference = TwinStateReference;
+
+export type TwinStateReviewRecord = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  twinId: string;
+  stateId: string;
+  workflowInstanceId: string;
+  workflowState: string;
+  outcome?: "approved" | "rejected" | "changes_requested" | "resubmitted";
+  reviewerId?: string;
+  notes?: string;
+  createdAt: string;
+  completedAt?: string;
+  selfApproved: false;
+};
 
 export type TwinReviewRecord = {
   reviewId: string;
@@ -99,12 +117,68 @@ export type DigitalTwinRepositoryPort = {
     twinId: string,
   ): Promise<PersistedStateReference[]>;
 
+  saveState(state: PersistedTwinState): Promise<PersistedTwinState>;
+  getStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedTwinState | null>;
+  listStates(tenantId: string, workspaceId: string, twinId: string): Promise<PersistedTwinState[]>;
+
+  saveStateVersion(version: PersistedTwinStateVersion): Promise<PersistedTwinStateVersion>;
+  listStateVersions(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedTwinStateVersion[]>;
+  listStateVersionsForTwin(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTwinStateVersion[]>;
+
+  saveRepresentationVersion(
+    version: PersistedRepresentationVersion,
+  ): Promise<PersistedRepresentationVersion>;
+  listRepresentationVersions(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationVersion[]>;
+
+  saveSnapshot(snapshot: PersistedTwinSnapshot): Promise<PersistedTwinSnapshot>;
+  getSnapshotById(
+    tenantId: string,
+    workspaceId: string,
+    snapshotId: string,
+  ): Promise<PersistedTwinSnapshot | null>;
+  listSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTwinSnapshot[]>;
+
+  appendTimelineEvent(event: PersistedTimelineEvent): Promise<PersistedTimelineEvent>;
+  listTimelineEvents(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTimelineEvent[]>;
+
   saveReview(review: TwinReviewRecord): Promise<TwinReviewRecord>;
   listReviews(
     tenantId: string,
     workspaceId: string,
     twinId?: string,
   ): Promise<TwinReviewRecord[]>;
+
+  saveStateReview(review: TwinStateReviewRecord): Promise<TwinStateReviewRecord>;
+  listStateReviews(
+    tenantId: string,
+    workspaceId: string,
+    twinId?: string,
+    stateId?: string,
+  ): Promise<TwinStateReviewRecord[]>;
 
   enqueueOutbox(record: OutboxEventRecord): Promise<OutboxEventRecord>;
   listOutbox(tenantId: string, workspaceId: string): Promise<OutboxEventRecord[]>;
@@ -116,7 +190,13 @@ export type DurableDigitalTwinStore = {
   relationships: PersistedTwinRelationship[];
   threadLinks: PersistedThreadLink[];
   stateReferences: PersistedStateReference[];
+  states: PersistedTwinState[];
+  stateVersions: PersistedTwinStateVersion[];
+  representationVersions: PersistedRepresentationVersion[];
+  snapshots: PersistedTwinSnapshot[];
+  timelineEvents: PersistedTimelineEvent[];
   reviews: TwinReviewRecord[];
+  stateReviews: TwinStateReviewRecord[];
   outbox: OutboxEventRecord[];
   events: DigitalTwinEvent[];
 };
@@ -128,7 +208,13 @@ export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
     relationships: [],
     threadLinks: [],
     stateReferences: [],
+    states: [],
+    stateVersions: [],
+    representationVersions: [],
+    snapshots: [],
+    timelineEvents: [],
     reviews: [],
+    stateReviews: [],
     outbox: [],
     events: [],
   };
@@ -262,6 +348,133 @@ export class MemoryDigitalTwinRepository implements DigitalTwinRepositoryPort {
     );
   }
 
+  async saveState(state: PersistedTwinState): Promise<PersistedTwinState> {
+    const idx = this.store.states.findIndex((row) => row.stateId === state.stateId);
+    if (idx >= 0) this.store.states[idx] = state;
+    else this.store.states.push(state);
+    return state;
+  }
+
+  async getStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedTwinState | null> {
+    return (
+      this.store.states.find(
+        (row) =>
+          row.stateId === stateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async listStates(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTwinState[]> {
+    return this.store.states.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.twinId === twinId,
+    );
+  }
+
+  async saveStateVersion(version: PersistedTwinStateVersion): Promise<PersistedTwinStateVersion> {
+    this.store.stateVersions.push(version);
+    return version;
+  }
+
+  async listStateVersions(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedTwinStateVersion[]> {
+    return this.store.stateVersions.filter(
+      (row) =>
+        row.stateId === stateId &&
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId,
+    );
+  }
+
+  async listStateVersionsForTwin(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTwinStateVersion[]> {
+    return this.store.stateVersions.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.twinId === twinId,
+    );
+  }
+
+  async saveRepresentationVersion(
+    version: PersistedRepresentationVersion,
+  ): Promise<PersistedRepresentationVersion> {
+    this.store.representationVersions.push(version);
+    return version;
+  }
+
+  async listRepresentationVersions(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationVersion[]> {
+    return this.store.representationVersions.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.twinId === twinId,
+    );
+  }
+
+  async saveSnapshot(snapshot: PersistedTwinSnapshot): Promise<PersistedTwinSnapshot> {
+    this.store.snapshots.push(snapshot);
+    return snapshot;
+  }
+
+  async getSnapshotById(
+    tenantId: string,
+    workspaceId: string,
+    snapshotId: string,
+  ): Promise<PersistedTwinSnapshot | null> {
+    return (
+      this.store.snapshots.find(
+        (row) =>
+          row.snapshotId === snapshotId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async listSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTwinSnapshot[]> {
+    return this.store.snapshots.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.twinId === twinId,
+    );
+  }
+
+  async appendTimelineEvent(event: PersistedTimelineEvent): Promise<PersistedTimelineEvent> {
+    this.store.timelineEvents.push(event);
+    return event;
+  }
+
+  async listTimelineEvents(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTimelineEvent[]> {
+    return this.store.timelineEvents.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.twinId === twinId,
+    );
+  }
+
   async saveReview(review: TwinReviewRecord): Promise<TwinReviewRecord> {
     this.store.reviews.push(review);
     return review;
@@ -277,6 +490,26 @@ export class MemoryDigitalTwinRepository implements DigitalTwinRepositoryPort {
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         (!twinId || row.twinId === twinId),
+    );
+  }
+
+  async saveStateReview(review: TwinStateReviewRecord): Promise<TwinStateReviewRecord> {
+    this.store.stateReviews.push(review);
+    return review;
+  }
+
+  async listStateReviews(
+    tenantId: string,
+    workspaceId: string,
+    twinId?: string,
+    stateId?: string,
+  ): Promise<TwinStateReviewRecord[]> {
+    return this.store.stateReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!twinId || row.twinId === twinId) &&
+        (!stateId || row.stateId === stateId),
     );
   }
 

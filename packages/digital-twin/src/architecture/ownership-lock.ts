@@ -1,5 +1,5 @@
 /**
- * Phase 12B — Digital Twin ownership lock.
+ * Phase 12C — Digital Twin ownership lock.
  *
  * Machine-readable twin of `docs/architecture/DIGITAL_TWIN_OWNERSHIP_MATRIX.md`.
  */
@@ -28,6 +28,7 @@ import {
   PROJECT_CONTROLS_OWNERSHIP,
   PROJECT_INTELLIGENCE_OWNERSHIP,
   PUBLIC_CONTRACT_VERSION,
+  REPRESENTATION_VERSIONING_READY,
   SENSOR_STREAM_OWNERSHIP,
   SIMULATION_EXECUTION_IMPLEMENTED,
   SIMULATION_STATE_OWNERSHIP,
@@ -38,8 +39,12 @@ import {
   TWIN_MAY_NOT_CLAIM_PROJECT_IDENTITY,
   TWIN_REPRESENTATION_OWNERSHIP,
   TWIN_REPRESENTATION_READY,
+  TWIN_SNAPSHOT_READY,
   TWIN_STATE_OWNERSHIP,
+  TWIN_STATE_READY,
   TWIN_THREAD_READY,
+  TWIN_TIMELINE_READY,
+  TWIN_VERSIONING_READY,
 } from "../version";
 
 export type DomainOwner =
@@ -76,25 +81,25 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "twin_state",
     owner: "digital_twin",
     relation: "owns",
-    notes: "State reference containers — not live telemetry ingestion",
+    notes: "Governed twin state with provenance — not live telemetry ingestion",
   },
   {
     concern: "twin_representation",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Representation references — L0–L5; references only in Phase 12B",
+    notes: "Representation references and immutable version history",
   },
   {
     concern: "simulation_state",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Simulated state references reserved — execution forbidden in Phase 12B",
+    notes: "Simulated state references reserved — execution forbidden in Phase 12C",
   },
   {
     concern: "digital_thread",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Thread links by reference — reuses platform timelines",
+    notes: "Thread links and append-only timeline by reference",
   },
   {
     concern: "asset_identity_canonical",
@@ -166,7 +171,7 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "physical_actuation",
     owner: "external_system",
     relation: "forbidden",
-    notes: "Actuation disabled in Phase 12B core slice",
+    notes: "Actuation disabled in Phase 12C state slice",
   },
   {
     concern: "automatic_control_loops",
@@ -206,6 +211,11 @@ export function assertOwnershipLock(): {
   twinIdentityReady: true;
   twinRepresentationReady: true;
   twinThreadReady: true;
+  twinStateReady: true;
+  twinVersioningReady: true;
+  representationVersioningReady: true;
+  twinSnapshotReady: true;
+  twinTimelineReady: true;
   knowledgeGraphReuse: true;
   productTablesIntroduced: true;
 } {
@@ -228,10 +238,10 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_claim_canonical_identity");
   }
   if (!DIGITAL_TWIN_IMPLEMENTED) {
-    throw new Error("digital_twin_core_must_be_implemented_in_phase_12b");
+    throw new Error("digital_twin_state_must_be_implemented_in_phase_12c");
   }
   if (PRODUCTION_DIGITAL_TWIN_READY) {
-    throw new Error("production_digital_twin_not_ready_in_phase_12b");
+    throw new Error("production_digital_twin_not_ready_in_phase_12c");
   }
   if (
     DIGITAL_TWIN_RUNTIME_IMPLEMENTED ||
@@ -239,10 +249,10 @@ export function assertOwnershipLock(): {
     SIMULATION_EXECUTION_IMPLEMENTED ||
     THREE_D_VIEWER_IMPLEMENTED
   ) {
-    throw new Error("digital_twin_runtime_forbidden_in_phase_12b");
+    throw new Error("digital_twin_runtime_forbidden_in_phase_12c");
   }
   if (PHYSICAL_ACTUATION_ENABLED || AUTOMATIC_CONTROL_ENABLED) {
-    throw new Error("actuation_and_control_forbidden_in_phase_12b");
+    throw new Error("actuation_and_control_forbidden_in_phase_12c");
   }
   if (IMPLEMENTS_OWN_AI_STACK) {
     throw new Error("digital_twin_must_not_implement_own_ai_stack");
@@ -256,17 +266,26 @@ export function assertOwnershipLock(): {
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.2.0-core-draft") {
-    throw new Error("public_contracts_must_be_core_draft_in_phase_12b");
+  if (PUBLIC_CONTRACT_VERSION !== "0.3.0-state-draft") {
+    throw new Error("public_contracts_must_be_state_draft_in_phase_12c");
   }
-  if (!TWIN_IDENTITY_READY || !TWIN_REPRESENTATION_READY || !TWIN_THREAD_READY) {
-    throw new Error("core_capabilities_not_ready");
+  if (
+    !TWIN_IDENTITY_READY ||
+    !TWIN_REPRESENTATION_READY ||
+    !TWIN_THREAD_READY ||
+    !TWIN_STATE_READY ||
+    !TWIN_VERSIONING_READY ||
+    !REPRESENTATION_VERSIONING_READY ||
+    !TWIN_SNAPSHOT_READY ||
+    !TWIN_TIMELINE_READY
+  ) {
+    throw new Error("state_capabilities_not_ready");
   }
   if (!KNOWLEDGE_GRAPH_REUSE) {
     throw new Error("knowledge_graph_reuse_required");
   }
   if (!DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED) {
-    throw new Error("product_tables_must_be_introduced_in_phase_12b");
+    throw new Error("product_tables_must_be_introduced");
   }
   if (SENSOR_STREAM_OWNERSHIP !== "shm") {
     throw new Error("sensor_streams_must_be_shm");
@@ -324,6 +343,11 @@ export function assertOwnershipLock(): {
     twinIdentityReady: true,
     twinRepresentationReady: true,
     twinThreadReady: true,
+    twinStateReady: true,
+    twinVersioningReady: true,
+    representationVersioningReady: true,
+    twinSnapshotReady: true,
+    twinTimelineReady: true,
     knowledgeGraphReuse: true,
     productTablesIntroduced: true,
   };

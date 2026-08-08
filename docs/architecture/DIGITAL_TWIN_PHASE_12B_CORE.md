@@ -63,9 +63,11 @@ No AI self-approval. Review slug: `digital_twin.identity_review`.
 
 All responses include governance forbid flags. No telemetry APIs.
 
-## Phase 12C readiness
+## Phase 12C — State, Versioning and Governed State Management
 
-`PHASE_12C_READY = true` — runtime, telemetry bindings, and simulation references are reserved for Phase 12C.
+Phase 12B established the core domain slice. **Phase 12C** adds governed twin state, representation versioning, snapshots, timeline, and `digital_twin.state_review`. See [DIGITAL_TWIN_PHASE_12C_STATE.md](./DIGITAL_TWIN_PHASE_12C_STATE.md).
+
+`PHASE_12C_READY = true` on the 12B baseline indicated forward compatibility; 12C implements the state slice at `0.3.0-state`.
 
 ## Phase 12A baseline
 

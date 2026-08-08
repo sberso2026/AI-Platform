@@ -337,19 +337,19 @@ export function assertCoreForbiddenCapabilities(): {
   physicalActuationEnabled: false;
 } {
   if (DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("digital_twin_runtime_forbidden_in_phase_12b");
+    throw new Error("digital_twin_runtime_forbidden_in_phase_12c");
   }
   if (LIVE_TELEMETRY_IMPLEMENTED) {
-    throw new Error("live_telemetry_forbidden_in_phase_12b");
+    throw new Error("live_telemetry_forbidden_in_phase_12c");
   }
   if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12b");
+    throw new Error("simulation_execution_forbidden_in_phase_12c");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
-    throw new Error("three_d_viewer_forbidden_in_phase_12b");
+    throw new Error("three_d_viewer_forbidden_in_phase_12c");
   }
   if (PHYSICAL_ACTUATION_ENABLED) {
-    throw new Error("physical_actuation_forbidden_in_phase_12b");
+    throw new Error("physical_actuation_forbidden_in_phase_12c");
   }
   return {
     ok: true,

@@ -1,19 +1,26 @@
 /**
- * Phase 12B — Digital Twin engine facade.
+ * Phase 12C — Digital Twin engine facade.
  *
- * Orchestrates identity review workflow with core engine operations.
+ * Orchestrates identity and state review workflows with core/state engine operations.
  */
 
 import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
 import { assertOwnershipLock } from "../architecture/ownership-lock";
 import type { DigitalTwinRepositoryPort, TwinReviewRecord } from "./persistence";
 import {
-  assertIdentityPublishable,
+  assertReviewPublishable,
   startIdentityReview,
   transitionIdentityReview,
   type IdentityReviewAction,
   type IdentityReviewTargetState,
 } from "./review-workflow";
+import {
+  createDigitalTwinStateEngine,
+  type AttachRepresentationVersionInput,
+  type CreateSnapshotInput,
+  type CreateTwinStateInput,
+  type DigitalTwinStateEngine,
+} from "./state-engine";
 import {
   createDigitalTwinCoreEngine,
   type AddRelationshipInput,
@@ -32,6 +39,7 @@ export type DigitalTwinEngineDeps = {
 export class DigitalTwinEngine {
   readonly kind = "digital_twin_engine" as const;
   private readonly core: DigitalTwinCoreEngine;
+  private readonly state: DigitalTwinStateEngine;
   private readonly repository: DigitalTwinRepositoryPort;
   private readonly newId: (prefix: string) => string;
 
@@ -40,6 +48,7 @@ export class DigitalTwinEngine {
     this.repository = deps.repository;
     this.newId = deps.newId ?? deps.repository.newId.bind(deps.repository);
     this.core = createDigitalTwinCoreEngine({ repository: deps.repository, newId: this.newId });
+    this.state = createDigitalTwinStateEngine({ repository: deps.repository, newId: this.newId });
   }
 
   createIdentity(input: CreateTwinIdentityInput) {
@@ -75,6 +84,38 @@ export class DigitalTwinEngine {
     return this.core.getByTarget(tenantId, workspaceId, canonicalEntityType, canonicalEntityId);
   }
 
+  createState(input: CreateTwinStateInput) {
+    return this.state.createState(input);
+  }
+
+  submitStateReview(input: Parameters<DigitalTwinStateEngine["submitStateReview"]>[0]) {
+    return this.state.submitStateReview(input);
+  }
+
+  transitionStateReview(input: Parameters<DigitalTwinStateEngine["transitionStateReview"]>[0]) {
+    return this.state.transitionStateReview(input);
+  }
+
+  publishState(input: Parameters<DigitalTwinStateEngine["publishState"]>[0]) {
+    return this.state.publishState(input);
+  }
+
+  supersedeState(input: Parameters<DigitalTwinStateEngine["supersedeState"]>[0]) {
+    return this.state.supersedeState(input);
+  }
+
+  attachRepresentationVersion(input: AttachRepresentationVersionInput) {
+    return this.state.attachRepresentationVersion(input);
+  }
+
+  createSnapshot(input: CreateSnapshotInput) {
+    return this.state.createSnapshot(input);
+  }
+
+  listStateHistory(tenantId: string, workspaceId: string, twinId: string) {
+    return this.state.listHistory(tenantId, workspaceId, twinId);
+  }
+
   async startReview(input: {
     tenantId: string;
     workspaceId: string;
@@ -108,7 +149,7 @@ export class DigitalTwinEngine {
     assessedBy?: string;
   }): Promise<EngineeringWorkflowInstance> {
     if (input.to === "published") {
-      assertIdentityPublishable({
+      assertReviewPublishable({
         workflowState: input.instance.state,
         reviewerId: input.reviewerId,
         createdBy: input.assessedBy,
@@ -150,4 +191,13 @@ export function createDigitalTwinEngine(deps: DigitalTwinEngineDeps): DigitalTwi
   return new DigitalTwinEngine(deps);
 }
 
-export type { CreateTwinIdentityInput, AttachRepresentationInput, AddRelationshipInput, AddThreadLinkInput, TwinLookupResult };
+export type {
+  CreateTwinIdentityInput,
+  AttachRepresentationInput,
+  AddRelationshipInput,
+  AddThreadLinkInput,
+  TwinLookupResult,
+  CreateTwinStateInput,
+  AttachRepresentationVersionInput,
+  CreateSnapshotInput,
+};

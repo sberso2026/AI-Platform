@@ -1,7 +1,8 @@
 /**
- * Phase 12B — State reference containers (versioned, provenance required).
+ * Phase 12C — Governed twin state model (versioned, provenance required).
  *
- * Simulated state is reserved/empty support — simulated ≠ observed locks enforced.
+ * Observed ≠ derived ≠ simulated (simulated remains reserved; no execution).
+ * Fail closed without provenance — no fabricated state.
  */
 
 export const STATE_REFERENCE_CATEGORIES = [
@@ -12,6 +13,18 @@ export const STATE_REFERENCE_CATEGORIES = [
 ] as const;
 
 export type StateReferenceCategory = (typeof STATE_REFERENCE_CATEGORIES)[number];
+
+export const TWIN_STATE_LIFECYCLE = [
+  "draft",
+  "pending_review",
+  "published",
+  "superseded",
+  "archived",
+] as const;
+
+export type TwinStateLifecycle = (typeof TWIN_STATE_LIFECYCLE)[number];
+
+export type StateReviewStatus = "not_reviewed" | "pending_review" | "approved" | "rejected";
 
 export type StateProvenance = {
   sourceModule: string;
@@ -37,14 +50,14 @@ export type StateReferenceBase = {
 };
 
 /** Observed state from telemetry or field observation (reference only). */
-export type ObservedStateReference = StateReferenceBase & {
+export type TwinObservedState = StateReferenceBase & {
   category: "observed";
   observedAt: string;
   liveIngestionEnabled: false;
 };
 
 /** Derived state computed from other sources (reference only). */
-export type DerivedStateReference = StateReferenceBase & {
+export type TwinDerivedState = StateReferenceBase & {
   category: "derived";
   derivedFromRefs: string[];
 };
@@ -55,7 +68,7 @@ export type OperationalStateReference = StateReferenceBase & {
   operationalContext?: string;
 };
 
-/** Simulated state — reserved, execution forbidden in Phase 12B. */
+/** Simulated state — reserved, execution forbidden. */
 export type SimulatedStateReference = StateReferenceBase & {
   category: "simulated";
   simulationExecuted: false;
@@ -63,16 +76,109 @@ export type SimulatedStateReference = StateReferenceBase & {
 };
 
 export type TwinStateReference =
-  | ObservedStateReference
-  | DerivedStateReference
+  | TwinObservedState
+  | TwinDerivedState
   | OperationalStateReference
   | SimulatedStateReference;
 
+/** @deprecated alias */
+export type ObservedStateReference = TwinObservedState;
+/** @deprecated alias */
+export type DerivedStateReference = TwinDerivedState;
+
+export type TwinStateVersion = {
+  stateVersionId: string;
+  stateId: string;
+  twinId: string;
+  tenantId: string;
+  workspaceId: string;
+  versionNumber: number;
+  category: StateReferenceCategory;
+  lifecycle: TwinStateLifecycle;
+  provenance: StateProvenance;
+  externalRef: string;
+  confidence?: number;
+  evidenceRefs: string[];
+  reviewStatus: StateReviewStatus;
+  createdAt: string;
+  createdBy?: string;
+  simulationExecuted: false;
+  storesTelemetryPayload: false;
+};
+
+export type TwinState = {
+  stateId: string;
+  twinId: string;
+  tenantId: string;
+  workspaceId: string;
+  category: StateReferenceCategory;
+  lifecycle: TwinStateLifecycle;
+  currentVersion: number;
+  provenance: StateProvenance;
+  externalRef: string;
+  confidence?: number;
+  evidenceRefs: string[];
+  reviewStatus: StateReviewStatus;
+  reviewWorkflowInstanceId?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  supersededAt?: string;
+  supersededByStateId?: string;
+  createdBy?: string;
+  simulationExecuted: false;
+  liveIngestionEnabled: false;
+  storesTelemetryPayload: false;
+};
+
+export type TwinStateSnapshot = {
+  snapshotId: string;
+  twinId: string;
+  tenantId: string;
+  workspaceId: string;
+  /** Versioned state references only — no telemetry payloads */
+  stateVersionRefs: Array<{ stateId: string; stateVersionId: string; versionNumber: number }>;
+  representationVersionIds?: string[];
+  label?: string;
+  createdAt: string;
+  createdBy?: string;
+  storesTelemetryPayload: false;
+};
+
+export function assertProvenanceRequired(provenance: StateProvenance | undefined): void {
+  if (!provenance?.sourceModule || !provenance?.sourceRef || !provenance?.capturedAt) {
+    throw new Error("twin_state_provenance_required");
+  }
+}
+
 export function assertSimulatedNotObserved(
-  observed: ObservedStateReference | undefined,
+  observed: TwinObservedState | undefined,
   simulated: SimulatedStateReference | undefined,
 ): void {
   if (observed && simulated && observed.externalRef === simulated.externalRef) {
     throw new Error("simulated_state_must_not_equal_observed_state");
+  }
+}
+
+export function assertNoFabricatedState(input: {
+  provenance?: StateProvenance;
+  externalRef?: string;
+}): void {
+  assertProvenanceRequired(input.provenance);
+  if (!input.externalRef) {
+    throw new Error("twin_state_external_ref_required");
+  }
+}
+
+export function assertObservedNotDerived(
+  observed: TwinObservedState | TwinDerivedState,
+  derived: TwinDerivedState | TwinObservedState,
+): void {
+  if (
+    observed.category === "observed" &&
+    derived.category === "derived" &&
+    observed.externalRef === derived.externalRef
+  ) {
+    throw new Error("observed_state_must_not_equal_derived_state");
   }
 }

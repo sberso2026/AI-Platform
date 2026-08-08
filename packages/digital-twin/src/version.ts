@@ -1,14 +1,14 @@
 /**
- * Phase 12B — Digital Twin Core Domain. Single authoritative version source.
+ * Phase 12C — Digital Twin State, Versioning and Governed State Management.
  *
- * Core slice: identity, representation references, thread links, relationships,
- * and state references. No runtime sync, telemetry, simulation, or 3D viewer.
+ * Extends 12B core with governed twin state, representation versioning,
+ * snapshots, and append-only timeline. No runtime sync, telemetry, simulation, or 3D viewer.
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.2.0-core" as const;
-export const DIGITAL_TWIN_STATUS = "core" as const;
-export const DIGITAL_TWIN_PHASE = "12B" as const;
+export const DIGITAL_TWIN_VERSION = "0.3.0-state" as const;
+export const DIGITAL_TWIN_STATUS = "state" as const;
+export const DIGITAL_TWIN_PHASE = "12C" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -20,6 +20,17 @@ export const TWIN_IDENTITY_READY = true as const;
 export const twinIdentityReady = true as const;
 export const TWIN_REPRESENTATION_READY = true as const;
 export const TWIN_THREAD_READY = true as const;
+export const TWIN_STATE_READY = true as const;
+export const TwinStateReady = true as const;
+export const twinStateReady = true as const;
+export const TWIN_VERSIONING_READY = true as const;
+export const TwinVersioningReady = true as const;
+export const REPRESENTATION_VERSIONING_READY = true as const;
+export const RepresentationVersioningReady = true as const;
+export const TWIN_SNAPSHOT_READY = true as const;
+export const TwinSnapshotReady = true as const;
+export const TWIN_TIMELINE_READY = true as const;
+export const TwinTimelineReady = true as const;
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
 export const HOSTED_PERSISTENCE_READY = true as const;
@@ -40,6 +51,7 @@ export const DUPLICATE_ASSET_OWNERSHIP_DETECTED = false as const;
 export const DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false as const;
 
 export const PHASE_12C_READY = true as const;
+export const PHASE_12D_READY = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -50,6 +62,15 @@ export const PHASE_12A_CERTIFIED_COMMIT =
   "2c5ed03f7de12cde9bfb71a9d430f5e342291303" as const;
 export const PHASE_12A_HOSTED_RUN = "31253197987" as const;
 export const PHASE_12A_VERSION = "0.1.0-discovery" as const;
+
+// ---------------------------------------------------------------------------
+// Phase 12B certified baseline (pinned — do not move)
+// ---------------------------------------------------------------------------
+
+export const PHASE_12B_CERTIFIED_COMMIT =
+  "5e1bb22486a9fdd6385fb980daf0150a330eca9b" as const;
+export const PHASE_12B_HOSTED_RUN = "31255221472" as const;
+export const PHASE_12B_VERSION = "0.2.0-core" as const;
 
 // ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
@@ -75,7 +96,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
   "34975b1cf660580d46287f24e746b8915903f768" as const;
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.2.0-core-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.3.0-state-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -113,8 +134,9 @@ export const TWIN_MAY_NOT_CLAIM_PROJECT_IDENTITY = true as const;
 export const AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED = false as const;
 
 export const DIGITAL_TWIN_IDENTITY_REVIEW_SLUG = "digital_twin.identity_review" as const;
+export const DIGITAL_TWIN_STATE_REVIEW_SLUG = "digital_twin.state_review" as const;
 
-export function getDigitalTwinCoreDeclaration() {
+export function getDigitalTwinStateDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -128,6 +150,11 @@ export function getDigitalTwinCoreDeclaration() {
     twinIdentityReady,
     twinRepresentationReady: TWIN_REPRESENTATION_READY,
     twinThreadReady: TWIN_THREAD_READY,
+    twinStateReady,
+    twinVersioningReady: TWIN_VERSIONING_READY,
+    representationVersioningReady: REPRESENTATION_VERSIONING_READY,
+    twinSnapshotReady: TWIN_SNAPSHOT_READY,
+    twinTimelineReady: TWIN_TIMELINE_READY,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
     hostedDigitalTwinPersistenceReady,
     productionDigitalTwinReady: PRODUCTION_DIGITAL_TWIN_READY,
@@ -140,8 +167,11 @@ export function getDigitalTwinCoreDeclaration() {
     implementsOwnAiStack: IMPLEMENTS_OWN_AI_STACK,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase12CReady: PHASE_12C_READY,
+    phase12DReady: PHASE_12D_READY,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
+    phase12BVersion: PHASE_12B_VERSION,
+    phase12BCertifiedCommit: PHASE_12B_CERTIFIED_COMMIT,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
     projectControlsV1Commit: PROJECT_CONTROLS_V1_COMMIT,
@@ -155,10 +185,16 @@ export function getDigitalTwinCoreDeclaration() {
     duplicateProjectOwnershipDetected: DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
     moduleRegistryStatus: DIGITAL_TWIN_MODULE_REGISTRY_STATUS,
     identityReviewSlug: DIGITAL_TWIN_IDENTITY_REVIEW_SLUG,
+    stateReviewSlug: DIGITAL_TWIN_STATE_REVIEW_SLUG,
   };
 }
 
-/** @deprecated Use getDigitalTwinCoreDeclaration */
+/** @deprecated Use getDigitalTwinStateDeclaration */
+export function getDigitalTwinCoreDeclaration() {
+  return getDigitalTwinStateDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinStateDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinCoreDeclaration();
+  return getDigitalTwinStateDeclaration();
 }
