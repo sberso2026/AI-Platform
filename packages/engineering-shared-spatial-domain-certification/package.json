@@ -1,14 +1,16 @@
 {
   "name": "@rtb/engineering-shared-spatial-domain-certification",
-  "version": "0.1.0-spatial-discovery",
+  "version": "0.2.0-spatial-core",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase12l": "tsx scripts/run-phase12l-certification.ts",
+    "certify:phase12m": "tsx scripts/run-phase12m-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {
-    "@rtb/engineering-shared-spatial-domain": "workspace:*"
+    "@rtb/engineering-shared-spatial-domain": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

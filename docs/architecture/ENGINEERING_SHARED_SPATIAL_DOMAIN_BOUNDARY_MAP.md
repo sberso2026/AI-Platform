@@ -1,57 +1,49 @@
-# Engineering Shared Spatial Domain — Boundary Map (Phase 12L)
+# Engineering Shared Spatial Domain — Boundary Map (Phase 12M)
 
-Status: discovery · Runtime: **not implemented**
+Status: spatial_core · Runtime: **reference registry + governance** (not GIS)
 
-## In scope (discovery)
+## In scope (12M)
 
-- Ownership locks and architecture ADRs
-- Draft reference types: `SpatialReference`, `LocationReference`, CRS refs
-- Draft public contracts `0.1.0-draft`
-- Reconciliation of Digital Twin `SPATIAL_CANONICAL_OWNERSHIP` to
-  `engineering_os_shared_spatial_domain`
-- Certification gates for discovery readiness
+- Canonical `SpatialReference` registry (`engineering_spatial_references`)
+- CRS registry, coordinate references (WITH CRS), declared relationships
+- Legacy TEXT reconciliation states (candidate ≠ canonical)
+- Review workflow `engineering_shared_spatial_domain.spatial_reference_review`
+- Memory + Postgres persistence adapters
+- Engineering OS HTTP under `/api/engineering/spatial/*`
+- Additive DT binding to `SpatialReference.id` (dual-read)
+- Public contracts `0.2.0-spatial-core` (prerelease, not GA)
+- `spatialOwnershipFullyResolved=true` when ownership-lock conditions proven
 
-## Out of scope (forbidden in 12L)
+## Out of scope (forbidden in 12M)
 
 | Capability | Status |
 | --- | --- |
-| Spatial runtime / registers | forbidden (`SharedSpatialDomainRuntimeImplemented=false`) |
-| GIS engine / map tiles | forbidden (`gisRuntimeImplemented=false`) |
-| PostGIS | forbidden |
+| GIS engine / map product | forbidden (`gisRuntimeImplemented=false`) |
+| PostGIS product features | forbidden |
 | Coordinate transformation execution | forbidden (`coordinateTransformationImplemented=false`) |
-| Spatial analytics | forbidden |
-| Sensor registry / SHM | forbidden |
-| 3D viewer | forbidden |
-| Production DB tables (`engineering_locations`) | deferred |
-| Phase 12M implementation | flag only (`phase12MReady=true`) — **do not start Phase 12M** |
+| Spatial analytics / intersection / containment compute | forbidden |
+| Geometry blob repository | forbidden (`geometryRepositoryImplemented=false`) |
+| BIM/CAD extraction | forbidden |
+| Sensor registry / SHM / telemetry / actuation | forbidden |
+| AI spatial authority / auto location approval | forbidden |
+| Digital Twin as canonical spatial owner | forbidden (`digitalTwinMayOwnCanonicalSpatial=false`) |
+| Phase 12N | flag only (`PHASE_12N_READY=true`) — **do not start** |
 
 ## Module boundaries
 
 ```
-Engineering Shared Spatial Domain (12L discovery)
-  OWNS: LocationReference, SpatialReference, CRS ref semantics (draft)
-  FORBIDDEN: geometry blobs, GIS/PostGIS runtime, transforms, analytics
-
-Consumers (CONSUMES / REFERENCES):
-  - Digital Twin → thin TwinSpatialReference wrappers (unchanged)
-  - Inspection / Asset / Project Intelligence → consumer vocabulary
-  - Shared Project Domain → reserved LocationReference type
-
-Identity owners (remain unchanged):
-  - engineering_os_shared_domain → assets
-  - engineering_os_shared_project_domain → projects
-
-External geometry / models:
-  - Platform Files / engineering_documents / BIM / GIS files
+RTB AI Platform
+  └── Engineering OS
+        └── Shared Spatial Domain (OWNS SpatialReference / CRS refs)
+              ├── HTTP /api/engineering/spatial/*
+              ├── batch_85 tables (no geometry / no PostGIS types)
+              └── Consumers
+                    ├── Digital Twin (additive sharedSpatialReferenceId)
+                    ├── Asset / Inspection / Project Intelligence
+                    └── Project Controls
 ```
 
-## Digital Twin relationship
+## Declared vs proven
 
-Digital Twin **is not** the Shared Spatial Domain. It continues to own twin identity,
-state, representation mappings, simulation, and digital thread. For spatial:
-
-- **OWNS**: thin `TwinSpatialReference` records (batch_79) — functional, unchanged
-- **CONSUMES/REFERENCES**: future shared LocationReference / CRS refs
-- **MUST_NEVER_OWN**: canonical location registry, geometry blobs, GIS runtime
-
-See `docs/architecture/adr/ADR_TWIN_SPATIAL_REFERENCE_REBINDING.md`.
+Declared spatial relationships are **semantic only**. They do not constitute
+geometric proof and must not trigger intersection/containment computation.

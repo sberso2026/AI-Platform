@@ -348,6 +348,9 @@ importers:
       '@rtb/engineering-shared-spatial-domain':
         specifier: workspace:*
         version: link:../engineering-shared-spatial-domain
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
     devDependencies:
       '@types/node':
         specifier: ^22.15.29

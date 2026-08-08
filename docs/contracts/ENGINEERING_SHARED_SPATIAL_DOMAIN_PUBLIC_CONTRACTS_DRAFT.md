@@ -1,29 +1,34 @@
-# Engineering Shared Spatial Domain — Public Contracts Draft
+# Engineering Shared Spatial Domain — Public Contracts (0.2.0-spatial-core)
 
-Status: **draft** · Version: `0.1.0-draft` · Phase: 12L discovery
+Status: **prerelease** · Version: `0.2.0-spatial-core` · Phase: 12M spatial_core
 
-These contracts are **not** GA and are **not** runtime-backed.
+These contracts are **runtime-backed** for reference registry operations but are
+**not GA** (`1.0.0` forbidden).
 
 ## Contract families
 
 | Family | Intent |
 | --- | --- |
-| `SpatialReferenceCore` | Composed spatial pointer (location + CRS + optional local frame) |
-| `LocationReferenceCore` | Canonical location identity (future `engineering_locations`) |
-| `CoordinateReferenceSystemCore` | CRS identity / authority / EPSG code declaration |
+| `SpatialReferenceCore` | Canonical SpatialReference identity, hierarchy, lifecycle, versioning |
+| `LocationReferenceCore` | Thin alias over SpatialReference |
+| `CoordinateReferenceSystemCore` | EPSG / project grid / BIM-model / external CRS identity |
+| `CoordinateReferenceCore` | Optional x/y/z or lat/lon/elev WITH CRS (incompatible CRS → abstain) |
+| `SpatialRelationshipReferenceCore` | Declared relationships (≠ geometric proof) |
+| `LegacySpatialReconciliationCore` | TEXT classification states; candidate ≠ canonical |
+| `SpatialReferenceReviewCore` | `engineering_shared_spatial_domain.spatial_reference_review` |
 | `CoordinateTransformationDeclarationCore` | Declared transform provenance — **not executed** |
-| `LinearReferenceReservation` | Chainage/station reserved — no runtime |
-| `TwinSpatialReferenceRebindingStrategy` | How DT thin wrappers rebind to shared refs later |
+| `LinearReferenceReservation` | alignmentReference / chainage / station / offset semantics only |
+| `TwinSpatialReferenceRebindingStrategy` | Additive `sharedSpatialReferenceId` dual-read binding |
 
 ## Non-goals
 
 - No GIS query API
 - No geometry payload contracts
-- No PostGIS types
-- No sensor placement runtime contracts
+- No PostGIS product types
+- No sensor placement / telemetry / SHM runtime contracts
 - No automatic CRS transforms
+- No AI spatial authority / auto location approval
 
 ## Stability
 
-Draft contracts may evolve in Phase 12M+ without implying production readiness.
-`PUBLIC_CONTRACT_VERSION` remains `0.1.0-draft` for this discovery package.
+`PUBLIC_CONTRACT_VERSION` = `0.2.0-spatial-core`. Must not claim `1.0.0`.

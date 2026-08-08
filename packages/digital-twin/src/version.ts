@@ -7,10 +7,11 @@
  * Preserves 12J/12I: SolverCapabilityRegistryReady, FourLayerQualificationIntact,
  * CalculiXAdapterIntact, RealSolverExecutionCertified.
  *
- * Phase 12L (Shared Spatial Domain Discovery) reconciles SPATIAL_CANONICAL_OWNERSHIP
- * to engineering_os_shared_spatial_domain. DT version stays 0.11.0-digital-thread.
- * spatialOwnershipFullyResolved remains false (no register yet).
- * PHASE_12M_READY = true (flag only — do not start Phase 12M).
+ * Phase 12L/12M: SPATIAL_CANONICAL_OWNERSHIP = engineering_os_shared_spatial_domain.
+ * DT version stays 0.11.0-digital-thread. Additive TwinSpatialReference binding to
+ * SpatialReference.id (dual-read). DT spatialOwnershipFullyResolved remains false
+ * (residual TEXT dual-read + no Twin ownership of register). Shared Spatial Domain
+ * package owns FullyResolved=true. PHASE_12N_READY is on the spatial package only.
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;

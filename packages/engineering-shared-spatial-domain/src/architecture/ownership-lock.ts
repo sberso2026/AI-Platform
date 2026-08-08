@@ -1,9 +1,9 @@
 /**
- * Phase 12L — Shared Spatial Domain ownership lock.
+ * Phase 12M — Shared Spatial Domain ownership lock.
  *
  * SharedSpatialDomainOwnershipLocked = architecture decision locked.
- * spatialOwnershipFullyResolved = false until a later phase materializes
- * registers and retires residual TEXT location fields.
+ * spatialOwnershipFullyResolved = true when registry + ownership + DT consume
+ * + legacy classified + geometry external + CRS ops are proven.
  */
 
 import {
@@ -12,30 +12,36 @@ import {
   CANONICAL_LOCATION_REFERENCE_OWNERSHIP,
   CANONICAL_PROJECT_IDENTITY_OWNERSHIP,
   CANONICAL_SPATIAL_REFERENCE_OWNERSHIP,
+  COORDINATE_REFERENCE_GOVERNANCE_READY,
+  COORDINATE_REFERENCE_SYSTEM_REGISTRY_READY,
   COORDINATE_TRANSFORMATION_IMPLEMENTED,
   DIGITAL_TWIN_MAY_OWN_CANONICAL_SPATIAL,
+  DIGITAL_TWIN_SPATIAL_BINDING_READY,
+  DUPLICATE_CRS_OWNERSHIP_DETECTED,
   DUPLICATE_GEOMETRY_OWNERSHIP_DETECTED,
+  DUPLICATE_LOCATION_REGISTER_DETECTED,
   DUPLICATE_SPATIAL_OWNERSHIP_DETECTED,
-  ENGINEERING_LOCATIONS_TABLE_EXISTS,
   ENGINEERING_SHARED_SPATIAL_DOMAIN_KEY,
   ENGINEERING_SHARED_SPATIAL_DOMAIN_VERSION,
   ENGINEERING_TIME_SERIES_OWNERSHIP,
   GEOMETRY_BLOB_OWNERSHIP,
+  GEOMETRY_REPOSITORY_IMPLEMENTED,
   GIS_RUNTIME_IMPLEMENTED,
   KNOWLEDGE_GRAPH_OWNERSHIP,
-  PHASE_12M_READY,
+  LEGACY_SPATIAL_RECONCILIATION_READY,
+  PHASE_12N_READY,
   POSTGIS_IMPLEMENTED,
+  PRODUCTION_DIGITAL_TWIN_READY,
+  PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
   PUBLIC_CONTRACT_VERSION,
-  SENSOR_REGISTRY_IMPLEMENTED,
   SHARED_SPATIAL_DOMAIN_DISCOVERY_READY,
   SHARED_SPATIAL_DOMAIN_OWNERSHIP_LOCKED,
   SHARED_SPATIAL_DOMAIN_RUNTIME_IMPLEMENTED,
-  SHARED_SPATIAL_PRODUCT_TABLES_INTRODUCED,
   SHARED_SPATIAL_PRODUCT_UI_IMPLEMENTED,
-  SHM_RUNTIME_IMPLEMENTED,
+  SHARED_SPATIAL_REFERENCE_REGISTRY_READY,
   SPATIAL_ANALYTICS_IMPLEMENTED,
   SPATIAL_OWNERSHIP_FULLY_RESOLVED,
-  THREE_D_VIEWER_IMPLEMENTED,
+  SPATIAL_REFERENCE_GOVERNANCE_READY,
   TWIN_SPATIAL_REFERENCE_OWNERSHIP,
 } from "../version";
 
@@ -75,19 +81,19 @@ export const SHARED_SPATIAL_DOMAIN_OWNERSHIP_MATRIX: readonly SpatialOwnershipRo
     concern: "spatial_reference_semantics",
     owner: "engineering_os_shared_spatial_domain",
     relation: "owns",
-    notes: "Canonical SpatialReference / LocationReference / CRS ref semantics (decision locked; register deferred)",
+    notes: "Canonical SpatialReference registry (engineering_spatial_references)",
   },
   {
     concern: "location_reference",
     owner: "engineering_os_shared_spatial_domain",
     relation: "owns",
-    notes: "Future engineering_locations register; TEXT fields are residual until implementation",
+    notes: "LocationReference is thin alias over SpatialReference",
   },
   {
     concern: "crs_reference_governance",
     owner: "engineering_os_shared_spatial_domain",
     relation: "owns",
-    notes: "CRS identity and declaration rules; transforms reserved for later phase",
+    notes: "CRS identity registry; transforms remain forbidden",
   },
   {
     concern: "geometry_blobs",
@@ -99,7 +105,7 @@ export const SHARED_SPATIAL_DOMAIN_OWNERSHIP_MATRIX: readonly SpatialOwnershipRo
     concern: "twin_spatial_reference",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Thin TwinSpatialReference wrappers only — consumes shared location/CRS refs",
+    notes: "Thin TwinSpatialReference wrappers — consume SpatialReference.id",
   },
   {
     concern: "canonical_spatial_location",
@@ -111,7 +117,7 @@ export const SHARED_SPATIAL_DOMAIN_OWNERSHIP_MATRIX: readonly SpatialOwnershipRo
     concern: "asset_identity",
     owner: "engineering_os_shared_domain",
     relation: "references",
-    notes: "Asset identity remains shared domain; assets may carry residual TEXT location",
+    notes: "Asset identity remains shared domain; residual TEXT classified",
   },
   {
     concern: "project_identity",
@@ -135,54 +141,95 @@ export const SHARED_SPATIAL_DOMAIN_OWNERSHIP_MATRIX: readonly SpatialOwnershipRo
     concern: "inspection_spatial_vocabulary",
     owner: "inspection_intelligence",
     relation: "consumes",
-    notes: "II consumer vocabulary (AssetReferenceLocation) — not canonical owner",
+    notes: "II consumer vocabulary — not canonical owner",
   },
   {
     concern: "residual_text_location_fields",
     owner: "unresolved_residual_text",
     relation: "reserved",
-    notes: "engineering_assets.location / engineering_projects.location TEXT — keeps FullyResolved=false",
+    notes: "TEXT fields classified via LegacySpatialReconciliation; not auto-canonical",
   },
   {
     concern: "gis_runtime",
     owner: "engineering_os_shared_spatial_domain",
     relation: "forbidden",
-    notes: "No GIS/PostGIS/runtime in discovery",
+    notes: "No GIS/PostGIS product runtime",
   },
   {
     concern: "coordinate_transformation_runtime",
     owner: "engineering_os_shared_spatial_domain",
     relation: "forbidden",
-    notes: "Transforms declared only; not implemented",
+    notes: "Transforms not implemented; incompatible CRS abstains",
   },
   {
     concern: "spatial_analytics",
     owner: "engineering_os_shared_spatial_domain",
     relation: "forbidden",
-    notes: "No spatial analytics in discovery",
+    notes: "No spatial analytics; declared relationships ≠ geometric proof",
   },
   {
     concern: "sensor_registry",
     owner: "shm",
     relation: "must_never_own",
-    notes: "Sensor registry / SHM out of scope for Shared Spatial Domain",
+    notes: "Sensor registry / SHM out of scope",
   },
 ] as const;
+
+function assertFullyResolvedConditions(): void {
+  const conditions = {
+    registry: SHARED_SPATIAL_REFERENCE_REGISTRY_READY,
+    ownership: SHARED_SPATIAL_DOMAIN_OWNERSHIP_LOCKED,
+    runtime: SHARED_SPATIAL_DOMAIN_RUNTIME_IMPLEMENTED,
+    governance: SPATIAL_REFERENCE_GOVERNANCE_READY,
+    crsGovernance: COORDINATE_REFERENCE_GOVERNANCE_READY,
+    crsRegistry: COORDINATE_REFERENCE_SYSTEM_REGISTRY_READY,
+    legacy: LEGACY_SPATIAL_RECONCILIATION_READY,
+    dtBinding: DIGITAL_TWIN_SPATIAL_BINDING_READY,
+    geometryExternal:
+      GEOMETRY_BLOB_OWNERSHIP === "external_or_existing_engineering_model_owner" &&
+      !GEOMETRY_REPOSITORY_IMPLEMENTED,
+    noTransforms: !COORDINATE_TRANSFORMATION_IMPLEMENTED && !GIS_RUNTIME_IMPLEMENTED,
+    noDuplicate:
+      !DUPLICATE_SPATIAL_OWNERSHIP_DETECTED &&
+      !DUPLICATE_GEOMETRY_OWNERSHIP_DETECTED &&
+      !DUPLICATE_CRS_OWNERSHIP_DETECTED &&
+      !DUPLICATE_LOCATION_REGISTER_DETECTED,
+    dtMayNotOwn: !DIGITAL_TWIN_MAY_OWN_CANONICAL_SPATIAL,
+  };
+  const failed = Object.entries(conditions)
+    .filter(([, ok]) => !ok)
+    .map(([name]) => name);
+  if (failed.length > 0) {
+    throw new Error(`spatial_ownership_fully_resolved_conditions_ unmet:${failed.join(",")}`);
+  }
+  if (!SPATIAL_OWNERSHIP_FULLY_RESOLVED) {
+    throw new Error("spatial_ownership_fully_resolved_must_be_true_when_conditions_met");
+  }
+}
 
 export function assertSharedSpatialDomainOwnershipLock(): {
   ok: true;
   SharedSpatialDomainDiscoveryReady: true;
   SharedSpatialDomainOwnershipLocked: true;
-  SharedSpatialDomainRuntimeImplemented: false;
-  spatialOwnershipFullyResolved: false;
+  SharedSpatialDomainRuntimeImplemented: true;
+  SharedSpatialReferenceRegistryReady: true;
+  SpatialReferenceGovernanceReady: true;
+  CoordinateReferenceGovernanceReady: true;
+  CoordinateReferenceSystemRegistryReady: true;
+  LegacySpatialReconciliationReady: true;
+  DigitalTwinSpatialBindingReady: true;
+  spatialOwnershipFullyResolved: true;
   duplicateSpatialOwnershipDetected: false;
   duplicateGeometryOwnershipDetected: false;
   digitalTwinMayOwnCanonicalSpatial: false;
+  coordinateTransformationImplemented: false;
+  gisRuntimeImplemented: false;
+  geometryRepositoryImplemented: false;
   publicContractVersion: typeof PUBLIC_CONTRACT_VERSION;
-  phase12MReady: true;
+  phase12NReady: true;
   canonicalSpatialReferenceOwnership: typeof CANONICAL_SPATIAL_REFERENCE_OWNERSHIP;
 } {
-  if (ENGINEERING_SHARED_SPATIAL_DOMAIN_VERSION !== "0.1.0-spatial-discovery") {
+  if (ENGINEERING_SHARED_SPATIAL_DOMAIN_VERSION !== "0.2.0-spatial-core") {
     throw new Error("shared_spatial_domain_version_mismatch");
   }
   if (ENGINEERING_SHARED_SPATIAL_DOMAIN_KEY !== "engineering_os_shared_spatial_domain") {
@@ -194,13 +241,8 @@ export function assertSharedSpatialDomainOwnershipLock(): {
   if (!SHARED_SPATIAL_DOMAIN_OWNERSHIP_LOCKED) {
     throw new Error("shared_spatial_domain_ownership_must_be_locked");
   }
-  if (SHARED_SPATIAL_DOMAIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("shared_spatial_domain_runtime_forbidden_in_phase_12l");
-  }
-  if (SPATIAL_OWNERSHIP_FULLY_RESOLVED) {
-    throw new Error(
-      "spatial_ownership_must_remain_unresolved_until_register_and_text_retirement",
-    );
+  if (!SHARED_SPATIAL_DOMAIN_RUNTIME_IMPLEMENTED) {
+    throw new Error("shared_spatial_domain_runtime_required_in_phase_12m");
   }
   if (
     CANONICAL_SPATIAL_REFERENCE_OWNERSHIP !== "engineering_os_shared_spatial_domain" ||
@@ -235,26 +277,32 @@ export function assertSharedSpatialDomainOwnershipLock(): {
     GIS_RUNTIME_IMPLEMENTED ||
     SPATIAL_ANALYTICS_IMPLEMENTED ||
     POSTGIS_IMPLEMENTED ||
-    SENSOR_REGISTRY_IMPLEMENTED ||
-    SHM_RUNTIME_IMPLEMENTED ||
-    THREE_D_VIEWER_IMPLEMENTED
+    GEOMETRY_REPOSITORY_IMPLEMENTED
   ) {
-    throw new Error("spatial_runtime_capabilities_forbidden_in_phase_12l");
+    throw new Error("forbidden_spatial_capabilities_enabled");
   }
-  if (DUPLICATE_SPATIAL_OWNERSHIP_DETECTED || DUPLICATE_GEOMETRY_OWNERSHIP_DETECTED) {
+  if (
+    DUPLICATE_SPATIAL_OWNERSHIP_DETECTED ||
+    DUPLICATE_GEOMETRY_OWNERSHIP_DETECTED ||
+    DUPLICATE_CRS_OWNERSHIP_DETECTED ||
+    DUPLICATE_LOCATION_REGISTER_DETECTED
+  ) {
     throw new Error("duplicate_spatial_or_geometry_ownership");
   }
-  if (ENGINEERING_LOCATIONS_TABLE_EXISTS || SHARED_SPATIAL_PRODUCT_TABLES_INTRODUCED) {
-    throw new Error("shared_spatial_product_tables_forbidden_in_discovery");
-  }
   if (SHARED_SPATIAL_PRODUCT_UI_IMPLEMENTED) {
-    throw new Error("shared_spatial_product_ui_forbidden_in_discovery");
+    throw new Error("shared_spatial_product_ui_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.1.0-draft") {
-    throw new Error("public_contracts_must_be_draft_in_phase_12l");
+  if (PRODUCTION_MEMORY_REPOSITORY_ALLOWED) {
+    throw new Error("production_memory_repository_forbidden");
   }
-  if (!PHASE_12M_READY) {
-    throw new Error("phase_12m_ready_flag_required");
+  if (PRODUCTION_DIGITAL_TWIN_READY) {
+    throw new Error("production_digital_twin_must_remain_false");
+  }
+  if (PUBLIC_CONTRACT_VERSION !== "0.2.0-spatial-core") {
+    throw new Error("public_contracts_must_be_spatial_core_prerelease");
+  }
+  if (!PHASE_12N_READY) {
+    throw new Error("phase_12n_ready_flag_required");
   }
 
   const twinOwnsCanonical = SHARED_SPATIAL_DOMAIN_OWNERSHIP_MATRIX.some(
@@ -265,17 +313,28 @@ export function assertSharedSpatialDomainOwnershipLock(): {
     throw new Error("digital_twin_may_not_own_canonical_spatial_location");
   }
 
+  assertFullyResolvedConditions();
+
   return {
     ok: true,
     SharedSpatialDomainDiscoveryReady: true,
     SharedSpatialDomainOwnershipLocked: true,
-    SharedSpatialDomainRuntimeImplemented: false,
-    spatialOwnershipFullyResolved: false,
+    SharedSpatialDomainRuntimeImplemented: true,
+    SharedSpatialReferenceRegistryReady: true,
+    SpatialReferenceGovernanceReady: true,
+    CoordinateReferenceGovernanceReady: true,
+    CoordinateReferenceSystemRegistryReady: true,
+    LegacySpatialReconciliationReady: true,
+    DigitalTwinSpatialBindingReady: true,
+    spatialOwnershipFullyResolved: true,
     duplicateSpatialOwnershipDetected: false,
     duplicateGeometryOwnershipDetected: false,
     digitalTwinMayOwnCanonicalSpatial: false,
+    coordinateTransformationImplemented: false,
+    gisRuntimeImplemented: false,
+    geometryRepositoryImplemented: false,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
-    phase12MReady: true,
+    phase12NReady: true,
     canonicalSpatialReferenceOwnership: CANONICAL_SPATIAL_REFERENCE_OWNERSHIP,
   };
 }

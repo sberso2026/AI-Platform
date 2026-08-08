@@ -37,6 +37,8 @@ export const DIGITAL_THREAD_REFERENCE_KINDS = [
   "review",
   "knowledge_graph_node",
   "knowledge_graph_edge",
+  /** Phase 12M — Shared Spatial Domain SpatialReference participation (refs only). */
+  "spatial_reference",
 ] as const;
 
 export type DigitalThreadReferenceKind =
