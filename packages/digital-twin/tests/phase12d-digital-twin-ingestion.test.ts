@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED,
   CERTIFIED_SOURCE_ADAPTERS,
@@ -73,7 +73,7 @@ describe("Phase 12D Digital Twin governed state ingestion", () => {
   });
 
   it("declares ingestion events in catalog", () => {
-    expect(assertIngestionContracts().contractVersion).toBe("0.7.0-simulation-draft");
+    expect(assertIngestionContracts().contractVersion).toBe("0.8.0-simulation-assurance-draft");
     for (const evt of INGESTION_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -25,7 +25,7 @@ const ASSET_INTELLIGENCE_V1_COMMIT = "925e2ed74025cac6a145c346c17c53320efb8757";
 const PHASE_12A_COMMIT = "2c5ed03f7de12cde9bfb71a9d430f5e342291303";
 
 describe("Phase 12B Digital Twin core", () => {
-  it("defines exactly 50 gates (Aâ€“AX)", () => {
+  it("defines exactly 50 gates (A–AX)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(50);
     expect(ids[0]).toBe("A");
@@ -37,11 +37,11 @@ describe("Phase 12B Digital Twin core", () => {
 
   it("declares the core version and status", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.2\.0-core"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "core"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12B"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.2\.0-core"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.2\.0-core"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.8\.0-simulation-assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation_assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12H"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12b/);
   });
 
@@ -71,7 +71,7 @@ describe("Phase 12B Digital Twin core", () => {
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.2\.0-core-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.8\.0-simulation-assurance-draft"/);
     expect(version).toMatch(/DIGITAL_TWIN_IDENTITY_REVIEW_SLUG = "digital_twin\.identity_review"/);
   });
 

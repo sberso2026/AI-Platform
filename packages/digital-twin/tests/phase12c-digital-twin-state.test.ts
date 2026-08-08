@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   assertCoreContracts,
   assertOwnershipLock,
@@ -72,12 +72,12 @@ describe("Phase 12C Digital Twin state domain", () => {
     expect(lock.ok).toBe(true);
     expect(lock.twinStateReady).toBe(true);
     expect(lock.twinVersioningReady).toBe(true);
-    expect(lock.publicContractVersion).toBe("0.7.0-simulation-draft");
+    expect(lock.publicContractVersion).toBe("0.8.0-simulation-assurance-draft");
   });
 
   it("declares state contract families and domain events", () => {
-    expect(assertCoreContracts().contractVersion).toBe("0.7.0-simulation-draft");
-    expect(assertStateContracts().contractVersion).toBe("0.7.0-simulation-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.8.0-simulation-assurance-draft");
+    expect(assertStateContracts().contractVersion).toBe("0.8.0-simulation-assurance-draft");
     for (const evt of STATE_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

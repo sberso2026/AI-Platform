@@ -34,11 +34,11 @@ describe("Phase 12E Digital Twin telemetry binding", () => {
 
   it("declares telemetry binding version and status", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.5\.0-telemetry-binding"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "telemetry_binding"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12E"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.5\.0-telemetry-binding"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.5\.0-telemetry-binding"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.8\.0-simulation-assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation_assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12H"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12e/);
   });
 
@@ -65,7 +65,7 @@ describe("Phase 12E Digital Twin telemetry binding", () => {
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.5\.0-telemetry-binding-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.8\.0-simulation-assurance-draft"/);
   });
 
   it("pins Phase 12D certified baseline", () => {

@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -23,7 +23,7 @@ const PROJECT_CONTROLS_V1_COMMIT = "b17fe4cfe2574520ec813a7b43ba7328a585d741";
 const ASSET_INTELLIGENCE_V1_COMMIT = "925e2ed74025cac6a145c346c17c53320efb8757";
 
 describe("Phase 12A Digital Twin discovery", () => {
-  it("defines exactly 39 gates (Aâ€“AM)", () => {
+  it("defines exactly 39 gates (A–AM)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(39);
     expect(ids[0]).toBe("A");
@@ -37,11 +37,11 @@ describe("Phase 12A Digital Twin discovery", () => {
     const version = read(VERSION);
     expect(version).toMatch(/DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin"/);
     expect(version).toMatch(/DIGITAL_TWIN_MODULE_KEY = "digital_twin"/);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.1\.0-discovery"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "discovery"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12A"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.1\.0-discovery"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.1\.0-discovery"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.8\.0-simulation-assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation_assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12H"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12a/);
   });
 
@@ -65,7 +65,7 @@ describe("Phase 12A Digital Twin discovery", () => {
       expect(version, String(lock)).toMatch(lock);
     }
     expect(version).toMatch(/DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true/);
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.1\.0-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.8\.0-simulation-assurance-draft"/);
   });
 
   it("locks ownership without claiming canonical identity", () => {

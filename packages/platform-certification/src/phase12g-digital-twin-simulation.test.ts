@@ -34,11 +34,11 @@ describe("Phase 12G Digital Twin simulation", () => {
 
   it("declares simulation version and status", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.7\.0-simulation"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12G"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.7\.0-simulation"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.7\.0-simulation"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.8\.0-simulation-assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation_assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12H"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12g/);
   });
 
@@ -67,7 +67,7 @@ describe("Phase 12G Digital Twin simulation", () => {
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.7\.0-simulation-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.8\.0-simulation-assurance-draft"/);
   });
 
   it("pins Phase 12F certified baseline", () => {

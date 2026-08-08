@@ -30,6 +30,11 @@ export const KG_EDGE_REUSE = {
   hasSimulationScenario: "has_simulation_scenario",
   producedSimulationResult: "produced_simulation_result",
   hasSimulatedState: "has_simulated_state",
+  hasSimulationPackage: "has_simulation_package",
+  hasMethodQualification: "has_method_qualification",
+  hasProviderQualification: "has_provider_qualification",
+  hasApplicationQualification: "has_application_qualification",
+  hasExecutionQualification: "has_execution_qualification",
 } as const;
 
 export type TwinRelationship = {

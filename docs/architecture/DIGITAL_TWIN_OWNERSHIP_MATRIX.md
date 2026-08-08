@@ -1,12 +1,13 @@
-# Digital Twin — Ownership Matrix (Phase 12G simulation)
+# Digital Twin — Ownership Matrix (Phase 12H simulation assurance)
 
-Status: simulation · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+Status: simulation_assurance · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
 
-> **Phase 12G update:** Twin owns simulation method/provider registries and the
-> simulated-state plane as **Digital Twin simulation governance**. General
-> Engineering Tool Framework remains with `platform_intelligence`
-> (`duplicateEngineeringToolFrameworkDetected=false`). Certified executable path
-> is `deterministic_fixture` only (`nativeEngineeringSolverImplemented=false`).
+> **Phase 12H update:** Twin owns multi-layer simulation qualification, eligibility,
+> packages, integrity, and reproducibility as **Digital Twin simulation assurance**.
+> External solver adapters remain reserved stubs
+> (`externalEngineeringSolverAdaptersImplemented=false`). General Engineering Tool
+> Framework remains with `platform_intelligence`. Certified executable path is
+> `deterministic_fixture` only (`nativeEngineeringSolverImplemented=false`).
 
 ## Locked ownership boundaries
 
@@ -21,6 +22,9 @@ Status: simulation · Aligned with `packages/digital-twin/src/architecture/owner
 | source_engineering_model | `external_or_existing_engineering_model_owner` | consumes (source_ref/fileId) |
 | simulation_state | `digital_twin` | owns (separate simulated plane) |
 | simulation_governance | `digital_twin` | owns (method/provider registries) |
+| simulation_assurance | `digital_twin` | owns (four-layer qualification + packages) |
+| simulation_package | `digital_twin` | owns (manifests/integrity; Platform Files refs) |
+| external_engineering_solver_adapters | `external_or_existing_engineering_model_owner` | forbidden (stubs only) |
 | engineering_tool_framework | `platform_intelligence` | consumes (compatibility adapters) |
 | digital_thread | `digital_twin` | owns |
 | asset_identity_canonical | `engineering_os_shared_domain` | consumes |

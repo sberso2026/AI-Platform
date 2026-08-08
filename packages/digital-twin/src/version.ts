@@ -1,15 +1,17 @@
 /**
- * Phase 12G — Digital Twin Simulation Governance & Simulated-State Foundation.
+ * Phase 12H — Digital Twin Simulation Assurance, Multi-Layer Qualification
+ * and Reproducible Simulation Package Foundation.
  *
- * Extends 12F with governed simulation method/provider registries, scenario
- * execution via deterministic fixture only, and a separate simulated-state plane.
+ * Extends 12G with four-layer qualification, eligibility (fail-closed),
+ * TwinSimulationPackage integrity/completeness/reproducibility.
+ * externalEngineeringSolverAdaptersImplemented remains false.
  * nativeEngineeringSolverImplemented remains false.
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.7.0-simulation" as const;
-export const DIGITAL_TWIN_STATUS = "simulation" as const;
-export const DIGITAL_TWIN_PHASE = "12G" as const;
+export const DIGITAL_TWIN_VERSION = "0.8.0-simulation-assurance" as const;
+export const DIGITAL_TWIN_STATUS = "simulation_assurance" as const;
+export const DIGITAL_TWIN_PHASE = "12H" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -61,7 +63,7 @@ export const twinRepresentationNavigationReady = true as const;
 export const REPRESENTATION_NAVIGATION_IMPLEMENTED = true as const;
 export const representationNavigationImplemented = true as const;
 
-/** Phase 12G simulation framework readiness */
+/** Phase 12G simulation framework readiness (retained) */
 export const TWIN_SIMULATION_FRAMEWORK_READY = true as const;
 export const TwinSimulationFrameworkReady = true as const;
 export const twinSimulationFrameworkReady = true as const;
@@ -75,6 +77,32 @@ export const TWIN_SIMULATED_STATE_READY = true as const;
 export const TwinSimulatedStateReady = true as const;
 export const twinSimulatedStateReady = true as const;
 
+/** Phase 12H simulation assurance readiness */
+export const SIMULATION_METHOD_QUALIFICATION_READY = true as const;
+export const SimulationMethodQualificationReady = true as const;
+export const simulationMethodQualificationReady = true as const;
+export const SIMULATION_PROVIDER_QUALIFICATION_READY = true as const;
+export const SimulationProviderQualificationReady = true as const;
+export const simulationProviderQualificationReady = true as const;
+export const SIMULATION_APPLICATION_QUALIFICATION_READY = true as const;
+export const SimulationApplicationQualificationReady = true as const;
+export const simulationApplicationQualificationReady = true as const;
+export const SIMULATION_EXECUTION_QUALIFICATION_READY = true as const;
+export const SimulationExecutionQualificationReady = true as const;
+export const simulationExecutionQualificationReady = true as const;
+export const SIMULATION_QUALIFICATION_ELIGIBILITY_READY = true as const;
+export const SimulationQualificationEligibilityReady = true as const;
+export const simulationQualificationEligibilityReady = true as const;
+export const TWIN_SIMULATION_PACKAGE_READY = true as const;
+export const TwinSimulationPackageReady = true as const;
+export const twinSimulationPackageReady = true as const;
+export const SIMULATION_PACKAGE_INTEGRITY_READY = true as const;
+export const SimulationPackageIntegrityReady = true as const;
+export const simulationPackageIntegrityReady = true as const;
+export const SIMULATION_REPRODUCIBILITY_READY = true as const;
+export const SimulationReproducibilityReady = true as const;
+export const simulationReproducibilityReady = true as const;
+
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
 export const HOSTED_PERSISTENCE_READY = true as const;
@@ -82,7 +110,8 @@ export const hostedDigitalTwinPersistenceReady = true as const;
 
 /**
  * Bounded runtime: state-ingestion + telemetry binding + representation mapping
- * + governed simulation orchestration with deterministic fixture ONLY.
+ * + governed simulation orchestration with deterministic fixture ONLY
+ * + multi-layer qualification / package assurance foundation.
  */
 export const DIGITAL_TWIN_RUNTIME_IMPLEMENTED = true as const;
 export const digitalTwinRuntimeImplemented = true as const;
@@ -123,6 +152,8 @@ export const simulationExecutionImplemented = true as const;
 export const simulationImplemented = false as const;
 export const NATIVE_ENGINEERING_SOLVER_IMPLEMENTED = false as const;
 export const nativeEngineeringSolverImplemented = false as const;
+export const EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED = false as const;
+export const externalEngineeringSolverAdaptersImplemented = false as const;
 export const SIMULATION_OPTIMIZATION_IMPLEMENTED = false as const;
 export const simulationOptimizationImplemented = false as const;
 export const SIMULATION_USES_PUBLISHED_STATE_ONLY = true as const;
@@ -172,9 +203,11 @@ export const PHASE_12F_READY = true as const;
 export const phase12FReady = true as const;
 export const PHASE_12G_READY = true as const;
 export const phase12GReady = true as const;
-/** Flag only — do not start Phase 12H. */
 export const PHASE_12H_READY = true as const;
 export const phase12HReady = true as const;
+/** Flag only — do not start Phase 12I. */
+export const PHASE_12I_READY = true as const;
+export const phase12IReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -232,6 +265,15 @@ export const PHASE_12F_HOSTED_RUN = "31261555990" as const;
 export const PHASE_12F_VERSION = "0.6.0-representation" as const;
 
 // ---------------------------------------------------------------------------
+// Phase 12G certified baseline (pinned — do not move)
+// ---------------------------------------------------------------------------
+
+export const PHASE_12G_CERTIFIED_COMMIT =
+  "a3832076425b276f089e38f1c9aa76559014454c" as const;
+export const PHASE_12G_HOSTED_RUN = "31262355460" as const;
+export const PHASE_12G_VERSION = "0.7.0-simulation" as const;
+
+// ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
 
@@ -259,7 +301,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 export const projectIntelligenceV1Intact = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.7.0-simulation-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.8.0-simulation-assurance-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -270,6 +312,7 @@ export const TWIN_STATE_OWNERSHIP = "digital_twin" as const;
 export const SIMULATION_STATE_OWNERSHIP = "digital_twin" as const;
 export const TWIN_REPRESENTATION_OWNERSHIP = "digital_twin" as const;
 export const TWIN_SIMULATION_GOVERNANCE_OWNERSHIP = "digital_twin" as const;
+export const TWIN_SIMULATION_ASSURANCE_OWNERSHIP = "digital_twin" as const;
 export const DIGITAL_THREAD_OWNERSHIP = "digital_twin" as const;
 export const MODEL_FILE_BLOB_OWNERSHIP = "platform_files" as const;
 export const DOCUMENT_DRAWING_METADATA_OWNERSHIP = "engineering_os_shared_domain" as const;
@@ -295,8 +338,8 @@ export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
 export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "simulation" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.7.0-simulation" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "simulation_assurance" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.8.0-simulation-assurance" as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
 export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
@@ -313,8 +356,18 @@ export const DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG =
 export const DIGITAL_TWIN_REPRESENTATION_MAPPING_REVIEW_SLUG =
   "digital_twin.representation_mapping_review" as const;
 export const DIGITAL_TWIN_SIMULATION_REVIEW_SLUG = "digital_twin.simulation_review" as const;
+export const DIGITAL_TWIN_METHOD_QUALIFICATION_REVIEW_SLUG =
+  "digital_twin.simulation_method_qualification_review" as const;
+export const DIGITAL_TWIN_PROVIDER_QUALIFICATION_REVIEW_SLUG =
+  "digital_twin.simulation_provider_qualification_review" as const;
+export const DIGITAL_TWIN_APPLICATION_QUALIFICATION_REVIEW_SLUG =
+  "digital_twin.simulation_application_qualification_review" as const;
+export const DIGITAL_TWIN_EXECUTION_QUALIFICATION_REVIEW_SLUG =
+  "digital_twin.simulation_execution_qualification_review" as const;
+export const DIGITAL_TWIN_PACKAGE_REVIEW_SLUG =
+  "digital_twin.simulation_package_review" as const;
 
-export function getDigitalTwinSimulationDeclaration() {
+export function getDigitalTwinSimulationAssuranceDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -345,6 +398,14 @@ export function getDigitalTwinSimulationDeclaration() {
     twinSimulationMethodRegistryReady,
     twinSimulationProviderRegistryReady,
     twinSimulatedStateReady,
+    simulationMethodQualificationReady,
+    simulationProviderQualificationReady,
+    simulationApplicationQualificationReady,
+    simulationExecutionQualificationReady,
+    simulationQualificationEligibilityReady,
+    twinSimulationPackageReady,
+    simulationPackageIntegrityReady,
+    simulationReproducibilityReady,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
     hostedDigitalTwinPersistenceReady,
     productionDigitalTwinReady: PRODUCTION_DIGITAL_TWIN_READY,
@@ -364,6 +425,7 @@ export function getDigitalTwinSimulationDeclaration() {
     simulationExecutionImplemented,
     simulationImplemented,
     nativeEngineeringSolverImplemented,
+    externalEngineeringSolverAdaptersImplemented,
     simulationOptimizationImplemented,
     simulationUsesPublishedStateOnly,
     predictiveTwinImplemented,
@@ -388,6 +450,7 @@ export function getDigitalTwinSimulationDeclaration() {
     phase12FReady,
     phase12GReady,
     phase12HReady,
+    phase12IReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
@@ -402,6 +465,9 @@ export function getDigitalTwinSimulationDeclaration() {
     phase12FVersion: PHASE_12F_VERSION,
     phase12FCertifiedCommit: PHASE_12F_CERTIFIED_COMMIT,
     phase12FHostedRun: PHASE_12F_HOSTED_RUN,
+    phase12GVersion: PHASE_12G_VERSION,
+    phase12GCertifiedCommit: PHASE_12G_CERTIFIED_COMMIT,
+    phase12GHostedRun: PHASE_12G_HOSTED_RUN,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
@@ -422,40 +488,50 @@ export function getDigitalTwinSimulationDeclaration() {
     telemetryBindingReviewSlug: DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG,
     representationMappingReviewSlug: DIGITAL_TWIN_REPRESENTATION_MAPPING_REVIEW_SLUG,
     simulationReviewSlug: DIGITAL_TWIN_SIMULATION_REVIEW_SLUG,
+    methodQualificationReviewSlug: DIGITAL_TWIN_METHOD_QUALIFICATION_REVIEW_SLUG,
+    providerQualificationReviewSlug: DIGITAL_TWIN_PROVIDER_QUALIFICATION_REVIEW_SLUG,
+    applicationQualificationReviewSlug: DIGITAL_TWIN_APPLICATION_QUALIFICATION_REVIEW_SLUG,
+    executionQualificationReviewSlug: DIGITAL_TWIN_EXECUTION_QUALIFICATION_REVIEW_SLUG,
+    packageReviewSlug: DIGITAL_TWIN_PACKAGE_REVIEW_SLUG,
   };
 }
 
 /** Alias for version info consumers. */
 export function getDigitalTwinVersionInfo() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationDeclaration */
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+export function getDigitalTwinSimulationDeclaration() {
+  return getDigitalTwinSimulationAssuranceDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
 export function getDigitalTwinRepresentationDeclaration() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationDeclaration */
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
 export function getDigitalTwinTelemetryBindingDeclaration() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationDeclaration */
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
 export function getDigitalTwinIngestionDeclaration() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationDeclaration */
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
 export function getDigitalTwinStateDeclaration() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationDeclaration */
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
 export function getDigitalTwinCoreDeclaration() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationDeclaration */
+/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinSimulationDeclaration();
+  return getDigitalTwinSimulationAssuranceDeclaration();
 }

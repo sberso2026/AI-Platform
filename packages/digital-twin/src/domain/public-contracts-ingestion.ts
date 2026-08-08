@@ -18,8 +18,8 @@ export function assertIngestionContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.7.0-simulation-draft") {
-    throw new Error("ingestion_contracts_require_0_7_0_simulation_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.8.0-simulation-assurance-draft") {
+    throw new Error("ingestion_contracts_require_0_8_0_simulation_assurance_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

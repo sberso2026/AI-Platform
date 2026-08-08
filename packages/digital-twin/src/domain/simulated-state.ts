@@ -20,6 +20,8 @@ export type TwinSimulatedState = {
   inputSetId: string;
   validationId?: string;
   reviewId?: string;
+  /** Phase 12H — link package when a simulation package exists. */
+  simulationPackageId?: string;
   assumptions?: string[];
   limitations?: string[];
   lifecycle: "draft" | "pending_review" | "published" | "superseded" | "archived";
@@ -46,6 +48,7 @@ export function createTwinSimulatedState(input: {
   inputSetId: string;
   validationId?: string;
   reviewId?: string;
+  simulationPackageId?: string;
   assumptions?: string[];
   limitations?: string[];
   externalRef: string;
@@ -65,6 +68,7 @@ export function createTwinSimulatedState(input: {
     inputSetId: input.inputSetId,
     validationId: input.validationId,
     reviewId: input.reviewId,
+    simulationPackageId: input.simulationPackageId,
     assumptions: input.assumptions,
     limitations: input.limitations,
     lifecycle: "draft",
@@ -75,6 +79,17 @@ export function createTwinSimulatedState(input: {
     createdAt: now,
     updatedAt: now,
     createdBy: input.createdBy,
+  };
+}
+
+export function linkSimulatedStateToPackage(
+  state: TwinSimulatedState,
+  simulationPackageId: string,
+): TwinSimulatedState {
+  return {
+    ...state,
+    simulationPackageId,
+    updatedAt: new Date().toISOString(),
   };
 }
 

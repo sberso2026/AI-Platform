@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -27,7 +27,7 @@ const PHASE_12A_COMMIT = "2c5ed03f7de12cde9bfb71a9d430f5e342291303";
 const PHASE_12B_COMMIT = "5e1bb22486a9fdd6385fb980daf0150a330eca9b";
 
 describe("Phase 12C Digital Twin state", () => {
-  it("defines exactly 51 gates (Aâ€“AY)", () => {
+  it("defines exactly 51 gates (A–AY)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(51);
     expect(ids[0]).toBe("A");
@@ -39,11 +39,11 @@ describe("Phase 12C Digital Twin state", () => {
 
   it("declares the state version and status", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.3\.0-state"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "state"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12C"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.3\.0-state"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.3\.0-state"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.8\.0-simulation-assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation_assurance"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12H"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.8\.0-simulation-assurance"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12c/);
   });
 
@@ -70,7 +70,7 @@ describe("Phase 12C Digital Twin state", () => {
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.3\.0-state-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.8\.0-simulation-assurance-draft"/);
     expect(version).toMatch(/DIGITAL_TWIN_STATE_REVIEW_SLUG = "digital_twin\.state_review"/);
   });
 

@@ -1,9 +1,10 @@
 /**
- * Phase 12G — Digital Twin ownership lock.
+ * Phase 12H — Digital Twin ownership lock.
  *
- * Machine-readable twin of ownership matrix including simulation governance.
+ * Machine-readable twin of ownership matrix including simulation governance
+ * and multi-layer simulation assurance / package foundation.
  * simulationExecutionImplemented=true means bounded orchestration + deterministic
- * fixture ONLY — native FEA/CFD/physics solvers remain forbidden.
+ * fixture ONLY — native FEA/CFD/physics solvers and external solver adapters remain forbidden.
  */
 
 import {
@@ -71,6 +72,15 @@ import {
   TWIN_SIMULATION_FRAMEWORK_READY,
   TWIN_SIMULATION_METHOD_REGISTRY_READY,
   TWIN_SIMULATION_PROVIDER_REGISTRY_READY,
+  SIMULATION_METHOD_QUALIFICATION_READY,
+  SIMULATION_PROVIDER_QUALIFICATION_READY,
+  SIMULATION_APPLICATION_QUALIFICATION_READY,
+  SIMULATION_EXECUTION_QUALIFICATION_READY,
+  SIMULATION_QUALIFICATION_ELIGIBILITY_READY,
+  TWIN_SIMULATION_PACKAGE_READY,
+  SIMULATION_PACKAGE_INTEGRITY_READY,
+  SIMULATION_REPRODUCIBILITY_READY,
+  EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED,
   TWIN_SNAPSHOT_READY,
   TWIN_SOURCE_ADAPTER_READY,
   TWIN_STATE_INGESTION_READY,
@@ -183,6 +193,25 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     owner: "digital_twin",
     relation: "owns",
     notes: "Twin owns simulation method/provider registries as Digital Twin simulation governance",
+  },
+  {
+    concern: "simulation_assurance",
+    owner: "digital_twin",
+    relation: "owns",
+    notes:
+      "Four-layer qualification, eligibility, packages, integrity, reproducibility — fixture-scoped; no real solvers",
+  },
+  {
+    concern: "simulation_package",
+    owner: "digital_twin",
+    relation: "owns",
+    notes: "TwinSimulationPackage manifests and integrity — Platform Files refs only; no binaries",
+  },
+  {
+    concern: "external_engineering_solver_adapters",
+    owner: "external_or_existing_engineering_model_owner",
+    relation: "forbidden",
+    notes: "Reserved stubs only — externalEngineeringSolverAdaptersImplemented=false",
   },
   {
     concern: "engineering_tool_framework",
@@ -343,6 +372,15 @@ export function assertOwnershipLock(): {
   twinSimulationMethodRegistryReady: true;
   twinSimulationProviderRegistryReady: true;
   twinSimulatedStateReady: true;
+  simulationMethodQualificationReady: true;
+  simulationProviderQualificationReady: true;
+  simulationApplicationQualificationReady: true;
+  simulationExecutionQualificationReady: true;
+  simulationQualificationEligibilityReady: true;
+  twinSimulationPackageReady: true;
+  simulationPackageIntegrityReady: true;
+  simulationReproducibilityReady: true;
+  externalEngineeringSolverAdaptersImplemented: false;
   twinVersioningReady: true;
   representationVersioningReady: true;
   twinSnapshotReady: true;
@@ -384,13 +422,13 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_claim_canonical_identity");
   }
   if (!DIGITAL_TWIN_IMPLEMENTED) {
-    throw new Error("digital_twin_simulation_must_be_implemented_in_phase_12g");
+    throw new Error("digital_twin_simulation_must_be_implemented_in_phase_12h");
   }
   if (PRODUCTION_DIGITAL_TWIN_READY) {
-    throw new Error("production_digital_twin_not_ready_in_phase_12g");
+    throw new Error("production_digital_twin_not_ready_in_phase_12h");
   }
   if (!DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("digital_twin_bounded_runtime_required_in_phase_12g");
+    throw new Error("digital_twin_bounded_runtime_required_in_phase_12h");
   }
   if (
     AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED ||
@@ -410,13 +448,16 @@ export function assertOwnershipLock(): {
     throw new Error("historian_high_frequency_and_sensor_registry_forbidden");
   }
   if (SHM_RUNTIME_IMPLEMENTED || SHM_SIGNAL_PROCESSING_IMPLEMENTED) {
-    throw new Error("shm_forbidden_in_phase_12g");
+    throw new Error("shm_forbidden_in_phase_12h");
   }
   if (!SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("bounded_simulation_execution_required_in_phase_12g");
+    throw new Error("bounded_simulation_execution_required_in_phase_12h");
   }
   if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
     throw new Error("native_engineering_solver_forbidden");
+  }
+  if (EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED) {
+    throw new Error("external_engineering_solver_adapters_forbidden");
   }
   if (SIMULATION_OPTIMIZATION_IMPLEMENTED || PREDICTIVE_TWIN_IMPLEMENTED) {
     throw new Error("optimization_and_prediction_forbidden");
@@ -451,8 +492,8 @@ export function assertOwnershipLock(): {
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.7.0-simulation-draft") {
-    throw new Error("public_contracts_must_be_simulation_draft_in_phase_12g");
+  if (PUBLIC_CONTRACT_VERSION !== "0.8.0-simulation-assurance-draft") {
+    throw new Error("public_contracts_must_be_simulation_assurance_draft_in_phase_12h");
   }
   if (
     !TWIN_IDENTITY_READY ||
@@ -472,12 +513,20 @@ export function assertOwnershipLock(): {
     !TWIN_SIMULATION_METHOD_REGISTRY_READY ||
     !TWIN_SIMULATION_PROVIDER_REGISTRY_READY ||
     !TWIN_SIMULATED_STATE_READY ||
+    !SIMULATION_METHOD_QUALIFICATION_READY ||
+    !SIMULATION_PROVIDER_QUALIFICATION_READY ||
+    !SIMULATION_APPLICATION_QUALIFICATION_READY ||
+    !SIMULATION_EXECUTION_QUALIFICATION_READY ||
+    !SIMULATION_QUALIFICATION_ELIGIBILITY_READY ||
+    !TWIN_SIMULATION_PACKAGE_READY ||
+    !SIMULATION_PACKAGE_INTEGRITY_READY ||
+    !SIMULATION_REPRODUCIBILITY_READY ||
     !TWIN_VERSIONING_READY ||
     !REPRESENTATION_VERSIONING_READY ||
     !TWIN_SNAPSHOT_READY ||
     !TWIN_TIMELINE_READY
   ) {
-    throw new Error("simulation_capabilities_not_ready");
+    throw new Error("simulation_assurance_capabilities_not_ready");
   }
   if (!KNOWLEDGE_GRAPH_REUSE) {
     throw new Error("knowledge_graph_reuse_required");
@@ -545,6 +594,13 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_own_general_engineering_tool_framework");
   }
 
+  const solverAdapterRows = DIGITAL_TWIN_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "external_engineering_solver_adapters",
+  );
+  if (solverAdapterRows.some((row) => row.relation !== "forbidden")) {
+    throw new Error("external_engineering_solver_adapters_must_remain_forbidden");
+  }
+
   return {
     ok: true,
     digitalTwinOwnership: DIGITAL_TWIN_OWNERSHIP,
@@ -605,6 +661,15 @@ export function assertOwnershipLock(): {
     twinSimulationMethodRegistryReady: true,
     twinSimulationProviderRegistryReady: true,
     twinSimulatedStateReady: true,
+    simulationMethodQualificationReady: true,
+    simulationProviderQualificationReady: true,
+    simulationApplicationQualificationReady: true,
+    simulationExecutionQualificationReady: true,
+    simulationQualificationEligibilityReady: true,
+    twinSimulationPackageReady: true,
+    simulationPackageIntegrityReady: true,
+    simulationReproducibilityReady: true,
+    externalEngineeringSolverAdaptersImplemented: false,
     twinVersioningReady: true,
     representationVersioningReady: true,
     twinSnapshotReady: true,

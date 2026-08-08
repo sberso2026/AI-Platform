@@ -25,7 +25,17 @@ import {
   type TwinSimulationReview,
   type TwinSimulationValidationState,
 } from "./simulation-result";
-import { NATIVE_ENGINEERING_SOLVER_IMPLEMENTED } from "../version";
+import {
+  assertEligibleForExecution,
+  assessSimulationQualificationEligibility,
+  type EligibilityAssessment,
+  type EligibilityInput,
+} from "./simulation-qualification-eligibility";
+import { rejectExternalSolverAdapterActivation } from "./simulation-external-solver-stubs";
+import {
+  EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED,
+  NATIVE_ENGINEERING_SOLVER_IMPLEMENTED,
+} from "../version";
 
 export type TwinSimulationExecutionRequest = {
   requestId: string;
@@ -160,6 +170,10 @@ export type SimulationOrchestratorContext = {
   method: TwinSimulationMethod;
   provider: TwinSimulationProvider;
   forceTimeout?: boolean;
+  /** When true (default for assurance path), require eligibility. */
+  assuranceRequired?: boolean;
+  eligibility?: EligibilityInput;
+  applicationKey?: string;
 };
 
 export type SimulationOrchestratorResult = {
@@ -168,6 +182,7 @@ export type SimulationOrchestratorResult = {
   result?: TwinSimulationResult;
   validation?: TwinSimulationValidationState;
   review?: TwinSimulationReview;
+  eligibility?: EligibilityAssessment;
   publishedObservedState: false;
 };
 
@@ -179,6 +194,11 @@ export class TwinSimulationExecutionOrchestrator {
     if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
       throw new Error("native_engineering_solver_forbidden");
     }
+    if (EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED) {
+      throw new Error("external_engineering_solver_adapters_forbidden");
+    }
+    rejectExternalSolverAdapterActivation(request as unknown as Record<string, unknown>);
+
     if (!request.authorizedBy) {
       throw new Error("simulation_execution_unauthorized");
     }
@@ -207,6 +227,23 @@ export class TwinSimulationExecutionOrchestrator {
     assertScenarioCannotOverwriteObserved(ctx.scenario);
     assertMethodExecutable(ctx.method);
     assertProviderExecutable(ctx.provider);
+
+    let eligibility: EligibilityAssessment | undefined;
+    const assuranceRequired = ctx.assuranceRequired === true;
+    if (assuranceRequired) {
+      if (!ctx.eligibility) {
+        throw new Error("assurance_mode_requires_qualification_eligibility_context");
+      }
+      eligibility = assessSimulationQualificationEligibility({
+        ...ctx.eligibility,
+        methodId: request.methodId,
+        providerId: request.providerId,
+        applicationKey:
+          ctx.applicationKey ?? ctx.eligibility.applicationKey ?? "fixture_assurance",
+        assuranceRequired: true,
+      });
+      assertEligibleForExecution(eligibility);
+    }
 
     if (ctx.inputSet.representationVersionPins.length === 0) {
       throw new Error("representation_pins_required");
@@ -267,6 +304,7 @@ export class TwinSimulationExecutionOrchestrator {
       return {
         run,
         inputSet: frozen,
+        eligibility,
         publishedObservedState: false,
       };
     }
@@ -328,6 +366,7 @@ export class TwinSimulationExecutionOrchestrator {
       result,
       validation,
       review,
+      eligibility,
       publishedObservedState: false,
     };
   }

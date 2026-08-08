@@ -25,6 +25,11 @@ export const THREAD_LINK_TARGET_TYPES = [
   "simulation_run_ref",
   "simulation_result_ref",
   "simulated_state_ref",
+  "simulation_package_ref",
+  "method_qualification_ref",
+  "provider_qualification_ref",
+  "application_qualification_ref",
+  "execution_qualification_ref",
 ] as const;
 
 export type ThreadLinkTargetType = (typeof THREAD_LINK_TARGET_TYPES)[number];
