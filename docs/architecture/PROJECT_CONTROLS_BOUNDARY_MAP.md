@@ -1,6 +1,6 @@
 # Project Controls — boundary map (discovery)
 
-Status: schedule_intelligence · Module version: `0.3.0-schedule-intelligence` · Phase: 11C
+Status: change_intelligence · Module version: `0.4.0-change-intelligence` · Phase: 11D
 
 Three relations, and nothing in between: Project Controls **owns** a concern,
 **consumes** it through a public contract, or is **forbidden** from it. The
@@ -22,7 +22,9 @@ flowchart TB
   end
 
   subgraph PLATFORM["Platform"]
-    COMMERCE["Commerce / Finance<br/>entitlements · seats · ledgers · billing"]
+    COMMERCE["Commerce<br/>entitlements · seats · licensing"]
+    FINANCE["External / future Finance domain<br/>ledgers · billing · financial posting"]
+    CONTRACTS["Reserved contractual change authority<br/>engineering_core · future commercial/contracts · Business OS · external"]
   end
 
   subgraph EXTERNAL["External / future"]
@@ -31,7 +33,7 @@ flowchart TB
     CMMS["CMMS work orders"]
   end
 
-  PC["Project Controls 0.3.0-schedule-intelligence<br/>progress + schedule intelligence ABOUT projects<br/>cost · change · contingency reserved"]
+  PC["Project Controls 0.4.0-change-intelligence<br/>progress + schedule + change intelligence ABOUT projects<br/>cost · contingency · baseline reserved"]
 
   CORE -->|consumes projectId, WBS nodes| PC
   PI -->|consumes knowledge derivatives| PC
@@ -45,7 +47,8 @@ flowchart TB
   PC -.->|FORBIDDEN: mutate asset_lifecycle_canonical| SHARED
   PC -.->|FORBIDDEN: own or duplicate| AI
   PC -.->|FORBIDDEN: own inspection records| II
-  PC -.->|FORBIDDEN: financial ledgers, billing| COMMERCE
+  PC -.->|FORBIDDEN: financial ledgers, billing, posting| FINANCE
+  PC -.->|FORBIDDEN: approve or execute contractual change| CONTRACTS
   PC -.->|FORBIDDEN| TWIN
   PC -.->|FORBIDDEN| SHM
   PC -.->|FORBIDDEN| CMMS
@@ -61,16 +64,19 @@ Controls. Dotted arrows are prohibitions.
 
 ## Owns
 
-Concerns where Project Controls is the owner. All are future work; none has an
-implementation in Phase 11A.
+Concerns where Project Controls is the owner.
 
-| Concern key | Description |
-| --- | --- |
-| `cost_controls_intelligence` | Planned, committed and incurred cost positions and their variance |
-| `schedule_controls_intelligence` | Activities, milestones, baselines and schedule variance |
-| `progress_controls_intelligence` | Measured physical progress against defined scope |
-| `change_controls_intelligence` | Change requests, variations and trends |
-| `contingency_controls_intelligence` | Contingency pools and drawdown history |
+| Concern key | Description | Status |
+| --- | --- | --- |
+| `progress_controls_intelligence` | Advisory progress indications from evidence | Implemented 11B |
+| `schedule_controls_intelligence` | Advisory schedule posture from declared milestones and baselines | Implemented 11C |
+| `change_controls_intelligence` | Advisory change assessment: classification, status context, impact contexts | Implemented 11D |
+| `project_snapshot_and_timeline` | Immutable identifier-only snapshots and an append-only project timeline | Implemented 11D |
+| `cost_controls_intelligence` | Planned, committed and incurred cost positions and their variance | Reserved — Phase 11E |
+| `contingency_controls_intelligence` | Contingency pools and drawdown history | Reserved |
+
+Change ownership is ownership of *intelligence about change*, not authority over
+change. See `PROJECT_CONTROLS_CHANGE_AUTHORITY_BOUNDARY.md`.
 
 `earned_value` is reserved to Project Controls by domain but carries the
 `forbidden` relation in Phase 11A: no other module may claim it, and Project
@@ -115,12 +121,14 @@ Concerns Project Controls must not implement, own or mutate.
 | `earned_value` | `project_controls` | Reserved; requires trustworthy cost + schedule + progress first |
 | `asset_lifecycle_canonical` | `engineering_os_shared_domain` | Canonical lifecycle transitions belong to the shared domain |
 | `canonical_risk_register` | `engineering_core` | Auto-creation or auto-mutation of Core Risk is never permitted |
-| `financial_ledgers_billing` | `platform_commerce_finance` | Money movement is a finance system of record |
+| `financial_ledgers_billing` | `external_finance_or_future_finance_domain` | Money movement is a finance system of record. Respelled in 11D away from `platform_commerce_finance`, which owns entitlement only |
+| `contractual_change_authority` | `reserved_not_project_controls` | Approving, pricing or executing a contractual change is never a Project Controls act |
 | `digital_twin` | `external_future` | Out of scope |
 | `structural_health_monitoring` | `external_future` | Out of scope |
 | `cmms_work_orders` | `none_in_project_controls` | No work order execution in Project Controls |
 
-Additionally forbidden for the duration of Phase 11A, regardless of eventual
-ownership: earned value calculation, Critical Path Method scheduling, cost
-engines, budget ledgers, schedule execution, work packaging UI, Project Controls
-SQL product tables and any Project Controls product page.
+Additionally forbidden through Phase 11D, regardless of eventual ownership:
+earned value calculation, Critical Path Method scheduling, float computation,
+forecasting, cost engines, budget ledgers, financial posting, contingency
+drawdown, schedule execution, change execution, contractual change approval,
+work packaging UI and any Project Controls product page.

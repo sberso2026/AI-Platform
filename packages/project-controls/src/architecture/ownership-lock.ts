@@ -1,5 +1,5 @@
 /**
- * Phase 11C — Project Controls ownership lock.
+ * Phase 11D — Project Controls ownership lock.
  *
  * The matrix below is the machine-readable twin of
  * `docs/architecture/PROJECT_CONTROLS_OWNERSHIP_MATRIX.md`. It exists so a
@@ -9,14 +9,30 @@
  * placeholder spelling `engineering_core` to `engineering_os_shared_project_domain`,
  * matching the sibling asset identity owner. Project Controls consumes a
  * `ProjectReference` from that layer and owns intelligence about projects only.
+ *
+ * Phase 11D change: change *intelligence* becomes an owned, implemented concern
+ * while contractual change *authority* stays outside Project Controls, and
+ * financial ledger ownership is re-spelled to
+ * `external_finance_or_future_finance_domain`.
  */
 
 import {
+  AI_MAY_PUBLISH_CHANGE_FORBIDDEN,
   AI_MAY_PUBLISH_PROGRESS_FORBIDDEN,
   AI_MAY_PUBLISH_SCHEDULE_FORBIDDEN,
+  AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   BUDGET_LEDGER_IMPLEMENTED,
+  CHANGE_EXECUTION_IMPLEMENTED,
+  CHANGE_INTELLIGENCE_IS_ADVISORY_ONLY,
+  CHANGE_INTELLIGENCE_IS_CONTRACTUAL_AUTHORITY,
+  CHANGE_INTELLIGENCE_OWNERSHIP,
+  CHANGE_INTELLIGENCE_READY,
+  CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
+  CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
+  FINANCIAL_LEDGER_OWNERSHIP,
+  FINANCIAL_POSTING_IMPLEMENTED,
   CANONICAL_ASSET_IDENTITY_OWNERSHIP,
   CANONICAL_ASSET_LIFECYCLE_OWNERSHIP,
   CANONICAL_ENGINEERING_RISK_OWNERSHIP,
@@ -65,6 +81,8 @@ export type DomainOwner =
   | "asset_intelligence"
   | "inspection_intelligence"
   | "platform_commerce_finance"
+  | "external_finance_or_future_finance_domain"
+  | "reserved_not_project_controls"
   | "external_future"
   | "none_in_project_controls";
 
@@ -128,7 +146,8 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "cost_controls_intelligence",
     owner: "project_controls",
     relation: "owns",
-    notes: "Reserved provider interface only; no cost engine exists in 11B",
+    notes:
+      "Reserved provider interface only; no cost engine, budget ledger or financial posting in 11D (Phase 11E candidate)",
   },
   {
     concern: "schedule_controls_intelligence",
@@ -141,13 +160,28 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "change_controls_intelligence",
     owner: "project_controls",
     relation: "owns",
-    notes: "Reserved provider interface only; no change control workflow in 11B",
+    notes:
+      "Implemented in 11D as advisory, evidence-driven change intelligence — not contractual change authority and not change execution",
+  },
+  {
+    concern: "contractual_change_authority",
+    owner: "reserved_not_project_controls",
+    relation: "forbidden",
+    notes:
+      "Raising, approving, pricing and executing a contractual change belongs to engineering_core, a future commercial/contracts domain, business OS or external contract administration",
+  },
+  {
+    concern: "project_snapshot_and_timeline",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Immutable identifier-only snapshots and an append-only project timeline introduced in 11D",
   },
   {
     concern: "contingency_controls_intelligence",
     owner: "project_controls",
     relation: "owns",
-    notes: "Reserved provider interface only; no contingency drawdown in 11B",
+    notes: "Reserved provider interface only; no contingency drawdown in 11D",
   },
   {
     concern: "earned_value",
@@ -188,9 +222,10 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
   },
   {
     concern: "financial_ledgers_billing",
-    owner: "platform_commerce_finance",
+    owner: "external_finance_or_future_finance_domain",
     relation: "forbidden",
-    notes: "Commerce/finance owns money movement; PC is not a ledger",
+    notes:
+      "Money movement, budgets and postings sit in an external or future finance domain; PC is not a ledger and posts nothing",
   },
   {
     concern: "entitlements_seats_licensing",
@@ -232,10 +267,15 @@ export function assertOwnershipLock(): {
   canonicalEngineeringRiskOwnership: typeof CANONICAL_ENGINEERING_RISK_OWNERSHIP;
   progressIntelligenceOwnership: typeof PROGRESS_INTELLIGENCE_OWNERSHIP;
   scheduleIntelligenceOwnership: typeof SCHEDULE_INTELLIGENCE_OWNERSHIP;
+  changeIntelligenceOwnership: typeof CHANGE_INTELLIGENCE_OWNERSHIP;
+  contractualChangeAuthorityOwnership: typeof CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP;
+  financialLedgerOwnership: typeof FINANCIAL_LEDGER_OWNERSHIP;
   sharedProjectDomainReady: true;
   projectContextEngineReady: true;
   progressIntelligenceReady: true;
   scheduleIntelligenceReady: true;
+  changeIntelligenceReady: true;
+  changeIntelligenceIsContractualAuthority: false;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
   duplicateAssetOwnershipIntroduced: false;
@@ -276,8 +316,17 @@ export function assertOwnershipLock(): {
   if (CANONICAL_ENGINEERING_RISK_OWNERSHIP !== "engineering_core") {
     throw new Error("canonical_risk_must_be_engineering_core");
   }
+  if (FINANCIAL_LEDGER_OWNERSHIP !== "external_finance_or_future_finance_domain") {
+    throw new Error("financial_ledger_owner_must_be_external_finance_domain");
+  }
+  if (CHANGE_INTELLIGENCE_OWNERSHIP !== "project_controls") {
+    throw new Error("change_intelligence_must_be_owned_by_project_controls");
+  }
+  if (String(CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP) === "project_controls") {
+    throw new Error("project_controls_may_not_hold_contractual_change_authority");
+  }
   if (PROJECT_CONTROLS_IMPLEMENTED || PRODUCTION_PROJECT_CONTROLS_READY) {
-    throw new Error("project_controls_product_forbidden_in_phase_11c");
+    throw new Error("project_controls_product_forbidden_in_phase_11d");
   }
   if (
     EARNED_VALUE_IMPLEMENTED ||
@@ -285,13 +334,15 @@ export function assertOwnershipLock(): {
     FLOAT_COMPUTATION_IMPLEMENTED ||
     COST_ENGINE_IMPLEMENTED ||
     BUDGET_LEDGER_IMPLEMENTED ||
+    FINANCIAL_POSTING_IMPLEMENTED ||
     SCHEDULE_EXECUTION_IMPLEMENTED ||
     FORECASTING_IMPLEMENTED ||
     RESOURCE_LEVELING_IMPLEMENTED ||
     CHANGE_CONTROL_IMPLEMENTED ||
+    CHANGE_EXECUTION_IMPLEMENTED ||
     CONTINGENCY_MANAGEMENT_IMPLEMENTED
   ) {
-    throw new Error("project_controls_engines_forbidden_in_phase_11c");
+    throw new Error("project_controls_engines_forbidden_in_phase_11d");
   }
   if (PROGRESS_MEASUREMENT_IS_EARNED_VALUE || !PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY) {
     throw new Error("progress_intelligence_must_stay_advisory_not_earned_value");
@@ -300,12 +351,19 @@ export function assertOwnershipLock(): {
     throw new Error("schedule_intelligence_must_stay_advisory_not_cpm");
   }
   if (
+    CHANGE_INTELLIGENCE_IS_CONTRACTUAL_AUTHORITY ||
+    !CHANGE_INTELLIGENCE_IS_ADVISORY_ONLY
+  ) {
+    throw new Error("change_intelligence_must_stay_advisory_not_contractual_authority");
+  }
+  if (
     !SHARED_PROJECT_DOMAIN_READY ||
     !PROJECT_CONTEXT_ENGINE_READY ||
     !PROGRESS_INTELLIGENCE_READY ||
-    !SCHEDULE_INTELLIGENCE_READY
+    !SCHEDULE_INTELLIGENCE_READY ||
+    !CHANGE_INTELLIGENCE_READY
   ) {
-    throw new Error("phase_11c_capabilities_must_be_ready");
+    throw new Error("phase_11d_capabilities_must_be_ready");
   }
   if (
     DUPLICATE_ASSET_OWNERSHIP_INTRODUCED ||
@@ -326,6 +384,12 @@ export function assertOwnershipLock(): {
   if (AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED || !AI_MAY_PUBLISH_SCHEDULE_FORBIDDEN) {
     throw new Error("autonomous_schedule_publication_forbidden");
   }
+  if (AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED || !AI_MAY_PUBLISH_CHANGE_FORBIDDEN) {
+    throw new Error("autonomous_change_publication_forbidden");
+  }
+  if (CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED) {
+    throw new Error("contractual_change_approval_by_ai_forbidden");
+  }
 
   const scheduleRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
     (row) => row.concern === "schedule_controls_intelligence",
@@ -336,6 +400,39 @@ export function assertOwnershipLock(): {
     scheduleRows[0].relation !== "owns"
   ) {
     throw new Error("schedule_controls_intelligence_must_be_owned_by_project_controls");
+  }
+
+  const changeRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "change_controls_intelligence",
+  );
+  if (
+    changeRows.length !== 1 ||
+    changeRows[0].owner !== "project_controls" ||
+    changeRows[0].relation !== "owns"
+  ) {
+    throw new Error("change_controls_intelligence_must_be_owned_by_project_controls");
+  }
+
+  const authorityRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "contractual_change_authority",
+  );
+  if (
+    authorityRows.length !== 1 ||
+    authorityRows[0].owner === "project_controls" ||
+    authorityRows[0].relation !== "forbidden"
+  ) {
+    throw new Error("contractual_change_authority_must_stay_outside_project_controls");
+  }
+
+  const ledgerRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "financial_ledgers_billing",
+  );
+  if (
+    ledgerRows.length !== 1 ||
+    ledgerRows[0].owner !== "external_finance_or_future_finance_domain" ||
+    ledgerRows[0].relation !== "forbidden"
+  ) {
+    throw new Error("financial_ledgers_must_be_external_finance_domain");
   }
 
   const identityRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
@@ -377,10 +474,15 @@ export function assertOwnershipLock(): {
     canonicalEngineeringRiskOwnership: CANONICAL_ENGINEERING_RISK_OWNERSHIP,
     progressIntelligenceOwnership: PROGRESS_INTELLIGENCE_OWNERSHIP,
     scheduleIntelligenceOwnership: SCHEDULE_INTELLIGENCE_OWNERSHIP,
+    changeIntelligenceOwnership: CHANGE_INTELLIGENCE_OWNERSHIP,
+    contractualChangeAuthorityOwnership: CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
+    financialLedgerOwnership: FINANCIAL_LEDGER_OWNERSHIP,
     sharedProjectDomainReady: true,
     projectContextEngineReady: true,
     progressIntelligenceReady: true,
     scheduleIntelligenceReady: true,
+    changeIntelligenceReady: true,
+    changeIntelligenceIsContractualAuthority: false,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,
     duplicateAssetOwnershipIntroduced: false,

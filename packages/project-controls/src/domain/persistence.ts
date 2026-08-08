@@ -1,5 +1,5 @@
 /**
- * Phase 11C — Project Controls persistence port and memory adapter.
+ * Phase 11D — Project Controls persistence port and memory adapter.
  *
  * The memory adapter exists for tests and certification units only;
  * `assertProductionRepositorySafe` makes choosing it in production a throw
@@ -24,6 +24,17 @@ import type {
   ScheduleSnapshot,
   ScheduleTimelineEvent,
 } from "./schedule";
+import type {
+  ChangeCandidate,
+  ChangeClassification,
+  ChangeConfidence,
+  ChangeEvidence,
+  ChangeIntelligenceState,
+  ChangeReviewRecord,
+  ProjectSnapshot,
+  ProjectTimelineEvent,
+} from "./change";
+import { changeStateKey } from "./change";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -57,6 +68,26 @@ export type PersistedScheduleAssessment = ScheduleAssessmentState;
 export type PersistedScheduleReview = ScheduleReviewRecord;
 export type PersistedScheduleSnapshot = ScheduleSnapshot;
 export type PersistedScheduleTimelineEvent = ScheduleTimelineEvent;
+
+export type PersistedChangeEvidence = ChangeEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scope: ProjectScopeRef;
+  changeStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedChangeState = ChangeIntelligenceState;
+export type PersistedChangeCandidate = ChangeCandidate;
+export type PersistedChangeReview = ChangeReviewRecord;
+export type PersistedChangeConfidence = ChangeConfidence & {
+  changeStateId: string;
+  recordedAt: string;
+};
+export type PersistedProjectSnapshot = ProjectSnapshot;
+export type PersistedProjectTimelineEvent = ProjectTimelineEvent;
 
 export type IdempotencyRecord = {
   tenantId: string;
@@ -202,6 +233,90 @@ export type ProjectControlsRepositoryPort = {
     projectId: string,
   ): Promise<PersistedScheduleTimelineEvent[]>;
 
+  saveChangeState(state: PersistedChangeState): Promise<PersistedChangeState>;
+  getChangeStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedChangeState | null>;
+  latestChangeState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    changeClass: ChangeClassification,
+    asOf?: string,
+  ): Promise<PersistedChangeState | undefined>;
+  listChangeStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedChangeState[]>;
+  nextChangeStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    changeClass: ChangeClassification,
+    expectedVersion?: number,
+  ): Promise<number>;
+
+  saveChangeEvidence(
+    evidence: readonly PersistedChangeEvidence[],
+  ): Promise<PersistedChangeEvidence[]>;
+  listChangeEvidence(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId: string,
+  ): Promise<PersistedChangeEvidence[]>;
+
+  saveChangeReview(review: PersistedChangeReview): Promise<PersistedChangeReview>;
+  listChangeReviews(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId?: string,
+  ): Promise<PersistedChangeReview[]>;
+
+  saveChangeConfidence(
+    confidence: PersistedChangeConfidence,
+  ): Promise<PersistedChangeConfidence>;
+  listChangeConfidence(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId: string,
+  ): Promise<PersistedChangeConfidence[]>;
+
+  saveChangeCandidate(candidate: PersistedChangeCandidate): Promise<PersistedChangeCandidate>;
+  getChangeCandidateById(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedChangeCandidate | null>;
+  listChangeCandidates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedChangeCandidate[]>;
+
+  saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
+  getProjectSnapshotById(
+    tenantId: string,
+    workspaceId: string,
+    snapshotId: string,
+  ): Promise<PersistedProjectSnapshot | null>;
+  listProjectSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProjectSnapshot[]>;
+
+  appendProjectTimeline(
+    entry: PersistedProjectTimelineEvent,
+  ): Promise<PersistedProjectTimelineEvent>;
+  listProjectTimeline(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProjectTimelineEvent[]>;
+
   saveProjectProfile(profile: PersistedProjectProfile): Promise<PersistedProjectProfile>;
   latestProjectProfile(
     tenantId: string,
@@ -236,6 +351,13 @@ export type DurableProjectControlsStore = {
   scheduleReviews: PersistedScheduleReview[];
   scheduleSnapshots: PersistedScheduleSnapshot[];
   scheduleTimeline: PersistedScheduleTimelineEvent[];
+  changeStates: PersistedChangeState[];
+  changeEvidence: PersistedChangeEvidence[];
+  changeReviews: PersistedChangeReview[];
+  changeConfidence: PersistedChangeConfidence[];
+  changeCandidates: PersistedChangeCandidate[];
+  projectSnapshots: PersistedProjectSnapshot[];
+  projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
   idempotency: IdempotencyRecord[];
   outbox: OutboxEventRecord[];
@@ -254,6 +376,13 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     scheduleReviews: [],
     scheduleSnapshots: [],
     scheduleTimeline: [],
+    changeStates: [],
+    changeEvidence: [],
+    changeReviews: [],
+    changeConfidence: [],
+    changeCandidates: [],
+    projectSnapshots: [],
+    projectTimeline: [],
     projectProfiles: [],
     idempotency: [],
     outbox: [],
@@ -590,6 +719,233 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
     projectId: string,
   ): Promise<PersistedScheduleTimelineEvent[]> {
     return this.store.scheduleTimeline.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async saveChangeState(state: PersistedChangeState): Promise<PersistedChangeState> {
+    const clash = this.store.changeStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        changeStateKey(row.scope, row.changeClass) ===
+          changeStateKey(state.scope, state.changeClass) &&
+        row.version === state.version,
+    );
+    if (clash) {
+      throw new Error(`optimistic_lock_conflict:change_version=${state.version}`);
+    }
+    this.store.changeStates.push(state);
+    return state;
+  }
+
+  async getChangeStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedChangeState | null> {
+    return (
+      this.store.changeStates.find(
+        (row) =>
+          row.stateId === stateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestChangeState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    changeClass: ChangeClassification,
+    asOf?: string,
+  ): Promise<PersistedChangeState | undefined> {
+    return latestAsOf(
+      this.store.changeStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          changeStateKey(row.scope, row.changeClass) === changeStateKey(scope, changeClass),
+      ),
+      asOf,
+    );
+  }
+
+  async listChangeStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedChangeState[]> {
+    return this.store.changeStates.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async nextChangeStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    changeClass: ChangeClassification,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestChangeState(tenantId, workspaceId, scope, changeClass);
+    const current = latest?.version ?? 0;
+    assertNextVersion(current, expectedVersion);
+    return current + 1;
+  }
+
+  async saveChangeEvidence(
+    evidence: readonly PersistedChangeEvidence[],
+  ): Promise<PersistedChangeEvidence[]> {
+    this.store.changeEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listChangeEvidence(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId: string,
+  ): Promise<PersistedChangeEvidence[]> {
+    return this.store.changeEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.changeStateId === changeStateId,
+    );
+  }
+
+  async saveChangeReview(review: PersistedChangeReview): Promise<PersistedChangeReview> {
+    this.store.changeReviews.push(review);
+    return review;
+  }
+
+  async listChangeReviews(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId?: string,
+  ): Promise<PersistedChangeReview[]> {
+    return this.store.changeReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!changeStateId || row.changeStateId === changeStateId),
+    );
+  }
+
+  async saveChangeConfidence(
+    confidence: PersistedChangeConfidence,
+  ): Promise<PersistedChangeConfidence> {
+    this.store.changeConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listChangeConfidence(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId: string,
+  ): Promise<PersistedChangeConfidence[]> {
+    return this.store.changeConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.changeStateId === changeStateId,
+    );
+  }
+
+  async saveChangeCandidate(
+    candidate: PersistedChangeCandidate,
+  ): Promise<PersistedChangeCandidate> {
+    this.store.changeCandidates.push(candidate);
+    return candidate;
+  }
+
+  async getChangeCandidateById(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedChangeCandidate | null> {
+    return (
+      this.store.changeCandidates.find(
+        (row) =>
+          row.candidateId === candidateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async listChangeCandidates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedChangeCandidate[]> {
+    return this.store.changeCandidates.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async saveProjectSnapshot(
+    snapshot: PersistedProjectSnapshot,
+  ): Promise<PersistedProjectSnapshot> {
+    const clash = this.store.projectSnapshots.find(
+      (row) => row.snapshotId === snapshot.snapshotId,
+    );
+    if (clash) throw new Error("project_snapshot_is_immutable");
+    this.store.projectSnapshots.push(snapshot);
+    return snapshot;
+  }
+
+  async getProjectSnapshotById(
+    tenantId: string,
+    workspaceId: string,
+    snapshotId: string,
+  ): Promise<PersistedProjectSnapshot | null> {
+    return (
+      this.store.projectSnapshots.find(
+        (row) =>
+          row.snapshotId === snapshotId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async listProjectSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProjectSnapshot[]> {
+    return this.store.projectSnapshots.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async appendProjectTimeline(
+    entry: PersistedProjectTimelineEvent,
+  ): Promise<PersistedProjectTimelineEvent> {
+    this.store.projectTimeline.push(entry);
+    return entry;
+  }
+
+  async listProjectTimeline(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProjectTimelineEvent[]> {
+    return this.store.projectTimeline.filter(
       (row) =>
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&

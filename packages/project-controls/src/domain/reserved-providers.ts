@@ -1,10 +1,15 @@
 /**
- * Phase 11C — reserved Project Controls provider interfaces.
+ * Phase 11D — reserved Project Controls provider interfaces.
  *
  * These are *shapes only*. Schedule Intelligence (11C) is advisory evidence
  * assessment — it is NOT the ScheduleProvider below. ScheduleProvider covers
  * CPM primitives (baseline, activity network, critical path) and every factory
  * returns an implementation whose every method throws `not_implemented`.
+ *
+ * Likewise, Change Intelligence (11D) is NOT the ChangeProvider below.
+ * `ChangeIntelligenceEngine` produces advisory assessments; `ChangeProvider`
+ * models the contractual/product change-control surface (raise, price, approve,
+ * execute a change) and stays unimplemented.
  *
  * If a future phase implements one of these, it must flip the corresponding
  * `*_IMPLEMENTED` flag in `version.ts` and add its own certification gates.
@@ -13,13 +18,21 @@
 import {
   BUDGET_LEDGER_IMPLEMENTED,
   CHANGE_CONTROL_IMPLEMENTED,
+  CHANGE_EXECUTION_IMPLEMENTED,
+  CONTINGENCY_MANAGEMENT_IMPLEMENTED,
   COST_ENGINE_IMPLEMENTED,
   CPM_SCHEDULING_IMPLEMENTED,
   EARNED_VALUE_IMPLEMENTED,
+  FINANCIAL_POSTING_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
   PRODUCTIVITY_ANALYSIS_IMPLEMENTED,
   SCHEDULE_EXECUTION_IMPLEMENTED,
 } from "../version";
+import {
+  BASELINE_PROVIDER_IMPLEMENTED,
+  createReservedBaselineProvider,
+  type BaselineProvider,
+} from "./baseline-provider";
 import type { ProjectScopeRef } from "./progress";
 
 export const RESERVED_PROVIDER_KEYS = [
@@ -29,6 +42,8 @@ export const RESERVED_PROVIDER_KEYS = [
   "forecast",
   "change",
   "productivity",
+  "contingency",
+  "baseline",
 ] as const;
 
 export type ReservedProviderKey = (typeof RESERVED_PROVIDER_KEYS)[number];
@@ -92,11 +107,26 @@ export type ForecastProvider = {
   getCostForecast(query: ReservedProviderQuery): Promise<never>;
 };
 
+/**
+ * Contractual / product change control. Distinct from Change Intelligence:
+ * these methods raise, price, approve and execute a change instrument, none of
+ * which Project Controls may do.
+ */
 export type ChangeProvider = {
   readonly providerKey: "change";
   readonly implemented: false;
   listChangeEvents(query: ReservedProviderQuery): Promise<never>;
   getChangeImpact(query: ReservedProviderQuery): Promise<never>;
+  approveContractualChange(query: ReservedProviderQuery): Promise<never>;
+  executeChange(query: ReservedProviderQuery): Promise<never>;
+  priceChange(query: ReservedProviderQuery): Promise<never>;
+};
+
+export type ContingencyProvider = {
+  readonly providerKey: "contingency";
+  readonly implemented: false;
+  getContingencyBalance(query: ReservedProviderQuery): Promise<never>;
+  drawContingency(query: ReservedProviderQuery): Promise<never>;
 };
 
 export type ProductivityProvider = {
@@ -113,6 +143,8 @@ export type ReservedProviderSet = {
   forecast: ForecastProvider;
   change: ChangeProvider;
   productivity: ProductivityProvider;
+  contingency: ContingencyProvider;
+  baseline: BaselineProvider;
 };
 
 // ---------------------------------------------------------------------------
@@ -164,6 +196,18 @@ export function createReservedChangeProvider(): ChangeProvider {
     implemented: false,
     listChangeEvents: async () => reject("change", "listChangeEvents"),
     getChangeImpact: async () => reject("change", "getChangeImpact"),
+    approveContractualChange: async () => reject("change", "approveContractualChange"),
+    executeChange: async () => reject("change", "executeChange"),
+    priceChange: async () => reject("change", "priceChange"),
+  };
+}
+
+export function createReservedContingencyProvider(): ContingencyProvider {
+  return {
+    providerKey: "contingency",
+    implemented: false,
+    getContingencyBalance: async () => reject("contingency", "getContingencyBalance"),
+    drawContingency: async () => reject("contingency", "drawContingency"),
   };
 }
 
@@ -184,10 +228,12 @@ export function createReservedProviderSet(): ReservedProviderSet {
     forecast: createReservedForecastProvider(),
     change: createReservedChangeProvider(),
     productivity: createReservedProductivityProvider(),
+    contingency: createReservedContingencyProvider(),
+    baseline: createReservedBaselineProvider(),
   };
 }
 
-/** Every reserved provider must stay unimplemented for Phase 11C to certify. CPM stays false. */
+/** Every reserved provider must stay unimplemented for Phase 11D to certify. CPM stays false. */
 export function assertReservedProvidersUnimplemented(): {
   ok: true;
   reservedProviderKeys: typeof RESERVED_PROVIDER_KEYS;
@@ -206,6 +252,10 @@ export function assertReservedProvidersUnimplemented(): {
     SCHEDULE_EXECUTION_IMPLEMENTED ||
     FORECASTING_IMPLEMENTED ||
     CHANGE_CONTROL_IMPLEMENTED ||
+    CHANGE_EXECUTION_IMPLEMENTED ||
+    CONTINGENCY_MANAGEMENT_IMPLEMENTED ||
+    FINANCIAL_POSTING_IMPLEMENTED ||
+    BASELINE_PROVIDER_IMPLEMENTED ||
     PRODUCTIVITY_ANALYSIS_IMPLEMENTED
   ) {
     throw new Error("reserved_capability_flag_flipped_without_certification");

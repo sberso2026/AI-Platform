@@ -1,8 +1,9 @@
 /**
- * Phase 11C — Project Controls domain events.
+ * Phase 11D — Project Controls domain events.
  *
  * Identifiers only — no evidence payloads. Governance flags prevent mistaking
- * advisory schedule/progress intelligence for CPM or earned value.
+ * advisory schedule/progress/change intelligence for CPM, earned value or a
+ * contractual change approval.
  */
 
 import type {
@@ -11,6 +12,11 @@ import type {
   ProjectScopeRef,
 } from "./progress";
 import type { ScheduleAssessmentState } from "./schedule";
+import type {
+  ChangeCandidate,
+  ChangeIntelligenceState,
+  ProjectSnapshot,
+} from "./change";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -20,9 +26,24 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.schedule.reviewed",
   "engineering.project.schedule.published",
   "engineering.project.profile.updated",
+  "engineering.project.change.assessed",
+  "engineering.project.change.reviewed",
+  "engineering.project.change.published",
+  "engineering.project.change.superseded",
+  "engineering.project.change_candidate.created",
+  "engineering.project.snapshot.created",
 ] as const;
 
 export type ProjectControlsEventType = (typeof PROJECT_CONTROLS_EVENTS)[number];
+
+export const PROJECT_CONTROLS_CHANGE_EVENTS = [
+  "engineering.project.change.assessed",
+  "engineering.project.change.reviewed",
+  "engineering.project.change.published",
+  "engineering.project.change.superseded",
+  "engineering.project.change_candidate.created",
+  "engineering.project.snapshot.created",
+] as const;
 
 export type ProjectControlsEventGovernance = {
   advisoryOnly: true;
@@ -30,6 +51,8 @@ export type ProjectControlsEventGovernance = {
   criticalPathComputed: false;
   floatComputed: false;
   costIntegrated: false;
+  financialPostingPerformed: false;
+  contractualApprovalClaimed: false;
   forecastProduced: false;
   mutatesProjectIdentity: false;
   autonomousPublication: false;
@@ -41,6 +64,8 @@ export const PROJECT_CONTROLS_EVENT_GOVERNANCE: ProjectControlsEventGovernance =
   criticalPathComputed: false,
   floatComputed: false,
   costIntegrated: false,
+  financialPostingPerformed: false,
+  contractualApprovalClaimed: false,
   forecastProduced: false,
   mutatesProjectIdentity: false,
   autonomousPublication: false,
@@ -126,9 +151,65 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     publishedScopes: profile.progress.publishedScopes,
     scheduleScopesAssessed: profile.schedule?.scopesAssessed ?? 0,
     scheduleScopesAbstained: profile.schedule?.scopesAbstained ?? 0,
+    changesAssessed: profile.change?.changesAssessed ?? 0,
+    changesAbstained: profile.change?.changesAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
+  };
+}
+
+/**
+ * Identifiers only — no evidence payloads, no narratives, no impact detail and
+ * never a monetary quantum.
+ */
+export function changeEventPayload(state: ChangeIntelligenceState): Record<string, unknown> {
+  return {
+    changeStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    changeClass: state.changeClass,
+    changeStatusContext: state.changeStatusContext,
+    scopeKind: state.scope.kind,
+    scopeReferenceId: state.scope.referenceId,
+    candidateId: state.candidateId,
+    authoritativeChangeRefId: state.authoritativeChangeRef?.referenceId,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    contractualApprovalClaimed: false,
+    contractualAuthorityClaimed: false,
+  };
+}
+
+/** Identifiers only. A candidate event never asserts an approved change. */
+export function changeCandidateEventPayload(
+  candidate: ChangeCandidate,
+): Record<string, unknown> {
+  return {
+    candidateId: candidate.candidateId,
+    status: candidate.status,
+    changeClass: candidate.changeClass,
+    scopeKind: candidate.scope.kind,
+    scopeReferenceId: candidate.scope.referenceId,
+    signalRefCount: candidate.signalRefs.length,
+    isApprovedChange: false,
+    contractualApprovalClaimed: false,
+  };
+}
+
+/** Identifiers and counts only — a snapshot event carries no state content. */
+export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, unknown> {
+  return {
+    snapshotId: snapshot.snapshotId,
+    schemaVersion: snapshot.schemaVersion,
+    profileId: snapshot.profileId,
+    progressStateCount: snapshot.progressStateIds.length,
+    scheduleStateCount: snapshot.scheduleStateIds.length,
+    changeStateCount: snapshot.changeStateIds.length,
+    capturedAt: snapshot.capturedAt,
+    immutable: true,
+    containsEvidencePayloads: false,
   };
 }
 

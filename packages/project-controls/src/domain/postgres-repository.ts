@@ -1,10 +1,10 @@
 /**
- * Phase 11C — production PostgreSQL/Supabase Project Controls repository.
+ * Phase 11D — production PostgreSQL/Supabase Project Controls repository.
  * Supabase hosts Postgres; the domain API stays infrastructure-independent.
  *
- * Progress tables are created by batch_62; schedule tables by batch_63.
- * `project_id` is a foreign key into `engineering_projects`, which this
- * repository never writes.
+ * Progress tables are created by batch_62; schedule tables by batch_63; change
+ * plus shared project snapshot/timeline tables by batch_64. `project_id` is a
+ * foreign key into `engineering_projects`, which this repository never writes.
  */
 
 import { randomUUID } from "node:crypto";
@@ -18,7 +18,14 @@ import {
   type PersistedProgressReview,
   type PersistedProgressSnapshot,
   type PersistedProgressTimelineEvent,
+  type PersistedChangeCandidate,
+  type PersistedChangeConfidence,
+  type PersistedChangeEvidence,
+  type PersistedChangeReview,
+  type PersistedChangeState,
   type PersistedProjectProfile,
+  type PersistedProjectSnapshot,
+  type PersistedProjectTimelineEvent,
   type PersistedScheduleAssessment,
   type PersistedScheduleEvidence,
   type PersistedScheduleReview,
@@ -26,6 +33,7 @@ import {
   type PersistedScheduleTimelineEvent,
   type ProjectControlsRepositoryPort,
 } from "./persistence";
+import type { ChangeClassification } from "./change";
 import type { ProjectScopeRef } from "./progress";
 
 type AnyClient = SupabaseClient<any, "public", any>;
@@ -40,6 +48,13 @@ const SCHEDULE_EVIDENCE = "project_controls_schedule_evidence";
 const SCHEDULE_REVIEWS = "project_controls_schedule_reviews";
 const SCHEDULE_SNAPSHOTS = "project_controls_schedule_snapshots";
 const SCHEDULE_TIMELINE = "project_controls_schedule_timeline";
+const CHANGE_STATES = "project_controls_change_states";
+const CHANGE_EVIDENCE = "project_controls_change_evidence";
+const CHANGE_REVIEWS = "project_controls_change_reviews";
+const CHANGE_CONFIDENCE = "project_controls_change_confidence";
+const CHANGE_CANDIDATES = "project_controls_change_candidates";
+const PROJECT_SNAPSHOTS = "project_controls_project_snapshots";
+const PROJECT_TIMELINE = "project_controls_project_timeline";
 const PROFILES = "project_controls_project_profiles";
 const IDEMPOTENCY = "project_controls_idempotency";
 const OUTBOX = "project_controls_outbox_events";
@@ -667,6 +682,470 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
     return (data ?? []).map(mapScheduleTimelineRow);
   }
 
+  // ------------------------------------------------------------------ change
+
+  async saveChangeState(state: PersistedChangeState): Promise<PersistedChangeState> {
+    const row = {
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      project_id: state.projectId,
+      scope_kind: state.scope.kind,
+      scope_reference_id: state.scope.referenceId ?? null,
+      version: state.version,
+      status: state.status,
+      assessment_class: state.assessmentClass,
+      change_class: state.changeClass,
+      change_status_context: state.changeStatusContext,
+      authoritative_change_ref: state.authoritativeChangeRef ?? null,
+      candidate_id: state.candidateId ?? null,
+      impact_contexts: state.impact,
+      confidence_class: state.confidence.confidenceClass,
+      confidence_score: state.confidence.score,
+      data_sufficiency: state.confidence.dataSufficiency,
+      confidence_payload: state.confidence,
+      evidence_refs: state.evidenceRefs,
+      reasons: state.reasons,
+      limitations: state.limitations,
+      abstained: state.abstained,
+      abstention_reason: state.abstentionReason ?? null,
+      narrative: state.narrative ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      assessed_at: state.assessedAt,
+      recorded_at: state.recordedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      workflow_instance_id: state.workflowInstanceId ?? null,
+      earned_value_computed: false,
+      critical_path_computed: false,
+      float_computed: false,
+      cost_integrated: false,
+      budget_mutated: false,
+      financial_posting_performed: false,
+      forecast_produced: false,
+      contingency_drawn: false,
+      change_executed: false,
+      contractual_approval_claimed: false,
+      contractual_authority_claimed: false,
+      core_risk_mutated: false,
+      advisory_only: true,
+      mutates_project_identity: false,
+    };
+    const { data, error } = await this.supabase
+      .from(CHANGE_STATES)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) {
+      if (error.code === "23505" || /duplicate key/i.test(error.message)) {
+        throw new Error(`optimistic_lock_conflict:${error.message}`);
+      }
+      throw new Error(`change_state_persist_failed:${error.message}`);
+    }
+    return mapChangeStateRow(data);
+  }
+
+  async getChangeStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedChangeState | null> {
+    const { data, error } = await this.supabase
+      .from(CHANGE_STATES)
+      .select("*")
+      .eq("id", stateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`change_state_read_failed:${error.message}`);
+    return data ? mapChangeStateRow(data) : null;
+  }
+
+  async latestChangeState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    changeClass: ChangeClassification,
+    asOf?: string,
+  ): Promise<PersistedChangeState | undefined> {
+    let query = this.supabase
+      .from(CHANGE_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", scope.projectId)
+      .eq("scope_kind", scope.kind)
+      .eq("change_class", changeClass)
+      .order("version", { ascending: false })
+      .limit(1);
+    query = scope.referenceId
+      ? query.eq("scope_reference_id", scope.referenceId)
+      : query.is("scope_reference_id", null);
+    if (asOf) query = query.lte("recorded_at", asOf);
+    const { data, error } = await query;
+    if (error) throw new Error(`change_state_read_failed:${error.message}`);
+    const row = (data ?? [])[0];
+    return row ? mapChangeStateRow(row) : undefined;
+  }
+
+  async listChangeStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedChangeState[]> {
+    const { data, error } = await this.supabase
+      .from(CHANGE_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: false });
+    if (error) throw new Error(`change_state_list_failed:${error.message}`);
+    return (data ?? []).map(mapChangeStateRow);
+  }
+
+  async nextChangeStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    changeClass: ChangeClassification,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestChangeState(tenantId, workspaceId, scope, changeClass);
+    const current = latest?.version ?? 0;
+    if (expectedVersion !== undefined && expectedVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedVersion};actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveChangeEvidence(
+    evidence: readonly PersistedChangeEvidence[],
+  ): Promise<PersistedChangeEvidence[]> {
+    if (evidence.length === 0) return [];
+    const rows = evidence.map((item) => ({
+      id: item.evidenceId,
+      tenant_id: item.tenantId,
+      workspace_id: item.workspaceId,
+      project_id: item.projectId,
+      change_state_id: item.changeStateId,
+      scope_kind: item.scope.kind,
+      scope_reference_id: item.scope.referenceId ?? null,
+      evidence_kind: item.kind,
+      source_type: item.sourceType,
+      source_ref: item.sourceRef,
+      source_key: item.sourceKey,
+      source_version: item.sourceVersion ?? null,
+      provenance: item.provenance,
+      review_status: item.reviewStatus,
+      observed_at: item.observedAt ?? null,
+      confidence: item.confidence ?? null,
+      weight: item.weight ?? null,
+      declared_change_class: item.declaredChangeClass ?? null,
+      declared_status_context: item.declaredStatusContext ?? null,
+      narrative: item.narrative ?? null,
+      revoked: item.revoked ?? false,
+      conflicts_with: item.conflictsWith ?? [],
+      recorded_at: item.recordedAt,
+      created_by: item.createdBy ?? null,
+      derived_from_earned_value: false,
+      mutates_core_risk: false,
+      mutates_budget: false,
+      contractual_approval_claimed: false,
+    }));
+    const { data, error } = await this.supabase.from(CHANGE_EVIDENCE).insert(rows).select("*");
+    if (error) throw new Error(`change_evidence_persist_failed:${error.message}`);
+    return (data ?? []).map(mapChangeEvidenceRow);
+  }
+
+  async listChangeEvidence(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId: string,
+  ): Promise<PersistedChangeEvidence[]> {
+    const { data, error } = await this.supabase
+      .from(CHANGE_EVIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("change_state_id", changeStateId);
+    if (error) throw new Error(`change_evidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapChangeEvidenceRow);
+  }
+
+  async saveChangeReview(review: PersistedChangeReview): Promise<PersistedChangeReview> {
+    const row = {
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      project_id: review.projectId,
+      change_state_id: review.changeStateId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+      contractual_approval_claimed: false,
+    };
+    const { data, error } = await this.supabase
+      .from(CHANGE_REVIEWS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`change_review_persist_failed:${error.message}`);
+    return mapChangeReviewRow(data);
+  }
+
+  async listChangeReviews(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId?: string,
+  ): Promise<PersistedChangeReview[]> {
+    let query = this.supabase
+      .from(CHANGE_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (changeStateId) query = query.eq("change_state_id", changeStateId);
+    const { data, error } = await query;
+    if (error) throw new Error(`change_review_read_failed:${error.message}`);
+    return (data ?? []).map(mapChangeReviewRow);
+  }
+
+  async saveChangeConfidence(
+    confidence: PersistedChangeConfidence,
+  ): Promise<PersistedChangeConfidence> {
+    const row = {
+      id: confidence.confidenceId,
+      tenant_id: confidence.tenantId,
+      workspace_id: confidence.workspaceId,
+      project_id: confidence.projectId,
+      change_state_id: confidence.changeStateId,
+      scope_kind: confidence.scope.kind,
+      scope_reference_id: confidence.scope.referenceId ?? null,
+      score: confidence.score,
+      confidence_class: confidence.confidenceClass,
+      data_sufficiency: confidence.dataSufficiency,
+      evidence_count: confidence.evidenceCount,
+      usable_evidence_count: confidence.usableEvidenceCount,
+      source_diversity: confidence.sourceDiversity,
+      freshness: confidence.freshness,
+      review_completeness: confidence.reviewCompleteness,
+      provenance_quality: confidence.provenanceQuality,
+      agreement: confidence.agreement,
+      conflict_state: confidence.conflictState,
+      abstention: confidence.abstention,
+      abstention_reason: confidence.abstentionReason ?? null,
+      reasons: confidence.reasons,
+      method: confidence.method,
+      method_version: confidence.methodVersion,
+      assessed_at: confidence.assessedAt,
+      recorded_at: confidence.recordedAt,
+      engineering_correctness_claimed: false,
+      contractual_certainty_claimed: false,
+    };
+    const { data, error } = await this.supabase
+      .from(CHANGE_CONFIDENCE)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`change_confidence_persist_failed:${error.message}`);
+    return mapChangeConfidenceRow(data);
+  }
+
+  async listChangeConfidence(
+    tenantId: string,
+    workspaceId: string,
+    changeStateId: string,
+  ): Promise<PersistedChangeConfidence[]> {
+    const { data, error } = await this.supabase
+      .from(CHANGE_CONFIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("change_state_id", changeStateId);
+    if (error) throw new Error(`change_confidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapChangeConfidenceRow);
+  }
+
+  async saveChangeCandidate(
+    candidate: PersistedChangeCandidate,
+  ): Promise<PersistedChangeCandidate> {
+    const row = {
+      id: candidate.candidateId,
+      tenant_id: candidate.tenantId,
+      workspace_id: candidate.workspaceId,
+      project_id: candidate.projectId,
+      scope_kind: candidate.scope.kind,
+      scope_reference_id: candidate.scope.referenceId ?? null,
+      change_class: candidate.changeClass,
+      status: candidate.status,
+      signal_refs: candidate.signalRefs,
+      title: candidate.title ?? null,
+      narrative: candidate.narrative ?? null,
+      created_at: candidate.createdAt,
+      created_by: candidate.createdBy ?? null,
+      supersedes_id: candidate.supersedesId ?? null,
+      is_approved_change: false,
+      contractual_approval_claimed: false,
+      mutates_budget: false,
+      derived_from_earned_value: false,
+    };
+    const { data, error } = await this.supabase
+      .from(CHANGE_CANDIDATES)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`change_candidate_persist_failed:${error.message}`);
+    return mapChangeCandidateRow(data);
+  }
+
+  async getChangeCandidateById(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedChangeCandidate | null> {
+    const { data, error } = await this.supabase
+      .from(CHANGE_CANDIDATES)
+      .select("*")
+      .eq("id", candidateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`change_candidate_read_failed:${error.message}`);
+    return data ? mapChangeCandidateRow(data) : null;
+  }
+
+  async listChangeCandidates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedChangeCandidate[]> {
+    const { data, error } = await this.supabase
+      .from(CHANGE_CANDIDATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`change_candidate_list_failed:${error.message}`);
+    return (data ?? []).map(mapChangeCandidateRow);
+  }
+
+  // ------------------------------------- shared project snapshot and timeline
+
+  async saveProjectSnapshot(
+    snapshot: PersistedProjectSnapshot,
+  ): Promise<PersistedProjectSnapshot> {
+    const row = {
+      id: snapshot.snapshotId,
+      tenant_id: snapshot.tenantId,
+      workspace_id: snapshot.workspaceId,
+      project_id: snapshot.projectId,
+      schema_version: snapshot.schemaVersion,
+      captured_at: snapshot.capturedAt,
+      profile_id: snapshot.profileId ?? null,
+      progress_state_ids: snapshot.progressStateIds,
+      schedule_state_ids: snapshot.scheduleStateIds,
+      change_state_ids: snapshot.changeStateIds,
+      created_by: snapshot.createdBy ?? null,
+      immutable: true,
+      contains_evidence_payloads: false,
+      is_project_registry: false,
+      mutates_project_identity: false,
+      earned_value_computed: false,
+      financial_posting_performed: false,
+      contractual_approval_claimed: false,
+    };
+    const { data, error } = await this.supabase
+      .from(PROJECT_SNAPSHOTS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`project_snapshot_persist_failed:${error.message}`);
+    return mapProjectSnapshotRow(data);
+  }
+
+  async getProjectSnapshotById(
+    tenantId: string,
+    workspaceId: string,
+    snapshotId: string,
+  ): Promise<PersistedProjectSnapshot | null> {
+    const { data, error } = await this.supabase
+      .from(PROJECT_SNAPSHOTS)
+      .select("*")
+      .eq("id", snapshotId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`project_snapshot_read_failed:${error.message}`);
+    return data ? mapProjectSnapshotRow(data) : null;
+  }
+
+  async listProjectSnapshots(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProjectSnapshot[]> {
+    const { data, error } = await this.supabase
+      .from(PROJECT_SNAPSHOTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("captured_at", { ascending: false });
+    if (error) throw new Error(`project_snapshot_list_failed:${error.message}`);
+    return (data ?? []).map(mapProjectSnapshotRow);
+  }
+
+  async appendProjectTimeline(
+    entry: PersistedProjectTimelineEvent,
+  ): Promise<PersistedProjectTimelineEvent> {
+    const row = {
+      entry_id: entry.entryId,
+      tenant_id: entry.tenantId,
+      workspace_id: entry.workspaceId,
+      project_id: entry.projectId,
+      state_id: entry.stateId ?? null,
+      kind: entry.kind,
+      event_type: entry.eventType,
+      recorded_at: entry.recordedAt,
+      source_key: entry.sourceKey,
+      actor_id: entry.actorId ?? null,
+      detail: entry.detail ?? null,
+      governance: entry.governance,
+    };
+    const { data, error } = await this.supabase
+      .from(PROJECT_TIMELINE)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`project_timeline_persist_failed:${error.message}`);
+    return mapProjectTimelineRow(data);
+  }
+
+  async listProjectTimeline(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedProjectTimelineEvent[]> {
+    const { data, error } = await this.supabase
+      .from(PROJECT_TIMELINE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: true });
+    if (error) throw new Error(`project_timeline_read_failed:${error.message}`);
+    return (data ?? []).map(mapProjectTimelineRow);
+  }
+
   // ---------------------------------------------------------------- profiles
 
   async saveProjectProfile(profile: PersistedProjectProfile): Promise<PersistedProjectProfile> {
@@ -685,6 +1164,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       project_status: profile.projectStatus,
       progress_summary: profile.progress,
       schedule_summary: profile.schedule ?? {},
+      change_summary: profile.change ?? {},
       contributors: profile.contributors,
       active_contributor_keys: profile.activeContributorKeys,
       reserved_contributor_keys: profile.reservedContributorKeys,
@@ -987,6 +1467,7 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     projectStatus: row.project_status,
     progress: row.progress_summary,
     schedule: row.schedule_summary ?? undefined,
+    change: row.change_summary ?? undefined,
     contributors: row.contributors ?? [],
     activeContributorKeys: row.active_contributor_keys ?? [],
     reservedContributorKeys: row.reserved_contributor_keys ?? [],
@@ -999,6 +1480,8 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     criticalPathComputed: false,
     floatComputed: false,
     costIntegrated: false,
+    financialPostingPerformed: false,
+    contractualApprovalClaimed: false,
     forecastProduced: false,
     advisoryOnly: true,
     mutatesProjectIdentity: false,
@@ -1142,6 +1625,209 @@ function mapScheduleTimelineRow(row: any): PersistedScheduleTimelineEvent {
       earnedValueComputed: false,
       criticalPathComputed: false,
       floatComputed: false,
+      mutatesProjectIdentity: false,
+    },
+  };
+}
+
+function mapChangeStateRow(row: any): PersistedChangeState {
+  return {
+    id: row.id,
+    stateId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scope: scopeFromRow(row),
+    version: row.version,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    changeClass: row.change_class,
+    changeStatusContext: row.change_status_context,
+    authoritativeChangeRef: row.authoritative_change_ref ?? undefined,
+    candidateId: row.candidate_id ?? undefined,
+    impact: row.impact_contexts,
+    evidenceRefs: row.evidence_refs ?? [],
+    confidence: row.confidence_payload,
+    reasons: row.reasons ?? [],
+    limitations: row.limitations ?? [],
+    abstained: row.abstained,
+    abstentionReason: row.abstention_reason ?? undefined,
+    narrative: row.narrative ?? undefined,
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    reviewedAt: row.reviewed_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    workflowInstanceId: row.workflow_instance_id ?? undefined,
+    earnedValueComputed: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+    costIntegrated: false,
+    budgetMutated: false,
+    financialPostingPerformed: false,
+    forecastProduced: false,
+    contingencyDrawn: false,
+    changeExecuted: false,
+    contractualApprovalClaimed: false,
+    contractualAuthorityClaimed: false,
+    coreRiskMutated: false,
+    advisoryOnly: true,
+    mutatesProjectIdentity: false,
+    autonomousPublication: false,
+  };
+}
+
+function mapChangeEvidenceRow(row: any): PersistedChangeEvidence {
+  return {
+    evidenceId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    changeStateId: row.change_state_id,
+    scope: scopeFromRow(row),
+    kind: row.evidence_kind,
+    sourceType: row.source_type,
+    sourceRef: row.source_ref,
+    sourceKey: row.source_key,
+    sourceVersion: row.source_version ?? undefined,
+    provenance: row.provenance,
+    reviewStatus: row.review_status,
+    observedAt: row.observed_at ?? undefined,
+    confidence: row.confidence ?? undefined,
+    weight: row.weight ?? undefined,
+    declaredChangeClass: row.declared_change_class ?? undefined,
+    declaredStatusContext: row.declared_status_context ?? undefined,
+    narrative: row.narrative ?? undefined,
+    revoked: row.revoked ?? false,
+    conflictsWith: row.conflicts_with ?? [],
+    recordedAt: row.recorded_at,
+    createdBy: row.created_by ?? undefined,
+    derivedFromEarnedValue: false,
+    mutatesCoreRisk: false,
+    mutatesBudget: false,
+    contractualApprovalClaimed: false,
+  };
+}
+
+function mapChangeReviewRow(row: any): PersistedChangeReview {
+  return {
+    reviewId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    changeStateId: row.change_state_id,
+    workflowInstanceId: row.workflow_instance_id,
+    workflowState: row.workflow_state,
+    outcome: row.outcome ?? undefined,
+    reviewerId: row.reviewer_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    selfApproved: false,
+    contractualApprovalClaimed: false,
+  };
+}
+
+function mapChangeConfidenceRow(row: any): PersistedChangeConfidence {
+  return {
+    confidenceId: row.id,
+    changeStateId: row.change_state_id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scope: scopeFromRow(row),
+    score: row.score,
+    confidenceClass: row.confidence_class,
+    dataSufficiency: row.data_sufficiency,
+    evidenceCount: row.evidence_count,
+    usableEvidenceCount: row.usable_evidence_count,
+    sourceDiversity: row.source_diversity,
+    freshness: row.freshness,
+    reviewCompleteness: row.review_completeness,
+    provenanceQuality: row.provenance_quality,
+    agreement: row.agreement,
+    conflictState: row.conflict_state,
+    abstention: row.abstention,
+    abstentionReason: row.abstention_reason ?? undefined,
+    reasons: row.reasons ?? [],
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    engineeringCorrectnessClaimed: false,
+    contractualCertaintyClaimed: false,
+  };
+}
+
+function mapChangeCandidateRow(row: any): PersistedChangeCandidate {
+  return {
+    candidateId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scope: scopeFromRow(row),
+    changeClass: row.change_class,
+    status: row.status,
+    signalRefs: row.signal_refs ?? [],
+    title: row.title ?? undefined,
+    narrative: row.narrative ?? undefined,
+    createdAt: row.created_at,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    isApprovedChange: false,
+    contractualApprovalClaimed: false,
+    mutatesBudget: false,
+    derivedFromEarnedValue: false,
+  };
+}
+
+function mapProjectSnapshotRow(row: any): PersistedProjectSnapshot {
+  return {
+    snapshotId: row.id,
+    schemaVersion: row.schema_version,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    capturedAt: row.captured_at,
+    profileId: row.profile_id ?? undefined,
+    progressStateIds: row.progress_state_ids ?? [],
+    scheduleStateIds: row.schedule_state_ids ?? [],
+    changeStateIds: row.change_state_ids ?? [],
+    createdBy: row.created_by ?? undefined,
+    immutable: true,
+    containsEvidencePayloads: false,
+    projectReferenceResolved: true,
+    isProjectRegistry: false,
+    mutatesProjectIdentity: false,
+    earnedValueComputed: false,
+    financialPostingPerformed: false,
+    contractualApprovalClaimed: false,
+  };
+}
+
+function mapProjectTimelineRow(row: any): PersistedProjectTimelineEvent {
+  return {
+    entryId: row.entry_id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    stateId: row.state_id ?? undefined,
+    kind: row.kind,
+    eventType: row.event_type,
+    recordedAt: row.recorded_at,
+    sourceKey: row.source_key,
+    actorId: row.actor_id ?? undefined,
+    detail: row.detail ?? undefined,
+    governance: {
+      advisoryOnly: true,
+      earnedValueComputed: false,
+      criticalPathComputed: false,
+      floatComputed: false,
+      financialPostingPerformed: false,
+      contractualApprovalClaimed: false,
       mutatesProjectIdentity: false,
     },
   };

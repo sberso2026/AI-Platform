@@ -345,6 +345,17 @@ export type ProjectProfile = {
     dominantSufficiency: import("./schedule").ScheduleEvidenceSufficiency;
     latestAssessmentAt?: string;
   };
+  /**
+   * Change rollups from Phase 11D. Counts and contexts only — never a monetary
+   * quantum, never a contractual position.
+   */
+  change?: import("./change").ChangeProfileContribution;
+  /**
+   * Reserved shape for the Phase 11E cost contributor. Always absent in 11D;
+   * declared so consumers can see where cost intelligence will land without
+   * being able to read a value that does not exist.
+   */
+  costContribution?: never;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];
@@ -358,6 +369,8 @@ export type ProjectProfile = {
   criticalPathComputed: false;
   floatComputed: false;
   costIntegrated: false;
+  financialPostingPerformed: false;
+  contractualApprovalClaimed: false;
   forecastProduced: false;
   advisoryOnly: true;
   mutatesProjectIdentity: false;

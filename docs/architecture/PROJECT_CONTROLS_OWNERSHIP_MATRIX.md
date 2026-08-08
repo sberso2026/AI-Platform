@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: schedule_intelligence · Module version: `0.3.0-schedule-intelligence` · Phase: 11C
+Status: change_intelligence · Module version: `0.4.0-change-intelligence` · Phase: 11D
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in
@@ -18,18 +18,20 @@ rows.
 | Project documents | `project_intelligence` | consumes | Document intelligence derivatives |
 | Meeting intelligence | `project_intelligence` | consumes | Meeting derivatives; PC may cite them as progress evidence |
 | Project Controls — progress | `project_controls` | **owns** | **Implemented in 11B** — advisory, evidence-driven, not earned value |
-| Project profile composition | `project_controls` | **owns** | **Implemented in 11B/11C** — Project Context Engine (progress + schedule) |
-| Project Controls — cost | `project_controls` | owns | Reserved provider interface only; no cost engine |
+| Project profile composition | `project_controls` | **owns** | **Implemented in 11B/11C/11D** — Project Context Engine (progress + schedule + change) |
+| Project Controls — cost | `project_controls` | owns | Reserved provider interface only; no cost engine, no budget ledger, no financial posting. Phase 11E |
 | Project Controls — schedule | `project_controls` | **owns** | **Implemented in 11C** — advisory schedule intelligence; not CPM or execution |
-| Project Controls — change | `project_controls` | owns | Reserved provider interface only; no change workflow in 11B |
-| Project Controls — contingency | `project_controls` | owns | Reserved provider interface only; no drawdown in 11B |
+| Project Controls — change | `project_controls` | **owns** | **Implemented in 11D** — advisory change intelligence; assessment only, never contractual approval |
+| Contractual change authority | `reserved_not_project_controls` | **forbidden** | Reserved for engineering_core, a future commercial/contracts domain, Business OS or external contract administration |
+| Project snapshot and timeline | `project_controls` | **owns** | **Implemented in 11D** — immutable, identifier-only snapshots and an append-only project timeline |
+| Project Controls — contingency | `project_controls` | owns | Reserved provider interface only; no drawdown |
 | Earned Value | `project_controls` | reserved / forbidden | Reserved to PC by domain; forbidden to implement |
 | Asset identity (canonical) | `engineering_os_shared_domain` | consumes | PC never owns canonical asset identity |
 | Asset lifecycle (canonical) | `engineering_os_shared_domain` | forbidden | PC never mutates canonical asset lifecycle |
 | Asset Intelligence | `asset_intelligence` | consumes | Frozen V1 — public contracts only |
 | Inspection Intelligence | `inspection_intelligence` | consumes | PC may cite inspection results as progress evidence |
 | Canonical Risk register | `engineering_core` | forbidden | PC may reference; auto-mutation forbidden |
-| Financial ledgers / billing | `platform_commerce_finance` | forbidden | Commerce and finance own money movement |
+| Financial ledgers / billing | `external_finance_or_future_finance_domain` | forbidden | Respelled in 11D. Project cost ledgers belong to an external finance system of record or a future finance domain — not Platform Commerce, which owns entitlement only |
 | Entitlements / seats / licensing | `platform_commerce_finance` | consumes | Existing PC entitlements stay entitlement-only |
 | Digital Twin | `external_future` | forbidden | Out of PC scope |
 | Structural Health Monitoring (SHM) | `external_future` | forbidden | Out of PC scope |
@@ -106,9 +108,13 @@ Stated explicitly, because these are the boundaries most likely to be eroded:
   `DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false`.
 - **Canonical Risk.** Owned by `engineering_core`
   (`RISK_CORE_AUTO_MUTATION_ALLOWED = false`).
-- **Financial ledgers and billing.** Owned by platform commerce and finance. A
-  cost position inside Project Controls would be a control artefact, not a record
-  of account — and no cost position exists in 11B.
+- **Financial ledgers and billing.** Owned by
+  `external_finance_or_future_finance_domain`. A cost position inside Project
+  Controls would be a control artefact, not a record of account — and no cost
+  position exists through 11D. `FINANCIAL_POSTING_IMPLEMENTED = false`.
+- **Contractual change authority.** Deliberately unassigned
+  (`reserved_not_project_controls`). Project Controls assesses change and never
+  approves it; see `PROJECT_CONTROLS_CHANGE_AUTHORITY_BOUNDARY.md`.
 - **Earned value.** Reserved to the PC domain but forbidden to implement.
   Progress Intelligence is advisory and evidence-based; see
   `PROJECT_CONTROLS_PROGRESS_INTELLIGENCE.md`.
@@ -116,8 +122,8 @@ Stated explicitly, because these are the boundaries most likely to be eroded:
 
 ## Product status
 
-Owning progress intelligence is not owning a Project Controls product.
-`PROJECT_CONTROLS_IMPLEMENTED = false`,
+Owning progress, schedule and change intelligence is not owning a Project
+Controls product. `PROJECT_CONTROLS_IMPLEMENTED = false`,
 `PRODUCTION_PROJECT_CONTROLS_READY = false`, and the Engineering OS module
 registry entry stays `coming_soon`. `assertOwnershipLock()` throws
 `project_controls_product_forbidden_in_phase_11b` if either flag is flipped.
@@ -130,7 +136,10 @@ registry entry stays `coming_soon`. `assertOwnershipLock()` throws
 | PC does not claim or mutate project identity | `assertOwnershipLock()`; write-free resolution port |
 | PC consumes ProjectReference only | `PROJECT_CONTROLS_CONSUMES_PROJECT_REFERENCE_ONLY`; FK to `engineering_projects` |
 | Progress is advisory, never earned value | `assertNoEarnedValue()`; batch_62 CHECK constraints |
-| PC engines (cost/schedule/EV/forecast) unimplemented | `assertReservedProvidersUnimplemented()` |
+| Change is advisory, never contractual approval | `assertNoContractualApproval()`; `assertChangePublishable()`; batch_64 CHECK constraints |
+| Change candidate is never an approved change | `assertCandidateIsNotApprovedChange()`; batch_64 `is_approved_change = false` |
+| No cost engine, budget ledger or financial posting | `assertNoCostEngine()`; batch_64 `budget_mutated`/`financial_posting_performed` CHECKs |
+| PC engines (cost/EV/forecast/contingency/baseline) unimplemented | `assertReservedProvidersUnimplemented()` |
 | PC owns no asset identity row | `assertOwnershipLock()` |
 | PC never mutates canonical lifecycle | version lock |
 | PC never auto-mutates Core Risk | version lock |

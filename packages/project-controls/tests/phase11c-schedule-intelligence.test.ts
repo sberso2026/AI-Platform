@@ -142,8 +142,8 @@ describe("Phase 11C schedule intelligence engine", () => {
     ).toThrow(/schedule_self_approval_forbidden/);
   });
 
-  it("enumerates all seven Phase 11C domain events", () => {
-    expect(PROJECT_CONTROLS_EVENTS).toEqual([
+  it("keeps the seven Phase 11C domain events at the head of the event list", () => {
+    expect(PROJECT_CONTROLS_EVENTS.slice(0, 7)).toEqual([
       "engineering.project.progress.updated",
       "engineering.project.progress.reviewed",
       "engineering.project.progress.published",
@@ -156,11 +156,12 @@ describe("Phase 11C schedule intelligence engine", () => {
 });
 
 describe("Phase 11C project context with schedule", () => {
-  it("lists two active contributors including schedule_intelligence", () => {
+  it("keeps schedule_intelligence active alongside progress and change", () => {
     const check = assertProjectProfileContributorsComplete();
     expect(check.activeContributorKeys).toEqual([
       "progress_intelligence",
       "schedule_intelligence",
+      "change_intelligence",
     ]);
   });
 

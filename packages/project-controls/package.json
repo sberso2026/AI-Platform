@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls",
-  "version": "0.3.0-schedule-intelligence",
+  "version": "0.4.0-change-intelligence",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

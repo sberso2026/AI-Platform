@@ -13,15 +13,26 @@ import {
   CANONICAL_PROJECT_IDENTITY_CLAIMED_BY_PROJECT_CONTROLS,
   CANONICAL_PROJECT_IDENTITY_OWNERSHIP,
   CANONICAL_PROJECT_IDENTITY_PHYSICAL_STORE,
+  AI_MAY_PUBLISH_CHANGE_FORBIDDEN,
+  AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED,
   CASH_FLOW_IMPLEMENTED,
+  CHANGE_CONFIDENCE_ENGINE_READY,
   CHANGE_CONTROL_IMPLEMENTED,
+  CHANGE_EXECUTION_IMPLEMENTED,
+  CHANGE_INTELLIGENCE_IS_ADVISORY_ONLY,
+  CHANGE_INTELLIGENCE_IS_CONTRACTUAL_AUTHORITY,
+  CHANGE_INTELLIGENCE_READY,
+  CHANGE_PERSISTENCE_READY,
+  CHANGE_REVIEW_WORKFLOW_READY,
   CLAIMS_ANALYSIS_IMPLEMENTED,
   CONTINGENCY_MANAGEMENT_IMPLEMENTED,
+  CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
   COST_ENGINE_IMPLEMENTED,
   CPM_SCHEDULING_IMPLEMENTED,
   DUPLICATE_ASSET_OWNERSHIP_INTRODUCED,
   DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
   EARNED_VALUE_IMPLEMENTED,
+  FINANCIAL_POSTING_IMPLEMENTED,
   FLOAT_COMPUTATION_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
   getProjectControlsDeclaration,
@@ -39,6 +50,8 @@ import {
   PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY,
   PROGRESS_MEASUREMENT_IS_EARNED_VALUE,
   PROJECT_CONTEXT_ENGINE_READY,
+  PROJECT_CONTROLS_CHANGE_TABLES,
+  PROJECT_CONTROLS_CHANGE_TABLES_INTRODUCED,
   PROJECT_CONTROLS_COST_SCHEDULE_TABLES_INTRODUCED,
   PROJECT_CONTROLS_IMPLEMENTED,
   PROJECT_CONTROLS_MODULE_KEY,
@@ -52,12 +65,15 @@ import {
   PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED,
   PROJECT_CONTROLS_SCHEDULE_TABLES,
   PROJECT_CONTROLS_SCHEDULE_TABLES_INTRODUCED,
+  PROJECT_CONTROLS_SHARED_PROJECT_TABLES,
   PROJECT_CONTROLS_STATUS,
   PROJECT_CONTROLS_VERSION,
   PROJECT_IDENTITY_MUTATION_BY_PROJECT_CONTROLS_ALLOWED,
   PROJECT_IDENTITY_OWNER_SPELLING_UNIFICATION,
   PROJECT_IDENTITY_OWNERSHIP,
   PROJECT_INTELLIGENCE_V1_COMMIT,
+  PROJECT_SNAPSHOT_READY,
+  PROJECT_TIMELINE_READY,
   RESERVED_PROVIDER_KEYS,
   RESOURCE_LEVELING_IMPLEMENTED,
   RISK_CORE_AUTO_MUTATION_ALLOWED,
@@ -68,13 +84,13 @@ import {
   createReservedProviderSet,
 } from "../src/index";
 
-describe("Phase 11C Project Controls ownership and forbid locks", () => {
-  it("declares the schedule intelligence module identity", () => {
+describe("Phase 11D Project Controls ownership and forbid locks", () => {
+  it("declares the change intelligence module identity", () => {
     expect(PROJECT_CONTROLS_PRODUCT_NAME).toBe("Project Controls");
     expect(PROJECT_CONTROLS_MODULE_KEY).toBe("project_controls");
-    expect(PROJECT_CONTROLS_VERSION).toBe("0.3.0-schedule-intelligence");
-    expect(PROJECT_CONTROLS_STATUS).toBe("schedule_intelligence");
-    expect(PROJECT_CONTROLS_PHASE).toBe("11C");
+    expect(PROJECT_CONTROLS_VERSION).toBe("0.4.0-change-intelligence");
+    expect(PROJECT_CONTROLS_STATUS).toBe("change_intelligence");
+    expect(PROJECT_CONTROLS_PHASE).toBe("11D");
     expect(PROJECT_CONTROLS_IMPLEMENTED).toBe(false);
     expect(PRODUCTION_PROJECT_CONTROLS_READY).toBe(false);
     expect(PHASE_11A_CERTIFIED_COMMIT).toBe("b9a3a6091ec4af1eb1ebdd9749da497ce5af9700");
@@ -82,11 +98,25 @@ describe("Phase 11C Project Controls ownership and forbid locks", () => {
     expect(PHASE_11B_CERTIFIED_COMMIT).toBe("336707d4baaf63b6a4e5f4ef4255f9ca8d7e4dd6");
   });
 
-  it("flips Phase 11B and 11C capability flags", () => {
+  it("flips Phase 11B, 11C and 11D capability flags", () => {
     expect(SHARED_PROJECT_DOMAIN_READY).toBe(true);
     expect(PROJECT_CONTEXT_ENGINE_READY).toBe(true);
     expect(PROGRESS_INTELLIGENCE_READY).toBe(true);
     expect(SCHEDULE_INTELLIGENCE_READY).toBe(true);
+    expect(CHANGE_INTELLIGENCE_READY).toBe(true);
+    expect(CHANGE_CONFIDENCE_ENGINE_READY).toBe(true);
+    expect(CHANGE_REVIEW_WORKFLOW_READY).toBe(true);
+    expect(CHANGE_PERSISTENCE_READY).toBe(true);
+    expect(CHANGE_INTELLIGENCE_IS_ADVISORY_ONLY).toBe(true);
+    expect(CHANGE_INTELLIGENCE_IS_CONTRACTUAL_AUTHORITY).toBe(false);
+    expect(PROJECT_TIMELINE_READY).toBe(true);
+    expect(PROJECT_SNAPSHOT_READY).toBe(true);
+    expect(CHANGE_EXECUTION_IMPLEMENTED).toBe(false);
+    expect(FINANCIAL_POSTING_IMPLEMENTED).toBe(false);
+    expect(CONTINGENCY_MANAGEMENT_IMPLEMENTED).toBe(false);
+    expect(AI_MAY_PUBLISH_CHANGE_FORBIDDEN).toBe(true);
+    expect(AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED).toBe(false);
+    expect(CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED).toBe(false);
     expect(PROGRESS_CONFIDENCE_ENGINE_READY).toBe(true);
     expect(PROGRESS_MEASUREMENT_IMPLEMENTED).toBe(true);
     expect(PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY).toBe(true);
@@ -108,6 +138,11 @@ describe("Phase 11C Project Controls ownership and forbid locks", () => {
     expect(lock.progressIntelligenceOwnership).toBe("project_controls");
     expect(lock.scheduleIntelligenceOwnership).toBe("project_controls");
     expect(lock.scheduleIntelligenceReady).toBe(true);
+    expect(lock.changeIntelligenceOwnership).toBe("project_controls");
+    expect(lock.changeIntelligenceReady).toBe(true);
+    expect(lock.changeIntelligenceIsContractualAuthority).toBe(false);
+    expect(lock.contractualChangeAuthorityOwnership).toBe("reserved_not_project_controls");
+    expect(lock.financialLedgerOwnership).toBe("external_finance_or_future_finance_domain");
     expect(PROJECT_CONTROLS_OWNERSHIP).toBe("project_controls");
     expect(PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
     expect(CANONICAL_PROJECT_IDENTITY_OWNERSHIP).toBe("engineering_os_shared_project_domain");
@@ -202,13 +237,22 @@ describe("Phase 11C Project Controls ownership and forbid locks", () => {
     await expect(providers.productivity.getUnitRates(query)).rejects.toThrow(/not_implemented/);
   });
 
-  it("introduces progress and schedule tables", () => {
+  it("introduces progress, schedule and change tables", () => {
     expect(PROJECT_CONTROLS_PROGRESS_TABLES_INTRODUCED).toBe(true);
     expect(PROJECT_CONTROLS_SCHEDULE_TABLES_INTRODUCED).toBe(true);
+    expect(PROJECT_CONTROLS_CHANGE_TABLES_INTRODUCED).toBe(true);
     expect(PROJECT_CONTROLS_PROGRESS_TABLES.length).toBe(8);
     expect(PROJECT_CONTROLS_SCHEDULE_TABLES.length).toBe(5);
+    expect(PROJECT_CONTROLS_CHANGE_TABLES.length).toBe(5);
+    expect(PROJECT_CONTROLS_SHARED_PROJECT_TABLES.length).toBe(2);
     expect(PROJECT_CONTROLS_SCHEDULE_TABLES).toContain("project_controls_schedule_assessments");
-    for (const table of [...PROJECT_CONTROLS_PROGRESS_TABLES, ...PROJECT_CONTROLS_SCHEDULE_TABLES]) {
+    expect(PROJECT_CONTROLS_CHANGE_TABLES).toContain("project_controls_change_states");
+    for (const table of [
+      ...PROJECT_CONTROLS_PROGRESS_TABLES,
+      ...PROJECT_CONTROLS_SCHEDULE_TABLES,
+      ...PROJECT_CONTROLS_CHANGE_TABLES,
+      ...PROJECT_CONTROLS_SHARED_PROJECT_TABLES,
+    ]) {
       expect(table.startsWith("project_controls_")).toBe(true);
     }
   });
@@ -228,18 +272,24 @@ describe("Phase 11C Project Controls ownership and forbid locks", () => {
 
   it("exposes a coherent declaration", () => {
     const declaration = getProjectControlsDeclaration();
-    expect(declaration.version).toBe("0.3.0-schedule-intelligence");
-    expect(declaration.status).toBe("schedule_intelligence");
-    expect(declaration.phase).toBe("11C");
+    expect(declaration.version).toBe("0.4.0-change-intelligence");
+    expect(declaration.status).toBe("change_intelligence");
+    expect(declaration.phase).toBe("11D");
     expect(declaration.productionProjectControlsReady).toBe(false);
     expect(declaration.sharedProjectDomainReady).toBe(true);
     expect(declaration.projectContextEngineReady).toBe(true);
     expect(declaration.progressIntelligenceReady).toBe(true);
     expect(declaration.scheduleIntelligenceReady).toBe(true);
+    expect(declaration.changeIntelligenceReady).toBe(true);
+    expect(declaration.changeIntelligenceIsAdvisoryOnly).toBe(true);
+    expect(declaration.changeIntelligenceIsContractualAuthority).toBe(false);
+    expect(declaration.financialPostingImplemented).toBe(false);
+    expect(declaration.changeExecutionImplemented).toBe(false);
+    expect(declaration.financialLedgerOwnership).toBe("external_finance_or_future_finance_domain");
     expect(declaration.canonicalProjectIdentityOwnership).toBe(
       "engineering_os_shared_project_domain",
     );
-    expect(declaration.hierarchy).toContain("progress + schedule intelligence");
+    expect(declaration.hierarchy).toContain("progress + schedule + change intelligence");
     expect(declaration.hierarchy).toContain("advisory only");
   });
 });

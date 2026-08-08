@@ -1,12 +1,13 @@
 {
   "name": "@rtb/project-controls-certification",
-  "version": "0.3.0-schedule-intelligence",
+  "version": "0.4.0-change-intelligence",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase11a": "tsx scripts/run-phase11a-certification.ts",
     "certify:phase11b": "tsx scripts/run-phase11b-certification.ts",
     "certify:phase11c": "tsx scripts/run-phase11c-certification.ts",
+    "certify:phase11d": "tsx scripts/run-phase11d-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

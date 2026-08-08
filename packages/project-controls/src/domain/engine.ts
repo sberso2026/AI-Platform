@@ -1,12 +1,16 @@
 /**
- * Phase 11C — Project Controls engine facade.
+ * Phase 11D — Project Controls engine facade.
  *
- * Orchestrates the progress and schedule intelligence slices end to end:
- * capability check → identity resolution → confidence → assessment → review
- * start → versioned persistence → snapshot → timeline → outbox → events.
+ * Orchestrates the progress, schedule and change intelligence slices end to
+ * end: capability check → identity resolution → confidence → assessment →
+ * review start → versioned persistence → snapshot → timeline → outbox → events.
  *
  * Identity is always resolved through the Engineering Shared Project Domain
  * port. The engine has no write path into `engineering_projects`.
+ *
+ * Forbidden here and everywhere below: cost engine, budget ledger, financial
+ * posting, forecast, earned value, CPM/float, schedule execution, change
+ * execution and contractual change approval.
  */
 
 import {
@@ -17,10 +21,13 @@ import {
 import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
 import { assertOwnershipLock } from "../architecture/ownership-lock";
 import {
+  changeCandidateEventPayload,
+  changeEventPayload,
   createProjectControlsEvent,
   profileEventPayload,
   progressEventPayload,
   scheduleEventPayload,
+  snapshotEventPayload,
   type ProjectControlsEventPublishPort,
 } from "./events";
 import {
@@ -30,10 +37,28 @@ import {
 } from "./role-matrix";
 import type {
   IdempotencyRecord,
+  PersistedChangeEvidence,
   PersistedProgressEvidence,
   PersistedScheduleEvidence,
   ProjectControlsRepositoryPort,
 } from "./persistence";
+import {
+  changeStateKey,
+  type ChangeCandidate,
+  type ChangeClassification,
+  type ChangeEvidence,
+  type ChangeIntelligenceState,
+  type ChangeReference,
+  type ChangeReviewOutcome,
+  type ChangeReviewRecord,
+  type ChangeSignal,
+  type ProjectSnapshot,
+  type ProjectTimelineEvent,
+} from "./change";
+import {
+  createChangeIntelligenceEngine,
+  type ChangeIntelligenceEngine,
+} from "./change-engine";
 import {
   scopeKey,
   type ProgressAssessmentState,
@@ -58,12 +83,17 @@ import {
   type ScheduleIntelligenceEngine,
 } from "./schedule-engine";
 import {
+  assertChangePublishable,
   assertPublishable,
   assertSchedulePublishable,
+  startChangeReview,
   startProgressReview,
   startScheduleReview,
+  transitionChangeReview,
   transitionProgressReview,
   transitionScheduleReview,
+  type ChangeReviewAction,
+  type ChangeReviewTargetState,
   type ProgressReviewAction,
   type ProgressReviewTargetState,
   type ScheduleReviewAction,
@@ -196,6 +226,109 @@ export type ReviewScheduleResult = {
   projectIdentityMutated: false;
 };
 
+export type CreateChangeCandidateCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scope: ProjectScopeRef;
+  signals: readonly ChangeSignal[];
+  actorRole: ProjectControlsRole;
+  actorId?: string;
+  changeClass?: ChangeClassification;
+  title?: string;
+  narrative?: string;
+  asOf?: string;
+  correlationId?: string;
+  idempotencyKey?: string;
+};
+
+export type CreateChangeCandidateResult = {
+  candidate: ChangeCandidate;
+  idempotentReplay: boolean;
+  /** A candidate is a subject for assessment, never an approved change. */
+  isApprovedChange: false;
+  contractualApprovalClaimed: false;
+};
+
+export type AssessChangeCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scope: ProjectScopeRef;
+  changeClass: ChangeClassification;
+  evidence: readonly ChangeEvidence[];
+  actorRole: ProjectControlsRole;
+  actorId?: string;
+  candidateId?: string;
+  authoritativeChangeRef?: ChangeReference;
+  narrative?: string;
+  asOf?: string;
+  expectedVersion?: number;
+  idempotencyKey?: string;
+  correlationId?: string;
+  startReview?: boolean;
+  freshnessHorizonHours?: number;
+  sufficiencyThreshold?: number;
+  minimumEvidenceCount?: number;
+};
+
+export type AssessChangeResult = {
+  state: ChangeIntelligenceState;
+  workflowInstance?: EngineeringWorkflowInstance;
+  review?: ChangeReviewRecord;
+  abstained: boolean;
+  abstentionReason?: string;
+  idempotentReplay: boolean;
+  projectIdentityMutated: false;
+  earnedValueComputed: false;
+  criticalPathComputed: false;
+  financialPostingPerformed: false;
+  contractualApprovalClaimed: false;
+};
+
+export type ReviewChangeCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  changeStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: ChangeReviewAction;
+  to: ChangeReviewTargetState;
+  reviewerId: string;
+  actorRole: ProjectControlsRole;
+  notes?: string;
+  publish?: boolean;
+  asOf?: string;
+  correlationId?: string;
+  idempotencyKey?: string;
+};
+
+export type ReviewChangeResult = {
+  state: ChangeIntelligenceState;
+  review: ChangeReviewRecord;
+  workflowInstance: EngineeringWorkflowInstance;
+  published: boolean;
+  projectIdentityMutated: false;
+  /** Publishing intelligence is not approving a contractual change. */
+  contractualApprovalClaimed: false;
+};
+
+export type CreateProjectSnapshotCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  actorRole: ProjectControlsRole;
+  actorId?: string;
+  profileId?: string;
+  asOf?: string;
+  correlationId?: string;
+};
+
+export type CreateProjectSnapshotResult = {
+  snapshot: ProjectSnapshot;
+  projectIdentityMutated: false;
+};
+
 export type ComposeProjectProfileCommand = {
   tenantId: string;
   workspaceId: string;
@@ -220,15 +353,28 @@ export type ProjectControlsEngineDeps = {
   events: ProjectControlsEventPublishPort;
   progressEngine?: ProgressIntelligenceEngine;
   scheduleEngine?: ScheduleIntelligenceEngine;
+  changeEngine?: ChangeIntelligenceEngine;
   contextEngine?: ProjectContextEngine;
 };
 
 const PROGRESS_SOURCE_KEY = "project_controls.progress_intelligence" as const;
 const SCHEDULE_SOURCE_KEY = "project_controls.schedule_intelligence" as const;
+const CHANGE_SOURCE_KEY = "project_controls.change_intelligence" as const;
+
+const PROJECT_TIMELINE_GOVERNANCE = {
+  advisoryOnly: true,
+  earnedValueComputed: false,
+  criticalPathComputed: false,
+  floatComputed: false,
+  financialPostingPerformed: false,
+  contractualApprovalClaimed: false,
+  mutatesProjectIdentity: false,
+} as const;
 
 export class ProjectControlsEngine {
   private readonly progressEngine: ProgressIntelligenceEngine;
   private readonly scheduleEngine: ScheduleIntelligenceEngine;
+  private readonly changeEngine: ChangeIntelligenceEngine;
   private readonly contextEngine: ProjectContextEngine;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
@@ -240,6 +386,9 @@ export class ProjectControlsEngine {
     this.scheduleEngine =
       deps.scheduleEngine ??
       createScheduleIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
+    this.changeEngine =
+      deps.changeEngine ??
+      createChangeIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
     this.contextEngine =
       deps.contextEngine ?? createProjectContextEngine({ newId: (p) => deps.repository.newId(p) });
   }
@@ -685,6 +834,413 @@ export class ProjectControlsEngine {
     };
   }
 
+  async createChangeCandidate(
+    command: CreateChangeCandidateCommand,
+  ): Promise<CreateChangeCandidateResult> {
+    this.requireCapability(command.actorRole, "change.assess");
+    const replay = await this.replay<CreateChangeCandidateResult>(
+      command,
+      "create_change_candidate",
+    );
+    if (replay) return replay;
+
+    const reference = await this.resolveProject(command);
+    const asOf = command.asOf ?? new Date().toISOString();
+
+    const candidate = this.changeEngine.createCandidate({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      scope: command.scope,
+      signals: command.signals,
+      changeClass: command.changeClass,
+      title: command.title,
+      narrative: command.narrative,
+      asOf,
+      createdBy: command.actorId,
+    });
+    const saved = await this.deps.repository.saveChangeCandidate(candidate);
+
+    await this.appendProjectTimeline({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      stateId: saved.candidateId,
+      kind: "change_candidate_created",
+      eventType: "engineering.project.change_candidate.created",
+      recordedAt: asOf,
+      actorId: command.actorId,
+    });
+    await this.emitChangeEvent({
+      eventType: "engineering.project.change_candidate.created",
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      scope: saved.scope,
+      stateId: saved.candidateId,
+      occurredAt: asOf,
+      correlationId: command.correlationId,
+      payload: changeCandidateEventPayload(saved),
+    });
+
+    const result: CreateChangeCandidateResult = {
+      candidate: saved,
+      idempotentReplay: false,
+      isApprovedChange: false,
+      contractualApprovalClaimed: false,
+    };
+    await this.recordIdempotency(
+      command,
+      "create_change_candidate",
+      saved.candidateId,
+      result,
+    );
+    return result;
+  }
+
+  async assessChange(command: AssessChangeCommand): Promise<AssessChangeResult> {
+    this.requireCapability(command.actorRole, "change.assess");
+    const replay = await this.replay<AssessChangeResult>(command, "assess_change");
+    if (replay) return replay;
+
+    const reference = await this.resolveProject(command);
+    const asOf = command.asOf ?? new Date().toISOString();
+
+    const previous = await this.deps.repository.latestChangeState(
+      command.tenantId,
+      command.workspaceId,
+      command.scope,
+      command.changeClass,
+    );
+    const version = await this.deps.repository.nextChangeStateVersion(
+      command.tenantId,
+      command.workspaceId,
+      command.scope,
+      command.changeClass,
+      command.expectedVersion,
+    );
+
+    const outcome = this.changeEngine.assess({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      scope: command.scope,
+      changeClass: command.changeClass,
+      evidence: command.evidence,
+      candidateId: command.candidateId,
+      authoritativeChangeRef: command.authoritativeChangeRef,
+      version,
+      asOf,
+      narrative: command.narrative,
+      createdBy: command.actorId,
+      supersedesId: previous?.stateId,
+      freshnessHorizonHours: command.freshnessHorizonHours,
+      sufficiencyThreshold: command.sufficiencyThreshold,
+      minimumEvidenceCount: command.minimumEvidenceCount,
+    });
+
+    let state = outcome.state;
+    let workflowInstance: EngineeringWorkflowInstance | undefined;
+    let review: ChangeReviewRecord | undefined;
+
+    // An abstained assessment is recorded but never enters review: there is no
+    // supported change posture for a reviewer to approve.
+    if (!outcome.abstained && command.startReview !== false) {
+      const started = startChangeReview({
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        assessmentStateId: state.stateId,
+        startedBy: command.actorId,
+      });
+      workflowInstance = started.instance;
+      state = {
+        ...state,
+        status: "pending_review",
+        workflowInstanceId: started.instance.instanceId,
+      };
+      review = {
+        reviewId: started.review.reviewId,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        changeStateId: state.stateId,
+        workflowInstanceId: started.instance.instanceId,
+        workflowState: started.instance.state,
+        createdAt: started.review.createdAt,
+        selfApproved: false,
+        contractualApprovalClaimed: false,
+      };
+    }
+
+    const saved = await this.deps.repository.saveChangeState(state);
+    await this.deps.repository.saveChangeEvidence(
+      command.evidence.map<PersistedChangeEvidence>((item) => ({
+        ...item,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        scope: command.scope,
+        changeStateId: saved.stateId,
+        recordedAt: asOf,
+        createdBy: command.actorId,
+      })),
+    );
+    await this.deps.repository.saveChangeConfidence({
+      ...outcome.confidence,
+      changeStateId: saved.stateId,
+      recordedAt: asOf,
+    });
+    if (review) await this.deps.repository.saveChangeReview(review);
+
+    await this.appendProjectTimeline({
+      tenantId: saved.tenantId,
+      workspaceId: saved.workspaceId,
+      projectId: saved.projectId,
+      stateId: saved.stateId,
+      kind: outcome.abstained ? "change_abstained" : "change_assessed",
+      eventType: "engineering.project.change.assessed",
+      recordedAt: asOf,
+      actorId: command.actorId,
+      detail: outcome.abstentionReason,
+    });
+    await this.emitChangeState("engineering.project.change.assessed", saved, command.correlationId);
+
+    const result: AssessChangeResult = {
+      state: saved,
+      workflowInstance,
+      review,
+      abstained: outcome.abstained,
+      abstentionReason: outcome.abstentionReason,
+      idempotentReplay: false,
+      projectIdentityMutated: false,
+      earnedValueComputed: false,
+      criticalPathComputed: false,
+      financialPostingPerformed: false,
+      contractualApprovalClaimed: false,
+    };
+    await this.recordIdempotency(command, "assess_change", saved.stateId, result);
+    return result;
+  }
+
+  async reviewChange(command: ReviewChangeCommand): Promise<ReviewChangeResult> {
+    const latest = await this.deps.repository.getChangeStateById(
+      command.tenantId,
+      command.workspaceId,
+      command.changeStateId,
+    );
+    if (!latest) throw new Error("change_state_not_found");
+    if (latest.status === "published") throw new Error("published_change_state_immutable");
+    if (latest.abstained) throw new Error("abstained_change_state_not_reviewable");
+
+    const capability: ProjectControlsCapability =
+      command.action === "approve" ? "change.approve" : "change.review";
+    assertProjectControlsCapability(command.actorRole, capability, {
+      actorId: command.reviewerId,
+      assessedBy: latest.createdBy,
+    });
+
+    const asOf = command.asOf ?? new Date().toISOString();
+    let instance = transitionChangeReview({
+      instance: command.workflowInstance,
+      action: command.action,
+      to: command.to,
+    });
+
+    const publish = command.publish === true && command.to === "approved";
+    if (publish) {
+      assertProjectControlsCapability(command.actorRole, "change.publish", {
+        actorId: command.reviewerId,
+        assessedBy: latest.createdBy,
+      });
+      assertChangePublishable({
+        workflowState: instance.state,
+        reviewerId: command.reviewerId,
+        assessedBy: latest.createdBy,
+        contractualApprovalClaimed: false,
+      });
+      instance = transitionChangeReview({ instance, action: "publish", to: "published" });
+    }
+
+    const nextStatus: ChangeIntelligenceState["status"] = publish
+      ? "published"
+      : command.to === "approved"
+        ? "reviewed"
+        : command.to === "rejected"
+          ? "rejected"
+          : command.to === "changes_requested"
+            ? "changes_requested"
+            : "pending_review";
+
+    const version = await this.deps.repository.nextChangeStateVersion(
+      command.tenantId,
+      command.workspaceId,
+      latest.scope,
+      latest.changeClass,
+    );
+    const nextId = this.deps.repository.newId("pcchange");
+    const next: ChangeIntelligenceState = {
+      ...latest,
+      id: nextId,
+      stateId: nextId,
+      version,
+      status: nextStatus,
+      recordedAt: asOf,
+      reviewedAt: asOf,
+      publishedAt: publish ? asOf : latest.publishedAt,
+      supersedesId: latest.stateId,
+      workflowInstanceId: instance.instanceId,
+    };
+    const saved = await this.deps.repository.saveChangeState(next);
+
+    const review: ChangeReviewRecord = {
+      reviewId: this.deps.repository.newId("pcchgreview"),
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: command.projectId,
+      changeStateId: saved.stateId,
+      workflowInstanceId: instance.instanceId,
+      workflowState: instance.state,
+      outcome: changeReviewOutcomeFor(command.action),
+      reviewerId: command.reviewerId,
+      notes: command.notes,
+      createdAt: asOf,
+      completedAt: command.action === "resubmit" ? undefined : asOf,
+      selfApproved: false,
+      contractualApprovalClaimed: false,
+    };
+    await this.deps.repository.saveChangeReview(review);
+
+    await this.appendProjectTimeline({
+      tenantId: saved.tenantId,
+      workspaceId: saved.workspaceId,
+      projectId: saved.projectId,
+      stateId: saved.stateId,
+      kind: publish
+        ? "change_published"
+        : command.to === "rejected"
+          ? "change_rejected"
+          : "change_reviewed",
+      eventType: publish
+        ? "engineering.project.change.published"
+        : "engineering.project.change.reviewed",
+      recordedAt: asOf,
+      actorId: command.reviewerId,
+      detail: command.notes,
+    });
+    await this.emitChangeState("engineering.project.change.reviewed", saved, command.correlationId);
+    if (publish) {
+      await this.emitChangeState(
+        "engineering.project.change.published",
+        saved,
+        command.correlationId,
+      );
+    }
+    if (latest.stateId !== saved.stateId) {
+      await this.emitChangeState(
+        "engineering.project.change.superseded",
+        latest,
+        command.correlationId,
+      );
+    }
+
+    return {
+      state: saved,
+      review,
+      workflowInstance: instance,
+      published: publish,
+      projectIdentityMutated: false,
+      contractualApprovalClaimed: false,
+    };
+  }
+
+  /**
+   * Capture an immutable, identifier-only reference set for the project. The
+   * snapshot copies no evidence, no indications and no dates from the states it
+   * points at.
+   */
+  async createProjectSnapshot(
+    command: CreateProjectSnapshotCommand,
+  ): Promise<CreateProjectSnapshotResult> {
+    this.requireCapability(command.actorRole, "snapshot.create");
+    const reference = await this.resolveProject(command);
+    const asOf = command.asOf ?? new Date().toISOString();
+
+    const [progress, schedule, change] = await Promise.all([
+      this.deps.repository.listProgressAssessments(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
+      this.deps.repository.listScheduleAssessments(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
+      this.deps.repository.listChangeStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
+    ]);
+
+    const profileId =
+      command.profileId ??
+      (
+        await this.deps.repository.latestProjectProfile(
+          command.tenantId,
+          command.workspaceId,
+          reference.projectId,
+        )
+      )?.profileId;
+
+    const snapshot: ProjectSnapshot = {
+      snapshotId: this.deps.repository.newId("pcprojsnap"),
+      schemaVersion: "project_controls_project_snapshot/1",
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      capturedAt: asOf,
+      profileId,
+      progressStateIds: latestPerScope(progress).map((state) => state.stateId),
+      scheduleStateIds: latestPerScopeSchedule(schedule).map((state) => state.stateId),
+      changeStateIds: latestPerChangeThread(change).map((state) => state.stateId),
+      createdBy: command.actorId,
+      immutable: true,
+      containsEvidencePayloads: false,
+      projectReferenceResolved: true,
+      isProjectRegistry: false,
+      mutatesProjectIdentity: false,
+      earnedValueComputed: false,
+      financialPostingPerformed: false,
+      contractualApprovalClaimed: false,
+    };
+    const saved = await this.deps.repository.saveProjectSnapshot(snapshot);
+
+    await this.appendProjectTimeline({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      stateId: saved.snapshotId,
+      kind: "project_snapshot_created",
+      eventType: "engineering.project.snapshot.created",
+      recordedAt: asOf,
+      actorId: command.actorId,
+    });
+    await this.emitChangeEvent({
+      eventType: "engineering.project.snapshot.created",
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      stateId: saved.snapshotId,
+      occurredAt: asOf,
+      correlationId: command.correlationId,
+      payload: snapshotEventPayload(saved),
+    });
+
+    return { snapshot: saved, projectIdentityMutated: false };
+  }
+
   async composeProjectProfile(
     command: ComposeProjectProfileCommand,
   ): Promise<ComposeProjectProfileResult> {
@@ -698,6 +1254,16 @@ export class ProjectControlsEngine {
       reference.projectId,
     );
     const schedule = await this.deps.repository.listScheduleAssessments(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
+    const change = await this.deps.repository.listChangeStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
+    const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
       reference.projectId,
@@ -719,6 +1285,8 @@ export class ProjectControlsEngine {
       projectReference: reference,
       progress: latestPerScope(progress),
       schedule: latestPerScopeSchedule(schedule),
+      change: latestPerChangeThread(change),
+      changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,
       createdBy: command.actorId,
@@ -813,6 +1381,80 @@ export class ProjectControlsEngine {
       input.workspaceId,
       input.scope,
       input.asOf,
+    );
+  }
+
+  async getLatestChange(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    changeClass: ChangeClassification;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<ChangeIntelligenceState | undefined> {
+    this.requireCapability(input.actorRole, "change.read");
+    return this.deps.repository.latestChangeState(
+      input.tenantId,
+      input.workspaceId,
+      input.scope,
+      input.changeClass,
+      input.asOf,
+    );
+  }
+
+  async listChangeHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ChangeIntelligenceState[]> {
+    this.requireCapability(input.actorRole, "change.read");
+    return this.deps.repository.listChangeStates(
+      input.tenantId,
+      input.workspaceId,
+      input.projectId,
+    );
+  }
+
+  async listChangeCandidates(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ChangeCandidate[]> {
+    this.requireCapability(input.actorRole, "change.read");
+    return this.deps.repository.listChangeCandidates(
+      input.tenantId,
+      input.workspaceId,
+      input.projectId,
+    );
+  }
+
+  async listProjectSnapshots(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ProjectSnapshot[]> {
+    this.requireCapability(input.actorRole, "snapshot.read");
+    return this.deps.repository.listProjectSnapshots(
+      input.tenantId,
+      input.workspaceId,
+      input.projectId,
+    );
+  }
+
+  async listProjectTimeline(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ProjectTimelineEvent[]> {
+    this.requireCapability(input.actorRole, "profile.read");
+    return this.deps.repository.listProjectTimeline(
+      input.tenantId,
+      input.workspaceId,
+      input.projectId,
     );
   }
 
@@ -1063,6 +1705,99 @@ export class ProjectControlsEngine {
     });
     await this.deps.events.publish(event);
   }
+
+  private async appendProjectTimeline(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    stateId?: string;
+    kind: ProjectTimelineEvent["kind"];
+    eventType: string;
+    recordedAt: string;
+    actorId?: string;
+    detail?: string;
+  }): Promise<void> {
+    await this.deps.repository.appendProjectTimeline({
+      entryId: this.deps.repository.newId("pcprojtimeline"),
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      stateId: input.stateId,
+      kind: input.kind,
+      eventType: input.eventType,
+      recordedAt: input.recordedAt,
+      sourceKey: CHANGE_SOURCE_KEY,
+      actorId: input.actorId,
+      detail: input.detail,
+      governance: PROJECT_TIMELINE_GOVERNANCE,
+    });
+  }
+
+  private async emitChangeState(
+    eventType:
+      | "engineering.project.change.assessed"
+      | "engineering.project.change.reviewed"
+      | "engineering.project.change.published"
+      | "engineering.project.change.superseded",
+    state: ChangeIntelligenceState,
+    correlationId?: string,
+  ): Promise<void> {
+    await this.emitChangeEvent({
+      eventType,
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      scope: state.scope,
+      stateId: state.stateId,
+      occurredAt: state.recordedAt,
+      correlationId,
+      payload: changeEventPayload(state),
+    });
+  }
+
+  private async emitChangeEvent(input: {
+    eventType:
+      | "engineering.project.change.assessed"
+      | "engineering.project.change.reviewed"
+      | "engineering.project.change.published"
+      | "engineering.project.change.superseded"
+      | "engineering.project.change_candidate.created"
+      | "engineering.project.snapshot.created";
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    scope?: ProjectScopeRef;
+    stateId: string;
+    occurredAt: string;
+    correlationId?: string;
+    payload: Record<string, unknown>;
+  }): Promise<void> {
+    const event = createProjectControlsEvent({
+      eventId: this.deps.repository.newId("pcevent"),
+      eventType: input.eventType,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      scope: input.scope,
+      stateId: input.stateId,
+      occurredAt: input.occurredAt,
+      correlationId: input.correlationId,
+      payload: input.payload,
+    });
+    await this.deps.repository.enqueueOutbox({
+      outboxId: this.deps.repository.newId("pcoutbox"),
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      eventType: input.eventType,
+      payload: event.payload,
+      correlationId: input.correlationId,
+      stateId: input.stateId,
+      published: false,
+      createdAt: input.occurredAt,
+    });
+    await this.deps.events.publish(event);
+  }
 }
 
 export function createProjectControlsEngine(
@@ -1124,4 +1859,32 @@ function latestPerScopeSchedule(
     if (!current || state.version > current.version) byScope.set(key, state);
   }
   return [...byScope.values()];
+}
+
+/** One change thread per scope + change class, so a profile counts each once. */
+function latestPerChangeThread(
+  states: readonly ChangeIntelligenceState[],
+): ChangeIntelligenceState[] {
+  const byThread = new Map<string, ChangeIntelligenceState>();
+  for (const state of states) {
+    const key = changeStateKey(state.scope, state.changeClass);
+    const current = byThread.get(key);
+    if (!current || state.version > current.version) byThread.set(key, state);
+  }
+  return [...byThread.values()];
+}
+
+function changeReviewOutcomeFor(action: ChangeReviewAction): ChangeReviewOutcome {
+  switch (action) {
+    case "approve":
+      return "approved";
+    case "reject":
+      return "rejected";
+    case "request_changes":
+      return "changes_requested";
+    case "resubmit":
+      return "resubmitted";
+    case "publish":
+      return "approved";
+  }
 }

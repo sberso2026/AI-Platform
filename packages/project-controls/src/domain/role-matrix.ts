@@ -1,8 +1,10 @@
 /**
- * Phase 11C — Project Controls capability matrix.
+ * Phase 11D — Project Controls capability matrix.
  *
  * Segregation of duties: the role that assesses cannot approve or publish.
- * CPM / cost / earned value capabilities remain absent.
+ * CPM / cost / earned value / forecast / contingency / financial posting
+ * capabilities remain absent. Change capabilities cover the *assessment*
+ * lifecycle only — no capability here confers contractual change authority.
  */
 
 export const PROJECT_CONTROLS_ROLES = [
@@ -30,8 +32,17 @@ export const PROJECT_CONTROLS_CAPABILITIES = [
   "schedule.approve",
   "schedule.publish",
   "schedule.reject",
+  "change.read",
+  "change.assess",
+  "change.submit_review",
+  "change.review",
+  "change.approve",
+  "change.publish",
+  "change.reject",
   "profile.read",
   "profile.compose",
+  "snapshot.read",
+  "snapshot.create",
 ] as const;
 
 export type ProjectControlsCapability = (typeof PROJECT_CONTROLS_CAPABILITIES)[number];
@@ -41,10 +52,18 @@ export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly ProjectControlsCapabi
   "progress.publish",
   "schedule.approve",
   "schedule.publish",
+  "change.approve",
+  "change.publish",
 ] as const;
 
 const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> = {
-  viewer: ["progress.read", "schedule.read", "profile.read"],
+  viewer: [
+    "progress.read",
+    "schedule.read",
+    "change.read",
+    "profile.read",
+    "snapshot.read",
+  ],
   project_controls_engineer: [
     "progress.read",
     "progress.assess",
@@ -52,8 +71,13 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "schedule.read",
     "schedule.assess",
     "schedule.submit_review",
+    "change.read",
+    "change.assess",
+    "change.submit_review",
     "profile.read",
     "profile.compose",
+    "snapshot.read",
+    "snapshot.create",
   ],
   reviewer: [
     "progress.read",
@@ -62,7 +86,11 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "schedule.read",
     "schedule.review",
     "schedule.reject",
+    "change.read",
+    "change.review",
+    "change.reject",
     "profile.read",
+    "snapshot.read",
   ],
   approver: [
     "progress.read",
@@ -75,7 +103,13 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "schedule.approve",
     "schedule.publish",
     "schedule.reject",
+    "change.read",
+    "change.review",
+    "change.approve",
+    "change.publish",
+    "change.reject",
     "profile.read",
+    "snapshot.read",
   ],
   admin: [...PROJECT_CONTROLS_CAPABILITIES],
 };
@@ -108,9 +142,14 @@ export function assertProjectControlsCapability(
   }
 }
 
-/** CPM / cost / EV capabilities must never appear in the matrix. */
+/**
+ * Reserved capabilities must never appear in the matrix. `change.*` is now an
+ * implemented *assessment* capability set and is deliberately not on this list;
+ * cost, earned value, CPM, float, forecast, contingency and financial posting
+ * stay forbidden.
+ */
 export function assertNoReservedCapabilities(): { ok: true } {
-  const forbidden = /(cost|earned_value|forecast|change|contingency|productivity|cpm|float)/;
+  const forbidden = /(cost|earned_value|cpm|float|forecast|contingency|posting)/;
   for (const capability of PROJECT_CONTROLS_CAPABILITIES) {
     if (forbidden.test(capability)) {
       throw new Error(`reserved_capability_must_not_be_granted:${capability}`);
