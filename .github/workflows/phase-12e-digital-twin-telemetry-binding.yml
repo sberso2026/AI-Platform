@@ -51,6 +51,8 @@ jobs:
         run: pnpm --filter @rtb/platform-certification exec vitest run src/phase12e-digital-twin-telemetry-binding.test.ts
       - name: Secret scan
         run: pnpm --filter @rtb/digital-twin-certification secret-scan
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/digital-twin-certification exec playwright install --with-deps chromium
       - name: Browser E2E telemetry binding (CERTIFY_BROWSER=1)
         run: pnpm --filter @rtb/digital-twin-certification test:e2e:telemetry-binding
       - name: Phase 12E certification (gates A–BI)
