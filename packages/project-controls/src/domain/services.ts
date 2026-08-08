@@ -58,6 +58,12 @@ import type {
   ReviewRiskOpportunityCommand,
   ReviewRiskOpportunityResult,
 } from "./engine-risk-opportunity";
+import type {
+  AssessAssuranceCommand,
+  AssessAssuranceResult,
+  ReviewAssuranceCommand,
+  ReviewAssuranceResult,
+} from "./engine-assurance";
 import type { ProgressAssessmentState, ProjectProfile, ProjectScopeRef } from "./progress";
 import type { ScheduleAssessmentState } from "./schedule";
 import type {
@@ -73,6 +79,7 @@ import type { ForecastAssessmentState } from "./forecast";
 import type { DecisionAssessmentState } from "./decision";
 import type { ScenarioAssessmentState } from "./scenario";
 import type { RiskOpportunityAssessmentState } from "./risk-opportunity";
+import type { AssuranceAssessmentState } from "./assurance";
 import type { ProjectControlsRole } from "./role-matrix";
 
 export class ProgressIntelligenceService {
@@ -379,6 +386,38 @@ export class RiskOpportunityIntelligenceService {
   }
 }
 
+export class AssuranceIntelligenceService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(command: AssessAssuranceCommand): Promise<AssessAssuranceResult> {
+    return this.engine.assessAssurance(command);
+  }
+
+  review(command: ReviewAssuranceCommand): Promise<ReviewAssuranceResult> {
+    return this.engine.reviewAssurance(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    assuranceUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<AssuranceAssessmentState | undefined> {
+    return this.engine.getLatestAssurance(input);
+  }
+
+  history(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<AssuranceAssessmentState[]> {
+    return this.engine.listAssuranceHistory(input);
+  }
+}
+
 export class ProjectSnapshotService {
   constructor(private readonly engine: ProjectControlsEngine) {}
 
@@ -432,6 +471,7 @@ export class ProjectControlsService {
   readonly decision: DecisionSupportService;
   readonly scenario: ScenarioIntelligenceService;
   readonly riskOpportunity: RiskOpportunityIntelligenceService;
+  readonly assurance: AssuranceIntelligenceService;
   readonly snapshot: ProjectSnapshotService;
   readonly context: ProjectContextService;
 
@@ -445,6 +485,7 @@ export class ProjectControlsService {
     this.decision = new DecisionSupportService(engine);
     this.scenario = new ScenarioIntelligenceService(engine);
     this.riskOpportunity = new RiskOpportunityIntelligenceService(engine);
+    this.assurance = new AssuranceIntelligenceService(engine);
     this.snapshot = new ProjectSnapshotService(engine);
     this.context = new ProjectContextService(engine);
   }

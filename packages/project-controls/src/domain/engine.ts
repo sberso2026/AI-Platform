@@ -175,6 +175,13 @@ import {
   type ReviewRiskOpportunityCommand,
   type ReviewRiskOpportunityResult,
 } from "./engine-risk-opportunity";
+import {
+  createAssuranceOrchestration,
+  type AssessAssuranceCommand,
+  type AssessAssuranceResult,
+  type ReviewAssuranceCommand,
+  type ReviewAssuranceResult,
+} from "./engine-assurance";
 
 export type {
   AssessForecastCommand,
@@ -203,6 +210,13 @@ export type {
   ReviewRiskOpportunityCommand,
   ReviewRiskOpportunityResult,
 } from "./engine-risk-opportunity";
+
+export type {
+  AssessAssuranceCommand,
+  AssessAssuranceResult,
+  ReviewAssuranceCommand,
+  ReviewAssuranceResult,
+} from "./engine-assurance";
 
 export type AssessProgressCommand = {
   tenantId: string;
@@ -601,6 +615,7 @@ export class ProjectControlsEngine {
   private readonly decisionOrchestration: ReturnType<typeof createDecisionOrchestration>;
   private readonly scenarioOrchestration: ReturnType<typeof createScenarioOrchestration>;
   private readonly riskOpportunityOrchestration: ReturnType<typeof createRiskOpportunityOrchestration>;
+  private readonly assuranceOrchestration: ReturnType<typeof createAssuranceOrchestration>;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
     assertOwnershipLock();
@@ -641,6 +656,12 @@ export class ProjectControlsEngine {
       appendTimeline: (input) => this.appendProjectTimeline(input),
     });
     this.riskOpportunityOrchestration = createRiskOpportunityOrchestration({
+      projectDomainPort: deps.projectDomainPort,
+      repository: deps.repository,
+      events: deps.events,
+      appendTimeline: (input) => this.appendProjectTimeline(input),
+    });
+    this.assuranceOrchestration = createAssuranceOrchestration({
       projectDomainPort: deps.projectDomainPort,
       repository: deps.repository,
       events: deps.events,
@@ -2069,6 +2090,40 @@ export class ProjectControlsEngine {
     return this.riskOpportunityOrchestration.listRiskOpportunityHistory(input);
   }
 
+  async assessAssurance(command: AssessAssuranceCommand): Promise<AssessAssuranceResult> {
+    this.requireCapability(command.actorRole, "assurance.assess");
+    return this.assuranceOrchestration.assessAssurance(command);
+  }
+
+  async reviewAssurance(command: ReviewAssuranceCommand): Promise<ReviewAssuranceResult> {
+    this.requireCapability(
+      command.actorRole,
+      command.publish ? "assurance.publish" : "assurance.review",
+    );
+    return this.assuranceOrchestration.reviewAssurance(command);
+  }
+
+  async getLatestAssurance(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: import("./assurance").AssuranceControlContext["scope"];
+    assuranceUnitId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "assurance.read");
+    return this.assuranceOrchestration.getLatestAssurance(input);
+  }
+
+  async listAssuranceHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "assurance.read");
+    return this.assuranceOrchestration.listAssuranceHistory(input);
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -2081,7 +2136,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity] =
+    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance] =
       await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
@@ -2128,6 +2183,11 @@ export class ProjectControlsEngine {
         command.workspaceId,
         reference.projectId,
       ),
+      this.deps.repository.listAssuranceStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
     ]);
 
     const profileId =
@@ -2164,6 +2224,9 @@ export class ProjectControlsEngine {
       ),
       riskOpportunityStateIds: this.riskOpportunityOrchestration
         .latestPerRiskOpportunityThread(riskOpportunity)
+        .map((state) => state.stateId),
+      assuranceStateIds: this.assuranceOrchestration
+        .latestPerAssuranceThread(assurance)
         .map((state) => state.stateId),
       createdBy: command.actorId,
       immutable: true,
@@ -2253,6 +2316,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const assurance = await this.deps.repository.listAssuranceStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -2284,6 +2352,7 @@ export class ProjectControlsEngine {
       riskOpportunity: this.riskOpportunityOrchestration.latestPerRiskOpportunityThread(
         riskOpportunity,
       ),
+      assurance: this.assuranceOrchestration.latestPerAssuranceThread(assurance),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,

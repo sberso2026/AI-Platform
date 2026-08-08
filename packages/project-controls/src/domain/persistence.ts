@@ -77,6 +77,13 @@ import type {
   RiskOpportunityReviewRecord,
 } from "./risk-opportunity";
 import { riskOpportunityStateKey } from "./risk-opportunity";
+import type {
+  AssuranceAssessmentState,
+  AssuranceConfidence,
+  AssuranceEvidence,
+  AssuranceReviewRecord,
+} from "./assurance";
+import { assuranceStateKey } from "./assurance";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -222,6 +229,22 @@ export type PersistedRiskOpportunityState = RiskOpportunityAssessmentState;
 export type PersistedRiskOpportunityReview = RiskOpportunityReviewRecord;
 export type PersistedRiskOpportunityConfidence = RiskOpportunityConfidence & {
   riskOpportunityStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedAssuranceEvidence = AssuranceEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assuranceStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedAssuranceState = AssuranceAssessmentState;
+export type PersistedAssuranceReview = AssuranceReviewRecord;
+export type PersistedAssuranceConfidence = AssuranceConfidence & {
+  assuranceStateId: string;
   recordedAt: string;
 };
 
@@ -726,6 +749,54 @@ export type ProjectControlsRepositoryPort = {
     riskOpportunityStateId: string,
   ): Promise<PersistedRiskOpportunityConfidence[]>;
 
+  saveAssuranceState(state: PersistedAssuranceState): Promise<PersistedAssuranceState>;
+  getAssuranceStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedAssuranceState | null>;
+  latestAssuranceState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    assuranceUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedAssuranceState | undefined>;
+  listAssuranceStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedAssuranceState[]>;
+  nextAssuranceStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    assuranceUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveAssuranceEvidence(
+    evidence: readonly PersistedAssuranceEvidence[],
+  ): Promise<PersistedAssuranceEvidence[]>;
+  listAssuranceEvidence(
+    tenantId: string,
+    workspaceId: string,
+    assuranceStateId: string,
+  ): Promise<PersistedAssuranceEvidence[]>;
+  saveAssuranceReview(review: PersistedAssuranceReview): Promise<PersistedAssuranceReview>;
+  listAssuranceReviews(
+    tenantId: string,
+    workspaceId: string,
+    assuranceStateId?: string,
+  ): Promise<PersistedAssuranceReview[]>;
+  saveAssuranceConfidence(
+    confidence: PersistedAssuranceConfidence,
+  ): Promise<PersistedAssuranceConfidence>;
+  listAssuranceConfidence(
+    tenantId: string,
+    workspaceId: string,
+    assuranceStateId: string,
+  ): Promise<PersistedAssuranceConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -810,6 +881,10 @@ export type DurableProjectControlsStore = {
   riskOpportunityEvidence: PersistedRiskOpportunityEvidence[];
   riskOpportunityReviews: PersistedRiskOpportunityReview[];
   riskOpportunityConfidence: PersistedRiskOpportunityConfidence[];
+  assuranceStates: PersistedAssuranceState[];
+  assuranceEvidence: PersistedAssuranceEvidence[];
+  assuranceReviews: PersistedAssuranceReview[];
+  assuranceConfidence: PersistedAssuranceConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -859,6 +934,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     riskOpportunityEvidence: [],
     riskOpportunityReviews: [],
     riskOpportunityConfidence: [],
+    assuranceStates: [],
+    assuranceEvidence: [],
+    assuranceReviews: [],
+    assuranceConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -2180,6 +2259,142 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.riskOpportunityStateId === riskOpportunityStateId,
+    );
+  }
+
+  async saveAssuranceState(state: PersistedAssuranceState): Promise<PersistedAssuranceState> {
+    const assuranceUnitId = state.controlContext.assuranceUnitId;
+    const clash = this.store.assuranceStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        assuranceStateKey(row.controlContext.scope, row.controlContext.assuranceUnitId) ===
+          assuranceStateKey(state.controlContext.scope, assuranceUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:assurance_version=${state.version}`);
+    this.store.assuranceStates.push(state);
+    return state;
+  }
+
+  async getAssuranceStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedAssuranceState | null> {
+    return (
+      this.store.assuranceStates.find(
+        (row) =>
+          row.tenantId === tenantId && row.workspaceId === workspaceId && row.stateId === stateId,
+      ) ?? null
+    );
+  }
+
+  async latestAssuranceState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    assuranceUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedAssuranceState | undefined> {
+    return latestAsOf(
+      this.store.assuranceStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          assuranceStateKey(row.controlContext.scope, row.controlContext.assuranceUnitId) ===
+            assuranceStateKey(scope, assuranceUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listAssuranceStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedAssuranceState[]> {
+    return this.store.assuranceStates.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId,
+    );
+  }
+
+  async nextAssuranceStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    assuranceUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestAssuranceState(
+      tenantId,
+      workspaceId,
+      scope,
+      assuranceUnitId,
+    );
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && expectedVersion !== next - 1) {
+      throw new Error(`optimistic_lock_conflict:assurance_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveAssuranceEvidence(
+    evidence: readonly PersistedAssuranceEvidence[],
+  ): Promise<PersistedAssuranceEvidence[]> {
+    this.store.assuranceEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listAssuranceEvidence(
+    tenantId: string,
+    workspaceId: string,
+    assuranceStateId: string,
+  ): Promise<PersistedAssuranceEvidence[]> {
+    return this.store.assuranceEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.assuranceStateId === assuranceStateId,
+    );
+  }
+
+  async saveAssuranceReview(review: PersistedAssuranceReview): Promise<PersistedAssuranceReview> {
+    this.store.assuranceReviews.push(review);
+    return review;
+  }
+
+  async listAssuranceReviews(
+    tenantId: string,
+    workspaceId: string,
+    assuranceStateId?: string,
+  ): Promise<PersistedAssuranceReview[]> {
+    return this.store.assuranceReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!assuranceStateId || row.assuranceStateId === assuranceStateId),
+    );
+  }
+
+  async saveAssuranceConfidence(
+    confidence: PersistedAssuranceConfidence,
+  ): Promise<PersistedAssuranceConfidence> {
+    this.store.assuranceConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listAssuranceConfidence(
+    tenantId: string,
+    workspaceId: string,
+    assuranceStateId: string,
+  ): Promise<PersistedAssuranceConfidence[]> {
+    return this.store.assuranceConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.assuranceStateId === assuranceStateId,
     );
   }
 

@@ -67,6 +67,17 @@ export {
   assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInRiskOpportunityIntelligence,
   assertAdvisoryOnly as assertRiskOpportunityAdvisoryOnly,
 } from "./domain/risk-opportunity-engine";
+export * from "./domain/assurance";
+export * from "./domain/assurance-confidence";
+export {
+  ProjectControlsAssuranceIntelligenceEngine,
+  AssuranceIntelligenceEngine,
+  createAssuranceIntelligenceEngine,
+  assertNoCertificationAuthority,
+  assertNoEvidenceApproval,
+  assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInAssuranceIntelligence,
+  assertAdvisoryOnly as assertAssuranceAdvisoryOnly,
+} from "./domain/assurance-engine";
 export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
@@ -121,6 +132,10 @@ export {
   type PersistedRiskOpportunityEvidence,
   type PersistedRiskOpportunityReview,
   type PersistedRiskOpportunityConfidence,
+  type PersistedAssuranceState,
+  type PersistedAssuranceEvidence,
+  type PersistedAssuranceReview,
+  type PersistedAssuranceConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

@@ -108,7 +108,7 @@ describe("Phase 11H decision review workflow", () => {
 describe("Phase 11H project context with decision support", () => {
   it("lists nine active contributors including decision_support and scenario_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(9);
+    expect(check.activeContributorKeys).toHaveLength(10);
     expect(check.activeContributorKeys).toContain("decision_support");
     expect(check.activeContributorKeys).toContain("scenario_intelligence");
   });

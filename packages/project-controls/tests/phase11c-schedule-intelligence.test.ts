@@ -168,6 +168,7 @@ describe("Phase 11C project context with schedule", () => {
       "decision_support",
       "scenario_intelligence",
       "risk_opportunity_intelligence",
+      "assurance_intelligence",
     ]);
   });
 

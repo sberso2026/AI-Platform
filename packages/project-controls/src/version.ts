@@ -1,10 +1,10 @@
 /**
- * Phase 11J — Project Controls Risk & Opportunity Intelligence.
+ * Phase 11K — Project Controls Assurance Intelligence.
  * Single authoritative version source.
  *
  * Project Controls owns *intelligence ABOUT projects*. It never owns project
- * identity. Phase 11J adds Risk & Opportunity Intelligence as a ninth contributor
- * to the Project Context Engine. Progress (11B) through Scenario Intelligence (11I) stay intact.
+ * identity. Phase 11K adds Assurance Intelligence as a tenth contributor
+ * to the Project Context Engine. Progress (11B) through Risk & Opportunity (11J) stay intact.
  *
  * Scenario Intelligence produces exploratory advisory scenario comparisons from
  * published composed contributors, forecast intelligence, and decision support.
@@ -16,9 +16,9 @@
  */
 export const PROJECT_CONTROLS_PRODUCT_NAME = "Project Controls" as const;
 export const PROJECT_CONTROLS_MODULE_KEY = "project_controls" as const;
-export const PROJECT_CONTROLS_VERSION = "0.10.0-risk-opportunity-intelligence" as const;
-export const PROJECT_CONTROLS_STATUS = "risk_opportunity_intelligence" as const;
-export const PROJECT_CONTROLS_PHASE = "11J" as const;
+export const PROJECT_CONTROLS_VERSION = "0.11.0-assurance-intelligence" as const;
+export const PROJECT_CONTROLS_STATUS = "assurance_intelligence" as const;
+export const PROJECT_CONTROLS_PHASE = "11K" as const;
 
 export const PROJECT_CONTROLS_ROUTE_PREFIX = "/engineering/apps/project-controls" as const;
 export const PROJECT_CONTROLS_API_PREFIX = "/api/engineering/project-controls" as const;
@@ -40,6 +40,8 @@ export const PROJECT_CONTROLS_SCENARIO_API_ROUTE =
   "/api/engineering/project-controls/scenario" as const;
 export const PROJECT_CONTROLS_RISK_OPPORTUNITY_API_ROUTE =
   "/api/engineering/project-controls/risk-opportunity" as const;
+export const PROJECT_CONTROLS_ASSURANCE_API_ROUTE =
+  "/api/engineering/project-controls/assurance" as const;
 export const PROJECT_CONTROLS_SNAPSHOT_API_ROUTE =
   "/api/engineering/project-controls/snapshot" as const;
 export const PROJECT_CONTROLS_PROFILE_API_ROUTE =
@@ -93,6 +95,11 @@ export const PHASE_11I_CERTIFIED_COMMIT =
   "1dc73a070883ea4783869517da558ea34ff797eb" as const;
 export const PHASE_11I_HOSTED_RUN = "31245651307" as const;
 export const PHASE_11I_VERSION = "0.9.0-scenario-intelligence" as const;
+
+export const PHASE_11J_CERTIFIED_COMMIT =
+  "c840c93d8f7b5eb93d510437ad92b4087d067b2b" as const;
+export const PHASE_11J_HOSTED_RUN = "31246586072" as const;
+export const PHASE_11J_VERSION = "0.10.0-risk-opportunity-intelligence" as const;
 
 // ---------------------------------------------------------------------------
 // Implementation state
@@ -171,6 +178,14 @@ export const RISK_OPPORTUNITY_REVIEW_WORKFLOW_READY = true as const;
 export const RISK_OPPORTUNITY_PERSISTENCE_READY = true as const;
 export const RISK_OPPORTUNITY_INTELLIGENCE_IS_ADVISORY_ONLY = true as const;
 
+/** Phase 11K capabilities that are genuinely implemented. */
+export const ASSURANCE_INTELLIGENCE_READY = true as const;
+export const AssuranceIntelligenceReady = true as const;
+export const ASSURANCE_CONFIDENCE_ENGINE_READY = true as const;
+export const ASSURANCE_REVIEW_WORKFLOW_READY = true as const;
+export const ASSURANCE_PERSISTENCE_READY = true as const;
+export const ASSURANCE_INTELLIGENCE_IS_ADVISORY_ONLY = true as const;
+
 export const PROGRESS_MEASUREMENT_IMPLEMENTED = true as const;
 export const PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY = true as const;
 export const PROGRESS_MEASUREMENT_IS_EARNED_VALUE = false as const;
@@ -219,6 +234,8 @@ export const FORECAST_INTELLIGENCE_OWNERSHIP = "project_controls" as const;
 export const decisionSupportOwnership = "project_controls" as const;
 export const scenarioIntelligenceOwnership = "project_controls" as const;
 export const riskOpportunityIntelligenceOwnership = "project_controls" as const;
+export const assuranceIntelligenceOwnership = "project_controls" as const;
+export const assuranceAuthorityOwnership = "human_only" as const;
 export const projectRecommendationOwnership = "project_controls" as const;
 export const projectDecisionOwnership = "human_only" as const;
 export const projectContextCompositionOwnership = "project_controls" as const;
@@ -301,9 +318,11 @@ export const PROJECT_CONTROLS_FORECAST_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_DECISION_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_SCENARIO_TABLES_INTRODUCED = true as const;
 export const PROJECT_CONTROLS_RISK_OPPORTUNITY_TABLES_INTRODUCED = true as const;
+export const PROJECT_CONTROLS_ASSURANCE_TABLES_INTRODUCED = true as const;
 export const DECISION_SUPPORT_IMPLEMENTED = true as const;
 export const SCENARIO_INTELLIGENCE_IMPLEMENTED = true as const;
 export const RISK_OPPORTUNITY_INTELLIGENCE_IMPLEMENTED = true as const;
+export const ASSURANCE_INTELLIGENCE_IMPLEMENTED = true as const;
 /** Reserved decision execution engine — distinct from advisory Decision Support Intelligence. */
 export const DECISIONING_IMPLEMENTED = false as const;
 export const DECISION_ENGINE_IMPLEMENTED = false as const;
@@ -338,6 +357,12 @@ export const AI_MAY_PUBLISH_SCENARIO_FORBIDDEN = true as const;
 export const AUTONOMOUS_SCENARIO_PUBLICATION_ALLOWED = false as const;
 export const AI_MAY_PUBLISH_RISK_OPPORTUNITY_FORBIDDEN = true as const;
 export const AUTONOMOUS_RISK_OPPORTUNITY_PUBLICATION_ALLOWED = false as const;
+export const AI_MAY_PUBLISH_ASSURANCE_FORBIDDEN = true as const;
+export const AUTONOMOUS_ASSURANCE_PUBLICATION_ALLOWED = false as const;
+export const AUTOMATIC_ASSURANCE_APPROVAL_ENABLED = false as const;
+export const AUTOMATIC_CERTIFICATION_ENABLED = false as const;
+export const AUTOMATIC_EVIDENCE_APPROVAL_ENABLED = false as const;
+export const DUPLICATE_ASSURANCE_OWNERSHIP_DETECTED = false as const;
 export const AUTOMATIC_DECISION_EXECUTION_ENABLED = false as const;
 export const AUTOMATIC_SCENARIO_EXECUTION_ENABLED = false as const;
 export const AUTOMATIC_RISK_REGISTER_MUTATION_ENABLED = false as const;
@@ -357,10 +382,12 @@ export const PHASE_11G_READY = true as const;
 export const PHASE_11H_READY = true as const;
 /** Phase 11I certified baseline — remains true for regression compatibility. */
 export const PHASE_11I_READY = true as const;
-/** Phase 11I implemented in this phase. */
+/** Phase 11J certified baseline — remains true for regression compatibility. */
 export const PHASE_11J_READY = true as const;
-/** Phase 11K readiness flag only — Phase 11K is not implemented in 11J. */
+/** Phase 11K implemented in this phase. */
 export const PHASE_11K_READY = true as const;
+/** Phase 11L readiness flag only — Phase 11L is not implemented in 11K. */
+export const PHASE_11L_READY = true as const;
 
 // ---------------------------------------------------------------------------
 // Migrations
@@ -386,6 +413,8 @@ export const PROJECT_CONTROLS_SCENARIO_MIGRATION =
   "supabase/migrations/20260808090000_batch_69_project_controls_scenario_intelligence.sql" as const;
 export const PROJECT_CONTROLS_RISK_OPPORTUNITY_MIGRATION =
   "supabase/migrations/20260808100000_batch_70_project_controls_risk_opportunity_intelligence.sql" as const;
+export const PROJECT_CONTROLS_ASSURANCE_MIGRATION =
+  "supabase/migrations/20260808110000_batch_71_project_controls_assurance_intelligence.sql" as const;
 
 export const PROJECT_CONTROLS_PROGRESS_TABLES = [
   "project_controls_progress_assessments",
@@ -456,6 +485,13 @@ export const PROJECT_CONTROLS_RISK_OPPORTUNITY_TABLES = [
   "project_controls_risk_opportunity_confidence",
 ] as const;
 
+export const PROJECT_CONTROLS_ASSURANCE_TABLES = [
+  "project_controls_assurance_states",
+  "project_controls_assurance_evidence",
+  "project_controls_assurance_reviews",
+  "project_controls_assurance_confidence",
+] as const;
+
 export const PROJECT_CONTROLS_SHARED_PROJECT_TABLES = [
   "project_controls_project_snapshots",
   "project_controls_project_timeline",
@@ -475,6 +511,7 @@ export const PROJECT_CONTROLS_IMPLEMENTED_CONCEPTS = [
   "decision_support",
   "scenario_intelligence",
   "risk_opportunity_intelligence",
+  "assurance_intelligence",
   "project_profile",
   "project_context_composition",
 ] as const;
@@ -530,6 +567,7 @@ export function getProjectControlsDeclaration() {
     decisionApiRoute: PROJECT_CONTROLS_DECISION_API_ROUTE,
     scenarioApiRoute: PROJECT_CONTROLS_SCENARIO_API_ROUTE,
     riskOpportunityApiRoute: PROJECT_CONTROLS_RISK_OPPORTUNITY_API_ROUTE,
+    assuranceApiRoute: PROJECT_CONTROLS_ASSURANCE_API_ROUTE,
     snapshotApiRoute: PROJECT_CONTROLS_SNAPSHOT_API_ROUTE,
     phase11aCertifiedCommit: PHASE_11A_CERTIFIED_COMMIT,
     phase11aHostedRun: PHASE_11A_HOSTED_RUN,
@@ -612,6 +650,19 @@ export function getProjectControlsDeclaration() {
     automaticTreatmentExecutionEnabled: AUTOMATIC_TREATMENT_EXECUTION_ENABLED,
     duplicateRiskOwnershipDetected: DUPLICATE_RISK_OWNERSHIP_DETECTED,
     riskOpportunityIntelligenceOwnership: riskOpportunityIntelligenceOwnership,
+    assuranceIntelligenceReady: ASSURANCE_INTELLIGENCE_READY,
+    AssuranceIntelligenceReady: AssuranceIntelligenceReady,
+    assuranceConfidenceEngineReady: ASSURANCE_CONFIDENCE_ENGINE_READY,
+    assuranceReviewWorkflowReady: ASSURANCE_REVIEW_WORKFLOW_READY,
+    assurancePersistenceReady: ASSURANCE_PERSISTENCE_READY,
+    assuranceIntelligenceIsAdvisoryOnly: ASSURANCE_INTELLIGENCE_IS_ADVISORY_ONLY,
+    aiMayPublishAssuranceForbidden: AI_MAY_PUBLISH_ASSURANCE_FORBIDDEN,
+    automaticAssuranceApprovalEnabled: AUTOMATIC_ASSURANCE_APPROVAL_ENABLED,
+    automaticCertificationEnabled: AUTOMATIC_CERTIFICATION_ENABLED,
+    automaticEvidenceApprovalEnabled: AUTOMATIC_EVIDENCE_APPROVAL_ENABLED,
+    duplicateAssuranceOwnershipDetected: DUPLICATE_ASSURANCE_OWNERSHIP_DETECTED,
+    assuranceIntelligenceOwnership: assuranceIntelligenceOwnership,
+    assuranceAuthorityOwnership: assuranceAuthorityOwnership,
     automaticDecisionExecutionEnabled: AUTOMATIC_DECISION_EXECUTION_ENABLED,
     automaticScheduleChangeEnabled: AUTOMATIC_SCHEDULE_CHANGE_ENABLED,
     automaticCostChangeEnabled: AUTOMATIC_COST_CHANGE_ENABLED,
@@ -625,6 +676,7 @@ export function getProjectControlsDeclaration() {
     phase11iReady: PHASE_11I_READY,
     phase11jReady: PHASE_11J_READY,
     phase11kReady: PHASE_11K_READY,
+    phase11lReady: PHASE_11L_READY,
     progressMeasurementImplemented: PROGRESS_MEASUREMENT_IMPLEMENTED,
     progressMeasurementIsAdvisoryOnly: PROGRESS_MEASUREMENT_IS_ADVISORY_ONLY,
     progressMeasurementIsEarnedValue: PROGRESS_MEASUREMENT_IS_EARNED_VALUE,
@@ -682,6 +734,7 @@ export function getProjectControlsDeclaration() {
     projectControlsDecisionTablesIntroduced: PROJECT_CONTROLS_DECISION_TABLES_INTRODUCED,
     projectControlsScenarioTablesIntroduced: PROJECT_CONTROLS_SCENARIO_TABLES_INTRODUCED,
     projectControlsRiskOpportunityTablesIntroduced: PROJECT_CONTROLS_RISK_OPPORTUNITY_TABLES_INTRODUCED,
+    projectControlsAssuranceTablesIntroduced: PROJECT_CONTROLS_ASSURANCE_TABLES_INTRODUCED,
     moduleRegistryStatus: PROJECT_CONTROLS_MODULE_REGISTRY_STATUS,
     moduleGa: PROJECT_CONTROLS_MODULE_GA,
     implementedConcepts: PROJECT_CONTROLS_IMPLEMENTED_CONCEPTS,
@@ -695,9 +748,10 @@ export function getProjectControlsDeclaration() {
     decisionTables: PROJECT_CONTROLS_DECISION_TABLES,
     scenarioTables: PROJECT_CONTROLS_SCENARIO_TABLES,
     riskOpportunityTables: PROJECT_CONTROLS_RISK_OPPORTUNITY_TABLES,
+    assuranceTables: PROJECT_CONTROLS_ASSURANCE_TABLES,
     sharedProjectTables: PROJECT_CONTROLS_SHARED_PROJECT_TABLES,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Engineering Shared Project Domain (canonical project identity) → Project Controls (progress + schedule + change + cost + productivity + forecast + decision support + scenario + risk/opportunity intelligence about projects — advisory only)" as const,
+      "RTB AI Platform → Engineering OS → Engineering Shared Project Domain (canonical project identity) → Project Controls (progress + schedule + change + cost + productivity + forecast + decision support + scenario + risk/opportunity + assurance intelligence about projects — advisory only)" as const,
   };
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls-certification",
-  "version": "0.10.0-risk-opportunity-intelligence",
+  "version": "0.11.0-assurance-intelligence",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,6 +12,7 @@
     "certify:phase11f": "tsx scripts/run-phase11f-certification.ts",
     "certify:phase11h": "tsx scripts/run-phase11h-certification.ts",
     "certify:phase11j": "tsx scripts/run-phase11j-certification.ts",
+    "certify:phase11k": "tsx scripts/run-phase11k-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

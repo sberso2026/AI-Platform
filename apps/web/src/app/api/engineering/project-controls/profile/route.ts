@@ -28,6 +28,7 @@ const ACTIVE_CONTRIBUTORS = [
   "decision_support",
   "scenario_intelligence",
   "risk_opportunity_intelligence",
+  "assurance_intelligence",
 ] as const;
 
 const RESERVED_CONTRIBUTORS = ["contingency_intelligence", "earned_value"] as const;
@@ -63,6 +64,15 @@ const GOVERNANCE_FLAGS = {
   phase11iReady: true,
   phase11jReady: true,
   phase11kReady: true,
+  phase11lReady: true,
+  assuranceIntelligenceReady: true,
+  AssuranceIntelligenceReady: true,
+  automaticAssuranceApprovalEnabled: false,
+  automaticCertificationEnabled: false,
+  automaticEvidenceApprovalEnabled: false,
+  duplicateAssuranceOwnershipDetected: false,
+  assuranceAuthorityOwnership: "human_only",
+  assuranceIntelligenceOwnership: "project_controls",
   decisionSupportReady: true,
   scenarioIntelligenceReady: true,
   ScenarioIntelligenceReady: true,
@@ -77,7 +87,7 @@ const GOVERNANCE_FLAGS = {
   automaticScheduleChangeEnabled: false,
   automaticCostChangeEnabled: false,
   automaticContractInstructionEnabled: false,
-  activeContributorCount: 9,
+  activeContributorCount: 10,
   projectSnapshotReady: true,
   projectTimelineReady: true,
   contractualAuthority: false,

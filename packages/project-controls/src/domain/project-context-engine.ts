@@ -152,6 +152,13 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
       "Advisory risk/opportunity intelligence signals from composed contributors through scenario intelligence. Implemented in Phase 11J. Not register mutation, owner assignment, or treatment execution.",
   },
   {
+    key: "assurance_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory assurance posture from all published contributors and evidence metadata. Implemented in Phase 11K. Not verification, certification, approval, or evidence approval.",
+  },
+  {
     key: "contingency_intelligence",
     status: "reserved",
     ownedBy: "project_controls",
@@ -184,6 +191,7 @@ export type ProjectContextComposeInput = {
   decision?: readonly DecisionAssessmentState[];
   scenario?: readonly ScenarioAssessmentState[];
   riskOpportunity?: readonly RiskOpportunityAssessmentState[];
+  assurance?: readonly AssuranceAssessmentState[];
   /** Number of open change candidates; a candidate is never an approved change. */
   changeCandidateCount?: number;
   version?: number;
@@ -245,6 +253,12 @@ const DECISION_CONFIDENCE_ORDER: DecisionConfidenceClass[] = [
   "high",
 ];
 const SCENARIO_CONFIDENCE_ORDER: ScenarioConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const ASSURANCE_CONFIDENCE_ORDER: AssuranceConfidenceClass[] = [
   "unavailable",
   "low",
   "medium",
@@ -330,6 +344,12 @@ export class ProjectContextEngine {
         state.tenantId === input.tenantId &&
         state.workspaceId === input.workspaceId,
     );
+    const assurance = (input.assurance ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
 
     const reasons: string[] = [];
     const progressAssessed = progress.filter((state) => !state.abstained);
@@ -359,6 +379,9 @@ export class ProjectContextEngine {
     const riskOpportunityAssessed = riskOpportunity.filter((state) => !state.abstained);
     const riskOpportunityAbstained = riskOpportunity.filter((state) => state.abstained);
     const riskOpportunityPublished = riskOpportunity.filter((state) => state.status === "published");
+    const assuranceAssessed = assurance.filter((state) => !state.abstained);
+    const assuranceAbstained = assurance.filter((state) => state.abstained);
+    const assurancePublished = assurance.filter((state) => state.status === "published");
 
     const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
@@ -408,6 +431,7 @@ export class ProjectContextEngine {
       decisionAbstained.length > 0 ||
       scenarioAbstained.length > 0 ||
       riskOpportunityAbstained.length > 0 ||
+      assuranceAbstained.length > 0 ||
       progressPublished.length === 0 ||
       (schedule.length > 0 && schedulePublished.length === 0) ||
       (change.length > 0 && changePublished.length === 0) ||
@@ -428,6 +452,7 @@ export class ProjectContextEngine {
       if (decisionAbstained.length > 0) reasons.push("some_decision_assessments_abstained");
       if (scenarioAbstained.length > 0) reasons.push("some_scenario_assessments_abstained");
       if (riskOpportunityAbstained.length > 0) reasons.push("some_risk_opportunity_assessments_abstained");
+      if (assuranceAbstained.length > 0) reasons.push("some_assurance_assessments_abstained");
       if (progressPublished.length === 0 && progress.length > 0) {
         reasons.push("no_published_progress_yet");
       }
@@ -701,6 +726,39 @@ export class ProjectContextEngine {
         treatmentExecutionPerformed: false,
         duplicateRiskOwnershipDetected: false,
       } satisfies RiskOpportunityProfileContribution,
+      assuranceIntelligence: {
+        assessmentsCompleted: assuranceAssessed.length,
+        assessmentsAbstained: assuranceAbstained.length,
+        publishedAssessments: assurancePublished.length,
+        strongPostureCount: countAssurancePosture(assuranceAssessed, "strong"),
+        adequatePostureCount: countAssurancePosture(assuranceAssessed, "adequate"),
+        constrainedPostureCount: countAssurancePosture(assuranceAssessed, "constrained"),
+        weakPostureCount: countAssurancePosture(assuranceAssessed, "weak"),
+        insufficientPostureCount: countAssurancePosture(assuranceAssessed, "insufficient"),
+        conflictingPostureCount: countAssurancePosture(assuranceAssessed, "conflicting"),
+        unknownPostureCount: countAssurancePosture(assuranceAssessed, "unknown"),
+        completeFindingCount: countAssuranceFinding(assuranceAssessed, "complete"),
+        incompleteFindingCount: countAssuranceFinding(assuranceAssessed, "incomplete"),
+        staleFindingCount: countAssuranceFinding(assuranceAssessed, "stale"),
+        conflictingFindingCount: countAssuranceFinding(assuranceAssessed, "conflicting"),
+        missingSourceFindingCount: countAssuranceFinding(assuranceAssessed, "missing_source"),
+        missingProvenanceFindingCount: countAssuranceFinding(assuranceAssessed, "missing_provenance"),
+        unsupportedFindingCount: countAssuranceFinding(assuranceAssessed, "unsupported"),
+        dependencyGapFindingCount: countAssuranceFinding(assuranceAssessed, "dependency_gap"),
+        unavailableFindingCount: countAssuranceFinding(assuranceAssessed, "unavailable"),
+        unknownFindingCount: countAssuranceFinding(assuranceAssessed, "unknown"),
+        contributorCoverageCount: assuranceAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        crossContributorConflictCount: assuranceAssessed.reduce(
+          (sum, state) => sum + state.synthesis.crossContributorConflicts.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestAssuranceConfidence(assurance),
+        dominantSufficiency: dominantAssurance(assurance),
+        latestAssessmentAt: latestAt(assurance.map((s) => s.assessedAt)),
+      } satisfies AssuranceProfileContribution,
       contributors: PROJECT_PROFILE_CONTRIBUTORS,
       activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
       reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
@@ -744,8 +802,8 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 9) {
-    throw new Error("phase_11j_must_have_exactly_nine_active_contributors");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 10) {
+    throw new Error("phase_11k_must_have_exactly_ten_active_contributors");
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
     throw new Error("progress_intelligence_must_stay_active");
@@ -773,6 +831,9 @@ export function assertProjectProfileContributorsComplete(): {
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("risk_opportunity_intelligence")) {
     throw new Error("risk_opportunity_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("assurance_intelligence")) {
+    throw new Error("assurance_intelligence_must_be_active");
   }
   for (const key of ["contingency_intelligence", "earned_value"] as const) {
     const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
@@ -1077,6 +1138,48 @@ function countOpportunitySignal(
   return states.reduce(
     (sum, state) =>
       sum + state.opportunitySignals.filter((signal) => signal.opportunitySignal === opportunitySignal).length,
+    0,
+  );
+}
+
+
+function lowestAssuranceConfidence(
+  states: readonly AssuranceAssessmentState[],
+): AssuranceConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      ASSURANCE_CONFIDENCE_ORDER.indexOf(current) < ASSURANCE_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantAssurance(states: readonly AssuranceAssessmentState[]): AssuranceEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<AssuranceEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countAssurancePosture(
+  states: readonly AssuranceAssessmentState[],
+  posture: AssurancePosture,
+): number {
+  return states.filter((state) => state.assurancePosture === posture).length;
+}
+
+function countAssuranceFinding(
+  states: readonly AssuranceAssessmentState[],
+  findingKind: AssuranceFindingKind,
+): number {
+  return states.reduce(
+    (sum, state) =>
+      sum + state.contributorFindings.filter((finding) => finding.findingKind === findingKind).length,
     0,
   );
 }

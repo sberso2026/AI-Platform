@@ -25,6 +25,7 @@ import type { ForecastAssessmentState } from "./forecast";
 import type { DecisionAssessmentState } from "./decision";
 import type { ScenarioAssessmentState } from "./scenario";
 import type { RiskOpportunityAssessmentState } from "./risk-opportunity";
+import type { AssuranceAssessmentState } from "./assurance";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -59,6 +60,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.risk_opportunity.updated",
   "engineering.project.risk_opportunity.reviewed",
   "engineering.project.risk_opportunity.published",
+  "engineering.project.assurance.updated",
+  "engineering.project.assurance.reviewed",
+  "engineering.project.assurance.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -103,6 +107,12 @@ export const PROJECT_CONTROLS_RISK_OPPORTUNITY_EVENTS = [
   "engineering.project.risk_opportunity.updated",
   "engineering.project.risk_opportunity.reviewed",
   "engineering.project.risk_opportunity.published",
+] as const;
+
+export const PROJECT_CONTROLS_ASSURANCE_EVENTS = [
+  "engineering.project.assurance.updated",
+  "engineering.project.assurance.reviewed",
+  "engineering.project.assurance.published",
 ] as const;
 
 export const PROJECT_CONTROLS_SCENARIO_EVENTS = [
@@ -390,6 +400,38 @@ export function riskOpportunityEventPayload(
     ownerAssignmentPerformed: false,
     treatmentExecutionPerformed: false,
     duplicateRiskOwnershipDetected: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
+/** Identifiers only — no certification, verification, or approval claims. */
+export function assuranceEventPayload(
+  state: AssuranceAssessmentState,
+): Record<string, unknown> {
+  return {
+    assuranceStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    assuranceUnitId: state.controlContext.assuranceUnitId,
+    assurancePosture: state.assurancePosture,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    findingCount: state.contributorFindings.length,
+    contributorCount: state.contributingContributors.length,
+    composedContextId: state.composedContextId,
+    forecastContextId: state.forecastContextId,
+    decisionContextId: state.decisionContextId,
+    scenarioContextId: state.scenarioContextId,
+    riskOpportunityContextId: state.riskOpportunityContextId,
+    autoExecutionClaimed: false,
+    approvalAuthorityClaimed: false,
+    certificationClaimed: false,
+    verificationClaimed: false,
+    evidenceApprovalClaimed: false,
+    duplicateAssuranceOwnershipDetected: false,
     mutatesUpstreamContributors: false,
   };
 }
