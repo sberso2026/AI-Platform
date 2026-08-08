@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: assurance_intelligence · Module version: `0.11.0-assurance-intelligence` · Phase: 11K
+Status: explainability_intelligence · Module version: `0.12.0-explainability-intelligence` · Phase: 11L
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in
@@ -25,6 +25,7 @@ rows.
 | Project Controls — scenario | `project_controls` | **owns** | **Implemented in 11I** — exploratory scenario comparison; no preferred selection or auto-execution |
 | Project Controls — risk/opportunity | `project_controls` | **owns** | **Implemented in 11J** — advisory intelligence signals only; no register mutation or owner assignment |
 | Project Controls — assurance | `project_controls` | **owns** | **Implemented in 11K** — advisory assurance posture about PC intelligence; not verification, certification, or approval (`assuranceAuthorityOwnership = human_only`) |
+| Project Controls — explainability | `project_controls` | **owns** | **Implemented in 11L** — public explanation summaries with traces; not chain-of-thought, hidden inference, or automatic approval (`explainabilityIntelligenceOwnership = project_controls`, `duplicateExplainabilityOwnershipDetected = false`) |
 | Contractual change authority | `reserved_not_project_controls` | **forbidden** | Reserved for engineering_core, a future commercial/contracts domain, Business OS or external contract administration |
 | Project snapshot and timeline | `project_controls` | **owns** | **Implemented in 11D/11E** — immutable, identifier-only snapshots and an append-only project timeline |
 | Project Controls — contingency | `project_controls` | owns | Reserved provider interface only; no drawdown |

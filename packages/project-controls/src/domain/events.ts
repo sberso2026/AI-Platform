@@ -26,6 +26,7 @@ import type { DecisionAssessmentState } from "./decision";
 import type { ScenarioAssessmentState } from "./scenario";
 import type { RiskOpportunityAssessmentState } from "./risk-opportunity";
 import type { AssuranceAssessmentState } from "./assurance";
+import type { ExplainabilityAssessmentState } from "./explainability";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -63,6 +64,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.assurance.updated",
   "engineering.project.assurance.reviewed",
   "engineering.project.assurance.published",
+  "engineering.project.explainability.updated",
+  "engineering.project.explainability.reviewed",
+  "engineering.project.explainability.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -113,6 +117,12 @@ export const PROJECT_CONTROLS_ASSURANCE_EVENTS = [
   "engineering.project.assurance.updated",
   "engineering.project.assurance.reviewed",
   "engineering.project.assurance.published",
+] as const;
+
+export const PROJECT_CONTROLS_EXPLAINABILITY_EVENTS = [
+  "engineering.project.explainability.updated",
+  "engineering.project.explainability.reviewed",
+  "engineering.project.explainability.published",
 ] as const;
 
 export const PROJECT_CONTROLS_SCENARIO_EVENTS = [
@@ -432,6 +442,41 @@ export function assuranceEventPayload(
     verificationClaimed: false,
     evidenceApprovalClaimed: false,
     duplicateAssuranceOwnershipDetected: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
+/** Identifiers only — no chain-of-thought or hidden reasoning disclosure. */
+export function explainabilityEventPayload(
+  state: ExplainabilityAssessmentState,
+): Record<string, unknown> {
+  return {
+    explainabilityStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    explainabilityUnitId: state.controlContext.explainabilityUnitId,
+    explanationStatus: state.explanationStatus,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    explanationCount: state.contributorExplanations.length,
+    contributorCount: state.contributingContributors.length,
+    traceCount:
+      state.dependencyTraces.length +
+      state.provenanceTraces.length +
+      state.timelineTraces.length,
+    composedContextId: state.composedContextId,
+    assuranceContextId: state.assuranceContextId,
+    autoExecutionClaimed: false,
+    approvalAuthorityClaimed: false,
+    verificationClaimed: false,
+    automaticEvidenceCreationClaimed: false,
+    chainOfThoughtExposed: false,
+    hiddenReasoningExposed: false,
+    fabricatedProvenance: false,
+    duplicateExplainabilityOwnershipDetected: false,
     mutatesUpstreamContributors: false,
   };
 }

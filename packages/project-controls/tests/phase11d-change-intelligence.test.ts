@@ -310,6 +310,7 @@ describe("Phase 11D project context with change", () => {
       "scenario_intelligence",
       "risk_opportunity_intelligence",
       "assurance_intelligence",
+      "explainability_intelligence",
     ]);
     expect(check.reservedContributorKeys).toContain("contingency_intelligence");
   });
@@ -546,6 +547,9 @@ describe("Phase 11D locks", () => {
       "engineering.project.assurance.updated",
       "engineering.project.assurance.reviewed",
       "engineering.project.assurance.published",
+      "engineering.project.explainability.updated",
+      "engineering.project.explainability.reviewed",
+      "engineering.project.explainability.published",
       "engineering.project.snapshot.created",
     ]);
   });

@@ -1,10 +1,10 @@
 # Project Controls Project Context Engine
 
-Phase 11K. `packages/project-controls/src/domain/project-context-engine.ts`.
+Phase 11L. `packages/project-controls/src/domain/project-context-engine.ts`.
 `PROJECT_CONTEXT_ENGINE_READY = true`. Phase 11G added
 `ProjectContextCompositionEngine` (`project-context-composition.ts`) and activated
 `forecast` as the sixth contributor. Phase 11H activates `decision_support` as
-the seventh contributor. Phase 11I activates `scenario_intelligence` as the eighth contributor. Phase 11J activates `risk_opportunity_intelligence` as the ninth contributor. Phase 11K activates `assurance_intelligence` as the tenth contributor.
+the seventh contributor. Phase 11I activates `scenario_intelligence` as the eighth contributor. Phase 11J activates `risk_opportunity_intelligence` as the ninth contributor. Phase 11K activates `assurance_intelligence` as the tenth contributor. Phase 11L activates `explainability_intelligence` as the eleventh contributor.
 
 ## Purpose
 
@@ -13,7 +13,7 @@ the intelligence Project Controls owns, built from per-scope progress, schedule,
 change and cost assessments plus productivity assessments and a resolved `ProjectReference`.
 
 Its value is as much structural as functional. It fixes the *shape* of the
-profile now, with ten of eleven contributors active and one declared
+profile now, with eleven of thirteen contributors active and two declared
 `reserved`, so later phases add values into an existing contract instead of
 renegotiating it.
 
@@ -46,13 +46,14 @@ cleanly.
 | `scenario_intelligence` | **active** | Exploratory scenario comparison; no preferred selection or optimisation |
 | `risk_opportunity_intelligence` | **active** | Advisory risk/opportunity signals; not register mutation or owner assignment |
 | `assurance_intelligence` | **active** | Advisory assurance posture about PC intelligence; not verification, certification, or approval |
+| `explainability_intelligence` | **active** | Public explanation summaries with traces; not chain-of-thought, hidden inference, approval, or verification |
 | `contingency_intelligence` | reserved | No contingency drawdown |
 | `earned_value` | reserved | Reserved **and forbidden** to implement |
 
 `assertProjectProfileContributorsComplete()` proves the list covers every declared
-key, that Phase 11K has exactly ten active contributors
+key, that Phase 11L has exactly eleven active contributors
 (`progress_intelligence`, `schedule_intelligence`, `change_intelligence`,
-`cost_intelligence`, `productivity_intelligence`, `forecast`, `decision_support`, `scenario_intelligence`, `risk_opportunity_intelligence`, `assurance_intelligence`), and that
+`cost_intelligence`, `productivity_intelligence`, `forecast`, `decision_support`, `scenario_intelligence`, `risk_opportunity_intelligence`, `assurance_intelligence`, `explainability_intelligence`), and that
 `contingency_intelligence` and `earned_value` are still reserved. Every composed profile echoes `activeContributorKeys` and
 `reservedContributorKeys`, so a consumer can tell absent-because-reserved from
 absent-because-no-data.
@@ -70,11 +71,13 @@ Risk & Opportunity Intelligence consumes composed context, forecast, decision su
 producing advisory risk/opportunity signals only — never register mutation, owner assignment, or treatment execution.
 Assurance Intelligence consumes all contributor outputs and evidence metadata,
 producing advisory assurance posture only — never verification, certification, approval, or evidence approval.
+Explainability Intelligence consumes all contributor outputs plus evidence/timeline/governance metadata,
+producing public reason summaries with dependency/provenance/timeline traces only — never chain-of-thought, hidden inference, automatic approval, or fabricated provenance. Traceability ≠ approval ≠ verification.
 `PROJECT_CONTEXT_COMPOSITION_READY = true`.
 
 ## Profile composition
 
-`compose({ tenantId, workspaceId, projectReference, progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance })`.
+`compose({ tenantId, workspaceId, projectReference, progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance, explainability })`.
 
 Assessments outside the given tenant, workspace and project are dropped rather
 than trusted, and the drop is recorded as `out_of_scope_*_ignored`.

@@ -51,6 +51,10 @@ import {
   type PersistedAssuranceEvidence,
   type PersistedAssuranceReview,
   type PersistedAssuranceState,
+  type PersistedExplainabilityConfidence,
+  type PersistedExplainabilityEvidence,
+  type PersistedExplainabilityReview,
+  type PersistedExplainabilityState,
   type PersistedProjectProfile,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
@@ -110,6 +114,10 @@ const ASSURANCE_STATES = "project_controls_assurance_states";
 const ASSURANCE_EVIDENCE = "project_controls_assurance_evidence";
 const ASSURANCE_REVIEWS = "project_controls_assurance_reviews";
 const ASSURANCE_CONFIDENCE = "project_controls_assurance_confidence";
+const EXPLAINABILITY_STATES = "project_controls_explainability_states";
+const EXPLAINABILITY_EVIDENCE = "project_controls_explainability_evidence";
+const EXPLAINABILITY_REVIEWS = "project_controls_explainability_reviews";
+const EXPLAINABILITY_CONFIDENCE = "project_controls_explainability_confidence";
 const PROJECT_SNAPSHOTS = "project_controls_project_snapshots";
 const PROJECT_TIMELINE = "project_controls_project_timeline";
 const PROFILES = "project_controls_project_profiles";
@@ -2510,8 +2518,8 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       project_id: state.projectId,
       scope_kind: ctx.scope.kind,
       scope_reference_id: ctx.scope.referenceId ?? null,
-      risk_opportunity_unit_id: ctx.riskOpportunityUnitId,
-      risk_opportunity_unit_label: ctx.riskOpportunityUnitLabel ?? null,
+      risk_opportunity_unit_id: ctx.assuranceUnitId,
+      risk_opportunity_unit_label: ctx.assuranceUnitLabel ?? null,
       version: state.version,
       status: state.status,
       assessment_class: state.assessmentClass,
@@ -2817,8 +2825,8 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       project_id: state.projectId,
       scope_kind: ctx.scope.kind,
       scope_reference_id: ctx.scope.referenceId ?? null,
-      assurance_unit_id: ctx.riskOpportunityUnitId,
-      assurance_unit_label: ctx.riskOpportunityUnitLabel ?? null,
+      assurance_unit_id: ctx.assuranceUnitId,
+      assurance_unit_label: ctx.assuranceUnitLabel ?? null,
       version: state.version,
       status: state.status,
       assessment_class: state.assessmentClass,
@@ -3094,18 +3102,330 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
   async listAssuranceConfidence(
     tenantId: string,
     workspaceId: string,
-    riskOpportunityStateId: string,
+    assuranceStateId: string,
   ): Promise<PersistedAssuranceConfidence[]> {
     const { data, error } = await this.supabase
       .from(ASSURANCE_CONFIDENCE)
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .eq("assurance_state_id", riskOpportunityStateId);
+      .eq("assurance_state_id", assuranceStateId);
     if (error) throw new Error(`assurance_confidence_read_failed:${error.message}`);
     return (data ?? []).map((row) => ({
       ...(row.confidence_payload as PersistedAssuranceConfidence),
-      riskOpportunityStateId: row.assurance_state_id,
+      assuranceStateId: row.assurance_state_id,
+      recordedAt: row.recorded_at,
+    }));
+  }
+
+  // ----------------------------------------------------------- explainability
+
+  async saveExplainabilityState(
+    state: PersistedExplainabilityState,
+  ): Promise<PersistedExplainabilityState> {
+    const ctx = state.controlContext;
+    const row = {
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      project_id: state.projectId,
+      scope_kind: ctx.scope.kind,
+      scope_reference_id: ctx.scope.referenceId ?? null,
+      explainability_unit_id: ctx.explainabilityUnitId,
+      explainability_unit_label: ctx.explainabilityUnitLabel ?? null,
+      version: state.version,
+      status: state.status,
+      assessment_class: state.assessmentClass,
+      explanation_status: state.explanationStatus,
+      synthesis: state.synthesis,
+      snapshot_payload: state.snapshot,
+      contributor_explanations: state.contributorExplanations,
+      control_context: ctx,
+      contributing_contributors: state.contributingContributors,
+      dependency_traces: state.dependencyTraces,
+      provenance_traces: state.provenanceTraces,
+      timeline_traces: state.timelineTraces,
+      assumption_refs: state.assumptionRefs,
+      confidence_source_refs: state.confidenceSourceRefs,
+      governance_refs: state.governanceRefs,
+      assumptions: state.assumptions,
+      confidence_class: state.confidence.confidenceClass,
+      data_sufficiency: state.confidence.dataSufficiency,
+      confidence_payload: state.confidence,
+      evidence_refs: state.evidenceRefs,
+      reasons: state.reasons,
+      limitations: state.limitations,
+      abstained: state.abstained,
+      abstention_reason: state.abstentionReason ?? null,
+      narrative: state.narrative ?? null,
+      composed_context_id: state.composedContextId ?? null,
+      assurance_context_id: state.assuranceContextId ?? null,
+      forecast_context_id: state.forecastContextId ?? null,
+      decision_context_id: state.decisionContextId ?? null,
+      scenario_context_id: state.scenarioContextId ?? null,
+      risk_opportunity_context_id: state.riskOpportunityContextId ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      assessed_at: state.assessedAt,
+      recorded_at: state.recordedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      workflow_instance_id: state.workflowInstanceId ?? null,
+      earned_value_computed: false,
+      critical_path_computed: false,
+      float_computed: false,
+      auto_execution_enabled: false,
+      schedule_execution_performed: false,
+      cost_execution_performed: false,
+      contract_instruction_performed: false,
+      approval_authority_claimed: false,
+      verification_claimed: false,
+      automatic_evidence_creation_claimed: false,
+      automatic_explanation_approval_claimed: false,
+      resource_planning_performed: false,
+      budget_ledger_mutated: false,
+      financial_posting_performed: false,
+      predictive_scheduling_performed: false,
+      duplicate_explainability_ownership_detected: false,
+      chain_of_thought_exposed: false,
+      hidden_reasoning_exposed: false,
+      fabricated_provenance: false,
+      mutates_upstream_contributors: false,
+      advisory_only: true,
+      mutates_project_identity: false,
+    };
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_STATES)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`explainability_state_persist_failed:${error.message}`);
+    return mapExplainabilityStateRow(data);
+  }
+
+  async getExplainabilityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedExplainabilityState | null> {
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_STATES)
+      .select("*")
+      .eq("id", stateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`explainability_state_read_failed:${error.message}`);
+    return data ? mapExplainabilityStateRow(data) : null;
+  }
+
+  async latestExplainabilityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    explainabilityUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedExplainabilityState | undefined> {
+    let query = this.supabase
+      .from(EXPLAINABILITY_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", scope.projectId)
+      .eq("scope_kind", scope.kind)
+      .eq("explainability_unit_id", explainabilityUnitId)
+      .order("version", { ascending: false })
+      .limit(1);
+    query = scope.referenceId
+      ? query.eq("scope_reference_id", scope.referenceId)
+      : query.is("scope_reference_id", null);
+    if (asOf) query = query.lte("recorded_at", asOf);
+    const { data, error } = await query;
+    if (error) throw new Error(`explainability_state_read_failed:${error.message}`);
+    const row = (data ?? [])[0];
+    return row ? mapExplainabilityStateRow(row) : undefined;
+  }
+
+  async listExplainabilityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedExplainabilityState[]> {
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: false });
+    if (error) throw new Error(`explainability_state_list_failed:${error.message}`);
+    return (data ?? []).map(mapExplainabilityStateRow);
+  }
+
+  async nextExplainabilityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    explainabilityUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestExplainabilityState(
+      tenantId,
+      workspaceId,
+      scope,
+      explainabilityUnitId,
+    );
+    const current = latest?.version ?? 0;
+    if (expectedVersion !== undefined && expectedVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedVersion};actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveExplainabilityEvidence(
+    evidence: readonly PersistedExplainabilityEvidence[],
+  ): Promise<PersistedExplainabilityEvidence[]> {
+    const rows = evidence.map((item) => ({
+      id: item.evidenceId,
+      tenant_id: item.tenantId,
+      workspace_id: item.workspaceId,
+      project_id: item.projectId,
+      explainability_state_id: item.explainabilityStateId,
+      evidence_kind: item.kind,
+      source_type: item.sourceType,
+      source_ref: item.sourceRef,
+      source_key: item.sourceKey,
+      provenance: item.provenance,
+      review_status: item.reviewStatus,
+      observed_at: item.observedAt ?? null,
+      declared_signal: item.declaredSignal ?? null,
+      contributor_key: item.contributorKey ?? null,
+      narrative: item.narrative ?? null,
+      recorded_at: item.recordedAt,
+      created_by: item.createdBy ?? null,
+      chain_of_thought_exposed: false,
+      hidden_reasoning_exposed: false,
+      fabricated_provenance: false,
+      auto_execution_claimed: false,
+      approval_authority_claimed: false,
+      verification_claimed: false,
+      automatic_evidence_creation_claimed: false,
+      earned_value_derived: false,
+      cpm_derived: false,
+      financial_posting_claimed: false,
+      register_mutation_claimed: false,
+      mutates_upstream_contributors: false,
+    }));
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_EVIDENCE)
+      .insert(rows)
+      .select("*");
+    if (error) throw new Error(`explainability_evidence_persist_failed:${error.message}`);
+    return (data ?? []).map(mapExplainabilityEvidenceRow);
+  }
+
+  async listExplainabilityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId: string,
+  ): Promise<PersistedExplainabilityEvidence[]> {
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_EVIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("explainability_state_id", explainabilityStateId);
+    if (error) throw new Error(`explainability_evidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapExplainabilityEvidenceRow);
+  }
+
+  async saveExplainabilityReview(
+    review: PersistedExplainabilityReview,
+  ): Promise<PersistedExplainabilityReview> {
+    const row = {
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      project_id: review.projectId,
+      explainability_state_id: review.explainabilityStateId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+      approval_authority_claimed: false,
+      verification_claimed: false,
+      chain_of_thought_exposed: false,
+    };
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_REVIEWS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`explainability_review_persist_failed:${error.message}`);
+    return mapExplainabilityReviewRow(data);
+  }
+
+  async listExplainabilityReviews(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId?: string,
+  ): Promise<PersistedExplainabilityReview[]> {
+    let query = this.supabase
+      .from(EXPLAINABILITY_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (explainabilityStateId) query = query.eq("explainability_state_id", explainabilityStateId);
+    const { data, error } = await query;
+    if (error) throw new Error(`explainability_review_read_failed:${error.message}`);
+    return (data ?? []).map(mapExplainabilityReviewRow);
+  }
+
+  async saveExplainabilityConfidence(
+    confidence: PersistedExplainabilityConfidence,
+  ): Promise<PersistedExplainabilityConfidence> {
+    const row = {
+      tenant_id: confidence.tenantId,
+      workspace_id: confidence.workspaceId,
+      project_id: confidence.projectId,
+      explainability_state_id: confidence.explainabilityStateId,
+      confidence_payload: confidence,
+      recorded_at: confidence.recordedAt,
+    };
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_CONFIDENCE)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`explainability_confidence_persist_failed:${error.message}`);
+    return {
+      ...(data.confidence_payload as PersistedExplainabilityConfidence),
+      explainabilityStateId: data.explainability_state_id,
+      recordedAt: data.recorded_at,
+    };
+  }
+
+  async listExplainabilityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId: string,
+  ): Promise<PersistedExplainabilityConfidence[]> {
+    const { data, error } = await this.supabase
+      .from(EXPLAINABILITY_CONFIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("explainability_state_id", explainabilityStateId);
+    if (error) throw new Error(`explainability_confidence_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      ...(row.confidence_payload as PersistedExplainabilityConfidence),
+      explainabilityStateId: row.explainability_state_id,
       recordedAt: row.recorded_at,
     }));
   }
@@ -3133,6 +3453,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       scenario_state_ids: snapshot.scenarioStateIds,
       risk_opportunity_state_ids: snapshot.riskOpportunityStateIds,
       assurance_state_ids: snapshot.assuranceStateIds,
+      explainability_state_ids: snapshot.explainabilityStateIds,
       created_by: snapshot.createdBy ?? null,
       immutable: true,
       contains_evidence_payloads: false,
@@ -3251,6 +3572,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       scenario_summary: profile.scenarioIntelligence ?? {},
       risk_opportunity_summary: profile.riskOpportunityIntelligence ?? {},
       assurance_summary: profile.assuranceIntelligence ?? {},
+      explainability_summary: profile.explainabilityIntelligence ?? {},
       contributors: profile.contributors,
       active_contributor_keys: profile.activeContributorKeys,
       reserved_contributor_keys: profile.reservedContributorKeys,
@@ -3561,6 +3883,7 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     scenarioIntelligence: row.scenario_summary ?? undefined,
     riskOpportunityIntelligence: row.risk_opportunity_summary ?? undefined,
     assuranceIntelligence: row.assurance_summary ?? undefined,
+    explainabilityIntelligence: row.explainability_summary ?? undefined,
     contributors: row.contributors ?? [],
     activeContributorKeys: row.active_contributor_keys ?? [],
     reservedContributorKeys: row.reserved_contributor_keys ?? [],
@@ -4309,6 +4632,7 @@ function mapProjectSnapshotRow(row: any): PersistedProjectSnapshot {
     scenarioStateIds: row.scenario_state_ids ?? [],
     riskOpportunityStateIds: row.risk_opportunity_state_ids ?? [],
     assuranceStateIds: row.assurance_state_ids ?? [],
+    explainabilityStateIds: row.explainability_state_ids ?? [],
     createdBy: row.created_by ?? undefined,
     immutable: true,
     containsEvidencePayloads: false,
@@ -4737,5 +5061,174 @@ function mapRiskOpportunityReviewRow(row: any): PersistedRiskOpportunityReview {
     completedAt: row.completed_at ?? undefined,
     selfApproved: false,
     approvalAuthorityClaimed: false,
+  };
+}
+
+function mapExplainabilityStateRow(row: any): PersistedExplainabilityState {
+  const ctx = row.control_context;
+  return {
+    id: row.id,
+    stateId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    controlContext: ctx,
+    version: row.version,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    explanationStatus: row.explanation_status ?? "unknown",
+    synthesis: row.synthesis ?? emptyExplainabilitySynthesis(row.id),
+    contributorExplanations: row.contributor_explanations ?? [],
+    snapshot: row.snapshot_payload ?? {
+      snapshotId: row.id,
+      integratedExplanationStatus: row.explanation_status ?? "unknown",
+      integratedReason: "unknown",
+      reasonSummary: "Explainability basis unavailable.",
+      contributorCount: 0,
+      evidenceRefCount: 0,
+      traceCount: 0,
+      abstained: row.abstained ?? false,
+      chainOfThoughtExposed: false,
+      hiddenReasoningExposed: false,
+    },
+    dependencyTraces: row.dependency_traces ?? [],
+    provenanceTraces: row.provenance_traces ?? [],
+    timelineTraces: row.timeline_traces ?? [],
+    assumptionRefs: row.assumption_refs ?? [],
+    confidenceSourceRefs: row.confidence_source_refs ?? [],
+    governanceRefs: row.governance_refs ?? [],
+    contributingContributors: row.contributing_contributors ?? [],
+    evidenceRefs: row.evidence_refs ?? [],
+    confidence: row.confidence_payload,
+    assumptions: row.assumptions ?? [],
+    reasons: row.reasons ?? [],
+    limitations: row.limitations ?? [],
+    abstained: row.abstained,
+    abstentionReason: row.abstention_reason ?? undefined,
+    narrative: row.narrative ?? undefined,
+    composedContextId: row.composed_context_id ?? undefined,
+    assuranceContextId: row.assurance_context_id ?? undefined,
+    forecastContextId: row.forecast_context_id ?? undefined,
+    decisionContextId: row.decision_context_id ?? undefined,
+    scenarioContextId: row.scenario_context_id ?? undefined,
+    riskOpportunityContextId: row.risk_opportunity_context_id ?? undefined,
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    reviewedAt: row.reviewed_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    workflowInstanceId: row.workflow_instance_id ?? undefined,
+    earnedValueComputed: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+    autoExecutionEnabled: false,
+    scheduleExecutionPerformed: false,
+    costExecutionPerformed: false,
+    contractInstructionPerformed: false,
+    approvalAuthorityClaimed: false,
+    verificationClaimed: false,
+    automaticEvidenceCreationClaimed: false,
+    automaticExplanationApprovalClaimed: false,
+    resourcePlanningPerformed: false,
+    budgetLedgerMutated: false,
+    financialPostingPerformed: false,
+    predictiveSchedulingPerformed: false,
+    advisoryOnly: true,
+    mutatesProjectIdentity: false,
+    mutatesUpstreamContributors: false,
+    autonomousPublication: false,
+    duplicateExplainabilityOwnershipDetected: false,
+    chainOfThoughtExposed: false,
+    hiddenReasoningExposed: false,
+    fabricatedProvenance: false,
+  };
+}
+
+function emptyExplainabilitySynthesis(id: string) {
+  return {
+    synthesisId: id,
+    integratedExplanationStatus: "unknown" as const,
+    integratedReason: "unknown" as const,
+    reasonSummary: "Explainability basis unavailable.",
+    contributorExplanations: [],
+    crossContributorConflictNotes: [],
+    missingEvidenceNotes: [],
+    unknownNotes: [],
+    dependencyTraces: [],
+    provenanceTraces: [],
+    timelineTraces: [],
+    assumptionRefs: [],
+    confidenceSourceRefs: [],
+    governanceRefs: [],
+    chainOfThoughtExposed: false as const,
+    hiddenReasoningExposed: false as const,
+    fabricatedProvenance: false as const,
+    approvalClaimed: false as const,
+    verificationClaimed: false as const,
+    mutatesUpstreamContributors: false as const,
+  };
+}
+
+function mapExplainabilityEvidenceRow(row: any): PersistedExplainabilityEvidence {
+  return {
+    evidenceId: row.id,
+    kind: row.evidence_kind,
+    sourceType: row.source_type,
+    sourceRef: row.source_ref,
+    sourceKey: row.source_key,
+    sourceVersion: row.source_version ?? undefined,
+    provenance: row.provenance,
+    reviewStatus: row.review_status,
+    observedAt: row.observed_at ?? undefined,
+    declaredSignal: row.declared_signal ?? undefined,
+    narrative: row.narrative ?? undefined,
+    revoked: row.revoked ?? false,
+    conflictsWith: row.conflicts_with ?? [],
+    contributorKey: row.contributor_key ?? undefined,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    explainabilityStateId: row.explainability_state_id,
+    recordedAt: row.recorded_at,
+    createdBy: row.created_by ?? undefined,
+    autoExecutionClaimed: false,
+    scheduleExecutionClaimed: false,
+    costExecutionClaimed: false,
+    contractInstructionClaimed: false,
+    approvalAuthorityClaimed: false,
+    chainOfThoughtExposed: false,
+    hiddenReasoningExposed: false,
+    automaticEvidenceCreationClaimed: false,
+    earnedValueDerived: false,
+    cpmDerived: false,
+    financialPostingClaimed: false,
+    numericalPrecisionClaimed: false,
+    registerMutationClaimed: false,
+    mutatesCoreRisk: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
+function mapExplainabilityReviewRow(row: any): PersistedExplainabilityReview {
+  return {
+    reviewId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    explainabilityStateId: row.explainability_state_id,
+    workflowInstanceId: row.workflow_instance_id,
+    workflowState: row.workflow_state,
+    outcome: row.outcome ?? undefined,
+    reviewerId: row.reviewer_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    selfApproved: false,
+    approvalAuthorityClaimed: false,
+    chainOfThoughtExposed: false,
+    hiddenReasoningExposed: false,
   };
 }

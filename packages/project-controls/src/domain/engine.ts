@@ -182,6 +182,13 @@ import {
   type ReviewAssuranceCommand,
   type ReviewAssuranceResult,
 } from "./engine-assurance";
+import {
+  createExplainabilityOrchestration,
+  type AssessExplainabilityCommand,
+  type AssessExplainabilityResult,
+  type ReviewExplainabilityCommand,
+  type ReviewExplainabilityResult,
+} from "./engine-explainability";
 
 export type {
   AssessForecastCommand,
@@ -217,6 +224,13 @@ export type {
   ReviewAssuranceCommand,
   ReviewAssuranceResult,
 } from "./engine-assurance";
+
+export type {
+  AssessExplainabilityCommand,
+  AssessExplainabilityResult,
+  ReviewExplainabilityCommand,
+  ReviewExplainabilityResult,
+} from "./engine-explainability";
 
 export type AssessProgressCommand = {
   tenantId: string;
@@ -616,6 +630,7 @@ export class ProjectControlsEngine {
   private readonly scenarioOrchestration: ReturnType<typeof createScenarioOrchestration>;
   private readonly riskOpportunityOrchestration: ReturnType<typeof createRiskOpportunityOrchestration>;
   private readonly assuranceOrchestration: ReturnType<typeof createAssuranceOrchestration>;
+  private readonly explainabilityOrchestration: ReturnType<typeof createExplainabilityOrchestration>;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
     assertOwnershipLock();
@@ -662,6 +677,12 @@ export class ProjectControlsEngine {
       appendTimeline: (input) => this.appendProjectTimeline(input),
     });
     this.assuranceOrchestration = createAssuranceOrchestration({
+      projectDomainPort: deps.projectDomainPort,
+      repository: deps.repository,
+      events: deps.events,
+      appendTimeline: (input) => this.appendProjectTimeline(input),
+    });
+    this.explainabilityOrchestration = createExplainabilityOrchestration({
       projectDomainPort: deps.projectDomainPort,
       repository: deps.repository,
       events: deps.events,
@@ -2124,6 +2145,44 @@ export class ProjectControlsEngine {
     return this.assuranceOrchestration.listAssuranceHistory(input);
   }
 
+  async assessExplainability(
+    command: AssessExplainabilityCommand,
+  ): Promise<AssessExplainabilityResult> {
+    this.requireCapability(command.actorRole, "explainability.assess");
+    return this.explainabilityOrchestration.assessExplainability(command);
+  }
+
+  async reviewExplainability(
+    command: ReviewExplainabilityCommand,
+  ): Promise<ReviewExplainabilityResult> {
+    this.requireCapability(
+      command.actorRole,
+      command.publish ? "explainability.publish" : "explainability.review",
+    );
+    return this.explainabilityOrchestration.reviewExplainability(command);
+  }
+
+  async getLatestExplainability(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: import("./explainability").ExplainabilityControlContext["scope"];
+    explainabilityUnitId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "explainability.read");
+    return this.explainabilityOrchestration.getLatestExplainability(input);
+  }
+
+  async listExplainabilityHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "explainability.read");
+    return this.explainabilityOrchestration.listExplainabilityHistory(input);
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -2136,7 +2195,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance] =
+    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance, explainability] =
       await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
@@ -2188,6 +2247,11 @@ export class ProjectControlsEngine {
         command.workspaceId,
         reference.projectId,
       ),
+      this.deps.repository.listExplainabilityStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
     ]);
 
     const profileId =
@@ -2227,6 +2291,9 @@ export class ProjectControlsEngine {
         .map((state) => state.stateId),
       assuranceStateIds: this.assuranceOrchestration
         .latestPerAssuranceThread(assurance)
+        .map((state) => state.stateId),
+      explainabilityStateIds: this.explainabilityOrchestration
+        .latestPerExplainabilityThread(explainability)
         .map((state) => state.stateId),
       createdBy: command.actorId,
       immutable: true,
@@ -2321,6 +2388,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const explainability = await this.deps.repository.listExplainabilityStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -2353,6 +2425,9 @@ export class ProjectControlsEngine {
         riskOpportunity,
       ),
       assurance: this.assuranceOrchestration.latestPerAssuranceThread(assurance),
+      explainability: this.explainabilityOrchestration.latestPerExplainabilityThread(
+        explainability,
+      ),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,

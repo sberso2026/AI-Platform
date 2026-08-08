@@ -190,7 +190,7 @@ describe("Phase 11E cost review workflow", () => {
 describe("Phase 11E project context with cost", () => {
   it("lists five active contributors including productivity_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(10);
+    expect(check.activeContributorKeys).toHaveLength(11);
     expect(check.activeContributorKeys).toContain("cost_intelligence");
     expect(check.activeContributorKeys).toContain("productivity_intelligence");
   });

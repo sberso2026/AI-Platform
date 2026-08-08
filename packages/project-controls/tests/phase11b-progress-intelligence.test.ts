@@ -318,10 +318,11 @@ describe("Phase 11B project context engine", () => {
       "scenario_intelligence",
       "risk_opportunity_intelligence",
       "assurance_intelligence",
+      "explainability_intelligence",
     ]);
     expect(check.reservedContributorKeys).toContain("earned_value");
     expect(check.reservedContributorKeys).toContain("contingency_intelligence");
-    expect(PROJECT_PROFILE_CONTRIBUTORS.length).toBe(12);
+    expect(PROJECT_PROFILE_CONTRIBUTORS.length).toBe(13);
   });
 
   it("abstains when no progress intelligence exists", () => {
@@ -383,6 +384,7 @@ describe("Phase 11B project context engine", () => {
       "scenario_intelligence",
       "risk_opportunity_intelligence",
       "assurance_intelligence",
+      "explainability_intelligence",
     ]);
     expect(outcome.profile.floatComputed).toBe(false);
     expect(outcome.profile.mutatesProjectIdentity).toBe(false);

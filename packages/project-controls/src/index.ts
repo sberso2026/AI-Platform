@@ -78,6 +78,17 @@ export {
   assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInAssuranceIntelligence,
   assertAdvisoryOnly as assertAssuranceAdvisoryOnly,
 } from "./domain/assurance-engine";
+export * from "./domain/explainability";
+export * from "./domain/explainability-confidence";
+export {
+  ProjectControlsExplainabilityIntelligenceEngine,
+  ExplainabilityIntelligenceEngine,
+  createExplainabilityIntelligenceEngine,
+  assertNoAutomaticExplanationApproval,
+  assertNoAutomaticEvidenceCreation,
+  assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInExplainabilityIntelligence,
+  assertAdvisoryOnly as assertExplainabilityAdvisoryOnly,
+} from "./domain/explainability-engine";
 export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
@@ -136,6 +147,10 @@ export {
   type PersistedAssuranceEvidence,
   type PersistedAssuranceReview,
   type PersistedAssuranceConfidence,
+  type PersistedExplainabilityState,
+  type PersistedExplainabilityEvidence,
+  type PersistedExplainabilityReview,
+  type PersistedExplainabilityConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

@@ -797,6 +797,54 @@ export type ProjectControlsRepositoryPort = {
     assuranceStateId: string,
   ): Promise<PersistedAssuranceConfidence[]>;
 
+  saveExplainabilityState(state: PersistedExplainabilityState): Promise<PersistedExplainabilityState>;
+  getExplainabilityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedExplainabilityState | null>;
+  latestExplainabilityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    explainabilityUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedExplainabilityState | undefined>;
+  listExplainabilityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedExplainabilityState[]>;
+  nextExplainabilityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    explainabilityUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveExplainabilityEvidence(
+    evidence: readonly PersistedExplainabilityEvidence[],
+  ): Promise<PersistedExplainabilityEvidence[]>;
+  listExplainabilityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId: string,
+  ): Promise<PersistedExplainabilityEvidence[]>;
+  saveExplainabilityReview(review: PersistedExplainabilityReview): Promise<PersistedExplainabilityReview>;
+  listExplainabilityReviews(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId?: string,
+  ): Promise<PersistedExplainabilityReview[]>;
+  saveExplainabilityConfidence(
+    confidence: PersistedExplainabilityConfidence,
+  ): Promise<PersistedExplainabilityConfidence>;
+  listExplainabilityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId: string,
+  ): Promise<PersistedExplainabilityConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -885,6 +933,10 @@ export type DurableProjectControlsStore = {
   assuranceEvidence: PersistedAssuranceEvidence[];
   assuranceReviews: PersistedAssuranceReview[];
   assuranceConfidence: PersistedAssuranceConfidence[];
+  explainabilityStates: PersistedExplainabilityState[];
+  explainabilityEvidence: PersistedExplainabilityEvidence[];
+  explainabilityReviews: PersistedExplainabilityReview[];
+  explainabilityConfidence: PersistedExplainabilityConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -938,6 +990,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     assuranceEvidence: [],
     assuranceReviews: [],
     assuranceConfidence: [],
+    explainabilityStates: [],
+    explainabilityEvidence: [],
+    explainabilityReviews: [],
+    explainabilityConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -2395,6 +2451,142 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.assuranceStateId === assuranceStateId,
+    );
+  }
+
+  async saveExplainabilityState(state: PersistedExplainabilityState): Promise<PersistedExplainabilityState> {
+    const explainabilityUnitId = state.controlContext.explainabilityUnitId;
+    const clash = this.store.explainabilityStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        explainabilityStateKey(row.controlContext.scope, row.controlContext.explainabilityUnitId) ===
+          explainabilityStateKey(state.controlContext.scope, explainabilityUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:explainability_version=${state.version}`);
+    this.store.explainabilityStates.push(state);
+    return state;
+  }
+
+  async getExplainabilityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedExplainabilityState | null> {
+    return (
+      this.store.explainabilityStates.find(
+        (row) =>
+          row.tenantId === tenantId && row.workspaceId === workspaceId && row.stateId === stateId,
+      ) ?? null
+    );
+  }
+
+  async latestExplainabilityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    explainabilityUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedExplainabilityState | undefined> {
+    return latestAsOf(
+      this.store.explainabilityStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          explainabilityStateKey(row.controlContext.scope, row.controlContext.explainabilityUnitId) ===
+            explainabilityStateKey(scope, explainabilityUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listExplainabilityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedExplainabilityState[]> {
+    return this.store.explainabilityStates.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId,
+    );
+  }
+
+  async nextExplainabilityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    explainabilityUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestExplainabilityState(
+      tenantId,
+      workspaceId,
+      scope,
+      explainabilityUnitId,
+    );
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && expectedVersion !== next - 1) {
+      throw new Error(`optimistic_lock_conflict:explainability_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveExplainabilityEvidence(
+    evidence: readonly PersistedExplainabilityEvidence[],
+  ): Promise<PersistedExplainabilityEvidence[]> {
+    this.store.explainabilityEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listExplainabilityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId: string,
+  ): Promise<PersistedExplainabilityEvidence[]> {
+    return this.store.explainabilityEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.explainabilityStateId === explainabilityStateId,
+    );
+  }
+
+  async saveExplainabilityReview(review: PersistedExplainabilityReview): Promise<PersistedExplainabilityReview> {
+    this.store.explainabilityReviews.push(review);
+    return review;
+  }
+
+  async listExplainabilityReviews(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId?: string,
+  ): Promise<PersistedExplainabilityReview[]> {
+    return this.store.explainabilityReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!explainabilityStateId || row.explainabilityStateId === explainabilityStateId),
+    );
+  }
+
+  async saveExplainabilityConfidence(
+    confidence: PersistedExplainabilityConfidence,
+  ): Promise<PersistedExplainabilityConfidence> {
+    this.store.explainabilityConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listExplainabilityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    explainabilityStateId: string,
+  ): Promise<PersistedExplainabilityConfidence[]> {
+    return this.store.explainabilityConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.explainabilityStateId === explainabilityStateId,
     );
   }
 

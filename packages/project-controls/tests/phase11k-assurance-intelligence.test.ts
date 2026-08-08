@@ -166,10 +166,11 @@ describe("Phase 11K assurance review workflow", () => {
 });
 
 describe("Phase 11K project context with assurance intelligence", () => {
-  it("lists ten active contributors including assurance_intelligence", () => {
+  it("lists eleven active contributors including assurance_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(10);
+    expect(check.activeContributorKeys).toHaveLength(11);
     expect(check.activeContributorKeys).toContain("assurance_intelligence");
+    expect(check.activeContributorKeys).toContain("explainability_intelligence");
   });
 });
 

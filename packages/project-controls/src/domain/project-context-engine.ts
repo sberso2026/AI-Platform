@@ -86,6 +86,22 @@ import {
   type RiskSignal,
   type OpportunitySignal,
 } from "./risk-opportunity";
+import {
+  type AssuranceAssessmentState,
+  type AssuranceConfidenceClass,
+  type AssuranceEvidenceSufficiency,
+  type AssuranceFindingKind,
+  type AssurancePosture,
+  type AssuranceProfileContribution,
+} from "./assurance";
+import {
+  type ExplainabilityAssessmentState,
+  type ExplainabilityConfidenceClass,
+  type ExplainabilityEvidenceSufficiency,
+  type ExplanationReason,
+  type ExplanationStatus,
+  type ExplainabilityProfileContribution,
+} from "./explainability";
 import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
 
 export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
@@ -159,6 +175,13 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
       "Advisory assurance posture from all published contributors and evidence metadata. Implemented in Phase 11K. Not verification, certification, approval, or evidence approval.",
   },
   {
+    key: "explainability_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Public explainability summaries with evidence/provenance/dependency traces. Implemented in Phase 11L. Not chain-of-thought, hidden inference, approval, or verification.",
+  },
+  {
     key: "contingency_intelligence",
     status: "reserved",
     ownedBy: "project_controls",
@@ -192,6 +215,7 @@ export type ProjectContextComposeInput = {
   scenario?: readonly ScenarioAssessmentState[];
   riskOpportunity?: readonly RiskOpportunityAssessmentState[];
   assurance?: readonly AssuranceAssessmentState[];
+  explainability?: readonly ExplainabilityAssessmentState[];
   /** Number of open change candidates; a candidate is never an approved change. */
   changeCandidateCount?: number;
   version?: number;
@@ -259,6 +283,12 @@ const SCENARIO_CONFIDENCE_ORDER: ScenarioConfidenceClass[] = [
   "high",
 ];
 const ASSURANCE_CONFIDENCE_ORDER: AssuranceConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const EXPLAINABILITY_CONFIDENCE_ORDER: ExplainabilityConfidenceClass[] = [
   "unavailable",
   "low",
   "medium",
@@ -350,6 +380,12 @@ export class ProjectContextEngine {
         state.tenantId === input.tenantId &&
         state.workspaceId === input.workspaceId,
     );
+    const explainability = (input.explainability ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
 
     const reasons: string[] = [];
     const progressAssessed = progress.filter((state) => !state.abstained);
@@ -382,6 +418,9 @@ export class ProjectContextEngine {
     const assuranceAssessed = assurance.filter((state) => !state.abstained);
     const assuranceAbstained = assurance.filter((state) => state.abstained);
     const assurancePublished = assurance.filter((state) => state.status === "published");
+    const explainabilityAssessed = explainability.filter((state) => !state.abstained);
+    const explainabilityAbstained = explainability.filter((state) => state.abstained);
+    const explainabilityPublished = explainability.filter((state) => state.status === "published");
 
     const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
@@ -432,6 +471,7 @@ export class ProjectContextEngine {
       scenarioAbstained.length > 0 ||
       riskOpportunityAbstained.length > 0 ||
       assuranceAbstained.length > 0 ||
+      explainabilityAbstained.length > 0 ||
       progressPublished.length === 0 ||
       (schedule.length > 0 && schedulePublished.length === 0) ||
       (change.length > 0 && changePublished.length === 0) ||
@@ -453,6 +493,9 @@ export class ProjectContextEngine {
       if (scenarioAbstained.length > 0) reasons.push("some_scenario_assessments_abstained");
       if (riskOpportunityAbstained.length > 0) reasons.push("some_risk_opportunity_assessments_abstained");
       if (assuranceAbstained.length > 0) reasons.push("some_assurance_assessments_abstained");
+      if (explainabilityAbstained.length > 0) {
+        reasons.push("some_explainability_assessments_abstained");
+      }
       if (progressPublished.length === 0 && progress.length > 0) {
         reasons.push("no_published_progress_yet");
       }
@@ -759,6 +802,36 @@ export class ProjectContextEngine {
         dominantSufficiency: dominantAssurance(assurance),
         latestAssessmentAt: latestAt(assurance.map((s) => s.assessedAt)),
       } satisfies AssuranceProfileContribution,
+      explainabilityIntelligence: {
+        assessmentsCompleted: explainabilityAssessed.length,
+        assessmentsAbstained: explainabilityAbstained.length,
+        publishedAssessments: explainabilityPublished.length,
+        supportedCount: countExplanationStatus(explainabilityAssessed, "supported"),
+        partiallySupportedCount: countExplanationStatus(explainabilityAssessed, "partially_supported"),
+        unsupportedCount: countExplanationStatus(explainabilityAssessed, "unsupported"),
+        conflictingCount: countExplanationStatus(explainabilityAssessed, "conflicting"),
+        incompleteCount: countExplanationStatus(explainabilityAssessed, "incomplete"),
+        unknownCount: countExplanationStatus(explainabilityAssessed, "unknown"),
+        evidenceBasedReasonCount: countExplanationReason(explainabilityAssessed, "evidence_based"),
+        derivedReasonCount: countExplanationReason(explainabilityAssessed, "derived"),
+        assumedReasonCount: countExplanationReason(explainabilityAssessed, "assumed"),
+        insufficientEvidenceReasonCount: countExplanationReason(
+          explainabilityAssessed,
+          "insufficient_evidence",
+        ),
+        unknownReasonCount: countExplanationReason(explainabilityAssessed, "unknown"),
+        contributorCoverageCount: explainabilityAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        crossContributorConflictCount: explainabilityAssessed.reduce(
+          (sum, state) => sum + state.synthesis.crossContributorConflictNotes.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestExplainabilityConfidence(explainability),
+        dominantSufficiency: dominantExplainability(explainability),
+        latestAssessmentAt: latestAt(explainability.map((s) => s.assessedAt)),
+      } satisfies ExplainabilityProfileContribution,
       contributors: PROJECT_PROFILE_CONTRIBUTORS,
       activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
       reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
@@ -802,8 +875,8 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 10) {
-    throw new Error("phase_11k_must_have_exactly_ten_active_contributors");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 11) {
+    throw new Error("phase_11l_must_have_exactly_eleven_active_contributors");
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
     throw new Error("progress_intelligence_must_stay_active");
@@ -834,6 +907,9 @@ export function assertProjectProfileContributorsComplete(): {
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("assurance_intelligence")) {
     throw new Error("assurance_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("explainability_intelligence")) {
+    throw new Error("explainability_intelligence_must_be_active");
   }
   for (const key of ["contingency_intelligence", "earned_value"] as const) {
     const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
@@ -1182,4 +1258,44 @@ function countAssuranceFinding(
       sum + state.contributorFindings.filter((finding) => finding.findingKind === findingKind).length,
     0,
   );
+}
+
+function lowestExplainabilityConfidence(
+  states: readonly ExplainabilityAssessmentState[],
+): ExplainabilityConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      EXPLAINABILITY_CONFIDENCE_ORDER.indexOf(current) <
+      EXPLAINABILITY_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantExplainability(
+  states: readonly ExplainabilityAssessmentState[],
+): ExplainabilityEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ExplainabilityEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countExplanationStatus(
+  states: readonly ExplainabilityAssessmentState[],
+  status: ExplanationStatus,
+): number {
+  return states.filter((state) => state.explanationStatus === status).length;
+}
+
+function countExplanationReason(
+  states: readonly ExplainabilityAssessmentState[],
+  reason: ExplanationReason,
+): number {
+  return states.filter((state) => state.synthesis.integratedReason === reason).length;
 }

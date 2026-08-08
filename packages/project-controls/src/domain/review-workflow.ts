@@ -27,6 +27,7 @@ import {
   AUTONOMOUS_SCENARIO_PUBLICATION_ALLOWED,
   AUTONOMOUS_RISK_OPPORTUNITY_PUBLICATION_ALLOWED,
   AUTONOMOUS_ASSURANCE_PUBLICATION_ALLOWED,
+  AUTONOMOUS_EXPLAINABILITY_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
@@ -1192,5 +1193,127 @@ export function assertAssurancePublishable(input: {
   }
   if (input.assessedBy && input.assessedBy === input.reviewerId) {
     throw new Error("assurance_self_approval_forbidden");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Explainability review (Phase 11L)
+// ---------------------------------------------------------------------------
+
+export const EXPLAINABILITY_REVIEW_WORKFLOW_SLUG =
+  "project_controls.explainability_review" as const;
+
+export const EXPLAINABILITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: EXPLAINABILITY_REVIEW_WORKFLOW_SLUG,
+  displayName: "Project Controls Explainability Intelligence Review",
+  moduleKey: "project_controls",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+  ],
+};
+
+export const EXPLAINABILITY_REVIEW_ENTITY_TYPE =
+  "project_controls_explainability_assessment" as const;
+
+export type ExplainabilityReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type ExplainabilityReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startExplainabilityReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: EXPLAINABILITY_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: EXPLAINABILITY_REVIEW_ENTITY_TYPE,
+    entityId: input.assessmentStateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "explainability_intelligence",
+      projectId: input.projectId,
+      advisoryOnly: true,
+      autoExecutionEnabled: false,
+      approvalAuthorityClaimed: false,
+      verificationClaimed: false,
+      automaticEvidenceCreationClaimed: false,
+      chainOfThoughtExposed: false,
+      hiddenReasoningExposed: false,
+      duplicateExplainabilityOwnershipDetected: false,
+      mutatesUpstreamContributors: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: EXPLAINABILITY_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionExplainabilityReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: ExplainabilityReviewAction;
+  to: ExplainabilityReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: EXPLAINABILITY_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function assertExplainabilityPublishable(input: {
+  workflowState: string;
+  reviewerId?: string;
+  assessedBy?: string;
+  approvalAuthorityClaimed?: boolean;
+  chainOfThoughtExposed?: boolean;
+}): void {
+  if (AUTONOMOUS_EXPLAINABILITY_PUBLICATION_ALLOWED) {
+    throw new Error("autonomous_explainability_publication_forbidden");
+  }
+  if (input.approvalAuthorityClaimed === true || input.chainOfThoughtExposed === true) {
+    throw new Error("explainability_assessment_is_not_approval_or_chain_of_thought");
+  }
+  if (input.workflowState !== "approved") {
+    throw new Error("explainability_publish_requires_approved_review");
+  }
+  if (!input.reviewerId) {
+    throw new Error("explainability_publish_requires_reviewer");
+  }
+  if (input.assessedBy && input.assessedBy === input.reviewerId) {
+    throw new Error("explainability_self_approval_forbidden");
   }
 }

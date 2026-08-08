@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls-certification",
-  "version": "0.11.0-assurance-intelligence",
+  "version": "0.12.0-explainability-intelligence",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "certify:phase11h": "tsx scripts/run-phase11h-certification.ts",
     "certify:phase11j": "tsx scripts/run-phase11j-certification.ts",
     "certify:phase11k": "tsx scripts/run-phase11k-certification.ts",
+    "certify:phase11l": "tsx scripts/run-phase11l-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {
