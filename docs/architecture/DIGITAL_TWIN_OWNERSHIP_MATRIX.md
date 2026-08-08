@@ -1,6 +1,11 @@
-# Digital Twin — Ownership Matrix (Phase 12A lock)
+# Digital Twin — Ownership Matrix (Phase 12B core)
 
-Status: discovery · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+Status: core · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+
+> **Phase 12B update:** Core domain tables (`batch_75`) now own twin identity,
+> representation references, relationships, thread links, and state references.
+> Kernel `digital_twins*` tables remain **preserve**. KG reuse via typed edges —
+> no new graph engine.
 
 ## Locked ownership boundaries
 
@@ -10,7 +15,7 @@ Status: discovery · Aligned with `packages/digital-twin/src/architecture/owners
 | twin_state | `digital_twin` | owns |
 | twin_representation | `digital_twin` | owns |
 | simulation_state | `digital_twin` | owns |
-| digital_thread | `digital_twin` | owns (model only in 12A) |
+| digital_thread | `digital_twin` | owns (implemented in 12B core) |
 | asset_identity_canonical | `engineering_os_shared_domain` | consumes |
 | project_identity_canonical | `engineering_os_shared_project_domain` | consumes |
 | asset_lifecycle_canonical | `engineering_os_shared_domain` | forbidden |

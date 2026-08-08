@@ -1,14 +1,16 @@
 {
   "name": "@rtb/digital-twin-certification",
-  "version": "0.1.0-discovery",
+  "version": "0.2.0-core",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase12a": "tsx scripts/run-phase12a-certification.ts",
+    "certify:phase12b": "tsx scripts/run-phase12b-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {
-    "@rtb/digital-twin": "workspace:*"
+    "@rtb/digital-twin": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

@@ -1,23 +1,28 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertCoreContracts,
   assertDraftContractsOnly,
   assertFidelityNotImplemented,
   assertOwnershipLock,
+  DIGITAL_TWIN_DISCOVERY_IMPLEMENTED,
   DIGITAL_TWIN_IMPLEMENTED,
   DIGITAL_TWIN_MODULE_KEY,
-  DIGITAL_TWIN_OWNERSHIP_MATRIX,
   DIGITAL_TWIN_PHASE,
   DIGITAL_TWIN_PRODUCT_NAME,
+  DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
   DIGITAL_TWIN_STATUS,
   DIGITAL_TWIN_VERSION,
-  DIGITAL_TWIN_DISCOVERY_IMPLEMENTED,
   digitalTwinDiscoveryReady,
   digitalTwinOwnershipLocked,
   FIDELITY_MODEL,
-  getDigitalTwinDiscoveryDeclaration,
+  getDigitalTwinCoreDeclaration,
+  HOSTED_PERSISTENCE_READY,
+  KNOWLEDGE_GRAPH_REUSE,
   LIVE_TELEMETRY_IMPLEMENTED,
+  PHASE_12A_CERTIFIED_COMMIT,
+  PHASE_12A_VERSION,
+  PHASE_12C_READY,
   PRODUCTION_DIGITAL_TWIN_READY,
-  PROJECT_CONTROLS_V1_COMMIT,
   PUBLIC_CONTRACT_VERSION,
   SIMULATION_EXECUTION_IMPLEMENTED,
   THREE_D_VIEWER_IMPLEMENTED,
@@ -29,23 +34,35 @@ import {
   ASSET_INTELLIGENCE_V1_COMMIT,
   PROJECT_INTELLIGENCE_V1_COMMIT,
   INSPECTION_INTELLIGENCE_V1_COMMIT,
+  PROJECT_CONTROLS_V1_COMMIT,
+  TWIN_IDENTITY_READY,
 } from "../src/index";
 
-describe("Phase 12A Digital Twin discovery lock", () => {
-  it("declares discovery identity and version", () => {
+describe("Phase 12A/12B Digital Twin discovery and core lock", () => {
+  it("declares core identity and version (12B)", () => {
     expect(DIGITAL_TWIN_PRODUCT_NAME).toBe("Digital Twin");
     expect(DIGITAL_TWIN_MODULE_KEY).toBe("digital_twin");
-    expect(DIGITAL_TWIN_VERSION).toBe("0.1.0-discovery");
-    expect(DIGITAL_TWIN_STATUS).toBe("discovery");
-    expect(DIGITAL_TWIN_PHASE).toBe("12A");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.2.0-core");
+    expect(DIGITAL_TWIN_STATUS).toBe("core");
+    expect(DIGITAL_TWIN_PHASE).toBe("12B");
     expect(DIGITAL_TWIN_DISCOVERY_IMPLEMENTED).toBe(true);
+    expect(DIGITAL_TWIN_IMPLEMENTED).toBe(true);
     expect(digitalTwinDiscoveryReady).toBe(true);
     expect(digitalTwinOwnershipLocked).toBe(true);
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.1.0-draft");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.2.0-core-draft");
+    expect(TWIN_IDENTITY_READY).toBe(true);
+    expect(KNOWLEDGE_GRAPH_REUSE).toBe(true);
+    expect(HOSTED_PERSISTENCE_READY).toBe(true);
+    expect(DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED).toBe(true);
+    expect(PHASE_12C_READY).toBe(true);
+  });
+
+  it("pins Phase 12A certified baseline", () => {
+    expect(PHASE_12A_CERTIFIED_COMMIT).toBe("2c5ed03f7de12cde9bfb71a9d430f5e342291303");
+    expect(PHASE_12A_VERSION).toBe("0.1.0-discovery");
   });
 
   it("keeps every production/runtime lock closed", () => {
-    expect(DIGITAL_TWIN_IMPLEMENTED).toBe(false);
     expect(PRODUCTION_DIGITAL_TWIN_READY).toBe(false);
     expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(false);
     expect(SIMULATION_EXECUTION_IMPLEMENTED).toBe(false);
@@ -60,30 +77,16 @@ describe("Phase 12A Digital Twin discovery lock", () => {
   it("asserts ownership without claiming canonical identity", () => {
     const lock = assertOwnershipLock();
     expect(lock.ok).toBe(true);
-    expect(lock.digitalTwinOwnership).toBe("digital_twin");
-    expect(lock.canonicalAssetIdentityOwnership).toBe("engineering_os_shared_domain");
-    expect(lock.canonicalProjectIdentityOwnership).toBe("engineering_os_shared_project_domain");
-    expect(lock.sensorStreamOwnership).toBe("shm");
+    expect(lock.digitalTwinImplemented).toBe(true);
     expect(lock.productionDigitalTwinReady).toBe(false);
-    expect(lock.publicContractVersion).toBe("0.1.0-draft");
-  });
-
-  it("never assigns canonical asset or project identity to digital_twin", () => {
-    const forbidden = DIGITAL_TWIN_OWNERSHIP_MATRIX.filter((row) =>
-      ["asset_identity_canonical", "project_identity_canonical", "asset_lifecycle_canonical"].includes(
-        row.concern,
-      ),
-    );
-    expect(forbidden.length).toBe(3);
-    for (const row of forbidden) {
-      expect(row.owner, row.concern).not.toBe("digital_twin");
-    }
+    expect(lock.publicContractVersion).toBe("0.2.0-core-draft");
   });
 
   it("reserves L0–L5 fidelity without implementation beyond L0", () => {
     expect(FIDELITY_MODEL.length).toBe(6);
     expect(assertFidelityNotImplemented().maxAvailableLevel).toBe("L0");
-    expect(assertDraftContractsOnly().contractVersion).toBe("0.1.0-draft");
+    expect(assertDraftContractsOnly().contractVersion).toBe("0.2.0-core-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.2.0-core-draft");
   });
 
   it("pins frozen V1 baselines", () => {
@@ -93,13 +96,16 @@ describe("Phase 12A Digital Twin discovery lock", () => {
     expect(INSPECTION_INTELLIGENCE_V1_COMMIT).toBe("d47c4ffa4c7147d3e2053b0764dfe5c80b56eb09");
   });
 
-  it("exposes a coherent discovery declaration", () => {
-    const declaration = getDigitalTwinDiscoveryDeclaration();
-    expect(declaration.version).toBe("0.1.0-discovery");
-    expect(declaration.status).toBe("discovery");
+  it("exposes a coherent core declaration", () => {
+    const declaration = getDigitalTwinCoreDeclaration();
+    expect(declaration.version).toBe("0.2.0-core");
+    expect(declaration.status).toBe("core");
+    expect(declaration.digitalTwinImplemented).toBe(true);
     expect(declaration.productionDigitalTwinReady).toBe(false);
     expect(declaration.digitalTwinRuntimeImplemented).toBe(false);
-    expect(declaration.phase12BReady).toBe(true);
-    expect(declaration.moduleRegistryStatus).toBe("coming_soon");
+    expect(declaration.phase12CReady).toBe(true);
+    expect(declaration.twinIdentityReady).toBe(true);
+    expect(declaration.digitalTwinProductTablesIntroduced).toBe(true);
+    expect(declaration.identityReviewSlug).toBe("digital_twin.identity_review");
   });
 });

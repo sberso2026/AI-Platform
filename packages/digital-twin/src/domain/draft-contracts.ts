@@ -43,8 +43,8 @@ export type TwinStateSnapshotDraft = {
 };
 
 export function assertDraftContractsOnly(): { ok: true; contractVersion: typeof PUBLIC_CONTRACT_VERSION } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.1.0-draft") {
-    throw new Error("only_draft_contracts_allowed_in_phase_12a");
+  if (!PUBLIC_CONTRACT_VERSION.endsWith("-draft")) {
+    throw new Error("only_draft_contracts_allowed");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

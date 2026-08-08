@@ -38,8 +38,9 @@ so Phase 12B can reason from fact rather than memory.
 
 Kernel `DigitalTwinService` registers and lists rows in `digital_twins` with
 status history. Phase 12A **preserves** these tables and the service as
-foundation. Phase 12B must **REBIND** auto-create and runtime orchestration under
-`@rtb/digital-twin` module ownership rather than implicit kernel-only behaviour.
+foundation. Phase 12B **REBINDs** via optional `kernel_twin_id` on
+`digital_twin_identities` (`batch_75`) — kernel tables are not dropped or rewritten.
+Auto-create and runtime orchestration remain deferred to Phase 12C+.
 
 ### 3. Kernel twin SQL tables — `PRESERVE`
 
@@ -174,3 +175,13 @@ or GA packaging is forbidden in Phase 12A.
 - No simulation execution, 3D viewer, SHM runtime, or actuation
 - No `digital_thread` persistence
 - No batch migrations for twin production schema in Phase 12A
+
+## Phase 12B core additions (`batch_75`)
+
+Phase 12B introduces module product tables without dropping kernel foundation:
+
+- `digital_twin_identities` — optional `kernel_twin_id` for REBIND
+- `digital_twin_representations`, `digital_twin_relationships`, `digital_twin_thread_links`
+- `digital_twin_state_references`, `digital_twin_reviews`, `digital_twin_outbox_events`
+
+Still absent after 12B: telemetry tables, simulation execution, runtime sync, 3D viewer.

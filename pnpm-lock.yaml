@@ -244,6 +244,13 @@ importers:
         version: 5.9.3
 
   packages/digital-twin:
+    dependencies:
+      '@rtb/engineering-os':
+        specifier: workspace:*
+        version: link:../engineering-os
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -260,6 +267,9 @@ importers:
       '@rtb/digital-twin':
         specifier: workspace:*
         version: link:../digital-twin
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
