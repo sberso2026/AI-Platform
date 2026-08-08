@@ -1,5 +1,5 @@
 /**
- * Phase 11D — Project Controls domain events.
+ * Phase 11E — Project Controls domain events.
  *
  * Identifiers only — no evidence payloads. Governance flags prevent mistaking
  * advisory schedule/progress/change intelligence for CPM, earned value or a
@@ -17,6 +17,9 @@ import type {
   ChangeIntelligenceState,
   ProjectSnapshot,
 } from "./change";
+import type {
+  CostIntelligenceState,
+} from "./cost";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -31,6 +34,11 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.change.published",
   "engineering.project.change.superseded",
   "engineering.project.change_candidate.created",
+  "engineering.project.cost.assessed",
+  "engineering.project.cost.reviewed",
+  "engineering.project.cost.published",
+  "engineering.project.cost.superseded",
+  "engineering.project.cost.variance_attributed",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -43,6 +51,14 @@ export const PROJECT_CONTROLS_CHANGE_EVENTS = [
   "engineering.project.change.superseded",
   "engineering.project.change_candidate.created",
   "engineering.project.snapshot.created",
+] as const;
+
+export const PROJECT_CONTROLS_COST_EVENTS = [
+  "engineering.project.cost.assessed",
+  "engineering.project.cost.reviewed",
+  "engineering.project.cost.published",
+  "engineering.project.cost.superseded",
+  "engineering.project.cost.variance_attributed",
 ] as const;
 
 export type ProjectControlsEventGovernance = {
@@ -153,6 +169,8 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     scheduleScopesAbstained: profile.schedule?.scopesAbstained ?? 0,
     changesAssessed: profile.change?.changesAssessed ?? 0,
     changesAbstained: profile.change?.changesAbstained ?? 0,
+    costsAssessed: profile.cost?.costsAssessed ?? 0,
+    costsAbstained: profile.cost?.costsAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
@@ -182,6 +200,26 @@ export function changeEventPayload(state: ChangeIntelligenceState): Record<strin
   };
 }
 
+/** Identifiers only — no monetary amounts or ledger balances. */
+export function costEventPayload(state: CostIntelligenceState): Record<string, unknown> {
+  return {
+    costStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    costPosture: state.costPosture,
+    varianceAttribution: state.varianceAttribution,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    accountId: state.controlContext.accountRef.accountId,
+    currencyCode: state.controlContext.currencyCode,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    changeIntelligenceRefCount: state.changeIntelligenceRefs.length,
+    financialPostingClaimed: false,
+  };
+}
+
 /** Identifiers only. A candidate event never asserts an approved change. */
 export function changeCandidateEventPayload(
   candidate: ChangeCandidate,
@@ -207,6 +245,7 @@ export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, 
     progressStateCount: snapshot.progressStateIds.length,
     scheduleStateCount: snapshot.scheduleStateIds.length,
     changeStateCount: snapshot.changeStateIds.length,
+    costStateCount: snapshot.costStateIds.length,
     capturedAt: snapshot.capturedAt,
     immutable: true,
     containsEvidencePayloads: false,

@@ -1,5 +1,5 @@
 /**
- * Phase 11D — Project Controls service facades.
+ * Phase 11E — Project Controls service facades.
  *
  * Thin wrappers over the engine so HTTP handlers and future UI code depend on
  * an intent-shaped API rather than the orchestration surface.
@@ -8,6 +8,8 @@
 import type {
   AssessChangeCommand,
   AssessChangeResult,
+  AssessCostCommand,
+  AssessCostResult,
   AssessProgressCommand,
   AssessProgressResult,
   AssessScheduleCommand,
@@ -21,6 +23,8 @@ import type {
   ProjectControlsEngine,
   ReviewChangeCommand,
   ReviewChangeResult,
+  ReviewCostCommand,
+  ReviewCostResult,
   ReviewProgressCommand,
   ReviewProgressResult,
   ReviewScheduleCommand,
@@ -35,6 +39,7 @@ import type {
   ProjectSnapshot,
   ProjectTimelineEvent,
 } from "./change";
+import type { CostIntelligenceState } from "./cost";
 import type { ProjectControlsRole } from "./role-matrix";
 
 export class ProgressIntelligenceService {
@@ -132,6 +137,42 @@ export class ChangeIntelligenceService {
   }
 }
 
+/**
+ * Advisory cost intelligence. Nothing on this service posts to a ledger or
+ * mutates a budget.
+ */
+export class CostIntelligenceService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(command: AssessCostCommand): Promise<AssessCostResult> {
+    return this.engine.assessCost(command);
+  }
+
+  review(command: ReviewCostCommand): Promise<ReviewCostResult> {
+    return this.engine.reviewCost(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    accountId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<CostIntelligenceState | undefined> {
+    return this.engine.getLatestCost(input);
+  }
+
+  history(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<CostIntelligenceState[]> {
+    return this.engine.listCostHistory(input);
+  }
+}
+
 export class ProjectSnapshotService {
   constructor(private readonly engine: ProjectControlsEngine) {}
 
@@ -179,6 +220,7 @@ export class ProjectControlsService {
   readonly progress: ProgressIntelligenceService;
   readonly schedule: ScheduleIntelligenceService;
   readonly change: ChangeIntelligenceService;
+  readonly cost: CostIntelligenceService;
   readonly snapshot: ProjectSnapshotService;
   readonly context: ProjectContextService;
 
@@ -186,6 +228,7 @@ export class ProjectControlsService {
     this.progress = new ProgressIntelligenceService(engine);
     this.schedule = new ScheduleIntelligenceService(engine);
     this.change = new ChangeIntelligenceService(engine);
+    this.cost = new CostIntelligenceService(engine);
     this.snapshot = new ProjectSnapshotService(engine);
     this.context = new ProjectContextService(engine);
   }
@@ -218,6 +261,14 @@ export class ProjectControlsService {
 
   reviewChange(command: ReviewChangeCommand): Promise<ReviewChangeResult> {
     return this.engine.reviewChange(command);
+  }
+
+  assessCost(command: AssessCostCommand): Promise<AssessCostResult> {
+    return this.engine.assessCost(command);
+  }
+
+  reviewCost(command: ReviewCostCommand): Promise<ReviewCostResult> {
+    return this.engine.reviewCost(command);
   }
 
   createProjectSnapshot(

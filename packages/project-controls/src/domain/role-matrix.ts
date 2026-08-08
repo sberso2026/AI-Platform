@@ -39,6 +39,13 @@ export const PROJECT_CONTROLS_CAPABILITIES = [
   "change.approve",
   "change.publish",
   "change.reject",
+  "cost.read",
+  "cost.assess",
+  "cost.submit_review",
+  "cost.review",
+  "cost.approve",
+  "cost.publish",
+  "cost.reject",
   "profile.read",
   "profile.compose",
   "snapshot.read",
@@ -54,6 +61,8 @@ export const SELF_APPROVE_FORBIDDEN_CAPABILITIES: readonly ProjectControlsCapabi
   "schedule.publish",
   "change.approve",
   "change.publish",
+  "cost.approve",
+  "cost.publish",
 ] as const;
 
 const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> = {
@@ -61,6 +70,7 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "progress.read",
     "schedule.read",
     "change.read",
+    "cost.read",
     "profile.read",
     "snapshot.read",
   ],
@@ -74,6 +84,9 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "change.read",
     "change.assess",
     "change.submit_review",
+    "cost.read",
+    "cost.assess",
+    "cost.submit_review",
     "profile.read",
     "profile.compose",
     "snapshot.read",
@@ -89,6 +102,9 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "change.read",
     "change.review",
     "change.reject",
+    "cost.read",
+    "cost.review",
+    "cost.reject",
     "profile.read",
     "snapshot.read",
   ],
@@ -108,6 +124,11 @@ const MATRIX: Record<ProjectControlsRole, readonly ProjectControlsCapability[]> 
     "change.approve",
     "change.publish",
     "change.reject",
+    "cost.read",
+    "cost.review",
+    "cost.approve",
+    "cost.publish",
+    "cost.reject",
     "profile.read",
     "snapshot.read",
   ],
@@ -143,13 +164,12 @@ export function assertProjectControlsCapability(
 }
 
 /**
- * Reserved capabilities must never appear in the matrix. `change.*` is now an
- * implemented *assessment* capability set and is deliberately not on this list;
- * cost, earned value, CPM, float, forecast, contingency and financial posting
- * stay forbidden.
+ * Reserved capabilities must never appear in the matrix. `change.*` and `cost.*`
+ * are implemented *assessment* capability sets; earned value, CPM, float,
+ * forecast, contingency and financial posting stay forbidden.
  */
 export function assertNoReservedCapabilities(): { ok: true } {
-  const forbidden = /(cost|earned_value|cpm|float|forecast|contingency|posting)/;
+  const forbidden = /^(earned_value|cpm|float|forecast|contingency|posting)/;
   for (const capability of PROJECT_CONTROLS_CAPABILITIES) {
     if (forbidden.test(capability)) {
       throw new Error(`reserved_capability_must_not_be_granted:${capability}`);

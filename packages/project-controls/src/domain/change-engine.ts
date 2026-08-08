@@ -43,7 +43,6 @@ import {
   CONTINGENCY_MANAGEMENT_IMPLEMENTED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
   COST_ENGINE_IMPLEMENTED,
-  COST_INTELLIGENCE_IMPLEMENTED,
   CPM_SCHEDULING_IMPLEMENTED,
   EARNED_VALUE_IMPLEMENTED,
   FINANCIAL_POSTING_IMPLEMENTED,
@@ -283,19 +282,13 @@ export function createChangeIntelligenceEngine(
 export function assertNoCostEngine(): {
   ok: true;
   costEngineImplemented: false;
-  costIntelligenceImplemented: false;
   budgetLedgerImplemented: false;
   financialPostingImplemented: false;
   earnedValueImplemented: false;
   forecastingImplemented: false;
   contingencyManagementImplemented: false;
 } {
-  if (
-    COST_ENGINE_IMPLEMENTED ||
-    COST_INTELLIGENCE_IMPLEMENTED ||
-    BUDGET_LEDGER_IMPLEMENTED ||
-    FINANCIAL_POSTING_IMPLEMENTED
-  ) {
+  if (COST_ENGINE_IMPLEMENTED || BUDGET_LEDGER_IMPLEMENTED || FINANCIAL_POSTING_IMPLEMENTED) {
     throw new Error("cost_engine_forbidden_in_change_intelligence");
   }
   if (EARNED_VALUE_IMPLEMENTED || CPM_SCHEDULING_IMPLEMENTED || FLOAT_COMPUTATION_IMPLEMENTED) {
@@ -307,7 +300,6 @@ export function assertNoCostEngine(): {
   return {
     ok: true,
     costEngineImplemented: false,
-    costIntelligenceImplemented: false,
     budgetLedgerImplemented: false,
     financialPostingImplemented: false,
     earnedValueImplemented: false,

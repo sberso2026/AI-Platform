@@ -1,6 +1,6 @@
 # Project Controls — boundary map (discovery)
 
-Status: change_intelligence · Module version: `0.4.0-change-intelligence` · Phase: 11D
+Status: cost_intelligence · Module version: `0.5.0-cost-intelligence` · Phase: 11E
 
 Three relations, and nothing in between: Project Controls **owns** a concern,
 **consumes** it through a public contract, or is **forbidden** from it. The
@@ -33,7 +33,7 @@ flowchart TB
     CMMS["CMMS work orders"]
   end
 
-  PC["Project Controls 0.4.0-change-intelligence<br/>progress + schedule + change intelligence ABOUT projects<br/>cost · contingency · baseline reserved"]
+  PC["Project Controls 0.5.0-cost-intelligence<br/>progress + schedule + change + cost intelligence ABOUT projects<br/>contingency · baseline reserved"]
 
   CORE -->|consumes projectId, WBS nodes| PC
   PI -->|consumes knowledge derivatives| PC
@@ -72,7 +72,7 @@ Concerns where Project Controls is the owner.
 | `schedule_controls_intelligence` | Advisory schedule posture from declared milestones and baselines | Implemented 11C |
 | `change_controls_intelligence` | Advisory change assessment: classification, status context, impact contexts | Implemented 11D |
 | `project_snapshot_and_timeline` | Immutable identifier-only snapshots and an append-only project timeline | Implemented 11D |
-| `cost_controls_intelligence` | Planned, committed and incurred cost positions and their variance | Reserved — Phase 11E |
+| `cost_controls_intelligence` | Planned, committed and incurred cost positions and their variance | Implemented 11E |
 | `contingency_controls_intelligence` | Contingency pools and drawdown history | Reserved |
 
 Change ownership is ownership of *intelligence about change*, not authority over
@@ -127,7 +127,7 @@ Concerns Project Controls must not implement, own or mutate.
 | `structural_health_monitoring` | `external_future` | Out of scope |
 | `cmms_work_orders` | `none_in_project_controls` | No work order execution in Project Controls |
 
-Additionally forbidden through Phase 11D, regardless of eventual ownership:
+Additionally forbidden through Phase 11E, regardless of eventual ownership:
 earned value calculation, Critical Path Method scheduling, float computation,
 forecasting, cost engines, budget ledgers, financial posting, contingency
 drawdown, schedule execution, change execution, contractual change approval,

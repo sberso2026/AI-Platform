@@ -469,6 +469,13 @@ export const PROJECT_TIMELINE_KINDS = [
   "change_published",
   "change_rejected",
   "change_superseded",
+  "cost_assessed",
+  "cost_abstained",
+  "cost_reviewed",
+  "cost_published",
+  "cost_rejected",
+  "cost_superseded",
+  "cost_variance_attributed",
   "project_profile_composed",
   "project_snapshot_created",
 ] as const;
@@ -525,6 +532,7 @@ export type ProjectSnapshot = {
   progressStateIds: string[];
   scheduleStateIds: string[];
   changeStateIds: string[];
+  costStateIds: string[];
   createdBy?: string;
   immutable: true;
   containsEvidencePayloads: false;

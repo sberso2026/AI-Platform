@@ -305,16 +305,17 @@ describe("Phase 11B progress confidence engine", () => {
 });
 
 describe("Phase 11B project context engine", () => {
-  it("lists exactly three active contributors and keeps EV/forecast reserved", () => {
+  it("lists exactly four active contributors and keeps EV/forecast reserved", () => {
     const check = assertProjectProfileContributorsComplete();
     expect(check.activeContributorKeys).toEqual([
       "progress_intelligence",
       "schedule_intelligence",
       "change_intelligence",
+      "cost_intelligence",
     ]);
     expect(check.reservedContributorKeys).toContain("earned_value");
     expect(check.reservedContributorKeys).toContain("forecast");
-    expect(check.reservedContributorKeys).toContain("cost_intelligence");
+    expect(check.reservedContributorKeys).toContain("contingency_intelligence");
     expect(PROJECT_PROFILE_CONTRIBUTORS.length).toBe(8);
   });
 
@@ -370,6 +371,7 @@ describe("Phase 11B project context engine", () => {
       "progress_intelligence",
       "schedule_intelligence",
       "change_intelligence",
+      "cost_intelligence",
     ]);
     expect(outcome.profile.floatComputed).toBe(false);
     expect(outcome.profile.mutatesProjectIdentity).toBe(false);

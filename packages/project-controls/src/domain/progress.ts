@@ -350,12 +350,8 @@ export type ProjectProfile = {
    * quantum, never a contractual position.
    */
   change?: import("./change").ChangeProfileContribution;
-  /**
-   * Reserved shape for the Phase 11E cost contributor. Always absent in 11D;
-   * declared so consumers can see where cost intelligence will land without
-   * being able to read a value that does not exist.
-   */
-  costContribution?: never;
+  /** Cost rollups from Phase 11E. Counts and postures only — never a ledger balance. */
+  cost?: import("./cost").CostProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];

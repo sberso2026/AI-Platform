@@ -10,6 +10,15 @@ export * from "./domain/schedule-engine";
 export * from "./domain/change";
 export * from "./domain/change-confidence";
 export * from "./domain/change-engine";
+export * from "./domain/cost";
+export * from "./domain/cost-confidence";
+export {
+  CostIntelligenceEngine,
+  createCostIntelligenceEngine,
+  assertNoEarnedValue as assertNoEarnedValueInCostIntelligence,
+  assertNoFinancialPosting,
+  assertNoForecastEngine,
+} from "./domain/cost-engine";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
 export * from "./domain/review-workflow";
@@ -39,6 +48,10 @@ export {
   type PersistedChangeReview,
   type PersistedChangeConfidence,
   type PersistedChangeCandidate,
+  type PersistedCostState,
+  type PersistedCostEvidence,
+  type PersistedCostReview,
+  type PersistedCostConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

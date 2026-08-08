@@ -12,9 +12,10 @@
  */
 
 import type { ProjectScopeRef } from "./progress";
+import { BASELINE_PROVIDER_IMPLEMENTED } from "../version";
 
 export const BASELINE_PROVIDER_KEY = "baseline" as const;
-export const BASELINE_PROVIDER_IMPLEMENTED = false as const;
+export { BASELINE_PROVIDER_IMPLEMENTED };
 
 export type BaselineProviderQuery = {
   tenantId: string;

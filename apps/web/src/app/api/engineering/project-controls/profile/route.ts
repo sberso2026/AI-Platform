@@ -1,9 +1,9 @@
 /**
- * Minimum Project Controls Project Profile HTTP API (Phase 11D).
+ * Minimum Project Controls Project Profile HTTP API (Phase 11E).
  *
  * Reads the Project Context Engine output. Advisory only: the profile carries
- * progress, schedule and change intelligence plus reserved contributors not yet
- * implemented. It never becomes a second source of project identity.
+ * progress, schedule, change and cost intelligence plus reserved contributors.
+ * It never becomes a second source of project identity.
  */
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -22,10 +22,10 @@ const ACTIVE_CONTRIBUTORS = [
   "progress_intelligence",
   "schedule_intelligence",
   "change_intelligence",
+  "cost_intelligence",
 ] as const;
 
 const RESERVED_CONTRIBUTORS = [
-  "cost_intelligence",
   "contingency_intelligence",
   "productivity_intelligence",
   "earned_value",
@@ -45,6 +45,10 @@ const GOVERNANCE_FLAGS = {
   progressIntelligenceReady: true,
   scheduleIntelligenceReady: true,
   changeIntelligenceReady: true,
+  costIntelligenceReady: true,
+  costIntelligenceIsAdvisoryOnly: true,
+  forecastEngineImplemented: false,
+  phase11fReady: true,
   projectSnapshotReady: true,
   projectTimelineReady: true,
   contractualAuthority: false,

@@ -1,10 +1,10 @@
 /**
- * Phase 11D — Project Context Engine.
+ * Phase 11E — Project Context Engine.
  *
  * Composes a `ProjectProfile` from the intelligence Project Controls owns.
- * Active contributors: progress intelligence (11B), schedule intelligence (11C)
- * and change intelligence (11D). Cost, contingency, productivity, earned value
- * and forecast stay reserved.
+ * Active contributors: progress intelligence (11B), schedule intelligence (11C),
+ * change intelligence (11D) and cost intelligence (11E). Contingency,
+ * productivity, earned value and forecast stay reserved.
  *
  * The engine reads a `ProjectReference` for identity fields. It never writes
  * identity and never re-derives it from its own tables.
@@ -36,6 +36,15 @@ import {
   type ChangeIntelligenceState,
   type ChangeProfileContribution,
 } from "./change";
+import {
+  dominantCostPosture,
+  type CostConfidenceClass,
+  type CostEvidenceSufficiency,
+  type CostIntelligenceState,
+  type CostPosture,
+  type CostProfileContribution,
+  type CostVarianceAttribution,
+} from "./cost";
 import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
 
 export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
@@ -61,10 +70,10 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
   },
   {
     key: "cost_intelligence",
-    status: "reserved",
+    status: "active",
     ownedBy: "project_controls",
     notes:
-      "Reserved for Phase 11E. No cost engine, no budget ledger, no financial posting; financial ledgers stay with external_finance_or_future_finance_domain.",
+      "Advisory, evidence-driven cost posture assessment. Implemented in Phase 11E. Not a budget ledger or financial posting.",
   },
   {
     key: "contingency_intelligence",
@@ -105,6 +114,7 @@ export type ProjectContextComposeInput = {
   progress: readonly ProgressAssessmentState[];
   schedule?: readonly ScheduleAssessmentState[];
   change?: readonly ChangeIntelligenceState[];
+  cost?: readonly CostIntelligenceState[];
   /** Number of open change candidates; a candidate is never an approved change. */
   changeCandidateCount?: number;
   version?: number;
@@ -136,6 +146,12 @@ const SCHEDULE_CONFIDENCE_ORDER: ScheduleConfidenceClass[] = [
   "high",
 ];
 const CHANGE_CONFIDENCE_ORDER: ChangeConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const COST_CONFIDENCE_ORDER: CostConfidenceClass[] = [
   "unavailable",
   "low",
   "medium",
@@ -179,6 +195,12 @@ export class ProjectContextEngine {
         state.tenantId === input.tenantId &&
         state.workspaceId === input.workspaceId,
     );
+    const cost = (input.cost ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
 
     const reasons: string[] = [];
     const progressAssessed = progress.filter((state) => !state.abstained);
@@ -190,6 +212,9 @@ export class ProjectContextEngine {
     const changeAssessed = change.filter((state) => !state.abstained);
     const changeAbstained = change.filter((state) => state.abstained);
     const changePublished = change.filter((state) => state.status === "published");
+    const costAssessed = cost.filter((state) => !state.abstained);
+    const costAbstained = cost.filter((state) => state.abstained);
+    const costPublished = cost.filter((state) => state.status === "published");
 
     const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
@@ -199,7 +224,7 @@ export class ProjectContextEngine {
     let abstentionReason: string | undefined;
     let profileClass: ProjectProfile["profileClass"] = "composed";
 
-    if (progress.length === 0 && schedule.length === 0 && change.length === 0) {
+    if (progress.length === 0 && schedule.length === 0 && change.length === 0 && cost.length === 0) {
       abstained = true;
       abstentionReason = "no_project_controls_intelligence_available";
       profileClass = "abstained";
@@ -207,7 +232,8 @@ export class ProjectContextEngine {
     } else if (
       progressAssessed.length === 0 &&
       scheduleAssessed.length === 0 &&
-      changeAssessed.length === 0
+      changeAssessed.length === 0 &&
+      costAssessed.length === 0
     ) {
       abstained = true;
       abstentionReason = "all_intelligence_assessments_abstained";
@@ -217,14 +243,17 @@ export class ProjectContextEngine {
       progressAbstained.length > 0 ||
       scheduleAbstained.length > 0 ||
       changeAbstained.length > 0 ||
+      costAbstained.length > 0 ||
       progressPublished.length === 0 ||
       (schedule.length > 0 && schedulePublished.length === 0) ||
-      (change.length > 0 && changePublished.length === 0)
+      (change.length > 0 && changePublished.length === 0) ||
+      (cost.length > 0 && costPublished.length === 0)
     ) {
       profileClass = "partially_composed";
       if (progressAbstained.length > 0) reasons.push("some_progress_scopes_abstained");
       if (scheduleAbstained.length > 0) reasons.push("some_schedule_scopes_abstained");
       if (changeAbstained.length > 0) reasons.push("some_change_assessments_abstained");
+      if (costAbstained.length > 0) reasons.push("some_cost_assessments_abstained");
       if (progressPublished.length === 0 && progress.length > 0) {
         reasons.push("no_published_progress_yet");
       }
@@ -233,6 +262,9 @@ export class ProjectContextEngine {
       }
       if (change.length > 0 && changePublished.length === 0) {
         reasons.push("no_published_change_assessment_yet");
+      }
+      if (cost.length > 0 && costPublished.length === 0) {
+        reasons.push("no_published_cost_assessment_yet");
       }
     }
 
@@ -296,6 +328,31 @@ export class ProjectContextEngine {
         latestAssessmentAt: latestAt(change.map((s) => s.assessedAt)),
         contractualAuthorityClaimed: false,
       } satisfies ChangeProfileContribution,
+      cost: {
+        costsAssessed: costAssessed.length,
+        costsAbstained: costAbstained.length,
+        publishedCosts: costPublished.length,
+        overCount: countPosture(costAssessed, "over"),
+        underCount: countPosture(costAssessed, "under"),
+        withinToleranceCount: countPosture(costAssessed, "within_tolerance"),
+        attentionRequiredCount: countPosture(costAssessed, "attention_required"),
+        unexplainedVarianceCount: countVarianceAttribution(
+          costAssessed,
+          "unexplained_movement",
+        ),
+        changeExplainedVarianceCount: countVarianceAttribution(
+          costAssessed,
+          "explained_by_approved_change",
+        ),
+        dominantPosture: dominantCostPosture(
+          costAssessed.map((state) => state.costPosture),
+        ),
+        dominantVarianceAttribution: dominantVarianceAttribution(costAssessed),
+        lowestConfidenceClass: lowestCostConfidence(cost),
+        dominantSufficiency: dominantCost(cost),
+        latestAssessmentAt: latestAt(cost.map((s) => s.assessedAt)),
+        financialPostingClaimed: false,
+      } satisfies CostProfileContribution,
       contributors: PROJECT_PROFILE_CONTRIBUTORS,
       activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
       reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
@@ -339,8 +396,8 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 3) {
-    throw new Error("phase_11d_must_have_exactly_three_active_contributors");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 4) {
+    throw new Error("phase_11e_must_have_exactly_four_active_contributors");
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
     throw new Error("progress_intelligence_must_stay_active");
@@ -351,8 +408,10 @@ export function assertProjectProfileContributorsComplete(): {
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("change_intelligence")) {
     throw new Error("change_intelligence_must_be_active");
   }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("cost_intelligence")) {
+    throw new Error("cost_intelligence_must_be_active");
+  }
   for (const key of [
-    "cost_intelligence",
     "contingency_intelligence",
     "productivity_intelligence",
     "earned_value",
@@ -455,4 +514,47 @@ function countStatusContext(
 function latestAt(values: string[]): string | undefined {
   if (values.length === 0) return undefined;
   return values.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+}
+
+function lowestCostConfidence(states: readonly CostIntelligenceState[]): CostConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      COST_CONFIDENCE_ORDER.indexOf(current) < COST_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantCost(states: readonly CostIntelligenceState[]): CostEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<CostEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countPosture(states: readonly CostIntelligenceState[], posture: CostPosture): number {
+  return states.filter((state) => state.costPosture === posture).length;
+}
+
+function countVarianceAttribution(
+  states: readonly CostIntelligenceState[],
+  attribution: CostVarianceAttribution,
+): number {
+  return states.filter((state) => state.varianceAttribution === attribution).length;
+}
+
+function dominantVarianceAttribution(
+  states: readonly CostIntelligenceState[],
+): CostVarianceAttribution | undefined {
+  if (states.length === 0) return undefined;
+  const counts = new Map<CostVarianceAttribution, number>();
+  for (const state of states) {
+    counts.set(state.varianceAttribution, (counts.get(state.varianceAttribution) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }

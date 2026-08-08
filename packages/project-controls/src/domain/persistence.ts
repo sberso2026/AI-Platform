@@ -1,5 +1,5 @@
 /**
- * Phase 11D — Project Controls persistence port and memory adapter.
+ * Phase 11E — Project Controls persistence port and memory adapter.
  *
  * The memory adapter exists for tests and certification units only;
  * `assertProductionRepositorySafe` makes choosing it in production a throw
@@ -35,6 +35,13 @@ import type {
   ProjectTimelineEvent,
 } from "./change";
 import { changeStateKey } from "./change";
+import type {
+  CostConfidence,
+  CostEvidence,
+  CostIntelligenceState,
+  CostReviewRecord,
+} from "./cost";
+import { costStateKey } from "./cost";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -86,6 +93,23 @@ export type PersistedChangeConfidence = ChangeConfidence & {
   changeStateId: string;
   recordedAt: string;
 };
+
+export type PersistedCostEvidence = CostEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  costStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedCostState = CostIntelligenceState;
+export type PersistedCostReview = CostReviewRecord;
+export type PersistedCostConfidence = CostConfidence & {
+  costStateId: string;
+  recordedAt: string;
+};
+
 export type PersistedProjectSnapshot = ProjectSnapshot;
 export type PersistedProjectTimelineEvent = ProjectTimelineEvent;
 
@@ -296,6 +320,55 @@ export type ProjectControlsRepositoryPort = {
     projectId: string,
   ): Promise<PersistedChangeCandidate[]>;
 
+  saveCostState(state: PersistedCostState): Promise<PersistedCostState>;
+  getCostStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedCostState | null>;
+  latestCostState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    accountId: string,
+    asOf?: string,
+  ): Promise<PersistedCostState | undefined>;
+  listCostStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedCostState[]>;
+  nextCostStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    accountId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+
+  saveCostEvidence(
+    evidence: readonly PersistedCostEvidence[],
+  ): Promise<PersistedCostEvidence[]>;
+  listCostEvidence(
+    tenantId: string,
+    workspaceId: string,
+    costStateId: string,
+  ): Promise<PersistedCostEvidence[]>;
+
+  saveCostReview(review: PersistedCostReview): Promise<PersistedCostReview>;
+  listCostReviews(
+    tenantId: string,
+    workspaceId: string,
+    costStateId?: string,
+  ): Promise<PersistedCostReview[]>;
+
+  saveCostConfidence(confidence: PersistedCostConfidence): Promise<PersistedCostConfidence>;
+  listCostConfidence(
+    tenantId: string,
+    workspaceId: string,
+    costStateId: string,
+  ): Promise<PersistedCostConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -356,6 +429,10 @@ export type DurableProjectControlsStore = {
   changeReviews: PersistedChangeReview[];
   changeConfidence: PersistedChangeConfidence[];
   changeCandidates: PersistedChangeCandidate[];
+  costStates: PersistedCostState[];
+  costEvidence: PersistedCostEvidence[];
+  costReviews: PersistedCostReview[];
+  costConfidence: PersistedCostConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -381,6 +458,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     changeReviews: [],
     changeConfidence: [],
     changeCandidates: [],
+    costStates: [],
+    costEvidence: [],
+    costReviews: [],
+    costConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -891,6 +972,141 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.projectId === projectId,
+    );
+  }
+
+  async saveCostState(state: PersistedCostState): Promise<PersistedCostState> {
+    const accountId = state.controlContext.accountRef.accountId;
+    const clash = this.store.costStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        costStateKey(row.controlContext.scope, row.controlContext.accountRef.accountId) ===
+          costStateKey(state.controlContext.scope, accountId) &&
+        row.version === state.version,
+    );
+    if (clash) {
+      throw new Error(`optimistic_lock_conflict:cost_version=${state.version}`);
+    }
+    this.store.costStates.push(state);
+    return state;
+  }
+
+  async getCostStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedCostState | null> {
+    return (
+      this.store.costStates.find(
+        (row) =>
+          row.stateId === stateId &&
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async latestCostState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    accountId: string,
+    asOf?: string,
+  ): Promise<PersistedCostState | undefined> {
+    return latestAsOf(
+      this.store.costStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          costStateKey(row.controlContext.scope, row.controlContext.accountRef.accountId) ===
+            costStateKey(scope, accountId),
+      ),
+      asOf,
+    );
+  }
+
+  async listCostStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedCostState[]> {
+    return this.store.costStates.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.projectId === projectId,
+    );
+  }
+
+  async nextCostStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    accountId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestCostState(tenantId, workspaceId, scope, accountId);
+    const current = latest?.version ?? 0;
+    assertNextVersion(current, expectedVersion);
+    return current + 1;
+  }
+
+  async saveCostEvidence(
+    evidence: readonly PersistedCostEvidence[],
+  ): Promise<PersistedCostEvidence[]> {
+    this.store.costEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listCostEvidence(
+    tenantId: string,
+    workspaceId: string,
+    costStateId: string,
+  ): Promise<PersistedCostEvidence[]> {
+    return this.store.costEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.costStateId === costStateId,
+    );
+  }
+
+  async saveCostReview(review: PersistedCostReview): Promise<PersistedCostReview> {
+    this.store.costReviews.push(review);
+    return review;
+  }
+
+  async listCostReviews(
+    tenantId: string,
+    workspaceId: string,
+    costStateId?: string,
+  ): Promise<PersistedCostReview[]> {
+    return this.store.costReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!costStateId || row.costStateId === costStateId),
+    );
+  }
+
+  async saveCostConfidence(
+    confidence: PersistedCostConfidence,
+  ): Promise<PersistedCostConfidence> {
+    this.store.costConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listCostConfidence(
+    tenantId: string,
+    workspaceId: string,
+    costStateId: string,
+  ): Promise<PersistedCostConfidence[]> {
+    return this.store.costConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.costStateId === costStateId,
     );
   }
 

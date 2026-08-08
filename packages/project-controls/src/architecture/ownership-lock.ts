@@ -1,5 +1,5 @@
 /**
- * Phase 11D — Project Controls ownership lock.
+ * Phase 11E — Project Controls ownership lock.
  *
  * The matrix below is the machine-readable twin of
  * `docs/architecture/PROJECT_CONTROLS_OWNERSHIP_MATRIX.md`. It exists so a
@@ -30,6 +30,9 @@ import {
   CHANGE_INTELLIGENCE_OWNERSHIP,
   CHANGE_INTELLIGENCE_READY,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
+  COST_INTELLIGENCE_IS_ADVISORY_ONLY,
+  COST_INTELLIGENCE_OWNERSHIP,
+  COST_INTELLIGENCE_READY,
   CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
   FINANCIAL_LEDGER_OWNERSHIP,
   FINANCIAL_POSTING_IMPLEMENTED,
@@ -147,7 +150,7 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     owner: "project_controls",
     relation: "owns",
     notes:
-      "Reserved provider interface only; no cost engine, budget ledger or financial posting in 11D (Phase 11E candidate)",
+      "Implemented in 11E as advisory, evidence-driven cost intelligence — not a budget ledger, not financial posting, not earned value",
   },
   {
     concern: "schedule_controls_intelligence",
@@ -268,6 +271,7 @@ export function assertOwnershipLock(): {
   progressIntelligenceOwnership: typeof PROGRESS_INTELLIGENCE_OWNERSHIP;
   scheduleIntelligenceOwnership: typeof SCHEDULE_INTELLIGENCE_OWNERSHIP;
   changeIntelligenceOwnership: typeof CHANGE_INTELLIGENCE_OWNERSHIP;
+  costIntelligenceOwnership: typeof COST_INTELLIGENCE_OWNERSHIP;
   contractualChangeAuthorityOwnership: typeof CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP;
   financialLedgerOwnership: typeof FINANCIAL_LEDGER_OWNERSHIP;
   sharedProjectDomainReady: true;
@@ -276,6 +280,8 @@ export function assertOwnershipLock(): {
   scheduleIntelligenceReady: true;
   changeIntelligenceReady: true;
   changeIntelligenceIsContractualAuthority: false;
+  costIntelligenceReady: true;
+  costIntelligenceIsAdvisoryOnly: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
   duplicateAssetOwnershipIntroduced: false;
@@ -322,11 +328,17 @@ export function assertOwnershipLock(): {
   if (CHANGE_INTELLIGENCE_OWNERSHIP !== "project_controls") {
     throw new Error("change_intelligence_must_be_owned_by_project_controls");
   }
+  if (COST_INTELLIGENCE_OWNERSHIP !== "project_controls") {
+    throw new Error("cost_intelligence_must_be_owned_by_project_controls");
+  }
+  if (!COST_INTELLIGENCE_READY || !COST_INTELLIGENCE_IS_ADVISORY_ONLY) {
+    throw new Error("cost_intelligence_flags_invalid");
+  }
   if (String(CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP) === "project_controls") {
     throw new Error("project_controls_may_not_hold_contractual_change_authority");
   }
   if (PROJECT_CONTROLS_IMPLEMENTED || PRODUCTION_PROJECT_CONTROLS_READY) {
-    throw new Error("project_controls_product_forbidden_in_phase_11d");
+    throw new Error("project_controls_product_forbidden_in_phase_11e");
   }
   if (
     EARNED_VALUE_IMPLEMENTED ||
@@ -413,6 +425,17 @@ export function assertOwnershipLock(): {
     throw new Error("change_controls_intelligence_must_be_owned_by_project_controls");
   }
 
+  const costRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "cost_controls_intelligence",
+  );
+  if (
+    costRows.length !== 1 ||
+    costRows[0].owner !== "project_controls" ||
+    costRows[0].relation !== "owns"
+  ) {
+    throw new Error("cost_controls_intelligence_must_be_owned_by_project_controls");
+  }
+
   const authorityRows = PROJECT_CONTROLS_OWNERSHIP_MATRIX.filter(
     (row) => row.concern === "contractual_change_authority",
   );
@@ -475,6 +498,7 @@ export function assertOwnershipLock(): {
     progressIntelligenceOwnership: PROGRESS_INTELLIGENCE_OWNERSHIP,
     scheduleIntelligenceOwnership: SCHEDULE_INTELLIGENCE_OWNERSHIP,
     changeIntelligenceOwnership: CHANGE_INTELLIGENCE_OWNERSHIP,
+    costIntelligenceOwnership: COST_INTELLIGENCE_OWNERSHIP,
     contractualChangeAuthorityOwnership: CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
     financialLedgerOwnership: FINANCIAL_LEDGER_OWNERSHIP,
     sharedProjectDomainReady: true,
@@ -483,6 +507,8 @@ export function assertOwnershipLock(): {
     scheduleIntelligenceReady: true,
     changeIntelligenceReady: true,
     changeIntelligenceIsContractualAuthority: false,
+    costIntelligenceReady: true,
+    costIntelligenceIsAdvisoryOnly: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,
     duplicateAssetOwnershipIntroduced: false,

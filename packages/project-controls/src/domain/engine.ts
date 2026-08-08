@@ -1,5 +1,5 @@
 /**
- * Phase 11D — Project Controls engine facade.
+ * Phase 11E — Project Controls engine facade.
  *
  * Orchestrates the progress, schedule and change intelligence slices end to
  * end: capability check → identity resolution → confidence → assessment →
@@ -23,6 +23,7 @@ import { assertOwnershipLock } from "../architecture/ownership-lock";
 import {
   changeCandidateEventPayload,
   changeEventPayload,
+  costEventPayload,
   createProjectControlsEvent,
   profileEventPayload,
   progressEventPayload,
@@ -38,6 +39,7 @@ import {
 import type {
   IdempotencyRecord,
   PersistedChangeEvidence,
+  PersistedCostEvidence,
   PersistedProgressEvidence,
   PersistedScheduleEvidence,
   ProjectControlsRepositoryPort,
@@ -59,6 +61,19 @@ import {
   createChangeIntelligenceEngine,
   type ChangeIntelligenceEngine,
 } from "./change-engine";
+import {
+  costStateKey,
+  type CostBasisReference,
+  type CostControlContext,
+  type CostEvidence,
+  type CostIntelligenceState,
+  type CostReviewOutcome,
+  type CostReviewRecord,
+} from "./cost";
+import {
+  createCostIntelligenceEngine,
+  type CostIntelligenceEngine,
+} from "./cost-engine";
 import {
   scopeKey,
   type ProgressAssessmentState,
@@ -84,16 +99,21 @@ import {
 } from "./schedule-engine";
 import {
   assertChangePublishable,
+  assertCostPublishable,
   assertPublishable,
   assertSchedulePublishable,
   startChangeReview,
+  startCostReview,
   startProgressReview,
   startScheduleReview,
   transitionChangeReview,
+  transitionCostReview,
   transitionProgressReview,
   transitionScheduleReview,
   type ChangeReviewAction,
   type ChangeReviewTargetState,
+  type CostReviewAction,
+  type CostReviewTargetState,
   type ProgressReviewAction,
   type ProgressReviewTargetState,
   type ScheduleReviewAction,
@@ -313,6 +333,68 @@ export type ReviewChangeResult = {
   contractualApprovalClaimed: false;
 };
 
+export type AssessCostCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  controlContext: CostControlContext;
+  evidence: readonly CostEvidence[];
+  actorRole: ProjectControlsRole;
+  actorId?: string;
+  costBasisRef?: CostBasisReference;
+  changeIntelligenceStateIds?: readonly string[];
+  narrative?: string;
+  asOf?: string;
+  expectedVersion?: number;
+  idempotencyKey?: string;
+  correlationId?: string;
+  startReview?: boolean;
+  freshnessHorizonHours?: number;
+  sufficiencyThreshold?: number;
+  minimumEvidenceCount?: number;
+};
+
+export type AssessCostResult = {
+  state: CostIntelligenceState;
+  workflowInstance?: EngineeringWorkflowInstance;
+  review?: CostReviewRecord;
+  abstained: boolean;
+  abstentionReason?: string;
+  varianceAttribution: CostIntelligenceState["varianceAttribution"];
+  idempotentReplay: boolean;
+  projectIdentityMutated: false;
+  earnedValueComputed: false;
+  financialPostingPerformed: false;
+  budgetMutated: false;
+  forecastProduced: false;
+};
+
+export type ReviewCostCommand = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  costStateId: string;
+  workflowInstance: EngineeringWorkflowInstance;
+  action: CostReviewAction;
+  to: CostReviewTargetState;
+  reviewerId: string;
+  actorRole: ProjectControlsRole;
+  notes?: string;
+  publish?: boolean;
+  asOf?: string;
+  correlationId?: string;
+  idempotencyKey?: string;
+};
+
+export type ReviewCostResult = {
+  state: CostIntelligenceState;
+  review: CostReviewRecord;
+  workflowInstance: EngineeringWorkflowInstance;
+  published: boolean;
+  projectIdentityMutated: false;
+  financialPostingClaimed: false;
+};
+
 export type CreateProjectSnapshotCommand = {
   tenantId: string;
   workspaceId: string;
@@ -354,12 +436,14 @@ export type ProjectControlsEngineDeps = {
   progressEngine?: ProgressIntelligenceEngine;
   scheduleEngine?: ScheduleIntelligenceEngine;
   changeEngine?: ChangeIntelligenceEngine;
+  costEngine?: CostIntelligenceEngine;
   contextEngine?: ProjectContextEngine;
 };
 
 const PROGRESS_SOURCE_KEY = "project_controls.progress_intelligence" as const;
 const SCHEDULE_SOURCE_KEY = "project_controls.schedule_intelligence" as const;
 const CHANGE_SOURCE_KEY = "project_controls.change_intelligence" as const;
+const COST_SOURCE_KEY = "project_controls.cost_intelligence" as const;
 
 const PROJECT_TIMELINE_GOVERNANCE = {
   advisoryOnly: true,
@@ -375,6 +459,7 @@ export class ProjectControlsEngine {
   private readonly progressEngine: ProgressIntelligenceEngine;
   private readonly scheduleEngine: ScheduleIntelligenceEngine;
   private readonly changeEngine: ChangeIntelligenceEngine;
+  private readonly costEngine: CostIntelligenceEngine;
   private readonly contextEngine: ProjectContextEngine;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
@@ -389,6 +474,9 @@ export class ProjectControlsEngine {
     this.changeEngine =
       deps.changeEngine ??
       createChangeIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
+    this.costEngine =
+      deps.costEngine ??
+      createCostIntelligenceEngine({ newId: (p) => deps.repository.newId(p) });
     this.contextEngine =
       deps.contextEngine ?? createProjectContextEngine({ newId: (p) => deps.repository.newId(p) });
   }
@@ -1154,6 +1242,272 @@ export class ProjectControlsEngine {
     };
   }
 
+  async assessCost(command: AssessCostCommand): Promise<AssessCostResult> {
+    this.requireCapability(command.actorRole, "cost.assess");
+    const replay = await this.replay<AssessCostResult>(command, "assess_cost");
+    if (replay) return replay;
+
+    const reference = await this.resolveProject(command);
+    const asOf = command.asOf ?? new Date().toISOString();
+    const scope = command.controlContext.scope;
+    const accountId = command.controlContext.accountRef.accountId;
+
+    const changeIntelligence = await this.resolveChangeIntelligenceRefs(
+      command.tenantId,
+      command.workspaceId,
+      command.changeIntelligenceStateIds,
+    );
+
+    const previous = await this.deps.repository.latestCostState(
+      command.tenantId,
+      command.workspaceId,
+      scope,
+      accountId,
+    );
+    const version = await this.deps.repository.nextCostStateVersion(
+      command.tenantId,
+      command.workspaceId,
+      scope,
+      accountId,
+      command.expectedVersion,
+    );
+
+    const outcome = this.costEngine.assess({
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: reference.projectId,
+      controlContext: command.controlContext,
+      evidence: command.evidence,
+      costBasisRef: command.costBasisRef,
+      changeIntelligence,
+      version,
+      asOf,
+      narrative: command.narrative,
+      createdBy: command.actorId,
+      supersedesId: previous?.stateId,
+      freshnessHorizonHours: command.freshnessHorizonHours,
+      sufficiencyThreshold: command.sufficiencyThreshold,
+      minimumEvidenceCount: command.minimumEvidenceCount,
+    });
+
+    let state = outcome.state;
+    let workflowInstance: EngineeringWorkflowInstance | undefined;
+    let review: CostReviewRecord | undefined;
+
+    if (!outcome.abstained && command.startReview !== false) {
+      const started = startCostReview({
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        assessmentStateId: state.stateId,
+        startedBy: command.actorId,
+      });
+      workflowInstance = started.instance;
+      state = {
+        ...state,
+        status: "pending_review",
+        workflowInstanceId: started.instance.instanceId,
+      };
+      review = {
+        reviewId: started.review.reviewId,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        costStateId: state.stateId,
+        workflowInstanceId: started.instance.instanceId,
+        workflowState: started.instance.state,
+        createdAt: started.review.createdAt,
+        selfApproved: false,
+        financialPostingClaimed: false,
+      };
+    }
+
+    const saved = await this.deps.repository.saveCostState(state);
+    await this.deps.repository.saveCostEvidence(
+      command.evidence.map<PersistedCostEvidence>((item) => ({
+        ...item,
+        tenantId: command.tenantId,
+        workspaceId: command.workspaceId,
+        projectId: reference.projectId,
+        costStateId: saved.stateId,
+        recordedAt: asOf,
+        createdBy: command.actorId,
+      })),
+    );
+    await this.deps.repository.saveCostConfidence({
+      ...outcome.confidence,
+      costStateId: saved.stateId,
+      recordedAt: asOf,
+    });
+    if (review) await this.deps.repository.saveCostReview(review);
+
+    await this.appendProjectTimeline({
+      tenantId: saved.tenantId,
+      workspaceId: saved.workspaceId,
+      projectId: saved.projectId,
+      stateId: saved.stateId,
+      kind: outcome.abstained ? "cost_abstained" : "cost_assessed",
+      eventType: "engineering.project.cost.assessed",
+      recordedAt: asOf,
+      actorId: command.actorId,
+      detail: outcome.abstentionReason,
+      sourceKey: COST_SOURCE_KEY,
+    });
+    await this.emitCostState("engineering.project.cost.assessed", saved, command.correlationId);
+    if (!outcome.abstained && outcome.varianceAttribution !== "insufficient_evidence") {
+      await this.emitCostState(
+        "engineering.project.cost.variance_attributed",
+        saved,
+        command.correlationId,
+      );
+    }
+
+    const result: AssessCostResult = {
+      state: saved,
+      workflowInstance,
+      review,
+      abstained: outcome.abstained,
+      abstentionReason: outcome.abstentionReason,
+      varianceAttribution: saved.varianceAttribution,
+      idempotentReplay: false,
+      projectIdentityMutated: false,
+      earnedValueComputed: false,
+      financialPostingPerformed: false,
+      budgetMutated: false,
+      forecastProduced: false,
+    };
+    await this.recordIdempotency(command, "assess_cost", saved.stateId, result);
+    return result;
+  }
+
+  async reviewCost(command: ReviewCostCommand): Promise<ReviewCostResult> {
+    const latest = await this.deps.repository.getCostStateById(
+      command.tenantId,
+      command.workspaceId,
+      command.costStateId,
+    );
+    if (!latest) throw new Error("cost_state_not_found");
+    if (latest.status === "published") throw new Error("published_cost_state_immutable");
+    if (latest.abstained) throw new Error("abstained_cost_state_not_reviewable");
+
+    const capability: ProjectControlsCapability =
+      command.action === "approve" ? "cost.approve" : "cost.review";
+    assertProjectControlsCapability(command.actorRole, capability, {
+      actorId: command.reviewerId,
+      assessedBy: latest.createdBy,
+    });
+
+    const asOf = command.asOf ?? new Date().toISOString();
+    let instance = transitionCostReview({
+      instance: command.workflowInstance,
+      action: command.action,
+      to: command.to,
+    });
+
+    const publish = command.publish === true && command.to === "approved";
+    if (publish) {
+      assertProjectControlsCapability(command.actorRole, "cost.publish", {
+        actorId: command.reviewerId,
+        assessedBy: latest.createdBy,
+      });
+      assertCostPublishable({
+        workflowState: instance.state,
+        reviewerId: command.reviewerId,
+        assessedBy: latest.createdBy,
+        financialPostingClaimed: false,
+      });
+      instance = transitionCostReview({ instance, action: "publish", to: "published" });
+    }
+
+    const nextStatus: CostIntelligenceState["status"] = publish
+      ? "published"
+      : command.to === "approved"
+        ? "reviewed"
+        : command.to === "rejected"
+          ? "rejected"
+          : command.to === "changes_requested"
+            ? "changes_requested"
+            : "pending_review";
+
+    const version = await this.deps.repository.nextCostStateVersion(
+      command.tenantId,
+      command.workspaceId,
+      latest.controlContext.scope,
+      latest.controlContext.accountRef.accountId,
+    );
+    const nextId = this.deps.repository.newId("pccost");
+    const next: CostIntelligenceState = {
+      ...latest,
+      id: nextId,
+      stateId: nextId,
+      version,
+      status: nextStatus,
+      recordedAt: asOf,
+      reviewedAt: asOf,
+      publishedAt: publish ? asOf : latest.publishedAt,
+      supersedesId: latest.stateId,
+      workflowInstanceId: instance.instanceId,
+    };
+    const saved = await this.deps.repository.saveCostState(next);
+
+    const review: CostReviewRecord = {
+      reviewId: this.deps.repository.newId("pccostreview"),
+      tenantId: command.tenantId,
+      workspaceId: command.workspaceId,
+      projectId: command.projectId,
+      costStateId: saved.stateId,
+      workflowInstanceId: instance.instanceId,
+      workflowState: instance.state,
+      outcome: costReviewOutcomeFor(command.action),
+      reviewerId: command.reviewerId,
+      notes: command.notes,
+      createdAt: asOf,
+      completedAt: command.action === "resubmit" ? undefined : asOf,
+      selfApproved: false,
+      financialPostingClaimed: false,
+    };
+    await this.deps.repository.saveCostReview(review);
+
+    await this.appendProjectTimeline({
+      tenantId: saved.tenantId,
+      workspaceId: saved.workspaceId,
+      projectId: saved.projectId,
+      stateId: saved.stateId,
+      kind: publish
+        ? "cost_published"
+        : command.to === "rejected"
+          ? "cost_rejected"
+          : "cost_reviewed",
+      eventType: publish
+        ? "engineering.project.cost.published"
+        : "engineering.project.cost.reviewed",
+      recordedAt: asOf,
+      actorId: command.reviewerId,
+      detail: command.notes,
+      sourceKey: COST_SOURCE_KEY,
+    });
+    await this.emitCostState("engineering.project.cost.reviewed", saved, command.correlationId);
+    if (publish) {
+      await this.emitCostState("engineering.project.cost.published", saved, command.correlationId);
+    }
+    if (latest.stateId !== saved.stateId) {
+      await this.emitCostState(
+        "engineering.project.cost.superseded",
+        latest,
+        command.correlationId,
+      );
+    }
+
+    return {
+      state: saved,
+      review,
+      workflowInstance: instance,
+      published: publish,
+      projectIdentityMutated: false,
+      financialPostingClaimed: false,
+    };
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -1166,7 +1520,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change] = await Promise.all([
+    const [progress, schedule, change, cost] = await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
         command.workspaceId,
@@ -1178,6 +1532,11 @@ export class ProjectControlsEngine {
         reference.projectId,
       ),
       this.deps.repository.listChangeStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
+      this.deps.repository.listCostStates(
         command.tenantId,
         command.workspaceId,
         reference.projectId,
@@ -1205,6 +1564,7 @@ export class ProjectControlsEngine {
       progressStateIds: latestPerScope(progress).map((state) => state.stateId),
       scheduleStateIds: latestPerScopeSchedule(schedule).map((state) => state.stateId),
       changeStateIds: latestPerChangeThread(change).map((state) => state.stateId),
+      costStateIds: latestPerCostThread(cost).map((state) => state.stateId),
       createdBy: command.actorId,
       immutable: true,
       containsEvidencePayloads: false,
@@ -1263,6 +1623,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const cost = await this.deps.repository.listCostStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -1286,6 +1651,7 @@ export class ProjectControlsEngine {
       progress: latestPerScope(progress),
       schedule: latestPerScopeSchedule(schedule),
       change: latestPerChangeThread(change),
+      cost: latestPerCostThread(cost),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,
@@ -1424,6 +1790,38 @@ export class ProjectControlsEngine {
   }): Promise<ChangeCandidate[]> {
     this.requireCapability(input.actorRole, "change.read");
     return this.deps.repository.listChangeCandidates(
+      input.tenantId,
+      input.workspaceId,
+      input.projectId,
+    );
+  }
+
+  async getLatestCost(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    accountId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<CostIntelligenceState | undefined> {
+    this.requireCapability(input.actorRole, "cost.read");
+    return this.deps.repository.latestCostState(
+      input.tenantId,
+      input.workspaceId,
+      input.scope,
+      input.accountId,
+      input.asOf,
+    );
+  }
+
+  async listCostHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<CostIntelligenceState[]> {
+    this.requireCapability(input.actorRole, "cost.read");
+    return this.deps.repository.listCostStates(
       input.tenantId,
       input.workspaceId,
       input.projectId,
@@ -1716,6 +2114,7 @@ export class ProjectControlsEngine {
     recordedAt: string;
     actorId?: string;
     detail?: string;
+    sourceKey?: string;
   }): Promise<void> {
     await this.deps.repository.appendProjectTimeline({
       entryId: this.deps.repository.newId("pcprojtimeline"),
@@ -1726,7 +2125,7 @@ export class ProjectControlsEngine {
       kind: input.kind,
       eventType: input.eventType,
       recordedAt: input.recordedAt,
-      sourceKey: CHANGE_SOURCE_KEY,
+      sourceKey: input.sourceKey ?? CHANGE_SOURCE_KEY,
       actorId: input.actorId,
       detail: input.detail,
       governance: PROJECT_TIMELINE_GOVERNANCE,
@@ -1762,6 +2161,91 @@ export class ProjectControlsEngine {
       | "engineering.project.change.published"
       | "engineering.project.change.superseded"
       | "engineering.project.change_candidate.created"
+      | "engineering.project.snapshot.created";
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    scope?: ProjectScopeRef;
+    stateId: string;
+    occurredAt: string;
+    correlationId?: string;
+    payload: Record<string, unknown>;
+  }): Promise<void> {
+    const event = createProjectControlsEvent({
+      eventId: this.deps.repository.newId("pcevent"),
+      eventType: input.eventType,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      scope: input.scope,
+      stateId: input.stateId,
+      occurredAt: input.occurredAt,
+      correlationId: input.correlationId,
+      payload: input.payload,
+    });
+    await this.deps.repository.enqueueOutbox({
+      outboxId: this.deps.repository.newId("pcoutbox"),
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: input.projectId,
+      eventType: input.eventType,
+      payload: event.payload,
+      correlationId: input.correlationId,
+      stateId: input.stateId,
+      published: false,
+      createdAt: input.occurredAt,
+    });
+    await this.deps.events.publish(event);
+  }
+
+  private async resolveChangeIntelligenceRefs(
+    tenantId: string,
+    workspaceId: string,
+    stateIds: readonly string[] | undefined,
+  ): Promise<ChangeIntelligenceState[]> {
+    if (!stateIds || stateIds.length === 0) return [];
+    const states: ChangeIntelligenceState[] = [];
+    for (const stateId of stateIds) {
+      const state = await this.deps.repository.getChangeStateById(
+        tenantId,
+        workspaceId,
+        stateId,
+      );
+      if (state) states.push(state);
+    }
+    return states;
+  }
+
+  private async emitCostState(
+    eventType:
+      | "engineering.project.cost.assessed"
+      | "engineering.project.cost.reviewed"
+      | "engineering.project.cost.published"
+      | "engineering.project.cost.superseded"
+      | "engineering.project.cost.variance_attributed",
+    state: CostIntelligenceState,
+    correlationId?: string,
+  ): Promise<void> {
+    await this.emitCostEvent({
+      eventType,
+      tenantId: state.tenantId,
+      workspaceId: state.workspaceId,
+      projectId: state.projectId,
+      scope: state.controlContext.scope,
+      stateId: state.stateId,
+      occurredAt: state.recordedAt,
+      correlationId,
+      payload: costEventPayload(state),
+    });
+  }
+
+  private async emitCostEvent(input: {
+    eventType:
+      | "engineering.project.cost.assessed"
+      | "engineering.project.cost.reviewed"
+      | "engineering.project.cost.published"
+      | "engineering.project.cost.superseded"
+      | "engineering.project.cost.variance_attributed"
       | "engineering.project.snapshot.created";
     tenantId: string;
     workspaceId: string;
@@ -1874,7 +2358,38 @@ function latestPerChangeThread(
   return [...byThread.values()];
 }
 
+/** One cost thread per scope + account, so a profile counts each once. */
+function latestPerCostThread(
+  states: readonly CostIntelligenceState[],
+): CostIntelligenceState[] {
+  const byThread = new Map<string, CostIntelligenceState>();
+  for (const state of states) {
+    const key = costStateKey(
+      state.controlContext.scope,
+      state.controlContext.accountRef.accountId,
+    );
+    const current = byThread.get(key);
+    if (!current || state.version > current.version) byThread.set(key, state);
+  }
+  return [...byThread.values()];
+}
+
 function changeReviewOutcomeFor(action: ChangeReviewAction): ChangeReviewOutcome {
+  switch (action) {
+    case "approve":
+      return "approved";
+    case "reject":
+      return "rejected";
+    case "request_changes":
+      return "changes_requested";
+    case "resubmit":
+      return "resubmitted";
+    case "publish":
+      return "approved";
+  }
+}
+
+function costReviewOutcomeFor(action: CostReviewAction): CostReviewOutcome {
   switch (action) {
     case "approve":
       return "approved";

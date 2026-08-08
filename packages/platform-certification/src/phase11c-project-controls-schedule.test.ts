@@ -34,16 +34,16 @@ describe("Phase 11C Project Controls schedule intelligence", () => {
     expect(read(GATES)).toMatch(/PHASE_11C_GATE_COUNT = 43|PHASE_11C_GATE_COUNT = PHASE_11C/);
   });
 
-  it("preserves the Phase 11C baseline while the module advances to 11D", () => {
+  it("preserves the Phase 11C baseline while the module advances to 11E", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/PROJECT_CONTROLS_VERSION = "0\.4\.0-change-intelligence"/);
-    expect(version).toMatch(/PROJECT_CONTROLS_STATUS = "change_intelligence"/);
-    expect(version).toMatch(/PROJECT_CONTROLS_PHASE = "11D"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_VERSION = "0\.5\.0-cost-intelligence"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_STATUS = "cost_intelligence"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_PHASE = "11E"/);
     expect(version).toMatch(/PHASE_11C_VERSION = "0\.3\.0-schedule-intelligence"/);
     expect(version).toMatch(new RegExp(`PHASE_11B_CERTIFIED_COMMIT =\\s*\\r?\\n?\\s*"${PHASE_11B_COMMIT}"`));
     expect(read(GATES)).toMatch(/PHASE_11C_PROJECT_CONTROLS_VERSION = "0\.3\.0-schedule-intelligence"/);
-    expect(read(`${PC}/package.json`)).toMatch(/"version": "0\.4\.0-change-intelligence"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.4\.0-change-intelligence"/);
+    expect(read(`${PC}/package.json`)).toMatch(/"version": "0\.5\.0-cost-intelligence"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.5\.0-cost-intelligence"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase11c/);
   });
 

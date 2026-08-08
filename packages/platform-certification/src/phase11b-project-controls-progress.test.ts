@@ -35,9 +35,9 @@ describe("Phase 11B Project Controls progress intelligence", () => {
     expect(read(GATES)).toMatch(/PHASE_11B_GATE_COUNT = 45|PHASE_11B_GATE_COUNT = PHASE_11B/);
   });
 
-  it("preserves Phase 11B baseline constants while module advances to 11D", () => {
+  it("preserves Phase 11B baseline constants while module advances to 11E", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/PROJECT_CONTROLS_VERSION = "0\.4\.0-change-intelligence"/);
+    expect(version).toMatch(/PROJECT_CONTROLS_VERSION = "0\.5\.0-cost-intelligence"/);
     expect(version).toMatch(/PHASE_11B_VERSION = "0\.2\.0-progress-intelligence"/);
     expect(version).toMatch(/PROGRESS_INTELLIGENCE_11B_INTACT = true/);
     expect(version).toMatch(new RegExp(`PHASE_11A_CERTIFIED_COMMIT =\\s*\\r?\\n?\\s*"${PHASE_11A_COMMIT}"`));

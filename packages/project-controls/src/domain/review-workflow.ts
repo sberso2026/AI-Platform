@@ -20,6 +20,7 @@ import {
 } from "@rtb/engineering-os";
 import {
   AUTONOMOUS_CHANGE_PUBLICATION_ALLOWED,
+  AUTONOMOUS_COST_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
@@ -371,5 +372,120 @@ export function assertChangePublishable(input: {
   }
   if (input.assessedBy && input.assessedBy === input.reviewerId) {
     throw new Error("change_self_approval_forbidden");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cost review (Phase 11E)
+// ---------------------------------------------------------------------------
+
+export const COST_REVIEW_WORKFLOW_SLUG = "project_controls.cost_review" as const;
+
+export const COST_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: COST_REVIEW_WORKFLOW_SLUG,
+  displayName: "Project Controls Cost Assessment Review",
+  moduleKey: "project_controls",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+  ],
+};
+
+export const COST_REVIEW_ENTITY_TYPE = "project_controls_cost_assessment" as const;
+
+export type CostReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type CostReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startCostReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: COST_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: COST_REVIEW_ENTITY_TYPE,
+    entityId: input.assessmentStateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "cost_intelligence",
+      projectId: input.projectId,
+      advisoryOnly: true,
+      earnedValueComputed: false,
+      financialPostingPerformed: false,
+      budgetMutated: false,
+      forecastProduced: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: COST_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionCostReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: CostReviewAction;
+  to: CostReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: COST_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function assertCostPublishable(input: {
+  workflowState: string;
+  reviewerId?: string;
+  assessedBy?: string;
+  financialPostingClaimed?: boolean;
+}): void {
+  if (AUTONOMOUS_COST_PUBLICATION_ALLOWED) {
+    throw new Error("autonomous_cost_publication_forbidden");
+  }
+  if (input.financialPostingClaimed === true) {
+    throw new Error("cost_assessment_approval_is_not_financial_posting");
+  }
+  if (input.workflowState !== "approved") {
+    throw new Error("cost_publish_requires_approved_review");
+  }
+  if (!input.reviewerId) {
+    throw new Error("cost_publish_requires_reviewer");
+  }
+  if (input.assessedBy && input.assessedBy === input.reviewerId) {
+    throw new Error("cost_self_approval_forbidden");
   }
 }
