@@ -21,7 +21,7 @@ See also: `DIGITAL_TWIN_SPATIAL_MODEL_RECONCILIATION.md`, `DIGITAL_TWIN_REPRESEN
 ## Consumes vs owns
 
 - **Owns**: representation source/element/mapping refs; thin spatial wrappers
-- **Does not own**: canonical location registers (`engineering_os_shared_domain`)
+- **Does not own**: canonical location registers (`engineering_os_shared_spatial_domain`, Phase 12L)
 - **Does not own**: Engineering Model binaries (Platform Files / engineering_documents)
 - **Does not own**: rendering engine, WebGL scene graph, or full BIM viewer shell
 

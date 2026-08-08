@@ -53,6 +53,7 @@ export const ASSURANCE_GOVERNANCE = {
   phase12JReady: true,
   phase12KReady: true,
   phase12LReady: true,
+  phase12MReady: true,
 } as const;
 
 export function rejectSolverActivation(body: Record<string, unknown>, requestId: string) {

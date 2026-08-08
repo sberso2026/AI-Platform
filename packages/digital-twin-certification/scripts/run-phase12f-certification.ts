@@ -521,7 +521,7 @@ async function main() {
     "spatialCanonicalOwnership reconciled shared domain",
     has(
       VERSION,
-      /SPATIAL_CANONICAL_OWNERSHIP =\s*"existing_shared_spatial_domain_or_explicitly_reconciled_owner"/,
+      /SPATIAL_CANONICAL_OWNERSHIP =\s*"engineering_os_shared_spatial_domain"/,
     )
       ? "pass"
       : "fail",
@@ -765,7 +765,7 @@ async function main() {
     twinRepresentationMappingReady: true,
     twinRepresentationNavigationReady: true,
     engineeringTimeSeriesOwnership: "asset_intelligence",
-    spatialCanonicalOwnership: "existing_shared_spatial_domain_or_explicitly_reconciled_owner",
+    spatialCanonicalOwnership: "engineering_os_shared_spatial_domain",
     sourceModelOwnership: "external_or_existing_engineering_model_owner",
     knowledgeGraphReuse: true,
     hostedDigitalTwinPersistenceReady: true,

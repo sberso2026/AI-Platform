@@ -130,6 +130,7 @@ export type DomainOwner =
   | "external_system"
   | "external_or_existing_engineering_model_owner"
   | "external_engineering_tool"
+  | "engineering_os_shared_spatial_domain"
   | "existing_shared_spatial_domain_or_explicitly_reconciled_owner";
 
 export type BoundaryRelation = "owns" | "consumes" | "forbidden" | "preserve";
@@ -192,9 +193,10 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
   },
   {
     concern: "spatial_canonical_location",
-    owner: "existing_shared_spatial_domain_or_explicitly_reconciled_owner",
+    owner: "engineering_os_shared_spatial_domain",
     relation: "consumes",
-    notes: "Canonical locations belong to engineering_os_shared_domain",
+    notes:
+      "Phase 12L: canonical spatial REFERENCE semantics owned by Shared Spatial Domain (register deferred; FullyResolved=false)",
   },
   {
     concern: "source_engineering_model",
@@ -460,10 +462,7 @@ export function assertOwnershipLock(): {
   if (TWIN_REPRESENTATION_OWNERSHIP !== "digital_twin") {
     throw new Error("twin_representation_owner_mismatch");
   }
-  if (
-    SPATIAL_CANONICAL_OWNERSHIP !==
-    "existing_shared_spatial_domain_or_explicitly_reconciled_owner"
-  ) {
+  if (SPATIAL_CANONICAL_OWNERSHIP !== "engineering_os_shared_spatial_domain") {
     throw new Error("spatial_canonical_ownership_must_be_shared_domain");
   }
   if (SOURCE_MODEL_OWNERSHIP !== "external_or_existing_engineering_model_owner") {

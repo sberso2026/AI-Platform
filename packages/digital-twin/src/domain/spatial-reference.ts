@@ -1,8 +1,9 @@
 /**
  * Phase 12F — TwinSpatialReference (thin wrapper over shared location IDs).
  *
- * Does NOT create Location hierarchy tables. Canonical locations stay with
- * engineering_os_shared_domain.
+ * Does NOT create Location hierarchy tables. Canonical spatial REFERENCE
+ * semantics are owned by engineering_os_shared_spatial_domain (Phase 12L);
+ * registers are not yet materialized (spatialOwnershipFullyResolved=false).
  */
 
 export type TwinSpatialReference = {

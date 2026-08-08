@@ -18,7 +18,7 @@ Status: digital_thread · Aligned with `packages/digital-twin/src/architecture/o
 | twin_representation | `digital_twin` | owns |
 | representation_mapping | `digital_twin` | owns (refs only; no model binaries) |
 | twin_spatial_reference | `digital_twin` | owns thin wrappers only |
-| spatial_canonical_location | `engineering_os_shared_domain` | consumes |
+| spatial_canonical_location | `engineering_os_shared_spatial_domain` | consumes (12L reconciled; FullyResolved=false) |
 | source_engineering_model | `external_or_existing_engineering_model_owner` | consumes (source_ref/fileId) |
 | simulation_state | `digital_twin` | owns (separate simulated plane) |
 | simulation_governance | `digital_twin` | owns (method/provider registries) |

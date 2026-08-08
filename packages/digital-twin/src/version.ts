@@ -1,12 +1,16 @@
 /**
- * Phase 12K — Digital Twin Digital Thread Intelligence.
+ * Phase 12K — Digital Twin Digital Thread Intelligence (certified identity retained).
  *
  * Cross-domain traceability and provenance composition (REFERENCES only).
  * Digital Thread ≠ Knowledge Graph ≠ Timeline ≠ workflow history ≠ document repo ≠ reasoning chain.
  * Missing provenance → provenanceStatus=unknown, fail-closed (never fabricate).
  * Preserves 12J/12I: SolverCapabilityRegistryReady, FourLayerQualificationIntact,
  * CalculiXAdapterIntact, RealSolverExecutionCertified.
- * PHASE_12L_READY = true (flag only — do not start Phase 12L).
+ *
+ * Phase 12L (Shared Spatial Domain Discovery) reconciles SPATIAL_CANONICAL_OWNERSHIP
+ * to engineering_os_shared_spatial_domain. DT version stays 0.11.0-digital-thread.
+ * spatialOwnershipFullyResolved remains false (no register yet).
+ * PHASE_12M_READY = true (flag only — do not start Phase 12M).
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
@@ -291,9 +295,12 @@ export const PHASE_12J_READY = true as const;
 export const phase12JReady = true as const;
 export const PHASE_12K_READY = true as const;
 export const phase12KReady = true as const;
-/** Flag only — do not start Phase 12L. */
+/** Flag only — Phase 12L discovery proceeds in shared-spatial package. */
 export const PHASE_12L_READY = true as const;
 export const phase12LReady = true as const;
+/** Flag only — do not start Phase 12M. */
+export const PHASE_12M_READY = true as const;
+export const phase12MReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -350,6 +357,11 @@ export const PHASE_12J_CERTIFIED_COMMIT =
 export const PHASE_12J_HOSTED_RUN = "31267810968" as const;
 export const PHASE_12J_VERSION = "0.10.0-solver-capabilities" as const;
 
+export const PHASE_12K_CERTIFIED_COMMIT =
+  "dc5d1d6775b172634cd50038d34f35c13c34c339" as const;
+export const PHASE_12K_HOSTED_RUN = "31269156189" as const;
+export const PHASE_12K_VERSION = "0.11.0-digital-thread" as const;
+
 // ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
@@ -393,8 +405,13 @@ export const TWIN_SIMULATION_ASSURANCE_OWNERSHIP = "digital_twin" as const;
 export const DIGITAL_THREAD_OWNERSHIP = "digital_twin" as const;
 export const MODEL_FILE_BLOB_OWNERSHIP = "platform_files" as const;
 export const DOCUMENT_DRAWING_METADATA_OWNERSHIP = "engineering_os_shared_domain" as const;
-export const CANONICAL_LOCATION_OWNERSHIP = "engineering_os_shared_domain" as const;
+export const CANONICAL_LOCATION_OWNERSHIP =
+  "engineering_os_shared_spatial_domain" as const;
+/** Reconciled in Phase 12L — Shared Spatial Domain owns canonical spatial refs. */
 export const SPATIAL_CANONICAL_OWNERSHIP =
+  "engineering_os_shared_spatial_domain" as const;
+/** @deprecated Phase 12F placeholder — reconciled in 12L. */
+export const SPATIAL_CANONICAL_OWNERSHIP_LEGACY_PLACEHOLDER =
   "existing_shared_spatial_domain_or_explicitly_reconciled_owner" as const;
 export const SOURCE_MODEL_OWNERSHIP = "external_or_existing_engineering_model_owner" as const;
 export const ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP = "platform_intelligence" as const;
@@ -584,6 +601,7 @@ export function getDigitalTwinDigitalThreadDeclaration() {
     phase12JReady,
     phase12KReady,
     phase12LReady,
+    phase12MReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
@@ -610,6 +628,9 @@ export function getDigitalTwinDigitalThreadDeclaration() {
     phase12JVersion: PHASE_12J_VERSION,
     phase12JCertifiedCommit: PHASE_12J_CERTIFIED_COMMIT,
     phase12JHostedRun: PHASE_12J_HOSTED_RUN,
+    phase12KVersion: PHASE_12K_VERSION,
+    phase12KCertifiedCommit: PHASE_12K_CERTIFIED_COMMIT,
+    phase12KHostedRun: PHASE_12K_HOSTED_RUN,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
