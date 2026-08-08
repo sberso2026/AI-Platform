@@ -1,6 +1,6 @@
 /**
  * Phase 12I — Digital Twin external solver public contracts
- * (0.10.0-solver-capabilities-draft).
+ * (0.11.0-digital-thread-draft).
  */
 
 import {
@@ -64,7 +64,7 @@ export function assertSimulationContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.10.0-solver-capabilities-draft") {
+  if (PUBLIC_CONTRACT_VERSION !== "0.11.0-digital-thread-draft") {
     throw new Error("simulation_contracts_require_0_10_0_solver_capabilities_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };

@@ -47,10 +47,10 @@ describe("Phase 12G Digital Twin simulation", () => {
   const twinId = "twin-1";
 
   it("declares simulation version and pinned 12F baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.10.0-solver-capabilities");
-    expect(DIGITAL_TWIN_STATUS).toBe("solver_capabilities");
-    expect(DIGITAL_TWIN_PHASE).toBe("12J");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.10.0-solver-capabilities-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
+    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
+    expect(DIGITAL_TWIN_PHASE).toBe("12K");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
     expect(PHASE_12F_VERSION).toBe("0.6.0-representation");
     expect(PHASE_12F_CERTIFIED_COMMIT).toBe("2846421e7905a69c789a882a86da4071272278e3");
     expect(PHASE_12H_READY).toBe(true);

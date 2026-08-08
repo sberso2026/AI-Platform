@@ -1,10 +1,10 @@
 /**
- * Phase 12J — Digital Twin ownership lock.
+ * Phase 12K — Digital Twin ownership lock.
  *
- * Extends 12I with multi-provider solver capability registry (query-only).
- * CalculiX linear_elastic_static remains the sole certified real execution path.
- * nativeEngineeringSolverImplemented remains false.
- * duplicateSolverOwnershipDetected = false; capability registry ≠ competing solver registry.
+ * Extends 12J with Digital Thread intelligence (refs-only composition).
+ * Digital Thread ≠ KG ≠ Timeline. duplicateKnowledgeGraphDetected=false.
+ * Preserves SolverCapabilityRegistryReady / FourLayerQualificationIntact /
+ * CalculiXAdapterIntact / RealSolverExecutionCertified.
  */
 
 import {
@@ -94,6 +94,13 @@ import {
   FOUR_LAYER_QUALIFICATION_INTACT,
   REAL_SOLVER_EXECUTION_CERTIFIED,
   CALCULIX_ADAPTER_INTACT,
+  DIGITAL_THREAD_INTELLIGENCE_READY,
+  PROVENANCE_READY,
+  INTEGRITY_ASSESSMENT_READY,
+  TEMPORAL_TRAVERSAL_READY,
+  CHANGE_SET_READY,
+  KNOWLEDGE_GRAPH_REUSE_READY,
+  DUPLICATE_KNOWLEDGE_GRAPH_DETECTED,
   TWIN_SNAPSHOT_READY,
   TWIN_SOURCE_ADAPTER_READY,
   TWIN_STATE_INGESTION_READY,
@@ -246,7 +253,14 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "digital_thread",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Thread links and append-only timeline by reference",
+    notes:
+      "Phase 12K Digital Thread intelligence — compose REFERENCES only; integrate Twin Thread/Snapshot/Timeline by reference; never duplicate KG/TS/document stores",
+  },
+  {
+    concern: "digital_thread_provenance",
+    owner: "digital_twin",
+    relation: "owns",
+    notes: "Provenance metadata only — missing → unknown fail-closed; never fabricate",
   },
   {
     concern: "asset_identity_canonical",
@@ -306,7 +320,8 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "knowledge_graph_nodes",
     owner: "platform_kernel_knowledge_graph",
     relation: "consumes",
-    notes: "Reuse typed KG relationships; no new KG subsystem in Twin",
+    notes:
+      "Reuse typed KG relationships; no new KG subsystem in Twin; KnowledgeGraphReuseReady=true; duplicateKnowledgeGraphDetected=false",
   },
   {
     concern: "canonical_risk_register",
@@ -416,6 +431,13 @@ export function assertOwnershipLock(): {
   fourLayerQualificationIntact: true;
   realSolverExecutionCertified: true;
   calculixAdapterIntact: true;
+  digitalThreadIntelligenceReady: true;
+  provenanceReady: true;
+  integrityAssessmentReady: true;
+  temporalTraversalReady: true;
+  changeSetReady: true;
+  knowledgeGraphReuseReady: true;
+  duplicateKnowledgeGraphDetected: false;
   twinVersioningReady: true;
   representationVersioningReady: true;
   twinSnapshotReady: true;
@@ -521,6 +543,19 @@ export function assertOwnershipLock(): {
   if (!REAL_SOLVER_EXECUTION_CERTIFIED || !CALCULIX_ADAPTER_INTACT) {
     throw new Error("phase_12i_real_solver_evidence_flags_required");
   }
+  if (
+    !DIGITAL_THREAD_INTELLIGENCE_READY ||
+    !PROVENANCE_READY ||
+    !INTEGRITY_ASSESSMENT_READY ||
+    !TEMPORAL_TRAVERSAL_READY ||
+    !CHANGE_SET_READY ||
+    !KNOWLEDGE_GRAPH_REUSE_READY
+  ) {
+    throw new Error("phase_12k_digital_thread_flags_required");
+  }
+  if (DUPLICATE_KNOWLEDGE_GRAPH_DETECTED) {
+    throw new Error("duplicate_knowledge_graph_forbidden");
+  }
   if (SIMULATION_OPTIMIZATION_IMPLEMENTED || PREDICTIVE_TWIN_IMPLEMENTED) {
     throw new Error("optimization_and_prediction_forbidden");
   }
@@ -554,8 +589,8 @@ export function assertOwnershipLock(): {
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.10.0-solver-capabilities-draft") {
-    throw new Error("public_contracts_must_be_solver_capabilities_draft_in_phase_12j");
+  if (PUBLIC_CONTRACT_VERSION !== "0.11.0-digital-thread-draft") {
+    throw new Error("public_contracts_must_be_digital_thread_draft_in_phase_12k");
   }
   if (
     !TWIN_IDENTITY_READY ||
@@ -748,6 +783,13 @@ export function assertOwnershipLock(): {
     fourLayerQualificationIntact: true,
     realSolverExecutionCertified: true,
     calculixAdapterIntact: true,
+    digitalThreadIntelligenceReady: true,
+    provenanceReady: true,
+    integrityAssessmentReady: true,
+    temporalTraversalReady: true,
+    changeSetReady: true,
+    knowledgeGraphReuseReady: true,
+    duplicateKnowledgeGraphDetected: false,
     twinVersioningReady: true,
     representationVersioningReady: true,
     twinSnapshotReady: true,

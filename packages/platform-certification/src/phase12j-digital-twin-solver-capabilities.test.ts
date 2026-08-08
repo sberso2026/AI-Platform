@@ -36,11 +36,11 @@ describe("Phase 12J Digital Twin solver capabilities", () => {
 
   it("declares solver capabilities version and status", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.10\.0-solver-capabilities"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "solver_capabilities"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12J"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.10\.0-solver-capabilities"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.10\.0-solver-capabilities"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.11\.0-digital-thread"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "digital_thread"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12K"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.11\.0-digital-thread"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.11\.0-digital-thread"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12j/);
     expect(read(`${CERT}/package.json`)).toMatch(/test:e2e:solver-capabilities/);
   });
@@ -76,7 +76,7 @@ describe("Phase 12J Digital Twin solver capabilities", () => {
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.10\.0-solver-capabilities-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.11\.0-digital-thread-draft"/);
   });
 
   it("pins Phase 12I certified baseline", () => {

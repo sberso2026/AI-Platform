@@ -31,6 +31,13 @@ export const ASSURANCE_GOVERNANCE = {
   capabilityDiscoveryReady: true,
   simulationPackageExtended: true,
   fourLayerQualificationIntact: true,
+  digitalThreadIntelligenceReady: true,
+  provenanceReady: true,
+  integrityAssessmentReady: true,
+  temporalTraversalReady: true,
+  changeSetReady: true,
+  knowledgeGraphReuseReady: true,
+  duplicateKnowledgeGraphDetected: false,
   simulationExecutionImplemented: true,
   nativeEngineeringSolverImplemented: false,
   externalEngineeringSolverAdaptersImplemented: true,
@@ -45,6 +52,7 @@ export const ASSURANCE_GOVERNANCE = {
   phase12IReady: true,
   phase12JReady: true,
   phase12KReady: true,
+  phase12LReady: true,
 } as const;
 
 export function rejectSolverActivation(body: Record<string, unknown>, requestId: string) {

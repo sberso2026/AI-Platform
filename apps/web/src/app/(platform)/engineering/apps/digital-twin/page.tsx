@@ -1,5 +1,5 @@
 /**
- * Phase 12J — Digital Twin solver capability registry overview.
+ * Phase 12K — Digital Twin Digital Thread Intelligence overview.
  */
 
 const SIMULATION_SURFACES = [
@@ -79,6 +79,39 @@ const CAPABILITY_SURFACES = [
   },
 ] as const;
 
+const THREAD_SURFACES = [
+  {
+    id: "compose",
+    name: "Compose",
+    summary: "DigitalThreadSnapshot — refs only; integrates Twin Thread/Snapshot/Timeline by reference.",
+  },
+  {
+    id: "as-of",
+    name: "As-of Traversal",
+    summary: "Temporal traversal: as-of, historical, current-reference — no causal inference.",
+  },
+  {
+    id: "provenance",
+    name: "Provenance",
+    summary: "Missing provenance → unknown (fail-closed). Never fabricate.",
+  },
+  {
+    id: "integrity",
+    name: "Integrity",
+    summary: "Detect complete|partial|broken_reference|conflicting|stale|unknown — never auto-repair.",
+  },
+  {
+    id: "change-set",
+    name: "Change Set",
+    summary: "Diff two thread snapshots — added/removed/superseded/version/relationship/…",
+  },
+  {
+    id: "kg-reuse",
+    name: "KG Reuse",
+    summary: "Platform shared KG refs only — duplicateKnowledgeGraphDetected=false.",
+  },
+] as const;
+
 const UNAVAILABLE = [
   { id: "native-solver", name: "Native FEA/CFD/physics solver", reason: "UNAVAILABLE — nativeEngineeringSolverImplemented=false." },
   { id: "ansys", name: "ANSYS adapter", reason: "RESERVED — unavailable stub." },
@@ -101,7 +134,7 @@ export default function DigitalTwinSolverCapabilitiesPage() {
           Digital Twin — Simulation Governance
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Version <span data-testid="digital-twin-simulation-version">0.10.0-solver-capabilities</span>.
+          Version <span data-testid="digital-twin-simulation-version">0.11.0-digital-thread</span>.
           Surfaces below are labeled <strong>SIMULATED</strong> and must not be visually merged with
           observed Twin state. Providers:{" "}
           <span data-testid="digital-twin-fixture-provider-flag">deterministic_fixture</span>
@@ -150,7 +183,7 @@ export default function DigitalTwinSolverCapabilitiesPage() {
         <ul
           className="mt-3 space-y-2"
           data-testid="digital-twin-unavailable-capabilities"
-          aria-label="Capabilities unavailable in Phase 12J"
+          aria-label="Capabilities unavailable in Phase 12K"
         >
           {UNAVAILABLE.map((item) => (
             <li
@@ -174,7 +207,7 @@ export default function DigitalTwinSolverCapabilitiesPage() {
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
           Version{" "}
-          <span data-testid="digital-twin-assurance-version">0.10.0-solver-capabilities</span>.
+          <span data-testid="digital-twin-assurance-version">0.11.0-digital-thread</span>.
           Four-layer qualification enforced before CalculiX execution (
           <span data-testid="digital-twin-four-layer-flag">FourLayerQualificationIntact=true</span>
           ).
@@ -207,7 +240,7 @@ export default function DigitalTwinSolverCapabilitiesPage() {
           External Engineering Solver
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Version <span data-testid="digital-twin-external-solver-version">0.10.0-solver-capabilities</span>.
+          Version <span data-testid="digital-twin-external-solver-version">0.11.0-digital-thread</span>.
           First real solver: CalculiX (
           <span data-testid="digital-twin-external-solver-flag">
             externalEngineeringSolverAdaptersImplemented=true
@@ -245,7 +278,7 @@ export default function DigitalTwinSolverCapabilitiesPage() {
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
           Version{" "}
-          <span data-testid="digital-twin-solver-capabilities-version">0.10.0-solver-capabilities</span>.
+          <span data-testid="digital-twin-solver-capabilities-version">0.11.0-digital-thread</span>.
           Multi-provider capability catalog — discovery only; no auto-execute (
           <span data-testid="digital-twin-capability-registry-flag">
             SolverCapabilityRegistryReady=true
@@ -283,6 +316,44 @@ export default function DigitalTwinSolverCapabilitiesPage() {
                   : surface.status === "reserved"
                     ? "RESERVED"
                     : "QUERY ONLY"}
+              </p>
+              <h3 className="font-medium text-slate-900">{surface.name}</h3>
+              <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section
+        className="mt-10"
+        data-testid="digital-twin-digital-thread-ready"
+        aria-labelledby="dt-thread-title"
+      >
+        <h2 id="dt-thread-title" className="text-2xl font-semibold text-slate-900">
+          Digital Thread Intelligence
+        </h2>
+        <p className="mt-2 max-w-2xl text-slate-600">
+          Version{" "}
+          <span data-testid="digital-twin-digital-thread-version">0.11.0-digital-thread</span>.
+          Cross-domain traceability and provenance composition — REFERENCES only (
+          <span data-testid="digital-twin-digital-thread-flag">
+            DigitalThreadIntelligenceReady=true
+          </span>
+          ). Digital Thread ≠ Knowledge Graph ≠ Timeline. Traceability ≠ causality.
+        </p>
+        <ul
+          className="mt-3 grid gap-3 sm:grid-cols-2"
+          data-testid="digital-twin-digital-thread-surfaces"
+          aria-label="Digital Twin digital thread surfaces"
+        >
+          {THREAD_SURFACES.map((surface) => (
+            <li
+              key={surface.id}
+              data-testid={`digital-twin-digital-thread-surface-${surface.id}`}
+              className="rounded-lg border border-teal-200 bg-teal-50/40 p-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-teal-800">
+                THREAD REF
               </p>
               <h3 className="font-medium text-slate-900">{surface.name}</h3>
               <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>

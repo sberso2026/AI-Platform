@@ -73,7 +73,7 @@ describe("Phase 12D Digital Twin governed state ingestion", () => {
   });
 
   it("declares ingestion events in catalog", () => {
-    expect(assertIngestionContracts().contractVersion).toBe("0.10.0-solver-capabilities-draft");
+    expect(assertIngestionContracts().contractVersion).toBe("0.11.0-digital-thread-draft");
     for (const evt of INGESTION_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

@@ -39,9 +39,9 @@ import {
 
 describe("Phase 12I Digital Twin External Solver", () => {
   it("declares 12I version identity and pins 12H", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.10.0-solver-capabilities");
-    expect(DIGITAL_TWIN_STATUS).toBe("solver_capabilities");
-    expect(DIGITAL_TWIN_PHASE).toBe("12J");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
+    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
+    expect(DIGITAL_TWIN_PHASE).toBe("12K");
     expect(PHASE_12H_CERTIFIED_COMMIT).toBe("f276dbb15b3a68d2863b3547a2dc58aa1ef3afbe");
     expect(PHASE_12H_HOSTED_RUN).toBe("31263802033");
     expect(PHASE_12H_VERSION).toBe("0.8.0-simulation-assurance");

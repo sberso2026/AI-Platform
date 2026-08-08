@@ -1,16 +1,18 @@
 /**
- * Phase 12J — Digital Twin Multi-Provider Solver Capability Registry.
+ * Phase 12K — Digital Twin Digital Thread Intelligence.
  *
- * Expands to a multi-provider CAPABILITY registry WITHOUT additional solver execution.
- * CalculiX linear_elastic_static from 12I remains the ONLY certified real execution path.
- * silentSolverFallbackAllowed = false.
- * PHASE_12K_READY = true (flag only — do not start Phase 12K).
+ * Cross-domain traceability and provenance composition (REFERENCES only).
+ * Digital Thread ≠ Knowledge Graph ≠ Timeline ≠ workflow history ≠ document repo ≠ reasoning chain.
+ * Missing provenance → provenanceStatus=unknown, fail-closed (never fabricate).
+ * Preserves 12J/12I: SolverCapabilityRegistryReady, FourLayerQualificationIntact,
+ * CalculiXAdapterIntact, RealSolverExecutionCertified.
+ * PHASE_12L_READY = true (flag only — do not start Phase 12L).
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.10.0-solver-capabilities" as const;
-export const DIGITAL_TWIN_STATUS = "solver_capabilities" as const;
-export const DIGITAL_TWIN_PHASE = "12J" as const;
+export const DIGITAL_TWIN_VERSION = "0.11.0-digital-thread" as const;
+export const DIGITAL_TWIN_STATUS = "digital_thread" as const;
+export const DIGITAL_TWIN_PHASE = "12K" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -148,6 +150,29 @@ export const fourLayerQualificationIntact = true as const;
 
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
+export const KNOWLEDGE_GRAPH_REUSE_READY = true as const;
+export const KnowledgeGraphReuseReady = true as const;
+export const knowledgeGraphReuseReady = true as const;
+export const DUPLICATE_KNOWLEDGE_GRAPH_DETECTED = false as const;
+export const duplicateKnowledgeGraphDetected = false as const;
+
+/** Phase 12K digital thread intelligence */
+export const DIGITAL_THREAD_INTELLIGENCE_READY = true as const;
+export const DigitalThreadIntelligenceReady = true as const;
+export const digitalThreadIntelligenceReady = true as const;
+export const PROVENANCE_READY = true as const;
+export const ProvenanceReady = true as const;
+export const provenanceReady = true as const;
+export const INTEGRITY_ASSESSMENT_READY = true as const;
+export const IntegrityAssessmentReady = true as const;
+export const integrityAssessmentReady = true as const;
+export const TEMPORAL_TRAVERSAL_READY = true as const;
+export const TemporalTraversalReady = true as const;
+export const temporalTraversalReady = true as const;
+export const CHANGE_SET_READY = true as const;
+export const ChangeSetReady = true as const;
+export const changeSetReady = true as const;
+
 export const HOSTED_PERSISTENCE_READY = true as const;
 export const hostedDigitalTwinPersistenceReady = true as const;
 
@@ -210,6 +235,11 @@ export const RUL_PREDICTION_IMPLEMENTED = false as const;
 export const rulPredictionImplemented = false as const;
 export const POF_PREDICTION_IMPLEMENTED = false as const;
 export const pofPredictionImplemented = false as const;
+/** Alias for workflow asserts (emit one primary key in artifacts). */
+export const PROBABILITY_OF_FAILURE_IMPLEMENTED = false as const;
+export const probabilityOfFailureImplemented = false as const;
+export const RUL_IMPLEMENTED = false as const;
+export const rulImplemented = false as const;
 
 export const THREE_D_VIEWER_IMPLEMENTED = false as const;
 export const threeDViewerImplemented = false as const;
@@ -259,9 +289,11 @@ export const PHASE_12I_READY = true as const;
 export const phase12IReady = true as const;
 export const PHASE_12J_READY = true as const;
 export const phase12JReady = true as const;
-/** Flag only — do not start Phase 12K. */
 export const PHASE_12K_READY = true as const;
 export const phase12KReady = true as const;
+/** Flag only — do not start Phase 12L. */
+export const PHASE_12L_READY = true as const;
+export const phase12LReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -313,6 +345,11 @@ export const PHASE_12I_CERTIFIED_COMMIT =
 export const PHASE_12I_HOSTED_RUN = "31265781321" as const;
 export const PHASE_12I_VERSION = "0.9.0-external-solver" as const;
 
+export const PHASE_12J_CERTIFIED_COMMIT =
+  "b9c9a911e96e490022248badd99630ddc8cacb2f" as const;
+export const PHASE_12J_HOSTED_RUN = "31267810968" as const;
+export const PHASE_12J_VERSION = "0.10.0-solver-capabilities" as const;
+
 // ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
@@ -341,7 +378,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 export const projectIntelligenceV1Intact = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.10.0-solver-capabilities-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.11.0-digital-thread-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -383,8 +420,8 @@ export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
 export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "solver_capabilities" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.10.0-solver-capabilities" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "digital_thread" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.11.0-digital-thread" as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
 export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
@@ -415,8 +452,10 @@ export const DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG =
   "digital_twin.solver_adapter_review" as const;
 export const DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG =
   "digital_twin.capability_review" as const;
+export const DIGITAL_TWIN_DIGITAL_THREAD_REVIEW_SLUG =
+  "digital_twin.digital_thread_review" as const;
 
-export function getDigitalTwinSolverCapabilitiesDeclaration() {
+export function getDigitalTwinDigitalThreadDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -476,7 +515,20 @@ export function getDigitalTwinSolverCapabilitiesDeclaration() {
     SimulationPackageExtended,
     fourLayerQualificationIntact,
     FourLayerQualificationIntact,
+    digitalThreadIntelligenceReady,
+    DigitalThreadIntelligenceReady,
+    provenanceReady,
+    ProvenanceReady,
+    integrityAssessmentReady,
+    IntegrityAssessmentReady,
+    temporalTraversalReady,
+    TemporalTraversalReady,
+    changeSetReady,
+    ChangeSetReady,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
+    knowledgeGraphReuseReady,
+    KnowledgeGraphReuseReady,
+    duplicateKnowledgeGraphDetected,
     hostedDigitalTwinPersistenceReady,
     productionDigitalTwinReady,
     digitalTwinRuntimeImplemented,
@@ -501,7 +553,9 @@ export function getDigitalTwinSolverCapabilitiesDeclaration() {
     predictiveTwinImplemented,
     probabilisticPredictionImplemented,
     rulPredictionImplemented,
+    rulImplemented,
     pofPredictionImplemented,
+    probabilityOfFailureImplemented,
     threeDViewerImplemented,
     physicalActuationEnabled,
     physicalActuationImplemented,
@@ -529,6 +583,7 @@ export function getDigitalTwinSolverCapabilitiesDeclaration() {
     phase12IReady,
     phase12JReady,
     phase12KReady,
+    phase12LReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
@@ -552,6 +607,9 @@ export function getDigitalTwinSolverCapabilitiesDeclaration() {
     phase12IVersion: PHASE_12I_VERSION,
     phase12ICertifiedCommit: PHASE_12I_CERTIFIED_COMMIT,
     phase12IHostedRun: PHASE_12I_HOSTED_RUN,
+    phase12JVersion: PHASE_12J_VERSION,
+    phase12JCertifiedCommit: PHASE_12J_CERTIFIED_COMMIT,
+    phase12JHostedRun: PHASE_12J_HOSTED_RUN,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
@@ -579,54 +637,60 @@ export function getDigitalTwinSolverCapabilitiesDeclaration() {
     packageReviewSlug: DIGITAL_TWIN_PACKAGE_REVIEW_SLUG,
     solverAdapterReviewSlug: DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG,
     capabilityReviewSlug: DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG,
+    digitalThreadReviewSlug: DIGITAL_TWIN_DIGITAL_THREAD_REVIEW_SLUG,
   };
 }
 
 export function getDigitalTwinVersionInfo() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
+export function getDigitalTwinSolverCapabilitiesDeclaration() {
+  return getDigitalTwinDigitalThreadDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinExternalSolverDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinSimulationAssuranceDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinSimulationDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinRepresentationDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinTelemetryBindingDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinIngestionDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinStateDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinCoreDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+/** @deprecated Use getDigitalTwinDigitalThreadDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinSolverCapabilitiesDeclaration();
+  return getDigitalTwinDigitalThreadDeclaration();
 }

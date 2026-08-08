@@ -40,7 +40,7 @@ describe("Phase 12I Digital Twin external solver", () => {
     expect(version).toMatch(/PHASE_12I_CERTIFIED_COMMIT/);
     expect(version).toMatch(/EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY = true/);
     expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.10\.0-solver-capabilities"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12J"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12K"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12i/);
     expect(read(`${CERT}/package.json`)).toMatch(/test:e2e:external-solver/);
   });
