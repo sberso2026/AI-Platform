@@ -114,6 +114,10 @@ const ASSURANCE_STATES = "project_controls_assurance_states";
 const ASSURANCE_EVIDENCE = "project_controls_assurance_evidence";
 const ASSURANCE_REVIEWS = "project_controls_assurance_reviews";
 const ASSURANCE_CONFIDENCE = "project_controls_assurance_confidence";
+const ORGANIZATIONAL_LEARNING_STATES = "project_controls_organizational_learning_states";
+const ORGANIZATIONAL_LEARNING_EVIDENCE = "project_controls_organizational_learning_evidence";
+const ORGANIZATIONAL_LEARNING_REVIEWS = "project_controls_organizational_learning_reviews";
+const ORGANIZATIONAL_LEARNING_CONFIDENCE = "project_controls_organizational_learning_confidence";
 const EXPLAINABILITY_STATES = "project_controls_explainability_states";
 const EXPLAINABILITY_EVIDENCE = "project_controls_explainability_evidence";
 const EXPLAINABILITY_REVIEWS = "project_controls_explainability_reviews";
@@ -3430,6 +3434,297 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
     }));
   }
 
+
+  // ----------------------------------------------------------- organizational_learning
+
+  async saveOrganizationalLearningState(
+    state: PersistedOrganizationalLearningState,
+  ): Promise<PersistedOrganizationalLearningState> {
+    const ctx = state.controlContext;
+    const row = {
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      project_id: state.projectId,
+      scope_kind: ctx.scope.kind,
+      scope_reference_id: ctx.scope.referenceId ?? null,
+      organizational_learning_unit_id: ctx.organizationalLearningUnitId,
+      organizational_learning_unit_label: ctx.organizationalLearningUnitLabel ?? null,
+      version: state.version,
+      status: state.status,
+      assessment_class: state.assessmentClass,
+      taxonomy_class: state.taxonomyClass,
+      synthesis: state.synthesis,
+      learning_items: state.learningItems,
+      control_context: ctx,
+      contributing_contributors: state.contributingContributors,
+      assumptions: state.assumptions,
+      confidence_class: state.confidence.confidenceClass,
+      data_sufficiency: state.confidence.dataSufficiency,
+      confidence_payload: state.confidence,
+      evidence_refs: state.evidenceRefs,
+      reasons: state.reasons,
+      limitations: state.limitations,
+      abstained: state.abstained,
+      abstention_reason: state.abstentionReason ?? null,
+      narrative: state.narrative ?? null,
+      composed_context_id: state.composedContextId ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      assessed_at: state.assessedAt,
+      recorded_at: state.recordedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      workflow_instance_id: state.workflowInstanceId ?? null,
+      earned_value_computed: false,
+      critical_path_computed: false,
+      float_computed: false,
+      auto_execution_enabled: false,
+      schedule_execution_performed: false,
+      cost_execution_performed: false,
+      contract_instruction_performed: false,
+      approval_authority_claimed: false,
+      fabricated_lesson: false,
+      unsupported_similarity_score: false,
+      knowledge_mutation_claimed: false,
+      resource_planning_performed: false,
+      budget_ledger_mutated: false,
+      financial_posting_performed: false,
+      predictive_scheduling_performed: false,
+      duplicate_knowledge_ownership_detected: false,
+      mutates_upstream_contributors: false,
+      advisory_only: true,
+      mutates_project_identity: false,
+    };
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_STATES)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`organizational_learning_state_persist_failed:${error.message}`);
+    return mapOrganizationalLearningStateRow(data);
+  }
+
+  async getOrganizationalLearningStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedOrganizationalLearningState | null> {
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_STATES)
+      .select("*")
+      .eq("id", stateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`organizational_learning_state_read_failed:${error.message}`);
+    return data ? mapOrganizationalLearningStateRow(data) : null;
+  }
+
+  async latestOrganizationalLearningState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    organizationalLearningUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedOrganizationalLearningState | undefined> {
+    let query = this.supabase
+      .from(ORGANIZATIONAL_LEARNING_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("scope_kind", scope.kind)
+      .eq("organizational_learning_unit_id", organizationalLearningUnitId)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (scope.referenceId) query = query.eq("scope_reference_id", scope.referenceId);
+    else query = query.is("scope_reference_id", null);
+    if (asOf) query = query.lte("assessed_at", asOf);
+    const { data, error } = await query;
+    if (error) throw new Error(`organizational_learning_state_read_failed:${error.message}`);
+    const row = (data ?? [])[0];
+    return row ? mapOrganizationalLearningStateRow(row) : undefined;
+  }
+
+  async listOrganizationalLearningStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedOrganizationalLearningState[]> {
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId);
+    if (error) throw new Error(`organizational_learning_state_list_failed:${error.message}`);
+    return (data ?? []).map(mapOrganizationalLearningStateRow);
+  }
+
+  async nextOrganizationalLearningStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    organizationalLearningUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestOrganizationalLearningState(
+      tenantId,
+      workspaceId,
+      scope,
+      organizationalLearningUnitId,
+    );
+    const current = latest?.version ?? 0;
+    if (expectedVersion !== undefined && current !== expectedVersion) {
+      throw new Error(`optimistic_lock_conflict:organizational_learning_expected=${expectedVersion}`);
+    }
+    return current + 1;
+  }
+
+  async saveOrganizationalLearningEvidence(
+    evidence: readonly PersistedOrganizationalLearningEvidence[],
+  ): Promise<PersistedOrganizationalLearningEvidence[]> {
+    if (evidence.length === 0) return [];
+    const rows = evidence.map((item) => ({
+      id: item.evidenceId,
+      tenant_id: item.tenantId,
+      workspace_id: item.workspaceId,
+      project_id: item.projectId,
+      organizational_learning_state_id: item.organizationalLearningStateId,
+      evidence_kind: item.kind,
+      source_type: item.sourceType,
+      source_ref: item.sourceRef,
+      source_key: item.sourceKey,
+      provenance: item.provenance,
+      review_status: item.reviewStatus,
+      observed_at: item.observedAt ?? null,
+      declared_signal: item.declaredSignal ?? null,
+      contributor_key: item.contributorKey ?? null,
+      narrative: item.narrative ?? null,
+      revoked: item.revoked ?? false,
+      recorded_at: item.recordedAt,
+      created_by: item.createdBy ?? null,
+      fabricated_lesson: false,
+      unsupported_similarity_score: false,
+      knowledge_mutation_claimed: false,
+      mutates_upstream_contributors: false,
+    }));
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_EVIDENCE)
+      .insert(rows)
+      .select("*");
+    if (error) throw new Error(`organizational_learning_evidence_persist_failed:${error.message}`);
+    return (data ?? []).map(mapOrganizationalLearningEvidenceRow);
+  }
+
+  async listOrganizationalLearningEvidence(
+    tenantId: string,
+    workspaceId: string,
+    organizationalLearningStateId: string,
+  ): Promise<PersistedOrganizationalLearningEvidence[]> {
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_EVIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("organizational_learning_state_id", organizationalLearningStateId);
+    if (error) throw new Error(`organizational_learning_evidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapOrganizationalLearningEvidenceRow);
+  }
+
+  async saveOrganizationalLearningReview(
+    review: PersistedOrganizationalLearningReview,
+  ): Promise<PersistedOrganizationalLearningReview> {
+    const row = {
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      project_id: review.projectId,
+      organizational_learning_state_id: review.organizationalLearningStateId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+      approval_authority_claimed: false,
+      fabricated_lesson: false,
+      unsupported_similarity_score: false,
+    };
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_REVIEWS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`organizational_learning_review_persist_failed:${error.message}`);
+    return mapOrganizationalLearningReviewRow(data);
+  }
+
+  async listOrganizationalLearningReviews(
+    tenantId: string,
+    workspaceId: string,
+    organizationalLearningStateId?: string,
+  ): Promise<PersistedOrganizationalLearningReview[]> {
+    let query = this.supabase
+      .from(ORGANIZATIONAL_LEARNING_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (organizationalLearningStateId) {
+      query = query.eq("organizational_learning_state_id", organizationalLearningStateId);
+    }
+    const { data, error } = await query;
+    if (error) throw new Error(`organizational_learning_review_read_failed:${error.message}`);
+    return (data ?? []).map(mapOrganizationalLearningReviewRow);
+  }
+
+  async saveOrganizationalLearningConfidence(
+    confidence: PersistedOrganizationalLearningConfidence,
+  ): Promise<PersistedOrganizationalLearningConfidence> {
+    const row = {
+      tenant_id: confidence.tenantId,
+      workspace_id: confidence.workspaceId,
+      project_id: confidence.projectId,
+      organizational_learning_state_id: confidence.organizationalLearningStateId,
+      confidence_payload: confidence,
+      recorded_at: confidence.recordedAt,
+    };
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_CONFIDENCE)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`organizational_learning_confidence_persist_failed:${error.message}`);
+    return {
+      ...(data.confidence_payload as PersistedOrganizationalLearningConfidence),
+      organizationalLearningStateId: data.organizational_learning_state_id,
+      recordedAt: data.recorded_at,
+    };
+  }
+
+  async listOrganizationalLearningConfidence(
+    tenantId: string,
+    workspaceId: string,
+    organizationalLearningStateId: string,
+  ): Promise<PersistedOrganizationalLearningConfidence[]> {
+    const { data, error } = await this.supabase
+      .from(ORGANIZATIONAL_LEARNING_CONFIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("organizational_learning_state_id", organizationalLearningStateId);
+    if (error) throw new Error(`organizational_learning_confidence_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      ...(row.confidence_payload as PersistedOrganizationalLearningConfidence),
+      organizationalLearningStateId: row.organizational_learning_state_id,
+      recordedAt: row.recorded_at,
+    }));
+  }
+
   // ------------------------------------- shared project snapshot and timeline
 
   async saveProjectSnapshot(
@@ -3454,6 +3749,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       risk_opportunity_state_ids: snapshot.riskOpportunityStateIds,
       assurance_state_ids: snapshot.assuranceStateIds,
       explainability_state_ids: snapshot.explainabilityStateIds,
+      organizational_learning_state_ids: snapshot.organizationalLearningStateIds,
       created_by: snapshot.createdBy ?? null,
       immutable: true,
       contains_evidence_payloads: false,
@@ -3573,6 +3869,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       risk_opportunity_summary: profile.riskOpportunityIntelligence ?? {},
       assurance_summary: profile.assuranceIntelligence ?? {},
       explainability_summary: profile.explainabilityIntelligence ?? {},
+      organizational_learning_summary: profile.organizationalLearning ?? {},
       contributors: profile.contributors,
       active_contributor_keys: profile.activeContributorKeys,
       reserved_contributor_keys: profile.reservedContributorKeys,
@@ -3884,6 +4181,7 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     riskOpportunityIntelligence: row.risk_opportunity_summary ?? undefined,
     assuranceIntelligence: row.assurance_summary ?? undefined,
     explainabilityIntelligence: row.explainability_summary ?? undefined,
+    organizationalLearning: row.organizational_learning_summary ?? undefined,
     contributors: row.contributors ?? [],
     activeContributorKeys: row.active_contributor_keys ?? [],
     reservedContributorKeys: row.reserved_contributor_keys ?? [],
@@ -4633,6 +4931,7 @@ function mapProjectSnapshotRow(row: any): PersistedProjectSnapshot {
     riskOpportunityStateIds: row.risk_opportunity_state_ids ?? [],
     assuranceStateIds: row.assurance_state_ids ?? [],
     explainabilityStateIds: row.explainability_state_ids ?? [],
+    organizationalLearningStateIds: row.organizational_learning_state_ids ?? [],
     createdBy: row.created_by ?? undefined,
     immutable: true,
     containsEvidencePayloads: false,
@@ -5230,5 +5529,146 @@ function mapExplainabilityReviewRow(row: any): PersistedExplainabilityReview {
     approvalAuthorityClaimed: false,
     chainOfThoughtExposed: false,
     hiddenReasoningExposed: false,
+  };
+}
+
+function mapOrganizationalLearningStateRow(row: any): PersistedOrganizationalLearningState {
+  const ctx = row.control_context;
+  return {
+    id: row.id,
+    stateId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    controlContext: ctx,
+    version: row.version,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    taxonomyClass: row.taxonomy_class,
+    synthesis: row.synthesis,
+    snapshot: row.synthesis?.snapshot ?? row.snapshot_payload ?? {
+      snapshotId: row.id,
+      integratedTaxonomyClass: row.taxonomy_class,
+      integratedBasisStatus: "unknown",
+      reasonSummary: "",
+      learningItemCount: 0,
+      evidenceRefCount: 0,
+      traceCount: 0,
+      abstained: row.abstained,
+      fabricatedLesson: false,
+      unsupportedSimilarityScore: false,
+    },
+    learningItems: row.learning_items ?? [],
+    contributingContributors: row.contributing_contributors ?? [],
+    evidenceRefs: row.evidence_refs ?? [],
+    historicalSimilarityRefs: row.synthesis?.historicalSimilarityRefs ?? [],
+    lessonReferences: row.synthesis?.lessonReferences ?? [],
+    patternReferences: row.synthesis?.patternReferences ?? [],
+    outcomeReferences: row.synthesis?.outcomeReferences ?? [],
+    reusablePracticeReferences: row.synthesis?.reusablePracticeReferences ?? [],
+    crossProjectKnowledgeRefs: row.synthesis?.crossProjectKnowledgeRefs ?? [],
+    knowledgeProvenanceTraces: row.synthesis?.knowledgeProvenanceTraces ?? [],
+    timelineTraces: row.synthesis?.timelineTraces ?? [],
+    governanceRefs: row.synthesis?.governanceRefs ?? [],
+    confidence: row.confidence_payload,
+    assumptions: row.assumptions ?? [],
+    limitations: row.limitations ?? [],
+    reasons: row.reasons ?? [],
+    abstained: row.abstained,
+    abstentionReason: row.abstention_reason ?? undefined,
+    narrative: row.narrative ?? undefined,
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    reviewedAt: row.reviewed_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    workflowInstanceId: row.workflow_instance_id ?? undefined,
+    composedContextId: row.composed_context_id ?? undefined,
+    explainabilityContextId: undefined,
+    assuranceContextId: undefined,
+    earnedValueComputed: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+    autoExecutionEnabled: false,
+    scheduleExecutionPerformed: false,
+    costExecutionPerformed: false,
+    contractInstructionPerformed: false,
+    learningApprovalClaimed: false,
+    knowledgeMutationClaimed: false,
+    automaticLearningApprovalClaimed: false,
+    automaticKnowledgeMutationClaimed: false,
+    resourcePlanningPerformed: false,
+    budgetLedgerMutated: false,
+    financialPostingPerformed: false,
+    predictiveSchedulingPerformed: false,
+    advisoryOnly: true,
+    mutatesProjectIdentity: false,
+    mutatesUpstreamContributors: false,
+    autonomousPublication: false,
+    duplicateKnowledgeOwnershipDetected: false,
+    fabricatedLesson: false,
+    unsupportedSimilarityScore: false,
+    recommendationClaimed: false,
+    predictionClaimed: false,
+    optimisationClaimed: false,
+  };
+}
+
+function mapOrganizationalLearningEvidenceRow(row: any): PersistedOrganizationalLearningEvidence {
+  return {
+    evidenceId: row.id,
+    kind: row.evidence_kind,
+    sourceType: row.source_type,
+    sourceRef: row.source_ref,
+    sourceKey: row.source_key,
+    provenance: row.provenance,
+    reviewStatus: row.review_status,
+    observedAt: row.observed_at ?? undefined,
+    declaredSignal: row.declared_signal ?? undefined,
+    narrative: row.narrative ?? undefined,
+    revoked: row.revoked ?? false,
+    contributorKey: row.contributor_key ?? undefined,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    organizationalLearningStateId: row.organizational_learning_state_id,
+    recordedAt: row.recorded_at,
+    createdBy: row.created_by ?? undefined,
+    fabricatedLesson: false,
+    unsupportedSimilarityScore: false,
+    knowledgeMutationClaimed: false,
+    autoExecutionClaimed: false,
+    learningApprovalClaimed: false,
+    recommendationClaimed: false,
+    predictionClaimed: false,
+    optimisationClaimed: false,
+    earnedValueDerived: false,
+    cpmDerived: false,
+    financialPostingClaimed: false,
+    registerMutationClaimed: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
+function mapOrganizationalLearningReviewRow(row: any): PersistedOrganizationalLearningReview {
+  return {
+    reviewId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    organizationalLearningStateId: row.organizational_learning_state_id,
+    workflowInstanceId: row.workflow_instance_id,
+    workflowState: row.workflow_state,
+    outcome: row.outcome ?? undefined,
+    reviewerId: row.reviewer_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    selfApproved: false,
+    learningApprovalClaimed: false,
+    knowledgeMutationClaimed: false,
   };
 }

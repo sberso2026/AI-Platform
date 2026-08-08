@@ -28,6 +28,7 @@ import {
   AUTONOMOUS_RISK_OPPORTUNITY_PUBLICATION_ALLOWED,
   AUTONOMOUS_ASSURANCE_PUBLICATION_ALLOWED,
   AUTONOMOUS_EXPLAINABILITY_PUBLICATION_ALLOWED,
+  AUTONOMOUS_ORGANIZATIONAL_LEARNING_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
@@ -1315,5 +1316,127 @@ export function assertExplainabilityPublishable(input: {
   }
   if (input.assessedBy && input.assessedBy === input.reviewerId) {
     throw new Error("explainability_self_approval_forbidden");
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// Organizational Learning review (Phase 11M)
+// ---------------------------------------------------------------------------
+
+export const ORGANIZATIONAL_LEARNING_REVIEW_WORKFLOW_SLUG =
+  "project_controls.organizational_learning_review" as const;
+
+export const ORGANIZATIONAL_LEARNING_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: ORGANIZATIONAL_LEARNING_REVIEW_WORKFLOW_SLUG,
+  displayName: "Project Controls Organizational Learning Intelligence Review",
+  moduleKey: "project_controls",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+  ],
+};
+
+export const ORGANIZATIONAL_LEARNING_REVIEW_ENTITY_TYPE =
+  "project_controls_organizational_learning_assessment" as const;
+
+export type OrganizationalLearningReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type OrganizationalLearningReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startOrganizationalLearningReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: ORGANIZATIONAL_LEARNING_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: ORGANIZATIONAL_LEARNING_REVIEW_ENTITY_TYPE,
+    entityId: input.assessmentStateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "organizational_learning",
+      projectId: input.projectId,
+      advisoryOnly: true,
+      autoExecutionEnabled: false,
+      learningApprovalClaimed: false,
+      knowledgeMutationClaimed: false,
+      fabricatedLesson: false,
+      unsupportedSimilarityScore: false,
+      duplicateKnowledgeOwnershipDetected: false,
+      mutatesUpstreamContributors: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: ORGANIZATIONAL_LEARNING_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionOrganizationalLearningReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: OrganizationalLearningReviewAction;
+  to: OrganizationalLearningReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: ORGANIZATIONAL_LEARNING_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function assertOrganizationalLearningPublishable(input: {
+  workflowState: string;
+  reviewerId?: string;
+  assessedBy?: string;
+  learningApprovalClaimed?: boolean;
+  fabricatedLesson?: boolean;
+}): void {
+  if (AUTONOMOUS_ORGANIZATIONAL_LEARNING_PUBLICATION_ALLOWED) {
+    throw new Error("autonomous_organizational_learning_publication_forbidden");
+  }
+  if (input.learningApprovalClaimed === true || input.fabricatedLesson === true) {
+    throw new Error("organizational_learning_assessment_is_not_approval_or_fabricated_lesson");
+  }
+  if (input.workflowState !== "approved") {
+    throw new Error("organizational_learning_publish_requires_approved_review");
+  }
+  if (!input.reviewerId) {
+    throw new Error("organizational_learning_publish_requires_reviewer");
+  }
+  if (input.assessedBy && input.assessedBy === input.reviewerId) {
+    throw new Error("organizational_learning_self_approval_forbidden");
   }
 }

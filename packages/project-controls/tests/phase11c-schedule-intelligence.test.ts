@@ -170,6 +170,7 @@ describe("Phase 11C project context with schedule", () => {
       "risk_opportunity_intelligence",
       "assurance_intelligence",
       "explainability_intelligence",
+      "organizational_learning",
     ]);
   });
 

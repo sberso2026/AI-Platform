@@ -89,6 +89,17 @@ export {
   assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInExplainabilityIntelligence,
   assertAdvisoryOnly as assertExplainabilityAdvisoryOnly,
 } from "./domain/explainability-engine";
+export * from "./domain/organizational-learning";
+export * from "./domain/organizational-learning-confidence";
+export {
+  ProjectControlsOrganizationalLearningEngine,
+  OrganizationalLearningIntelligenceEngine,
+  createOrganizationalLearningIntelligenceEngine,
+  assertNoAutomaticLearningApproval,
+  assertNoAutomaticKnowledgeMutation,
+  assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInOrganizationalLearning,
+  assertAdvisoryOnly as assertOrganizationalLearningAdvisoryOnly,
+} from "./domain/organizational-learning-engine";
 export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
@@ -151,6 +162,10 @@ export {
   type PersistedExplainabilityEvidence,
   type PersistedExplainabilityReview,
   type PersistedExplainabilityConfidence,
+  type PersistedOrganizationalLearningState,
+  type PersistedOrganizationalLearningEvidence,
+  type PersistedOrganizationalLearningReview,
+  type PersistedOrganizationalLearningConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

@@ -27,6 +27,7 @@ import type { ScenarioAssessmentState } from "./scenario";
 import type { RiskOpportunityAssessmentState } from "./risk-opportunity";
 import type { AssuranceAssessmentState } from "./assurance";
 import type { ExplainabilityAssessmentState } from "./explainability";
+import type { OrganizationalLearningAssessmentState } from "./organizational-learning";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -67,6 +68,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.explainability.updated",
   "engineering.project.explainability.reviewed",
   "engineering.project.explainability.published",
+  "engineering.project.organizational_learning.updated",
+  "engineering.project.organizational_learning.reviewed",
+  "engineering.project.organizational_learning.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -541,5 +545,27 @@ export function createInProcessProjectControlsEventPipeline(): ProjectControlsEv
     published() {
       return log;
     },
+  };
+}
+
+/** Identifiers only — no fabricated lessons, unsupported similarity scores, or knowledge mutation claims. */
+export function organizationalLearningEventPayload(
+  state: OrganizationalLearningAssessmentState,
+): Record<string, unknown> {
+  return {
+    organizationalLearningStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    projectId: state.projectId,
+    organizationalLearningUnitId: state.controlContext.organizationalLearningUnitId,
+    taxonomyClass: state.taxonomyClass,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    advisoryOnly: true,
+    fabricatedLesson: false,
+    unsupportedSimilarityScore: false,
+    knowledgeMutationClaimed: false,
+    mutatesUpstreamContributors: false,
   };
 }

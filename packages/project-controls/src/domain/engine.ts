@@ -189,6 +189,13 @@ import {
   type ReviewExplainabilityCommand,
   type ReviewExplainabilityResult,
 } from "./engine-explainability";
+import {
+  createOrganizationalLearningOrchestration,
+  type AssessOrganizationalLearningCommand,
+  type AssessOrganizationalLearningResult,
+  type ReviewOrganizationalLearningCommand,
+  type ReviewOrganizationalLearningResult,
+} from "./engine-organizational-learning";
 
 export type {
   AssessForecastCommand,
@@ -631,6 +638,7 @@ export class ProjectControlsEngine {
   private readonly riskOpportunityOrchestration: ReturnType<typeof createRiskOpportunityOrchestration>;
   private readonly assuranceOrchestration: ReturnType<typeof createAssuranceOrchestration>;
   private readonly explainabilityOrchestration: ReturnType<typeof createExplainabilityOrchestration>;
+  private readonly organizationalLearningOrchestration: ReturnType<typeof createOrganizationalLearningOrchestration>;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
     assertOwnershipLock();
@@ -683,6 +691,12 @@ export class ProjectControlsEngine {
       appendTimeline: (input) => this.appendProjectTimeline(input),
     });
     this.explainabilityOrchestration = createExplainabilityOrchestration({
+      projectDomainPort: deps.projectDomainPort,
+      repository: deps.repository,
+      events: deps.events,
+      appendTimeline: (input) => this.appendProjectTimeline(input),
+    });
+    this.organizationalLearningOrchestration = createOrganizationalLearningOrchestration({
       projectDomainPort: deps.projectDomainPort,
       repository: deps.repository,
       events: deps.events,
@@ -2183,6 +2197,44 @@ export class ProjectControlsEngine {
     return this.explainabilityOrchestration.listExplainabilityHistory(input);
   }
 
+  async assessOrganizationalLearning(
+    command: AssessOrganizationalLearningCommand,
+  ): Promise<AssessOrganizationalLearningResult> {
+    this.requireCapability(command.actorRole, "organizational_learning.assess");
+    return this.organizationalLearningOrchestration.assessOrganizationalLearning(command);
+  }
+
+  async reviewOrganizationalLearning(
+    command: ReviewOrganizationalLearningCommand,
+  ): Promise<ReviewOrganizationalLearningResult> {
+    this.requireCapability(
+      command.actorRole,
+      command.publish ? "organizational_learning.publish" : "organizational_learning.review",
+    );
+    return this.organizationalLearningOrchestration.reviewOrganizationalLearning(command);
+  }
+
+  async getLatestOrganizationalLearning(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: import("./organizational-learning").OrganizationalLearningControlContext["scope"];
+    organizationalLearningUnitId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "organizational_learning.read");
+    return this.organizationalLearningOrchestration.getLatestOrganizationalLearning(input);
+  }
+
+  async listOrganizationalLearningHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "organizational_learning.read");
+    return this.organizationalLearningOrchestration.listOrganizationalLearningHistory(input);
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -2195,7 +2247,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance, explainability] =
+    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity, assurance, explainability, organizationalLearning] =
       await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
@@ -2252,6 +2304,11 @@ export class ProjectControlsEngine {
         command.workspaceId,
         reference.projectId,
       ),
+      this.deps.repository.listOrganizationalLearningStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
     ]);
 
     const profileId =
@@ -2292,6 +2349,9 @@ export class ProjectControlsEngine {
       assuranceStateIds: this.assuranceOrchestration
         .latestPerAssuranceThread(assurance)
         .map((state) => state.stateId),
+      organizationalLearningStateIds: this.organizationalLearningOrchestration
+        .latestPerOrganizationalLearningThread(organizationalLearning)
+        .map((s) => s.stateId),
       explainabilityStateIds: this.explainabilityOrchestration
         .latestPerExplainabilityThread(explainability)
         .map((state) => state.stateId),
@@ -2388,6 +2448,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const organizationalLearning = await this.deps.repository.listOrganizationalLearningStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const explainability = await this.deps.repository.listExplainabilityStates(
       command.tenantId,
       command.workspaceId,
@@ -2427,6 +2492,9 @@ export class ProjectControlsEngine {
       assurance: this.assuranceOrchestration.latestPerAssuranceThread(assurance),
       explainability: this.explainabilityOrchestration.latestPerExplainabilityThread(
         explainability,
+      ),
+      organizationalLearning: this.organizationalLearningOrchestration.latestPerOrganizationalLearningThread(
+        organizationalLearning,
       ),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,

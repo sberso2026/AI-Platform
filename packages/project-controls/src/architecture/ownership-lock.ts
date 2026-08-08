@@ -48,11 +48,14 @@ import {
   ASSURANCE_INTELLIGENCE_IS_ADVISORY_ONLY,
   EXPLAINABILITY_INTELLIGENCE_READY,
   EXPLAINABILITY_INTELLIGENCE_IS_ADVISORY_ONLY,
+  ORGANIZATIONAL_LEARNING_INTELLIGENCE_READY,
+  ORGANIZATIONAL_LEARNING_INTELLIGENCE_IS_ADVISORY_ONLY,
   decisionSupportOwnership,
   scenarioIntelligenceOwnership,
   riskOpportunityIntelligenceOwnership,
   assuranceIntelligenceOwnership,
   explainabilityIntelligenceOwnership,
+  organizationalLearningIntelligenceOwnership,
   projectRecommendationOwnership,
   projectDecisionOwnership,
   PROJECT_CONTEXT_COMPOSITION_READY,
@@ -246,6 +249,13 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
       "Implemented in 11L as public explainability summaries with traces — not chain-of-thought, hidden inference, approval, or verification",
   },
   {
+    concern: "organizational_learning_controls_intelligence",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Implemented in 11M as advisory organizational learning references — not prediction, recommendation, approval, or knowledge mutation",
+  },
+  {
     concern: "contractual_change_authority",
     owner: "reserved_not_project_controls",
     relation: "forbidden",
@@ -358,6 +368,7 @@ export function assertOwnershipLock(): {
   riskOpportunityIntelligenceOwnership: typeof riskOpportunityIntelligenceOwnership;
   assuranceIntelligenceOwnership: typeof assuranceIntelligenceOwnership;
   explainabilityIntelligenceOwnership: typeof explainabilityIntelligenceOwnership;
+  organizationalLearningIntelligenceOwnership: typeof organizationalLearningIntelligenceOwnership;
   projectRecommendationOwnership: typeof projectRecommendationOwnership;
   projectDecisionOwnership: typeof projectDecisionOwnership;
   projectContextCompositionOwnership: typeof projectContextCompositionOwnership;
@@ -384,6 +395,8 @@ export function assertOwnershipLock(): {
   assuranceIntelligenceIsAdvisoryOnly: true;
   explainabilityIntelligenceReady: true;
   explainabilityIntelligenceIsAdvisoryOnly: true;
+  organizationalLearningIntelligenceReady: true;
+  organizationalLearningIntelligenceIsAdvisoryOnly: true;
   projectContextCompositionReady: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
@@ -635,6 +648,7 @@ export function assertOwnershipLock(): {
     riskOpportunityIntelligenceOwnership: riskOpportunityIntelligenceOwnership,
     assuranceIntelligenceOwnership: assuranceIntelligenceOwnership,
     explainabilityIntelligenceOwnership: explainabilityIntelligenceOwnership,
+    organizationalLearningIntelligenceOwnership: organizationalLearningIntelligenceOwnership,
     projectRecommendationOwnership: projectRecommendationOwnership,
     projectDecisionOwnership: projectDecisionOwnership,
     projectContextCompositionOwnership: projectContextCompositionOwnership,
@@ -661,6 +675,8 @@ export function assertOwnershipLock(): {
     assuranceIntelligenceIsAdvisoryOnly: true,
     explainabilityIntelligenceReady: true,
     explainabilityIntelligenceIsAdvisoryOnly: true,
+    organizationalLearningIntelligenceReady: true,
+    organizationalLearningIntelligenceIsAdvisoryOnly: true,
     projectContextCompositionReady: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,

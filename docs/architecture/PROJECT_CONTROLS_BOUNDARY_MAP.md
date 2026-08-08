@@ -1,6 +1,6 @@
 # Project Controls — boundary map (discovery)
 
-Status: explainability_intelligence · Module version: `0.12.0-explainability-intelligence` · Phase: 11L
+Status: organizational_learning · Module version: `0.13.0-organizational-learning` · Phase: 11M
 
 Three relations, and nothing in between: Project Controls **owns** a concern,
 **consumes** it through a public contract, or is **forbidden** from it. The
@@ -33,7 +33,7 @@ flowchart TB
     CMMS["CMMS work orders"]
   end
 
-  PC["Project Controls 0.12.0-explainability-intelligence<br/>progress + schedule + change + cost + productivity + forecast + decision support + scenario + risk/opportunity + assurance + explainability intelligence ABOUT projects<br/>composition layer · contingency · earned value reserved"]
+  PC["Project Controls 0.13.0-organizational-learning<br/>progress + schedule + change + cost + productivity + forecast + decision support + scenario + risk/opportunity + assurance + explainability + organizational learning intelligence ABOUT projects<br/>composition layer · contingency · earned value reserved"]
 
   CORE -->|consumes projectId, WBS nodes| PC
   PI -->|consumes knowledge derivatives| PC

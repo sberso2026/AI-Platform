@@ -162,10 +162,11 @@ describe("Phase 11L explainability review workflow", () => {
 });
 
 describe("Phase 11L project context with explainability intelligence", () => {
-  it("lists eleven active contributors including explainability_intelligence", () => {
+  it("lists twelve active contributors including explainability_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(11);
+    expect(check.activeContributorKeys).toHaveLength(12);
     expect(check.activeContributorKeys).toContain("explainability_intelligence");
+    expect(check.activeContributorKeys).toContain("organizational_learning");
     expect(check.activeContributorKeys).toContain("assurance_intelligence");
   });
 });

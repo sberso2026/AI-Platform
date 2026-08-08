@@ -102,6 +102,10 @@ import {
   type ExplanationStatus,
   type ExplainabilityProfileContribution,
 } from "./explainability";
+import type {
+  OrganizationalLearningAssessmentState,
+  OrganizationalLearningProfileContribution,
+} from "./organizational-learning";
 import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
 
 export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
@@ -182,6 +186,13 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
       "Public explainability summaries with evidence/provenance/dependency traces. Implemented in Phase 11L. Not chain-of-thought, hidden inference, approval, or verification.",
   },
   {
+    key: "organizational_learning",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory organizational learning references from historical evidence. Implemented in Phase 11M. Not prediction, recommendation, approval, or knowledge mutation.",
+  },
+  {
     key: "contingency_intelligence",
     status: "reserved",
     ownedBy: "project_controls",
@@ -216,6 +227,7 @@ export type ProjectContextComposeInput = {
   riskOpportunity?: readonly RiskOpportunityAssessmentState[];
   assurance?: readonly AssuranceAssessmentState[];
   explainability?: readonly ExplainabilityAssessmentState[];
+  organizationalLearning?: readonly OrganizationalLearningAssessmentState[];
   /** Number of open change candidates; a candidate is never an approved change. */
   changeCandidateCount?: number;
   version?: number;
@@ -421,6 +433,15 @@ export class ProjectContextEngine {
     const explainabilityAssessed = explainability.filter((state) => !state.abstained);
     const explainabilityAbstained = explainability.filter((state) => state.abstained);
     const explainabilityPublished = explainability.filter((state) => state.status === "published");
+    const organizationalLearning = (input.organizationalLearning ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const organizationalLearningAssessed = organizationalLearning.filter((state) => !state.abstained);
+    const organizationalLearningAbstained = organizationalLearning.filter((state) => state.abstained);
+    const organizationalLearningPublished = organizationalLearning.filter((state) => state.status === "published");
 
     const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
@@ -802,6 +823,30 @@ export class ProjectContextEngine {
         dominantSufficiency: dominantAssurance(assurance),
         latestAssessmentAt: latestAt(assurance.map((s) => s.assessedAt)),
       } satisfies AssuranceProfileContribution,
+      organizationalLearning: {
+        assessmentsCompleted: organizationalLearningAssessed.length,
+        assessmentsAbstained: organizationalLearningAbstained.length,
+        publishedAssessments: organizationalLearningPublished.length,
+        historicalPatternCount: countTaxonomy(organizationalLearningAssessed, "historical_pattern"),
+        recurringIssueCount: countTaxonomy(organizationalLearningAssessed, "recurring_issue"),
+        recurringSuccessCount: countTaxonomy(organizationalLearningAssessed, "recurring_success"),
+        lessonLearnedCount: countTaxonomy(organizationalLearningAssessed, "lesson_learned"),
+        knowledgeGapCount: countTaxonomy(organizationalLearningAssessed, "knowledge_gap"),
+        bestPracticeCount: countTaxonomy(organizationalLearningAssessed, "best_practice"),
+        similarProjectCount: countTaxonomy(organizationalLearningAssessed, "similar_project"),
+        unknownCount: countTaxonomy(organizationalLearningAssessed, "unknown"),
+        contributorCoverageCount: organizationalLearningAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        crossProjectRefCount: organizationalLearningAssessed.reduce(
+          (sum, state) => sum + state.crossProjectKnowledgeRefs.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestOrganizationalLearningConfidence(organizationalLearning),
+        dominantSufficiency: dominantOrganizationalLearning(organizationalLearning),
+        latestAssessmentAt: latestAt(organizationalLearning.map((s) => s.assessedAt)),
+      } satisfies OrganizationalLearningProfileContribution,
       explainabilityIntelligence: {
         assessmentsCompleted: explainabilityAssessed.length,
         assessmentsAbstained: explainabilityAbstained.length,
@@ -875,8 +920,8 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 11) {
-    throw new Error("phase_11l_must_have_exactly_eleven_active_contributors");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 12) {
+    throw new Error("phase_11m_must_have_exactly_twelve_active_contributors");
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
     throw new Error("progress_intelligence_must_stay_active");
@@ -910,6 +955,9 @@ export function assertProjectProfileContributorsComplete(): {
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("explainability_intelligence")) {
     throw new Error("explainability_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("organizational_learning")) {
+    throw new Error("organizational_learning_must_be_active");
   }
   for (const key of ["contingency_intelligence", "earned_value"] as const) {
     const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
@@ -1258,6 +1306,44 @@ function countAssuranceFinding(
       sum + state.contributorFindings.filter((finding) => finding.findingKind === findingKind).length,
     0,
   );
+}
+
+function countTaxonomy(
+  states: readonly OrganizationalLearningAssessmentState[],
+  taxonomy: OrganizationalLearningAssessmentState["taxonomyClass"],
+): number {
+  return states.filter((s) => s.taxonomyClass === taxonomy).length;
+}
+
+function lowestOrganizationalLearningConfidence(
+  states: readonly OrganizationalLearningAssessmentState[],
+): OrganizationalLearningProfileContribution["lowestConfidenceClass"] {
+  const order = ["unavailable", "low", "medium", "high"] as const;
+  let worst: (typeof order)[number] = "high";
+  for (const state of states) {
+    const cls = state.confidence.confidenceClass;
+    if (order.indexOf(cls) < order.indexOf(worst)) worst = cls;
+  }
+  return states.length === 0 ? "unavailable" : worst;
+}
+
+function dominantOrganizationalLearning(
+  states: readonly OrganizationalLearningAssessmentState[],
+): OrganizationalLearningProfileContribution["dominantSufficiency"] {
+  const counts = new Map<string, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  let best: OrganizationalLearningProfileContribution["dominantSufficiency"] = "insufficient";
+  let max = -1;
+  for (const [k, v] of counts) {
+    if (v > max) {
+      max = v;
+      best = k as OrganizationalLearningProfileContribution["dominantSufficiency"];
+    }
+  }
+  return best;
 }
 
 function lowestExplainabilityConfidence(

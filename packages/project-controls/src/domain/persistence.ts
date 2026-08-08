@@ -84,6 +84,20 @@ import type {
   AssuranceReviewRecord,
 } from "./assurance";
 import { assuranceStateKey } from "./assurance";
+import type {
+  ExplainabilityAssessmentState,
+  ExplainabilityConfidence,
+  ExplainabilityEvidence,
+  ExplainabilityReviewRecord,
+} from "./explainability";
+import { explainabilityStateKey } from "./explainability";
+import type {
+  OrganizationalLearningAssessmentState,
+  OrganizationalLearningConfidence,
+  OrganizationalLearningEvidence,
+  OrganizationalLearningReviewRecord,
+} from "./organizational-learning";
+import { organizationalLearningStateKey } from "./organizational-learning";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -845,6 +859,18 @@ export type ProjectControlsRepositoryPort = {
     explainabilityStateId: string,
   ): Promise<PersistedExplainabilityConfidence[]>;
 
+  saveOrganizationalLearningState(state: PersistedOrganizationalLearningState): Promise<PersistedOrganizationalLearningState>;
+  getOrganizationalLearningStateById(tenantId: string, workspaceId: string, stateId: string): Promise<PersistedOrganizationalLearningState | null>;
+  latestOrganizationalLearningState(tenantId: string, workspaceId: string, scope: ProjectScopeRef, organizationalLearningUnitId: string, asOf?: string): Promise<PersistedOrganizationalLearningState | undefined>;
+  listOrganizationalLearningStates(tenantId: string, workspaceId: string, projectId: string): Promise<PersistedOrganizationalLearningState[]>;
+  nextOrganizationalLearningStateVersion(tenantId: string, workspaceId: string, scope: ProjectScopeRef, organizationalLearningUnitId: string, expectedVersion?: number): Promise<number>;
+  saveOrganizationalLearningEvidence(evidence: readonly PersistedOrganizationalLearningEvidence[]): Promise<PersistedOrganizationalLearningEvidence[]>;
+  listOrganizationalLearningEvidence(tenantId: string, workspaceId: string, organizationalLearningStateId: string): Promise<PersistedOrganizationalLearningEvidence[]>;
+  saveOrganizationalLearningReview(review: PersistedOrganizationalLearningReview): Promise<PersistedOrganizationalLearningReview>;
+  listOrganizationalLearningReviews(tenantId: string, workspaceId: string, organizationalLearningStateId?: string): Promise<PersistedOrganizationalLearningReview[]>;
+  saveOrganizationalLearningConfidence(confidence: PersistedOrganizationalLearningConfidence): Promise<PersistedOrganizationalLearningConfidence>;
+  listOrganizationalLearningConfidence(tenantId: string, workspaceId: string, organizationalLearningStateId: string): Promise<PersistedOrganizationalLearningConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -937,6 +963,10 @@ export type DurableProjectControlsStore = {
   explainabilityEvidence: PersistedExplainabilityEvidence[];
   explainabilityReviews: PersistedExplainabilityReview[];
   explainabilityConfidence: PersistedExplainabilityConfidence[];
+  organizationalLearningStates: PersistedOrganizationalLearningState[];
+  organizationalLearningEvidence: PersistedOrganizationalLearningEvidence[];
+  organizationalLearningReviews: PersistedOrganizationalLearningReview[];
+  organizationalLearningConfidence: PersistedOrganizationalLearningConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -994,6 +1024,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     explainabilityEvidence: [],
     explainabilityReviews: [],
     explainabilityConfidence: [],
+    organizationalLearningStates: [],
+    organizationalLearningEvidence: [],
+    organizationalLearningReviews: [],
+    organizationalLearningConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -2588,6 +2622,78 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.workspaceId === workspaceId &&
         row.explainabilityStateId === explainabilityStateId,
     );
+  }
+
+
+  async saveOrganizationalLearningState(state: PersistedOrganizationalLearningState): Promise<PersistedOrganizationalLearningState> {
+    const organizationalLearningUnitId = state.controlContext.organizationalLearningUnitId;
+    const clash = this.store.organizationalLearningStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        organizationalLearningStateKey(row.controlContext.scope, row.controlContext.organizationalLearningUnitId) ===
+          organizationalLearningStateKey(state.controlContext.scope, organizationalLearningUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:organizational_learning_version=${state.version}`);
+    this.store.organizationalLearningStates.push(state);
+    return state;
+  }
+
+  async getOrganizationalLearningStateById(tenantId: string, workspaceId: string, stateId: string): Promise<PersistedOrganizationalLearningState | null> {
+    return this.store.organizationalLearningStates.find((row) => row.tenantId === tenantId && row.workspaceId === workspaceId && row.stateId === stateId) ?? null;
+  }
+
+  async latestOrganizationalLearningState(tenantId: string, workspaceId: string, scope: ProjectScopeRef, organizationalLearningUnitId: string, asOf?: string): Promise<PersistedOrganizationalLearningState | undefined> {
+    const rows = this.store.organizationalLearningStates.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        organizationalLearningStateKey(row.controlContext.scope, row.controlContext.organizationalLearningUnitId) ===
+          organizationalLearningStateKey(scope, organizationalLearningUnitId),
+    );
+    const filtered = asOf ? rows.filter((r) => r.assessedAt <= asOf) : rows;
+    return filtered.sort((a, b) => b.version - a.version)[0];
+  }
+
+  async listOrganizationalLearningStates(tenantId: string, workspaceId: string, projectId: string): Promise<PersistedOrganizationalLearningState[]> {
+    return this.store.organizationalLearningStates.filter((row) => row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId);
+  }
+
+  async nextOrganizationalLearningStateVersion(tenantId: string, workspaceId: string, scope: ProjectScopeRef, organizationalLearningUnitId: string, expectedVersion?: number): Promise<number> {
+    const latest = await this.latestOrganizationalLearningState(tenantId, workspaceId, scope, organizationalLearningUnitId);
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && latest && latest.version !== expectedVersion) {
+      throw new Error(`optimistic_lock_conflict:organizational_learning_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveOrganizationalLearningEvidence(evidence: readonly PersistedOrganizationalLearningEvidence[]): Promise<PersistedOrganizationalLearningEvidence[]> {
+    this.store.organizationalLearningEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listOrganizationalLearningEvidence(tenantId: string, workspaceId: string, organizationalLearningStateId: string): Promise<PersistedOrganizationalLearningEvidence[]> {
+    return this.store.organizationalLearningEvidence.filter((row) => row.tenantId === tenantId && row.workspaceId === workspaceId && row.organizationalLearningStateId === organizationalLearningStateId);
+  }
+
+  async saveOrganizationalLearningReview(review: PersistedOrganizationalLearningReview): Promise<PersistedOrganizationalLearningReview> {
+    this.store.organizationalLearningReviews.push(review);
+    return review;
+  }
+
+  async listOrganizationalLearningReviews(tenantId: string, workspaceId: string, organizationalLearningStateId?: string): Promise<PersistedOrganizationalLearningReview[]> {
+    return this.store.organizationalLearningReviews.filter((row) => row.tenantId === tenantId && row.workspaceId === workspaceId && (!organizationalLearningStateId || row.organizationalLearningStateId === organizationalLearningStateId));
+  }
+
+  async saveOrganizationalLearningConfidence(confidence: PersistedOrganizationalLearningConfidence): Promise<PersistedOrganizationalLearningConfidence> {
+    this.store.organizationalLearningConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listOrganizationalLearningConfidence(tenantId: string, workspaceId: string, organizationalLearningStateId: string): Promise<PersistedOrganizationalLearningConfidence[]> {
+    return this.store.organizationalLearningConfidence.filter((row) => row.tenantId === tenantId && row.workspaceId === workspaceId && row.organizationalLearningStateId === organizationalLearningStateId);
   }
 
   async saveProjectSnapshot(

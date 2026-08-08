@@ -169,7 +169,7 @@ describe("Phase 11J risk/opportunity review workflow", () => {
 describe("Phase 11J project context with risk/opportunity intelligence", () => {
   it("lists nine active contributors including risk_opportunity_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(11);
+    expect(check.activeContributorKeys).toHaveLength(12);
     expect(check.activeContributorKeys).toContain("risk_opportunity_intelligence");
   });
 });

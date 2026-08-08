@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls",
-  "version": "0.12.0-explainability-intelligence",
+  "version": "0.13.0-organizational-learning",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

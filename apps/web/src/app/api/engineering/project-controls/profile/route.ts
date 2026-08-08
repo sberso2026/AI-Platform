@@ -30,6 +30,7 @@ const ACTIVE_CONTRIBUTORS = [
   "risk_opportunity_intelligence",
   "assurance_intelligence",
   "explainability_intelligence",
+  "organizational_learning",
 ] as const;
 
 const RESERVED_CONTRIBUTORS = ["contingency_intelligence", "earned_value"] as const;
@@ -65,7 +66,15 @@ const GOVERNANCE_FLAGS = {
   phase11iReady: true,
   phase11jReady: true,
   phase11kReady: true,
-  phase11mReady: true,
+  phase11lReady: true,
+  phase11nReady: true,
+  organizationalLearningReady: true,
+  OrganizationalLearningReady: true,
+  organizationalLearningIntelligenceReady: true,
+  OrganizationalLearningIntelligenceReady: true,
+  automaticLearningApprovalEnabled: false,
+  automaticKnowledgeMutationEnabled: false,
+  duplicateKnowledgeOwnershipDetected: false,
   explainabilityIntelligenceReady: true,
   ExplainabilityIntelligenceReady: true,
   automaticExplanationApprovalEnabled: false,
@@ -93,7 +102,7 @@ const GOVERNANCE_FLAGS = {
   automaticScheduleChangeEnabled: false,
   automaticCostChangeEnabled: false,
   automaticContractInstructionEnabled: false,
-  activeContributorCount: 11,
+  activeContributorCount: 12,
   projectSnapshotReady: true,
   projectTimelineReady: true,
   contractualAuthority: false,

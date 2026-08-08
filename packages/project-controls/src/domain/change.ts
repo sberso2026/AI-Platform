@@ -540,6 +540,7 @@ export type ProjectSnapshot = {
   riskOpportunityStateIds: string[];
   assuranceStateIds: string[];
   explainabilityStateIds: string[];
+  organizationalLearningStateIds: string[];
   createdBy?: string;
   immutable: true;
   containsEvidencePayloads: false;

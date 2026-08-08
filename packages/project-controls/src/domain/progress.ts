@@ -291,6 +291,7 @@ export const PROJECT_PROFILE_CONTRIBUTOR_KEYS = [
   "risk_opportunity_intelligence",
   "assurance_intelligence",
   "explainability_intelligence",
+  "organizational_learning",
 ] as const;
 
 export type ProjectProfileContributorKey = (typeof PROJECT_PROFILE_CONTRIBUTOR_KEYS)[number];
@@ -368,6 +369,7 @@ export type ProjectProfile = {
   riskOpportunityIntelligence?: import("./risk-opportunity").RiskOpportunityProfileContribution;
   assuranceIntelligence?: import("./assurance").AssuranceProfileContribution;
   explainabilityIntelligence?: import("./explainability").ExplainabilityProfileContribution;
+  organizationalLearning?: import("./organizational-learning").OrganizationalLearningProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];
