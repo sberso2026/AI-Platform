@@ -1,5 +1,5 @@
 /**
- * Phase 12B — Digital Twin persistence port and memory adapter.
+ * Phase 12D — Digital Twin persistence port and memory adapter.
  *
  * Memory adapter exists for unit tests only; production fails closed.
  */
@@ -13,6 +13,11 @@ import type { TwinStateReference, TwinState, TwinStateVersion, TwinStateSnapshot
 import type { RepresentationVersion } from "./representation-versioning";
 import type { TwinTimelineEvent } from "./timeline";
 import type { DigitalTwinEvent } from "./events";
+import type { ObservedTwinStateCandidate } from "./observed-state-candidate";
+import type { TwinStateReconciliationRecord } from "./state-reconciliation";
+import type { DigitalTwinSourceAdapter } from "./source-adapter";
+import type { TwinSourceAuthorityPolicy } from "./source-authority";
+import type { TwinStateSchema } from "./state-schema-registry";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
 export type PersistedTwinIdentity = TwinIdentity;
@@ -68,6 +73,21 @@ export type OutboxEventRecord = {
   createdAt: string;
   publishedAt?: string;
 };
+
+export type IngestionIdempotencyRecord = {
+  idempotencyId: string;
+  tenantId: string;
+  workspaceId: string;
+  idempotencyKey: string;
+  candidateId: string;
+  createdAt: string;
+};
+
+export type PersistedStateCandidate = ObservedTwinStateCandidate;
+export type PersistedStateReconciliation = TwinStateReconciliationRecord;
+export type PersistedSourceAdapter = DigitalTwinSourceAdapter;
+export type PersistedStateSchema = TwinStateSchema;
+export type PersistedSourceAuthorityPolicy = TwinSourceAuthorityPolicy;
 
 export type DigitalTwinRepositoryPort = {
   readonly adapterKind: "memory" | "postgres";
@@ -182,6 +202,49 @@ export type DigitalTwinRepositoryPort = {
 
   enqueueOutbox(record: OutboxEventRecord): Promise<OutboxEventRecord>;
   listOutbox(tenantId: string, workspaceId: string): Promise<OutboxEventRecord[]>;
+
+  saveSourceAdapter(adapter: PersistedSourceAdapter): Promise<PersistedSourceAdapter>;
+  getSourceAdapterById(adapterId: string): Promise<PersistedSourceAdapter | null>;
+  listSourceAdapters(tenantId: string, workspaceId: string): Promise<PersistedSourceAdapter[]>;
+
+  saveStateSchema(schema: PersistedStateSchema): Promise<PersistedStateSchema>;
+  getStateSchemaById(schemaId: string): Promise<PersistedStateSchema | null>;
+  listStateSchemas(): Promise<PersistedStateSchema[]>;
+
+  saveStateCandidate(candidate: PersistedStateCandidate): Promise<PersistedStateCandidate>;
+  getStateCandidateById(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedStateCandidate | null>;
+  listStateCandidates(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedStateCandidate[]>;
+
+  saveStateReconciliation(
+    record: PersistedStateReconciliation,
+  ): Promise<PersistedStateReconciliation>;
+  getStateReconciliationByCandidate(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedStateReconciliation | null>;
+
+  saveSourceAuthorityPolicy(
+    policy: PersistedSourceAuthorityPolicy,
+  ): Promise<PersistedSourceAuthorityPolicy>;
+  getSourceAuthorityPolicy(policyId: string): Promise<PersistedSourceAuthorityPolicy | null>;
+
+  saveIngestionIdempotency(
+    record: IngestionIdempotencyRecord,
+  ): Promise<IngestionIdempotencyRecord>;
+  getIngestionIdempotency(
+    tenantId: string,
+    workspaceId: string,
+    idempotencyKey: string,
+  ): Promise<IngestionIdempotencyRecord | null>;
 };
 
 export type DurableDigitalTwinStore = {
@@ -199,6 +262,12 @@ export type DurableDigitalTwinStore = {
   stateReviews: TwinStateReviewRecord[];
   outbox: OutboxEventRecord[];
   events: DigitalTwinEvent[];
+  sourceAdapters: PersistedSourceAdapter[];
+  stateSchemas: PersistedStateSchema[];
+  stateCandidates: PersistedStateCandidate[];
+  stateReconciliations: PersistedStateReconciliation[];
+  sourceAuthorityPolicies: PersistedSourceAuthorityPolicy[];
+  ingestionIdempotency: IngestionIdempotencyRecord[];
 };
 
 export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
@@ -217,6 +286,12 @@ export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
     stateReviews: [],
     outbox: [],
     events: [],
+    sourceAdapters: [],
+    stateSchemas: [],
+    stateCandidates: [],
+    stateReconciliations: [],
+    sourceAuthorityPolicies: [],
+    ingestionIdempotency: [],
   };
 }
 
@@ -521,6 +596,138 @@ export class MemoryDigitalTwinRepository implements DigitalTwinRepositoryPort {
   async listOutbox(tenantId: string, workspaceId: string): Promise<OutboxEventRecord[]> {
     return this.store.outbox.filter(
       (row) => row.tenantId === tenantId && row.workspaceId === workspaceId,
+    );
+  }
+
+  async saveSourceAdapter(adapter: PersistedSourceAdapter): Promise<PersistedSourceAdapter> {
+    const idx = this.store.sourceAdapters.findIndex((a) => a.adapterId === adapter.adapterId);
+    if (idx >= 0) this.store.sourceAdapters[idx] = adapter;
+    else this.store.sourceAdapters.push(adapter);
+    return adapter;
+  }
+
+  async getSourceAdapterById(adapterId: string): Promise<PersistedSourceAdapter | null> {
+    return this.store.sourceAdapters.find((a) => a.adapterId === adapterId) ?? null;
+  }
+
+  async listSourceAdapters(
+    tenantId: string,
+    workspaceId: string,
+  ): Promise<PersistedSourceAdapter[]> {
+    void tenantId;
+    void workspaceId;
+    return [...this.store.sourceAdapters];
+  }
+
+  async saveStateSchema(schema: PersistedStateSchema): Promise<PersistedStateSchema> {
+    const idx = this.store.stateSchemas.findIndex((s) => s.schemaId === schema.schemaId);
+    if (idx >= 0) this.store.stateSchemas[idx] = schema;
+    else this.store.stateSchemas.push(schema);
+    return schema;
+  }
+
+  async getStateSchemaById(schemaId: string): Promise<PersistedStateSchema | null> {
+    return this.store.stateSchemas.find((s) => s.schemaId === schemaId) ?? null;
+  }
+
+  async listStateSchemas(): Promise<PersistedStateSchema[]> {
+    return [...this.store.stateSchemas];
+  }
+
+  async saveStateCandidate(
+    candidate: PersistedStateCandidate,
+  ): Promise<PersistedStateCandidate> {
+    const idx = this.store.stateCandidates.findIndex((c) => c.candidateId === candidate.candidateId);
+    if (idx >= 0) this.store.stateCandidates[idx] = candidate;
+    else this.store.stateCandidates.push(candidate);
+    return candidate;
+  }
+
+  async getStateCandidateById(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedStateCandidate | null> {
+    return (
+      this.store.stateCandidates.find(
+        (c) =>
+          c.candidateId === candidateId &&
+          c.tenantId === tenantId &&
+          c.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async listStateCandidates(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedStateCandidate[]> {
+    return this.store.stateCandidates.filter(
+      (c) => c.tenantId === tenantId && c.workspaceId === workspaceId && c.twinId === twinId,
+    );
+  }
+
+  async saveStateReconciliation(
+    record: PersistedStateReconciliation,
+  ): Promise<PersistedStateReconciliation> {
+    const idx = this.store.stateReconciliations.findIndex(
+      (r) => r.reconciliationId === record.reconciliationId,
+    );
+    if (idx >= 0) this.store.stateReconciliations[idx] = record;
+    else this.store.stateReconciliations.push(record);
+    return record;
+  }
+
+  async getStateReconciliationByCandidate(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedStateReconciliation | null> {
+    return (
+      this.store.stateReconciliations.find(
+        (r) =>
+          r.candidateId === candidateId &&
+          r.tenantId === tenantId &&
+          r.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async saveSourceAuthorityPolicy(
+    policy: PersistedSourceAuthorityPolicy,
+  ): Promise<PersistedSourceAuthorityPolicy> {
+    const idx = this.store.sourceAuthorityPolicies.findIndex((p) => p.policyId === policy.policyId);
+    if (idx >= 0) this.store.sourceAuthorityPolicies[idx] = policy;
+    else this.store.sourceAuthorityPolicies.push(policy);
+    return policy;
+  }
+
+  async getSourceAuthorityPolicy(
+    policyId: string,
+  ): Promise<PersistedSourceAuthorityPolicy | null> {
+    return this.store.sourceAuthorityPolicies.find((p) => p.policyId === policyId) ?? null;
+  }
+
+  async saveIngestionIdempotency(
+    record: IngestionIdempotencyRecord,
+  ): Promise<IngestionIdempotencyRecord> {
+    this.store.ingestionIdempotency.push(record);
+    return record;
+  }
+
+  async getIngestionIdempotency(
+    tenantId: string,
+    workspaceId: string,
+    idempotencyKey: string,
+  ): Promise<IngestionIdempotencyRecord | null> {
+    return (
+      this.store.ingestionIdempotency.find(
+        (r) =>
+          r.tenantId === tenantId &&
+          r.workspaceId === workspaceId &&
+          r.idempotencyKey === idempotencyKey,
+      ) ?? null
     );
   }
 }

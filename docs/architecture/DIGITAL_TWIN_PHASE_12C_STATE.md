@@ -5,6 +5,8 @@
 **Phase:** `12C`  
 **Public contracts:** `0.3.0-state-draft`
 
+> **Phase 12D** extends this slice with governed state ingestion. See [DIGITAL_TWIN_PHASE_12D_INGESTION.md](./DIGITAL_TWIN_PHASE_12D_INGESTION.md).
+
 ## Scope
 
 Phase 12C implements **governed twin state** on top of the Phase 12B core slice:

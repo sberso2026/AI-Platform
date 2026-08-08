@@ -1,5 +1,5 @@
 /**
- * Phase 12B — Digital Twin core engine.
+ * Phase 12D — Digital Twin core engine.
  *
  * Create/update identity, attach representation, add relationship, add thread link,
  * get lookups. Fail closed on missing scope; forbid runtime/telemetry/sim/viewer/actuation.
@@ -7,9 +7,11 @@
 
 import { assertOwnershipLock } from "../architecture/ownership-lock";
 import {
-  DIGITAL_TWIN_RUNTIME_IMPLEMENTED,
+  AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED,
+  HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
   LIVE_TELEMETRY_IMPLEMENTED,
   PHYSICAL_ACTUATION_ENABLED,
+  SHM_RUNTIME_IMPLEMENTED,
   SIMULATION_EXECUTION_IMPLEMENTED,
   THREE_D_VIEWER_IMPLEMENTED,
 } from "../version";
@@ -330,35 +332,45 @@ export function createDigitalTwinCoreEngine(deps: DigitalTwinEngineDeps): Digita
 
 export function assertCoreForbiddenCapabilities(): {
   ok: true;
-  runtimeImplemented: false;
   liveTelemetryImplemented: false;
   simulationImplemented: false;
   threeDViewerImplemented: false;
   physicalActuationEnabled: false;
 } {
-  if (DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("digital_twin_runtime_forbidden_in_phase_12c");
-  }
-  if (LIVE_TELEMETRY_IMPLEMENTED) {
-    throw new Error("live_telemetry_forbidden_in_phase_12c");
+  if (LIVE_TELEMETRY_IMPLEMENTED || HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
+    throw new Error("live_telemetry_forbidden_in_phase_12d");
   }
   if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12c");
+    throw new Error("simulation_execution_forbidden_in_phase_12d");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
-    throw new Error("three_d_viewer_forbidden_in_phase_12c");
+    throw new Error("three_d_viewer_forbidden_in_phase_12d");
   }
   if (PHYSICAL_ACTUATION_ENABLED) {
-    throw new Error("physical_actuation_forbidden_in_phase_12c");
+    throw new Error("physical_actuation_forbidden_in_phase_12d");
+  }
+  if (SHM_RUNTIME_IMPLEMENTED) {
+    throw new Error("shm_runtime_forbidden_in_phase_12d");
   }
   return {
     ok: true,
-    runtimeImplemented: false,
     liveTelemetryImplemented: false,
     simulationImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,
   };
+}
+
+export function assertIngestionForbiddenCapabilities(): ReturnType<
+  typeof assertCoreForbiddenCapabilities
+> & {
+  automaticObservedStatePublicationEnabled: false;
+} {
+  const core = assertCoreForbiddenCapabilities();
+  if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
+    throw new Error("automatic_observed_state_publication_forbidden");
+  }
+  return { ...core, automaticObservedStatePublicationEnabled: false };
 }
 
 function assertScope(tenantId: string, workspaceId: string): void {

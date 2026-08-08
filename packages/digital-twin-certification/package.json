@@ -1,12 +1,13 @@
 {
   "name": "@rtb/digital-twin-certification",
-  "version": "0.3.0-state",
+  "version": "0.4.0-ingestion",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase12a": "tsx scripts/run-phase12a-certification.ts",
     "certify:phase12b": "tsx scripts/run-phase12b-certification.ts",
     "certify:phase12c": "tsx scripts/run-phase12c-certification.ts",
+    "certify:phase12d": "tsx scripts/run-phase12d-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

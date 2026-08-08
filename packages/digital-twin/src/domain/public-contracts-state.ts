@@ -1,5 +1,5 @@
 /**
- * Phase 12C — Digital Twin state public contracts (0.3.0-state-draft).
+ * Phase 12D — Digital Twin state public contracts (0.4.0-ingestion-draft).
  */
 
 import { PUBLIC_CONTRACT_VERSION } from "../version";
@@ -12,6 +12,9 @@ export const STATE_CONTRACT_FAMILIES = [
   "TwinSnapshotCore",
   "RepresentationVersionCore",
   "TwinStateHistoryCore",
+  "ObservedStateCandidateCore",
+  "StateReconciliationCore",
+  "SourceAdapterCore",
 ] as const;
 
 export type StateContractFamily = (typeof STATE_CONTRACT_FAMILIES)[number];
@@ -47,8 +50,8 @@ export type RepresentationVersionCore = {
 };
 
 export function assertStateContracts(): { ok: true; contractVersion: typeof PUBLIC_CONTRACT_VERSION } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.3.0-state-draft") {
-    throw new Error("state_contracts_require_0_3_0_state_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.4.0-ingestion-draft") {
+    throw new Error("state_contracts_require_0_4_0_ingestion_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

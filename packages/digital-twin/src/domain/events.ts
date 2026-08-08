@@ -1,15 +1,14 @@
 /**
- * Phase 12C — Digital Twin domain events (identifiers only).
- *
- * Merged catalog includes engineering.digital_twin.state.created and related state events.
+ * Phase 12D — Digital Twin domain events (identifiers only).
  */
 
 import type { TwinIdentity } from "./identity";
 import type { TwinRepresentationReference } from "./representation";
 import type { TwinRelationship } from "./relationships";
+import { INGESTION_DOMAIN_EVENTS } from "./ingestion-events";
 import { STATE_DOMAIN_EVENTS } from "./state-events";
 
-export { STATE_DOMAIN_EVENTS };
+export { STATE_DOMAIN_EVENTS, INGESTION_DOMAIN_EVENTS };
 
 export const CORE_DIGITAL_TWIN_EVENTS = [
   "engineering.digital_twin.created",
@@ -18,7 +17,11 @@ export const CORE_DIGITAL_TWIN_EVENTS = [
   "engineering.digital_twin.representation.updated",
 ] as const;
 
-export const DIGITAL_TWIN_EVENTS = [...CORE_DIGITAL_TWIN_EVENTS, ...STATE_DOMAIN_EVENTS] as const;
+export const DIGITAL_TWIN_EVENTS = [
+  ...CORE_DIGITAL_TWIN_EVENTS,
+  ...STATE_DOMAIN_EVENTS,
+  ...INGESTION_DOMAIN_EVENTS,
+] as const;
 
 export type DigitalTwinEventType = (typeof DIGITAL_TWIN_EVENTS)[number];
 

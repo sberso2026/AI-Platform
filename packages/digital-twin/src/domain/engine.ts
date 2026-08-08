@@ -1,5 +1,5 @@
 /**
- * Phase 12C — Digital Twin engine facade.
+ * Phase 12D — Digital Twin engine facade.
  *
  * Orchestrates identity and state review workflows with core/state engine operations.
  */
@@ -22,6 +22,11 @@ import {
   type DigitalTwinStateEngine,
 } from "./state-engine";
 import {
+  createDigitalTwinStateIngestionEngine,
+  type DigitalTwinStateIngestionEngine,
+  type SubmitObservedStateInput,
+} from "./state-ingestion-engine";
+import {
   createDigitalTwinCoreEngine,
   type AddRelationshipInput,
   type AddThreadLinkInput,
@@ -40,6 +45,7 @@ export class DigitalTwinEngine {
   readonly kind = "digital_twin_engine" as const;
   private readonly core: DigitalTwinCoreEngine;
   private readonly state: DigitalTwinStateEngine;
+  private readonly ingestion: DigitalTwinStateIngestionEngine;
   private readonly repository: DigitalTwinRepositoryPort;
   private readonly newId: (prefix: string) => string;
 
@@ -49,6 +55,11 @@ export class DigitalTwinEngine {
     this.newId = deps.newId ?? deps.repository.newId.bind(deps.repository);
     this.core = createDigitalTwinCoreEngine({ repository: deps.repository, newId: this.newId });
     this.state = createDigitalTwinStateEngine({ repository: deps.repository, newId: this.newId });
+    this.ingestion = createDigitalTwinStateIngestionEngine({
+      repository: deps.repository,
+      stateEngine: this.state,
+      newId: this.newId,
+    });
   }
 
   createIdentity(input: CreateTwinIdentityInput) {
@@ -114,6 +125,40 @@ export class DigitalTwinEngine {
 
   listStateHistory(tenantId: string, workspaceId: string, twinId: string) {
     return this.state.listHistory(tenantId, workspaceId, twinId);
+  }
+
+  ingestObservedState(input: SubmitObservedStateInput) {
+    return this.ingestion.ingestObservedState(input);
+  }
+
+  publishCandidateViaReview(
+    input: Parameters<DigitalTwinStateIngestionEngine["publishCandidateViaReview"]>[0],
+  ) {
+    return this.ingestion.publishCandidateViaReview(input);
+  }
+
+  transitionCandidateReview(input: {
+    tenantId: string;
+    workspaceId: string;
+    twinId: string;
+    candidateId: string;
+    instance: import("@rtb/engineering-os").EngineeringWorkflowInstance;
+    action: import("./review-workflow").CandidateReviewAction;
+    to: import("./review-workflow").CandidateReviewTargetState;
+  }) {
+    return this.ingestion.transitionCandidateReview(input);
+  }
+
+  getStateCandidate(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ) {
+    return this.ingestion.getCandidate(tenantId, workspaceId, candidateId);
+  }
+
+  getStateReconciliation(tenantId: string, workspaceId: string, candidateId: string) {
+    return this.ingestion.getReconciliation(tenantId, workspaceId, candidateId);
   }
 
   async startReview(input: {
@@ -200,4 +245,5 @@ export type {
   CreateTwinStateInput,
   AttachRepresentationVersionInput,
   CreateSnapshotInput,
+  SubmitObservedStateInput,
 };

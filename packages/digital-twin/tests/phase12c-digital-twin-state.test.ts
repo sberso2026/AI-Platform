@@ -17,7 +17,10 @@ import {
   LIVE_TELEMETRY_IMPLEMENTED,
   PHASE_12B_CERTIFIED_COMMIT,
   PHASE_12B_VERSION,
+  PHASE_12C_CERTIFIED_COMMIT,
+  PHASE_12C_VERSION,
   PHASE_12D_READY,
+  PHASE_12E_READY,
   PUBLIC_CONTRACT_VERSION,
   REPRESENTATION_VERSIONING_READY,
   SIMULATION_EXECUTION_IMPLEMENTED,
@@ -38,13 +41,16 @@ describe("Phase 12C Digital Twin state domain", () => {
   const workspaceId = "workspace-1";
 
   it("declares state version and pinned 12B baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.3.0-state");
-    expect(DIGITAL_TWIN_STATUS).toBe("state");
-    expect(DIGITAL_TWIN_PHASE).toBe("12C");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.3.0-state-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.4.0-ingestion");
+    expect(DIGITAL_TWIN_STATUS).toBe("ingestion");
+    expect(DIGITAL_TWIN_PHASE).toBe("12D");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.4.0-ingestion-draft");
+    expect(PHASE_12C_VERSION).toBe("0.3.0-state");
+    expect(PHASE_12C_CERTIFIED_COMMIT).toBe("07b5ccc843395bd02633163dc654668da9f17658");
     expect(PHASE_12B_VERSION).toBe("0.2.0-core");
     expect(PHASE_12B_CERTIFIED_COMMIT).toBe("5e1bb22486a9fdd6385fb980daf0150a330eca9b");
     expect(PHASE_12D_READY).toBe(true);
+    expect(PHASE_12E_READY).toBe(true);
     expect(TWIN_STATE_READY).toBe(true);
     expect(twinStateReady).toBe(true);
     expect(TWIN_VERSIONING_READY).toBe(true);
@@ -70,12 +76,12 @@ describe("Phase 12C Digital Twin state domain", () => {
     expect(lock.ok).toBe(true);
     expect(lock.twinStateReady).toBe(true);
     expect(lock.twinVersioningReady).toBe(true);
-    expect(lock.publicContractVersion).toBe("0.3.0-state-draft");
+    expect(lock.publicContractVersion).toBe("0.4.0-ingestion-draft");
   });
 
   it("declares state contract families and domain events", () => {
-    expect(assertCoreContracts().contractVersion).toBe("0.3.0-state-draft");
-    expect(assertStateContracts().contractVersion).toBe("0.3.0-state-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.4.0-ingestion-draft");
+    expect(assertStateContracts().contractVersion).toBe("0.4.0-ingestion-draft");
     for (const evt of STATE_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

@@ -46,14 +46,14 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
   it("declares state identity and version (12C)", () => {
     expect(DIGITAL_TWIN_PRODUCT_NAME).toBe("Digital Twin");
     expect(DIGITAL_TWIN_MODULE_KEY).toBe("digital_twin");
-    expect(DIGITAL_TWIN_VERSION).toBe("0.3.0-state");
-    expect(DIGITAL_TWIN_STATUS).toBe("state");
-    expect(DIGITAL_TWIN_PHASE).toBe("12C");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.4.0-ingestion");
+    expect(DIGITAL_TWIN_STATUS).toBe("ingestion");
+    expect(DIGITAL_TWIN_PHASE).toBe("12D");
     expect(DIGITAL_TWIN_DISCOVERY_IMPLEMENTED).toBe(true);
     expect(DIGITAL_TWIN_IMPLEMENTED).toBe(true);
     expect(digitalTwinDiscoveryReady).toBe(true);
     expect(digitalTwinOwnershipLocked).toBe(true);
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.3.0-state-draft");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.4.0-ingestion-draft");
     expect(TWIN_IDENTITY_READY).toBe(true);
     expect(TWIN_STATE_READY).toBe(true);
     expect(KNOWLEDGE_GRAPH_REUSE).toBe(true);
@@ -87,15 +87,15 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
     expect(lock.ok).toBe(true);
     expect(lock.digitalTwinImplemented).toBe(true);
     expect(lock.productionDigitalTwinReady).toBe(false);
-    expect(lock.publicContractVersion).toBe("0.3.0-state-draft");
+    expect(lock.publicContractVersion).toBe("0.4.0-ingestion-draft");
     expect(lock.twinStateReady).toBe(true);
   });
 
   it("reserves L0–L5 fidelity without implementation beyond L0", () => {
     expect(FIDELITY_MODEL.length).toBe(6);
     expect(assertFidelityNotImplemented().maxAvailableLevel).toBe("L0");
-    expect(assertDraftContractsOnly().contractVersion).toBe("0.3.0-state-draft");
-    expect(assertCoreContracts().contractVersion).toBe("0.3.0-state-draft");
+    expect(assertDraftContractsOnly().contractVersion).toBe("0.4.0-ingestion-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.4.0-ingestion-draft");
   });
 
   it("pins frozen V1 baselines", () => {
@@ -107,11 +107,11 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
 
   it("exposes a coherent state declaration", () => {
     const declaration = getDigitalTwinStateDeclaration();
-    expect(declaration.version).toBe("0.3.0-state");
-    expect(declaration.status).toBe("state");
+    expect(declaration.version).toBe("0.4.0-ingestion");
+    expect(declaration.status).toBe("ingestion");
     expect(declaration.digitalTwinImplemented).toBe(true);
     expect(declaration.productionDigitalTwinReady).toBe(false);
-    expect(declaration.digitalTwinRuntimeImplemented).toBe(false);
+    expect(declaration.digitalTwinRuntimeImplemented).toBe(true);
     expect(declaration.phase12CReady).toBe(true);
     expect(declaration.phase12DReady).toBe(true);
     expect(declaration.twinIdentityReady).toBe(true);

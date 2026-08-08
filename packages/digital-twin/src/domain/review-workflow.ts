@@ -1,5 +1,5 @@
 /**
- * Phase 12C — Digital Twin identity and state review workflows.
+ * Phase 12D — Digital Twin identity, state, and candidate review workflows.
  *
  * draft → pending_review → approved|rejected → published
  * No AI self-approval.
@@ -216,4 +216,60 @@ export function assertIdentityPublishable(input: {
   createdBy?: string;
 }): void {
   assertReviewPublishable(input);
+}
+
+export const CANDIDATE_REVIEW_ENTITY_TYPE = "digital_twin_state_candidate" as const;
+
+export type CandidateReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type CandidateReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startCandidateStateReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  twinId: string;
+  candidateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: STATE_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: CANDIDATE_REVIEW_ENTITY_TYPE,
+    entityId: input.candidateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "digital_twin_state_candidate",
+      twinId: input.twinId,
+      candidateId: input.candidateId,
+      autoPublishEnabled: false,
+      liveIngestionEnabled: false,
+      storesTelemetryPayload: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: STATE_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionCandidateStateReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: CandidateReviewAction;
+  to: CandidateReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionStateReview(input);
 }

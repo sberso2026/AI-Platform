@@ -1,12 +1,13 @@
 /**
- * Phase 12C — Digital Twin ownership lock.
+ * Phase 12D — Digital Twin ownership lock.
  *
- * Machine-readable twin of `docs/architecture/DIGITAL_TWIN_OWNERSHIP_MATRIX.md`.
+ * Machine-readable twin of ownership matrix including governed state ingestion boundaries.
  */
 
 import {
   ASSET_INTELLIGENCE_OWNERSHIP,
   AUTOMATIC_CONTROL_ENABLED,
+  AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED,
   AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED,
   CANONICAL_ASSET_IDENTITY_OWNERSHIP,
   CANONICAL_ASSET_LIFECYCLE_OWNERSHIP,
@@ -19,6 +20,8 @@ import {
   DIGITAL_TWIN_RUNTIME_IMPLEMENTED,
   DUPLICATE_ASSET_OWNERSHIP_DETECTED,
   DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
+  DUPLICATE_TIME_SERIES_PLANE_DETECTED,
+  HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
   IMPLEMENTS_OWN_AI_STACK,
   INSPECTION_INTELLIGENCE_OWNERSHIP,
   KNOWLEDGE_GRAPH_REUSE,
@@ -30,6 +33,7 @@ import {
   PUBLIC_CONTRACT_VERSION,
   REPRESENTATION_VERSIONING_READY,
   SENSOR_STREAM_OWNERSHIP,
+  SHM_RUNTIME_IMPLEMENTED,
   SIMULATION_EXECUTION_IMPLEMENTED,
   SIMULATION_STATE_OWNERSHIP,
   TELEMETRY_INGESTION_PLANE_OWNERSHIP,
@@ -40,8 +44,11 @@ import {
   TWIN_REPRESENTATION_OWNERSHIP,
   TWIN_REPRESENTATION_READY,
   TWIN_SNAPSHOT_READY,
+  TWIN_SOURCE_ADAPTER_READY,
+  TWIN_STATE_INGESTION_READY,
   TWIN_STATE_OWNERSHIP,
   TWIN_STATE_READY,
+  TWIN_STATE_RECONCILIATION_READY,
   TWIN_THREAD_READY,
   TWIN_TIMELINE_READY,
   TWIN_VERSIONING_READY,
@@ -84,6 +91,12 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     notes: "Governed twin state with provenance — not live telemetry ingestion",
   },
   {
+    concern: "twin_state_ingestion",
+    owner: "digital_twin",
+    relation: "owns",
+    notes: "Bounded governed ingestion runtime — candidates require review before publish",
+  },
+  {
     concern: "twin_representation",
     owner: "digital_twin",
     relation: "owns",
@@ -93,7 +106,7 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "simulation_state",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Simulated state references reserved — execution forbidden in Phase 12C",
+    notes: "Simulated state references reserved — execution forbidden in Phase 12D",
   },
   {
     concern: "digital_thread",
@@ -147,7 +160,7 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "sensor_streams",
     owner: "shm",
     relation: "consumes",
-    notes: "SHM owns live structural/sensor streams; Twin binds references",
+    notes: "SHM owns live structural/sensor streams; Twin binds references only",
   },
   {
     concern: "telemetry_ingestion_plane",
@@ -171,13 +184,13 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "physical_actuation",
     owner: "external_system",
     relation: "forbidden",
-    notes: "Actuation disabled in Phase 12C state slice",
+    notes: "Actuation disabled in Phase 12D ingestion slice",
   },
   {
     concern: "automatic_control_loops",
     owner: "external_system",
     relation: "forbidden",
-    notes: "Automatic control disabled — human-gated only in future phases",
+    notes: "Automatic control disabled — human-gated only",
   },
   {
     concern: "kernel_digital_twins_tables",
@@ -198,13 +211,17 @@ export function assertOwnershipLock(): {
   telemetryIngestionPlaneOwnership: typeof TELEMETRY_INGESTION_PLANE_OWNERSHIP;
   digitalTwinImplemented: true;
   productionDigitalTwinReady: false;
-  digitalTwinRuntimeImplemented: false;
+  digitalTwinRuntimeImplemented: true;
+  automaticObservedStatePublicationEnabled: false;
   liveTelemetryImplemented: false;
+  highFrequencyTelemetryImplemented: false;
+  shmRuntimeImplemented: false;
   simulationExecutionImplemented: false;
   threeDViewerImplemented: false;
   physicalActuationEnabled: false;
   automaticControlEnabled: false;
   implementsOwnAiStack: false;
+  duplicateTimeSeriesPlaneDetected: false;
   duplicateAssetOwnershipDetected: false;
   duplicateProjectOwnershipDetected: false;
   publicContractVersion: typeof PUBLIC_CONTRACT_VERSION;
@@ -212,6 +229,9 @@ export function assertOwnershipLock(): {
   twinRepresentationReady: true;
   twinThreadReady: true;
   twinStateReady: true;
+  twinStateIngestionReady: true;
+  twinSourceAdapterReady: true;
+  twinStateReconciliationReady: true;
   twinVersioningReady: true;
   representationVersioningReady: true;
   twinSnapshotReady: true;
@@ -238,21 +258,28 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_claim_canonical_identity");
   }
   if (!DIGITAL_TWIN_IMPLEMENTED) {
-    throw new Error("digital_twin_state_must_be_implemented_in_phase_12c");
+    throw new Error("digital_twin_ingestion_must_be_implemented_in_phase_12d");
   }
   if (PRODUCTION_DIGITAL_TWIN_READY) {
-    throw new Error("production_digital_twin_not_ready_in_phase_12c");
+    throw new Error("production_digital_twin_not_ready_in_phase_12d");
   }
-  if (
-    DIGITAL_TWIN_RUNTIME_IMPLEMENTED ||
-    LIVE_TELEMETRY_IMPLEMENTED ||
-    SIMULATION_EXECUTION_IMPLEMENTED ||
-    THREE_D_VIEWER_IMPLEMENTED
-  ) {
-    throw new Error("digital_twin_runtime_forbidden_in_phase_12c");
+  if (!DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
+    throw new Error("digital_twin_bounded_runtime_required_in_phase_12d");
+  }
+  if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
+    throw new Error("automatic_observed_state_publication_forbidden");
+  }
+  if (LIVE_TELEMETRY_IMPLEMENTED || HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
+    throw new Error("telemetry_forbidden_in_phase_12d");
+  }
+  if (SHM_RUNTIME_IMPLEMENTED) {
+    throw new Error("shm_runtime_forbidden_in_phase_12d");
+  }
+  if (SIMULATION_EXECUTION_IMPLEMENTED || THREE_D_VIEWER_IMPLEMENTED) {
+    throw new Error("simulation_and_viewer_forbidden_in_phase_12d");
   }
   if (PHYSICAL_ACTUATION_ENABLED || AUTOMATIC_CONTROL_ENABLED) {
-    throw new Error("actuation_and_control_forbidden_in_phase_12c");
+    throw new Error("actuation_and_control_forbidden_in_phase_12d");
   }
   if (IMPLEMENTS_OWN_AI_STACK) {
     throw new Error("digital_twin_must_not_implement_own_ai_stack");
@@ -260,26 +287,32 @@ export function assertOwnershipLock(): {
   if (DUPLICATE_ASSET_OWNERSHIP_DETECTED || DUPLICATE_PROJECT_OWNERSHIP_DETECTED) {
     throw new Error("duplicate_ownership");
   }
+  if (DUPLICATE_TIME_SERIES_PLANE_DETECTED) {
+    throw new Error("duplicate_timeseries_plane_forbidden");
+  }
   if (CANONICAL_LIFECYCLE_MUTATION_BY_TWIN_ALLOWED) {
     throw new Error("canonical_lifecycle_mutation_forbidden");
   }
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.3.0-state-draft") {
-    throw new Error("public_contracts_must_be_state_draft_in_phase_12c");
+  if (PUBLIC_CONTRACT_VERSION !== "0.4.0-ingestion-draft") {
+    throw new Error("public_contracts_must_be_ingestion_draft_in_phase_12d");
   }
   if (
     !TWIN_IDENTITY_READY ||
     !TWIN_REPRESENTATION_READY ||
     !TWIN_THREAD_READY ||
     !TWIN_STATE_READY ||
+    !TWIN_STATE_INGESTION_READY ||
+    !TWIN_SOURCE_ADAPTER_READY ||
+    !TWIN_STATE_RECONCILIATION_READY ||
     !TWIN_VERSIONING_READY ||
     !REPRESENTATION_VERSIONING_READY ||
     !TWIN_SNAPSHOT_READY ||
     !TWIN_TIMELINE_READY
   ) {
-    throw new Error("state_capabilities_not_ready");
+    throw new Error("ingestion_capabilities_not_ready");
   }
   if (!KNOWLEDGE_GRAPH_REUSE) {
     throw new Error("knowledge_graph_reuse_required");
@@ -330,13 +363,17 @@ export function assertOwnershipLock(): {
     telemetryIngestionPlaneOwnership: TELEMETRY_INGESTION_PLANE_OWNERSHIP,
     digitalTwinImplemented: true,
     productionDigitalTwinReady: false,
-    digitalTwinRuntimeImplemented: false,
+    digitalTwinRuntimeImplemented: true,
+    automaticObservedStatePublicationEnabled: false,
     liveTelemetryImplemented: false,
+    highFrequencyTelemetryImplemented: false,
+    shmRuntimeImplemented: false,
     simulationExecutionImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,
     automaticControlEnabled: false,
     implementsOwnAiStack: false,
+    duplicateTimeSeriesPlaneDetected: false,
     duplicateAssetOwnershipDetected: false,
     duplicateProjectOwnershipDetected: false,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
@@ -344,6 +381,9 @@ export function assertOwnershipLock(): {
     twinRepresentationReady: true,
     twinThreadReady: true,
     twinStateReady: true,
+    twinStateIngestionReady: true,
+    twinSourceAdapterReady: true,
+    twinStateReconciliationReady: true,
     twinVersioningReady: true,
     representationVersioningReady: true,
     twinSnapshotReady: true,

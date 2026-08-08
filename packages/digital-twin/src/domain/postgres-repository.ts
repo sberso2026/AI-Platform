@@ -26,6 +26,12 @@ import {
   type PersistedTimelineEvent,
   type TwinReviewRecord,
   type TwinStateReviewRecord,
+  type IngestionIdempotencyRecord,
+  type PersistedStateCandidate,
+  type PersistedStateReconciliation,
+  type PersistedSourceAdapter,
+  type PersistedStateSchema,
+  type PersistedSourceAuthorityPolicy,
 } from "./persistence";
 
 const STATES = "digital_twin_states";
@@ -34,6 +40,12 @@ const REP_VERSIONS = "digital_twin_representation_versions";
 const SNAPSHOTS = "digital_twin_snapshots";
 const TIMELINE = "digital_twin_timeline_events";
 const STATE_REVIEWS = "digital_twin_state_reviews";
+const SOURCE_ADAPTERS = "digital_twin_source_adapters";
+const STATE_SCHEMAS = "digital_twin_state_schemas";
+const STATE_CANDIDATES = "digital_twin_state_candidates";
+const STATE_RECONCILIATION = "digital_twin_state_reconciliation";
+const SOURCE_AUTHORITY = "digital_twin_source_authority_policies";
+const INGESTION_IDEMPOTENCY = "digital_twin_ingestion_idempotency";
 
 type AnyClient = {
   from(table: string): {
@@ -963,6 +975,359 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
       selfApproved: false as const,
     }));
   }
+
+  async saveSourceAdapter(adapter: PersistedSourceAdapter): Promise<PersistedSourceAdapter> {
+    const row = {
+      adapter_id: adapter.adapterId,
+      adapter_version: adapter.adapterVersion,
+      source_type: adapter.sourceType,
+      source_system: adapter.sourceSystem,
+      source_owner: adapter.sourceOwner,
+      supported_target_types: adapter.supportedTargetTypes,
+      supported_state_schemas: adapter.supportedStateSchemas,
+      authentication_mode: adapter.authenticationMode,
+      polling_or_push_mode: adapter.pollingOrPushMode,
+      data_freshness_policy: adapter.dataFreshnessPolicy,
+      idempotency_support: adapter.idempotencySupport,
+      health: adapter.health,
+      status: adapter.status,
+      public_contract_ref: adapter.publicContractRef ?? null,
+      stores_telemetry_payload: false,
+      auto_publish_enabled: false,
+    };
+    const { error } = await this.supabase.from(SOURCE_ADAPTERS).upsert(row).select("*").single();
+    if (error) throw new Error(`source_adapter_persist_failed:${error.message}`);
+    return adapter;
+  }
+
+  async getSourceAdapterById(adapterId: string): Promise<PersistedSourceAdapter | null> {
+    const { data, error } = await this.supabase
+      .from(SOURCE_ADAPTERS)
+      .select("*")
+      .eq("adapter_id", adapterId)
+      .maybeSingle();
+    if (error) throw new Error(`source_adapter_read_failed:${error.message}`);
+    return data ? mapSourceAdapterRow(data as Record<string, unknown>) : null;
+  }
+
+  async listSourceAdapters(
+    _tenantId: string,
+    _workspaceId: string,
+  ): Promise<PersistedSourceAdapter[]> {
+    const { data, error } = await this.supabase.from(SOURCE_ADAPTERS).select("*");
+    if (error) throw new Error(`source_adapter_list_failed:${error.message}`);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapSourceAdapterRow);
+  }
+
+  async saveStateSchema(schema: PersistedStateSchema): Promise<PersistedStateSchema> {
+    const row = {
+      schema_id: schema.schemaId,
+      schema_version: schema.schemaVersion,
+      display_name: schema.displayName,
+      category: schema.category,
+      fields: schema.fields,
+      allows_unrestricted_blob: false,
+      stores_telemetry_payload: false,
+    };
+    const { error } = await this.supabase.from(STATE_SCHEMAS).upsert(row).select("*").single();
+    if (error) throw new Error(`state_schema_persist_failed:${error.message}`);
+    return schema;
+  }
+
+  async getStateSchemaById(schemaId: string): Promise<PersistedStateSchema | null> {
+    const { data, error } = await this.supabase
+      .from(STATE_SCHEMAS)
+      .select("*")
+      .eq("schema_id", schemaId)
+      .maybeSingle();
+    if (error) throw new Error(`state_schema_read_failed:${error.message}`);
+    return data ? mapStateSchemaRow(data as Record<string, unknown>) : null;
+  }
+
+  async listStateSchemas(): Promise<PersistedStateSchema[]> {
+    const { data, error } = await this.supabase.from(STATE_SCHEMAS).select("*");
+    if (error) throw new Error(`state_schema_list_failed:${error.message}`);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapStateSchemaRow);
+  }
+
+  async saveStateCandidate(candidate: PersistedStateCandidate): Promise<PersistedStateCandidate> {
+    const row = {
+      id: candidate.candidateId,
+      tenant_id: candidate.tenantId,
+      workspace_id: candidate.workspaceId,
+      twin_id: candidate.twinId,
+      adapter_id: candidate.adapterId,
+      schema_id: candidate.schemaId,
+      schema_version: candidate.schemaVersion,
+      category: candidate.category,
+      lifecycle: candidate.lifecycle,
+      external_ref: candidate.externalRef,
+      idempotency_key: candidate.idempotencyKey,
+      observed_at: candidate.observedAt,
+      received_at: candidate.receivedAt,
+      freshness: candidate.freshness,
+      payload: candidate.payload,
+      provenance: candidate.provenance,
+      unit_governance: candidate.unitGovernance ?? null,
+      confidence: candidate.confidence ?? null,
+      evidence_refs: candidate.evidenceRefs,
+      reconciliation_id: candidate.reconciliationId ?? null,
+      published_state_id: candidate.publishedStateId ?? null,
+      review_workflow_instance_id: candidate.reviewWorkflowInstanceId ?? null,
+      created_by: candidate.createdBy ?? null,
+      updated_at: candidate.updatedAt,
+      stores_telemetry_payload: false,
+      auto_publish_attempted: false,
+      simulation_executed: false,
+      live_ingestion_enabled: false,
+    };
+    const { error } = await this.supabase.from(STATE_CANDIDATES).upsert(row).select("*").single();
+    if (error) throw new Error(`state_candidate_persist_failed:${error.message}`);
+    return candidate;
+  }
+
+  async getStateCandidateById(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedStateCandidate | null> {
+    const { data, error } = await this.supabase
+      .from(STATE_CANDIDATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("id", candidateId)
+      .maybeSingle();
+    if (error) throw new Error(`state_candidate_read_failed:${error.message}`);
+    return data ? mapStateCandidateRow(data as Record<string, unknown>) : null;
+  }
+
+  async listStateCandidates(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedStateCandidate[]> {
+    const { data, error } = await this.supabase
+      .from(STATE_CANDIDATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("received_at", { ascending: false });
+    if (error) throw new Error(`state_candidate_list_failed:${error.message}`);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapStateCandidateRow);
+  }
+
+  async saveStateReconciliation(
+    record: PersistedStateReconciliation,
+  ): Promise<PersistedStateReconciliation> {
+    const row = {
+      id: record.reconciliationId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      twin_id: record.twinId,
+      candidate_id: record.candidateId,
+      outcome: record.outcome,
+      conflicting_state_id: record.conflictingStateId ?? null,
+      superseded_state_id: record.supersededStateId ?? null,
+      notes: record.notes ?? null,
+      evaluated_at: record.evaluatedAt,
+      evaluated_by: record.evaluatedBy ?? null,
+      requires_review: record.requiresReview,
+      auto_publish_blocked: true,
+    };
+    const { error } = await this.supabase
+      .from(STATE_RECONCILIATION)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`state_reconciliation_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async getStateReconciliationByCandidate(
+    tenantId: string,
+    workspaceId: string,
+    candidateId: string,
+  ): Promise<PersistedStateReconciliation | null> {
+    const { data, error } = await this.supabase
+      .from(STATE_RECONCILIATION)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("candidate_id", candidateId)
+      .maybeSingle();
+    if (error) throw new Error(`state_reconciliation_read_failed:${error.message}`);
+    return data ? mapStateReconciliationRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveSourceAuthorityPolicy(
+    policy: PersistedSourceAuthorityPolicy,
+  ): Promise<PersistedSourceAuthorityPolicy> {
+    const row = {
+      policy_id: policy.policyId,
+      policy_version: policy.policyVersion,
+      description: policy.description,
+      rules: policy.rules,
+      universal_ranking_forbidden: true,
+    };
+    const { error } = await this.supabase.from(SOURCE_AUTHORITY).upsert(row).select("*").single();
+    if (error) throw new Error(`source_authority_persist_failed:${error.message}`);
+    return policy;
+  }
+
+  async getSourceAuthorityPolicy(
+    policyId: string,
+  ): Promise<PersistedSourceAuthorityPolicy | null> {
+    const { data, error } = await this.supabase
+      .from(SOURCE_AUTHORITY)
+      .select("*")
+      .eq("policy_id", policyId)
+      .maybeSingle();
+    if (error) throw new Error(`source_authority_read_failed:${error.message}`);
+    return data ? mapSourceAuthorityRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveIngestionIdempotency(
+    record: IngestionIdempotencyRecord,
+  ): Promise<IngestionIdempotencyRecord> {
+    const row = {
+      id: record.idempotencyId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      idempotency_key: record.idempotencyKey,
+      candidate_id: record.candidateId,
+      created_at: record.createdAt,
+    };
+    const { error } = await this.supabase
+      .from(INGESTION_IDEMPOTENCY)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`ingestion_idempotency_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async getIngestionIdempotency(
+    tenantId: string,
+    workspaceId: string,
+    idempotencyKey: string,
+  ): Promise<IngestionIdempotencyRecord | null> {
+    const { data, error } = await this.supabase
+      .from(INGESTION_IDEMPOTENCY)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+    if (error) throw new Error(`ingestion_idempotency_read_failed:${error.message}`);
+    return data
+      ? {
+          idempotencyId: String(data.id),
+          tenantId: String(data.tenant_id),
+          workspaceId: String(data.workspace_id),
+          idempotencyKey: String(data.idempotency_key),
+          candidateId: String(data.candidate_id),
+          createdAt: String(data.created_at),
+        }
+      : null;
+  }
+}
+
+function mapSourceAdapterRow(row: Record<string, unknown>): PersistedSourceAdapter {
+  return {
+    adapterId: String(row.adapter_id),
+    adapterVersion: String(row.adapter_version),
+    sourceType: row.source_type as PersistedSourceAdapter["sourceType"],
+    sourceSystem: String(row.source_system),
+    sourceOwner: String(row.source_owner),
+    supportedTargetTypes: (row.supported_target_types as string[]) ?? [],
+    supportedStateSchemas: (row.supported_state_schemas as string[]) ?? [],
+    authenticationMode: row.authentication_mode as PersistedSourceAdapter["authenticationMode"],
+    pollingOrPushMode: row.polling_or_push_mode as PersistedSourceAdapter["pollingOrPushMode"],
+    dataFreshnessPolicy: String(row.data_freshness_policy),
+    idempotencySupport: Boolean(row.idempotency_support),
+    health: row.health as PersistedSourceAdapter["health"],
+    status: row.status as PersistedSourceAdapter["status"],
+    publicContractRef: row.public_contract_ref ? String(row.public_contract_ref) : undefined,
+    storesTelemetryPayload: false,
+    autoPublishEnabled: false,
+  };
+}
+
+function mapStateSchemaRow(row: Record<string, unknown>): PersistedStateSchema {
+  return {
+    schemaId: String(row.schema_id),
+    schemaVersion: String(row.schema_version),
+    displayName: String(row.display_name),
+    category: row.category as PersistedStateSchema["category"],
+    fields: (row.fields as PersistedStateSchema["fields"]) ?? [],
+    allowsUnrestrictedBlob: false,
+    storesTelemetryPayload: false,
+  };
+}
+
+function mapStateCandidateRow(row: Record<string, unknown>): PersistedStateCandidate {
+  return {
+    candidateId: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    adapterId: String(row.adapter_id),
+    schemaId: String(row.schema_id),
+    schemaVersion: String(row.schema_version),
+    category: row.category as PersistedStateCandidate["category"],
+    lifecycle: row.lifecycle as PersistedStateCandidate["lifecycle"],
+    externalRef: String(row.external_ref),
+    idempotencyKey: String(row.idempotency_key),
+    observedAt: String(row.observed_at),
+    receivedAt: String(row.received_at),
+    freshness: row.freshness as PersistedStateCandidate["freshness"],
+    payload: (row.payload as Record<string, unknown>) ?? {},
+    provenance: row.provenance as PersistedStateCandidate["provenance"],
+    unitGovernance: row.unit_governance as PersistedStateCandidate["unitGovernance"],
+    confidence: row.confidence != null ? Number(row.confidence) : undefined,
+    evidenceRefs: (row.evidence_refs as string[]) ?? [],
+    reconciliationId: row.reconciliation_id ? String(row.reconciliation_id) : undefined,
+    publishedStateId: row.published_state_id ? String(row.published_state_id) : undefined,
+    reviewWorkflowInstanceId: row.review_workflow_instance_id
+      ? String(row.review_workflow_instance_id)
+      : undefined,
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+    updatedAt: String(row.updated_at),
+    storesTelemetryPayload: false,
+    autoPublishAttempted: false,
+    simulationExecuted: false,
+    liveIngestionEnabled: false,
+  };
+}
+
+function mapStateReconciliationRow(row: Record<string, unknown>): PersistedStateReconciliation {
+  return {
+    reconciliationId: String(row.id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    candidateId: String(row.candidate_id),
+    outcome: row.outcome as PersistedStateReconciliation["outcome"],
+    conflictingStateId: row.conflicting_state_id ? String(row.conflicting_state_id) : undefined,
+    supersededStateId: row.superseded_state_id ? String(row.superseded_state_id) : undefined,
+    notes: row.notes ? String(row.notes) : undefined,
+    evaluatedAt: String(row.evaluated_at),
+    evaluatedBy: row.evaluated_by ? String(row.evaluated_by) : undefined,
+    requiresReview: Boolean(row.requires_review),
+    autoPublishBlocked: true,
+  };
+}
+
+function mapSourceAuthorityRow(row: Record<string, unknown>): PersistedSourceAuthorityPolicy {
+  return {
+    policyId: String(row.policy_id),
+    policyVersion: String(row.policy_version),
+    description: String(row.description),
+    rules: (row.rules as PersistedSourceAuthorityPolicy["rules"]) ?? [],
+    universalRankingForbidden: true,
+  };
 }
 
 export function createPostgresDigitalTwinRepository(supabase: unknown): PostgresDigitalTwinRepository {

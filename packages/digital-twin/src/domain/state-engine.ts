@@ -1,5 +1,5 @@
 /**
- * Phase 12C — Governed twin state engine.
+ * Phase 12D — Governed twin state engine.
  *
  * create state, submit review, publish, supersede, attach representation version,
  * create snapshot, list history. Fail closed on missing provenance; forbid runtime/telemetry/sim/viewer.
@@ -8,9 +8,11 @@
 import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
 import { assertOwnershipLock } from "../architecture/ownership-lock";
 import {
-  DIGITAL_TWIN_RUNTIME_IMPLEMENTED,
+  AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED,
+  HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
   LIVE_TELEMETRY_IMPLEMENTED,
   PHYSICAL_ACTUATION_ENABLED,
+  SHM_RUNTIME_IMPLEMENTED,
   SIMULATION_EXECUTION_IMPLEMENTED,
   THREE_D_VIEWER_IMPLEMENTED,
 } from "../version";
@@ -580,34 +582,37 @@ export function createDigitalTwinStateEngine(deps: DigitalTwinStateEngineDeps): 
 
 export function assertStateForbiddenCapabilities(): {
   ok: true;
-  runtimeImplemented: false;
   liveTelemetryImplemented: false;
   simulationImplemented: false;
   threeDViewerImplemented: false;
   physicalActuationEnabled: false;
+  automaticObservedStatePublicationEnabled: false;
 } {
-  if (DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("digital_twin_runtime_forbidden_in_phase_12c");
-  }
-  if (LIVE_TELEMETRY_IMPLEMENTED) {
-    throw new Error("live_telemetry_forbidden_in_phase_12c");
+  if (LIVE_TELEMETRY_IMPLEMENTED || HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
+    throw new Error("live_telemetry_forbidden_in_phase_12d");
   }
   if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12c");
+    throw new Error("simulation_execution_forbidden_in_phase_12d");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
-    throw new Error("three_d_viewer_forbidden_in_phase_12c");
+    throw new Error("three_d_viewer_forbidden_in_phase_12d");
   }
   if (PHYSICAL_ACTUATION_ENABLED) {
-    throw new Error("physical_actuation_forbidden_in_phase_12c");
+    throw new Error("physical_actuation_forbidden_in_phase_12d");
+  }
+  if (SHM_RUNTIME_IMPLEMENTED) {
+    throw new Error("shm_runtime_forbidden_in_phase_12d");
+  }
+  if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
+    throw new Error("automatic_observed_state_publication_forbidden");
   }
   return {
     ok: true,
-    runtimeImplemented: false,
     liveTelemetryImplemented: false,
     simulationImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,
+    automaticObservedStatePublicationEnabled: false,
   };
 }
 
