@@ -55,10 +55,10 @@ describe("Phase 12H Digital Twin simulation assurance", () => {
   const twinId = "twin-1";
 
   it("declares assurance version and pinned 12G baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.8.0-simulation-assurance");
-    expect(DIGITAL_TWIN_STATUS).toBe("simulation_assurance");
-    expect(DIGITAL_TWIN_PHASE).toBe("12H");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.8.0-simulation-assurance-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.9.0-external-solver");
+    expect(DIGITAL_TWIN_STATUS).toBe("external_solver");
+    expect(DIGITAL_TWIN_PHASE).toBe("12I");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.9.0-external-solver-draft");
     expect(PHASE_12G_VERSION).toBe("0.7.0-simulation");
     expect(PHASE_12G_CERTIFIED_COMMIT).toBe(
       "a3832076425b276f089e38f1c9aa76559014454c",
@@ -70,7 +70,7 @@ describe("Phase 12H Digital Twin simulation assurance", () => {
     expect(TwinSimulationPackageReady).toBe(true);
     expect(SIMULATION_EXECUTION_IMPLEMENTED).toBe(true);
     expect(NATIVE_ENGINEERING_SOLVER_IMPLEMENTED).toBe(false);
-    expect(EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED).toBe(false);
+    expect(EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED).toBe(true);
   });
 
   it("locks forbidden capabilities and terminology", () => {
@@ -90,7 +90,7 @@ describe("Phase 12H Digital Twin simulation assurance", () => {
     const lock = assertOwnershipLock();
     expect(lock.simulationMethodQualificationReady).toBe(true);
     expect(lock.twinSimulationPackageReady).toBe(true);
-    expect(lock.externalEngineeringSolverAdaptersImplemented).toBe(false);
+    expect(lock.externalEngineeringSolverAdaptersImplemented).toBe(true);
     expect(lock.spatialOwnershipFullyResolved).toBe(false);
   });
 

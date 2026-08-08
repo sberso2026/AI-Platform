@@ -1,6 +1,6 @@
 /**
- * Phase 12H — Digital Twin simulation assurance public contracts
- * (0.8.0-simulation-assurance-draft).
+ * Phase 12I — Digital Twin external solver public contracts
+ * (0.9.0-external-solver-draft).
  */
 
 import {
@@ -14,6 +14,9 @@ import {
   SIMULATION_METHOD_QUALIFICATION_READY,
   SIMULATION_QUALIFICATION_ELIGIBILITY_READY,
   TWIN_SIMULATION_PACKAGE_READY,
+  SILENT_SOLVER_FALLBACK_ALLOWED,
+  FIRST_REAL_ENGINEERING_SOLVER_ADAPTER_IMPLEMENTED,
+  EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY,
 } from "../version";
 
 export const SIMULATION_CONTRACT_FAMILIES = [
@@ -34,6 +37,9 @@ export const SIMULATION_CONTRACT_FAMILIES = [
   "TwinSimulationPackageCore",
   "SimulationPackageIntegrityCore",
   "SimulationReproducibilityCore",
+  "EngineeringSolverAdapterCore",
+  "SolverBenchmarkCore",
+  "SolverExecutionDefaultsManifestCore",
 ] as const;
 
 export type SimulationContractFamily = (typeof SIMULATION_CONTRACT_FAMILIES)[number];
@@ -58,8 +64,8 @@ export function assertSimulationContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.8.0-simulation-assurance-draft") {
-    throw new Error("simulation_contracts_require_0_8_0_simulation_assurance_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.9.0-external-solver-draft") {
+    throw new Error("simulation_contracts_require_0_9_0_external_solver_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }
@@ -68,7 +74,8 @@ export function assertSimulationForbiddenCapabilities(): {
   ok: true;
   simulationExecutionImplemented: true;
   nativeEngineeringSolverImplemented: false;
-  externalEngineeringSolverAdaptersImplemented: false;
+  externalEngineeringSolverAdaptersImplemented: true;
+  silentSolverFallbackAllowed: false;
   simulationOptimizationImplemented: false;
   automaticSimulationApprovalEnabled: false;
   predictiveTwinImplemented: false;
@@ -79,8 +86,14 @@ export function assertSimulationForbiddenCapabilities(): {
   if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
     throw new Error("native_engineering_solver_forbidden");
   }
-  if (EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED) {
-    throw new Error("external_engineering_solver_adapters_forbidden");
+  if (!EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED) {
+    throw new Error("external_engineering_solver_adapters_required");
+  }
+  if (!EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY || !FIRST_REAL_ENGINEERING_SOLVER_ADAPTER_IMPLEMENTED) {
+    throw new Error("first_real_solver_adapter_required");
+  }
+  if (SILENT_SOLVER_FALLBACK_ALLOWED) {
+    throw new Error("silent_solver_fallback_forbidden");
   }
   if (SIMULATION_OPTIMIZATION_IMPLEMENTED) {
     throw new Error("simulation_optimization_forbidden");
@@ -101,7 +114,8 @@ export function assertSimulationForbiddenCapabilities(): {
     ok: true,
     simulationExecutionImplemented: true,
     nativeEngineeringSolverImplemented: false,
-    externalEngineeringSolverAdaptersImplemented: false,
+    externalEngineeringSolverAdaptersImplemented: true,
+    silentSolverFallbackAllowed: false,
     simulationOptimizationImplemented: false,
     automaticSimulationApprovalEnabled: false,
     predictiveTwinImplemented: false,

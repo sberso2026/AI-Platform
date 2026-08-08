@@ -1,5 +1,5 @@
 /**
- * Shared Phase 12H assurance HTTP helpers.
+ * Shared Phase 12I external solver HTTP helpers.
  */
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -18,15 +18,24 @@ export const ASSURANCE_GOVERNANCE = {
   twinSimulationPackageReady: true,
   simulationPackageIntegrityReady: true,
   simulationReproducibilityReady: true,
+  externalSolverAdapterFrameworkReady: true,
+  firstRealEngineeringSolverAdapterImplemented: true,
+  firstRealEngineeringSolverMethodCertified: true,
+  firstRealSolverId: "calculix",
+  externalSolverCountCertified: 1,
+  silentSolverFallbackAllowed: false,
   simulationExecutionImplemented: true,
   nativeEngineeringSolverImplemented: false,
-  externalEngineeringSolverAdaptersImplemented: false,
+  externalEngineeringSolverAdaptersImplemented: true,
   simulationOptimizationImplemented: false,
   automaticSimulationApprovalEnabled: false,
   predictiveTwinImplemented: false,
   shmRuntimeImplemented: false,
   spatialOwnershipFullyResolved: false,
+  duplicateEngineeringToolFrameworkDetected: false,
+  duplicateSolverOwnershipDetected: false,
   phase12IReady: true,
+  phase12JReady: true,
 } as const;
 
 export function rejectSolverActivation(body: Record<string, unknown>, requestId: string) {
@@ -38,7 +47,10 @@ export function rejectSolverActivation(body: Record<string, unknown>, requestId:
     "activateAbaqus",
     "activateOpenSees",
     "activateOpenFOAM",
-    "externalSolverAdapter",
+    "activateSap2000",
+    "activateEtabs",
+    "activateStaad",
+    "activateSpaceGass",
   ];
   for (const key of forbidden) {
     if (key in body) {
@@ -49,6 +61,21 @@ export function rejectSolverActivation(body: Record<string, unknown>, requestId:
         requestId,
       );
     }
+  }
+  return null;
+}
+
+export function rejectUnqualifiedDirectExecution(
+  body: Record<string, unknown>,
+  requestId: string,
+) {
+  if (body.executeWithoutQualification === true || body.bypassQualification === true) {
+    return assuranceErr(
+      422,
+      "unqualified_direct_execution_forbidden",
+      "Qualification chain required before real solver execution",
+      requestId,
+    );
   }
   return null;
 }

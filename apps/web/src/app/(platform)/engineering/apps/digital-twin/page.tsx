@@ -1,14 +1,14 @@
 /**
- * Phase 12H — Digital Twin simulation assurance overview.
+ * Phase 12I — Digital Twin external solver overview.
  */
 
 const SIMULATION_SURFACES = [
-  { id: "methods", name: "Methods", summary: "Governed simulation method registry (fixture qualification only)." },
-  { id: "providers", name: "Providers", summary: "Provider registry — deterministic_fixture certified path only." },
+  { id: "methods", name: "Methods", summary: "Governed simulation method registry (fixture + CalculiX linear elastic static)." },
+  { id: "providers", name: "Providers", summary: "Provider registry — deterministic_fixture (test-only) and CalculiX real adapter." },
   { id: "definitions", name: "Definitions", summary: "Versioned simulation definitions with simulation-ready context." },
   { id: "scenarios", name: "Scenarios", summary: "SIMULATED hypothetical scenarios — not forecasts; cannot overwrite observed." },
   { id: "input-sets", name: "Input Sets", summary: "Pinned representation + published state versions; immutable after run." },
-  { id: "runs", name: "Runs", summary: "Governed orchestrator — fixture only; never publishes observed state." },
+  { id: "runs", name: "Runs", summary: "Governed orchestrator — fixture or CalculiX; never publishes observed state." },
   { id: "results", name: "Results", summary: "Immutable SIMULATED results — success ≠ validation ≠ approval." },
   { id: "validation", name: "Validation", summary: "Technical validation distinct from engineering acceptance." },
   { id: "reviews", name: "Reviews", summary: "digital_twin.simulation_review — no automatic / AI self-approval." },
@@ -17,7 +17,7 @@ const SIMULATION_SURFACES = [
 ] as const;
 
 const ASSURANCE_SURFACES = [
-  { id: "method-qualifications", name: "Method Qualifications", summary: "Layer 1 — registered ≠ qualified; fixture-scoped only." },
+  { id: "method-qualifications", name: "Method Qualifications", summary: "Layer 1 — registered ≠ qualified; enforced before real execution." },
   { id: "provider-qualifications", name: "Provider Qualifications", summary: "Layer 2 — method-specific; no auto-inherit across methods." },
   { id: "application-qualifications", name: "Application Qualifications", summary: "Layer 3 — context-bounded Method+Provider permission." },
   { id: "execution-qualifications", name: "Execution Qualifications", summary: "Layer 4 — no auto engineering approval from successful runs." },
@@ -27,9 +27,19 @@ const ASSURANCE_SURFACES = [
   { id: "reproducibility", name: "Reproducibility", summary: "Bounded reproducibility assessment — not universal accuracy." },
 ] as const;
 
+const SOLVER_SURFACES = [
+  { id: "calculix-adapter", name: "CalculiX Adapter", summary: "First real solver — ccx linear elastic static; GPL open-source." },
+  { id: "fixture-provider", name: "Fixture Provider", summary: "deterministic_fixture — test-only; never silent fallback for real solvers." },
+  { id: "benchmarks", name: "Benchmarks", summary: "Axial bar δ=PL/(AE) positive + negative cases (units, BC, timeout, …)." },
+  { id: "version-probe", name: "Version Probe", summary: "ccx -v health/version observations — fail-closed when unavailable." },
+] as const;
+
 const UNAVAILABLE = [
   { id: "native-solver", name: "Native FEA/CFD/physics solver", reason: "UNAVAILABLE — nativeEngineeringSolverImplemented=false." },
-  { id: "external-solver", name: "External solver adapters (ANSYS/Abaqus/…)", reason: "UNAVAILABLE — externalEngineeringSolverAdaptersImplemented=false." },
+  { id: "ansys", name: "ANSYS adapter", reason: "RESERVED — unavailable stub." },
+  { id: "abaqus", name: "Abaqus adapter", reason: "RESERVED — unavailable stub." },
+  { id: "opensees", name: "OpenSees adapter", reason: "RESERVED — not first solver (heavier install)." },
+  { id: "openfoam", name: "OpenFOAM adapter", reason: "RESERVED — CFD scope / heavier CI." },
   { id: "optimization", name: "Simulation optimization", reason: "UNAVAILABLE — simulationOptimizationImplemented=false." },
   { id: "prediction", name: "Predictive Twin / PoF / RUL", reason: "UNAVAILABLE — predictiveTwinImplemented=false." },
   { id: "shm", name: "SHM runtime / calibration", reason: "UNAVAILABLE — shmRuntimeImplemented=false." },
@@ -38,7 +48,7 @@ const UNAVAILABLE = [
   { id: "actuation", name: "Physical actuation", reason: "UNAVAILABLE — physicalActuationEnabled=false." },
 ] as const;
 
-export default function DigitalTwinSimulationAssurancePage() {
+export default function DigitalTwinExternalSolverPage() {
   return (
     <>
       <section data-testid="digital-twin-simulation-ready" aria-labelledby="dt-simulation-title">
@@ -46,10 +56,12 @@ export default function DigitalTwinSimulationAssurancePage() {
           Digital Twin — Simulation Governance
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Version <span data-testid="digital-twin-simulation-version">0.8.0-simulation-assurance</span>.
+          Version <span data-testid="digital-twin-simulation-version">0.9.0-external-solver</span>.
           Surfaces below are labeled <strong>SIMULATED</strong> and must not be visually merged with
-          observed Twin state. Certified provider:{" "}
+          observed Twin state. Providers:{" "}
           <span data-testid="digital-twin-fixture-provider-flag">deterministic_fixture</span>
+          {" "}(test-only) and{" "}
+          <span data-testid="digital-twin-calculix-provider-flag">calculix</span>
           {" "}(
           <span data-testid="digital-twin-native-solver-flag">nativeEngineeringSolverImplemented=false</span>
           ).
@@ -83,14 +95,17 @@ export default function DigitalTwinSimulationAssurancePage() {
           <p className="mt-1 text-sm text-slate-600" data-testid="digital-twin-firewall-message">
             Simulated Twin State never silently replaces Observed, Derived, or Operational state.
             Successful execution is not validation and not engineering acceptance.
+            Real solver requests never silently fall back to fixture (
+            <span data-testid="digital-twin-silent-fallback-flag">silentSolverFallbackAllowed=false</span>
+            ).
           </p>
         </section>
 
-        <h2 className="mt-8 text-lg font-semibold text-slate-900">Unavailable capabilities</h2>
+        <h2 className="mt-8 text-lg font-semibold text-slate-900">Unavailable / reserved capabilities</h2>
         <ul
           className="mt-3 space-y-2"
           data-testid="digital-twin-unavailable-capabilities"
-          aria-label="Capabilities unavailable in Phase 12H"
+          aria-label="Capabilities unavailable in Phase 12I"
         >
           {UNAVAILABLE.map((item) => (
             <li
@@ -114,13 +129,8 @@ export default function DigitalTwinSimulationAssurancePage() {
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
           Version{" "}
-          <span data-testid="digital-twin-assurance-version">0.8.0-simulation-assurance</span>.
-          Four-layer qualification: registered ≠ qualified ≠ application-qualified ≠
-          execution-qualified ≠ engineering-approved. External solvers remain reserved stubs (
-          <span data-testid="digital-twin-external-solver-flag">
-            externalEngineeringSolverAdaptersImplemented=false
-          </span>
-          ).
+          <span data-testid="digital-twin-assurance-version">0.9.0-external-solver</span>.
+          Four-layer qualification enforced before CalculiX execution.
         </p>
         <ul
           className="mt-3 grid gap-3 sm:grid-cols-2"
@@ -134,6 +144,43 @@ export default function DigitalTwinSimulationAssurancePage() {
               className="rounded-lg border border-sky-200 bg-sky-50/40 p-4"
             >
               <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">ASSURANCE</p>
+              <h3 className="font-medium text-slate-900">{surface.name}</h3>
+              <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section
+        className="mt-10"
+        data-testid="digital-twin-external-solver-ready"
+        aria-labelledby="dt-solver-title"
+      >
+        <h2 id="dt-solver-title" className="text-2xl font-semibold text-slate-900">
+          External Engineering Solver
+        </h2>
+        <p className="mt-2 max-w-2xl text-slate-600">
+          Version <span data-testid="digital-twin-external-solver-version">0.9.0-external-solver</span>.
+          First real solver: CalculiX (
+          <span data-testid="digital-twin-external-solver-flag">
+            externalEngineeringSolverAdaptersImplemented=true
+          </span>
+          ). Fixture vs real providers are visually distinct.
+        </p>
+        <ul
+          className="mt-3 grid gap-3 sm:grid-cols-2"
+          data-testid="digital-twin-solver-surfaces"
+          aria-label="Digital Twin external solver surfaces"
+        >
+          {SOLVER_SURFACES.map((surface) => (
+            <li
+              key={surface.id}
+              data-testid={`digital-twin-solver-surface-${surface.id}`}
+              className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                {surface.id === "fixture-provider" ? "FIXTURE" : "REAL SOLVER"}
+              </p>
               <h3 className="font-medium text-slate-900">{surface.name}</h3>
               <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>
             </li>

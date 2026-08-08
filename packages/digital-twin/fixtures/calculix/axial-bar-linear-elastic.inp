@@ -1,0 +1,23 @@
+*HEADING
+Digital Twin Phase 12I CalculiX axial bar fixture (linear elastic static)
+*NODE
+1,0.0,0.0,0.0
+2,1.0,0.0,0.0
+*ELEMENT, TYPE=T3D2, ELSET=Eall
+1,1,2
+*SOLID SECTION, ELSET=Eall, MATERIAL=Steel
+0.01
+*MATERIAL, NAME=Steel
+*ELASTIC
+2.1e11, 0.3
+*BOUNDARY
+1,1,3
+*STEP
+*STATIC
+*CLOAD
+2,1,1000
+*NODE FILE
+U
+*EL FILE
+S
+*END STEP

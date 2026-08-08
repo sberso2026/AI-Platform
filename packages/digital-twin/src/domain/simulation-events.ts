@@ -29,6 +29,15 @@ export const SIMULATION_DOMAIN_EVENTS = [
   "engineering.digital_twin.simulation.package.integrity_checked",
   "engineering.digital_twin.simulation.reproducibility.assessed",
   "engineering.digital_twin.simulation.eligibility.assessed",
+  "engineering.digital_twin.solver.adapter.registered",
+  "engineering.digital_twin.solver.version.probed",
+  "engineering.digital_twin.solver.health.checked",
+  "engineering.digital_twin.solver.run.started",
+  "engineering.digital_twin.solver.run.completed",
+  "engineering.digital_twin.solver.run.failed",
+  "engineering.digital_twin.solver.run.timeout",
+  "engineering.digital_twin.solver.run.cancelled",
+  "engineering.digital_twin.solver.benchmark.executed",
 ] as const;
 
 export const SIMULATION_ASSURANCE_DOMAIN_EVENTS = [
@@ -47,7 +56,20 @@ export const SIMULATION_ASSURANCE_DOMAIN_EVENTS = [
   "engineering.digital_twin.simulation.eligibility.assessed",
 ] as const;
 
+export const SOLVER_DOMAIN_EVENTS = [
+  "engineering.digital_twin.solver.adapter.registered",
+  "engineering.digital_twin.solver.version.probed",
+  "engineering.digital_twin.solver.health.checked",
+  "engineering.digital_twin.solver.run.started",
+  "engineering.digital_twin.solver.run.completed",
+  "engineering.digital_twin.solver.run.failed",
+  "engineering.digital_twin.solver.run.timeout",
+  "engineering.digital_twin.solver.run.cancelled",
+  "engineering.digital_twin.solver.benchmark.executed",
+] as const;
+
 export type SimulationDomainEvent = (typeof SIMULATION_DOMAIN_EVENTS)[number];
+export type SolverDomainEvent = (typeof SOLVER_DOMAIN_EVENTS)[number];
 
 export function assertSimulationEventNoLargePayload(payload: Record<string, unknown>): void {
   const serialized = JSON.stringify(payload);

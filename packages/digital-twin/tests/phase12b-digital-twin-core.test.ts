@@ -32,16 +32,16 @@ describe("Phase 12B Digital Twin core domain", () => {
   const workspaceId = "workspace-1";
 
   it("retains core identity with 12E module version", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.8.0-simulation-assurance");
-    expect(DIGITAL_TWIN_STATUS).toBe("simulation_assurance");
-    expect(DIGITAL_TWIN_PHASE).toBe("12H");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.9.0-external-solver");
+    expect(DIGITAL_TWIN_STATUS).toBe("external_solver");
+    expect(DIGITAL_TWIN_PHASE).toBe("12I");
     expect(DIGITAL_TWIN_IMPLEMENTED).toBe(true);
     expect(TWIN_IDENTITY_READY).toBe(true);
     expect(TWIN_REPRESENTATION_READY).toBe(true);
     expect(TWIN_THREAD_READY).toBe(true);
     expect(KNOWLEDGE_GRAPH_REUSE).toBe(true);
     expect(HOSTED_PERSISTENCE_READY).toBe(true);
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.8.0-simulation-assurance-draft");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.9.0-external-solver-draft");
     expect(IDENTITY_REVIEW_WORKFLOW_SLUG).toBe("digital_twin.identity_review");
     expect(DIGITAL_TWIN_IDENTITY_REVIEW_SLUG).toBe("digital_twin.identity_review");
   });
@@ -62,11 +62,11 @@ describe("Phase 12B Digital Twin core domain", () => {
     expect(lock.productionDigitalTwinReady).toBe(false);
     expect(lock.twinIdentityReady).toBe(true);
     expect(lock.knowledgeGraphReuse).toBe(true);
-    expect(lock.publicContractVersion).toBe("0.8.0-simulation-assurance-draft");
+    expect(lock.publicContractVersion).toBe("0.9.0-external-solver-draft");
   });
 
   it("declares core contract families", () => {
-    expect(assertCoreContracts().contractVersion).toBe("0.8.0-simulation-assurance-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.9.0-external-solver-draft");
   });
 
   it("declares domain events including state events", () => {

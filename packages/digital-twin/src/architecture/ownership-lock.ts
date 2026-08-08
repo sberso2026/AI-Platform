@@ -1,10 +1,10 @@
 /**
- * Phase 12H — Digital Twin ownership lock.
+ * Phase 12I — Digital Twin ownership lock.
  *
- * Machine-readable twin of ownership matrix including simulation governance
- * and multi-layer simulation assurance / package foundation.
- * simulationExecutionImplemented=true means bounded orchestration + deterministic
- * fixture ONLY — native FEA/CFD/physics solvers and external solver adapters remain forbidden.
+ * Extends 12H with external engineering solver adapters (CalculiX first).
+ * nativeEngineeringSolverImplemented remains false.
+ * engineeringSolverOwnership = external_engineering_tool; tool framework = platform_intelligence.
+ * duplicateSolverOwnershipDetected = false; no DigitalTwinSolverRegistry.
  */
 
 import {
@@ -81,6 +81,12 @@ import {
   SIMULATION_PACKAGE_INTEGRITY_READY,
   SIMULATION_REPRODUCIBILITY_READY,
   EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED,
+  EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY,
+  FIRST_REAL_ENGINEERING_SOLVER_ADAPTER_IMPLEMENTED,
+  SILENT_SOLVER_FALLBACK_ALLOWED,
+  DUPLICATE_SOLVER_OWNERSHIP_DETECTED,
+  ENGINEERING_SOLVER_OWNERSHIP,
+  FIRST_REAL_SOLVER_ID,
   TWIN_SNAPSHOT_READY,
   TWIN_SOURCE_ADAPTER_READY,
   TWIN_STATE_INGESTION_READY,
@@ -109,6 +115,7 @@ export type DomainOwner =
   | "platform_intelligence"
   | "external_system"
   | "external_or_existing_engineering_model_owner"
+  | "external_engineering_tool"
   | "existing_shared_spatial_domain_or_explicitly_reconciled_owner";
 
 export type BoundaryRelation = "owns" | "consumes" | "forbidden" | "preserve";
@@ -199,7 +206,7 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     owner: "digital_twin",
     relation: "owns",
     notes:
-      "Four-layer qualification, eligibility, packages, integrity, reproducibility — fixture-scoped; no real solvers",
+      "Four-layer qualification, eligibility, packages, integrity, reproducibility — enforced before real solver execution",
   },
   {
     concern: "simulation_package",
@@ -209,16 +216,17 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
   },
   {
     concern: "external_engineering_solver_adapters",
-    owner: "external_or_existing_engineering_model_owner",
-    relation: "forbidden",
-    notes: "Reserved stubs only — externalEngineeringSolverAdaptersImplemented=false",
+    owner: "external_engineering_tool",
+    relation: "consumes",
+    notes:
+      "CalculiX first real adapter; Twin consumes via EngineeringSolverAdapter — engineeringSolverOwnership=external_engineering_tool",
   },
   {
     concern: "engineering_tool_framework",
     owner: "platform_intelligence",
     relation: "consumes",
     notes:
-      "Reuse Platform Tool Registry catalog patterns as compatibility adapters — not a competing general tool framework",
+      "Reuse Platform Tool Registry (toolRegistryRef) — duplicateEngineeringToolFrameworkDetected=false; no DigitalTwinSolverRegistry",
   },
   {
     concern: "digital_thread",
@@ -380,7 +388,13 @@ export function assertOwnershipLock(): {
   twinSimulationPackageReady: true;
   simulationPackageIntegrityReady: true;
   simulationReproducibilityReady: true;
-  externalEngineeringSolverAdaptersImplemented: false;
+  externalEngineeringSolverAdaptersImplemented: true;
+  externalSolverAdapterFrameworkReady: true;
+  firstRealEngineeringSolverAdapterImplemented: true;
+  silentSolverFallbackAllowed: false;
+  duplicateSolverOwnershipDetected: false;
+  engineeringSolverOwnership: typeof ENGINEERING_SOLVER_OWNERSHIP;
+  firstRealSolverId: typeof FIRST_REAL_SOLVER_ID;
   twinVersioningReady: true;
   representationVersioningReady: true;
   twinSnapshotReady: true;
@@ -422,13 +436,13 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_claim_canonical_identity");
   }
   if (!DIGITAL_TWIN_IMPLEMENTED) {
-    throw new Error("digital_twin_simulation_must_be_implemented_in_phase_12h");
+    throw new Error("digital_twin_external_solver_must_be_implemented_in_phase_12i");
   }
   if (PRODUCTION_DIGITAL_TWIN_READY) {
-    throw new Error("production_digital_twin_not_ready_in_phase_12h");
+    throw new Error("production_digital_twin_not_ready_in_phase_12i");
   }
   if (!DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("digital_twin_bounded_runtime_required_in_phase_12h");
+    throw new Error("digital_twin_bounded_runtime_required_in_phase_12i");
   }
   if (
     AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED ||
@@ -451,13 +465,28 @@ export function assertOwnershipLock(): {
     throw new Error("shm_forbidden_in_phase_12h");
   }
   if (!SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("bounded_simulation_execution_required_in_phase_12h");
+    throw new Error("bounded_simulation_execution_required_in_phase_12i");
   }
   if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
     throw new Error("native_engineering_solver_forbidden");
   }
-  if (EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED) {
-    throw new Error("external_engineering_solver_adapters_forbidden");
+  if (!EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED) {
+    throw new Error("external_engineering_solver_adapters_required_in_phase_12i");
+  }
+  if (!EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY || !FIRST_REAL_ENGINEERING_SOLVER_ADAPTER_IMPLEMENTED) {
+    throw new Error("external_solver_adapter_framework_required");
+  }
+  if (SILENT_SOLVER_FALLBACK_ALLOWED) {
+    throw new Error("silent_solver_fallback_forbidden");
+  }
+  if (DUPLICATE_SOLVER_OWNERSHIP_DETECTED) {
+    throw new Error("duplicate_solver_ownership_forbidden");
+  }
+  if (ENGINEERING_SOLVER_OWNERSHIP !== "external_engineering_tool") {
+    throw new Error("engineering_solver_ownership_must_be_external_engineering_tool");
+  }
+  if (FIRST_REAL_SOLVER_ID !== "calculix") {
+    throw new Error("first_real_solver_must_be_calculix");
   }
   if (SIMULATION_OPTIMIZATION_IMPLEMENTED || PREDICTIVE_TWIN_IMPLEMENTED) {
     throw new Error("optimization_and_prediction_forbidden");
@@ -492,8 +521,8 @@ export function assertOwnershipLock(): {
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.8.0-simulation-assurance-draft") {
-    throw new Error("public_contracts_must_be_simulation_assurance_draft_in_phase_12h");
+  if (PUBLIC_CONTRACT_VERSION !== "0.9.0-external-solver-draft") {
+    throw new Error("public_contracts_must_be_external_solver_draft_in_phase_12i");
   }
   if (
     !TWIN_IDENTITY_READY ||
@@ -526,7 +555,7 @@ export function assertOwnershipLock(): {
     !TWIN_SNAPSHOT_READY ||
     !TWIN_TIMELINE_READY
   ) {
-    throw new Error("simulation_assurance_capabilities_not_ready");
+    throw new Error("external_solver_capabilities_not_ready");
   }
   if (!KNOWLEDGE_GRAPH_REUSE) {
     throw new Error("knowledge_graph_reuse_required");
@@ -597,8 +626,11 @@ export function assertOwnershipLock(): {
   const solverAdapterRows = DIGITAL_TWIN_OWNERSHIP_MATRIX.filter(
     (row) => row.concern === "external_engineering_solver_adapters",
   );
-  if (solverAdapterRows.some((row) => row.relation !== "forbidden")) {
-    throw new Error("external_engineering_solver_adapters_must_remain_forbidden");
+  if (solverAdapterRows.some((row) => row.relation !== "consumes")) {
+    throw new Error("external_engineering_solver_adapters_must_be_consumed");
+  }
+  if (solverAdapterRows.some((row) => row.owner === "digital_twin")) {
+    throw new Error("digital_twin_may_not_own_external_engineering_solver");
   }
 
   return {
@@ -669,7 +701,13 @@ export function assertOwnershipLock(): {
     twinSimulationPackageReady: true,
     simulationPackageIntegrityReady: true,
     simulationReproducibilityReady: true,
-    externalEngineeringSolverAdaptersImplemented: false,
+    externalEngineeringSolverAdaptersImplemented: true,
+    externalSolverAdapterFrameworkReady: true,
+    firstRealEngineeringSolverAdapterImplemented: true,
+    silentSolverFallbackAllowed: false,
+    duplicateSolverOwnershipDetected: false,
+    engineeringSolverOwnership: ENGINEERING_SOLVER_OWNERSHIP,
+    firstRealSolverId: FIRST_REAL_SOLVER_ID,
     twinVersioningReady: true,
     representationVersioningReady: true,
     twinSnapshotReady: true,

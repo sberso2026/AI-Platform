@@ -50,8 +50,8 @@ export type RepresentationVersionCore = {
 };
 
 export function assertStateContracts(): { ok: true; contractVersion: typeof PUBLIC_CONTRACT_VERSION } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.8.0-simulation-assurance-draft") {
-    throw new Error("state_contracts_require_0_8_0_simulation_assurance_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.9.0-external-solver-draft") {
+    throw new Error("state_contracts_require_0_9_0_external_solver_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

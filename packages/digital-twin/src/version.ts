@@ -1,17 +1,16 @@
 /**
- * Phase 12H — Digital Twin Simulation Assurance, Multi-Layer Qualification
- * and Reproducible Simulation Package Foundation.
+ * Phase 12I — Digital Twin External Engineering Solver Adapter Foundation.
  *
- * Extends 12G with four-layer qualification, eligibility (fail-closed),
- * TwinSimulationPackage integrity/completeness/reproducibility.
- * externalEngineeringSolverAdaptersImplemented remains false.
+ * Extends 12H with CalculiX (ccx) as the first real external solver adapter.
+ * silentSolverFallbackAllowed = false — real-solver requests MUST NOT fall back to fixture.
  * nativeEngineeringSolverImplemented remains false.
+ * PHASE_12J_READY = true (flag only — do not start Phase 12J).
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.8.0-simulation-assurance" as const;
-export const DIGITAL_TWIN_STATUS = "simulation_assurance" as const;
-export const DIGITAL_TWIN_PHASE = "12H" as const;
+export const DIGITAL_TWIN_VERSION = "0.9.0-external-solver" as const;
+export const DIGITAL_TWIN_STATUS = "external_solver" as const;
+export const DIGITAL_TWIN_PHASE = "12I" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -77,7 +76,7 @@ export const TWIN_SIMULATED_STATE_READY = true as const;
 export const TwinSimulatedStateReady = true as const;
 export const twinSimulatedStateReady = true as const;
 
-/** Phase 12H simulation assurance readiness */
+/** Phase 12H simulation assurance readiness (retained) */
 export const SIMULATION_METHOD_QUALIFICATION_READY = true as const;
 export const SimulationMethodQualificationReady = true as const;
 export const simulationMethodQualificationReady = true as const;
@@ -103,6 +102,27 @@ export const SIMULATION_REPRODUCIBILITY_READY = true as const;
 export const SimulationReproducibilityReady = true as const;
 export const simulationReproducibilityReady = true as const;
 
+/** Phase 12I external solver adapter foundation */
+export const EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY = true as const;
+export const ExternalSolverAdapterFrameworkReady = true as const;
+export const externalSolverAdapterFrameworkReady = true as const;
+export const FIRST_REAL_ENGINEERING_SOLVER_ADAPTER_IMPLEMENTED = true as const;
+export const firstRealEngineeringSolverAdapterImplemented = true as const;
+export const FIRST_REAL_ENGINEERING_SOLVER_METHOD_CERTIFIED = true as const;
+export const firstRealEngineeringSolverMethodCertified = true as const;
+export const FIRST_REAL_SOLVER_ID = "calculix" as const;
+export const firstRealSolverId = FIRST_REAL_SOLVER_ID;
+export const EXTERNAL_SOLVER_COUNT_CERTIFIED = 1 as const;
+export const externalSolverCountCertified = EXTERNAL_SOLVER_COUNT_CERTIFIED;
+export const SILENT_SOLVER_FALLBACK_ALLOWED = false as const;
+export const silentSolverFallbackAllowed = false as const;
+/**
+ * Derived at certification time from hosted/CI CalculiX evidence.
+ * Domain default is false; certification runner sets artifact flag when REAL_SOLVER_HOSTED=1
+ * or when a live ccx benchmark succeeds during certify:phase12i.
+ */
+export const REAL_SOLVER_HOSTED_EXECUTION_CERTIFIED_DEFAULT = false as const;
+
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
 export const HOSTED_PERSISTENCE_READY = true as const;
@@ -110,7 +130,7 @@ export const hostedDigitalTwinPersistenceReady = true as const;
 
 /**
  * Bounded runtime: state-ingestion + telemetry binding + representation mapping
- * + governed simulation orchestration with deterministic fixture ONLY
+ * + governed simulation orchestration (fixture + first external CalculiX adapter)
  * + multi-layer qualification / package assurance foundation.
  */
 export const DIGITAL_TWIN_RUNTIME_IMPLEMENTED = true as const;
@@ -126,7 +146,6 @@ export const automaticSimulationApprovalEnabled = false as const;
 export const AUTOMATIC_SIMULATION_CALIBRATION_ENABLED = false as const;
 export const automaticSimulationCalibrationEnabled = false as const;
 
-/** Bounded binding/projection ONLY — reads Asset Intelligence time series; does not ingest raw telemetry. */
 export const LIVE_TELEMETRY_IMPLEMENTED = true as const;
 export const liveTelemetryImplemented = true as const;
 export const HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED = false as const;
@@ -143,8 +162,8 @@ export const SHM_SIMULATION_CALIBRATION_IMPLEMENTED = false as const;
 export const shmSimulationCalibrationImplemented = false as const;
 
 /**
- * Bounded governed simulation framework + deterministic_fixture provider ONLY.
- * Does NOT imply native FEA/CFD/physics solvers.
+ * Bounded governed simulation + deterministic_fixture (test-only path) +
+ * first real external CalculiX adapter. Does NOT imply native FEA product.
  */
 export const SIMULATION_EXECUTION_IMPLEMENTED = true as const;
 export const simulationExecutionImplemented = true as const;
@@ -152,8 +171,8 @@ export const simulationExecutionImplemented = true as const;
 export const simulationImplemented = false as const;
 export const NATIVE_ENGINEERING_SOLVER_IMPLEMENTED = false as const;
 export const nativeEngineeringSolverImplemented = false as const;
-export const EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED = false as const;
-export const externalEngineeringSolverAdaptersImplemented = false as const;
+export const EXTERNAL_ENGINEERING_SOLVER_ADAPTERS_IMPLEMENTED = true as const;
+export const externalEngineeringSolverAdaptersImplemented = true as const;
 export const SIMULATION_OPTIMIZATION_IMPLEMENTED = false as const;
 export const simulationOptimizationImplemented = false as const;
 export const SIMULATION_USES_PUBLISHED_STATE_ONLY = true as const;
@@ -185,13 +204,14 @@ export const DUPLICATE_MODEL_OWNERSHIP_DETECTED = false as const;
 export const duplicateModelOwnershipDetected = false as const;
 export const DUPLICATE_ENGINEERING_TOOL_FRAMEWORK_DETECTED = false as const;
 export const duplicateEngineeringToolFrameworkDetected = false as const;
+export const DUPLICATE_SOLVER_OWNERSHIP_DETECTED = false as const;
+export const duplicateSolverOwnershipDetected = false as const;
 
 export const DUPLICATE_ASSET_OWNERSHIP_DETECTED = false as const;
 export const duplicateAssetOwnershipDetected = false as const;
 export const DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false as const;
 export const duplicateProjectOwnershipDetected = false as const;
 
-/** Consume 12F spatial refs only — no Twin spatial registry. */
 export const SPATIAL_OWNERSHIP_FULLY_RESOLVED = false as const;
 export const spatialOwnershipFullyResolved = false as const;
 
@@ -205,13 +225,15 @@ export const PHASE_12G_READY = true as const;
 export const phase12GReady = true as const;
 export const PHASE_12H_READY = true as const;
 export const phase12HReady = true as const;
-/** Flag only — do not start Phase 12I. */
 export const PHASE_12I_READY = true as const;
 export const phase12IReady = true as const;
+/** Flag only — do not start Phase 12J. */
+export const PHASE_12J_READY = true as const;
+export const phase12JReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
-// Phase 12A certified baseline (pinned — do not move)
+// Phase 12A–12H certified baselines (pinned — do not move)
 // ---------------------------------------------------------------------------
 
 export const PHASE_12A_CERTIFIED_COMMIT =
@@ -219,59 +241,40 @@ export const PHASE_12A_CERTIFIED_COMMIT =
 export const PHASE_12A_HOSTED_RUN = "31253197987" as const;
 export const PHASE_12A_VERSION = "0.1.0-discovery" as const;
 
-// ---------------------------------------------------------------------------
-// Phase 12B certified baseline (pinned — do not move)
-// ---------------------------------------------------------------------------
-
 export const PHASE_12B_CERTIFIED_COMMIT =
   "5e1bb22486a9fdd6385fb980daf0150a330eca9b" as const;
 export const PHASE_12B_HOSTED_RUN = "31255221472" as const;
 export const PHASE_12B_VERSION = "0.2.0-core" as const;
-
-// ---------------------------------------------------------------------------
-// Phase 12C certified baseline (pinned — do not move)
-// ---------------------------------------------------------------------------
 
 export const PHASE_12C_CERTIFIED_COMMIT =
   "07b5ccc843395bd02633163dc654668da9f17658" as const;
 export const PHASE_12C_HOSTED_RUN = "31256556800" as const;
 export const PHASE_12C_VERSION = "0.3.0-state" as const;
 
-// ---------------------------------------------------------------------------
-// Phase 12D certified baseline (pinned — do not move)
-// ---------------------------------------------------------------------------
-
 export const PHASE_12D_CERTIFIED_COMMIT =
   "3e387f4b76cbd9c80b274585c7b78821482f496d" as const;
 export const PHASE_12D_HOSTED_RUN = "31257741414" as const;
 export const PHASE_12D_VERSION = "0.4.0-ingestion" as const;
-
-// ---------------------------------------------------------------------------
-// Phase 12E certified baseline (pinned — do not move)
-// ---------------------------------------------------------------------------
 
 export const PHASE_12E_CERTIFIED_COMMIT =
   "b871e8c3eb9e1293604610bacdd410ecb4da5684" as const;
 export const PHASE_12E_HOSTED_RUN = "31260082507" as const;
 export const PHASE_12E_VERSION = "0.5.0-telemetry-binding" as const;
 
-// ---------------------------------------------------------------------------
-// Phase 12F certified baseline (pinned — do not move)
-// ---------------------------------------------------------------------------
-
 export const PHASE_12F_CERTIFIED_COMMIT =
   "2846421e7905a69c789a882a86da4071272278e3" as const;
 export const PHASE_12F_HOSTED_RUN = "31261555990" as const;
 export const PHASE_12F_VERSION = "0.6.0-representation" as const;
 
-// ---------------------------------------------------------------------------
-// Phase 12G certified baseline (pinned — do not move)
-// ---------------------------------------------------------------------------
-
 export const PHASE_12G_CERTIFIED_COMMIT =
   "a3832076425b276f089e38f1c9aa76559014454c" as const;
 export const PHASE_12G_HOSTED_RUN = "31262355460" as const;
 export const PHASE_12G_VERSION = "0.7.0-simulation" as const;
+
+export const PHASE_12H_CERTIFIED_COMMIT =
+  "f276dbb15b3a68d2863b3547a2dc58aa1ef3afbe" as const;
+export const PHASE_12H_HOSTED_RUN = "31263802033" as const;
+export const PHASE_12H_VERSION = "0.8.0-simulation-assurance" as const;
 
 // ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
@@ -301,7 +304,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 export const projectIntelligenceV1Intact = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.8.0-simulation-assurance-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.9.0-external-solver-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -321,6 +324,9 @@ export const SPATIAL_CANONICAL_OWNERSHIP =
   "existing_shared_spatial_domain_or_explicitly_reconciled_owner" as const;
 export const SOURCE_MODEL_OWNERSHIP = "external_or_existing_engineering_model_owner" as const;
 export const ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP = "platform_intelligence" as const;
+export const ENGINEERING_SOLVER_OWNERSHIP = "external_engineering_tool" as const;
+export const engineeringSolverOwnership = ENGINEERING_SOLVER_OWNERSHIP;
+export const engineeringToolFrameworkOwnership = ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP;
 
 export const CANONICAL_ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const CANONICAL_PROJECT_IDENTITY_OWNERSHIP = "engineering_os_shared_project_domain" as const;
@@ -338,8 +344,8 @@ export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
 export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "simulation_assurance" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.8.0-simulation-assurance" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "external_solver" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.9.0-external-solver" as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
 export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
@@ -366,8 +372,10 @@ export const DIGITAL_TWIN_EXECUTION_QUALIFICATION_REVIEW_SLUG =
   "digital_twin.simulation_execution_qualification_review" as const;
 export const DIGITAL_TWIN_PACKAGE_REVIEW_SLUG =
   "digital_twin.simulation_package_review" as const;
+export const DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG =
+  "digital_twin.solver_adapter_review" as const;
 
-export function getDigitalTwinSimulationAssuranceDeclaration() {
+export function getDigitalTwinExternalSolverDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -406,6 +414,13 @@ export function getDigitalTwinSimulationAssuranceDeclaration() {
     twinSimulationPackageReady,
     simulationPackageIntegrityReady,
     simulationReproducibilityReady,
+    externalSolverAdapterFrameworkReady,
+    firstRealEngineeringSolverAdapterImplemented,
+    firstRealEngineeringSolverMethodCertified,
+    firstRealSolverId,
+    externalSolverCountCertified,
+    silentSolverFallbackAllowed,
+    realSolverHostedExecutionCertifiedDefault: REAL_SOLVER_HOSTED_EXECUTION_CERTIFIED_DEFAULT,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
     hostedDigitalTwinPersistenceReady,
     productionDigitalTwinReady: PRODUCTION_DIGITAL_TWIN_READY,
@@ -439,10 +454,13 @@ export function getDigitalTwinSimulationAssuranceDeclaration() {
     duplicateTimeSeriesPlaneDetected,
     duplicateModelOwnershipDetected,
     duplicateEngineeringToolFrameworkDetected,
+    duplicateSolverOwnershipDetected,
     duplicateAssetOwnershipDetected,
     duplicateProjectOwnershipDetected,
     spatialOwnershipFullyResolved,
     engineeringTimeSeriesOwnership,
+    engineeringToolFrameworkOwnership,
+    engineeringSolverOwnership,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase12CReady: PHASE_12C_READY,
     phase12DReady: PHASE_12D_READY,
@@ -451,6 +469,7 @@ export function getDigitalTwinSimulationAssuranceDeclaration() {
     phase12GReady,
     phase12HReady,
     phase12IReady,
+    phase12JReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
@@ -468,6 +487,9 @@ export function getDigitalTwinSimulationAssuranceDeclaration() {
     phase12GVersion: PHASE_12G_VERSION,
     phase12GCertifiedCommit: PHASE_12G_CERTIFIED_COMMIT,
     phase12GHostedRun: PHASE_12G_HOSTED_RUN,
+    phase12HVersion: PHASE_12H_VERSION,
+    phase12HCertifiedCommit: PHASE_12H_CERTIFIED_COMMIT,
+    phase12HHostedRun: PHASE_12H_HOSTED_RUN,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
@@ -493,45 +515,50 @@ export function getDigitalTwinSimulationAssuranceDeclaration() {
     applicationQualificationReviewSlug: DIGITAL_TWIN_APPLICATION_QUALIFICATION_REVIEW_SLUG,
     executionQualificationReviewSlug: DIGITAL_TWIN_EXECUTION_QUALIFICATION_REVIEW_SLUG,
     packageReviewSlug: DIGITAL_TWIN_PACKAGE_REVIEW_SLUG,
+    solverAdapterReviewSlug: DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG,
   };
 }
 
-/** Alias for version info consumers. */
 export function getDigitalTwinVersionInfo() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+export function getDigitalTwinSimulationAssuranceDeclaration() {
+  return getDigitalTwinExternalSolverDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinSimulationDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinRepresentationDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinTelemetryBindingDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinIngestionDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinStateDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinCoreDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinSimulationAssuranceDeclaration */
+/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinSimulationAssuranceDeclaration();
+  return getDigitalTwinExternalSolverDeclaration();
 }

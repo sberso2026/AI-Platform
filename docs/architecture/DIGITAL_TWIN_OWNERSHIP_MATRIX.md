@@ -1,13 +1,12 @@
-# Digital Twin — Ownership Matrix (Phase 12H simulation assurance)
+# Digital Twin — Ownership Matrix (Phase 12I external solver)
 
-Status: simulation_assurance · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+Status: external_solver · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
 
-> **Phase 12H update:** Twin owns multi-layer simulation qualification, eligibility,
-> packages, integrity, and reproducibility as **Digital Twin simulation assurance**.
-> External solver adapters remain reserved stubs
-> (`externalEngineeringSolverAdaptersImplemented=false`). General Engineering Tool
-> Framework remains with `platform_intelligence`. Certified executable path is
-> `deterministic_fixture` only (`nativeEngineeringSolverImplemented=false`).
+> **Phase 12I update:** Twin consumes the first real external solver adapter (CalculiX)
+> via `EngineeringSolverAdapter`. `engineeringSolverOwnership=external_engineering_tool`.
+> `engineeringToolFrameworkOwnership=platform_intelligence` (Tool Registry refs only —
+> `duplicateEngineeringToolFrameworkDetected=false`, no DigitalTwinSolverRegistry).
+> `silentSolverFallbackAllowed=false`. Native FEA remains false.
 
 ## Locked ownership boundaries
 
@@ -24,7 +23,7 @@ Status: simulation_assurance · Aligned with `packages/digital-twin/src/architec
 | simulation_governance | `digital_twin` | owns (method/provider registries) |
 | simulation_assurance | `digital_twin` | owns (four-layer qualification + packages) |
 | simulation_package | `digital_twin` | owns (manifests/integrity; Platform Files refs) |
-| external_engineering_solver_adapters | `external_or_existing_engineering_model_owner` | forbidden (stubs only) |
+| external_engineering_solver_adapters | `external_engineering_tool` | consumes (CalculiX first; others reserved) |
 | engineering_tool_framework | `platform_intelligence` | consumes (compatibility adapters) |
 | digital_thread | `digital_twin` | owns |
 | asset_identity_canonical | `engineering_os_shared_domain` | consumes |
@@ -48,6 +47,9 @@ Status: simulation_assurance · Aligned with `packages/digital-twin/src/architec
 - Canonical location / place registers (`spatialOwnershipFullyResolved=false`)
 - Engineering model file binaries
 - A Twin-owned BIM/CAD authoring or 3D viewer plane
+- A competing general Engineering Tool Framework / DigitalTwinSolverRegistry
+- Native FEA/CFD product solvers (`nativeEngineeringSolverImplemented=false`)
+- Commercial solver licenses / binaries for reserved adapters
 - A competing general Engineering Tool Framework
 - Native FEA/CFD/physics solvers
 - Asset Intelligence condition / predictive models
@@ -60,7 +62,8 @@ Status: simulation_assurance · Aligned with `packages/digital-twin/src/architec
 ## Simulation firewall
 
 Simulated Twin State **never** silently replaces Observed / Derived / Operational state.
-`simulationExecutionImplemented=true` is bounded orchestration + fixture only.
+`simulationExecutionImplemented=true` is bounded orchestration + deterministic fixture
+(test-only) + first real CalculiX adapter. `silentSolverFallbackAllowed=false`.
 
 ## Control and actuation
 

@@ -1,8 +1,10 @@
 /**
- * Phase 12G — TwinSimulationProviderRegistry.
+ * Phase 12G/12I — TwinSimulationProviderRegistry.
  *
- * Certified executable path: deterministic_fixture ONLY.
- * Other provider types are metadata/adapters — not executed as native solvers.
+ * Executable paths:
+ * - deterministic_fixture (test-only)
+ * - external_solver / engineering_tool_adapter for CalculiX (qualified real path)
+ * Native FEA product claims remain forbidden.
  */
 
 export const SIMULATION_PROVIDER_TYPES = [
@@ -33,16 +35,34 @@ export type TwinSimulationProvider = {
   displayName: string;
   providerType: SimulationProviderType;
   status: SimulationProviderStatus;
-  /** Only deterministic_fixture may execute in Phase 12G. */
+  /** Fixture or CalculiX-backed real adapter may execute when qualified. */
   executableInPhase12G: boolean;
+  executableInPhase12I: boolean;
   claimsNativeEngineeringSolver: false;
-  /** Compatibility adapter pointer into Platform Tool Registry (ai_tools) — not a competing framework. */
+  /** Compatibility adapter pointer into Platform Tool Registry (ai_tools). */
   engineeringToolRegistryRef?: string;
+  /** Optional solver id for external adapters (e.g. calculix). */
+  solverId?: string;
   timeoutMsDefault: number;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
 };
+
+function isCalculiXProvider(input: {
+  providerType: SimulationProviderType;
+  providerKey: string;
+  solverId?: string;
+}): boolean {
+  if (input.solverId === "calculix") return true;
+  const key = input.providerKey.toLowerCase();
+  if (key.includes("calculix") || key.includes("ccx")) return true;
+  return (
+    (input.providerType === "external_solver" ||
+      input.providerType === "engineering_tool_adapter") &&
+    key.includes("calculix")
+  );
+}
 
 export function createTwinSimulationProvider(input: {
   providerId: string;
@@ -52,11 +72,13 @@ export function createTwinSimulationProvider(input: {
   displayName: string;
   providerType: SimulationProviderType;
   engineeringToolRegistryRef?: string;
+  solverId?: string;
   timeoutMsDefault?: number;
   createdBy?: string;
 }): TwinSimulationProvider {
   const now = new Date().toISOString();
-  const executable = input.providerType === "deterministic_fixture";
+  const fixture = input.providerType === "deterministic_fixture";
+  const calculix = isCalculiXProvider(input);
   return {
     providerId: input.providerId,
     tenantId: input.tenantId,
@@ -65,10 +87,12 @@ export function createTwinSimulationProvider(input: {
     displayName: input.displayName,
     providerType: input.providerType,
     status: "draft",
-    executableInPhase12G: executable,
+    executableInPhase12G: fixture,
+    executableInPhase12I: fixture || calculix,
     claimsNativeEngineeringSolver: false,
     engineeringToolRegistryRef: input.engineeringToolRegistryRef,
-    timeoutMsDefault: input.timeoutMsDefault ?? 5_000,
+    solverId: input.solverId ?? (calculix ? "calculix" : undefined),
+    timeoutMsDefault: input.timeoutMsDefault ?? (calculix ? 30_000 : 5_000),
     createdAt: now,
     updatedAt: now,
     createdBy: input.createdBy,
@@ -103,15 +127,21 @@ export function assertProviderExecutable(provider: TwinSimulationProvider): void
   if (provider.status === "revoked" || provider.status === "suspended") {
     throw new Error(`provider_not_executable:${provider.status}`);
   }
-  if (provider.providerType !== "deterministic_fixture") {
-    throw new Error("only_deterministic_fixture_executable_in_phase_12g");
+  const fixture = provider.providerType === "deterministic_fixture";
+  const calculix = isCalculiXProvider(provider);
+  if (!fixture && !calculix) {
+    throw new Error("provider_not_executable_reserved_or_unimplemented");
   }
-  if (!provider.executableInPhase12G) {
-    throw new Error("provider_not_executable_in_phase_12g");
+  if (!provider.executableInPhase12I && !provider.executableInPhase12G) {
+    throw new Error("provider_not_executable");
   }
   if (provider.claimsNativeEngineeringSolver) {
     throw new Error("native_solver_claim_forbidden");
   }
+}
+
+export function isRealExternalProvider(provider: TwinSimulationProvider): boolean {
+  return isCalculiXProvider(provider) && provider.providerType !== "deterministic_fixture";
 }
 
 export type TwinSimulationProviderRegistry = {
