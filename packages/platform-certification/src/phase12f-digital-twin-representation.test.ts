@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -24,7 +24,7 @@ const PHASE_12E_COMMIT = "b871e8c3eb9e1293604610bacdd410ecb4da5684";
 const ASSET_INTELLIGENCE_V1_COMMIT = "925e2ed74025cac6a145c346c17c53320efb8757";
 
 describe("Phase 12F Digital Twin representation", () => {
-  it("defines exactly 60 gates (A–BH)", () => {
+  it("defines exactly 60 gates (Aâ€“BH)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(60);
     expect(ids[0]).toBe("A");
@@ -34,11 +34,12 @@ describe("Phase 12F Digital Twin representation", () => {
 
   it("declares representation version and status", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.6\.0-representation"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "representation"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12F"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.6\.0-representation"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.6\.0-representation"/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.7\.0-simulation"/);
+    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "simulation"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12G"/);
+    expect(version).toMatch(/PHASE_12F_VERSION = "0\.6\.0-representation"/);
+    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.7\.0-simulation"/);
+    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.7\.0-simulation"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12f/);
   });
 
@@ -59,12 +60,12 @@ describe("Phase 12F Digital Twin representation", () => {
       /DUPLICATE_MODEL_OWNERSHIP_DETECTED = false/,
       /TELEMETRY_HISTORIAN_IMPLEMENTED = false/,
       /SHM_RUNTIME_IMPLEMENTED = false/,
-      /SIMULATION_EXECUTION_IMPLEMENTED = false/,
+      /NATIVE_ENGINEERING_SOLVER_IMPLEMENTED = false/,
       /PRODUCTION_DIGITAL_TWIN_READY = false/,
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.6\.0-representation-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.7\.0-simulation-draft"/);
   });
 
   it("pins Phase 12E certified baseline", () => {

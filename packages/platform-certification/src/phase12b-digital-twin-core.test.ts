@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -25,7 +25,7 @@ const ASSET_INTELLIGENCE_V1_COMMIT = "925e2ed74025cac6a145c346c17c53320efb8757";
 const PHASE_12A_COMMIT = "2c5ed03f7de12cde9bfb71a9d430f5e342291303";
 
 describe("Phase 12B Digital Twin core", () => {
-  it("defines exactly 50 gates (A–AX)", () => {
+  it("defines exactly 50 gates (Aâ€“AX)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(50);
     expect(ids[0]).toBe("A");
@@ -63,7 +63,7 @@ describe("Phase 12B Digital Twin core", () => {
       /PRODUCTION_DIGITAL_TWIN_READY = false/,
       /DIGITAL_TWIN_RUNTIME_IMPLEMENTED = false/,
       /LIVE_TELEMETRY_IMPLEMENTED = false/,
-      /SIMULATION_EXECUTION_IMPLEMENTED = false/,
+      /NATIVE_ENGINEERING_SOLVER_IMPLEMENTED = false/,
       /THREE_D_VIEWER_IMPLEMENTED = false/,
       /PHYSICAL_ACTUATION_ENABLED = false/,
       /AUTOMATIC_CONTROL_ENABLED = false/,

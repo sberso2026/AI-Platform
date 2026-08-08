@@ -1,6 +1,6 @@
 {
   "name": "@rtb/digital-twin",
-  "version": "0.6.0-representation",
+  "version": "0.7.0-simulation",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

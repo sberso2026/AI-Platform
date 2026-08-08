@@ -12,7 +12,7 @@ import {
   HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
   LIVE_TELEMETRY_IMPLEMENTED,
   SHM_RUNTIME_IMPLEMENTED,
-  SIMULATION_EXECUTION_IMPLEMENTED,
+  NATIVE_ENGINEERING_SOLVER_IMPLEMENTED,
 } from "../version";
 import {
   stateCandidateReceivedPayload,
@@ -509,7 +509,8 @@ export function assertIngestionRuntimeBounded(): {
   liveTelemetryImplemented: true;
   highFrequencyTelemetryImplemented: false;
   shmRuntimeImplemented: false;
-  simulationExecutionImplemented: false;
+  nativeEngineeringSolverImplemented: false;
+  simulationExecutionImplemented: true;
 } {
   if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
     throw new Error("automatic_observed_state_publication_forbidden");
@@ -523,8 +524,8 @@ export function assertIngestionRuntimeBounded(): {
   if (SHM_RUNTIME_IMPLEMENTED) {
     throw new Error("shm_runtime_forbidden_in_phase_12e");
   }
-  if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_forbidden_in_phase_12e");
+  if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
+    throw new Error("native_engineering_solver_forbidden");
   }
   return {
     ok: true,
@@ -533,7 +534,8 @@ export function assertIngestionRuntimeBounded(): {
     liveTelemetryImplemented: true,
     highFrequencyTelemetryImplemented: false,
     shmRuntimeImplemented: false,
-    simulationExecutionImplemented: false,
+    nativeEngineeringSolverImplemented: false,
+    simulationExecutionImplemented: true,
   };
 }
 

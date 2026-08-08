@@ -1,11 +1,12 @@
-# Digital Twin — Ownership Matrix (Phase 12F representation)
+# Digital Twin — Ownership Matrix (Phase 12G simulation)
 
-Status: representation · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+Status: simulation · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
 
-> **Phase 12F update:** Twin owns representation source/element/mapping references
-> and thin spatial wrappers. Canonical locations stay with
-> `engineering_os_shared_domain`. Engineering model binaries stay with Platform
-> Files / `engineering_documents`. `duplicateModelOwnershipDetected=false`.
+> **Phase 12G update:** Twin owns simulation method/provider registries and the
+> simulated-state plane as **Digital Twin simulation governance**. General
+> Engineering Tool Framework remains with `platform_intelligence`
+> (`duplicateEngineeringToolFrameworkDetected=false`). Certified executable path
+> is `deterministic_fixture` only (`nativeEngineeringSolverImplemented=false`).
 
 ## Locked ownership boundaries
 
@@ -18,8 +19,10 @@ Status: representation · Aligned with `packages/digital-twin/src/architecture/o
 | twin_spatial_reference | `digital_twin` | owns thin wrappers only |
 | spatial_canonical_location | `engineering_os_shared_domain` | consumes |
 | source_engineering_model | `external_or_existing_engineering_model_owner` | consumes (source_ref/fileId) |
-| simulation_state | `digital_twin` | owns |
-| digital_thread | `digital_twin` | owns (implemented in 12B core) |
+| simulation_state | `digital_twin` | owns (separate simulated plane) |
+| simulation_governance | `digital_twin` | owns (method/provider registries) |
+| engineering_tool_framework | `platform_intelligence` | consumes (compatibility adapters) |
+| digital_thread | `digital_twin` | owns |
 | asset_identity_canonical | `engineering_os_shared_domain` | consumes |
 | project_identity_canonical | `engineering_os_shared_project_domain` | consumes |
 | asset_lifecycle_canonical | `engineering_os_shared_domain` | forbidden |
@@ -38,37 +41,28 @@ Status: representation · Aligned with `packages/digital-twin/src/architecture/o
 ## What Digital Twin does NOT own
 
 - Canonical asset or project identity registers
-- Canonical location / place registers (shared domain — thin `TwinSpatialReference` only)
-- Engineering model file binaries (Platform Files / engineering_documents)
+- Canonical location / place registers (`spatialOwnershipFullyResolved=false`)
+- Engineering model file binaries
 - A Twin-owned BIM/CAD authoring or 3D viewer plane
-- Asset Intelligence condition, health, or predictive models
-- Inspection records or II workflows (inspection→element adapter reserved if II contracts insufficient)
-- Project Intelligence knowledge derivatives
-- Project Controls cost/schedule/progress intelligence (frozen V1 consumption only)
+- A competing general Engineering Tool Framework
+- Native FEA/CFD/physics solvers
+- Asset Intelligence condition / predictive models
+- Inspection / PI / PC authoritative planes
 - SHM sensor stream ingestion or structural solvers
 - A duplicate telemetry / time-series plane
-- A new knowledge graph subsystem (reuse typed KG relationships only)
-- Financial ledgers, work orders, or CMMS execution
+- A new knowledge graph subsystem
 - Physical actuation or closed-loop automatic control
 
-## Identity ownership decision
+## Simulation firewall
 
-Twin is a **representation layer**. `TwinTargetReference.canonicalId` must always
-point at Engineering OS shared domain identity. Twin must not become the asset
-registry.
+Simulated Twin State **never** silently replaces Observed / Derived / Operational state.
+`simulationExecutionImplemented=true` is bounded orchestration + fixture only.
 
 ## Control and actuation
 
-`PHYSICAL_ACTUATION_ENABLED = false` and `AUTOMATIC_CONTROL_ENABLED = false` for
-Phase 12A. Any future actuation path requires explicit human-gated architecture and
-certification — not discovery defaults.
-
-## Commercial boundary (architecture only)
-
-Commerce may eventually meter `digital_twin_computations` (see usage portal).
-Phase 12A documents entitlement placeholders only — no GA packaging or module enable.
+`PHYSICAL_ACTUATION_ENABLED = false` and `AUTOMATIC_CONTROL_ENABLED = false`.
 
 ## KG typed relationships
 
-Digital Twin **consumes** existing knowledge graph nodes and edge types (e.g.
-`has_digital_twin`). It does not introduce a parallel graph store.
+Digital Twin **consumes** existing knowledge graph nodes and edge types (including
+simulation string constants). It does not introduce a parallel graph store.

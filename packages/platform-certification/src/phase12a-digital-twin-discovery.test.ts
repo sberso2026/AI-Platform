@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -23,7 +23,7 @@ const PROJECT_CONTROLS_V1_COMMIT = "b17fe4cfe2574520ec813a7b43ba7328a585d741";
 const ASSET_INTELLIGENCE_V1_COMMIT = "925e2ed74025cac6a145c346c17c53320efb8757";
 
 describe("Phase 12A Digital Twin discovery", () => {
-  it("defines exactly 39 gates (A–AM)", () => {
+  it("defines exactly 39 gates (Aâ€“AM)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(39);
     expect(ids[0]).toBe("A");
@@ -52,7 +52,7 @@ describe("Phase 12A Digital Twin discovery", () => {
       /PRODUCTION_DIGITAL_TWIN_READY = false/,
       /DIGITAL_TWIN_RUNTIME_IMPLEMENTED = false/,
       /LIVE_TELEMETRY_IMPLEMENTED = false/,
-      /SIMULATION_EXECUTION_IMPLEMENTED = false/,
+      /NATIVE_ENGINEERING_SOLVER_IMPLEMENTED = false/,
       /THREE_D_VIEWER_IMPLEMENTED = false/,
       /PHYSICAL_ACTUATION_ENABLED = false/,
       /AUTOMATIC_CONTROL_ENABLED = false/,

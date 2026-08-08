@@ -42,23 +42,40 @@ export const FIDELITY_MODEL: readonly FidelityLevelDescriptor[] = [
   {
     level: "L4",
     name: "Simulation-ready",
-    status: "unavailable",
+    status: "future",
     description:
-      "Scenario bindings — simulation execution forbidden; representation must not claim L4 fidelity",
+      "Simulation-ready context may be declared on TwinSimulationDefinition — representation must not auto-promote to L4 or claim physical truth",
   },
   {
     level: "L5",
     name: "Live-sync",
     status: "unavailable",
-    description: "Full live-sync fidelity — not auto-promoted from representation mapping",
+    description: "Full live-sync fidelity — not auto-promoted from representation mapping or simulation",
   },
 ] as const;
 
-/** Representation may declare fidelity; must not auto-promote or claim simulation fidelity. */
+/**
+ * Representation may declare L0–L3 fidelity only.
+ * Simulation-ready context is declared on TwinSimulationDefinition separately —
+ * do not force this assert to treat simulation fidelity as physical truth.
+ */
 export function assertRepresentationFidelityDeclared(level: FidelityLevel): void {
   if (level === "L4" || level === "L5") {
     throw new Error("representation_may_not_claim_simulation_or_live_sync_fidelity");
   }
+}
+
+/** Simulation definitions may declare simulation-ready context without representation L4 promotion. */
+export function declareSimulationReadyContext(): {
+  simulationReadyContextDeclared: true;
+  representationAutoPromotedToL4: false;
+  claimsPhysicalTruth: false;
+} {
+  return {
+    simulationReadyContextDeclared: true,
+    representationAutoPromotedToL4: false,
+    claimsPhysicalTruth: false,
+  };
 }
 
 export function getFidelityDescriptor(level: FidelityLevel): FidelityLevelDescriptor {

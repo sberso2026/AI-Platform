@@ -13,7 +13,7 @@ import {
   LIVE_TELEMETRY_IMPLEMENTED,
   PHYSICAL_ACTUATION_ENABLED,
   SHM_RUNTIME_IMPLEMENTED,
-  SIMULATION_EXECUTION_IMPLEMENTED,
+  NATIVE_ENGINEERING_SOLVER_IMPLEMENTED,
   THREE_D_VIEWER_IMPLEMENTED,
 } from "../version";
 import {
@@ -594,8 +594,8 @@ export function assertStateForbiddenCapabilities(): {
   if (HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
     throw new Error("high_frequency_telemetry_forbidden_in_phase_12e");
   }
-  if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12e");
+  if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
+    throw new Error("native_engineering_solver_forbidden");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
     throw new Error("three_d_viewer_forbidden_in_phase_12e");

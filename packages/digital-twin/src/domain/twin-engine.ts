@@ -15,7 +15,7 @@ import {
   SENSOR_REGISTRY_IMPLEMENTED,
   SHM_RUNTIME_IMPLEMENTED,
   SHM_SIGNAL_PROCESSING_IMPLEMENTED,
-  SIMULATION_EXECUTION_IMPLEMENTED,
+  NATIVE_ENGINEERING_SOLVER_IMPLEMENTED,
   TELEMETRY_HISTORIAN_IMPLEMENTED,
   THREE_D_VIEWER_IMPLEMENTED,
 } from "../version";
@@ -352,8 +352,8 @@ export function assertCoreForbiddenCapabilities(): {
   ) {
     throw new Error("historian_high_frequency_shm_sensor_registry_forbidden");
   }
-  if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12e");
+  if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
+    throw new Error("native_engineering_solver_forbidden");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
     throw new Error("three_d_viewer_forbidden_in_phase_12e");

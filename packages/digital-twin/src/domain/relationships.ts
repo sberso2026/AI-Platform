@@ -26,6 +26,10 @@ export const KG_EDGE_REUSE = {
   hasRepresentationSource: "has_representation_source",
   mapsToRepresentationElement: "maps_to_representation_element",
   spatiallyAnchoredAt: "spatially_anchored_at",
+  hasSimulationDefinition: "has_simulation_definition",
+  hasSimulationScenario: "has_simulation_scenario",
+  producedSimulationResult: "produced_simulation_result",
+  hasSimulatedState: "has_simulated_state",
 } as const;
 
 export type TwinRelationship = {

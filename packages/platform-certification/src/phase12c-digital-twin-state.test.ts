@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -27,7 +27,7 @@ const PHASE_12A_COMMIT = "2c5ed03f7de12cde9bfb71a9d430f5e342291303";
 const PHASE_12B_COMMIT = "5e1bb22486a9fdd6385fb980daf0150a330eca9b";
 
 describe("Phase 12C Digital Twin state", () => {
-  it("defines exactly 51 gates (A–AY)", () => {
+  it("defines exactly 51 gates (Aâ€“AY)", () => {
     const ids = [...read(GATES).matchAll(/^\s*\["([A-Z]+)",/gm)].map((m) => m[1]);
     expect(ids.length).toBe(51);
     expect(ids[0]).toBe("A");
@@ -65,7 +65,7 @@ describe("Phase 12C Digital Twin state", () => {
       /PRODUCTION_DIGITAL_TWIN_READY = false/,
       /DIGITAL_TWIN_RUNTIME_IMPLEMENTED = false/,
       /LIVE_TELEMETRY_IMPLEMENTED = false/,
-      /SIMULATION_EXECUTION_IMPLEMENTED = false/,
+      /NATIVE_ENGINEERING_SOLVER_IMPLEMENTED = false/,
       /THREE_D_VIEWER_IMPLEMENTED = false/,
     ]) {
       expect(version, String(lock)).toMatch(lock);

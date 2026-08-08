@@ -1,7 +1,9 @@
 /**
- * Phase 12F — Digital Twin ownership lock.
+ * Phase 12G — Digital Twin ownership lock.
  *
- * Machine-readable twin of ownership matrix including representation/spatial/model boundaries.
+ * Machine-readable twin of ownership matrix including simulation governance.
+ * simulationExecutionImplemented=true means bounded orchestration + deterministic
+ * fixture ONLY — native FEA/CFD/physics solvers remain forbidden.
  */
 
 import {
@@ -9,6 +11,8 @@ import {
   AUTOMATIC_CONTROL_ENABLED,
   AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED,
   AUTOMATIC_REPRESENTATION_MAPPING_APPROVAL_ENABLED,
+  AUTOMATIC_SIMULATION_APPROVAL_ENABLED,
+  AUTOMATIC_SIMULATION_CALIBRATION_ENABLED,
   AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED,
   AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED,
   CANONICAL_ASSET_IDENTITY_OWNERSHIP,
@@ -21,17 +25,21 @@ import {
   DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
   DIGITAL_TWIN_RUNTIME_IMPLEMENTED,
   DUPLICATE_ASSET_OWNERSHIP_DETECTED,
+  DUPLICATE_ENGINEERING_TOOL_FRAMEWORK_DETECTED,
   DUPLICATE_MODEL_OWNERSHIP_DETECTED,
   DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
   DUPLICATE_TIME_SERIES_PLANE_DETECTED,
   ENGINEERING_TIME_SERIES_OWNERSHIP,
   ENGINEERING_TIME_SERIES_REUSE_READY,
+  ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP,
   HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
   IMPLEMENTS_OWN_AI_STACK,
   INSPECTION_INTELLIGENCE_OWNERSHIP,
   KNOWLEDGE_GRAPH_REUSE,
   LIVE_TELEMETRY_IMPLEMENTED,
+  NATIVE_ENGINEERING_SOLVER_IMPLEMENTED,
   PHYSICAL_ACTUATION_ENABLED,
+  PREDICTIVE_TWIN_IMPLEMENTED,
   PRODUCTION_DIGITAL_TWIN_READY,
   PROJECT_CONTROLS_OWNERSHIP,
   PROJECT_INTELLIGENCE_OWNERSHIP,
@@ -42,10 +50,13 @@ import {
   SENSOR_STREAM_OWNERSHIP,
   SHM_RUNTIME_IMPLEMENTED,
   SHM_SIGNAL_PROCESSING_IMPLEMENTED,
+  SHM_SIMULATION_CALIBRATION_IMPLEMENTED,
   SIMULATION_EXECUTION_IMPLEMENTED,
+  SIMULATION_OPTIMIZATION_IMPLEMENTED,
   SIMULATION_STATE_OWNERSHIP,
   SOURCE_MODEL_OWNERSHIP,
   SPATIAL_CANONICAL_OWNERSHIP,
+  SPATIAL_OWNERSHIP_FULLY_RESOLVED,
   TELEMETRY_HISTORIAN_IMPLEMENTED,
   TELEMETRY_INGESTION_PLANE_OWNERSHIP,
   THREE_D_VIEWER_IMPLEMENTED,
@@ -56,6 +67,10 @@ import {
   TWIN_REPRESENTATION_NAVIGATION_READY,
   TWIN_REPRESENTATION_OWNERSHIP,
   TWIN_REPRESENTATION_READY,
+  TWIN_SIMULATED_STATE_READY,
+  TWIN_SIMULATION_FRAMEWORK_READY,
+  TWIN_SIMULATION_METHOD_REGISTRY_READY,
+  TWIN_SIMULATION_PROVIDER_REGISTRY_READY,
   TWIN_SNAPSHOT_READY,
   TWIN_SOURCE_ADAPTER_READY,
   TWIN_STATE_INGESTION_READY,
@@ -81,6 +96,7 @@ export type DomainOwner =
   | "shm"
   | "platform_kernel_telemetry"
   | "platform_kernel_knowledge_graph"
+  | "platform_intelligence"
   | "external_system"
   | "external_or_existing_engineering_model_owner"
   | "existing_shared_spatial_domain_or_explicitly_reconciled_owner";
@@ -159,7 +175,21 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "simulation_state",
     owner: "digital_twin",
     relation: "owns",
-    notes: "Simulated state references reserved — execution forbidden in Phase 12F",
+    notes:
+      "Simulated-state plane + method/provider registries — fixture orchestration only; no native solver",
+  },
+  {
+    concern: "simulation_governance",
+    owner: "digital_twin",
+    relation: "owns",
+    notes: "Twin owns simulation method/provider registries as Digital Twin simulation governance",
+  },
+  {
+    concern: "engineering_tool_framework",
+    owner: "platform_intelligence",
+    relation: "consumes",
+    notes:
+      "Reuse Platform Tool Registry catalog patterns as compatibility adapters — not a competing general tool framework",
   },
   {
     concern: "digital_thread",
@@ -195,7 +225,7 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "inspection_history",
     owner: "inspection_intelligence",
     relation: "consumes",
-    notes: "II owns inspection records; Twin may cite as thread evidence; mapping adapter reserved",
+    notes: "II owns inspection records; Twin may cite as thread evidence",
   },
   {
     concern: "project_knowledge",
@@ -213,13 +243,13 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "sensor_streams",
     owner: "shm",
     relation: "consumes",
-    notes: "SHM owns live structural/sensor streams; Twin binds references only — shmSignalProcessingImplemented=false",
+    notes: "SHM owns live structural/sensor streams; Twin binds references only",
   },
   {
     concern: "telemetry_ingestion_plane",
     owner: "platform_kernel_telemetry",
     relation: "consumes",
-    notes: "Kernel owns raw sensors/events — Twin stores references only; no duplicate time-series plane",
+    notes: "Kernel owns raw sensors/events — Twin stores references only",
   },
   {
     concern: "knowledge_graph_nodes",
@@ -237,7 +267,7 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     concern: "physical_actuation",
     owner: "external_system",
     relation: "forbidden",
-    notes: "Actuation disabled in Phase 12F representation slice",
+    notes: "Actuation disabled",
   },
   {
     concern: "automatic_control_loops",
@@ -259,6 +289,7 @@ export function assertOwnershipLock(): {
   twinStateOwnership: typeof TWIN_STATE_OWNERSHIP;
   simulationStateOwnership: typeof SIMULATION_STATE_OWNERSHIP;
   engineeringTimeSeriesOwnership: typeof ENGINEERING_TIME_SERIES_OWNERSHIP;
+  engineeringToolFrameworkOwnership: typeof ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP;
   spatialCanonicalOwnership: typeof SPATIAL_CANONICAL_OWNERSHIP;
   sourceModelOwnership: typeof SOURCE_MODEL_OWNERSHIP;
   canonicalAssetIdentityOwnership: typeof CANONICAL_ASSET_IDENTITY_OWNERSHIP;
@@ -271,21 +302,29 @@ export function assertOwnershipLock(): {
   automaticObservedStatePublicationEnabled: false;
   automaticTelemetryStatePublicationEnabled: false;
   automaticRepresentationMappingApprovalEnabled: false;
+  automaticSimulationApprovalEnabled: false;
+  automaticSimulationCalibrationEnabled: false;
   liveTelemetryImplemented: true;
   highFrequencyTelemetryImplemented: false;
   telemetryHistorianImplemented: false;
   sensorRegistryImplemented: false;
   shmSignalProcessingImplemented: false;
   shmRuntimeImplemented: false;
-  simulationExecutionImplemented: false;
+  shmSimulationCalibrationImplemented: false;
+  simulationExecutionImplemented: true;
+  nativeEngineeringSolverImplemented: false;
+  simulationOptimizationImplemented: false;
+  predictiveTwinImplemented: false;
   threeDViewerImplemented: false;
   physicalActuationEnabled: false;
   automaticControlEnabled: false;
   implementsOwnAiStack: false;
   duplicateTimeSeriesPlaneDetected: false;
   duplicateModelOwnershipDetected: false;
+  duplicateEngineeringToolFrameworkDetected: false;
   duplicateAssetOwnershipDetected: false;
   duplicateProjectOwnershipDetected: false;
+  spatialOwnershipFullyResolved: false;
   publicContractVersion: typeof PUBLIC_CONTRACT_VERSION;
   twinIdentityReady: true;
   twinRepresentationReady: true;
@@ -300,6 +339,10 @@ export function assertOwnershipLock(): {
   twinRepresentationMappingReady: true;
   twinRepresentationNavigationReady: true;
   representationNavigationImplemented: true;
+  twinSimulationFrameworkReady: true;
+  twinSimulationMethodRegistryReady: true;
+  twinSimulationProviderRegistryReady: true;
+  twinSimulatedStateReady: true;
   twinVersioningReady: true;
   representationVersioningReady: true;
   twinSnapshotReady: true;
@@ -315,6 +358,9 @@ export function assertOwnershipLock(): {
   }
   if (ENGINEERING_TIME_SERIES_OWNERSHIP !== "asset_intelligence") {
     throw new Error("engineering_time_series_owner_must_be_asset_intelligence");
+  }
+  if (ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP !== "platform_intelligence") {
+    throw new Error("engineering_tool_framework_must_be_platform_intelligence");
   }
   if (TWIN_REPRESENTATION_OWNERSHIP !== "digital_twin") {
     throw new Error("twin_representation_owner_mismatch");
@@ -338,35 +384,48 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_claim_canonical_identity");
   }
   if (!DIGITAL_TWIN_IMPLEMENTED) {
-    throw new Error("digital_twin_representation_must_be_implemented_in_phase_12f");
+    throw new Error("digital_twin_simulation_must_be_implemented_in_phase_12g");
   }
   if (PRODUCTION_DIGITAL_TWIN_READY) {
-    throw new Error("production_digital_twin_not_ready_in_phase_12f");
+    throw new Error("production_digital_twin_not_ready_in_phase_12g");
   }
   if (!DIGITAL_TWIN_RUNTIME_IMPLEMENTED) {
-    throw new Error("digital_twin_bounded_runtime_required_in_phase_12f");
+    throw new Error("digital_twin_bounded_runtime_required_in_phase_12g");
   }
   if (
     AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED ||
     AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED ||
-    AUTOMATIC_REPRESENTATION_MAPPING_APPROVAL_ENABLED
+    AUTOMATIC_REPRESENTATION_MAPPING_APPROVAL_ENABLED ||
+    AUTOMATIC_SIMULATION_APPROVAL_ENABLED
   ) {
-    throw new Error("automatic_publication_or_mapping_approval_forbidden");
+    throw new Error("automatic_publication_or_approval_forbidden");
+  }
+  if (AUTOMATIC_SIMULATION_CALIBRATION_ENABLED || SHM_SIMULATION_CALIBRATION_IMPLEMENTED) {
+    throw new Error("automatic_simulation_calibration_forbidden");
   }
   if (!LIVE_TELEMETRY_IMPLEMENTED) {
     throw new Error("bounded_live_telemetry_binding_required");
   }
   if (HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED || TELEMETRY_HISTORIAN_IMPLEMENTED || SENSOR_REGISTRY_IMPLEMENTED) {
-    throw new Error("historian_high_frequency_and_sensor_registry_forbidden_in_phase_12f");
+    throw new Error("historian_high_frequency_and_sensor_registry_forbidden");
   }
   if (SHM_RUNTIME_IMPLEMENTED || SHM_SIGNAL_PROCESSING_IMPLEMENTED) {
-    throw new Error("shm_forbidden_in_phase_12f");
+    throw new Error("shm_forbidden_in_phase_12g");
   }
-  if (SIMULATION_EXECUTION_IMPLEMENTED || THREE_D_VIEWER_IMPLEMENTED) {
-    throw new Error("simulation_and_viewer_forbidden_in_phase_12f");
+  if (!SIMULATION_EXECUTION_IMPLEMENTED) {
+    throw new Error("bounded_simulation_execution_required_in_phase_12g");
+  }
+  if (NATIVE_ENGINEERING_SOLVER_IMPLEMENTED) {
+    throw new Error("native_engineering_solver_forbidden");
+  }
+  if (SIMULATION_OPTIMIZATION_IMPLEMENTED || PREDICTIVE_TWIN_IMPLEMENTED) {
+    throw new Error("optimization_and_prediction_forbidden");
+  }
+  if (THREE_D_VIEWER_IMPLEMENTED) {
+    throw new Error("three_d_viewer_forbidden");
   }
   if (PHYSICAL_ACTUATION_ENABLED || AUTOMATIC_CONTROL_ENABLED) {
-    throw new Error("actuation_and_control_forbidden_in_phase_12f");
+    throw new Error("actuation_and_control_forbidden");
   }
   if (IMPLEMENTS_OWN_AI_STACK) {
     throw new Error("digital_twin_must_not_implement_own_ai_stack");
@@ -380,14 +439,20 @@ export function assertOwnershipLock(): {
   if (DUPLICATE_MODEL_OWNERSHIP_DETECTED) {
     throw new Error("duplicate_model_ownership_forbidden");
   }
+  if (DUPLICATE_ENGINEERING_TOOL_FRAMEWORK_DETECTED) {
+    throw new Error("duplicate_engineering_tool_framework_forbidden");
+  }
+  if (SPATIAL_OWNERSHIP_FULLY_RESOLVED) {
+    throw new Error("spatial_ownership_must_remain_unresolved_consume_12f_refs_only");
+  }
   if (CANONICAL_LIFECYCLE_MUTATION_BY_TWIN_ALLOWED) {
     throw new Error("canonical_lifecycle_mutation_forbidden");
   }
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.6.0-representation-draft") {
-    throw new Error("public_contracts_must_be_representation_draft_in_phase_12f");
+  if (PUBLIC_CONTRACT_VERSION !== "0.7.0-simulation-draft") {
+    throw new Error("public_contracts_must_be_simulation_draft_in_phase_12g");
   }
   if (
     !TWIN_IDENTITY_READY ||
@@ -403,12 +468,16 @@ export function assertOwnershipLock(): {
     !TWIN_REPRESENTATION_MAPPING_READY ||
     !TWIN_REPRESENTATION_NAVIGATION_READY ||
     !REPRESENTATION_NAVIGATION_IMPLEMENTED ||
+    !TWIN_SIMULATION_FRAMEWORK_READY ||
+    !TWIN_SIMULATION_METHOD_REGISTRY_READY ||
+    !TWIN_SIMULATION_PROVIDER_REGISTRY_READY ||
+    !TWIN_SIMULATED_STATE_READY ||
     !TWIN_VERSIONING_READY ||
     !REPRESENTATION_VERSIONING_READY ||
     !TWIN_SNAPSHOT_READY ||
     !TWIN_TIMELINE_READY
   ) {
-    throw new Error("representation_capabilities_not_ready");
+    throw new Error("simulation_capabilities_not_ready");
   }
   if (!KNOWLEDGE_GRAPH_REUSE) {
     throw new Error("knowledge_graph_reuse_required");
@@ -469,12 +538,20 @@ export function assertOwnershipLock(): {
     throw new Error("digital_twin_may_not_own_canonical_spatial_location");
   }
 
+  const toolRows = DIGITAL_TWIN_OWNERSHIP_MATRIX.filter(
+    (row) => row.concern === "engineering_tool_framework",
+  );
+  if (toolRows.some((row) => row.owner === "digital_twin" && row.relation === "owns")) {
+    throw new Error("digital_twin_may_not_own_general_engineering_tool_framework");
+  }
+
   return {
     ok: true,
     digitalTwinOwnership: DIGITAL_TWIN_OWNERSHIP,
     twinStateOwnership: TWIN_STATE_OWNERSHIP,
     simulationStateOwnership: SIMULATION_STATE_OWNERSHIP,
     engineeringTimeSeriesOwnership: ENGINEERING_TIME_SERIES_OWNERSHIP,
+    engineeringToolFrameworkOwnership: ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP,
     spatialCanonicalOwnership: SPATIAL_CANONICAL_OWNERSHIP,
     sourceModelOwnership: SOURCE_MODEL_OWNERSHIP,
     canonicalAssetIdentityOwnership: CANONICAL_ASSET_IDENTITY_OWNERSHIP,
@@ -487,21 +564,29 @@ export function assertOwnershipLock(): {
     automaticObservedStatePublicationEnabled: false,
     automaticTelemetryStatePublicationEnabled: false,
     automaticRepresentationMappingApprovalEnabled: false,
+    automaticSimulationApprovalEnabled: false,
+    automaticSimulationCalibrationEnabled: false,
     liveTelemetryImplemented: true,
     highFrequencyTelemetryImplemented: false,
     telemetryHistorianImplemented: false,
     sensorRegistryImplemented: false,
     shmSignalProcessingImplemented: false,
     shmRuntimeImplemented: false,
-    simulationExecutionImplemented: false,
+    shmSimulationCalibrationImplemented: false,
+    simulationExecutionImplemented: true,
+    nativeEngineeringSolverImplemented: false,
+    simulationOptimizationImplemented: false,
+    predictiveTwinImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,
     automaticControlEnabled: false,
     implementsOwnAiStack: false,
     duplicateTimeSeriesPlaneDetected: false,
     duplicateModelOwnershipDetected: false,
+    duplicateEngineeringToolFrameworkDetected: false,
     duplicateAssetOwnershipDetected: false,
     duplicateProjectOwnershipDetected: false,
+    spatialOwnershipFullyResolved: false,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     twinIdentityReady: true,
     twinRepresentationReady: true,
@@ -516,6 +601,10 @@ export function assertOwnershipLock(): {
     twinRepresentationMappingReady: true,
     twinRepresentationNavigationReady: true,
     representationNavigationImplemented: true,
+    twinSimulationFrameworkReady: true,
+    twinSimulationMethodRegistryReady: true,
+    twinSimulationProviderRegistryReady: true,
+    twinSimulatedStateReady: true,
     twinVersioningReady: true,
     representationVersioningReady: true,
     twinSnapshotReady: true,

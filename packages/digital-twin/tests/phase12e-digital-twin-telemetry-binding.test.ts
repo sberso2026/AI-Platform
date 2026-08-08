@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import {
   AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED,
   DIGITAL_TWIN_EVENTS,
@@ -41,10 +41,10 @@ describe("Phase 12E Digital Twin telemetry binding", () => {
   const workspaceId = "workspace-1";
 
   it("declares telemetry binding version and pinned 12D baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.6.0-representation");
-    expect(DIGITAL_TWIN_STATUS).toBe("representation");
-    expect(DIGITAL_TWIN_PHASE).toBe("12F");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.6.0-representation-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.7.0-simulation");
+    expect(DIGITAL_TWIN_STATUS).toBe("simulation");
+    expect(DIGITAL_TWIN_PHASE).toBe("12G");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.7.0-simulation-draft");
     expect(PHASE_12D_VERSION).toBe("0.4.0-ingestion");
     expect(PHASE_12D_CERTIFIED_COMMIT).toBe("3e387f4b76cbd9c80b274585c7b78821482f496d");
     expect(PHASE_12F_READY).toBe(true);
@@ -67,7 +67,7 @@ describe("Phase 12E Digital Twin telemetry binding", () => {
   });
 
   it("declares telemetry events in catalog", () => {
-    expect(assertTelemetryContracts().contractVersion).toBe("0.6.0-representation-draft");
+    expect(assertTelemetryContracts().contractVersion).toBe("0.7.0-simulation-draft");
     for (const evt of TELEMETRY_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

@@ -19,6 +19,12 @@ export const THREAD_LINK_TARGET_TYPES = [
   "other_twin",
   "representation_source_ref",
   "representation_element_ref",
+  "simulation_definition_ref",
+  "simulation_scenario_ref",
+  "simulation_input_set_ref",
+  "simulation_run_ref",
+  "simulation_result_ref",
+  "simulated_state_ref",
 ] as const;
 
 export type ThreadLinkTargetType = (typeof THREAD_LINK_TARGET_TYPES)[number];
