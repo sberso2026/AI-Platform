@@ -42,10 +42,20 @@ export * from "./domain/decision-confidence";
 export {
   DecisionSupportEngine,
   createDecisionSupportEngine,
-  assertNoAutoExecution,
+  assertNoAutoExecution as assertNoAutoExecutionInDecisionSupport,
   assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInDecisionSupport,
   assertAdvisoryOnly as assertDecisionAdvisoryOnly,
 } from "./domain/decision-engine";
+export * from "./domain/scenario";
+export * from "./domain/scenario-confidence";
+export {
+  ProjectControlsScenarioIntelligenceEngine,
+  ScenarioIntelligenceEngine,
+  createScenarioIntelligenceEngine,
+  assertNoAutoExecution,
+  assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInScenarioIntelligence,
+  assertAdvisoryOnly as assertScenarioAdvisoryOnly,
+} from "./domain/scenario-engine";
 export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
@@ -92,6 +102,10 @@ export {
   type PersistedDecisionEvidence,
   type PersistedDecisionReview,
   type PersistedDecisionConfidence,
+  type PersistedScenarioState,
+  type PersistedScenarioEvidence,
+  type PersistedScenarioReview,
+  type PersistedScenarioConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

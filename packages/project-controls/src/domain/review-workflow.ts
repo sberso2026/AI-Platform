@@ -24,6 +24,7 @@ import {
   AUTONOMOUS_PRODUCTIVITY_PUBLICATION_ALLOWED,
   AUTONOMOUS_FORECAST_PUBLICATION_ALLOWED,
   AUTONOMOUS_DECISION_PUBLICATION_ALLOWED,
+  AUTONOMOUS_SCENARIO_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
@@ -833,5 +834,121 @@ export function assertDecisionPublishable(input: {
   }
   if (input.assessedBy && input.assessedBy === input.reviewerId) {
     throw new Error("decision_self_approval_forbidden");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Scenario review (Phase 11I)
+// ---------------------------------------------------------------------------
+
+export const SCENARIO_REVIEW_WORKFLOW_SLUG = "project_controls.scenario_review" as const;
+
+export const SCENARIO_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: SCENARIO_REVIEW_WORKFLOW_SLUG,
+  displayName: "Project Controls Scenario Intelligence Review",
+  moduleKey: "project_controls",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+  ],
+};
+
+export const SCENARIO_REVIEW_ENTITY_TYPE = "project_controls_scenario_assessment" as const;
+
+export type ScenarioReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type ScenarioReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startScenarioReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: SCENARIO_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: SCENARIO_REVIEW_ENTITY_TYPE,
+    entityId: input.assessmentStateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "scenario_intelligence",
+      projectId: input.projectId,
+      advisoryOnly: true,
+      autoExecutionEnabled: false,
+      approvalAuthorityClaimed: false,
+      preferredScenarioSelected: false,
+      optimisationPerformed: false,
+      mutatesUpstreamContributors: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: SCENARIO_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionScenarioReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: ScenarioReviewAction;
+  to: ScenarioReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: SCENARIO_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function assertScenarioPublishable(input: {
+  workflowState: string;
+  reviewerId?: string;
+  assessedBy?: string;
+  approvalAuthorityClaimed?: boolean;
+}): void {
+  if (AUTONOMOUS_SCENARIO_PUBLICATION_ALLOWED) {
+    throw new Error("autonomous_scenario_publication_forbidden");
+  }
+  if (input.approvalAuthorityClaimed === true) {
+    throw new Error("scenario_assessment_approval_is_not_project_or_contract_approval");
+  }
+  if (input.workflowState !== "approved") {
+    throw new Error("scenario_publish_requires_approved_review");
+  }
+  if (!input.reviewerId) {
+    throw new Error("scenario_publish_requires_reviewer");
+  }
+  if (input.assessedBy && input.assessedBy === input.reviewerId) {
+    throw new Error("scenario_self_approval_forbidden");
   }
 }

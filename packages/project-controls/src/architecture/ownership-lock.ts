@@ -40,7 +40,10 @@ import {
   FORECAST_INTELLIGENCE_READY,
   FORECAST_INTELLIGENCE_IS_ADVISORY_ONLY,
   DECISION_SUPPORT_READY,
+  SCENARIO_INTELLIGENCE_READY,
+  SCENARIO_INTELLIGENCE_IS_ADVISORY_ONLY,
   decisionSupportOwnership,
+  scenarioIntelligenceOwnership,
   projectRecommendationOwnership,
   projectDecisionOwnership,
   PROJECT_CONTEXT_COMPOSITION_READY,
@@ -205,6 +208,13 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
       "Implemented in 11H as advisory options/recommendations — not auto-execution or contract approval",
   },
   {
+    concern: "scenario_controls_intelligence",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Implemented in 11I as exploratory scenario comparison — not preferred selection, optimisation, or auto-execution",
+  },
+  {
     concern: "contractual_change_authority",
     owner: "reserved_not_project_controls",
     relation: "forbidden",
@@ -313,6 +323,7 @@ export function assertOwnershipLock(): {
   productivityIntelligenceOwnership: typeof PRODUCTIVITY_INTELLIGENCE_OWNERSHIP;
   forecastIntelligenceOwnership: typeof FORECAST_INTELLIGENCE_OWNERSHIP;
   decisionSupportOwnership: typeof decisionSupportOwnership;
+  scenarioIntelligenceOwnership: typeof scenarioIntelligenceOwnership;
   projectRecommendationOwnership: typeof projectRecommendationOwnership;
   projectDecisionOwnership: typeof projectDecisionOwnership;
   projectContextCompositionOwnership: typeof projectContextCompositionOwnership;
@@ -331,6 +342,8 @@ export function assertOwnershipLock(): {
   forecastIntelligenceReady: true;
   forecastIntelligenceIsAdvisoryOnly: true;
   decisionSupportReady: true;
+  scenarioIntelligenceReady: true;
+  scenarioIntelligenceIsAdvisoryOnly: true;
   projectContextCompositionReady: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
@@ -578,6 +591,7 @@ export function assertOwnershipLock(): {
     productivityIntelligenceOwnership: PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
     forecastIntelligenceOwnership: FORECAST_INTELLIGENCE_OWNERSHIP,
     decisionSupportOwnership: decisionSupportOwnership,
+    scenarioIntelligenceOwnership: scenarioIntelligenceOwnership,
     projectRecommendationOwnership: projectRecommendationOwnership,
     projectDecisionOwnership: projectDecisionOwnership,
     projectContextCompositionOwnership: projectContextCompositionOwnership,
@@ -595,6 +609,9 @@ export function assertOwnershipLock(): {
     productivityIntelligenceIsAdvisoryOnly: true,
     forecastIntelligenceReady: true,
     forecastIntelligenceIsAdvisoryOnly: true,
+    decisionSupportReady: true,
+    scenarioIntelligenceReady: true,
+    scenarioIntelligenceIsAdvisoryOnly: true,
     projectContextCompositionReady: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,

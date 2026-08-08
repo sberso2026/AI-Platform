@@ -23,6 +23,7 @@ import type {
 import type { ProductivityAssessmentState } from "./productivity";
 import type { ForecastAssessmentState } from "./forecast";
 import type { DecisionAssessmentState } from "./decision";
+import type { ScenarioAssessmentState } from "./scenario";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -51,6 +52,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.decision.updated",
   "engineering.project.decision.reviewed",
   "engineering.project.decision.published",
+  "engineering.project.scenario.updated",
+  "engineering.project.scenario.reviewed",
+  "engineering.project.scenario.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -89,6 +93,12 @@ export const PROJECT_CONTROLS_DECISION_EVENTS = [
   "engineering.project.decision.updated",
   "engineering.project.decision.reviewed",
   "engineering.project.decision.published",
+] as const;
+
+export const PROJECT_CONTROLS_SCENARIO_EVENTS = [
+  "engineering.project.scenario.updated",
+  "engineering.project.scenario.reviewed",
+  "engineering.project.scenario.published",
 ] as const;
 
 export type ProjectControlsEventGovernance = {
@@ -207,6 +217,8 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     forecastsAbstained: profile.forecast?.forecastsAbstained ?? 0,
     decisionsAssessed: profile.decisionSupport?.decisionsAssessed ?? 0,
     decisionsAbstained: profile.decisionSupport?.decisionsAbstained ?? 0,
+    scenariosAssessed: profile.scenarioIntelligence?.scenariosAssessed ?? 0,
+    scenariosAbstained: profile.scenarioIntelligence?.scenariosAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
@@ -338,6 +350,31 @@ export function decisionEventPayload(state: DecisionAssessmentState): Record<str
   };
 }
 
+/** Identifiers only — no preferred selection or optimisation claims. */
+export function scenarioEventPayload(state: ScenarioAssessmentState): Record<string, unknown> {
+  return {
+    scenarioStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    scenarioUnitId: state.controlContext.scenarioUnitId,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    scenarioOptionCount: state.scenarioOptions.length,
+    contributorCount: state.contributingContributors.length,
+    composedContextId: state.composedContextId,
+    forecastContextId: state.forecastContextId,
+    decisionContextId: state.decisionContextId,
+    autoExecutionClaimed: false,
+    approvalAuthorityClaimed: false,
+    preferredScenarioSelected: false,
+    optimisationPerformed: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
 /** Identifiers and counts only — a snapshot event carries no state content. */
 export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, unknown> {
   return {
@@ -351,6 +388,7 @@ export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, 
     productivityStateCount: snapshot.productivityStateIds.length,
     forecastStateCount: snapshot.forecastStateIds.length,
     decisionStateCount: snapshot.decisionStateIds.length,
+    scenarioStateCount: snapshot.scenarioStateIds.length,
     capturedAt: snapshot.capturedAt,
     immutable: true,
     containsEvidencePayloads: false,

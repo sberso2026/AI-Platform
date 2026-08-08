@@ -161,6 +161,13 @@ import {
   type ReviewDecisionCommand,
   type ReviewDecisionResult,
 } from "./engine-decision";
+import {
+  createScenarioOrchestration,
+  type AssessScenarioCommand,
+  type AssessScenarioResult,
+  type ReviewScenarioCommand,
+  type ReviewScenarioResult,
+} from "./engine-scenario";
 
 export type {
   AssessForecastCommand,
@@ -175,6 +182,13 @@ export type {
   ReviewDecisionCommand,
   ReviewDecisionResult,
 } from "./engine-decision";
+
+export type {
+  AssessScenarioCommand,
+  AssessScenarioResult,
+  ReviewScenarioCommand,
+  ReviewScenarioResult,
+} from "./engine-scenario";
 
 export type AssessProgressCommand = {
   tenantId: string;
@@ -571,6 +585,7 @@ export class ProjectControlsEngine {
   private readonly contextEngine: ProjectContextEngine;
   private readonly forecastOrchestration: ReturnType<typeof createForecastOrchestration>;
   private readonly decisionOrchestration: ReturnType<typeof createDecisionOrchestration>;
+  private readonly scenarioOrchestration: ReturnType<typeof createScenarioOrchestration>;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
     assertOwnershipLock();
@@ -599,6 +614,12 @@ export class ProjectControlsEngine {
       appendTimeline: (input) => this.appendProjectTimeline(input),
     });
     this.decisionOrchestration = createDecisionOrchestration({
+      projectDomainPort: deps.projectDomainPort,
+      repository: deps.repository,
+      events: deps.events,
+      appendTimeline: (input) => this.appendProjectTimeline(input),
+    });
+    this.scenarioOrchestration = createScenarioOrchestration({
       projectDomainPort: deps.projectDomainPort,
       repository: deps.repository,
       events: deps.events,
@@ -1955,6 +1976,40 @@ export class ProjectControlsEngine {
     return this.decisionOrchestration.listDecisionHistory(input);
   }
 
+  async assessScenario(command: AssessScenarioCommand): Promise<AssessScenarioResult> {
+    this.requireCapability(command.actorRole, "scenario.assess");
+    return this.scenarioOrchestration.assessScenario(command);
+  }
+
+  async reviewScenario(command: ReviewScenarioCommand): Promise<ReviewScenarioResult> {
+    this.requireCapability(
+      command.actorRole,
+      command.publish ? "scenario.publish" : "scenario.review",
+    );
+    return this.scenarioOrchestration.reviewScenario(command);
+  }
+
+  async getLatestScenario(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: import("./scenario").ScenarioControlContext["scope"];
+    scenarioUnitId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "scenario.read");
+    return this.scenarioOrchestration.getLatestScenario(input);
+  }
+
+  async listScenarioHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "scenario.read");
+    return this.scenarioOrchestration.listScenarioHistory(input);
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -1967,7 +2022,8 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost, productivity, forecast, decision] = await Promise.all([
+    const [progress, schedule, change, cost, productivity, forecast, decision, scenario] =
+      await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
         command.workspaceId,
@@ -2003,6 +2059,11 @@ export class ProjectControlsEngine {
         command.workspaceId,
         reference.projectId,
       ),
+      this.deps.repository.listScenarioStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
     ]);
 
     const profileId =
@@ -2032,6 +2093,9 @@ export class ProjectControlsEngine {
         (state) => state.stateId,
       ),
       decisionStateIds: this.decisionOrchestration.latestPerDecisionThread(decision).map(
+        (state) => state.stateId,
+      ),
+      scenarioStateIds: this.scenarioOrchestration.latestPerScenarioThread(scenario).map(
         (state) => state.stateId,
       ),
       createdBy: command.actorId,
@@ -2112,6 +2176,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const scenario = await this.deps.repository.listScenarioStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -2139,6 +2208,7 @@ export class ProjectControlsEngine {
       productivity: latestPerProductivityThread(productivity),
       forecast: this.forecastOrchestration.latestPerForecastThread(forecast),
       decision: this.decisionOrchestration.latestPerDecisionThread(decision),
+      scenario: this.scenarioOrchestration.latestPerScenarioThread(scenario),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,

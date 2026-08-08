@@ -39,6 +39,10 @@ import {
   type PersistedDecisionEvidence,
   type PersistedDecisionReview,
   type PersistedDecisionState,
+  type PersistedScenarioConfidence,
+  type PersistedScenarioEvidence,
+  type PersistedScenarioReview,
+  type PersistedScenarioState,
   type PersistedProjectProfile,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
@@ -86,6 +90,10 @@ const DECISION_STATES = "project_controls_decision_states";
 const DECISION_EVIDENCE = "project_controls_decision_evidence";
 const DECISION_REVIEWS = "project_controls_decision_reviews";
 const DECISION_CONFIDENCE = "project_controls_decision_confidence";
+const SCENARIO_STATES = "project_controls_scenario_states";
+const SCENARIO_EVIDENCE = "project_controls_scenario_evidence";
+const SCENARIO_REVIEWS = "project_controls_scenario_reviews";
+const SCENARIO_CONFIDENCE = "project_controls_scenario_confidence";
 const PROJECT_SNAPSHOTS = "project_controls_project_snapshots";
 const PROJECT_TIMELINE = "project_controls_project_timeline";
 const PROFILES = "project_controls_project_profiles";
@@ -2196,6 +2204,283 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
     }));
   }
 
+  // ----------------------------------------------------------- scenario
+
+  async saveScenarioState(state: PersistedScenarioState): Promise<PersistedScenarioState> {
+    const ctx = state.controlContext;
+    const row = {
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      project_id: state.projectId,
+      scope_kind: ctx.scope.kind,
+      scope_reference_id: ctx.scope.referenceId ?? null,
+      scenario_unit_id: ctx.scenarioUnitId,
+      scenario_unit_label: ctx.scenarioUnitLabel ?? null,
+      version: state.version,
+      status: state.status,
+      assessment_class: state.assessmentClass,
+      comparison: state.comparison,
+      scenario_options: state.scenarioOptions,
+      control_context: ctx,
+      contributing_contributors: state.contributingContributors,
+      assumptions: state.assumptions,
+      confidence_class: state.confidence.confidenceClass,
+      data_sufficiency: state.confidence.dataSufficiency,
+      confidence_payload: state.confidence,
+      evidence_refs: state.evidenceRefs,
+      reasons: state.reasons,
+      limitations: state.limitations,
+      abstained: state.abstained,
+      abstention_reason: state.abstentionReason ?? null,
+      narrative: state.narrative ?? null,
+      composed_context_id: state.composedContextId ?? null,
+      forecast_context_id: state.forecastContextId ?? null,
+      decision_context_id: state.decisionContextId ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      assessed_at: state.assessedAt,
+      recorded_at: state.recordedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      workflow_instance_id: state.workflowInstanceId ?? null,
+      earned_value_computed: false,
+      critical_path_computed: false,
+      float_computed: false,
+      auto_execution_enabled: false,
+      schedule_execution_performed: false,
+      cost_execution_performed: false,
+      contract_instruction_performed: false,
+      approval_authority_claimed: false,
+      resource_planning_performed: false,
+      budget_ledger_mutated: false,
+      financial_posting_performed: false,
+      predictive_scheduling_performed: false,
+      preferred_scenario_selected: false,
+      optimisation_performed: false,
+      monte_carlo_performed: false,
+      numerical_precision_claimed: false,
+      mutates_upstream_contributors: false,
+      advisory_only: true,
+      mutates_project_identity: false,
+    };
+    const { data, error } = await this.supabase.from(SCENARIO_STATES).insert(row).select("*").single();
+    if (error) throw new Error(`scenario_state_persist_failed:${error.message}`);
+    return mapScenarioStateRow(data);
+  }
+
+  async getScenarioStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedScenarioState | null> {
+    const { data, error } = await this.supabase
+      .from(SCENARIO_STATES)
+      .select("*")
+      .eq("id", stateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`scenario_state_read_failed:${error.message}`);
+    return data ? mapScenarioStateRow(data) : null;
+  }
+
+  async latestScenarioState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    scenarioUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedScenarioState | undefined> {
+    let query = this.supabase
+      .from(SCENARIO_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", scope.projectId)
+      .eq("scope_kind", scope.kind)
+      .eq("scenario_unit_id", scenarioUnitId)
+      .order("version", { ascending: false })
+      .limit(1);
+    query = scope.referenceId
+      ? query.eq("scope_reference_id", scope.referenceId)
+      : query.is("scope_reference_id", null);
+    if (asOf) query = query.lte("recorded_at", asOf);
+    const { data, error } = await query;
+    if (error) throw new Error(`scenario_state_read_failed:${error.message}`);
+    const row = (data ?? [])[0];
+    return row ? mapScenarioStateRow(row) : undefined;
+  }
+
+  async listScenarioStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScenarioState[]> {
+    const { data, error } = await this.supabase
+      .from(SCENARIO_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: false });
+    if (error) throw new Error(`scenario_state_list_failed:${error.message}`);
+    return (data ?? []).map(mapScenarioStateRow);
+  }
+
+  async nextScenarioStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    scenarioUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestScenarioState(tenantId, workspaceId, scope, scenarioUnitId);
+    const current = latest?.version ?? 0;
+    if (expectedVersion !== undefined && expectedVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedVersion};actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveScenarioEvidence(
+    evidence: readonly PersistedScenarioEvidence[],
+  ): Promise<PersistedScenarioEvidence[]> {
+    if (evidence.length === 0) return [];
+    const rows = evidence.map((item) => ({
+      id: item.evidenceId,
+      tenant_id: item.tenantId,
+      workspace_id: item.workspaceId,
+      project_id: item.projectId,
+      scenario_state_id: item.scenarioStateId,
+      evidence_kind: item.kind,
+      source_type: item.sourceType,
+      source_ref: item.sourceRef,
+      source_key: item.sourceKey,
+      source_version: item.sourceVersion ?? null,
+      provenance: item.provenance,
+      review_status: item.reviewStatus,
+      observed_at: item.observedAt ?? null,
+      declared_signal: item.declaredSignal ?? null,
+      contributor_key: item.contributorKey ?? null,
+      narrative: item.narrative ?? null,
+      revoked: item.revoked ?? false,
+      conflicts_with: item.conflictsWith ?? [],
+      recorded_at: item.recordedAt,
+      created_by: item.createdBy ?? null,
+      auto_execution_claimed: false,
+      schedule_execution_claimed: false,
+      cost_execution_claimed: false,
+      contract_instruction_claimed: false,
+      approval_authority_claimed: false,
+      earned_value_derived: false,
+      cpm_derived: false,
+      financial_posting_claimed: false,
+      monte_carlo_claimed: false,
+      numerical_precision_claimed: false,
+      preferred_selection_claimed: false,
+      optimisation_claimed: false,
+    }));
+    const { data, error } = await this.supabase.from(SCENARIO_EVIDENCE).insert(rows).select("*");
+    if (error) throw new Error(`scenario_evidence_persist_failed:${error.message}`);
+    return (data ?? []).map(mapScenarioEvidenceRow);
+  }
+
+  async listScenarioEvidence(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId: string,
+  ): Promise<PersistedScenarioEvidence[]> {
+    const { data, error } = await this.supabase
+      .from(SCENARIO_EVIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("scenario_state_id", scenarioStateId);
+    if (error) throw new Error(`scenario_evidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapScenarioEvidenceRow);
+  }
+
+  async saveScenarioReview(review: PersistedScenarioReview): Promise<PersistedScenarioReview> {
+    const row = {
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      project_id: review.projectId,
+      scenario_state_id: review.scenarioStateId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+      approval_authority_claimed: false,
+    };
+    const { data, error } = await this.supabase.from(SCENARIO_REVIEWS).insert(row).select("*").single();
+    if (error) throw new Error(`scenario_review_persist_failed:${error.message}`);
+    return mapScenarioReviewRow(data);
+  }
+
+  async listScenarioReviews(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId?: string,
+  ): Promise<PersistedScenarioReview[]> {
+    let query = this.supabase
+      .from(SCENARIO_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (scenarioStateId) query = query.eq("scenario_state_id", scenarioStateId);
+    const { data, error } = await query;
+    if (error) throw new Error(`scenario_review_read_failed:${error.message}`);
+    return (data ?? []).map(mapScenarioReviewRow);
+  }
+
+  async saveScenarioConfidence(
+    confidence: PersistedScenarioConfidence,
+  ): Promise<PersistedScenarioConfidence> {
+    const row = {
+      id: confidence.confidenceId,
+      tenant_id: confidence.tenantId,
+      workspace_id: confidence.workspaceId,
+      project_id: confidence.projectId,
+      scenario_state_id: confidence.scenarioStateId,
+      confidence_payload: confidence,
+      recorded_at: confidence.recordedAt,
+    };
+    const { data, error } = await this.supabase.from(SCENARIO_CONFIDENCE).insert(row).select("*").single();
+    if (error) throw new Error(`scenario_confidence_persist_failed:${error.message}`);
+    return {
+      ...(data.confidence_payload as PersistedScenarioConfidence),
+      scenarioStateId: data.scenario_state_id,
+      recordedAt: data.recorded_at,
+    };
+  }
+
+  async listScenarioConfidence(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId: string,
+  ): Promise<PersistedScenarioConfidence[]> {
+    const { data, error } = await this.supabase
+      .from(SCENARIO_CONFIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("scenario_state_id", scenarioStateId);
+    if (error) throw new Error(`scenario_confidence_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      ...(row.confidence_payload as PersistedScenarioConfidence),
+      scenarioStateId: row.scenario_state_id,
+      recordedAt: row.recorded_at,
+    }));
+  }
+
   // ------------------------------------- shared project snapshot and timeline
 
   async saveProjectSnapshot(
@@ -2216,6 +2501,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       productivity_state_ids: snapshot.productivityStateIds,
       forecast_state_ids: snapshot.forecastStateIds,
       decision_state_ids: snapshot.decisionStateIds,
+      scenario_state_ids: snapshot.scenarioStateIds,
       created_by: snapshot.createdBy ?? null,
       immutable: true,
       contains_evidence_payloads: false,
@@ -2331,6 +2617,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       productivity_summary: profile.productivity ?? {},
       forecast_summary: profile.forecast ?? {},
       decision_summary: profile.decisionSupport ?? {},
+      scenario_summary: profile.scenarioIntelligence ?? {},
       contributors: profile.contributors,
       active_contributor_keys: profile.activeContributorKeys,
       reserved_contributor_keys: profile.reservedContributorKeys,
@@ -2638,6 +2925,7 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     productivity: row.productivity_summary ?? undefined,
     forecast: row.forecast_summary ?? undefined,
     decisionSupport: row.decision_summary ?? undefined,
+    scenarioIntelligence: row.scenario_summary ?? undefined,
     contributors: row.contributors ?? [],
     activeContributorKeys: row.active_contributor_keys ?? [],
     reservedContributorKeys: row.reserved_contributor_keys ?? [],
@@ -3383,6 +3671,7 @@ function mapProjectSnapshotRow(row: any): PersistedProjectSnapshot {
     productivityStateIds: row.productivity_state_ids ?? [],
     forecastStateIds: row.forecast_state_ids ?? [],
     decisionStateIds: row.decision_state_ids ?? [],
+    scenarioStateIds: row.scenario_state_ids ?? [],
     createdBy: row.created_by ?? undefined,
     immutable: true,
     containsEvidencePayloads: false,
@@ -3417,5 +3706,129 @@ function mapProjectTimelineRow(row: any): PersistedProjectTimelineEvent {
       contractualApprovalClaimed: false,
       mutatesProjectIdentity: false,
     },
+  };
+}
+
+function mapScenarioStateRow(row: any): PersistedScenarioState {
+  const ctx = row.control_context;
+  return {
+    id: row.id,
+    stateId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    controlContext: ctx,
+    version: row.version,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    comparison: row.comparison ?? {
+      comparisonId: row.id,
+      scenarioOptions: [],
+      comparisonNotes: [],
+      preferredScenarioSelected: false,
+      optimisationPerformed: false,
+    },
+    scenarioOptions: row.scenario_options ?? [],
+    contributingContributors: row.contributing_contributors ?? [],
+    evidenceRefs: row.evidence_refs ?? [],
+    confidence: row.confidence_payload,
+    assumptions: row.assumptions ?? [],
+    reasons: row.reasons ?? [],
+    limitations: row.limitations ?? [],
+    abstained: row.abstained,
+    abstentionReason: row.abstention_reason ?? undefined,
+    narrative: row.narrative ?? undefined,
+    composedContextId: row.composed_context_id ?? undefined,
+    forecastContextId: row.forecast_context_id ?? undefined,
+    decisionContextId: row.decision_context_id ?? undefined,
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    reviewedAt: row.reviewed_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    workflowInstanceId: row.workflow_instance_id ?? undefined,
+    earnedValueComputed: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+    autoExecutionEnabled: false,
+    scheduleExecutionPerformed: false,
+    costExecutionPerformed: false,
+    contractInstructionPerformed: false,
+    approvalAuthorityClaimed: false,
+    resourcePlanningPerformed: false,
+    budgetLedgerMutated: false,
+    financialPostingPerformed: false,
+    predictiveSchedulingPerformed: false,
+    advisoryOnly: true,
+    mutatesProjectIdentity: false,
+    mutatesUpstreamContributors: false,
+    autonomousPublication: false,
+    completionDatePredicted: false,
+    costDecisionComputed: false,
+    scheduleExecuted: false,
+    preferredScenarioSelected: false,
+    optimisationPerformed: false,
+    monteCarloPerformed: false,
+    numericalPrecisionClaimed: false,
+  };
+}
+
+function mapScenarioEvidenceRow(row: any): PersistedScenarioEvidence {
+  return {
+    evidenceId: row.id,
+    kind: row.evidence_kind,
+    sourceType: row.source_type,
+    sourceRef: row.source_ref,
+    sourceKey: row.source_key,
+    sourceVersion: row.source_version ?? undefined,
+    provenance: row.provenance,
+    reviewStatus: row.review_status,
+    observedAt: row.observed_at ?? undefined,
+    declaredSignal: row.declared_signal ?? undefined,
+    narrative: row.narrative ?? undefined,
+    revoked: row.revoked ?? false,
+    conflictsWith: row.conflicts_with ?? [],
+    contributorKey: row.contributor_key ?? undefined,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scenarioStateId: row.scenario_state_id,
+    recordedAt: row.recorded_at,
+    createdBy: row.created_by ?? undefined,
+    autoExecutionClaimed: false,
+    scheduleExecutionClaimed: false,
+    costExecutionClaimed: false,
+    contractInstructionClaimed: false,
+    approvalAuthorityClaimed: false,
+    earnedValueDerived: false,
+    cpmDerived: false,
+    financialPostingClaimed: false,
+    monteCarloClaimed: false,
+    numericalPrecisionClaimed: false,
+    preferredSelectionClaimed: false,
+    optimisationClaimed: false,
+    mutatesCoreRisk: false,
+  };
+}
+
+function mapScenarioReviewRow(row: any): PersistedScenarioReview {
+  return {
+    reviewId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    scenarioStateId: row.scenario_state_id,
+    workflowInstanceId: row.workflow_instance_id,
+    workflowState: row.workflow_state,
+    outcome: row.outcome ?? undefined,
+    reviewerId: row.reviewer_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    selfApproved: false,
+    approvalAuthorityClaimed: false,
   };
 }

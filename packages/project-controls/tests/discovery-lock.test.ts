@@ -88,9 +88,9 @@ describe("Phase 11E Project Controls ownership and forbid locks", () => {
   it("declares the decision support module identity", () => {
     expect(PROJECT_CONTROLS_PRODUCT_NAME).toBe("Project Controls");
     expect(PROJECT_CONTROLS_MODULE_KEY).toBe("project_controls");
-    expect(PROJECT_CONTROLS_VERSION).toBe("0.8.0-decision-support");
-    expect(PROJECT_CONTROLS_STATUS).toBe("decision_support");
-    expect(PROJECT_CONTROLS_PHASE).toBe("11H");
+    expect(PROJECT_CONTROLS_VERSION).toBe("0.9.0-scenario-intelligence");
+    expect(PROJECT_CONTROLS_STATUS).toBe("scenario_intelligence");
+    expect(PROJECT_CONTROLS_PHASE).toBe("11I");
     expect(PROJECT_CONTROLS_IMPLEMENTED).toBe(false);
     expect(PRODUCTION_PROJECT_CONTROLS_READY).toBe(false);
     expect(PHASE_11A_CERTIFIED_COMMIT).toBe("b9a3a6091ec4af1eb1ebdd9749da497ce5af9700");
@@ -272,9 +272,9 @@ describe("Phase 11E Project Controls ownership and forbid locks", () => {
 
   it("exposes a coherent declaration", () => {
     const declaration = getProjectControlsDeclaration();
-    expect(declaration.version).toBe("0.8.0-decision-support");
-    expect(declaration.status).toBe("decision_support");
-    expect(declaration.phase).toBe("11H");
+    expect(declaration.version).toBe("0.9.0-scenario-intelligence");
+    expect(declaration.status).toBe("scenario_intelligence");
+    expect(declaration.phase).toBe("11I");
     expect(declaration.productionProjectControlsReady).toBe(false);
     expect(declaration.sharedProjectDomainReady).toBe(true);
     expect(declaration.projectContextEngineReady).toBe(true);
@@ -290,7 +290,7 @@ describe("Phase 11E Project Controls ownership and forbid locks", () => {
       "engineering_os_shared_project_domain",
     );
     expect(declaration.hierarchy).toContain(
-      "progress + schedule + change + cost + productivity + forecast + decision support intelligence",
+      "progress + schedule + change + cost + productivity + forecast + decision support + scenario intelligence",
     );
     expect(declaration.hierarchy).toContain("advisory only");
   });

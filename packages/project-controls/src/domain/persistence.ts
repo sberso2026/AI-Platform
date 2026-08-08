@@ -63,6 +63,13 @@ import type {
   DecisionReviewRecord,
 } from "./decision";
 import { decisionStateKey } from "./decision";
+import type {
+  ScenarioAssessmentState,
+  ScenarioConfidence,
+  ScenarioEvidence,
+  ScenarioReviewRecord,
+} from "./scenario";
+import { scenarioStateKey } from "./scenario";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -176,6 +183,22 @@ export type PersistedDecisionState = DecisionAssessmentState;
 export type PersistedDecisionReview = DecisionReviewRecord;
 export type PersistedDecisionConfidence = DecisionConfidence & {
   decisionStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedScenarioEvidence = ScenarioEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scenarioStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedScenarioState = ScenarioAssessmentState;
+export type PersistedScenarioReview = ScenarioReviewRecord;
+export type PersistedScenarioConfidence = ScenarioConfidence & {
+  scenarioStateId: string;
   recordedAt: string;
 };
 
@@ -582,6 +605,54 @@ export type ProjectControlsRepositoryPort = {
     decisionStateId: string,
   ): Promise<PersistedDecisionConfidence[]>;
 
+  saveScenarioState(state: PersistedScenarioState): Promise<PersistedScenarioState>;
+  getScenarioStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedScenarioState | null>;
+  latestScenarioState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    scenarioUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedScenarioState | undefined>;
+  listScenarioStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScenarioState[]>;
+  nextScenarioStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    scenarioUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveScenarioEvidence(
+    evidence: readonly PersistedScenarioEvidence[],
+  ): Promise<PersistedScenarioEvidence[]>;
+  listScenarioEvidence(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId: string,
+  ): Promise<PersistedScenarioEvidence[]>;
+  saveScenarioReview(review: PersistedScenarioReview): Promise<PersistedScenarioReview>;
+  listScenarioReviews(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId?: string,
+  ): Promise<PersistedScenarioReview[]>;
+  saveScenarioConfidence(
+    confidence: PersistedScenarioConfidence,
+  ): Promise<PersistedScenarioConfidence>;
+  listScenarioConfidence(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId: string,
+  ): Promise<PersistedScenarioConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -658,6 +729,10 @@ export type DurableProjectControlsStore = {
   decisionEvidence: PersistedDecisionEvidence[];
   decisionReviews: PersistedDecisionReview[];
   decisionConfidence: PersistedDecisionConfidence[];
+  scenarioStates: PersistedScenarioState[];
+  scenarioEvidence: PersistedScenarioEvidence[];
+  scenarioReviews: PersistedScenarioReview[];
+  scenarioConfidence: PersistedScenarioConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -699,6 +774,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     decisionEvidence: [],
     decisionReviews: [],
     decisionConfidence: [],
+    scenarioStates: [],
+    scenarioEvidence: [],
+    scenarioReviews: [],
+    scenarioConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -1745,6 +1824,139 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.decisionStateId === decisionStateId,
+    );
+  }
+
+  async saveScenarioState(state: PersistedScenarioState): Promise<PersistedScenarioState> {
+    const scenarioUnitId = state.controlContext.scenarioUnitId;
+    const clash = this.store.scenarioStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        scenarioStateKey(row.controlContext.scope, row.controlContext.scenarioUnitId) ===
+          scenarioStateKey(state.controlContext.scope, scenarioUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:scenario_version=${state.version}`);
+    this.store.scenarioStates.push(state);
+    return state;
+  }
+
+  async getScenarioStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedScenarioState | null> {
+    return (
+      this.store.scenarioStates.find(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          row.stateId === stateId,
+      ) ?? null
+    );
+  }
+
+  async latestScenarioState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    scenarioUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedScenarioState | undefined> {
+    return latestAsOf(
+      this.store.scenarioStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          scenarioStateKey(row.controlContext.scope, row.controlContext.scenarioUnitId) ===
+            scenarioStateKey(scope, scenarioUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listScenarioStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedScenarioState[]> {
+    return this.store.scenarioStates.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId,
+    );
+  }
+
+  async nextScenarioStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    scenarioUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestScenarioState(tenantId, workspaceId, scope, scenarioUnitId);
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && expectedVersion !== next - 1) {
+      throw new Error(`optimistic_lock_conflict:scenario_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveScenarioEvidence(
+    evidence: readonly PersistedScenarioEvidence[],
+  ): Promise<PersistedScenarioEvidence[]> {
+    this.store.scenarioEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listScenarioEvidence(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId: string,
+  ): Promise<PersistedScenarioEvidence[]> {
+    return this.store.scenarioEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.scenarioStateId === scenarioStateId,
+    );
+  }
+
+  async saveScenarioReview(review: PersistedScenarioReview): Promise<PersistedScenarioReview> {
+    this.store.scenarioReviews.push(review);
+    return review;
+  }
+
+  async listScenarioReviews(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId?: string,
+  ): Promise<PersistedScenarioReview[]> {
+    return this.store.scenarioReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!scenarioStateId || row.scenarioStateId === scenarioStateId),
+    );
+  }
+
+  async saveScenarioConfidence(
+    confidence: PersistedScenarioConfidence,
+  ): Promise<PersistedScenarioConfidence> {
+    this.store.scenarioConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listScenarioConfidence(
+    tenantId: string,
+    workspaceId: string,
+    scenarioStateId: string,
+  ): Promise<PersistedScenarioConfidence[]> {
+    return this.store.scenarioConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.scenarioStateId === scenarioStateId,
     );
   }
 

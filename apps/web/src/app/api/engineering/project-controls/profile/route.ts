@@ -26,6 +26,7 @@ const ACTIVE_CONTRIBUTORS = [
   "productivity_intelligence",
   "forecast",
   "decision_support",
+  "scenario_intelligence",
 ] as const;
 
 const RESERVED_CONTRIBUTORS = ["contingency_intelligence", "earned_value"] as const;
@@ -59,12 +60,16 @@ const GOVERNANCE_FLAGS = {
   phase11gReady: true,
   phase11hReady: true,
   phase11iReady: true,
+  phase11jReady: true,
   decisionSupportReady: true,
+  scenarioIntelligenceReady: true,
+  ScenarioIntelligenceReady: true,
+  automaticScenarioExecutionEnabled: false,
   automaticDecisionExecutionEnabled: false,
   automaticScheduleChangeEnabled: false,
   automaticCostChangeEnabled: false,
   automaticContractInstructionEnabled: false,
-  activeContributorCount: 7,
+  activeContributorCount: 8,
   projectSnapshotReady: true,
   projectTimelineReady: true,
   contractualAuthority: false,

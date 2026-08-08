@@ -1,6 +1,6 @@
 # Project Controls — boundary map (discovery)
 
-Status: decision_support · Module version: `0.8.0-decision-support` · Phase: 11H
+Status: scenario_intelligence · Module version: `0.9.0-scenario-intelligence` · Phase: 11I
 
 Three relations, and nothing in between: Project Controls **owns** a concern,
 **consumes** it through a public contract, or is **forbidden** from it. The
@@ -33,7 +33,7 @@ flowchart TB
     CMMS["CMMS work orders"]
   end
 
-  PC["Project Controls 0.8.0-decision-support<br/>progress + schedule + change + cost + productivity + forecast + decision support ABOUT projects<br/>composition layer · contingency · earned value reserved"]
+  PC["Project Controls 0.9.0-scenario-intelligence<br/>progress + schedule + change + cost + productivity + forecast + decision support + scenario intelligence ABOUT projects<br/>composition layer · contingency · earned value reserved"]
 
   CORE -->|consumes projectId, WBS nodes| PC
   PI -->|consumes knowledge derivatives| PC

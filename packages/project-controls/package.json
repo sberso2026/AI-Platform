@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls",
-  "version": "0.8.0-decision-support",
+  "version": "0.9.0-scenario-intelligence",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

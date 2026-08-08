@@ -287,6 +287,7 @@ export const PROJECT_PROFILE_CONTRIBUTOR_KEYS = [
   "earned_value",
   "forecast",
   "decision_support",
+  "scenario_intelligence",
 ] as const;
 
 export type ProjectProfileContributorKey = (typeof PROJECT_PROFILE_CONTRIBUTOR_KEYS)[number];
@@ -359,6 +360,8 @@ export type ProjectProfile = {
   forecast?: import("./forecast").ForecastProfileContribution;
   /** Decision support rollups from Phase 11H. Recommendations only — never execution. */
   decisionSupport?: import("./decision").DecisionProfileContribution;
+  /** Scenario intelligence rollups from Phase 11I. Comparisons only — never preferred selection. */
+  scenarioIntelligence?: import("./scenario").ScenarioProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];

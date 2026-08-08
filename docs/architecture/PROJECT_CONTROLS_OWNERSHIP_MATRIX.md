@@ -1,6 +1,6 @@
 # Project Controls — ownership matrix (locked)
 
-Status: decision_support · Module version: `0.8.0-decision-support` · Phase: 11H
+Status: scenario_intelligence · Module version: `0.9.0-scenario-intelligence` · Phase: 11I
 
 This matrix is the authoritative boundary statement for Project Controls. Its
 machine-readable twin is `PROJECT_CONTROLS_OWNERSHIP_MATRIX` in
@@ -22,6 +22,7 @@ rows.
 | Project Controls — cost | `project_controls` | **owns** | **Implemented in 11E** — advisory cost intelligence; no cost engine, no budget ledger, no financial posting |
 | Project Controls — schedule | `project_controls` | **owns** | **Implemented in 11C** — advisory schedule intelligence; not CPM or execution |
 | Project Controls — change | `project_controls` | **owns** | **Implemented in 11D** — advisory change intelligence; assessment only, never contractual approval |
+| Project Controls — scenario | `project_controls` | **owns** | **Implemented in 11I** — exploratory scenario comparison; no preferred selection or auto-execution |
 | Contractual change authority | `reserved_not_project_controls` | **forbidden** | Reserved for engineering_core, a future commercial/contracts domain, Business OS or external contract administration |
 | Project snapshot and timeline | `project_controls` | **owns** | **Implemented in 11D/11E** — immutable, identifier-only snapshots and an append-only project timeline |
 | Project Controls — contingency | `project_controls` | owns | Reserved provider interface only; no drawdown |

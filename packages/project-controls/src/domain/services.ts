@@ -46,6 +46,12 @@ import type {
   ReviewDecisionCommand,
   ReviewDecisionResult,
 } from "./engine-decision";
+import type {
+  AssessScenarioCommand,
+  AssessScenarioResult,
+  ReviewScenarioCommand,
+  ReviewScenarioResult,
+} from "./engine-scenario";
 import type { ProgressAssessmentState, ProjectProfile, ProjectScopeRef } from "./progress";
 import type { ScheduleAssessmentState } from "./schedule";
 import type {
@@ -59,6 +65,7 @@ import type { CostIntelligenceState } from "./cost";
 import type { ProductivityAssessmentState } from "./productivity";
 import type { ForecastAssessmentState } from "./forecast";
 import type { DecisionAssessmentState } from "./decision";
+import type { ScenarioAssessmentState } from "./scenario";
 import type { ProjectControlsRole } from "./role-matrix";
 
 export class ProgressIntelligenceService {
@@ -298,6 +305,41 @@ export class DecisionSupportService {
   }
 }
 
+/**
+ * Exploratory scenario comparison from composed contributors, forecast and decision only.
+ */
+export class ScenarioIntelligenceService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(command: AssessScenarioCommand): Promise<AssessScenarioResult> {
+    return this.engine.assessScenario(command);
+  }
+
+  review(command: ReviewScenarioCommand): Promise<ReviewScenarioResult> {
+    return this.engine.reviewScenario(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    scenarioUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<ScenarioAssessmentState | undefined> {
+    return this.engine.getLatestScenario(input);
+  }
+
+  history(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<ScenarioAssessmentState[]> {
+    return this.engine.listScenarioHistory(input);
+  }
+}
+
 export class ProjectSnapshotService {
   constructor(private readonly engine: ProjectControlsEngine) {}
 
@@ -349,6 +391,7 @@ export class ProjectControlsService {
   readonly productivity: ProductivityIntelligenceService;
   readonly forecast: ForecastIntelligenceService;
   readonly decision: DecisionSupportService;
+  readonly scenario: ScenarioIntelligenceService;
   readonly snapshot: ProjectSnapshotService;
   readonly context: ProjectContextService;
 
@@ -360,6 +403,7 @@ export class ProjectControlsService {
     this.productivity = new ProductivityIntelligenceService(engine);
     this.forecast = new ForecastIntelligenceService(engine);
     this.decision = new DecisionSupportService(engine);
+    this.scenario = new ScenarioIntelligenceService(engine);
     this.snapshot = new ProjectSnapshotService(engine);
     this.context = new ProjectContextService(engine);
   }
