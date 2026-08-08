@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls-certification",
-  "version": "0.7.0-forecast-intelligence",
+  "version": "0.8.0-decision-support",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "certify:phase11d": "tsx scripts/run-phase11d-certification.ts",
     "certify:phase11e": "tsx scripts/run-phase11e-certification.ts",
     "certify:phase11f": "tsx scripts/run-phase11f-certification.ts",
-    "certify:phase11g": "tsx scripts/run-phase11g-certification.ts",
+    "certify:phase11h": "tsx scripts/run-phase11h-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

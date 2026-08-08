@@ -35,6 +35,10 @@ import {
   type PersistedForecastEvidence,
   type PersistedForecastReview,
   type PersistedForecastState,
+  type PersistedDecisionConfidence,
+  type PersistedDecisionEvidence,
+  type PersistedDecisionReview,
+  type PersistedDecisionState,
   type PersistedProjectProfile,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
@@ -78,6 +82,10 @@ const FORECAST_STATES = "project_controls_forecast_states";
 const FORECAST_EVIDENCE = "project_controls_forecast_evidence";
 const FORECAST_REVIEWS = "project_controls_forecast_reviews";
 const FORECAST_CONFIDENCE = "project_controls_forecast_confidence";
+const DECISION_STATES = "project_controls_decision_states";
+const DECISION_EVIDENCE = "project_controls_decision_evidence";
+const DECISION_REVIEWS = "project_controls_decision_reviews";
+const DECISION_CONFIDENCE = "project_controls_decision_confidence";
 const PROJECT_SNAPSHOTS = "project_controls_project_snapshots";
 const PROJECT_TIMELINE = "project_controls_project_timeline";
 const PROFILES = "project_controls_project_profiles";
@@ -1895,6 +1903,299 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
     }));
   }
 
+  // ----------------------------------------------------------- decision
+
+  async saveDecisionState(
+    state: PersistedDecisionState,
+  ): Promise<PersistedDecisionState> {
+    const ctx = state.controlContext;
+    const row = {
+      id: state.stateId,
+      tenant_id: state.tenantId,
+      workspace_id: state.workspaceId,
+      project_id: state.projectId,
+      scope_kind: ctx.scope.kind,
+      scope_reference_id: ctx.scope.referenceId ?? null,
+      decision_unit_id: ctx.decisionUnitId,
+      decision_unit_label: ctx.decisionUnitLabel ?? null,
+      version: state.version,
+      status: state.status,
+      assessment_class: state.assessmentClass,
+      dominant_decision_class: state.dominantDecisionClass ?? null,
+      options: state.options,
+      recommendations: state.recommendations,
+      control_context: ctx,
+      contributing_contributors: state.contributingContributors,
+      assumptions: state.assumptions,
+      confidence_class: state.confidence.confidenceClass,
+      confidence_score: state.confidence.score,
+      data_sufficiency: state.confidence.dataSufficiency,
+      confidence_payload: state.confidence,
+      evidence_refs: state.evidenceRefs,
+      reasons: state.reasons,
+      limitations: state.limitations,
+      abstained: state.abstained,
+      abstention_reason: state.abstentionReason ?? null,
+      narrative: state.narrative ?? null,
+      composed_context_id: state.composedContextId ?? null,
+      forecast_context_id: state.forecastContextId ?? null,
+      method: state.method,
+      method_version: state.methodVersion,
+      assessed_at: state.assessedAt,
+      recorded_at: state.recordedAt,
+      reviewed_at: state.reviewedAt ?? null,
+      published_at: state.publishedAt ?? null,
+      created_by: state.createdBy ?? null,
+      supersedes_id: state.supersedesId ?? null,
+      workflow_instance_id: state.workflowInstanceId ?? null,
+      earned_value_computed: false,
+      critical_path_computed: false,
+      float_computed: false,
+      auto_execution_enabled: false,
+      schedule_execution_performed: false,
+      cost_execution_performed: false,
+      contract_instruction_performed: false,
+      approval_authority_claimed: false,
+      resource_planning_performed: false,
+      budget_ledger_mutated: false,
+      financial_posting_performed: false,
+      predictive_scheduling_performed: false,
+      mutates_upstream_contributors: false,
+      advisory_only: true,
+      mutates_project_identity: false,
+    };
+    const { data, error } = await this.supabase
+      .from(DECISION_STATES)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`decision_state_persist_failed:${error.message}`);
+    return mapDecisionStateRow(data);
+  }
+
+  async getDecisionStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedDecisionState | null> {
+    const { data, error } = await this.supabase
+      .from(DECISION_STATES)
+      .select("*")
+      .eq("id", stateId)
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    if (error) throw new Error(`decision_state_read_failed:${error.message}`);
+    return data ? mapDecisionStateRow(data) : null;
+  }
+
+  async latestDecisionState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    decisionUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedDecisionState | undefined> {
+    let query = this.supabase
+      .from(DECISION_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", scope.projectId)
+      .eq("scope_kind", scope.kind)
+      .eq("decision_unit_id", decisionUnitId)
+      .order("version", { ascending: false })
+      .limit(1);
+    query = scope.referenceId
+      ? query.eq("scope_reference_id", scope.referenceId)
+      : query.is("scope_reference_id", null);
+    if (asOf) query = query.lte("recorded_at", asOf);
+    const { data, error } = await query;
+    if (error) throw new Error(`decision_state_read_failed:${error.message}`);
+    const row = (data ?? [])[0];
+    return row ? mapDecisionStateRow(row) : undefined;
+  }
+
+  async listDecisionStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedDecisionState[]> {
+    const { data, error } = await this.supabase
+      .from(DECISION_STATES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("recorded_at", { ascending: false });
+    if (error) throw new Error(`decision_state_list_failed:${error.message}`);
+    return (data ?? []).map(mapDecisionStateRow);
+  }
+
+  async nextDecisionStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    decisionUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestDecisionState(
+      tenantId,
+      workspaceId,
+      scope,
+      decisionUnitId,
+    );
+    const current = latest?.version ?? 0;
+    if (expectedVersion !== undefined && expectedVersion !== current) {
+      throw new Error(`optimistic_lock_conflict:expected=${expectedVersion};actual=${current}`);
+    }
+    return current + 1;
+  }
+
+  async saveDecisionEvidence(
+    evidence: readonly PersistedDecisionEvidence[],
+  ): Promise<PersistedDecisionEvidence[]> {
+    if (evidence.length === 0) return [];
+    const rows = evidence.map((item) => ({
+      id: item.evidenceId,
+      tenant_id: item.tenantId,
+      workspace_id: item.workspaceId,
+      project_id: item.projectId,
+      decision_state_id: item.decisionStateId,
+      evidence_kind: item.kind,
+      source_type: item.sourceType,
+      source_ref: item.sourceRef,
+      source_key: item.sourceKey,
+      source_version: item.sourceVersion ?? null,
+      provenance: item.provenance,
+      review_status: item.reviewStatus,
+      observed_at: item.observedAt ?? null,
+      declared_signal: item.declaredSignal ?? null,
+      contributor_key: item.contributorKey ?? null,
+      confidence: item.confidence ?? null,
+      weight: item.weight ?? null,
+      narrative: item.narrative ?? null,
+      revoked: item.revoked ?? false,
+      conflicts_with: item.conflictsWith ?? [],
+      recorded_at: item.recordedAt,
+      created_by: item.createdBy ?? null,
+      auto_execution_claimed: false,
+      schedule_execution_claimed: false,
+      cost_execution_claimed: false,
+      contract_instruction_claimed: false,
+      approval_authority_claimed: false,
+      earned_value_derived: false,
+      cpm_derived: false,
+      financial_posting_claimed: false,
+    }));
+    const { data, error } = await this.supabase.from(DECISION_EVIDENCE).insert(rows).select("*");
+    if (error) throw new Error(`decision_evidence_persist_failed:${error.message}`);
+    return (data ?? []).map(mapDecisionEvidenceRow);
+  }
+
+  async listDecisionEvidence(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId: string,
+  ): Promise<PersistedDecisionEvidence[]> {
+    const { data, error } = await this.supabase
+      .from(DECISION_EVIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("decision_state_id", decisionStateId);
+    if (error) throw new Error(`decision_evidence_read_failed:${error.message}`);
+    return (data ?? []).map(mapDecisionEvidenceRow);
+  }
+
+  async saveDecisionReview(
+    review: PersistedDecisionReview,
+  ): Promise<PersistedDecisionReview> {
+    const row = {
+      id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      project_id: review.projectId,
+      decision_state_id: review.decisionStateId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+      approval_authority_claimed: false,
+    };
+    const { data, error } = await this.supabase
+      .from(DECISION_REVIEWS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`decision_review_persist_failed:${error.message}`);
+    return mapDecisionReviewRow(data);
+  }
+
+  async listDecisionReviews(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId?: string,
+  ): Promise<PersistedDecisionReview[]> {
+    let query = this.supabase
+      .from(DECISION_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId);
+    if (decisionStateId) query = query.eq("decision_state_id", decisionStateId);
+    const { data, error } = await query;
+    if (error) throw new Error(`decision_review_read_failed:${error.message}`);
+    return (data ?? []).map(mapDecisionReviewRow);
+  }
+
+  async saveDecisionConfidence(
+    confidence: PersistedDecisionConfidence,
+  ): Promise<PersistedDecisionConfidence> {
+    const row = {
+      id: confidence.confidenceId,
+      tenant_id: confidence.tenantId,
+      workspace_id: confidence.workspaceId,
+      project_id: confidence.projectId,
+      decision_state_id: confidence.decisionStateId,
+      confidence_payload: confidence,
+      recorded_at: confidence.recordedAt,
+    };
+    const { data, error } = await this.supabase
+      .from(DECISION_CONFIDENCE)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`decision_confidence_persist_failed:${error.message}`);
+    return {
+      ...confidence,
+      decisionStateId: data.decision_state_id,
+      recordedAt: data.recorded_at,
+    };
+  }
+
+  async listDecisionConfidence(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId: string,
+  ): Promise<PersistedDecisionConfidence[]> {
+    const { data, error } = await this.supabase
+      .from(DECISION_CONFIDENCE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("decision_state_id", decisionStateId);
+    if (error) throw new Error(`decision_confidence_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      ...(row.confidence_payload as PersistedDecisionConfidence),
+      decisionStateId: row.decision_state_id,
+      recordedAt: row.recorded_at,
+    }));
+  }
+
   // ------------------------------------- shared project snapshot and timeline
 
   async saveProjectSnapshot(
@@ -1914,6 +2215,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       cost_state_ids: snapshot.costStateIds,
       productivity_state_ids: snapshot.productivityStateIds,
       forecast_state_ids: snapshot.forecastStateIds,
+      decision_state_ids: snapshot.decisionStateIds,
       created_by: snapshot.createdBy ?? null,
       immutable: true,
       contains_evidence_payloads: false,
@@ -2028,6 +2330,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       cost_summary: profile.cost ?? {},
       productivity_summary: profile.productivity ?? {},
       forecast_summary: profile.forecast ?? {},
+      decision_summary: profile.decisionSupport ?? {},
       contributors: profile.contributors,
       active_contributor_keys: profile.activeContributorKeys,
       reserved_contributor_keys: profile.reservedContributorKeys,
@@ -2334,6 +2637,7 @@ function mapProfileRow(row: any): PersistedProjectProfile {
     cost: row.cost_summary ?? undefined,
     productivity: row.productivity_summary ?? undefined,
     forecast: row.forecast_summary ?? undefined,
+    decisionSupport: row.decision_summary ?? undefined,
     contributors: row.contributors ?? [],
     activeContributorKeys: row.active_contributor_keys ?? [],
     reservedContributorKeys: row.reserved_contributor_keys ?? [],
@@ -2953,6 +3257,116 @@ function mapProductivityReviewRow(row: any): PersistedProductivityReview {
   };
 }
 
+
+function mapDecisionStateRow(row: any): PersistedDecisionState {
+  const ctx = row.control_context;
+  return {
+    id: row.id,
+    stateId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    controlContext: ctx,
+    version: row.version,
+    status: row.status,
+    assessmentClass: row.assessment_class,
+    options: row.options ?? [],
+    recommendations: row.recommendations ?? [],
+    dominantDecisionClass: row.dominant_decision_class ?? undefined,
+    contributingContributors: row.contributing_contributors ?? [],
+    evidenceRefs: row.evidence_refs ?? [],
+    confidence: row.confidence_payload,
+    assumptions: row.assumptions ?? [],
+    reasons: row.reasons ?? [],
+    limitations: row.limitations ?? [],
+    abstained: row.abstained,
+    abstentionReason: row.abstention_reason ?? undefined,
+    narrative: row.narrative ?? undefined,
+    composedContextId: row.composed_context_id ?? undefined,
+    forecastContextId: row.forecast_context_id ?? undefined,
+    method: row.method,
+    methodVersion: row.method_version,
+    assessedAt: row.assessed_at,
+    recordedAt: row.recorded_at,
+    reviewedAt: row.reviewed_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    supersedesId: row.supersedes_id ?? undefined,
+    workflowInstanceId: row.workflow_instance_id ?? undefined,
+    earnedValueComputed: false,
+    criticalPathComputed: false,
+    floatComputed: false,
+    autoExecutionEnabled: false,
+    scheduleExecutionPerformed: false,
+    costExecutionPerformed: false,
+    contractInstructionPerformed: false,
+    approvalAuthorityClaimed: false,
+    resourcePlanningPerformed: false,
+    budgetLedgerMutated: false,
+    financialPostingPerformed: false,
+    predictiveSchedulingPerformed: false,
+    advisoryOnly: true,
+    mutatesProjectIdentity: false,
+    mutatesUpstreamContributors: false,
+    autonomousPublication: false,
+  };
+}
+
+function mapDecisionEvidenceRow(row: any): PersistedDecisionEvidence {
+  return {
+    evidenceId: row.id,
+    kind: row.evidence_kind,
+    sourceType: row.source_type,
+    sourceRef: row.source_ref,
+    sourceKey: row.source_key,
+    sourceVersion: row.source_version ?? undefined,
+    provenance: row.provenance,
+    reviewStatus: row.review_status,
+    observedAt: row.observed_at ?? undefined,
+    declaredSignal: row.declared_signal ?? undefined,
+    confidence: row.confidence ?? undefined,
+    weight: row.weight ?? undefined,
+    narrative: row.narrative ?? undefined,
+    revoked: row.revoked ?? false,
+    conflictsWith: row.conflicts_with ?? [],
+    contributorKey: row.contributor_key ?? undefined,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    decisionStateId: row.decision_state_id,
+    recordedAt: row.recorded_at,
+    createdBy: row.created_by ?? undefined,
+    autoExecutionClaimed: false,
+    scheduleExecutionClaimed: false,
+    costExecutionClaimed: false,
+    contractInstructionClaimed: false,
+    approvalAuthorityClaimed: false,
+    earnedValueDerived: false,
+    cpmDerived: false,
+    financialPostingClaimed: false,
+    mutatesCoreRisk: false,
+  };
+}
+
+function mapDecisionReviewRow(row: any): PersistedDecisionReview {
+  return {
+    reviewId: row.id,
+    tenantId: row.tenant_id,
+    workspaceId: row.workspace_id,
+    projectId: row.project_id,
+    decisionStateId: row.decision_state_id,
+    workflowInstanceId: row.workflow_instance_id,
+    workflowState: row.workflow_state,
+    outcome: row.outcome ?? undefined,
+    reviewerId: row.reviewer_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    selfApproved: false,
+    approvalAuthorityClaimed: false,
+  };
+}
+
 function mapProjectSnapshotRow(row: any): PersistedProjectSnapshot {
   return {
     snapshotId: row.id,
@@ -2968,6 +3382,7 @@ function mapProjectSnapshotRow(row: any): PersistedProjectSnapshot {
     costStateIds: row.cost_state_ids ?? [],
     productivityStateIds: row.productivity_state_ids ?? [],
     forecastStateIds: row.forecast_state_ids ?? [],
+    decisionStateIds: row.decision_state_ids ?? [],
     createdBy: row.created_by ?? undefined,
     immutable: true,
     containsEvidencePayloads: false,

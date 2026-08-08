@@ -297,7 +297,7 @@ describe("Phase 11D change review workflow", () => {
 });
 
 describe("Phase 11D project context with change", () => {
-  it("lists six active contributors including change_intelligence", () => {
+  it("lists seven active contributors including change_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
     expect(check.activeContributorKeys).toEqual([
       "progress_intelligence",
@@ -306,6 +306,7 @@ describe("Phase 11D project context with change", () => {
       "cost_intelligence",
       "productivity_intelligence",
       "forecast",
+      "decision_support",
     ]);
     expect(check.reservedContributorKeys).toContain("contingency_intelligence");
   });
@@ -505,7 +506,7 @@ describe("Phase 11D snapshot and timeline", () => {
 });
 
 describe("Phase 11D locks", () => {
-  it("enumerates the twenty-four Phase 11G domain events", () => {
+  it("enumerates the twenty-seven Phase 11H domain events", () => {
     expect(PROJECT_CONTROLS_EVENTS).toEqual([
       "engineering.project.progress.updated",
       "engineering.project.progress.reviewed",
@@ -530,6 +531,9 @@ describe("Phase 11D locks", () => {
       "engineering.project.forecast.updated",
       "engineering.project.forecast.reviewed",
       "engineering.project.forecast.published",
+      "engineering.project.decision.updated",
+      "engineering.project.decision.reviewed",
+      "engineering.project.decision.published",
       "engineering.project.snapshot.created",
     ]);
   });

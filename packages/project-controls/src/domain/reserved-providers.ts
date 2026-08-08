@@ -22,6 +22,9 @@ import {
   CONTINGENCY_MANAGEMENT_IMPLEMENTED,
   COST_ENGINE_IMPLEMENTED,
   CPM_SCHEDULING_IMPLEMENTED,
+  DECISIONING_IMPLEMENTED,
+  DECISION_ENGINE_IMPLEMENTED,
+  DECISION_EXECUTION_IMPLEMENTED,
   EARNED_VALUE_IMPLEMENTED,
   FINANCIAL_POSTING_IMPLEMENTED,
   FORECASTING_IMPLEMENTED,
@@ -40,6 +43,7 @@ export const RESERVED_PROVIDER_KEYS = [
   "cost",
   "earned_value",
   "forecast",
+  "decision",
   "change",
   "productivity",
   "contingency",
@@ -108,6 +112,18 @@ export type ForecastProvider = {
 };
 
 /**
+ * Autonomous decision execution engine. Distinct from Decision Support Intelligence:
+ * these methods produce binding completion/cost decisions, none of which Project
+ * Controls may do autonomously.
+ */
+export type DecisionProvider = {
+  readonly providerKey: "decision";
+  readonly implemented: false;
+  getCompletionDecision(query: ReservedProviderQuery): Promise<never>;
+  getCostDecision(query: ReservedProviderQuery): Promise<never>;
+};
+
+/**
  * Contractual / product change control. Distinct from Change Intelligence:
  * these methods raise, price, approve and execute a change instrument, none of
  * which Project Controls may do.
@@ -141,6 +157,7 @@ export type ReservedProviderSet = {
   cost: CostProvider;
   earnedValue: EarnedValueProvider;
   forecast: ForecastProvider;
+  decision: DecisionProvider;
   change: ChangeProvider;
   productivity: ProductivityProvider;
   contingency: ContingencyProvider;
@@ -190,6 +207,15 @@ export function createReservedForecastProvider(): ForecastProvider {
   };
 }
 
+export function createReservedDecisionProvider(): DecisionProvider {
+  return {
+    providerKey: "decision",
+    implemented: false,
+    getCompletionDecision: async () => reject("decision", "getCompletionDecision"),
+    getCostDecision: async () => reject("decision", "getCostDecision"),
+  };
+}
+
 export function createReservedChangeProvider(): ChangeProvider {
   return {
     providerKey: "change",
@@ -226,6 +252,7 @@ export function createReservedProviderSet(): ReservedProviderSet {
     cost: createReservedCostProvider(),
     earnedValue: createReservedEarnedValueProvider(),
     forecast: createReservedForecastProvider(),
+    decision: createReservedDecisionProvider(),
     change: createReservedChangeProvider(),
     productivity: createReservedProductivityProvider(),
     contingency: createReservedContingencyProvider(),
@@ -251,6 +278,9 @@ export function assertReservedProvidersUnimplemented(): {
     BUDGET_LEDGER_IMPLEMENTED ||
     SCHEDULE_EXECUTION_IMPLEMENTED ||
     FORECASTING_IMPLEMENTED ||
+    DECISIONING_IMPLEMENTED ||
+    DECISION_ENGINE_IMPLEMENTED ||
+    DECISION_EXECUTION_IMPLEMENTED ||
     CHANGE_CONTROL_IMPLEMENTED ||
     CHANGE_EXECUTION_IMPLEMENTED ||
     CONTINGENCY_MANAGEMENT_IMPLEMENTED ||

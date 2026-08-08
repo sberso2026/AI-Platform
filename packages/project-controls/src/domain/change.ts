@@ -535,6 +535,7 @@ export type ProjectSnapshot = {
   costStateIds: string[];
   productivityStateIds: string[];
   forecastStateIds: string[];
+  decisionStateIds: string[];
   createdBy?: string;
   immutable: true;
   containsEvidencePayloads: false;

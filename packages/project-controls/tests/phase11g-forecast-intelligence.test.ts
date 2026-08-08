@@ -125,10 +125,11 @@ describe("Phase 11G forecast review workflow", () => {
 });
 
 describe("Phase 11G project context with forecast", () => {
-  it("lists six active contributors including forecast", () => {
+  it("lists seven active contributors including forecast", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(6);
+    expect(check.activeContributorKeys).toHaveLength(7);
     expect(check.activeContributorKeys).toContain("forecast");
+    expect(check.activeContributorKeys).toContain("decision_support");
   });
 });
 

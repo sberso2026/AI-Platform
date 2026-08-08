@@ -286,6 +286,7 @@ export const PROJECT_PROFILE_CONTRIBUTOR_KEYS = [
   "productivity_intelligence",
   "earned_value",
   "forecast",
+  "decision_support",
 ] as const;
 
 export type ProjectProfileContributorKey = (typeof PROJECT_PROFILE_CONTRIBUTOR_KEYS)[number];
@@ -356,6 +357,8 @@ export type ProjectProfile = {
   productivity?: import("./productivity").ProductivityProfileContribution;
   /** Forecast rollups from Phase 11G. Postures only — never dates or cost forecasts. */
   forecast?: import("./forecast").ForecastProfileContribution;
+  /** Decision support rollups from Phase 11H. Recommendations only — never execution. */
+  decisionSupport?: import("./decision").DecisionProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];

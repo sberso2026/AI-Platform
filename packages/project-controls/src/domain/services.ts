@@ -40,6 +40,12 @@ import type {
   ReviewForecastCommand,
   ReviewForecastResult,
 } from "./engine-forecast";
+import type {
+  AssessDecisionCommand,
+  AssessDecisionResult,
+  ReviewDecisionCommand,
+  ReviewDecisionResult,
+} from "./engine-decision";
 import type { ProgressAssessmentState, ProjectProfile, ProjectScopeRef } from "./progress";
 import type { ScheduleAssessmentState } from "./schedule";
 import type {
@@ -52,6 +58,7 @@ import type {
 import type { CostIntelligenceState } from "./cost";
 import type { ProductivityAssessmentState } from "./productivity";
 import type { ForecastAssessmentState } from "./forecast";
+import type { DecisionAssessmentState } from "./decision";
 import type { ProjectControlsRole } from "./role-matrix";
 
 export class ProgressIntelligenceService {
@@ -256,6 +263,41 @@ export class ForecastIntelligenceService {
   }
 }
 
+/**
+ * Advisory decision support from composed contributors and forecast only.
+ */
+export class DecisionSupportService {
+  constructor(private readonly engine: ProjectControlsEngine) {}
+
+  assess(command: AssessDecisionCommand): Promise<AssessDecisionResult> {
+    return this.engine.assessDecision(command);
+  }
+
+  review(command: ReviewDecisionCommand): Promise<ReviewDecisionResult> {
+    return this.engine.reviewDecision(command);
+  }
+
+  latest(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: ProjectScopeRef;
+    decisionUnitId: string;
+    actorRole: ProjectControlsRole;
+    asOf?: string;
+  }): Promise<DecisionAssessmentState | undefined> {
+    return this.engine.getLatestDecision(input);
+  }
+
+  history(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }): Promise<DecisionAssessmentState[]> {
+    return this.engine.listDecisionHistory(input);
+  }
+}
+
 export class ProjectSnapshotService {
   constructor(private readonly engine: ProjectControlsEngine) {}
 
@@ -306,6 +348,7 @@ export class ProjectControlsService {
   readonly cost: CostIntelligenceService;
   readonly productivity: ProductivityIntelligenceService;
   readonly forecast: ForecastIntelligenceService;
+  readonly decision: DecisionSupportService;
   readonly snapshot: ProjectSnapshotService;
   readonly context: ProjectContextService;
 
@@ -316,6 +359,7 @@ export class ProjectControlsService {
     this.cost = new CostIntelligenceService(engine);
     this.productivity = new ProductivityIntelligenceService(engine);
     this.forecast = new ForecastIntelligenceService(engine);
+    this.decision = new DecisionSupportService(engine);
     this.snapshot = new ProjectSnapshotService(engine);
     this.context = new ProjectContextService(engine);
   }
@@ -372,6 +416,14 @@ export class ProjectControlsService {
 
   reviewForecast(command: ReviewForecastCommand): Promise<ReviewForecastResult> {
     return this.engine.reviewForecast(command);
+  }
+
+  assessDecision(command: AssessDecisionCommand): Promise<AssessDecisionResult> {
+    return this.engine.assessDecision(command);
+  }
+
+  reviewDecision(command: ReviewDecisionCommand): Promise<ReviewDecisionResult> {
+    return this.engine.reviewDecision(command);
   }
 
   createProjectSnapshot(

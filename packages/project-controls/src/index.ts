@@ -37,6 +37,15 @@ export {
   assertNoEarnedValueOrCpm,
   assertAdvisoryOnly as assertForecastAdvisoryOnly,
 } from "./domain/forecast-engine";
+export * from "./domain/decision";
+export * from "./domain/decision-confidence";
+export {
+  DecisionSupportEngine,
+  createDecisionSupportEngine,
+  assertNoAutoExecution,
+  assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInDecisionSupport,
+  assertAdvisoryOnly as assertDecisionAdvisoryOnly,
+} from "./domain/decision-engine";
 export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
@@ -79,6 +88,10 @@ export {
   type PersistedForecastEvidence,
   type PersistedForecastReview,
   type PersistedForecastConfidence,
+  type PersistedDecisionState,
+  type PersistedDecisionEvidence,
+  type PersistedDecisionReview,
+  type PersistedDecisionConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,

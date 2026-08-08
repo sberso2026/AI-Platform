@@ -39,6 +39,10 @@ import {
   FORECAST_INTELLIGENCE_OWNERSHIP,
   FORECAST_INTELLIGENCE_READY,
   FORECAST_INTELLIGENCE_IS_ADVISORY_ONLY,
+  DECISION_SUPPORT_READY,
+  decisionSupportOwnership,
+  projectRecommendationOwnership,
+  projectDecisionOwnership,
   PROJECT_CONTEXT_COMPOSITION_READY,
   projectContextCompositionOwnership,
   CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
@@ -187,6 +191,20 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
       "Implemented in 11D as advisory, evidence-driven change intelligence — not contractual change authority and not change execution",
   },
   {
+    concern: "forecast_controls_intelligence",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Implemented in 11G as advisory trajectory from composed contributors — not completion date or cost forecast",
+  },
+  {
+    concern: "decision_controls_intelligence",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Implemented in 11H as advisory options/recommendations — not auto-execution or contract approval",
+  },
+  {
     concern: "contractual_change_authority",
     owner: "reserved_not_project_controls",
     relation: "forbidden",
@@ -294,6 +312,9 @@ export function assertOwnershipLock(): {
   costIntelligenceOwnership: typeof COST_INTELLIGENCE_OWNERSHIP;
   productivityIntelligenceOwnership: typeof PRODUCTIVITY_INTELLIGENCE_OWNERSHIP;
   forecastIntelligenceOwnership: typeof FORECAST_INTELLIGENCE_OWNERSHIP;
+  decisionSupportOwnership: typeof decisionSupportOwnership;
+  projectRecommendationOwnership: typeof projectRecommendationOwnership;
+  projectDecisionOwnership: typeof projectDecisionOwnership;
   projectContextCompositionOwnership: typeof projectContextCompositionOwnership;
   contractualChangeAuthorityOwnership: typeof CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP;
   financialLedgerOwnership: typeof FINANCIAL_LEDGER_OWNERSHIP;
@@ -309,6 +330,7 @@ export function assertOwnershipLock(): {
   productivityIntelligenceIsAdvisoryOnly: true;
   forecastIntelligenceReady: true;
   forecastIntelligenceIsAdvisoryOnly: true;
+  decisionSupportReady: true;
   projectContextCompositionReady: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
@@ -555,6 +577,9 @@ export function assertOwnershipLock(): {
     costIntelligenceOwnership: COST_INTELLIGENCE_OWNERSHIP,
     productivityIntelligenceOwnership: PRODUCTIVITY_INTELLIGENCE_OWNERSHIP,
     forecastIntelligenceOwnership: FORECAST_INTELLIGENCE_OWNERSHIP,
+    decisionSupportOwnership: decisionSupportOwnership,
+    projectRecommendationOwnership: projectRecommendationOwnership,
+    projectDecisionOwnership: projectDecisionOwnership,
     projectContextCompositionOwnership: projectContextCompositionOwnership,
     contractualChangeAuthorityOwnership: CONTRACTUAL_CHANGE_AUTHORITY_OWNERSHIP,
     financialLedgerOwnership: FINANCIAL_LEDGER_OWNERSHIP,

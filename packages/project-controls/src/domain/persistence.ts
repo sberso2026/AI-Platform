@@ -56,6 +56,13 @@ import type {
   ForecastReviewRecord,
 } from "./forecast";
 import { forecastStateKey } from "./forecast";
+import type {
+  DecisionAssessmentState,
+  DecisionConfidence,
+  DecisionEvidence,
+  DecisionReviewRecord,
+} from "./decision";
+import { decisionStateKey } from "./decision";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -153,6 +160,22 @@ export type PersistedForecastState = ForecastAssessmentState;
 export type PersistedForecastReview = ForecastReviewRecord;
 export type PersistedForecastConfidence = ForecastConfidence & {
   forecastStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedDecisionEvidence = DecisionEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  decisionStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedDecisionState = DecisionAssessmentState;
+export type PersistedDecisionReview = DecisionReviewRecord;
+export type PersistedDecisionConfidence = DecisionConfidence & {
+  decisionStateId: string;
   recordedAt: string;
 };
 
@@ -511,6 +534,54 @@ export type ProjectControlsRepositoryPort = {
     forecastStateId: string,
   ): Promise<PersistedForecastConfidence[]>;
 
+  saveDecisionState(state: PersistedDecisionState): Promise<PersistedDecisionState>;
+  getDecisionStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedDecisionState | null>;
+  latestDecisionState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    decisionUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedDecisionState | undefined>;
+  listDecisionStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedDecisionState[]>;
+  nextDecisionStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    decisionUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveDecisionEvidence(
+    evidence: readonly PersistedDecisionEvidence[],
+  ): Promise<PersistedDecisionEvidence[]>;
+  listDecisionEvidence(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId: string,
+  ): Promise<PersistedDecisionEvidence[]>;
+  saveDecisionReview(review: PersistedDecisionReview): Promise<PersistedDecisionReview>;
+  listDecisionReviews(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId?: string,
+  ): Promise<PersistedDecisionReview[]>;
+  saveDecisionConfidence(
+    confidence: PersistedDecisionConfidence,
+  ): Promise<PersistedDecisionConfidence>;
+  listDecisionConfidence(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId: string,
+  ): Promise<PersistedDecisionConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -583,6 +654,10 @@ export type DurableProjectControlsStore = {
   forecastEvidence: PersistedForecastEvidence[];
   forecastReviews: PersistedForecastReview[];
   forecastConfidence: PersistedForecastConfidence[];
+  decisionStates: PersistedDecisionState[];
+  decisionEvidence: PersistedDecisionEvidence[];
+  decisionReviews: PersistedDecisionReview[];
+  decisionConfidence: PersistedDecisionConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -620,6 +695,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     forecastEvidence: [],
     forecastReviews: [],
     forecastConfidence: [],
+    decisionStates: [],
+    decisionEvidence: [],
+    decisionReviews: [],
+    decisionConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -1533,6 +1612,139 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.forecastStateId === forecastStateId,
+    );
+  }
+
+  async saveDecisionState(state: PersistedDecisionState): Promise<PersistedDecisionState> {
+    const decisionUnitId = state.controlContext.decisionUnitId;
+    const clash = this.store.decisionStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        decisionStateKey(row.controlContext.scope, row.controlContext.decisionUnitId) ===
+          decisionStateKey(state.controlContext.scope, decisionUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:decision_version=${state.version}`);
+    this.store.decisionStates.push(state);
+    return state;
+  }
+
+  async getDecisionStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedDecisionState | null> {
+    return (
+      this.store.decisionStates.find(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          row.stateId === stateId,
+      ) ?? null
+    );
+  }
+
+  async latestDecisionState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    decisionUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedDecisionState | undefined> {
+    return latestAsOf(
+      this.store.decisionStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          decisionStateKey(row.controlContext.scope, row.controlContext.decisionUnitId) ===
+            decisionStateKey(scope, decisionUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listDecisionStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedDecisionState[]> {
+    return this.store.decisionStates.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId,
+    );
+  }
+
+  async nextDecisionStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    decisionUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestDecisionState(tenantId, workspaceId, scope, decisionUnitId);
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && expectedVersion !== next - 1) {
+      throw new Error(`optimistic_lock_conflict:decision_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveDecisionEvidence(
+    evidence: readonly PersistedDecisionEvidence[],
+  ): Promise<PersistedDecisionEvidence[]> {
+    this.store.decisionEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listDecisionEvidence(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId: string,
+  ): Promise<PersistedDecisionEvidence[]> {
+    return this.store.decisionEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.decisionStateId === decisionStateId,
+    );
+  }
+
+  async saveDecisionReview(review: PersistedDecisionReview): Promise<PersistedDecisionReview> {
+    this.store.decisionReviews.push(review);
+    return review;
+  }
+
+  async listDecisionReviews(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId?: string,
+  ): Promise<PersistedDecisionReview[]> {
+    return this.store.decisionReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!decisionStateId || row.decisionStateId === decisionStateId),
+    );
+  }
+
+  async saveDecisionConfidence(
+    confidence: PersistedDecisionConfidence,
+  ): Promise<PersistedDecisionConfidence> {
+    this.store.decisionConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listDecisionConfidence(
+    tenantId: string,
+    workspaceId: string,
+    decisionStateId: string,
+  ): Promise<PersistedDecisionConfidence[]> {
+    return this.store.decisionConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.decisionStateId === decisionStateId,
     );
   }
 
