@@ -34,13 +34,13 @@ describe("Phase 12I Digital Twin external solver", () => {
     expect(new Set(ids).size).toBe(75);
   });
 
-  it("declares external solver version and status", () => {
+  it("preserves Phase 12I external solver pins and artifacts after 12J", () => {
     const version = read(VERSION);
-    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.9\.0-external-solver"/);
-    expect(version).toMatch(/DIGITAL_TWIN_STATUS = "external_solver"/);
-    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12I"/);
-    expect(read(`${DT}/package.json`)).toMatch(/"version": "0\.9\.0-external-solver"/);
-    expect(read(`${CERT}/package.json`)).toMatch(/"version": "0\.9\.0-external-solver"/);
+    expect(version).toMatch(/PHASE_12I_VERSION = "0\.9\.0-external-solver"/);
+    expect(version).toMatch(/PHASE_12I_CERTIFIED_COMMIT/);
+    expect(version).toMatch(/EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY = true/);
+    expect(version).toMatch(/DIGITAL_TWIN_VERSION = "0\.10\.0-solver-capabilities"/);
+    expect(version).toMatch(/DIGITAL_TWIN_PHASE = "12J"/);
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase12i/);
     expect(read(`${CERT}/package.json`)).toMatch(/test:e2e:external-solver/);
   });
@@ -75,7 +75,7 @@ describe("Phase 12I Digital Twin external solver", () => {
     ]) {
       expect(version, String(lock)).toMatch(lock);
     }
-    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.9\.0-external-solver-draft"/);
+    expect(version).toMatch(/PUBLIC_CONTRACT_VERSION = "0\.10\.0-solver-capabilities-draft"/);
     expect(version).toMatch(/FIRST_REAL_SOLVER_ID = "calculix"/);
     expect(version).toMatch(/EXTERNAL_SOLVER_COUNT_CERTIFIED = 1/);
   });
@@ -115,8 +115,9 @@ describe("Phase 12I Digital Twin external solver", () => {
     expect(batch82Sql).not.toMatch(/\bdigital_twin_outbox\b(?!_events)/);
   });
 
-  it("does not start Phase 12J domain implementation", () => {
-    expect(present(`${DT}/src/domain/phase12j`)).toBe(false);
+  it("keeps CalculiX adapter and batch_82 intact for 12I evidence", () => {
+    expect(present(`${DT}/src/domain/solvers/calculix-adapter.ts`)).toBe(true);
+    expect(present(BATCH_82)).toBe(true);
   });
 
   it("keeps V1 asset intelligence pin intact in version module", () => {

@@ -24,6 +24,20 @@ export type SimulationPackageArtifactRef = {
   label?: string;
 };
 
+/** Phase 12J additive capability extension (optional — does not break 12H packages). */
+export type SimulationPackageCapabilityExtension = {
+  capabilityId: string;
+  capabilityVersion: string;
+  providerVersion: string;
+  adapterVersion: string;
+  compatibilitySnapshotId?: string;
+  compatibilitySnapshot?: {
+    compatible: boolean;
+    executable: boolean;
+    reason: string;
+  };
+};
+
 export type SimulationPackageManifest = {
   manifestSchema: "simulation-package-manifest.json";
   packageId: string;
@@ -40,6 +54,8 @@ export type SimulationPackageManifest = {
   createdAt: string;
   claimsNativeSolver: false;
   storesBinaryPayload: false;
+  /** Phase 12J additive — capability/provider/adapter version pins. */
+  capabilityExtension?: SimulationPackageCapabilityExtension;
 };
 
 export type TwinSimulationPackage = {
@@ -91,6 +107,7 @@ export function createSimulationPackageManifest(input: {
   resultId?: string;
   artifactRefs: SimulationPackageArtifactRef[];
   requiredArtifactClasses: SimulationArtifactClass[];
+  capabilityExtension?: SimulationPackageCapabilityExtension;
 }): SimulationPackageManifest {
   for (const a of input.artifactRefs) {
     if (!a.fileId.startsWith("platform-files:") && !a.fileId.includes("/")) {
@@ -116,6 +133,25 @@ export function createSimulationPackageManifest(input: {
     createdAt: new Date().toISOString(),
     claimsNativeSolver: false,
     storesBinaryPayload: false,
+    capabilityExtension: input.capabilityExtension,
+  };
+}
+
+/** Phase 12J — attach capability/provider/adapter pins without mutating sealed packages. */
+export function extendSimulationPackageWithCapability(
+  pkg: TwinSimulationPackage,
+  extension: SimulationPackageCapabilityExtension,
+): TwinSimulationPackage {
+  if (pkg.status === "sealed") {
+    throw new Error("sealed_package_capability_extension_forbidden");
+  }
+  return {
+    ...pkg,
+    manifest: {
+      ...pkg.manifest,
+      capabilityExtension: extension,
+    },
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -138,6 +174,7 @@ export function createTwinSimulationPackage(input: {
   runId?: string;
   resultId?: string;
   createdBy?: string;
+  capabilityExtension?: SimulationPackageCapabilityExtension;
 }): TwinSimulationPackage {
   const now = new Date().toISOString();
   const manifest = createSimulationPackageManifest({
@@ -152,6 +189,7 @@ export function createTwinSimulationPackage(input: {
     resultId: input.resultId,
     artifactRefs: input.artifactRefs ?? [],
     requiredArtifactClasses: input.requiredArtifactClasses,
+    capabilityExtension: input.capabilityExtension,
   });
   return {
     packageId: input.packageId,

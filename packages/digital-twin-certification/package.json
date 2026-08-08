@@ -1,6 +1,6 @@
 {
   "name": "@rtb/digital-twin-certification",
-  "version": "0.9.0-external-solver",
+  "version": "0.10.0-solver-capabilities",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,11 +13,13 @@
     "certify:phase12g": "tsx scripts/run-phase12g-certification.ts",
     "certify:phase12h": "tsx scripts/run-phase12h-certification.ts",
     "certify:phase12i": "tsx scripts/run-phase12i-certification.ts",
+    "certify:phase12j": "tsx scripts/run-phase12j-certification.ts",
     "test:e2e:telemetry-binding": "playwright test playwright/telemetry-binding.spec.ts",
     "test:e2e:representation": "playwright test playwright/representation.spec.ts",
     "test:e2e:simulation": "playwright test playwright/simulation.spec.ts",
     "test:e2e:simulation-assurance": "playwright test playwright/simulation-assurance.spec.ts",
     "test:e2e:external-solver": "playwright test playwright/external-solver.spec.ts",
+    "test:e2e:solver-capabilities": "playwright test playwright/solver-capabilities.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

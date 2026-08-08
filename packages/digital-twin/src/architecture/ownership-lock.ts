@@ -1,10 +1,10 @@
 /**
- * Phase 12I — Digital Twin ownership lock.
+ * Phase 12J — Digital Twin ownership lock.
  *
- * Extends 12H with external engineering solver adapters (CalculiX first).
+ * Extends 12I with multi-provider solver capability registry (query-only).
+ * CalculiX linear_elastic_static remains the sole certified real execution path.
  * nativeEngineeringSolverImplemented remains false.
- * engineeringSolverOwnership = external_engineering_tool; tool framework = platform_intelligence.
- * duplicateSolverOwnershipDetected = false; no DigitalTwinSolverRegistry.
+ * duplicateSolverOwnershipDetected = false; capability registry ≠ competing solver registry.
  */
 
 import {
@@ -87,6 +87,13 @@ import {
   DUPLICATE_SOLVER_OWNERSHIP_DETECTED,
   ENGINEERING_SOLVER_OWNERSHIP,
   FIRST_REAL_SOLVER_ID,
+  SOLVER_CAPABILITY_REGISTRY_READY,
+  PROVIDER_COMPATIBILITY_MATRIX_READY,
+  CAPABILITY_DISCOVERY_READY,
+  SIMULATION_PACKAGE_EXTENDED,
+  FOUR_LAYER_QUALIFICATION_INTACT,
+  REAL_SOLVER_EXECUTION_CERTIFIED,
+  CALCULIX_ADAPTER_INTACT,
   TWIN_SNAPSHOT_READY,
   TWIN_SOURCE_ADAPTER_READY,
   TWIN_STATE_INGESTION_READY,
@@ -220,6 +227,13 @@ export const DIGITAL_TWIN_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
     relation: "consumes",
     notes:
       "CalculiX first real adapter; Twin consumes via EngineeringSolverAdapter — engineeringSolverOwnership=external_engineering_tool",
+  },
+  {
+    concern: "solver_capability_registry",
+    owner: "digital_twin",
+    relation: "owns",
+    notes:
+      "Phase 12J multi-provider capability registry — query/discovery only; not a competing DigitalTwinSolverRegistry; no auto-execute",
   },
   {
     concern: "engineering_tool_framework",
@@ -395,6 +409,13 @@ export function assertOwnershipLock(): {
   duplicateSolverOwnershipDetected: false;
   engineeringSolverOwnership: typeof ENGINEERING_SOLVER_OWNERSHIP;
   firstRealSolverId: typeof FIRST_REAL_SOLVER_ID;
+  solverCapabilityRegistryReady: true;
+  providerCompatibilityMatrixReady: true;
+  capabilityDiscoveryReady: true;
+  simulationPackageExtended: true;
+  fourLayerQualificationIntact: true;
+  realSolverExecutionCertified: true;
+  calculixAdapterIntact: true;
   twinVersioningReady: true;
   representationVersioningReady: true;
   twinSnapshotReady: true;
@@ -488,6 +509,18 @@ export function assertOwnershipLock(): {
   if (FIRST_REAL_SOLVER_ID !== "calculix") {
     throw new Error("first_real_solver_must_be_calculix");
   }
+  if (
+    !SOLVER_CAPABILITY_REGISTRY_READY ||
+    !PROVIDER_COMPATIBILITY_MATRIX_READY ||
+    !CAPABILITY_DISCOVERY_READY ||
+    !SIMULATION_PACKAGE_EXTENDED ||
+    !FOUR_LAYER_QUALIFICATION_INTACT
+  ) {
+    throw new Error("phase_12j_capability_registry_flags_required");
+  }
+  if (!REAL_SOLVER_EXECUTION_CERTIFIED || !CALCULIX_ADAPTER_INTACT) {
+    throw new Error("phase_12i_real_solver_evidence_flags_required");
+  }
   if (SIMULATION_OPTIMIZATION_IMPLEMENTED || PREDICTIVE_TWIN_IMPLEMENTED) {
     throw new Error("optimization_and_prediction_forbidden");
   }
@@ -521,8 +554,8 @@ export function assertOwnershipLock(): {
   if (AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED) {
     throw new Error("autonomous_twin_state_publication_forbidden");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.9.0-external-solver-draft") {
-    throw new Error("public_contracts_must_be_external_solver_draft_in_phase_12i");
+  if (PUBLIC_CONTRACT_VERSION !== "0.10.0-solver-capabilities-draft") {
+    throw new Error("public_contracts_must_be_solver_capabilities_draft_in_phase_12j");
   }
   if (
     !TWIN_IDENTITY_READY ||
@@ -708,6 +741,13 @@ export function assertOwnershipLock(): {
     duplicateSolverOwnershipDetected: false,
     engineeringSolverOwnership: ENGINEERING_SOLVER_OWNERSHIP,
     firstRealSolverId: FIRST_REAL_SOLVER_ID,
+    solverCapabilityRegistryReady: true,
+    providerCompatibilityMatrixReady: true,
+    capabilityDiscoveryReady: true,
+    simulationPackageExtended: true,
+    fourLayerQualificationIntact: true,
+    realSolverExecutionCertified: true,
+    calculixAdapterIntact: true,
     twinVersioningReady: true,
     representationVersioningReady: true,
     twinSnapshotReady: true,

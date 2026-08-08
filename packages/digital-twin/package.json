@@ -1,6 +1,6 @@
 {
   "name": "@rtb/digital-twin",
-  "version": "0.9.0-external-solver",
+  "version": "0.10.0-solver-capabilities",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

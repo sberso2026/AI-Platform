@@ -38,6 +38,10 @@ export const SIMULATION_DOMAIN_EVENTS = [
   "engineering.digital_twin.solver.run.timeout",
   "engineering.digital_twin.solver.run.cancelled",
   "engineering.digital_twin.solver.benchmark.executed",
+  "engineering.solver.capability.registered",
+  "engineering.solver.capability.qualified",
+  "engineering.solver.capability.revoked",
+  "engineering.solver.provider.updated",
 ] as const;
 
 export const SIMULATION_ASSURANCE_DOMAIN_EVENTS = [
@@ -68,8 +72,18 @@ export const SOLVER_DOMAIN_EVENTS = [
   "engineering.digital_twin.solver.benchmark.executed",
 ] as const;
 
+/** Phase 12J — capability registry events (identifiers only). */
+export const SOLVER_CAPABILITY_DOMAIN_EVENTS = [
+  "engineering.solver.capability.registered",
+  "engineering.solver.capability.qualified",
+  "engineering.solver.capability.revoked",
+  "engineering.solver.provider.updated",
+] as const;
+
 export type SimulationDomainEvent = (typeof SIMULATION_DOMAIN_EVENTS)[number];
 export type SolverDomainEvent = (typeof SOLVER_DOMAIN_EVENTS)[number];
+export type SolverCapabilityDomainEvent =
+  (typeof SOLVER_CAPABILITY_DOMAIN_EVENTS)[number];
 
 export function assertSimulationEventNoLargePayload(payload: Record<string, unknown>): void {
   const serialized = JSON.stringify(payload);

@@ -1,16 +1,16 @@
 /**
- * Phase 12I — Digital Twin External Engineering Solver Adapter Foundation.
+ * Phase 12J — Digital Twin Multi-Provider Solver Capability Registry.
  *
- * Extends 12H with CalculiX (ccx) as the first real external solver adapter.
- * silentSolverFallbackAllowed = false — real-solver requests MUST NOT fall back to fixture.
- * nativeEngineeringSolverImplemented remains false.
- * PHASE_12J_READY = true (flag only — do not start Phase 12J).
+ * Expands to a multi-provider CAPABILITY registry WITHOUT additional solver execution.
+ * CalculiX linear_elastic_static from 12I remains the ONLY certified real execution path.
+ * silentSolverFallbackAllowed = false.
+ * PHASE_12K_READY = true (flag only — do not start Phase 12K).
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.9.0-external-solver" as const;
-export const DIGITAL_TWIN_STATUS = "external_solver" as const;
-export const DIGITAL_TWIN_PHASE = "12I" as const;
+export const DIGITAL_TWIN_VERSION = "0.10.0-solver-capabilities" as const;
+export const DIGITAL_TWIN_STATUS = "solver_capabilities" as const;
+export const DIGITAL_TWIN_PHASE = "12J" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -102,7 +102,7 @@ export const SIMULATION_REPRODUCIBILITY_READY = true as const;
 export const SimulationReproducibilityReady = true as const;
 export const simulationReproducibilityReady = true as const;
 
-/** Phase 12I external solver adapter foundation */
+/** Phase 12I external solver adapter foundation (retained) */
 export const EXTERNAL_SOLVER_ADAPTER_FRAMEWORK_READY = true as const;
 export const ExternalSolverAdapterFrameworkReady = true as const;
 export const externalSolverAdapterFrameworkReady = true as const;
@@ -117,11 +117,34 @@ export const externalSolverCountCertified = EXTERNAL_SOLVER_COUNT_CERTIFIED;
 export const SILENT_SOLVER_FALLBACK_ALLOWED = false as const;
 export const silentSolverFallbackAllowed = false as const;
 /**
- * Derived at certification time from hosted/CI CalculiX evidence.
- * Domain default is false; certification runner sets artifact flag when REAL_SOLVER_HOSTED=1
- * or when a live ccx benchmark succeeds during certify:phase12i.
+ * Domain default for derived hosted evidence (cert runner may set artifact flag).
+ * RealSolverExecutionCertified / CalculiXAdapterIntact preserve 12I truthfulness.
  */
 export const REAL_SOLVER_HOSTED_EXECUTION_CERTIFIED_DEFAULT = false as const;
+/** Preserves 12I certified real execution path (flag — evidence from 12I + CI). */
+export const REAL_SOLVER_EXECUTION_CERTIFIED = true as const;
+export const RealSolverExecutionCertified = true as const;
+export const realSolverExecutionCertified = true as const;
+export const CALCULIX_ADAPTER_INTACT = true as const;
+export const CalculiXAdapterIntact = true as const;
+export const calculixAdapterIntact = true as const;
+
+/** Phase 12J multi-provider capability registry */
+export const SOLVER_CAPABILITY_REGISTRY_READY = true as const;
+export const SolverCapabilityRegistryReady = true as const;
+export const solverCapabilityRegistryReady = true as const;
+export const PROVIDER_COMPATIBILITY_MATRIX_READY = true as const;
+export const ProviderCompatibilityMatrixReady = true as const;
+export const providerCompatibilityMatrixReady = true as const;
+export const CAPABILITY_DISCOVERY_READY = true as const;
+export const CapabilityDiscoveryReady = true as const;
+export const capabilityDiscoveryReady = true as const;
+export const SIMULATION_PACKAGE_EXTENDED = true as const;
+export const SimulationPackageExtended = true as const;
+export const simulationPackageExtended = true as const;
+export const FOUR_LAYER_QUALIFICATION_INTACT = true as const;
+export const FourLayerQualificationIntact = true as const;
+export const fourLayerQualificationIntact = true as const;
 
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
@@ -131,7 +154,7 @@ export const hostedDigitalTwinPersistenceReady = true as const;
 /**
  * Bounded runtime: state-ingestion + telemetry binding + representation mapping
  * + governed simulation orchestration (fixture + first external CalculiX adapter)
- * + multi-layer qualification / package assurance foundation.
+ * + multi-layer qualification / package assurance + capability registry (no new execution).
  */
 export const DIGITAL_TWIN_RUNTIME_IMPLEMENTED = true as const;
 export const digitalTwinRuntimeImplemented = true as const;
@@ -164,6 +187,7 @@ export const shmSimulationCalibrationImplemented = false as const;
 /**
  * Bounded governed simulation + deterministic_fixture (test-only path) +
  * first real external CalculiX adapter. Does NOT imply native FEA product.
+ * 12J adds capability registry only — no new execute paths.
  */
 export const SIMULATION_EXECUTION_IMPLEMENTED = true as const;
 export const simulationExecutionImplemented = true as const;
@@ -191,9 +215,15 @@ export const THREE_D_VIEWER_IMPLEMENTED = false as const;
 export const threeDViewerImplemented = false as const;
 export const PHYSICAL_ACTUATION_ENABLED = false as const;
 export const physicalActuationEnabled = false as const;
+/** Alias for workflow asserts that use Implemented naming. */
+export const PHYSICAL_ACTUATION_IMPLEMENTED = false as const;
+export const physicalActuationImplemented = false as const;
 export const AUTOMATIC_CONTROL_ENABLED = false as const;
 export const automaticControlEnabled = false as const;
+export const AUTOMATIC_CONTROL_IMPLEMENTED = false as const;
+export const automaticControlImplemented = false as const;
 export const PRODUCTION_DIGITAL_TWIN_READY = false as const;
+export const productionDigitalTwinReady = false as const;
 export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
 export const productionMemoryRepositoryAllowed = false as const;
 export const IMPLEMENTS_OWN_AI_STACK = false as const;
@@ -227,13 +257,15 @@ export const PHASE_12H_READY = true as const;
 export const phase12HReady = true as const;
 export const PHASE_12I_READY = true as const;
 export const phase12IReady = true as const;
-/** Flag only — do not start Phase 12J. */
 export const PHASE_12J_READY = true as const;
 export const phase12JReady = true as const;
+/** Flag only — do not start Phase 12K. */
+export const PHASE_12K_READY = true as const;
+export const phase12KReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
-// Phase 12A–12H certified baselines (pinned — do not move)
+// Phase 12A–12I certified baselines (pinned — do not move)
 // ---------------------------------------------------------------------------
 
 export const PHASE_12A_CERTIFIED_COMMIT =
@@ -276,6 +308,11 @@ export const PHASE_12H_CERTIFIED_COMMIT =
 export const PHASE_12H_HOSTED_RUN = "31263802033" as const;
 export const PHASE_12H_VERSION = "0.8.0-simulation-assurance" as const;
 
+export const PHASE_12I_CERTIFIED_COMMIT =
+  "6989d310a91b04db5949954a57db060782dd8dec" as const;
+export const PHASE_12I_HOSTED_RUN = "31265781321" as const;
+export const PHASE_12I_VERSION = "0.9.0-external-solver" as const;
+
 // ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
@@ -304,7 +341,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 export const projectIntelligenceV1Intact = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.9.0-external-solver-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.10.0-solver-capabilities-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -327,6 +364,8 @@ export const ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP = "platform_intelligence" as c
 export const ENGINEERING_SOLVER_OWNERSHIP = "external_engineering_tool" as const;
 export const engineeringSolverOwnership = ENGINEERING_SOLVER_OWNERSHIP;
 export const engineeringToolFrameworkOwnership = ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP;
+export const SOLVER_CAPABILITY_REGISTRY_OWNERSHIP = "digital_twin" as const;
+export const solverCapabilityRegistryOwnership = SOLVER_CAPABILITY_REGISTRY_OWNERSHIP;
 
 export const CANONICAL_ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const CANONICAL_PROJECT_IDENTITY_OWNERSHIP = "engineering_os_shared_project_domain" as const;
@@ -344,8 +383,8 @@ export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
 export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "external_solver" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.9.0-external-solver" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "solver_capabilities" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.10.0-solver-capabilities" as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
 export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
@@ -374,8 +413,10 @@ export const DIGITAL_TWIN_PACKAGE_REVIEW_SLUG =
   "digital_twin.simulation_package_review" as const;
 export const DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG =
   "digital_twin.solver_adapter_review" as const;
+export const DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG =
+  "digital_twin.capability_review" as const;
 
-export function getDigitalTwinExternalSolverDeclaration() {
+export function getDigitalTwinSolverCapabilitiesDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -421,9 +462,23 @@ export function getDigitalTwinExternalSolverDeclaration() {
     externalSolverCountCertified,
     silentSolverFallbackAllowed,
     realSolverHostedExecutionCertifiedDefault: REAL_SOLVER_HOSTED_EXECUTION_CERTIFIED_DEFAULT,
+    realSolverExecutionCertified,
+    RealSolverExecutionCertified,
+    calculixAdapterIntact,
+    CalculiXAdapterIntact,
+    solverCapabilityRegistryReady,
+    SolverCapabilityRegistryReady,
+    providerCompatibilityMatrixReady,
+    ProviderCompatibilityMatrixReady,
+    capabilityDiscoveryReady,
+    CapabilityDiscoveryReady,
+    simulationPackageExtended,
+    SimulationPackageExtended,
+    fourLayerQualificationIntact,
+    FourLayerQualificationIntact,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
     hostedDigitalTwinPersistenceReady,
-    productionDigitalTwinReady: PRODUCTION_DIGITAL_TWIN_READY,
+    productionDigitalTwinReady,
     digitalTwinRuntimeImplemented,
     automaticObservedStatePublicationEnabled,
     automaticTelemetryStatePublicationEnabled,
@@ -449,7 +504,9 @@ export function getDigitalTwinExternalSolverDeclaration() {
     pofPredictionImplemented,
     threeDViewerImplemented,
     physicalActuationEnabled,
+    physicalActuationImplemented,
     automaticControlEnabled,
+    automaticControlImplemented,
     implementsOwnAiStack,
     duplicateTimeSeriesPlaneDetected,
     duplicateModelOwnershipDetected,
@@ -461,6 +518,7 @@ export function getDigitalTwinExternalSolverDeclaration() {
     engineeringTimeSeriesOwnership,
     engineeringToolFrameworkOwnership,
     engineeringSolverOwnership,
+    solverCapabilityRegistryOwnership,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase12CReady: PHASE_12C_READY,
     phase12DReady: PHASE_12D_READY,
@@ -470,6 +528,7 @@ export function getDigitalTwinExternalSolverDeclaration() {
     phase12HReady,
     phase12IReady,
     phase12JReady,
+    phase12KReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
@@ -490,6 +549,9 @@ export function getDigitalTwinExternalSolverDeclaration() {
     phase12HVersion: PHASE_12H_VERSION,
     phase12HCertifiedCommit: PHASE_12H_CERTIFIED_COMMIT,
     phase12HHostedRun: PHASE_12H_HOSTED_RUN,
+    phase12IVersion: PHASE_12I_VERSION,
+    phase12ICertifiedCommit: PHASE_12I_CERTIFIED_COMMIT,
+    phase12IHostedRun: PHASE_12I_HOSTED_RUN,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
@@ -516,49 +578,55 @@ export function getDigitalTwinExternalSolverDeclaration() {
     executionQualificationReviewSlug: DIGITAL_TWIN_EXECUTION_QUALIFICATION_REVIEW_SLUG,
     packageReviewSlug: DIGITAL_TWIN_PACKAGE_REVIEW_SLUG,
     solverAdapterReviewSlug: DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG,
+    capabilityReviewSlug: DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG,
   };
 }
 
 export function getDigitalTwinVersionInfo() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
+export function getDigitalTwinExternalSolverDeclaration() {
+  return getDigitalTwinSolverCapabilitiesDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinSimulationAssuranceDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinSimulationDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinRepresentationDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinTelemetryBindingDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinIngestionDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinStateDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinCoreDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinExternalSolverDeclaration */
+/** @deprecated Use getDigitalTwinSolverCapabilitiesDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinExternalSolverDeclaration();
+  return getDigitalTwinSolverCapabilitiesDeclaration();
 }

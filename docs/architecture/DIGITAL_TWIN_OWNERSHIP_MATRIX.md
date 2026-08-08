@@ -1,12 +1,12 @@
-# Digital Twin — Ownership Matrix (Phase 12I external solver)
+# Digital Twin — Ownership Matrix (Phase 12J solver capabilities)
 
-Status: external_solver · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+Status: solver_capabilities · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
 
-> **Phase 12I update:** Twin consumes the first real external solver adapter (CalculiX)
-> via `EngineeringSolverAdapter`. `engineeringSolverOwnership=external_engineering_tool`.
-> `engineeringToolFrameworkOwnership=platform_intelligence` (Tool Registry refs only —
-> `duplicateEngineeringToolFrameworkDetected=false`, no DigitalTwinSolverRegistry).
+> **Phase 12J update:** Twin owns a multi-provider **capability registry** (query/discovery
+> only). This is **not** a competing DigitalTwinSolverRegistry / tool framework.
+> CalculiX `linear_elastic_static` remains the sole certified real execution path (12I).
 > `silentSolverFallbackAllowed=false`. Native FEA remains false.
+> `RealSolverExecutionCertified` / `CalculiXAdapterIntact` preserved.
 
 ## Locked ownership boundaries
 
@@ -23,6 +23,7 @@ Status: external_solver · Aligned with `packages/digital-twin/src/architecture/
 | simulation_governance | `digital_twin` | owns (method/provider registries) |
 | simulation_assurance | `digital_twin` | owns (four-layer qualification + packages) |
 | simulation_package | `digital_twin` | owns (manifests/integrity; Platform Files refs) |
+| solver_capability_registry | `digital_twin` | owns (capability catalog; no auto-execute) |
 | external_engineering_solver_adapters | `external_engineering_tool` | consumes (CalculiX first; others reserved) |
 | engineering_tool_framework | `platform_intelligence` | consumes (compatibility adapters) |
 | digital_thread | `digital_twin` | owns |
@@ -50,8 +51,6 @@ Status: external_solver · Aligned with `packages/digital-twin/src/architecture/
 - A competing general Engineering Tool Framework / DigitalTwinSolverRegistry
 - Native FEA/CFD product solvers (`nativeEngineeringSolverImplemented=false`)
 - Commercial solver licenses / binaries for reserved adapters
-- A competing general Engineering Tool Framework
-- Native FEA/CFD/physics solvers
 - Asset Intelligence condition / predictive models
 - Inspection / PI / PC authoritative planes
 - SHM sensor stream ingestion or structural solvers
@@ -63,7 +62,8 @@ Status: external_solver · Aligned with `packages/digital-twin/src/architecture/
 
 Simulated Twin State **never** silently replaces Observed / Derived / Operational state.
 `simulationExecutionImplemented=true` is bounded orchestration + deterministic fixture
-(test-only) + first real CalculiX adapter. `silentSolverFallbackAllowed=false`.
+(test-only) + first real CalculiX adapter. Capability discovery does not execute.
+`silentSolverFallbackAllowed=false`.
 
 ## Control and actuation
 

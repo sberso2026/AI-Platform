@@ -101,8 +101,8 @@ export function toTwinIdentityCore(identity: TwinIdentity): TwinIdentityCore {
 }
 
 export function assertCoreContracts(): { ok: true; contractVersion: typeof PUBLIC_CONTRACT_VERSION } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.9.0-external-solver-draft") {
-    throw new Error("core_contracts_require_0_9_0_external_solver_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.10.0-solver-capabilities-draft") {
+    throw new Error("core_contracts_require_0_10_0_solver_capabilities_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

@@ -1,5 +1,5 @@
 /**
- * Phase 12I — Digital Twin external solver overview.
+ * Phase 12J — Digital Twin solver capability registry overview.
  */
 
 const SIMULATION_SURFACES = [
@@ -34,6 +34,51 @@ const SOLVER_SURFACES = [
   { id: "version-probe", name: "Version Probe", summary: "ccx -v health/version observations — fail-closed when unavailable." },
 ] as const;
 
+const CAPABILITY_SURFACES = [
+  {
+    id: "calculix-linear-static",
+    name: "CalculiX linear_elastic_static",
+    status: "qualified" as const,
+    summary: "Sole certified real execution capability — linked to Phase 12I method.",
+  },
+  {
+    id: "calculix-modal",
+    name: "CalculiX modal",
+    status: "reserved" as const,
+    summary: "Reserved / not_qualified — no execution path in 12J.",
+  },
+  {
+    id: "calculix-buckling",
+    name: "CalculiX buckling",
+    status: "reserved" as const,
+    summary: "Reserved / not_qualified — no execution path in 12J.",
+  },
+  {
+    id: "calculix-thermal",
+    name: "CalculiX thermal",
+    status: "reserved" as const,
+    summary: "Reserved / not_qualified — no execution path in 12J.",
+  },
+  {
+    id: "calculix-contact",
+    name: "CalculiX contact",
+    status: "reserved" as const,
+    summary: "Reserved / not_qualified — no execution path in 12J.",
+  },
+  {
+    id: "compatibility-matrix",
+    name: "Provider Compatibility Matrix",
+    status: "query" as const,
+    summary: "Method×Solver×Version×Application×ProjectType queries — never executes.",
+  },
+  {
+    id: "capability-discovery",
+    name: "Capability Discovery",
+    status: "query" as const,
+    summary: "Query-only discovery — execute-on-discover rejected.",
+  },
+] as const;
+
 const UNAVAILABLE = [
   { id: "native-solver", name: "Native FEA/CFD/physics solver", reason: "UNAVAILABLE — nativeEngineeringSolverImplemented=false." },
   { id: "ansys", name: "ANSYS adapter", reason: "RESERVED — unavailable stub." },
@@ -48,7 +93,7 @@ const UNAVAILABLE = [
   { id: "actuation", name: "Physical actuation", reason: "UNAVAILABLE — physicalActuationEnabled=false." },
 ] as const;
 
-export default function DigitalTwinExternalSolverPage() {
+export default function DigitalTwinSolverCapabilitiesPage() {
   return (
     <>
       <section data-testid="digital-twin-simulation-ready" aria-labelledby="dt-simulation-title">
@@ -56,7 +101,7 @@ export default function DigitalTwinExternalSolverPage() {
           Digital Twin — Simulation Governance
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Version <span data-testid="digital-twin-simulation-version">0.9.0-external-solver</span>.
+          Version <span data-testid="digital-twin-simulation-version">0.10.0-solver-capabilities</span>.
           Surfaces below are labeled <strong>SIMULATED</strong> and must not be visually merged with
           observed Twin state. Providers:{" "}
           <span data-testid="digital-twin-fixture-provider-flag">deterministic_fixture</span>
@@ -105,7 +150,7 @@ export default function DigitalTwinExternalSolverPage() {
         <ul
           className="mt-3 space-y-2"
           data-testid="digital-twin-unavailable-capabilities"
-          aria-label="Capabilities unavailable in Phase 12I"
+          aria-label="Capabilities unavailable in Phase 12J"
         >
           {UNAVAILABLE.map((item) => (
             <li
@@ -129,8 +174,10 @@ export default function DigitalTwinExternalSolverPage() {
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
           Version{" "}
-          <span data-testid="digital-twin-assurance-version">0.9.0-external-solver</span>.
-          Four-layer qualification enforced before CalculiX execution.
+          <span data-testid="digital-twin-assurance-version">0.10.0-solver-capabilities</span>.
+          Four-layer qualification enforced before CalculiX execution (
+          <span data-testid="digital-twin-four-layer-flag">FourLayerQualificationIntact=true</span>
+          ).
         </p>
         <ul
           className="mt-3 grid gap-3 sm:grid-cols-2"
@@ -160,7 +207,7 @@ export default function DigitalTwinExternalSolverPage() {
           External Engineering Solver
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Version <span data-testid="digital-twin-external-solver-version">0.9.0-external-solver</span>.
+          Version <span data-testid="digital-twin-external-solver-version">0.10.0-solver-capabilities</span>.
           First real solver: CalculiX (
           <span data-testid="digital-twin-external-solver-flag">
             externalEngineeringSolverAdaptersImplemented=true
@@ -180,6 +227,62 @@ export default function DigitalTwinExternalSolverPage() {
             >
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
                 {surface.id === "fixture-provider" ? "FIXTURE" : "REAL SOLVER"}
+              </p>
+              <h3 className="font-medium text-slate-900">{surface.name}</h3>
+              <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section
+        className="mt-10"
+        data-testid="digital-twin-solver-capabilities-ready"
+        aria-labelledby="dt-capabilities-title"
+      >
+        <h2 id="dt-capabilities-title" className="text-2xl font-semibold text-slate-900">
+          Solver Capability Registry
+        </h2>
+        <p className="mt-2 max-w-2xl text-slate-600">
+          Version{" "}
+          <span data-testid="digital-twin-solver-capabilities-version">0.10.0-solver-capabilities</span>.
+          Multi-provider capability catalog — discovery only; no auto-execute (
+          <span data-testid="digital-twin-capability-registry-flag">
+            SolverCapabilityRegistryReady=true
+          </span>
+          ).
+        </p>
+        <ul
+          className="mt-3 grid gap-3 sm:grid-cols-2"
+          data-testid="digital-twin-capability-surfaces"
+          aria-label="Digital Twin solver capability surfaces"
+        >
+          {CAPABILITY_SURFACES.map((surface) => (
+            <li
+              key={surface.id}
+              data-testid={`digital-twin-capability-surface-${surface.id}`}
+              className={
+                surface.status === "qualified"
+                  ? "rounded-lg border border-emerald-200 bg-emerald-50/40 p-4"
+                  : surface.status === "reserved"
+                    ? "rounded-lg border border-slate-200 bg-slate-50/60 p-4"
+                    : "rounded-lg border border-indigo-200 bg-indigo-50/40 p-4"
+              }
+            >
+              <p
+                className={
+                  surface.status === "qualified"
+                    ? "text-xs font-semibold uppercase tracking-wide text-emerald-800"
+                    : surface.status === "reserved"
+                      ? "text-xs font-semibold uppercase tracking-wide text-slate-600"
+                      : "text-xs font-semibold uppercase tracking-wide text-indigo-800"
+                }
+              >
+                {surface.status === "qualified"
+                  ? "QUALIFIED"
+                  : surface.status === "reserved"
+                    ? "RESERVED"
+                    : "QUERY ONLY"}
               </p>
               <h3 className="font-medium text-slate-900">{surface.name}</h3>
               <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>

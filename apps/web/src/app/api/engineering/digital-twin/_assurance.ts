@@ -1,5 +1,5 @@
 /**
- * Shared Phase 12I external solver HTTP helpers.
+ * Shared Phase 12J solver capability HTTP helpers (extends 12I assurance).
  */
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -24,6 +24,13 @@ export const ASSURANCE_GOVERNANCE = {
   firstRealSolverId: "calculix",
   externalSolverCountCertified: 1,
   silentSolverFallbackAllowed: false,
+  realSolverExecutionCertified: true,
+  calculixAdapterIntact: true,
+  solverCapabilityRegistryReady: true,
+  providerCompatibilityMatrixReady: true,
+  capabilityDiscoveryReady: true,
+  simulationPackageExtended: true,
+  fourLayerQualificationIntact: true,
   simulationExecutionImplemented: true,
   nativeEngineeringSolverImplemented: false,
   externalEngineeringSolverAdaptersImplemented: true,
@@ -34,8 +41,10 @@ export const ASSURANCE_GOVERNANCE = {
   spatialOwnershipFullyResolved: false,
   duplicateEngineeringToolFrameworkDetected: false,
   duplicateSolverOwnershipDetected: false,
+  productionDigitalTwinReady: false,
   phase12IReady: true,
   phase12JReady: true,
+  phase12KReady: true,
 } as const;
 
 export function rejectSolverActivation(body: Record<string, unknown>, requestId: string) {
@@ -76,6 +85,32 @@ export function rejectUnqualifiedDirectExecution(
       "Qualification chain required before real solver execution",
       requestId,
     );
+  }
+  return null;
+}
+
+/** Discovery must never execute. */
+export function rejectExecuteOnDiscover(
+  body: Record<string, unknown>,
+  requestId: string,
+) {
+  const forbidden = [
+    "execute",
+    "autoExecute",
+    "runOnDiscover",
+    "executeOnDiscover",
+    "spawnSolver",
+    "runBenchmark",
+  ];
+  for (const key of forbidden) {
+    if (key in body && body[key] !== undefined && body[key] !== false) {
+      return assuranceErr(
+        422,
+        "capability_discovery_execute_forbidden",
+        `Discovery is query-only; forbidden key: ${key}`,
+        requestId,
+      );
+    }
   }
   return null;
 }
