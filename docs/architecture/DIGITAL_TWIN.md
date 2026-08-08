@@ -1,5 +1,11 @@
 # Digital Twin Framework
 
+> **Phase 12A discovery lock** — Architecture, ownership, and draft contracts are
+> locked in Phase 12A (`0.1.0-discovery`). Start with
+> [DIGITAL_TWIN_PHASE_12A_DISCOVERY.md](./DIGITAL_TWIN_PHASE_12A_DISCOVERY.md).
+> No runtime, telemetry ingestion, simulation, or 3D viewer ships in 12A.
+> Kernel tables below are **PRESERVE** foundation; auto-create rebinds in 12B+.
+
 ## Overview
 
 Neutral digital twin registry used by Industrial OS, Fleet OS, Infrastructure OS, Smart Building OS, Smart City OS, and Autonomous Systems OS.
