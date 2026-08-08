@@ -1,6 +1,6 @@
 {
   "name": "@rtb/digital-twin-certification",
-  "version": "0.4.0-ingestion",
+  "version": "0.5.0-telemetry-binding",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,8 @@
     "certify:phase12b": "tsx scripts/run-phase12b-certification.ts",
     "certify:phase12c": "tsx scripts/run-phase12c-certification.ts",
     "certify:phase12d": "tsx scripts/run-phase12d-certification.ts",
+    "certify:phase12e": "tsx scripts/run-phase12e-certification.ts",
+    "test:e2e:telemetry-binding": "playwright test playwright/telemetry-binding.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {
@@ -15,6 +17,7 @@
     "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.29",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3"

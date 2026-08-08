@@ -17,10 +17,12 @@ import {
   AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED,
   DIGITAL_TWIN_IDENTITY_REVIEW_SLUG,
   DIGITAL_TWIN_STATE_REVIEW_SLUG,
+  DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG,
 } from "../version";
 
 export const IDENTITY_REVIEW_WORKFLOW_SLUG = DIGITAL_TWIN_IDENTITY_REVIEW_SLUG;
 export const STATE_REVIEW_WORKFLOW_SLUG = DIGITAL_TWIN_STATE_REVIEW_SLUG;
+export const TELEMETRY_BINDING_REVIEW_WORKFLOW_SLUG = DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG;
 
 export const IDENTITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
   slug: IDENTITY_REVIEW_WORKFLOW_SLUG,
@@ -272,4 +274,104 @@ export function transitionCandidateStateReview(input: {
   to: CandidateReviewTargetState;
 }): EngineeringWorkflowInstance {
   return transitionStateReview(input);
+}
+
+export const TELEMETRY_BINDING_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: TELEMETRY_BINDING_REVIEW_WORKFLOW_SLUG,
+  displayName: "Digital Twin Telemetry Binding Review",
+  moduleKey: "digital_twin",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+    "suspended",
+    "superseded",
+    "retired",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+    { from: "published", to: "suspended", action: "suspend" },
+    { from: "published", to: "superseded", action: "supersede" },
+    { from: "suspended", to: "published", action: "resume" },
+    { from: "published", to: "retired", action: "retire" },
+    { from: "superseded", to: "retired", action: "retire" },
+  ],
+};
+
+export const TELEMETRY_BINDING_REVIEW_ENTITY_TYPE = "digital_twin_telemetry_binding" as const;
+
+export type TelemetryBindingReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish"
+  | "suspend"
+  | "supersede"
+  | "resume"
+  | "retire";
+export type TelemetryBindingReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published"
+  | "suspended"
+  | "superseded"
+  | "retired";
+
+export function startTelemetryBindingReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  twinId: string;
+  bindingId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: TELEMETRY_BINDING_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: TELEMETRY_BINDING_REVIEW_ENTITY_TYPE,
+    entityId: input.bindingId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "digital_twin_telemetry_binding",
+      twinId: input.twinId,
+      bindingId: input.bindingId,
+      storesRawTelemetry: false,
+      autoPublishEnabled: false,
+      liveTelemetryBound: true,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: TELEMETRY_BINDING_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionTelemetryBindingReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: TelemetryBindingReviewAction;
+  to: TelemetryBindingReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: TELEMETRY_BINDING_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
 }

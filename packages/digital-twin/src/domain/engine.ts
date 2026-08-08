@@ -1,7 +1,8 @@
 /**
- * Phase 12D — Digital Twin engine facade.
+ * Phase 12E — Digital Twin engine facade.
  *
- * Orchestrates identity and state review workflows with core/state engine operations.
+ * Orchestrates identity, state, ingestion, and telemetry projection workflows.
+ * digitalTwinRuntimeImplemented: bounded state-ingestion + telemetry binding/projection only.
  */
 
 import type { EngineeringWorkflowInstance } from "@rtb/engineering-os";
@@ -27,6 +28,11 @@ import {
   type SubmitObservedStateInput,
 } from "./state-ingestion-engine";
 import {
+  createTwinTelemetryProjectionEngine,
+  type TwinTelemetryProjectionEngine,
+} from "./telemetry-projection-engine";
+import { createMemoryEngineeringTimeSeriesReadPort } from "./time-series-read-port";
+import {
   createDigitalTwinCoreEngine,
   type AddRelationshipInput,
   type AddThreadLinkInput,
@@ -39,6 +45,7 @@ import {
 export type DigitalTwinEngineDeps = {
   repository: DigitalTwinRepositoryPort;
   newId?: (prefix: string) => string;
+  timeSeriesReadPort?: import("./time-series-read-port").EngineeringTimeSeriesReadPort;
 };
 
 export class DigitalTwinEngine {
@@ -46,6 +53,7 @@ export class DigitalTwinEngine {
   private readonly core: DigitalTwinCoreEngine;
   private readonly state: DigitalTwinStateEngine;
   private readonly ingestion: DigitalTwinStateIngestionEngine;
+  private readonly telemetryProjection: TwinTelemetryProjectionEngine;
   private readonly repository: DigitalTwinRepositoryPort;
   private readonly newId: (prefix: string) => string;
 
@@ -58,6 +66,12 @@ export class DigitalTwinEngine {
     this.ingestion = createDigitalTwinStateIngestionEngine({
       repository: deps.repository,
       stateEngine: this.state,
+      newId: this.newId,
+    });
+    this.telemetryProjection = createTwinTelemetryProjectionEngine({
+      repository: deps.repository,
+      timeSeriesReadPort: deps.timeSeriesReadPort ?? createMemoryEngineeringTimeSeriesReadPort(),
+      ingestionEngine: this.ingestion,
       newId: this.newId,
     });
   }
@@ -159,6 +173,12 @@ export class DigitalTwinEngine {
 
   getStateReconciliation(tenantId: string, workspaceId: string, candidateId: string) {
     return this.ingestion.getReconciliation(tenantId, workspaceId, candidateId);
+  }
+
+  projectTelemetryBinding(
+    input: Parameters<TwinTelemetryProjectionEngine["projectBinding"]>[0],
+  ) {
+    return this.telemetryProjection.projectBinding(input);
   }
 
   async startReview(input: {

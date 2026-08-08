@@ -94,7 +94,10 @@ export const CERTIFIED_SOURCE_ADAPTERS: readonly DigitalTwinSourceAdapter[] = [
     sourceSystem: "asset_intelligence",
     sourceOwner: "asset_intelligence",
     supportedTargetTypes: ["asset"],
-    supportedStateSchemas: ["twin.observed.asset_intelligence.v1"],
+    supportedStateSchemas: [
+      "twin.observed.asset_intelligence.v1",
+      "twin.observed.telemetry_projection.v1",
+    ],
     authenticationMode: "service_account",
     pollingOrPushMode: "push",
     dataFreshnessPolicy: "advisory_slice",

@@ -1,6 +1,6 @@
 # ADR: Digital Twin Telemetry and Time Series
 
-Status: accepted (Phase 12A architecture lock)
+Status: accepted (Phase 12E telemetry binding lock)
 
 ## Context
 
@@ -8,24 +8,26 @@ The platform already exposes:
 
 - `packages/platform-kernel/src/telemetry/telemetry-service.ts` — tenant-scoped
   telemetry with optional `digital_twin_id`
-- Asset Intelligence analytics over inspection and condition history
+- **Asset Intelligence** `asset_intelligence_time_series` (batch_55) — authoritative engineering time series
 - SHM-owned sensor streams (future module)
 
-Digital Twin needs observation bindings without becoming a second ingestion plane.
+Digital Twin Phase 12E adds **binding and bounded projection** without becoming a second ingestion plane.
 
 ## Decision
 
-**CONSOLIDATE** on `platform_kernel_telemetry` as the single telemetry ingestion
-plane. Digital Twin stores **TelemetryEventReference** bindings and thread links
-only — no duplicate time-series database, stream processor, or retention policy
-inside `@rtb/digital-twin` — **no duplicate time-series plane**.
+**CONSOLIDATE** on:
 
-## Consequences
+1. `platform_kernel_telemetry` — raw sensors/events (Twin stores references only)
+2. `asset_intelligence` — engineering time series values (`EngineeringTimeSeriesReadPort`, read-only)
 
-- Positive: one retention, one billing meter, one security audit surface
-- Positive: AI time series stay in Asset Intelligence bounded context
-- Negative: Twin live-sync (L5) depends on kernel/SHM roadmap — explicit phase gate
-- Phase 12A: `LIVE_TELEMETRY_IMPLEMENTED = false` in discovery lock
+Digital Twin stores **TelemetrySourceReference**, **TelemetryChannelReference**, and **TwinTelemetryBinding** metadata — **no duplicate time-series plane** (`duplicateTimeSeriesPlaneDetected=false`).
+
+## Phase 12E update
+
+- `LIVE_TELEMETRY_IMPLEMENTED = true` — bounded binding/projection ONLY
+- `telemetryHistorianImplemented = false`
+- `shmSignalProcessingImplemented = false`
+- Never create `digital_twin_*` telemetry value/history tables
 
 ## Alternatives rejected
 

@@ -40,11 +40,7 @@ describe("Phase 12C Digital Twin state domain", () => {
   const tenantId = "tenant-1";
   const workspaceId = "workspace-1";
 
-  it("declares state version and pinned 12B baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.4.0-ingestion");
-    expect(DIGITAL_TWIN_STATUS).toBe("ingestion");
-    expect(DIGITAL_TWIN_PHASE).toBe("12D");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.4.0-ingestion-draft");
+  it("retains state capabilities with pinned 12B/12C baselines", () => {
     expect(PHASE_12C_VERSION).toBe("0.3.0-state");
     expect(PHASE_12C_CERTIFIED_COMMIT).toBe("07b5ccc843395bd02633163dc654668da9f17658");
     expect(PHASE_12B_VERSION).toBe("0.2.0-core");
@@ -64,8 +60,8 @@ describe("Phase 12C Digital Twin state domain", () => {
     expect(STATE_REVIEW_WORKFLOW.slug).toBe("digital_twin.state_review");
   });
 
-  it("keeps runtime/telemetry/sim/viewer locks closed", () => {
-    expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(false);
+  it("keeps forbidden runtime locks closed with bounded live telemetry", () => {
+    expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(true);
     expect(SIMULATION_EXECUTION_IMPLEMENTED).toBe(false);
     expect(THREE_D_VIEWER_IMPLEMENTED).toBe(false);
     assertStateForbiddenCapabilities();
@@ -76,12 +72,12 @@ describe("Phase 12C Digital Twin state domain", () => {
     expect(lock.ok).toBe(true);
     expect(lock.twinStateReady).toBe(true);
     expect(lock.twinVersioningReady).toBe(true);
-    expect(lock.publicContractVersion).toBe("0.4.0-ingestion-draft");
+    expect(lock.publicContractVersion).toBe("0.5.0-telemetry-binding-draft");
   });
 
   it("declares state contract families and domain events", () => {
-    expect(assertCoreContracts().contractVersion).toBe("0.4.0-ingestion-draft");
-    expect(assertStateContracts().contractVersion).toBe("0.4.0-ingestion-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.5.0-telemetry-binding-draft");
+    expect(assertStateContracts().contractVersion).toBe("0.5.0-telemetry-binding-draft");
     for (const evt of STATE_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

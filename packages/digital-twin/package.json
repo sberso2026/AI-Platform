@@ -1,6 +1,6 @@
 {
   "name": "@rtb/digital-twin",
-  "version": "0.4.0-ingestion",
+  "version": "0.5.0-telemetry-binding",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

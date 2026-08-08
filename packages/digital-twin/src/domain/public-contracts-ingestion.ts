@@ -1,5 +1,5 @@
 /**
- * Phase 12D — Digital Twin ingestion public contracts (0.4.0-ingestion-draft).
+ * Phase 12D/12E — Digital Twin ingestion public contracts (retained in 12E).
  */
 
 import { PUBLIC_CONTRACT_VERSION } from "../version";
@@ -18,8 +18,8 @@ export function assertIngestionContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.4.0-ingestion-draft") {
-    throw new Error("ingestion_contracts_require_0_4_0_ingestion_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.5.0-telemetry-binding-draft") {
+    throw new Error("ingestion_contracts_require_0_5_0_telemetry_binding_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

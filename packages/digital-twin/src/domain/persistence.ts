@@ -18,6 +18,11 @@ import type { TwinStateReconciliationRecord } from "./state-reconciliation";
 import type { DigitalTwinSourceAdapter } from "./source-adapter";
 import type { TwinSourceAuthorityPolicy } from "./source-authority";
 import type { TwinStateSchema } from "./state-schema-registry";
+import type { TelemetrySourceReference } from "./telemetry-source";
+import type { TelemetryChannelReference } from "./telemetry-channel";
+import type { TwinTelemetryBinding } from "./telemetry-binding";
+import type { TwinTelemetryAggregationPolicy } from "./aggregation-policy";
+import type { TelemetryProjectionRecord } from "./telemetry-projection-engine";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
 export type PersistedTwinIdentity = TwinIdentity;
@@ -88,6 +93,27 @@ export type PersistedStateReconciliation = TwinStateReconciliationRecord;
 export type PersistedSourceAdapter = DigitalTwinSourceAdapter;
 export type PersistedStateSchema = TwinStateSchema;
 export type PersistedSourceAuthorityPolicy = TwinSourceAuthorityPolicy;
+export type PersistedTelemetrySource = TelemetrySourceReference;
+export type PersistedTelemetryChannel = TelemetryChannelReference;
+export type PersistedTelemetryBinding = TwinTelemetryBinding;
+export type PersistedTelemetryAggregationPolicy = TwinTelemetryAggregationPolicy;
+export type PersistedTelemetryProjectionRecord = TelemetryProjectionRecord;
+
+export type TelemetryBindingReviewRecord = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  twinId: string;
+  bindingId: string;
+  workflowInstanceId: string;
+  workflowState: string;
+  outcome?: "approved" | "rejected" | "changes_requested" | "resubmitted";
+  reviewerId?: string;
+  notes?: string;
+  createdAt: string;
+  completedAt?: string;
+  selfApproved: false;
+};
 
 export type DigitalTwinRepositoryPort = {
   readonly adapterKind: "memory" | "postgres";
@@ -245,6 +271,64 @@ export type DigitalTwinRepositoryPort = {
     workspaceId: string,
     idempotencyKey: string,
   ): Promise<IngestionIdempotencyRecord | null>;
+
+  saveTelemetrySource(source: PersistedTelemetrySource): Promise<PersistedTelemetrySource>;
+  listTelemetrySources(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetrySource[]>;
+  getTelemetrySourceById(
+    tenantId: string,
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<PersistedTelemetrySource | null>;
+
+  saveTelemetryChannel(channel: PersistedTelemetryChannel): Promise<PersistedTelemetryChannel>;
+  listTelemetryChannels(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetryChannel[]>;
+
+  saveTelemetryBinding(binding: PersistedTelemetryBinding): Promise<PersistedTelemetryBinding>;
+  getTelemetryBindingById(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryBinding | null>;
+  listTelemetryBindings(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetryBinding[]>;
+
+  saveTelemetryAggregationPolicy(
+    policy: PersistedTelemetryAggregationPolicy,
+  ): Promise<PersistedTelemetryAggregationPolicy>;
+  getTelemetryAggregationPolicyByBinding(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryAggregationPolicy | null>;
+
+  saveTelemetryProjectionRecord(
+    record: PersistedTelemetryProjectionRecord,
+  ): Promise<PersistedTelemetryProjectionRecord>;
+  listTelemetryProjectionRecords(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryProjectionRecord[]>;
+
+  saveTelemetryBindingReview(
+    review: TelemetryBindingReviewRecord,
+  ): Promise<TelemetryBindingReviewRecord>;
+  listTelemetryBindingReviews(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<TelemetryBindingReviewRecord[]>;
 };
 
 export type DurableDigitalTwinStore = {
@@ -268,6 +352,12 @@ export type DurableDigitalTwinStore = {
   stateReconciliations: PersistedStateReconciliation[];
   sourceAuthorityPolicies: PersistedSourceAuthorityPolicy[];
   ingestionIdempotency: IngestionIdempotencyRecord[];
+  telemetrySources: PersistedTelemetrySource[];
+  telemetryChannels: PersistedTelemetryChannel[];
+  telemetryBindings: PersistedTelemetryBinding[];
+  telemetryAggregationPolicies: PersistedTelemetryAggregationPolicy[];
+  telemetryProjectionRecords: PersistedTelemetryProjectionRecord[];
+  telemetryBindingReviews: TelemetryBindingReviewRecord[];
 };
 
 export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
@@ -292,6 +382,12 @@ export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
     stateReconciliations: [],
     sourceAuthorityPolicies: [],
     ingestionIdempotency: [],
+    telemetrySources: [],
+    telemetryChannels: [],
+    telemetryBindings: [],
+    telemetryAggregationPolicies: [],
+    telemetryProjectionRecords: [],
+    telemetryBindingReviews: [],
   };
 }
 
@@ -728,6 +824,142 @@ export class MemoryDigitalTwinRepository implements DigitalTwinRepositoryPort {
           r.workspaceId === workspaceId &&
           r.idempotencyKey === idempotencyKey,
       ) ?? null
+    );
+  }
+
+  async saveTelemetrySource(source: PersistedTelemetrySource): Promise<PersistedTelemetrySource> {
+    const idx = this.store.telemetrySources.findIndex((s) => s.sourceId === source.sourceId);
+    if (idx >= 0) this.store.telemetrySources[idx] = source;
+    else this.store.telemetrySources.push(source);
+    return source;
+  }
+
+  async listTelemetrySources(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetrySource[]> {
+    return this.store.telemetrySources.filter(
+      (s) => s.tenantId === tenantId && s.workspaceId === workspaceId && s.twinId === twinId,
+    );
+  }
+
+  async getTelemetrySourceById(
+    tenantId: string,
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<PersistedTelemetrySource | null> {
+    return (
+      this.store.telemetrySources.find(
+        (s) => s.sourceId === sourceId && s.tenantId === tenantId && s.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async saveTelemetryChannel(channel: PersistedTelemetryChannel): Promise<PersistedTelemetryChannel> {
+    const idx = this.store.telemetryChannels.findIndex((c) => c.channelId === channel.channelId);
+    if (idx >= 0) this.store.telemetryChannels[idx] = channel;
+    else this.store.telemetryChannels.push(channel);
+    return channel;
+  }
+
+  async listTelemetryChannels(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetryChannel[]> {
+    return this.store.telemetryChannels.filter(
+      (c) => c.tenantId === tenantId && c.workspaceId === workspaceId && c.twinId === twinId,
+    );
+  }
+
+  async saveTelemetryBinding(binding: PersistedTelemetryBinding): Promise<PersistedTelemetryBinding> {
+    const idx = this.store.telemetryBindings.findIndex((b) => b.bindingId === binding.bindingId);
+    if (idx >= 0) this.store.telemetryBindings[idx] = binding;
+    else this.store.telemetryBindings.push(binding);
+    return binding;
+  }
+
+  async getTelemetryBindingById(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryBinding | null> {
+    return (
+      this.store.telemetryBindings.find(
+        (b) =>
+          b.bindingId === bindingId && b.tenantId === tenantId && b.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async listTelemetryBindings(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetryBinding[]> {
+    return this.store.telemetryBindings.filter(
+      (b) => b.tenantId === tenantId && b.workspaceId === workspaceId && b.twinId === twinId,
+    );
+  }
+
+  async saveTelemetryAggregationPolicy(
+    policy: PersistedTelemetryAggregationPolicy,
+  ): Promise<PersistedTelemetryAggregationPolicy> {
+    const idx = this.store.telemetryAggregationPolicies.findIndex(
+      (p) => p.policyId === policy.policyId,
+    );
+    if (idx >= 0) this.store.telemetryAggregationPolicies[idx] = policy;
+    else this.store.telemetryAggregationPolicies.push(policy);
+    return policy;
+  }
+
+  async getTelemetryAggregationPolicyByBinding(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryAggregationPolicy | null> {
+    return (
+      this.store.telemetryAggregationPolicies.find(
+        (p) =>
+          p.bindingId === bindingId && p.tenantId === tenantId && p.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async saveTelemetryProjectionRecord(
+    record: PersistedTelemetryProjectionRecord,
+  ): Promise<PersistedTelemetryProjectionRecord> {
+    this.store.telemetryProjectionRecords.push(record);
+    return record;
+  }
+
+  async listTelemetryProjectionRecords(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryProjectionRecord[]> {
+    return this.store.telemetryProjectionRecords.filter(
+      (r) =>
+        r.bindingId === bindingId && r.tenantId === tenantId && r.workspaceId === workspaceId,
+    );
+  }
+
+  async saveTelemetryBindingReview(
+    review: TelemetryBindingReviewRecord,
+  ): Promise<TelemetryBindingReviewRecord> {
+    this.store.telemetryBindingReviews.push(review);
+    return review;
+  }
+
+  async listTelemetryBindingReviews(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<TelemetryBindingReviewRecord[]> {
+    return this.store.telemetryBindingReviews.filter(
+      (r) =>
+        r.bindingId === bindingId && r.tenantId === tenantId && r.workspaceId === workspaceId,
     );
   }
 }

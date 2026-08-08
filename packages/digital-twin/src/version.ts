@@ -1,14 +1,15 @@
 /**
- * Phase 12D — Digital Twin Governed State Ingestion.
+ * Phase 12E — Digital Twin Telemetry Binding.
  *
- * Extends 12C with source adapters, schema registry, freshness, reconciliation,
- * and bounded state-ingestion runtime. No auto-publish, telemetry payloads, SHM, sim, or 3D viewer.
+ * Extends 12D with telemetry source/channel references, binding lifecycle,
+ * engineering time series read port (Asset Intelligence), and bounded projection.
+ * No raw telemetry storage, historian, SHM signal processing, or auto-publish.
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.4.0-ingestion" as const;
-export const DIGITAL_TWIN_STATUS = "ingestion" as const;
-export const DIGITAL_TWIN_PHASE = "12D" as const;
+export const DIGITAL_TWIN_VERSION = "0.5.0-telemetry-binding" as const;
+export const DIGITAL_TWIN_STATUS = "telemetry_binding" as const;
+export const DIGITAL_TWIN_PHASE = "12E" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -40,20 +41,41 @@ export const twinSourceAdapterReady = true as const;
 export const TWIN_STATE_RECONCILIATION_READY = true as const;
 export const TwinStateReconciliationReady = true as const;
 export const twinStateReconciliationReady = true as const;
+
+export const TWIN_TELEMETRY_BINDING_READY = true as const;
+export const TwinTelemetryBindingReady = true as const;
+export const twinTelemetryBindingReady = true as const;
+export const TWIN_TELEMETRY_PROJECTION_READY = true as const;
+export const TwinTelemetryProjectionReady = true as const;
+export const twinTelemetryProjectionReady = true as const;
+export const ENGINEERING_TIME_SERIES_REUSE_READY = true as const;
+export const EngineeringTimeSeriesReuseReady = true as const;
+export const engineeringTimeSeriesReuseReady = true as const;
+
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
 export const HOSTED_PERSISTENCE_READY = true as const;
 export const hostedDigitalTwinPersistenceReady = true as const;
 
-/** Bounded state-ingestion runtime ONLY — not live telemetry, SHM, sim, or actuation. */
+/** Bounded state-ingestion + telemetry binding/projection runtime — not historian, SHM, sim, or actuation. */
 export const DIGITAL_TWIN_RUNTIME_IMPLEMENTED = true as const;
 export const digitalTwinRuntimeImplemented = true as const;
 export const AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED = false as const;
 export const automaticObservedStatePublicationEnabled = false as const;
-export const LIVE_TELEMETRY_IMPLEMENTED = false as const;
-export const liveTelemetryImplemented = false as const;
+export const AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED = false as const;
+export const automaticTelemetryStatePublicationEnabled = false as const;
+
+/** Bounded binding/projection ONLY — reads Asset Intelligence time series; does not ingest raw telemetry. */
+export const LIVE_TELEMETRY_IMPLEMENTED = true as const;
+export const liveTelemetryImplemented = true as const;
 export const HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED = false as const;
 export const highFrequencyTelemetryImplemented = false as const;
+export const TELEMETRY_HISTORIAN_IMPLEMENTED = false as const;
+export const telemetryHistorianImplemented = false as const;
+export const SENSOR_REGISTRY_IMPLEMENTED = false as const;
+export const sensorRegistryImplemented = false as const;
+export const SHM_SIGNAL_PROCESSING_IMPLEMENTED = false as const;
+export const shmSignalProcessingImplemented = false as const;
 export const SHM_RUNTIME_IMPLEMENTED = false as const;
 export const shmRuntimeImplemented = false as const;
 export const SIMULATION_EXECUTION_IMPLEMENTED = false as const;
@@ -79,6 +101,8 @@ export const PHASE_12C_READY = true as const;
 export const PHASE_12D_READY = true as const;
 export const PHASE_12E_READY = true as const;
 export const phase12EReady = true as const;
+export const PHASE_12F_READY = true as const;
+export const phase12FReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -109,6 +133,15 @@ export const PHASE_12C_HOSTED_RUN = "31256556800" as const;
 export const PHASE_12C_VERSION = "0.3.0-state" as const;
 
 // ---------------------------------------------------------------------------
+// Phase 12D certified baseline (pinned — do not move)
+// ---------------------------------------------------------------------------
+
+export const PHASE_12D_CERTIFIED_COMMIT =
+  "3e387f4b76cbd9c80b274585c7b78821482f496d" as const;
+export const PHASE_12D_HOSTED_RUN = "31257741414" as const;
+export const PHASE_12D_VERSION = "0.4.0-ingestion" as const;
+
+// ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
 
@@ -132,7 +165,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
   "34975b1cf660580d46287f24e746b8915903f768" as const;
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.4.0-ingestion-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.5.0-telemetry-binding-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -150,6 +183,8 @@ export const CANONICAL_ASSET_LIFECYCLE_OWNERSHIP = "engineering_os_shared_domain
 export const CANONICAL_ENGINEERING_RISK_OWNERSHIP = "engineering_core" as const;
 
 export const ASSET_INTELLIGENCE_OWNERSHIP = "asset_intelligence" as const;
+export const ENGINEERING_TIME_SERIES_OWNERSHIP = "asset_intelligence" as const;
+export const engineeringTimeSeriesOwnership = ENGINEERING_TIME_SERIES_OWNERSHIP;
 export const INSPECTION_INTELLIGENCE_OWNERSHIP = "inspection_intelligence" as const;
 export const PROJECT_INTELLIGENCE_OWNERSHIP = "project_intelligence" as const;
 export const PROJECT_CONTROLS_OWNERSHIP = "project_controls" as const;
@@ -158,10 +193,10 @@ export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
 export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "coming_soon" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.0.0" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "telemetry_binding" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.5.0-telemetry-binding" as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
-export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = false as const;
+export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
 
 export const CANONICAL_LIFECYCLE_MUTATION_BY_TWIN_ALLOWED = false as const;
@@ -171,8 +206,10 @@ export const AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED = false as const;
 
 export const DIGITAL_TWIN_IDENTITY_REVIEW_SLUG = "digital_twin.identity_review" as const;
 export const DIGITAL_TWIN_STATE_REVIEW_SLUG = "digital_twin.state_review" as const;
+export const DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG =
+  "digital_twin.telemetry_binding_review" as const;
 
-export function getDigitalTwinIngestionDeclaration() {
+export function getDigitalTwinTelemetryBindingDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -180,7 +217,6 @@ export function getDigitalTwinIngestionDeclaration() {
     status: DIGITAL_TWIN_STATUS,
     phase: DIGITAL_TWIN_PHASE,
     digitalTwinImplemented: DIGITAL_TWIN_IMPLEMENTED,
-    digitalTwinDiscoveryImplemented: DIGITAL_TWIN_DISCOVERY_IMPLEMENTED,
     digitalTwinDiscoveryReady,
     digitalTwinOwnershipLocked,
     twinIdentityReady,
@@ -194,31 +230,43 @@ export function getDigitalTwinIngestionDeclaration() {
     twinStateIngestionReady,
     twinSourceAdapterReady,
     twinStateReconciliationReady,
+    twinTelemetryBindingReady,
+    twinTelemetryProjectionReady,
+    engineeringTimeSeriesReuseReady,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
     hostedDigitalTwinPersistenceReady,
     productionDigitalTwinReady: PRODUCTION_DIGITAL_TWIN_READY,
     digitalTwinRuntimeImplemented,
     automaticObservedStatePublicationEnabled,
-    liveTelemetryImplemented: LIVE_TELEMETRY_IMPLEMENTED,
-    highFrequencyTelemetryImplemented: HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
-    shmRuntimeImplemented: SHM_RUNTIME_IMPLEMENTED,
-    simulationExecutionImplemented: SIMULATION_EXECUTION_IMPLEMENTED,
-    threeDViewerImplemented: THREE_D_VIEWER_IMPLEMENTED,
-    physicalActuationEnabled: PHYSICAL_ACTUATION_ENABLED,
-    automaticControlEnabled: AUTOMATIC_CONTROL_ENABLED,
+    automaticTelemetryStatePublicationEnabled,
+    liveTelemetryImplemented,
+    highFrequencyTelemetryImplemented,
+    telemetryHistorianImplemented,
+    sensorRegistryImplemented,
+    shmSignalProcessingImplemented,
+    shmRuntimeImplemented,
+    simulationExecutionImplemented,
+    threeDViewerImplemented,
+    physicalActuationEnabled,
+    automaticControlEnabled,
     implementsOwnAiStack,
     duplicateTimeSeriesPlaneDetected,
+    engineeringTimeSeriesOwnership,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase12CReady: PHASE_12C_READY,
     phase12DReady: PHASE_12D_READY,
     phase12EReady,
+    phase12FReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
     phase12BCertifiedCommit: PHASE_12B_CERTIFIED_COMMIT,
     phase12CVersion: PHASE_12C_VERSION,
     phase12CCertifiedCommit: PHASE_12C_CERTIFIED_COMMIT,
+    phase12DVersion: PHASE_12D_VERSION,
+    phase12DCertifiedCommit: PHASE_12D_CERTIFIED_COMMIT,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
+    digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
     projectControlsV1Commit: PROJECT_CONTROLS_V1_COMMIT,
     assetIntelligenceV1Tag: ASSET_INTELLIGENCE_V1_TAG,
@@ -232,20 +280,26 @@ export function getDigitalTwinIngestionDeclaration() {
     moduleRegistryStatus: DIGITAL_TWIN_MODULE_REGISTRY_STATUS,
     identityReviewSlug: DIGITAL_TWIN_IDENTITY_REVIEW_SLUG,
     stateReviewSlug: DIGITAL_TWIN_STATE_REVIEW_SLUG,
+    telemetryBindingReviewSlug: DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG,
   };
 }
 
-/** @deprecated Use getDigitalTwinIngestionDeclaration */
+/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
+export function getDigitalTwinIngestionDeclaration() {
+  return getDigitalTwinTelemetryBindingDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
 export function getDigitalTwinStateDeclaration() {
-  return getDigitalTwinIngestionDeclaration();
+  return getDigitalTwinTelemetryBindingDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinIngestionDeclaration */
+/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
 export function getDigitalTwinCoreDeclaration() {
-  return getDigitalTwinIngestionDeclaration();
+  return getDigitalTwinTelemetryBindingDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinIngestionDeclaration */
+/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinIngestionDeclaration();
+  return getDigitalTwinTelemetryBindingDeclaration();
 }

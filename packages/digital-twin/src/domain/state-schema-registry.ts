@@ -60,6 +60,23 @@ const REGISTRY: TwinStateSchema[] = [
     allowsUnrestrictedBlob: false,
     storesTelemetryPayload: false,
   },
+  {
+    schemaId: "twin.observed.telemetry_projection.v1",
+    schemaVersion: "1.0.0",
+    displayName: "Telemetry Projection Observed State",
+    category: "observed",
+    fields: [
+      { name: "bindingId", valueType: "string", required: true },
+      { name: "twinAttributeKey", valueType: "string", required: true },
+      { name: "projectedValue", valueType: "number", required: false, quantitative: true },
+      { name: "unit", valueType: "string", required: true },
+      { name: "quality", valueType: "string", required: true },
+      { name: "projectionMethod", valueType: "string", required: true },
+      { name: "engineeringSeriesRef", valueType: "reference", required: false },
+    ],
+    allowsUnrestrictedBlob: false,
+    storesTelemetryPayload: false,
+  },
 ];
 
 export class TwinStateSchemaRegistry {

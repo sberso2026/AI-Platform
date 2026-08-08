@@ -32,6 +32,12 @@ import {
   type PersistedSourceAdapter,
   type PersistedStateSchema,
   type PersistedSourceAuthorityPolicy,
+  type PersistedTelemetrySource,
+  type PersistedTelemetryChannel,
+  type PersistedTelemetryBinding,
+  type PersistedTelemetryAggregationPolicy,
+  type PersistedTelemetryProjectionRecord,
+  type TelemetryBindingReviewRecord,
 } from "./persistence";
 
 const STATES = "digital_twin_states";
@@ -46,6 +52,12 @@ const STATE_CANDIDATES = "digital_twin_state_candidates";
 const STATE_RECONCILIATION = "digital_twin_state_reconciliation";
 const SOURCE_AUTHORITY = "digital_twin_source_authority_policies";
 const INGESTION_IDEMPOTENCY = "digital_twin_ingestion_idempotency";
+const TELEMETRY_SOURCES = "digital_twin_telemetry_sources";
+const TELEMETRY_CHANNELS = "digital_twin_telemetry_channels";
+const TELEMETRY_BINDINGS = "digital_twin_telemetry_bindings";
+const TELEMETRY_POLICIES = "digital_twin_telemetry_aggregation_policies";
+const TELEMETRY_PROJECTIONS = "digital_twin_telemetry_projection_records";
+const TELEMETRY_BINDING_REVIEWS = "digital_twin_telemetry_binding_reviews";
 
 type AnyClient = {
   from(table: string): {
@@ -1232,6 +1244,293 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
         }
       : null;
   }
+
+  async saveTelemetrySource(source: PersistedTelemetrySource): Promise<PersistedTelemetrySource> {
+    const row = {
+      source_id: source.sourceId,
+      tenant_id: source.tenantId,
+      workspace_id: source.workspaceId,
+      twin_id: source.twinId,
+      source_kind: source.sourceKind,
+      external_ref: source.externalRef,
+      engineering_series_id: source.engineeringSeriesId ?? null,
+      attribute_key: source.attributeKey ?? null,
+      display_name: source.displayName,
+      description: source.description ?? null,
+      owner_module: source.ownerModule,
+      stores_raw_telemetry: false,
+      created_at: source.createdAt,
+      updated_at: source.updatedAt,
+      created_by: source.createdBy ?? null,
+    };
+    const { error } = await this.supabase.from(TELEMETRY_SOURCES).insert(row).select("*").single();
+    if (error) throw new Error(`telemetry_source_persist_failed:${error.message}`);
+    return source;
+  }
+
+  async listTelemetrySources(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetrySource[]> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_SOURCES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`telemetry_sources_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapTelemetrySourceRow(row as Record<string, unknown>));
+  }
+
+  async getTelemetrySourceById(
+    tenantId: string,
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<PersistedTelemetrySource | null> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_SOURCES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("source_id", sourceId)
+      .maybeSingle();
+    if (error) throw new Error(`telemetry_source_read_failed:${error.message}`);
+    return data ? mapTelemetrySourceRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveTelemetryChannel(channel: PersistedTelemetryChannel): Promise<PersistedTelemetryChannel> {
+    const row = {
+      channel_id: channel.channelId,
+      tenant_id: channel.tenantId,
+      workspace_id: channel.workspaceId,
+      twin_id: channel.twinId,
+      source_id: channel.sourceId,
+      channel_key: channel.channelKey,
+      display_name: channel.displayName,
+      unit: channel.unit,
+      twin_attribute_key: channel.twinAttributeKey,
+      engineering_series_ref: channel.engineeringSeriesRef ?? null,
+      source_ref: channel.sourceRef,
+      stores_raw_telemetry: false,
+      created_at: channel.createdAt,
+      updated_at: channel.updatedAt,
+    };
+    const { error } = await this.supabase.from(TELEMETRY_CHANNELS).insert(row).select("*").single();
+    if (error) throw new Error(`telemetry_channel_persist_failed:${error.message}`);
+    return channel;
+  }
+
+  async listTelemetryChannels(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetryChannel[]> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_CHANNELS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`telemetry_channels_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapTelemetryChannelRow(row as Record<string, unknown>));
+  }
+
+  async saveTelemetryBinding(binding: PersistedTelemetryBinding): Promise<PersistedTelemetryBinding> {
+    const row = {
+      binding_id: binding.bindingId,
+      tenant_id: binding.tenantId,
+      workspace_id: binding.workspaceId,
+      twin_id: binding.twinId,
+      source_id: binding.sourceId,
+      channel_id: binding.channelId,
+      binding_key: binding.bindingKey,
+      display_name: binding.displayName,
+      lifecycle: binding.lifecycle,
+      source_ref: binding.sourceRef,
+      channel_ref: binding.channelRef,
+      engineering_series_id: binding.engineeringSeriesId ?? null,
+      policy_id: binding.policyId ?? null,
+      review_workflow_instance_id: binding.reviewWorkflowInstanceId ?? null,
+      superseded_by_binding_id: binding.supersededByBindingId ?? null,
+      stores_raw_telemetry: false,
+      auto_publish_enabled: false,
+      created_at: binding.createdAt,
+      updated_at: binding.updatedAt,
+      created_by: binding.createdBy ?? null,
+    };
+    const { error } = await this.supabase.from(TELEMETRY_BINDINGS).insert(row).select("*").single();
+    if (error) throw new Error(`telemetry_binding_persist_failed:${error.message}`);
+    return binding;
+  }
+
+  async getTelemetryBindingById(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryBinding | null> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_BINDINGS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("binding_id", bindingId)
+      .maybeSingle();
+    if (error) throw new Error(`telemetry_binding_read_failed:${error.message}`);
+    return data ? mapTelemetryBindingRow(data as Record<string, unknown>) : null;
+  }
+
+  async listTelemetryBindings(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedTelemetryBinding[]> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_BINDINGS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`telemetry_bindings_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapTelemetryBindingRow(row as Record<string, unknown>));
+  }
+
+  async saveTelemetryAggregationPolicy(
+    policy: PersistedTelemetryAggregationPolicy,
+  ): Promise<PersistedTelemetryAggregationPolicy> {
+    const row = {
+      policy_id: policy.policyId,
+      tenant_id: policy.tenantId,
+      workspace_id: policy.workspaceId,
+      binding_id: policy.bindingId,
+      method: policy.method,
+      window_seconds: policy.windowSeconds,
+      min_samples: policy.minSamples,
+      gap_handling: policy.gapHandling,
+      interpolation: policy.interpolation,
+      stale_after_seconds: policy.staleAfterSeconds,
+      stores_raw_telemetry: false,
+      created_at: policy.createdAt,
+      updated_at: policy.updatedAt,
+    };
+    const { error } = await this.supabase.from(TELEMETRY_POLICIES).insert(row).select("*").single();
+    if (error) throw new Error(`telemetry_policy_persist_failed:${error.message}`);
+    return policy;
+  }
+
+  async getTelemetryAggregationPolicyByBinding(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryAggregationPolicy | null> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_POLICIES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("binding_id", bindingId)
+      .maybeSingle();
+    if (error) throw new Error(`telemetry_policy_read_failed:${error.message}`);
+    return data ? mapTelemetryPolicyRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveTelemetryProjectionRecord(
+    record: PersistedTelemetryProjectionRecord,
+  ): Promise<PersistedTelemetryProjectionRecord> {
+    const row = {
+      projection_id: record.projectionId,
+      tenant_id: record.tenantId,
+      workspace_id: record.workspaceId,
+      twin_id: record.twinId,
+      binding_id: record.bindingId,
+      projected_state: record.projectedState,
+      candidate_id: record.candidateId ?? null,
+      quality_rejected: record.qualityRejected,
+      stale_detected: record.staleDetected,
+      source_unavailable: record.sourceUnavailable,
+      stores_raw_telemetry: false,
+      created_at: record.createdAt,
+    };
+    const { error } = await this.supabase.from(TELEMETRY_PROJECTIONS).insert(row).select("*").single();
+    if (error) throw new Error(`telemetry_projection_persist_failed:${error.message}`);
+    return record;
+  }
+
+  async listTelemetryProjectionRecords(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<PersistedTelemetryProjectionRecord[]> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_PROJECTIONS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("binding_id", bindingId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`telemetry_projections_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapTelemetryProjectionRow(row as Record<string, unknown>));
+  }
+
+  async saveTelemetryBindingReview(
+    review: TelemetryBindingReviewRecord,
+  ): Promise<TelemetryBindingReviewRecord> {
+    const row = {
+      review_id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      twin_id: review.twinId,
+      binding_id: review.bindingId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+    };
+    const { error } = await this.supabase
+      .from(TELEMETRY_BINDING_REVIEWS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`telemetry_binding_review_persist_failed:${error.message}`);
+    return review;
+  }
+
+  async listTelemetryBindingReviews(
+    tenantId: string,
+    workspaceId: string,
+    bindingId: string,
+  ): Promise<TelemetryBindingReviewRecord[]> {
+    const { data, error } = await this.supabase
+      .from(TELEMETRY_BINDING_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("binding_id", bindingId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`telemetry_binding_reviews_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      reviewId: String(row.review_id),
+      tenantId: String(row.tenant_id),
+      workspaceId: String(row.workspace_id),
+      twinId: String(row.twin_id),
+      bindingId: String(row.binding_id),
+      workflowInstanceId: String(row.workflow_instance_id),
+      workflowState: String(row.workflow_state),
+      outcome: row.outcome as TelemetryBindingReviewRecord["outcome"],
+      reviewerId: row.reviewer_id ? String(row.reviewer_id) : undefined,
+      notes: row.notes ? String(row.notes) : undefined,
+      createdAt: String(row.created_at),
+      completedAt: row.completed_at ? String(row.completed_at) : undefined,
+      selfApproved: false as const,
+    }));
+  }
 }
 
 function mapSourceAdapterRow(row: Record<string, unknown>): PersistedSourceAdapter {
@@ -1327,6 +1626,109 @@ function mapSourceAuthorityRow(row: Record<string, unknown>): PersistedSourceAut
     description: String(row.description),
     rules: (row.rules as PersistedSourceAuthorityPolicy["rules"]) ?? [],
     universalRankingForbidden: true,
+  };
+}
+
+function mapTelemetrySourceRow(row: Record<string, unknown>): PersistedTelemetrySource {
+  return {
+    sourceId: String(row.source_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    sourceKind: row.source_kind as PersistedTelemetrySource["sourceKind"],
+    externalRef: String(row.external_ref),
+    engineeringSeriesId: row.engineering_series_id ? String(row.engineering_series_id) : undefined,
+    attributeKey: row.attribute_key ? String(row.attribute_key) : undefined,
+    displayName: String(row.display_name),
+    description: row.description ? String(row.description) : undefined,
+    ownerModule: row.owner_module as PersistedTelemetrySource["ownerModule"],
+    storesRawTelemetry: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+  };
+}
+
+function mapTelemetryChannelRow(row: Record<string, unknown>): PersistedTelemetryChannel {
+  return {
+    channelId: String(row.channel_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    sourceId: String(row.source_id),
+    channelKey: String(row.channel_key),
+    displayName: String(row.display_name),
+    unit: String(row.unit),
+    twinAttributeKey: String(row.twin_attribute_key),
+    engineeringSeriesRef: row.engineering_series_ref ? String(row.engineering_series_ref) : undefined,
+    sourceRef: row.source_ref as PersistedTelemetryChannel["sourceRef"],
+    storesRawTelemetry: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function mapTelemetryBindingRow(row: Record<string, unknown>): PersistedTelemetryBinding {
+  return {
+    bindingId: String(row.binding_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    sourceId: String(row.source_id),
+    channelId: String(row.channel_id),
+    bindingKey: String(row.binding_key),
+    displayName: String(row.display_name),
+    lifecycle: row.lifecycle as PersistedTelemetryBinding["lifecycle"],
+    sourceRef: row.source_ref as PersistedTelemetryBinding["sourceRef"],
+    channelRef: row.channel_ref as PersistedTelemetryBinding["channelRef"],
+    engineeringSeriesId: row.engineering_series_id ? String(row.engineering_series_id) : undefined,
+    policyId: row.policy_id ? String(row.policy_id) : undefined,
+    reviewWorkflowInstanceId: row.review_workflow_instance_id
+      ? String(row.review_workflow_instance_id)
+      : undefined,
+    supersededByBindingId: row.superseded_by_binding_id
+      ? String(row.superseded_by_binding_id)
+      : undefined,
+    storesRawTelemetry: false,
+    autoPublishEnabled: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+  };
+}
+
+function mapTelemetryPolicyRow(row: Record<string, unknown>): PersistedTelemetryAggregationPolicy {
+  return {
+    policyId: String(row.policy_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    bindingId: String(row.binding_id),
+    method: row.method as PersistedTelemetryAggregationPolicy["method"],
+    windowSeconds: Number(row.window_seconds),
+    minSamples: Number(row.min_samples),
+    gapHandling: row.gap_handling as PersistedTelemetryAggregationPolicy["gapHandling"],
+    interpolation: "not_implemented",
+    staleAfterSeconds: Number(row.stale_after_seconds),
+    storesRawTelemetry: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function mapTelemetryProjectionRow(row: Record<string, unknown>): PersistedTelemetryProjectionRecord {
+  return {
+    projectionId: String(row.projection_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    bindingId: String(row.binding_id),
+    projectedState: row.projected_state as PersistedTelemetryProjectionRecord["projectedState"],
+    candidateId: row.candidate_id ? String(row.candidate_id) : undefined,
+    qualityRejected: Boolean(row.quality_rejected),
+    staleDetected: Boolean(row.stale_detected),
+    sourceUnavailable: Boolean(row.source_unavailable),
+    createdAt: String(row.created_at),
+    storesRawTelemetry: false,
   };
 }
 

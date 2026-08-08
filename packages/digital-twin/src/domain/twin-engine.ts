@@ -8,11 +8,15 @@
 import { assertOwnershipLock } from "../architecture/ownership-lock";
 import {
   AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED,
+  AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED,
   HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED,
   LIVE_TELEMETRY_IMPLEMENTED,
   PHYSICAL_ACTUATION_ENABLED,
+  SENSOR_REGISTRY_IMPLEMENTED,
   SHM_RUNTIME_IMPLEMENTED,
+  SHM_SIGNAL_PROCESSING_IMPLEMENTED,
   SIMULATION_EXECUTION_IMPLEMENTED,
+  TELEMETRY_HISTORIAN_IMPLEMENTED,
   THREE_D_VIEWER_IMPLEMENTED,
 } from "../version";
 import {
@@ -332,29 +336,37 @@ export function createDigitalTwinCoreEngine(deps: DigitalTwinEngineDeps): Digita
 
 export function assertCoreForbiddenCapabilities(): {
   ok: true;
-  liveTelemetryImplemented: false;
+  liveTelemetryImplemented: true;
   simulationImplemented: false;
   threeDViewerImplemented: false;
   physicalActuationEnabled: false;
 } {
-  if (LIVE_TELEMETRY_IMPLEMENTED || HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
-    throw new Error("live_telemetry_forbidden_in_phase_12d");
+  if (!LIVE_TELEMETRY_IMPLEMENTED) {
+    throw new Error("bounded_live_telemetry_binding_required_in_phase_12e");
+  }
+  if (
+    HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED ||
+    TELEMETRY_HISTORIAN_IMPLEMENTED ||
+    SENSOR_REGISTRY_IMPLEMENTED ||
+    SHM_SIGNAL_PROCESSING_IMPLEMENTED
+  ) {
+    throw new Error("historian_high_frequency_shm_sensor_registry_forbidden");
   }
   if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12d");
+    throw new Error("simulation_execution_forbidden_in_phase_12e");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
-    throw new Error("three_d_viewer_forbidden_in_phase_12d");
+    throw new Error("three_d_viewer_forbidden_in_phase_12e");
   }
   if (PHYSICAL_ACTUATION_ENABLED) {
-    throw new Error("physical_actuation_forbidden_in_phase_12d");
+    throw new Error("physical_actuation_forbidden_in_phase_12e");
   }
   if (SHM_RUNTIME_IMPLEMENTED) {
-    throw new Error("shm_runtime_forbidden_in_phase_12d");
+    throw new Error("shm_runtime_forbidden_in_phase_12e");
   }
   return {
     ok: true,
-    liveTelemetryImplemented: false,
+    liveTelemetryImplemented: true,
     simulationImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,
@@ -365,12 +377,17 @@ export function assertIngestionForbiddenCapabilities(): ReturnType<
   typeof assertCoreForbiddenCapabilities
 > & {
   automaticObservedStatePublicationEnabled: false;
+  automaticTelemetryStatePublicationEnabled: false;
 } {
   const core = assertCoreForbiddenCapabilities();
-  if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
-    throw new Error("automatic_observed_state_publication_forbidden");
+  if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED || AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED) {
+    throw new Error("automatic_state_publication_forbidden");
   }
-  return { ...core, automaticObservedStatePublicationEnabled: false };
+  return {
+    ...core,
+    automaticObservedStatePublicationEnabled: false,
+    automaticTelemetryStatePublicationEnabled: false,
+  };
 }
 
 function assertScope(tenantId: string, workspaceId: string): void {

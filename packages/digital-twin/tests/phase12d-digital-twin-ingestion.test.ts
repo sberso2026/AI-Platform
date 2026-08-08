@@ -12,6 +12,8 @@ import {
   LIVE_TELEMETRY_IMPLEMENTED,
   PHASE_12C_CERTIFIED_COMMIT,
   PHASE_12C_VERSION,
+  PHASE_12D_CERTIFIED_COMMIT,
+  PHASE_12D_VERSION,
   PHASE_12E_READY,
   PUBLIC_CONTRACT_VERSION,
   SHM_RUNTIME_IMPLEMENTED,
@@ -39,13 +41,11 @@ describe("Phase 12D Digital Twin governed state ingestion", () => {
   const tenantId = "tenant-1";
   const workspaceId = "workspace-1";
 
-  it("declares ingestion version and pinned 12C baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.4.0-ingestion");
-    expect(DIGITAL_TWIN_STATUS).toBe("ingestion");
-    expect(DIGITAL_TWIN_PHASE).toBe("12D");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.4.0-ingestion-draft");
+  it("retains ingestion capabilities with pinned 12C/12D baselines", () => {
     expect(PHASE_12C_VERSION).toBe("0.3.0-state");
     expect(PHASE_12C_CERTIFIED_COMMIT).toBe("07b5ccc843395bd02633163dc654668da9f17658");
+    expect(PHASE_12D_VERSION).toBe("0.4.0-ingestion");
+    expect(PHASE_12D_CERTIFIED_COMMIT).toBe("3e387f4b76cbd9c80b274585c7b78821482f496d");
     expect(PHASE_12E_READY).toBe(true);
     expect(TWIN_STATE_INGESTION_READY).toBe(true);
     expect(TwinStateIngestionReady).toBe(true);
@@ -73,14 +73,14 @@ describe("Phase 12D Digital Twin governed state ingestion", () => {
   });
 
   it("declares ingestion events in catalog", () => {
-    expect(assertIngestionContracts().contractVersion).toBe("0.4.0-ingestion-draft");
+    expect(assertIngestionContracts().contractVersion).toBe("0.5.0-telemetry-binding-draft");
     for (const evt of INGESTION_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }
   });
 
-  it("forbids telemetry, SHM, sim, and auto-publish", () => {
-    expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(false);
+  it("forbids high-frequency telemetry, SHM, sim, and auto-publish", () => {
+    expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(true);
     expect(HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED).toBe(false);
     expect(SHM_RUNTIME_IMPLEMENTED).toBe(false);
     expect(SIMULATION_EXECUTION_IMPLEMENTED).toBe(false);

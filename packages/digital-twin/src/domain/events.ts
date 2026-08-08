@@ -7,8 +7,9 @@ import type { TwinRepresentationReference } from "./representation";
 import type { TwinRelationship } from "./relationships";
 import { INGESTION_DOMAIN_EVENTS } from "./ingestion-events";
 import { STATE_DOMAIN_EVENTS } from "./state-events";
+import { TELEMETRY_DOMAIN_EVENTS } from "./telemetry-events";
 
-export { STATE_DOMAIN_EVENTS, INGESTION_DOMAIN_EVENTS };
+export { STATE_DOMAIN_EVENTS, INGESTION_DOMAIN_EVENTS, TELEMETRY_DOMAIN_EVENTS };
 
 export const CORE_DIGITAL_TWIN_EVENTS = [
   "engineering.digital_twin.created",
@@ -21,6 +22,7 @@ export const DIGITAL_TWIN_EVENTS = [
   ...CORE_DIGITAL_TWIN_EVENTS,
   ...STATE_DOMAIN_EVENTS,
   ...INGESTION_DOMAIN_EVENTS,
+  ...TELEMETRY_DOMAIN_EVENTS,
 ] as const;
 
 export type DigitalTwinEventType = (typeof DIGITAL_TWIN_EVENTS)[number];
@@ -35,7 +37,8 @@ export type DigitalTwinEvent = {
   correlationId?: string;
   payload: Record<string, unknown>;
   governance: {
-    liveTelemetryImplemented: false;
+    /** Bounded binding/projection — Twin does not store raw telemetry payloads. */
+    liveTelemetryImplemented: true;
     simulationExecuted: false;
     runtimeSyncEnabled: false;
     physicalActuationEnabled: false;
@@ -109,7 +112,7 @@ export function createDigitalTwinEvent(input: {
     correlationId: input.correlationId,
     payload: input.payload,
     governance: {
-      liveTelemetryImplemented: false,
+      liveTelemetryImplemented: true,
       simulationExecuted: false,
       runtimeSyncEnabled: false,
       physicalActuationEnabled: false,

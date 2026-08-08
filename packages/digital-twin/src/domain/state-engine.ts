@@ -582,33 +582,36 @@ export function createDigitalTwinStateEngine(deps: DigitalTwinStateEngineDeps): 
 
 export function assertStateForbiddenCapabilities(): {
   ok: true;
-  liveTelemetryImplemented: false;
+  liveTelemetryImplemented: true;
   simulationImplemented: false;
   threeDViewerImplemented: false;
   physicalActuationEnabled: false;
   automaticObservedStatePublicationEnabled: false;
 } {
-  if (LIVE_TELEMETRY_IMPLEMENTED || HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
-    throw new Error("live_telemetry_forbidden_in_phase_12d");
+  if (!LIVE_TELEMETRY_IMPLEMENTED) {
+    throw new Error("bounded_live_telemetry_binding_required_in_phase_12e");
+  }
+  if (HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
+    throw new Error("high_frequency_telemetry_forbidden_in_phase_12e");
   }
   if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_execution_forbidden_in_phase_12d");
+    throw new Error("simulation_execution_forbidden_in_phase_12e");
   }
   if (THREE_D_VIEWER_IMPLEMENTED) {
-    throw new Error("three_d_viewer_forbidden_in_phase_12d");
+    throw new Error("three_d_viewer_forbidden_in_phase_12e");
   }
   if (PHYSICAL_ACTUATION_ENABLED) {
-    throw new Error("physical_actuation_forbidden_in_phase_12d");
+    throw new Error("physical_actuation_forbidden_in_phase_12e");
   }
   if (SHM_RUNTIME_IMPLEMENTED) {
-    throw new Error("shm_runtime_forbidden_in_phase_12d");
+    throw new Error("shm_runtime_forbidden_in_phase_12e");
   }
   if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
     throw new Error("automatic_observed_state_publication_forbidden");
   }
   return {
     ok: true,
-    liveTelemetryImplemented: false,
+    liveTelemetryImplemented: true,
     simulationImplemented: false,
     threeDViewerImplemented: false,
     physicalActuationEnabled: false,

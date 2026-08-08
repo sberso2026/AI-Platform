@@ -506,7 +506,7 @@ export function assertIngestionRuntimeBounded(): {
   ok: true;
   digitalTwinRuntimeImplemented: true;
   automaticObservedStatePublicationEnabled: false;
-  liveTelemetryImplemented: false;
+  liveTelemetryImplemented: true;
   highFrequencyTelemetryImplemented: false;
   shmRuntimeImplemented: false;
   simulationExecutionImplemented: false;
@@ -514,20 +514,23 @@ export function assertIngestionRuntimeBounded(): {
   if (AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED) {
     throw new Error("automatic_observed_state_publication_forbidden");
   }
-  if (LIVE_TELEMETRY_IMPLEMENTED || HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
-    throw new Error("telemetry_forbidden_in_phase_12d");
+  if (!LIVE_TELEMETRY_IMPLEMENTED) {
+    throw new Error("bounded_live_telemetry_binding_required_in_phase_12e");
+  }
+  if (HIGH_FREQUENCY_TELEMETRY_IMPLEMENTED) {
+    throw new Error("high_frequency_telemetry_forbidden_in_phase_12e");
   }
   if (SHM_RUNTIME_IMPLEMENTED) {
-    throw new Error("shm_runtime_forbidden_in_phase_12d");
+    throw new Error("shm_runtime_forbidden_in_phase_12e");
   }
   if (SIMULATION_EXECUTION_IMPLEMENTED) {
-    throw new Error("simulation_forbidden_in_phase_12d");
+    throw new Error("simulation_forbidden_in_phase_12e");
   }
   return {
     ok: true,
     digitalTwinRuntimeImplemented: true,
     automaticObservedStatePublicationEnabled: false,
-    liveTelemetryImplemented: false,
+    liveTelemetryImplemented: true,
     highFrequencyTelemetryImplemented: false,
     shmRuntimeImplemented: false,
     simulationExecutionImplemented: false,
