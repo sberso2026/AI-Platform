@@ -24,6 +24,7 @@ import type { ProductivityAssessmentState } from "./productivity";
 import type { ForecastAssessmentState } from "./forecast";
 import type { DecisionAssessmentState } from "./decision";
 import type { ScenarioAssessmentState } from "./scenario";
+import type { RiskOpportunityAssessmentState } from "./risk-opportunity";
 
 export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.progress.updated",
@@ -55,6 +56,9 @@ export const PROJECT_CONTROLS_EVENTS = [
   "engineering.project.scenario.updated",
   "engineering.project.scenario.reviewed",
   "engineering.project.scenario.published",
+  "engineering.project.risk_opportunity.updated",
+  "engineering.project.risk_opportunity.reviewed",
+  "engineering.project.risk_opportunity.published",
   "engineering.project.snapshot.created",
 ] as const;
 
@@ -93,6 +97,12 @@ export const PROJECT_CONTROLS_DECISION_EVENTS = [
   "engineering.project.decision.updated",
   "engineering.project.decision.reviewed",
   "engineering.project.decision.published",
+] as const;
+
+export const PROJECT_CONTROLS_RISK_OPPORTUNITY_EVENTS = [
+  "engineering.project.risk_opportunity.updated",
+  "engineering.project.risk_opportunity.reviewed",
+  "engineering.project.risk_opportunity.published",
 ] as const;
 
 export const PROJECT_CONTROLS_SCENARIO_EVENTS = [
@@ -219,6 +229,8 @@ export function profileEventPayload(profile: ProjectProfile): Record<string, unk
     decisionsAbstained: profile.decisionSupport?.decisionsAbstained ?? 0,
     scenariosAssessed: profile.scenarioIntelligence?.scenariosAssessed ?? 0,
     scenariosAbstained: profile.scenarioIntelligence?.scenariosAbstained ?? 0,
+    riskOpportunityAssessmentsCompleted: profile.riskOpportunityIntelligence?.assessmentsCompleted ?? 0,
+    riskOpportunityAssessmentsAbstained: profile.riskOpportunityIntelligence?.assessmentsAbstained ?? 0,
     abstained: profile.abstained,
     activeContributorKeys: profile.activeContributorKeys,
     reservedContributorKeys: profile.reservedContributorKeys,
@@ -350,6 +362,38 @@ export function decisionEventPayload(state: DecisionAssessmentState): Record<str
   };
 }
 
+/** Identifiers only — no register mutation or owner assignment claims. */
+export function riskOpportunityEventPayload(
+  state: import("./risk-opportunity").RiskOpportunityAssessmentState,
+): Record<string, unknown> {
+  return {
+    riskOpportunityStateId: state.stateId,
+    version: state.version,
+    status: state.status,
+    assessmentClass: state.assessmentClass,
+    scopeKind: state.controlContext.scope.kind,
+    scopeReferenceId: state.controlContext.scope.referenceId,
+    riskOpportunityUnitId: state.controlContext.riskOpportunityUnitId,
+    abstained: state.abstained,
+    evidenceRefCount: state.evidenceRefs.length,
+    riskSignalCount: state.riskSignals.length,
+    opportunitySignalCount: state.opportunitySignals.length,
+    contributorCount: state.contributingContributors.length,
+    composedContextId: state.composedContextId,
+    forecastContextId: state.forecastContextId,
+    decisionContextId: state.decisionContextId,
+    scenarioContextId: state.scenarioContextId,
+    autoExecutionClaimed: false,
+    approvalAuthorityClaimed: false,
+    riskRegisterMutated: false,
+    opportunityRegisterMutated: false,
+    ownerAssignmentPerformed: false,
+    treatmentExecutionPerformed: false,
+    duplicateRiskOwnershipDetected: false,
+    mutatesUpstreamContributors: false,
+  };
+}
+
 /** Identifiers only — no preferred selection or optimisation claims. */
 export function scenarioEventPayload(state: ScenarioAssessmentState): Record<string, unknown> {
   return {
@@ -389,6 +433,7 @@ export function snapshotEventPayload(snapshot: ProjectSnapshot): Record<string, 
     forecastStateCount: snapshot.forecastStateIds.length,
     decisionStateCount: snapshot.decisionStateIds.length,
     scenarioStateCount: snapshot.scenarioStateIds.length,
+    riskOpportunityStateCount: snapshot.riskOpportunityStateIds.length,
     capturedAt: snapshot.capturedAt,
     immutable: true,
     containsEvidencePayloads: false,

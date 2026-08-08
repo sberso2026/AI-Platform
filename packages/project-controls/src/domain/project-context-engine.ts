@@ -4,8 +4,8 @@
  * Composes a `ProjectProfile` from the intelligence Project Controls owns.
  * Active contributors: progress intelligence (11B), schedule intelligence (11C),
  * change intelligence (11D), cost intelligence (11E), productivity intelligence
- * (11F), forecast intelligence (11G), decision support (11H), and scenario
- * intelligence (11I). Contingency
+ * (11F), forecast intelligence (11G), decision support (11H), scenario
+ * intelligence (11I), and risk & opportunity intelligence (11J). Contingency
  * and earned value stay reserved.
  *
  * The engine reads a `ProjectReference` for identity fields. It never writes
@@ -78,6 +78,14 @@ import {
   type ScenarioType,
   type ScenarioProfileContribution,
 } from "./scenario";
+import {
+  type RiskOpportunityAssessmentState,
+  type RiskOpportunityConfidenceClass,
+  type RiskOpportunityEvidenceSufficiency,
+  type RiskOpportunityProfileContribution,
+  type RiskSignal,
+  type OpportunitySignal,
+} from "./risk-opportunity";
 import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
 
 export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
@@ -137,6 +145,13 @@ export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] 
       "Exploratory scenario comparison from composed contributors, forecast, and decision support. Implemented in Phase 11I. Not preferred selection or optimisation.",
   },
   {
+    key: "risk_opportunity_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory risk/opportunity intelligence signals from composed contributors through scenario intelligence. Implemented in Phase 11J. Not register mutation, owner assignment, or treatment execution.",
+  },
+  {
     key: "contingency_intelligence",
     status: "reserved",
     ownedBy: "project_controls",
@@ -168,6 +183,7 @@ export type ProjectContextComposeInput = {
   forecast?: readonly ForecastAssessmentState[];
   decision?: readonly DecisionAssessmentState[];
   scenario?: readonly ScenarioAssessmentState[];
+  riskOpportunity?: readonly RiskOpportunityAssessmentState[];
   /** Number of open change candidates; a candidate is never an approved change. */
   changeCandidateCount?: number;
   version?: number;
@@ -229,6 +245,12 @@ const DECISION_CONFIDENCE_ORDER: DecisionConfidenceClass[] = [
   "high",
 ];
 const SCENARIO_CONFIDENCE_ORDER: ScenarioConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const RISK_OPPORTUNITY_CONFIDENCE_ORDER: RiskOpportunityConfidenceClass[] = [
   "unavailable",
   "low",
   "medium",
@@ -302,6 +324,12 @@ export class ProjectContextEngine {
         state.tenantId === input.tenantId &&
         state.workspaceId === input.workspaceId,
     );
+    const riskOpportunity = (input.riskOpportunity ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
 
     const reasons: string[] = [];
     const progressAssessed = progress.filter((state) => !state.abstained);
@@ -328,6 +356,9 @@ export class ProjectContextEngine {
     const scenarioAssessed = scenario.filter((state) => !state.abstained);
     const scenarioAbstained = scenario.filter((state) => state.abstained);
     const scenarioPublished = scenario.filter((state) => state.status === "published");
+    const riskOpportunityAssessed = riskOpportunity.filter((state) => !state.abstained);
+    const riskOpportunityAbstained = riskOpportunity.filter((state) => state.abstained);
+    const riskOpportunityPublished = riskOpportunity.filter((state) => state.status === "published");
 
     const projectProgress = progress
       .filter((state) => state.scope.kind === "project")
@@ -345,7 +376,8 @@ export class ProjectContextEngine {
       productivity.length === 0 &&
       forecast.length === 0 &&
       decision.length === 0 &&
-      scenario.length === 0
+      scenario.length === 0 &&
+      riskOpportunity.length === 0
     ) {
       abstained = true;
       abstentionReason = "no_project_controls_intelligence_available";
@@ -359,7 +391,8 @@ export class ProjectContextEngine {
       productivityAssessed.length === 0 &&
       forecastAssessed.length === 0 &&
       decisionAssessed.length === 0 &&
-      scenarioAssessed.length === 0
+      scenarioAssessed.length === 0 &&
+      riskOpportunityAssessed.length === 0
     ) {
       abstained = true;
       abstentionReason = "all_intelligence_assessments_abstained";
@@ -374,6 +407,7 @@ export class ProjectContextEngine {
       forecastAbstained.length > 0 ||
       decisionAbstained.length > 0 ||
       scenarioAbstained.length > 0 ||
+      riskOpportunityAbstained.length > 0 ||
       progressPublished.length === 0 ||
       (schedule.length > 0 && schedulePublished.length === 0) ||
       (change.length > 0 && changePublished.length === 0) ||
@@ -381,7 +415,8 @@ export class ProjectContextEngine {
       (productivity.length > 0 && productivityPublished.length === 0) ||
       (forecast.length > 0 && forecastPublished.length === 0) ||
       (decision.length > 0 && decisionPublished.length === 0) ||
-      (scenario.length > 0 && scenarioPublished.length === 0)
+      (scenario.length > 0 && scenarioPublished.length === 0) ||
+      (riskOpportunity.length > 0 && riskOpportunityPublished.length === 0)
     ) {
       profileClass = "partially_composed";
       if (progressAbstained.length > 0) reasons.push("some_progress_scopes_abstained");
@@ -392,6 +427,7 @@ export class ProjectContextEngine {
       if (forecastAbstained.length > 0) reasons.push("some_forecast_assessments_abstained");
       if (decisionAbstained.length > 0) reasons.push("some_decision_assessments_abstained");
       if (scenarioAbstained.length > 0) reasons.push("some_scenario_assessments_abstained");
+      if (riskOpportunityAbstained.length > 0) reasons.push("some_risk_opportunity_assessments_abstained");
       if (progressPublished.length === 0 && progress.length > 0) {
         reasons.push("no_published_progress_yet");
       }
@@ -415,6 +451,9 @@ export class ProjectContextEngine {
       }
       if (scenario.length > 0 && scenarioPublished.length === 0) {
         reasons.push("no_published_scenario_assessment_yet");
+      }
+      if (riskOpportunity.length > 0 && riskOpportunityPublished.length === 0) {
+        reasons.push("no_published_risk_opportunity_assessment_yet");
       }
     }
 
@@ -609,6 +648,59 @@ export class ProjectContextEngine {
         costDecisionComputed: false,
         scheduleExecuted: false,
       } satisfies ScenarioProfileContribution,
+      riskOpportunityIntelligence: {
+        assessmentsCompleted: riskOpportunityAssessed.length,
+        assessmentsAbstained: riskOpportunityAbstained.length,
+        publishedAssessments: riskOpportunityPublished.length,
+        emergingRiskCount: countRiskSignal(riskOpportunityAssessed, "emerging"),
+        increasingRiskCount: countRiskSignal(riskOpportunityAssessed, "increasing"),
+        persistentRiskCount: countRiskSignal(riskOpportunityAssessed, "persistent"),
+        interactingRiskCount: countRiskSignal(riskOpportunityAssessed, "interacting"),
+        unresolvedRiskCount: countRiskSignal(riskOpportunityAssessed, "unresolved"),
+        evidenceGapRiskCount: countRiskSignal(riskOpportunityAssessed, "evidence_gap"),
+        unknownRiskCount: countRiskSignal(riskOpportunityAssessed, "unknown"),
+        recoveryOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "recovery"),
+        mitigationOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "mitigation"),
+        coordinationOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "coordination"),
+        sequencingOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "sequencing"),
+        productivityOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "productivity"),
+        costAvoidanceOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "cost_avoidance"),
+        scheduleProtectionOpportunityCount: countOpportunitySignal(
+          riskOpportunityAssessed,
+          "schedule_protection",
+        ),
+        unknownOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "unknown"),
+        riskSignalCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.riskSignals.length,
+          0,
+        ),
+        opportunitySignalCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.opportunitySignals.length,
+          0,
+        ),
+        crossContributorConflictCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.synthesis.crossContributorConflicts.length,
+          0,
+        ),
+        escalationIndicatorCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.synthesis.escalationIndicators.length,
+          0,
+        ),
+        contributorCoverageCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestRiskOpportunityConfidence(riskOpportunity),
+        dominantSufficiency: dominantRiskOpportunity(riskOpportunity),
+        latestAssessmentAt: latestAt(riskOpportunity.map((s) => s.assessedAt)),
+        autoExecutionClaimed: false,
+        approvalAuthorityClaimed: false,
+        riskRegisterMutated: false,
+        opportunityRegisterMutated: false,
+        ownerAssignmentPerformed: false,
+        treatmentExecutionPerformed: false,
+        duplicateRiskOwnershipDetected: false,
+      } satisfies RiskOpportunityProfileContribution,
       contributors: PROJECT_PROFILE_CONTRIBUTORS,
       activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
       reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
@@ -652,8 +744,8 @@ export function assertProjectProfileContributorsComplete(): {
   for (const key of declared) {
     if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
   }
-  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 8) {
-    throw new Error("phase_11i_must_have_exactly_eight_active_contributors");
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 9) {
+    throw new Error("phase_11j_must_have_exactly_nine_active_contributors");
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
     throw new Error("progress_intelligence_must_stay_active");
@@ -678,6 +770,9 @@ export function assertProjectProfileContributorsComplete(): {
   }
   if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("scenario_intelligence")) {
     throw new Error("scenario_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("risk_opportunity_intelligence")) {
+    throw new Error("risk_opportunity_intelligence_must_be_active");
   }
   for (const key of ["contingency_intelligence", "earned_value"] as const) {
     const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
@@ -938,6 +1033,50 @@ function countScenarioType(states: readonly ScenarioAssessmentState[], scenarioT
   return states.reduce(
     (sum, state) =>
       sum + state.scenarioOptions.filter((opt) => opt.scenarioType === scenarioType).length,
+    0,
+  );
+}
+
+function lowestRiskOpportunityConfidence(
+  states: readonly RiskOpportunityAssessmentState[],
+): RiskOpportunityConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      RISK_OPPORTUNITY_CONFIDENCE_ORDER.indexOf(current) <
+      RISK_OPPORTUNITY_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantRiskOpportunity(
+  states: readonly RiskOpportunityAssessmentState[],
+): RiskOpportunityEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<RiskOpportunityEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countRiskSignal(states: readonly RiskOpportunityAssessmentState[], riskSignal: RiskSignal): number {
+  return states.reduce(
+    (sum, state) => sum + state.riskSignals.filter((signal) => signal.riskSignal === riskSignal).length,
+    0,
+  );
+}
+
+function countOpportunitySignal(
+  states: readonly RiskOpportunityAssessmentState[],
+  opportunitySignal: OpportunitySignal,
+): number {
+  return states.reduce(
+    (sum, state) =>
+      sum + state.opportunitySignals.filter((signal) => signal.opportunitySignal === opportunitySignal).length,
     0,
   );
 }

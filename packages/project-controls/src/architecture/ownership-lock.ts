@@ -42,8 +42,11 @@ import {
   DECISION_SUPPORT_READY,
   SCENARIO_INTELLIGENCE_READY,
   SCENARIO_INTELLIGENCE_IS_ADVISORY_ONLY,
+  RISK_OPPORTUNITY_INTELLIGENCE_READY,
+  RISK_OPPORTUNITY_INTELLIGENCE_IS_ADVISORY_ONLY,
   decisionSupportOwnership,
   scenarioIntelligenceOwnership,
+  riskOpportunityIntelligenceOwnership,
   projectRecommendationOwnership,
   projectDecisionOwnership,
   PROJECT_CONTEXT_COMPOSITION_READY,
@@ -64,6 +67,7 @@ import {
   CPM_SCHEDULING_IMPLEMENTED,
   DUPLICATE_ASSET_OWNERSHIP_INTRODUCED,
   DUPLICATE_PROJECT_OWNERSHIP_DETECTED,
+  DUPLICATE_RISK_OWNERSHIP_DETECTED,
   DUPLICATE_PROJECT_OWNERSHIP_INTRODUCED,
   EARNED_VALUE_IMPLEMENTED,
   FLOAT_COMPUTATION_IMPLEMENTED,
@@ -215,6 +219,13 @@ export const PROJECT_CONTROLS_OWNERSHIP_MATRIX: readonly OwnershipRow[] = [
       "Implemented in 11I as exploratory scenario comparison — not preferred selection, optimisation, or auto-execution",
   },
   {
+    concern: "risk_opportunity_controls_intelligence",
+    owner: "project_controls",
+    relation: "owns",
+    notes:
+      "Implemented in 11J as advisory risk/opportunity intelligence signals — not register mutation, owner assignment, or treatment execution",
+  },
+  {
     concern: "contractual_change_authority",
     owner: "reserved_not_project_controls",
     relation: "forbidden",
@@ -324,6 +335,7 @@ export function assertOwnershipLock(): {
   forecastIntelligenceOwnership: typeof FORECAST_INTELLIGENCE_OWNERSHIP;
   decisionSupportOwnership: typeof decisionSupportOwnership;
   scenarioIntelligenceOwnership: typeof scenarioIntelligenceOwnership;
+  riskOpportunityIntelligenceOwnership: typeof riskOpportunityIntelligenceOwnership;
   projectRecommendationOwnership: typeof projectRecommendationOwnership;
   projectDecisionOwnership: typeof projectDecisionOwnership;
   projectContextCompositionOwnership: typeof projectContextCompositionOwnership;
@@ -344,6 +356,8 @@ export function assertOwnershipLock(): {
   decisionSupportReady: true;
   scenarioIntelligenceReady: true;
   scenarioIntelligenceIsAdvisoryOnly: true;
+  riskOpportunityIntelligenceReady: true;
+  riskOpportunityIntelligenceIsAdvisoryOnly: true;
   projectContextCompositionReady: true;
   projectControlsImplemented: false;
   productionProjectControlsReady: false;
@@ -592,6 +606,7 @@ export function assertOwnershipLock(): {
     forecastIntelligenceOwnership: FORECAST_INTELLIGENCE_OWNERSHIP,
     decisionSupportOwnership: decisionSupportOwnership,
     scenarioIntelligenceOwnership: scenarioIntelligenceOwnership,
+    riskOpportunityIntelligenceOwnership: riskOpportunityIntelligenceOwnership,
     projectRecommendationOwnership: projectRecommendationOwnership,
     projectDecisionOwnership: projectDecisionOwnership,
     projectContextCompositionOwnership: projectContextCompositionOwnership,
@@ -612,6 +627,8 @@ export function assertOwnershipLock(): {
     decisionSupportReady: true,
     scenarioIntelligenceReady: true,
     scenarioIntelligenceIsAdvisoryOnly: true,
+    riskOpportunityIntelligenceReady: true,
+    riskOpportunityIntelligenceIsAdvisoryOnly: true,
     projectContextCompositionReady: true,
     projectControlsImplemented: false,
     productionProjectControlsReady: false,

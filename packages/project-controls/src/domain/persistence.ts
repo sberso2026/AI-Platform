@@ -70,6 +70,13 @@ import type {
   ScenarioReviewRecord,
 } from "./scenario";
 import { scenarioStateKey } from "./scenario";
+import type {
+  RiskOpportunityAssessmentState,
+  RiskOpportunityConfidence,
+  RiskOpportunityEvidence,
+  RiskOpportunityReviewRecord,
+} from "./risk-opportunity";
+import { riskOpportunityStateKey } from "./risk-opportunity";
 import type { ProjectControlsEvent } from "./events";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
@@ -199,6 +206,22 @@ export type PersistedScenarioState = ScenarioAssessmentState;
 export type PersistedScenarioReview = ScenarioReviewRecord;
 export type PersistedScenarioConfidence = ScenarioConfidence & {
   scenarioStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedRiskOpportunityEvidence = RiskOpportunityEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  riskOpportunityStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedRiskOpportunityState = RiskOpportunityAssessmentState;
+export type PersistedRiskOpportunityReview = RiskOpportunityReviewRecord;
+export type PersistedRiskOpportunityConfidence = RiskOpportunityConfidence & {
+  riskOpportunityStateId: string;
   recordedAt: string;
 };
 
@@ -653,6 +676,56 @@ export type ProjectControlsRepositoryPort = {
     scenarioStateId: string,
   ): Promise<PersistedScenarioConfidence[]>;
 
+  saveRiskOpportunityState(state: PersistedRiskOpportunityState): Promise<PersistedRiskOpportunityState>;
+  getRiskOpportunityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedRiskOpportunityState | null>;
+  latestRiskOpportunityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    riskOpportunityUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedRiskOpportunityState | undefined>;
+  listRiskOpportunityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedRiskOpportunityState[]>;
+  nextRiskOpportunityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    riskOpportunityUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number>;
+  saveRiskOpportunityEvidence(
+    evidence: readonly PersistedRiskOpportunityEvidence[],
+  ): Promise<PersistedRiskOpportunityEvidence[]>;
+  listRiskOpportunityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    riskOpportunityStateId: string,
+  ): Promise<PersistedRiskOpportunityEvidence[]>;
+  saveRiskOpportunityReview(
+    review: PersistedRiskOpportunityReview,
+  ): Promise<PersistedRiskOpportunityReview>;
+  listRiskOpportunityReviews(
+    tenantId: string,
+    workspaceId: string,
+    riskOpportunityStateId?: string,
+  ): Promise<PersistedRiskOpportunityReview[]>;
+  saveRiskOpportunityConfidence(
+    confidence: PersistedRiskOpportunityConfidence,
+  ): Promise<PersistedRiskOpportunityConfidence>;
+  listRiskOpportunityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    riskOpportunityStateId: string,
+  ): Promise<PersistedRiskOpportunityConfidence[]>;
+
   saveProjectSnapshot(snapshot: PersistedProjectSnapshot): Promise<PersistedProjectSnapshot>;
   getProjectSnapshotById(
     tenantId: string,
@@ -733,6 +806,10 @@ export type DurableProjectControlsStore = {
   scenarioEvidence: PersistedScenarioEvidence[];
   scenarioReviews: PersistedScenarioReview[];
   scenarioConfidence: PersistedScenarioConfidence[];
+  riskOpportunityStates: PersistedRiskOpportunityState[];
+  riskOpportunityEvidence: PersistedRiskOpportunityEvidence[];
+  riskOpportunityReviews: PersistedRiskOpportunityReview[];
+  riskOpportunityConfidence: PersistedRiskOpportunityConfidence[];
   projectSnapshots: PersistedProjectSnapshot[];
   projectTimeline: PersistedProjectTimelineEvent[];
   projectProfiles: PersistedProjectProfile[];
@@ -778,6 +855,10 @@ export function createDurableProjectControlsMemoryStore(): DurableProjectControl
     scenarioEvidence: [],
     scenarioReviews: [],
     scenarioConfidence: [],
+    riskOpportunityStates: [],
+    riskOpportunityEvidence: [],
+    riskOpportunityReviews: [],
+    riskOpportunityConfidence: [],
     projectSnapshots: [],
     projectTimeline: [],
     projectProfiles: [],
@@ -1957,6 +2038,148 @@ export class MemoryProjectControlsRepository implements ProjectControlsRepositor
         row.tenantId === tenantId &&
         row.workspaceId === workspaceId &&
         row.scenarioStateId === scenarioStateId,
+    );
+  }
+
+  async saveRiskOpportunityState(
+    state: PersistedRiskOpportunityState,
+  ): Promise<PersistedRiskOpportunityState> {
+    const riskOpportunityUnitId = state.controlContext.riskOpportunityUnitId;
+    const clash = this.store.riskOpportunityStates.find(
+      (row) =>
+        row.tenantId === state.tenantId &&
+        row.workspaceId === state.workspaceId &&
+        riskOpportunityStateKey(row.controlContext.scope, row.controlContext.riskOpportunityUnitId) ===
+          riskOpportunityStateKey(state.controlContext.scope, riskOpportunityUnitId) &&
+        row.version === state.version,
+    );
+    if (clash) throw new Error(`optimistic_lock_conflict:risk_opportunity_version=${state.version}`);
+    this.store.riskOpportunityStates.push(state);
+    return state;
+  }
+
+  async getRiskOpportunityStateById(
+    tenantId: string,
+    workspaceId: string,
+    stateId: string,
+  ): Promise<PersistedRiskOpportunityState | null> {
+    return (
+      this.store.riskOpportunityStates.find(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          row.stateId === stateId,
+      ) ?? null
+    );
+  }
+
+  async latestRiskOpportunityState(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    riskOpportunityUnitId: string,
+    asOf?: string,
+  ): Promise<PersistedRiskOpportunityState | undefined> {
+    return latestAsOf(
+      this.store.riskOpportunityStates.filter(
+        (row) =>
+          row.tenantId === tenantId &&
+          row.workspaceId === workspaceId &&
+          riskOpportunityStateKey(row.controlContext.scope, row.controlContext.riskOpportunityUnitId) ===
+            riskOpportunityStateKey(scope, riskOpportunityUnitId),
+      ),
+      asOf,
+    );
+  }
+
+  async listRiskOpportunityStates(
+    tenantId: string,
+    workspaceId: string,
+    projectId: string,
+  ): Promise<PersistedRiskOpportunityState[]> {
+    return this.store.riskOpportunityStates.filter(
+      (row) =>
+        row.tenantId === tenantId && row.workspaceId === workspaceId && row.projectId === projectId,
+    );
+  }
+
+  async nextRiskOpportunityStateVersion(
+    tenantId: string,
+    workspaceId: string,
+    scope: ProjectScopeRef,
+    riskOpportunityUnitId: string,
+    expectedVersion?: number,
+  ): Promise<number> {
+    const latest = await this.latestRiskOpportunityState(
+      tenantId,
+      workspaceId,
+      scope,
+      riskOpportunityUnitId,
+    );
+    const next = (latest?.version ?? 0) + 1;
+    if (expectedVersion !== undefined && expectedVersion !== next - 1) {
+      throw new Error(`optimistic_lock_conflict:risk_opportunity_expected=${expectedVersion}`);
+    }
+    return next;
+  }
+
+  async saveRiskOpportunityEvidence(
+    evidence: readonly PersistedRiskOpportunityEvidence[],
+  ): Promise<PersistedRiskOpportunityEvidence[]> {
+    this.store.riskOpportunityEvidence.push(...evidence);
+    return [...evidence];
+  }
+
+  async listRiskOpportunityEvidence(
+    tenantId: string,
+    workspaceId: string,
+    riskOpportunityStateId: string,
+  ): Promise<PersistedRiskOpportunityEvidence[]> {
+    return this.store.riskOpportunityEvidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.riskOpportunityStateId === riskOpportunityStateId,
+    );
+  }
+
+  async saveRiskOpportunityReview(
+    review: PersistedRiskOpportunityReview,
+  ): Promise<PersistedRiskOpportunityReview> {
+    this.store.riskOpportunityReviews.push(review);
+    return review;
+  }
+
+  async listRiskOpportunityReviews(
+    tenantId: string,
+    workspaceId: string,
+    riskOpportunityStateId?: string,
+  ): Promise<PersistedRiskOpportunityReview[]> {
+    return this.store.riskOpportunityReviews.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        (!riskOpportunityStateId || row.riskOpportunityStateId === riskOpportunityStateId),
+    );
+  }
+
+  async saveRiskOpportunityConfidence(
+    confidence: PersistedRiskOpportunityConfidence,
+  ): Promise<PersistedRiskOpportunityConfidence> {
+    this.store.riskOpportunityConfidence.push(confidence);
+    return confidence;
+  }
+
+  async listRiskOpportunityConfidence(
+    tenantId: string,
+    workspaceId: string,
+    riskOpportunityStateId: string,
+  ): Promise<PersistedRiskOpportunityConfidence[]> {
+    return this.store.riskOpportunityConfidence.filter(
+      (row) =>
+        row.tenantId === tenantId &&
+        row.workspaceId === workspaceId &&
+        row.riskOpportunityStateId === riskOpportunityStateId,
     );
   }
 

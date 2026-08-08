@@ -1,10 +1,10 @@
 # Project Controls Project Context Engine
 
-Phase 11I. `packages/project-controls/src/domain/project-context-engine.ts`.
+Phase 11J. `packages/project-controls/src/domain/project-context-engine.ts`.
 `PROJECT_CONTEXT_ENGINE_READY = true`. Phase 11G added
 `ProjectContextCompositionEngine` (`project-context-composition.ts`) and activated
 `forecast` as the sixth contributor. Phase 11H activates `decision_support` as
-the seventh contributor. Phase 11I activates `scenario_intelligence` as the eighth contributor.
+the seventh contributor. Phase 11I activates `scenario_intelligence` as the eighth contributor. Phase 11J activates `risk_opportunity_intelligence` as the ninth contributor.
 
 ## Purpose
 
@@ -13,7 +13,7 @@ the intelligence Project Controls owns, built from per-scope progress, schedule,
 change and cost assessments plus productivity assessments and a resolved `ProjectReference`.
 
 Its value is as much structural as functional. It fixes the *shape* of the
-profile now, with eight of nine contributors active and one declared
+profile now, with nine of eleven contributors active and two declared
 `reserved`, so later phases add values into an existing contract instead of
 renegotiating it.
 
@@ -44,13 +44,14 @@ cleanly.
 | `forecast` | **active** | Advisory trajectory from composed contributors; not completion date or cost forecast |
 | `decision_support` | **active** | Advisory options/recommendations; not auto-execution or contract approval |
 | `scenario_intelligence` | **active** | Exploratory scenario comparison; no preferred selection or optimisation |
+| `risk_opportunity_intelligence` | **active** | Advisory risk/opportunity signals; not register mutation or owner assignment |
 | `contingency_intelligence` | reserved | No contingency drawdown |
 | `earned_value` | reserved | Reserved **and forbidden** to implement |
 
 `assertProjectProfileContributorsComplete()` proves the list covers every declared
-key, that Phase 11I has exactly eight active contributors
+key, that Phase 11J has exactly nine active contributors
 (`progress_intelligence`, `schedule_intelligence`, `change_intelligence`,
-`cost_intelligence`, `productivity_intelligence`, `forecast`, `decision_support`, `scenario_intelligence`), and that
+`cost_intelligence`, `productivity_intelligence`, `forecast`, `decision_support`, `scenario_intelligence`, `risk_opportunity_intelligence`), and that
 `contingency_intelligence` and `earned_value` are still reserved. Every composed profile echoes `activeContributorKeys` and
 `reservedContributorKeys`, so a consumer can tell absent-because-reserved from
 absent-because-no-data.
@@ -64,11 +65,13 @@ contributors. Decision Support Intelligence consumes composed context plus forec
 and upstream contributors, producing advisory options/recommendations only.
 Scenario Intelligence consumes composed context, forecast, and decision support,
 producing exploratory scenario comparisons only — never preferred selection or auto-execution.
+Risk & Opportunity Intelligence consumes composed context, forecast, decision support, and scenario intelligence,
+producing advisory risk/opportunity signals only — never register mutation, owner assignment, or treatment execution.
 `PROJECT_CONTEXT_COMPOSITION_READY = true`.
 
 ## Profile composition
 
-`compose({ tenantId, workspaceId, projectReference, progress, schedule, change, cost, productivity, forecast, decision, scenario })`.
+`compose({ tenantId, workspaceId, projectReference, progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity })`.
 
 Assessments outside the given tenant, workspace and project are dropped rather
 than trusted, and the drop is recorded as `out_of_scope_*_ignored`.

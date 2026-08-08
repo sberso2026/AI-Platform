@@ -168,6 +168,13 @@ import {
   type ReviewScenarioCommand,
   type ReviewScenarioResult,
 } from "./engine-scenario";
+import {
+  createRiskOpportunityOrchestration,
+  type AssessRiskOpportunityCommand,
+  type AssessRiskOpportunityResult,
+  type ReviewRiskOpportunityCommand,
+  type ReviewRiskOpportunityResult,
+} from "./engine-risk-opportunity";
 
 export type {
   AssessForecastCommand,
@@ -189,6 +196,13 @@ export type {
   ReviewScenarioCommand,
   ReviewScenarioResult,
 } from "./engine-scenario";
+
+export type {
+  AssessRiskOpportunityCommand,
+  AssessRiskOpportunityResult,
+  ReviewRiskOpportunityCommand,
+  ReviewRiskOpportunityResult,
+} from "./engine-risk-opportunity";
 
 export type AssessProgressCommand = {
   tenantId: string;
@@ -586,6 +600,7 @@ export class ProjectControlsEngine {
   private readonly forecastOrchestration: ReturnType<typeof createForecastOrchestration>;
   private readonly decisionOrchestration: ReturnType<typeof createDecisionOrchestration>;
   private readonly scenarioOrchestration: ReturnType<typeof createScenarioOrchestration>;
+  private readonly riskOpportunityOrchestration: ReturnType<typeof createRiskOpportunityOrchestration>;
 
   constructor(private readonly deps: ProjectControlsEngineDeps) {
     assertOwnershipLock();
@@ -620,6 +635,12 @@ export class ProjectControlsEngine {
       appendTimeline: (input) => this.appendProjectTimeline(input),
     });
     this.scenarioOrchestration = createScenarioOrchestration({
+      projectDomainPort: deps.projectDomainPort,
+      repository: deps.repository,
+      events: deps.events,
+      appendTimeline: (input) => this.appendProjectTimeline(input),
+    });
+    this.riskOpportunityOrchestration = createRiskOpportunityOrchestration({
       projectDomainPort: deps.projectDomainPort,
       repository: deps.repository,
       events: deps.events,
@@ -2010,6 +2031,44 @@ export class ProjectControlsEngine {
     return this.scenarioOrchestration.listScenarioHistory(input);
   }
 
+  async assessRiskOpportunity(
+    command: AssessRiskOpportunityCommand,
+  ): Promise<AssessRiskOpportunityResult> {
+    this.requireCapability(command.actorRole, "risk_opportunity.assess");
+    return this.riskOpportunityOrchestration.assessRiskOpportunity(command);
+  }
+
+  async reviewRiskOpportunity(
+    command: ReviewRiskOpportunityCommand,
+  ): Promise<ReviewRiskOpportunityResult> {
+    this.requireCapability(
+      command.actorRole,
+      command.publish ? "risk_opportunity.publish" : "risk_opportunity.review",
+    );
+    return this.riskOpportunityOrchestration.reviewRiskOpportunity(command);
+  }
+
+  async getLatestRiskOpportunity(input: {
+    tenantId: string;
+    workspaceId: string;
+    scope: import("./risk-opportunity").RiskOpportunityControlContext["scope"];
+    riskOpportunityUnitId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "risk_opportunity.read");
+    return this.riskOpportunityOrchestration.getLatestRiskOpportunity(input);
+  }
+
+  async listRiskOpportunityHistory(input: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+    actorRole: ProjectControlsRole;
+  }) {
+    this.requireCapability(input.actorRole, "risk_opportunity.read");
+    return this.riskOpportunityOrchestration.listRiskOpportunityHistory(input);
+  }
+
   /**
    * Capture an immutable, identifier-only reference set for the project. The
    * snapshot copies no evidence, no indications and no dates from the states it
@@ -2022,7 +2081,7 @@ export class ProjectControlsEngine {
     const reference = await this.resolveProject(command);
     const asOf = command.asOf ?? new Date().toISOString();
 
-    const [progress, schedule, change, cost, productivity, forecast, decision, scenario] =
+    const [progress, schedule, change, cost, productivity, forecast, decision, scenario, riskOpportunity] =
       await Promise.all([
       this.deps.repository.listProgressAssessments(
         command.tenantId,
@@ -2064,6 +2123,11 @@ export class ProjectControlsEngine {
         command.workspaceId,
         reference.projectId,
       ),
+      this.deps.repository.listRiskOpportunityStates(
+        command.tenantId,
+        command.workspaceId,
+        reference.projectId,
+      ),
     ]);
 
     const profileId =
@@ -2098,6 +2162,9 @@ export class ProjectControlsEngine {
       scenarioStateIds: this.scenarioOrchestration.latestPerScenarioThread(scenario).map(
         (state) => state.stateId,
       ),
+      riskOpportunityStateIds: this.riskOpportunityOrchestration
+        .latestPerRiskOpportunityThread(riskOpportunity)
+        .map((state) => state.stateId),
       createdBy: command.actorId,
       immutable: true,
       containsEvidencePayloads: false,
@@ -2181,6 +2248,11 @@ export class ProjectControlsEngine {
       command.workspaceId,
       reference.projectId,
     );
+    const riskOpportunity = await this.deps.repository.listRiskOpportunityStates(
+      command.tenantId,
+      command.workspaceId,
+      reference.projectId,
+    );
     const candidates = await this.deps.repository.listChangeCandidates(
       command.tenantId,
       command.workspaceId,
@@ -2209,6 +2281,9 @@ export class ProjectControlsEngine {
       forecast: this.forecastOrchestration.latestPerForecastThread(forecast),
       decision: this.decisionOrchestration.latestPerDecisionThread(decision),
       scenario: this.scenarioOrchestration.latestPerScenarioThread(scenario),
+      riskOpportunity: this.riskOpportunityOrchestration.latestPerRiskOpportunityThread(
+        riskOpportunity,
+      ),
       changeCandidateCount: candidates.filter((row) => row.status === "candidate").length,
       version,
       asOf,

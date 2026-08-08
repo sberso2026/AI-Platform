@@ -155,10 +155,11 @@ describe("Phase 11I scenario review workflow", () => {
 });
 
 describe("Phase 11I project context with scenario intelligence", () => {
-  it("lists eight active contributors including scenario_intelligence", () => {
+  it("lists nine active contributors including scenario_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(8);
+    expect(check.activeContributorKeys).toHaveLength(9);
     expect(check.activeContributorKeys).toContain("scenario_intelligence");
+    expect(check.activeContributorKeys).toContain("risk_opportunity_intelligence");
   });
 });
 

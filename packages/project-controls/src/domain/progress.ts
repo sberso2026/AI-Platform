@@ -288,6 +288,7 @@ export const PROJECT_PROFILE_CONTRIBUTOR_KEYS = [
   "forecast",
   "decision_support",
   "scenario_intelligence",
+  "risk_opportunity_intelligence",
 ] as const;
 
 export type ProjectProfileContributorKey = (typeof PROJECT_PROFILE_CONTRIBUTOR_KEYS)[number];
@@ -362,6 +363,7 @@ export type ProjectProfile = {
   decisionSupport?: import("./decision").DecisionProfileContribution;
   /** Scenario intelligence rollups from Phase 11I. Comparisons only — never preferred selection. */
   scenarioIntelligence?: import("./scenario").ScenarioProfileContribution;
+  riskOpportunityIntelligence?: import("./risk-opportunity").RiskOpportunityProfileContribution;
   contributors: readonly ProjectProfileContributor[];
   activeContributorKeys: readonly ProjectProfileContributorKey[];
   reservedContributorKeys: readonly ProjectProfileContributorKey[];

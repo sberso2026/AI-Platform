@@ -25,6 +25,7 @@ import {
   AUTONOMOUS_FORECAST_PUBLICATION_ALLOWED,
   AUTONOMOUS_DECISION_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCENARIO_PUBLICATION_ALLOWED,
+  AUTONOMOUS_RISK_OPPORTUNITY_PUBLICATION_ALLOWED,
   AUTONOMOUS_PROGRESS_PUBLICATION_ALLOWED,
   AUTONOMOUS_SCHEDULE_PUBLICATION_ALLOWED,
   CONTRACTUAL_CHANGE_APPROVAL_BY_AI_ALLOWED,
@@ -950,5 +951,126 @@ export function assertScenarioPublishable(input: {
   }
   if (input.assessedBy && input.assessedBy === input.reviewerId) {
     throw new Error("scenario_self_approval_forbidden");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Risk & Opportunity review (Phase 11J)
+// ---------------------------------------------------------------------------
+
+export const RISK_OPPORTUNITY_REVIEW_WORKFLOW_SLUG =
+  "project_controls.risk_opportunity_review" as const;
+
+export const RISK_OPPORTUNITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: RISK_OPPORTUNITY_REVIEW_WORKFLOW_SLUG,
+  displayName: "Project Controls Risk & Opportunity Intelligence Review",
+  moduleKey: "project_controls",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "published",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "changes_requested", action: "request_changes" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "changes_requested", to: "pending_review", action: "resubmit" },
+    { from: "approved", to: "published", action: "publish" },
+  ],
+};
+
+export const RISK_OPPORTUNITY_REVIEW_ENTITY_TYPE =
+  "project_controls_risk_opportunity_assessment" as const;
+
+export type RiskOpportunityReviewAction =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "resubmit"
+  | "publish";
+export type RiskOpportunityReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "pending_review"
+  | "published";
+
+export function startRiskOpportunityReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assessmentStateId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: RISK_OPPORTUNITY_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: RISK_OPPORTUNITY_REVIEW_ENTITY_TYPE,
+    entityId: input.assessmentStateId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "risk_opportunity_intelligence",
+      projectId: input.projectId,
+      advisoryOnly: true,
+      autoExecutionEnabled: false,
+      approvalAuthorityClaimed: false,
+      riskRegisterMutated: false,
+      opportunityRegisterMutated: false,
+      ownerAssignmentPerformed: false,
+      treatmentExecutionPerformed: false,
+      duplicateRiskOwnershipDetected: false,
+      mutatesUpstreamContributors: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: RISK_OPPORTUNITY_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionRiskOpportunityReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: RiskOpportunityReviewAction;
+  to: RiskOpportunityReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: RISK_OPPORTUNITY_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export function assertRiskOpportunityPublishable(input: {
+  workflowState: string;
+  reviewerId?: string;
+  assessedBy?: string;
+  approvalAuthorityClaimed?: boolean;
+}): void {
+  if (AUTONOMOUS_RISK_OPPORTUNITY_PUBLICATION_ALLOWED) {
+    throw new Error("autonomous_risk_opportunity_publication_forbidden");
+  }
+  if (input.approvalAuthorityClaimed === true) {
+    throw new Error("risk_opportunity_assessment_approval_is_not_register_approval");
+  }
+  if (input.workflowState !== "approved") {
+    throw new Error("risk_opportunity_publish_requires_approved_review");
+  }
+  if (!input.reviewerId) {
+    throw new Error("risk_opportunity_publish_requires_reviewer");
+  }
+  if (input.assessedBy && input.assessedBy === input.reviewerId) {
+    throw new Error("risk_opportunity_self_approval_forbidden");
   }
 }

@@ -159,7 +159,7 @@ describe("Phase 11F productivity review workflow", () => {
 describe("Phase 11F project context with productivity", () => {
   it("lists seven active contributors including productivity_intelligence", () => {
     const check = assertProjectProfileContributorsComplete();
-    expect(check.activeContributorKeys).toHaveLength(8);
+    expect(check.activeContributorKeys).toHaveLength(9);
     expect(check.activeContributorKeys).toContain("productivity_intelligence");
     expect(check.activeContributorKeys).toContain("forecast");
     expect(check.activeContributorKeys).toContain("decision_support");

@@ -1,6 +1,6 @@
 {
   "name": "@rtb/project-controls",
-  "version": "0.9.0-scenario-intelligence",
+  "version": "0.10.0-risk-opportunity-intelligence",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

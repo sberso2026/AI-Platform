@@ -56,6 +56,17 @@ export {
   assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInScenarioIntelligence,
   assertAdvisoryOnly as assertScenarioAdvisoryOnly,
 } from "./domain/scenario-engine";
+export * from "./domain/risk-opportunity";
+export * from "./domain/risk-opportunity-confidence";
+export {
+  ProjectControlsRiskOpportunityIntelligenceEngine,
+  RiskOpportunityIntelligenceEngine,
+  createRiskOpportunityIntelligenceEngine,
+  assertNoRegisterMutation,
+  assertNoTreatmentExecution,
+  assertNoEarnedValueOrCpm as assertNoEarnedValueOrCpmInRiskOpportunityIntelligence,
+  assertAdvisoryOnly as assertRiskOpportunityAdvisoryOnly,
+} from "./domain/risk-opportunity-engine";
 export * from "./domain/project-context-composition";
 export * from "./domain/baseline-provider";
 export * from "./domain/project-context-engine";
@@ -106,6 +117,10 @@ export {
   type PersistedScenarioEvidence,
   type PersistedScenarioReview,
   type PersistedScenarioConfidence,
+  type PersistedRiskOpportunityState,
+  type PersistedRiskOpportunityEvidence,
+  type PersistedRiskOpportunityReview,
+  type PersistedRiskOpportunityConfidence,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
   type PersistedProjectProfile,
