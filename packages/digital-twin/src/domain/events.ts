@@ -8,8 +8,14 @@ import type { TwinRelationship } from "./relationships";
 import { INGESTION_DOMAIN_EVENTS } from "./ingestion-events";
 import { STATE_DOMAIN_EVENTS } from "./state-events";
 import { TELEMETRY_DOMAIN_EVENTS } from "./telemetry-events";
+import { REPRESENTATION_DOMAIN_EVENTS } from "./representation-events";
 
-export { STATE_DOMAIN_EVENTS, INGESTION_DOMAIN_EVENTS, TELEMETRY_DOMAIN_EVENTS };
+export {
+  STATE_DOMAIN_EVENTS,
+  INGESTION_DOMAIN_EVENTS,
+  TELEMETRY_DOMAIN_EVENTS,
+  REPRESENTATION_DOMAIN_EVENTS,
+};
 
 export const CORE_DIGITAL_TWIN_EVENTS = [
   "engineering.digital_twin.created",
@@ -23,6 +29,7 @@ export const DIGITAL_TWIN_EVENTS = [
   ...STATE_DOMAIN_EVENTS,
   ...INGESTION_DOMAIN_EVENTS,
   ...TELEMETRY_DOMAIN_EVENTS,
+  ...REPRESENTATION_DOMAIN_EVENTS,
 ] as const;
 
 export type DigitalTwinEventType = (typeof DIGITAL_TWIN_EVENTS)[number];

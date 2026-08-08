@@ -38,6 +38,12 @@ import {
   type PersistedTelemetryAggregationPolicy,
   type PersistedTelemetryProjectionRecord,
   type TelemetryBindingReviewRecord,
+  type PersistedRepresentationSource,
+  type PersistedRepresentationElement,
+  type PersistedRepresentationMapping,
+  type PersistedSpatialReference,
+  type PersistedRepresentationChangeImpact,
+  type RepresentationMappingReviewRecord,
 } from "./persistence";
 
 const STATES = "digital_twin_states";
@@ -58,6 +64,13 @@ const TELEMETRY_BINDINGS = "digital_twin_telemetry_bindings";
 const TELEMETRY_POLICIES = "digital_twin_telemetry_aggregation_policies";
 const TELEMETRY_PROJECTIONS = "digital_twin_telemetry_projection_records";
 const TELEMETRY_BINDING_REVIEWS = "digital_twin_telemetry_binding_reviews";
+const REP_SOURCES = "digital_twin_representation_sources";
+const REP_ELEMENTS = "digital_twin_representation_elements";
+const REP_MAPPINGS = "digital_twin_representation_mappings";
+const REP_MAPPING_REVIEWS = "digital_twin_representation_mapping_reviews";
+const REP_CHANGE_IMPACTS = "digital_twin_representation_change_impacts";
+/** Thin spatial refs table (batch_79) — no location hierarchy. */
+const SPATIAL_REFS = "digital_twin_spatial_references";
 
 type AnyClient = {
   from(table: string): {
@@ -1531,7 +1544,436 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
       selfApproved: false as const,
     }));
   }
+
+  async saveRepresentationSource(
+    source: PersistedRepresentationSource,
+  ): Promise<PersistedRepresentationSource> {
+    const row = {
+      source_id: source.representationSourceId,
+      tenant_id: source.tenantId,
+      workspace_id: source.workspaceId,
+      twin_id: source.twinId,
+      format: source.format,
+      source_ref: source.sourceRef,
+      file_id: source.fileId ?? null,
+      display_name: source.displayName,
+      version: source.version,
+      fidelity_level: source.fidelityLevel,
+      coordinate_reference_system: source.coordinateReferenceSystem ?? null,
+      status: source.status,
+      stores_geometry_payload: false,
+      stores_source_model_binary: false,
+      authoring_enabled: false,
+      viewer_authoring_enabled: false,
+      viewer_enabled: false,
+      created_at: source.createdAt,
+      updated_at: source.updatedAt,
+      created_by: source.createdBy ?? null,
+    };
+    const { error } = await this.supabase.from(REP_SOURCES).insert(row).select("*").single();
+    if (error) throw new Error(`representation_source_persist_failed:${error.message}`);
+    return source;
+  }
+
+  async listRepresentationSources(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationSource[]> {
+    const { data, error } = await this.supabase
+      .from(REP_SOURCES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`representation_sources_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapRepresentationSourceRow(row as Record<string, unknown>));
+  }
+
+  async getRepresentationSourceById(
+    tenantId: string,
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<PersistedRepresentationSource | null> {
+    const { data, error } = await this.supabase
+      .from(REP_SOURCES)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("source_id", sourceId)
+      .maybeSingle();
+    if (error) throw new Error(`representation_source_read_failed:${error.message}`);
+    return data ? mapRepresentationSourceRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveRepresentationElement(
+    element: PersistedRepresentationElement,
+  ): Promise<PersistedRepresentationElement> {
+    const row = {
+      element_id: element.elementRefId,
+      source_id: element.representationSourceId,
+      tenant_id: element.tenantId,
+      workspace_id: element.workspaceId,
+      twin_id: element.twinId,
+      external_element_id: element.externalElementId,
+      element_type: element.elementType ?? null,
+      display_name: element.displayName ?? null,
+      parent_element_id: element.parentElementRefId ?? null,
+      stores_geometry_payload: false,
+      created_at: element.createdAt,
+      updated_at: element.updatedAt,
+    };
+    const { error } = await this.supabase.from(REP_ELEMENTS).insert(row).select("*").single();
+    if (error) throw new Error(`representation_element_persist_failed:${error.message}`);
+    return element;
+  }
+
+  async listRepresentationElements(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationElement[]> {
+    const { data, error } = await this.supabase
+      .from(REP_ELEMENTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`representation_elements_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapRepresentationElementRow(row as Record<string, unknown>));
+  }
+
+  async getRepresentationElementById(
+    tenantId: string,
+    workspaceId: string,
+    elementId: string,
+  ): Promise<PersistedRepresentationElement | null> {
+    const { data, error } = await this.supabase
+      .from(REP_ELEMENTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("element_id", elementId)
+      .maybeSingle();
+    if (error) throw new Error(`representation_element_read_failed:${error.message}`);
+    return data ? mapRepresentationElementRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveRepresentationMapping(
+    mapping: PersistedRepresentationMapping,
+  ): Promise<PersistedRepresentationMapping> {
+    const row = {
+      mapping_id: mapping.mappingId,
+      tenant_id: mapping.tenantId,
+      workspace_id: mapping.workspaceId,
+      twin_id: mapping.twinId,
+      source_id: mapping.representationSourceId,
+      element_id: mapping.elementRefId,
+      mapping_type: mapping.mappingType,
+      method: mapping.mappingMethod,
+      confidence: mapping.confidence,
+      mapping_version: mapping.mappingVersion,
+      lifecycle: mapping.lifecycle,
+      target_entity_ref: mapping.targetEntityRef ?? null,
+      review_workflow_instance_id: mapping.reviewWorkflowInstanceId ?? null,
+      superseded_by_mapping_id: mapping.supersededByMappingId ?? null,
+      ai_suggested: mapping.aiSuggested,
+      auto_approved: false,
+      stores_geometry_payload: false,
+      viewer_authoring_enabled: false,
+      auto_approve_enabled: false,
+      created_at: mapping.createdAt,
+      updated_at: mapping.updatedAt,
+      created_by: mapping.createdBy ?? null,
+    };
+    const { error } = await this.supabase.from(REP_MAPPINGS).insert(row).select("*").single();
+    if (error) throw new Error(`representation_mapping_persist_failed:${error.message}`);
+    return mapping;
+  }
+
+  async listRepresentationMappings(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationMapping[]> {
+    const { data, error } = await this.supabase
+      .from(REP_MAPPINGS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`representation_mappings_read_failed:${error.message}`);
+    return (data ?? []).map((row) => mapRepresentationMappingRow(row as Record<string, unknown>));
+  }
+
+  async getRepresentationMappingById(
+    tenantId: string,
+    workspaceId: string,
+    mappingId: string,
+  ): Promise<PersistedRepresentationMapping | null> {
+    const { data, error } = await this.supabase
+      .from(REP_MAPPINGS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("mapping_id", mappingId)
+      .maybeSingle();
+    if (error) throw new Error(`representation_mapping_read_failed:${error.message}`);
+    return data ? mapRepresentationMappingRow(data as Record<string, unknown>) : null;
+  }
+
+  async saveRepresentationMappingReview(
+    review: RepresentationMappingReviewRecord,
+  ): Promise<RepresentationMappingReviewRecord> {
+    const row = {
+      review_id: review.reviewId,
+      tenant_id: review.tenantId,
+      workspace_id: review.workspaceId,
+      twin_id: review.twinId,
+      mapping_id: review.mappingId,
+      workflow_instance_id: review.workflowInstanceId,
+      workflow_state: review.workflowState,
+      outcome: review.outcome ?? null,
+      reviewer_id: review.reviewerId ?? null,
+      notes: review.notes ?? null,
+      created_at: review.createdAt,
+      completed_at: review.completedAt ?? null,
+      self_approved: false,
+    };
+    const { error } = await this.supabase
+      .from(REP_MAPPING_REVIEWS)
+      .insert(row)
+      .select("*")
+      .single();
+    if (error) throw new Error(`representation_mapping_review_persist_failed:${error.message}`);
+    return review;
+  }
+
+  async listRepresentationMappingReviews(
+    tenantId: string,
+    workspaceId: string,
+    mappingId: string,
+  ): Promise<RepresentationMappingReviewRecord[]> {
+    const { data, error } = await this.supabase
+      .from(REP_MAPPING_REVIEWS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("mapping_id", mappingId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`representation_mapping_reviews_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      reviewId: String(row.review_id),
+      tenantId: String(row.tenant_id),
+      workspaceId: String(row.workspace_id),
+      twinId: String(row.twin_id),
+      mappingId: String(row.mapping_id),
+      workflowInstanceId: String(row.workflow_instance_id),
+      workflowState: String(row.workflow_state),
+      outcome: row.outcome as RepresentationMappingReviewRecord["outcome"],
+      reviewerId: row.reviewer_id ? String(row.reviewer_id) : undefined,
+      notes: row.notes ? String(row.notes) : undefined,
+      createdAt: String(row.created_at),
+      completedAt: row.completed_at ? String(row.completed_at) : undefined,
+      selfApproved: false as const,
+    }));
+  }
+
+  async saveSpatialReference(spatial: PersistedSpatialReference): Promise<PersistedSpatialReference> {
+    const row = {
+      spatial_ref_id: spatial.spatialRefId,
+      tenant_id: spatial.tenantId,
+      workspace_id: spatial.workspaceId,
+      twin_id: spatial.twinId,
+      canonical_location_id: spatial.canonicalLocationId,
+      location_ref: spatial.canonicalLocationId,
+      coordinate_reference_system: spatial.coordinateReferenceSystem,
+      unit_system: spatial.unitSystem ?? null,
+      zone_ref: spatial.zoneRef ?? null,
+      level_ref: spatial.levelRef ?? null,
+      notes: spatial.notes ?? null,
+      invents_location_registry: false,
+      owns_canonical_location: false,
+      creates_location_hierarchy: false,
+      stores_geometry_payload: false,
+      created_at: spatial.createdAt,
+      updated_at: spatial.updatedAt,
+    };
+    const { error } = await this.supabase.from(SPATIAL_REFS).upsert(row, {
+      onConflict: "spatial_ref_id",
+    });
+    if (error) throw new Error(`spatial_reference_persist_failed:${error.message}`);
+    return spatial;
+  }
+
+  async listSpatialReferences(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedSpatialReference[]> {
+    const { data, error } = await this.supabase
+      .from(SPATIAL_REFS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId);
+    if (error) throw new Error(`spatial_references_read_failed:${error.message}`);
+    return (data ?? []).map((row) => ({
+      spatialRefId: String(row.spatial_ref_id),
+      twinId: String(row.twin_id),
+      tenantId: String(row.tenant_id),
+      workspaceId: String(row.workspace_id),
+      canonicalLocationId: String(row.canonical_location_id ?? row.location_ref ?? ""),
+      coordinateReferenceSystem: String(row.coordinate_reference_system),
+      zoneRef: row.zone_ref ? String(row.zone_ref) : undefined,
+      levelRef: row.level_ref ? String(row.level_ref) : undefined,
+      unitSystem: row.unit_system ? String(row.unit_system) : undefined,
+      notes: row.notes ? String(row.notes) : undefined,
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+      ownsCanonicalLocation: false as const,
+      createsLocationHierarchy: false as const,
+    }));
+  }
+
+  async saveRepresentationChangeImpact(
+    impact: PersistedRepresentationChangeImpact,
+  ): Promise<PersistedRepresentationChangeImpact> {
+    const row = {
+      impact_id: impact.impactId,
+      tenant_id: impact.tenantId,
+      workspace_id: impact.workspaceId,
+      twin_id: impact.twinId,
+      source_id: impact.representationSourceId,
+      mapping_id: impact.mappingId ?? null,
+      element_id: impact.elementRefId ?? null,
+      impact: impact.impact,
+      change_summary: impact.changeSummary,
+      source_version_before: impact.sourceVersionBefore ?? null,
+      source_version_after: impact.sourceVersionAfter ?? null,
+      requires_review: impact.requiresReview,
+      stores_geometry_payload: false,
+      created_at: impact.createdAt,
+    };
+    const { error } = await this.supabase.from(REP_CHANGE_IMPACTS).insert(row).select("*").single();
+    if (error) throw new Error(`representation_change_impact_persist_failed:${error.message}`);
+    return impact;
+  }
+
+  async listRepresentationChangeImpacts(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationChangeImpact[]> {
+    const { data, error } = await this.supabase
+      .from(REP_CHANGE_IMPACTS)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .eq("twin_id", twinId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`representation_change_impacts_read_failed:${error.message}`);
+    return (data ?? []).map((row) =>
+      mapRepresentationChangeImpactRow(row as Record<string, unknown>),
+    );
+  }
 }
+
+function mapRepresentationSourceRow(row: Record<string, unknown>): PersistedRepresentationSource {
+  return {
+    representationSourceId: String(row.source_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    format: row.format as PersistedRepresentationSource["format"],
+    sourceRef: String(row.source_ref),
+    fileId: row.file_id ? String(row.file_id) : undefined,
+    displayName: String(row.display_name),
+    version: String(row.version),
+    fidelityLevel: row.fidelity_level as PersistedRepresentationSource["fidelityLevel"],
+    coordinateReferenceSystem: row.coordinate_reference_system
+      ? String(row.coordinate_reference_system)
+      : undefined,
+    status: row.status as PersistedRepresentationSource["status"],
+    storesGeometryPayload: false,
+    storesSourceModelBinary: false,
+    authoringEnabled: false,
+    viewerEnabled: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+  };
+}
+
+function mapRepresentationElementRow(row: Record<string, unknown>): PersistedRepresentationElement {
+  return {
+    elementRefId: String(row.element_id),
+    representationSourceId: String(row.source_id),
+    twinId: String(row.twin_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    externalElementId: String(row.external_element_id),
+    elementType: row.element_type ? String(row.element_type) : undefined,
+    displayName: row.display_name ? String(row.display_name) : undefined,
+    parentElementRefId: row.parent_element_id ? String(row.parent_element_id) : undefined,
+    storesGeometryPayload: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function mapRepresentationMappingRow(row: Record<string, unknown>): PersistedRepresentationMapping {
+  return {
+    mappingId: String(row.mapping_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    representationSourceId: String(row.source_id),
+    elementRefId: String(row.element_id),
+    mappingType: row.mapping_type as PersistedRepresentationMapping["mappingType"],
+    mappingMethod: (row.method ?? row.mapping_method) as PersistedRepresentationMapping["mappingMethod"],
+    confidence: row.confidence as PersistedRepresentationMapping["confidence"],
+    mappingVersion: Number(row.mapping_version),
+    lifecycle: row.lifecycle as PersistedRepresentationMapping["lifecycle"],
+    targetEntityRef: row.target_entity_ref ? String(row.target_entity_ref) : undefined,
+    reviewWorkflowInstanceId: row.review_workflow_instance_id
+      ? String(row.review_workflow_instance_id)
+      : undefined,
+    supersededByMappingId: row.superseded_by_mapping_id
+      ? String(row.superseded_by_mapping_id)
+      : undefined,
+    aiSuggested: Boolean(row.ai_suggested),
+    autoApproved: false,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    createdBy: row.created_by ? String(row.created_by) : undefined,
+    immutableWhenPublished: true,
+  };
+}
+
+function mapRepresentationChangeImpactRow(
+  row: Record<string, unknown>,
+): PersistedRepresentationChangeImpact {
+  return {
+    impactId: String(row.impact_id),
+    tenantId: String(row.tenant_id),
+    workspaceId: String(row.workspace_id),
+    twinId: String(row.twin_id),
+    representationSourceId: String(row.source_id),
+    mappingId: row.mapping_id ? String(row.mapping_id) : undefined,
+    elementRefId: row.element_id ? String(row.element_id) : undefined,
+    impact: row.impact as PersistedRepresentationChangeImpact["impact"],
+    changeSummary: String(row.change_summary),
+    sourceVersionBefore: row.source_version_before ? String(row.source_version_before) : undefined,
+    sourceVersionAfter: row.source_version_after ? String(row.source_version_after) : undefined,
+    createdAt: String(row.created_at),
+    requiresReview: Boolean(row.requires_review),
+  };
+}
+
 
 function mapSourceAdapterRow(row: Record<string, unknown>): PersistedSourceAdapter {
   return {

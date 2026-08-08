@@ -36,6 +36,8 @@ export type TwinTelemetryBinding = {
   policyId?: string;
   reviewWorkflowInstanceId?: string;
   supersededByBindingId?: string;
+  /** Optional Phase 12F representation element ref (domain field only). */
+  representationElementRefId?: string;
   storesRawTelemetry: false;
   autoPublishEnabled: false;
   createdAt: string;
@@ -56,6 +58,7 @@ export function createTwinTelemetryBinding(input: {
   channelRef: TwinTelemetryBinding["channelRef"];
   engineeringSeriesId?: string;
   policyId?: string;
+  representationElementRefId?: string;
   createdBy?: string;
 }): TwinTelemetryBinding {
   const now = new Date().toISOString();
@@ -73,6 +76,7 @@ export function createTwinTelemetryBinding(input: {
     channelRef: input.channelRef,
     engineeringSeriesId: input.engineeringSeriesId,
     policyId: input.policyId,
+    representationElementRefId: input.representationElementRefId,
     storesRawTelemetry: false,
     autoPublishEnabled: false,
     createdAt: now,

@@ -46,14 +46,14 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
   it("declares module identity with 12E telemetry binding version", () => {
     expect(DIGITAL_TWIN_PRODUCT_NAME).toBe("Digital Twin");
     expect(DIGITAL_TWIN_MODULE_KEY).toBe("digital_twin");
-    expect(DIGITAL_TWIN_VERSION).toBe("0.5.0-telemetry-binding");
-    expect(DIGITAL_TWIN_STATUS).toBe("telemetry_binding");
-    expect(DIGITAL_TWIN_PHASE).toBe("12E");
+    expect(DIGITAL_TWIN_VERSION).toBe("0.6.0-representation");
+    expect(DIGITAL_TWIN_STATUS).toBe("representation");
+    expect(DIGITAL_TWIN_PHASE).toBe("12F");
     expect(DIGITAL_TWIN_DISCOVERY_IMPLEMENTED).toBe(true);
     expect(DIGITAL_TWIN_IMPLEMENTED).toBe(true);
     expect(digitalTwinDiscoveryReady).toBe(true);
     expect(digitalTwinOwnershipLocked).toBe(true);
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.5.0-telemetry-binding-draft");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("0.6.0-representation-draft");
     expect(TWIN_IDENTITY_READY).toBe(true);
     expect(TWIN_STATE_READY).toBe(true);
     expect(KNOWLEDGE_GRAPH_REUSE).toBe(true);
@@ -87,15 +87,15 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
     expect(lock.ok).toBe(true);
     expect(lock.digitalTwinImplemented).toBe(true);
     expect(lock.productionDigitalTwinReady).toBe(false);
-    expect(lock.publicContractVersion).toBe("0.5.0-telemetry-binding-draft");
+    expect(lock.publicContractVersion).toBe("0.6.0-representation-draft");
     expect(lock.twinStateReady).toBe(true);
   });
 
   it("reserves L0–L5 fidelity without implementation beyond L0", () => {
     expect(FIDELITY_MODEL.length).toBe(6);
     expect(assertFidelityNotImplemented().maxAvailableLevel).toBe("L0");
-    expect(assertDraftContractsOnly().contractVersion).toBe("0.5.0-telemetry-binding-draft");
-    expect(assertCoreContracts().contractVersion).toBe("0.5.0-telemetry-binding-draft");
+    expect(assertDraftContractsOnly().contractVersion).toBe("0.6.0-representation-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.6.0-representation-draft");
   });
 
   it("pins frozen V1 baselines", () => {
@@ -107,8 +107,8 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
 
   it("exposes a coherent telemetry binding declaration", () => {
     const declaration = getDigitalTwinStateDeclaration();
-    expect(declaration.version).toBe("0.5.0-telemetry-binding");
-    expect(declaration.status).toBe("telemetry_binding");
+    expect(declaration.version).toBe("0.6.0-representation");
+    expect(declaration.status).toBe("representation");
     expect(declaration.digitalTwinImplemented).toBe(true);
     expect(declaration.productionDigitalTwinReady).toBe(false);
     expect(declaration.digitalTwinRuntimeImplemented).toBe(true);

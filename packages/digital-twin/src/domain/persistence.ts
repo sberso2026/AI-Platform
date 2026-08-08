@@ -23,6 +23,11 @@ import type { TelemetryChannelReference } from "./telemetry-channel";
 import type { TwinTelemetryBinding } from "./telemetry-binding";
 import type { TwinTelemetryAggregationPolicy } from "./aggregation-policy";
 import type { TelemetryProjectionRecord } from "./telemetry-projection-engine";
+import type { TwinRepresentationSourceReference } from "./representation-source";
+import type { TwinRepresentationElementReference } from "./representation-element";
+import type { TwinRepresentationMapping } from "./representation-mapping";
+import type { TwinSpatialReference } from "./spatial-reference";
+import type { RepresentationChangeImpact } from "./representation-change-impact";
 import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
 export type PersistedTwinIdentity = TwinIdentity;
@@ -98,6 +103,11 @@ export type PersistedTelemetryChannel = TelemetryChannelReference;
 export type PersistedTelemetryBinding = TwinTelemetryBinding;
 export type PersistedTelemetryAggregationPolicy = TwinTelemetryAggregationPolicy;
 export type PersistedTelemetryProjectionRecord = TelemetryProjectionRecord;
+export type PersistedRepresentationSource = TwinRepresentationSourceReference;
+export type PersistedRepresentationElement = TwinRepresentationElementReference;
+export type PersistedRepresentationMapping = TwinRepresentationMapping;
+export type PersistedSpatialReference = TwinSpatialReference;
+export type PersistedRepresentationChangeImpact = RepresentationChangeImpact;
 
 export type TelemetryBindingReviewRecord = {
   reviewId: string;
@@ -108,6 +118,22 @@ export type TelemetryBindingReviewRecord = {
   workflowInstanceId: string;
   workflowState: string;
   outcome?: "approved" | "rejected" | "changes_requested" | "resubmitted";
+  reviewerId?: string;
+  notes?: string;
+  createdAt: string;
+  completedAt?: string;
+  selfApproved: false;
+};
+
+export type RepresentationMappingReviewRecord = {
+  reviewId: string;
+  tenantId: string;
+  workspaceId: string;
+  twinId: string;
+  mappingId: string;
+  workflowInstanceId: string;
+  workflowState: string;
+  outcome?: "approved" | "rejected" | "published" | "superseded";
   reviewerId?: string;
   notes?: string;
   createdAt: string;
@@ -329,6 +355,73 @@ export type DigitalTwinRepositoryPort = {
     workspaceId: string,
     bindingId: string,
   ): Promise<TelemetryBindingReviewRecord[]>;
+
+  saveRepresentationSource(
+    source: PersistedRepresentationSource,
+  ): Promise<PersistedRepresentationSource>;
+  listRepresentationSources(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationSource[]>;
+  getRepresentationSourceById(
+    tenantId: string,
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<PersistedRepresentationSource | null>;
+
+  saveRepresentationElement(
+    element: PersistedRepresentationElement,
+  ): Promise<PersistedRepresentationElement>;
+  listRepresentationElements(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationElement[]>;
+  getRepresentationElementById(
+    tenantId: string,
+    workspaceId: string,
+    elementId: string,
+  ): Promise<PersistedRepresentationElement | null>;
+
+  saveRepresentationMapping(
+    mapping: PersistedRepresentationMapping,
+  ): Promise<PersistedRepresentationMapping>;
+  listRepresentationMappings(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationMapping[]>;
+  getRepresentationMappingById(
+    tenantId: string,
+    workspaceId: string,
+    mappingId: string,
+  ): Promise<PersistedRepresentationMapping | null>;
+
+  saveRepresentationMappingReview(
+    review: RepresentationMappingReviewRecord,
+  ): Promise<RepresentationMappingReviewRecord>;
+  listRepresentationMappingReviews(
+    tenantId: string,
+    workspaceId: string,
+    mappingId: string,
+  ): Promise<RepresentationMappingReviewRecord[]>;
+
+  saveSpatialReference(spatial: PersistedSpatialReference): Promise<PersistedSpatialReference>;
+  listSpatialReferences(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedSpatialReference[]>;
+
+  saveRepresentationChangeImpact(
+    impact: PersistedRepresentationChangeImpact,
+  ): Promise<PersistedRepresentationChangeImpact>;
+  listRepresentationChangeImpacts(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationChangeImpact[]>;
 };
 
 export type DurableDigitalTwinStore = {
@@ -358,6 +451,12 @@ export type DurableDigitalTwinStore = {
   telemetryAggregationPolicies: PersistedTelemetryAggregationPolicy[];
   telemetryProjectionRecords: PersistedTelemetryProjectionRecord[];
   telemetryBindingReviews: TelemetryBindingReviewRecord[];
+  representationSources: PersistedRepresentationSource[];
+  representationElements: PersistedRepresentationElement[];
+  representationMappings: PersistedRepresentationMapping[];
+  representationMappingReviews: RepresentationMappingReviewRecord[];
+  spatialReferences: PersistedSpatialReference[];
+  representationChangeImpacts: PersistedRepresentationChangeImpact[];
 };
 
 export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
@@ -388,6 +487,12 @@ export function createDurableDigitalTwinMemoryStore(): DurableDigitalTwinStore {
     telemetryAggregationPolicies: [],
     telemetryProjectionRecords: [],
     telemetryBindingReviews: [],
+    representationSources: [],
+    representationElements: [],
+    representationMappings: [],
+    representationMappingReviews: [],
+    spatialReferences: [],
+    representationChangeImpacts: [],
   };
 }
 
@@ -960,6 +1065,162 @@ export class MemoryDigitalTwinRepository implements DigitalTwinRepositoryPort {
     return this.store.telemetryBindingReviews.filter(
       (r) =>
         r.bindingId === bindingId && r.tenantId === tenantId && r.workspaceId === workspaceId,
+    );
+  }
+
+  async saveRepresentationSource(
+    source: PersistedRepresentationSource,
+  ): Promise<PersistedRepresentationSource> {
+    const idx = this.store.representationSources.findIndex(
+      (s) => s.representationSourceId === source.representationSourceId,
+    );
+    if (idx >= 0) this.store.representationSources[idx] = source;
+    else this.store.representationSources.push(source);
+    return source;
+  }
+
+  async listRepresentationSources(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationSource[]> {
+    return this.store.representationSources.filter(
+      (s) => s.tenantId === tenantId && s.workspaceId === workspaceId && s.twinId === twinId,
+    );
+  }
+
+  async getRepresentationSourceById(
+    tenantId: string,
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<PersistedRepresentationSource | null> {
+    return (
+      this.store.representationSources.find(
+        (s) =>
+          s.representationSourceId === sourceId &&
+          s.tenantId === tenantId &&
+          s.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async saveRepresentationElement(
+    element: PersistedRepresentationElement,
+  ): Promise<PersistedRepresentationElement> {
+    const idx = this.store.representationElements.findIndex(
+      (e) => e.elementRefId === element.elementRefId,
+    );
+    if (idx >= 0) this.store.representationElements[idx] = element;
+    else this.store.representationElements.push(element);
+    return element;
+  }
+
+  async listRepresentationElements(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationElement[]> {
+    return this.store.representationElements.filter(
+      (e) => e.tenantId === tenantId && e.workspaceId === workspaceId && e.twinId === twinId,
+    );
+  }
+
+  async getRepresentationElementById(
+    tenantId: string,
+    workspaceId: string,
+    elementId: string,
+  ): Promise<PersistedRepresentationElement | null> {
+    return (
+      this.store.representationElements.find(
+        (e) =>
+          e.elementRefId === elementId &&
+          e.tenantId === tenantId &&
+          e.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async saveRepresentationMapping(
+    mapping: PersistedRepresentationMapping,
+  ): Promise<PersistedRepresentationMapping> {
+    const idx = this.store.representationMappings.findIndex((m) => m.mappingId === mapping.mappingId);
+    if (idx >= 0) this.store.representationMappings[idx] = mapping;
+    else this.store.representationMappings.push(mapping);
+    return mapping;
+  }
+
+  async listRepresentationMappings(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationMapping[]> {
+    return this.store.representationMappings.filter(
+      (m) => m.tenantId === tenantId && m.workspaceId === workspaceId && m.twinId === twinId,
+    );
+  }
+
+  async getRepresentationMappingById(
+    tenantId: string,
+    workspaceId: string,
+    mappingId: string,
+  ): Promise<PersistedRepresentationMapping | null> {
+    return (
+      this.store.representationMappings.find(
+        (m) =>
+          m.mappingId === mappingId && m.tenantId === tenantId && m.workspaceId === workspaceId,
+      ) ?? null
+    );
+  }
+
+  async saveRepresentationMappingReview(
+    review: RepresentationMappingReviewRecord,
+  ): Promise<RepresentationMappingReviewRecord> {
+    this.store.representationMappingReviews.push(review);
+    return review;
+  }
+
+  async listRepresentationMappingReviews(
+    tenantId: string,
+    workspaceId: string,
+    mappingId: string,
+  ): Promise<RepresentationMappingReviewRecord[]> {
+    return this.store.representationMappingReviews.filter(
+      (r) =>
+        r.mappingId === mappingId && r.tenantId === tenantId && r.workspaceId === workspaceId,
+    );
+  }
+
+  async saveSpatialReference(spatial: PersistedSpatialReference): Promise<PersistedSpatialReference> {
+    const idx = this.store.spatialReferences.findIndex((s) => s.spatialRefId === spatial.spatialRefId);
+    if (idx >= 0) this.store.spatialReferences[idx] = spatial;
+    else this.store.spatialReferences.push(spatial);
+    return spatial;
+  }
+
+  async listSpatialReferences(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedSpatialReference[]> {
+    return this.store.spatialReferences.filter(
+      (s) => s.tenantId === tenantId && s.workspaceId === workspaceId && s.twinId === twinId,
+    );
+  }
+
+  async saveRepresentationChangeImpact(
+    impact: PersistedRepresentationChangeImpact,
+  ): Promise<PersistedRepresentationChangeImpact> {
+    this.store.representationChangeImpacts.push(impact);
+    return impact;
+  }
+
+  async listRepresentationChangeImpacts(
+    tenantId: string,
+    workspaceId: string,
+    twinId: string,
+  ): Promise<PersistedRepresentationChangeImpact[]> {
+    return this.store.representationChangeImpacts.filter(
+      (i) => i.tenantId === tenantId && i.workspaceId === workspaceId && i.twinId === twinId,
     );
   }
 }

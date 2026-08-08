@@ -72,12 +72,12 @@ describe("Phase 12C Digital Twin state domain", () => {
     expect(lock.ok).toBe(true);
     expect(lock.twinStateReady).toBe(true);
     expect(lock.twinVersioningReady).toBe(true);
-    expect(lock.publicContractVersion).toBe("0.5.0-telemetry-binding-draft");
+    expect(lock.publicContractVersion).toBe("0.6.0-representation-draft");
   });
 
   it("declares state contract families and domain events", () => {
-    expect(assertCoreContracts().contractVersion).toBe("0.5.0-telemetry-binding-draft");
-    expect(assertStateContracts().contractVersion).toBe("0.5.0-telemetry-binding-draft");
+    expect(assertCoreContracts().contractVersion).toBe("0.6.0-representation-draft");
+    expect(assertStateContracts().contractVersion).toBe("0.6.0-representation-draft");
     for (const evt of STATE_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

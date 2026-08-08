@@ -23,6 +23,9 @@ export const KG_EDGE_REUSE = {
   connectedTo: "connected_to",
   monitoredBy: "monitored_by",
   derivedFrom: "derived_from",
+  hasRepresentationSource: "has_representation_source",
+  mapsToRepresentationElement: "maps_to_representation_element",
+  spatiallyAnchoredAt: "spatially_anchored_at",
 } as const;
 
 export type TwinRelationship = {

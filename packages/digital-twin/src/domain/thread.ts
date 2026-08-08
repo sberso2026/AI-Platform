@@ -17,6 +17,8 @@ export const THREAD_LINK_TARGET_TYPES = [
   "platform_timeline",
   "knowledge_graph_node",
   "other_twin",
+  "representation_source_ref",
+  "representation_element_ref",
 ] as const;
 
 export type ThreadLinkTargetType = (typeof THREAD_LINK_TARGET_TYPES)[number];

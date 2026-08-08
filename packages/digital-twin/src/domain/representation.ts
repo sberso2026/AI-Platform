@@ -12,6 +12,8 @@ export const REPRESENTATION_TYPES = [
   "gis",
   "point_cloud",
   "process_diagram",
+  "schematic",
+  "other",
 ] as const;
 
 export type RepresentationType = (typeof REPRESENTATION_TYPES)[number];

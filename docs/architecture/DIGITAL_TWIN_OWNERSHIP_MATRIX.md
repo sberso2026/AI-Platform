@@ -1,11 +1,11 @@
-# Digital Twin — Ownership Matrix (Phase 12B core)
+# Digital Twin — Ownership Matrix (Phase 12F representation)
 
-Status: core · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
+Status: representation · Aligned with `packages/digital-twin/src/architecture/ownership-lock.ts`
 
-> **Phase 12B update:** Core domain tables (`batch_75`) now own twin identity,
-> representation references, relationships, thread links, and state references.
-> Kernel `digital_twins*` tables remain **preserve**. KG reuse via typed edges —
-> no new graph engine.
+> **Phase 12F update:** Twin owns representation source/element/mapping references
+> and thin spatial wrappers. Canonical locations stay with
+> `engineering_os_shared_domain`. Engineering model binaries stay with Platform
+> Files / `engineering_documents`. `duplicateModelOwnershipDetected=false`.
 
 ## Locked ownership boundaries
 
@@ -14,6 +14,10 @@ Status: core · Aligned with `packages/digital-twin/src/architecture/ownership-l
 | twin_identity | `digital_twin` | owns |
 | twin_state | `digital_twin` | owns |
 | twin_representation | `digital_twin` | owns |
+| representation_mapping | `digital_twin` | owns (refs only; no model binaries) |
+| twin_spatial_reference | `digital_twin` | owns thin wrappers only |
+| spatial_canonical_location | `engineering_os_shared_domain` | consumes |
+| source_engineering_model | `external_or_existing_engineering_model_owner` | consumes (source_ref/fileId) |
 | simulation_state | `digital_twin` | owns |
 | digital_thread | `digital_twin` | owns (implemented in 12B core) |
 | asset_identity_canonical | `engineering_os_shared_domain` | consumes |
@@ -34,8 +38,11 @@ Status: core · Aligned with `packages/digital-twin/src/architecture/ownership-l
 ## What Digital Twin does NOT own
 
 - Canonical asset or project identity registers
+- Canonical location / place registers (shared domain — thin `TwinSpatialReference` only)
+- Engineering model file binaries (Platform Files / engineering_documents)
+- A Twin-owned BIM/CAD authoring or 3D viewer plane
 - Asset Intelligence condition, health, or predictive models
-- Inspection records or II workflows
+- Inspection records or II workflows (inspection→element adapter reserved if II contracts insufficient)
 - Project Intelligence knowledge derivatives
 - Project Controls cost/schedule/progress intelligence (frozen V1 consumption only)
 - SHM sensor stream ingestion or structural solvers

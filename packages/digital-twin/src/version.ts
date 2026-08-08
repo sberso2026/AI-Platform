@@ -1,15 +1,15 @@
 /**
- * Phase 12E — Digital Twin Telemetry Binding.
+ * Phase 12F — Digital Twin Spatial Context & Representation Mapping.
  *
- * Extends 12D with telemetry source/channel references, binding lifecycle,
- * engineering time series read port (Asset Intelligence), and bounded projection.
- * No raw telemetry storage, historian, SHM signal processing, or auto-publish.
+ * Extends 12E with BIM/IFC representation sources, element refs, governed mappings,
+ * thin spatial references, and list/reference navigation. No geometry DB, authoring,
+ * or 3D viewer.
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.5.0-telemetry-binding" as const;
-export const DIGITAL_TWIN_STATUS = "telemetry_binding" as const;
-export const DIGITAL_TWIN_PHASE = "12E" as const;
+export const DIGITAL_TWIN_VERSION = "0.6.0-representation" as const;
+export const DIGITAL_TWIN_STATUS = "representation" as const;
+export const DIGITAL_TWIN_PHASE = "12F" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -52,18 +52,29 @@ export const ENGINEERING_TIME_SERIES_REUSE_READY = true as const;
 export const EngineeringTimeSeriesReuseReady = true as const;
 export const engineeringTimeSeriesReuseReady = true as const;
 
+export const TWIN_REPRESENTATION_MAPPING_READY = true as const;
+export const TwinRepresentationMappingReady = true as const;
+export const twinRepresentationMappingReady = true as const;
+export const TWIN_REPRESENTATION_NAVIGATION_READY = true as const;
+export const TwinRepresentationNavigationReady = true as const;
+export const twinRepresentationNavigationReady = true as const;
+export const REPRESENTATION_NAVIGATION_IMPLEMENTED = true as const;
+export const representationNavigationImplemented = true as const;
+
 export const KNOWLEDGE_GRAPH_REUSE = true as const;
 export const KnowledgeGraphReuse = true as const;
 export const HOSTED_PERSISTENCE_READY = true as const;
 export const hostedDigitalTwinPersistenceReady = true as const;
 
-/** Bounded state-ingestion + telemetry binding/projection runtime — not historian, SHM, sim, or actuation. */
+/** Bounded state-ingestion + telemetry binding + representation mapping — not historian, SHM, sim, or actuation. */
 export const DIGITAL_TWIN_RUNTIME_IMPLEMENTED = true as const;
 export const digitalTwinRuntimeImplemented = true as const;
 export const AUTOMATIC_OBSERVED_STATE_PUBLICATION_ENABLED = false as const;
 export const automaticObservedStatePublicationEnabled = false as const;
 export const AUTOMATIC_TELEMETRY_STATE_PUBLICATION_ENABLED = false as const;
 export const automaticTelemetryStatePublicationEnabled = false as const;
+export const AUTOMATIC_REPRESENTATION_MAPPING_APPROVAL_ENABLED = false as const;
+export const automaticRepresentationMappingApprovalEnabled = false as const;
 
 /** Bounded binding/projection ONLY — reads Asset Intelligence time series; does not ingest raw telemetry. */
 export const LIVE_TELEMETRY_IMPLEMENTED = true as const;
@@ -93,6 +104,8 @@ export const IMPLEMENTS_OWN_AI_STACK = false as const;
 export const implementsOwnAiStack = false as const;
 export const DUPLICATE_TIME_SERIES_PLANE_DETECTED = false as const;
 export const duplicateTimeSeriesPlaneDetected = false as const;
+export const DUPLICATE_MODEL_OWNERSHIP_DETECTED = false as const;
+export const duplicateModelOwnershipDetected = false as const;
 
 export const DUPLICATE_ASSET_OWNERSHIP_DETECTED = false as const;
 export const DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false as const;
@@ -103,6 +116,8 @@ export const PHASE_12E_READY = true as const;
 export const phase12EReady = true as const;
 export const PHASE_12F_READY = true as const;
 export const phase12FReady = true as const;
+export const PHASE_12G_READY = true as const;
+export const phase12GReady = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -142,6 +157,15 @@ export const PHASE_12D_HOSTED_RUN = "31257741414" as const;
 export const PHASE_12D_VERSION = "0.4.0-ingestion" as const;
 
 // ---------------------------------------------------------------------------
+// Phase 12E certified baseline (pinned — do not move)
+// ---------------------------------------------------------------------------
+
+export const PHASE_12E_CERTIFIED_COMMIT =
+  "b871e8c3eb9e1293604610bacdd410ecb4da5684" as const;
+export const PHASE_12E_HOSTED_RUN = "31260082507" as const;
+export const PHASE_12E_VERSION = "0.5.0-telemetry-binding" as const;
+
+// ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
 
@@ -165,7 +189,7 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
   "34975b1cf660580d46287f24e746b8915903f768" as const;
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.5.0-telemetry-binding-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.6.0-representation-draft" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -176,6 +200,12 @@ export const TWIN_STATE_OWNERSHIP = "digital_twin" as const;
 export const SIMULATION_STATE_OWNERSHIP = "digital_twin" as const;
 export const TWIN_REPRESENTATION_OWNERSHIP = "digital_twin" as const;
 export const DIGITAL_THREAD_OWNERSHIP = "digital_twin" as const;
+export const MODEL_FILE_BLOB_OWNERSHIP = "platform_files" as const;
+export const DOCUMENT_DRAWING_METADATA_OWNERSHIP = "engineering_os_shared_domain" as const;
+export const CANONICAL_LOCATION_OWNERSHIP = "engineering_os_shared_domain" as const;
+export const SPATIAL_CANONICAL_OWNERSHIP =
+  "existing_shared_spatial_domain_or_explicitly_reconciled_owner" as const;
+export const SOURCE_MODEL_OWNERSHIP = "external_or_existing_engineering_model_owner" as const;
 
 export const CANONICAL_ASSET_IDENTITY_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const CANONICAL_PROJECT_IDENTITY_OWNERSHIP = "engineering_os_shared_project_domain" as const;
@@ -193,8 +223,8 @@ export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
 export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "telemetry_binding" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.5.0-telemetry-binding" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "representation" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.6.0-representation" as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
 export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
@@ -208,8 +238,10 @@ export const DIGITAL_TWIN_IDENTITY_REVIEW_SLUG = "digital_twin.identity_review" 
 export const DIGITAL_TWIN_STATE_REVIEW_SLUG = "digital_twin.state_review" as const;
 export const DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG =
   "digital_twin.telemetry_binding_review" as const;
+export const DIGITAL_TWIN_REPRESENTATION_MAPPING_REVIEW_SLUG =
+  "digital_twin.representation_mapping_review" as const;
 
-export function getDigitalTwinTelemetryBindingDeclaration() {
+export function getDigitalTwinRepresentationDeclaration() {
   return {
     productName: DIGITAL_TWIN_PRODUCT_NAME,
     moduleKey: DIGITAL_TWIN_MODULE_KEY,
@@ -233,12 +265,16 @@ export function getDigitalTwinTelemetryBindingDeclaration() {
     twinTelemetryBindingReady,
     twinTelemetryProjectionReady,
     engineeringTimeSeriesReuseReady,
+    twinRepresentationMappingReady,
+    twinRepresentationNavigationReady,
+    representationNavigationImplemented,
     knowledgeGraphReuse: KNOWLEDGE_GRAPH_REUSE,
     hostedDigitalTwinPersistenceReady,
     productionDigitalTwinReady: PRODUCTION_DIGITAL_TWIN_READY,
     digitalTwinRuntimeImplemented,
     automaticObservedStatePublicationEnabled,
     automaticTelemetryStatePublicationEnabled,
+    automaticRepresentationMappingApprovalEnabled,
     liveTelemetryImplemented,
     highFrequencyTelemetryImplemented,
     telemetryHistorianImplemented,
@@ -251,12 +287,14 @@ export function getDigitalTwinTelemetryBindingDeclaration() {
     automaticControlEnabled,
     implementsOwnAiStack,
     duplicateTimeSeriesPlaneDetected,
+    duplicateModelOwnershipDetected,
     engineeringTimeSeriesOwnership,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase12CReady: PHASE_12C_READY,
     phase12DReady: PHASE_12D_READY,
     phase12EReady,
     phase12FReady,
+    phase12GReady,
     phase12AVersion: PHASE_12A_VERSION,
     phase12ACertifiedCommit: PHASE_12A_CERTIFIED_COMMIT,
     phase12BVersion: PHASE_12B_VERSION,
@@ -265,6 +303,9 @@ export function getDigitalTwinTelemetryBindingDeclaration() {
     phase12CCertifiedCommit: PHASE_12C_CERTIFIED_COMMIT,
     phase12DVersion: PHASE_12D_VERSION,
     phase12DCertifiedCommit: PHASE_12D_CERTIFIED_COMMIT,
+    phase12EVersion: PHASE_12E_VERSION,
+    phase12ECertifiedCommit: PHASE_12E_CERTIFIED_COMMIT,
+    phase12EHostedRun: PHASE_12E_HOSTED_RUN,
     digitalTwinProductTablesIntroduced: DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED,
     digitalTwinProductUiImplemented: DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED,
     projectControlsV1Tag: PROJECT_CONTROLS_V1_TAG,
@@ -281,25 +322,36 @@ export function getDigitalTwinTelemetryBindingDeclaration() {
     identityReviewSlug: DIGITAL_TWIN_IDENTITY_REVIEW_SLUG,
     stateReviewSlug: DIGITAL_TWIN_STATE_REVIEW_SLUG,
     telemetryBindingReviewSlug: DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG,
+    representationMappingReviewSlug: DIGITAL_TWIN_REPRESENTATION_MAPPING_REVIEW_SLUG,
   };
 }
 
-/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
+/** Alias for version info consumers. */
+export function getDigitalTwinVersionInfo() {
+  return getDigitalTwinRepresentationDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinRepresentationDeclaration */
+export function getDigitalTwinTelemetryBindingDeclaration() {
+  return getDigitalTwinRepresentationDeclaration();
+}
+
+/** @deprecated Use getDigitalTwinRepresentationDeclaration */
 export function getDigitalTwinIngestionDeclaration() {
-  return getDigitalTwinTelemetryBindingDeclaration();
+  return getDigitalTwinRepresentationDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
+/** @deprecated Use getDigitalTwinRepresentationDeclaration */
 export function getDigitalTwinStateDeclaration() {
-  return getDigitalTwinTelemetryBindingDeclaration();
+  return getDigitalTwinRepresentationDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
+/** @deprecated Use getDigitalTwinRepresentationDeclaration */
 export function getDigitalTwinCoreDeclaration() {
-  return getDigitalTwinTelemetryBindingDeclaration();
+  return getDigitalTwinRepresentationDeclaration();
 }
 
-/** @deprecated Use getDigitalTwinTelemetryBindingDeclaration */
+/** @deprecated Use getDigitalTwinRepresentationDeclaration */
 export function getDigitalTwinDiscoveryDeclaration() {
-  return getDigitalTwinTelemetryBindingDeclaration();
+  return getDigitalTwinRepresentationDeclaration();
 }

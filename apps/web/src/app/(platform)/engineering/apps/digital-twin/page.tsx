@@ -1,43 +1,48 @@
 /**
- * Phase 12E — Digital Twin telemetry binding overview.
+ * Phase 12F — Digital Twin representation mapping & navigation overview.
  */
 
-const TELEMETRY_SURFACES = [
-  { id: "telemetry-sources", name: "Telemetry Sources", summary: "Reference kernel and Asset Intelligence series — no raw storage." },
-  { id: "telemetry-bindings", name: "Bindings", summary: "Governed twin-to-series bindings with review lifecycle." },
-  { id: "binding-status", name: "Binding status", summary: "Lifecycle draft through retired; no auto-publish." },
-  { id: "source-health", name: "Source health", summary: "available | degraded | unavailable | unknown" },
-  { id: "current-projected-state", name: "Current projected state", summary: "Bounded projection from AI time series." },
-  { id: "freshness", name: "Freshness", summary: "Last observation age and stale detection." },
-  { id: "quality", name: "Quality", summary: "good | suspect | bad | missing | out_of_range | stale | unknown" },
+const REPRESENTATION_SURFACES = [
+  { id: "representations", name: "Representations", summary: "Source model refs (IFC/BIM/CAD/drawing) — no binaries." },
+  { id: "versions", name: "Versions", summary: "Immutable representation source version history." },
+  { id: "mappings", name: "Mappings", summary: "Governed twin↔element mappings with review lifecycle." },
+  { id: "mapped-elements", name: "Mapped Elements", summary: "Element references without geometry payloads." },
+  { id: "state-context", name: "State Context", summary: "Resolve published state mappings to elements." },
+  { id: "telemetry-context", name: "Telemetry Context", summary: "Resolve telemetry binding ↔ element links." },
+  { id: "inspection-context", name: "Inspection Context", summary: "Inspection→element reserved when II contracts missing." },
+  { id: "mapping-review", name: "Mapping Review", summary: "draft→pending_review→approved→published — no AI self-approval." },
 ] as const;
 
 const UNAVAILABLE = [
-  { id: "telemetry-historian", name: "Telemetry historian", reason: "UNAVAILABLE — not implemented in Phase 12E." },
-  { id: "high-frequency", name: "High-frequency telemetry", reason: "UNAVAILABLE — bounded binding/projection only." },
-  { id: "shm-signal-processing", name: "SHM signal processing", reason: "UNAVAILABLE — shmSignalProcessingImplemented=false." },
-  { id: "sensor-registry", name: "Sensor registry", reason: "UNAVAILABLE — sensorRegistryImplemented=false." },
-  { id: "three-d-viewer", name: "3D viewer", reason: "UNAVAILABLE — not implemented." },
+  { id: "three-d-viewer", name: "3D / BIM viewer", reason: "UNAVAILABLE — threeDViewerImplemented=false; navigation is list/reference based." },
+  { id: "bim-authoring", name: "BIM/CAD authoring", reason: "UNAVAILABLE — authoringEnabled=false." },
+  { id: "geometry-db", name: "Geometry database", reason: "UNAVAILABLE — storesGeometryPayload=false." },
+  { id: "simulation", name: "Simulation execution", reason: "UNAVAILABLE — simulationExecutionImplemented=false." },
+  { id: "shm", name: "SHM signal processing", reason: "UNAVAILABLE — shmSignalProcessingImplemented=false." },
+  { id: "historian", name: "Telemetry historian", reason: "UNAVAILABLE — telemetryHistorianImplemented=false." },
+  { id: "actuation", name: "Physical actuation", reason: "UNAVAILABLE — physicalActuationEnabled=false." },
 ] as const;
 
-export default function DigitalTwinTelemetryBindingPage() {
+export default function DigitalTwinRepresentationPage() {
   return (
-    <section data-testid="digital-twin-telemetry-binding-ready" aria-labelledby="dt-telemetry-title">
-      <h1 id="dt-telemetry-title" className="text-2xl font-semibold text-slate-900">
-        Digital Twin — Telemetry Binding
+    <section data-testid="digital-twin-representation-ready" aria-labelledby="dt-representation-title">
+      <h1 id="dt-representation-title" className="text-2xl font-semibold text-slate-900">
+        Digital Twin — Representation Mapping
       </h1>
       <p className="mt-2 max-w-2xl text-slate-600">
-        Version <span data-testid="digital-twin-telemetry-version">0.5.0-telemetry-binding</span>.
-        Engineering time series ownership stays with Asset Intelligence; Twin reads via public contracts only.
+        Version <span data-testid="digital-twin-representation-version">0.6.0-representation</span>.
+        Visual 3D/BIM viewer is UNAVAILABLE (
+        <span data-testid="digital-twin-three-d-viewer-flag">threeDViewerImplemented=false</span>
+        ). Navigation is list and reference based only.
       </p>
 
-      <h2 className="mt-8 text-lg font-semibold text-slate-900">Telemetry surfaces</h2>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Representation surfaces</h2>
       <ul
         className="mt-3 grid gap-3 sm:grid-cols-2"
-        data-testid="digital-twin-telemetry-surfaces"
-        aria-label="Digital Twin telemetry binding surfaces"
+        data-testid="digital-twin-representation-surfaces"
+        aria-label="Digital Twin representation surfaces"
       >
-        {TELEMETRY_SURFACES.map((surface) => (
+        {REPRESENTATION_SURFACES.map((surface) => (
           <li
             key={surface.id}
             data-testid={`digital-twin-surface-${surface.id}`}
@@ -53,7 +58,7 @@ export default function DigitalTwinTelemetryBindingPage() {
       <ul
         className="mt-3 space-y-2"
         data-testid="digital-twin-unavailable-capabilities"
-        aria-label="Capabilities unavailable in Phase 12E"
+        aria-label="Capabilities unavailable in Phase 12F"
       >
         {UNAVAILABLE.map((item) => (
           <li
@@ -66,28 +71,16 @@ export default function DigitalTwinTelemetryBindingPage() {
         ))}
       </ul>
 
-      <section className="mt-8" data-testid="digital-twin-source-unavailable-surface" aria-label="Source unavailable">
-        <h2 className="text-lg font-semibold text-slate-900">Source unavailable</h2>
-        <p className="mt-1 text-sm text-slate-600" data-testid="digital-twin-source-unavailable-message">
-          When source health is unavailable, projection is blocked and no auto-publish occurs.
+      <section
+        className="mt-8"
+        data-testid="digital-twin-viewer-unavailable-surface"
+        aria-label="Viewer unavailable"
+      >
+        <h2 className="text-lg font-semibold text-slate-900">Viewer unavailable</h2>
+        <p className="mt-1 text-sm text-slate-600" data-testid="digital-twin-viewer-unavailable-message">
+          threeDViewerImplemented remains false. Use representation navigation to resolve
+          Twin → sources/elements via list and reference APIs.
         </p>
-      </section>
-
-      <section className="mt-6" data-testid="digital-twin-freshness-quality-surface" aria-label="Freshness and quality">
-        <dl className="grid gap-2 sm:grid-cols-2">
-          <div>
-            <dt className="text-sm font-medium text-slate-700">Freshness</dt>
-            <dd data-testid="digital-twin-freshness-label" className="text-sm text-slate-600">
-              Stale when last observation exceeds policy window.
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-slate-700">Quality</dt>
-            <dd data-testid="digital-twin-quality-label" className="text-sm text-slate-600">
-              Projections with bad, missing, or stale quality are rejected from auto-ingest.
-            </dd>
-          </div>
-        </dl>
       </section>
     </section>
   );

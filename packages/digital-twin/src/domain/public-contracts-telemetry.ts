@@ -19,8 +19,8 @@ export function assertTelemetryContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.5.0-telemetry-binding-draft") {
-    throw new Error("telemetry_contracts_require_0_5_0_telemetry_binding_draft");
+  if (PUBLIC_CONTRACT_VERSION !== "0.6.0-representation-draft") {
+    throw new Error("telemetry_contracts_require_0_6_0_representation_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

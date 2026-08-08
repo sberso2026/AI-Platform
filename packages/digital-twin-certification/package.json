@@ -1,6 +1,6 @@
 {
   "name": "@rtb/digital-twin-certification",
-  "version": "0.5.0-telemetry-binding",
+  "version": "0.6.0-representation",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,9 @@
     "certify:phase12c": "tsx scripts/run-phase12c-certification.ts",
     "certify:phase12d": "tsx scripts/run-phase12d-certification.ts",
     "certify:phase12e": "tsx scripts/run-phase12e-certification.ts",
+    "certify:phase12f": "tsx scripts/run-phase12f-certification.ts",
     "test:e2e:telemetry-binding": "playwright test playwright/telemetry-binding.spec.ts",
+    "test:e2e:representation": "playwright test playwright/representation.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

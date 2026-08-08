@@ -1,33 +1,36 @@
-# Digital Twin — Spatial Boundary (Phase 12A)
+# Digital Twin — Spatial Boundary (Phase 12F)
 
-Status: discovery · `THREE_D_VIEWER_IMPLEMENTED = false`
+Status: representation · `THREE_D_VIEWER_IMPLEMENTED = false`
+
+See also: `DIGITAL_TWIN_SPATIAL_MODEL_RECONCILIATION.md`, `DIGITAL_TWIN_REPRESENTATION_MODEL.md`.
 
 ## Spatial boundary
 
-Digital Twin may eventually anchor representations in space (L3 fidelity). Phase 12A
-draws a hard boundary:
-
-| Capability | Phase 12A |
+| Capability | Phase 12F |
 | --- | --- |
-| Spatial anchors (draft contract) | documented only |
-| BIM/CAD ingestion | forbidden |
-| Mesh storage | forbidden |
-| **3D viewer** | **forbidden in Phase 12A** |
-| Point cloud processing | forbidden |
-| GIS map tile serving | forbidden |
+| Thin `TwinSpatialReference` wrappers | **implemented** (refs + CRS + unitSystem) |
+| Canonical location registry | **forbidden** (shared domain owns) |
+| BIM/IFC representation mapping | **implemented** (refs/metadata only) |
+| Mesh / geometry payload storage | **forbidden** |
+| **3D viewer** | **forbidden** (`threeDViewerImplemented=false`) |
+| BIM authoring / source model mutation | **forbidden** |
+| Point cloud processing | **forbidden** |
+| GIS engine / map tile serving | **forbidden** |
+| Representation navigation (resolve) | **implemented** (read-oriented UI/API) |
 
 ## Consumes vs owns
 
-- **Owns**: representation config that *references* spatial frames (draft)
+- **Owns**: representation source/element/mapping refs; thin spatial wrappers
 - **Does not own**: canonical location registers (`engineering_os_shared_domain`)
-- **Does not own**: rendering engine, WebGL scene graph, or viewer UI shell
+- **Does not own**: Engineering Model binaries (Platform Files / engineering_documents)
+- **Does not own**: rendering engine, WebGL scene graph, or full BIM viewer shell
 
-## Integration pattern (future)
+## CRS governance
 
-Spatial-lite (L3) binds to existing location / functional location refs on assets.
-Full viewer implementation requires a dedicated phase with performance certification.
+`coordinateReferenceSystem` is required on spatial refs. Transformations must declare
+`sourceCRS`, `targetCRS`, `method`, `version`, and `provenance`. No Twin GIS engine.
 
 ## Simulation boundary
 
-Spatial outputs from simulation (L4) remain unavailable until simulation execution
-is explicitly certified — not in discovery.
+Spatial outputs from simulation (L4) remain unavailable —
+`simulationExecutionImplemented=false`.

@@ -2,11 +2,11 @@ export default function DigitalTwinLayout({ children }: { children: React.ReactN
   return (
     <div
       data-testid="digital-twin-shell"
-      data-module-version="0.5.0-telemetry-binding"
-      data-module-status="telemetry_binding"
+      data-module-version="0.6.0-representation"
+      data-module-status="representation"
     >
       <nav aria-label="Digital Twin sections">
-        <a href="/engineering/apps/digital-twin">Telemetry Binding</a>
+        <a href="/engineering/apps/digital-twin">Representation Mapping</a>
       </nav>
       {children}
     </div>

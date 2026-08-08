@@ -16,6 +16,7 @@ import {
 import {
   AUTONOMOUS_TWIN_STATE_PUBLICATION_ALLOWED,
   DIGITAL_TWIN_IDENTITY_REVIEW_SLUG,
+  DIGITAL_TWIN_REPRESENTATION_MAPPING_REVIEW_SLUG,
   DIGITAL_TWIN_STATE_REVIEW_SLUG,
   DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG,
 } from "../version";
@@ -23,6 +24,9 @@ import {
 export const IDENTITY_REVIEW_WORKFLOW_SLUG = DIGITAL_TWIN_IDENTITY_REVIEW_SLUG;
 export const STATE_REVIEW_WORKFLOW_SLUG = DIGITAL_TWIN_STATE_REVIEW_SLUG;
 export const TELEMETRY_BINDING_REVIEW_WORKFLOW_SLUG = DIGITAL_TWIN_TELEMETRY_BINDING_REVIEW_SLUG;
+export const REPRESENTATION_MAPPING_REVIEW_WORKFLOW_SLUG =
+  DIGITAL_TWIN_REPRESENTATION_MAPPING_REVIEW_SLUG;
+/** Literal slug retained for certification probes: digital_twin.representation_mapping_review */
 
 export const IDENTITY_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
   slug: IDENTITY_REVIEW_WORKFLOW_SLUG,
@@ -371,6 +375,101 @@ export function transitionTelemetryBindingReview(input: {
   return transitionWorkflowInstance({
     instance: input.instance,
     definition: TELEMETRY_BINDING_REVIEW_WORKFLOW,
+    action: input.action,
+    to: input.to,
+  });
+}
+
+export const REPRESENTATION_MAPPING_REVIEW_WORKFLOW: EngineeringWorkflowDefinition = {
+  slug: REPRESENTATION_MAPPING_REVIEW_WORKFLOW_SLUG,
+  displayName: "Digital Twin Representation Mapping Review",
+  moduleKey: "digital_twin",
+  version: 1,
+  initialState: "draft",
+  states: [
+    "draft",
+    "pending_review",
+    "approved",
+    "rejected",
+    "published",
+    "superseded",
+    "retired",
+  ] as const,
+  transitions: [
+    { from: "draft", to: "pending_review", action: "submit" },
+    { from: "pending_review", to: "approved", action: "approve" },
+    { from: "pending_review", to: "rejected", action: "reject" },
+    { from: "pending_review", to: "draft", action: "return_draft" },
+    { from: "approved", to: "published", action: "publish" },
+    { from: "rejected", to: "draft", action: "revise" },
+    { from: "published", to: "superseded", action: "supersede" },
+    { from: "published", to: "retired", action: "retire" },
+    { from: "superseded", to: "retired", action: "retire" },
+  ],
+};
+
+export const REPRESENTATION_MAPPING_REVIEW_ENTITY_TYPE =
+  "digital_twin_representation_mapping" as const;
+
+export type RepresentationMappingReviewAction =
+  | "approve"
+  | "reject"
+  | "return_draft"
+  | "revise"
+  | "publish"
+  | "supersede"
+  | "retire";
+export type RepresentationMappingReviewTargetState =
+  | "approved"
+  | "rejected"
+  | "draft"
+  | "published"
+  | "superseded"
+  | "retired"
+  | "pending_review";
+
+export function startRepresentationMappingReview(input: {
+  tenantId: string;
+  workspaceId: string;
+  twinId: string;
+  mappingId: string;
+  startedBy?: string;
+}): { instance: EngineeringWorkflowInstance; review: EngineeringReviewRecord } {
+  const instance = createWorkflowInstance({
+    definition: REPRESENTATION_MAPPING_REVIEW_WORKFLOW,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    entityType: REPRESENTATION_MAPPING_REVIEW_ENTITY_TYPE,
+    entityId: input.mappingId,
+    startedBy: input.startedBy,
+    context: {
+      kind: "digital_twin_representation_mapping",
+      twinId: input.twinId,
+      mappingId: input.mappingId,
+      storesGeometryPayload: false,
+      storesSourceModelBinary: false,
+      autoApproveEnabled: false,
+      threeDViewerImplemented: false,
+    },
+  });
+  const submitted = transitionWorkflowInstance({
+    instance,
+    definition: REPRESENTATION_MAPPING_REVIEW_WORKFLOW,
+    action: "submit",
+    to: "pending_review",
+  });
+  const review = createReviewRecord({ instanceId: submitted.instanceId });
+  return { instance: submitted, review };
+}
+
+export function transitionRepresentationMappingReview(input: {
+  instance: EngineeringWorkflowInstance;
+  action: RepresentationMappingReviewAction;
+  to: RepresentationMappingReviewTargetState;
+}): EngineeringWorkflowInstance {
+  return transitionWorkflowInstance({
+    instance: input.instance,
+    definition: REPRESENTATION_MAPPING_REVIEW_WORKFLOW,
     action: input.action,
     to: input.to,
   });
