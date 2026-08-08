@@ -88,36 +88,86 @@ export function analyticalAxialBarDisplacementM(input: {
   return (input.loadN * input.lengthM) / (input.youngsModulusPa * input.sectionAreaM2);
 }
 
+const SCI_FLOAT = "[-+]?\\d*\\.?\\d+(?:[Ee][-+]\\d+)?";
+
 /**
- * Parse a minimal CalculiX .dat displacement line set into mapped output.
+ * Parse CalculiX .dat NODE PRINT displacement blocks into mapped output.
+ * Format (typical):
+ *   displacements (vx,vy,vz) for set Nall and node:
+ *            1  0.000000E+00  0.000000E+00  0.000000E+00
+ *            2  4.761905E-07  0.000000E+00  0.000000E+00
  * Fail-closed when required fields cannot be parsed.
  */
 export function mapCalculixDatToLinearElasticOutput(datText: string): LinearElasticStaticMappedOutput {
-  const displMatches = [...datText.matchAll(/displacements?\s*\(.*?\)[\s\S]*?([-+]?\d*\.?\d+(?:[Ee][-+]?\d+)?)/gi)];
-  const uMatch = datText.match(/U\s*[:=]\s*([-+]?\d*\.?\d+(?:[Ee][-+]?\d+)?)/i);
-  const numeric = uMatch?.[1] ?? displMatches[0]?.[1];
-  if (!numeric) {
-    // Fallback: last floating token labeled as displacement magnitude in fixture notes
+  const floatRe = new RegExp(SCI_FLOAT, "g");
+  const lineRe = new RegExp(
+    `^\\s*(\\d+)\\s+(${SCI_FLOAT})\\s+(${SCI_FLOAT})\\s+(${SCI_FLOAT})\\s*$`,
+    "gm",
+  );
+
+  let maxAbs = 0;
+  let found = false;
+
+  // Prefer the displacements section; ignore node ids / heading noise.
+  const sectionMatch = datText.match(
+    /displacements?\s*\([^)]*\)[\s\S]*?(?=\n\s*\n[A-Za-z]|\n\s*stresses|\n\s*forces|\n\s*total\s+cpu|$)/i,
+  );
+  const section = sectionMatch?.[0] ?? datText;
+  for (const m of section.matchAll(lineRe)) {
+    const ux = Number(m[2]);
+    const uy = Number(m[3]);
+    const uz = Number(m[4]);
+    if (![ux, uy, uz].every((v) => Number.isFinite(v))) continue;
+    found = true;
+    maxAbs = Math.max(maxAbs, Math.abs(ux), Math.abs(uy), Math.abs(uz));
+  }
+
+  if (!found) {
+    // Explicit annotation (fixture companion / adapter notes)
     const mag = datText.match(/max_displacement_m\s*=\s*([-+]?\d*\.?\d+(?:[Ee][-+]?\d+)?)/i);
-    if (!mag) {
+    if (mag) {
       return {
         mapperVersion: SOLVER_OUTPUT_MAPPER_VERSION,
         methodKey: LINEAR_ELASTIC_STATIC_METHOD_KEY,
-        parseOk: false,
-        errorCode: "output_parse_failed",
+        maxDisplacementM: Number(mag[1]),
+        parseOk: true,
       };
     }
+    const uMatch = datText.match(
+      new RegExp(`\\bU1?\\b\\s*[:=]\\s*(${SCI_FLOAT})`, "i"),
+    );
+    if (uMatch) {
+      return {
+        mapperVersion: SOLVER_OUTPUT_MAPPER_VERSION,
+        methodKey: LINEAR_ELASTIC_STATIC_METHOD_KEY,
+        maxDisplacementM: Math.abs(Number(uMatch[1])),
+        parseOk: true,
+        rawNotes: ["parsed_from_U_label"],
+      };
+    }
+    // Last resort: collect scientific floats that look like small displacements (not node ids)
+    const candidates = [...datText.matchAll(floatRe)]
+      .map((m) => Number(m[0]))
+      .filter((v) => Number.isFinite(v) && Math.abs(v) > 0 && Math.abs(v) < 1e-2);
+    if (candidates.length > 0) {
+      maxAbs = Math.max(...candidates.map((v) => Math.abs(v)));
+      found = true;
+    }
+  }
+
+  if (!found) {
     return {
       mapperVersion: SOLVER_OUTPUT_MAPPER_VERSION,
       methodKey: LINEAR_ELASTIC_STATIC_METHOD_KEY,
-      maxDisplacementM: Number(mag[1]),
-      parseOk: true,
+      parseOk: false,
+      errorCode: "output_parse_failed",
     };
   }
+
   return {
     mapperVersion: SOLVER_OUTPUT_MAPPER_VERSION,
     methodKey: LINEAR_ELASTIC_STATIC_METHOD_KEY,
-    maxDisplacementM: Number(numeric),
+    maxDisplacementM: maxAbs,
     parseOk: true,
   };
 }

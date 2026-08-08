@@ -23,6 +23,7 @@ import {
   FIRST_REAL_ENGINEERING_SOLVER_ADAPTER_IMPLEMENTED,
   FIRST_REAL_SOLVER_ID,
   LINEAR_ELASTIC_STATIC_METHOD_KEY,
+  mapCalculixDatToLinearElasticOutput,
   mapLinearElasticStaticInput,
   NATIVE_ENGINEERING_SOLVER_IMPLEMENTED,
   PHASE_12H_CERTIFIED_COMMIT,
@@ -108,6 +109,23 @@ describe("Phase 12I Digital Twin External Solver", () => {
     expect(CALCULIX_ADAPTER_VERSION).toBe("1.0.0");
     expect(CALCULIX_SOLVER_ID).toBe("calculix");
     expect(SOLVER_EXECUTION_DEFAULTS_MANIFEST_VERSION).toContain("calculix");
+  });
+
+  it("parses CalculiX .dat node displacements without mistaking node ids", () => {
+    const dat = `
+ displacements (vx,vy,vz) for set Nall and node:
+
+         1  0.000000E+00  0.000000E+00  0.000000E+00
+         2  4.761905E-07  0.000000E+00  0.000000E+00
+
+`;
+    const mapped = mapCalculixDatToLinearElasticOutput(dat);
+    expect(mapped.parseOk).toBe(true);
+    expect(mapped.maxDisplacementM).toBeCloseTo(4.761905e-7, 12);
+    const rel =
+      Math.abs((mapped.maxDisplacementM ?? 0) - CALCULIX_AXIAL_BAR_BENCHMARK.expectedDisplacementM) /
+      CALCULIX_AXIAL_BAR_BENCHMARK.expectedDisplacementM;
+    expect(rel).toBeLessThanOrEqual(0.05);
   });
 
   it("creates calculix provider as executable in 12I", () => {
