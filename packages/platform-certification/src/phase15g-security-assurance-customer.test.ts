@@ -18,7 +18,7 @@ describe("Phase 15G Security & Assurance Customer Assurance", () => {
       resolve(root, "packages/security-assurance/src/discovery-flags.ts"),
       "utf8",
     );
-    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[78]\.0-/);
+    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[78]\.0-|1\.0\.0/);
     expect(version).toContain("924b2eaa7f6bfc635d742c5310cff3a22ed5d446");
     expect(flags).toContain("CustomerAssuranceImplemented = true");
     expect(flags).toContain("AssuranceDisclosurePolicyReady = true");

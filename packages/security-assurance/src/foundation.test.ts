@@ -54,8 +54,8 @@ function currentEvidence(partial: {
 
 describe("Phase 15B Security & Assurance foundation", () => {
   it("declares 0.2.0-control-evidence and Phase 15A baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.8.0-ga-readiness");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.8.0-ga-readiness");
+    expect(SECURITY_ASSURANCE_VERSION).toBe("1.0.0");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(PHASE_15A_BASELINE_COMMIT).toBe(
       "4748972076f77e7392bb41ec664adddfeb677407",
     );

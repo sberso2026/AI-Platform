@@ -18,7 +18,7 @@ describe("Phase 15F Security & Assurance Compliance Intelligence", () => {
       resolve(root, "packages/security-assurance/src/discovery-flags.ts"),
       "utf8",
     );
-    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[678]\.0-/);
+    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[678]\.0-|1\.0\.0/);
     expect(version).toContain("aa5150fc4acf287b50c973220c40d62b7f91687f");
     expect(flags).toContain("ComplianceIntelligenceReady = true");
     expect(flags).toContain("ComplianceFrameworkRegistryImplemented = true");

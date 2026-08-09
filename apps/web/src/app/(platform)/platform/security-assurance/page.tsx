@@ -16,14 +16,14 @@ export default function PlatformSecurityAssurancePage() {
       <PageMain>
         <main className="space-y-6">
           <p data-testid="security-assurance-foundation-ready">
-            Security & Assurance foundation ready (0.8.0-ga-readiness) —
+            Security & Assurance foundation ready (1.0.0) —
             controls, evidence freshness, assessments, findings, exceptions, and
             dimensional posture; SecurityIntelligenceImplemented=false;
             CustomerTrustCenterImplemented=false; no universal security score.
           </p>
 
           <p data-testid="security-assurance-isolation-ready">
-            Isolation Assurance ready (0.8.0-ga-readiness) —
+            Isolation Assurance ready (1.0.0) —
             IsolationAssuranceRuntimeImplemented=true;
             knownCrossTenantLeakageDetected=false;
             knownCrossWorkspaceLeakageDetected=false;
@@ -32,7 +32,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-ai-data-ready">
-            AI & Data Security Assurance ready (0.8.0-ga-readiness) —
+            AI & Data Security Assurance ready (1.0.0) —
             AiDataSecurityRuntimeImplemented=true;
             ProviderDataHandlingAssuranceImplemented=true;
             duplicateAiStackDetected=false;
@@ -41,7 +41,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-secure-compute-ready">
-            Secure Compute Assurance ready (0.8.0-ga-readiness) —
+            Secure Compute Assurance ready (1.0.0) —
             SecureComputeAssuranceRuntimeImplemented=true;
             WorkloadIdentityAssuranceImplemented=true;
             ExecutionProvenanceImplemented=true;
@@ -51,7 +51,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-compliance-ready">
-            Compliance Intelligence ready (0.8.0-ga-readiness) —
+            Compliance Intelligence ready (1.0.0) —
             ComplianceFrameworkRegistryImplemented=true;
             ComplianceAssessmentImplemented=true;
             automaticCertificationEnabled=false;
@@ -60,7 +60,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-customer-ready">
-            Customer Assurance ready (0.8.0-ga-readiness) —
+            Customer Assurance ready (1.0.0) —
             CustomerAssuranceImplemented=true;
             AssuranceDisclosurePolicyReady=true;
             automaticCustomerAssurancePublicationEnabled=false;
@@ -68,10 +68,21 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-v1-readiness">
-            Security & Assurance V1 GA readiness assessed (0.8.0-ga-readiness) —
-            securityAssuranceV1GaReady=true; securityAssuranceV1GaCertified=false;
-            openBlockers=0; openRequiredBeforeGa=0; phase15IReady=true;
-            contracts not frozen at 1.0.0; S07/S08 remain Tier-1 requirements.
+            Security & Assurance V1 GA readiness assessed (1.0.0) —
+            securityAssuranceV1GaReady=true; openBlockers=0; openRequiredBeforeGa=0;
+            phase15IReady=true; S07/S08 remain Tier-1 requirements.
+          </p>
+
+          <p data-testid="security-assurance-v1-ready">
+            Security & Assurance V1.0 GA (1.0.0) —
+            SecurityAssuranceV1GaCertified=true; SecurityAssuranceV1Frozen=true;
+            SecurityAssurancePublicContractsFrozen=true;
+            SecurityAssuranceManifestFrozen=true;
+            productionSecurityAssuranceReady=true;
+            releaseTag=security-assurance-v1.0.0;
+            CustomerTrustCenterImplemented=false;
+            S07ExternalPenTestComplete=false; S08CustomerSsoProductionReady=false;
+            universalSecurityScorePresent=false.
           </p>
 
           <section aria-label="Security assurance inspection surfaces">
@@ -237,14 +248,21 @@ export default function PlatformSecurityAssurancePage() {
               aria-label="V1 readiness summary"
             >
               <li>securityAssuranceV1GaReady=true</li>
-              <li>securityAssuranceV1GaCertified=false</li>
+              <li>securityAssuranceV1GaCertified=true</li>
               <li>openBlockers=0</li>
               <li>openRequiredBeforeGa=0</li>
               <li>S07 REQUIRED_BEFORE_TIER1_PRODUCTION</li>
               <li>S08 REQUIRED_BEFORE_TIER1_PRODUCTION</li>
             </ul>
             <p data-testid="sa-v1-contracts" className="mt-2 text-sm text-muted-foreground">
-              SecurityAssurancePublicContractsFrozenAt1_0_0=false
+              SecurityAssurancePublicContractsFrozenAt1_0_0=true;
+              SecurityAssurancePublicContractsFrozen=true
+            </p>
+            <p data-testid="security-assurance-ga-version" className="text-sm">
+              version=1.0.0
+            </p>
+            <p data-testid="security-assurance-release-tag" className="text-sm">
+              releaseTag=security-assurance-v1.0.0
             </p>
           </section>
 

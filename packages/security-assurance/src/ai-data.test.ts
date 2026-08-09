@@ -22,8 +22,8 @@ import {
 
 describe("Phase 15D AI & Data Security Assurance", () => {
   it("declares current package version on Phase 15C baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.8.0-ga-readiness");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.8.0-ga-readiness");
+    expect(SECURITY_ASSURANCE_VERSION).toBe("1.0.0");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(PHASE_15C_BASELINE_COMMIT).toBe(
       "897383f5a95cf81847ee866c1c1fdac5012b25a5",
     );

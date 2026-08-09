@@ -16,7 +16,7 @@ export default function PlatformCustomerAssurancePage() {
       <PageMain>
         <main className="space-y-6" aria-label="Customer assurance">
           <p data-testid="security-assurance-customer-ready">
-            Customer Assurance ready (0.8.0-ga-readiness) —
+            Customer Assurance ready (1.0.0) —
             CustomerAssuranceImplemented=true;
             AssuranceDisclosurePolicyReady=true;
             automaticCustomerAssurancePublicationEnabled=false;

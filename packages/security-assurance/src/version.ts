@@ -1,12 +1,33 @@
 /**
- * Phase 15H — Security & Assurance V1 GA Readiness / production hardening assessment.
- * Not 1.0.0. Assessment may set securityAssuranceV1GaReady; does not freeze V1 GA.
+ * Phase 15I — Security & Assurance V1.0 Production GA.
+ * First allowed use of Security & Assurance 1.0.0.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.8.0-ga-readiness" as const;
-export const SECURITY_ASSURANCE_STATUS = "ga_readiness" as const;
-export const SECURITY_ASSURANCE_PHASE = "15H" as const;
+export const SECURITY_ASSURANCE_VERSION = "1.0.0" as const;
+export const SECURITY_ASSURANCE_STATUS = "ga" as const;
+export const SECURITY_ASSURANCE_PHASE = "15I" as const;
 
-export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
+export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION = "1.0.0" as const;
+export const SecurityAssurancePublicContractsVersion = "1.0.0" as const;
+export const SecurityAssurancePublicContractsFrozen = true as const;
+/** Alias retained for Phase 15H readiness lineage. */
+export const SecurityAssurancePublicContractsFrozenAt1_0_0 = true as const;
+
+export const SECURITY_ASSURANCE_RELEASE_TAG =
+  "security-assurance-v1.0.0" as const;
+export const releaseTagMoved = false as const;
+
+export const SecurityAssuranceManifestFrozen = true as const;
+export const SecurityAssuranceV1GaCertified = true as const;
+export const securityAssuranceV1GaCertified = true as const;
+export const SecurityAssuranceV1Frozen = true as const;
+export const productionSecurityAssuranceReady = true as const;
+
+/** Immutable Phase 15H GA-readiness baseline. */
+export const PHASE_15H_BASELINE_COMMIT =
+  "e1d2d72170c3fa47bc2dddcd13b596890387666f" as const;
+export const PHASE_15H_BASELINE_HOSTED_RUN = "31307998599" as const;
+export const PHASE_15H_BASELINE_VERSION = "0.8.0-ga-readiness" as const;
+export const SECURITY_ASSURANCE_PREVIOUS_VERSION =
   "0.8.0-ga-readiness" as const;
 
 /** Immutable Phase 15G customer-assurance baseline. */
@@ -56,3 +77,23 @@ export const ENGINEERING_OS_V1_TAG = "engineering-os-v1.0.0" as const;
 export const ENGINEERING_OS_V1_COMMIT =
   "3bfc02478f50ce17f7a81e4e312986c9e1377535" as const;
 export const ENGINEERING_OS_V1_HOSTED_RUN = "31298241500" as const;
+
+/** V1 semantic invariants (fail-closed). */
+export const SECURITY_ASSURANCE_V1_SEMANTICS = {
+  controlDefinedNeqImplemented: true,
+  controlImplementedNeqEffective: true,
+  evidencePresentNeqSufficient: true,
+  staleEvidenceNeqCurrentAssurance: true,
+  automatedEvidenceNeqIndependentAssurance: true,
+  frameworkMappingNeqCertification: true,
+  findingNeqIncident: true,
+  exceptionNeqRemediation: true,
+  postureNeqCertification: true,
+  customerAssuranceNeqCertification: true,
+  absenceOfEvidenceIsUnknown: true,
+  unknownDisclosureFailClosed: true,
+  SecurityEvidenceProvenanceEnforced: true,
+  SecurityEvidenceFreshnessEnforced: true,
+  universalSecurityScorePresent: false,
+  internalEvidenceCannotSatisfyIndependentAssurance: true,
+} as const;

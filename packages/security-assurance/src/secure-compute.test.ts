@@ -20,9 +20,9 @@ import {
 } from "./version";
 
 describe("Phase 15E Secure Compute Assurance", () => {
-  it("declares 0.8.0-ga-readiness on Phase 15D baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.8.0-ga-readiness");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.8.0-ga-readiness");
+  it("declares 1.0.0 on Phase 15D baseline", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("1.0.0");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(PHASE_15D_BASELINE_COMMIT).toBe(
       "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
     );

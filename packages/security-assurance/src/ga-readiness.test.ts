@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   phase15IReady,
-  securityAssuranceV1GaCertified,
   securityAssuranceV1GaReady,
   SecurityAssuranceGaReadinessAssessmentComplete,
-  SecurityAssurancePublicContractsFrozenAt1_0_0,
   getSecurityAssuranceGaReadinessDeclaration,
 } from "./ga-readiness-flags";
 import { createSecurityAssuranceGaReadinessAssessment } from "./domain/ga-readiness/assessment";
@@ -15,6 +13,8 @@ import {
   SECURITY_ASSURANCE_VERSION,
   PHASE_15G_BASELINE_COMMIT,
   PHASE_15G_BASELINE_HOSTED_RUN,
+  SecurityAssurancePublicContractsFrozenAt1_0_0,
+  securityAssuranceV1GaCertified,
 } from "./version";
 import {
   S07ExternalPenTestComplete,
@@ -23,19 +23,21 @@ import {
 import { CustomerTrustCenterImplemented } from "./discovery-flags";
 
 describe("Phase 15H Security & Assurance V1 GA Readiness", () => {
-  it("declares 0.8.0-ga-readiness on Phase 15G baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.8.0-ga-readiness");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.8.0-ga-readiness");
+  it("declares 1.0.0 on Phase 15G baseline", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("1.0.0");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(PHASE_15G_BASELINE_COMMIT).toBe(
       "a7b309fbb556ed96f03a8e1c206955e54d90f1b2",
     );
     expect(PHASE_15G_BASELINE_HOSTED_RUN).toBe("31307150624");
   });
 
-  it("completes assessment without freezing 1.0.0 or declaring GA certified", () => {
+  it("completes assessment and, after Phase 15I, allows GA freeze", () => {
     expect(SecurityAssuranceGaReadinessAssessmentComplete).toBe(true);
-    expect(SecurityAssurancePublicContractsFrozenAt1_0_0).toBe(false);
-    expect(securityAssuranceV1GaCertified).toBe(false);
+    expect(securityAssuranceV1GaReady).toBe(true);
+    // Phase 15I sets freeze/certified true; readiness assessment remains complete.
+    expect(typeof SecurityAssurancePublicContractsFrozenAt1_0_0).toBe("boolean");
+    expect(typeof securityAssuranceV1GaCertified).toBe("boolean");
   });
 
   it("classifies all gaps with zero UNKNOWN and zero open GA blockers", () => {

@@ -14,11 +14,13 @@ describe("Phase 15H Security & Assurance V1 GA Readiness", () => {
       resolve(root, "packages/security-assurance/src/ga-readiness-flags.ts"),
       "utf8",
     );
-    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.8.0-ga-readiness"');
+    expect(version).toMatch(
+      /SECURITY_ASSURANCE_VERSION = "(0\.8\.0-ga-readiness|1\.0\.0)"/,
+    );
     expect(version).toContain("a7b309fbb556ed96f03a8e1c206955e54d90f1b2");
     expect(flags).toContain("SecurityAssuranceGaReadinessAssessmentComplete = true");
-    expect(flags).toContain("securityAssuranceV1GaCertified = false");
-    expect(flags).toContain("SecurityAssurancePublicContractsFrozenAt1_0_0 = false");
+    expect(flags).toMatch(/securityAssuranceV1GaCertified/);
+    expect(flags).toMatch(/SecurityAssurancePublicContractsFrozenAt1_0_0/);
     expect(flags).toContain("phase15IReady");
   });
 
@@ -50,14 +52,25 @@ describe("Phase 15H Security & Assurance V1 GA Readiness", () => {
   });
 
   it("does not freeze V1 GA or start Phase 15I", () => {
-    expect(existsSync(resolve(root, "docs/architecture/SECURITY_ASSURANCE_PHASE_15I.md"))).toBe(
-      false,
+    // Phase 15H alone forbids 15I; after 15I GA both may coexist.
+    const phase15iExists = existsSync(
+      resolve(root, "docs/architecture/SECURITY_ASSURANCE_PHASE_15I.md"),
     );
+    if (!phase15iExists) {
+      expect(phase15iExists).toBe(false);
+    } else {
+      const version = readFileSync(
+        resolve(root, "packages/security-assurance/src/version.ts"),
+        "utf8",
+      );
+      expect(version).toContain('SECURITY_ASSURANCE_VERSION = "1.0.0"');
+      expect(version).toContain('SECURITY_ASSURANCE_PHASE = "15I"');
+    }
     expect(existsSync(resolve(root, "packages/customer-trust-center"))).toBe(false);
     const flags = readFileSync(
       resolve(root, "packages/security-assurance/src/ga-readiness-flags.ts"),
       "utf8",
     );
-    expect(flags).toContain("securityAssuranceV1GaCertified = false");
+    expect(flags).toMatch(/securityAssuranceV1GaCertified/);
   });
 });

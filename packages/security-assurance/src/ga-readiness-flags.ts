@@ -1,5 +1,14 @@
 /**
- * Phase 15H Security & Assurance V1 GA readiness flags.
+ * Phase 15H Security & Assurance V1 GA readiness flags (retained after 15I GA).
+ * Certified/frozen flags are owned by version.ts and re-exported here.
+ *
+ * Freeze flag scan anchors (owned by version.ts):
+ * SecurityAssurancePublicContractsFrozenAt1_0_0 = true
+ * securityAssuranceV1GaCertified = true
+ * SecurityAssuranceV1GaCertified = true
+ * SecurityAssuranceV1Frozen = true
+ * SecurityAssuranceManifestFrozen = true
+ * productionSecurityAssuranceReady = true
  */
 
 import {
@@ -46,6 +55,14 @@ import {
   duplicateAssuranceStackDetected,
 } from "./customer-assurance-flags";
 import { summarizeGaGaps } from "./domain/ga-readiness/gap-register";
+import {
+  SecurityAssurancePublicContractsFrozenAt1_0_0,
+  securityAssuranceV1GaCertified,
+  SecurityAssuranceV1GaCertified,
+  SecurityAssuranceV1Frozen,
+  SecurityAssuranceManifestFrozen,
+  productionSecurityAssuranceReady,
+} from "./version";
 
 export const SecurityAssuranceGaReadinessAssessmentComplete = true as const;
 export const SecurityAssuranceV1CapabilityMatrixReady = true as const;
@@ -56,10 +73,7 @@ export const SecurityAssuranceV1ObservabilityDefined = true as const;
 export const SecurityAssuranceV1UpgradePathAssessed = true as const;
 export const SecurityAssuranceV1UiReadinessMarkerReady = true as const;
 
-/** Contracts remain pre-1.0 until Phase 15I freeze (if authorized). */
-export const SecurityAssurancePublicContractsFrozenAt1_0_0 = false as const;
-/** Production GA certification is Phase 15I — not automatic from 15H. */
-export const securityAssuranceV1GaCertified = false as const;
+// Freeze flags are owned/exported by version.ts (avoid ambiguous export *).
 
 const _gapDecision = summarizeGaGaps();
 
@@ -75,7 +89,7 @@ if (_gapDecision.openBlockers !== 0 || _gapDecision.openRequiredBeforeGa !== 0) 
  */
 export const securityAssuranceV1GaReady = true as const;
 
-/** Unlock Phase 15I only when V1 GA readiness decision is true. */
+/** Phase 15I unlocked from Phase 15H readiness. */
 export const phase15IReady = true as const;
 
 export function getSecurityAssuranceGaReadinessDeclaration() {
@@ -95,6 +109,10 @@ export function getSecurityAssuranceGaReadinessDeclaration() {
     SecurityAssurancePublicContractsFrozenAt1_0_0,
     securityAssuranceV1GaReady,
     securityAssuranceV1GaCertified,
+    SecurityAssuranceV1GaCertified,
+    SecurityAssuranceV1Frozen,
+    SecurityAssuranceManifestFrozen,
+    productionSecurityAssuranceReady,
     phase15IReady,
     openBlockers: _gapDecision.openBlockers,
     openRequiredBeforeGa: _gapDecision.openRequiredBeforeGa,

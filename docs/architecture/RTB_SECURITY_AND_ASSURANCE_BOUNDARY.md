@@ -1,8 +1,8 @@
 # RTB Security & Assurance Boundary
 
-Status: Locked (Phase 14C) · Phase 15A–15H (`0.8.0-ga-readiness`)  
-`SecurityAndAssuranceBoundaryLocked = true` · Foundation → Customer Assurance certified; V1 GA readiness assessed (`securityAssuranceV1GaReady=true`, `securityAssuranceV1GaCertified=false`)  
-Scope: Assurance/control/evidence subsystem; public Trust Center / certification / SIEM **not** implemented; contracts not frozen at 1.0.0
+Status: Locked (Phase 14C) · Phase 15A–15I (`1.0.0` GA)  
+`SecurityAndAssuranceBoundaryLocked = true` · Security & Assurance V1.0 GA certified (`SecurityAssuranceV1GaCertified=true`, `SecurityAssuranceV1Frozen=true`)  
+Scope: Assurance/control/evidence subsystem frozen at 1.0.0; public Trust Center / SIEM / automatic certification **not** implemented; S07/S08 remain Tier-1 requirements
 
 ## Future Security & Assurance (candidate)
 

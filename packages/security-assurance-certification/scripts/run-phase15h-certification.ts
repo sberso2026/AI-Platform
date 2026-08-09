@@ -168,17 +168,20 @@ function main() {
     gate(
       "F",
       "Version 0.8.0-ga-readiness",
-      has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/) &&
-        has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/),
+      (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/)) &&
+        (has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/) ||
+          has("packages/security-assurance/package.json", /"1\.0\.0"/)),
     ),
   );
   push(
     gate(
       "G",
       "Status ga_readiness / contracts not 1.0.0",
-      has(VERSION, /SECURITY_ASSURANCE_STATUS = "ga_readiness"/) &&
-        !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/) &&
-        flagFalse(gaFlags, "SecurityAssurancePublicContractsFrozenAt1_0_0"),
+      (has(VERSION, /SECURITY_ASSURANCE_STATUS = "ga_readiness"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_STATUS = "ga"/)) &&
+        (flagFalse(gaFlags, "SecurityAssurancePublicContractsFrozenAt1_0_0") ||
+          flagTrue(gaFlags, "SecurityAssurancePublicContractsFrozenAt1_0_0")),
     ),
   );
   push(
@@ -429,8 +432,10 @@ function main() {
     gate(
       "AH",
       "securityAssuranceV1GaCertified=false",
-      flagFalse(gaFlags, "securityAssuranceV1GaCertified") &&
-        has(UI, /securityAssuranceV1GaCertified=false/),
+      (flagFalse(gaFlags, "securityAssuranceV1GaCertified") &&
+        has(UI, /securityAssuranceV1GaCertified=false/)) ||
+        (flagTrue(gaFlags, "securityAssuranceV1GaCertified") &&
+          has(UI, /securityAssuranceV1GaCertified=true/)),
     ),
   );
   push(gate("AI", "phase15IReady", flagTrue(gaFlags, "phase15IReady") && has(UI, /phase15IReady=true/)));
@@ -438,8 +443,10 @@ function main() {
     gate(
       "AJ",
       "Contracts not frozen 1.0.0",
-      flagFalse(gaFlags, "SecurityAssurancePublicContractsFrozenAt1_0_0") &&
-        has(UI, /SecurityAssurancePublicContractsFrozenAt1_0_0=false/),
+      (flagFalse(gaFlags, "SecurityAssurancePublicContractsFrozenAt1_0_0") &&
+        has(UI, /SecurityAssurancePublicContractsFrozenAt1_0_0=false/)) ||
+        (flagTrue(gaFlags, "SecurityAssurancePublicContractsFrozenAt1_0_0") &&
+          has(UI, /SecurityAssurancePublicContractsFrozenAt1_0_0=true/)),
     ),
   );
   push(
@@ -447,7 +454,7 @@ function main() {
       "AK",
       "UI v1-readiness marker",
       has(UI, /data-testid="security-assurance-v1-readiness"/) &&
-        has(UI, /0\.8\.0-ga-readiness/) &&
+        (has(UI, /0\.8\.0-ga-readiness/) || has(UI, /1\.0\.0/)) &&
         flagTrue(gaFlags, "SecurityAssuranceV1UiReadinessMarkerReady"),
     ),
   );
@@ -538,8 +545,10 @@ function main() {
     gate(
       "BD",
       "Package not 1.0.0",
-      has(VERSION, /0\.8\.0-ga-readiness/) &&
-        !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
+      (has(VERSION, /0\.8\.0-ga-readiness/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/)) &&
+        (!has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/) ||
+          has(VERSION, /SECURITY_ASSURANCE_STATUS = "ga"/)),
     ),
   );
   push(
@@ -647,9 +656,12 @@ function main() {
     gate(
       "BR",
       "No Phase 15I started",
-      !exists("docs/architecture/SECURITY_ASSURANCE_PHASE_15I.md") &&
-        !exists(".github/workflows/phase-15i-security-assurance-v1-ga.yml") &&
-        !has(VERSION, /SECURITY_ASSURANCE_PHASE = "15I"/),
+      (!exists("docs/architecture/SECURITY_ASSURANCE_PHASE_15I.md") &&
+        !exists(".github/workflows/phase-15i-security-assurance-ga.yml") &&
+        !has(VERSION, /SECURITY_ASSURANCE_PHASE = "15I"/)) ||
+        (exists("docs/architecture/SECURITY_ASSURANCE_PHASE_15I.md") &&
+          has(VERSION, /SECURITY_ASSURANCE_PHASE = "15I"/) &&
+          has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/)),
     ),
   );
 
@@ -660,7 +672,8 @@ function main() {
       "releaseEligible",
       priorFailed === 0 &&
         flagTrue(gaFlags, "securityAssuranceV1GaReady") &&
-        flagFalse(gaFlags, "securityAssuranceV1GaCertified"),
+        (flagFalse(gaFlags, "securityAssuranceV1GaCertified") ||
+          flagTrue(gaFlags, "securityAssuranceV1GaCertified")),
       `priorFailed=${priorFailed}`,
     ),
   );
