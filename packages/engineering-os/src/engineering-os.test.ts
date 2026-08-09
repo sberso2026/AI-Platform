@@ -17,7 +17,17 @@ describe("Engineering OS installation seed", () => {
   it("defines Engineering OS manifest", () => {
     expect(ENGINEERING_OS_MANIFEST.id).toBe("engineering-os");
     expect(ENGINEERING_OS_MANIFEST.operating_system).toBe("engineering");
-    expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$/);
+  });
+
+  it("declares Phase 14A GA readiness version without claiming EOS V1 GA", async () => {
+    const v = await import("./version");
+    expect(v.ENGINEERING_OS_VERSION).toBe("0.9.0-ga-readiness");
+    expect(v.ENGINEERING_OS_STATUS).toBe("ga_readiness");
+    expect(v.productionEngineeringOSReady).toBe(false);
+    expect(v.engineeringOSV1GaCertified).toBe(false);
+    expect(v.phase14BReady).toBe(true);
+    expect(v.clientLicensedSolverExecutionArchitectureSupported).toBe(true);
   });
 
   it("registers Phase 8A initial modules via module registry bridge", () => {

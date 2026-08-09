@@ -515,7 +515,7 @@ export function buildEngineeringOsManifest(
     name: "Engineering OS",
     description:
       "First commercial Operating System on RTB AI Platform — shared engineering foundation and module host",
-    version: "0.3.0",
+    version: "0.9.0-ga-readiness",
     author: "RTB Engineering",
     certificationOnly: false,
     catalogStatus: "available",

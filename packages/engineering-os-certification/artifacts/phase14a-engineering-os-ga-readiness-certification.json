@@ -1,0 +1,515 @@
+{
+  "schemaVersion": "phase14a-engineering-os-ga-readiness/1",
+  "phase": "14A",
+  "name": "phase14a-engineering-os-ga-readiness-certification",
+  "version": "0.9.0-ga-readiness",
+  "status": "ga_readiness",
+  "title": "Engineering OS V1 System Integration and GA Readiness Lock",
+  "verdict": "PASS",
+  "commit": "931c73c2133375f6c8f690da83becde472760e46",
+  "artifactCommitSha": "931c73c2133375f6c8f690da83becde472760e46",
+  "ciHeadSha": "931c73c2133375f6c8f690da83becde472760e46",
+  "buildIdentitySha": "931c73c2133375f6c8f690da83becde472760e46",
+  "EngineeringOSGaReadinessAssessmentComplete": true,
+  "EngineeringOSProductBoundaryLocked": true,
+  "EngineeringOSOwnershipModelLocked": true,
+  "EngineeringOSModuleCompatibilityAssessed": true,
+  "EngineeringOSSharedDomainMaturityAssessed": true,
+  "EngineeringOSCapabilityMatrixReady": true,
+  "EngineeringOSCrossModuleSearchAssessed": true,
+  "EngineeringOSAiOrchestrationAssessed": true,
+  "EngineeringOSToolFrameworkIntegrated": true,
+  "clientLicensedSolverExecutionArchitectureSupported": true,
+  "EngineeringOSNavigationAssessed": true,
+  "EngineeringOSContextModelLocked": true,
+  "EngineeringOSEventMatrixReady": true,
+  "EngineeringOSHealthModelDefined": true,
+  "EngineeringOSCommercialPackagingDefined": true,
+  "EngineeringOSSecurityBoundaryDefined": true,
+  "EngineeringOSOperationsReadinessAssessed": true,
+  "EngineeringOSGaGapRegisterReady": true,
+  "EngineeringOSV1ReadinessMatrixReady": true,
+  "duplicateAssetOwnershipDetected": false,
+  "duplicateProjectOwnershipDetected": false,
+  "duplicateSpatialOwnershipDetected": false,
+  "duplicateKnowledgeGraphDetected": false,
+  "duplicateWorkflowEngineDetected": false,
+  "duplicateEngineeringToolFrameworkDetected": false,
+  "privateCrossModuleCouplingDetected": false,
+  "productionEngineeringOSReady": false,
+  "engineeringOSV1GaCertified": false,
+  "clientLicensedETABSExecutionCertified": false,
+  "clientLicensedSPACEGASSExecutionCertified": false,
+  "implementsOwnAiStack": false,
+  "silentSolverFallbackAllowed": false,
+  "ProjectIntelligenceV1Intact": true,
+  "InspectionIntelligenceV1Intact": true,
+  "AssetIntelligenceV1Intact": true,
+  "ProjectControlsV1Intact": true,
+  "DigitalTwinV1Intact": true,
+  "EngineeringModelInteroperabilityV1Intact": true,
+  "phase14BReady": true,
+  "releaseEligible": true,
+  "secretExposure": false,
+  "secretExposureDetected": false,
+  "unexpected5xx": 0,
+  "requiredTestsSkipped": 0,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "931c73c2133375f6c8f690da83becde472760e46"
+    },
+    {
+      "id": "B",
+      "name": "Project Intelligence V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Inspection Intelligence V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Asset Intelligence V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Project Controls V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Digital Twin V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Engineering Model Interoperability V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Engineering OS package exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Engineering OS certification package exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Version 0.9.0-ga-readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Status ga_readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "productionEngineeringOSReady is false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "engineeringOSV1GaCertified is false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "System inventory document",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_PHASE_14A_EXISTING_SYSTEM_INVENTORY.md"
+    },
+    {
+      "id": "O",
+      "name": "Product boundary document",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_PRODUCT_BOUNDARY.md"
+    },
+    {
+      "id": "P",
+      "name": "Ownership matrix document",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_OWNERSHIP_MATRIX.md"
+    },
+    {
+      "id": "Q",
+      "name": "Canonical ownership normalization document",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_CANONICAL_OWNERSHIP_NORMALIZATION.md"
+    },
+    {
+      "id": "R",
+      "name": "Shared domain maturity matrix",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_SHARED_DOMAIN_MATURITY_MATRIX.md"
+    },
+    {
+      "id": "S",
+      "name": "Module compatibility matrix",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_MODULE_COMPATIBILITY_MATRIX.md"
+    },
+    {
+      "id": "T",
+      "name": "Capability matrix",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_CAPABILITY_MATRIX.md"
+    },
+    {
+      "id": "U",
+      "name": "Cross-module search model",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_CROSS_MODULE_SEARCH_MODEL.md"
+    },
+    {
+      "id": "V",
+      "name": "AI orchestration model",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_AI_ORCHESTRATION_MODEL.md"
+    },
+    {
+      "id": "W",
+      "name": "Tool framework integration",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_TOOL_FRAMEWORK_INTEGRATION.md"
+    },
+    {
+      "id": "X",
+      "name": "Client-owned commercial solver architecture",
+      "status": "pass",
+      "detail": "docs/architecture/CLIENT_OWNED_COMMERCIAL_SOLVER_EXECUTION_ARCHITECTURE.md"
+    },
+    {
+      "id": "Y",
+      "name": "Navigation model",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_NAVIGATION_MODEL.md"
+    },
+    {
+      "id": "Z",
+      "name": "Context model",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_CONTEXT_MODEL.md"
+    },
+    {
+      "id": "AA",
+      "name": "Event matrix",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_EVENT_MATRIX.md"
+    },
+    {
+      "id": "AB",
+      "name": "Health model",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_HEALTH_MODEL.md"
+    },
+    {
+      "id": "AC",
+      "name": "Commercial packaging architecture",
+      "status": "pass",
+      "detail": "docs/commercial/ENGINEERING_OS_V1_PACKAGING_ARCHITECTURE.md"
+    },
+    {
+      "id": "AD",
+      "name": "Security boundary",
+      "status": "pass",
+      "detail": "docs/security/ENGINEERING_OS_V1_SECURITY_BOUNDARY.md"
+    },
+    {
+      "id": "AE",
+      "name": "Capacity/performance baseline",
+      "status": "pass",
+      "detail": "docs/operations/ENGINEERING_OS_V1_CAPACITY_AND_PERFORMANCE_BASELINE.md"
+    },
+    {
+      "id": "AF",
+      "name": "Operations readiness",
+      "status": "pass",
+      "detail": "docs/operations/ENGINEERING_OS_V1_OPERATIONS_READINESS.md"
+    },
+    {
+      "id": "AG",
+      "name": "GA gap register",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_GA_GAP_REGISTER.md"
+    },
+    {
+      "id": "AH",
+      "name": "V1 readiness matrix",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_V1_READINESS_MATRIX.md"
+    },
+    {
+      "id": "AI",
+      "name": "Phase 14A overview",
+      "status": "pass",
+      "detail": "docs/architecture/ENGINEERING_OS_PHASE_14A.md"
+    },
+    {
+      "id": "AJ",
+      "name": "EngineeringOSGaReadinessAssessmentComplete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "EngineeringOSProductBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "EngineeringOSOwnershipModelLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "EngineeringOSModuleCompatibilityAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "EngineeringOSSharedDomainMaturityAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "EngineeringOSCapabilityMatrixReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "EngineeringOSCrossModuleSearchAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "EngineeringOSAiOrchestrationAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "EngineeringOSToolFrameworkIntegrated",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "clientLicensedSolverExecutionArchitectureSupported",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "EngineeringOSNavigationAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "EngineeringOSContextModelLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "EngineeringOSEventMatrixReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "EngineeringOSHealthModelDefined",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "EngineeringOSCommercialPackagingDefined",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "EngineeringOSSecurityBoundaryDefined",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "EngineeringOSOperationsReadinessAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "EngineeringOSGaGapRegisterReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "EngineeringOSV1ReadinessMatrixReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "Duplicate ownership/framework flags false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "implementsOwnAiStack false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Live commercial solver flags false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Gap register has no UNKNOWN ownership",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "Migration lineage inventoried / no 14A migration",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "UI/status mismatches documented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Secret exposure",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "phase14BReady and releaseEligible",
+      "status": "pass",
+      "detail": "phase14BReady=true;priorFailed=0"
+    }
+  ],
+  "requiredGates": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "AA",
+    "AB",
+    "AC",
+    "AD",
+    "AE",
+    "AF",
+    "AG",
+    "AH",
+    "AI",
+    "AJ",
+    "AK",
+    "AL",
+    "AM",
+    "AN",
+    "AO",
+    "AP",
+    "AQ",
+    "AR",
+    "AS",
+    "AT",
+    "AU",
+    "AV",
+    "AW",
+    "AX",
+    "AY",
+    "AZ",
+    "BA",
+    "BB",
+    "BC",
+    "BD",
+    "BE",
+    "BF",
+    "BG",
+    "BH",
+    "BI",
+    "BJ",
+    "BK",
+    "BL"
+  ],
+  "gateCount": 64,
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "generatedAt": "2026-08-09T04:35:22.341Z"
+}
