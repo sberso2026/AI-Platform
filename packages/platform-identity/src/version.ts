@@ -1,13 +1,19 @@
 /**
- * Phase 16A — Platform Enterprise Identity / Customer SSO Discovery.
- * Discovery / architecture lock only. Not production SSO.
+ * Phase 16B — Platform Enterprise Identity Production OIDC / Entra SSO (S08).
  */
-export const PLATFORM_IDENTITY_VERSION = "0.1.0-enterprise-sso-discovery" as const;
-export const PLATFORM_IDENTITY_STATUS = "discovery" as const;
-export const PLATFORM_IDENTITY_PHASE = "16A" as const;
+export const PLATFORM_IDENTITY_VERSION = "0.2.0-enterprise-sso" as const;
+export const PLATFORM_IDENTITY_STATUS = "enterprise_sso" as const;
+export const PLATFORM_IDENTITY_PHASE = "16B" as const;
 
 export const PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACT_VERSION =
-  "0.1.0-draft" as const;
+  "0.2.0-enterprise-sso" as const;
+
+/** Phase 16A discovery baseline (immutable). */
+export const PHASE_16A_BASELINE_COMMIT =
+  "af1e0425c77c516d4cf99a42d5e3eab9bee7206e" as const;
+export const PHASE_16A_BASELINE_HOSTED_RUN = "31309905950" as const;
+export const PHASE_16A_BASELINE_VERSION =
+  "0.1.0-enterprise-sso-discovery" as const;
 
 /** Certified Security & Assurance V1.0 baseline (immutable). */
 export const SECURITY_ASSURANCE_V1_TAG = "security-assurance-v1.0.0" as const;
@@ -28,4 +34,5 @@ export const PLATFORM_IDENTITY_V1_SEMANTICS = {
   jitUserNeqPrivilegedUser: true,
   ssoProviderConfiguredNeqProviderHealthy: true,
   ssoRequiredNeqPasswordFallback: true,
+  passwordFallbackWhenRequired: false,
 } as const;

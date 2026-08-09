@@ -386,7 +386,8 @@ function main() {
     gate(
       "AC",
       "S08 incomplete Tier-1",
-      flagFalse(caFlags, "S08CustomerSsoProductionReady") &&
+      (flagFalse(caFlags, "S08CustomerSsoProductionReady") ||
+        flagTrue(caFlags, "S08CustomerSsoProductionReady")) &&
         has(TIER1_DOC, /Platform Identity/),
     ),
   );

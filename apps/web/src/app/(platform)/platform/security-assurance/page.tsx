@@ -81,7 +81,8 @@ export default function PlatformSecurityAssurancePage() {
             productionSecurityAssuranceReady=true;
             releaseTag=security-assurance-v1.0.0;
             CustomerTrustCenterImplemented=false;
-            S07ExternalPenTestComplete=false; S08CustomerSsoProductionReady=false;
+            S07ExternalPenTestComplete=false; S08CustomerSsoProductionReady=true;
+            S08 owned by Platform Identity (Phase 16B closed).
             universalSecurityScorePresent=false.
           </p>
 

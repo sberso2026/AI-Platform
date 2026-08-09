@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const root = resolve(__dirname, "../../..");
 
 describe("Phase 16A Platform Enterprise SSO Discovery", () => {
-  it("declares discovery version and keeps S08/S07 incomplete", () => {
+  it("preserves discovery locks and frozen baselines under later phases", () => {
     const version = readFileSync(
       resolve(root, "packages/platform-identity/src/version.ts"),
       "utf8",
@@ -14,14 +14,12 @@ describe("Phase 16A Platform Enterprise SSO Discovery", () => {
       resolve(root, "packages/platform-identity/src/discovery-flags.ts"),
       "utf8",
     );
-    expect(version).toContain(
-      'PLATFORM_IDENTITY_VERSION = "0.1.0-enterprise-sso-discovery"',
+    expect(version).toMatch(
+      /PLATFORM_IDENTITY_VERSION = "(0\.1\.0-enterprise-sso-discovery|0\.2\.0-enterprise-sso)"/,
     );
     expect(version).toContain("cf3e9eff49c1314ea16e115dcde26cd45e520121");
     expect(version).toContain("3bfc02478f50ce17f7a81e4e312986c9e1377535");
     expect(flags).toContain("EnterpriseIdentityDiscoveryReady = true");
-    expect(flags).toContain("S08CustomerSsoProductionReady = false");
-    expect(flags).toContain("S07ExternalPenTestComplete = false");
     expect(flags).toContain("securityAssuranceOwnsCustomerSso = false");
     expect(flags).toContain("phase16BReady = true");
   });
@@ -56,16 +54,8 @@ describe("Phase 16A Platform Enterprise SSO Discovery", () => {
     expect(eos).toContain('ENGINEERING_OS_VERSION = "1.0.0"');
   });
 
-  it("does not claim production SSO or start 16B implementation docs", () => {
-    expect(
-      existsSync(resolve(root, "docs/architecture/PLATFORM_IDENTITY_PHASE_16B.md")),
-    ).toBe(false);
+  it("does not introduce duplicate SSO packages", () => {
     expect(existsSync(resolve(root, "packages/security-assurance-sso"))).toBe(false);
-    const flags = readFileSync(
-      resolve(root, "packages/platform-identity/src/discovery-flags.ts"),
-      "utf8",
-    );
-    expect(flags).toContain("EnterpriseSsoRuntimeImplemented = false");
-    expect(flags).toContain("CustomerSsoProductionReady = false");
+    expect(existsSync(resolve(root, "packages/engineering-os-sso"))).toBe(false);
   });
 });

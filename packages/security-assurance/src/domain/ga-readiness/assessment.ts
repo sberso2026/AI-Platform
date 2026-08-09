@@ -14,7 +14,7 @@ export class SecurityAssuranceGaReadinessAssessment {
   readonly contractsFrozenAt1_0_0 = false as const;
   readonly securityAssuranceV1GaCertified = false as const;
   readonly S07ExternalPenTestComplete = false as const;
-  readonly S08CustomerSsoProductionReady = false as const;
+  readonly S08CustomerSsoProductionReady = true as const;
   readonly CustomerTrustCenterImplemented = false as const;
   readonly automaticCertificationEnabled = false as const;
   readonly automaticComplianceClaimEnabled = false as const;

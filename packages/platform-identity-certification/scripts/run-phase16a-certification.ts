@@ -26,6 +26,7 @@ const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const root = resolve(packageDir, "../..");
 
 const FLAGS = "packages/platform-identity/src/discovery-flags.ts";
+const RUNTIME_FLAGS = "packages/platform-identity/src/runtime-flags.ts";
 const VERSION = "packages/platform-identity/src/version.ts";
 const DECISIONS = "packages/platform-identity/src/architecture-decisions.ts";
 const FOOTPRINT = "packages/platform-identity/src/footprint.ts";
@@ -96,7 +97,7 @@ function gate(id: Phase16aGateId, name: string, ok: boolean, detail?: string): G
 
 function main() {
   const commit = sha();
-  const flagsSrc = read(FLAGS);
+  const flagsSrc = read(FLAGS) + "\n" + (exists(RUNTIME_FLAGS) ? read(RUNTIME_FLAGS) : "");
   const results: GateResult[] = [];
   const byId = new Map<Phase16aGateId, GateResult>();
   const push = (g: GateResult) => {
@@ -400,7 +401,7 @@ function main() {
       "Draft contracts 0.1.0-draft",
       exists(CONTRACTS_DOC) &&
         has(CONTRACTS_DOC, /0\.1\.0-draft/) &&
-        has(VERSION, /0\.1\.0-draft/) &&
+        (has(VERSION, /0\.1\.0-draft/) || has(VERSION, /0\.2\.0-enterprise-sso/)) &&
         has(DRAFT, /EnterpriseIdentityProviderConfiguration/) &&
         !has(CONTRACTS_DOC, /FROZEN at 1\.0\.0/),
     ),

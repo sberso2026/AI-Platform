@@ -55,7 +55,7 @@ export class CustomerAssuranceEngine {
   readonly automaticSecurityApprovalEnabled = false as const;
   readonly automaticRemediationEnabled = false as const;
   readonly S07ExternalPenTestComplete = false as const;
-  readonly S08CustomerSsoProductionReady = false as const;
+  readonly S08CustomerSsoProductionReady = true as const;
   readonly CustomerTrustCenterImplemented = false as const;
   readonly duplicateAssuranceStackDetected = false as const;
   readonly duplicatePolicyEngineDetected = false as const;

@@ -52,7 +52,7 @@ describe("Phase 15H Security & Assurance V1 GA Readiness", () => {
 
   it("keeps S07/S08 and Trust Center truthful for Tier-1 distinction", () => {
     expect(S07ExternalPenTestComplete).toBe(false);
-    expect(S08CustomerSsoProductionReady).toBe(false);
+    expect(S08CustomerSsoProductionReady).toBe(true);
     expect(CustomerTrustCenterImplemented).toBe(false);
     const a = createSecurityAssuranceGaReadinessAssessment();
     expect(a.decide().subsystemReadyDistinctFromTier1Production).toBe(true);

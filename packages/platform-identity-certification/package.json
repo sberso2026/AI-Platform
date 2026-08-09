@@ -1,16 +1,19 @@
 {
   "name": "@rtb/platform-identity-certification",
-  "version": "0.1.0-enterprise-sso-discovery",
+  "version": "0.2.0-enterprise-sso",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase16a": "tsx scripts/run-phase16a-certification.ts",
-    "secret-scan": "tsx scripts/secret-exposure-scan.ts"
+    "certify:phase16b": "tsx scripts/run-phase16b-certification.ts",
+    "secret-scan": "tsx scripts/secret-exposure-scan.ts",
+    "test:e2e:sso": "playwright test playwright/v1-enterprise-sso.spec.ts"
   },
   "dependencies": {
     "@rtb/platform-identity": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.29",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3"

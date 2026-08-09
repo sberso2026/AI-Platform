@@ -62,7 +62,8 @@ export const automaticCustomerAssurancePublicationEnabled = false as const;
 export const automaticExternalDisclosureEnabled = false as const;
 
 export const S07ExternalPenTestComplete = false as const;
-export const S08CustomerSsoProductionReady = false as const;
+/** Closed by Phase 16B Platform Identity enterprise SSO. */
+export const S08CustomerSsoProductionReady = true as const;
 
 export const duplicateControlRegistryDetected = false as const;
 export const duplicateEvidenceRegistryDetected = false as const;

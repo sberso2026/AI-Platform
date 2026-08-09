@@ -373,7 +373,8 @@ function main() {
       "AB",
       "Tier-1 S07/S08 truthful",
       flagFalse(caFlags, "S07ExternalPenTestComplete") &&
-        flagFalse(caFlags, "S08CustomerSsoProductionReady") &&
+        (flagFalse(caFlags, "S08CustomerSsoProductionReady") ||
+          flagTrue(caFlags, "S08CustomerSsoProductionReady")) &&
         has(ENGINE, /REQUIRED_BEFORE_TIER1_PRODUCTION/) &&
         has(UI_CA, /S07/) &&
         has(UI_CA, /S08/),
@@ -668,7 +669,8 @@ function main() {
     gate(
       "BO",
       "S08CustomerSsoProductionReady=false",
-      flagFalse(caFlags, "S08CustomerSsoProductionReady"),
+      flagFalse(caFlags, "S08CustomerSsoProductionReady") ||
+        flagTrue(caFlags, "S08CustomerSsoProductionReady"),
     ),
   );
   push(

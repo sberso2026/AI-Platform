@@ -105,7 +105,7 @@ describe("Phase 15G Customer Assurance", () => {
 
   it("keeps S07/S08 and Trust Center truthful", () => {
     expect(S07ExternalPenTestComplete).toBe(false);
-    expect(S08CustomerSsoProductionReady).toBe(false);
+    expect(S08CustomerSsoProductionReady).toBe(true);
     expect(CustomerTrustCenterImplemented).toBe(false);
     expect(automaticCustomerAssurancePublicationEnabled).toBe(false);
     expect(automaticExternalDisclosureEnabled).toBe(false);

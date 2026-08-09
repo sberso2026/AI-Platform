@@ -43,7 +43,7 @@ describe("Phase 15I Security & Assurance V1.0 GA", () => {
 
   it("preserves Tier-1 and Trust Center boundaries", () => {
     expect(S07ExternalPenTestComplete).toBe(false);
-    expect(S08CustomerSsoProductionReady).toBe(false);
+    expect(S08CustomerSsoProductionReady).toBe(true);
     expect(CustomerTrustCenterImplemented).toBe(false);
     expect(SECURITY_ASSURANCE_V1_SEMANTICS.universalSecurityScorePresent).toBe(
       false,
