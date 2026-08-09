@@ -20,23 +20,21 @@ describe("Engineering OS installation seed", () => {
     expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$/);
   });
 
-  it("declares Phase 14D security closure without claiming EOS V1 GA", async () => {
+  it("declares Phase 14E Engineering OS V1.0 GA", async () => {
     const v = await import("./version");
-    expect(v.ENGINEERING_OS_VERSION).toBe("0.12.0-security-closure");
-    expect(v.ENGINEERING_OS_STATUS).toBe("security_closure");
-    expect(v.productionEngineeringOSReady).toBe(false);
-    expect(v.engineeringOSV1GaCertified).toBe(false);
+    expect(v.ENGINEERING_OS_VERSION).toBe("1.0.0");
+    expect(v.ENGINEERING_OS_STATUS).toBe("ga");
+    expect(v.productionEngineeringOSReady).toBe(true);
+    expect(v.engineeringOSV1GaCertified).toBe(true);
+    expect(v.engineeringOSV1Frozen).toBe(true);
     expect(v.EngineeringOSProductIntegrationReady).toBe(true);
     expect(v.moduleRegistryTruthful).toBe(true);
-    expect(v.phase14EReady).toBe(true);
+    expect(v.ENGINEERING_OS_RELEASE_TAG).toBe("engineering-os-v1.0.0");
     const s = await import("./security-readiness");
     expect(s.EnterpriseSecurityAssessmentComplete).toBe(true);
     const closure = await import("./security-closure");
     expect(closure.engineeringOsSecurityGaGatePassed).toBe(true);
     expect(closure.securityClosureRequiredBeforeGa).toBe(false);
-    expect(s.getEnterpriseSecurityReadinessDeclaration().engineeringOsSecurityGaGatePassed).toBe(
-      true,
-    );
   });
 
   it("registers all production V1 modules truthfully", () => {

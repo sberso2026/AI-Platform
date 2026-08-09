@@ -409,6 +409,9 @@ importers:
         specifier: workspace:*
         version: link:../engineering-os
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.1
       '@types/node':
         specifier: ^22.15.29
         version: 22.20.1

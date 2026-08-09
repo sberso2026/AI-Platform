@@ -1,0 +1,110 @@
+name: Phase 14E Engineering OS V1 GA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-os/**"
+      - "packages/engineering-os-certification/**"
+      - "packages/platform-certification/src/phase14e*"
+      - "apps/web/src/app/(platform)/engineering/**"
+      - "docs/architecture/ENGINEERING_OS_V1_*"
+      - "docs/architecture/ENGINEERING_OS_PHASE_14E.md"
+      - "docs/commercial/ENGINEERING_OS_V1_PACKAGING.md"
+      - "docs/operations/ENGINEERING_OS_V1_*"
+      - "docs/security/ENGINEERING_OS_V1_*"
+      - ".github/workflows/phase-14e-engineering-os-ga.yml"
+
+concurrency:
+  group: phase-14e-engineering-os-ga-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm --filter @rtb/engineering-os-certification exec playwright install chromium --with-deps
+      - name: Unit tests (Engineering OS)
+        run: pnpm --filter @rtb/engineering-os test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase14e-engineering-os-ga.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-os-certification secret-scan
+      - name: Dependency SCA
+        run: pnpm --filter @rtb/engineering-os-certification sca
+      - name: Platform restore certification
+        run: pnpm --filter @rtb/engineering-os-certification restore:platform
+      - name: Browser E2E
+        env:
+          CERTIFY_BROWSER: "1"
+        run: pnpm --filter @rtb/engineering-os-certification test:e2e:v1
+      - name: Phase 14E certification (gates A–BT)
+        env:
+          CERTIFY_BROWSER: "1"
+        run: pnpm --filter @rtb/engineering-os-certification certify:phase14e
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-os-certification/artifacts/phase14e-engineering-os-ga-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===72],
+            ["version", a.version==="1.0.0"],
+            ["status", a.status==="ga"],
+            ["releaseTag", a.releaseTag==="engineering-os-v1.0.0"],
+            ["productionEngineeringOSReady", a.productionEngineeringOSReady===true],
+            ["engineeringOSV1GaCertified", a.engineeringOSV1GaCertified===true],
+            ["engineeringOSV1Frozen", a.engineeringOSV1Frozen===true],
+            ["engineeringOsSecurityGaGatePassed", a.engineeringOsSecurityGaGatePassed===true],
+            ["securityClosureRequiredBeforeGa", a.securityClosureRequiredBeforeGa===false],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+            ["releaseEligible", a.releaseEligible===true],
+            ["artifactIdentity", a.artifactCommitSha===a.ciHeadSha && a.ciHeadSha===a.buildIdentitySha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            releaseTag: a.releaseTag,
+            tagToCreate: a.tagToCreate,
+            productionEngineeringOSReady: a.productionEngineeringOSReady,
+            engineeringOSV1GaCertified: a.engineeringOSV1GaCertified,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase14e-engineering-os-ga-certification
+          path: packages/engineering-os-certification/artifacts/phase14e-engineering-os-ga-certification.json
+          if-no-files-found: warn

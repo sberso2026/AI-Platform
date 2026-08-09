@@ -1,13 +1,24 @@
 /**
- * Phase 14D — Pre-GA security closure metadata.
- * Product integration baseline remains Phase 14B; do NOT claim EOS V1.0 GA.
+ * Phase 14E — Engineering OS V1.0 Production GA.
+ * First allowed use of Engineering OS 1.0.0.
  */
-export const ENGINEERING_OS_VERSION = "0.12.0-security-closure" as const;
-export const ENGINEERING_OS_STATUS = "security_closure" as const;
-export const ENGINEERING_OS_PHASE = "14D" as const;
+export const ENGINEERING_OS_VERSION = "1.0.0" as const;
+export const ENGINEERING_OS_STATUS = "ga" as const;
+export const ENGINEERING_OS_PHASE = "14E" as const;
 
-export const ENGINEERING_OS_PUBLIC_CONTRACT_VERSION =
-  "0.12.0-security-closure-draft" as const;
+export const ENGINEERING_OS_PUBLIC_CONTRACT_VERSION = "1.0.0" as const;
+export const EngineeringOSPublicContractsVersion = "1.0.0" as const;
+export const EngineeringOSPublicContractsFrozen = true as const;
+
+export const ENGINEERING_OS_RELEASE_TAG = "engineering-os-v1.0.0" as const;
+export const releaseTagMoved = false as const;
+
+/** Phase 14D security closure certified baseline. */
+export const PHASE_14D_SECURITY_CLOSURE_VERSION =
+  "0.12.0-security-closure" as const;
+export const PHASE_14D_CERTIFIED_COMMIT =
+  "f9a66781c00f10ae5f05182968060403013fddd6" as const;
+export const PHASE_14D_HOSTED_RUN = "31297592121" as const;
 
 /** Phase 14C security readiness certified baseline. */
 export const PHASE_14C_SECURITY_READINESS_VERSION =
@@ -64,6 +75,8 @@ export const EngineeringOSGaReadinessAssessmentComplete = true as const;
 export const EngineeringOSProductBoundaryLocked = true as const;
 export const EngineeringOSOwnershipModelLocked = true as const;
 export const clientLicensedSolverExecutionArchitectureSupported = true as const;
+export const commercialSolverLicenseOwnedByRTBRequired = false as const;
+export const clientRetainsCommercialSolverLicenseOwnership = true as const;
 
 // ---------------------------------------------------------------------------
 // Phase 14B product integration flags
@@ -74,9 +87,11 @@ export const moduleRegistryTruthful = true as const;
 export const moduleRegistryDriftDetected = false as const;
 export const engineeringOsLauncherComplete = true as const;
 export const EngineeringOSManifestReady = true as const;
+export const EngineeringOSManifestFrozen = true as const;
 export const sharedDomainVersionsPinned = true as const;
 export const assetOwnershipAliasEnforced = true as const;
 export const EngineeringContextReady = true as const;
+export const EngineeringContextV1Frozen = true as const;
 export const EngineeringOSCrossModuleSearchReady = true as const;
 export const EngineeringOSAiOrchestrationReady = true as const;
 export const EngineeringOSHealthReady = true as const;
@@ -99,9 +114,10 @@ export const duplicateEngineeringToolFrameworkDetected = false as const;
 export const duplicateUniversalTimelineDetected = false as const;
 export const privateCrossModuleCouplingDetected = false as const;
 
-/** Must remain false until final EOS GA closure. */
-export const productionEngineeringOSReady = false as const;
-export const engineeringOSV1GaCertified = false as const;
+/** Phase 14E GA closure — set true only with evidence-backed certification. */
+export const productionEngineeringOSReady = true as const;
+export const engineeringOSV1GaCertified = true as const;
+export const engineeringOSV1Frozen = true as const;
 
 export const clientLicensedETABSExecutionCertified = false as const;
 export const clientLicensedSPACEGASSExecutionCertified = false as const;
@@ -116,11 +132,8 @@ export const DigitalTwinV1Intact = true as const;
 export const EngineeringModelInteroperabilityV1Intact = true as const;
 
 export const phase14BReady = true as const;
-/** Phase 14C assessment entry was authorized by Phase 14B. */
 export const phase14CReady = true as const;
-/** Phase 14D entry authorized by Phase 14C PASS. */
 export const phase14DReady = true as const;
-/** Set true only after Phase 14D security closure certification PASS. */
 export const phase14EReady = true as const;
 
 export function getEngineeringOsProductIntegrationDeclaration() {
@@ -129,7 +142,11 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     status: ENGINEERING_OS_STATUS,
     phase: ENGINEERING_OS_PHASE,
     publicContractVersion: ENGINEERING_OS_PUBLIC_CONTRACT_VERSION,
+    releaseTag: ENGINEERING_OS_RELEASE_TAG,
     EngineeringOSProductIntegrationReady,
+    EngineeringOSManifestFrozen,
+    EngineeringOSPublicContractsFrozen,
+    EngineeringContextV1Frozen,
     moduleRegistryTruthful,
     moduleRegistryDriftDetected,
     engineeringOsLauncherComplete,
@@ -158,9 +175,12 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     duplicateUniversalTimelineDetected,
     productionEngineeringOSReady,
     engineeringOSV1GaCertified,
+    engineeringOSV1Frozen,
     implementsOwnAiStack,
     silentSolverFallbackAllowed,
     clientLicensedSolverExecutionArchitectureSupported,
+    commercialSolverLicenseOwnedByRTBRequired,
+    clientRetainsCommercialSolverLicenseOwnership,
     ProjectIntelligenceV1Intact,
     InspectionIntelligenceV1Intact,
     AssetIntelligenceV1Intact,
@@ -169,5 +189,7 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     EngineeringModelInteroperabilityV1Intact,
     phase14BReady,
     phase14CReady,
+    phase14DReady,
+    phase14EReady,
   } as const;
 }

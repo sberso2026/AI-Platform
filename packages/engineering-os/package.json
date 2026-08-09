@@ -1,6 +1,6 @@
 {
   "name": "@rtb/engineering-os",
-  "version": "0.12.0-security-closure",
+  "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",

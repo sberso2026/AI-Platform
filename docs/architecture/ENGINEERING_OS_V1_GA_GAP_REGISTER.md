@@ -1,47 +1,31 @@
 # Engineering OS V1 GA Gap Register
 
-Status: Phase 14B update · Product integration closure  
-Baseline: Phase 14A PASS `1542a497…` / hosted `31294920688`
+Status: Phase 14E GA · Version `1.0.0`  
+`GA_BLOCKER open = 0` · `REQUIRED_BEFORE_GA open = 0`
 
-Classification: **BLOCKER** · **REQUIRED_BEFORE_GA** · **RECOMMENDED_POST_GA** ·
-**OPTIONAL** · **EXTERNAL_DEPENDENCY** · **INTENTIONALLY_UNAVAILABLE** · **CLOSED**
+| ID | Gap | Class | Status |
+| --- | --- | --- | --- |
+| G01–G07, G10–G15 | Product integration (14B) | REQUIRED_BEFORE_GA | **CLOSED** |
+| S01–S06 | Security closure (14D) | REQUIRED_BEFORE_GA | **CLOSED** |
+| G08 | Shared Project Domain prerelease pin | RECOMMENDED_POST_GA | open (pin-compatible) |
+| G09 | Shared Spatial Domain prerelease pin | RECOMMENDED_POST_GA | open (pin-compatible) |
+| G16 | OS-level performance/SLO aggregation | RECOMMENDED_POST_GA | open |
+| G17 | SPACE GASS live execution | EXTERNAL_DEPENDENCY | open |
+| G18 | ETABS live execution | INTENTIONALLY_UNAVAILABLE | open |
+| G19 | PoF / RUL / SHM / autonomous approval | INTENTIONALLY_UNAVAILABLE | open |
+| G20 | Silent solver fallback | INTENTIONALLY_UNAVAILABLE (forbidden) | must remain false |
+| S07 | External penetration test | REQUIRED_BEFORE_TIER1_PRODUCTION | open |
+| S08 | Customer SSO | REQUIRED_BEFORE_TIER1_PRODUCTION | open |
+| S09–S11 | ISO / SOC2 / E8 maturity | EXTERNAL_ASSURANCE | open / not claimed |
 
-| ID | Gap | Class | Owner | Corrective phase | Status |
-| --- | --- | --- | --- | --- | --- |
-| G01 | OS module registry marks Project Controls coming_soon | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G02 | OS module registry marks Digital Twin coming_soon | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G03 | Asset Intelligence absent from OS module registry | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G04 | Engineering Model Interoperability absent from registry | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G05 | Modules launcher marks Inspection Intelligence coming_soon | REQUIRED_BEFORE_GA | Engineering OS / web | 14B | **CLOSED** |
-| G06 | Asset Intelligence missing from modules launcher | REQUIRED_BEFORE_GA | Engineering OS / web | 14B | **CLOSED** |
-| G07 | Shared Asset Domain semantic vs runtime alias | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G08 | Shared Project Domain still 0.1.0 prerelease | RECOMMENDED_POST_GA | Shared Project Domain | post-GA | open (pin-compatible) |
-| G09 | Shared Spatial Domain still 0.2.0-spatial-core | RECOMMENDED_POST_GA | Shared Spatial Domain | post-GA | open (pin-compatible) |
-| G10 | EngineeringOSManifest aggregate not implemented | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G11 | Cross-module search provider normalization incomplete | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G12 | OS home lacks multi-module command aggregation | REQUIRED_BEFORE_GA | Engineering OS / web | 14B | **CLOSED** |
-| G13 | EngineeringContext runtime not standardized | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G14 | Aggregate OS health incomplete | REQUIRED_BEFORE_GA | Engineering OS | 14B | **CLOSED** |
-| G15 | Commercial EOS packaging not productized | REQUIRED_BEFORE_GA | Commerce + EOS | 14B | **CLOSED** |
-| G16 | OS-level performance/SLO aggregation missing | RECOMMENDED_POST_GA | Ops | post-GA | open |
-| G17 | SPACE GASS live execution unavailable | EXTERNAL_DEPENDENCY | Client / Interop | post-GA provider | open |
-| G18 | ETABS live COM/execution not certified | INTENTIONALLY_UNAVAILABLE | Interop | post-GA provider | open |
-| G19 | PoF / RUL / SHM / autonomous approval | INTENTIONALLY_UNAVAILABLE | AI / future | future | open |
-| G20 | Silent solver fallback / license bypass | INTENTIONALLY_UNAVAILABLE (forbidden) | All | never | must remain false |
+## Counts
 
-## Summary counts (after 14B)
-
-| Class | Count |
+| Class | Open |
 | --- | --- |
-| BLOCKER | 0 |
-| REQUIRED_BEFORE_GA still_requires_closure | **0** |
-| REQUIRED_BEFORE_GA CLOSED | **12** |
-| RECOMMENDED_POST_GA | 3 |
-| EXTERNAL_DEPENDENCY | 1 |
-| INTENTIONALLY_UNAVAILABLE | 3 |
-
-## Phase 14C derivation note
-
-Phase 14C should address remaining non-integration GA concerns (shared-domain
-optional GA, ops SLO, Security & Assurance if approved) — **not** live solvers.
-Do not start 14C from this file alone.
+| GA_BLOCKER | **0** |
+| REQUIRED_BEFORE_GA | **0** |
+| REQUIRED_BEFORE_TIER1_PRODUCTION | **2** |
+| RECOMMENDED_POST_GA | **3** |
+| EXTERNAL_DEPENDENCY | **1** |
+| INTENTIONALLY_UNAVAILABLE | **3** |
+| EXTERNAL_ASSURANCE | **3** |

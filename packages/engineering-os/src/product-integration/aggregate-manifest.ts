@@ -147,6 +147,16 @@ export function buildEngineeringOSManifest(
       classification: "unavailable",
       detail: "Remaining Useful Life not independently certified",
     },
+    {
+      id: "shm",
+      classification: "reserved",
+      detail: "Structural Health Monitoring reserved / unavailable in V1",
+    },
+    {
+      id: "analysis_model_generation",
+      classification: "reserved",
+      detail: "Analysis-model generation reserved / unavailable in V1",
+    },
   ];
 
   return {

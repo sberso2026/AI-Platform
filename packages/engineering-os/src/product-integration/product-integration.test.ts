@@ -26,9 +26,9 @@ import {
 
 describe("Phase 14B Engineering OS product integration", () => {
   it("builds truthful aggregate manifest", () => {
-    expect(ENGINEERING_OS_VERSION).toBe("0.12.0-security-closure");
+    expect(ENGINEERING_OS_VERSION).toBe("1.0.0");
     expect(EngineeringOSProductIntegrationReady).toBe(true);
-    expect(productionEngineeringOSReady).toBe(false);
+    expect(productionEngineeringOSReady).toBe(true);
     expect(moduleRegistryDriftDetected).toBe(false);
     assertProductionModulesRegistered(ENGINEERING_OS_AGGREGATE_MANIFEST);
     expect(ENGINEERING_OS_AGGREGATE_MANIFEST.installedModules).toHaveLength(6);

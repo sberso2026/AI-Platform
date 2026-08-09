@@ -91,8 +91,11 @@ export default function EngineeringCommandCenterPage() {
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
-        data-testid="engineering-os-product-ready"
+        data-testid="engineering-os-v1-ready"
       >
+        <span data-testid="engineering-os-product-ready" className="sr-only">
+          Engineering OS product ready
+        </span>
         <div data-testid="engineering-command-center" className="contents">
         {error && <p className="mb-4 text-[0.9375rem] text-destructive">{error}</p>}
 

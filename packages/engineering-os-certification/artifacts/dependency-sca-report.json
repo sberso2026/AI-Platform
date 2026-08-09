@@ -1,6 +1,6 @@
 {
   "schemaVersion": "rtb-dependency-sca-report/1",
-  "scannedAt": "2026-08-09T05:50:54.011Z",
+  "scannedAt": "2026-08-09T06:08:11.463Z",
   "tool": "pnpm audit --prod --json",
   "metadata": {
     "vulnerabilities": {

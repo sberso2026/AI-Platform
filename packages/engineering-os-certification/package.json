@@ -1,6 +1,6 @@
 {
   "name": "@rtb/engineering-os-certification",
-  "version": "0.12.0-security-closure",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,14 +8,17 @@
     "certify:phase14b": "tsx scripts/run-phase14b-certification.ts",
     "certify:phase14c": "tsx scripts/run-phase14c-certification.ts",
     "certify:phase14d": "tsx scripts/run-phase14d-certification.ts",
+    "certify:phase14e": "tsx scripts/run-phase14e-certification.ts",
     "sca": "tsx scripts/run-dependency-sca.ts",
     "restore:platform": "tsx scripts/run-platform-restore-certification.ts",
-    "secret-scan": "tsx scripts/secret-exposure-scan.ts"
+    "secret-scan": "tsx scripts/secret-exposure-scan.ts",
+    "test:e2e:v1": "playwright test playwright/v1-ga.spec.ts"
   },
   "dependencies": {
     "@rtb/engineering-os": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.29",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3"
