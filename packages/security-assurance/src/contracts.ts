@@ -68,7 +68,8 @@ export type PostureDimensionId =
   | "secure_sdlc"
   | "incident_readiness"
   | "recovery"
-  | "compliance_evidence";
+  | "compliance_evidence"
+  | "compliance_intelligence";
 
 export type FrameworkId =
   | "ISO27001"
@@ -260,4 +261,5 @@ export const POSTURE_DIMENSION_IDS: PostureDimensionId[] = [
   "incident_readiness",
   "recovery",
   "compliance_evidence",
+  "compliance_intelligence",
 ];

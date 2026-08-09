@@ -21,6 +21,10 @@ export const SECURITY_ASSURANCE_EVENT_TYPES = [
   "security_assurance.secure_compute.finding_opened",
   "security_assurance.secure_compute.posture_updated",
   "security_assurance.secure_compute.context_recorded",
+  "security_assurance.compliance.assessment_completed",
+  "security_assurance.compliance.gap_opened",
+  "security_assurance.compliance.posture_updated",
+  "security_assurance.compliance.framework_registered",
 ] as const;
 
 export type SecurityAssuranceEventType =

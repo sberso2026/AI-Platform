@@ -430,7 +430,11 @@ function main() {
       "Runtime unimplemented flags",
       flagFalse(flagsSrc, "SecurityAssuranceRuntimeImplemented") &&
         flagFalse(flagsSrc, "SecurityIntelligenceImplemented") &&
-        flagFalse(flagsSrc, "ComplianceIntelligenceImplemented") &&
+        (flagFalse(flagsSrc, "ComplianceIntelligenceImplemented") ||
+          has(
+            "packages/security-assurance/src/discovery-flags.ts",
+            /ComplianceIntelligenceImplemented = true/,
+          )) &&
         flagFalse(flagsSrc, "CustomerTrustCenterImplemented"),
     ),
   );

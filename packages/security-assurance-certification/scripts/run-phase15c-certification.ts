@@ -156,10 +156,12 @@ function main() {
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.3\.0-isolation-assurance"/) ||
         has(VERSION, /PHASE_15C_BASELINE_VERSION = "0\.3\.0-isolation-assurance"/) ||
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/)) &&
         (has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/) ||
           has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
-          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/)),
+          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
+          has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/)),
     ),
   );
   push(
@@ -168,7 +170,8 @@ function main() {
       "Contracts 0.3.0-isolation-assurance",
       (has(VERSION, /0\.3\.0-isolation-assurance/) ||
         has(VERSION, /0\.4\.0-ai-data-security/) ||
-        has(VERSION, /0\.5\.0-secure-compute/)) &&
+        has(VERSION, /0\.5\.0-secure-compute/) ||
+        has(VERSION, /0\.6\.0-compliance-intelligence/)) &&
         has(ISO_CONTRACTS, /IsolationProbeRun/) &&
         has(ISO_CONTRACTS, /IsolationAssuranceSnapshot/),
     ),
@@ -545,7 +548,11 @@ function main() {
       "BA",
       "Advanced products unimplemented",
       flagFalse(discoveryFlags, "SecurityIntelligenceImplemented") &&
-        flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") &&
+        (flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") ||
+          has(
+            "packages/security-assurance/src/discovery-flags.ts",
+            /ComplianceIntelligenceImplemented = true/,
+          )) &&
         flagFalse(isoFlags, "AiTrustRuntimeImplemented") &&
         flagFalse(isoFlags, "ThreatIntelligenceRuntimeImplemented") &&
         flagFalse(discoveryFlags, "CustomerTrustCenterImplemented"),

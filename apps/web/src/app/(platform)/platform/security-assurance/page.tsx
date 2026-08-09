@@ -2,28 +2,28 @@ import { Header } from "@/components/layout/header";
 import { PageMain } from "@/components/layout/page-main";
 
 /**
- * Bounded administrative Security & Assurance surface (Phases 15B–15E).
- * No SOC dashboard theatre, threat map, or universal security score.
+ * Bounded administrative Security & Assurance surface (Phases 15B–15F).
+ * No SOC dashboard theatre, threat map, or universal security/compliance score.
  */
 export default function PlatformSecurityAssurancePage() {
   return (
     <>
       <Header
         title="Security & Assurance"
-        description="Control, evidence, isolation, AI/data, and secure-compute assurance"
+        description="Control, evidence, isolation, AI/data, secure-compute, and compliance intelligence"
         showEngineeringChrome={false}
       />
       <PageMain>
         <main className="space-y-6">
           <p data-testid="security-assurance-foundation-ready">
-            Security & Assurance foundation ready (0.5.0-secure-compute) —
+            Security & Assurance foundation ready (0.6.0-compliance-intelligence) —
             controls, evidence freshness, assessments, findings, exceptions, and
             dimensional posture; SecurityIntelligenceImplemented=false;
             CustomerTrustCenterImplemented=false; no universal security score.
           </p>
 
           <p data-testid="security-assurance-isolation-ready">
-            Isolation Assurance ready (0.5.0-secure-compute) —
+            Isolation Assurance ready (0.6.0-compliance-intelligence) —
             IsolationAssuranceRuntimeImplemented=true;
             knownCrossTenantLeakageDetected=false;
             knownCrossWorkspaceLeakageDetected=false;
@@ -32,7 +32,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-ai-data-ready">
-            AI & Data Security Assurance ready (0.5.0-secure-compute) —
+            AI & Data Security Assurance ready (0.6.0-compliance-intelligence) —
             AiDataSecurityRuntimeImplemented=true;
             ProviderDataHandlingAssuranceImplemented=true;
             duplicateAiStackDetected=false;
@@ -41,13 +41,22 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-secure-compute-ready">
-            Secure Compute Assurance ready (0.5.0-secure-compute) —
+            Secure Compute Assurance ready (0.6.0-compliance-intelligence) —
             SecureComputeAssuranceRuntimeImplemented=true;
             WorkloadIdentityAssuranceImplemented=true;
             ExecutionProvenanceImplemented=true;
             duplicateExecutionHostDetected=false;
             confidentialComputingClaimed=false;
             teeClaimed=false; observes compute security, does not enforce.
+          </p>
+
+          <p data-testid="security-assurance-compliance-ready">
+            Compliance Intelligence ready (0.6.0-compliance-intelligence) —
+            ComplianceFrameworkRegistryImplemented=true;
+            ComplianceAssessmentImplemented=true;
+            automaticCertificationEnabled=false;
+            automaticComplianceClaimEnabled=false;
+            certificationClaimed=false; mapping/assessment only, not certification.
           </p>
 
           <section aria-label="Security assurance inspection surfaces">
@@ -62,6 +71,7 @@ export default function PlatformSecurityAssurancePage() {
               <li data-testid="sa-surface-isolation">Isolation Assurance</li>
               <li data-testid="sa-surface-ai-data">AI & Data Security</li>
               <li data-testid="sa-surface-secure-compute">Secure Compute</li>
+              <li data-testid="sa-surface-compliance">Compliance Intelligence</li>
             </ul>
           </section>
 
@@ -156,6 +166,33 @@ export default function PlatformSecurityAssurancePage() {
             </p>
           </section>
 
+          <section aria-label="Compliance intelligence">
+            <h2 className="text-lg font-semibold">Compliance Intelligence</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Framework registry · framework/version · requirement status · mapped
+              RTB controls · evidence freshness · gaps · external assurance
+              dependencies · limitations
+            </p>
+            <ul
+              className="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3"
+              data-testid="sa-compliance-frameworks"
+              aria-label="Compliance frameworks"
+            >
+              <li data-testid="sa-comp-fw-ISO27001_2022">ISO/IEC 27001:2022</li>
+              <li data-testid="sa-comp-fw-NIST_CSF_2_0">NIST CSF 2.0</li>
+              <li data-testid="sa-comp-fw-ESSENTIAL_EIGHT">Essential Eight</li>
+              <li data-testid="sa-comp-fw-SOC2_TSC">SOC 2 TSC (scaffold)</li>
+            </ul>
+            <p data-testid="sa-comp-claim-safety" className="mt-2 text-sm text-muted-foreground">
+              iso27001CertifiedClaimed=false; soc2CompliantClaimed=false;
+              essentialEightPassedClaimed=false; nistCompliantClaimed=false
+            </p>
+            <p data-testid="sa-comp-external" className="text-sm">
+              external assurance required for attestation/pen-test markers — internal
+              evidence alone cannot satisfy
+            </p>
+          </section>
+
           <section aria-label="Posture dimensions">
             <h2 className="text-lg font-semibold">Posture dimensions</h2>
             <ul
@@ -171,6 +208,7 @@ export default function PlatformSecurityAssurancePage() {
               <li>incident_readiness</li>
               <li>recovery</li>
               <li>compliance_evidence</li>
+              <li>compliance_intelligence</li>
             </ul>
             <p data-testid="sa-no-universal-score" className="mt-2 text-sm text-muted-foreground">
               universalScorePresent=false
@@ -183,6 +221,7 @@ export default function PlatformSecurityAssurancePage() {
             <p data-testid="sa-auto-remediation-flag">automaticRemediationEnabled=false</p>
             <p data-testid="sa-auto-rls-mutation-flag">automaticRlsMutationEnabled=false</p>
             <p data-testid="sa-auto-runtime-mutation-flag">automaticRuntimeMutationEnabled=false</p>
+            <p data-testid="sa-auto-certification-flag">automaticCertificationEnabled=false</p>
             <p data-testid="sa-s08-ownership">S08 owned by Platform Identity</p>
             <p data-testid="sa-s07-tier1">S07 REQUIRED_BEFORE_TIER1_PRODUCTION</p>
           </section>

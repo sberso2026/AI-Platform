@@ -20,9 +20,9 @@ import {
 } from "./version";
 
 describe("Phase 15E Secure Compute Assurance", () => {
-  it("declares 0.5.0-secure-compute on Phase 15D baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.5.0-secure-compute");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.5.0-secure-compute");
+  it("declares 0.6.0-compliance-intelligence on Phase 15D baseline", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.6.0-compliance-intelligence");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.6.0-compliance-intelligence");
     expect(PHASE_15D_BASELINE_COMMIT).toBe(
       "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
     );

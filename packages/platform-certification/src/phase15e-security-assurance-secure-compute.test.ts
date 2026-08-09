@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const root = resolve(__dirname, "../../..");
 
 describe("Phase 15E Security & Assurance Secure Compute", () => {
-  it("advances to 0.5.0-secure-compute with Secure Compute ready", () => {
+  it("advances to 0.6.0-compliance-intelligence with Secure Compute ready", () => {
     const version = readFileSync(
       resolve(root, "packages/security-assurance/src/version.ts"),
       "utf8",
@@ -14,7 +14,7 @@ describe("Phase 15E Security & Assurance Secure Compute", () => {
       resolve(root, "packages/security-assurance/src/secure-compute-flags.ts"),
       "utf8",
     );
-    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.5.0-secure-compute"');
+    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.6.0-compliance-intelligence"');
     expect(version).toContain("ef8efd2b4b30082e9c26ac867c65c51e3e39d207");
     expect(flags).toContain("SecureComputeAssuranceReady = true");
     expect(flags).toContain("SecureComputeAssuranceRuntimeImplemented = true");

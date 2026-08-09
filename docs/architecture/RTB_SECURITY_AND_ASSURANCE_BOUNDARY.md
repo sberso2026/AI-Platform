@@ -1,8 +1,8 @@
 # RTB Security & Assurance Boundary
 
-Status: Locked (Phase 14C) · Phase 15A–15E (`0.5.0-secure-compute`)  
-`SecurityAndAssuranceBoundaryLocked = true` · Foundation · Isolation · AI/Data · Secure Compute ready  
-Scope: Secure compute assurance observes existing execution controls; AI Trust / SIEM / TEE platform **not** implemented
+Status: Locked (Phase 14C) · Phase 15A–15F (`0.6.0-compliance-intelligence`)  
+`SecurityAndAssuranceBoundaryLocked = true` · Foundation · Isolation · AI/Data · Secure Compute · Compliance Intelligence ready  
+Scope: Compliance intelligence maps/assesses controls & evidence; certification/Trust Center/SIEM **not** implemented
 
 ## Future Security & Assurance (candidate)
 

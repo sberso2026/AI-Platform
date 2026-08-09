@@ -155,9 +155,11 @@ function main() {
       "Version 0.4.0-ai-data-security",
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
         has(VERSION, /PHASE_15D_BASELINE_VERSION = "0\.4\.0-ai-data-security"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/)) &&
         (has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
-          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/)),
+          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
+          has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/)),
     ),
   );
   push(
@@ -165,7 +167,8 @@ function main() {
       "G",
       "Contracts 0.4.0-ai-data-security",
       (has(VERSION, /0\.4\.0-ai-data-security/) ||
-        has(VERSION, /0\.5\.0-secure-compute/)) &&
+        has(VERSION, /0\.5\.0-secure-compute/) ||
+        has(VERSION, /0\.6\.0-compliance-intelligence/)) &&
         has(CONTRACTS, /AiDataFlowRecord/) &&
         has(CONTRACTS, /AiDataSecuritySnapshot/),
     ),
@@ -308,7 +311,9 @@ function main() {
       "AG",
       "Admin UI marker",
       has(UI, /data-testid="security-assurance-ai-data-ready"/) &&
-        (has(UI, /0\.4\.0-ai-data-security/) || has(UI, /0\.5\.0-secure-compute/)),
+        (has(UI, /0\.4\.0-ai-data-security/) ||
+          has(UI, /0\.5\.0-secure-compute/) ||
+          has(UI, /0\.6\.0-compliance-intelligence/)),
     ),
   );
   push(gate("AH", "Migration batch_92", exists(MIGRATION) && has(MIGRATION, /batch_92/)));
@@ -369,7 +374,11 @@ function main() {
       "AR",
       "Advanced products unimplemented",
       flagFalse(discoveryFlags, "SecurityIntelligenceImplemented") &&
-        flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") &&
+        (flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") ||
+          has(
+            "packages/security-assurance/src/discovery-flags.ts",
+            /ComplianceIntelligenceImplemented = true/,
+          )) &&
         flagFalse(isoFlags, "AiTrustRuntimeImplemented") &&
         flagFalse(isoFlags, "ThreatIntelligenceRuntimeImplemented") &&
         (flagFalse(foundationFlags, "SecureComputeAssuranceRuntimeImplemented") ||
@@ -439,7 +448,8 @@ function main() {
       has(VERSION, /0\.4\.0-ai-data-security/) &&
         (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
           has(VERSION, /PHASE_15D_BASELINE_VERSION = "0\.4\.0-ai-data-security"/) ||
-          has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
+          has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
+          has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

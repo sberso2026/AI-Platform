@@ -4,6 +4,7 @@ export * from "./foundation-flags";
 export * from "./isolation-flags";
 export * from "./ai-data-flags";
 export * from "./secure-compute-flags";
+export * from "./compliance-intelligence-flags";
 export {
   SECURITY_ASSURANCE_DRAFT_CONTRACT_NAMES,
   type SecurityControlReference as DraftSecurityControlReference,
@@ -13,6 +14,7 @@ export * from "./contracts";
 export * from "./isolation-contracts";
 export * from "./ai-data-contracts";
 export * from "./secure-compute-contracts";
+export * from "./compliance-intelligence-contracts";
 export * from "./domain/semantics";
 export * from "./domain/seed-controls";
 export * from "./domain/control-registry";
@@ -39,3 +41,6 @@ export * from "./domain/secure-compute/seed-probes";
 export * from "./domain/secure-compute/fixture-harness";
 export * from "./domain/secure-compute/engine";
 export * from "./domain/secure-compute/runtime";
+export * from "./domain/compliance-intelligence/seed-frameworks";
+export * from "./domain/compliance-intelligence/engine";
+export * from "./domain/compliance-intelligence/runtime";

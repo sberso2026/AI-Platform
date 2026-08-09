@@ -1,13 +1,19 @@
 /**
- * Phase 15E — Security & Assurance Secure Compute Assurance.
- * Not 1.0.0. Observes/assesses secure compute — does not replace Execution Host or sandbox.
+ * Phase 15F — Security & Assurance Compliance Intelligence Foundation.
+ * Not 1.0.0. Mapping/assessment only — does not claim certification or replace GRC.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.5.0-secure-compute" as const;
-export const SECURITY_ASSURANCE_STATUS = "secure_compute" as const;
-export const SECURITY_ASSURANCE_PHASE = "15E" as const;
+export const SECURITY_ASSURANCE_VERSION = "0.6.0-compliance-intelligence" as const;
+export const SECURITY_ASSURANCE_STATUS = "compliance_intelligence" as const;
+export const SECURITY_ASSURANCE_PHASE = "15F" as const;
 
 export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
-  "0.5.0-secure-compute" as const;
+  "0.6.0-compliance-intelligence" as const;
+
+/** Immutable Phase 15E secure-compute baseline. */
+export const PHASE_15E_BASELINE_COMMIT =
+  "aa5150fc4acf287b50c973220c40d62b7f91687f" as const;
+export const PHASE_15E_BASELINE_HOSTED_RUN = "31305116039" as const;
+export const PHASE_15E_BASELINE_VERSION = "0.5.0-secure-compute" as const;
 
 /** Immutable Phase 15D AI/data security baseline. */
 export const PHASE_15D_BASELINE_COMMIT =

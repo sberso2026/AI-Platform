@@ -14,7 +14,7 @@ describe("Phase 15D Security & Assurance AI & Data", () => {
       resolve(root, "packages/security-assurance/src/ai-data-flags.ts"),
       "utf8",
     );
-    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.5.0-secure-compute"');
+    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.6.0-compliance-intelligence"');
     expect(version).toContain("897383f5a95cf81847ee866c1c1fdac5012b25a5");
     expect(flags).toContain("AiDataSecurityReady = true");
     expect(flags).toContain("AiDataSecurityRuntimeImplemented = true");

@@ -29,7 +29,7 @@ export const SecurityAssuranceImplementationRoadmapReady = true as const;
  */
 export const SecurityAssuranceRuntimeImplemented = false as const;
 export const SecurityIntelligenceImplemented = false as const;
-export const ComplianceIntelligenceImplemented = false as const;
+export const ComplianceIntelligenceImplemented = true as const;
 export const CustomerTrustCenterImplemented = false as const;
 
 export const duplicateIdentityProviderDetected = false as const;

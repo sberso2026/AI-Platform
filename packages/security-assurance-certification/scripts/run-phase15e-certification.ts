@@ -157,15 +157,19 @@ function main() {
     gate(
       "F",
       "Version 0.5.0-secure-compute",
-      has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) &&
-        has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/),
+      (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
+        has(VERSION, /PHASE_15E_BASELINE_VERSION = "0\.5\.0-secure-compute"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/)) &&
+        (has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
+          has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/)),
     ),
   );
   push(
     gate(
       "G",
       "Contracts 0.5.0-secure-compute",
-      has(VERSION, /0\.5\.0-secure-compute/) &&
+      (has(VERSION, /0\.5\.0-secure-compute/) ||
+        has(VERSION, /0\.6\.0-compliance-intelligence/)) &&
         has(CONTRACTS, /ExecutionSecurityContext/) &&
         has(CONTRACTS, /SecureComputeSnapshot/),
     ),
@@ -360,7 +364,7 @@ function main() {
       "AP",
       "Admin UI marker",
       has(UI, /data-testid="security-assurance-secure-compute-ready"/) &&
-        has(UI, /0\.5\.0-secure-compute/),
+        (has(UI, /0\.5\.0-secure-compute/) || has(UI, /0\.6\.0-compliance-intelligence/)),
     ),
   );
   push(gate("AQ", "Migration batch_93", exists(MIGRATION) && has(MIGRATION, /batch_93/)));
@@ -422,7 +426,11 @@ function main() {
       "BA",
       "Advanced products unimplemented",
       flagFalse(discoveryFlags, "SecurityIntelligenceImplemented") &&
-        flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") &&
+        (flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") ||
+          has(
+            "packages/security-assurance/src/discovery-flags.ts",
+            /ComplianceIntelligenceImplemented = true/,
+          )) &&
         flagFalse(isoFlags, "AiTrustRuntimeImplemented") &&
         flagFalse(isoFlags, "ThreatIntelligenceRuntimeImplemented") &&
         flagFalse(discoveryFlags, "CustomerTrustCenterImplemented") &&
@@ -486,7 +494,8 @@ function main() {
     gate(
       "BK",
       "Package not 1.0.0",
-      has(VERSION, /0\.5\.0-secure-compute/) &&
+      (has(VERSION, /0\.5\.0-secure-compute/) ||
+        has(VERSION, /0\.6\.0-compliance-intelligence/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

@@ -21,6 +21,7 @@ const CATEGORY_TO_DIMENSION: Record<string, PostureDimensionId> = {
   incident_readiness: "incident_readiness",
   recovery: "recovery",
   compliance_evidence: "compliance_evidence",
+  compliance_intelligence: "compliance_intelligence",
 };
 
 function mapAssessmentToPosture(result: AssessmentResult): PostureDimensionStatus {
