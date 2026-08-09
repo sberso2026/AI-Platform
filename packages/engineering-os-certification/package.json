@@ -1,10 +1,11 @@
 {
   "name": "@rtb/engineering-os-certification",
-  "version": "0.9.0-ga-readiness",
+  "version": "0.10.0-product-integration",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase14a": "tsx scripts/run-phase14a-certification.ts",
+    "certify:phase14b": "tsx scripts/run-phase14b-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

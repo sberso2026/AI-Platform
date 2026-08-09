@@ -86,20 +86,20 @@ export default function EngineeringCommandCenterPage() {
   return (
     <>
       <Header
-        title="Engineering Command Center"
-        description="Operations overview for engineering projects, decisions, risks, and technical queries"
+        title="Engineering OS"
+        description="Product home for projects, assets, certified modules, health, and Engineering AI"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
-        data-testid="engineering-os-shell"
+        data-testid="engineering-os-product-ready"
       >
         <div data-testid="engineering-command-center" className="contents">
         {error && <p className="mb-4 text-[0.9375rem] text-destructive">{error}</p>}
 
         <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
           <SectionHeader
-            title="Modules"
-            description="Engineering OS module host — Project Intelligence and future modules"
+            title="Certified modules"
+            description="Entitled Engineering OS V1 modules — federation and live solver execution remain distinct"
           />
           <div className="mt-3 flex flex-wrap gap-3 text-sm">
             <Link
@@ -115,10 +115,52 @@ export default function EngineeringCommandCenterPage() {
               Project Intelligence
             </Link>
             <Link
+              href="/engineering/apps/inspection-intelligence"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Inspection Intelligence
+            </Link>
+            <Link
+              href="/engineering/apps/asset-intelligence"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Asset Intelligence
+            </Link>
+            <Link
+              href="/engineering/apps/project-controls"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Project Controls
+            </Link>
+            <Link
+              href="/engineering/apps/digital-twin"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Digital Twin
+            </Link>
+            <Link
+              href="/engineering/apps/model-interoperability"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Engineering Models
+            </Link>
+            <Link
+              href="/engineering/ai"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              Engineering AI
+            </Link>
+            <Link
               href="/engineering/search"
               className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
             >
-              Global search
+              Search
+            </Link>
+            <Link
+              href="/engineering/health"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
+            >
+              OS health
             </Link>
           </div>
         </section>

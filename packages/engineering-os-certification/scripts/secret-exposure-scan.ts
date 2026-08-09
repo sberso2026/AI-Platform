@@ -41,6 +41,8 @@ const SCAN_DOCS = [
   "docs/architecture/ENGINEERING_OS_V1_GA_GAP_REGISTER.md",
   "docs/architecture/ENGINEERING_OS_V1_READINESS_MATRIX.md",
   "docs/architecture/CLIENT_OWNED_COMMERCIAL_SOLVER_EXECUTION_ARCHITECTURE.md",
+  "apps/web/src/app/(platform)/engineering/modules/page.tsx",
+  "apps/web/src/app/(platform)/engineering/page.tsx",
   "docs/commercial/ENGINEERING_OS_V1_PACKAGING_ARCHITECTURE.md",
   "docs/security/ENGINEERING_OS_V1_SECURITY_BOUNDARY.md",
   "docs/operations/ENGINEERING_OS_V1_CAPACITY_AND_PERFORMANCE_BASELINE.md",

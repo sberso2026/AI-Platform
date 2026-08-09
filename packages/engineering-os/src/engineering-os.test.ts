@@ -20,27 +20,33 @@ describe("Engineering OS installation seed", () => {
     expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$/);
   });
 
-  it("declares Phase 14A GA readiness version without claiming EOS V1 GA", async () => {
+  it("declares Phase 14B product integration without claiming EOS V1 GA", async () => {
     const v = await import("./version");
-    expect(v.ENGINEERING_OS_VERSION).toBe("0.9.0-ga-readiness");
-    expect(v.ENGINEERING_OS_STATUS).toBe("ga_readiness");
+    expect(v.ENGINEERING_OS_VERSION).toBe("0.10.0-product-integration");
+    expect(v.ENGINEERING_OS_STATUS).toBe("product_integration");
     expect(v.productionEngineeringOSReady).toBe(false);
     expect(v.engineeringOSV1GaCertified).toBe(false);
-    expect(v.phase14BReady).toBe(true);
-    expect(v.clientLicensedSolverExecutionArchitectureSupported).toBe(true);
+    expect(v.EngineeringOSProductIntegrationReady).toBe(true);
+    expect(v.moduleRegistryTruthful).toBe(true);
+    expect(v.phase14CReady).toBe(true);
   });
 
-  it("registers Phase 8A initial modules via module registry bridge", () => {
-    expect(ENGINEERING_APPLICATIONS).toHaveLength(4);
+  it("registers all production V1 modules truthfully", () => {
+    expect(ENGINEERING_APPLICATIONS).toHaveLength(6);
     const keys = ENGINEERING_APPLICATIONS.map((app) => app.app_key);
     expect(keys).toEqual([
       "project_intelligence",
       "inspection_intelligence",
+      "asset_intelligence",
       "project_controls",
       "digital_twin",
+      "engineering_model_interoperability",
     ]);
-    const pi = ENGINEERING_APPLICATIONS.find((a) => a.app_key === "project_intelligence");
-    expect(pi?.enabled).toBe(true);
+    for (const app of ENGINEERING_APPLICATIONS) {
+      expect(app.enabled).toBe(true);
+      expect(app.status).not.toBe("coming_soon");
+      expect(app.version).toBe("1.0.0");
+    }
   });
 
   it("declares core capabilities", () => {

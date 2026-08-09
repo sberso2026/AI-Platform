@@ -8,18 +8,20 @@ import {
 } from "./index";
 
 describe("Phase 8A module registry", () => {
-  it("registers exactly the four initial modules", () => {
+  it("registers production V1 modules (Phase 14B truthful registry)", () => {
     const keys = defaultEngineeringModuleRegistry.listInitial().map((m) => m.moduleKey);
     expect(keys).toEqual([
       "project_intelligence",
       "inspection_intelligence",
+      "asset_intelligence",
       "project_controls",
       "digital_twin",
+      "engineering_model_interoperability",
     ]);
   });
 
   it("builds OS runtime manifest with modules", () => {
-    expect(ENGINEERING_OS_RUNTIME_MANIFEST.modules?.length).toBe(4);
+    expect(ENGINEERING_OS_RUNTIME_MANIFEST.modules?.length).toBe(6);
     expect(ENGINEERING_OS_RUNTIME_MANIFEST.capabilities?.some((c) => c.id === "engineering_module_host")).toBe(
       true,
     );

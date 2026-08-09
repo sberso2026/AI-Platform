@@ -119,14 +119,14 @@ describe("Phase 12A Digital Twin discovery", () => {
     }
   });
 
-  it("leaves the Engineering OS module registry entry at coming_soon", () => {
+  it("registers Digital Twin in Engineering OS after Phase 14B product integration", () => {
     const registry = read("packages/engineering-os/src/module-registry.ts");
     const start = registry.indexOf('id: "digital_twin"');
     expect(start).toBeGreaterThan(-1);
-    const entry = registry.slice(start, registry.indexOf("\n  {", start));
-    expect(entry).toMatch(/status: "coming_soon"/);
-    expect(entry).toMatch(/enabled: false/);
-    expect(entry).toMatch(/version: "0\.0\.0"/);
+    const entry = registry.slice(start, start + 800);
+    expect(entry).toMatch(/status: "registered"/);
+    expect(entry).toMatch(/enabled: true/);
+    expect(entry).toMatch(/version: "1\.0\.0"/);
   });
 
   it("ships the Phase 12A discovery documents", () => {

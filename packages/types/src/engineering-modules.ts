@@ -17,14 +17,18 @@ export type EngineeringModuleStatus =
 export type EngineeringInitialModuleKey =
   | "project_intelligence"
   | "inspection_intelligence"
+  | "asset_intelligence"
   | "project_controls"
-  | "digital_twin";
+  | "digital_twin"
+  | "engineering_model_interoperability";
 
 export const ENGINEERING_INITIAL_MODULE_KEYS: EngineeringInitialModuleKey[] = [
   "project_intelligence",
   "inspection_intelligence",
+  "asset_intelligence",
   "project_controls",
   "digital_twin",
+  "engineering_model_interoperability",
 ];
 
 export type EngineeringModuleRegistration = ModuleManifest & {

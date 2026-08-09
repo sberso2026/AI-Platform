@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, StatusChip } from "@rtb/ui";
-import { Boxes, Brain, ClipboardCheck, BarChart3, Box, Network } from "lucide-react";
+import {
+  Boxes,
+  Brain,
+  ClipboardCheck,
+  BarChart3,
+  Box,
+  Network,
+  Activity,
+} from "lucide-react";
 
 const MODULES = [
   {
@@ -17,15 +25,23 @@ const MODULES = [
   {
     key: "inspection_intelligence",
     name: "Inspection Intelligence",
-    description: "Inspection planning and findings management",
+    description: "Inspection planning, field capture, and review workflows",
     href: "/engineering/apps/inspection-intelligence",
-    status: "coming_soon" as const,
+    status: "available" as const,
     icon: ClipboardCheck,
+  },
+  {
+    key: "asset_intelligence",
+    name: "Asset Intelligence",
+    description: "Asset condition, criticality, reliability, and advisory signals",
+    href: "/engineering/apps/asset-intelligence",
+    status: "available" as const,
+    icon: Activity,
   },
   {
     key: "project_controls",
     name: "Project Controls",
-    description: "Cost, schedule, and progress controls",
+    description: "Governed cost, schedule, progress, and controls intelligence",
     href: "/engineering/apps/project-controls",
     status: "available" as const,
     icon: BarChart3,
@@ -33,7 +49,7 @@ const MODULES = [
   {
     key: "digital_twin",
     name: "Digital Twin",
-    description: "Digital twin context for assets and locations",
+    description: "Twin identity, state, simulation, and digital thread",
     href: "/engineering/apps/digital-twin",
     status: "available" as const,
     icon: Box,
@@ -74,9 +90,7 @@ export default function EngineeringModuleLauncherPage() {
                     <Icon className="h-5 w-5 text-slate-700" />
                     <CardTitle className="text-base">{mod.name}</CardTitle>
                   </div>
-                  <StatusChip status={mod.status === "available" ? "complete" : "pending"}>
-                    {mod.status === "available" ? "Available" : "Coming soon"}
-                  </StatusChip>
+                  <StatusChip status="complete">Available</StatusChip>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600">{mod.description}</p>
@@ -84,14 +98,14 @@ export default function EngineeringModuleLauncherPage() {
                 </CardContent>
               </Card>
             );
-            return mod.status === "available" ? (
-              <Link key={mod.key} href={mod.href} data-testid={`engineering-module-${mod.key}`}>
+            return (
+              <Link
+                key={mod.key}
+                href={mod.href}
+                data-testid={`engineering-module-${mod.key}`}
+              >
                 {content}
               </Link>
-            ) : (
-              <div key={mod.key} data-testid={`engineering-module-${mod.key}`} aria-disabled="true">
-                {content}
-              </div>
             );
           })}
         </div>

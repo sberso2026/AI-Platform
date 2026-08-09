@@ -1,6 +1,7 @@
 export * from "./version";
 export * from "./manifest";
 export * from "./module-registry";
+export * from "./product-integration";
 export * from "./module-sdk";
 export * from "./domain-sdk";
 export * from "./workflow-sdk";

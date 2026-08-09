@@ -1,13 +1,18 @@
 /**
- * Phase 14A — Engineering OS GA readiness / discovery lock.
+ * Phase 14B — Engineering OS Product Integration Closure.
  * Do NOT claim Engineering OS V1.0 production readiness here.
  */
-export const ENGINEERING_OS_VERSION = "0.9.0-ga-readiness" as const;
-export const ENGINEERING_OS_STATUS = "ga_readiness" as const;
-export const ENGINEERING_OS_PHASE = "14A" as const;
+export const ENGINEERING_OS_VERSION = "0.10.0-product-integration" as const;
+export const ENGINEERING_OS_STATUS = "product_integration" as const;
+export const ENGINEERING_OS_PHASE = "14B" as const;
 
 export const ENGINEERING_OS_PUBLIC_CONTRACT_VERSION =
-  "0.9.0-ga-readiness-draft" as const;
+  "0.10.0-product-integration-draft" as const;
+
+/** Phase 14A certified baseline. */
+export const PHASE_14A_CERTIFIED_COMMIT =
+  "1542a4973dcf98539eefbf710c500927cb939fa8" as const;
+export const PHASE_14A_HOSTED_RUN = "31294920688" as const;
 
 /** Frozen V1 module tags (must not move). */
 export const PROJECT_INTELLIGENCE_V1_TAG = "project-intelligence-v1.0.0" as const;
@@ -31,29 +36,48 @@ export const ENGINEERING_MODEL_INTEROPERABILITY_V1_TAG =
 export const ENGINEERING_MODEL_INTEROPERABILITY_V1_COMMIT =
   "4e55f32f8b5727ae900915b20492bbdf1d60f6b9" as const;
 
+export const PRODUCTION_V1_MODULE_KEYS = [
+  "project_intelligence",
+  "inspection_intelligence",
+  "asset_intelligence",
+  "project_controls",
+  "digital_twin",
+  "engineering_model_interoperability",
+] as const;
+
 // ---------------------------------------------------------------------------
-// Required Phase 14A readiness flags
+// Phase 14A assessment flags (retained)
 // ---------------------------------------------------------------------------
 
 export const EngineeringOSGaReadinessAssessmentComplete = true as const;
 export const EngineeringOSProductBoundaryLocked = true as const;
 export const EngineeringOSOwnershipModelLocked = true as const;
-export const EngineeringOSModuleCompatibilityAssessed = true as const;
-export const EngineeringOSSharedDomainMaturityAssessed = true as const;
-export const EngineeringOSCapabilityMatrixReady = true as const;
-export const EngineeringOSCrossModuleSearchAssessed = true as const;
-export const EngineeringOSAiOrchestrationAssessed = true as const;
-export const EngineeringOSToolFrameworkIntegrated = true as const;
 export const clientLicensedSolverExecutionArchitectureSupported = true as const;
-export const EngineeringOSNavigationAssessed = true as const;
-export const EngineeringOSContextModelLocked = true as const;
-export const EngineeringOSEventMatrixReady = true as const;
-export const EngineeringOSHealthModelDefined = true as const;
-export const EngineeringOSCommercialPackagingDefined = true as const;
-export const EngineeringOSSecurityBoundaryDefined = true as const;
-export const EngineeringOSOperationsReadinessAssessed = true as const;
-export const EngineeringOSGaGapRegisterReady = true as const;
-export const EngineeringOSV1ReadinessMatrixReady = true as const;
+
+// ---------------------------------------------------------------------------
+// Phase 14B product integration flags
+// ---------------------------------------------------------------------------
+
+export const EngineeringOSProductIntegrationReady = true as const;
+export const moduleRegistryTruthful = true as const;
+export const moduleRegistryDriftDetected = false as const;
+export const engineeringOsLauncherComplete = true as const;
+export const EngineeringOSManifestReady = true as const;
+export const sharedDomainVersionsPinned = true as const;
+export const assetOwnershipAliasEnforced = true as const;
+export const EngineeringContextReady = true as const;
+export const EngineeringOSCrossModuleSearchReady = true as const;
+export const EngineeringOSAiOrchestrationReady = true as const;
+export const EngineeringOSHealthReady = true as const;
+export const EngineeringOSNavigationReady = true as const;
+export const EngineeringOSCommercialProductReady = true as const;
+export const EngineeringOSEntitlementCoverageReady = true as const;
+export const EngineeringOSInstallabilityReady = true as const;
+export const EngineeringOSCompatibilityResolverReady = true as const;
+export const EngineeringOSCapabilityAggregationReady = true as const;
+export const EngineeringOSReportingNavigationReady = true as const;
+export const EngineeringOSEventIntegrationReady = true as const;
+export const EngineeringOSProductIntegrationSecurityReady = true as const;
 
 export const duplicateAssetOwnershipDetected = false as const;
 export const duplicateProjectOwnershipDetected = false as const;
@@ -61,9 +85,10 @@ export const duplicateSpatialOwnershipDetected = false as const;
 export const duplicateKnowledgeGraphDetected = false as const;
 export const duplicateWorkflowEngineDetected = false as const;
 export const duplicateEngineeringToolFrameworkDetected = false as const;
+export const duplicateUniversalTimelineDetected = false as const;
 export const privateCrossModuleCouplingDetected = false as const;
 
-/** Must remain false in Phase 14A. */
+/** Must remain false until final EOS GA closure. */
 export const productionEngineeringOSReady = false as const;
 export const engineeringOSV1GaCertified = false as const;
 
@@ -79,47 +104,48 @@ export const ProjectControlsV1Intact = true as const;
 export const DigitalTwinV1Intact = true as const;
 export const EngineeringModelInteroperabilityV1Intact = true as const;
 
-/** Set true only when gap register is complete with no UNKNOWN ownership. */
 export const phase14BReady = true as const;
+/** Set true when 14B product integration certification passes. */
+export const phase14CReady = true as const;
 
-export function getEngineeringOsGaReadinessDeclaration() {
+export function getEngineeringOsProductIntegrationDeclaration() {
   return {
     version: ENGINEERING_OS_VERSION,
     status: ENGINEERING_OS_STATUS,
     phase: ENGINEERING_OS_PHASE,
     publicContractVersion: ENGINEERING_OS_PUBLIC_CONTRACT_VERSION,
-    EngineeringOSGaReadinessAssessmentComplete,
-    EngineeringOSProductBoundaryLocked,
-    EngineeringOSOwnershipModelLocked,
-    EngineeringOSModuleCompatibilityAssessed,
-    EngineeringOSSharedDomainMaturityAssessed,
-    EngineeringOSCapabilityMatrixReady,
-    EngineeringOSCrossModuleSearchAssessed,
-    EngineeringOSAiOrchestrationAssessed,
-    EngineeringOSToolFrameworkIntegrated,
-    clientLicensedSolverExecutionArchitectureSupported,
-    EngineeringOSNavigationAssessed,
-    EngineeringOSContextModelLocked,
-    EngineeringOSEventMatrixReady,
-    EngineeringOSHealthModelDefined,
-    EngineeringOSCommercialPackagingDefined,
-    EngineeringOSSecurityBoundaryDefined,
-    EngineeringOSOperationsReadinessAssessed,
-    EngineeringOSGaGapRegisterReady,
-    EngineeringOSV1ReadinessMatrixReady,
+    EngineeringOSProductIntegrationReady,
+    moduleRegistryTruthful,
+    moduleRegistryDriftDetected,
+    engineeringOsLauncherComplete,
+    EngineeringOSManifestReady,
+    sharedDomainVersionsPinned,
+    assetOwnershipAliasEnforced,
+    EngineeringContextReady,
+    EngineeringOSCrossModuleSearchReady,
+    EngineeringOSAiOrchestrationReady,
+    EngineeringOSHealthReady,
+    EngineeringOSNavigationReady,
+    EngineeringOSCommercialProductReady,
+    EngineeringOSEntitlementCoverageReady,
+    EngineeringOSInstallabilityReady,
+    EngineeringOSCompatibilityResolverReady,
+    EngineeringOSCapabilityAggregationReady,
+    EngineeringOSReportingNavigationReady,
+    EngineeringOSEventIntegrationReady,
+    EngineeringOSProductIntegrationSecurityReady,
     duplicateAssetOwnershipDetected,
     duplicateProjectOwnershipDetected,
     duplicateSpatialOwnershipDetected,
     duplicateKnowledgeGraphDetected,
     duplicateWorkflowEngineDetected,
     duplicateEngineeringToolFrameworkDetected,
-    privateCrossModuleCouplingDetected,
+    duplicateUniversalTimelineDetected,
     productionEngineeringOSReady,
     engineeringOSV1GaCertified,
-    clientLicensedETABSExecutionCertified,
-    clientLicensedSPACEGASSExecutionCertified,
     implementsOwnAiStack,
     silentSolverFallbackAllowed,
+    clientLicensedSolverExecutionArchitectureSupported,
     ProjectIntelligenceV1Intact,
     InspectionIntelligenceV1Intact,
     AssetIntelligenceV1Intact,
@@ -127,5 +153,6 @@ export function getEngineeringOsGaReadinessDeclaration() {
     DigitalTwinV1Intact,
     EngineeringModelInteroperabilityV1Intact,
     phase14BReady,
+    phase14CReady,
   } as const;
 }

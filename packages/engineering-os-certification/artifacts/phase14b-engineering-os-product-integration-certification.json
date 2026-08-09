@@ -1,0 +1,499 @@
+{
+  "schemaVersion": "phase14b-engineering-os-product-integration/1",
+  "phase": "14B",
+  "name": "phase14b-engineering-os-product-integration-certification",
+  "version": "0.10.0-product-integration",
+  "status": "product_integration",
+  "title": "Engineering OS Product Integration Closure",
+  "verdict": "PASS",
+  "commit": "1542a4973dcf98539eefbf710c500927cb939fa8",
+  "artifactCommitSha": "1542a4973dcf98539eefbf710c500927cb939fa8",
+  "ciHeadSha": "1542a4973dcf98539eefbf710c500927cb939fa8",
+  "buildIdentitySha": "1542a4973dcf98539eefbf710c500927cb939fa8",
+  "phase14ABaseline": "1542a4973dcf98539eefbf710c500927cb939fa8",
+  "EngineeringOSProductIntegrationReady": true,
+  "moduleRegistryTruthful": true,
+  "engineeringOsLauncherComplete": true,
+  "EngineeringOSManifestReady": true,
+  "sharedDomainVersionsPinned": true,
+  "assetOwnershipAliasEnforced": true,
+  "EngineeringContextReady": true,
+  "EngineeringOSCrossModuleSearchReady": true,
+  "EngineeringOSAiOrchestrationReady": true,
+  "EngineeringOSHealthReady": true,
+  "EngineeringOSNavigationReady": true,
+  "EngineeringOSCommercialProductReady": true,
+  "EngineeringOSEntitlementCoverageReady": true,
+  "EngineeringOSInstallabilityReady": true,
+  "EngineeringOSCompatibilityResolverReady": true,
+  "EngineeringOSCapabilityAggregationReady": true,
+  "EngineeringOSReportingNavigationReady": true,
+  "EngineeringOSEventIntegrationReady": true,
+  "EngineeringOSProductIntegrationSecurityReady": true,
+  "productionEngineeringOSReady": false,
+  "engineeringOSV1GaCertified": false,
+  "phase14CReady": true,
+  "releaseEligible": true,
+  "secretExposure": false,
+  "secretExposureDetected": false,
+  "unexpected5xx": 0,
+  "requiredTestsSkipped": 0,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "1542a4973dcf98539eefbf710c500927cb939fa8"
+    },
+    {
+      "id": "B",
+      "name": "Phase 14A baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Project Intelligence V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Inspection Intelligence V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Asset Intelligence V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Project Controls V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Digital Twin V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Interop V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Version 0.10.0-product-integration",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "productionEngineeringOSReady false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "engineeringOSV1GaCertified false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "moduleRegistryTruthful",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Registry has six production modules",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "No coming_soon production modules",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Launcher completeness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "EngineeringOSManifestReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "sharedDomainVersionsPinned",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "assetOwnershipAliasEnforced",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "EngineeringContextReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Cross-module search ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "AI orchestration ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Health aggregation ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Navigation ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "OS Home product-ready marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Commercial product ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Entitlement coverage ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Installability ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Compatibility resolver ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Capability aggregation ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Reporting navigation ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Event integration ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Product integration security ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Duplicate ownership/framework flags false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "duplicateUniversalTimelineDetected false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "implementsOwnAiStack false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Gap register REQUIRED_BEFORE_GA closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Readiness matrix updated",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "phase14CReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "AQ",
+      "name": "Aggregate manifest asserts",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Ownership normalizer tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Search object types complete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Commercial solver entitlement ≠ license",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Client-owned solver architecture retained",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Reports page module routes",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "No Phase 14B migration rewrite",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "EngineeringOSProductIntegrationReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "engineeringOsLauncherComplete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "moduleRegistryDriftDetected false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "SPACE GASS live remains blocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "ETABS live remains not certified",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "PoF/RUL unavailable preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "Silent fallback false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Platform architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Frozen V1 intact flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "Health does not fail OS on solver unavailable",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "AI discoverable capabilities",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Compatibility fail-closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "Context requires tenant/workspace/user",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "1542a4973dcf98539eefbf710c500927cb939fa8"
+    },
+    {
+      "id": "BL",
+      "name": "No Security & Assurance subsystem started",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ],
+  "requiredGates": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "AA",
+    "AB",
+    "AC",
+    "AD",
+    "AE",
+    "AF",
+    "AG",
+    "AH",
+    "AI",
+    "AJ",
+    "AK",
+    "AL",
+    "AM",
+    "AN",
+    "AO",
+    "AP",
+    "AQ",
+    "AR",
+    "AS",
+    "AT",
+    "AU",
+    "AV",
+    "AW",
+    "AX",
+    "AY",
+    "AZ",
+    "BA",
+    "BB",
+    "BC",
+    "BD",
+    "BE",
+    "BF",
+    "BG",
+    "BH",
+    "BI",
+    "BJ",
+    "BK",
+    "BL"
+  ],
+  "gateCount": 64,
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "generatedAt": "2026-08-09T05:01:26.314Z"
+}
