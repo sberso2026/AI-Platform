@@ -1,0 +1,620 @@
+{
+  "title": "Platform Enterprise SSO Discovery",
+  "schemaVersion": "platform-enterprise-sso-discovery-certification/1",
+  "phase": "16A",
+  "verdict": "PASS",
+  "version": "0.1.0-enterprise-sso-discovery",
+  "status": "discovery",
+  "commit": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "artifactCommitSha": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "ciHeadSha": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "buildIdentitySha": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "securityAssuranceV1Baseline": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 57,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Security & Assurance V1 tag intact"
+    },
+    {
+      "id": "C",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "D",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "E",
+      "name": "Discovery version 0.1.0-enterprise-sso-discovery"
+    },
+    {
+      "id": "F",
+      "name": "Identity footprint inventory"
+    },
+    {
+      "id": "G",
+      "name": "Identity ownership locked"
+    },
+    {
+      "id": "H",
+      "name": "Protocol strategy locked"
+    },
+    {
+      "id": "I",
+      "name": "Entra first-class boundary"
+    },
+    {
+      "id": "J",
+      "name": "Provider-neutral architecture"
+    },
+    {
+      "id": "K",
+      "name": "Tenant SSO policy"
+    },
+    {
+      "id": "L",
+      "name": "Domain verification architecture"
+    },
+    {
+      "id": "M",
+      "name": "User/tenant binding"
+    },
+    {
+      "id": "N",
+      "name": "Account linking"
+    },
+    {
+      "id": "O",
+      "name": "JIT decision"
+    },
+    {
+      "id": "P",
+      "name": "SCIM decision"
+    },
+    {
+      "id": "Q",
+      "name": "Role/group mapping"
+    },
+    {
+      "id": "R",
+      "name": "MFA assurance"
+    },
+    {
+      "id": "S",
+      "name": "Conditional Access boundary"
+    },
+    {
+      "id": "T",
+      "name": "Session security"
+    },
+    {
+      "id": "U",
+      "name": "Offboarding"
+    },
+    {
+      "id": "V",
+      "name": "Break-glass boundary"
+    },
+    {
+      "id": "W",
+      "name": "Multi-tenant IdP isolation"
+    },
+    {
+      "id": "X",
+      "name": "Security & Assurance evidence boundary"
+    },
+    {
+      "id": "Y",
+      "name": "Audit reuse"
+    },
+    {
+      "id": "Z",
+      "name": "Events reuse"
+    },
+    {
+      "id": "AA",
+      "name": "Threat model"
+    },
+    {
+      "id": "AB",
+      "name": "Fail-closed semantics"
+    },
+    {
+      "id": "AC",
+      "name": "Customer UX"
+    },
+    {
+      "id": "AD",
+      "name": "Admin UX"
+    },
+    {
+      "id": "AE",
+      "name": "Commercial boundary"
+    },
+    {
+      "id": "AF",
+      "name": "S07 sequencing"
+    },
+    {
+      "id": "AG",
+      "name": "Tier-1 readiness flags false"
+    },
+    {
+      "id": "AH",
+      "name": "Draft contracts 0.1.0-draft"
+    },
+    {
+      "id": "AI",
+      "name": "Package placement"
+    },
+    {
+      "id": "AJ",
+      "name": "Gap register"
+    },
+    {
+      "id": "AK",
+      "name": "Implementation roadmap"
+    },
+    {
+      "id": "AL",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "AM",
+      "name": "SecurityAssuranceV1Intact"
+    },
+    {
+      "id": "AN",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "AO",
+      "name": "Module V1 intact flags"
+    },
+    {
+      "id": "AP",
+      "name": "No production SSO runtime"
+    },
+    {
+      "id": "AQ",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AR",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AS",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AT",
+      "name": "Platform architecture test"
+    },
+    {
+      "id": "AU",
+      "name": "Phase 16A overview"
+    },
+    {
+      "id": "AV",
+      "name": "Ownership matrix UNKNOWN=0"
+    },
+    {
+      "id": "AW",
+      "name": "phase16BReady"
+    },
+    {
+      "id": "AX",
+      "name": "S08 remains incomplete"
+    },
+    {
+      "id": "AY",
+      "name": "S07 remains incomplete"
+    },
+    {
+      "id": "AZ",
+      "name": "No Sec&A V1 contract mutation"
+    },
+    {
+      "id": "BA",
+      "name": "No EOS V1 mutation"
+    },
+    {
+      "id": "BB",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "BC",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "BD",
+      "name": "Discovery package not 1.0.0"
+    },
+    {
+      "id": "BE",
+      "name": "securityAssuranceOwnsCustomerSso=false"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "EnterpriseIdentityDiscoveryReady": true,
+  "PlatformIdentityOwnershipLocked": true,
+  "CustomerSsoOwnershipLocked": true,
+  "EnterpriseSsoArchitectureLocked": true,
+  "EnterpriseSsoProtocolStrategyLocked": true,
+  "EnterpriseIdentityLifecycleDefined": true,
+  "EnterpriseSsoThreatModelReady": true,
+  "EnterpriseSsoGapRegisterReady": true,
+  "EnterpriseSsoImplementationRoadmapReady": true,
+  "CustomerSsoProductionReady": false,
+  "S08CustomerSsoProductionReady": false,
+  "S07ExternalPenTestComplete": false,
+  "Tier1EnterpriseProductionReady": false,
+  "securityAssuranceOwnsCustomerSso": false,
+  "EngineeringOsOwnsCustomerSso": false,
+  "EnterpriseSsoRuntimeImplemented": false,
+  "duplicateIdentityProviderDetected": false,
+  "duplicateAuthorizationSystemDetected": false,
+  "duplicatePolicyEngineDetected": false,
+  "duplicateAuditSystemDetected": false,
+  "SecurityAssuranceV1Intact": true,
+  "EngineeringOSV1Intact": true,
+  "phase16BReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "cf3e9eff49c1314ea16e115dcde26cd45e520121"
+    },
+    {
+      "id": "B",
+      "name": "Security & Assurance V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Discovery version 0.1.0-enterprise-sso-discovery",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Identity footprint inventory",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Identity ownership locked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Protocol strategy locked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Entra first-class boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Provider-neutral architecture",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Tenant SSO policy",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "Domain verification architecture",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "User/tenant binding",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Account linking",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "JIT decision",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "SCIM decision",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Role/group mapping",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "MFA assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Conditional Access boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Session security",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Offboarding",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Break-glass boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Multi-tenant IdP isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Security & Assurance evidence boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Audit reuse",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Events reuse",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Threat model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Fail-closed semantics",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Customer UX",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Admin UX",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Commercial boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "S07 sequencing",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Tier-1 readiness flags false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Draft contracts 0.1.0-draft",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Package placement",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Gap register",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Implementation roadmap",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "SecurityAssuranceV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Module V1 intact flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "No production SSO runtime",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Platform architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Phase 16A overview",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Ownership matrix UNKNOWN=0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "phase16BReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "S08 remains incomplete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "S07 remains incomplete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "No Sec&A V1 contract mutation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "No EOS V1 mutation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "cf3e9eff49c1314ea16e115dcde26cd45e520121"
+    },
+    {
+      "id": "BC",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BD",
+      "name": "Discovery package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "securityAssuranceOwnsCustomerSso=false",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}
