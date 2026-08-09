@@ -42,9 +42,10 @@ export type TwinStateSnapshotDraft = {
   attributes: Record<string, unknown>;
 };
 
+/** @deprecated Phase 12A name — GA freezes public contracts at 1.0.0 (no draft). */
 export function assertDraftContractsOnly(): { ok: true; contractVersion: typeof PUBLIC_CONTRACT_VERSION } {
-  if (!PUBLIC_CONTRACT_VERSION.endsWith("-draft")) {
-    throw new Error("only_draft_contracts_allowed");
+  if (PUBLIC_CONTRACT_VERSION !== "1.0.0") {
+    throw new Error("public_contracts_must_be_frozen_at_1_0_0");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };
 }

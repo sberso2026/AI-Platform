@@ -55,10 +55,10 @@ describe("Phase 12H Digital Twin simulation assurance", () => {
   const twinId = "twin-1";
 
   it("declares assurance version and pinned 12G baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
-    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
-    expect(DIGITAL_TWIN_PHASE).toBe("12K");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("1.0.0");
+    expect(DIGITAL_TWIN_STATUS).toBe("ga");
+    expect(DIGITAL_TWIN_PHASE).toBe("12N");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(PHASE_12G_VERSION).toBe("0.7.0-simulation");
     expect(PHASE_12G_CERTIFIED_COMMIT).toBe(
       "a3832076425b276f089e38f1c9aa76559014454c",
@@ -91,7 +91,7 @@ describe("Phase 12H Digital Twin simulation assurance", () => {
     expect(lock.simulationMethodQualificationReady).toBe(true);
     expect(lock.twinSimulationPackageReady).toBe(true);
     expect(lock.externalEngineeringSolverAdaptersImplemented).toBe(true);
-    expect(lock.spatialOwnershipFullyResolved).toBe(false);
+    expect(lock.spatialOwnershipFullyResolved).toBe(true);
   });
 
   it("builds fixture-scoped qualifications and eligibility", () => {

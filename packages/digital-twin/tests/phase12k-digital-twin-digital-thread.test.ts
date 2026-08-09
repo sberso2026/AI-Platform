@@ -39,10 +39,10 @@ import type { TwinThreadReference } from "../src/domain/thread";
 
 describe("Phase 12K Digital Twin digital thread", () => {
   it("declares digital thread version and status", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
-    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
-    expect(DIGITAL_TWIN_PHASE).toBe("12K");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("1.0.0");
+    expect(DIGITAL_TWIN_STATUS).toBe("ga");
+    expect(DIGITAL_TWIN_PHASE).toBe("12N");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
   });
 
   it("pins Phase 12J certified baseline", () => {
@@ -272,8 +272,8 @@ describe("Phase 12K Digital Twin digital thread", () => {
 
   it("declaration reports digital thread version", () => {
     const d = getDigitalTwinDigitalThreadDeclaration();
-    expect(d.version).toBe("0.11.0-digital-thread");
-    expect(d.status).toBe("digital_thread");
+    expect(d.version).toBe("1.0.0");
+    expect(d.status).toBe("ga");
     expect(d.phase12LReady).toBe(true);
     expect(d.phase12JCertifiedCommit).toBe(PHASE_12J_CERTIFIED_COMMIT);
   });

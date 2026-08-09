@@ -41,10 +41,10 @@ describe("Phase 12E Digital Twin telemetry binding", () => {
   const workspaceId = "workspace-1";
 
   it("declares telemetry binding version and pinned 12D baseline", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
-    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
-    expect(DIGITAL_TWIN_PHASE).toBe("12K");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("1.0.0");
+    expect(DIGITAL_TWIN_STATUS).toBe("ga");
+    expect(DIGITAL_TWIN_PHASE).toBe("12N");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(PHASE_12D_VERSION).toBe("0.4.0-ingestion");
     expect(PHASE_12D_CERTIFIED_COMMIT).toBe("3e387f4b76cbd9c80b274585c7b78821482f496d");
     expect(PHASE_12F_READY).toBe(true);
@@ -67,7 +67,7 @@ describe("Phase 12E Digital Twin telemetry binding", () => {
   });
 
   it("declares telemetry events in catalog", () => {
-    expect(assertTelemetryContracts().contractVersion).toBe("0.11.0-digital-thread-draft");
+    expect(assertTelemetryContracts().contractVersion).toBe("1.0.0");
     for (const evt of TELEMETRY_DOMAIN_EVENTS) {
       expect(DIGITAL_TWIN_EVENTS).toContain(evt);
     }

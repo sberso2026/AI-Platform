@@ -27,7 +27,7 @@ const MODULES = [
     name: "Project Controls",
     description: "Cost, schedule, and progress controls",
     href: "/engineering/apps/project-controls",
-    status: "coming_soon" as const,
+    status: "available" as const,
     icon: BarChart3,
   },
   {
@@ -35,7 +35,7 @@ const MODULES = [
     name: "Digital Twin",
     description: "Digital twin context for assets and locations",
     href: "/engineering/apps/digital-twin",
-    status: "coming_soon" as const,
+    status: "available" as const,
     icon: Box,
   },
 ];

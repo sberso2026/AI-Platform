@@ -1,14 +1,14 @@
+import { ENGINEERING_PAGE_POLICIES } from "@rtb/platform-commerce";
+import { ApplicationEntitlementLayout } from "@/components/commerce/application-entitlement-layout";
+import { DigitalTwinShell } from "@/components/engineering/digital-twin-shell";
+
 export default function DigitalTwinLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      data-testid="digital-twin-shell"
-      data-module-version="0.11.0-digital-thread"
-      data-module-status="digital_thread"
+    <ApplicationEntitlementLayout
+      policy={ENGINEERING_PAGE_POLICIES["/engineering/apps/digital-twin"]}
+      returnPath="/system/products"
     >
-      <nav aria-label="Digital Twin sections">
-        <a href="/engineering/apps/digital-twin">Digital Thread</a>
-      </nav>
-      {children}
-    </div>
+      <DigitalTwinShell>{children}</DigitalTwinShell>
+    </ApplicationEntitlementLayout>
   );
 }

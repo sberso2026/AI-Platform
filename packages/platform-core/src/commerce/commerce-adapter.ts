@@ -28,6 +28,8 @@ const OS_PRODUCT_SLUG: Record<string, string> = {
 const AVAILABLE_ENGINEERING_APP_KEYS = new Set([
   "inspection_intelligence",
   "project_controls",
+  "digital_twin",
+  "asset_intelligence",
   "meeting_intelligence",
   "document_intelligence",
   "structural_intelligence",

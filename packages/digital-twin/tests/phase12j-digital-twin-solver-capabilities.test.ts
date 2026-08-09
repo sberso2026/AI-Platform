@@ -50,10 +50,10 @@ import { assertOwnershipLock } from "../src/architecture/ownership-lock";
 
 describe("Phase 12J Digital Twin solver capabilities", () => {
   it("declares solver capabilities version and status", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
-    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
-    expect(DIGITAL_TWIN_PHASE).toBe("12K");
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
+    expect(DIGITAL_TWIN_VERSION).toBe("1.0.0");
+    expect(DIGITAL_TWIN_STATUS).toBe("ga");
+    expect(DIGITAL_TWIN_PHASE).toBe("12N");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
   });
 
   it("pins Phase 12I certified baseline", () => {
@@ -202,8 +202,8 @@ describe("Phase 12J Digital Twin solver capabilities", () => {
 
   it("declaration reports phase 12J identity", () => {
     const d = getDigitalTwinSolverCapabilitiesDeclaration();
-    expect(d.version).toBe("0.11.0-digital-thread");
-    expect(d.phase).toBe("12K");
+    expect(d.version).toBe("1.0.0");
+    expect(d.phase).toBe("12N");
     expect(d.phase12KReady).toBe(true);
     expect(d.phase12ICertifiedCommit).toBe(PHASE_12I_CERTIFIED_COMMIT);
   });

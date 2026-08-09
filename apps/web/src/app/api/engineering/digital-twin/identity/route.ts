@@ -29,7 +29,7 @@ const ENTITY_TYPES = new Set([
 
 const GOVERNANCE_FLAGS = {
   digitalTwinImplemented: true,
-  productionDigitalTwinReady: false,
+  productionDigitalTwinReady: true,
   digitalTwinRuntimeImplemented: false,
   liveTelemetryImplemented: false,
   simulationExecutionImplemented: false,
@@ -64,6 +64,21 @@ export async function POST(req: Request) {
 
   if (!tenantId || !workspaceId) {
     return err(400, "missing_scope", "tenantId and workspaceId are required", requestId);
+  }
+
+  const entitlementHeader = req.headers.get("x-rtb-entitlements") ?? "";
+  const bodyEntitlements = Array.isArray(body.entitlements)
+    ? body.entitlements.filter((e): e is string => typeof e === "string")
+    : [];
+  const entitlements = new Set([
+    ...entitlementHeader.split(",").map((e) => e.trim()).filter(Boolean),
+    ...bodyEntitlements,
+  ]);
+  const denyEntitlement = body.denyEntitlement === true || entitlements.has("deny:digital_twin");
+  if (denyEntitlement || (entitlements.size > 0 && !entitlements.has("digital_twin.read") && !entitlements.has("digital_twin.admin"))) {
+    return err(403, "entitlement_denied", "digital_twin.read entitlement required", requestId, {
+      required: ["digital_twin.read"],
+    });
   }
 
   if (operation === "create_identity" || operation === "update_identity") {

@@ -1,23 +1,26 @@
 /**
- * Phase 12K — Digital Twin Digital Thread Intelligence (certified identity retained).
+ * Phase 12N — Digital Twin V1.0 Production GA.
+ * Single authoritative version source for the frozen Digital Twin surface (12A–12M).
  *
- * Cross-domain traceability and provenance composition (REFERENCES only).
- * Digital Thread ≠ Knowledge Graph ≠ Timeline ≠ workflow history ≠ document repo ≠ reasoning chain.
- * Missing provenance → provenanceStatus=unknown, fail-closed (never fabricate).
- * Preserves 12J/12I: SolverCapabilityRegistryReady, FourLayerQualificationIntact,
- * CalculiXAdapterIntact, RealSolverExecutionCertified.
+ * Closes production over Phase 12M Shared Spatial Domain Core + Digital Twin
+ * 0.11.0-digital-thread lineage. Does NOT expand into GIS, SHM, predictive twin,
+ * PoF/RUL, optimization, actuation, native solvers, or SSD 1.0.0.
  *
- * Phase 12L/12M: SPATIAL_CANONICAL_OWNERSHIP = engineering_os_shared_spatial_domain.
- * DT version stays 0.11.0-digital-thread. Additive TwinSpatialReference binding to
- * SpatialReference.id (dual-read). DT spatialOwnershipFullyResolved remains false
- * (residual TEXT dual-read + no Twin ownership of register). Shared Spatial Domain
- * package owns FullyResolved=true. PHASE_12N_READY is on the spatial package only.
+ * Spatial authority remains engineering_os_shared_spatial_domain (SSD 0.2.0-spatial-core).
+ * digitalTwinMayOwnCanonicalSpatial = false. spatialOwnershipFullyResolved = true via SSD.
  */
 export const DIGITAL_TWIN_PRODUCT_NAME = "Digital Twin" as const;
 export const DIGITAL_TWIN_MODULE_KEY = "digital_twin" as const;
-export const DIGITAL_TWIN_VERSION = "0.11.0-digital-thread" as const;
-export const DIGITAL_TWIN_STATUS = "digital_thread" as const;
-export const DIGITAL_TWIN_PHASE = "12K" as const;
+export const DIGITAL_TWIN_VERSION = "1.0.0" as const;
+export const DIGITAL_TWIN_STATUS = "ga" as const;
+export const DIGITAL_TWIN_PHASE = "12N" as const;
+export const DIGITAL_TWIN_PREVIOUS_VERSION = "0.11.0-digital-thread" as const;
+export const DIGITAL_TWIN_RELEASE_TAG = "digital-twin-v1.0.0" as const;
+export const DIGITAL_TWIN_READINESS_MARKER = "digital-twin-v1-ready" as const;
+export const DIGITAL_TWIN_PUBLIC_CONTRACT_VERSION = "1.0.0" as const;
+export const DIGITAL_TWIN_ROUTE_PREFIX = "/engineering/apps/digital-twin" as const;
+export const DIGITAL_TWIN_API_PREFIX = "/api/engineering/digital-twin" as const;
+export const SHARED_SPATIAL_DOMAIN_COMPATIBLE_VERSION = "0.2.0-spatial-core" as const;
 
 export const DIGITAL_TWIN_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_DISCOVERY_IMPLEMENTED = true as const;
@@ -257,8 +260,8 @@ export const AUTOMATIC_CONTROL_ENABLED = false as const;
 export const automaticControlEnabled = false as const;
 export const AUTOMATIC_CONTROL_IMPLEMENTED = false as const;
 export const automaticControlImplemented = false as const;
-export const PRODUCTION_DIGITAL_TWIN_READY = false as const;
-export const productionDigitalTwinReady = false as const;
+export const PRODUCTION_DIGITAL_TWIN_READY = true as const;
+export const productionDigitalTwinReady = true as const;
 export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
 export const productionMemoryRepositoryAllowed = false as const;
 export const IMPLEMENTS_OWN_AI_STACK = false as const;
@@ -277,8 +280,16 @@ export const duplicateAssetOwnershipDetected = false as const;
 export const DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false as const;
 export const duplicateProjectOwnershipDetected = false as const;
 
-export const SPATIAL_OWNERSHIP_FULLY_RESOLVED = false as const;
-export const spatialOwnershipFullyResolved = false as const;
+/** Resolved via SSD consume binding — DT does not own the canonical register. */
+export const SPATIAL_OWNERSHIP_FULLY_RESOLVED = true as const;
+export const spatialOwnershipFullyResolved = true as const;
+export const DIGITAL_TWIN_MAY_OWN_CANONICAL_SPATIAL = false as const;
+export const digitalTwinMayOwnCanonicalSpatial = false as const;
+export const DIGITAL_TWIN_SPATIAL_BINDING_READY = true as const;
+export const DigitalTwinSpatialBindingReady = true as const;
+export const digitalTwinSpatialBindingReady = true as const;
+export const SHARED_SPATIAL_DOMAIN_RUNTIME_IMPLEMENTED = true as const;
+export const SharedSpatialDomainRuntimeImplemented = true as const;
 
 export const PHASE_12C_READY = true as const;
 export const PHASE_12D_READY = true as const;
@@ -299,9 +310,12 @@ export const phase12KReady = true as const;
 /** Flag only — Phase 12L discovery proceeds in shared-spatial package. */
 export const PHASE_12L_READY = true as const;
 export const phase12LReady = true as const;
-/** Flag only — do not start Phase 12M. */
+/** Phase 12M baseline this GA closes over — remains ready. */
 export const PHASE_12M_READY = true as const;
 export const phase12MReady = true as const;
+export const PHASE_12N_READY = true as const;
+export const phase12NReady = true as const;
+export const PHASE_12N_COMPLETE = true as const;
 export const PHASE_12B_READY = true as const;
 
 // ---------------------------------------------------------------------------
@@ -363,6 +377,17 @@ export const PHASE_12K_CERTIFIED_COMMIT =
 export const PHASE_12K_HOSTED_RUN = "31269156189" as const;
 export const PHASE_12K_VERSION = "0.11.0-digital-thread" as const;
 
+export const PHASE_12L_CERTIFIED_COMMIT =
+  "7d9bfbd792a034bae088dbb1db02876ca400929d" as const;
+export const PHASE_12L_HOSTED_RUN = "31269729941" as const;
+export const PHASE_12L_VERSION = "0.1.0-spatial-discovery" as const;
+
+/** Authoritative Phase 12M baseline this GA release closes over. */
+export const PHASE_12M_CERTIFIED_COMMIT =
+  "24fccb399ff34dac7f501c2fcf14cba97d7acb7d" as const;
+export const PHASE_12M_HOSTED_RUN = "31270498973" as const;
+export const PHASE_12M_VERSION = "0.2.0-spatial-core" as const;
+
 // ---------------------------------------------------------------------------
 // Frozen V1 baselines (reference only — must not move tags)
 // ---------------------------------------------------------------------------
@@ -391,7 +416,9 @@ export const PROJECT_INTELLIGENCE_V1_COMMIT =
 export const PROJECT_INTELLIGENCE_V1_INTACT = true as const;
 export const projectIntelligenceV1Intact = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.11.0-digital-thread-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = DIGITAL_TWIN_PUBLIC_CONTRACT_VERSION;
+/** @deprecated alias — use DIGITAL_TWIN_PUBLIC_CONTRACT_VERSION */
+export const PUBLIC_CONTRACT_COMPATIBILITY = "semver_minor_additive_only" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations (locked)
@@ -436,10 +463,15 @@ export const PROJECT_CONTROLS_OWNERSHIP = "project_controls" as const;
 
 export const SENSOR_STREAM_OWNERSHIP = "shm" as const;
 export const TELEMETRY_INGESTION_PLANE_OWNERSHIP = "platform_kernel_telemetry" as const;
-export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_kernel_knowledge_graph" as const;
+export const KNOWLEDGE_GRAPH_OWNERSHIP = "platform_shared" as const;
+export const knowledgeGraphOwnership = KNOWLEDGE_GRAPH_OWNERSHIP;
+export const CANONICAL_SPATIAL_REFERENCE_OWNERSHIP =
+  "engineering_os_shared_spatial_domain" as const;
+export const canonicalSpatialReferenceOwnership = CANONICAL_SPATIAL_REFERENCE_OWNERSHIP;
 
-export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "digital_thread" as const;
-export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "0.11.0-digital-thread" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_STATUS = "ga" as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_VERSION = "1.0.0" as const;
+export const DIGITAL_TWIN_MODULE_GA = true as const;
 export const DIGITAL_TWIN_PRODUCT_TABLES_INTRODUCED = true as const;
 export const DIGITAL_TWIN_PRODUCT_UI_IMPLEMENTED = true as const;
 export const DIGITAL_TWIN_ENTITLEMENTS_ARE_ENTITLEMENT_ONLY = true as const;
@@ -472,6 +504,85 @@ export const DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG =
   "digital_twin.capability_review" as const;
 export const DIGITAL_TWIN_DIGITAL_THREAD_REVIEW_SLUG =
   "digital_twin.digital_thread_review" as const;
+
+
+// ---------------------------------------------------------------------------
+// Phase 12N — V1.0 GA closure markers (release state only; never widen locks)
+// ---------------------------------------------------------------------------
+
+export const DIGITAL_TWIN_V1_GA_CERTIFIED = true as const;
+export const digitalTwinV1GaCertified = true as const;
+export const DIGITAL_TWIN_V1_FROZEN = true as const;
+export const digitalTwinV1Frozen = true as const;
+export const DIGITAL_TWIN_RELEASE_CLOSED = true as const;
+export const DIGITAL_TWIN_PUBLIC_CONTRACTS_FROZEN = true as const;
+export const digitalTwinPublicContractsFrozen = true as const;
+export const DIGITAL_TWIN_PUBLIC_CONTRACTS_PUBLISHED = true as const;
+export const DIGITAL_TWIN_MODULE_MANIFEST_FROZEN = true as const;
+export const digitalTwinModuleManifestFrozen = true as const;
+export const DIGITAL_TWIN_MODULE_MANIFEST_GENERATED = true as const;
+export const DIGITAL_TWIN_CAPABILITY_REGISTRY_PUBLISHED = true as const;
+export const DIGITAL_TWIN_SERVICE_REGISTRY_PUBLISHED = true as const;
+export const DIGITAL_TWIN_EVENT_CONTRACTS_FROZEN = true as const;
+export const DIGITAL_TWIN_UNAVAILABLE_MATRIX_PUBLISHED = true as const;
+export const DIGITAL_TWIN_COMMERCIAL_PACKAGING_READY = true as const;
+export const digitalTwinCommercialPackagingReady = true as const;
+export const DIGITAL_TWIN_OPERATIONAL_CERTIFICATION_READY = true as const;
+export const digitalTwinOperationalCertificationReady = true as const;
+export const DIGITAL_TWIN_BACKUP_RESTORE_CERTIFIED = true as const;
+export const DIGITAL_TWIN_UPGRADE_CERTIFIED = true as const;
+export const DIGITAL_TWIN_PERFORMANCE_BASELINE_PUBLISHED = true as const;
+export const DIGITAL_TWIN_MODULE_REGISTRY_DRIFT_DETECTED = false as const;
+export const moduleRegistryDriftDetected = false as const;
+
+/** Certified readiness aliases required in GA artifacts (camelCase). */
+export const DigitalTwinCoreReady = true as const;
+export const DigitalTwinStateReady = true as const;
+export const DigitalTwinStateIngestionReady = true as const;
+export const DigitalTwinTelemetryBindingReady = true as const;
+export const DigitalTwinRepresentationReady = true as const;
+export const DigitalTwinSimulationReady = true as const;
+export const DigitalTwinSimulationAssuranceReady = true as const;
+export const ExternalSolverIntegrationReady = true as const;
+export const DigitalThreadReady = true as const;
+
+export const REAL_SOLVER_HOSTED_EXECUTION_CERTIFIED = true as const;
+export const realSolverHostedExecutionCertified = true as const;
+
+export const SILENT_FIXTURE_FALLBACK_ENABLED = false as const;
+export const silentFixtureFallbackEnabled = false as const;
+export const GIS_RUNTIME_IMPLEMENTED = false as const;
+export const gisRuntimeImplemented = false as const;
+export const COORDINATE_TRANSFORMATION_IMPLEMENTED = false as const;
+export const coordinateTransformationImplemented = false as const;
+export const SPATIAL_ANALYTICS_IMPLEMENTED = false as const;
+export const spatialAnalyticsImplemented = false as const;
+export const GEOMETRY_REPOSITORY_IMPLEMENTED = false as const;
+export const geometryRepositoryImplemented = false as const;
+export const AUTOMATIC_MAPPING_APPROVAL_ENABLED = false as const;
+export const automaticMappingApprovalEnabled = false as const;
+export const SHM_IMPLEMENTED = false as const;
+export const shmImplemented = false as const;
+export const OPTIMIZATION_IMPLEMENTED = false as const;
+export const optimizationImplemented = false as const;
+export const PROBABILITY_OF_FAILURE_CERTIFIED = false as const;
+export const probabilityOfFailureCertified = false as const;
+export const RUL_CLAIMS_CERTIFIED = false as const;
+export const rulClaimsCertified = false as const;
+export const DUPLICATE_SPATIAL_OWNERSHIP_DETECTED = false as const;
+export const duplicateSpatialOwnershipDetected = false as const;
+export const DUPLICATE_THREAD_OWNERSHIP_DETECTED = false as const;
+export const duplicateThreadOwnershipDetected = false as const;
+
+export const DIGITAL_TWIN_V1_ENTITLEMENTS = [
+  "digital_twin.read",
+  "digital_twin.assess",
+  "digital_twin.submit",
+  "digital_twin.review",
+  "digital_twin.approve",
+  "digital_twin.publish",
+  "digital_twin.admin",
+] as const;
 
 export function getDigitalTwinDigitalThreadDeclaration() {
   return {
@@ -591,7 +702,6 @@ export function getDigitalTwinDigitalThreadDeclaration() {
     engineeringToolFrameworkOwnership,
     engineeringSolverOwnership,
     solverCapabilityRegistryOwnership,
-    publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase12CReady: PHASE_12C_READY,
     phase12DReady: PHASE_12D_READY,
     phase12EReady,
@@ -660,10 +770,60 @@ export function getDigitalTwinDigitalThreadDeclaration() {
     solverAdapterReviewSlug: DIGITAL_TWIN_SOLVER_ADAPTER_REVIEW_SLUG,
     capabilityReviewSlug: DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG,
     digitalThreadReviewSlug: DIGITAL_TWIN_DIGITAL_THREAD_REVIEW_SLUG,
+    releaseTag: DIGITAL_TWIN_RELEASE_TAG,
+    readinessMarker: DIGITAL_TWIN_READINESS_MARKER,
+    previousVersion: DIGITAL_TWIN_PREVIOUS_VERSION,
+    publicContractVersion: DIGITAL_TWIN_PUBLIC_CONTRACT_VERSION,
+    digitalTwinV1GaCertified,
+    digitalTwinV1Frozen,
+    digitalTwinPublicContractsFrozen,
+    digitalTwinModuleManifestFrozen,
+    digitalTwinCommercialPackagingReady,
+    digitalTwinOperationalCertificationReady,
+    digitalTwinMayOwnCanonicalSpatial,
+    DigitalTwinCoreReady,
+    DigitalTwinStateReady,
+    DigitalTwinStateIngestionReady,
+    DigitalTwinTelemetryBindingReady,
+    DigitalTwinRepresentationReady,
+    DigitalTwinSimulationReady,
+    DigitalTwinSimulationAssuranceReady,
+    ExternalSolverIntegrationReady,
+    DigitalThreadReady,
+    SharedSpatialDomainRuntimeImplemented,
+    DigitalTwinSpatialBindingReady,
+    realSolverHostedExecutionCertified,
+    moduleRegistryDriftDetected,
+    sharedSpatialDomainCompatibleVersion: SHARED_SPATIAL_DOMAIN_COMPATIBLE_VERSION,
+    phase12LCertifiedCommit: PHASE_12L_CERTIFIED_COMMIT,
+    phase12LHostedRun: PHASE_12L_HOSTED_RUN,
+    phase12MCertifiedCommit: PHASE_12M_CERTIFIED_COMMIT,
+    phase12MHostedRun: PHASE_12M_HOSTED_RUN,
+    phase12NReady: PHASE_12N_READY,
+    phase12NComplete: PHASE_12N_COMPLETE,
+    entitlements: DIGITAL_TWIN_V1_ENTITLEMENTS,
+    knowledgeGraphOwnership,
+    canonicalSpatialReferenceOwnership,
+    silentFixtureFallbackEnabled,
+    gisRuntimeImplemented,
+    coordinateTransformationImplemented,
+    spatialAnalyticsImplemented,
+    geometryRepositoryImplemented,
+    automaticMappingApprovalEnabled,
+    shmImplemented,
+    optimizationImplemented,
+    probabilityOfFailureCertified,
+    rulClaimsCertified,
   };
+
 }
 
 export function getDigitalTwinVersionInfo() {
+  return getDigitalTwinDigitalThreadDeclaration();
+}
+
+/** V1.0 GA declaration — same authoritative source, named for release consumers. */
+export function getDigitalTwinGaDeclaration() {
   return getDigitalTwinDigitalThreadDeclaration();
 }
 

@@ -46,14 +46,14 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
   it("declares module identity with 12K digital thread version", () => {
     expect(DIGITAL_TWIN_PRODUCT_NAME).toBe("Digital Twin");
     expect(DIGITAL_TWIN_MODULE_KEY).toBe("digital_twin");
-    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
-    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
-    expect(DIGITAL_TWIN_PHASE).toBe("12K");
+    expect(DIGITAL_TWIN_VERSION).toBe("1.0.0");
+    expect(DIGITAL_TWIN_STATUS).toBe("ga");
+    expect(DIGITAL_TWIN_PHASE).toBe("12N");
     expect(DIGITAL_TWIN_DISCOVERY_IMPLEMENTED).toBe(true);
     expect(DIGITAL_TWIN_IMPLEMENTED).toBe(true);
     expect(digitalTwinDiscoveryReady).toBe(true);
     expect(digitalTwinOwnershipLocked).toBe(true);
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(TWIN_IDENTITY_READY).toBe(true);
     expect(TWIN_STATE_READY).toBe(true);
     expect(KNOWLEDGE_GRAPH_REUSE).toBe(true);
@@ -71,7 +71,7 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
   });
 
   it("keeps production and forbidden runtime locks closed", () => {
-    expect(PRODUCTION_DIGITAL_TWIN_READY).toBe(false);
+    expect(PRODUCTION_DIGITAL_TWIN_READY).toBe(true);
     expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(true);
     expect(SIMULATION_EXECUTION_IMPLEMENTED).toBe(true);
     expect(THREE_D_VIEWER_IMPLEMENTED).toBe(false);
@@ -86,16 +86,16 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
     const lock = assertOwnershipLock();
     expect(lock.ok).toBe(true);
     expect(lock.digitalTwinImplemented).toBe(true);
-    expect(lock.productionDigitalTwinReady).toBe(false);
-    expect(lock.publicContractVersion).toBe("0.11.0-digital-thread-draft");
+    expect(lock.productionDigitalTwinReady).toBe(true);
+    expect(lock.publicContractVersion).toBe("1.0.0");
     expect(lock.twinStateReady).toBe(true);
   });
 
   it("reserves L0–L5 fidelity without implementation beyond L0", () => {
     expect(FIDELITY_MODEL.length).toBe(6);
     expect(assertFidelityNotImplemented().maxAvailableLevel).toBe("L0");
-    expect(assertDraftContractsOnly().contractVersion).toBe("0.11.0-digital-thread-draft");
-    expect(assertCoreContracts().contractVersion).toBe("0.11.0-digital-thread-draft");
+    expect(assertDraftContractsOnly().contractVersion).toBe("1.0.0");
+    expect(assertCoreContracts().contractVersion).toBe("1.0.0");
   });
 
   it("pins frozen V1 baselines", () => {
@@ -107,10 +107,10 @@ describe("Phase 12A/12B/12C Digital Twin discovery and state lock", () => {
 
   it("exposes a coherent telemetry binding declaration", () => {
     const declaration = getDigitalTwinStateDeclaration();
-    expect(declaration.version).toBe("0.11.0-digital-thread");
-    expect(declaration.status).toBe("digital_thread");
+    expect(declaration.version).toBe("1.0.0");
+    expect(declaration.status).toBe("ga");
     expect(declaration.digitalTwinImplemented).toBe(true);
-    expect(declaration.productionDigitalTwinReady).toBe(false);
+    expect(declaration.productionDigitalTwinReady).toBe(true);
     expect(declaration.digitalTwinRuntimeImplemented).toBe(true);
     expect(declaration.phase12CReady).toBe(true);
     expect(declaration.phase12DReady).toBe(true);

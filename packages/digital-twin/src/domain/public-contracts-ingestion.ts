@@ -18,7 +18,7 @@ export function assertIngestionContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.11.0-digital-thread-draft") {
+  if (PUBLIC_CONTRACT_VERSION !== "1.0.0") {
     throw new Error("ingestion_contracts_require_0_10_0_solver_capabilities_draft");
   }
   return { ok: true, contractVersion: PUBLIC_CONTRACT_VERSION };

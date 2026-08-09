@@ -1,0 +1,106 @@
+name: Phase 12N Digital Twin V1.0 GA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/digital-twin/**"
+      - "packages/digital-twin-certification/**"
+      - "packages/platform-certification/src/phase12n*"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "packages/engineering-shared-spatial-domain/**"
+      - "supabase/migrations/*digital_twin*"
+      - "supabase/migrations/*shared_spatial*"
+      - "apps/web/src/app/api/engineering/digital-twin/**"
+      - "apps/web/src/app/(platform)/engineering/apps/digital-twin/**"
+      - "apps/web/src/components/engineering/digital-twin-shell.tsx"
+      - ".github/workflows/phase-12n-digital-twin-ga.yml"
+      - "docs/release/DIGITAL_TWIN_V1_*"
+      - "docs/runbooks/DIGITAL_TWIN_V1_*"
+      - "docs/architecture/DIGITAL_TWIN_V1_*"
+      - "docs/commercial/DIGITAL_TWIN_V1_*"
+      - "docs/operations/DIGITAL_TWIN_V1_*"
+
+concurrency:
+  group: phase-12n-digital-twin-ga-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_BROWSER: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright chromium
+        run: pnpm --filter @rtb/digital-twin-certification exec playwright install --with-deps chromium
+      - name: Unit tests
+        run: pnpm --filter @rtb/digital-twin test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase12n-digital-twin-ga.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/digital-twin-certification secret-scan
+      - name: Browser GA gate
+        run: pnpm --filter @rtb/digital-twin-certification test:e2e:v1
+      - name: Phase 12N certification (gates A–BT)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/digital-twin-certification certify:phase12n
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/digital-twin-certification/artifacts/phase12n-digital-twin-v1-ga-certification.json","utf8"));
+          const checks = [
+            a.verdict==="PASS",
+            a.failedGateCount===0,
+            a.skippedGateCount===0,
+            a.notExecutedGateCount===0,
+            a.requiredGates.length===72,
+            a.version==="1.0.0",
+            a.status==="ga",
+            a.releaseTag==="digital-twin-v1.0.0",
+            a.productionDigitalTwinReady===true,
+            a.digitalTwinV1GaCertified===true,
+            a.digitalTwinV1Frozen===true,
+            a.digitalTwinBackupRestoreCertified===true,
+            a.moduleRegistryDriftDetected===false,
+            a.spatialOwnershipFullyResolved===true,
+            a.digitalTwinMayOwnCanonicalSpatial===false,
+            a.physicalActuationImplemented===false,
+            a.nativeEngineeringSolverImplemented===false,
+            a.silentFixtureFallbackEnabled===false,
+            a.realSolverHostedExecutionCertified===true,
+            a.releaseEligible===true,
+            a.artifactCommitSha===a.ciHeadSha,
+            a.batch86Created===false,
+          ];
+          if (checks.some(x=>!x)) { console.error(a); process.exit(1); }
+          console.log(JSON.stringify({ verdict:a.verdict, version:a.version, releaseTag:a.releaseTag },null,2));
+          EOF
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase12n-digital-twin-v1-ga-certification
+          path: packages/digital-twin-certification/artifacts/phase12n-digital-twin-v1-ga-certification.json
+          if-no-files-found: warn

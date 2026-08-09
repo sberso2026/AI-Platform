@@ -32,22 +32,22 @@ describe("Phase 12B Digital Twin core domain", () => {
   const workspaceId = "workspace-1";
 
   it("retains core identity with 12E module version", () => {
-    expect(DIGITAL_TWIN_VERSION).toBe("0.11.0-digital-thread");
-    expect(DIGITAL_TWIN_STATUS).toBe("digital_thread");
-    expect(DIGITAL_TWIN_PHASE).toBe("12K");
+    expect(DIGITAL_TWIN_VERSION).toBe("1.0.0");
+    expect(DIGITAL_TWIN_STATUS).toBe("ga");
+    expect(DIGITAL_TWIN_PHASE).toBe("12N");
     expect(DIGITAL_TWIN_IMPLEMENTED).toBe(true);
     expect(TWIN_IDENTITY_READY).toBe(true);
     expect(TWIN_REPRESENTATION_READY).toBe(true);
     expect(TWIN_THREAD_READY).toBe(true);
     expect(KNOWLEDGE_GRAPH_REUSE).toBe(true);
     expect(HOSTED_PERSISTENCE_READY).toBe(true);
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.11.0-digital-thread-draft");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(IDENTITY_REVIEW_WORKFLOW_SLUG).toBe("digital_twin.identity_review");
     expect(DIGITAL_TWIN_IDENTITY_REVIEW_SLUG).toBe("digital_twin.identity_review");
   });
 
   it("keeps forbidden runtime locks closed with bounded live telemetry", () => {
-    expect(PRODUCTION_DIGITAL_TWIN_READY).toBe(false);
+    expect(PRODUCTION_DIGITAL_TWIN_READY).toBe(true);
     expect(LIVE_TELEMETRY_IMPLEMENTED).toBe(true);
     expect(SIMULATION_EXECUTION_IMPLEMENTED).toBe(true);
     expect(THREE_D_VIEWER_IMPLEMENTED).toBe(false);
@@ -59,14 +59,14 @@ describe("Phase 12B Digital Twin core domain", () => {
     const lock = assertOwnershipLock();
     expect(lock.ok).toBe(true);
     expect(lock.digitalTwinImplemented).toBe(true);
-    expect(lock.productionDigitalTwinReady).toBe(false);
+    expect(lock.productionDigitalTwinReady).toBe(true);
     expect(lock.twinIdentityReady).toBe(true);
     expect(lock.knowledgeGraphReuse).toBe(true);
-    expect(lock.publicContractVersion).toBe("0.11.0-digital-thread-draft");
+    expect(lock.publicContractVersion).toBe("1.0.0");
   });
 
   it("declares core contract families", () => {
-    expect(assertCoreContracts().contractVersion).toBe("0.11.0-digital-thread-draft");
+    expect(assertCoreContracts().contractVersion).toBe("1.0.0");
   });
 
   it("declares domain events including state events", () => {

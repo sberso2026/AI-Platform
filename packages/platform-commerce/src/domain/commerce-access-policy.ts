@@ -124,6 +124,13 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     seatRequired: true,
     workspaceRequired: true,
   },
+  "/engineering/apps/digital-twin": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "digital_twin",
+    action: "access",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
   "/engineering/apps/inspection-intelligence/templates": {
     productKey: ENGINEERING_PRODUCT,
     applicationKey: "inspection_intelligence",
