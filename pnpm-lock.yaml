@@ -23,6 +23,9 @@ importers:
       '@rtb/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@rtb/engineering-execution-host':
+        specifier: workspace:*
+        version: link:../../packages/engineering-execution-host
       '@rtb/engineering-model-interoperability':
         specifier: workspace:*
         version: link:../../packages/engineering-model-interoperability
@@ -270,6 +273,47 @@ importers:
       '@rtb/digital-twin':
         specifier: workspace:*
         version: link:../digital-twin
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.55.0
+        version: 1.61.1
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      tsx:
+        specifier: ^4.20.6
+        version: 4.23.0
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
+  packages/engineering-execution-host:
+    dependencies:
+      '@rtb/engineering-model-interoperability':
+        specifier: workspace:*
+        version: link:../engineering-model-interoperability
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
+  packages/engineering-execution-host-certification:
+    dependencies:
+      '@rtb/engineering-execution-host':
+        specifier: workspace:*
+        version: link:../engineering-execution-host
+      '@rtb/engineering-model-interoperability':
+        specifier: workspace:*
+        version: link:../engineering-model-interoperability
       '@supabase/supabase-js':
         specifier: ^2.49.8
         version: 2.110.1

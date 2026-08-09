@@ -27,3 +27,9 @@ export * from "./domain/spacegass/spacegass-input-mapper";
 export * from "./domain/spacegass/spacegass-output-mapper";
 export * from "./domain/spacegass/spacegass-model-adapter";
 export * from "./domain/spacegass/spacegass-solver-adapter";
+/** Non-certified live probe modules retained for controlled-host reuse (Phase 13D.1). */
+export * from "./domain/spacegass/spacegass-live-types";
+export * from "./domain/spacegass/spacegass-live-provider";
+export * from "./domain/spacegass/spacegass-live-health";
+export * from "./domain/spacegass/spacegass-live-federation";
+export * from "./domain/spacegass/spacegass-live-execution";

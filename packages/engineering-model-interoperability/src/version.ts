@@ -138,6 +138,27 @@ export const SPACE_GASS_HOSTED_EXECUTION_CERTIFIED = false as const;
 export const spaceGassHostedExecutionCertified = false as const;
 export const SpaceGassHostedExecutionCertified = false as const;
 
+/** Controlled-host certification — false without controlled host live evidence. */
+export const SPACE_GASS_CONTROLLED_EXECUTION_CERTIFIED = false as const;
+export const spaceGassControlledExecutionCertified = false as const;
+export const SpaceGassControlledExecutionCertified = false as const;
+
+/**
+ * Live probe modules may exist for host reuse (Phase 13D.1) but LiveReady stays false
+ * until a proven live session is certified. Package version remains 0.3.0-spacegass.
+ */
+export const SPACEGASS_LIVE_PROVIDER_IMPLEMENTED = true as const;
+export const spacegassLiveProviderImplemented = true as const;
+export const SPACEGASS_LIVE_PROVIDER_READY = false as const;
+export const SPACEGASSLiveProviderReady = false as const;
+export const spacegassLiveProviderReady = false as const;
+export const SPACEGASS_LIVE_MODEL_FEDERATION_READY = false as const;
+export const SPACEGASSLiveModelFederationReady = false as const;
+export const SPACEGASS_LIVE_RESULT_FEDERATION_READY = false as const;
+export const SPACEGASSLiveResultFederationReady = false as const;
+export const SPACEGASS_LIVE_EXECUTION_CERTIFIED = false as const;
+export const SPACEGASSLiveExecutionCertified = false as const;
+
 export const SILENT_SOLVER_FALLBACK_ALLOWED = false as const;
 export const silentSolverFallbackAllowed = false as const;
 

@@ -1,0 +1,113 @@
+name: Phase 13D.1 Controlled Engineering Execution Host
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-execution-host/**"
+      - "packages/engineering-execution-host-certification/**"
+      - "packages/engineering-model-interoperability/src/domain/spacegass/spacegass-live-*"
+      - "packages/digital-twin/package.json"
+      - "packages/digital-twin/src/version.ts"
+      - "packages/platform-certification/src/phase13d1*"
+      - "apps/web/src/app/api/engineering/execution-hosts/**"
+      - "apps/web/src/app/(platform)/engineering/apps/execution-hosts/**"
+      - "supabase/migrations/20260808270000_batch_88_engineering_execution_hosts.sql"
+      - "docs/operations/CONTROLLED_ENGINEERING_EXECUTION_HOST_RUNBOOK.md"
+      - "docs/operations/SPACEGASS_CONTROLLED_HOST_PROVISIONING.md"
+      - "docs/architecture/CONTROLLED_ENGINEERING_EXECUTION_HOST_CONTRACTS.md"
+      - "docs/architecture/ENGINEERING_EXECUTION_HOST_FUTURE_ETABS_INTEGRATION.md"
+      - "docs/contracts/ENGINEERING_EXECUTION_HOST_PUBLIC_CONTRACTS_DRAFT.md"
+      - ".github/workflows/phase-13d1-controlled-engineering-execution-host.yml"
+
+concurrency:
+  group: phase-13d1-controlled-engineering-execution-host-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_BROWSER: "1"
+  CERTIFY_REQUIRE_HOSTED: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/engineering-execution-host-certification exec playwright install chromium --with-deps
+      - name: Unit tests (execution host)
+        run: pnpm --filter @rtb/engineering-execution-host test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase13d1-controlled-engineering-execution-host.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-execution-host-certification secret-scan
+      - name: Phase 13D.1 certification
+        env:
+          CERTIFY_BROWSER: "1"
+          CERTIFY_REQUIRE_HOSTED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/engineering-execution-host-certification certify:phase13d1
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-execution-host-certification/artifacts/phase13d1-controlled-engineering-execution-host-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===70],
+            ["version", a.version==="0.1.0-execution-host"],
+            ["ControlledEngineeringExecutionHostReady", a.ControlledEngineeringExecutionHostReady===true],
+            ["SPACEGASSLiveExecutionCertified", a.SPACEGASSLiveExecutionCertified===false],
+            ["silentSolverFallbackAllowed", a.silentSolverFallbackAllowed===false],
+            ["ETABSAdapterImplemented", a.ETABSAdapterImplemented===false],
+            ["DigitalTwinV1Intact", a.DigitalTwinV1Intact===true],
+            ["digitalTwinVersion", a.digitalTwinVersion==="1.0.0"],
+            ["phase13DReCertificationReady", a.phase13DReCertificationReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["unexpected5xx", a.unexpected5xx===0],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates, spaceGassHostAvailable: a.spaceGassHostAvailable }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            gateCount: a.gateCount,
+            SPACEGASSLiveExecutionCertified: a.SPACEGASSLiveExecutionCertified,
+            spaceGassHostAvailable: a.spaceGassHostAvailable,
+            phase13DCanBeRecertifiedNow: a.phase13DCanBeRecertifiedNow,
+            DigitalTwinV1Intact: a.DigitalTwinV1Intact,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase13d1-controlled-engineering-execution-host-certification
+          path: packages/engineering-execution-host-certification/artifacts/phase13d1-controlled-engineering-execution-host-certification.json
+          if-no-files-found: warn
