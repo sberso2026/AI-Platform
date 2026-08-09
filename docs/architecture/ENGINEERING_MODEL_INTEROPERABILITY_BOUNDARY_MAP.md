@@ -1,16 +1,17 @@
-# Engineering Model Interoperability — Boundary Map (Phase 13C)
+# Engineering Model Interoperability — Boundary Map (Phase 13E)
 
-Status: spacegass · Runtime: **IFC/openBIM + SPACE GASS**
+Status: etabs_federation · Runtime: **IFC/openBIM + SPACE GASS + ETABS export federation**
 (`IFCFederationReady=true`, `SpaceGassFederationReady=true`,
-`productionInteroperabilityRuntimeImplemented=true`) · Version `0.3.0-spacegass`
+`ETABSModelFederationReady=true`,
+`productionInteroperabilityRuntimeImplemented=true`) · Version `0.4.0-etabs-federation`
 
 ## Independently governed concerns
 
-| Concern | In 13C | Notes |
+| Concern | In 13E | Notes |
 | --- | --- | --- |
-| **Model Federation** | runtime (IFC + SPACE GASS) | Federated references; not ownership transfer |
+| **Model Federation** | runtime (IFC + SPACE GASS + ETABS export) | Federated references; not ownership transfer |
 | **Result Federation** | runtime refs | Trust-classified; imported ≠ rtb_execution_certified |
-| **Solver Execution** | interop-hosted SPACE GASS adapter (fail-closed) | Consumes DT `EngineeringSolverAdapter`; DT package frozen CalculiX-only; `spaceGassHostedExecutionCertified=false` |
+| **Solver Execution** | interop-hosted SPACE GASS + ETABS adapters (fail-closed) | Consumes DT `EngineeringSolverAdapter`; hosted/controlled certified=false |
 | **Model Authoring** | locked / not implemented | Remains in source applications |
 | **Analysis Model Generation** | locked / not implemented | Never auto-certified |
 
@@ -19,35 +20,39 @@ Status: spacegass · Runtime: **IFC/openBIM + SPACE GASS**
 - model accessible ≠ solver executable
 - model federated ≠ model owned by RTB
 - existing results ≠ RTB-generated results
-- SPACE GASS / IFC imported ≠ `rtb_execution_certified`
+- ETABS / SPACE GASS / IFC imported ≠ `rtb_execution_certified`
+- ETABS export federation ≠ live native COM
 - solver supported ≠ solver qualified ≠ project-approved ≠ execution-qualified ≠ engineering-approved
 - silent solver fallback forbidden (`silentSolverFallbackAllowed=false`)
 
-## In scope (13C)
+## In scope (13E)
 
-- IFC/openBIM production federation (retained from 13B)
-- SPACE GASS production model/result federation (fixture export format)
-- `SPACEGASSSolverAdapter` fail-closed path + four-layer qualification
-- batch_87 additive tables (no rewrite of batch_86)
-- HTTP SPACE GASS route + UI readiness markers
-- Public contracts `0.3.0-spacegass` (prerelease, not GA)
+- IFC/openBIM production federation (retained)
+- SPACE GASS production model/result federation (retained; live still false)
+- ETABS export/fixture model + result federation
+- `ETABSSolverAdapter` fail-closed path + qualification records
+- CSIInteropCore internal helper (not business domain)
+- batch_89 additive tables (no rewrite of batch_86/87/88)
+- HTTP ETABS route + UI readiness markers
+- Public contracts `0.4.0-etabs-federation` (prerelease, not GA)
 
-## Out of scope (forbidden in 13C)
+## Out of scope (forbidden in 13E)
 
 | Capability | Status |
 | --- | --- |
-| Production ETABS / SAP2000 / SAFE / CSiBridge / STAAD adapters | forbidden |
+| Live native ETABS COM / hosted / controlled execution certified | forbidden / false |
+| Production SAP2000 / SAFE / CSiBridge / STAAD adapters | forbidden |
 | Production Revit / Navisworks / Tekla adapters | forbidden |
 | Analysis-model generation / source-model mutation | forbidden |
 | Full BIM viewer | forbidden (`fullBimViewerImplemented=false`) |
-| Second solver / tool framework / SPACEGASSExecutionFramework | forbidden |
+| Second solver / tool framework | forbidden |
 | Automatic analysis-model certification | forbidden |
-| Silent fallback to CalculiX/fixture when SPACE GASS requested | forbidden |
-| Phase 13D | not started (`phase13DReady` flag only) |
+| Silent fallback to CalculiX/SPACE GASS/fixture when ETABS requested | forbidden |
+| SPACE GASS live certification flip | forbidden (Phase 13D blocked status preserved) |
+| Phase 13F | not started (`phase13FReady` flag only) |
 | Modifications to `packages/digital-twin/**` | forbidden |
 
 ## Digital Twin
 
-Consume DT **1.0.0** public contracts only. Do not modify
-`packages/digital-twin/**`. Tag `digital-twin-v1.0.0` must remain at
-`a94425ed009ca087c2f44c9d3757c0c82bd936b1`.
+Digital Twin V1 remains `1.0.0` at tag `digital-twin-v1.0.0`
+(`a94425ed009ca087c2f44c9d3757c0c82bd936b1`). Interop is additive outside the DT package.

@@ -26,7 +26,7 @@ export type ProviderDiscoveryRow = {
   capabilities: ProviderCapabilityFlags;
   /** Reserved stub already present under Digital Twin (document only). */
   digitalTwinReservedStub: boolean;
-  /** IFC/openBIM + SPACE GASS are production-implemented in Phase 13C. */
+  /** IFC/openBIM + SPACE GASS + ETABS export federation are production-implemented in Phase 13E. */
   productionAdapterImplemented: boolean;
   notes: string;
 };
@@ -128,9 +128,9 @@ export const PROVIDER_DISCOVERY_MATRIX: readonly ProviderDiscoveryRow[] = [
       analysisModelGenerationSupported: true,
     }),
     digitalTwinReservedStub: true,
-    productionAdapterImplemented: false,
+    productionAdapterImplemented: true,
     notes:
-      "Priority discovery — DT reserved stub `etabs`. CSI family: product-specific adapter/qualification remains separate.",
+      "Phase 13E ETABS export/fixture federation + fail-closed solver adapter (ETABSHostedExecutionCertified=false; not live native COM). CSIInteropCore is internal helper only; SAP2000/SAFE/CSiBridge remain separate/unimplemented.",
   },
   {
     providerKey: "sap2000",
@@ -281,11 +281,17 @@ export function assertProviderDiscoveryMatrix(): {
   ifcReserved: true;
   ifcProductionAdapter: true;
   spacegassProductionAdapter: true;
-  etabsProductionAdapter: false;
+  etabsProductionAdapter: true;
+  sap2000ProductionAdapter: false;
+  safeProductionAdapter: false;
+  csibridgeProductionAdapter: false;
 } {
   const etabs = getProviderDiscoveryRow("etabs");
   const spacegass = getProviderDiscoveryRow("spacegass");
   const ifc = getProviderDiscoveryRow("ifc_openbim");
+  const sap2000 = getProviderDiscoveryRow("sap2000");
+  const safe = getProviderDiscoveryRow("safe");
+  const csibridge = getProviderDiscoveryRow("csibridge");
   if (!etabs?.capabilities.modelFederationSupported) {
     throw new Error("etabs_integration_not_discovered");
   }
@@ -299,15 +305,22 @@ export function assertProviderDiscoveryMatrix(): {
     throw new Error("ifc_production_adapter_required");
   }
   if (!spacegass.productionAdapterImplemented) {
-    throw new Error("spacegass_production_adapter_required_in_13c");
+    throw new Error("spacegass_production_adapter_required");
   }
-  if (etabs.productionAdapterImplemented) {
-    throw new Error("etabs_production_adapter_forbidden_in_13c");
+  if (!etabs.productionAdapterImplemented) {
+    throw new Error("etabs_production_adapter_required_in_13e");
   }
-  const allowedProduction = new Set(["ifc_openbim", "spacegass"]);
+  if (
+    sap2000?.productionAdapterImplemented ||
+    safe?.productionAdapterImplemented ||
+    csibridge?.productionAdapterImplemented
+  ) {
+    throw new Error("other_csi_production_adapters_forbidden_in_13e");
+  }
+  const allowedProduction = new Set(["ifc_openbim", "spacegass", "etabs"]);
   for (const row of PROVIDER_DISCOVERY_MATRIX) {
     if (row.productionAdapterImplemented && !allowedProduction.has(row.providerKey)) {
-      throw new Error(`native_production_adapter_forbidden_in_13c:${row.providerKey}`);
+      throw new Error(`native_production_adapter_forbidden_in_13e:${row.providerKey}`);
     }
   }
   return {
@@ -318,6 +331,9 @@ export function assertProviderDiscoveryMatrix(): {
     ifcReserved: true,
     ifcProductionAdapter: true,
     spacegassProductionAdapter: true,
-    etabsProductionAdapter: false,
+    etabsProductionAdapter: true,
+    sap2000ProductionAdapter: false,
+    safeProductionAdapter: false,
+    csibridgeProductionAdapter: false,
   };
 }

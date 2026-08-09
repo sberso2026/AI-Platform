@@ -336,6 +336,9 @@ importers:
       '@rtb/digital-twin':
         specifier: workspace:*
         version: link:../digital-twin
+      '@rtb/engineering-execution-host':
+        specifier: workspace:*
+        version: link:../engineering-execution-host
     devDependencies:
       '@types/node':
         specifier: ^22.15.29

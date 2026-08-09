@@ -1,8 +1,9 @@
 /**
- * Phase 13C — Public contracts at 0.3.0-spacegass (prerelease, NOT 1.0.0).
+ * Phase 13E — Public contracts at 0.4.0-etabs-federation (prerelease, NOT 1.0.0).
  *
- * Runtime-backed for IFC federation + SPACE GASS federation / fail-closed solver adapter.
- * ETABS and other native adapters remain unimplemented.
+ * Runtime-backed for IFC + SPACE GASS + ETABS export federation / fail-closed solvers.
+ * SAP2000 / SAFE / CSiBridge remain unimplemented. ETABS path is export federation —
+ * not live native COM.
  */
 
 import { PUBLIC_CONTRACT_VERSION } from "../version";
@@ -21,6 +22,10 @@ export const ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES = [
   "EngineeringModelChangeImpact",
   "SPACEGASSSolverAdapter",
   "SPACEGASSQualificationRecord",
+  "ETABSModelAdapter",
+  "ETABSSolverAdapter",
+  "ETABSQualificationRecord",
+  "CSIInteropCore",
 ] as const;
 
 export type EngineeringInteropPublicContractFamily =
@@ -45,6 +50,8 @@ export type ExternalSolverProviderReference = {
   reusesEngineeringSolverAdapter: true;
   certifiedCapabilityHints?: readonly string[];
   spaceGassHostedExecutionCertified?: false;
+  ETABSHostedExecutionCertified?: false;
+  ETABSControlledExecutionCertified?: false;
 };
 
 export function assertEngineeringInteropPublicContracts(): {
@@ -55,9 +62,10 @@ export function assertEngineeringInteropPublicContracts(): {
   runtimeBacked: true;
   ifcFederation: true;
   spacegassFederation: true;
+  etabsFederation: true;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.3.0-spacegass") {
-    throw new Error("interop_contracts_must_be_spacegass");
+  if (PUBLIC_CONTRACT_VERSION !== "0.4.0-etabs-federation") {
+    throw new Error("interop_contracts_must_be_etabs_federation");
   }
   if (PUBLIC_CONTRACT_VERSION === "1.0.0") {
     throw new Error("interop_contracts_must_not_be_ga");
@@ -70,10 +78,11 @@ export function assertEngineeringInteropPublicContracts(): {
     runtimeBacked: true,
     ifcFederation: true,
     spacegassFederation: true,
+    etabsFederation: true,
   };
 }
 
-/** @deprecated Prefer assertEngineeringInteropPublicContracts (13C). */
+/** @deprecated Prefer assertEngineeringInteropPublicContracts (13E). */
 export function assertEngineeringInteropDraftContracts() {
   const r = assertEngineeringInteropPublicContracts();
   return {

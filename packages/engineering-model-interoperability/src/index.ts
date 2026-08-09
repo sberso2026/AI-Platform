@@ -33,3 +33,16 @@ export * from "./domain/spacegass/spacegass-live-provider";
 export * from "./domain/spacegass/spacegass-live-health";
 export * from "./domain/spacegass/spacegass-live-federation";
 export * from "./domain/spacegass/spacegass-live-execution";
+/** Phase 13E — ETABS export federation + fail-closed solver (not live COM). */
+export * from "./domain/etabs/csi-interop-core";
+export * from "./domain/etabs/etabs-version";
+export * from "./domain/etabs/etabs-license";
+export * from "./domain/etabs/etabs-project-policy";
+export * from "./domain/etabs/etabs-capability-registry";
+export * from "./domain/etabs/etabs-qualification";
+export * from "./domain/etabs/etabs-input-mapper";
+export * from "./domain/etabs/etabs-output-mapper";
+export * from "./domain/etabs/etabs-model-adapter";
+export * from "./domain/etabs/etabs-solver-adapter";
+export * from "./domain/etabs/etabs-ifc-coexistence";
+export * from "./domain/etabs/etabs-host-probe";

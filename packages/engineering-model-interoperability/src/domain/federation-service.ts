@@ -1,9 +1,10 @@
 /**
- * Phase 13C — EngineeringModelFederationService.
+ * Phase 13E — EngineeringModelFederationService.
  *
- * Federates IFC + SPACE GASS models into references/elements/mappings/results
- * without claiming source-model ownership or enabling mutation / analysis-model gen.
- * SPACE GASS solver execution is handled by SPACEGASSSolverAdapter (fail-closed).
+ * Federates IFC + SPACE GASS + ETABS (export fixture) models into
+ * references/elements/mappings/results without claiming source-model ownership
+ * or enabling mutation / analysis-model gen.
+ * Solver execution handled by fail-closed adapters (not live COM for ETABS).
  */
 
 import { randomUUID } from "node:crypto";
@@ -37,6 +38,13 @@ import {
   trustForIfcImportedResult,
   type EngineeringAnalysisResultReference,
 } from "./result-reference";
+import {
+  assertEtabsImportNotRtbCertified,
+  createETABSModelAdapter,
+  parseEtabsExportFixture,
+  trustForEtabsImportedResult,
+} from "./etabs/etabs-model-adapter";
+import { ETABS_ADAPTER_VERSION } from "./etabs/etabs-version";
 import {
   assertSpaceGassImportNotRtbCertified,
   createSPACEGASSModelAdapter,
@@ -89,6 +97,29 @@ export type FederateSpaceGassResult = {
   elements: EngineeringModelElementReference[];
   results: EngineeringAnalysisResultReference[];
   events: EngineeringModelOutboxEvent[];
+};
+
+export type FederateEtabsInput = {
+  tenantId: string;
+  workspaceId: string;
+  locator: string;
+  content: string;
+  platformFileRef?: string;
+  projectId?: string;
+  assetId?: string;
+  spatialReferenceId?: string;
+  twinId?: string;
+  displayName?: string;
+};
+
+export type FederateEtabsResult = {
+  model: EngineeringModelReference;
+  version: EngineeringModelVersion;
+  elements: EngineeringModelElementReference[];
+  results: EngineeringAnalysisResultReference[];
+  events: EngineeringModelOutboxEvent[];
+  federationPath: "export_fixture";
+  liveNativeCom: false;
 };
 
 export class EngineeringModelFederationService {
@@ -319,6 +350,138 @@ export class EngineeringModelFederationService {
     }
 
     return { model, version, elements, results, events };
+  }
+
+  async federateEtabs(input: FederateEtabsInput): Promise<FederateEtabsResult> {
+    if (MODEL_MUTATION_IMPLEMENTED) {
+      throw new Error("model_mutation_must_remain_false");
+    }
+    if (ANALYSIS_MODEL_GENERATION_IMPLEMENTED) {
+      throw new Error("analysis_model_generation_must_remain_false");
+    }
+    if (FULL_BIM_VIEWER_IMPLEMENTED) {
+      throw new Error("full_bim_viewer_must_remain_false");
+    }
+    if (!SOURCE_MODEL_OWNERSHIP_PRESERVED) {
+      throw new Error("source_model_ownership_must_be_preserved");
+    }
+
+    const parsed = parseEtabsExportFixture(input.content);
+    if (!parsed.ok) {
+      throw new Error(`${parsed.code}:${parsed.detail}`);
+    }
+
+    const adapter = createETABSModelAdapter({
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+    });
+    const model = await adapter.identifyModel!({
+      locator: input.locator,
+      content: input.content,
+    });
+    model.displayName = input.displayName ?? model.displayName;
+    model.platformFileRef =
+      input.platformFileRef ?? model.platformFileRef ?? input.locator;
+    model.projectId = input.projectId;
+    model.assetId = input.assetId;
+    model.spatialReferenceId = input.spatialReferenceId;
+    model.twinId = input.twinId;
+    model.status = "federated";
+
+    const ts = nowIso();
+    const version: EngineeringModelVersion = {
+      kind: "engineering_model_version",
+      owner: "source_client_engineering_application",
+      federationOwner: "engineering_model_interoperability",
+      modelVersionId: this.repo.newId("emi_ver"),
+      modelRefId: model.modelRefId,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      versionLabel: parsed.fixture.productVersionHint ?? "etabs_export_fixture",
+      platformFileRef: model.platformFileRef,
+      schemaId: "etabs_export_fixture",
+      parserVersion: ETABS_ADAPTER_VERSION,
+      contentSha256: parsed.contentSha256,
+      elementCount:
+        (parsed.fixture.joints?.length ?? 0) +
+        (parsed.fixture.frames?.length ?? 0) +
+        (parsed.fixture.areas?.length ?? 0) +
+        (parsed.fixture.links?.length ?? 0) +
+        (parsed.fixture.stories?.length ?? 0) +
+        (parsed.fixture.sections?.length ?? 0) +
+        (parsed.fixture.materials?.length ?? 0) +
+        (parsed.fixture.groups?.length ?? 0) +
+        (parsed.fixture.loadPatterns?.length ?? 0) +
+        (parsed.fixture.loadCases?.length ?? 0) +
+        (parsed.fixture.combinations?.length ?? 0),
+      ingestedAt: ts,
+      createdAt: ts,
+      updatedAt: ts,
+    };
+
+    const elements = (
+      await adapter.listElements!({ modelRef: model, content: input.content })
+    ).map((el) => ({
+      ...el,
+      modelVersionId: version.modelVersionId,
+    }));
+
+    const results = await adapter.listAnalysisResults!({ modelRef: model });
+    for (const r of results) {
+      assertEtabsImportNotRtbCertified(r.trustClassification);
+      if (r.trustClassification !== trustForEtabsImportedResult()) {
+        throw new Error("etabs_import_trust_mismatch");
+      }
+    }
+
+    await this.repo.saveModel(model);
+    await this.repo.saveVersion(version);
+    for (const el of elements) {
+      await this.repo.saveElement(el);
+    }
+    for (const r of results) {
+      await this.repo.saveResult(r);
+    }
+
+    const events = [
+      createEngineeringModelOutboxEvent({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.model.reference.created",
+        payload: { modelRefId: model.modelRefId },
+      }),
+      createEngineeringModelOutboxEvent({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.model.version.ingested",
+        payload: {
+          modelRefId: model.modelRefId,
+          modelVersionId: version.modelVersionId,
+        },
+      }),
+      createEngineeringModelOutboxEvent({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.model.result.referenced",
+        payload: {
+          modelRefId: model.modelRefId,
+          resultRefId: results[0]?.resultRefId,
+        },
+      }),
+    ];
+    for (const ev of events) {
+      await this.repo.enqueueOutbox(ev);
+    }
+
+    return {
+      model,
+      version,
+      elements,
+      results,
+      events,
+      federationPath: "export_fixture",
+      liveNativeCom: false,
+    };
   }
 
   async proposeMapping(input: {

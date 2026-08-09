@@ -1,6 +1,6 @@
 {
   "name": "@rtb/engineering-model-interoperability",
-  "version": "0.3.0-spacegass",
+  "version": "0.4.0-etabs-federation",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@rtb/digital-twin": "workspace:*"
+    "@rtb/digital-twin": "workspace:*",
+    "@rtb/engineering-execution-host": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

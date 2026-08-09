@@ -1,8 +1,8 @@
 /**
- * Thin readiness marker for Phase 13C Engineering Model Interoperability
- * IFC/openBIM + SPACE GASS federation. Not a full BIM viewer / authoring surface.
+ * Thin readiness marker for Phase 13E Engineering Model Interoperability
+ * IFC/openBIM + SPACE GASS + ETABS export federation. Not a full BIM viewer.
  */
-export default function EngineeringModelInteropSpaceGassPage() {
+export default function EngineeringModelInteropEtabsPage() {
   return (
     <main className="p-8">
       <h1>Engineering Model Interoperability</h1>
@@ -12,8 +12,14 @@ export default function EngineeringModelInteropSpaceGassPage() {
         no full BIM viewer.
       </p>
       <p data-testid="engineering-model-spacegass-ready">
-        SPACE GASS ready (0.3.0-spacegass) — native model federation, existing result
-        federation, governed fail-closed solver adapter; hosted execution certified=false.
+        SPACE GASS ready (retained) — native model federation, existing result
+        federation, governed fail-closed solver adapter; hosted execution certified=false;
+        live certified=false.
+      </p>
+      <p data-testid="engineering-model-etabs-ready">
+        ETABS ready (0.4.0-etabs-federation) — export/fixture model federation, existing
+        result federation, governed fail-closed solver adapter; NOT live native COM;
+        ETABSHostedExecutionCertified=false; ETABSControlledExecutionCertified=false.
       </p>
       <ul aria-label="Bounded federation surfaces">
         <li data-testid="emi-surface-models">Models</li>
@@ -27,21 +33,32 @@ export default function EngineeringModelInteropSpaceGassPage() {
         <li data-testid="emi-surface-spacegass-results">SPACE GASS results</li>
         <li data-testid="emi-surface-spacegass-qualification">SPACE GASS qualification</li>
         <li data-testid="emi-surface-spacegass-execution">SPACE GASS execution (fail-closed)</li>
+        <li data-testid="emi-surface-etabs-models">ETABS models (export federation)</li>
+        <li data-testid="emi-surface-etabs-results">ETABS results (export federation)</li>
+        <li data-testid="emi-surface-etabs-qualification">ETABS qualification</li>
+        <li data-testid="emi-surface-etabs-execution">ETABS execution (fail-closed)</li>
       </ul>
       <section aria-label="Result trust distinction">
         <p data-testid="emi-existing-external-result-label">
-          EXISTING EXTERNAL RESULT — imported SPACE GASS results remain source_declared;
-          never auto-promoted to rtb_execution_certified.
+          EXISTING EXTERNAL RESULT — imported ETABS / SPACE GASS results remain
+          source_declared; never auto-promoted to rtb_execution_certified.
         </p>
         <p data-testid="emi-rtb-certified-execution-label">
-          RTB-CERTIFIED EXECUTION — requires RTB-governed SPACE GASS execution evidence;
-          spaceGassHostedExecutionCertified=false in this environment.
+          RTB-CERTIFIED EXECUTION — requires RTB-governed execution evidence;
+          ETABSHostedExecutionCertified=false; spaceGassHostedExecutionCertified=false.
+        </p>
+        <p data-testid="emi-export-federation-label">
+          EXPORT FEDERATION — ETABS path is approved export/fixture federation, not live
+          native COM.
         </p>
       </section>
       <p data-testid="emi-full-bim-viewer-flag">fullBimViewerImplemented=false</p>
       <p data-testid="emi-solver-execution-flag">solverExecutionImplemented=false</p>
       <p data-testid="emi-spacegass-hosted-flag">spaceGassHostedExecutionCertified=false</p>
-      <p data-testid="emi-etabs-adapter-flag">ETABSAdapterImplemented=false</p>
+      <p data-testid="emi-spacegass-live-flag">SPACEGASSLiveExecutionCertified=false</p>
+      <p data-testid="emi-etabs-adapter-flag">ETABSAdapterImplemented=true</p>
+      <p data-testid="emi-etabs-hosted-flag">ETABSHostedExecutionCertified=false</p>
+      <p data-testid="emi-etabs-controlled-flag">ETABSControlledExecutionCertified=false</p>
     </main>
   );
 }

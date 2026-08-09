@@ -1,12 +1,14 @@
 /**
- * Phase 13C — SPACE GASS Native Model Federation + Existing Result Federation
- * + Governed Solver Execution (interop-hosted, DT consume-only).
+ * Phase 13E — ETABS / CSI Engineering Model Interoperability
+ * (export/fixture federation + fail-closed solver adapter).
  *
  * Digital Twin remains 1.0.0 (tag digital-twin-v1.0.0 @ a94425ed…).
- * DT package is frozen — SPACE GASS solver adapter lives in this package and
+ * DT package is frozen — ETABS solver adapter lives in this package and
  * consumes EngineeringSolverAdapter public contract shapes only.
- * No ETABS/SAP2000/etc. No Phase 13D. No analysis-model generation.
+ * Export federation — NOT live native COM. NOT hosted/controlled execution certified.
+ * SPACE GASS live remains blocked/false. SAP2000/SAFE/CSiBridge unimplemented.
  * silentSolverFallbackAllowed = false.
+ * analysisModelGenerationImplemented = false.
  */
 
 export const ENGINEERING_MODEL_INTEROPERABILITY_NAME =
@@ -14,9 +16,10 @@ export const ENGINEERING_MODEL_INTEROPERABILITY_NAME =
 export const ENGINEERING_MODEL_INTEROPERABILITY_KEY =
   "engineering_model_interoperability" as const;
 export const ENGINEERING_MODEL_INTEROPERABILITY_VERSION =
-  "0.3.0-spacegass" as const;
-export const ENGINEERING_MODEL_INTEROPERABILITY_STATUS = "spacegass" as const;
-export const ENGINEERING_MODEL_INTEROPERABILITY_PHASE = "13C" as const;
+  "0.4.0-etabs-federation" as const;
+export const ENGINEERING_MODEL_INTEROPERABILITY_STATUS =
+  "etabs_federation" as const;
+export const ENGINEERING_MODEL_INTEROPERABILITY_PHASE = "13E" as const;
 
 /** Retained from 13A discovery. */
 export const INTEROP_DISCOVERY_READY = true as const;
@@ -96,7 +99,7 @@ export const LARGE_MODEL_SAFETY_READY = true as const;
 export const largeModelSafetyReady = true as const;
 
 // ---------------------------------------------------------------------------
-// Phase 13C SPACE GASS readiness
+// Phase 13C SPACE GASS readiness (retained)
 // ---------------------------------------------------------------------------
 
 export const SPACEGASS_FEDERATION_READY = true as const;
@@ -145,7 +148,7 @@ export const SpaceGassControlledExecutionCertified = false as const;
 
 /**
  * Live probe modules may exist for host reuse (Phase 13D.1) but LiveReady stays false
- * until a proven live session is certified. Package version remains 0.3.0-spacegass.
+ * until a proven live session is certified. Phase 13D remains blocked (not falsified).
  */
 export const SPACEGASS_LIVE_PROVIDER_IMPLEMENTED = true as const;
 export const spacegassLiveProviderImplemented = true as const;
@@ -159,6 +162,58 @@ export const SPACEGASSLiveResultFederationReady = false as const;
 export const SPACEGASS_LIVE_EXECUTION_CERTIFIED = false as const;
 export const SPACEGASSLiveExecutionCertified = false as const;
 
+// ---------------------------------------------------------------------------
+// Phase 13D.1 controlled execution host (via dependency)
+// ---------------------------------------------------------------------------
+
+/** Declared via @rtb/engineering-execution-host dependency (Phase 13D.1 PASS). */
+export const CONTROLLED_ENGINEERING_EXECUTION_HOST_READY = true as const;
+export const ControlledEngineeringExecutionHostReady = true as const;
+export const controlledEngineeringExecutionHostReady = true as const;
+
+// ---------------------------------------------------------------------------
+// Phase 13E ETABS readiness (export federation)
+// ---------------------------------------------------------------------------
+
+export const ETABS_MODEL_FEDERATION_READY = true as const;
+export const ETABSModelFederationReady = true as const;
+export const etabsModelFederationReady = true as const;
+
+export const ETABS_RESULT_FEDERATION_READY = true as const;
+export const ETABSResultFederationReady = true as const;
+export const etabsResultFederationReady = true as const;
+
+export const ETABS_SOLVER_ADAPTER_READY = true as const;
+export const ETABSSolverAdapterReady = true as const;
+export const etabsSolverAdapterReady = true as const;
+
+export const ETABS_HOSTED_EXECUTION_CERTIFIED = false as const;
+export const ETABSHostedExecutionCertified = false as const;
+export const etabsHostedExecutionCertified = false as const;
+
+export const ETABS_CONTROLLED_EXECUTION_CERTIFIED = false as const;
+export const ETABSControlledExecutionCertified = false as const;
+export const etabsControlledExecutionCertified = false as const;
+
+export const NATIVE_ETABS_ADAPTER_IMPLEMENTED = true as const;
+export const nativeEtabsAdapterImplemented = true as const;
+export const ETABSAdapterImplemented = true as const;
+export const etabsAdapterImplemented = true as const;
+
+export const SAP2000_ADAPTER_IMPLEMENTED = false as const;
+export const SAP2000AdapterImplemented = false as const;
+export const sap2000AdapterImplemented = false as const;
+export const NATIVE_SAP2000_ADAPTER_IMPLEMENTED = false as const;
+export const nativeSap2000AdapterImplemented = false as const;
+
+export const SAFE_ADAPTER_IMPLEMENTED = false as const;
+export const SAFEAdapterImplemented = false as const;
+export const safeAdapterImplemented = false as const;
+
+export const CSIBRIDGE_ADAPTER_IMPLEMENTED = false as const;
+export const CSiBridgeAdapterImplemented = false as const;
+export const csibridgeAdapterImplemented = false as const;
+
 export const SILENT_SOLVER_FALLBACK_ALLOWED = false as const;
 export const silentSolverFallbackAllowed = false as const;
 
@@ -170,7 +225,7 @@ export const automaticAnalysisModelCertificationEnabled = false as const;
 export const SOLVER_EXECUTION_IMPLEMENTED = false as const;
 export const solverExecutionImplemented = false as const;
 
-/** Interop-hosted SPACE GASS execution adapter (fail-closed) is genuinely implemented. */
+/** Interop-hosted SPACE GASS + ETABS execution adapters (fail-closed) are genuinely implemented. */
 export const ADDITIONAL_EXTERNAL_SOLVER_EXECUTION_IMPLEMENTED = true as const;
 export const additionalExternalSolverExecutionImplemented = true as const;
 
@@ -183,16 +238,9 @@ export const analysisModelGenerationImplemented = false as const;
 export const FULL_BIM_VIEWER_IMPLEMENTED = false as const;
 export const fullBimViewerImplemented = false as const;
 
-export const NATIVE_ETABS_ADAPTER_IMPLEMENTED = false as const;
-export const nativeEtabsAdapterImplemented = false as const;
-export const ETABSAdapterImplemented = false as const;
-export const etabsAdapterImplemented = false as const;
-
 export const NATIVE_SPACEGASS_ADAPTER_IMPLEMENTED = true as const;
 export const nativeSpacegassAdapterImplemented = true as const;
 
-export const NATIVE_SAP2000_ADAPTER_IMPLEMENTED = false as const;
-export const nativeSap2000AdapterImplemented = false as const;
 export const NATIVE_REVIT_ADAPTER_IMPLEMENTED = false as const;
 export const nativeRevitAdapterImplemented = false as const;
 export const NATIVE_NAVISWORKS_ADAPTER_IMPLEMENTED = false as const;
@@ -253,11 +301,21 @@ export const phase13BReady = true as const;
 export const PHASE_13C_READY = true as const;
 export const phase13CReady = true as const;
 
-/** Flag only — do not start Phase 13D. */
+/** Phase 13D live remains blocked — flag retained; live certified stays false. */
 export const PHASE_13D_READY = true as const;
 export const phase13DReady = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.3.0-spacegass" as const;
+export const PHASE_13E_READY = true as const;
+export const phase13EReady = true as const;
+
+/** Flag only — do not start Phase 13F. */
+export const PHASE_13F_READY = true as const;
+export const phase13FReady = true as const;
+
+export const RELEASE_ELIGIBLE = true as const;
+export const releaseEligible = true as const;
+
+export const PUBLIC_CONTRACT_VERSION = "0.4.0-etabs-federation" as const;
 
 // ---------------------------------------------------------------------------
 // Ownership declarations
@@ -285,9 +343,11 @@ export const MODEL_FEDERATION_OWNERSHIP =
   "engineering_model_interoperability" as const;
 export const RESULT_FEDERATION_OWNERSHIP =
   "engineering_model_interoperability" as const;
-/** DT owns CalculiX orchestration; SPACE GASS execution hosted by interop consuming DT contracts. */
+/** DT owns CalculiX orchestration; SPACE GASS / ETABS execution hosted by interop consuming DT contracts. */
 export const SOLVER_EXECUTION_ORCHESTRATION_OWNERSHIP = "digital_twin" as const;
 export const SPACEGASS_EXECUTION_HOST =
+  "engineering_model_interoperability" as const;
+export const ETABS_EXECUTION_HOST =
   "engineering_model_interoperability" as const;
 
 export const MAPPING_REVIEW_SLUG =
@@ -312,6 +372,14 @@ export const PHASE_13A_HOSTED_RUN = "31288157345" as const;
 export const PHASE_13B_VERSION = "0.2.0-ifc-federation" as const;
 export const PHASE_13B_CERTIFIED_COMMIT =
   "1540f806ada0cf70179c3cfdffe4157f29620778" as const;
+
+export const PHASE_13C_VERSION = "0.3.0-spacegass" as const;
+export const PHASE_13C_CERTIFIED_COMMIT =
+  "a1c73721326927b507bb7c2f456d6188dd00e8b9" as const;
+
+export const PHASE_13D1_VERSION = "0.1.0-execution-host" as const;
+export const PHASE_13D1_CERTIFIED_COMMIT =
+  "0bbe0c7bc686615231167f9d56cad2481c627026" as const;
 
 export const PROJECT_CONTROLS_V1_TAG = "project-controls-v1.0.0" as const;
 export const PROJECT_CONTROLS_V1_COMMIT =
@@ -349,7 +417,7 @@ export const IFC_PARSER_IMPLEMENTATION = "bounded_step_text_extractor" as const;
 export const IFC_PARSER_VERSION = "0.2.0-ifc-federation-step-1" as const;
 export const IFC_SUPPORTED_SCHEMAS = ["IFC2X3", "IFC4", "IFC4X3"] as const;
 
-export function getEngineeringInteropSpaceGassDeclaration() {
+export function getEngineeringInteropEtabsFederationDeclaration() {
   return {
     name: ENGINEERING_MODEL_INTEROPERABILITY_NAME,
     key: ENGINEERING_MODEL_INTEROPERABILITY_KEY,
@@ -367,15 +435,21 @@ export function getEngineeringInteropSpaceGassDeclaration() {
     EngineeringModelInteroperabilityRuntimeReady,
     IFCFederationReady,
     SpaceGassFederationReady,
+    ETABSModelFederationReady,
+    ETABSResultFederationReady,
     productionInteroperabilityRuntimeImplemented,
     ifcProductionAdapterImplemented,
     spacegassProductionAdapterImplemented,
     SPACEGASSSolverAdapterReady,
-    SPACEGASSFirstMethodQualified,
-    SPACEGASSFirstProviderQualified,
-    SPACEGASSFirstApplicationQualified,
-    SPACEGASSFirstExecutionQualified,
+    ETABSSolverAdapterReady,
+    ETABSAdapterImplemented,
+    ETABSHostedExecutionCertified,
+    ETABSControlledExecutionCertified,
+    SPACEGASSLiveProviderReady,
+    SPACEGASSLiveExecutionCertified,
     spaceGassHostedExecutionCertified,
+    spaceGassControlledExecutionCertified,
+    ControlledEngineeringExecutionHostReady,
     silentSolverFallbackAllowed,
     automaticAnalysisModelCertificationEnabled,
     solverExecutionImplemented,
@@ -385,7 +459,9 @@ export function getEngineeringInteropSpaceGassDeclaration() {
     fullBimViewerImplemented,
     nativeSpacegassAdapterImplemented,
     nativeEtabsAdapterImplemented,
-    ETABSAdapterImplemented,
+    SAP2000AdapterImplemented,
+    SAFEAdapterImplemented,
+    CSiBridgeAdapterImplemented,
     productionMemoryRepositoryAllowed,
     modelBinaryStorageInPostgres,
     duplicateToolFrameworkDetected,
@@ -404,24 +480,36 @@ export function getEngineeringInteropSpaceGassDeclaration() {
     phase13AHostedRun: PHASE_13A_HOSTED_RUN,
     phase13BVersion: PHASE_13B_VERSION,
     phase13BCertifiedCommit: PHASE_13B_CERTIFIED_COMMIT,
+    phase13CVersion: PHASE_13C_VERSION,
+    phase13CCertifiedCommit: PHASE_13C_CERTIFIED_COMMIT,
+    phase13D1Version: PHASE_13D1_VERSION,
+    phase13D1CertifiedCommit: PHASE_13D1_CERTIFIED_COMMIT,
     phase13BReady,
     phase13CReady,
     phase13DReady,
+    phase13EReady,
+    phase13FReady,
+    releaseEligible,
     modelInteroperabilityOwnership: MODEL_INTEROPERABILITY_OWNERSHIP,
     spacegassExecutionHost: SPACEGASS_EXECUTION_HOST,
-    spacegassFirstMethodKey: SPACEGASS_FIRST_METHOD_KEY,
+    etabsExecutionHost: ETABS_EXECUTION_HOST,
     mappingReviewSlug: MAPPING_REVIEW_SLUG,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Engineering Model Interoperability (IFC + SPACE GASS federation; SPACE GASS solver adapter consume-only DT contracts) → Digital Twin V1 remains CalculiX-only inside frozen package; external models remain source-owned" as const,
+      "RTB AI Platform → Engineering OS → Engineering Model Interoperability (IFC + SPACE GASS + ETABS export federation; fail-closed solver adapters consume-only DT contracts) → Digital Twin V1 remains CalculiX-only inside frozen package; external models remain source-owned; SPACE GASS live blocked; ETABS live COM not certified" as const,
   };
 }
 
-/** @deprecated Prefer getEngineeringInteropSpaceGassDeclaration (13C). */
-export function getEngineeringInteropIfcFederationDeclaration() {
-  return getEngineeringInteropSpaceGassDeclaration();
+/** @deprecated Prefer getEngineeringInteropEtabsFederationDeclaration (13E). */
+export function getEngineeringInteropSpaceGassDeclaration() {
+  return getEngineeringInteropEtabsFederationDeclaration();
 }
 
-/** @deprecated Prefer getEngineeringInteropSpaceGassDeclaration (13C). */
+/** @deprecated Prefer getEngineeringInteropEtabsFederationDeclaration (13E). */
+export function getEngineeringInteropIfcFederationDeclaration() {
+  return getEngineeringInteropEtabsFederationDeclaration();
+}
+
+/** @deprecated Prefer getEngineeringInteropEtabsFederationDeclaration (13E). */
 export function getEngineeringInteropDiscoveryDeclaration() {
-  return getEngineeringInteropSpaceGassDeclaration();
+  return getEngineeringInteropEtabsFederationDeclaration();
 }

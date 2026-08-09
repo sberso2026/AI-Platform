@@ -1,0 +1,120 @@
+name: Phase 13E Engineering Model ETABS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-model-interoperability/**"
+      - "packages/engineering-model-interoperability-certification/**"
+      - "packages/engineering-execution-host/package.json"
+      - "packages/engineering-execution-host/src/version.ts"
+      - "packages/digital-twin/package.json"
+      - "packages/digital-twin/src/version.ts"
+      - "packages/platform-certification/src/phase13e*"
+      - "apps/web/src/app/api/engineering/model-interoperability/**"
+      - "apps/web/src/app/(platform)/engineering/apps/model-interoperability/**"
+      - "supabase/migrations/20260808280000_batch_89_engineering_model_interoperability_etabs.sql"
+      - "docs/architecture/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - "docs/architecture/ENGINEERING_INTEROPERABILITY_ETABS_*"
+      - "docs/contracts/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - ".github/workflows/phase-13e-engineering-model-etabs.yml"
+
+concurrency:
+  group: phase-13e-engineering-model-etabs-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_BROWSER: "1"
+  CERTIFY_REQUIRE_HOSTED: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification exec playwright install chromium --with-deps
+      - name: Unit tests (ETABS)
+        run: pnpm --filter @rtb/engineering-model-interoperability test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase13e-engineering-model-etabs.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification secret-scan
+      - name: Phase 13E certification (gates A–BT)
+        env:
+          CERTIFY_BROWSER: "1"
+          CERTIFY_REQUIRE_HOSTED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification certify:phase13e
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-model-interoperability-certification/artifacts/phase13e-engineering-model-etabs-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===72],
+            ["version", a.version==="0.4.0-etabs-federation"],
+            ["status", a.status==="etabs_federation"],
+            ["ETABSModelFederationReady", a.ETABSModelFederationReady===true],
+            ["ETABSResultFederationReady", a.ETABSResultFederationReady===true],
+            ["ETABSAdapterImplemented", a.ETABSAdapterImplemented===true],
+            ["ETABSSolverAdapterReady", a.ETABSSolverAdapterReady===true],
+            ["ETABSHostedExecutionCertified", a.ETABSHostedExecutionCertified===false],
+            ["ETABSControlledExecutionCertified", a.ETABSControlledExecutionCertified===false],
+            ["SPACEGASSLiveExecutionCertified", a.SPACEGASSLiveExecutionCertified===false],
+            ["IFCFederationReady", a.IFCFederationReady===true],
+            ["SpaceGassFederationReady", a.SpaceGassFederationReady===true],
+            ["silentSolverFallbackAllowed", a.silentSolverFallbackAllowed===false],
+            ["DigitalTwinV1Intact", a.DigitalTwinV1Intact===true],
+            ["digitalTwinVersion", a.digitalTwinVersion==="1.0.0"],
+            ["digitalTwinV1Commit", a.digitalTwinV1Commit==="a94425ed009ca087c2f44c9d3757c0c82bd936b1"],
+            ["publicContractVersion", a.publicContractVersion==="0.4.0-etabs-federation"],
+            ["releaseEligible", a.releaseEligible===true],
+            ["liveNativeCom", a.liveNativeCom===false],
+            ["unexpected5xx", a.unexpected5xx===0],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            ETABSHostedExecutionCertified: a.ETABSHostedExecutionCertified,
+            ETABSModelFederationReady: a.ETABSModelFederationReady,
+            SPACEGASSLiveExecutionCertified: a.SPACEGASSLiveExecutionCertified,
+            DigitalTwinV1Intact: a.DigitalTwinV1Intact,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase13e-engineering-model-etabs-certification
+          path: packages/engineering-model-interoperability-certification/artifacts/phase13e-engineering-model-etabs-certification.json
+          if-no-files-found: warn
