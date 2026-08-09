@@ -150,13 +150,15 @@ function main() {
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/)) &&
         (has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/) ||
           has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/) ||
           has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
           has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
           has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/) ||
-          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/)),
+          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/)),
     ),
   );
   push(
@@ -169,7 +171,7 @@ function main() {
         has(VERSION, /0\.4\.0-ai-data-security/) ||
         has(VERSION, /0\.5\.0-secure-compute/) ||
         has(VERSION, /0\.6\.0-compliance-intelligence/) ||
-        has(VERSION, /0\.7\.0-customer-assurance/)) &&
+        has(VERSION, /0\.7\.0-customer-assurance/) || has(VERSION, /0\.8\.0-ga-readiness/)) &&
         has(CONTRACTS, /SecurityEvidenceReference/) &&
         has(CONTRACTS, /universalNumericScore: null/),
     ),

@@ -159,9 +159,11 @@ function main() {
       "F",
       "Version 0.6.0-compliance-intelligence",
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/)) &&
         (has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/) ||
-          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/)),
+          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/)),
     ),
   );
   push(
@@ -169,7 +171,7 @@ function main() {
       "G",
       "Contracts 0.6.0-compliance-intelligence",
       (has(VERSION, /0\.6\.0-compliance-intelligence/) ||
-        has(VERSION, /0\.7\.0-customer-assurance/)) &&
+        has(VERSION, /0\.7\.0-customer-assurance/) || has(VERSION, /0\.8\.0-ga-readiness/)) &&
         has(CONTRACTS, /ComplianceFramework/) &&
         has(CONTRACTS, /ComplianceSnapshot/) &&
         has(CONTRACTS, /ExternalAssuranceRequirement/),
@@ -365,7 +367,7 @@ function main() {
       "AI",
       "Admin UI marker",
       has(UI, /data-testid="security-assurance-compliance-ready"/) &&
-        (has(UI, /0\.6\.0-compliance-intelligence/) || has(UI, /0\.7\.0-customer-assurance/)),
+        (has(UI, /0\.6\.0-compliance-intelligence/) || (has(UI, /0\.7\.0-customer-assurance/) || has(UI, /0\.8\.0-ga-readiness/))),
     ),
   );
   push(gate("AJ", "Migration batch_94", exists(MIGRATION) && has(MIGRATION, /batch_94/)));
@@ -492,7 +494,7 @@ function main() {
     gate(
       "BD",
       "Package not 1.0.0",
-      (has(VERSION, /0\.6\.0-compliance-intelligence/) || has(VERSION, /0\.7\.0-customer-assurance/)) &&
+      (has(VERSION, /0\.6\.0-compliance-intelligence/) || has(VERSION, /0\.7\.0-customer-assurance/) || has(VERSION, /0\.8\.0-ga-readiness/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

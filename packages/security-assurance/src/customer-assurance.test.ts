@@ -24,10 +24,10 @@ import {
 } from "./version";
 
 describe("Phase 15G Customer Assurance", () => {
-  it("declares 0.7.0-customer-assurance on Phase 15F baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.7.0-customer-assurance");
+  it("declares 0.8.0-ga-readiness on Phase 15F baseline", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.8.0-ga-readiness");
     expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe(
-      "0.7.0-customer-assurance",
+      "0.8.0-ga-readiness",
     );
     expect(PHASE_15F_BASELINE_COMMIT).toBe(
       "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",

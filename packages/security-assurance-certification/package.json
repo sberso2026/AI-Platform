@@ -1,6 +1,6 @@
 {
   "name": "@rtb/security-assurance-certification",
-  "version": "0.7.0-customer-assurance",
+  "version": "0.8.0-ga-readiness",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,12 +11,14 @@
     "certify:phase15e": "tsx scripts/run-phase15e-certification.ts",
     "certify:phase15f": "tsx scripts/run-phase15f-certification.ts",
     "certify:phase15g": "tsx scripts/run-phase15g-certification.ts",
+    "certify:phase15h": "tsx scripts/run-phase15h-certification.ts",
     "test:e2e": "playwright test playwright/v1-foundation.spec.ts",
     "test:e2e:isolation": "playwright test playwright/v1-isolation.spec.ts",
     "test:e2e:ai-data": "playwright test playwright/v1-ai-data.spec.ts",
     "test:e2e:secure-compute": "playwright test playwright/v1-secure-compute.spec.ts",
     "test:e2e:compliance": "playwright test playwright/v1-compliance.spec.ts",
     "test:e2e:customer": "playwright test playwright/v1-customer-assurance.spec.ts",
+    "test:e2e:ga-readiness": "playwright test playwright/v1-ga-readiness.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

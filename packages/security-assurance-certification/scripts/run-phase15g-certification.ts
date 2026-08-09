@@ -164,15 +164,17 @@ function main() {
     gate(
       "F",
       "Version 0.7.0-customer-assurance",
-      has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/) &&
-        has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/),
+      (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/)) &&
+        (has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/)),
     ),
   );
   push(
     gate(
       "G",
       "Contracts 0.7.0-customer-assurance",
-      has(VERSION, /0\.7\.0-customer-assurance/) &&
+      (has(VERSION, /0\.7\.0-customer-assurance/) || has(VERSION, /0\.8\.0-ga-readiness/)) &&
         has(CONTRACTS, /CustomerAssuranceProfile/) &&
         has(CONTRACTS, /AssuranceDisclosurePolicy/) &&
         has(CONTRACTS, /AssuranceClaimReference/) &&
@@ -597,7 +599,7 @@ function main() {
     gate(
       "BH",
       "Package not 1.0.0",
-      has(VERSION, /0\.7\.0-customer-assurance/) &&
+      has(VERSION, /0\.7\.0-customer-assurance/) || has(VERSION, /0\.8\.0-ga-readiness/) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

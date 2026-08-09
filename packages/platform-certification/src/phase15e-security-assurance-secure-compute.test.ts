@@ -14,7 +14,7 @@ describe("Phase 15E Security & Assurance Secure Compute", () => {
       resolve(root, "packages/security-assurance/src/secure-compute-flags.ts"),
       "utf8",
     );
-    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[67]\.0-/);
+    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[678]\.0-/);
     expect(version).toContain("ef8efd2b4b30082e9c26ac867c65c51e3e39d207");
     expect(flags).toContain("SecureComputeAssuranceReady = true");
     expect(flags).toContain("SecureComputeAssuranceRuntimeImplemented = true");

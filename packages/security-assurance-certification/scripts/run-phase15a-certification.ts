@@ -127,7 +127,8 @@ function main() {
           has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
           has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
           has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/) ||
-          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/)),
+          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/)),
     ),
   );
   push(

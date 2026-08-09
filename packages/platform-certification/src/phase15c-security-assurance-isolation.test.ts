@@ -14,7 +14,7 @@ describe("Phase 15C Security & Assurance isolation", () => {
       resolve(root, "packages/security-assurance/src/isolation-flags.ts"),
       "utf8",
     );
-    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[67]\.0-/);
+    expect(version).toMatch(/SECURITY_ASSURANCE_VERSION = "0\.[678]\.0-/);
     expect(version).toContain("897383f5a95cf81847ee866c1c1fdac5012b25a5");
     expect(flags).toContain("IsolationAssuranceRuntimeImplemented = true");
     expect(flags).toContain("IsolationAssuranceReady = true");

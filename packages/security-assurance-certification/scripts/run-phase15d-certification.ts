@@ -157,11 +157,13 @@ function main() {
         has(VERSION, /PHASE_15D_BASELINE_VERSION = "0\.4\.0-ai-data-security"/) ||
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/)) &&
         (has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
           has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
           has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/) ||
-          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/)),
+          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.8\.0-ga-readiness"/)),
     ),
   );
   push(
@@ -171,7 +173,7 @@ function main() {
       (has(VERSION, /0\.4\.0-ai-data-security/) ||
         has(VERSION, /0\.5\.0-secure-compute/) ||
         has(VERSION, /0\.6\.0-compliance-intelligence/) ||
-        has(VERSION, /0\.7\.0-customer-assurance/)) &&
+        has(VERSION, /0\.7\.0-customer-assurance/) || has(VERSION, /0\.8\.0-ga-readiness/)) &&
         has(CONTRACTS, /AiDataFlowRecord/) &&
         has(CONTRACTS, /AiDataSecuritySnapshot/),
     ),
@@ -316,7 +318,7 @@ function main() {
       has(UI, /data-testid="security-assurance-ai-data-ready"/) &&
         (has(UI, /0\.4\.0-ai-data-security/) ||
           has(UI, /0\.5\.0-secure-compute/) ||
-          (has(UI, /0\.6\.0-compliance-intelligence/) || has(UI, /0\.7\.0-customer-assurance/))),
+          (has(UI, /0\.6\.0-compliance-intelligence/) || (has(UI, /0\.7\.0-customer-assurance/) || has(UI, /0\.8\.0-ga-readiness/)))),
     ),
   );
   push(gate("AH", "Migration batch_92", exists(MIGRATION) && has(MIGRATION, /batch_92/)));
@@ -453,7 +455,8 @@ function main() {
           has(VERSION, /PHASE_15D_BASELINE_VERSION = "0\.4\.0-ai-data-security"/) ||
           has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/) ||
           has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.6\.0-compliance-intelligence"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.7\.0-customer-assurance"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.8\.0-ga-readiness"/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

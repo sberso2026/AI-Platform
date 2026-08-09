@@ -1,6 +1,6 @@
 {
   "name": "@rtb/security-assurance",
-  "version": "0.7.0-customer-assurance",
+  "version": "0.8.0-ga-readiness",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

@@ -20,10 +20,10 @@ import {
 } from "./version";
 
 describe("Phase 15F Compliance Intelligence Foundation", () => {
-  it("declares 0.7.0-customer-assurance on Phase 15E baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.7.0-customer-assurance");
+  it("declares 0.8.0-ga-readiness on Phase 15E baseline", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.8.0-ga-readiness");
     expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe(
-      "0.7.0-customer-assurance",
+      "0.8.0-ga-readiness",
     );
     expect(PHASE_15E_BASELINE_COMMIT).toBe(
       "aa5150fc4acf287b50c973220c40d62b7f91687f",

@@ -1,13 +1,19 @@
 /**
- * Phase 15G — Security & Assurance Customer Assurance.
- * Not 1.0.0. Approved customer-safe disclosure only — not certification or Trust Center.
+ * Phase 15H — Security & Assurance V1 GA Readiness / production hardening assessment.
+ * Not 1.0.0. Assessment may set securityAssuranceV1GaReady; does not freeze V1 GA.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.7.0-customer-assurance" as const;
-export const SECURITY_ASSURANCE_STATUS = "customer_assurance" as const;
-export const SECURITY_ASSURANCE_PHASE = "15G" as const;
+export const SECURITY_ASSURANCE_VERSION = "0.8.0-ga-readiness" as const;
+export const SECURITY_ASSURANCE_STATUS = "ga_readiness" as const;
+export const SECURITY_ASSURANCE_PHASE = "15H" as const;
 
 export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
-  "0.7.0-customer-assurance" as const;
+  "0.8.0-ga-readiness" as const;
+
+/** Immutable Phase 15G customer-assurance baseline. */
+export const PHASE_15G_BASELINE_COMMIT =
+  "a7b309fbb556ed96f03a8e1c206955e54d90f1b2" as const;
+export const PHASE_15G_BASELINE_HOSTED_RUN = "31307150624" as const;
+export const PHASE_15G_BASELINE_VERSION = "0.7.0-customer-assurance" as const;
 
 /** Immutable Phase 15F compliance-intelligence baseline. */
 export const PHASE_15F_BASELINE_COMMIT =

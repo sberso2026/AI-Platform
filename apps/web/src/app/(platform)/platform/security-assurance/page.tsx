@@ -16,14 +16,14 @@ export default function PlatformSecurityAssurancePage() {
       <PageMain>
         <main className="space-y-6">
           <p data-testid="security-assurance-foundation-ready">
-            Security & Assurance foundation ready (0.7.0-customer-assurance) —
+            Security & Assurance foundation ready (0.8.0-ga-readiness) —
             controls, evidence freshness, assessments, findings, exceptions, and
             dimensional posture; SecurityIntelligenceImplemented=false;
             CustomerTrustCenterImplemented=false; no universal security score.
           </p>
 
           <p data-testid="security-assurance-isolation-ready">
-            Isolation Assurance ready (0.7.0-customer-assurance) —
+            Isolation Assurance ready (0.8.0-ga-readiness) —
             IsolationAssuranceRuntimeImplemented=true;
             knownCrossTenantLeakageDetected=false;
             knownCrossWorkspaceLeakageDetected=false;
@@ -32,7 +32,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-ai-data-ready">
-            AI & Data Security Assurance ready (0.7.0-customer-assurance) —
+            AI & Data Security Assurance ready (0.8.0-ga-readiness) —
             AiDataSecurityRuntimeImplemented=true;
             ProviderDataHandlingAssuranceImplemented=true;
             duplicateAiStackDetected=false;
@@ -41,7 +41,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-secure-compute-ready">
-            Secure Compute Assurance ready (0.7.0-customer-assurance) —
+            Secure Compute Assurance ready (0.8.0-ga-readiness) —
             SecureComputeAssuranceRuntimeImplemented=true;
             WorkloadIdentityAssuranceImplemented=true;
             ExecutionProvenanceImplemented=true;
@@ -51,7 +51,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-compliance-ready">
-            Compliance Intelligence ready (0.7.0-customer-assurance) —
+            Compliance Intelligence ready (0.8.0-ga-readiness) —
             ComplianceFrameworkRegistryImplemented=true;
             ComplianceAssessmentImplemented=true;
             automaticCertificationEnabled=false;
@@ -60,11 +60,18 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-customer-ready">
-            Customer Assurance ready (0.7.0-customer-assurance) —
+            Customer Assurance ready (0.8.0-ga-readiness) —
             CustomerAssuranceImplemented=true;
             AssuranceDisclosurePolicyReady=true;
             automaticCustomerAssurancePublicationEnabled=false;
             CustomerTrustCenterImplemented=false; approved disclosure only.
+          </p>
+
+          <p data-testid="security-assurance-v1-readiness">
+            Security & Assurance V1 GA readiness assessed (0.8.0-ga-readiness) —
+            securityAssuranceV1GaReady=true; securityAssuranceV1GaCertified=false;
+            openBlockers=0; openRequiredBeforeGa=0; phase15IReady=true;
+            contracts not frozen at 1.0.0; S07/S08 remain Tier-1 requirements.
           </p>
 
           <section aria-label="Security assurance inspection surfaces">
@@ -81,6 +88,7 @@ export default function PlatformSecurityAssurancePage() {
               <li data-testid="sa-surface-secure-compute">Secure Compute</li>
               <li data-testid="sa-surface-compliance">Compliance Intelligence</li>
               <li data-testid="sa-surface-customer">Customer Assurance</li>
+              <li data-testid="sa-surface-v1-readiness">V1 GA Readiness</li>
             </ul>
           </section>
 
@@ -214,6 +222,29 @@ export default function PlatformSecurityAssurancePage() {
             </p>
             <p data-testid="sa-ca-separation" className="text-sm text-muted-foreground">
               Internal findings are not projected to customer surfaces.
+            </p>
+          </section>
+
+          <section aria-label="V1 GA readiness">
+            <h2 className="text-lg font-semibold">V1 GA readiness</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Architecture · ownership · maturity · gap register · operations ·
+              commercial packaging · upgrade path
+            </p>
+            <ul
+              className="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3"
+              data-testid="sa-v1-readiness-summary"
+              aria-label="V1 readiness summary"
+            >
+              <li>securityAssuranceV1GaReady=true</li>
+              <li>securityAssuranceV1GaCertified=false</li>
+              <li>openBlockers=0</li>
+              <li>openRequiredBeforeGa=0</li>
+              <li>S07 REQUIRED_BEFORE_TIER1_PRODUCTION</li>
+              <li>S08 REQUIRED_BEFORE_TIER1_PRODUCTION</li>
+            </ul>
+            <p data-testid="sa-v1-contracts" className="mt-2 text-sm text-muted-foreground">
+              SecurityAssurancePublicContractsFrozenAt1_0_0=false
             </p>
           </section>
 
