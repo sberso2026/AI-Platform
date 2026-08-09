@@ -1,4 +1,4 @@
-name: Phase 16B Platform Enterprise SSO
+name: Phase 16C Tier-1 Pen-Test Readiness
 
 on:
   workflow_dispatch:
@@ -7,19 +7,13 @@ on:
     paths:
       - "packages/platform-identity/**"
       - "packages/platform-identity-certification/**"
-      - "packages/platform-certification/src/phase16*"
-      - "packages/security-assurance/src/customer-assurance-flags.ts"
-      - "apps/web/src/app/(auth)/login/**"
-      - "apps/web/src/app/(platform)/platform/enterprise-sso/**"
-      - "apps/web/src/app/api/platform/enterprise-sso/**"
-      - "supabase/migrations/20260808350000_batch_96_platform_enterprise_identity_oidc.sql"
-      - "docs/architecture/PLATFORM_IDENTITY_PHASE_16B.md"
-      - "docs/operations/PLATFORM_ENTERPRISE_SSO_OPERATIONS.md"
-      - "docs/identity/PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACTS_0_2_0.md"
-      - ".github/workflows/phase-16b-platform-enterprise-sso.yml"
+      - "packages/platform-certification/src/phase16c*"
+      - "docs/architecture/PLATFORM_IDENTITY_PHASE_16C.md"
+      - "docs/security/RTB_TIER1_*"
+      - ".github/workflows/phase-16c-tier1-pen-test-readiness.yml"
 
 concurrency:
-  group: phase-16b-platform-enterprise-sso-${{ github.ref }}
+  group: phase-16c-tier1-pen-test-readiness-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -51,38 +45,44 @@ jobs:
       - name: Unit tests
         run: pnpm --filter @rtb/platform-identity test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase16a-platform-enterprise-sso-discovery.test.ts src/phase16b-platform-enterprise-sso.test.ts
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase16c-tier1-pen-test-readiness.test.ts src/phase16b-platform-enterprise-sso.test.ts
       - name: Secret scan
         run: pnpm --filter @rtb/platform-identity-certification secret-scan
-      - name: Phase 16B certification
-        run: pnpm --filter @rtb/platform-identity-certification certify:phase16b
+      - name: Phase 16C certification
+        run: pnpm --filter @rtb/platform-identity-certification certify:phase16c
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
-          const a = JSON.parse(require("fs").readFileSync("packages/platform-identity-certification/artifacts/phase16b-platform-enterprise-sso-certification.json","utf8"));
+          const a = JSON.parse(require("fs").readFileSync("packages/platform-identity-certification/artifacts/phase16c-tier1-pen-test-readiness-certification.json","utf8"));
           const checks = [
             ["verdict", a.verdict==="PASS"],
             ["failedGateCount", a.failedGateCount===0],
             ["skippedGateCount", a.skippedGateCount===0],
             ["notExecutedGateCount", a.notExecutedGateCount===0],
             ["requiredTestsSkipped", a.requiredTestsSkipped===0],
-            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===65],
-            ["version", a.version==="0.2.0-enterprise-sso" || a.version==="0.3.0-pen-test-readiness"],
-            ["EnterpriseSsoRuntimeImplemented", a.EnterpriseSsoRuntimeImplemented===true],
-            ["S08CustomerSsoProductionReady", a.S08CustomerSsoProductionReady===true],
-            ["CustomerSsoProductionReady", a.CustomerSsoProductionReady===true],
-            ["S07ExternalPenTestComplete", a.S07ExternalPenTestComplete===false],
-            ["Tier1EnterpriseProductionReady", a.Tier1EnterpriseProductionReady===false],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===50],
+            ["version", a.version==="0.3.0-pen-test-readiness"],
+            ["ExternalPenTestReadinessReady", a.ExternalPenTestReadinessReady===true],
+            ["ExternalPenTestScopeReady", a.ExternalPenTestScopeReady===true],
+            ["PenTestRulesOfEngagementReady", a.PenTestRulesOfEngagementReady===true],
+            ["PenTestEnvironmentReady", a.PenTestEnvironmentReady===true],
+            ["PenTestTenantFixturesReady", a.PenTestTenantFixturesReady===true],
+            ["PenTestEvidencePackageReady", a.PenTestEvidencePackageReady===true],
+            ["PenTestRemediationWorkflowReady", a.PenTestRemediationWorkflowReady===true],
+            ["PenTestRetestCriteriaReady", a.PenTestRetestCriteriaReady===true],
+            ["S07ClosureCriteriaLocked", a.S07ClosureCriteriaLocked===true],
             ["nearFinalTier1AttackSurfaceReadyForExternalPenTest", a.nearFinalTier1AttackSurfaceReadyForExternalPenTest===true],
-            ["passwordFallbackWhenRequired", a.passwordFallbackWhenRequired===false],
-            ["knownEnterpriseIdentityCrossTenantLeakageDetected", a.knownEnterpriseIdentityCrossTenantLeakageDetected===false],
-            ["SamlFederationImplemented", a.SamlFederationImplemented===false],
-            ["ScimProvisioningImplemented", a.ScimProvisioningImplemented===false],
-            ["LiveEntraIntegrationImplemented", a.LiveEntraIntegrationImplemented===false],
+            ["S08CustomerSsoProductionReady", a.S08CustomerSsoProductionReady===true],
+            ["S07ExternalPenTestComplete", a.S07ExternalPenTestComplete===false],
+            ["ExternalPenTestComplete", a.ExternalPenTestComplete===false],
+            ["Tier1EnterpriseProductionReady", a.Tier1EnterpriseProductionReady===false],
+            ["FakeExternalPenTestResultPresent", a.FakeExternalPenTestResultPresent===false],
+            ["InternalPenetrationTestOpinionIssued", a.InternalPenetrationTestOpinionIssued===false],
             ["SecurityAssuranceV1Intact", a.SecurityAssuranceV1Intact===true],
             ["EngineeringOSV1Intact", a.EngineeringOSV1Intact===true],
-            ["phase16CReady", a.phase16CReady===true],
+            ["unexpected5xx", a.unexpected5xx===0],
             ["releaseEligible", a.releaseEligible===true],
+            ["secretExposure", a.secretExposure===false],
             ["secretExposureDetected", a.secretExposureDetected===false],
             ["artifactIdentity", a.artifactCommitSha===a.ciHeadSha && a.ciHeadSha===a.buildIdentitySha],
           ];
@@ -92,10 +92,10 @@ jobs:
             console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
             process.exit(1);
           }
-          console.log("Phase 16B assert PASS");
+          console.log("Phase 16C assert PASS");
           EOF
       - name: Upload certification artifact
         uses: actions/upload-artifact@v4
         with:
-          name: phase16b-platform-enterprise-sso-certification
-          path: packages/platform-identity-certification/artifacts/phase16b-platform-enterprise-sso-certification.json
+          name: phase16c-tier1-pen-test-readiness-certification
+          path: packages/platform-identity-certification/artifacts/phase16c-tier1-pen-test-readiness-certification.json

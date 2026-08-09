@@ -3,6 +3,7 @@ import {
   PLATFORM_IDENTITY_VERSION,
   PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACT_VERSION,
   PHASE_16A_BASELINE_COMMIT,
+  PHASE_16B_BASELINE_COMMIT,
   PLATFORM_IDENTITY_V1_SEMANTICS,
 } from "./version";
 import {
@@ -35,14 +36,30 @@ import {
 import { validateOidcIdToken, signHs256IdToken } from "./domain/oidc/validate";
 import { createEnterpriseIdentityEvent } from "./domain/events";
 
+import {
+  ExternalPenTestReadinessReady,
+  S07ClosureCriteriaLocked,
+  FakeExternalPenTestResultPresent,
+  InternalPenetrationTestOpinionIssued,
+  ExternalPenTestComplete,
+} from "./pen-test-readiness-flags";
+import {
+  TIER1_ATTACK_SURFACE_INVENTORY,
+  S07_CLOSURE_CRITERIA,
+  PEN_TEST_ENGAGEMENT_MODE,
+} from "./domain/pen-test-readiness";
+
 describe("Phase 16B Platform Enterprise SSO", () => {
-  it("advances to 0.2.0-enterprise-sso and closes S08", () => {
-    expect(PLATFORM_IDENTITY_VERSION).toBe("0.2.0-enterprise-sso");
+  it("preserves S08 closure and public contracts on 16C readiness version", () => {
+    expect(PLATFORM_IDENTITY_VERSION).toBe("0.3.0-pen-test-readiness");
     expect(PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACT_VERSION).toBe(
       "0.2.0-enterprise-sso",
     );
     expect(PHASE_16A_BASELINE_COMMIT).toBe(
       "af1e0425c77c516d4cf99a42d5e3eab9bee7206e",
+    );
+    expect(PHASE_16B_BASELINE_COMMIT).toBe(
+      "0078c9b67021b695c5a4137905247818dd945d83",
     );
     expect(EnterpriseSsoRuntimeImplemented).toBe(true);
     expect(EnterpriseOidcFederationReady).toBe(true);
@@ -217,5 +234,25 @@ describe("Phase 16B Platform Enterprise SSO", () => {
     ).toThrow();
     const b = measurePerformanceBaselines();
     expect(b.oidcCallbackValidationMs).toBeLessThan(1000);
+  });
+});
+
+describe("Phase 16C pen-test readiness", () => {
+  it("locks readiness without completing S07", () => {
+    expect(ExternalPenTestReadinessReady).toBe(true);
+    expect(S07ClosureCriteriaLocked).toBe(true);
+    expect(ExternalPenTestComplete).toBe(false);
+    expect(FakeExternalPenTestResultPresent).toBe(false);
+    expect(InternalPenetrationTestOpinionIssued).toBe(false);
+    expect(S07_CLOSURE_CRITERIA.internalTestsInsufficient).toBe(true);
+    expect(PEN_TEST_ENGAGEMENT_MODE.mode).toBe("grey_box_hybrid");
+    expect(
+      TIER1_ATTACK_SURFACE_INVENTORY.some((e) => e.classification === "IN_SCOPE"),
+    ).toBe(true);
+    expect(
+      TIER1_ATTACK_SURFACE_INVENTORY.some(
+        (e) => e.classification === "EXTERNAL_PROVIDER",
+      ),
+    ).toBe(true);
   });
 });

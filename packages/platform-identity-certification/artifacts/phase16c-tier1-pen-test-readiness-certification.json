@@ -1,0 +1,553 @@
+{
+  "title": "Tier-1 External Penetration Test Readiness",
+  "schemaVersion": "tier1-pen-test-readiness-certification/1",
+  "phase": "16C",
+  "verdict": "PASS",
+  "version": "0.3.0-pen-test-readiness",
+  "status": "pen_test_readiness",
+  "commit": "0078c9b67021b695c5a4137905247818dd945d83",
+  "artifactCommitSha": "0078c9b67021b695c5a4137905247818dd945d83",
+  "ciHeadSha": "0078c9b67021b695c5a4137905247818dd945d83",
+  "buildIdentitySha": "0078c9b67021b695c5a4137905247818dd945d83",
+  "phase16BBaseline": "0078c9b67021b695c5a4137905247818dd945d83",
+  "securityAssuranceV1Baseline": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 50,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 16B baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Security & Assurance V1 tag intact"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.3.0-pen-test-readiness"
+    },
+    {
+      "id": "G",
+      "name": "Attack-surface inventory"
+    },
+    {
+      "id": "H",
+      "name": "Scope document"
+    },
+    {
+      "id": "I",
+      "name": "Rules of engagement"
+    },
+    {
+      "id": "J",
+      "name": "Environment readiness"
+    },
+    {
+      "id": "K",
+      "name": "Tenant fixtures"
+    },
+    {
+      "id": "L",
+      "name": "SSO surface preserved"
+    },
+    {
+      "id": "M",
+      "name": "Authorization/IDOR categories"
+    },
+    {
+      "id": "N",
+      "name": "API surface categories"
+    },
+    {
+      "id": "O",
+      "name": "Web surface methodology"
+    },
+    {
+      "id": "P",
+      "name": "AI surface categories"
+    },
+    {
+      "id": "Q",
+      "name": "File/artifact surface"
+    },
+    {
+      "id": "R",
+      "name": "Execution host surface"
+    },
+    {
+      "id": "S",
+      "name": "Security & Assurance surface"
+    },
+    {
+      "id": "T",
+      "name": "Logging evidence requirements"
+    },
+    {
+      "id": "U",
+      "name": "Prohibited testing"
+    },
+    {
+      "id": "V",
+      "name": "Severity model"
+    },
+    {
+      "id": "W",
+      "name": "Finding governance"
+    },
+    {
+      "id": "X",
+      "name": "Remediation workflow"
+    },
+    {
+      "id": "Y",
+      "name": "Retest criteria"
+    },
+    {
+      "id": "Z",
+      "name": "S07 closure criteria locked"
+    },
+    {
+      "id": "AA",
+      "name": "External assurance integration"
+    },
+    {
+      "id": "AB",
+      "name": "Customer-assurance boundary"
+    },
+    {
+      "id": "AC",
+      "name": "Tester selection criteria"
+    },
+    {
+      "id": "AD",
+      "name": "Evidence/assessor package"
+    },
+    {
+      "id": "AE",
+      "name": "Environment parity"
+    },
+    {
+      "id": "AF",
+      "name": "Operations during test"
+    },
+    {
+      "id": "AG",
+      "name": "Post-test cleanup"
+    },
+    {
+      "id": "AH",
+      "name": "Engagement mode documented"
+    },
+    {
+      "id": "AI",
+      "name": "S08 preserved true"
+    },
+    {
+      "id": "AJ",
+      "name": "S07 remains false"
+    },
+    {
+      "id": "AK",
+      "name": "Tier1 remains false"
+    },
+    {
+      "id": "AL",
+      "name": "No fake external pen-test result"
+    },
+    {
+      "id": "AM",
+      "name": "No internal pen-test opinion"
+    },
+    {
+      "id": "AN",
+      "name": "Readiness flags true"
+    },
+    {
+      "id": "AO",
+      "name": "Frozen integrity flags"
+    },
+    {
+      "id": "AP",
+      "name": "Public contracts still 0.2.0-enterprise-sso"
+    },
+    {
+      "id": "AQ",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AR",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AS",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AT",
+      "name": "Browser readiness marker"
+    },
+    {
+      "id": "AU",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AV",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "AW",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "AX",
+      "name": "ExternalPenTestReadinessReady"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "requiredTestsSkipped": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "ExternalPenTestReadinessReady": true,
+  "ExternalPenTestScopeReady": true,
+  "PenTestRulesOfEngagementReady": true,
+  "PenTestEnvironmentReady": true,
+  "PenTestTenantFixturesReady": true,
+  "PenTestEvidencePackageReady": true,
+  "PenTestRemediationWorkflowReady": true,
+  "PenTestRetestCriteriaReady": true,
+  "S07ClosureCriteriaLocked": true,
+  "nearFinalTier1AttackSurfaceReadyForExternalPenTest": true,
+  "S08CustomerSsoProductionReady": true,
+  "S07ExternalPenTestComplete": false,
+  "ExternalPenTestComplete": false,
+  "Tier1EnterpriseProductionReady": false,
+  "FakeExternalPenTestResultPresent": false,
+  "InternalPenetrationTestOpinionIssued": false,
+  "SecurityAssuranceV1Intact": true,
+  "EngineeringOSV1Intact": true,
+  "ProjectIntelligenceV1Intact": true,
+  "InspectionIntelligenceV1Intact": true,
+  "AssetIntelligenceV1Intact": true,
+  "ProjectControlsV1Intact": true,
+  "DigitalTwinV1Intact": true,
+  "EngineeringModelInteroperabilityV1Intact": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "0078c9b67021b695c5a4137905247818dd945d83"
+    },
+    {
+      "id": "B",
+      "name": "Phase 16B baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Security & Assurance V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.3.0-pen-test-readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Attack-surface inventory",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Scope document",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Rules of engagement",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Environment readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Tenant fixtures",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "SSO surface preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Authorization/IDOR categories",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "API surface categories",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Web surface methodology",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "AI surface categories",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "File/artifact surface",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Execution host surface",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Security & Assurance surface",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Logging evidence requirements",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Prohibited testing",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Severity model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Finding governance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Remediation workflow",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Retest criteria",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "S07 closure criteria locked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "External assurance integration",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Customer-assurance boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Tester selection criteria",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Evidence/assessor package",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Environment parity",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Operations during test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Post-test cleanup",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Engagement mode documented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "S08 preserved true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "S07 remains false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Tier1 remains false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "No fake external pen-test result",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "No internal pen-test opinion",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Readiness flags true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Frozen integrity flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Public contracts still 0.2.0-enterprise-sso",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Browser readiness marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "0078c9b67021b695c5a4137905247818dd945d83"
+    },
+    {
+      "id": "AW",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "AX",
+      "name": "ExternalPenTestReadinessReady",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

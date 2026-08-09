@@ -14,7 +14,9 @@ describe("Phase 16B Platform Enterprise SSO / S08", () => {
       resolve(root, "packages/platform-identity/src/runtime-flags.ts"),
       "utf8",
     );
-    expect(version).toContain('PLATFORM_IDENTITY_VERSION = "0.2.0-enterprise-sso"');
+    expect(version).toMatch(
+      /PLATFORM_IDENTITY_VERSION = "(0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness)"/,
+    );
     expect(version).toContain("af1e0425c77c516d4cf99a42d5e3eab9bee7206e");
     expect(runtime).toContain("EnterpriseSsoRuntimeImplemented = true");
     expect(runtime).toContain("S08CustomerSsoProductionReady = true");
@@ -50,10 +52,7 @@ describe("Phase 16B Platform Enterprise SSO / S08", () => {
     expect(sa).toContain('SECURITY_ASSURANCE_VERSION = "1.0.0"');
   });
 
-  it("does not start 16C docs or SAML/SCIM packages", () => {
-    expect(
-      existsSync(resolve(root, "docs/architecture/PLATFORM_IDENTITY_PHASE_16C.md")),
-    ).toBe(false);
+  it("preserves SAML/SCIM/live-Entra boundaries and S07 incomplete", () => {
     const runtime = readFileSync(
       resolve(root, "packages/platform-identity/src/runtime-flags.ts"),
       "utf8",
@@ -61,5 +60,6 @@ describe("Phase 16B Platform Enterprise SSO / S08", () => {
     expect(runtime).toContain("SamlFederationImplemented = false");
     expect(runtime).toContain("ScimProvisioningImplemented = false");
     expect(runtime).toContain("LiveEntraIntegrationImplemented = false");
+    expect(runtime).toContain("S07ExternalPenTestComplete = false");
   });
 });

@@ -22,8 +22,10 @@ describe("Phase 16A discovery preserved under 16B", () => {
     expect(EXISTING_IDENTITY_FOOTPRINT.length).toBeGreaterThan(10);
   });
 
-  it("advances package version for enterprise SSO runtime", () => {
-    expect(PLATFORM_IDENTITY_VERSION).toBe("0.2.0-enterprise-sso");
+  it("advances package version for enterprise SSO / pen-test readiness", () => {
+    expect(["0.2.0-enterprise-sso", "0.3.0-pen-test-readiness"]).toContain(
+      PLATFORM_IDENTITY_VERSION,
+    );
     expect(EnterpriseSsoRuntimeImplemented).toBe(true);
   });
 });

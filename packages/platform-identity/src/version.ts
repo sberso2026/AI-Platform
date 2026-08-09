@@ -1,12 +1,19 @@
 /**
- * Phase 16B — Platform Enterprise Identity Production OIDC / Entra SSO (S08).
+ * Phase 16C — Tier-1 External Penetration Test Readiness.
+ * Does NOT complete S07. Does NOT self-certify an external pen test.
  */
-export const PLATFORM_IDENTITY_VERSION = "0.2.0-enterprise-sso" as const;
-export const PLATFORM_IDENTITY_STATUS = "enterprise_sso" as const;
-export const PLATFORM_IDENTITY_PHASE = "16B" as const;
+export const PLATFORM_IDENTITY_VERSION = "0.3.0-pen-test-readiness" as const;
+export const PLATFORM_IDENTITY_STATUS = "pen_test_readiness" as const;
+export const PLATFORM_IDENTITY_PHASE = "16C" as const;
 
 export const PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACT_VERSION =
   "0.2.0-enterprise-sso" as const;
+
+/** Phase 16B enterprise SSO baseline (immutable). */
+export const PHASE_16B_BASELINE_COMMIT =
+  "0078c9b67021b695c5a4137905247818dd945d83" as const;
+export const PHASE_16B_BASELINE_HOSTED_RUN = "31310620360" as const;
+export const PHASE_16B_BASELINE_VERSION = "0.2.0-enterprise-sso" as const;
 
 /** Phase 16A discovery baseline (immutable). */
 export const PHASE_16A_BASELINE_COMMIT =
@@ -35,4 +42,6 @@ export const PLATFORM_IDENTITY_V1_SEMANTICS = {
   ssoProviderConfiguredNeqProviderHealthy: true,
   ssoRequiredNeqPasswordFallback: true,
   passwordFallbackWhenRequired: false,
+  externalFindingNeqSelfAssessment: true,
+  internalTestsCannotSatisfyS07: true,
 } as const;

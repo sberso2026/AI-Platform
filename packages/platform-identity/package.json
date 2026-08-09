@@ -1,6 +1,6 @@
 {
   "name": "@rtb/platform-identity",
-  "version": "0.2.0-enterprise-sso",
+  "version": "0.3.0-pen-test-readiness",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

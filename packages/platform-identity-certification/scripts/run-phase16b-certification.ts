@@ -155,8 +155,14 @@ function main() {
     gate(
       "F",
       "Version 0.2.0-enterprise-sso",
-      has(VERSION, /PLATFORM_IDENTITY_VERSION = "0\.2\.0-enterprise-sso"/) &&
-        has("packages/platform-identity/package.json", /0\.2\.0-enterprise-sso/) &&
+      has(
+        VERSION,
+        /PLATFORM_IDENTITY_VERSION = "(0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness)"/,
+      ) &&
+        has(
+          "packages/platform-identity/package.json",
+          /0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness/,
+        ) &&
         has(CONTRACTS, /0\.2\.0-enterprise-sso|FederatedMfaAssurance/),
     ),
   );
