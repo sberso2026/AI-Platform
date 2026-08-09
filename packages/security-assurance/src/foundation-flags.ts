@@ -43,8 +43,8 @@ export const automaticExceptionApprovalEnabled = false as const;
 export const automaticRemediationEnabled = false as const;
 
 /** IsolationAssuranceRuntimeImplemented lives in isolation-flags.ts (Phase 15C). */
+/** SecureComputeAssuranceRuntimeImplemented lives in secure-compute-flags.ts (Phase 15E). */
 export const AiTrustRuntimeImplemented = false as const;
-export const SecureComputeAssuranceRuntimeImplemented = false as const;
 export const ThreatIntelligenceRuntimeImplemented = false as const;
 
 export const implementsOwnAiStack = false as const;
@@ -70,7 +70,6 @@ export function getSecurityAssuranceFoundationDeclaration() {
     SecurityIntelligenceImplemented,
     ComplianceIntelligenceImplemented,
     AiTrustRuntimeImplemented,
-    SecureComputeAssuranceRuntimeImplemented,
     ThreatIntelligenceRuntimeImplemented,
     CustomerTrustCenterImplemented,
     implementsOwnAiStack,

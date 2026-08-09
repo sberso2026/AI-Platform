@@ -147,10 +147,12 @@ function main() {
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.2\.0-control-evidence"/) ||
         has(VERSION, /PHASE_15B_BASELINE_VERSION = "0\.2\.0-control-evidence"/) ||
         has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.3\.0-isolation-assurance"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
         (has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/) ||
           has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/) ||
-          has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/)),
+          has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
+          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/)),
     ),
   );
   push(
@@ -160,7 +162,8 @@ function main() {
       (has(VERSION, /SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =\s*"0\.2\.0-control-evidence"/) ||
         has(VERSION, /PHASE_15B_BASELINE_VERSION = "0\.2\.0-control-evidence"/) ||
         has(VERSION, /0\.3\.0-isolation-assurance/) ||
-        has(VERSION, /0\.4\.0-ai-data-security/)) &&
+        has(VERSION, /0\.4\.0-ai-data-security/) ||
+        has(VERSION, /0\.5\.0-secure-compute/)) &&
         has(CONTRACTS, /SecurityEvidenceReference/) &&
         has(CONTRACTS, /universalNumericScore: null/),
     ),
@@ -546,7 +549,11 @@ function main() {
         (flagFalse(flagsSrc, "IsolationAssuranceRuntimeImplemented") ||
           has("packages/security-assurance/src/isolation-flags.ts", /IsolationAssuranceRuntimeImplemented = true/)) &&
         flagFalse(flagsSrc, "AiTrustRuntimeImplemented") &&
-        flagFalse(flagsSrc, "SecureComputeAssuranceRuntimeImplemented") &&
+        (flagFalse(flagsSrc, "SecureComputeAssuranceRuntimeImplemented") ||
+          has(
+            "packages/security-assurance/src/secure-compute-flags.ts",
+            /SecureComputeAssuranceRuntimeImplemented = true/,
+          )) &&
         (flagFalse(flagsSrc, "ThreatIntelligenceRuntimeImplemented") ||
           has("packages/security-assurance/src/isolation-flags.ts", /ThreatIntelligenceRuntimeImplemented = false/)) &&
         flagFalse(discoveryFlags, "CustomerTrustCenterImplemented"),

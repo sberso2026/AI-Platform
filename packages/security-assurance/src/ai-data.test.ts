@@ -21,9 +21,9 @@ import {
 } from "./version";
 
 describe("Phase 15D AI & Data Security Assurance", () => {
-  it("declares 0.4.0-ai-data-security on Phase 15C baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.4.0-ai-data-security");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.4.0-ai-data-security");
+  it("declares current package version on Phase 15C baseline", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.5.0-secure-compute");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.5.0-secure-compute");
     expect(PHASE_15C_BASELINE_COMMIT).toBe(
       "897383f5a95cf81847ee866c1c1fdac5012b25a5",
     );

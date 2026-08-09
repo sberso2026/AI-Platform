@@ -2,7 +2,7 @@ import { Header } from "@/components/layout/header";
 import { PageMain } from "@/components/layout/page-main";
 
 /**
- * Bounded administrative Security & Assurance surface (Phases 15B–15D).
+ * Bounded administrative Security & Assurance surface (Phases 15B–15E).
  * No SOC dashboard theatre, threat map, or universal security score.
  */
 export default function PlatformSecurityAssurancePage() {
@@ -10,20 +10,20 @@ export default function PlatformSecurityAssurancePage() {
     <>
       <Header
         title="Security & Assurance"
-        description="Control, evidence, isolation, AI/data security assurance, and dimensional posture"
+        description="Control, evidence, isolation, AI/data, and secure-compute assurance"
         showEngineeringChrome={false}
       />
       <PageMain>
         <main className="space-y-6">
           <p data-testid="security-assurance-foundation-ready">
-            Security & Assurance foundation ready (0.4.0-ai-data-security) —
+            Security & Assurance foundation ready (0.5.0-secure-compute) —
             controls, evidence freshness, assessments, findings, exceptions, and
             dimensional posture; SecurityIntelligenceImplemented=false;
             CustomerTrustCenterImplemented=false; no universal security score.
           </p>
 
           <p data-testid="security-assurance-isolation-ready">
-            Isolation Assurance ready (0.4.0-ai-data-security) —
+            Isolation Assurance ready (0.5.0-secure-compute) —
             IsolationAssuranceRuntimeImplemented=true;
             knownCrossTenantLeakageDetected=false;
             knownCrossWorkspaceLeakageDetected=false;
@@ -32,12 +32,22 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-ai-data-ready">
-            AI & Data Security Assurance ready (0.4.0-ai-data-security) —
+            AI & Data Security Assurance ready (0.5.0-secure-compute) —
             AiDataSecurityRuntimeImplemented=true;
             ProviderDataHandlingAssuranceImplemented=true;
             duplicateAiStackDetected=false;
             AiTrustRuntimeImplemented=false;
             no universal prompt-injection claim; observes AI/data security.
+          </p>
+
+          <p data-testid="security-assurance-secure-compute-ready">
+            Secure Compute Assurance ready (0.5.0-secure-compute) —
+            SecureComputeAssuranceRuntimeImplemented=true;
+            WorkloadIdentityAssuranceImplemented=true;
+            ExecutionProvenanceImplemented=true;
+            duplicateExecutionHostDetected=false;
+            confidentialComputingClaimed=false;
+            teeClaimed=false; observes compute security, does not enforce.
           </p>
 
           <section aria-label="Security assurance inspection surfaces">
@@ -51,6 +61,7 @@ export default function PlatformSecurityAssurancePage() {
               <li data-testid="sa-surface-posture">Posture dimensions</li>
               <li data-testid="sa-surface-isolation">Isolation Assurance</li>
               <li data-testid="sa-surface-ai-data">AI & Data Security</li>
+              <li data-testid="sa-surface-secure-compute">Secure Compute</li>
             </ul>
           </section>
 
@@ -110,6 +121,41 @@ export default function PlatformSecurityAssurancePage() {
             </p>
           </section>
 
+          <section aria-label="Secure compute assurance">
+            <h2 className="text-lg font-semibold">Secure Compute</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Plane matrix · workload/runtime posture · execution provenance ·
+              control evidence · findings · evidence freshness · limitations
+            </p>
+            <ul
+              className="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3"
+              data-testid="sa-secure-compute-planes"
+              aria-label="Secure compute planes"
+            >
+              <li data-testid="sa-sc-plane-WORKLOAD_IDENTITY">WORKLOAD_IDENTITY</li>
+              <li data-testid="sa-sc-plane-TENANT_WORKSPACE_SCOPE">TENANT_WORKSPACE_SCOPE</li>
+              <li data-testid="sa-sc-plane-EXECUTION_AUTHORIZATION">EXECUTION_AUTHORIZATION</li>
+              <li data-testid="sa-sc-plane-RUNTIME_ISOLATION">RUNTIME_ISOLATION</li>
+              <li data-testid="sa-sc-plane-FILESYSTEM_SCOPE">FILESYSTEM_SCOPE</li>
+              <li data-testid="sa-sc-plane-NETWORK_EGRESS">NETWORK_EGRESS</li>
+              <li data-testid="sa-sc-plane-SECRET_ACCESS">SECRET_ACCESS</li>
+              <li data-testid="sa-sc-plane-RESOURCE_LIMITS">RESOURCE_LIMITS</li>
+              <li data-testid="sa-sc-plane-EXECUTION_TIMEOUT">EXECUTION_TIMEOUT</li>
+              <li data-testid="sa-sc-plane-ARTEFACT_INTEGRITY">ARTEFACT_INTEGRITY</li>
+              <li data-testid="sa-sc-plane-EXECUTION_PROVENANCE">EXECUTION_PROVENANCE</li>
+              <li data-testid="sa-sc-plane-OUTPUT_HANDLING">OUTPUT_HANDLING</li>
+              <li data-testid="sa-sc-plane-TEMPORARY_DATA">TEMPORARY_DATA</li>
+              <li data-testid="sa-sc-plane-LOGGING_TELEMETRY">LOGGING_TELEMETRY</li>
+              <li data-testid="sa-sc-plane-HOST_POSTURE">HOST_POSTURE</li>
+            </ul>
+            <p data-testid="sa-sc-workload-posture" className="mt-2 text-sm">
+              workload/runtime posture: attributable identity required; unknown fail-closed
+            </p>
+            <p data-testid="sa-sc-no-tee-claim" className="text-sm text-muted-foreground">
+              confidentialComputingClaimed=false; teeClaimed=false
+            </p>
+          </section>
+
           <section aria-label="Posture dimensions">
             <h2 className="text-lg font-semibold">Posture dimensions</h2>
             <ul
@@ -136,6 +182,7 @@ export default function PlatformSecurityAssurancePage() {
             <p data-testid="sa-auto-exception-flag">automaticExceptionApprovalEnabled=false</p>
             <p data-testid="sa-auto-remediation-flag">automaticRemediationEnabled=false</p>
             <p data-testid="sa-auto-rls-mutation-flag">automaticRlsMutationEnabled=false</p>
+            <p data-testid="sa-auto-runtime-mutation-flag">automaticRuntimeMutationEnabled=false</p>
             <p data-testid="sa-s08-ownership">S08 owned by Platform Identity</p>
             <p data-testid="sa-s07-tier1">S07 REQUIRED_BEFORE_TIER1_PRODUCTION</p>
           </section>

@@ -1,5 +1,5 @@
 /**
- * Phase 15D AI & Data Security Assurance readiness flags.
+ * Phase 15E Secure Compute Assurance readiness flags.
  */
 
 import {
@@ -37,52 +37,66 @@ import {
   AiTrustRuntimeImplemented,
   ThreatIntelligenceRuntimeImplemented,
 } from "./isolation-flags";
+import {
+  AiDataSecurityReady,
+  AiDataSecurityRuntimeImplemented,
+  duplicateAiStackDetected,
+  duplicateSecretManagerDetected,
+} from "./ai-data-flags";
 
-export const AiDataSecurityReady = true as const;
-export const AiDataSecurityRuntimeImplemented = true as const;
-export const AiDataSecurityAssessmentImplemented = true as const;
-export const AiDataFlowEvidenceImplemented = true as const;
-export const ProviderDataHandlingAssuranceImplemented = true as const;
-export const SensitiveDataExposureAssessmentImplemented = true as const;
+export const SecureComputeAssuranceReady = true as const;
+export const SecureComputeAssuranceRuntimeImplemented = true as const;
+export const SecureComputeAssessmentImplemented = true as const;
+export const WorkloadIdentityAssuranceImplemented = true as const;
+export const ExecutionProvenanceImplemented = true as const;
+export const RuntimeIsolationAssessmentImplemented = true as const;
+export const ExecutionIntegrityAssessmentImplemented = true as const;
 
-export const duplicateAiStackDetected = false as const;
-export const duplicateSecretManagerDetected = false as const;
+export const automaticRuntimeMutationEnabled = false as const;
+export const duplicateSandboxDetected = false as const;
+export const duplicateAuthSystemDetected = false as const;
 
-/** Set true only after Phase 15D certification PASS. */
-export const phase15EReady = true as const;
+/** Set true only after Phase 15E certification PASS. */
+export const phase15FReady = true as const;
 
-export function getSecurityAssuranceAiDataDeclaration() {
+export function getSecurityAssuranceSecureComputeDeclaration() {
   return {
     SecurityAssuranceFoundationReady,
     IsolationAssuranceReady,
     IsolationAssuranceRuntimeImplemented,
     AiDataSecurityReady,
     AiDataSecurityRuntimeImplemented,
-    AiDataSecurityAssessmentImplemented,
-    AiDataFlowEvidenceImplemented,
-    ProviderDataHandlingAssuranceImplemented,
-    SensitiveDataExposureAssessmentImplemented,
+    SecureComputeAssuranceReady,
+    SecureComputeAssuranceRuntimeImplemented,
+    SecureComputeAssessmentImplemented,
+    WorkloadIdentityAssuranceImplemented,
+    ExecutionProvenanceImplemented,
+    RuntimeIsolationAssessmentImplemented,
+    ExecutionIntegrityAssessmentImplemented,
     automaticRemediationEnabled,
     automaticAuthorizationMutationEnabled,
     automaticRlsMutationEnabled,
+    automaticRuntimeMutationEnabled,
     SecurityIntelligenceImplemented,
     ComplianceIntelligenceImplemented,
     AiTrustRuntimeImplemented,
     ThreatIntelligenceRuntimeImplemented,
     CustomerTrustCenterImplemented,
     implementsOwnAiStack,
-    duplicateAiStackDetected,
+    duplicateExecutionHostDetected,
+    duplicateSandboxDetected,
     duplicateSecretManagerDetected,
-    duplicateIdentityProviderDetected,
     duplicatePolicyEngineDetected,
+    duplicateAuthSystemDetected,
+    duplicateWorkflowEngineDetected,
+    duplicateEventBusDetected,
+    duplicateAiStackDetected,
+    duplicateIdentityProviderDetected,
     duplicateAuditSystemDetected,
     duplicateAiRuntimeDetected,
     duplicateToolFrameworkDetected,
-    duplicateExecutionHostDetected,
     duplicateKnowledgeGraphDetected,
-    duplicateWorkflowEngineDetected,
     duplicateFileStoreDetected,
-    duplicateEventBusDetected,
     EngineeringOSV1Intact,
     ProjectIntelligenceV1Intact,
     InspectionIntelligenceV1Intact,
@@ -90,6 +104,6 @@ export function getSecurityAssuranceAiDataDeclaration() {
     ProjectControlsV1Intact,
     DigitalTwinV1Intact,
     EngineeringModelInteroperabilityV1Intact,
-    phase15EReady,
+    phase15FReady,
   } as const;
 }

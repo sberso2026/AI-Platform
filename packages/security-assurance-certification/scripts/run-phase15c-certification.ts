@@ -155,9 +155,11 @@ function main() {
       "Version 0.3.0-isolation-assurance",
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.3\.0-isolation-assurance"/) ||
         has(VERSION, /PHASE_15C_BASELINE_VERSION = "0\.3\.0-isolation-assurance"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
         (has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/) ||
-          has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/)),
+          has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
+          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/)),
     ),
   );
   push(
@@ -165,7 +167,8 @@ function main() {
       "G",
       "Contracts 0.3.0-isolation-assurance",
       (has(VERSION, /0\.3\.0-isolation-assurance/) ||
-        has(VERSION, /0\.4\.0-ai-data-security/)) &&
+        has(VERSION, /0\.4\.0-ai-data-security/) ||
+        has(VERSION, /0\.5\.0-secure-compute/)) &&
         has(ISO_CONTRACTS, /IsolationProbeRun/) &&
         has(ISO_CONTRACTS, /IsolationAssuranceSnapshot/),
     ),

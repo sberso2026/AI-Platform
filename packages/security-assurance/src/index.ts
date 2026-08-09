@@ -3,6 +3,7 @@ export * from "./discovery-flags";
 export * from "./foundation-flags";
 export * from "./isolation-flags";
 export * from "./ai-data-flags";
+export * from "./secure-compute-flags";
 export {
   SECURITY_ASSURANCE_DRAFT_CONTRACT_NAMES,
   type SecurityControlReference as DraftSecurityControlReference,
@@ -11,6 +12,7 @@ export {
 export * from "./contracts";
 export * from "./isolation-contracts";
 export * from "./ai-data-contracts";
+export * from "./secure-compute-contracts";
 export * from "./domain/semantics";
 export * from "./domain/seed-controls";
 export * from "./domain/control-registry";
@@ -33,3 +35,7 @@ export * from "./domain/ai-data/seed-probes";
 export * from "./domain/ai-data/fixture-harness";
 export * from "./domain/ai-data/engine";
 export * from "./domain/ai-data/runtime";
+export * from "./domain/secure-compute/seed-probes";
+export * from "./domain/secure-compute/fixture-harness";
+export * from "./domain/secure-compute/engine";
+export * from "./domain/secure-compute/runtime";

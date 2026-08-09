@@ -1,13 +1,19 @@
 /**
- * Phase 15D — Security & Assurance AI & Data Security Assurance.
- * Not 1.0.0. Observes/assesses AI/data security — does not replace AI stack or enforcement.
+ * Phase 15E — Security & Assurance Secure Compute Assurance.
+ * Not 1.0.0. Observes/assesses secure compute — does not replace Execution Host or sandbox.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.4.0-ai-data-security" as const;
-export const SECURITY_ASSURANCE_STATUS = "ai_data_security" as const;
-export const SECURITY_ASSURANCE_PHASE = "15D" as const;
+export const SECURITY_ASSURANCE_VERSION = "0.5.0-secure-compute" as const;
+export const SECURITY_ASSURANCE_STATUS = "secure_compute" as const;
+export const SECURITY_ASSURANCE_PHASE = "15E" as const;
 
 export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
-  "0.4.0-ai-data-security" as const;
+  "0.5.0-secure-compute" as const;
+
+/** Immutable Phase 15D AI/data security baseline. */
+export const PHASE_15D_BASELINE_COMMIT =
+  "ef8efd2b4b30082e9c26ac867c65c51e3e39d207" as const;
+export const PHASE_15D_BASELINE_HOSTED_RUN = "31301585089" as const;
+export const PHASE_15D_BASELINE_VERSION = "0.4.0-ai-data-security" as const;
 
 /** Immutable Phase 15C isolation baseline. */
 export const PHASE_15C_BASELINE_COMMIT =

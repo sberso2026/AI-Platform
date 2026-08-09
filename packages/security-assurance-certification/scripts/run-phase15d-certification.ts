@@ -153,15 +153,19 @@ function main() {
     gate(
       "F",
       "Version 0.4.0-ai-data-security",
-      has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) &&
-        has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/),
+      (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
+        has(VERSION, /PHASE_15D_BASELINE_VERSION = "0\.4\.0-ai-data-security"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
+        (has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
+          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/)),
     ),
   );
   push(
     gate(
       "G",
       "Contracts 0.4.0-ai-data-security",
-      has(VERSION, /0\.4\.0-ai-data-security/) &&
+      (has(VERSION, /0\.4\.0-ai-data-security/) ||
+        has(VERSION, /0\.5\.0-secure-compute/)) &&
         has(CONTRACTS, /AiDataFlowRecord/) &&
         has(CONTRACTS, /AiDataSecuritySnapshot/),
     ),
@@ -304,7 +308,7 @@ function main() {
       "AG",
       "Admin UI marker",
       has(UI, /data-testid="security-assurance-ai-data-ready"/) &&
-        has(UI, /0\.4\.0-ai-data-security/),
+        (has(UI, /0\.4\.0-ai-data-security/) || has(UI, /0\.5\.0-secure-compute/)),
     ),
   );
   push(gate("AH", "Migration batch_92", exists(MIGRATION) && has(MIGRATION, /batch_92/)));
@@ -368,7 +372,11 @@ function main() {
         flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") &&
         flagFalse(isoFlags, "AiTrustRuntimeImplemented") &&
         flagFalse(isoFlags, "ThreatIntelligenceRuntimeImplemented") &&
-        flagFalse(foundationFlags, "SecureComputeAssuranceRuntimeImplemented") &&
+        (flagFalse(foundationFlags, "SecureComputeAssuranceRuntimeImplemented") ||
+          has(
+            "packages/security-assurance/src/secure-compute-flags.ts",
+            /SecureComputeAssuranceRuntimeImplemented = true/,
+          )) &&
         flagFalse(discoveryFlags, "CustomerTrustCenterImplemented"),
     ),
   );
@@ -429,6 +437,9 @@ function main() {
       "BC",
       "Package not 1.0.0",
       has(VERSION, /0\.4\.0-ai-data-security/) &&
+        (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/) ||
+          has(VERSION, /PHASE_15D_BASELINE_VERSION = "0\.4\.0-ai-data-security"/) ||
+          has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.5\.0-secure-compute"/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

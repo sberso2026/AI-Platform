@@ -17,6 +17,10 @@ export const SECURITY_ASSURANCE_EVENT_TYPES = [
   "security_assurance.ai_data.assessment_completed",
   "security_assurance.ai_data.finding_opened",
   "security_assurance.ai_data.posture_updated",
+  "security_assurance.secure_compute.assessment_completed",
+  "security_assurance.secure_compute.finding_opened",
+  "security_assurance.secure_compute.posture_updated",
+  "security_assurance.secure_compute.context_recorded",
 ] as const;
 
 export type SecurityAssuranceEventType =
