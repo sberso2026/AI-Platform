@@ -7,7 +7,9 @@ import {
   interopErr,
   parseInteropJsonBody,
   rejectForbiddenInteropPayload,
+  rejectInlineEntitlementDenial,
   requireScope,
+  requiredInteropEntitlement,
 } from "../_assurance";
 
 const OPS = new Set([
@@ -34,6 +36,11 @@ export async function POST(req: Request) {
   if (!OPS.has(operation)) {
     return interopErr(400, "invalid_operation", `Unknown operation: ${operation}`, requestId);
   }
+
+  const write = operation !== "get" && operation !== "list";
+  const entitlement = requiredInteropEntitlement("models", write);
+  const denied = rejectInlineEntitlementDenial(body, requestId, entitlement);
+  if (denied) return denied;
 
   const modelRefId =
     typeof body.modelRefId === "string"

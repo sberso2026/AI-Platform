@@ -66,13 +66,11 @@ const etabsFixturePath = resolve(
   "../fixtures/etabs/sample-project.etabs.json",
 );
 
-describe("Phase 13E Engineering Model Interoperability ETABS", () => {
-  it("declares etabs-federation version and readiness flags", () => {
-    expect(ENGINEERING_MODEL_INTEROPERABILITY_VERSION).toBe(
-      "0.4.0-etabs-federation",
-    );
-    expect(ENGINEERING_MODEL_INTEROPERABILITY_STATUS).toBe("etabs_federation");
-    expect(ENGINEERING_MODEL_INTEROPERABILITY_PHASE).toBe("13E");
+describe("Phase 13F Engineering Model Interoperability V1.0 GA (retained federation)", () => {
+  it("declares V1.0 GA version and readiness flags", () => {
+    expect(ENGINEERING_MODEL_INTEROPERABILITY_VERSION).toBe("1.0.0");
+    expect(ENGINEERING_MODEL_INTEROPERABILITY_STATUS).toBe("ga");
+    expect(ENGINEERING_MODEL_INTEROPERABILITY_PHASE).toBe("13F");
     expect(PRODUCTION_INTEROPERABILITY_RUNTIME_IMPLEMENTED).toBe(true);
     expect(IFC_FEDERATION_READY).toBe(true);
     expect(SPACEGASS_FEDERATION_READY).toBe(true);
@@ -112,14 +110,14 @@ describe("Phase 13E Engineering Model Interoperability ETABS", () => {
     expect(PHASE_13D1_CERTIFIED_COMMIT).toBe(
       "0bbe0c7bc686615231167f9d56cad2481c627026",
     );
-    expect(PUBLIC_CONTRACT_VERSION).toBe("0.4.0-etabs-federation");
+    expect(PUBLIC_CONTRACT_VERSION).toBe("1.0.0");
     expect(DIGITAL_TWIN_V1_VERSION).toBe("1.0.0");
     expect(DIGITAL_TWIN_V1_COMMIT).toBe(
       "a94425ed009ca087c2f44c9d3757c0c82bd936b1",
     );
   });
 
-  it("locks ownership and public contracts for ETABS federation runtime", () => {
+  it("locks ownership and public contracts for V1.0 GA", () => {
     const lock = assertEngineeringInteropOwnershipLock();
     expect(lock.ok).toBe(true);
     expect(lock.ETABSModelFederationReady).toBe(true);
@@ -131,7 +129,7 @@ describe("Phase 13E Engineering Model Interoperability ETABS", () => {
     expect(assertTerminologyLocks().ok).toBe(true);
     expect(assertEngineeringFederationModel().ok).toBe(true);
     expect(assertEngineeringInteropPublicContracts().etabsFederation).toBe(true);
-    expect(assertEngineeringInteropPublicContracts().ga).toBe(false);
+    expect(assertEngineeringInteropPublicContracts().ga).toBe(true);
   });
 
   it("marks IFC + SPACE GASS + ETABS production; other CSI false", () => {
@@ -320,15 +318,18 @@ describe("Phase 13E Engineering Model Interoperability ETABS", () => {
     expect(r3.silentFallbackUsed).toBe(false);
   });
 
-  it("declaration exposes ETABS honesty flags", () => {
+  it("declaration exposes V1.0 GA honesty flags", () => {
     const d = getEngineeringInteropEtabsFederationDeclaration();
-    expect(d.version).toBe("0.4.0-etabs-federation");
-    expect(d.status).toBe("etabs_federation");
+    expect(d.version).toBe("1.0.0");
+    expect(d.status).toBe("ga");
     expect(d.ETABSHostedExecutionCertified).toBe(false);
     expect(d.ETABSControlledExecutionCertified).toBe(false);
     expect(d.ETABSSolverAdapterReady).toBe(true);
     expect(d.SPACEGASSLiveExecutionCertified).toBe(false);
+    expect(d.phase13DStatus).toBe("blocked_external_dependency");
     expect(d.phase13FReady).toBe(true);
     expect(d.DigitalTwinV1Intact).toBe(true);
+    expect(d.EngineeringModelInteroperabilityV1GaCertified).toBe(true);
+    expect(d.EngineeringModelInteroperabilityV1Frozen).toBe(true);
   });
 });

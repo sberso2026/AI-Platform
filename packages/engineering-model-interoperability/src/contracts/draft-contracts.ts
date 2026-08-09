@@ -1,9 +1,8 @@
 /**
- * Phase 13E — Public contracts at 0.4.0-etabs-federation (prerelease, NOT 1.0.0).
+ * Phase 13F — Public contracts frozen at 1.0.0 GA.
  *
  * Runtime-backed for IFC + SPACE GASS + ETABS export federation / fail-closed solvers.
- * SAP2000 / SAFE / CSiBridge remain unimplemented. ETABS path is export federation —
- * not live native COM.
+ * SAP2000 / SAFE / CSiBridge remain unimplemented. Live SPACE GASS / ETABS COM not certified.
  */
 
 import { PUBLIC_CONTRACT_VERSION } from "../version";
@@ -14,12 +13,14 @@ import type { EngineeringAnalysisResultReference } from "../domain/result-refere
 
 export const ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES = [
   "EngineeringModelReference",
+  "EngineeringModelVersion",
   "EngineeringModelAdapter",
   "EngineeringModelElementReference",
-  "EngineeringAnalysisResultReference",
-  "ExternalSolverProviderReference",
+  "EngineeringModelFederationService",
   "EngineeringModelMapping",
   "EngineeringModelChangeImpact",
+  "EngineeringAnalysisResultReference",
+  "ExternalSolverProviderReference",
   "SPACEGASSSolverAdapter",
   "SPACEGASSQualificationRecord",
   "ETABSModelAdapter",
@@ -58,23 +59,20 @@ export function assertEngineeringInteropPublicContracts(): {
   ok: true;
   contractVersion: typeof PUBLIC_CONTRACT_VERSION;
   families: typeof ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES;
-  ga: false;
+  ga: true;
   runtimeBacked: true;
   ifcFederation: true;
   spacegassFederation: true;
   etabsFederation: true;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.4.0-etabs-federation") {
-    throw new Error("interop_contracts_must_be_etabs_federation");
-  }
-  if (PUBLIC_CONTRACT_VERSION === "1.0.0") {
-    throw new Error("interop_contracts_must_not_be_ga");
+  if (PUBLIC_CONTRACT_VERSION !== "1.0.0") {
+    throw new Error("interop_contracts_must_be_ga_1_0_0");
   }
   return {
     ok: true,
     contractVersion: PUBLIC_CONTRACT_VERSION,
     families: ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES,
-    ga: false,
+    ga: true,
     runtimeBacked: true,
     ifcFederation: true,
     spacegassFederation: true,
@@ -82,14 +80,27 @@ export function assertEngineeringInteropPublicContracts(): {
   };
 }
 
-/** @deprecated Prefer assertEngineeringInteropPublicContracts (13E). */
+/** @deprecated Prefer assertEngineeringInteropPublicContracts (13F). */
 export function assertEngineeringInteropDraftContracts() {
   const r = assertEngineeringInteropPublicContracts();
   return {
     ok: r.ok as true,
     contractVersion: r.contractVersion,
     families: r.families,
-    ga: false as const,
+    ga: true as const,
     runtimeBacked: true as const,
+  };
+}
+
+export function assertPublicContractsFrozen(): {
+  ok: true;
+  contractCount: number;
+  contractVersion: string;
+} {
+  const r = assertEngineeringInteropPublicContracts();
+  return {
+    ok: true,
+    contractCount: r.families.length,
+    contractVersion: r.contractVersion,
   };
 }

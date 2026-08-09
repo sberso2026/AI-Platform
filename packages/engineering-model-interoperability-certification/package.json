@@ -1,6 +1,6 @@
 {
   "name": "@rtb/engineering-model-interoperability-certification",
-  "version": "0.4.0-etabs-federation",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,12 @@
     "certify:phase13b": "tsx scripts/run-phase13b-certification.ts",
     "certify:phase13c": "tsx scripts/run-phase13c-certification.ts",
     "certify:phase13e": "tsx scripts/run-phase13e-certification.ts",
+    "certify:phase13f": "tsx scripts/run-phase13f-certification.ts",
+    "generate:manifest": "tsx scripts/generate-module-manifest.ts",
     "test:e2e:ifc": "playwright test playwright/v1-ifc-federation.spec.ts",
     "test:e2e:spacegass": "playwright test playwright/v1-spacegass.spec.ts",
     "test:e2e:etabs": "playwright test playwright/v1-etabs.spec.ts",
+    "test:e2e:v1": "playwright test playwright/v1-ga.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

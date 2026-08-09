@@ -95,6 +95,36 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "project-intelligence-knowledge.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "knowledge.intelligence.write", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
   "project-intelligence-reasoning.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.read", seatRequired: true, workspaceRequired: true },
   "project-intelligence-reasoning.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.execute", seatRequired: true, workspaceRequired: true, featureKey: "ai_assistant", cachePolicy: "fresh" },
+  "model-interoperability.read": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "engineering_model_interoperability",
+    action: "engineering_model.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  "model-interoperability.write": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "engineering_model_interoperability",
+    action: "engineering_model.register",
+    seatRequired: true,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
+  "execution-hosts.read": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "engineering_execution_host",
+    action: "execution_host.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  "execution-hosts.write": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "engineering_execution_host",
+    action: "execution_host.admin",
+    seatRequired: true,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
 };
 
 /** Page route application guards */
@@ -128,6 +158,20 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     productKey: ENGINEERING_PRODUCT,
     applicationKey: "digital_twin",
     action: "access",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  "/engineering/apps/model-interoperability": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "engineering_model_interoperability",
+    action: "access",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  "/engineering/apps/execution-hosts": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "engineering_execution_host",
+    action: "execution_host.read",
     seatRequired: true,
     workspaceRequired: true,
   },

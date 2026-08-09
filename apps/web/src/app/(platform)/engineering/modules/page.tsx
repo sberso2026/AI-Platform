@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, StatusChip } from "@rtb/ui";
-import { Boxes, Brain, ClipboardCheck, BarChart3, Box } from "lucide-react";
+import { Boxes, Brain, ClipboardCheck, BarChart3, Box, Network } from "lucide-react";
 
 const MODULES = [
   {
@@ -37,6 +37,15 @@ const MODULES = [
     href: "/engineering/apps/digital-twin",
     status: "available" as const,
     icon: Box,
+  },
+  {
+    key: "engineering_model_interoperability",
+    name: "Engineering Model Interoperability",
+    description:
+      "IFC / SPACE GASS / ETABS export federation with governed mapping — V1.0 GA",
+    href: "/engineering/apps/model-interoperability",
+    status: "available" as const,
+    icon: Network,
   },
 ];
 

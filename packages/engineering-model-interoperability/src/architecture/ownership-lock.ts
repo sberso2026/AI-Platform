@@ -1,9 +1,9 @@
 /**
- * Phase 13E — Engineering Model Interoperability ownership lock
+ * Phase 13F — Engineering Model Interoperability V1.0 GA ownership lock
  * (IFC + SPACE GASS + ETABS export federation / interop-hosted fail-closed solvers).
  *
  * Preserves asset / project / spatial / DT / ETF ownership. External models remain
- * source-owned. DT V1 frozen — ETABS/SPACE GASS execution hosted here consuming DT contracts.
+ * source-owned. DT V1 frozen — live SPACE GASS/ETABS remain uncertified.
  */
 
 import {
@@ -296,8 +296,8 @@ export function assertEngineeringInteropOwnershipLock(): {
 } {
   assertTerminologyLocks();
 
-  if (ENGINEERING_MODEL_INTEROPERABILITY_VERSION !== "0.4.0-etabs-federation") {
-    throw new Error("etabs_federation_version_mismatch");
+  if (ENGINEERING_MODEL_INTEROPERABILITY_VERSION !== "1.0.0") {
+    throw new Error("emi_v1_ga_version_mismatch");
   }
   if (ENGINEERING_MODEL_INTEROPERABILITY_KEY !== "engineering_model_interoperability") {
     throw new Error("interop_key_mismatch");
@@ -361,7 +361,7 @@ export function assertEngineeringInteropOwnershipLock(): {
     CSIBRIDGE_ADAPTER_IMPLEMENTED ||
     NATIVE_REVIT_ADAPTER_IMPLEMENTED
   ) {
-    throw new Error("non_etabs_csi_or_authoring_adapters_forbidden_in_13e");
+    throw new Error("non_etabs_csi_or_authoring_adapters_forbidden_in_v1");
   }
   if (PRODUCTION_MEMORY_REPOSITORY_ALLOWED || MODEL_BINARY_STORAGE_IN_POSTGRES) {
     throw new Error("hosted_persistence_constraints_violated");
@@ -413,11 +413,8 @@ export function assertEngineeringInteropOwnershipLock(): {
   if (!CONTROLLED_ENGINEERING_EXECUTION_HOST_READY) {
     throw new Error("controlled_execution_host_ready_required_via_dependency");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.4.0-etabs-federation") {
-    throw new Error("public_contracts_must_be_etabs_federation");
-  }
-  if (PUBLIC_CONTRACT_VERSION === "1.0.0") {
-    throw new Error("public_contracts_must_not_be_ga");
+  if (PUBLIC_CONTRACT_VERSION !== "1.0.0") {
+    throw new Error("public_contracts_must_be_ga_1_0_0");
   }
   if (DIGITAL_TWIN_V1_VERSION !== "1.0.0") {
     throw new Error("digital_twin_v1_version_pin_mismatch");

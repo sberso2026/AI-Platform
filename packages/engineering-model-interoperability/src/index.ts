@@ -18,6 +18,14 @@ export * from "./domain/persistence";
 export * from "./domain/postgres-repository";
 export * from "./domain/parser-governance";
 export * from "./domain/large-model-safety";
+/** Phase 13F — V1.0 GA freeze registries */
+export * from "./domain/capability-registry";
+export * from "./domain/service-registry";
+export * from "./domain/event-contracts";
+export * from "./domain/unavailable-capabilities";
+export * from "./domain/module-manifest";
+export * from "./domain/registry-drift";
+export * from "./domain/ga-closure";
 export * from "./domain/spacegass/spacegass-version";
 export * from "./domain/spacegass/spacegass-license";
 export * from "./domain/spacegass/spacegass-project-policy";

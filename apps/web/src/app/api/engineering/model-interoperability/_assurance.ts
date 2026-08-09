@@ -16,8 +16,15 @@ export function interopErr(
 
 export const INTEROP_GOVERNANCE = {
   EngineeringModelInteroperabilityRuntimeReady: true,
+  EngineeringModelInteroperabilityV1GaCertified: true,
+  EngineeringModelInteroperabilityV1Frozen: true,
   IFCFederationReady: true,
   SpaceGassFederationReady: true,
+  SPACEGASSModelFederationReady: true,
+  SPACEGASSResultFederationReady: true,
+  ETABSModelFederationReady: true,
+  ETABSResultFederationReady: true,
+  ETABSAdapterImplemented: true,
   InteropDiscoveryReady: true,
   EngineeringFederationModelLocked: true,
   sourceModelOwnershipPreserved: true,
@@ -25,23 +32,72 @@ export const INTEROP_GOVERNANCE = {
   duplicateModelOwnershipDetected: false,
   productionInteroperabilityRuntimeImplemented: true,
   automaticAnalysisModelCertificationEnabled: false,
+  automaticMappingApprovalEnabled: false,
   solverExecutionImplemented: false,
   additionalExternalSolverExecutionImplemented: true,
   SPACEGASSSolverAdapterReady: true,
+  ETABSSolverAdapterReady: true,
+  SPACEGASSLiveProviderReady: false,
+  SPACEGASSLiveExecutionCertified: false,
   spaceGassHostedExecutionCertified: false,
+  spaceGassControlledExecutionCertified: false,
+  ETABSHostedExecutionCertified: false,
+  ETABSControlledExecutionCertified: false,
+  ControlledEngineeringExecutionHostReady: true,
   silentSolverFallbackAllowed: false,
   modelMutationImplemented: false,
   analysisModelGenerationImplemented: false,
   fullBimViewerImplemented: false,
   productionMemoryRepositoryAllowed: false,
   modelBinaryStorageInPostgres: false,
-  ETABSAdapterImplemented: false,
   DigitalTwinV1Intact: true,
+  publicContractsFrozen: true,
+  moduleManifestFrozen: true,
+  commercialPackagingReady: true,
+  operationalCertificationReady: true,
+  phase13DStatus: "blocked_external_dependency",
   phase13CReady: true,
   phase13DReady: true,
-  publicContractVersion: "0.3.0-spacegass",
+  phase13EReady: true,
+  phase13FReady: true,
+  publicContractVersion: "1.0.0",
   unexpected5xx: 0,
 } as const;
+
+/** Entitlement key required for the route segment (execute does not imply provider availability). */
+export function requiredInteropEntitlement(
+  route: string,
+  write: boolean,
+): string {
+  if (route === "etabs") return "etabs.federation";
+  if (route === "spacegass") return "spacegass.federation";
+  if (route === "results") return "engineering_result.read";
+  if (route === "reviews") return "engineering_model.review";
+  if (route === "mappings" && write) return "engineering_model.map";
+  if (write) return "engineering_model.register";
+  return "engineering_model.read";
+}
+
+/**
+ * Soft entitlement probe — returns entitlement_denied when caller asserts missing entitlement.
+ * Does not imply provider availability for external_solver.execute.
+ */
+export function rejectInlineEntitlementDenial(
+  body: Record<string, unknown>,
+  requestId: string,
+  required: string,
+): NextResponse | null {
+  if (body.assertEntitlementDenied === true || body.entitlementGranted === false) {
+    return interopErr(
+      403,
+      "entitlement_denied",
+      `${required} entitlement required`,
+      requestId,
+      { requiredEntitlement: required, impliesProviderAvailability: false },
+    );
+  }
+  return null;
+}
 
 export async function parseInteropJsonBody(req: Request): Promise<
   | { ok: true; body: Record<string, unknown>; requestId: string; correlationId: string }
