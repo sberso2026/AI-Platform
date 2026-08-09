@@ -26,7 +26,7 @@ export type ProviderDiscoveryRow = {
   capabilities: ProviderCapabilityFlags;
   /** Reserved stub already present under Digital Twin (document only). */
   digitalTwinReservedStub: boolean;
-  /** Only IFC/openBIM is production-implemented in Phase 13B. */
+  /** IFC/openBIM + SPACE GASS are production-implemented in Phase 13C. */
   productionAdapterImplemented: boolean;
   notes: string;
 };
@@ -113,9 +113,9 @@ export const PROVIDER_DISCOVERY_MATRIX: readonly ProviderDiscoveryRow[] = [
       analysisModelGenerationSupported: true,
     }),
     digitalTwinReservedStub: true,
-    productionAdapterImplemented: false,
+    productionAdapterImplemented: true,
     notes:
-      "Priority discovery — DT reserved stub `spacegass`. Integration discovered, not implemented.",
+      "Phase 13C production SPACE GASS model/result federation + interop-hosted fail-closed solver adapter (hostedExecutionCertified=false). DT stub remains non-activatable inside frozen DT package.",
   },
   {
     providerKey: "etabs",
@@ -279,7 +279,9 @@ export function assertProviderDiscoveryMatrix(): {
   etabsDiscovered: true;
   spaceGassDiscovered: true;
   ifcReserved: true;
-  ifcProductionOnly: true;
+  ifcProductionAdapter: true;
+  spacegassProductionAdapter: true;
+  etabsProductionAdapter: false;
 } {
   const etabs = getProviderDiscoveryRow("etabs");
   const spacegass = getProviderDiscoveryRow("spacegass");
@@ -294,15 +296,19 @@ export function assertProviderDiscoveryMatrix(): {
     throw new Error("ifc_first_class_path_not_reserved");
   }
   if (!ifc.productionAdapterImplemented) {
-    throw new Error("ifc_production_adapter_required_in_13b");
+    throw new Error("ifc_production_adapter_required");
   }
+  if (!spacegass.productionAdapterImplemented) {
+    throw new Error("spacegass_production_adapter_required_in_13c");
+  }
+  if (etabs.productionAdapterImplemented) {
+    throw new Error("etabs_production_adapter_forbidden_in_13c");
+  }
+  const allowedProduction = new Set(["ifc_openbim", "spacegass"]);
   for (const row of PROVIDER_DISCOVERY_MATRIX) {
-    if (row.providerKey !== "ifc_openbim" && row.productionAdapterImplemented) {
-      throw new Error(`native_production_adapter_forbidden_in_13b:${row.providerKey}`);
+    if (row.productionAdapterImplemented && !allowedProduction.has(row.providerKey)) {
+      throw new Error(`native_production_adapter_forbidden_in_13c:${row.providerKey}`);
     }
-  }
-  if (etabs.productionAdapterImplemented || spacegass.productionAdapterImplemented) {
-    throw new Error("etabs_spacegass_production_adapters_forbidden");
   }
   return {
     ok: true,
@@ -310,6 +316,8 @@ export function assertProviderDiscoveryMatrix(): {
     etabsDiscovered: true,
     spaceGassDiscovered: true,
     ifcReserved: true,
-    ifcProductionOnly: true,
+    ifcProductionAdapter: true,
+    spacegassProductionAdapter: true,
+    etabsProductionAdapter: false,
   };
 }

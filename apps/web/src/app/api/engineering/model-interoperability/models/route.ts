@@ -10,7 +10,7 @@ import {
   requireScope,
 } from "../_assurance";
 
-const OPS = new Set(["create", "get", "list", "federate_ifc"]);
+const OPS = new Set(["create", "get", "list", "federate_ifc", "federate_spacegass"]);
 
 export async function POST(req: Request) {
   const parsed = await parseInteropJsonBody(req);

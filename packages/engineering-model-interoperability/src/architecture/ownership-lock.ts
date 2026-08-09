@@ -1,11 +1,13 @@
 /**
- * Phase 13B — Engineering Model Interoperability ownership lock (runtime + IFC).
+ * Phase 13C — Engineering Model Interoperability ownership lock
+ * (IFC federation + SPACE GASS federation / interop-hosted solver adapter).
  *
  * Preserves asset / project / spatial / DT / ETF ownership. External models remain
- * source-owned. IFC federation runtime does not transfer ownership to RTB.
+ * source-owned. DT V1 frozen — SPACE GASS execution hosted here consuming DT contracts.
  */
 
 import {
+  ADDITIONAL_EXTERNAL_SOLVER_EXECUTION_IMPLEMENTED,
   ANALYSIS_MODEL_GENERATION_IMPLEMENTED,
   AUTOMATIC_ANALYSIS_MODEL_CERTIFICATION_ENABLED,
   CANONICAL_ASSET_OWNERSHIP,
@@ -41,13 +43,20 @@ import {
   NATIVE_SAP2000_ADAPTER_IMPLEMENTED,
   NATIVE_SPACEGASS_ADAPTER_IMPLEMENTED,
   PHASE_13A_CERTIFIED_COMMIT,
+  PHASE_13B_CERTIFIED_COMMIT,
   PHASE_13C_READY,
+  PHASE_13D_READY,
   PRODUCTION_INTEROPERABILITY_RUNTIME_IMPLEMENTED,
   PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
   PUBLIC_CONTRACT_VERSION,
   REUSES_DIGITAL_TWIN_SOLVER_ADAPTER_FRAMEWORK,
+  SILENT_SOLVER_FALLBACK_ALLOWED,
   SOLVER_EXECUTION_IMPLEMENTED,
   SOURCE_MODEL_OWNERSHIP_PRESERVED,
+  SPACEGASS_FEDERATION_READY,
+  SPACEGASS_PRODUCTION_ADAPTER_IMPLEMENTED,
+  SPACEGASS_SOLVER_ADAPTER_READY,
+  SPACE_GASS_HOSTED_EXECUTION_CERTIFIED,
 } from "../version";
 import { assertTerminologyLocks } from "./terminology-lock";
 
@@ -100,11 +109,24 @@ export const ENGINEERING_INTEROP_OWNERSHIP_MATRIX: readonly InteropOwnershipRow[
       notes: "IFC/openBIM production adapter — first-class vendor-neutral path",
     },
     {
+      concern: "spacegass_federation_runtime",
+      owner: "engineering_model_interoperability",
+      relation: "implements",
+      notes: "SPACE GASS production model/result federation (fixture export + fail-closed solver)",
+    },
+    {
       concern: "solver_execution_orchestration",
       owner: "digital_twin",
       relation: "reuses",
       notes:
-        "Reuse EngineeringSolverAdapter + four-layer qualification — no second framework",
+        "Reuse EngineeringSolverAdapter + four-layer qualification — no second framework. DT V1 remains CalculiX-only inside frozen package.",
+    },
+    {
+      concern: "spacegass_solver_adapter_host",
+      owner: "engineering_model_interoperability",
+      relation: "implements",
+      notes:
+        "SPACEGASSSolverAdapter hosted in interop consuming DT public contracts (DT freeze)",
     },
     {
       concern: "engineering_tool_framework",
@@ -122,7 +144,7 @@ export const ENGINEERING_INTEROP_OWNERSHIP_MATRIX: readonly InteropOwnershipRow[
       concern: "external_solver_binaries",
       owner: "external_engineering_tool",
       relation: "must_never_own",
-      notes: "Solvers remain external engineering tools",
+      notes: "Solvers remain external engineering tools; no SPACE GASS binary in-repo",
     },
     {
       concern: "canonical_asset_identity",
@@ -152,13 +174,13 @@ export const ENGINEERING_INTEROP_OWNERSHIP_MATRIX: readonly InteropOwnershipRow[
       concern: "ifc_first_class_path",
       owner: "engineering_model_interoperability",
       relation: "owns",
-      notes: "IFC/openBIM first-class vendor-neutral path — not sole pathway",
+      notes: "IFC/openBIM first-class vendor-neutral path — coexistence with SPACE GASS",
     },
     {
-      concern: "production_native_adapters",
+      concern: "production_etabs_adapter",
       owner: "forbidden",
       relation: "forbidden",
-      notes: "ETABS/SPACE GASS/SAP2000/Revit/Navisworks/Tekla not implemented in 13B",
+      notes: "ETABS not implemented in 13C",
     },
     {
       concern: "automatic_analysis_model_certification",
@@ -186,10 +208,16 @@ export function assertEngineeringInteropOwnershipLock(): {
   EngineeringFederationModelLocked: true;
   EngineeringModelInteroperabilityRuntimeReady: true;
   IFCFederationReady: true;
+  SpaceGassFederationReady: true;
   productionInteroperabilityRuntimeImplemented: true;
   ifcProductionAdapterImplemented: true;
+  spacegassProductionAdapterImplemented: true;
+  SPACEGASSSolverAdapterReady: true;
+  spaceGassHostedExecutionCertified: false;
+  silentSolverFallbackAllowed: false;
   automaticAnalysisModelCertificationEnabled: false;
   solverExecutionImplemented: false;
+  additionalExternalSolverExecutionImplemented: true;
   modelMutationImplemented: false;
   analysisModelGenerationImplemented: false;
   fullBimViewerImplemented: false;
@@ -203,14 +231,15 @@ export function assertEngineeringInteropOwnershipLock(): {
   duplicateSpatialOwnershipDetected: false;
   publicContractVersion: typeof PUBLIC_CONTRACT_VERSION;
   phase13CReady: true;
+  phase13DReady: true;
   digitalTwinV1Version: typeof DIGITAL_TWIN_V1_VERSION;
   digitalTwinV1Commit: typeof DIGITAL_TWIN_V1_COMMIT;
   modelInteroperabilityOwnership: typeof MODEL_INTEROPERABILITY_OWNERSHIP;
 } {
   assertTerminologyLocks();
 
-  if (ENGINEERING_MODEL_INTEROPERABILITY_VERSION !== "0.2.0-ifc-federation") {
-    throw new Error("ifc_federation_version_mismatch");
+  if (ENGINEERING_MODEL_INTEROPERABILITY_VERSION !== "0.3.0-spacegass") {
+    throw new Error("spacegass_version_mismatch");
   }
   if (ENGINEERING_MODEL_INTEROPERABILITY_KEY !== "engineering_model_interoperability") {
     throw new Error("interop_key_mismatch");
@@ -221,8 +250,14 @@ export function assertEngineeringInteropOwnershipLock(): {
   if (!ENGINEERING_MODEL_INTEROPERABILITY_RUNTIME_READY || !IFC_FEDERATION_READY) {
     throw new Error("ifc_federation_runtime_not_ready");
   }
+  if (!SPACEGASS_FEDERATION_READY || !SPACEGASS_PRODUCTION_ADAPTER_IMPLEMENTED) {
+    throw new Error("spacegass_federation_not_ready");
+  }
+  if (!SPACEGASS_SOLVER_ADAPTER_READY || !NATIVE_SPACEGASS_ADAPTER_IMPLEMENTED) {
+    throw new Error("spacegass_adapter_not_ready");
+  }
   if (!PRODUCTION_INTEROPERABILITY_RUNTIME_IMPLEMENTED) {
-    throw new Error("production_interop_runtime_required_in_13b");
+    throw new Error("production_interop_runtime_required");
   }
   if (!IFC_PRODUCTION_ADAPTER_IMPLEMENTED || !IFC_FIRST_CLASS_INTEROPERABILITY_RESERVED) {
     throw new Error("ifc_production_adapter_required");
@@ -236,15 +271,23 @@ export function assertEngineeringInteropOwnershipLock(): {
     ANALYSIS_MODEL_GENERATION_IMPLEMENTED ||
     FULL_BIM_VIEWER_IMPLEMENTED
   ) {
-    throw new Error("forbidden_capability_enabled_in_13b");
+    throw new Error("forbidden_capability_enabled_in_13c");
+  }
+  if (!ADDITIONAL_EXTERNAL_SOLVER_EXECUTION_IMPLEMENTED) {
+    throw new Error("spacegass_external_solver_execution_adapter_required");
+  }
+  if (SPACE_GASS_HOSTED_EXECUTION_CERTIFIED) {
+    throw new Error("spacegass_hosted_execution_certified_must_be_false");
+  }
+  if (SILENT_SOLVER_FALLBACK_ALLOWED) {
+    throw new Error("silent_solver_fallback_forbidden");
   }
   if (
     NATIVE_ETABS_ADAPTER_IMPLEMENTED ||
-    NATIVE_SPACEGASS_ADAPTER_IMPLEMENTED ||
     NATIVE_SAP2000_ADAPTER_IMPLEMENTED ||
     NATIVE_REVIT_ADAPTER_IMPLEMENTED
   ) {
-    throw new Error("native_production_adapters_forbidden_in_13b");
+    throw new Error("non_spacegass_native_adapters_forbidden_in_13c");
   }
   if (PRODUCTION_MEMORY_REPOSITORY_ALLOWED || MODEL_BINARY_STORAGE_IN_POSTGRES) {
     throw new Error("hosted_persistence_constraints_violated");
@@ -293,8 +336,8 @@ export function assertEngineeringInteropOwnershipLock(): {
   if (!CSI_PRODUCT_ADAPTERS_REMAIN_SEPARATE) {
     throw new Error("csi_product_adapters_must_remain_separate");
   }
-  if (PUBLIC_CONTRACT_VERSION !== "0.2.0-ifc-federation") {
-    throw new Error("public_contracts_must_be_ifc_federation");
+  if (PUBLIC_CONTRACT_VERSION !== "0.3.0-spacegass") {
+    throw new Error("public_contracts_must_be_spacegass");
   }
   if (PUBLIC_CONTRACT_VERSION === "1.0.0") {
     throw new Error("public_contracts_must_not_be_ga");
@@ -308,8 +351,14 @@ export function assertEngineeringInteropOwnershipLock(): {
   if (PHASE_13A_CERTIFIED_COMMIT !== "5d238f24a3c61b95011c6c2a0ab2f1bf81540267") {
     throw new Error("phase_13a_commit_pin_mismatch");
   }
+  if (PHASE_13B_CERTIFIED_COMMIT !== "1540f806ada0cf70179c3cfdffe4157f29620778") {
+    throw new Error("phase_13b_commit_pin_mismatch");
+  }
   if (!PHASE_13C_READY) {
     throw new Error("phase_13c_ready_flag_required");
+  }
+  if (!PHASE_13D_READY) {
+    throw new Error("phase_13d_ready_flag_required_as_flag_only");
   }
 
   return {
@@ -318,10 +367,16 @@ export function assertEngineeringInteropOwnershipLock(): {
     EngineeringFederationModelLocked: true,
     EngineeringModelInteroperabilityRuntimeReady: true,
     IFCFederationReady: true,
+    SpaceGassFederationReady: true,
     productionInteroperabilityRuntimeImplemented: true,
     ifcProductionAdapterImplemented: true,
+    spacegassProductionAdapterImplemented: true,
+    SPACEGASSSolverAdapterReady: true,
+    spaceGassHostedExecutionCertified: false,
+    silentSolverFallbackAllowed: false,
     automaticAnalysisModelCertificationEnabled: false,
     solverExecutionImplemented: false,
+    additionalExternalSolverExecutionImplemented: true,
     modelMutationImplemented: false,
     analysisModelGenerationImplemented: false,
     fullBimViewerImplemented: false,
@@ -335,6 +390,7 @@ export function assertEngineeringInteropOwnershipLock(): {
     duplicateSpatialOwnershipDetected: false,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
     phase13CReady: true,
+    phase13DReady: true,
     digitalTwinV1Version: DIGITAL_TWIN_V1_VERSION,
     digitalTwinV1Commit: DIGITAL_TWIN_V1_COMMIT,
     modelInteroperabilityOwnership: MODEL_INTEROPERABILITY_OWNERSHIP,

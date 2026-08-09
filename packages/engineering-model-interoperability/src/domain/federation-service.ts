@@ -1,8 +1,9 @@
 /**
- * Phase 13B — EngineeringModelFederationService.
+ * Phase 13C — EngineeringModelFederationService.
  *
- * Federates IFC models into references/elements/mappings without claiming
- * source-model ownership or enabling solver execution / mutation.
+ * Federates IFC + SPACE GASS models into references/elements/mappings/results
+ * without claiming source-model ownership or enabling mutation / analysis-model gen.
+ * SPACE GASS solver execution is handled by SPACEGASSSolverAdapter (fail-closed).
  */
 
 import { randomUUID } from "node:crypto";
@@ -36,6 +37,13 @@ import {
   trustForIfcImportedResult,
   type EngineeringAnalysisResultReference,
 } from "./result-reference";
+import {
+  assertSpaceGassImportNotRtbCertified,
+  createSPACEGASSModelAdapter,
+  parseSpaceGassExportFixture,
+  trustForSpaceGassImportedResult,
+} from "./spacegass/spacegass-model-adapter";
+import { SPACEGASS_ADAPTER_VERSION } from "./spacegass/spacegass-version";
 
 function nowIso() {
   return new Date().toISOString();
@@ -59,6 +67,27 @@ export type FederateIfcResult = {
   version: EngineeringModelVersion;
   elements: EngineeringModelElementReference[];
   unsupportedEntityCount: number;
+  events: EngineeringModelOutboxEvent[];
+};
+
+export type FederateSpaceGassInput = {
+  tenantId: string;
+  workspaceId: string;
+  locator: string;
+  content: string;
+  platformFileRef?: string;
+  projectId?: string;
+  assetId?: string;
+  spatialReferenceId?: string;
+  twinId?: string;
+  displayName?: string;
+};
+
+export type FederateSpaceGassResult = {
+  model: EngineeringModelReference;
+  version: EngineeringModelVersion;
+  elements: EngineeringModelElementReference[];
+  results: EngineeringAnalysisResultReference[];
   events: EngineeringModelOutboxEvent[];
 };
 
@@ -168,6 +197,128 @@ export class EngineeringModelFederationService {
       ),
       events,
     };
+  }
+
+  async federateSpaceGass(
+    input: FederateSpaceGassInput,
+  ): Promise<FederateSpaceGassResult> {
+    if (MODEL_MUTATION_IMPLEMENTED) {
+      throw new Error("model_mutation_must_remain_false");
+    }
+    if (ANALYSIS_MODEL_GENERATION_IMPLEMENTED) {
+      throw new Error("analysis_model_generation_must_remain_false");
+    }
+    if (FULL_BIM_VIEWER_IMPLEMENTED) {
+      throw new Error("full_bim_viewer_must_remain_false");
+    }
+    if (!SOURCE_MODEL_OWNERSHIP_PRESERVED) {
+      throw new Error("source_model_ownership_must_be_preserved");
+    }
+
+    const parsed = parseSpaceGassExportFixture(input.content);
+    if (!parsed.ok) {
+      throw new Error(`${parsed.code}:${parsed.detail}`);
+    }
+
+    const adapter = createSPACEGASSModelAdapter({
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+    });
+    const model = await adapter.identifyModel!({
+      locator: input.locator,
+      content: input.content,
+    });
+    model.displayName = input.displayName ?? model.displayName;
+    model.platformFileRef =
+      input.platformFileRef ?? model.platformFileRef ?? input.locator;
+    model.projectId = input.projectId;
+    model.assetId = input.assetId;
+    model.spatialReferenceId = input.spatialReferenceId;
+    model.twinId = input.twinId;
+    model.status = "federated";
+
+    const ts = nowIso();
+    const version: EngineeringModelVersion = {
+      kind: "engineering_model_version",
+      owner: "source_client_engineering_application",
+      federationOwner: "engineering_model_interoperability",
+      modelVersionId: this.repo.newId("emi_ver"),
+      modelRefId: model.modelRefId,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      versionLabel: parsed.fixture.productVersionHint ?? "spacegass_export_fixture",
+      platformFileRef: model.platformFileRef,
+      schemaId: "spacegass_export_fixture",
+      parserVersion: SPACEGASS_ADAPTER_VERSION,
+      contentSha256: parsed.contentSha256,
+      elementCount:
+        (parsed.fixture.nodes?.length ?? 0) +
+        (parsed.fixture.members?.length ?? 0) +
+        (parsed.fixture.plates?.length ?? 0) +
+        (parsed.fixture.supports?.length ?? 0) +
+        (parsed.fixture.sections?.length ?? 0) +
+        (parsed.fixture.materials?.length ?? 0) +
+        (parsed.fixture.memberGroups?.length ?? 0),
+      ingestedAt: ts,
+      createdAt: ts,
+      updatedAt: ts,
+    };
+
+    const elements = (
+      await adapter.listElements!({ modelRef: model, content: input.content })
+    ).map((el) => ({
+      ...el,
+      modelVersionId: version.modelVersionId,
+    }));
+
+    const results = await adapter.listAnalysisResults!({ modelRef: model });
+    for (const r of results) {
+      assertSpaceGassImportNotRtbCertified(r.trustClassification);
+      if (r.trustClassification !== trustForSpaceGassImportedResult()) {
+        throw new Error("spacegass_import_trust_mismatch");
+      }
+    }
+
+    await this.repo.saveModel(model);
+    await this.repo.saveVersion(version);
+    for (const el of elements) {
+      await this.repo.saveElement(el);
+    }
+    for (const r of results) {
+      await this.repo.saveResult(r);
+    }
+
+    const events = [
+      createEngineeringModelOutboxEvent({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.model.reference.created",
+        payload: { modelRefId: model.modelRefId },
+      }),
+      createEngineeringModelOutboxEvent({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.model.version.ingested",
+        payload: {
+          modelRefId: model.modelRefId,
+          modelVersionId: version.modelVersionId,
+        },
+      }),
+      createEngineeringModelOutboxEvent({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.model.result.referenced",
+        payload: {
+          modelRefId: model.modelRefId,
+          resultRefId: results[0]?.resultRefId,
+        },
+      }),
+    ];
+    for (const ev of events) {
+      await this.repo.enqueueOutbox(ev);
+    }
+
+    return { model, version, elements, results, events };
   }
 
   async proposeMapping(input: {

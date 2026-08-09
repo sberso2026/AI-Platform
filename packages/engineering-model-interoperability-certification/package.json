@@ -1,12 +1,14 @@
 {
   "name": "@rtb/engineering-model-interoperability-certification",
-  "version": "0.2.0-ifc-federation",
+  "version": "0.3.0-spacegass",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase13a": "tsx scripts/run-phase13a-certification.ts",
     "certify:phase13b": "tsx scripts/run-phase13b-certification.ts",
+    "certify:phase13c": "tsx scripts/run-phase13c-certification.ts",
     "test:e2e:ifc": "playwright test playwright/v1-ifc-federation.spec.ts",
+    "test:e2e:spacegass": "playwright test playwright/v1-spacegass.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

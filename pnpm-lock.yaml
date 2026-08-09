@@ -23,6 +23,9 @@ importers:
       '@rtb/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@rtb/engineering-model-interoperability':
+        specifier: workspace:*
+        version: link:../../packages/engineering-model-interoperability
       '@rtb/engineering-os':
         specifier: workspace:*
         version: link:../../packages/engineering-os
@@ -285,6 +288,10 @@ importers:
         version: 5.9.3
 
   packages/engineering-model-interoperability:
+    dependencies:
+      '@rtb/digital-twin':
+        specifier: workspace:*
+        version: link:../digital-twin
     devDependencies:
       '@types/node':
         specifier: ^22.15.29

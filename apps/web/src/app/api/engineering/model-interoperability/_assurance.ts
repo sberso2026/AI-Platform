@@ -1,5 +1,5 @@
 /**
- * Phase 13B — Engineering Model Interoperability HTTP assurance helpers.
+ * Phase 13C — Engineering Model Interoperability HTTP assurance helpers.
  */
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -17,6 +17,7 @@ export function interopErr(
 export const INTEROP_GOVERNANCE = {
   EngineeringModelInteroperabilityRuntimeReady: true,
   IFCFederationReady: true,
+  SpaceGassFederationReady: true,
   InteropDiscoveryReady: true,
   EngineeringFederationModelLocked: true,
   sourceModelOwnershipPreserved: true,
@@ -25,14 +26,20 @@ export const INTEROP_GOVERNANCE = {
   productionInteroperabilityRuntimeImplemented: true,
   automaticAnalysisModelCertificationEnabled: false,
   solverExecutionImplemented: false,
-  additionalExternalSolverExecutionImplemented: false,
+  additionalExternalSolverExecutionImplemented: true,
+  SPACEGASSSolverAdapterReady: true,
+  spaceGassHostedExecutionCertified: false,
+  silentSolverFallbackAllowed: false,
   modelMutationImplemented: false,
   analysisModelGenerationImplemented: false,
   fullBimViewerImplemented: false,
   productionMemoryRepositoryAllowed: false,
   modelBinaryStorageInPostgres: false,
+  ETABSAdapterImplemented: false,
   DigitalTwinV1Intact: true,
   phase13CReady: true,
+  phase13DReady: true,
+  publicContractVersion: "0.3.0-spacegass",
   unexpected5xx: 0,
 } as const;
 
@@ -79,6 +86,7 @@ export function rejectForbiddenInteropPayload(
     "aiSelfApproval",
     "autoConfirmMapping",
     "fullBimViewer",
+    "silentSolverFallback",
   ];
   for (const key of forbidden) {
     if (key in body && body[key] !== undefined && body[key] !== false) {

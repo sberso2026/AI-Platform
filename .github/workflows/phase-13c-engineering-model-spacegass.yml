@@ -1,0 +1,114 @@
+name: Phase 13C Engineering Model SPACE GASS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-model-interoperability/**"
+      - "packages/engineering-model-interoperability-certification/**"
+      - "packages/digital-twin/package.json"
+      - "packages/digital-twin/src/version.ts"
+      - "packages/platform-certification/src/phase13c*"
+      - "apps/web/src/app/api/engineering/model-interoperability/**"
+      - "apps/web/src/app/(platform)/engineering/apps/model-interoperability/**"
+      - "supabase/migrations/20260808260000_batch_87_engineering_model_interoperability_spacegass.sql"
+      - "docs/architecture/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - "docs/architecture/ENGINEERING_INTEROPERABILITY_SPACEGASS_*"
+      - "docs/contracts/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - ".github/workflows/phase-13c-engineering-model-spacegass.yml"
+
+concurrency:
+  group: phase-13c-engineering-model-spacegass-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_BROWSER: "1"
+  CERTIFY_REQUIRE_HOSTED: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification exec playwright install chromium --with-deps
+      - name: Unit tests (SPACE GASS)
+        run: pnpm --filter @rtb/engineering-model-interoperability test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase13c-engineering-model-spacegass.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification secret-scan
+      - name: Phase 13C certification (gates A–BW)
+        env:
+          CERTIFY_BROWSER: "1"
+          CERTIFY_REQUIRE_HOSTED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification certify:phase13c
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-model-interoperability-certification/artifacts/phase13c-engineering-model-spacegass-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===75],
+            ["version", a.version==="0.3.0-spacegass"],
+            ["status", a.status==="spacegass"],
+            ["SpaceGassFederationReady", a.SpaceGassFederationReady===true],
+            ["IFCFederationReady", a.IFCFederationReady===true],
+            ["SPACEGASSSolverAdapterReady", a.SPACEGASSSolverAdapterReady===true],
+            ["spaceGassHostedExecutionCertified", a.spaceGassHostedExecutionCertified===false],
+            ["silentSolverFallbackAllowed", a.silentSolverFallbackAllowed===false],
+            ["additionalExternalSolverExecutionImplemented", a.additionalExternalSolverExecutionImplemented===true],
+            ["solverExecutionImplemented", a.solverExecutionImplemented===false],
+            ["ETABSAdapterImplemented", a.ETABSAdapterImplemented===false],
+            ["DigitalTwinV1Intact", a.DigitalTwinV1Intact===true],
+            ["digitalTwinVersion", a.digitalTwinVersion==="1.0.0"],
+            ["digitalTwinV1Commit", a.digitalTwinV1Commit==="a94425ed009ca087c2f44c9d3757c0c82bd936b1"],
+            ["publicContractVersion", a.publicContractVersion==="0.3.0-spacegass"],
+            ["releaseEligible", a.releaseEligible===true],
+            ["unexpected5xx", a.unexpected5xx===0],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            spaceGassHostedExecutionCertified: a.spaceGassHostedExecutionCertified,
+            SPACEGASSSolverAdapterReady: a.SPACEGASSSolverAdapterReady,
+            DigitalTwinV1Intact: a.DigitalTwinV1Intact,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase13c-engineering-model-spacegass-certification
+          path: packages/engineering-model-interoperability-certification/artifacts/phase13c-engineering-model-spacegass-certification.json
+          if-no-files-found: warn

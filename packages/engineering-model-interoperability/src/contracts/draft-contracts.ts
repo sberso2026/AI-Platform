@@ -1,7 +1,8 @@
 /**
- * Phase 13B — Public contracts at 0.2.0-ifc-federation (prerelease, NOT 1.0.0).
+ * Phase 13C — Public contracts at 0.3.0-spacegass (prerelease, NOT 1.0.0).
  *
- * Runtime-backed for IFC federation only. Native adapters remain unimplemented.
+ * Runtime-backed for IFC federation + SPACE GASS federation / fail-closed solver adapter.
+ * ETABS and other native adapters remain unimplemented.
  */
 
 import { PUBLIC_CONTRACT_VERSION } from "../version";
@@ -18,6 +19,8 @@ export const ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES = [
   "ExternalSolverProviderReference",
   "EngineeringModelMapping",
   "EngineeringModelChangeImpact",
+  "SPACEGASSSolverAdapter",
+  "SPACEGASSQualificationRecord",
 ] as const;
 
 export type EngineeringInteropPublicContractFamily =
@@ -41,6 +44,7 @@ export type ExternalSolverProviderReference = {
   ownership: "external_engineering_tool";
   reusesEngineeringSolverAdapter: true;
   certifiedCapabilityHints?: readonly string[];
+  spaceGassHostedExecutionCertified?: false;
 };
 
 export function assertEngineeringInteropPublicContracts(): {
@@ -49,10 +53,11 @@ export function assertEngineeringInteropPublicContracts(): {
   families: typeof ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES;
   ga: false;
   runtimeBacked: true;
-  ifcFederationOnly: true;
+  ifcFederation: true;
+  spacegassFederation: true;
 } {
-  if (PUBLIC_CONTRACT_VERSION !== "0.2.0-ifc-federation") {
-    throw new Error("interop_contracts_must_be_ifc_federation");
+  if (PUBLIC_CONTRACT_VERSION !== "0.3.0-spacegass") {
+    throw new Error("interop_contracts_must_be_spacegass");
   }
   if (PUBLIC_CONTRACT_VERSION === "1.0.0") {
     throw new Error("interop_contracts_must_not_be_ga");
@@ -63,11 +68,12 @@ export function assertEngineeringInteropPublicContracts(): {
     families: ENGINEERING_INTEROP_PUBLIC_CONTRACT_FAMILIES,
     ga: false,
     runtimeBacked: true,
-    ifcFederationOnly: true,
+    ifcFederation: true,
+    spacegassFederation: true,
   };
 }
 
-/** @deprecated Prefer assertEngineeringInteropPublicContracts (13B). */
+/** @deprecated Prefer assertEngineeringInteropPublicContracts (13C). */
 export function assertEngineeringInteropDraftContracts() {
   const r = assertEngineeringInteropPublicContracts();
   return {
