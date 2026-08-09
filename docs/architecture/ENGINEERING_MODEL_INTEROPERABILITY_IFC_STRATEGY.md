@@ -1,37 +1,43 @@
-# Engineering Model Interoperability — IFC Strategy (Phase 13A)
+# Engineering Model Interoperability — IFC Strategy (Phase 13B)
 
-Status: interop_discovery · `IFCFirstClassInteroperabilityReserved=true`
+Status: ifc_federation · `IFCFederationReady=true` ·
+`ifcProductionAdapterImplemented=true` · Version `0.2.0-ifc-federation`
 
 ## Decision
 
-IFC / openBIM is a **first-class vendor-neutral interoperability path**.
+IFC / openBIM is a **first-class vendor-neutral interoperability path** and the
+**only production adapter** in Phase 13B.
 
-IFC is **not the sole pathway**. Native product adapters (ETABS, SPACE GASS,
-Revit, etc.) remain optional and independently governed.
+IFC is **not the sole pathway** long-term. Native product adapters (ETABS,
+SPACE GASS, Revit, etc.) remain optional and unimplemented in 13B.
 
-## Implications
+## Runtime
 
 | Topic | Lock |
 | --- | --- |
-| Vendor-neutral exchange | Prefer IFC/openBIM where it reduces lock-in |
-| Native adapters | Allowed as optional; never required for all providers |
+| Production adapter | `IFCModelAdapter` (`ifc_openbim`) |
+| Parser | Bounded STEP/IFC text extractor (`0.2.0-ifc-federation-step-1`) |
+| Supported schemas | IFC2X3, IFC4, IFC4X3 (fail-closed otherwise) |
+| Geometry / viewer | Not extracted / `fullBimViewerImplemented=false` |
+| Binaries | Platform Files string refs — no PG binary storage |
 | Model ownership | Federated IFC references do not transfer ownership to RTB |
-| Geometry blobs | Remain external / source-owned |
-| Production ingestion | **Not implemented** in 13A |
-| Sole pathway claim | **Forbidden** — `ifcSolePathway=false` |
+| Unsupported entities | Recorded as limitations (not silently discarded) |
 
-## Capability class (discovery flags)
+## Capability class
 
 For `ifc_openbim`:
 
 - `modelFederationSupported=true`
-- `resultFederationSupported=true` (where result exchange exists)
-- `analysisModelGenerationSupported=true` (future generation — not auto-certified)
-- `solverExecutionSupported=false` (IFC is not a solver)
-- `productionAdapterImplemented=false`
+- `resultFederationSupported=true`
+- `analysisModelGenerationSupported=true` (future — not implemented / not auto-certified)
+- `solverExecutionSupported=false`
+- `productionAdapterImplemented=true` (**13B**)
 
-## Non-goals (13A)
+All other providers remain `productionAdapterImplemented=false`.
 
-- No IFC parser / writer production runtime
+## Non-goals (13B)
+
+- No production native CSI / SPACE GASS / Revit / Navisworks / Tekla adapters
 - No automatic BIM→analysis model certification
-- No replacement of native CSI / SPACE GASS adapters by IFC-only policy
+- No full 3D BIM viewer
+- No GPU-dependent parsing in CI

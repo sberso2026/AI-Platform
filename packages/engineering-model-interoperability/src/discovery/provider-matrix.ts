@@ -26,7 +26,8 @@ export type ProviderDiscoveryRow = {
   capabilities: ProviderCapabilityFlags;
   /** Reserved stub already present under Digital Twin (document only). */
   digitalTwinReservedStub: boolean;
-  productionAdapterImplemented: false;
+  /** Only IFC/openBIM is production-implemented in Phase 13B. */
+  productionAdapterImplemented: boolean;
   notes: string;
 };
 
@@ -59,9 +60,9 @@ export const PROVIDER_DISCOVERY_MATRIX: readonly ProviderDiscoveryRow[] = [
       analysisModelGenerationSupported: true,
     }),
     digitalTwinReservedStub: false,
-    productionAdapterImplemented: false,
+    productionAdapterImplemented: true,
     notes:
-      "First-class vendor-neutral path (not sole pathway). Native adapters remain optional.",
+      "Phase 13B production IFC/openBIM federation adapter. Native adapters remain optional/unimplemented.",
   },
   {
     providerKey: "revit",
@@ -278,7 +279,7 @@ export function assertProviderDiscoveryMatrix(): {
   etabsDiscovered: true;
   spaceGassDiscovered: true;
   ifcReserved: true;
-  noProductionAdapters: true;
+  ifcProductionOnly: true;
 } {
   const etabs = getProviderDiscoveryRow("etabs");
   const spacegass = getProviderDiscoveryRow("spacegass");
@@ -292,10 +293,16 @@ export function assertProviderDiscoveryMatrix(): {
   if (!ifc?.capabilities.modelFederationSupported) {
     throw new Error("ifc_first_class_path_not_reserved");
   }
+  if (!ifc.productionAdapterImplemented) {
+    throw new Error("ifc_production_adapter_required_in_13b");
+  }
   for (const row of PROVIDER_DISCOVERY_MATRIX) {
-    if (row.productionAdapterImplemented) {
-      throw new Error(`production_adapter_forbidden_in_13a:${row.providerKey}`);
+    if (row.providerKey !== "ifc_openbim" && row.productionAdapterImplemented) {
+      throw new Error(`native_production_adapter_forbidden_in_13b:${row.providerKey}`);
     }
+  }
+  if (etabs.productionAdapterImplemented || spacegass.productionAdapterImplemented) {
+    throw new Error("etabs_spacegass_production_adapters_forbidden");
   }
   return {
     ok: true,
@@ -303,6 +310,6 @@ export function assertProviderDiscoveryMatrix(): {
     etabsDiscovered: true,
     spaceGassDiscovered: true,
     ifcReserved: true,
-    noProductionAdapters: true,
+    ifcProductionOnly: true,
   };
 }

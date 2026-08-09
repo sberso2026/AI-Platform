@@ -1,12 +1,13 @@
 /**
- * Phase 13A — Engineering Model & Solver Interoperability Discovery.
+ * Phase 13B — Engineering Model Interoperability Core Runtime + IFC/openBIM Federation.
  *
- * Architecture lock + provider inventory ONLY. No production ETABS / SPACE GASS /
- * SAP2000 / Revit / Navisworks / IFC ingestion runtime, and no additional solver
- * execution beyond Digital Twin V1 CalculiX linear-static.
+ * First production-capable federation runtime for IFC/openBIM only.
+ * No production ETABS / SPACE GASS / SAP2000 / Revit / Navisworks / Tekla adapters.
+ * No solver execution, model mutation/authoring, or analysis-model generation.
+ * No full BIM viewer. Prefer Platform Files string refs for binaries (no PG blobs).
  *
  * Digital Twin remains 1.0.0 (tag digital-twin-v1.0.0 @ a94425ed…).
- * PHASE_13B_READY is a flag only — do not start Phase 13B.
+ * PHASE_13C_READY is a flag only — do not start Phase 13C.
  */
 
 export const ENGINEERING_MODEL_INTEROPERABILITY_NAME =
@@ -14,12 +15,12 @@ export const ENGINEERING_MODEL_INTEROPERABILITY_NAME =
 export const ENGINEERING_MODEL_INTEROPERABILITY_KEY =
   "engineering_model_interoperability" as const;
 export const ENGINEERING_MODEL_INTEROPERABILITY_VERSION =
-  "0.1.0-interop-discovery" as const;
+  "0.2.0-ifc-federation" as const;
 export const ENGINEERING_MODEL_INTEROPERABILITY_STATUS =
-  "interop_discovery" as const;
-export const ENGINEERING_MODEL_INTEROPERABILITY_PHASE = "13A" as const;
+  "ifc_federation" as const;
+export const ENGINEERING_MODEL_INTEROPERABILITY_PHASE = "13B" as const;
 
-/** Discovery readiness. */
+/** Retained from 13A discovery. */
 export const INTEROP_DISCOVERY_READY = true as const;
 export const InteropDiscoveryReady = true as const;
 export const interopDiscoveryReady = true as const;
@@ -59,20 +60,92 @@ export const SPACE_GASS_INTEGRATION_DISCOVERED = true as const;
 export const SpaceGassIntegrationDiscovered = true as const;
 export const spaceGassIntegrationDiscovered = true as const;
 
-/** ALWAYS false in 13A — discovery only. */
-export const PRODUCTION_INTEROPERABILITY_RUNTIME_IMPLEMENTED = false as const;
-export const productionInteroperabilityRuntimeImplemented = false as const;
-export const ProductionInteroperabilityRuntimeImplemented = false as const;
+// ---------------------------------------------------------------------------
+// Phase 13B runtime readiness
+// ---------------------------------------------------------------------------
 
+export const ENGINEERING_MODEL_INTEROPERABILITY_RUNTIME_READY = true as const;
+export const EngineeringModelInteroperabilityRuntimeReady = true as const;
+export const engineeringModelInteroperabilityRuntimeReady = true as const;
+
+export const IFC_FEDERATION_READY = true as const;
+export const IFCFederationReady = true as const;
+export const ifcFederationReady = true as const;
+
+export const PRODUCTION_INTEROPERABILITY_RUNTIME_IMPLEMENTED = true as const;
+export const productionInteroperabilityRuntimeImplemented = true as const;
+export const ProductionInteroperabilityRuntimeImplemented = true as const;
+
+export const IFC_PRODUCTION_ADAPTER_IMPLEMENTED = true as const;
+export const ifcProductionAdapterImplemented = true as const;
+
+export const MODEL_FEDERATION_PRODUCT_TABLES_INTRODUCED = true as const;
+export const modelFederationProductTablesIntroduced = true as const;
+
+export const MAPPING_REVIEW_READY = true as const;
+export const mappingReviewReady = true as const;
+
+export const CHANGE_IMPACT_READY = true as const;
+export const changeImpactReady = true as const;
+
+export const RESULT_REFERENCE_FEDERATION_READY = true as const;
+export const resultReferenceFederationReady = true as const;
+
+export const PARSER_GOVERNANCE_READY = true as const;
+export const parserGovernanceReady = true as const;
+
+export const LARGE_MODEL_SAFETY_READY = true as const;
+export const largeModelSafetyReady = true as const;
+
+/** ALWAYS false — honesty locks. */
 export const AUTOMATIC_ANALYSIS_MODEL_CERTIFICATION_ENABLED = false as const;
 export const automaticAnalysisModelCertificationEnabled = false as const;
 
-/** Do NOT create a second solver/tool framework. */
+export const SOLVER_EXECUTION_IMPLEMENTED = false as const;
+export const solverExecutionImplemented = false as const;
+
+export const ADDITIONAL_EXTERNAL_SOLVER_EXECUTION_IMPLEMENTED = false as const;
+export const additionalExternalSolverExecutionImplemented = false as const;
+
+export const MODEL_MUTATION_IMPLEMENTED = false as const;
+export const modelMutationImplemented = false as const;
+
+export const ANALYSIS_MODEL_GENERATION_IMPLEMENTED = false as const;
+export const analysisModelGenerationImplemented = false as const;
+
+export const FULL_BIM_VIEWER_IMPLEMENTED = false as const;
+export const fullBimViewerImplemented = false as const;
+
+export const NATIVE_ETABS_ADAPTER_IMPLEMENTED = false as const;
+export const nativeEtabsAdapterImplemented = false as const;
+export const NATIVE_SPACEGASS_ADAPTER_IMPLEMENTED = false as const;
+export const nativeSpacegassAdapterImplemented = false as const;
+export const NATIVE_SAP2000_ADAPTER_IMPLEMENTED = false as const;
+export const nativeSap2000AdapterImplemented = false as const;
+export const NATIVE_REVIT_ADAPTER_IMPLEMENTED = false as const;
+export const nativeRevitAdapterImplemented = false as const;
+export const NATIVE_NAVISWORKS_ADAPTER_IMPLEMENTED = false as const;
+export const nativeNavisworksAdapterImplemented = false as const;
+export const NATIVE_TEKLA_ADAPTER_IMPLEMENTED = false as const;
+export const nativeTeklaAdapterImplemented = false as const;
+
+export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
+export const productionMemoryRepositoryAllowed = false as const;
+
+export const MODEL_BINARY_STORAGE_IN_POSTGRES = false as const;
+export const modelBinaryStorageInPostgres = false as const;
+
 export const DUPLICATE_TOOL_FRAMEWORK_DETECTED = false as const;
 export const duplicateToolFrameworkDetected = false as const;
 
 export const SOURCE_MODEL_OWNERSHIP_PRESERVED = true as const;
 export const sourceModelOwnershipPreserved = true as const;
+
+export const DIGITAL_TWIN_MAY_OWN_SOURCE_MODEL = false as const;
+export const digitalTwinMayOwnSourceModel = false as const;
+
+export const DUPLICATE_MODEL_OWNERSHIP_DETECTED = false as const;
+export const duplicateModelOwnershipDetected = false as const;
 
 export const DUPLICATE_ASSET_OWNERSHIP_DETECTED = false as const;
 export const duplicateAssetOwnershipDetected = false as const;
@@ -80,6 +153,8 @@ export const DUPLICATE_PROJECT_OWNERSHIP_DETECTED = false as const;
 export const duplicateProjectOwnershipDetected = false as const;
 export const DUPLICATE_SPATIAL_OWNERSHIP_DETECTED = false as const;
 export const duplicateSpatialOwnershipDetected = false as const;
+export const DUPLICATE_TWIN_OWNERSHIP_DETECTED = false as const;
+export const duplicateTwinOwnershipDetected = false as const;
 
 /** Model accessible ≠ solver executable (and related honesty locks). */
 export const MODEL_ACCESSIBLE_IMPLIES_SOLVER_EXECUTABLE = false as const;
@@ -102,15 +177,22 @@ export const csiProductAdaptersRemainSeparate = true as const;
 export const REUSES_DIGITAL_TWIN_SOLVER_ADAPTER_FRAMEWORK = true as const;
 export const reusesDigitalTwinSolverAdapterFramework = true as const;
 
-/** Flag only — do not start Phase 13B. */
+/** Flag only — do not start Phase 13C. */
 export const PHASE_13B_READY = true as const;
 export const phase13BReady = true as const;
+export const PHASE_13C_READY = true as const;
+export const phase13CReady = true as const;
 
-export const PUBLIC_CONTRACT_VERSION = "0.1.0-draft" as const;
+export const PUBLIC_CONTRACT_VERSION = "0.2.0-ifc-federation" as const;
 
 // ---------------------------------------------------------------------------
-// Ownership declarations (locked — preserve existing domains)
+// Ownership declarations
 // ---------------------------------------------------------------------------
+
+export const MODEL_INTEROPERABILITY_OWNERSHIP =
+  "engineering_model_interoperability" as const;
+export const modelInteroperabilityOwnership =
+  MODEL_INTEROPERABILITY_OWNERSHIP;
 
 export const CANONICAL_ASSET_OWNERSHIP = "engineering_os_shared_domain" as const;
 export const CANONICAL_PROJECT_OWNERSHIP =
@@ -122,6 +204,7 @@ export const ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP =
   "platform_intelligence" as const;
 export const EXTERNAL_MODEL_OWNERSHIP =
   "source_client_engineering_application" as const;
+export const externalModelOwnership = EXTERNAL_MODEL_OWNERSHIP;
 export const EXTERNAL_SOLVER_OWNERSHIP = "external_engineering_tool" as const;
 
 export const MODEL_FEDERATION_OWNERSHIP =
@@ -130,8 +213,11 @@ export const RESULT_FEDERATION_OWNERSHIP =
   "engineering_model_interoperability" as const;
 export const SOLVER_EXECUTION_ORCHESTRATION_OWNERSHIP = "digital_twin" as const;
 
+export const MAPPING_REVIEW_SLUG =
+  "engineering_model_interoperability.mapping_review" as const;
+
 // ---------------------------------------------------------------------------
-// Digital Twin V1 pin (must not mutate / must not move tag)
+// Pins
 // ---------------------------------------------------------------------------
 
 export const DIGITAL_TWIN_V1_VERSION = "1.0.0" as const;
@@ -140,6 +226,11 @@ export const DIGITAL_TWIN_V1_COMMIT =
   "a94425ed009ca087c2f44c9d3757c0c82bd936b1" as const;
 export const DIGITAL_TWIN_V1_INTACT = true as const;
 export const DigitalTwinV1Intact = true as const;
+
+export const PHASE_13A_VERSION = "0.1.0-interop-discovery" as const;
+export const PHASE_13A_CERTIFIED_COMMIT =
+  "5d238f24a3c61b95011c6c2a0ab2f1bf81540267" as const;
+export const PHASE_13A_HOSTED_RUN = "31288157345" as const;
 
 export const PROJECT_CONTROLS_V1_TAG = "project-controls-v1.0.0" as const;
 export const PROJECT_CONTROLS_V1_COMMIT =
@@ -155,7 +246,6 @@ export const PROJECT_INTELLIGENCE_V1_TAG = "project-intelligence-v1.0.0" as cons
 export const PROJECT_INTELLIGENCE_V1_COMMIT =
   "34975b1cf660580d46287f24e746b8915903f768" as const;
 
-/** Existing DT reserved external solver stubs (document only — do not modify DT). */
 export const DIGITAL_TWIN_RESERVED_SOLVER_STUBS = [
   "ansys",
   "abaqus",
@@ -174,7 +264,11 @@ export const DIGITAL_TWIN_CERTIFIED_SOLVER = "calculix" as const;
 export const DIGITAL_TWIN_CERTIFIED_SOLVER_CAPABILITY =
   "linear_elastic_static" as const;
 
-export function getEngineeringInteropDiscoveryDeclaration() {
+export const IFC_PARSER_IMPLEMENTATION = "bounded_step_text_extractor" as const;
+export const IFC_PARSER_VERSION = "0.2.0-ifc-federation-step-1" as const;
+export const IFC_SUPPORTED_SCHEMAS = ["IFC2X3", "IFC4", "IFC4X3"] as const;
+
+export function getEngineeringInteropIfcFederationDeclaration() {
   return {
     name: ENGINEERING_MODEL_INTEROPERABILITY_NAME,
     key: ENGINEERING_MODEL_INTEROPERABILITY_KEY,
@@ -189,10 +283,22 @@ export function getEngineeringInteropDiscoveryDeclaration() {
     IFCFirstClassInteroperabilityReserved,
     ETABSIntegrationDiscovered,
     SpaceGassIntegrationDiscovered,
+    EngineeringModelInteroperabilityRuntimeReady,
+    IFCFederationReady,
     productionInteroperabilityRuntimeImplemented,
+    ifcProductionAdapterImplemented,
     automaticAnalysisModelCertificationEnabled,
+    solverExecutionImplemented,
+    additionalExternalSolverExecutionImplemented,
+    modelMutationImplemented,
+    analysisModelGenerationImplemented,
+    fullBimViewerImplemented,
+    productionMemoryRepositoryAllowed,
+    modelBinaryStorageInPostgres,
     duplicateToolFrameworkDetected,
     sourceModelOwnershipPreserved,
+    digitalTwinMayOwnSourceModel,
+    duplicateModelOwnershipDetected,
     duplicateAssetOwnershipDetected,
     duplicateProjectOwnershipDetected,
     duplicateSpatialOwnershipDetected,
@@ -200,7 +306,12 @@ export function getEngineeringInteropDiscoveryDeclaration() {
     digitalTwinV1Version: DIGITAL_TWIN_V1_VERSION,
     digitalTwinV1Commit: DIGITAL_TWIN_V1_COMMIT,
     publicContractVersion: PUBLIC_CONTRACT_VERSION,
+    phase13AVersion: PHASE_13A_VERSION,
+    phase13ACertifiedCommit: PHASE_13A_CERTIFIED_COMMIT,
+    phase13AHostedRun: PHASE_13A_HOSTED_RUN,
     phase13BReady,
+    phase13CReady,
+    modelInteroperabilityOwnership: MODEL_INTEROPERABILITY_OWNERSHIP,
     canonicalAssetOwnership: CANONICAL_ASSET_OWNERSHIP,
     canonicalProjectOwnership: CANONICAL_PROJECT_OWNERSHIP,
     canonicalSpatialOwnership: CANONICAL_SPATIAL_OWNERSHIP,
@@ -208,7 +319,16 @@ export function getEngineeringInteropDiscoveryDeclaration() {
     engineeringToolFrameworkOwnership: ENGINEERING_TOOL_FRAMEWORK_OWNERSHIP,
     externalModelOwnership: EXTERNAL_MODEL_OWNERSHIP,
     externalSolverOwnership: EXTERNAL_SOLVER_OWNERSHIP,
+    mappingReviewSlug: MAPPING_REVIEW_SLUG,
+    ifcParserImplementation: IFC_PARSER_IMPLEMENTATION,
+    ifcParserVersion: IFC_PARSER_VERSION,
+    ifcSupportedSchemas: IFC_SUPPORTED_SCHEMAS,
     hierarchy:
-      "RTB AI Platform → Engineering OS → Engineering Model Interoperability (federation discovery) → reuse Digital Twin EngineeringSolverAdapter / ETF four-layer qualification; external models/solvers remain source-owned" as const,
+      "RTB AI Platform → Engineering OS → Engineering Model Interoperability (IFC federation runtime) → consume Digital Twin V1 public contracts; external models remain source-owned" as const,
   };
+}
+
+/** @deprecated Prefer getEngineeringInteropIfcFederationDeclaration (13B). */
+export function getEngineeringInteropDiscoveryDeclaration() {
+  return getEngineeringInteropIfcFederationDeclaration();
 }
