@@ -122,7 +122,12 @@ function main() {
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.1\.0-discovery"/) ||
         has(VERSION, /PHASE_15A_BASELINE_VERSION = "0\.1\.0-discovery"/)) &&
         (has("packages/security-assurance/package.json", /"0\.1\.0-discovery"/) ||
-          has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/)),
+          has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/) ||
+          has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/) ||
+          has("packages/security-assurance/package.json", /"0\.5\.0-secure-compute"/) ||
+          has("packages/security-assurance/package.json", /"0\.6\.0-compliance-intelligence"/) ||
+          has("packages/security-assurance/package.json", /"0\.7\.0-customer-assurance"/)),
     ),
   );
   push(

@@ -10,20 +10,20 @@ export default function PlatformSecurityAssurancePage() {
     <>
       <Header
         title="Security & Assurance"
-        description="Control, evidence, isolation, AI/data, secure-compute, and compliance intelligence"
+        description="Control, evidence, isolation, AI/data, secure-compute, compliance, and customer assurance"
         showEngineeringChrome={false}
       />
       <PageMain>
         <main className="space-y-6">
           <p data-testid="security-assurance-foundation-ready">
-            Security & Assurance foundation ready (0.6.0-compliance-intelligence) —
+            Security & Assurance foundation ready (0.7.0-customer-assurance) —
             controls, evidence freshness, assessments, findings, exceptions, and
             dimensional posture; SecurityIntelligenceImplemented=false;
             CustomerTrustCenterImplemented=false; no universal security score.
           </p>
 
           <p data-testid="security-assurance-isolation-ready">
-            Isolation Assurance ready (0.6.0-compliance-intelligence) —
+            Isolation Assurance ready (0.7.0-customer-assurance) —
             IsolationAssuranceRuntimeImplemented=true;
             knownCrossTenantLeakageDetected=false;
             knownCrossWorkspaceLeakageDetected=false;
@@ -32,7 +32,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-ai-data-ready">
-            AI & Data Security Assurance ready (0.6.0-compliance-intelligence) —
+            AI & Data Security Assurance ready (0.7.0-customer-assurance) —
             AiDataSecurityRuntimeImplemented=true;
             ProviderDataHandlingAssuranceImplemented=true;
             duplicateAiStackDetected=false;
@@ -41,7 +41,7 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-secure-compute-ready">
-            Secure Compute Assurance ready (0.6.0-compliance-intelligence) —
+            Secure Compute Assurance ready (0.7.0-customer-assurance) —
             SecureComputeAssuranceRuntimeImplemented=true;
             WorkloadIdentityAssuranceImplemented=true;
             ExecutionProvenanceImplemented=true;
@@ -51,12 +51,20 @@ export default function PlatformSecurityAssurancePage() {
           </p>
 
           <p data-testid="security-assurance-compliance-ready">
-            Compliance Intelligence ready (0.6.0-compliance-intelligence) —
+            Compliance Intelligence ready (0.7.0-customer-assurance) —
             ComplianceFrameworkRegistryImplemented=true;
             ComplianceAssessmentImplemented=true;
             automaticCertificationEnabled=false;
             automaticComplianceClaimEnabled=false;
             certificationClaimed=false; mapping/assessment only, not certification.
+          </p>
+
+          <p data-testid="security-assurance-customer-ready">
+            Customer Assurance ready (0.7.0-customer-assurance) —
+            CustomerAssuranceImplemented=true;
+            AssuranceDisclosurePolicyReady=true;
+            automaticCustomerAssurancePublicationEnabled=false;
+            CustomerTrustCenterImplemented=false; approved disclosure only.
           </p>
 
           <section aria-label="Security assurance inspection surfaces">
@@ -72,6 +80,7 @@ export default function PlatformSecurityAssurancePage() {
               <li data-testid="sa-surface-ai-data">AI & Data Security</li>
               <li data-testid="sa-surface-secure-compute">Secure Compute</li>
               <li data-testid="sa-surface-compliance">Compliance Intelligence</li>
+              <li data-testid="sa-surface-customer">Customer Assurance</li>
             </ul>
           </section>
 
@@ -193,6 +202,21 @@ export default function PlatformSecurityAssurancePage() {
             </p>
           </section>
 
+          <section aria-label="Customer assurance foundation">
+            <h2 className="text-lg font-semibold">Customer Assurance</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Approved profile · claims · framework summaries · external assurance ·
+              AI/data governance · backup/recovery · Tier-1 requirements · documents
+            </p>
+            <p data-testid="sa-ca-admin-link" className="mt-2 text-sm">
+              Authenticated foundation: /platform/security-assurance/customer-assurance
+              (not a public Trust Center)
+            </p>
+            <p data-testid="sa-ca-separation" className="text-sm text-muted-foreground">
+              Internal findings are not projected to customer surfaces.
+            </p>
+          </section>
+
           <section aria-label="Posture dimensions">
             <h2 className="text-lg font-semibold">Posture dimensions</h2>
             <ul
@@ -222,6 +246,9 @@ export default function PlatformSecurityAssurancePage() {
             <p data-testid="sa-auto-rls-mutation-flag">automaticRlsMutationEnabled=false</p>
             <p data-testid="sa-auto-runtime-mutation-flag">automaticRuntimeMutationEnabled=false</p>
             <p data-testid="sa-auto-certification-flag">automaticCertificationEnabled=false</p>
+            <p data-testid="sa-auto-customer-publish-flag">
+              automaticCustomerAssurancePublicationEnabled=false
+            </p>
             <p data-testid="sa-s08-ownership">S08 owned by Platform Identity</p>
             <p data-testid="sa-s07-tier1">S07 REQUIRED_BEFORE_TIER1_PRODUCTION</p>
           </section>

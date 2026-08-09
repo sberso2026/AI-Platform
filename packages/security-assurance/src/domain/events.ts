@@ -25,6 +25,10 @@ export const SECURITY_ASSURANCE_EVENT_TYPES = [
   "security_assurance.compliance.gap_opened",
   "security_assurance.compliance.posture_updated",
   "security_assurance.compliance.framework_registered",
+  "security_assurance.customer.claim_approved",
+  "security_assurance.customer.package_published",
+  "security_assurance.customer.package_accessed",
+  "security_assurance.customer.document_disclosed",
 ] as const;
 
 export type SecurityAssuranceEventType =

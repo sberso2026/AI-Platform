@@ -1,13 +1,19 @@
 /**
- * Phase 15F — Security & Assurance Compliance Intelligence Foundation.
- * Not 1.0.0. Mapping/assessment only — does not claim certification or replace GRC.
+ * Phase 15G — Security & Assurance Customer Assurance.
+ * Not 1.0.0. Approved customer-safe disclosure only — not certification or Trust Center.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.6.0-compliance-intelligence" as const;
-export const SECURITY_ASSURANCE_STATUS = "compliance_intelligence" as const;
-export const SECURITY_ASSURANCE_PHASE = "15F" as const;
+export const SECURITY_ASSURANCE_VERSION = "0.7.0-customer-assurance" as const;
+export const SECURITY_ASSURANCE_STATUS = "customer_assurance" as const;
+export const SECURITY_ASSURANCE_PHASE = "15G" as const;
 
 export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
-  "0.6.0-compliance-intelligence" as const;
+  "0.7.0-customer-assurance" as const;
+
+/** Immutable Phase 15F compliance-intelligence baseline. */
+export const PHASE_15F_BASELINE_COMMIT =
+  "924b2eaa7f6bfc635d742c5310cff3a22ed5d446" as const;
+export const PHASE_15F_BASELINE_HOSTED_RUN = "31306360885" as const;
+export const PHASE_15F_BASELINE_VERSION = "0.6.0-compliance-intelligence" as const;
 
 /** Immutable Phase 15E secure-compute baseline. */
 export const PHASE_15E_BASELINE_COMMIT =
