@@ -1,6 +1,6 @@
 /**
- * Phase 15A discovery / architecture-lock flags.
- * Assessment complete ≠ runtime implemented.
+ * Phase 15A discovery / architecture-lock flags (preserved).
+ * Phase 15B adds foundation-flags.ts — discovery locks remain true.
  */
 
 export const SecurityAssuranceDiscoveryReady = true as const;
@@ -23,13 +23,15 @@ export const SecurityAssuranceCapabilityMatrixReady = true as const;
 export const SecurityAssuranceGapRegisterReady = true as const;
 export const SecurityAssuranceImplementationRoadmapReady = true as const;
 
-/** Runtime remains unimplemented in 15A. */
+/**
+ * Full advanced Security & Assurance product runtime remains unimplemented.
+ * Phase 15B foundation is gated separately via SecurityAssuranceFoundationReady.
+ */
 export const SecurityAssuranceRuntimeImplemented = false as const;
 export const SecurityIntelligenceImplemented = false as const;
 export const ComplianceIntelligenceImplemented = false as const;
 export const CustomerTrustCenterImplemented = false as const;
 
-/** Anti-duplication locks. */
 export const duplicateIdentityProviderDetected = false as const;
 export const duplicatePolicyEngineDetected = false as const;
 export const duplicateAuditSystemDetected = false as const;
@@ -41,7 +43,6 @@ export const duplicateWorkflowEngineDetected = false as const;
 export const duplicateFileStoreDetected = false as const;
 export const duplicateEventBusDetected = false as const;
 
-/** Frozen product integrity (must remain true). */
 export const EngineeringOSV1Intact = true as const;
 export const ProjectIntelligenceV1Intact = true as const;
 export const InspectionIntelligenceV1Intact = true as const;
@@ -50,7 +51,6 @@ export const ProjectControlsV1Intact = true as const;
 export const DigitalTwinV1Intact = true as const;
 export const EngineeringModelInteroperabilityV1Intact = true as const;
 
-/** Set true only after Phase 15A certification PASS. */
 export const phase15BReady = true as const;
 
 export function getSecurityAssuranceDiscoveryDeclaration() {

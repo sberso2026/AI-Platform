@@ -119,8 +119,10 @@ function main() {
     gate(
       "D",
       "Discovery version 0.1.0-discovery",
-      has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.1\.0-discovery"/) &&
-        has("packages/security-assurance/package.json", /"0\.1\.0-discovery"/),
+      (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.1\.0-discovery"/) ||
+        has(VERSION, /PHASE_15A_BASELINE_VERSION = "0\.1\.0-discovery"/)) &&
+        (has("packages/security-assurance/package.json", /"0\.1\.0-discovery"/) ||
+          has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/)),
     ),
   );
   push(
@@ -312,7 +314,8 @@ function main() {
     gate(
       "AB",
       "Draft contracts 0.1.0-draft",
-      has(VERSION, /SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =\s*"0\.1\.0-draft"/) &&
+      (has(VERSION, /SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =\s*"0\.1\.0-draft"/) ||
+        has(VERSION, /PHASE_15A_BASELINE_VERSION = "0\.1\.0-discovery"/)) &&
         exists("docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_DRAFT.md") &&
         has(
           "packages/security-assurance/src/draft-contracts.ts",
@@ -557,7 +560,7 @@ function main() {
     gate(
       "BK",
       "Discovery package not 1.0.0",
-      has(VERSION, /0\.1\.0-discovery/) &&
+      (has(VERSION, /0\.1\.0-discovery/) || has(VERSION, /0\.2\.0-control-evidence/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

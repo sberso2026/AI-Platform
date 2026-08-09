@@ -1,4 +1,4 @@
-name: Phase 15A Security & Assurance Discovery
+name: Phase 15B Security & Assurance Foundation
 
 on:
   workflow_dispatch:
@@ -7,25 +7,27 @@ on:
     paths:
       - "packages/security-assurance/**"
       - "packages/security-assurance-certification/**"
-      - "packages/platform-certification/src/phase15a*"
+      - "packages/platform-certification/src/phase15b*"
+      - "apps/web/src/app/(platform)/platform/security-assurance/**"
+      - "supabase/migrations/20260808290000_batch_90_security_assurance_foundation.sql"
       - "docs/security/SECURITY_ASSURANCE_*"
-      - "docs/architecture/SECURITY_ASSURANCE_PHASE_15A.md"
-      - "docs/architecture/RTB_SECURITY_AND_ASSURANCE_BOUNDARY.md"
-      - ".github/workflows/phase-15a-security-assurance-discovery.yml"
+      - "docs/architecture/SECURITY_ASSURANCE_PHASE_15B.md"
+      - ".github/workflows/phase-15b-security-assurance-foundation.yml"
 
 concurrency:
-  group: phase-15a-security-assurance-discovery-${{ github.ref }}
+  group: phase-15b-security-assurance-foundation-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
   NODE_VERSION: "22"
   PNPM_VERSION: "9.15.0"
 
 jobs:
   certify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,33 +42,35 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Unit tests (Security & Assurance discovery)
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/security-assurance-certification exec playwright install --with-deps chromium
+      - name: Unit tests (Security & Assurance foundation)
         run: pnpm --filter @rtb/security-assurance test
       - name: Architecture tests
-        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase15a-security-assurance-discovery.test.ts
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase15a-security-assurance-discovery.test.ts src/phase15b-security-assurance-foundation.test.ts
       - name: Secret scan
         run: pnpm --filter @rtb/security-assurance-certification secret-scan
-      - name: Phase 15A certification (gates A–BL)
-        run: pnpm --filter @rtb/security-assurance-certification certify:phase15a
+      - name: Phase 15B certification (gates A–BT)
+        run: pnpm --filter @rtb/security-assurance-certification certify:phase15b
       - name: Assert PASS artifact
         run: |
           node <<'EOF'
-          const a = JSON.parse(require("fs").readFileSync("packages/security-assurance-certification/artifacts/phase15a-security-assurance-discovery-certification.json","utf8"));
+          const a = JSON.parse(require("fs").readFileSync("packages/security-assurance-certification/artifacts/phase15b-security-assurance-foundation-certification.json","utf8"));
           const checks = [
             ["verdict", a.verdict==="PASS"],
             ["failedGateCount", a.failedGateCount===0],
             ["skippedGateCount", a.skippedGateCount===0],
             ["notExecutedGateCount", a.notExecutedGateCount===0],
-            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===64],
-            ["version", a.version==="0.1.0-discovery" || a.version==="0.2.0-control-evidence"],
-            ["status", a.status==="discovery" || a.status==="control_evidence_foundation"],
-            ["SecurityAssuranceDiscoveryReady", a.SecurityAssuranceDiscoveryReady===true],
-            ["SecurityAssuranceRuntimeImplemented", a.SecurityAssuranceRuntimeImplemented===false],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===72],
+            ["version", a.version==="0.2.0-control-evidence"],
+            ["status", a.status==="control_evidence_foundation"],
+            ["SecurityAssuranceFoundationReady", a.SecurityAssuranceFoundationReady===true],
             ["SecurityIntelligenceImplemented", a.SecurityIntelligenceImplemented===false],
             ["CustomerTrustCenterImplemented", a.CustomerTrustCenterImplemented===false],
+            ["automaticSecurityApprovalEnabled", a.automaticSecurityApprovalEnabled===false],
             ["duplicatePolicyEngineDetected", a.duplicatePolicyEngineDetected===false],
             ["EngineeringOSV1Intact", a.EngineeringOSV1Intact===true],
-            ["phase15BReady", a.phase15BReady===true],
+            ["phase15CReady", a.phase15CReady===true],
             ["releaseEligible", a.releaseEligible===true],
             ["secretExposureDetected", a.secretExposureDetected===false],
             ["artifactIdentity", a.artifactCommitSha===a.ciHeadSha && a.ciHeadSha===a.buildIdentitySha],
@@ -80,14 +84,14 @@ jobs:
           console.log(JSON.stringify({
             verdict: a.verdict,
             version: a.version,
-            phase15BReady: a.phase15BReady,
-            SecurityAssuranceRuntimeImplemented: a.SecurityAssuranceRuntimeImplemented,
+            phase15CReady: a.phase15CReady,
+            SecurityAssuranceFoundationReady: a.SecurityAssuranceFoundationReady,
           }, null, 2));
           EOF
       - name: Upload certification artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase15a-security-assurance-discovery-certification
-          path: packages/security-assurance-certification/artifacts/phase15a-security-assurance-discovery-certification.json
+          name: phase15b-security-assurance-foundation-certification
+          path: packages/security-assurance-certification/artifacts/phase15b-security-assurance-foundation-certification.json
           if-no-files-found: warn

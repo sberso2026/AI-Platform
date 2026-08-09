@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const root = resolve(__dirname, "../../..");
 
-describe("Phase 15A Security & Assurance discovery", () => {
-  it("places Sec&A at Platform level as 0.1.0-discovery without runtime", () => {
+describe("Phase 15A Security & Assurance discovery (regression)", () => {
+  it("preserves discovery corpus while foundation advances version", () => {
     const version = readFileSync(
       resolve(root, "packages/security-assurance/src/version.ts"),
       "utf8",
@@ -14,9 +14,8 @@ describe("Phase 15A Security & Assurance discovery", () => {
       resolve(root, "packages/security-assurance/src/discovery-flags.ts"),
       "utf8",
     );
-    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.1.0-discovery"');
-    expect(version).toContain('SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =');
-    expect(version).toContain("0.1.0-draft");
+    expect(version).toContain("4748972076f77e7392bb41ec664adddfeb677407");
+    expect(version).toContain('PHASE_15A_BASELINE_VERSION = "0.1.0-discovery"');
     expect(flags).toContain("SecurityAssuranceDiscoveryReady = true");
     expect(flags).toContain("SecurityAssuranceRuntimeImplemented = false");
     expect(flags).toContain("CustomerTrustCenterImplemented = false");

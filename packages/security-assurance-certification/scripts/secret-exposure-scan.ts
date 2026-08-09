@@ -1,5 +1,5 @@
 /**
- * Secret exposure scan for Security & Assurance Phase 15A.
+ * Secret exposure scan for Security & Assurance Phase 15A/15B.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -24,6 +24,7 @@ const SCAN_ROOTS = [
 
 const SCAN_DOCS = [
   "docs/architecture/SECURITY_ASSURANCE_PHASE_15A.md",
+  "docs/architecture/SECURITY_ASSURANCE_PHASE_15B.md",
   "docs/architecture/RTB_SECURITY_AND_ASSURANCE_BOUNDARY.md",
   "docs/security/SECURITY_ASSURANCE_PHASE_15A_EXISTING_CONTROL_INVENTORY.md",
   "docs/security/SECURITY_ASSURANCE_OWNERSHIP_MATRIX.md",
@@ -35,6 +36,9 @@ const SCAN_DOCS = [
   "docs/security/SECURITY_ASSURANCE_PHASE_15A_GAP_REGISTER.md",
   "docs/security/SECURITY_ASSURANCE_IMPLEMENTATION_ROADMAP.md",
   "docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_DRAFT.md",
+  "docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_0_2_0.md",
+  "apps/web/src/app/(platform)/platform/security-assurance/page.tsx",
+  "supabase/migrations/20260808290000_batch_90_security_assurance_foundation.sql",
 ].map((rel) => resolve(root, rel));
 
 function collectFiles(dir: string, acc: string[] = []): string[] {

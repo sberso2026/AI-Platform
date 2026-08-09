@@ -1,16 +1,19 @@
 {
   "name": "@rtb/security-assurance-certification",
-  "version": "0.1.0-discovery",
+  "version": "0.2.0-control-evidence",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase15a": "tsx scripts/run-phase15a-certification.ts",
+    "certify:phase15b": "tsx scripts/run-phase15b-certification.ts",
+    "test:e2e": "playwright test playwright/v1-foundation.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {
     "@rtb/security-assurance": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.29",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3"

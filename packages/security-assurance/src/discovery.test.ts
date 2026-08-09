@@ -8,19 +8,19 @@ import {
   getSecurityAssuranceDiscoveryDeclaration,
   phase15BReady,
 } from "./discovery-flags";
-import {
-  SECURITY_ASSURANCE_DRAFT_CONTRACT_NAMES,
-} from "./draft-contracts";
+import { SECURITY_ASSURANCE_DRAFT_CONTRACT_NAMES } from "./draft-contracts";
 import {
   ENGINEERING_OS_V1_COMMIT,
-  SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION,
+  PHASE_15A_BASELINE_COMMIT,
   SECURITY_ASSURANCE_VERSION,
 } from "./version";
 
-describe("Phase 15A Security & Assurance discovery", () => {
-  it("declares 0.1.0-discovery without implementing runtime", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.1.0-discovery");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.1.0-draft");
+describe("Phase 15A Security & Assurance discovery regression", () => {
+  it("preserves discovery locks and EOS V1 baseline under foundation version", () => {
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.2.0-control-evidence");
+    expect(PHASE_15A_BASELINE_COMMIT).toBe(
+      "4748972076f77e7392bb41ec664adddfeb677407",
+    );
     expect(SecurityAssuranceDiscoveryReady).toBe(true);
     expect(SecurityAssuranceRuntimeImplemented).toBe(false);
     expect(SecurityIntelligenceImplemented).toBe(false);
@@ -32,13 +32,12 @@ describe("Phase 15A Security & Assurance discovery", () => {
     );
   });
 
-  it("exposes draft contracts and discovery declaration", () => {
+  it("keeps draft contract names and discovery declaration", () => {
     expect(SECURITY_ASSURANCE_DRAFT_CONTRACT_NAMES).toContain(
       "SecurityControlReference",
     );
     const d = getSecurityAssuranceDiscoveryDeclaration();
     expect(d.SecurityAssuranceBoundaryLocked).toBe(true);
     expect(d.EngineeringOSV1Intact).toBe(true);
-    expect(d.SecurityAssuranceRuntimeImplemented).toBe(false);
   });
 });
