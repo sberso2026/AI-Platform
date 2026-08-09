@@ -1,0 +1,18 @@
+{
+  "name": "@rtb/engineering-model-interoperability-certification",
+  "version": "0.1.0-interop-discovery",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "certify:phase13a": "tsx scripts/run-phase13a-certification.ts",
+    "secret-scan": "tsx scripts/secret-exposure-scan.ts"
+  },
+  "dependencies": {
+    "@rtb/engineering-model-interoperability": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,110 @@
+name: Phase 13A Engineering Interoperability Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-model-interoperability/**"
+      - "packages/engineering-model-interoperability-certification/**"
+      - "packages/digital-twin/package.json"
+      - "packages/digital-twin/src/version.ts"
+      - "packages/platform-certification/src/phase13a*"
+      - "docs/architecture/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - "docs/architecture/ENGINEERING_FEDERATION_MODEL.md"
+      - "docs/contracts/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - ".github/workflows/phase-13a-engineering-interoperability-discovery.yml"
+
+concurrency:
+  group: phase-13a-engineering-interoperability-discovery-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests (interop discovery)
+        run: pnpm --filter @rtb/engineering-model-interoperability test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase13a-engineering-interoperability-discovery.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification secret-scan
+      - name: Phase 13A certification (gates A–BE)
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification certify:phase13a
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-model-interoperability-certification/artifacts/phase13a-engineering-interoperability-discovery-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===57],
+            ["version", a.version==="0.1.0-interop-discovery"],
+            ["status", a.status==="interop_discovery"],
+            ["DigitalTwinV1Intact", a.DigitalTwinV1Intact===true],
+            ["EngineeringFederationModelLocked", a.EngineeringFederationModelLocked===true],
+            ["ModelFederationBoundaryLocked", a.ModelFederationBoundaryLocked===true],
+            ["ResultFederationBoundaryLocked", a.ResultFederationBoundaryLocked===true],
+            ["SolverExecutionBoundaryLocked", a.SolverExecutionBoundaryLocked===true],
+            ["IFCFirstClassInteroperabilityReserved", a.IFCFirstClassInteroperabilityReserved===true],
+            ["ETABSIntegrationDiscovered", a.ETABSIntegrationDiscovered===true],
+            ["SpaceGassIntegrationDiscovered", a.SpaceGassIntegrationDiscovered===true],
+            ["automaticAnalysisModelCertificationEnabled", a.automaticAnalysisModelCertificationEnabled===false],
+            ["duplicateToolFrameworkDetected", a.duplicateToolFrameworkDetected===false],
+            ["duplicateAssetOwnershipDetected", a.duplicateAssetOwnershipDetected===false],
+            ["duplicateProjectOwnershipDetected", a.duplicateProjectOwnershipDetected===false],
+            ["duplicateSpatialOwnershipDetected", a.duplicateSpatialOwnershipDetected===false],
+            ["sourceModelOwnershipPreserved", a.sourceModelOwnershipPreserved===true],
+            ["productionInteroperabilityRuntimeImplemented", a.productionInteroperabilityRuntimeImplemented===false],
+            ["digitalTwinVersion", a.digitalTwinVersion==="1.0.0"],
+            ["digitalTwinV1Commit", a.digitalTwinV1Commit==="a94425ed009ca087c2f44c9d3757c0c82bd936b1"],
+            ["projectControlsV1Intact", a.projectControlsV1Intact===true],
+            ["assetIntelligenceV1Intact", a.assetIntelligenceV1Intact===true],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact===true],
+            ["inspectionIntelligenceV1Intact", a.inspectionIntelligenceV1Intact===true],
+            ["publicContractVersion", a.publicContractVersion==="0.1.0-draft"],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+            ["phase13BReady", a.phase13BReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            DigitalTwinV1Intact: a.DigitalTwinV1Intact,
+            phase13BReady: a.phase13BReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase13a-engineering-interoperability-discovery-certification
+          path: packages/engineering-model-interoperability-certification/artifacts/phase13a-engineering-interoperability-discovery-certification.json
+          if-no-files-found: warn
