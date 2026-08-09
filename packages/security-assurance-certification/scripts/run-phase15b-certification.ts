@@ -146,9 +146,11 @@ function main() {
       "Foundation version 0.2.0-control-evidence",
       (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.2\.0-control-evidence"/) ||
         has(VERSION, /PHASE_15B_BASELINE_VERSION = "0\.2\.0-control-evidence"/) ||
-        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.3\.0-isolation-assurance"/)) &&
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.3\.0-isolation-assurance"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.4\.0-ai-data-security"/)) &&
         (has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/) ||
-          has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/)),
+          has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/) ||
+          has("packages/security-assurance/package.json", /"0\.4\.0-ai-data-security"/)),
     ),
   );
   push(
@@ -157,7 +159,8 @@ function main() {
       "Public contracts 0.2.0-control-evidence",
       (has(VERSION, /SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =\s*"0\.2\.0-control-evidence"/) ||
         has(VERSION, /PHASE_15B_BASELINE_VERSION = "0\.2\.0-control-evidence"/) ||
-        has(VERSION, /0\.3\.0-isolation-assurance/)) &&
+        has(VERSION, /0\.3\.0-isolation-assurance/) ||
+        has(VERSION, /0\.4\.0-ai-data-security/)) &&
         has(CONTRACTS, /SecurityEvidenceReference/) &&
         has(CONTRACTS, /universalNumericScore: null/),
     ),

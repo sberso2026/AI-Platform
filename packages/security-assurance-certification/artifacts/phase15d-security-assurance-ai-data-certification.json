@@ -1,0 +1,717 @@
+{
+  "title": "Security & Assurance AI & Data Security Assurance",
+  "verdict": "PASS",
+  "version": "0.4.0-ai-data-security",
+  "status": "ai_data_security",
+  "commit": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "artifactCommitSha": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "ciHeadSha": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "buildIdentitySha": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "phase15CBaseline": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "phase15BBaseline": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "phase15ABaseline": "4748972076f77e7392bb41ec664adddfeb677407",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 68,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15C baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15B/15A regression"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.4.0-ai-data-security"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.4.0-ai-data-security"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / reuse boundary"
+    },
+    {
+      "id": "I",
+      "name": "Classification fail-closed"
+    },
+    {
+      "id": "J",
+      "name": "DATA_INGESTION plane"
+    },
+    {
+      "id": "K",
+      "name": "DATA_STORAGE plane"
+    },
+    {
+      "id": "L",
+      "name": "RETRIEVAL plane"
+    },
+    {
+      "id": "M",
+      "name": "AI_CONTEXT plane"
+    },
+    {
+      "id": "N",
+      "name": "PROMPT plane"
+    },
+    {
+      "id": "O",
+      "name": "MODEL_PROVIDER plane"
+    },
+    {
+      "id": "P",
+      "name": "TOOL_INPUT plane"
+    },
+    {
+      "id": "Q",
+      "name": "TOOL_OUTPUT plane"
+    },
+    {
+      "id": "R",
+      "name": "MODEL_OUTPUT plane"
+    },
+    {
+      "id": "S",
+      "name": "PERSISTENCE plane"
+    },
+    {
+      "id": "T",
+      "name": "LOGGING_TELEMETRY plane"
+    },
+    {
+      "id": "U",
+      "name": "DATA_EGRESS plane"
+    },
+    {
+      "id": "V",
+      "name": "Provider unknown fail-closed"
+    },
+    {
+      "id": "W",
+      "name": "Sensitive exposure assessment"
+    },
+    {
+      "id": "X",
+      "name": "Evidence provenance/freshness"
+    },
+    {
+      "id": "Y",
+      "name": "Probe error != PASS"
+    },
+    {
+      "id": "Z",
+      "name": "Findings != incidents"
+    },
+    {
+      "id": "AA",
+      "name": "No autonomous remediation"
+    },
+    {
+      "id": "AB",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "AC",
+      "name": "Isolation dimension preserved"
+    },
+    {
+      "id": "AD",
+      "name": "Posture no universal score"
+    },
+    {
+      "id": "AE",
+      "name": "Events ai_data.*"
+    },
+    {
+      "id": "AF",
+      "name": "Workflow ai_data_review"
+    },
+    {
+      "id": "AG",
+      "name": "Admin UI marker"
+    },
+    {
+      "id": "AH",
+      "name": "Migration batch_92"
+    },
+    {
+      "id": "AI",
+      "name": "RLS tenant/workspace"
+    },
+    {
+      "id": "AJ",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AK",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AL",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "AM",
+      "name": "Accessibility"
+    },
+    {
+      "id": "AN",
+      "name": "Responsive"
+    },
+    {
+      "id": "AO",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AP",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AQ",
+      "name": "AiDataSecurityReady flags"
+    },
+    {
+      "id": "AR",
+      "name": "Advanced products unimplemented"
+    },
+    {
+      "id": "AS",
+      "name": "implementsOwnAiStack=false"
+    },
+    {
+      "id": "AT",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "AU",
+      "name": "Module V1 intact"
+    },
+    {
+      "id": "AV",
+      "name": "phase15EReady"
+    },
+    {
+      "id": "AW",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "AX",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "AY",
+      "name": "Semantics locks"
+    },
+    {
+      "id": "AZ",
+      "name": "Foundation+Isolation still ready"
+    },
+    {
+      "id": "BA",
+      "name": "No SIEM/DLP/Trust Center packages"
+    },
+    {
+      "id": "BB",
+      "name": "EOS still 1.0.0"
+    },
+    {
+      "id": "BC",
+      "name": "Package not 1.0.0"
+    },
+    {
+      "id": "BD",
+      "name": "AI/data docs"
+    },
+    {
+      "id": "BE",
+      "name": "No prompt-injection completeness claim"
+    },
+    {
+      "id": "BF",
+      "name": "Secret non-exposure in evidence"
+    },
+    {
+      "id": "BG",
+      "name": "Data-flow evidence implemented"
+    },
+    {
+      "id": "BH",
+      "name": "Provider assurance implemented"
+    },
+    {
+      "id": "BI",
+      "name": "Cross-tenant context denial"
+    },
+    {
+      "id": "BJ",
+      "name": "Unauthorized retrieval denial"
+    },
+    {
+      "id": "BK",
+      "name": "Tool scope/provenance"
+    },
+    {
+      "id": "BL",
+      "name": "Logging secret non-exposure"
+    },
+    {
+      "id": "BM",
+      "name": "Egress assessment"
+    },
+    {
+      "id": "BN",
+      "name": "duplicateAiStackDetected=false"
+    },
+    {
+      "id": "BO",
+      "name": "duplicateSecretManagerDetected=false"
+    },
+    {
+      "id": "BP",
+      "name": "SecurityAssuranceBoundaryLocked"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "AiDataSecurityReady": true,
+  "AiDataSecurityRuntimeImplemented": true,
+  "IsolationAssuranceReady": true,
+  "duplicateAiStackDetected": false,
+  "automaticRemediationEnabled": false,
+  "SecurityIntelligenceImplemented": false,
+  "AiTrustRuntimeImplemented": false,
+  "implementsOwnAiStack": false,
+  "EngineeringOSV1Intact": true,
+  "phase15EReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "897383f5a95cf81847ee866c1c1fdac5012b25a5"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15C baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15B/15A regression",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.4.0-ai-data-security",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.4.0-ai-data-security",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / reuse boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Classification fail-closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "DATA_INGESTION plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "DATA_STORAGE plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "RETRIEVAL plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "AI_CONTEXT plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "PROMPT plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "MODEL_PROVIDER plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "TOOL_INPUT plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "TOOL_OUTPUT plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "MODEL_OUTPUT plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "PERSISTENCE plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "LOGGING_TELEMETRY plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "DATA_EGRESS plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Provider unknown fail-closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Sensitive exposure assessment",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Evidence provenance/freshness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Probe error != PASS",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Findings != incidents",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "No autonomous remediation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Isolation dimension preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Posture no universal score",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Events ai_data.*",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Workflow ai_data_review",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Admin UI marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Migration batch_92",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "RLS tenant/workspace",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Accessibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Responsive",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "AiDataSecurityReady flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Advanced products unimplemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "implementsOwnAiStack=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Module V1 intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "phase15EReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "897383f5a95cf81847ee866c1c1fdac5012b25a5"
+    },
+    {
+      "id": "AX",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "AY",
+      "name": "Semantics locks",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "Foundation+Isolation still ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "No SIEM/DLP/Trust Center packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "EOS still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "Package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "AI/data docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "No prompt-injection completeness claim",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Secret non-exposure in evidence",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "Data-flow evidence implemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "Provider assurance implemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Cross-tenant context denial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "Unauthorized retrieval denial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Tool scope/provenance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "Logging secret non-exposure",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "Egress assessment",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BN",
+      "name": "duplicateAiStackDetected=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BO",
+      "name": "duplicateSecretManagerDetected=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BP",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

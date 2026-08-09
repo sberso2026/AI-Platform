@@ -26,6 +26,7 @@ const SCAN_DOCS = [
   "docs/architecture/SECURITY_ASSURANCE_PHASE_15A.md",
   "docs/architecture/SECURITY_ASSURANCE_PHASE_15B.md",
   "docs/architecture/SECURITY_ASSURANCE_PHASE_15C.md",
+  "docs/architecture/SECURITY_ASSURANCE_PHASE_15D.md",
   "docs/architecture/RTB_SECURITY_AND_ASSURANCE_BOUNDARY.md",
   "docs/security/SECURITY_ASSURANCE_PHASE_15A_EXISTING_CONTROL_INVENTORY.md",
   "docs/security/SECURITY_ASSURANCE_OWNERSHIP_MATRIX.md",
@@ -39,9 +40,11 @@ const SCAN_DOCS = [
   "docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_DRAFT.md",
   "docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_0_2_0.md",
   "docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_0_3_0.md",
+  "docs/security/SECURITY_ASSURANCE_PUBLIC_CONTRACTS_0_4_0.md",
   "apps/web/src/app/(platform)/platform/security-assurance/page.tsx",
   "supabase/migrations/20260808290000_batch_90_security_assurance_foundation.sql",
   "supabase/migrations/20260808300000_batch_91_security_assurance_isolation.sql",
+  "supabase/migrations/20260808310000_batch_92_security_assurance_ai_data.sql",
 ].map((rel) => resolve(root, rel));
 
 function collectFiles(dir: string, acc: string[] = []): string[] {

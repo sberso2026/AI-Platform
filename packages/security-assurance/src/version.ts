@@ -1,13 +1,19 @@
 /**
- * Phase 15C — Security & Assurance Isolation Assurance.
- * Not 1.0.0. Observes/probes/evidences isolation — does not replace enforcement.
+ * Phase 15D — Security & Assurance AI & Data Security Assurance.
+ * Not 1.0.0. Observes/assesses AI/data security — does not replace AI stack or enforcement.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.3.0-isolation-assurance" as const;
-export const SECURITY_ASSURANCE_STATUS = "isolation_assurance" as const;
-export const SECURITY_ASSURANCE_PHASE = "15C" as const;
+export const SECURITY_ASSURANCE_VERSION = "0.4.0-ai-data-security" as const;
+export const SECURITY_ASSURANCE_STATUS = "ai_data_security" as const;
+export const SECURITY_ASSURANCE_PHASE = "15D" as const;
 
 export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
-  "0.3.0-isolation-assurance" as const;
+  "0.4.0-ai-data-security" as const;
+
+/** Immutable Phase 15C isolation baseline. */
+export const PHASE_15C_BASELINE_COMMIT =
+  "897383f5a95cf81847ee866c1c1fdac5012b25a5" as const;
+export const PHASE_15C_BASELINE_HOSTED_RUN = "31300864126" as const;
+export const PHASE_15C_BASELINE_VERSION = "0.3.0-isolation-assurance" as const;
 
 /** Immutable Phase 15B foundation baseline. */
 export const PHASE_15B_BASELINE_COMMIT =

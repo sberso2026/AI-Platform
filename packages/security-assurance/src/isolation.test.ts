@@ -19,8 +19,8 @@ import {
 
 describe("Phase 15C Isolation Assurance", () => {
   it("declares 0.3.0-isolation-assurance on Phase 15B baseline", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.3.0-isolation-assurance");
-    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.3.0-isolation-assurance");
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.4.0-ai-data-security");
+    expect(SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION).toBe("0.4.0-ai-data-security");
     expect(PHASE_15B_BASELINE_COMMIT).toBe(
       "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
     );

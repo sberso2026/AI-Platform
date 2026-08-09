@@ -2,7 +2,7 @@ import { Header } from "@/components/layout/header";
 import { PageMain } from "@/components/layout/page-main";
 
 /**
- * Bounded administrative Security & Assurance surface (Phase 15B + 15C).
+ * Bounded administrative Security & Assurance surface (Phases 15B–15D).
  * No SOC dashboard theatre, threat map, or universal security score.
  */
 export default function PlatformSecurityAssurancePage() {
@@ -10,25 +10,34 @@ export default function PlatformSecurityAssurancePage() {
     <>
       <Header
         title="Security & Assurance"
-        description="Control, evidence, assessment, isolation assurance, and dimensional posture"
+        description="Control, evidence, isolation, AI/data security assurance, and dimensional posture"
         showEngineeringChrome={false}
       />
       <PageMain>
         <main className="space-y-6">
           <p data-testid="security-assurance-foundation-ready">
-            Security & Assurance foundation ready (0.3.0-isolation-assurance) —
+            Security & Assurance foundation ready (0.4.0-ai-data-security) —
             controls, evidence freshness, assessments, findings, exceptions, and
             dimensional posture; SecurityIntelligenceImplemented=false;
             CustomerTrustCenterImplemented=false; no universal security score.
           </p>
 
           <p data-testid="security-assurance-isolation-ready">
-            Isolation Assurance ready (0.3.0-isolation-assurance) —
+            Isolation Assurance ready (0.4.0-ai-data-security) —
             IsolationAssuranceRuntimeImplemented=true;
             knownCrossTenantLeakageDetected=false;
             knownCrossWorkspaceLeakageDetected=false;
             automaticRemediationEnabled=false;
             automaticRlsMutationEnabled=false; observes isolation, does not enforce.
+          </p>
+
+          <p data-testid="security-assurance-ai-data-ready">
+            AI & Data Security Assurance ready (0.4.0-ai-data-security) —
+            AiDataSecurityRuntimeImplemented=true;
+            ProviderDataHandlingAssuranceImplemented=true;
+            duplicateAiStackDetected=false;
+            AiTrustRuntimeImplemented=false;
+            no universal prompt-injection claim; observes AI/data security.
           </p>
 
           <section aria-label="Security assurance inspection surfaces">
@@ -41,15 +50,12 @@ export default function PlatformSecurityAssurancePage() {
               <li data-testid="sa-surface-exceptions">Exceptions</li>
               <li data-testid="sa-surface-posture">Posture dimensions</li>
               <li data-testid="sa-surface-isolation">Isolation Assurance</li>
+              <li data-testid="sa-surface-ai-data">AI & Data Security</li>
             </ul>
           </section>
 
           <section aria-label="Isolation assurance">
             <h2 className="text-lg font-semibold">Isolation Assurance</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Overall isolation posture · target planes · probe status · last verified ·
-              freshness · failed probes · findings · scope · limitations
-            </p>
             <ul
               className="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3"
               data-testid="sa-isolation-planes"
@@ -69,6 +75,38 @@ export default function PlatformSecurityAssurancePage() {
             </ul>
             <p data-testid="sa-iso-no-theatre" className="mt-2 text-sm text-muted-foreground">
               no fake 100% secure indicator
+            </p>
+          </section>
+
+          <section aria-label="AI and data security assurance">
+            <h2 className="text-lg font-semibold">AI & Data Security</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Plane status · provider posture · data-flow assurance · findings ·
+              evidence freshness · limitations
+            </p>
+            <ul
+              className="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3"
+              data-testid="sa-ai-data-planes"
+              aria-label="AI data security planes"
+            >
+              <li data-testid="sa-aid-plane-DATA_INGESTION">DATA_INGESTION</li>
+              <li data-testid="sa-aid-plane-DATA_STORAGE">DATA_STORAGE</li>
+              <li data-testid="sa-aid-plane-RETRIEVAL">RETRIEVAL</li>
+              <li data-testid="sa-aid-plane-AI_CONTEXT">AI_CONTEXT</li>
+              <li data-testid="sa-aid-plane-PROMPT">PROMPT</li>
+              <li data-testid="sa-aid-plane-MODEL_PROVIDER">MODEL_PROVIDER</li>
+              <li data-testid="sa-aid-plane-TOOL_INPUT">TOOL_INPUT</li>
+              <li data-testid="sa-aid-plane-TOOL_OUTPUT">TOOL_OUTPUT</li>
+              <li data-testid="sa-aid-plane-MODEL_OUTPUT">MODEL_OUTPUT</li>
+              <li data-testid="sa-aid-plane-PERSISTENCE">PERSISTENCE</li>
+              <li data-testid="sa-aid-plane-LOGGING_TELEMETRY">LOGGING_TELEMETRY</li>
+              <li data-testid="sa-aid-plane-DATA_EGRESS">DATA_EGRESS</li>
+            </ul>
+            <p data-testid="sa-aid-provider-posture" className="mt-2 text-sm">
+              provider posture: approved evidenced; unknown fail-closed
+            </p>
+            <p data-testid="sa-aid-no-injection-claim" className="text-sm text-muted-foreground">
+              promptInjectionCompletelyPreventedClaimed=false
             </p>
           </section>
 

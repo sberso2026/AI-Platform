@@ -1,0 +1,97 @@
+name: Phase 15D Security & Assurance AI & Data
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/security-assurance/**"
+      - "packages/security-assurance-certification/**"
+      - "packages/platform-certification/src/phase15d*"
+      - "apps/web/src/app/(platform)/platform/security-assurance/**"
+      - "supabase/migrations/20260808310000_batch_92_security_assurance_ai_data.sql"
+      - "docs/security/SECURITY_ASSURANCE_*"
+      - "docs/architecture/SECURITY_ASSURANCE_PHASE_15D.md"
+      - ".github/workflows/phase-15d-security-assurance-ai-data.yml"
+
+concurrency:
+  group: phase-15d-security-assurance-ai-data-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/security-assurance-certification exec playwright install --with-deps chromium
+      - name: Unit tests
+        run: pnpm --filter @rtb/security-assurance test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase15a-security-assurance-discovery.test.ts src/phase15b-security-assurance-foundation.test.ts src/phase15c-security-assurance-isolation.test.ts src/phase15d-security-assurance-ai-data.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/security-assurance-certification secret-scan
+      - name: Phase 15D certification (gates A–BP)
+        run: pnpm --filter @rtb/security-assurance-certification certify:phase15d
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/security-assurance-certification/artifacts/phase15d-security-assurance-ai-data-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===68],
+            ["version", a.version==="0.4.0-ai-data-security"],
+            ["status", a.status==="ai_data_security"],
+            ["AiDataSecurityReady", a.AiDataSecurityReady===true],
+            ["AiDataSecurityRuntimeImplemented", a.AiDataSecurityRuntimeImplemented===true],
+            ["duplicateAiStackDetected", a.duplicateAiStackDetected===false],
+            ["automaticRemediationEnabled", a.automaticRemediationEnabled===false],
+            ["AiTrustRuntimeImplemented", a.AiTrustRuntimeImplemented===false],
+            ["EngineeringOSV1Intact", a.EngineeringOSV1Intact===true],
+            ["phase15EReady", a.phase15EReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+            ["artifactIdentity", a.artifactCommitSha===a.ciHeadSha && a.ciHeadSha===a.buildIdentitySha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            phase15EReady: a.phase15EReady,
+            AiDataSecurityReady: a.AiDataSecurityReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase15d-security-assurance-ai-data-certification
+          path: packages/security-assurance-certification/artifacts/phase15d-security-assurance-ai-data-certification.json
+          if-no-files-found: warn
