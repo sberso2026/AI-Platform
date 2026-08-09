@@ -61,7 +61,7 @@ jobs:
             ["notExecutedGateCount", a.notExecutedGateCount===0],
             ["requiredTestsSkipped", a.requiredTestsSkipped===0],
             ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===50],
-            ["version", a.version==="0.3.0-pen-test-readiness"],
+            ["version", a.version==="0.3.0-pen-test-readiness" || a.version==="0.3.1-internal-adversarial"],
             ["ExternalPenTestReadinessReady", a.ExternalPenTestReadinessReady===true],
             ["ExternalPenTestScopeReady", a.ExternalPenTestScopeReady===true],
             ["PenTestRulesOfEngagementReady", a.PenTestRulesOfEngagementReady===true],

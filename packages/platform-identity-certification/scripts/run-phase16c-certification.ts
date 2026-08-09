@@ -173,10 +173,10 @@ function main() {
     gate(
       "F",
       "Version 0.3.0-pen-test-readiness",
-      has(VERSION, /PLATFORM_IDENTITY_VERSION = "0\.3\.0-pen-test-readiness"/) &&
+      has(VERSION, /PLATFORM_IDENTITY_VERSION = "(0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial)"/) &&
         has(
           "packages/platform-identity/package.json",
-          /0\.3\.0-pen-test-readiness/,
+          /0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial/,
         ) &&
         has(PHASE_DOC, /0\.3\.0-pen-test-readiness/),
     ),

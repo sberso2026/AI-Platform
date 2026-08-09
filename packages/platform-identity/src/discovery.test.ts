@@ -23,7 +23,7 @@ describe("Phase 16A discovery preserved under 16B", () => {
   });
 
   it("advances package version for enterprise SSO / pen-test readiness", () => {
-    expect(["0.2.0-enterprise-sso", "0.3.0-pen-test-readiness"]).toContain(
+    expect(["0.2.0-enterprise-sso", "0.3.0-pen-test-readiness", "0.3.1-internal-adversarial"]).toContain(
       PLATFORM_IDENTITY_VERSION,
     );
     expect(EnterpriseSsoRuntimeImplemented).toBe(true);

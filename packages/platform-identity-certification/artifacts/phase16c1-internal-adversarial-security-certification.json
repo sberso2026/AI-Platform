@@ -1,0 +1,430 @@
+{
+  "title": "Internal Adversarial Security Validation & S07 Deferral",
+  "schemaVersion": "internal-adversarial-security-certification/1",
+  "phase": "16C.1",
+  "verdict": "PASS",
+  "version": "0.3.1-internal-adversarial",
+  "status": "internal_adversarial",
+  "commit": "2999b103d35ce600ced3a15f2e39eef146c48236",
+  "artifactCommitSha": "2999b103d35ce600ced3a15f2e39eef146c48236",
+  "ciHeadSha": "2999b103d35ce600ced3a15f2e39eef146c48236",
+  "buildIdentitySha": "2999b103d35ce600ced3a15f2e39eef146c48236",
+  "phase16CBaseline": "2999b103d35ce600ced3a15f2e39eef146c48236",
+  "phase16BBaseline": "0078c9b67021b695c5a4137905247818dd945d83",
+  "securityAssuranceV1Baseline": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 38,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 16C baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Phase 16B / S08 preserved"
+    },
+    {
+      "id": "D",
+      "name": "Security & Assurance V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "F",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "G",
+      "name": "Version 0.3.1-internal-adversarial"
+    },
+    {
+      "id": "H",
+      "name": "S07 deferral documented"
+    },
+    {
+      "id": "I",
+      "name": "S07 not waived"
+    },
+    {
+      "id": "J",
+      "name": "External pen test still required for Tier-1"
+    },
+    {
+      "id": "K",
+      "name": "S07 remains false"
+    },
+    {
+      "id": "L",
+      "name": "ExternalPenTestPerformed false"
+    },
+    {
+      "id": "M",
+      "name": "Independent opinion not issued"
+    },
+    {
+      "id": "N",
+      "name": "Tier1 remains false"
+    },
+    {
+      "id": "O",
+      "name": "S08 remains true"
+    },
+    {
+      "id": "P",
+      "name": "16C readiness artifacts preserved"
+    },
+    {
+      "id": "Q",
+      "name": "Internal validation docs"
+    },
+    {
+      "id": "R",
+      "name": "Test matrix"
+    },
+    {
+      "id": "S",
+      "name": "Findings register"
+    },
+    {
+      "id": "T",
+      "name": "Regression runbook"
+    },
+    {
+      "id": "U",
+      "name": "Adversarial suite ready"
+    },
+    {
+      "id": "V",
+      "name": "Tenant A/B fixtures"
+    },
+    {
+      "id": "W",
+      "name": "Zero open CRITICAL"
+    },
+    {
+      "id": "X",
+      "name": "Zero open HIGH"
+    },
+    {
+      "id": "Y",
+      "name": "Adversarial suite execution"
+    },
+    {
+      "id": "Z",
+      "name": "knownCrossTenantLeakageDetected false"
+    },
+    {
+      "id": "AA",
+      "name": "Non-claim semantics"
+    },
+    {
+      "id": "AB",
+      "name": "Frozen integrity flags"
+    },
+    {
+      "id": "AC",
+      "name": "Public contracts still 0.2.0-enterprise-sso"
+    },
+    {
+      "id": "AD",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AE",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AF",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AG",
+      "name": "Browser marker"
+    },
+    {
+      "id": "AH",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AI",
+      "name": "SCA audit informational"
+    },
+    {
+      "id": "AJ",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "AK",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "AL",
+      "name": "InternalAdversarialSecurityValidationReady"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "requiredTestsSkipped": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "InternalAdversarialSecurityValidationReady": true,
+  "InternalSecurityRegressionSuiteReady": true,
+  "KnownCriticalInternalSecurityFindingOpen": false,
+  "KnownHighInternalSecurityFindingOpen": false,
+  "S07Status": "DEFERRED_UNTIL_TIER1_COMMERCIALIZATION",
+  "S07RequirementWaived": false,
+  "ExternalPenTestStillRequiredForTier1": true,
+  "S07ExternalPenTestComplete": false,
+  "ExternalPenTestPerformed": false,
+  "IndependentPenTestOpinionIssued": false,
+  "IndependentSecurityAssuranceComplete": false,
+  "Tier1EnterpriseProductionReady": false,
+  "S08CustomerSsoProductionReady": true,
+  "FakeExternalPenTestResultPresent": false,
+  "knownCrossTenantLeakageDetected": false,
+  "adversarialCaseCount": 38,
+  "adversarialFailedCount": 0,
+  "substitutesForExternalPenTest": false,
+  "SecurityAssuranceV1Intact": true,
+  "EngineeringOSV1Intact": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "2999b103d35ce600ced3a15f2e39eef146c48236"
+    },
+    {
+      "id": "B",
+      "name": "Phase 16C baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Phase 16B / S08 preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Security & Assurance V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Version 0.3.1-internal-adversarial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "S07 deferral documented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "S07 not waived",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "External pen test still required for Tier-1",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "S07 remains false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "ExternalPenTestPerformed false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Independent opinion not issued",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Tier1 remains false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "S08 remains true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "16C readiness artifacts preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Internal validation docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Test matrix",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Findings register",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Regression runbook",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Adversarial suite ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Tenant A/B fixtures",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Zero open CRITICAL",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Zero open HIGH",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Adversarial suite execution",
+      "status": "pass",
+      "detail": "cases=38; failed=0"
+    },
+    {
+      "id": "Z",
+      "name": "knownCrossTenantLeakageDetected false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Non-claim semantics",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Frozen integrity flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Public contracts still 0.2.0-enterprise-sso",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Browser marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "SCA audit informational",
+      "status": "pass",
+      "detail": "pnpm audit critical=0 (informational; not external pen test)"
+    },
+    {
+      "id": "AJ",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "2999b103d35ce600ced3a15f2e39eef146c48236"
+    },
+    {
+      "id": "AK",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "AL",
+      "name": "InternalAdversarialSecurityValidationReady",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

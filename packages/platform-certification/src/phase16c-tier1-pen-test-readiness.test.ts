@@ -18,8 +18,8 @@ describe("Phase 16C Tier-1 External Pen-Test Readiness", () => {
       resolve(root, "packages/platform-identity/src/runtime-flags.ts"),
       "utf8",
     );
-    expect(version).toContain(
-      'PLATFORM_IDENTITY_VERSION = "0.3.0-pen-test-readiness"',
+    expect(version).toMatch(
+      /PLATFORM_IDENTITY_VERSION = "(0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial)"/,
     );
     expect(version).toContain("0078c9b67021b695c5a4137905247818dd945d83");
     expect(version).toContain(

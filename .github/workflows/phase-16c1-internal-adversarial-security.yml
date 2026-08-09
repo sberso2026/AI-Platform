@@ -1,0 +1,97 @@
+name: Phase 16C.1 Internal Adversarial Security
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/platform-identity/**"
+      - "packages/platform-identity-certification/**"
+      - "packages/platform-certification/src/phase16c1*"
+      - "docs/architecture/PLATFORM_IDENTITY_PHASE_16C1.md"
+      - "docs/security/S07_EXTERNAL_PEN_TEST_DEFERRAL.md"
+      - "docs/security/INTERNAL_*"
+      - ".github/workflows/phase-16c1-internal-adversarial-security.yml"
+
+concurrency:
+  group: phase-16c1-internal-adversarial-security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  CERTIFY_BROWSER: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/platform-identity-certification exec playwright install --with-deps chromium
+      - name: Unit tests
+        run: pnpm --filter @rtb/platform-identity test
+      - name: Architecture tests
+        run: pnpm --dir packages/platform-certification exec vitest run src/phase16c1-internal-adversarial-security.test.ts src/phase16c-tier1-pen-test-readiness.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/platform-identity-certification secret-scan
+      - name: Phase 16C.1 certification
+        run: pnpm --filter @rtb/platform-identity-certification certify:phase16c1
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/platform-identity-certification/artifacts/phase16c1-internal-adversarial-security-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["requiredTestsSkipped", a.requiredTestsSkipped===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===38],
+            ["version", a.version==="0.3.1-internal-adversarial"],
+            ["InternalAdversarialSecurityValidationReady", a.InternalAdversarialSecurityValidationReady===true],
+            ["InternalSecurityRegressionSuiteReady", a.InternalSecurityRegressionSuiteReady===true],
+            ["KnownCriticalInternalSecurityFindingOpen", a.KnownCriticalInternalSecurityFindingOpen===false],
+            ["KnownHighInternalSecurityFindingOpen", a.KnownHighInternalSecurityFindingOpen===false],
+            ["S07Status", a.S07Status==="DEFERRED_UNTIL_TIER1_COMMERCIALIZATION"],
+            ["S07RequirementWaived", a.S07RequirementWaived===false],
+            ["ExternalPenTestStillRequiredForTier1", a.ExternalPenTestStillRequiredForTier1===true],
+            ["S07ExternalPenTestComplete", a.S07ExternalPenTestComplete===false],
+            ["ExternalPenTestPerformed", a.ExternalPenTestPerformed===false],
+            ["IndependentPenTestOpinionIssued", a.IndependentPenTestOpinionIssued===false],
+            ["Tier1EnterpriseProductionReady", a.Tier1EnterpriseProductionReady===false],
+            ["S08CustomerSsoProductionReady", a.S08CustomerSsoProductionReady===true],
+            ["knownCrossTenantLeakageDetected", a.knownCrossTenantLeakageDetected===false],
+            ["substitutesForExternalPenTest", a.substitutesForExternalPenTest===false],
+            ["unexpected5xx", a.unexpected5xx===0],
+            ["secretExposure", a.secretExposure===false],
+            ["releaseEligible", a.releaseEligible===true],
+            ["artifactIdentity", a.artifactCommitSha===a.ciHeadSha && a.ciHeadSha===a.buildIdentitySha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log("Phase 16C.1 assert PASS");
+          EOF
+      - name: Upload certification artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase16c1-internal-adversarial-security-certification
+          path: packages/platform-identity-certification/artifacts/phase16c1-internal-adversarial-security-certification.json

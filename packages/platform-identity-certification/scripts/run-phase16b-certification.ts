@@ -157,11 +157,11 @@ function main() {
       "Version 0.2.0-enterprise-sso",
       has(
         VERSION,
-        /PLATFORM_IDENTITY_VERSION = "(0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness)"/,
+        /PLATFORM_IDENTITY_VERSION = "(0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial)"/,
       ) &&
         has(
           "packages/platform-identity/package.json",
-          /0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness/,
+          /0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial/,
         ) &&
         has(CONTRACTS, /0\.2\.0-enterprise-sso|FederatedMfaAssurance/),
     ),

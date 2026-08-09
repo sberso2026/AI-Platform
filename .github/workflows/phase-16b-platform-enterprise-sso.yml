@@ -67,7 +67,7 @@ jobs:
             ["notExecutedGateCount", a.notExecutedGateCount===0],
             ["requiredTestsSkipped", a.requiredTestsSkipped===0],
             ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===65],
-            ["version", a.version==="0.2.0-enterprise-sso" || a.version==="0.3.0-pen-test-readiness"],
+            ["version", a.version==="0.2.0-enterprise-sso" || a.version==="0.3.0-pen-test-readiness" || a.version==="0.3.1-internal-adversarial"],
             ["EnterpriseSsoRuntimeImplemented", a.EnterpriseSsoRuntimeImplemented===true],
             ["S08CustomerSsoProductionReady", a.S08CustomerSsoProductionReady===true],
             ["CustomerSsoProductionReady", a.CustomerSsoProductionReady===true],

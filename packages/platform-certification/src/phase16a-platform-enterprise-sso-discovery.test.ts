@@ -15,7 +15,7 @@ describe("Phase 16A Platform Enterprise SSO Discovery", () => {
       "utf8",
     );
     expect(version).toMatch(
-      /PLATFORM_IDENTITY_VERSION = "(0\.1\.0-enterprise-sso-discovery|0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness)"/,
+      /PLATFORM_IDENTITY_VERSION = "(0\.1\.0-enterprise-sso-discovery|0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial)"/,
     );
     expect(version).toContain("cf3e9eff49c1314ea16e115dcde26cd45e520121");
     expect(version).toContain("3bfc02478f50ce17f7a81e4e312986c9e1377535");

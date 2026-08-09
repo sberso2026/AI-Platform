@@ -15,7 +15,7 @@ describe("Phase 16B Platform Enterprise SSO / S08", () => {
       "utf8",
     );
     expect(version).toMatch(
-      /PLATFORM_IDENTITY_VERSION = "(0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness)"/,
+      /PLATFORM_IDENTITY_VERSION = "(0\.2\.0-enterprise-sso|0\.3\.0-pen-test-readiness|0\.3\.1-internal-adversarial)"/,
     );
     expect(version).toContain("af1e0425c77c516d4cf99a42d5e3eab9bee7206e");
     expect(runtime).toContain("EnterpriseSsoRuntimeImplemented = true");

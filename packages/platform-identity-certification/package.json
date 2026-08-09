@@ -1,15 +1,17 @@
 {
   "name": "@rtb/platform-identity-certification",
-  "version": "0.3.0-pen-test-readiness",
+  "version": "0.3.1-internal-adversarial",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase16a": "tsx scripts/run-phase16a-certification.ts",
     "certify:phase16b": "tsx scripts/run-phase16b-certification.ts",
     "certify:phase16c": "tsx scripts/run-phase16c-certification.ts",
+    "certify:phase16c1": "tsx scripts/run-phase16c1-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts",
     "test:e2e:sso": "playwright test playwright/v1-enterprise-sso.spec.ts",
-    "test:e2e:pen-test-readiness": "playwright test playwright/v1-pen-test-readiness.spec.ts"
+    "test:e2e:pen-test-readiness": "playwright test playwright/v1-pen-test-readiness.spec.ts",
+    "test:e2e:internal-adversarial": "playwright test playwright/v1-internal-adversarial.spec.ts"
   },
   "dependencies": {
     "@rtb/platform-identity": "workspace:*"

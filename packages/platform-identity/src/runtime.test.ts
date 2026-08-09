@@ -51,7 +51,7 @@ import {
 
 describe("Phase 16B Platform Enterprise SSO", () => {
   it("preserves S08 closure and public contracts on 16C readiness version", () => {
-    expect(PLATFORM_IDENTITY_VERSION).toBe("0.3.0-pen-test-readiness");
+    expect(PLATFORM_IDENTITY_VERSION).toBe("0.3.1-internal-adversarial");
     expect(PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACT_VERSION).toBe(
       "0.2.0-enterprise-sso",
     );

@@ -1,13 +1,19 @@
 /**
- * Phase 16C — Tier-1 External Penetration Test Readiness.
- * Does NOT complete S07. Does NOT self-certify an external pen test.
+ * Phase 16C.1 — Internal adversarial security validation & S07 deferral.
+ * Does NOT complete S07. Does NOT substitute for independent external pen test.
  */
-export const PLATFORM_IDENTITY_VERSION = "0.3.0-pen-test-readiness" as const;
-export const PLATFORM_IDENTITY_STATUS = "pen_test_readiness" as const;
-export const PLATFORM_IDENTITY_PHASE = "16C" as const;
+export const PLATFORM_IDENTITY_VERSION = "0.3.1-internal-adversarial" as const;
+export const PLATFORM_IDENTITY_STATUS = "internal_adversarial" as const;
+export const PLATFORM_IDENTITY_PHASE = "16C.1" as const;
 
 export const PLATFORM_ENTERPRISE_IDENTITY_PUBLIC_CONTRACT_VERSION =
   "0.2.0-enterprise-sso" as const;
+
+/** Phase 16C pen-test readiness baseline (immutable). */
+export const PHASE_16C_BASELINE_COMMIT =
+  "2999b103d35ce600ced3a15f2e39eef146c48236" as const;
+export const PHASE_16C_BASELINE_HOSTED_RUN = "31311869194" as const;
+export const PHASE_16C_BASELINE_VERSION = "0.3.0-pen-test-readiness" as const;
 
 /** Phase 16B enterprise SSO baseline (immutable). */
 export const PHASE_16B_BASELINE_COMMIT =
@@ -44,4 +50,5 @@ export const PLATFORM_IDENTITY_V1_SEMANTICS = {
   passwordFallbackWhenRequired: false,
   externalFindingNeqSelfAssessment: true,
   internalTestsCannotSatisfyS07: true,
+  internalAdversarialNeqExternalPenTest: true,
 } as const;
