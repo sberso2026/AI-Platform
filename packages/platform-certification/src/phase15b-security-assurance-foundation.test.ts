@@ -14,8 +14,8 @@ describe("Phase 15B Security & Assurance foundation", () => {
       resolve(root, "packages/security-assurance/src/foundation-flags.ts"),
       "utf8",
     );
-    expect(version).toContain('SECURITY_ASSURANCE_VERSION = "0.2.0-control-evidence"');
-    expect(version).toContain("0.2.0-control-evidence");
+    expect(version).toContain("0.3.0-isolation-assurance");
+    expect(version).toContain("c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f");
     expect(version).toContain("4748972076f77e7392bb41ec664adddfeb677407");
     expect(flags).toContain("SecurityAssuranceFoundationReady = true");
     expect(flags).toContain("automaticSecurityApprovalEnabled = false");

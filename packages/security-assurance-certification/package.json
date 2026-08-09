@@ -1,12 +1,14 @@
 {
   "name": "@rtb/security-assurance-certification",
-  "version": "0.2.0-control-evidence",
+  "version": "0.3.0-isolation-assurance",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase15a": "tsx scripts/run-phase15a-certification.ts",
     "certify:phase15b": "tsx scripts/run-phase15b-certification.ts",
+    "certify:phase15c": "tsx scripts/run-phase15c-certification.ts",
     "test:e2e": "playwright test playwright/v1-foundation.spec.ts",
+    "test:e2e:isolation": "playwright test playwright/v1-isolation.spec.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

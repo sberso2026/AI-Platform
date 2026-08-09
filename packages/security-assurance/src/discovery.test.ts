@@ -17,7 +17,7 @@ import {
 
 describe("Phase 15A Security & Assurance discovery regression", () => {
   it("preserves discovery locks and EOS V1 baseline under foundation version", () => {
-    expect(SECURITY_ASSURANCE_VERSION).toBe("0.2.0-control-evidence");
+    expect(SECURITY_ASSURANCE_VERSION).toBe("0.3.0-isolation-assurance");
     expect(PHASE_15A_BASELINE_COMMIT).toBe(
       "4748972076f77e7392bb41ec664adddfeb677407",
     );

@@ -144,15 +144,20 @@ function main() {
     gate(
       "E",
       "Foundation version 0.2.0-control-evidence",
-      has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.2\.0-control-evidence"/) &&
-        has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/),
+      (has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.2\.0-control-evidence"/) ||
+        has(VERSION, /PHASE_15B_BASELINE_VERSION = "0\.2\.0-control-evidence"/) ||
+        has(VERSION, /SECURITY_ASSURANCE_VERSION = "0\.3\.0-isolation-assurance"/)) &&
+        (has("packages/security-assurance/package.json", /"0\.2\.0-control-evidence"/) ||
+          has("packages/security-assurance/package.json", /"0\.3\.0-isolation-assurance"/)),
     ),
   );
   push(
     gate(
       "F",
       "Public contracts 0.2.0-control-evidence",
-      has(VERSION, /SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =\s*"0\.2\.0-control-evidence"/) &&
+      (has(VERSION, /SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =\s*"0\.2\.0-control-evidence"/) ||
+        has(VERSION, /PHASE_15B_BASELINE_VERSION = "0\.2\.0-control-evidence"/) ||
+        has(VERSION, /0\.3\.0-isolation-assurance/)) &&
         has(CONTRACTS, /SecurityEvidenceReference/) &&
         has(CONTRACTS, /universalNumericScore: null/),
     ),
@@ -459,7 +464,7 @@ function main() {
       "AP",
       "Admin UI ready marker",
       has(UI, /data-testid="security-assurance-foundation-ready"/) &&
-        has(UI, /0\.2\.0-control-evidence/),
+        (has(UI, /0\.2\.0-control-evidence/) || has(UI, /0\.3\.0-isolation-assurance/)),
     ),
   );
   push(gate("AQ", "Workflow exists", exists(WORKFLOW) && has(WORKFLOW, /phase15CReady/)));
@@ -535,10 +540,12 @@ function main() {
       "Advanced runtimes unimplemented",
       flagFalse(discoveryFlags, "SecurityIntelligenceImplemented") &&
         flagFalse(discoveryFlags, "ComplianceIntelligenceImplemented") &&
-        flagFalse(flagsSrc, "IsolationAssuranceRuntimeImplemented") &&
+        (flagFalse(flagsSrc, "IsolationAssuranceRuntimeImplemented") ||
+          has("packages/security-assurance/src/isolation-flags.ts", /IsolationAssuranceRuntimeImplemented = true/)) &&
         flagFalse(flagsSrc, "AiTrustRuntimeImplemented") &&
         flagFalse(flagsSrc, "SecureComputeAssuranceRuntimeImplemented") &&
-        flagFalse(flagsSrc, "ThreatIntelligenceRuntimeImplemented") &&
+        (flagFalse(flagsSrc, "ThreatIntelligenceRuntimeImplemented") ||
+          has("packages/security-assurance/src/isolation-flags.ts", /ThreatIntelligenceRuntimeImplemented = false/)) &&
         flagFalse(discoveryFlags, "CustomerTrustCenterImplemented"),
     ),
   );
@@ -609,7 +616,8 @@ function main() {
     gate(
       "BK",
       "Foundation package not 1.0.0",
-      has(VERSION, /0\.2\.0-control-evidence/) &&
+      (has(VERSION, /0\.2\.0-control-evidence/) ||
+        has(VERSION, /0\.3\.0-isolation-assurance/)) &&
         !has(VERSION, /SECURITY_ASSURANCE_VERSION = "1\.0\.0"/),
     ),
   );

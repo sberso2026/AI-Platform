@@ -1,0 +1,738 @@
+{
+  "title": "Security & Assurance Isolation Assurance",
+  "verdict": "PASS",
+  "version": "0.3.0-isolation-assurance",
+  "status": "isolation_assurance",
+  "commit": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "artifactCommitSha": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "ciHeadSha": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "buildIdentitySha": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "phase15BBaseline": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "phase15ABaseline": "4748972076f77e7392bb41ec664adddfeb677407",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 70,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15B baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15A regression corpus"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.3.0-isolation-assurance"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.3.0-isolation-assurance"
+    },
+    {
+      "id": "H",
+      "name": "Ownership — does not own enforcement"
+    },
+    {
+      "id": "I",
+      "name": "Probe registry"
+    },
+    {
+      "id": "J",
+      "name": "Probe versioning / no unrestricted code"
+    },
+    {
+      "id": "K",
+      "name": "Database/RLS isolation"
+    },
+    {
+      "id": "L",
+      "name": "API/IDOR isolation"
+    },
+    {
+      "id": "M",
+      "name": "File isolation"
+    },
+    {
+      "id": "N",
+      "name": "Search isolation"
+    },
+    {
+      "id": "O",
+      "name": "KG isolation"
+    },
+    {
+      "id": "P",
+      "name": "AI context isolation"
+    },
+    {
+      "id": "Q",
+      "name": "Background job isolation"
+    },
+    {
+      "id": "R",
+      "name": "Event isolation"
+    },
+    {
+      "id": "S",
+      "name": "Execution host isolation"
+    },
+    {
+      "id": "T",
+      "name": "Solver workspace isolation"
+    },
+    {
+      "id": "U",
+      "name": "Cache applicability"
+    },
+    {
+      "id": "V",
+      "name": "Evidence provenance"
+    },
+    {
+      "id": "W",
+      "name": "Evidence freshness"
+    },
+    {
+      "id": "X",
+      "name": "Probe error semantics"
+    },
+    {
+      "id": "Y",
+      "name": "Isolation assessment"
+    },
+    {
+      "id": "Z",
+      "name": "Isolation findings"
+    },
+    {
+      "id": "AA",
+      "name": "Posture integration isolation-only"
+    },
+    {
+      "id": "AB",
+      "name": "Control mapping"
+    },
+    {
+      "id": "AC",
+      "name": "Scheduled/repeatable assurance contract"
+    },
+    {
+      "id": "AD",
+      "name": "Release-gate contract"
+    },
+    {
+      "id": "AE",
+      "name": "Production safety"
+    },
+    {
+      "id": "AF",
+      "name": "Admin UI isolation marker"
+    },
+    {
+      "id": "AG",
+      "name": "Isolation events"
+    },
+    {
+      "id": "AH",
+      "name": "Audit/timeline"
+    },
+    {
+      "id": "AI",
+      "name": "Workflow reuse isolation_review"
+    },
+    {
+      "id": "AJ",
+      "name": "Migration batch_91"
+    },
+    {
+      "id": "AK",
+      "name": "RLS on isolation tables"
+    },
+    {
+      "id": "AL",
+      "name": "Tenant/workspace isolation"
+    },
+    {
+      "id": "AM",
+      "name": "IDOR least privilege"
+    },
+    {
+      "id": "AN",
+      "name": "Performance baselines recorded"
+    },
+    {
+      "id": "AO",
+      "name": "No remediation / no RLS mutation"
+    },
+    {
+      "id": "AP",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "AQ",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AR",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AS",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "AT",
+      "name": "Accessibility"
+    },
+    {
+      "id": "AU",
+      "name": "Responsive"
+    },
+    {
+      "id": "AV",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AW",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AX",
+      "name": "IsolationAssuranceReady flags"
+    },
+    {
+      "id": "AY",
+      "name": "Plane assessed flags"
+    },
+    {
+      "id": "AZ",
+      "name": "Leakage flags false"
+    },
+    {
+      "id": "BA",
+      "name": "Advanced products unimplemented"
+    },
+    {
+      "id": "BB",
+      "name": "implementsOwnAiStack=false"
+    },
+    {
+      "id": "BC",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "BD",
+      "name": "Module V1 intact"
+    },
+    {
+      "id": "BE",
+      "name": "phase15DReady"
+    },
+    {
+      "id": "BF",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "BG",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "BH",
+      "name": "Semantics locks"
+    },
+    {
+      "id": "BI",
+      "name": "Foundation still ready"
+    },
+    {
+      "id": "BJ",
+      "name": "No SIEM/Trust Center packages"
+    },
+    {
+      "id": "BK",
+      "name": "EOS still 1.0.0"
+    },
+    {
+      "id": "BL",
+      "name": "Package not 1.0.0"
+    },
+    {
+      "id": "BM",
+      "name": "Isolation docs"
+    },
+    {
+      "id": "BN",
+      "name": "knownCrossTenantLeakageDetected=false"
+    },
+    {
+      "id": "BO",
+      "name": "knownCrossWorkspaceLeakageDetected=false"
+    },
+    {
+      "id": "BP",
+      "name": "Failed probe never PASS fallback"
+    },
+    {
+      "id": "BQ",
+      "name": "CACHE not_applicable truthful"
+    },
+    {
+      "id": "BR",
+      "name": "SecurityAssuranceBoundaryLocked"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "IsolationAssuranceReady": true,
+  "IsolationAssuranceRuntimeImplemented": true,
+  "knownCrossTenantLeakageDetected": false,
+  "knownCrossWorkspaceLeakageDetected": false,
+  "automaticRemediationEnabled": false,
+  "automaticRlsMutationEnabled": false,
+  "SecurityIntelligenceImplemented": false,
+  "CustomerTrustCenterImplemented": false,
+  "implementsOwnAiStack": false,
+  "duplicatePolicyEngineDetected": false,
+  "EngineeringOSV1Intact": true,
+  "phase15DReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15B baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15A regression corpus",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.3.0-isolation-assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.3.0-isolation-assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Ownership — does not own enforcement",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Probe registry",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Probe versioning / no unrestricted code",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Database/RLS isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "API/IDOR isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "File isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Search isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "KG isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "AI context isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Background job isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Event isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Execution host isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Solver workspace isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Cache applicability",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Evidence provenance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Evidence freshness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Probe error semantics",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Isolation assessment",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Isolation findings",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Posture integration isolation-only",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Control mapping",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Scheduled/repeatable assurance contract",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Release-gate contract",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Production safety",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Admin UI isolation marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Isolation events",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Audit/timeline",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Workflow reuse isolation_review",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Migration batch_91",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "RLS on isolation tables",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Tenant/workspace isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "IDOR least privilege",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Performance baselines recorded",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "No remediation / no RLS mutation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Accessibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Responsive",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "IsolationAssuranceReady flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "Plane assessed flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "Leakage flags false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "Advanced products unimplemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "implementsOwnAiStack=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "Module V1 intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "phase15DReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f"
+    },
+    {
+      "id": "BG",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BH",
+      "name": "Semantics locks",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Foundation still ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "No SIEM/Trust Center packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "EOS still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "Package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "Isolation docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BN",
+      "name": "knownCrossTenantLeakageDetected=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BO",
+      "name": "knownCrossWorkspaceLeakageDetected=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BP",
+      "name": "Failed probe never PASS fallback",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BQ",
+      "name": "CACHE not_applicable truthful",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BR",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

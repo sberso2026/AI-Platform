@@ -1,8 +1,8 @@
 # RTB Security & Assurance Boundary
 
-Status: Locked (Phase 14C) · Phase 15A discovery · Phase 15B foundation (`0.2.0-control-evidence`)  
-`SecurityAndAssuranceBoundaryLocked = true` · `SecurityAssuranceFoundationReady = true`  
-Scope: Foundation control/evidence/assessment implemented; advanced Security Intelligence **not** implemented
+Status: Locked (Phase 14C) · Phase 15A discovery · Phase 15B foundation · Phase 15C isolation (`0.3.0-isolation-assurance`)  
+`SecurityAndAssuranceBoundaryLocked = true` · `SecurityAssuranceFoundationReady = true` · `IsolationAssuranceReady = true`  
+Scope: Isolation Assurance observes/probes/evidences existing controls; advanced Security Intelligence **not** implemented
 
 ## Future Security & Assurance (candidate)
 

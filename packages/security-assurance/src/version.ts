@@ -1,13 +1,19 @@
 /**
- * Phase 15B — Security & Assurance Control / Evidence / Assessment Foundation.
- * Not 1.0.0. Advanced Security Intelligence remains unimplemented.
+ * Phase 15C — Security & Assurance Isolation Assurance.
+ * Not 1.0.0. Observes/probes/evidences isolation — does not replace enforcement.
  */
-export const SECURITY_ASSURANCE_VERSION = "0.2.0-control-evidence" as const;
-export const SECURITY_ASSURANCE_STATUS = "control_evidence_foundation" as const;
-export const SECURITY_ASSURANCE_PHASE = "15B" as const;
+export const SECURITY_ASSURANCE_VERSION = "0.3.0-isolation-assurance" as const;
+export const SECURITY_ASSURANCE_STATUS = "isolation_assurance" as const;
+export const SECURITY_ASSURANCE_PHASE = "15C" as const;
 
 export const SECURITY_ASSURANCE_PUBLIC_CONTRACT_VERSION =
-  "0.2.0-control-evidence" as const;
+  "0.3.0-isolation-assurance" as const;
+
+/** Immutable Phase 15B foundation baseline. */
+export const PHASE_15B_BASELINE_COMMIT =
+  "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f" as const;
+export const PHASE_15B_BASELINE_HOSTED_RUN = "31300106081" as const;
+export const PHASE_15B_BASELINE_VERSION = "0.2.0-control-evidence" as const;
 
 /** Immutable Phase 15A discovery baseline. */
 export const PHASE_15A_BASELINE_COMMIT =
