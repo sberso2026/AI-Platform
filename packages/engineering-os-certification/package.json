@@ -1,11 +1,12 @@
 {
   "name": "@rtb/engineering-os-certification",
-  "version": "0.10.0-product-integration",
+  "version": "0.11.0-security-readiness",
   "private": true,
   "type": "module",
   "scripts": {
     "certify:phase14a": "tsx scripts/run-phase14a-certification.ts",
     "certify:phase14b": "tsx scripts/run-phase14b-certification.ts",
+    "certify:phase14c": "tsx scripts/run-phase14c-certification.ts",
     "secret-scan": "tsx scripts/secret-exposure-scan.ts"
   },
   "dependencies": {

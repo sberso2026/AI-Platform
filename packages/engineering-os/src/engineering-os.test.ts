@@ -20,15 +20,18 @@ describe("Engineering OS installation seed", () => {
     expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$/);
   });
 
-  it("declares Phase 14B product integration without claiming EOS V1 GA", async () => {
+  it("declares Phase 14C security readiness without claiming EOS V1 GA", async () => {
     const v = await import("./version");
-    expect(v.ENGINEERING_OS_VERSION).toBe("0.10.0-product-integration");
-    expect(v.ENGINEERING_OS_STATUS).toBe("product_integration");
+    expect(v.ENGINEERING_OS_VERSION).toBe("0.11.0-security-readiness");
+    expect(v.ENGINEERING_OS_STATUS).toBe("security_readiness");
     expect(v.productionEngineeringOSReady).toBe(false);
     expect(v.engineeringOSV1GaCertified).toBe(false);
     expect(v.EngineeringOSProductIntegrationReady).toBe(true);
     expect(v.moduleRegistryTruthful).toBe(true);
-    expect(v.phase14CReady).toBe(true);
+    const s = await import("./security-readiness");
+    expect(s.EnterpriseSecurityAssessmentComplete).toBe(true);
+    expect(s.engineeringOsSecurityGaGatePassed).toBe(false);
+    expect(s.securityClosureRequiredBeforeGa).toBe(true);
   });
 
   it("registers all production V1 modules truthfully", () => {

@@ -1,5 +1,5 @@
 /**
- * Lightweight secret exposure scan for Engineering OS Phase 14A.
+ * Lightweight secret exposure scan for Engineering OS Phase 14C.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -23,30 +23,35 @@ const SCAN_ROOTS = [
 ];
 
 const SCAN_DOCS = [
-  "docs/architecture/ENGINEERING_OS_PHASE_14A.md",
-  "docs/architecture/ENGINEERING_OS_PHASE_14A_EXISTING_SYSTEM_INVENTORY.md",
-  "docs/architecture/ENGINEERING_OS_PRODUCT_BOUNDARY.md",
-  "docs/architecture/ENGINEERING_OS_V1_OWNERSHIP_MATRIX.md",
-  "docs/architecture/ENGINEERING_OS_CANONICAL_OWNERSHIP_NORMALIZATION.md",
-  "docs/architecture/ENGINEERING_OS_SHARED_DOMAIN_MATURITY_MATRIX.md",
-  "docs/architecture/ENGINEERING_OS_V1_MODULE_COMPATIBILITY_MATRIX.md",
-  "docs/architecture/ENGINEERING_OS_V1_CAPABILITY_MATRIX.md",
-  "docs/architecture/ENGINEERING_OS_CROSS_MODULE_SEARCH_MODEL.md",
-  "docs/architecture/ENGINEERING_OS_AI_ORCHESTRATION_MODEL.md",
-  "docs/architecture/ENGINEERING_OS_TOOL_FRAMEWORK_INTEGRATION.md",
-  "docs/architecture/ENGINEERING_OS_V1_NAVIGATION_MODEL.md",
-  "docs/architecture/ENGINEERING_OS_CONTEXT_MODEL.md",
-  "docs/architecture/ENGINEERING_OS_V1_EVENT_MATRIX.md",
-  "docs/architecture/ENGINEERING_OS_V1_HEALTH_MODEL.md",
+  "docs/architecture/ENGINEERING_OS_PHASE_14C.md",
+  "docs/architecture/RTB_SECURITY_AND_ASSURANCE_BOUNDARY.md",
   "docs/architecture/ENGINEERING_OS_V1_GA_GAP_REGISTER.md",
-  "docs/architecture/ENGINEERING_OS_V1_READINESS_MATRIX.md",
   "docs/architecture/CLIENT_OWNED_COMMERCIAL_SOLVER_EXECUTION_ARCHITECTURE.md",
+  "docs/security/ENGINEERING_OS_V1_SECURITY_BOUNDARY.md",
+  "docs/security/RTB_ENTERPRISE_SECURITY_EXISTING_CONTROL_INVENTORY.md",
+  "docs/security/RTB_SECURITY_OWNERSHIP_MATRIX.md",
+  "docs/security/RTB_SECURITY_POLICY_ENFORCEMENT_MODEL.md",
+  "docs/security/RTB_PRIVILEGED_ACCESS_BASELINE.md",
+  "docs/security/RTB_TENANT_ISOLATION_ASSURANCE_MODEL.md",
+  "docs/security/RTB_DATA_CLASSIFICATION_MODEL.md",
+  "docs/security/RTB_DATA_GOVERNANCE_BASELINE.md",
+  "docs/security/RTB_ENCRYPTION_BASELINE.md",
+  "docs/security/RTB_AI_SECURITY_AND_TRUST_BASELINE.md",
+  "docs/security/RTB_SECURE_SDLC_BASELINE.md",
+  "docs/security/RTB_VULNERABILITY_MANAGEMENT_BASELINE.md",
+  "docs/security/RTB_SECURITY_INCIDENT_RESPONSE_BASELINE.md",
+  "docs/security/RTB_SECURITY_LOGGING_AND_MONITORING.md",
+  "docs/security/RTB_THREAT_INTELLIGENCE_BOUNDARY.md",
+  "docs/security/RTB_BACKUP_RECOVERY_AND_RESILIENCE.md",
+  "docs/security/RTB_ARTIFACT_INTEGRITY_PROVENANCE_MODEL.md",
+  "docs/security/RTB_CUSTOMER_TRUST_CENTER_BOUNDARY.md",
+  "docs/security/RTB_ENTERPRISE_SECURITY_CONTROL_MATRIX.md",
+  "docs/security/RTB_ENGINEERING_OS_V1_SECURITY_GAP_REGISTER.md",
+  "docs/security/RTB_ENTERPRISE_SECURITY_READINESS_MATRIX.md",
+  "docs/security/RTB_ENTERPRISE_CUSTOMER_ASSURANCE_READINESS.md",
+  "docs/security/RTB_ESSENTIAL_EIGHT_APPLICABILITY.md",
   "apps/web/src/app/(platform)/engineering/modules/page.tsx",
   "apps/web/src/app/(platform)/engineering/page.tsx",
-  "docs/commercial/ENGINEERING_OS_V1_PACKAGING_ARCHITECTURE.md",
-  "docs/security/ENGINEERING_OS_V1_SECURITY_BOUNDARY.md",
-  "docs/operations/ENGINEERING_OS_V1_CAPACITY_AND_PERFORMANCE_BASELINE.md",
-  "docs/operations/ENGINEERING_OS_V1_OPERATIONS_READINESS.md",
 ].map((rel) => resolve(root, rel));
 
 function collectFiles(dir: string, acc: string[] = []): string[] {

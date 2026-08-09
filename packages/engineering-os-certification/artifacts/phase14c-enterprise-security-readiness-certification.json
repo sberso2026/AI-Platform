@@ -1,0 +1,504 @@
+{
+  "schemaVersion": "phase14c-enterprise-security-readiness/1",
+  "phase": "14C",
+  "name": "phase14c-enterprise-security-readiness-certification",
+  "version": "0.11.0-security-readiness",
+  "status": "security_readiness",
+  "title": "Enterprise Security Readiness / Engineering OS GA Security Gate",
+  "verdict": "PASS",
+  "commit": "70ae39837ac9e2cd3039b344ca083004884238c6",
+  "artifactCommitSha": "70ae39837ac9e2cd3039b344ca083004884238c6",
+  "ciHeadSha": "70ae39837ac9e2cd3039b344ca083004884238c6",
+  "buildIdentitySha": "70ae39837ac9e2cd3039b344ca083004884238c6",
+  "phase14BBaseline": "70ae39837ac9e2cd3039b344ca083004884238c6",
+  "EnterpriseSecurityAssessmentComplete": true,
+  "SecurityOwnershipModelLocked": true,
+  "SecurityAndAssuranceBoundaryLocked": true,
+  "SecurityControlMatrixReady": true,
+  "SecurityGapRegisterReady": true,
+  "EnterpriseSecurityReadinessMatrixReady": true,
+  "TenantIsolationSecurityAssessed": true,
+  "AiSecurityTrustAssessed": true,
+  "SecureExecutionHostAssessed": true,
+  "SecureSdlcAssessed": true,
+  "IncidentResponseAssessed": true,
+  "BackupRecoveryAssessed": true,
+  "EssentialEightApplicabilityAssessed": true,
+  "CustomerAssuranceReadinessAssessed": true,
+  "ExternalCertificationBoundaryLocked": true,
+  "knownCrossTenantLeakageDetected": false,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "engineeringOsSecurityGaGatePassed": false,
+  "securityClosureRequiredBeforeGa": true,
+  "existingPolicyEngineReused": true,
+  "implementsOwnAiStack": false,
+  "productionEngineeringOSReady": false,
+  "engineeringOSV1GaCertified": false,
+  "iso27001Certified": false,
+  "soc2Assured": false,
+  "essentialEightMaturityClaimed": false,
+  "externalPenetrationTestDocumented": false,
+  "phase14DReady": true,
+  "releaseEligible": true,
+  "unexpected5xx": 0,
+  "requiredTestsSkipped": 0,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "70ae39837ac9e2cd3039b344ca083004884238c6"
+    },
+    {
+      "id": "B",
+      "name": "Phase 14B baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Frozen V1 tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "14B product integration flags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Assessment version 0.11.0-security-readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Security inventory document",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Ownership matrix document",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Security & Assurance boundary document",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Policy enforcement model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Privileged access baseline",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Tenant isolation assurance model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "Data classification model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "AI security trust baseline",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Secure SDLC baseline",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Vulnerability management baseline",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "Incident response baseline",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Control matrix",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Security gap register",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Security readiness matrix",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Customer assurance readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Essential Eight applicability",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Phase 14C overview",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "EnterpriseSecurityAssessmentComplete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "SecurityOwnershipModelLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "SecurityAndAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "SecurityControlMatrixReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "SecurityGapRegisterReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "EnterpriseSecurityReadinessMatrixReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "TenantIsolationSecurityAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "AiSecurityTrustAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "SecureExecutionHostAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "SecureSdlcAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "IncidentResponseAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "BackupRecoveryAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "EssentialEightApplicabilityAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "CustomerAssuranceReadinessAssessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "ExternalCertificationBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "knownCrossTenantLeakageDetected false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "secretExposureDetected false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "existingPolicyEngineReused true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "engineeringOsSecurityGaGatePassed false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "securityClosureRequiredBeforeGa true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "iso/soc/e8 claims false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "externalPenetrationTestDocumented false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Gap register has REQUIRED_BEFORE_GA items",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "No UNKNOWN ownership",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "productionEngineeringOSReady false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "engineeringOSV1GaCertified false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "implementsOwnAiStack false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "No Security Intelligence package",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "No Trust Center implementation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "Platform architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "Penetration test status documented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Encryption classified provider-managed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Execution host assessed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "Threat intel boundary not a database",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "phase14DReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "70ae39837ac9e2cd3039b344ca083004884238c6"
+    },
+    {
+      "id": "BJ",
+      "name": "No ISO certification claim in docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "GA decision evidence-backed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    }
+  ],
+  "requiredGates": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "AA",
+    "AB",
+    "AC",
+    "AD",
+    "AE",
+    "AF",
+    "AG",
+    "AH",
+    "AI",
+    "AJ",
+    "AK",
+    "AL",
+    "AM",
+    "AN",
+    "AO",
+    "AP",
+    "AQ",
+    "AR",
+    "AS",
+    "AT",
+    "AU",
+    "AV",
+    "AW",
+    "AX",
+    "AY",
+    "AZ",
+    "BA",
+    "BB",
+    "BC",
+    "BD",
+    "BE",
+    "BF",
+    "BG",
+    "BH",
+    "BI",
+    "BJ",
+    "BK",
+    "BL"
+  ],
+  "gateCount": 64,
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "generatedAt": "2026-08-09T05:25:20.625Z"
+}

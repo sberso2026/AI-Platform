@@ -1,13 +1,17 @@
 /**
- * Phase 14B — Engineering OS Product Integration Closure.
- * Do NOT claim Engineering OS V1.0 production readiness here.
+ * Phase 14C — Enterprise Security Readiness assessment metadata.
+ * Product integration baseline remains Phase 14B; do NOT claim EOS V1.0 GA.
  */
-export const ENGINEERING_OS_VERSION = "0.10.0-product-integration" as const;
-export const ENGINEERING_OS_STATUS = "product_integration" as const;
-export const ENGINEERING_OS_PHASE = "14B" as const;
+export const ENGINEERING_OS_VERSION = "0.11.0-security-readiness" as const;
+export const ENGINEERING_OS_STATUS = "security_readiness" as const;
+export const ENGINEERING_OS_PHASE = "14C" as const;
 
 export const ENGINEERING_OS_PUBLIC_CONTRACT_VERSION =
-  "0.10.0-product-integration-draft" as const;
+  "0.11.0-security-readiness-draft" as const;
+
+/** Phase 14B product integration certified baseline. */
+export const PHASE_14B_PRODUCT_INTEGRATION_VERSION =
+  "0.10.0-product-integration" as const;
 
 /** Phase 14A certified baseline. */
 export const PHASE_14A_CERTIFIED_COMMIT =
@@ -105,8 +109,10 @@ export const DigitalTwinV1Intact = true as const;
 export const EngineeringModelInteroperabilityV1Intact = true as const;
 
 export const phase14BReady = true as const;
-/** Set true when 14B product integration certification passes. */
+/** Phase 14C assessment entry was authorized by Phase 14B. */
 export const phase14CReady = true as const;
+/** Set true only after Phase 14C assessment certification PASS. */
+export const phase14DReady = true as const;
 
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {

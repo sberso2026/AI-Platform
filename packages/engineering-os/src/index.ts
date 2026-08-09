@@ -1,4 +1,5 @@
 export * from "./version";
+export * from "./security-readiness";
 export * from "./manifest";
 export * from "./module-registry";
 export * from "./product-integration";
