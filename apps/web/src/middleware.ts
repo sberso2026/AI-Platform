@@ -1,8 +1,30 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { evaluatePrivilegedMfa } from "@rtb/engineering-os/security-closure/privileged-mfa";
 import { canAccessPlatformRoute, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
 import type { NavTier } from "@rtb/types";
+
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return {};
+    const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const json = atob(padded);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function privilegedMfaEnforcementEnabled(): boolean {
+  return (
+    process.env.RTB_ENFORCE_PRIVILEGED_MFA === "1" ||
+    process.env.VERCEL_ENV === "production" ||
+    process.env.NODE_ENV === "production"
+  );
+}
 
 const PLATFORM_ACCESS_PREFIXES = [
   "/platform/",
@@ -115,6 +137,36 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/engineering";
       return NextResponse.redirect(url);
+    }
+
+    const privilegedSurface =
+      pathname.startsWith("/platform/") ||
+      pathname.startsWith("/system/") ||
+      pathname === "/audit" ||
+      pathname.startsWith("/audit/");
+    const platformAdmin =
+      (user.app_metadata as { platform_admin?: boolean } | undefined)?.platform_admin === true;
+    if (
+      privilegedMfaEnforcementEnabled() &&
+      privilegedSurface &&
+      (platformAdmin || access.roleSlug === "owner")
+    ) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const payload = session?.access_token ? decodeJwtPayload(session.access_token) : {};
+      const decision = evaluatePrivilegedMfa({
+        aal: typeof payload.aal === "string" ? payload.aal : null,
+        amr: Array.isArray(payload.amr) ? (payload.amr as Array<string | { method?: string }>) : null,
+        platformAdmin,
+        roleSlug: access.roleSlug,
+      });
+      if (!decision.allowed) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("mfa_required", "privileged");
+        return NextResponse.redirect(url);
+      }
     }
   }
 

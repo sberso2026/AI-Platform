@@ -1,19 +1,19 @@
 # Engineering OS V1 Security Gap Register
 
-Status: Phase 14C · `SecurityGapRegisterReady = true`  
-Decision: `engineeringOsSecurityGaGatePassed = false` · `securityClosureRequiredBeforeGa = true`
+Status: Phase 14D · `SecurityGapRegisterReady = true`  
+Decision: `engineeringOsSecurityGaGatePassed = true` · `securityClosureRequiredBeforeGa = false`
 
 Classes: **GA_BLOCKER** · **REQUIRED_BEFORE_GA** · **REQUIRED_BEFORE_TIER1_PRODUCTION** ·
-**RECOMMENDED_POST_GA** · **EXTERNAL_ASSURANCE** · **INTENTIONALLY_EXTERNAL** · **NOT_APPLICABLE**
+**RECOMMENDED_POST_GA** · **EXTERNAL_ASSURANCE** · **INTENTIONALLY_EXTERNAL** · **NOT_APPLICABLE** · **CLOSED**
 
 | ID | Control | Class | Evidence | Risk | Owner | Required action | Target | Type |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| S01 | Privileged MFA for RTB prod admins / break-glass | REQUIRED_BEFORE_GA | No enforced MFA/AAL2 evidenced | Privileged account takeover | Platform Identity/Ops | Enforce MFA for privileged roles; document break-glass | pre-EOS-GA | software + ops |
-| S02 | Dependency vulnerability scanning in CI | REQUIRED_BEFORE_GA | Secret-scan only; no SCA/CodeQL | Supply-chain vuln | Secure SDLC | Add minimum SCA gate on critical packages | pre-EOS-GA | software |
-| S03 | Unified platform IR roles/escalation for EOS aggregate | REQUIRED_BEFORE_GA | Module IR exists; platform unified thin | Slow/unclear response | Ops/Sec | Publish unified IR covering EOS Home/search/AI/health | pre-EOS-GA | governance |
-| S04 | Secret rotation / revocation procedure | REQUIRED_BEFORE_GA | Secrets in GitHub/Supabase; rotation not documented | Stale credentials | Ops | Document + exercise rotation for critical secrets | pre-EOS-GA | ops |
-| S05 | Classification-aware AI/logging enforcement | REQUIRED_BEFORE_GA | Taxonomy defined in 14C; not wired | Sensitive data to providers/logs | AI Runtime / EOS | Enforce deny/minimize for ENGINEERING_SENSITIVE/RESTRICTED | pre-EOS-GA | software |
-| S06 | Platform backup restore test + RPO/RTO honesty | REQUIRED_BEFORE_GA | Module bounded restore; OS-level not_tested; RPO not_defined | Unrecoverable outage | Ops | Test restore path; document known/unknown RPO/RTO without invention | pre-EOS-GA | ops |
+| S01 | Privileged MFA for RTB prod admins / break-glass | **CLOSED** | `privileged-mfa.ts`, middleware hook, break-glass audit module, `RTB_PRIVILEGED_MFA_AND_BREAK_GLASS.md` | Privileged account takeover | Platform Identity/Ops | — | pre-EOS-GA | software + ops |
+| S02 | Dependency vulnerability scanning in CI | **CLOSED** | `run-dependency-sca.ts`, SCA policy, exceptions, CI workflow | Supply-chain vuln | Secure SDLC | — | pre-EOS-GA | software |
+| S03 | Unified platform IR roles/escalation for EOS aggregate | **CLOSED** | `RTB_UNIFIED_INCIDENT_RESPONSE.md`, runbook, IR-FIX fixtures | Slow/unclear response | Ops/Sec | — | pre-EOS-GA | governance |
+| S04 | Secret rotation / revocation procedure | **CLOSED** | `RTB_SECRET_LIFECYCLE_AND_ROTATION.md` + secret-scan | Stale credentials | Ops | — | pre-EOS-GA | ops |
+| S05 | Classification-aware AI/logging enforcement | **CLOSED** | `classification-ai-policy.ts`, `sensitive-logging.ts` | Sensitive data to providers/logs | AI Runtime / EOS | — | pre-EOS-GA | software |
+| S06 | Platform backup restore test + RPO/RTO honesty | **CLOSED** | restore fixture certification, runbook; RPO `DEFINED_NOT_TESTED`, RTO `MEASURED` | Unrecoverable outage | Ops | — | pre-EOS-GA | ops |
 | S07 | External penetration test | REQUIRED_BEFORE_TIER1_PRODUCTION | No pen-test report in repo | Residual unknown vulns | Sec/Ops | Independent test before Tier-1 customers | pre-Tier1 | assurance |
 | S08 | Customer SSO (OIDC/SAML) GA | REQUIRED_BEFORE_TIER1_PRODUCTION | Teams/Entra bounded; not universal SSO | Enterprise onboarding block | Identity | Productize SSO | pre-Tier1 | software |
 | S09 | ISO 27001 certification | EXTERNAL_ASSURANCE | Not certified | Assurance questionnaires | Sec/Compliance | External certification program | post-GA | external |
@@ -29,7 +29,8 @@ Classes: **GA_BLOCKER** · **REQUIRED_BEFORE_GA** · **REQUIRED_BEFORE_TIER1_PRO
 | Class | Count |
 | --- | --- |
 | GA_BLOCKER | **0** |
-| REQUIRED_BEFORE_GA | **6** (S01–S06) |
+| REQUIRED_BEFORE_GA open | **0** |
+| REQUIRED_BEFORE_GA CLOSED (S01–S06) | **6** |
 | REQUIRED_BEFORE_TIER1_PRODUCTION | **2** |
 | RECOMMENDED_POST_GA | **3** |
 | EXTERNAL_ASSURANCE | **3** |
@@ -37,9 +38,10 @@ Classes: **GA_BLOCKER** · **REQUIRED_BEFORE_GA** · **REQUIRED_BEFORE_TIER1_PRO
 
 ## GA security decision
 
-Because REQUIRED_BEFORE_GA items remain open:
+Because REQUIRED_BEFORE_GA open = 0 and GA_BLOCKER = 0:
 
-- `engineeringOsSecurityGaGatePassed = false`
-- `securityClosureRequiredBeforeGa = true`
+- `engineeringOsSecurityGaGatePassed = true`
+- `securityClosureRequiredBeforeGa = false`
 
-No UNKNOWN ownership. Assessment complete ≠ gaps closed.
+Still: `productionEngineeringOSReady = false` · `engineeringOSV1GaCertified = false`  
+Pre-GA security gate ≠ Engineering OS V1 GA ≠ ISO/SOC2.

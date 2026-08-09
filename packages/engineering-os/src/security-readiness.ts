@@ -1,7 +1,13 @@
 /**
  * Phase 14C — Enterprise Security Readiness assessment flags.
- * Assessment complete ≠ Engineering OS V1 GA ≠ ISO/SOC2 certification.
+ * Phase 14D flips the GA security gate via security-closure (evidence-backed).
  */
+import {
+  engineeringOsSecurityGaGatePassed,
+  knownCrossTenantLeakageDetected,
+  secretExposureDetected,
+  securityClosureRequiredBeforeGa,
+} from "./security-closure/flags";
 import {
   engineeringOSV1GaCertified,
   implementsOwnAiStack,
@@ -31,16 +37,6 @@ export const BackupRecoveryAssessed = true as const;
 export const EssentialEightApplicabilityAssessed = true as const;
 export const CustomerAssuranceReadinessAssessed = true as const;
 export const ExternalCertificationBoundaryLocked = true as const;
-
-export const knownCrossTenantLeakageDetected = false as const;
-export const secretExposureDetected = false as const;
-
-/**
- * Evidence-backed GA security gate (Phase 14C).
- * false: REQUIRED_BEFORE_GA security gaps remain (see Security Gap Register).
- */
-export const engineeringOsSecurityGaGatePassed = false as const;
-export const securityClosureRequiredBeforeGa = true as const;
 
 export const existingPolicyEngineReused = true as const;
 

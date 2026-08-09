@@ -1,13 +1,20 @@
 /**
- * Phase 14C — Enterprise Security Readiness assessment metadata.
+ * Phase 14D — Pre-GA security closure metadata.
  * Product integration baseline remains Phase 14B; do NOT claim EOS V1.0 GA.
  */
-export const ENGINEERING_OS_VERSION = "0.11.0-security-readiness" as const;
-export const ENGINEERING_OS_STATUS = "security_readiness" as const;
-export const ENGINEERING_OS_PHASE = "14C" as const;
+export const ENGINEERING_OS_VERSION = "0.12.0-security-closure" as const;
+export const ENGINEERING_OS_STATUS = "security_closure" as const;
+export const ENGINEERING_OS_PHASE = "14D" as const;
 
 export const ENGINEERING_OS_PUBLIC_CONTRACT_VERSION =
-  "0.11.0-security-readiness-draft" as const;
+  "0.12.0-security-closure-draft" as const;
+
+/** Phase 14C security readiness certified baseline. */
+export const PHASE_14C_SECURITY_READINESS_VERSION =
+  "0.11.0-security-readiness" as const;
+export const PHASE_14C_CERTIFIED_COMMIT =
+  "5fd29af093e009e7e2aaf961c797141f452cc1c2" as const;
+export const PHASE_14C_HOSTED_RUN = "31296672278" as const;
 
 /** Phase 14B product integration certified baseline. */
 export const PHASE_14B_PRODUCT_INTEGRATION_VERSION =
@@ -111,8 +118,10 @@ export const EngineeringModelInteroperabilityV1Intact = true as const;
 export const phase14BReady = true as const;
 /** Phase 14C assessment entry was authorized by Phase 14B. */
 export const phase14CReady = true as const;
-/** Set true only after Phase 14C assessment certification PASS. */
+/** Phase 14D entry authorized by Phase 14C PASS. */
 export const phase14DReady = true as const;
+/** Set true only after Phase 14D security closure certification PASS. */
+export const phase14EReady = true as const;
 
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {

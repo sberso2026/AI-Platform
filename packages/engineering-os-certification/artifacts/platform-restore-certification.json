@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "platform-restore-certification/1",
+  "phase": "14D",
+  "PlatformBackupRestoreProcedureReady": true,
+  "PlatformRestoreTestPassed": true,
+  "BackupIntegrityAssessed": true,
+  "RpoStatusKnown": true,
+  "RtoStatusKnown": true,
+  "rpoStatus": "DEFINED_NOT_TESTED",
+  "rtoStatus": "MEASURED",
+  "measuredRestoreDurationMs": 25,
+  "tenantWorkspacePreserved": true,
+  "migrationCompatible": true,
+  "criticalStateReadable": true,
+  "notes": [
+    "rpo_follows_provider_backup_schedule_not_rtb_sla",
+    "fixture_restore_duration_ms=25"
+  ],
+  "slaClaimed": false,
+  "generatedAt": "2026-08-09T05:50:55.124Z"
+}

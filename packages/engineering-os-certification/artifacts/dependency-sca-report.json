@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "rtb-dependency-sca-report/1",
+  "scannedAt": "2026-08-09T05:50:54.011Z",
+  "tool": "pnpm audit --prod --json",
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 7,
+      "high": 8,
+      "critical": 0
+    },
+    "dependencies": 144,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 144
+  },
+  "findingCount": 15,
+  "findings": [
+    {
+      "severity": "moderate",
+      "package": "postcss",
+      "advisory": "GHSA-qx2v-qp2m-jg93",
+      "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output"
+    },
+    {
+      "severity": "high",
+      "package": "sharp",
+      "advisory": "GHSA-f88m-g3jw-g9cj",
+      "title": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591"
+    },
+    {
+      "severity": "high",
+      "package": "next",
+      "advisory": "GHSA-m99w-x7hq-7vfj",
+      "title": "Next.js: Denial of Service in App Router using Server Actions"
+    },
+    {
+      "severity": "high",
+      "package": "next",
+      "advisory": "GHSA-89xv-2m56-2m9x",
+      "title": "Next.js: Server-Side Request Forgery in Server Actions on custom servers"
+    },
+    {
+      "severity": "moderate",
+      "package": "next",
+      "advisory": "GHSA-68g3-v927-f742",
+      "title": "Next.js: Cache confusion of response bodies for requests with bodies"
+    },
+    {
+      "severity": "moderate",
+      "package": "next",
+      "advisory": "GHSA-4633-3j49-mh5q",
+      "title": "Next.js: Cache confusion of response bodies for requests with bodies containing invalid UTF-8 byte sequences"
+    },
+    {
+      "severity": "moderate",
+      "package": "next",
+      "advisory": "GHSA-4c39-4ccg-62r3",
+      "title": "Next.js: Unbounded Server Action payload in Edge runtime"
+    },
+    {
+      "severity": "high",
+      "package": "next",
+      "advisory": "GHSA-p9j2-gv94-2wf4",
+      "title": "Next.js: Server-Side Request Forgery in rewrites via attacker-controlled destination hostname"
+    },
+    {
+      "severity": "moderate",
+      "package": "next",
+      "advisory": "GHSA-q8wf-6r8g-63ch",
+      "title": "Next.js: Denial of Service in the Image Optimization API using SVGs"
+    },
+    {
+      "severity": "moderate",
+      "package": "next",
+      "advisory": "GHSA-955p-x3mx-jcvp",
+      "title": "Next.js: Unauthenticated disclosure of internal Server Function endpoints"
+    },
+    {
+      "severity": "high",
+      "package": "postcss",
+      "advisory": "GHSA-6g55-p6wh-862q",
+      "title": "PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments"
+    },
+    {
+      "severity": "high",
+      "package": "postcss",
+      "advisory": "GHSA-r28c-9q8g-f849",
+      "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure"
+    },
+    {
+      "severity": "moderate",
+      "package": "postcss",
+      "advisory": "GHSA-fxqj-rqcc-2cmp",
+      "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset"
+    },
+    {
+      "severity": "high",
+      "package": "nanoid",
+      "advisory": "GHSA-28wg-ghj8-5hjv",
+      "title": "nanoid: non-secure generators can loop indefinitely with negative size"
+    },
+    {
+      "severity": "high",
+      "package": "nanoid",
+      "advisory": "GHSA-2v37-7h3g-55p8",
+      "title": "nanoid: custom generators can loop indefinitely when size is zero"
+    }
+  ],
+  "exceptionsApplied": [
+    "GHSA-f88m-g3jw-g9cj",
+    "GHSA-m99w-x7hq-7vfj",
+    "GHSA-89xv-2m56-2m9x",
+    "GHSA-p9j2-gv94-2wf4",
+    "GHSA-6g55-p6wh-862q",
+    "GHSA-r28c-9q8g-f849",
+    "GHSA-28wg-ghj8-5hjv",
+    "GHSA-2v37-7h3g-55p8"
+  ],
+  "CriticalDependencyVulnerabilityUnresolved": false,
+  "unresolvedCritical": [],
+  "unresolvedHigh": [],
+  "DependencyScaReady": true,
+  "DependencyScaCiEnforced": true,
+  "pass": true
+}
