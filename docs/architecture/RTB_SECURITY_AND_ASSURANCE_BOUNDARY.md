@@ -48,3 +48,10 @@ Future certification requires appropriate external assessment/certification bodi
 
 Define boundary and control mapping only. Do **not** implement Security Intelligence,
 Trust Center, SIEM, or a competing Policy Engine.
+
+## Phase 15A discovery lock
+
+Platform-level package placement: `packages/security-assurance` at `0.1.0-discovery`.  
+Detailed ownership/boundaries: `docs/security/SECURITY_ASSURANCE_ARCHITECTURE_BOUNDARIES.md`  
+and `docs/security/SECURITY_ASSURANCE_OWNERSHIP_MATRIX.md`.  
+Runtime remains unimplemented (`SecurityAssuranceRuntimeImplemented = false`).
