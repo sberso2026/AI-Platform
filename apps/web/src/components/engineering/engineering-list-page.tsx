@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, StatusChip } from "@rtb/ui";
+import { loadEngineeringListItems } from "@/lib/engineering/load-engineering-list";
 
 export function EngineeringListPage({
   title,
@@ -27,43 +28,62 @@ export function EngineeringListPage({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(apiEndpoint)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.error) setError(json.error);
-        else setItems(Array.isArray(json.data) ? json.data : []);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    loadEngineeringListItems(apiEndpoint)
+      .then((result) => {
+        if (cancelled) return;
+        setItems(result.items);
+        setError(result.error);
         setLoading(false);
       })
-      .catch((e) => {
-        setError(e.message);
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to load records");
         setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [apiEndpoint]);
 
+  const createButton =
+    createHref ? (
+      <Link
+        href={createHref}
+        className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+        data-testid="engineering-list-create"
+      >
+        {createLabel ?? "Create"}
+      </Link>
+    ) : null;
+
   return (
-      <>
-        <Header title={title} description={description} />
-              <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
+    <>
+      <Header title={title} description={description} />
+      <main
+        className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
+        data-testid="page-main"
+      >
         <div className="mb-4 flex items-center justify-between">
           <p className="text-[0.9375rem] text-slate-500">
             {loading ? "Loading..." : `${items.length} records`}
           </p>
-          {createHref && (
-            <Link
-              href={createHref}
-              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              {createLabel ?? "Create"}
-            </Link>
-          )}
+          {createButton}
         </div>
-        {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="mb-4 text-sm text-destructive" data-testid="engineering-list-error">
+            {error}
+          </p>
+        )}
         {!loading && !error && items.length === 0 && (
-          <Card>
-            <CardContent className="p-6">
+          <Card data-testid="engineering-list-empty">
+            <CardContent className="flex flex-col items-start gap-3 p-6">
               <p className="text-sm text-muted-foreground">
                 {emptyMessage ?? "No records yet."}
               </p>
+              {createButton}
             </CardContent>
           </Card>
         )}
@@ -81,7 +101,7 @@ export function EngineeringListPage({
           ))}
         </div>
       </main>
-      </>
+    </>
   );
 }
 

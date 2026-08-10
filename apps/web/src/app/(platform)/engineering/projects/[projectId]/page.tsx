@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@rtb/ui";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 export default function EngineeringProjectDetailPage() {
   const params = useParams();
@@ -19,12 +20,25 @@ export default function EngineeringProjectDetailPage() {
 
   useEffect(() => {
     fetch(`/api/engineering/projects/${projectId}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.error) setError(json.error);
-        else setData(json.data);
+      .then((r) =>
+        parseApiJsonResponse<{
+          project: Record<string, unknown>;
+          assets: Record<string, unknown>[];
+          documents: Record<string, unknown>[];
+        }>(r),
+      )
+      .then((parsed) => {
+        if (!parsed.ok || !parsed.data) {
+          setError(
+            parsed.errorMessage ?? `Request failed with status ${parsed.status}`,
+          );
+          return;
+        }
+        setData(parsed.data);
       })
-      .catch((e) => setError(e.message));
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : "Failed to load project"),
+      );
   }, [projectId]);
 
   const project = data?.project;

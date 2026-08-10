@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, Button, Input } from "@rtb/ui";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 export default function NewEngineeringProjectPage() {
   const router = useRouter();
@@ -31,9 +32,11 @@ export default function NewEngineeringProjectPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to create project");
-      router.push(`/engineering/projects/${json.data.id}`);
+      const parsed = await parseApiJsonResponse<{ id: string }>(res);
+      if (!parsed.ok || !parsed.data?.id) {
+        throw new Error(parsed.errorMessage ?? "Failed to create project");
+      }
+      router.push(`/engineering/projects/${parsed.data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
       setLoading(false);

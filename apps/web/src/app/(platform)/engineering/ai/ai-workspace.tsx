@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, Badge, Button, Input } from "@rtb/ui";
 import { Send, Bot, User } from "lucide-react";
 import { cn } from "@rtb/ui";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 interface Message {
   id: string;
@@ -46,15 +47,17 @@ export default function EngineeringAIWorkspace() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/engineering/projects").then((r) => r.json()),
-      fetch("/api/engineering/assets").then((r) => r.json()),
-      fetch("/api/engineering/documents").then((r) => r.json()),
-      fetch("/api/engineering/disciplines").then((r) => r.json()),
+      fetch("/api/engineering/projects").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/assets").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/documents").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/disciplines").then((r) => parseApiJsonResponse(r)),
     ]).then(([p, a, d, disc]) => {
-      setProjects(Array.isArray(p.data) ? p.data : []);
-      setAssets(Array.isArray(a.data) ? a.data : []);
-      setDocuments(Array.isArray(d.data) ? d.data : []);
-      setDisciplines(Array.isArray(disc.data) ? disc.data : []);
+      setProjects(Array.isArray(p.data) ? (p.data as Record<string, unknown>[]) : []);
+      setAssets(Array.isArray(a.data) ? (a.data as Record<string, unknown>[]) : []);
+      setDocuments(Array.isArray(d.data) ? (d.data as Record<string, unknown>[]) : []);
+      setDisciplines(
+        Array.isArray(disc.data) ? (disc.data as Record<string, unknown>[]) : [],
+      );
     });
   }, []);
 

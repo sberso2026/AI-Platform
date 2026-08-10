@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, Badge, Button, Input } from "@rtb/ui";
+import {
+  asRecordArray,
+  parseApiJsonResponse,
+} from "@/lib/api/parse-json-response";
 
 export function useRegisterList(endpoint: string) {
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
@@ -10,15 +14,30 @@ export function useRegisterList(endpoint: string) {
   const [error, setError] = useState<string | null>(null);
   const reload = () => {
     setLoading(true);
+    setError(null);
     fetch(endpoint)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.error) setError(json.error);
-        else setItems(Array.isArray(json.data) ? json.data : json.data?.risks ?? []);
+      .then((r) => parseApiJsonResponse(r))
+      .then((parsed) => {
+        if (!parsed.ok) {
+          setError(
+            parsed.errorMessage ?? `Request failed with status ${parsed.status}`,
+          );
+          setItems([]);
+        } else if (Array.isArray(parsed.data)) {
+          setItems(asRecordArray(parsed.data));
+        } else if (
+          parsed.data &&
+          typeof parsed.data === "object" &&
+          Array.isArray((parsed.data as { risks?: unknown }).risks)
+        ) {
+          setItems(asRecordArray((parsed.data as { risks: unknown }).risks));
+        } else {
+          setItems([]);
+        }
         setLoading(false);
       })
-      .catch((e) => {
-        setError(e.message);
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : "Failed to load records");
         setLoading(false);
       });
   };

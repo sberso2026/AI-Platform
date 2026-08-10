@@ -3,7 +3,11 @@ import { getAuthContext } from "@/lib/kernel";
 import { getEngineeringApiPolicy } from "@rtb/platform-commerce";
 import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { enforceCommercePolicy, type CommerceHandlerContext } from "./with-commerce-entitlement";
-import { lifecycleErrorResponse, unauthenticatedResponse } from "@/lib/lifecycle-api";
+import {
+  handleCommerceDomainError,
+  lifecycleErrorResponse,
+  unauthenticatedResponse,
+} from "@/lib/lifecycle-api";
 
 export type { CommerceHandlerContext };
 
@@ -34,7 +38,15 @@ function projectIntelligenceEntitlementCode(reasonCode: string): string {
 }
 
 async function projectIntelligenceGuardError(response: NextResponse, requestId: string): Promise<NextResponse> {
-  const body = await response.clone().json().catch(() => ({}));
+  const text = await response.clone().text().catch(() => "");
+  let body: Record<string, unknown> = {};
+  if (text.trim()) {
+    try {
+      body = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      body = {};
+    }
+  }
   const reasonCode = typeof body?.code === "string" ? body.code : "entitlement_denied";
   return lifecycleErrorResponse(
     projectIntelligenceEntitlementCode(reasonCode),
@@ -84,7 +96,12 @@ export function withEngineeringApi(
   return async (request: Request): Promise<NextResponse> => {
     const guarded = await guardEngineeringApi(segment, request.method);
     if (guarded instanceof NextResponse) return guarded;
-    return handler(guarded, request);
+    try {
+      return await handler(guarded, request);
+    } catch (err) {
+      // Always return a JSON lifecycle/commerce error — never an empty non-JSON body.
+      return handleCommerceDomainError(err, guarded.correlationId);
+    }
   };
 }
 
@@ -102,7 +119,11 @@ export function withEngineeringApiParams<T extends Record<string, string>>(
   ): Promise<NextResponse> => {
     const guarded = await guardEngineeringApi(segment, request.method);
     if (guarded instanceof NextResponse) return guarded;
-    const params = await routeContext.params;
-    return handler(guarded, request, params);
+    try {
+      const params = await routeContext.params;
+      return await handler(guarded, request, params);
+    } catch (err) {
+      return handleCommerceDomainError(err, guarded.correlationId);
+    }
   };
 }

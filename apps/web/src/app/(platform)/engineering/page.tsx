@@ -31,6 +31,10 @@ import {
   FileText,
   Zap,
 } from "lucide-react";
+import {
+  asRecordArray,
+  parseApiJsonResponse,
+} from "@/lib/api/parse-json-response";
 
 type Trend = "up" | "down" | "flat";
 
@@ -62,21 +66,28 @@ export default function EngineeringCommandCenterPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/engineering/dashboard").then((r) => r.json()),
-      fetch("/api/engineering/timeline").then((r) => r.json()),
-      fetch("/api/engineering/activity").then((r) => r.json()),
-      fetch("/api/engineering/decisions").then((r) => r.json()),
-      fetch("/api/engineering/risks").then((r) => r.json()),
+      fetch("/api/engineering/dashboard").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/timeline").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/activity").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/decisions").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/risks").then((r) => parseApiJsonResponse(r)),
     ])
       .then(([dash, tl, act, dec, rsk]) => {
-        if (dash.error) setError(String(dash.error));
-        else setData(dash.data);
-        setTimeline(Array.isArray(tl.data) ? tl.data.slice(0, 6) : []);
-        setActivity(Array.isArray(act.data) ? act.data.slice(0, 6) : []);
-        setDecisions(Array.isArray(dec.data) ? dec.data.slice(0, 5) : []);
-        setRisks(Array.isArray(rsk.data) ? rsk.data.slice(0, 5) : []);
+        if (!dash.ok) {
+          setError(
+            dash.errorMessage ?? `Dashboard failed with status ${dash.status}`,
+          );
+        } else if (dash.data && typeof dash.data === "object") {
+          setData(dash.data as Record<string, unknown>);
+        }
+        setTimeline(asRecordArray(tl.data).slice(0, 6));
+        setActivity(asRecordArray(act.data).slice(0, 6));
+        setDecisions(asRecordArray(dec.data).slice(0, 5));
+        setRisks(asRecordArray(rsk.data).slice(0, 5));
       })
-      .catch((e) => setError(e.message));
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : "Failed to load command center"),
+      );
   }, []);
 
   const health = (data?.platformHealth as Record<string, string>) ?? {};
