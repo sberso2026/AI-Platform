@@ -2,18 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
-import { resolveVisiblePrimaryNavIds } from "@/lib/engineering/experience-surfaces";
+import {
+  resolveEngineeringDeploymentProfile,
+  resolveExperienceUxDensity,
+  resolveVisiblePrimaryNavIds,
+} from "@/lib/engineering/experience-surfaces";
+import type { DeploymentProfile, EngineeringUxDensity } from "@rtb/engineering-os";
 
 export type EngineeringCapabilitySnapshot = {
   productEntitled: boolean;
   entitledFeatureKeys: string[];
   entitledApplicationKeys: string[];
   visiblePrimaryNavIds: string[];
+  profileId: DeploymentProfile;
+  uxDensity: EngineeringUxDensity;
   timingMs: number | null;
   loaded: boolean;
 };
 
-const CACHE_KEY = "rtb.engineering.capability.snapshot.v1";
+const CACHE_KEY = "rtb.engineering.capability.snapshot.v2";
 const CACHE_TTL_MS = 60_000;
 
 type CachedSnapshot = {
@@ -42,9 +49,11 @@ function writeCache(value: Omit<EngineeringCapabilitySnapshot, "loaded">) {
 }
 
 /**
- * Capability metadata for experience nav. Cached briefly; does not block first paint.
+ * Capability + profile metadata for experience nav.
+ * Cached briefly; does not block first paint or enterprise capability discovery on ESSENTIAL.
  */
 export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
+  const profileId = resolveEngineeringDeploymentProfile();
   const cached = typeof window !== "undefined" ? readCache() : null;
   const [state, setState] = useState<EngineeringCapabilitySnapshot>(() => ({
     productEntitled: cached?.value.productEntitled ?? true,
@@ -55,7 +64,10 @@ export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
       resolveVisiblePrimaryNavIds({
         productEntitled: true,
         entitledFeatureKeys: [],
+        profileId,
       }),
+    profileId: cached?.value.profileId ?? profileId,
+    uxDensity: cached?.value.uxDensity ?? resolveExperienceUxDensity(profileId),
     timingMs: cached?.value.timingMs ?? null,
     loaded: Boolean(cached),
   }));
@@ -77,6 +89,7 @@ export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
           aiAssistant?: { allowed?: boolean };
           productAccess?: { allowed?: boolean };
           features?: Array<{ key: string; allowed: boolean }>;
+          deploymentProfile?: string;
         }>(snapshotRes);
 
         const entitledApplicationKeys = (
@@ -90,6 +103,7 @@ export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
           aiAssistant?: { allowed?: boolean };
           productAccess?: { allowed?: boolean };
           features?: Array<{ key: string; allowed: boolean }>;
+          deploymentProfile?: string;
         } | null;
 
         const entitledFeatureKeys: string[] = [];
@@ -101,9 +115,13 @@ export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
         }
 
         const productEntitled = snap?.productAccess?.allowed !== false;
+        const resolvedProfile = resolveEngineeringDeploymentProfile(
+          snap?.deploymentProfile,
+        );
         const visiblePrimaryNavIds = resolveVisiblePrimaryNavIds({
           productEntitled,
           entitledFeatureKeys,
+          profileId: resolvedProfile,
         });
         const timingMs = Math.round(performance.now() - started);
         const next = {
@@ -111,6 +129,8 @@ export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
           entitledFeatureKeys,
           entitledApplicationKeys,
           visiblePrimaryNavIds,
+          profileId: resolvedProfile,
+          uxDensity: resolveExperienceUxDensity(resolvedProfile),
           timingMs,
         };
         writeCache(next);

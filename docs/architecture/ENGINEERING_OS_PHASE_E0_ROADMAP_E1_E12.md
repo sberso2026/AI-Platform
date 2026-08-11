@@ -14,7 +14,7 @@ Status: Planning baseline (E0) · Does not certify future phases
 | **E7** | Passive Engineering Memory | Governed passive capture of decisions/outcomes/tool results into Platform Memory; Ask uses memory as context never authority | No second Memory/KG; Platform Kernel ownership preserved. (Earlier draft labelled E7 “Tool Registry UX” — superseded; absorbed by E6.) |
 | **E8** | Engineering Action & Workflow Orchestration | Ask→proposal→human review→existing domain/workflow execute; provenance/audit; E7 memory handoff | No second workflow engine; Platform Workflow/Event Bus ownership; E4 external write remains gated. (Earlier draft labelled E8 “Connector framework productization” — superseded.) |
 | **E9** | Unified Engineering Intelligence Integration | Route Ask/context to certified PI/AI/II/PC capabilities; coherent Intelligence landing; provenance; E7/E8 handoffs | No engine ownership duplication; Platform capability registry reused; no fabricated intelligence. (Earlier draft labelled E9 “PROFESSIONAL packaging” — superseded.) |
-| **E10** | Enterprise federation | ERP/EAM/data-platform adapters; conflict representation | SoR policy |
+| **E10** | Deployment Profiles & Progressive UX | ESSENTIAL/PROFESSIONAL/ENTERPRISE packaging; progressive nav density; profile≠auth; deployment/identity abstraction; optional Copilot federation | Entitlement+RBAC; zero-connector ESSENTIAL; no provider hard deps. (Earlier draft labelled E10 “Enterprise federation” — superseded.) |
 | **E11** | Ambient governance polish | Automatic provenance/audit UX minimization | Security closure |
 | **E12** | Profile certification gate | ESSENTIAL/PROFESSIONAL/ENTERPRISE evidence packs | No V1 reopen |
 

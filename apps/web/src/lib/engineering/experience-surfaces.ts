@@ -6,9 +6,29 @@
 import {
   E1_EXPERIENCE_ROUTES,
   E1_SURFACE_CAPABILITY_GATES,
-  filterVisiblePrimaryNavIds,
+  resolveProfilePrimaryNav,
+  resolveUxDensity,
+  type DeploymentProfile,
+  type EngineeringUxDensity,
 } from "@rtb/engineering-os";
 import { ENGINEERING_CERTIFIED_V1_MODULES } from "./certified-modules";
+
+/** Default progressive profile when tenant profile is not yet configured. */
+export const DEFAULT_ENGINEERING_DEPLOYMENT_PROFILE: DeploymentProfile = "ESSENTIAL";
+
+export function resolveEngineeringDeploymentProfile(
+  explicit?: DeploymentProfile | string | null,
+): DeploymentProfile {
+  const fromEnv =
+    typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_EOS_DEPLOYMENT_PROFILE
+      : undefined;
+  const raw = (explicit ?? fromEnv ?? DEFAULT_ENGINEERING_DEPLOYMENT_PROFILE).toString();
+  if (raw === "PROFESSIONAL" || raw === "ENTERPRISE" || raw === "ESSENTIAL") {
+    return raw;
+  }
+  return DEFAULT_ENGINEERING_DEPLOYMENT_PROFILE;
+}
 
 export const ENGINEERING_EXPERIENCE_SURFACES = [
   {
@@ -132,8 +152,21 @@ export const ENGINEERING_INTELLIGENCE_CATEGORIES = [
 export function resolveVisiblePrimaryNavIds(input: {
   productEntitled: boolean;
   entitledFeatureKeys: readonly string[];
+  /** When set, nav is intersected with profile packaging (E10). */
+  profileId?: DeploymentProfile | string | null;
 }): string[] {
-  return filterVisiblePrimaryNavIds(input);
+  const profileId = resolveEngineeringDeploymentProfile(input.profileId);
+  return resolveProfilePrimaryNav({
+    profileId,
+    productEntitled: input.productEntitled,
+    entitledFeatureKeys: input.entitledFeatureKeys,
+  });
+}
+
+export function resolveExperienceUxDensity(
+  profileId?: DeploymentProfile | string | null,
+): EngineeringUxDensity {
+  return resolveUxDensity(resolveEngineeringDeploymentProfile(profileId));
 }
 
 export function entitledIntelligenceHrefs(
