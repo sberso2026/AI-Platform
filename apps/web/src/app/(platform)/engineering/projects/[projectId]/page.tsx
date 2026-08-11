@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
 
 export default function EngineeringProjectDetailPage() {
   const params = useParams();
@@ -67,6 +68,14 @@ export default function EngineeringProjectDetailPage() {
               {project.client_name ? (
                 <Badge variant="outline">{project.client_name as string}</Badge>
               ) : null}
+              <AskThisObjectLink
+                label="Ask this project"
+                projectId={projectId}
+                objectType="project"
+                objectId={projectId}
+                q="Summarise this project"
+                testId="ask-this-project"
+              />
             </div>
             <div className="mb-4 flex gap-2 border-b">
               {tabs.map((t) => (
@@ -97,8 +106,20 @@ export default function EngineeringProjectDetailPage() {
                     <Row label="Industry" value={project.industry as string} />
                     <Row label="Type" value={project.project_type as string} />
                     <Row
-                      label="Knowledge Node"
-                      value={(project.knowledge_node_id as string)?.slice(0, 8) ?? "—"}
+                      label="Knowledge"
+                      value={
+                        (project.presentation as
+                          | {
+                              knowledgeLinkStatus?: string;
+                              knowledgeNodeTitle?: string | null;
+                            }
+                          | undefined)?.knowledgeLinkStatus === "linked"
+                          ? (project.presentation as { knowledgeNodeTitle?: string | null })
+                              .knowledgeNodeTitle
+                            ? `Linked — ${(project.presentation as { knowledgeNodeTitle?: string | null }).knowledgeNodeTitle}`
+                            : "Linked"
+                          : "Not linked"
+                      }
                     />
                   </CardContent>
                 </Card>
@@ -155,12 +176,20 @@ export default function EngineeringProjectDetailPage() {
             {tab === "knowledge" && (
               <Card>
                 <CardContent className="p-6 text-sm">
-                  Knowledge node:{" "}
-                  {(project.knowledge_node_id as string) ?? "Not linked"}
+                  {(project.presentation as
+                    | {
+                        knowledgeLinkStatus?: string;
+                        knowledgeNodeTitle?: string | null;
+                      }
+                    | undefined)?.knowledgeLinkStatus === "linked"
+                    ? (project.presentation as { knowledgeNodeTitle?: string | null })
+                        .knowledgeNodeTitle
+                      ? `Linked — ${(project.presentation as { knowledgeNodeTitle?: string | null }).knowledgeNodeTitle}`
+                      : "Knowledge linked via shared Knowledge Graph"
+                    : "Knowledge not linked"}
                 </CardContent>
               </Card>
             )}
-
             {tab === "settings" && (
               <Card>
                 <CardContent className="p-6 text-sm text-muted-foreground">

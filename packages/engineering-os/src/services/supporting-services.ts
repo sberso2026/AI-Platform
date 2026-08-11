@@ -1,4 +1,4 @@
-import type { Json, SupabaseClient } from "@rtb/database";
+﻿import type { Json, SupabaseClient } from "@rtb/database";
 import type { PlatformKernel } from "@rtb/platform-kernel";
 import type {
   CommerceExecutionContext,
@@ -388,7 +388,8 @@ export class EngineeringSearchService {
 export class EngineeringAIService {
   constructor(
     private readonly supabase: SupabaseClient,
-    private readonly kernel: PlatformKernel
+    private readonly kernel: PlatformKernel,
+    private readonly search?: EngineeringSearchService,
   ) {}
 
   async run(commerce: CommerceExecutionContext, input: {
@@ -401,6 +402,10 @@ export class EngineeringAIService {
     documentId?: string;
     disciplineId?: string;
     agentSlug?: string;
+    objectType?: string;
+    objectId?: string;
+    scope?: string;
+    sessionId?: string;
   }) {
     assertEngineeringService(commerce, "ai.execute", input.tenantId);
     const enabled = await this.kernel.intelligence.features.evaluate({
@@ -410,6 +415,106 @@ export class EngineeringAIService {
     });
     if (!enabled) {
       throw new Error("Engineering OS is not enabled for this tenant");
+    }
+
+    // E2 grounded path: compose native retrieval; no second assistant stack.
+    if (this.search) {
+      const { EngineeringRetrievalService } = await import("./engineering-retrieval-service");
+      const { runGroundedEngineeringAsk } = await import("./grounded-ask");
+      const retrieval = new EngineeringRetrievalService(this.search, {
+        available: false,
+      });
+
+      const objectType =
+        input.objectType ??
+        (input.documentId ? "document" : input.assetId ? "asset" : input.projectId ? "project" : null);
+      const objectId = input.objectId ?? input.documentId ?? input.assetId ?? null;
+
+      const grounded = await runGroundedEngineeringAsk({
+        commerce,
+        retrieval,
+        query: {
+          tenantId: input.tenantId,
+          workspaceId: input.workspaceId,
+          userId: input.userId,
+          projectId: input.projectId,
+          objectType,
+          objectId,
+          query: input.message,
+          scope: (input.scope as
+            | "workspace"
+            | "project"
+            | "asset"
+            | "document"
+            | "object"
+            | undefined) ?? undefined,
+          limit: 12,
+        },
+        tryGenerate: async ({ message }) => {
+          try {
+            let agentId: string | undefined;
+            const slug = input.agentSlug ?? "engineering-director";
+            const { data: agent } = await this.supabase
+              .from("agents")
+              .select("id")
+              .eq("tenant_id", input.tenantId)
+              .eq("slug", slug)
+              .maybeSingle();
+            agentId = agent?.id as string | undefined;
+
+            const result = await this.kernel.aiDirector.run({
+              tenantId: input.tenantId,
+              workspaceId: input.workspaceId,
+              userId: input.userId,
+              agentId,
+              sessionId: input.sessionId,
+              message,
+              context: {
+                operating_system: "engineering",
+                project_id: input.projectId,
+                asset_id: input.assetId,
+                document_id: input.documentId,
+                discipline_id: input.disciplineId,
+                grounded: true,
+                phase: "E2",
+              },
+            });
+            return { content: result.message ?? "", failed: false };
+          } catch {
+            return { content: "", failed: true };
+          }
+        },
+      });
+
+      await this.kernel.eventBus.publish({
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        eventType: "engineering.ai.run.completed",
+        source: "engineering-os",
+        payload: {
+          grounded: true,
+          evidence_state: grounded.evidenceState,
+          requires_review: grounded.requiresReview,
+          sources: grounded.evidence.length,
+        },
+      });
+
+      return {
+        message: grounded.message,
+        requiresReview: grounded.requiresReview,
+        evidence: grounded.evidence,
+        evidenceState: grounded.evidenceState,
+        scope: grounded.scope,
+        limitations: grounded.limitations,
+        retrievalMode: grounded.retrievalMode,
+        grounded: grounded.grounded,
+        meta: {
+          ...grounded.meta,
+          confidence: grounded.grounded.abstained ? 0 : 0.7,
+          requiresReview: grounded.requiresReview,
+          policyApplied: true,
+        },
+      };
     }
 
     let agentId: string | undefined;
@@ -487,6 +592,11 @@ export class EngineeringAIService {
     return {
       ...result,
       requiresReview,
+      evidence: [],
+      evidenceState: "INSUFFICIENT" as const,
+      limitations: [
+        "Grounded retrieval service was not wired; refusing to present ungrounded evidence.",
+      ],
       meta: {
         confidence: result.run.confidence,
         requiresReview,
@@ -497,6 +607,7 @@ export class EngineeringAIService {
         traceId: (result.run as { trace_id?: string }).trace_id,
         costEventRef: result.run.id,
         policyApplied: true,
+        grounded: false,
       },
     };
   }
@@ -570,3 +681,4 @@ export class EngineeringDashboardService {
     };
   }
 }
+

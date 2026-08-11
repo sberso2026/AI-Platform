@@ -100,7 +100,7 @@ describe("EOS-E1 Experience foundation", () => {
     const ask = readSrc("src/components/engineering/ask-engineering-shell.tsx");
     expect(ask).toContain("initFromDeepLink");
     expect(ask).toContain("ask-context-bar");
-    expect(ask).toContain("ask-evidence-placeholder");
+    expect(ask).toContain("ask-evidence-panel");
     expect(ask).toContain("No fabricated");
   });
 

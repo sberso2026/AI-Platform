@@ -149,6 +149,9 @@ export const phaseE0Ready = true as const;
 /** Phase E1 experience foundation ready (contract details live in ./phase-e1). */
 export const phaseE1Ready = true as const;
 
+/** Phase E2 grounded search ready (contract details live in ./phase-e2). */
+export const phaseE2Ready = true as const;
+
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {
     version: ENGINEERING_OS_VERSION,
@@ -210,5 +213,6 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     PhaseE0NoMajorMigrationRequired,
     phaseE0Ready,
     phaseE1Ready,
+    phaseE2Ready,
   } as const;
 }

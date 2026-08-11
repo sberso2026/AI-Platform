@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@rtb/database";
+﻿import type { SupabaseClient } from "@rtb/database";
 import type { PlatformKernel } from "@rtb/platform-kernel";
 import {
   EngineeringAssetService,
@@ -83,7 +83,7 @@ export function createEngineeringOS(
     kernel,
     { decisions, actions, risks, issues, technicalQueries, lessons }
   );
-  const ai = new EngineeringAIService(supabase, kernel);
+  const ai = new EngineeringAIService(supabase, kernel, search);
   const dashboard = new EngineeringDashboardService(
     projects,
     assets,
@@ -117,3 +117,4 @@ export function createEngineeringOS(
     health,
   };
 }
+

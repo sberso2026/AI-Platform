@@ -18,6 +18,10 @@ export const POST = withEngineeringApi("ai", async ({ ctx, commerce }, request) 
     documentId: body.documentId,
     disciplineId: body.disciplineId,
     agentSlug: body.agentSlug,
+    objectType: body.objectType,
+    objectId: body.objectId,
+    scope: body.scope,
+    sessionId: body.sessionId,
   });
   return NextResponse.json({ data }, { status: 201 });
 });
