@@ -6,6 +6,7 @@ export * from "./phase-e3";
 export * from "./phase-e4";
 export * from "./phase-e5";
 export * from "./phase-e6";
+export * from "./phase-e7";
 export * from "./security-readiness";
 export * from "./security-closure";
 export * from "./manifest";

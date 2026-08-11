@@ -11,7 +11,7 @@ Status: Planning baseline (E0) · Does not certify future phases
 | **E4** | Enterprise Connector Framework | Vendor-neutral read-first connectors; ESSENTIAL zero-connector; E3 identity handoff; E2 optional evidence | No SoR ownership transfer; no live vendor hard deps; writes disabled. (Earlier draft labelled E4 “Explore & native search” — superseded.) |
 | **E5** | Engineering Reasoning, Evidence & Explainability | Evidence-based Ask reasoning; fact/inference/assumption; Why?; abstention/conflict; advisory authority | No CoT; no tool/KG/connector ownership; no fabricated authority. (Earlier draft labelled E5 “Document intelligence hardening” — superseded.) |
 | **E6** | Governed Engineering Tool Framework | Discover/invoke governed tools from Ask; units/certification/provenance; LLM cannot impersonate tools | No second Tool Registry; Platform Intelligence ownership preserved. (Earlier draft labelled E6 “Memory & KG publish” — superseded.) |
-| **E7** | Tool Registry UX | Governed tool invocation from Ask | Fail-closed solvers |
+| **E7** | Passive Engineering Memory | Governed passive capture of decisions/outcomes/tool results into Platform Memory; Ask uses memory as context never authority | No second Memory/KG; Platform Kernel ownership preserved. (Earlier draft labelled E7 “Tool Registry UX” — superseded; absorbed by E6.) |
 | **E8** | Connector framework productization | Install/health/mapping UX; first productivity connector optional | Optional only |
 | **E9** | PROFESSIONAL packaging | Cross-company Explore/Intelligence + commercial profile | No forced SAP |
 | **E10** | Enterprise federation | ERP/EAM/data-platform adapters; conflict representation | SoR policy |

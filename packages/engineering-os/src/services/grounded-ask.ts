@@ -1,5 +1,5 @@
 /**
- * Grounded Ask orchestration — E2 retrieval + E3 context + optional E4 connectors + E5 reasoning.
+ * Grounded Ask orchestration — E2 retrieval + E3 context + optional E4 connectors + E5 reasoning + E6 tools + E7 memory.
  * Reasoning provider failure degrades to E2 retrieval-only.
  */
 
@@ -21,6 +21,16 @@ import {
   mapAskActionToToolId,
 } from "../phase-e6/e5-bridge";
 import { EngineeringToolInvocationService } from "../phase-e6/invocation";
+import type { EngineeringMemoryHit } from "../phase-e7/contracts";
+import {
+  applyMemoryToReasoning,
+  deriveMemoryContextChips,
+  memoryHitsToEvidence,
+  type AskMemoryContextChips,
+} from "../phase-e7/ask-bridge";
+import { EngineeringMemoryCaptureService } from "../phase-e7/capture";
+import { EngineeringMemoryRetrievalService } from "../phase-e7/retrieval";
+import type { EngineeringMemoryStore } from "../phase-e7/store";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
 
 export type GroundedAskResult = {
@@ -36,6 +46,8 @@ export type GroundedAskResult = {
   why?: EngineeringReasoningResponse["why"];
   recommendedNextActions?: EngineeringReasoningResponse["recommendedNextActions"];
   toolResult?: EngineeringToolResult | null;
+  memoryHits?: EngineeringMemoryHit[];
+  memoryChips?: AskMemoryContextChips | null;
   meta: Record<string, unknown>;
   run?: unknown;
 };
@@ -66,6 +78,11 @@ export async function runGroundedEngineeringAsk(input: {
   toolPermissions?: string[];
   requireCertifiedToolPath?: boolean;
   toolInvocation?: EngineeringToolInvocationService | null;
+  /** E7 optional passive memory store / capture (Platform Memory ownership). */
+  memoryStore?: EngineeringMemoryStore | null;
+  memoryCapture?: EngineeringMemoryCaptureService | null;
+  skipMemory?: boolean;
+  captureToolResultToMemory?: boolean;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
 
@@ -76,11 +93,38 @@ export async function runGroundedEngineeringAsk(input: {
   });
   const query = enrichment.query;
 
+  // E7: bounded memory retrieval after context, before/alongside evidence assembly
+  let memoryHits: EngineeringMemoryHit[] = [];
+  let memoryLimitations: string[] = [];
+  let memoryRetrieveMs: number | null = null;
+  if (!input.skipMemory && input.memoryStore) {
+    const memoryRetrieval = new EngineeringMemoryRetrievalService(input.memoryStore);
+    const memoryResult = await memoryRetrieval.retrieve({
+      tenantId: query.tenantId,
+      workspaceId: query.workspaceId,
+      projectId: query.projectId,
+      userId: query.userId,
+      query: query.query,
+      subjectObjectId: query.objectId,
+      subjectObjectType: query.objectType,
+      limit: 8,
+    });
+    memoryHits = memoryResult.hits;
+    memoryLimitations = memoryResult.limitations;
+    memoryRetrieveMs = memoryResult.timingMs.retrieveMs;
+  }
+
   const { search, answer } = await input.retrieval.retrieveAndAnswer(
     input.commerce,
     query,
     { generationAvailable: generationProbe },
   );
+
+  if (memoryHits.length) {
+    const memoryEvidence = memoryHitsToEvidence(memoryHits);
+    answer.evidence = [...memoryEvidence, ...answer.evidence];
+    answer.limitations.push(...memoryLimitations);
+  }
 
   if (query.relatedObjectIds?.length) {
     answer.evidence = boostEvidenceByContextRelatedIds(
@@ -221,6 +265,15 @@ export async function runGroundedEngineeringAsk(input: {
     retrievalMode = "retrieval_only";
   }
 
+  // E7: fold memory provenance into Why? after reasoning
+  if (reasoning && memoryHits.length) {
+    reasoning = applyMemoryToReasoning(reasoning, memoryHits);
+    message = reasoning.answer;
+    answer.limitations = [
+      ...new Set([...answer.limitations, ...reasoning.limitations]),
+    ];
+  }
+
   // E6: optional governed tool invocation after reasoning
   let toolResult: EngineeringToolResult | null = null;
   if (input.toolAction) {
@@ -252,6 +305,30 @@ export async function runGroundedEngineeringAsk(input: {
           message = `${message}\n\nGoverned tool result: ${JSON.stringify(toolResult.output)}`;
         }
       }
+
+      if (input.captureToolResultToMemory && input.memoryCapture && toolResult) {
+        await input.memoryCapture.captureToolResult({
+          tenantId: query.tenantId,
+          workspaceId: query.workspaceId,
+          projectId: query.projectId,
+          userId: query.userId,
+          subject: {
+            objectType: (query.objectType as never) ?? "DOCUMENT",
+            objectId: query.objectId ?? toolResult.invocationId,
+            tenantId: query.tenantId,
+            workspaceId: query.workspaceId,
+            projectId: query.projectId,
+            authority: "ENGINEERING_OS",
+            provenance: {
+              sourceType: "tool_result",
+              sourceId: toolResult.invocationId,
+              mechanism: "SYSTEM",
+              timestamp: new Date().toISOString(),
+            },
+          },
+          toolResult,
+        });
+      }
     } else {
       answer.limitations.push(
         `Tool action "${input.toolAction}" has no governed executable tool; capability unavailable.`,
@@ -259,13 +336,17 @@ export async function runGroundedEngineeringAsk(input: {
     }
   }
 
-  const phase = toolResult
-    ? "E6"
-    : reasoning
-      ? "E5"
-      : enrichment.contextApplied
-        ? "E3"
-        : "E2";
+  const memoryChips = memoryHits.length ? deriveMemoryContextChips(memoryHits) : null;
+
+  const phase = memoryHits.length
+    ? "E7"
+    : toolResult
+      ? "E6"
+      : reasoning
+        ? "E5"
+        : enrichment.contextApplied
+          ? "E3"
+          : "E2";
 
   return {
     message,
@@ -297,6 +378,8 @@ export async function runGroundedEngineeringAsk(input: {
     why: reasoning?.why,
     recommendedNextActions: reasoning?.recommendedNextActions,
     toolResult,
+    memoryHits,
+    memoryChips,
     meta: {
       phase,
       grounded: true,
@@ -335,6 +418,10 @@ export async function runGroundedEngineeringAsk(input: {
       toolStatus: toolResult?.status ?? null,
       toolOutputKind: toolResult?.outputKind ?? null,
       llmFabricatedToolResult: false,
+      memoryHitCount: memoryHits.length,
+      memoryRetrieveMs,
+      memoryIsAuthority: false,
+      cotPersisted: false,
     },
   };
 }

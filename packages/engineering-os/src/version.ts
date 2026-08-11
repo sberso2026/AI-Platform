@@ -164,6 +164,12 @@ export const phaseE5Ready = true as const;
 /** Phase E6 governed tool framework ready (contract details live in ./phase-e6). */
 export const phaseE6Ready = true as const;
 
+/** Phase E7 passive engineering memory ready (contract details live in ./phase-e7). */
+export const phaseE7Ready = true as const;
+
+/** No second Engineering Memory framework — Platform Kernel Memory ownership. */
+export const duplicateMemoryFrameworkDetected = false as const;
+
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {
     version: ENGINEERING_OS_VERSION,
@@ -200,6 +206,7 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     duplicateKnowledgeGraphDetected,
     duplicateWorkflowEngineDetected,
     duplicateEngineeringToolFrameworkDetected,
+    duplicateMemoryFrameworkDetected,
     duplicateUniversalTimelineDetected,
     productionEngineeringOSReady,
     engineeringOSV1GaCertified,
@@ -230,5 +237,6 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     phaseE4Ready,
     phaseE5Ready,
     phaseE6Ready,
+    phaseE7Ready,
   } as const;
 }

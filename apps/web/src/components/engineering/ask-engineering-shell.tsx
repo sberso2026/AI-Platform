@@ -64,6 +64,13 @@ interface Message {
   recommendedNextActions?: SuggestedAction[];
   authorityStatus?: string | null;
   explanationStatus?: string | null;
+  memoryChips?: {
+    previousSimilarWork?: boolean;
+    relevantPrecedent?: boolean;
+    previousDecision?: boolean;
+    lessons?: boolean;
+    whyWasThisDone?: boolean;
+  } | null;
 }
 
 const SCOPE_OPTIONS = [
@@ -74,7 +81,7 @@ const SCOPE_OPTIONS = [
 ] as const;
 
 /**
- * Ask Engineering OS — E2–E5 grounded evidence + Why? explainability UI.
+ * Ask Engineering OS — E2–E7 grounded evidence, Why?, tools, and passive memory context.
  */
 export function AskEngineeringShell({
   embedded = false,
@@ -231,6 +238,7 @@ export function AskEngineeringShell({
         recommendedNextActions?: SuggestedAction[];
         authorityStatus?: string | null;
         explanationStatus?: string | null;
+        memoryChips?: Message["memoryChips"];
         meta?: Record<string, unknown>;
       }>(res);
 
@@ -286,6 +294,7 @@ export function AskEngineeringShell({
           recommendedNextActions: data.recommendedNextActions ?? [],
           authorityStatus: data.authorityStatus ?? null,
           explanationStatus: data.explanationStatus ?? null,
+          memoryChips: data.memoryChips ?? null,
         },
       ]);
     } catch (err) {
@@ -311,7 +320,7 @@ export function AskEngineeringShell({
     <main
       className="flex flex-1 flex-col overflow-hidden"
       data-testid="ask-engineering-os"
-      data-retrieval-ready="e6"
+      data-retrieval-ready="e7"
     >
       <div
         className="flex flex-wrap items-center gap-2 border-b px-4 py-3 text-sm"
@@ -378,6 +387,44 @@ export function AskEngineeringShell({
 
               {message.role === "assistant" && message.evidenceState ? (
                 <div className="space-y-2 pl-8" data-testid="ask-evidence-panel">
+                  {message.memoryChips &&
+                  (message.memoryChips.previousSimilarWork ||
+                    message.memoryChips.relevantPrecedent ||
+                    message.memoryChips.previousDecision ||
+                    message.memoryChips.lessons ||
+                    message.memoryChips.whyWasThisDone) ? (
+                    <div
+                      className="flex flex-wrap gap-1.5"
+                      data-testid="ask-memory-context"
+                      aria-label="Relevant engineering memory"
+                    >
+                      {message.memoryChips.previousSimilarWork ? (
+                        <span className="rounded border px-2 py-0.5 text-[11px] text-slate-700">
+                          Previous similar work
+                        </span>
+                      ) : null}
+                      {message.memoryChips.relevantPrecedent ? (
+                        <span className="rounded border px-2 py-0.5 text-[11px] text-slate-700">
+                          Relevant precedent
+                        </span>
+                      ) : null}
+                      {message.memoryChips.previousDecision ? (
+                        <span className="rounded border px-2 py-0.5 text-[11px] text-slate-700">
+                          Previous decision
+                        </span>
+                      ) : null}
+                      {message.memoryChips.lessons ? (
+                        <span className="rounded border px-2 py-0.5 text-[11px] text-slate-700">
+                          Lessons
+                        </span>
+                      ) : null}
+                      {message.memoryChips.whyWasThisDone ? (
+                        <span className="rounded border px-2 py-0.5 text-[11px] text-slate-700">
+                          Why was this done?
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <p className="text-xs text-muted-foreground">
                     Evidence state: {message.evidenceState}
                     {message.explanationStatus ? ` · ${message.explanationStatus}` : ""}

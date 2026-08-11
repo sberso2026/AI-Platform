@@ -12,6 +12,8 @@ export class MemoryService {
     classification?: MemoryClassification;
     createdBy?: string;
     expiresAt?: string;
+    /** Optional metadata blob (e.g. Engineering OS E7 record). */
+    metadata?: Record<string, unknown>;
   }): Promise<AIMemory> {
     const { data, error } = await this.supabase
       .from("ai_memories")
@@ -21,6 +23,7 @@ export class MemoryService {
         scope_ref_id: input.scopeRefId,
         content: input.content,
         classification: input.classification ?? "general",
+        metadata: (input.metadata ?? {}) as Json,
         created_by: input.createdBy ?? null,
         expires_at: input.expiresAt ?? null,
       })

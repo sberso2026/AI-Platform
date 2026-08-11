@@ -426,9 +426,13 @@ export class EngineeringAIService {
       const { EngineeringRetrievalService } = await import("./engineering-retrieval-service");
       const { runGroundedEngineeringAsk } = await import("./grounded-ask");
       const { createSupabaseContextProvider } = await import("./supabase-context-provider");
+      const { PlatformEngineeringMemoryAdapter } = await import("../phase-e7/store");
+      const { EngineeringMemoryCaptureService } = await import("../phase-e7/capture");
       const retrieval = new EngineeringRetrievalService(this.search, {
         available: false,
       });
+      const memoryStore = new PlatformEngineeringMemoryAdapter(this.kernel.memory);
+      const memoryCapture = new EngineeringMemoryCaptureService(memoryStore);
 
       const objectType =
         input.objectType ??
@@ -474,6 +478,9 @@ export class EngineeringAIService {
           toolInputs: input.toolInputs,
           toolUnits: input.toolUnits,
           requireCertifiedToolPath: input.requireCertifiedToolPath,
+          memoryStore,
+          memoryCapture,
+          captureToolResultToMemory: Boolean(input.toolAction),
           tryGenerate: async ({ message }) => {
             try {
               let agentId: string | undefined;
@@ -522,6 +529,7 @@ export class EngineeringAIService {
             sources: grounded.evidence.length,
             explanation_status: grounded.reasoning?.explanationStatus ?? null,
             tool_invocation_id: grounded.toolResult?.invocationId ?? null,
+            memory_hit_count: grounded.memoryHits?.length ?? 0,
           },
         });
 
@@ -542,6 +550,8 @@ export class EngineeringAIService {
           authorityStatus: grounded.reasoning?.authorityStatus ?? null,
           explanationStatus: grounded.reasoning?.explanationStatus ?? null,
           toolResult: grounded.toolResult ?? null,
+          memoryHits: grounded.memoryHits ?? [],
+          memoryChips: grounded.memoryChips ?? null,
           meta: {
             ...grounded.meta,
             confidence: grounded.reasoning?.confidence ?? (grounded.grounded.abstained ? 0 : 0.7),
