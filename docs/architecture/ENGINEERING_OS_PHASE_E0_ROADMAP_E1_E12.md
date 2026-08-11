@@ -16,7 +16,7 @@ Status: Planning baseline (E0) · Does not certify future phases
 | **E9** | Unified Engineering Intelligence Integration | Route Ask/context to certified PI/AI/II/PC capabilities; coherent Intelligence landing; provenance; E7/E8 handoffs | No engine ownership duplication; Platform capability registry reused; no fabricated intelligence. (Earlier draft labelled E9 “PROFESSIONAL packaging” — superseded.) |
 | **E10** | Deployment Profiles & Progressive UX | ESSENTIAL/PROFESSIONAL/ENTERPRISE packaging; progressive nav density; profile≠auth; deployment/identity abstraction; optional Copilot federation | Entitlement+RBAC; zero-connector ESSENTIAL; no provider hard deps. (Earlier draft labelled E10 “Enterprise federation” — superseded.) |
 | **E11** | Evaluation, Performance & Engineer Adoption | Deterministic evaluation framework; engineering benchmarks A–N + KGP integrity workflow; KPI kind separation; performance budgets; resilience/adversarial gates; privacy-safe adoption telemetry; admin evaluation report | E0–E10 invariants; no unsupported ROI/accuracy claims; ESSENTIAL zero-connector. (Earlier draft labelled E11 “Ambient governance polish” — superseded.) |
-| **E12** | Profile certification gate | ESSENTIAL/PROFESSIONAL/ENTERPRISE evidence packs | No V1 reopen |
+| **E12** | Production Architecture & Product Certification | Final A1–A20 certification; ownership/profile/integration maturity matrices; E2E provenance; security/authority/failure-mode gates; ESSENTIAL zero-connector + enterprise packaging honesty | No V1 reopen; fixtures ≠ live integrations. (Earlier draft labelled E12 “Profile certification gate” — absorbed into this production certification.) |
 
 ## Sequencing rules
 
