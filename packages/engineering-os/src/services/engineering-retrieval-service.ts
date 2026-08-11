@@ -103,6 +103,19 @@ export class EngineeringRetrievalService {
     }
 
     let evidence = bucketsToEvidence(buckets, { ...query, scope });
+    // E3: prefer authorised related object IDs from context (no fabricated rows).
+    if (query.relatedObjectIds?.length) {
+      const boost = new Set(query.relatedObjectIds);
+      evidence = [...evidence].sort((a, b) => {
+        const aHit = boost.has(a.canonicalObjectId) ? 1 : 0;
+        const bHit = boost.has(b.canonicalObjectId) ? 1 : 0;
+        if (aHit !== bHit) return bHit - aHit;
+        return (b.retrievalScore ?? 0) - (a.retrievalScore ?? 0);
+      });
+      limitations.push(
+        "E3 context hints applied to rank authorised related objects within search results.",
+      );
+    }
     // Preferential ranking already applied; keep superseded if conflicting.
     if (evidence.some((e) => e.authorityStatus === "SUPERSEDED")) {
       limitations.push("One supporting source is superseded.");

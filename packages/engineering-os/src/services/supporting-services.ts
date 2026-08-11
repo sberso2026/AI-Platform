@@ -417,10 +417,11 @@ export class EngineeringAIService {
       throw new Error("Engineering OS is not enabled for this tenant");
     }
 
-    // E2 grounded path: compose native retrieval; no second assistant stack.
+    // E2/E3 grounded path: context resolver enriches retrieval; degrades to E2 on failure.
     if (this.search) {
       const { EngineeringRetrievalService } = await import("./engineering-retrieval-service");
       const { runGroundedEngineeringAsk } = await import("./grounded-ask");
+      const { createSupabaseContextProvider } = await import("./supabase-context-provider");
       const retrieval = new EngineeringRetrievalService(this.search, {
         available: false,
       });
@@ -429,6 +430,19 @@ export class EngineeringAIService {
         input.objectType ??
         (input.documentId ? "document" : input.assetId ? "asset" : input.projectId ? "project" : null);
       const objectId = input.objectId ?? input.documentId ?? input.assetId ?? null;
+
+      const contextProvider = createSupabaseContextProvider(this.supabase, input.tenantId);
+      const contextAuth = {
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId ?? null,
+        canAccessObject: (ref: {
+          objectType: string;
+          objectId: string;
+          tenantId: string;
+          workspaceId?: string | null;
+          projectId?: string | null;
+        }) => ref.tenantId === input.tenantId,
+      };
 
       const grounded = await runGroundedEngineeringAsk({
         commerce,
@@ -450,6 +464,8 @@ export class EngineeringAIService {
             | undefined) ?? undefined,
           limit: 12,
         },
+        contextProvider,
+        contextAuth,
         tryGenerate: async ({ message }) => {
           try {
             let agentId: string | undefined;
@@ -476,7 +492,7 @@ export class EngineeringAIService {
                 document_id: input.documentId,
                 discipline_id: input.disciplineId,
                 grounded: true,
-                phase: "E2",
+                phase: "E3",
               },
             });
             return { content: result.message ?? "", failed: false };

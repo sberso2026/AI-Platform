@@ -152,6 +152,9 @@ export const phaseE1Ready = true as const;
 /** Phase E2 grounded search ready (contract details live in ./phase-e2). */
 export const phaseE2Ready = true as const;
 
+/** Phase E3 canonical context ready (contract details live in ./phase-e3). */
+export const phaseE3Ready = true as const;
+
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {
     version: ENGINEERING_OS_VERSION,
@@ -214,5 +217,6 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     phaseE0Ready,
     phaseE1Ready,
     phaseE2Ready,
+    phaseE3Ready,
   } as const;
 }

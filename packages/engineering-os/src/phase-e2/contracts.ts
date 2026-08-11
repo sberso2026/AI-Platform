@@ -96,6 +96,12 @@ export type EngineeringSearchQuery = {
   query: string;
   scope?: EngineeringSearchScope | null;
   limit?: number;
+  /** E3 additive: authorised related object IDs from context resolver (optional). */
+  relatedObjectIds?: string[];
+  /** E3 additive: preferred relationship types for ranking hints (optional). */
+  preferredRelationshipTypes?: string[];
+  /** E3 additive: context resolution state when enrichment was attempted. */
+  contextState?: string | null;
 };
 
 export type EngineeringEvidence = {

@@ -1,9 +1,15 @@
 /**
  * Grounded Ask orchestration — extends Engineering AI path without a second stack.
+ * E3: optional context resolver enrichment; failure degrades to E2 retrieval.
  */
 
 import type { CommerceExecutionContext } from "@rtb/types";
 import type { EngineeringGroundedAnswer, EngineeringSearchQuery } from "../phase-e2/contracts";
+import type { AuthorisationGate, ContextDomainProvider } from "../phase-e3/canonical-context-resolver";
+import {
+  boostEvidenceByContextRelatedIds,
+  enrichAskQueryWithContext,
+} from "../phase-e3/ask-context-bridge";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
 
 export type GroundedAskResult = {
@@ -31,13 +37,54 @@ export async function runGroundedEngineeringAsk(input: {
     message: string;
     evidenceSummary: string;
   }) => Promise<{ content: string; failed?: boolean } | null>;
+  /** E3 optional — when absent or failing, E2 lexical path is unchanged. */
+  contextProvider?: ContextDomainProvider | null;
+  contextAuth?: AuthorisationGate | null;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
+
+  const enrichment = await enrichAskQueryWithContext({
+    query: input.query,
+    provider: input.contextProvider,
+    auth: input.contextAuth,
+  });
+  const query = enrichment.query;
+
   const { search, answer } = await input.retrieval.retrieveAndAnswer(
     input.commerce,
-    input.query,
+    query,
     { generationAvailable: generationProbe },
   );
+
+  // Prefer context-related authorised evidence without inventing rows.
+  if (query.relatedObjectIds?.length) {
+    answer.evidence = boostEvidenceByContextRelatedIds(
+      answer.evidence,
+      query.relatedObjectIds,
+    );
+    search.evidence = boostEvidenceByContextRelatedIds(
+      search.evidence,
+      query.relatedObjectIds,
+    );
+  }
+
+  if (enrichment.contextApplied && enrichment.bundle) {
+    answer.limitations.push(
+      `E3 context ${enrichment.bundle.contextState}: ${enrichment.bundle.relationships.length} authorised relationship(s), ${enrichment.bundle.relatedObjects.length} related object(s).`,
+    );
+    if (enrichment.bundle.timingMs) {
+      answer.limitations.push(
+        `Context resolve ${enrichment.bundle.timingMs.resolveMs}ms / objects ${enrichment.bundle.timingMs.objectsLoaded} / edges ${enrichment.bundle.timingMs.relationshipsTraversed}.`,
+      );
+    }
+  } else if (enrichment.degradedToE2) {
+    // Silent degrade for missing provider; note only when resolve failed after attempt.
+    if (enrichment.reason && enrichment.reason !== "context_provider_unavailable") {
+      answer.limitations.push(
+        "E3 context unavailable; used E2 native retrieval without fabricated relationship expansion.",
+      );
+    }
+  }
 
   let message = answer.answer;
   let generationAvailable = false;
@@ -68,8 +115,6 @@ export async function runGroundedEngineeringAsk(input: {
       if (generated?.failed) {
         generationFailed = true;
       } else if (generated?.content?.trim()) {
-        // Keep deterministic synthesis as authority; append model wording only when non-empty
-        // and still attach real evidence (never model-fabricated refs).
         generationAvailable = true;
         message = `${generated.content.trim()}\n\n—\nGrounded against ${answer.evidence.length} authorised Engineering OS source(s). Advisory only.`;
       }
@@ -101,7 +146,7 @@ export async function runGroundedEngineeringAsk(input: {
     limitations: answer.limitations,
     retrievalMode: generationFailed ? "retrieval_only" : answer.retrievalMode,
     meta: {
-      phase: "E2",
+      phase: enrichment.contextApplied ? "E3" : "E2",
       grounded: true,
       evidenceState: answer.evidenceState,
       scope: answer.scope,
@@ -115,6 +160,11 @@ export async function runGroundedEngineeringAsk(input: {
       generationFailed,
       abstained: answer.abstained,
       policyApplied: true,
+      contextApplied: enrichment.contextApplied,
+      contextDegradedToE2: enrichment.degradedToE2,
+      contextState: query.contextState ?? null,
+      contextResolveMs: enrichment.bundle?.timingMs?.resolveMs ?? null,
+      relatedObjectIds: query.relatedObjectIds ?? [],
     },
   };
 }
