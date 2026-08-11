@@ -8,6 +8,7 @@ import { Button, Card, CardContent, Input } from "@rtb/ui";
 import { Bot, Send, User } from "lucide-react";
 import { cn } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { recordEngineeringAdoptionEvent } from "@/lib/engineering/adoption-telemetry";
 import {
   buildAskHref,
   useEngineeringContext,
@@ -343,6 +344,7 @@ export function AskEngineeringShell({
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    recordEngineeringAdoptionEvent({ type: "ask_used", surface: "ask" });
 
     try {
       const toolInputs: Record<string, unknown> = {};
@@ -604,12 +606,19 @@ export function AskEngineeringShell({
                       <button
                         type="button"
                         className="flex w-full items-center justify-between text-left text-sm font-medium text-slate-900"
-                        onClick={() =>
+                        onClick={() => {
+                          const next = !expandedWhy[message.id];
                           setExpandedWhy((prev) => ({
                             ...prev,
-                            [message.id]: !prev[message.id],
-                          }))
-                        }
+                            [message.id]: next,
+                          }));
+                          if (next) {
+                            recordEngineeringAdoptionEvent({
+                              type: "why_opened",
+                              surface: "ask",
+                            });
+                          }
+                        }}
                         data-testid="ask-why-toggle"
                       >
                         <span>Why?</span>
@@ -677,6 +686,12 @@ export function AskEngineeringShell({
                               href={ev.sourceLocation}
                               className="block rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-slate-400"
                               data-testid="ask-evidence-link"
+                              onClick={() =>
+                                recordEngineeringAdoptionEvent({
+                                  type: "evidence_opened",
+                                  surface: "ask",
+                                })
+                              }
                             >
                               <div className="font-medium text-slate-900">
                                 {ev.title}
@@ -753,6 +768,39 @@ export function AskEngineeringShell({
                         {action.label}
                       </button>
                     ))}
+                  </div>
+
+                  <div
+                    className="flex flex-wrap items-center gap-2 pt-1"
+                    data-testid="ask-usefulness-feedback"
+                  >
+                    <span className="text-[11px] text-muted-foreground">Was this useful?</span>
+                    <button
+                      type="button"
+                      className="rounded-md border px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                      onClick={() =>
+                        recordEngineeringAdoptionEvent({
+                          type: "feedback_useful",
+                          surface: "ask",
+                          reason: "saved_time",
+                        })
+                      }
+                    >
+                      Useful
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                      onClick={() =>
+                        recordEngineeringAdoptionEvent({
+                          type: "feedback_not_useful",
+                          surface: "ask",
+                          reason: "missing_evidence",
+                        })
+                      }
+                    >
+                      Not useful
+                    </button>
                   </div>
                 </div>
               ) : null}

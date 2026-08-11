@@ -176,6 +176,9 @@ export const phaseE9Ready = true as const;
 /** Phase E10 deployment profiles & progressive UX ready (contract details live in ./phase-e10). */
 export const phaseE10Ready = true as const;
 
+/** Phase E11 evaluation, performance & engineer adoption ready (contract details live in ./phase-e11). */
+export const phaseE11Ready = true as const;
+
 /** No second Engineering Memory framework — Platform Kernel Memory ownership. */
 export const duplicateMemoryFrameworkDetected = false as const;
 
@@ -250,5 +253,6 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     phaseE8Ready,
     phaseE9Ready,
     phaseE10Ready,
+    phaseE11Ready,
   } as const;
 }
