@@ -81,7 +81,7 @@ const SCOPE_OPTIONS = [
 ] as const;
 
 /**
- * Ask Engineering OS — E2–E7 grounded evidence, Why?, tools, and passive memory context.
+ * Ask Engineering OS — E2–E8 grounded evidence, Why?, tools, memory context, and governed work proposals.
  */
 export function AskEngineeringShell({
   embedded = false,
@@ -114,6 +114,17 @@ export function AskEngineeringShell({
   const [compareTitleA, setCompareTitleA] = useState("");
   const [compareTitleB, setCompareTitleB] = useState("");
   const [checkNeedle, setCheckNeedle] = useState("");
+  const [activeProposal, setActiveProposal] = useState<{
+    proposalId: string;
+    actionType: string;
+    approvalState: string;
+    payloadHash: string;
+    title?: string;
+    draftText?: string;
+    contextFreshnessToken?: string;
+  } | null>(null);
+  const [proposalDraftEdit, setProposalDraftEdit] = useState("");
+  const [proposalBusy, setProposalBusy] = useState(false);
   const [scope, setScope] = useState<string>(
     searchParams.get("scope") ??
       (searchParams.get("documentId")
@@ -167,6 +178,158 @@ export function AskEngineeringShell({
       setContext({ projectId: null, objectId: null, objectType: null });
     }
     router.replace(`${pathname}?${params.toString()}`);
+  }
+
+  async function createWorkProposal(kind: string, message: Message) {
+    setProposalBusy(true);
+    try {
+      const res = await fetch("/api/engineering/action-proposals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          op: "create",
+          kind,
+          title:
+            kind === "draft_response"
+              ? "Draft response"
+              : kind === "prepare_decision"
+                ? "Prepare decision"
+                : kind === "add_risk"
+                  ? "Add risk"
+                  : kind === "add_issue"
+                    ? "Add issue"
+                    : kind === "assign_review"
+                      ? "Assign review"
+                      : kind === "link_evidence"
+                        ? "Link evidence"
+                        : "Create action",
+          description: message.content.slice(0, 500),
+          draftText: kind === "draft_response" || kind === "prepare_decision" ? message.content : undefined,
+          projectId: context.projectId || undefined,
+          objectType: context.objectType || undefined,
+          objectId: context.objectId || undefined,
+          evidenceRefs: (message.evidence ?? []).map((e) => e.sourceId).filter(Boolean),
+          askQuery: messages.find((m) => m.role === "user")?.content ?? null,
+        }),
+      });
+      const parsed = await parseApiJsonResponse<{
+        proposalId: string;
+        actionType: string;
+        approvalState: string;
+        provenance?: { payloadHash?: string };
+        proposedPayload?: { title?: string; draftText?: string };
+        sourceContext?: { contextFreshnessToken?: string };
+      }>(res);
+      if (!parsed.ok || !parsed.data) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: parsed.errorMessage ?? "Could not create governed action proposal.",
+            evidenceState: "INSUFFICIENT",
+          },
+        ]);
+        return;
+      }
+      const data = parsed.data;
+      setActiveProposal({
+        proposalId: data.proposalId,
+        actionType: data.actionType,
+        approvalState: data.approvalState,
+        payloadHash: data.provenance?.payloadHash ?? "",
+        title: data.proposedPayload?.title,
+        draftText: String(data.proposedPayload?.draftText ?? ""),
+        contextFreshnessToken: data.sourceContext?.contextFreshnessToken,
+      });
+      setProposalDraftEdit(String(data.proposedPayload?.draftText ?? data.proposedPayload?.title ?? ""));
+    } finally {
+      setProposalBusy(false);
+    }
+  }
+
+  async function reviewProposal(op: "approve" | "reject" | "edit" | "execute") {
+    if (!activeProposal) return;
+    setProposalBusy(true);
+    try {
+      const body: Record<string, unknown> = {
+        op,
+        proposalId: activeProposal.proposalId,
+        expectedPayloadHash: activeProposal.payloadHash,
+        contextFreshnessToken: activeProposal.contextFreshnessToken,
+        idempotencyKey: activeProposal.proposalId,
+      };
+      if (op === "edit") {
+        body.proposedPayload = {
+          title: activeProposal.title,
+          draftText: proposalDraftEdit,
+          description: proposalDraftEdit,
+          status: "draft",
+        };
+      }
+      if (op === "reject") body.note = "Rejected from Ask review";
+      const res = await fetch("/api/engineering/action-proposals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const parsed = await parseApiJsonResponse<{
+        proposalId: string;
+        actionType: string;
+        approvalState: string;
+        provenance?: { payloadHash?: string };
+        proposedPayload?: { title?: string; draftText?: string };
+        domainResultId?: string | null;
+        failureReason?: string | null;
+        sourceContext?: { contextFreshnessToken?: string };
+      }>(res);
+      if (!parsed.ok || !parsed.data) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: parsed.errorMessage ?? "Proposal review failed — no fake completion.",
+          },
+        ]);
+        return;
+      }
+      const data = parsed.data;
+      setActiveProposal({
+        proposalId: data.proposalId,
+        actionType: data.actionType,
+        approvalState: data.approvalState,
+        payloadHash: data.provenance?.payloadHash ?? activeProposal.payloadHash,
+        title: data.proposedPayload?.title ?? activeProposal.title,
+        draftText: String(data.proposedPayload?.draftText ?? proposalDraftEdit),
+        contextFreshnessToken:
+          data.sourceContext?.contextFreshnessToken ?? activeProposal.contextFreshnessToken,
+      });
+      if (data.approvalState === "COMPLETED") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: `Governed work completed via existing domain service (${data.domainResultId ?? "ok"}). Human approval was required — advisory orchestration only.`,
+          },
+        ]);
+        setActiveProposal(null);
+      } else if (data.approvalState === "REJECTED") {
+        setActiveProposal(null);
+      } else if (data.approvalState === "FAILED") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: `Proposal failed: ${data.failureReason ?? "domain/workflow failure"}. No fake success recorded.`,
+          },
+        ]);
+      }
+    } finally {
+      setProposalBusy(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -320,7 +483,7 @@ export function AskEngineeringShell({
     <main
       className="flex flex-1 flex-col overflow-hidden"
       data-testid="ask-engineering-os"
-      data-retrieval-ready="e7"
+      data-retrieval-ready="e8"
     >
       <div
         className="flex flex-wrap items-center gap-2 border-b px-4 py-3 text-sm"
@@ -567,6 +730,30 @@ export function AskEngineeringShell({
                       </ul>
                     </div>
                   ) : null}
+
+                  <div className="flex flex-wrap gap-1.5" data-testid="ask-work-actions">
+                    {(
+                      [
+                        { id: "create_action", label: "Create action" },
+                        { id: "draft_response", label: "Draft response" },
+                        { id: "prepare_decision", label: "Prepare decision" },
+                        { id: "add_risk", label: "Add risk" },
+                        { id: "add_issue", label: "Add issue" },
+                        { id: "assign_review", label: "Assign review" },
+                        { id: "link_evidence", label: "Link evidence" },
+                      ] as const
+                    ).map((action) => (
+                      <button
+                        key={action.id}
+                        type="button"
+                        disabled={proposalBusy}
+                        onClick={() => void createWorkProposal(action.id, message)}
+                        className="rounded-md border px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -579,6 +766,62 @@ export function AskEngineeringShell({
         className="border-t bg-white px-4 py-3"
         data-testid="ask-input-form"
       >
+        {activeProposal ? (
+          <div
+            className="mx-auto mb-3 max-w-3xl rounded-md border border-slate-200 bg-slate-50 p-3"
+            data-testid="ask-proposal-review"
+          >
+            <p className="text-xs font-medium text-slate-900">
+              Review proposal · {activeProposal.actionType} · {activeProposal.approvalState}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              AI drafts stay DRAFT until you accept. No autonomous approval.
+            </p>
+            <textarea
+              className="mt-2 w-full rounded-md border px-2 py-1 text-xs"
+              rows={3}
+              value={proposalDraftEdit}
+              onChange={(e) => setProposalDraftEdit(e.target.value)}
+              data-testid="ask-proposal-edit"
+            />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={proposalBusy}
+                className="rounded-md border px-2 py-1 text-xs"
+                onClick={() => void reviewProposal("edit")}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                disabled={proposalBusy || activeProposal.approvalState === "APPROVED"}
+                className="rounded-md border px-2 py-1 text-xs"
+                onClick={() => void reviewProposal("approve")}
+                data-testid="ask-proposal-accept"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                disabled={proposalBusy || activeProposal.approvalState !== "APPROVED"}
+                className="rounded-md border bg-slate-900 px-2 py-1 text-xs text-white"
+                onClick={() => void reviewProposal("execute")}
+              >
+                Execute
+              </button>
+              <button
+                type="button"
+                disabled={proposalBusy}
+                className="rounded-md border px-2 py-1 text-xs text-red-700"
+                onClick={() => void reviewProposal("reject")}
+                data-testid="ask-proposal-reject"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="mx-auto max-w-3xl space-y-2">
           <div className="flex flex-wrap gap-2" data-testid="ask-tool-actions">
             {(

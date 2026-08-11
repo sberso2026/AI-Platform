@@ -12,7 +12,7 @@ Status: Planning baseline (E0) · Does not certify future phases
 | **E5** | Engineering Reasoning, Evidence & Explainability | Evidence-based Ask reasoning; fact/inference/assumption; Why?; abstention/conflict; advisory authority | No CoT; no tool/KG/connector ownership; no fabricated authority. (Earlier draft labelled E5 “Document intelligence hardening” — superseded.) |
 | **E6** | Governed Engineering Tool Framework | Discover/invoke governed tools from Ask; units/certification/provenance; LLM cannot impersonate tools | No second Tool Registry; Platform Intelligence ownership preserved. (Earlier draft labelled E6 “Memory & KG publish” — superseded.) |
 | **E7** | Passive Engineering Memory | Governed passive capture of decisions/outcomes/tool results into Platform Memory; Ask uses memory as context never authority | No second Memory/KG; Platform Kernel ownership preserved. (Earlier draft labelled E7 “Tool Registry UX” — superseded; absorbed by E6.) |
-| **E8** | Connector framework productization | Install/health/mapping UX; first productivity connector optional | Optional only |
+| **E8** | Engineering Action & Workflow Orchestration | Ask→proposal→human review→existing domain/workflow execute; provenance/audit; E7 memory handoff | No second workflow engine; Platform Workflow/Event Bus ownership; E4 external write remains gated. (Earlier draft labelled E8 “Connector framework productization” — superseded.) |
 | **E9** | PROFESSIONAL packaging | Cross-company Explore/Intelligence + commercial profile | No forced SAP |
 | **E10** | Enterprise federation | ERP/EAM/data-platform adapters; conflict representation | SoR policy |
 | **E11** | Ambient governance polish | Automatic provenance/audit UX minimization | Security closure |
