@@ -2,6 +2,13 @@
  * Phase 14E — Engineering OS V1.0 Production GA.
  * First allowed use of Engineering OS 1.0.0.
  */
+import {
+  ENGINEERING_OS_EVOLUTION_PHASE,
+  EngineeringIntelligenceLayerContractLocked,
+  PhaseE0ArchitectureComplete,
+  PhaseE0NoMajorMigrationRequired,
+} from "./phase-e0/contracts";
+
 export const ENGINEERING_OS_VERSION = "1.0.0" as const;
 export const ENGINEERING_OS_STATUS = "ga" as const;
 export const ENGINEERING_OS_PHASE = "14E" as const;
@@ -136,6 +143,9 @@ export const phase14CReady = true as const;
 export const phase14DReady = true as const;
 export const phase14EReady = true as const;
 
+/** Phase E0 ready flag (contract details live in ./phase-e0). */
+export const phaseE0Ready = true as const;
+
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {
     version: ENGINEERING_OS_VERSION,
@@ -191,5 +201,10 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     phase14CReady,
     phase14DReady,
     phase14EReady,
+    ENGINEERING_OS_EVOLUTION_PHASE,
+    EngineeringIntelligenceLayerContractLocked,
+    PhaseE0ArchitectureComplete,
+    PhaseE0NoMajorMigrationRequired,
+    phaseE0Ready,
   } as const;
 }

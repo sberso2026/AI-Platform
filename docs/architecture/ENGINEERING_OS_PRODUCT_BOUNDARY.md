@@ -38,3 +38,14 @@ Knowledge Graph infrastructure, Plugin/module installation framework.
 Engineering OS is the **composition and governance shell** for Engineering product
 modules. It is not a seventh intelligence product and must not absorb certified
 module internals.
+
+## Phase E0 extension
+
+Phase E0 locks Engineering OS as a vendor-neutral **Engineering Intelligence Layer**
+above client tools (assistant-first Experience, optional enterprise connectors,
+ESSENTIAL→ENTERPRISE profiles). See:
+
+- `docs/architecture/adr/ADR_ENGINEERING_INTELLIGENCE_LAYER_E0.md`
+- `docs/architecture/ENGINEERING_OS_PHASE_E0_PRODUCT_ARCHITECTURE.md`
+
+E0 does **not** reopen this Phase 14A ownership lock or V1 module freezes.
