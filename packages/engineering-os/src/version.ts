@@ -155,6 +155,9 @@ export const phaseE2Ready = true as const;
 /** Phase E3 canonical context ready (contract details live in ./phase-e3). */
 export const phaseE3Ready = true as const;
 
+/** Phase E4 connector framework ready (contract details live in ./phase-e4). */
+export const phaseE4Ready = true as const;
+
 export function getEngineeringOsProductIntegrationDeclaration() {
   return {
     version: ENGINEERING_OS_VERSION,
@@ -218,5 +221,6 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     phaseE1Ready,
     phaseE2Ready,
     phaseE3Ready,
+    phaseE4Ready,
   } as const;
 }

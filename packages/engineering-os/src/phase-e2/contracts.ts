@@ -115,9 +115,9 @@ export type EngineeringEvidence = {
   sourceLocation: string;
   excerpt: string;
   retrievalScore?: number;
-  provenance: "engineering_os_native";
+  provenance: "engineering_os_native" | "connector_external";
   lastUpdated?: string | null;
-  permissionsApplied: true;
+  permissionsApplied: true | false;
   conflicting?: boolean;
   supersededWarning?: boolean;
 };

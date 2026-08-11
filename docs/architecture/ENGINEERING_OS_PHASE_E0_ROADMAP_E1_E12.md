@@ -8,7 +8,7 @@ Status: Planning baseline (E0) · Does not certify future phases
 | **E1** | Experience foundation | Ask / My / Explore / Intelligence shells; capability-based nav hide | Entitlements |
 | **E2** | Ask Engineering OS MVP | Advisory assistant over native context + abstention/evidence | No fabrication |
 | **E3** | Canonical Engineering Context & Relationship Model | Object refs, external identity mapping, provenance-backed relationships, bounded context resolver, E2 Ask enrichment | No second KG; no PI/II/connector ownership; no fabricated future domains. (Earlier draft labelled E3 “My Engineering” — superseded.) |
-| **E4** | Explore & native search | Unified search/RAG across shared domain | Zero-connector |
+| **E4** | Enterprise Connector Framework | Vendor-neutral read-first connectors; ESSENTIAL zero-connector; E3 identity handoff; E2 optional evidence | No SoR ownership transfer; no live vendor hard deps; writes disabled. (Earlier draft labelled E4 “Explore & native search” — superseded.) |
 | **E5** | Document intelligence hardening | Native doc ingest/classify/cite without Fabric | Platform Files |
 | **E6** | Engineering Memory & KG publish | Memory semantics on Platform KG infra | No KG fork |
 | **E7** | Tool Registry UX | Governed tool invocation from Ask | Fail-closed solvers |
@@ -20,8 +20,8 @@ Status: Planning baseline (E0) · Does not certify future phases
 
 ## Sequencing rules
 
-1. E1–E5 must not require enterprise connectors.
-2. E8+ connectors remain optional for ESSENTIAL certification.
+1. E1–E3 must not require enterprise connectors; E4 framework remains optional for ESSENTIAL (zero-connector mode).
+2. E8+ may productize durable connector admin UX; connectors remain optional for ESSENTIAL certification.
 3. Each phase ships tests proving no certified ownership regression.
 4. No phase may set `commercialSolverLicenseOwnedByRTBRequired = true` without a new ADR.
 

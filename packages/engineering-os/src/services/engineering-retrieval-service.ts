@@ -1,6 +1,6 @@
 /**
- * Native Engineering Retrieval Service (E2).
- * Composes EngineeringSearchService; lexical-first with optional semantic fallback.
+ * Native Engineering Retrieval Service (E2 + optional E4 connector evidence).
+ * Composes EngineeringSearchService; lexical-first with optional semantic / connector contribution.
  */
 
 import type { CommerceExecutionContext } from "@rtb/types";
@@ -11,7 +11,11 @@ import {
   type EngineeringRetrievalMode,
   type EngineeringSearchQuery,
   type EngineeringGroundedSearchResult,
+  type EngineeringEvidence,
 } from "../phase-e2/contracts";
+import type { ExternalIdentityMapping } from "../phase-e3/contracts";
+import type { EngineeringConnectorRegistry } from "../phase-e4/registry";
+import { retrieveConnectorEvidence } from "../phase-e4/connector-retrieval";
 import {
   bucketsToEvidence,
   buildSearchResultEnvelope,
@@ -38,10 +42,18 @@ export type SemanticRetrievalProbe = {
   retrieve?: (query: EngineeringSearchQuery) => Promise<SearchBuckets | null>;
 };
 
+export type ConnectorRetrievalProbe = {
+  registry?: EngineeringConnectorRegistry | null;
+  existingMappings?: ExternalIdentityMapping[];
+  enabled?: boolean;
+  timeoutMs?: number;
+};
+
 export class EngineeringRetrievalService {
   constructor(
     private readonly search: EngineeringSearchLike,
     private readonly semantic: SemanticRetrievalProbe = { available: false },
+    private readonly connectors: ConnectorRetrievalProbe = { enabled: false },
   ) {}
 
   async retrieve(
@@ -55,9 +67,7 @@ export class EngineeringRetrievalService {
     let semanticAttempted = false;
     let buckets: SearchBuckets | null = null;
 
-    // Authorization is enforced inside EngineeringSearchService (assertEngineeringService + RLS).
-    // Retrieval must never bypass that path.
-
+    // 1. Native Engineering OS retrieval (always)
     if (this.semantic.available && this.semantic.retrieve) {
       semanticAttempted = true;
       try {
@@ -81,7 +91,6 @@ export class EngineeringRetrievalService {
       if (retrievalMode !== "lexical_fallback") retrievalMode = "lexical";
     }
 
-    // Object-scoped document summarisation when only metadata exists.
     if (scope === "document" && query.objectId) {
       const docs = (buckets.documents ?? []).filter(
         (d) => String((d as { id?: string }).id ?? "") === query.objectId,
@@ -102,8 +111,9 @@ export class EngineeringRetrievalService {
       }
     }
 
-    let evidence = bucketsToEvidence(buckets, { ...query, scope });
-    // E3: prefer authorised related object IDs from context (no fabricated rows).
+    let evidence: EngineeringEvidence[] = bucketsToEvidence(buckets, { ...query, scope });
+
+    // 2–3. E3 context ranking hints (relatedObjectIds already on query from grounded-ask)
     if (query.relatedObjectIds?.length) {
       const boost = new Set(query.relatedObjectIds);
       evidence = [...evidence].sort((a, b) => {
@@ -116,7 +126,37 @@ export class EngineeringRetrievalService {
         "E3 context hints applied to rank authorised related objects within search results.",
       );
     }
-    // Preferential ranking already applied; keep superseded if conflicting.
+
+    // 4–7. Optional connector evidence (E4) — never required; failure degrades gracefully
+    let connectorTiming: Record<string, number> | undefined;
+    if (this.connectors.enabled && this.connectors.registry) {
+      try {
+        const contrib = await retrieveConnectorEvidence({
+          query,
+          registry: this.connectors.registry,
+          existingMappings: this.connectors.existingMappings,
+          timeoutMs: this.connectors.timeoutMs,
+        });
+        connectorTiming = contrib.timing;
+        limitations.push(...contrib.limitations);
+        if (contrib.evidence.length) {
+          evidence = [...evidence, ...contrib.evidence];
+          limitations.push(
+            `E4 connector contribution: ${contrib.evidence.length} external evidence item(s) from ${contrib.connectorsQueried.length} connector(s).`,
+          );
+        }
+        if (contrib.connectorsFailed.length) {
+          limitations.push(
+            `Connector failures (non-fatal): ${contrib.connectorsFailed.join(", ")}.`,
+          );
+        }
+      } catch {
+        limitations.push(
+          "E4 connector retrieval failed; continued with native Engineering OS evidence only.",
+        );
+      }
+    }
+
     if (evidence.some((e) => e.authorityStatus === "SUPERSEDED")) {
       limitations.push("One supporting source is superseded.");
     }
@@ -124,13 +164,15 @@ export class EngineeringRetrievalService {
       limitations.push("Conflicting evidence was retained for review.");
     }
 
-    // Cross-tenant safety: drop any row that somehow carries another tenant id.
+    // Keep native + authorised connector evidence; drop insecure permission states.
     evidence = evidence.filter((e) => {
-      // Evidence mapper does not embed tenantId; search services are tenant-scoped.
-      return e.permissionsApplied === true && e.provenance === "engineering_os_native";
+      if (e.permissionsApplied !== true) return false;
+      return (
+        e.provenance === "engineering_os_native" || e.provenance === "connector_external"
+      );
     });
 
-    return buildSearchResultEnvelope({
+    const envelope = buildSearchResultEnvelope({
       query: { ...query, scope },
       evidence,
       retrievalMode,
@@ -139,6 +181,12 @@ export class EngineeringRetrievalService {
       semanticAttempted,
       semanticAvailable: this.semantic.available,
     });
+    if (connectorTiming) {
+      envelope.limitations.push(
+        `Connector timing selection=${connectorTiming.selectionMs}ms query=${connectorTiming.queryMs}ms map=${connectorTiming.mappingMs}ms total=${connectorTiming.totalMs}ms.`,
+      );
+    }
+    return envelope;
   }
 
   async retrieveAndAnswer(
