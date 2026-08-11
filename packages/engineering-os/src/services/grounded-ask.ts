@@ -31,6 +31,11 @@ import {
 import { EngineeringMemoryCaptureService } from "../phase-e7/capture";
 import { EngineeringMemoryRetrievalService } from "../phase-e7/retrieval";
 import type { EngineeringMemoryStore } from "../phase-e7/store";
+import type { EngineeringIntelligenceResultEnvelope } from "../phase-e9/contracts";
+import { applyIntelligenceToReasoning } from "../phase-e9/ask-bridge";
+import {
+  EngineeringIntelligenceService,
+} from "../phase-e9/invocation";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
 
 export type GroundedAskResult = {
@@ -48,6 +53,7 @@ export type GroundedAskResult = {
   toolResult?: EngineeringToolResult | null;
   memoryHits?: EngineeringMemoryHit[];
   memoryChips?: AskMemoryContextChips | null;
+  intelligenceResults?: EngineeringIntelligenceResultEnvelope[];
   meta: Record<string, unknown>;
   run?: unknown;
 };
@@ -83,6 +89,10 @@ export async function runGroundedEngineeringAsk(input: {
   memoryCapture?: EngineeringMemoryCaptureService | null;
   skipMemory?: boolean;
   captureToolResultToMemory?: boolean;
+  /** E9 optional certified intelligence routing (no engine ownership). */
+  intelligence?: EngineeringIntelligenceService | null;
+  intelligenceEntitledKeys?: string[];
+  skipIntelligence?: boolean;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
 
@@ -114,6 +124,33 @@ export async function runGroundedEngineeringAsk(input: {
     memoryRetrieveMs = memoryResult.timingMs.retrieveMs;
   }
 
+  // E9: bounded certified intelligence routing (no fan-out) after context
+  let intelligenceResults: EngineeringIntelligenceResultEnvelope[] = [];
+  let intelligenceLimitations: string[] = [];
+  let intelligenceTiming: { routeMs: number; invokeMs: number; totalMs: number } | null =
+    null;
+  if (!input.skipIntelligence && input.intelligence) {
+    const intel = await input.intelligence.routeAndInvoke({
+      tenantId: query.tenantId,
+      workspaceId: query.workspaceId,
+      userId: query.userId,
+      query: query.query,
+      objectType: query.objectType,
+      objectId: query.objectId,
+      projectId: query.projectId,
+      entitledKeys: input.intelligenceEntitledKeys,
+      providedInputs: {
+        projectId: query.projectId,
+        assetId: query.objectType === "asset" ? query.objectId : undefined,
+        subjectId: query.objectId,
+      },
+      maxCapabilities: 2,
+    });
+    intelligenceResults = intel.results;
+    intelligenceLimitations = intel.limitations;
+    intelligenceTiming = intel.timingMs;
+  }
+
   const { search, answer } = await input.retrieval.retrieveAndAnswer(
     input.commerce,
     query,
@@ -124,6 +161,9 @@ export async function runGroundedEngineeringAsk(input: {
     const memoryEvidence = memoryHitsToEvidence(memoryHits);
     answer.evidence = [...memoryEvidence, ...answer.evidence];
     answer.limitations.push(...memoryLimitations);
+  }
+  if (intelligenceLimitations.length) {
+    answer.limitations.push(...intelligenceLimitations);
   }
 
   if (query.relatedObjectIds?.length) {
@@ -274,6 +314,15 @@ export async function runGroundedEngineeringAsk(input: {
     ];
   }
 
+  // E9: fold certified intelligence into Why?
+  if (reasoning && intelligenceResults.length) {
+    reasoning = applyIntelligenceToReasoning(reasoning, intelligenceResults);
+    message = reasoning.answer;
+    answer.limitations = [
+      ...new Set([...answer.limitations, ...reasoning.limitations]),
+    ];
+  }
+
   // E6: optional governed tool invocation after reasoning
   let toolResult: EngineeringToolResult | null = null;
   if (input.toolAction) {
@@ -338,15 +387,17 @@ export async function runGroundedEngineeringAsk(input: {
 
   const memoryChips = memoryHits.length ? deriveMemoryContextChips(memoryHits) : null;
 
-  const phase = memoryHits.length
-    ? "E7"
-    : toolResult
-      ? "E6"
-      : reasoning
-        ? "E5"
-        : enrichment.contextApplied
-          ? "E3"
-          : "E2";
+  const phase = intelligenceResults.length
+    ? "E9"
+    : memoryHits.length
+      ? "E7"
+      : toolResult
+        ? "E6"
+        : reasoning
+          ? "E5"
+          : enrichment.contextApplied
+            ? "E3"
+            : "E2";
 
   return {
     message,
@@ -380,6 +431,7 @@ export async function runGroundedEngineeringAsk(input: {
     toolResult,
     memoryHits,
     memoryChips,
+    intelligenceResults,
     meta: {
       phase,
       grounded: true,
@@ -422,6 +474,13 @@ export async function runGroundedEngineeringAsk(input: {
       memoryRetrieveMs,
       memoryIsAuthority: false,
       cotPersisted: false,
+      intelligenceCapabilityIds: intelligenceResults.map((r) => r.capabilityId),
+      intelligenceOwners: intelligenceResults.map((r) => r.owner),
+      intelligenceRouteMs: intelligenceTiming?.routeMs ?? null,
+      intelligenceInvokeMs: intelligenceTiming?.invokeMs ?? null,
+      intelligenceTotalMs: intelligenceTiming?.totalMs ?? null,
+      intelligenceIsApproval: false,
+      fabricatedIntelligence: false,
     },
   };
 }

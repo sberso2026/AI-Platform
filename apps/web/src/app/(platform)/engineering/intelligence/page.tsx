@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { EmptyState, SectionHeader } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
-import { ENGINEERING_INTELLIGENCE_CATEGORIES } from "@/lib/engineering/experience-surfaces";
+import { listUserFacingCatalogConcepts } from "@rtb/engineering-os";
 import { useExperiencePerf } from "@/hooks/use-experience-perf";
 
 type ModuleRow = {
@@ -16,8 +16,8 @@ type ModuleRow = {
 };
 
 /**
- * Intelligence landing — composes entitled certified modules only.
- * Does not copy engines or duplicate dashboards.
+ * Intelligence landing — entitled certified capability catalog (composition only).
+ * User concepts, not internal engine architecture. No dead tiles.
  */
 export default function IntelligenceLandingPage() {
   useExperiencePerf("intelligence");
@@ -53,25 +53,30 @@ export default function IntelligenceLandingPage() {
     };
   }, []);
 
-  const entitledKeys = new Set(modules.map((m) => m.applicationKey));
-  const visible = ENGINEERING_INTELLIGENCE_CATEGORIES.filter((c) =>
-    entitledKeys.has(c.applicationKey),
+  const entitledKeys = useMemo(
+    () => modules.map((m) => m.applicationKey),
+    [modules],
+  );
+  const concepts = useMemo(
+    () => listUserFacingCatalogConcepts(entitledKeys),
+    [entitledKeys],
   );
 
   return (
     <>
       <Header
         title="Intelligence"
-        description="Entry point to installed engineering intelligence capabilities"
+        description="Certified engineering intelligence you are entitled to use"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
         data-testid="intelligence-landing"
         data-ownership="composition-only"
+        data-phase="e9"
       >
         <p className="mb-6 max-w-2xl text-sm text-muted-foreground">
-          Certified engines remain owned by their modules. This surface only links entitled
-          capabilities — no duplicate dashboards or ownership transfer.
+          Engines stay owned by Project, Asset, Inspection, and Controls modules. This page only
+          surfaces entitled capabilities — no duplicate ownership or dead tiles.
         </p>
 
         {loading ? (
@@ -81,26 +86,32 @@ export default function IntelligenceLandingPage() {
         ) : null}
         {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
-        {!loading && visible.length === 0 ? (
+        {!loading && concepts.length === 0 ? (
           <EmptyState
-            title="No intelligence modules available"
-            description="Install or entitle Project, Asset, or Inspection Intelligence to see entries here."
+            title="No intelligence capabilities available"
+            description="Install or entitle Project, Asset, Inspection, or Project Controls intelligence to see entries here."
           />
         ) : (
           <section data-testid="intelligence-categories">
             <SectionHeader title="Available intelligence" description="" />
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className="rounded-md border border-slate-200 bg-white px-4 py-3 hover:border-slate-400"
-                  data-testid={`intelligence-item-${item.id}`}
-                >
-                  <div className="text-sm font-medium text-slate-900">{item.label}</div>
-                  <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
-                </Link>
-              ))}
+              {concepts.map((group) => {
+                const primary = group.capabilities[0];
+                if (!primary?.href) return null;
+                return (
+                  <Link
+                    key={group.concept}
+                    href={primary.href}
+                    className="rounded-md border border-slate-200 bg-white px-4 py-3 hover:border-slate-400"
+                    data-testid={`intelligence-item-${group.concept.toLowerCase()}`}
+                  >
+                    <div className="text-sm font-medium text-slate-900">{group.concept}</div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {group.capabilities.map((c) => c.name).join(" · ")}
+                    </p>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}

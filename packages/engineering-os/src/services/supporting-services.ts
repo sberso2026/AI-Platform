@@ -428,11 +428,13 @@ export class EngineeringAIService {
       const { createSupabaseContextProvider } = await import("./supabase-context-provider");
       const { PlatformEngineeringMemoryAdapter } = await import("../phase-e7/store");
       const { EngineeringMemoryCaptureService } = await import("../phase-e7/capture");
+      const { EngineeringIntelligenceService } = await import("../phase-e9/invocation");
       const retrieval = new EngineeringRetrievalService(this.search, {
         available: false,
       });
       const memoryStore = new PlatformEngineeringMemoryAdapter(this.kernel.memory);
       const memoryCapture = new EngineeringMemoryCaptureService(memoryStore);
+      const intelligence = new EngineeringIntelligenceService();
 
       const objectType =
         input.objectType ??
@@ -481,6 +483,7 @@ export class EngineeringAIService {
           memoryStore,
           memoryCapture,
           captureToolResultToMemory: Boolean(input.toolAction),
+          intelligence,
           tryGenerate: async ({ message }) => {
             try {
               let agentId: string | undefined;

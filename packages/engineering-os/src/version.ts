@@ -170,6 +170,9 @@ export const phaseE7Ready = true as const;
 /** Phase E8 action & workflow orchestration ready (contract details live in ./phase-e8). */
 export const phaseE8Ready = true as const;
 
+/** Phase E9 unified intelligence integration ready (contract details live in ./phase-e9). */
+export const phaseE9Ready = true as const;
+
 /** No second Engineering Memory framework — Platform Kernel Memory ownership. */
 export const duplicateMemoryFrameworkDetected = false as const;
 
@@ -242,5 +245,6 @@ export function getEngineeringOsProductIntegrationDeclaration() {
     phaseE6Ready,
     phaseE7Ready,
     phaseE8Ready,
+    phaseE9Ready,
   } as const;
 }
