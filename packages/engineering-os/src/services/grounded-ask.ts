@@ -15,6 +15,12 @@ import {
   EngineeringReasoningService,
   type ReasoningProvider,
 } from "../phase-e5/reasoning-service";
+import type { EngineeringToolResult } from "../phase-e6/contracts";
+import {
+  applyToolResultToReasoning,
+  mapAskActionToToolId,
+} from "../phase-e6/e5-bridge";
+import { EngineeringToolInvocationService } from "../phase-e6/invocation";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
 
 export type GroundedAskResult = {
@@ -29,6 +35,7 @@ export type GroundedAskResult = {
   reasoning?: EngineeringReasoningResponse;
   why?: EngineeringReasoningResponse["why"];
   recommendedNextActions?: EngineeringReasoningResponse["recommendedNextActions"];
+  toolResult?: EngineeringToolResult | null;
   meta: Record<string, unknown>;
   run?: unknown;
 };
@@ -36,6 +43,7 @@ export type GroundedAskResult = {
 /**
  * Prefer deterministic grounded synthesis from authorised evidence.
  * Optional generation hook may refine wording but must not replace evidence.
+ * Optional governed tool action runs after reasoning and feeds Why? provenance.
  */
 export async function runGroundedEngineeringAsk(input: {
   commerce: CommerceExecutionContext;
@@ -51,6 +59,13 @@ export async function runGroundedEngineeringAsk(input: {
   /** E5 optional reasoning provider — failure degrades to retrieval-only. */
   reasoningProvider?: ReasoningProvider | null;
   skipReasoning?: boolean;
+  /** E6 optional governed tool action (run_check|compare|verify|estimate|analyse). */
+  toolAction?: string | null;
+  toolInputs?: Record<string, unknown>;
+  toolUnits?: Record<string, string>;
+  toolPermissions?: string[];
+  requireCertifiedToolPath?: boolean;
+  toolInvocation?: EngineeringToolInvocationService | null;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
 
@@ -206,17 +221,58 @@ export async function runGroundedEngineeringAsk(input: {
     retrievalMode = "retrieval_only";
   }
 
-  const phase = reasoning
-    ? "E5"
-    : enrichment.contextApplied
-      ? "E3"
-      : "E2";
+  // E6: optional governed tool invocation after reasoning
+  let toolResult: EngineeringToolResult | null = null;
+  if (input.toolAction) {
+    const toolId = mapAskActionToToolId(input.toolAction);
+    if (toolId) {
+      const invoker = input.toolInvocation ?? new EngineeringToolInvocationService();
+      toolResult = await invoker.invoke({
+        tenantId: query.tenantId,
+        workspaceId: query.workspaceId,
+        userId: query.userId,
+        toolId,
+        inputs: input.toolInputs ?? {},
+        units: input.toolUnits,
+        intent: input.query.query,
+        requireCertifiedPath: input.requireCertifiedToolPath ?? false,
+        permissions: input.toolPermissions ?? [
+          "engineering_tool.execute",
+          "engineering_tool.discover",
+        ],
+        evidenceRefs: (reasoning?.evidence ?? answer.evidence).map((e) => e.sourceId),
+      });
+      if (reasoning) {
+        reasoning = applyToolResultToReasoning(reasoning, toolResult);
+        message = reasoning.answer;
+        answer.limitations = reasoning.limitations;
+      } else {
+        answer.limitations.push(...toolResult.limitations);
+        if (toolResult.status === "SUCCESS" && toolResult.output) {
+          message = `${message}\n\nGoverned tool result: ${JSON.stringify(toolResult.output)}`;
+        }
+      }
+    } else {
+      answer.limitations.push(
+        `Tool action "${input.toolAction}" has no governed executable tool; capability unavailable.`,
+      );
+    }
+  }
+
+  const phase = toolResult
+    ? "E6"
+    : reasoning
+      ? "E5"
+      : enrichment.contextApplied
+        ? "E3"
+        : "E2";
 
   return {
     message,
     requiresReview:
       reasoning?.authorityStatus === "REQUIRES_HUMAN_REVIEW" ||
       reasoning?.authorityStatus === "ADVISORY" ||
+      Boolean(toolResult?.reviewRequired) ||
       answer.requiresReview ||
       !answer.abstained,
     grounded: {
@@ -240,6 +296,7 @@ export async function runGroundedEngineeringAsk(input: {
     reasoning,
     why: reasoning?.why,
     recommendedNextActions: reasoning?.recommendedNextActions,
+    toolResult,
     meta: {
       phase,
       grounded: true,
@@ -272,6 +329,12 @@ export async function runGroundedEngineeringAsk(input: {
       reasoningTotalMs: reasoning?.timingMs.totalMs ?? null,
       degradedToRetrievalOnly: reasoning?.degradedToRetrievalOnly ?? generationFailed,
       chainOfThoughtExposed: false,
+      toolId: toolResult?.toolId ?? null,
+      toolVersion: toolResult?.toolVersion ?? null,
+      toolInvocationId: toolResult?.invocationId ?? null,
+      toolStatus: toolResult?.status ?? null,
+      toolOutputKind: toolResult?.outputKind ?? null,
+      llmFabricatedToolResult: false,
     },
   };
 }

@@ -22,6 +22,10 @@ export const POST = withEngineeringApi("ai", async ({ ctx, commerce }, request) 
     objectId: body.objectId,
     scope: body.scope,
     sessionId: body.sessionId,
+    toolAction: body.toolAction,
+    toolInputs: body.toolInputs,
+    toolUnits: body.toolUnits,
+    requireCertifiedToolPath: body.requireCertifiedToolPath,
   });
   return NextResponse.json({ data }, { status: 201 });
 });

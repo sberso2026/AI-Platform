@@ -98,6 +98,15 @@ export function AskEngineeringShell({
   const [input, setInput] = useState(searchParams.get("q") ?? "");
   const [isLoading, setIsLoading] = useState(false);
   const [expandedWhy, setExpandedWhy] = useState<Record<string, boolean>>({});
+  const [toolAction, setToolAction] = useState<string | null>(null);
+  const [toolLength, setToolLength] = useState("");
+  const [toolWidth, setToolWidth] = useState("");
+  const [toolUnit, setToolUnit] = useState("m");
+  const [toolPieceCount, setToolPieceCount] = useState("");
+  const [toolPieceLength, setToolPieceLength] = useState("");
+  const [compareTitleA, setCompareTitleA] = useState("");
+  const [compareTitleB, setCompareTitleB] = useState("");
+  const [checkNeedle, setCheckNeedle] = useState("");
   const [scope, setScope] = useState<string>(
     searchParams.get("scope") ??
       (searchParams.get("documentId")
@@ -166,6 +175,27 @@ export function AskEngineeringShell({
     setIsLoading(true);
 
     try {
+      const toolInputs: Record<string, unknown> = {};
+      const toolUnits: Record<string, string> = {};
+      if (toolAction === "analyse") {
+        if (toolLength) toolInputs.length = Number(toolLength);
+        if (toolWidth) toolInputs.width = Number(toolWidth);
+        if (toolUnit) {
+          toolUnits.length = toolUnit;
+          toolUnits.width = toolUnit;
+        }
+      } else if (toolAction === "estimate") {
+        if (toolPieceCount) toolInputs.pieceCount = Number(toolPieceCount);
+        if (toolPieceLength) toolInputs.pieceLength = Number(toolPieceLength);
+        if (toolUnit) toolUnits.pieceLength = toolUnit;
+      } else if (toolAction === "compare") {
+        if (compareTitleA) toolInputs.titleA = compareTitleA;
+        if (compareTitleB) toolInputs.titleB = compareTitleB;
+      } else if (toolAction === "run_check" || toolAction === "verify") {
+        toolInputs.haystack = userMessage.content;
+        if (checkNeedle) toolInputs.needle = checkNeedle;
+      }
+
       const res = await fetch("/api/engineering/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,6 +211,9 @@ export function AskEngineeringShell({
           scope,
           sessionId: context.sessionId || undefined,
           agentSlug: "engineering-director",
+          toolAction: toolAction || undefined,
+          toolInputs: Object.keys(toolInputs).length ? toolInputs : undefined,
+          toolUnits: Object.keys(toolUnits).length ? toolUnits : undefined,
         }),
       });
       const parsed = await parseApiJsonResponse<{
@@ -278,7 +311,7 @@ export function AskEngineeringShell({
     <main
       className="flex flex-1 flex-col overflow-hidden"
       data-testid="ask-engineering-os"
-      data-retrieval-ready="e5"
+      data-retrieval-ready="e6"
     >
       <div
         className="flex flex-wrap items-center gap-2 border-b px-4 py-3 text-sm"
@@ -499,18 +532,125 @@ export function AskEngineeringShell({
         className="border-t bg-white px-4 py-3"
         data-testid="ask-input-form"
       >
-        <div className="mx-auto flex max-w-3xl gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask from authorised Engineering OS evidence…"
-            disabled={isLoading}
-            data-testid="ask-input"
-            className="text-base"
-          />
-          <Button type="submit" disabled={isLoading || !input.trim()} data-testid="ask-submit">
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="mx-auto max-w-3xl space-y-2">
+          <div className="flex flex-wrap gap-2" data-testid="ask-tool-actions">
+            {(
+              [
+                { id: "run_check", label: "Run check" },
+                { id: "compare", label: "Compare" },
+                { id: "verify", label: "Verify" },
+                { id: "estimate", label: "Estimate" },
+                { id: "analyse", label: "Analyse" },
+              ] as const
+            ).map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                onClick={() => setToolAction(toolAction === action.id ? null : action.id)}
+                className={cn(
+                  "rounded-md border px-2 py-1 text-xs",
+                  toolAction === action.id
+                    ? "border-slate-800 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-400",
+                )}
+                data-testid={`ask-tool-${action.id}`}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+          {toolAction ? (
+            <div
+              className="grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs sm:grid-cols-2"
+              data-testid="ask-tool-inputs"
+            >
+              <p className="sm:col-span-2 text-muted-foreground">
+                Governed tool selected. Provide critical inputs/units — values are never invented.
+              </p>
+              {(toolAction === "analyse") && (
+                <>
+                  <Input
+                    placeholder="Length"
+                    value={toolLength}
+                    onChange={(e) => setToolLength(e.target.value)}
+                    data-testid="ask-tool-length"
+                  />
+                  <Input
+                    placeholder="Width"
+                    value={toolWidth}
+                    onChange={(e) => setToolWidth(e.target.value)}
+                    data-testid="ask-tool-width"
+                  />
+                  <Input
+                    placeholder="Unit (e.g. m)"
+                    value={toolUnit}
+                    onChange={(e) => setToolUnit(e.target.value)}
+                    data-testid="ask-tool-unit"
+                  />
+                </>
+              )}
+              {toolAction === "estimate" && (
+                <>
+                  <Input
+                    placeholder="Piece count"
+                    value={toolPieceCount}
+                    onChange={(e) => setToolPieceCount(e.target.value)}
+                    data-testid="ask-tool-piece-count"
+                  />
+                  <Input
+                    placeholder="Piece length"
+                    value={toolPieceLength}
+                    onChange={(e) => setToolPieceLength(e.target.value)}
+                    data-testid="ask-tool-piece-length"
+                  />
+                  <Input
+                    placeholder="Unit (e.g. m)"
+                    value={toolUnit}
+                    onChange={(e) => setToolUnit(e.target.value)}
+                    data-testid="ask-tool-unit"
+                  />
+                </>
+              )}
+              {toolAction === "compare" && (
+                <>
+                  <Input
+                    placeholder="Title A"
+                    value={compareTitleA}
+                    onChange={(e) => setCompareTitleA(e.target.value)}
+                    data-testid="ask-tool-title-a"
+                  />
+                  <Input
+                    placeholder="Title B"
+                    value={compareTitleB}
+                    onChange={(e) => setCompareTitleB(e.target.value)}
+                    data-testid="ask-tool-title-b"
+                  />
+                </>
+              )}
+              {(toolAction === "run_check" || toolAction === "verify") && (
+                <Input
+                  placeholder="Keyword to check in your question/evidence"
+                  value={checkNeedle}
+                  onChange={(e) => setCheckNeedle(e.target.value)}
+                  data-testid="ask-tool-needle"
+                  className="sm:col-span-2"
+                />
+              )}
+            </div>
+          ) : null}
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask from authorised Engineering OS evidence…"
+              disabled={isLoading}
+              data-testid="ask-input"
+              className="text-base"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim()} data-testid="ask-submit">
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </form>
     </main>

@@ -402,11 +402,15 @@ export class EngineeringAIService {
     documentId?: string;
     disciplineId?: string;
     agentSlug?: string;
-    objectType?: string;
-    objectId?: string;
-    scope?: string;
-    sessionId?: string;
-  }) {
+      objectType?: string;
+      objectId?: string;
+      scope?: string;
+      sessionId?: string;
+      toolAction?: string;
+      toolInputs?: Record<string, unknown>;
+      toolUnits?: Record<string, string>;
+      requireCertifiedToolPath?: boolean;
+    }) {
     assertEngineeringService(commerce, "ai.execute", input.tenantId);
     const enabled = await this.kernel.intelligence.features.evaluate({
       tenantId: input.tenantId,
@@ -464,83 +468,89 @@ export class EngineeringAIService {
             | undefined) ?? undefined,
           limit: 12,
         },
-        contextProvider,
-        contextAuth,
-        tryGenerate: async ({ message }) => {
-          try {
-            let agentId: string | undefined;
-            const slug = input.agentSlug ?? "engineering-director";
-            const { data: agent } = await this.supabase
-              .from("agents")
-              .select("id")
-              .eq("tenant_id", input.tenantId)
-              .eq("slug", slug)
-              .maybeSingle();
-            agentId = agent?.id as string | undefined;
+          contextProvider,
+          contextAuth,
+          toolAction: input.toolAction,
+          toolInputs: input.toolInputs,
+          toolUnits: input.toolUnits,
+          requireCertifiedToolPath: input.requireCertifiedToolPath,
+          tryGenerate: async ({ message }) => {
+            try {
+              let agentId: string | undefined;
+              const slug = input.agentSlug ?? "engineering-director";
+              const { data: agent } = await this.supabase
+                .from("agents")
+                .select("id")
+                .eq("tenant_id", input.tenantId)
+                .eq("slug", slug)
+                .maybeSingle();
+              agentId = agent?.id as string | undefined;
 
-            const result = await this.kernel.aiDirector.run({
-              tenantId: input.tenantId,
-              workspaceId: input.workspaceId,
-              userId: input.userId,
-              agentId,
-              sessionId: input.sessionId,
-              message,
-              context: {
-                operating_system: "engineering",
-                project_id: input.projectId,
-                asset_id: input.assetId,
-                document_id: input.documentId,
-                discipline_id: input.disciplineId,
-                grounded: true,
-                phase: "E5",
-              },
-            });
-            return { content: result.message ?? "", failed: false };
-          } catch {
-            return { content: "", failed: true };
-          }
-        },
-      });
+              const result = await this.kernel.aiDirector.run({
+                tenantId: input.tenantId,
+                workspaceId: input.workspaceId,
+                userId: input.userId,
+                agentId,
+                sessionId: input.sessionId,
+                message,
+                context: {
+                  operating_system: "engineering",
+                  project_id: input.projectId,
+                  asset_id: input.assetId,
+                  document_id: input.documentId,
+                  discipline_id: input.disciplineId,
+                  grounded: true,
+                  phase: input.toolAction ? "E6" : "E5",
+                },
+              });
+              return { content: result.message ?? "", failed: false };
+            } catch {
+              return { content: "", failed: true };
+            }
+          },
+        });
 
-      await this.kernel.eventBus.publish({
-        tenantId: input.tenantId,
-        workspaceId: input.workspaceId,
-        eventType: "engineering.ai.run.completed",
-        source: "engineering-os",
-        payload: {
-          grounded: true,
-          evidence_state: grounded.evidenceState,
-          requires_review: grounded.requiresReview,
-          sources: grounded.evidence.length,
-          explanation_status: grounded.reasoning?.explanationStatus ?? null,
-        },
-      });
+        await this.kernel.eventBus.publish({
+          tenantId: input.tenantId,
+          workspaceId: input.workspaceId,
+          eventType: "engineering.ai.run.completed",
+          source: "engineering-os",
+          payload: {
+            grounded: true,
+            evidence_state: grounded.evidenceState,
+            requires_review: grounded.requiresReview,
+            sources: grounded.evidence.length,
+            explanation_status: grounded.reasoning?.explanationStatus ?? null,
+            tool_invocation_id: grounded.toolResult?.invocationId ?? null,
+          },
+        });
 
-      return {
-        message: grounded.message,
-        requiresReview: grounded.requiresReview,
-        evidence: grounded.evidence,
-        evidenceState: grounded.evidenceState,
-        scope: grounded.scope,
-        limitations: grounded.limitations,
-        retrievalMode: grounded.retrievalMode,
-        grounded: grounded.grounded,
-        reasoning: grounded.reasoning ?? null,
-        why: grounded.why ?? null,
-        recommendedNextActions: grounded.recommendedNextActions ?? [],
-        basis: grounded.reasoning?.basis ?? [],
-        assumptions: grounded.reasoning?.assumptions ?? [],
-        authorityStatus: grounded.reasoning?.authorityStatus ?? null,
-        explanationStatus: grounded.reasoning?.explanationStatus ?? null,
-        meta: {
-          ...grounded.meta,
-          confidence: grounded.reasoning?.confidence ?? (grounded.grounded.abstained ? 0 : 0.7),
+        return {
+          message: grounded.message,
           requiresReview: grounded.requiresReview,
-          policyApplied: true,
-          phase: grounded.meta.phase ?? "E5",
-        },
-      };
-    }
+          evidence: grounded.evidence,
+          evidenceState: grounded.evidenceState,
+          scope: grounded.scope,
+          limitations: grounded.limitations,
+          retrievalMode: grounded.retrievalMode,
+          grounded: grounded.grounded,
+          reasoning: grounded.reasoning ?? null,
+          why: grounded.why ?? null,
+          recommendedNextActions: grounded.recommendedNextActions ?? [],
+          basis: grounded.reasoning?.basis ?? [],
+          assumptions: grounded.reasoning?.assumptions ?? [],
+          authorityStatus: grounded.reasoning?.authorityStatus ?? null,
+          explanationStatus: grounded.reasoning?.explanationStatus ?? null,
+          toolResult: grounded.toolResult ?? null,
+          meta: {
+            ...grounded.meta,
+            confidence: grounded.reasoning?.confidence ?? (grounded.grounded.abstained ? 0 : 0.7),
+            requiresReview: grounded.requiresReview,
+            policyApplied: true,
+            phase: grounded.meta.phase ?? (input.toolAction ? "E6" : "E5"),
+          },
+        };
+      }
 
     let agentId: string | undefined;
     const slug = input.agentSlug ?? "engineering-director";
