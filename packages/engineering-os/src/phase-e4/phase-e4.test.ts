@@ -99,7 +99,7 @@ describe("Phase E4 connector framework", () => {
     });
     expect(result.evidence.length).toBeGreaterThan(0);
     expect(result.evidence.every((e) => e.provenance === "engineering_os_native")).toBe(true);
-    expect(result.meta.phase === "E2" || result.meta.phase === "E3").toBe(true);
+    expect(["E2", "E3", "E5"]).toContain(result.meta.phase);
   });
 
   it("file import path supports small-company / ESSENTIAL mode", async () => {

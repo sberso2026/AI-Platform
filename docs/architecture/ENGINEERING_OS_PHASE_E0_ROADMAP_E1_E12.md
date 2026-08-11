@@ -9,7 +9,7 @@ Status: Planning baseline (E0) · Does not certify future phases
 | **E2** | Ask Engineering OS MVP | Advisory assistant over native context + abstention/evidence | No fabrication |
 | **E3** | Canonical Engineering Context & Relationship Model | Object refs, external identity mapping, provenance-backed relationships, bounded context resolver, E2 Ask enrichment | No second KG; no PI/II/connector ownership; no fabricated future domains. (Earlier draft labelled E3 “My Engineering” — superseded.) |
 | **E4** | Enterprise Connector Framework | Vendor-neutral read-first connectors; ESSENTIAL zero-connector; E3 identity handoff; E2 optional evidence | No SoR ownership transfer; no live vendor hard deps; writes disabled. (Earlier draft labelled E4 “Explore & native search” — superseded.) |
-| **E5** | Document intelligence hardening | Native doc ingest/classify/cite without Fabric | Platform Files |
+| **E5** | Engineering Reasoning, Evidence & Explainability | Evidence-based Ask reasoning; fact/inference/assumption; Why?; abstention/conflict; advisory authority | No CoT; no tool/KG/connector ownership; no fabricated authority. (Earlier draft labelled E5 “Document intelligence hardening” — superseded.) |
 | **E6** | Engineering Memory & KG publish | Memory semantics on Platform KG infra | No KG fork |
 | **E7** | Tool Registry UX | Governed tool invocation from Ask | Fail-closed solvers |
 | **E8** | Connector framework productization | Install/health/mapping UX; first productivity connector optional | Optional only |

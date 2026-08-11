@@ -492,7 +492,7 @@ export class EngineeringAIService {
                 document_id: input.documentId,
                 discipline_id: input.disciplineId,
                 grounded: true,
-                phase: "E3",
+                phase: "E5",
               },
             });
             return { content: result.message ?? "", failed: false };
@@ -512,6 +512,7 @@ export class EngineeringAIService {
           evidence_state: grounded.evidenceState,
           requires_review: grounded.requiresReview,
           sources: grounded.evidence.length,
+          explanation_status: grounded.reasoning?.explanationStatus ?? null,
         },
       });
 
@@ -524,11 +525,19 @@ export class EngineeringAIService {
         limitations: grounded.limitations,
         retrievalMode: grounded.retrievalMode,
         grounded: grounded.grounded,
+        reasoning: grounded.reasoning ?? null,
+        why: grounded.why ?? null,
+        recommendedNextActions: grounded.recommendedNextActions ?? [],
+        basis: grounded.reasoning?.basis ?? [],
+        assumptions: grounded.reasoning?.assumptions ?? [],
+        authorityStatus: grounded.reasoning?.authorityStatus ?? null,
+        explanationStatus: grounded.reasoning?.explanationStatus ?? null,
         meta: {
           ...grounded.meta,
-          confidence: grounded.grounded.abstained ? 0 : 0.7,
+          confidence: grounded.reasoning?.confidence ?? (grounded.grounded.abstained ? 0 : 0.7),
           requiresReview: grounded.requiresReview,
           policyApplied: true,
+          phase: grounded.meta.phase ?? "E5",
         },
       };
     }

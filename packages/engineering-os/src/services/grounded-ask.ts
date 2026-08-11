@@ -1,6 +1,6 @@
 /**
- * Grounded Ask orchestration — extends Engineering AI path without a second stack.
- * E3: optional context resolver enrichment; failure degrades to E2 retrieval.
+ * Grounded Ask orchestration — E2 retrieval + E3 context + optional E4 connectors + E5 reasoning.
+ * Reasoning provider failure degrades to E2 retrieval-only.
  */
 
 import type { CommerceExecutionContext } from "@rtb/types";
@@ -10,6 +10,11 @@ import {
   boostEvidenceByContextRelatedIds,
   enrichAskQueryWithContext,
 } from "../phase-e3/ask-context-bridge";
+import type { EngineeringReasoningResponse } from "../phase-e5/contracts";
+import {
+  EngineeringReasoningService,
+  type ReasoningProvider,
+} from "../phase-e5/reasoning-service";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
 
 export type GroundedAskResult = {
@@ -21,6 +26,9 @@ export type GroundedAskResult = {
   scope: EngineeringGroundedAnswer["scope"];
   limitations: string[];
   retrievalMode: EngineeringGroundedAnswer["retrievalMode"];
+  reasoning?: EngineeringReasoningResponse;
+  why?: EngineeringReasoningResponse["why"];
+  recommendedNextActions?: EngineeringReasoningResponse["recommendedNextActions"];
   meta: Record<string, unknown>;
   run?: unknown;
 };
@@ -40,6 +48,9 @@ export async function runGroundedEngineeringAsk(input: {
   /** E3 optional — when absent or failing, E2 lexical path is unchanged. */
   contextProvider?: ContextDomainProvider | null;
   contextAuth?: AuthorisationGate | null;
+  /** E5 optional reasoning provider — failure degrades to retrieval-only. */
+  reasoningProvider?: ReasoningProvider | null;
+  skipReasoning?: boolean;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
 
@@ -56,7 +67,6 @@ export async function runGroundedEngineeringAsk(input: {
     { generationAvailable: generationProbe },
   );
 
-  // Prefer context-related authorised evidence without inventing rows.
   if (query.relatedObjectIds?.length) {
     answer.evidence = boostEvidenceByContextRelatedIds(
       answer.evidence,
@@ -78,7 +88,6 @@ export async function runGroundedEngineeringAsk(input: {
       );
     }
   } else if (enrichment.degradedToE2) {
-    // Silent degrade for missing provider; note only when resolve failed after attempt.
     if (enrichment.reason && enrichment.reason !== "context_provider_unavailable") {
       answer.limitations.push(
         "E3 context unavailable; used E2 native retrieval without fabricated relationship expansion.",
@@ -86,11 +95,77 @@ export async function runGroundedEngineeringAsk(input: {
     }
   }
 
-  let message = answer.answer;
+  // E5 reasoning over authorised evidence (deterministic; optional refine)
+  let reasoning: EngineeringReasoningResponse | undefined;
+  if (!input.skipReasoning) {
+    const reasoningService = new EngineeringReasoningService(
+      input.reasoningProvider ??
+        (input.tryGenerate
+          ? {
+              refine: async ({ finding, evidenceSummary, mode }) => {
+                try {
+                  const generated = await input.tryGenerate!({
+                    message: [
+                      "You refine an evidence-grounded engineering finding.",
+                      "Answer ONLY using the authorised evidence below.",
+                      "Distinguish facts (from evidence) vs inferences. Do not invent standards, revisions, approvals, calculations, or citations.",
+                      "Do not expose chain-of-thought or platform internals.",
+                      `Mode: ${mode}`,
+                      `Finding: ${finding}`,
+                      "",
+                      "Evidence:",
+                      evidenceSummary,
+                    ].join("\n"),
+                    evidenceSummary,
+                  });
+                  return generated;
+                } catch {
+                  return { content: "", failed: true };
+                }
+              },
+            }
+          : {}),
+    );
+    reasoning = await reasoningService.reason({
+      query: input.query.query,
+      evidence: answer.evidence,
+      searchQuery: query,
+      context: {
+        tenantId: query.tenantId,
+        workspaceId: query.workspaceId ?? null,
+        userId: query.userId,
+        projectId: query.projectId ?? null,
+        objectType: (query.objectType as never) ?? null,
+        objectId: query.objectId ?? null,
+      },
+    });
+  }
+
+  let message = reasoning?.answer ?? answer.answer;
   let generationAvailable = false;
   let generationFailed = false;
+  let retrievalMode = answer.retrievalMode;
 
-  if (!answer.abstained && input.tryGenerate) {
+  if (reasoning?.degradedToRetrievalOnly) {
+    generationFailed = true;
+    retrievalMode = "retrieval_only";
+    message = reasoning.answer;
+    answer.limitations.push(...reasoning.limitations);
+  } else if (reasoning) {
+    generationAvailable = Boolean(input.tryGenerate) && !reasoning.degradedToRetrievalOnly;
+    answer.evidence = reasoning.evidence;
+    answer.evidenceState = reasoning.evidenceState;
+    answer.abstained = reasoning.abstained;
+    answer.requiresReview =
+      reasoning.authorityStatus === "REQUIRES_HUMAN_REVIEW" ||
+      reasoning.authorityStatus === "ADVISORY" ||
+      !reasoning.abstained;
+    answer.limitations = [
+      ...new Set([...answer.limitations, ...reasoning.limitations]),
+    ];
+    answer.answer = reasoning.answer;
+  } else if (!answer.abstained && input.tryGenerate) {
+    // Legacy E2 path when reasoning skipped
     const evidenceSummary = answer.evidence
       .slice(0, 8)
       .map(
@@ -123,48 +198,80 @@ export async function runGroundedEngineeringAsk(input: {
     }
   }
 
-  if (generationFailed) {
+  if (generationFailed && !reasoning) {
     answer.limitations.push(
       "AI generation unavailable; returned retrieval-grounded answer without fabricated fallback.",
     );
     message = answer.answer;
+    retrievalMode = "retrieval_only";
   }
+
+  const phase = reasoning
+    ? "E5"
+    : enrichment.contextApplied
+      ? "E3"
+      : "E2";
 
   return {
     message,
-    requiresReview: answer.requiresReview || !answer.abstained,
+    requiresReview:
+      reasoning?.authorityStatus === "REQUIRES_HUMAN_REVIEW" ||
+      reasoning?.authorityStatus === "ADVISORY" ||
+      answer.requiresReview ||
+      !answer.abstained,
     grounded: {
       ...answer,
       answer: message,
       generationAvailable,
-      retrievalMode: generationFailed ? "retrieval_only" : answer.retrievalMode,
+      retrievalMode: generationFailed || reasoning?.degradedToRetrievalOnly
+        ? "retrieval_only"
+        : retrievalMode,
       limitations: answer.limitations,
+      abstained: reasoning?.abstained ?? answer.abstained,
     },
-    evidence: answer.evidence,
-    evidenceState: answer.evidenceState,
+    evidence: reasoning?.evidence ?? answer.evidence,
+    evidenceState: reasoning?.evidenceState ?? answer.evidenceState,
     scope: answer.scope,
     limitations: answer.limitations,
-    retrievalMode: generationFailed ? "retrieval_only" : answer.retrievalMode,
+    retrievalMode:
+      generationFailed || reasoning?.degradedToRetrievalOnly
+        ? "retrieval_only"
+        : retrievalMode,
+    reasoning,
+    why: reasoning?.why,
+    recommendedNextActions: reasoning?.recommendedNextActions,
     meta: {
-      phase: enrichment.contextApplied ? "E3" : "E2",
+      phase,
       grounded: true,
-      evidenceState: answer.evidenceState,
+      evidenceState: reasoning?.evidenceState ?? answer.evidenceState,
       scope: answer.scope,
-      retrievalMode: generationFailed ? "retrieval_only" : answer.retrievalMode,
+      retrievalMode:
+        generationFailed || reasoning?.degradedToRetrievalOnly
+          ? "retrieval_only"
+          : retrievalMode,
       retrievalMs: search.timingMs.retrievalMs,
-      sourcesRetrieved: answer.evidence.length,
+      sourcesRetrieved: (reasoning?.evidence ?? answer.evidence).length,
       sourcesSearched: search.searchedSourceTypes.length,
       semanticAttempted: search.timingMs.semanticAttempted,
       semanticAvailable: search.timingMs.semanticAvailable,
       generationAvailable,
       generationFailed,
-      abstained: answer.abstained,
+      abstained: reasoning?.abstained ?? answer.abstained,
       policyApplied: true,
       contextApplied: enrichment.contextApplied,
       contextDegradedToE2: enrichment.degradedToE2,
       contextState: query.contextState ?? null,
       contextResolveMs: enrichment.bundle?.timingMs?.resolveMs ?? null,
       relatedObjectIds: query.relatedObjectIds ?? [],
+      reasoningMode: reasoning?.mode ?? null,
+      explanationStatus: reasoning?.explanationStatus ?? null,
+      authorityStatus: reasoning?.authorityStatus ?? null,
+      confidence: reasoning?.confidence ?? null,
+      evidenceAssemblyMs: reasoning?.timingMs.evidenceAssemblyMs ?? null,
+      reasoningMs: reasoning?.timingMs.reasoningMs ?? null,
+      reasoningTotalMs: reasoning?.timingMs.totalMs ?? null,
+      degradedToRetrievalOnly: reasoning?.degradedToRetrievalOnly ?? generationFailed,
+      chainOfThoughtExposed: false,
     },
   };
 }
