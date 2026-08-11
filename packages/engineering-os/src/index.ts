@@ -1,5 +1,6 @@
 ﻿export * from "./version";
 export * from "./phase-e0";
+export * from "./phase-e1";
 export * from "./security-readiness";
 export * from "./security-closure";
 export * from "./manifest";

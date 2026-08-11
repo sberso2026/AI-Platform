@@ -109,6 +109,10 @@ export interface SidebarNavContext {
   hasPermission: (resource: string, action: string) => boolean;
   /** Active domain OS ids (e.g. engineering). Empty = platform-only. */
   activeOperatingSystemIds?: string[];
+  /** Entitled commerce feature keys (capability-based nav). */
+  entitledFeatureKeys?: string[];
+  /** Entitled commerce application keys (capability-based nav). */
+  entitledApplicationKeys?: string[];
 }
 
 export function resolveNavTier(roleSlug: string): NavTier {
@@ -175,6 +179,17 @@ export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolea
     return item.permissions.every((p) =>
       context.hasPermission(p.resource, p.action)
     );
+  }
+
+  if (item.featureKey) {
+    const features = context.entitledFeatureKeys;
+    // Until capability snapshot loads, hide gated items (no dead tabs).
+    if (!features || !features.includes(item.featureKey)) return false;
+  }
+
+  if (item.applicationKey) {
+    const apps = context.entitledApplicationKeys;
+    if (!apps || !apps.includes(item.applicationKey)) return false;
   }
 
   return true;

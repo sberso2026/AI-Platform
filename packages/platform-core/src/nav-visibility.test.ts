@@ -240,10 +240,43 @@ describe("Batch 2.12 — Sidebar section defaults", () => {
   });
 });
 
-describe("Batch 2.12 — Engineering Command Center home", () => {
-  it("remains primary engineering entry", () => {
-    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("viewer"));
-    expect(visible.find((i) => i.id === "eng-dashboard")?.href).toBe("/engineering");
+describe("Phase E1 — Experience primary nav", () => {
+  it("shows Home and hides Ask without ai_assistant entitlement", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
+    expect(visible.find((i) => i.id === "eng-home")?.href).toBe("/engineering");
+    expect(visible.some((i) => i.id === "eng-ask")).toBe(false);
+    expect(visible.some((i) => i.id === "eng-explore")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-intelligence")).toBe(true);
+  });
+
+  it("shows Ask when ai_assistant is entitled", () => {
+    const visible = filterSidebarNavigation(
+      FULL_NAVIGATION,
+      ctx("engineer", { entitledFeatureKeys: ["ai_assistant"] }),
+    );
+    expect(visible.find((i) => i.id === "eng-ask")?.href).toBe("/engineering/ask");
+  });
+
+  it("hides register deep links from primary sidebar", () => {
+    const visible = filterSidebarNavigation(
+      FULL_NAVIGATION,
+      ctx("engineer", { entitledFeatureKeys: ["ai_assistant"] }),
+    );
+    expect(visible.some((i) => i.id === "eng-risks")).toBe(false);
+    expect(visible.some((i) => i.id === "eng-projects")).toBe(false);
+  });
+
+  it("hides platform internals from ordinary engineers", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
+    expect(visible.some((i) => i.href === "/platform/prompts")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/models")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/tools")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/events")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/knowledge")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/telemetry")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/features")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/secrets")).toBe(false);
+    expect(visible.some((i) => i.href === "/platform/evaluations")).toBe(false);
   });
 });
 

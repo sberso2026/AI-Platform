@@ -21,6 +21,7 @@ import { getIcon } from "@/lib/icons";
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { ProductSwitcher } from "@/components/layout/product-switcher";
 import { createClient } from "@/lib/supabase/client";
+import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 
 type NavContextResponse = {
   data?: {
@@ -57,6 +58,7 @@ export function Sidebar() {
   );
   const [hydrated, setHydrated] = useState(false);
   const [navContext, setNavContext] = useState<SidebarNavContext | null>(null);
+  const capabilities = useEngineeringCapabilities();
 
   useEffect(() => {
     let cancelled = false;
@@ -92,8 +94,17 @@ export function Sidebar() {
           (item.group === "platform" || item.href === "/platform/home"),
       );
     }
-    return filterSidebarNavigation(FULL_NAVIGATION, navContext);
-  }, [navContext]);
+    const withCapabilities: SidebarNavContext = {
+      ...navContext,
+      entitledFeatureKeys: capabilities.loaded
+        ? capabilities.entitledFeatureKeys
+        : navContext.entitledFeatureKeys,
+      entitledApplicationKeys: capabilities.loaded
+        ? capabilities.entitledApplicationKeys
+        : navContext.entitledApplicationKeys,
+    };
+    return filterSidebarNavigation(FULL_NAVIGATION, withCapabilities);
+  }, [navContext, capabilities.loaded, capabilities.entitledFeatureKeys, capabilities.entitledApplicationKeys]);
 
   const grouped = useMemo(() => groupNavigation(visibleNavigation), [visibleNavigation]);
 

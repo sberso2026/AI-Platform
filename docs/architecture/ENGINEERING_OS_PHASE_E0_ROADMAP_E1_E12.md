@@ -33,4 +33,4 @@ Status: Planning baseline (E0) · Does not certify future phases
 - [x] SoR + connector + profile + UX policies published
 - [x] Migration assessment: no major migration required
 - [x] Machine-readable contract flags in `@rtb/engineering-os`
-- [ ] E1 implementation kickoff (next phase)
+- [x] E1 implementation kickoff (next phase)

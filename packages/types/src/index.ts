@@ -325,6 +325,10 @@ export interface NavItem {
   audience?: NavTier;
   /** Route exists but is omitted from sidebar (advanced/legacy routes) */
   sidebarHidden?: boolean;
+  /** Optional commerce feature gate for capability-based primary nav visibility */
+  featureKey?: string;
+  /** Optional commerce application gate for capability-based primary nav visibility */
+  applicationKey?: string;
 }
 
 export type NavGroup =

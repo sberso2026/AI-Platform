@@ -22,11 +22,11 @@ describe("Batch 2.07 — Navigation grouping", () => {
     expect(NAV_GROUP_ORDER[2]).toBe("engineering_admin");
   });
 
-  it("labels Engineering Command Center as primary engineering entry", () => {
-    const cmd = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard");
-    expect(cmd?.label).toBe("Engineering Command Center");
-    expect(cmd?.href).toBe("/engineering");
-    expect(cmd?.group).toBe("engineering");
+  it("labels Home as primary engineering entry", () => {
+    const home = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home");
+    expect(home?.label).toBe("Home");
+    expect(home?.href).toBe("/engineering");
+    expect(home?.group).toBe("engineering");
   });
 
   it("splits registers and administration away from primary eng ops", () => {
@@ -106,10 +106,10 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
     ]);
   });
 
-  it("expands Engineering OS and Registers by default", () => {
+  it("expands Engineering OS by default; registers collapse by default", () => {
     const defaults = getDefaultSidebarGroupState();
     expect(defaults.engineering).toBe(true);
-    expect(defaults.engineering_registers).toBe(true);
+    expect(defaults.engineering_registers).toBe(false);
     expect(defaults.engineering_admin).toBe(false);
     expect(defaults.platform_admin).toBe(false);
   });
@@ -123,7 +123,7 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
       JSON.stringify({ engineering_admin: true, platform_admin: true, unknown: false })
     );
     expect(parsed.engineering).toBe(true);
-    expect(parsed.engineering_registers).toBe(true);
+    expect(parsed.engineering_registers).toBe(false);
     expect(parsed.engineering_admin).toBe(true);
     expect(parsed.platform_admin).toBe(true);
     expect(parsed).not.toHaveProperty("unknown");
@@ -195,10 +195,30 @@ describe("Platform Commerce UI — navigation rename", () => {
 });
 
 describe("Platform Commerce UI — Engineering OS access", () => {
-  it("keeps Engineering Command Center route unchanged", () => {
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+  it("keeps Engineering home route unchanged", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.href).toBe(
       "/engineering"
     );
+  });
+
+  it("exposes E1 primary experience surfaces without dead tabs", () => {
+    const primary = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden && i.group === "engineering");
+    expect(primary.map((i) => i.id)).toEqual([
+      "eng-home",
+      "eng-ask",
+      "eng-my",
+      "eng-explore",
+      "eng-intelligence",
+    ]);
+    expect(primary.every((i) => Boolean(i.href))).toBe(true);
+  });
+
+  it("preserves structured module deep links as sidebarHidden", () => {
+    for (const id of ["eng-projects", "eng-assets", "eng-documents", "eng-ai", "eng-decisions"]) {
+      const item = ENGINEERING_NAVIGATION.find((i) => i.id === id);
+      expect(item?.sidebarHidden).toBe(true);
+      expect(item?.href).toBeTruthy();
+    }
   });
 
   it("preserves sidebar persistence keys", () => {
@@ -208,8 +228,8 @@ describe("Platform Commerce UI — Engineering OS access", () => {
 });
 
 describe("Batch 2.08 — Default landing and Platform Overview access", () => {
-  it("uses Engineering Command Center as product home route", () => {
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+  it("uses Engineering Home as product home route", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.href).toBe(
       "/engineering"
     );
   });

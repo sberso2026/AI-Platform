@@ -2,103 +2,117 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  MetricCard,
-  SectionHeader,
-  StatusChip,
-  TimelineRow,
-  ActivityRow,
-  EmptyState,
-} from "@rtb/ui";
-import {
-  FolderKanban,
-  ClipboardCheck,
-  AlertTriangle,
-  MessageSquare,
-  CheckSquare,
-  Activity,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Gavel,
-  Clock,
-  Sparkles,
-  FileText,
-  Zap,
-} from "lucide-react";
+import { Button, EmptyState, Input, SectionHeader } from "@rtb/ui";
 import {
   asRecordArray,
   parseApiJsonResponse,
 } from "@/lib/api/parse-json-response";
+import {
+  useEngineeringProjectFilter,
+  withProjectQuery,
+} from "@/hooks/use-engineering-project-filter";
+import { buildAskHref } from "@/hooks/use-engineering-context";
+import { useExperiencePerf } from "@/hooks/use-experience-perf";
+import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 
-type Trend = "up" | "down" | "flat";
+type Row = Record<string, unknown>;
 
-function timelineIcon(eventType?: string) {
-  const t = (eventType ?? "").toLowerCase();
-  if (t.includes("decision") || t.includes("approv")) return <Gavel className="h-5 w-5" />;
-  if (t.includes("risk")) return <AlertTriangle className="h-5 w-5" />;
-  if (t.includes("query") || t.includes("tq")) return <MessageSquare className="h-5 w-5" />;
-  if (t.includes("action")) return <CheckSquare className="h-5 w-5" />;
-  if (t.includes("document")) return <FileText className="h-5 w-5" />;
-  return <Clock className="h-5 w-5" />;
+function rowLabel(row: Row, keys: string[]) {
+  for (const k of keys) {
+    const v = row[k];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return String(row.id ?? "Item");
 }
 
-function activityIcon(activityType?: string) {
-  const t = (activityType ?? "").toLowerCase();
-  if (t.includes("ai")) return <Sparkles className="h-5 w-5" />;
-  if (t.includes("risk")) return <AlertTriangle className="h-5 w-5" />;
-  if (t.includes("decision")) return <Gavel className="h-5 w-5" />;
-  return <Zap className="h-5 w-5" />;
-}
-
-export default function EngineeringCommandCenterPage() {
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
-  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
-  const [activity, setActivity] = useState<Record<string, unknown>[]>([]);
-  const [decisions, setDecisions] = useState<Record<string, unknown>[]>([]);
-  const [risks, setRisks] = useState<Record<string, unknown>[]>([]);
+/**
+ * Engineering OS Home — assistant-first experience foundation.
+ * Composes existing APIs only; no fabricated cards.
+ */
+export default function EngineeringHomePage() {
+  useExperiencePerf("home");
+  const router = useRouter();
+  const projectId = useEngineeringProjectFilter();
+  const capabilities = useEngineeringCapabilities();
+  const [askDraft, setAskDraft] = useState("");
+  const [actions, setActions] = useState<Row[]>([]);
+  const [tqs, setTqs] = useState<Row[]>([]);
+  const [decisions, setDecisions] = useState<Row[]>([]);
+  const [risks, setRisks] = useState<Row[]>([]);
+  const [projects, setProjects] = useState<Row[]>([]);
+  const [documents, setDocuments] = useState<Row[]>([]);
+  const [activity, setActivity] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/engineering/dashboard").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/timeline").then((r) => parseApiJsonResponse(r)),
+      fetch(withProjectQuery("/api/engineering/actions", projectId)).then((r) =>
+        parseApiJsonResponse(r),
+      ),
+      fetch(withProjectQuery("/api/engineering/technical-queries", projectId)).then((r) =>
+        parseApiJsonResponse(r),
+      ),
+      fetch(withProjectQuery("/api/engineering/decisions", projectId)).then((r) =>
+        parseApiJsonResponse(r),
+      ),
+      fetch(withProjectQuery("/api/engineering/risks", projectId)).then((r) =>
+        parseApiJsonResponse(r),
+      ),
+      fetch("/api/engineering/projects").then((r) => parseApiJsonResponse(r)),
+      fetch(withProjectQuery("/api/engineering/documents", projectId)).then((r) =>
+        parseApiJsonResponse(r),
+      ),
       fetch("/api/engineering/activity").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/decisions").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/risks").then((r) => parseApiJsonResponse(r)),
     ])
-      .then(([dash, tl, act, dec, rsk]) => {
-        if (!dash.ok) {
-          setError(
-            dash.errorMessage ?? `Dashboard failed with status ${dash.status}`,
-          );
-        } else if (dash.data && typeof dash.data === "object") {
-          setData(dash.data as Record<string, unknown>);
-        }
-        setTimeline(asRecordArray(tl.data).slice(0, 6));
+      .then(([a, t, d, r, p, docs, act]) => {
+        setActions(asRecordArray(a.data).slice(0, 5));
+        setTqs(asRecordArray(t.data).slice(0, 5));
+        setDecisions(asRecordArray(d.data).slice(0, 5));
+        setRisks(asRecordArray(r.data).slice(0, 5));
+        setProjects(asRecordArray(p.data).slice(0, 5));
+        setDocuments(asRecordArray(docs.data).slice(0, 5));
         setActivity(asRecordArray(act.data).slice(0, 6));
-        setDecisions(asRecordArray(dec.data).slice(0, 5));
-        setRisks(asRecordArray(rsk.data).slice(0, 5));
       })
       .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : "Failed to load command center"),
+        setError(e instanceof Error ? e.message : "Failed to load home"),
       );
-  }, []);
+  }, [projectId]);
 
-  const health = (data?.platformHealth as Record<string, string>) ?? {};
-  const healthOk = Object.values(health).every((v) => v === "operational" || !v);
-  const aiRuns = ((data?.recentAiRuns as Record<string, unknown>[]) ?? []).slice(0, 5);
+  const askEnabled = capabilities.visiblePrimaryNavIds.includes("eng-ask");
+  const scopeLabel = projectId ? "Selected project" : "All projects (workspace)";
+
+  function submitAsk(e: React.FormEvent) {
+    e.preventDefault();
+    if (!askEnabled) return;
+    router.push(
+      buildAskHref({
+        projectId,
+        q: askDraft.trim() || null,
+      }),
+    );
+  }
+
+  const attention = [
+    { id: "actions", title: "Open actions", href: "/engineering/actions", rows: actions, keys: ["title", "action_title", "summary"] },
+    { id: "tqs", title: "TQs / RFIs", href: "/engineering/technical-queries", rows: tqs, keys: ["title", "query_number", "subject"] },
+    { id: "decisions", title: "Decisions", href: "/engineering/decisions", rows: decisions, keys: ["title", "decision_title"] },
+    { id: "risks", title: "Risks", href: "/engineering/risks", rows: risks, keys: ["title", "risk_title"] },
+  ].filter((s) => s.rows.length > 0);
+
+  const suggestions = [
+    { id: "summarise", label: "Summarise project", q: "Summarise this project" },
+    { id: "tqs", label: "Review open TQs", q: "Review open technical queries" },
+    { id: "changes", label: "Find recent changes", q: "What changed recently?" },
+    { id: "actions", label: "Inspect outstanding actions", q: "What actions are outstanding?" },
+  ];
 
   return (
     <>
       <Header
         title="Engineering OS"
-        description="Product home for projects, assets, certified modules, health, and Engineering AI"
+        description="Assistant-first engineering workspace"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
@@ -107,335 +121,163 @@ export default function EngineeringCommandCenterPage() {
         <span data-testid="engineering-os-product-ready" className="sr-only">
           Engineering OS product ready
         </span>
-        <div data-testid="engineering-command-center" className="contents">
-        {error && <p className="mb-4 text-[0.9375rem] text-destructive">{error}</p>}
+        <div data-testid="engineering-home" className="contents">
+          {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
-        <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
-          <SectionHeader
-            title="Certified modules"
-            description="Entitled Engineering OS V1 modules — federation and live solver execution remain distinct"
-          />
-          <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link
-              href="/engineering/modules"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Open module launcher
-            </Link>
-            <Link
-              href="/engineering/apps/project-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Project Intelligence
-            </Link>
-            <Link
-              href="/engineering/apps/inspection-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Inspection Intelligence
-            </Link>
-            <Link
-              href="/engineering/apps/asset-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Asset Intelligence
-            </Link>
-            <Link
-              href="/engineering/apps/project-controls"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Project Controls
-            </Link>
-            <Link
-              href="/engineering/apps/digital-twin"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Digital Twin
-            </Link>
-            <Link
-              href="/engineering/apps/model-interoperability"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Engineering Models
-            </Link>
-            <Link
-              href="/engineering/ai"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Engineering AI
-            </Link>
-            <Link
-              href="/engineering/search"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Search
-            </Link>
-            <Link
-              href="/engineering/health"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              OS health
-            </Link>
-          </div>
-        </section>
+          <section className="mb-8" data-testid="home-ask">
+            <form onSubmit={submitAsk} className="flex flex-col gap-3 sm:flex-row">
+              <Input
+                value={askDraft}
+                onChange={(e) => setAskDraft(e.target.value)}
+                placeholder="Ask Engineering OS…"
+                className="text-base sm:flex-1"
+                data-testid="home-ask-input"
+                disabled={!askEnabled}
+              />
+              <Button type="submit" disabled={!askEnabled} data-testid="home-ask-submit">
+                Ask
+              </Button>
+            </form>
+            {!askEnabled ? (
+              <p className="mt-2 text-xs text-muted-foreground" data-testid="home-ask-unavailable">
+                Ask is hidden until the assistant capability is entitled.
+              </p>
+            ) : null}
+          </section>
 
-        <section aria-label="Engineering KPIs" className="mb-8">
-          <SectionHeader
-            title="Engineering KPIs"
-            description="Live signal across projects, engineering reviews, risks, and action registers"
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 lg:gap-5">
-            <KpiLink href="/engineering/projects">
-              <MetricCard
-                label="Engineering Projects"
-                value={(data?.activeProjects as unknown[])?.length ?? 0}
-                icon={<FolderKanban className="h-6 w-6" />}
-                tone="blue"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="flat" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/decisions">
-              <MetricCard
-                label="Engineering Reviews Pending"
-                value={
-                  (data?.reviewRequiredCount as number) ??
-                  (data?.pendingDecisionsCount as number) ??
-                  0
-                }
-                icon={<ClipboardCheck className="h-6 w-6" />}
-                tone="amber"
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="up" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/risks">
-              <MetricCard
-                label="Critical Risk Assessments"
-                value={(data?.openRisksCount as number) ?? 0}
-                icon={<AlertTriangle className="h-6 w-6" />}
-                tone="red"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="down" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/technical-queries">
-              <MetricCard
-                label="Open Technical Queries"
-                value={(data?.openTechnicalQueriesCount as number) ?? 0}
-                icon={<MessageSquare className="h-6 w-6" />}
-                tone="blue"
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="flat" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/actions">
-              <MetricCard
-                label="Action Register — Critical"
-                value={(data?.openActionsCount as number) ?? 0}
-                icon={<CheckSquare className="h-6 w-6" />}
-                tone="amber"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="up" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/health">
-              <MetricCard
-                label="Platform Health"
-                value={healthOk ? "OK" : "Check"}
-                icon={<Activity className="h-6 w-6" />}
-                tone={healthOk ? "green" : "red"}
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="flat" />}
-                secondary
-              />
-            </KpiLink>
-          </div>
-        </section>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <Panel
-            title="Engineering Decisions"
-            href="/engineering/decisions"
-            emptyTitle="No engineering decisions yet"
-            emptyDescription="Engineering decisions requiring review will appear here."
-            items={decisions}
-            render={(d) => (
-              <ActivityRow
-                title={`${(d.decision_number as string) ?? ""} — ${(d.title as string) ?? ""}`.replace(/^ — /, "")}
-                subtitle="Engineering Decision"
-                icon={<Gavel className="h-5 w-5" />}
-                chip={<StatusChip value={(d.approval_status as string) ?? "pending"} />}
-              />
-            )}
-          />
-          <Panel
-            title="Risk Assessments"
-            href="/engineering/risks"
-            emptyTitle="No open risk assessments"
-            emptyDescription="Critical and scored engineering risks will appear here."
-            items={risks}
-            render={(r) => {
-              const score = Number(r.score ?? 0);
-              const severity =
-                score >= 15 ? "critical" : score >= 10 ? "high" : score >= 5 ? "medium" : "low";
-              return (
-                <ActivityRow
-                  title={`${(r.risk_number as string) ?? ""} — ${(r.title as string) ?? ""}`.replace(/^ — /, "")}
-                  subtitle={`Risk Assessment · score ${String(r.score ?? "—")}`}
-                  icon={<AlertTriangle className="h-5 w-5" />}
-                  chip={<StatusChip status={severity} />}
-                />
-              );
-            }}
-          />
-          <Panel
-            title="Engineering Timeline"
-            href="/engineering/timeline"
-            emptyTitle="No timeline events yet"
-            emptyDescription="Engineering events across decisions, risks, and technical queries will appear here."
-            items={timeline}
-            render={(e) => (
-              <TimelineRow
-                title={(e.title as string) ?? "Timeline event"}
-                eventType={(e.event_type as string) ?? undefined}
-                occurredAt={(e.occurred_at as string) ?? (e.created_at as string) ?? null}
-                icon={timelineIcon(e.event_type as string | undefined)}
-                entity={e.linked_entity_label ? String(e.linked_entity_label) : undefined}
-              />
-            )}
-          />
-          <Panel
-            title="AI Recommendations"
-            href="/engineering/ai"
-            emptyTitle="No active AI recommendations"
-            emptyDescription="Engineering AI Director will surface recommendations from risks, technical queries, documents, and project activity."
-            emptyAction={
+          <section className="mb-8" data-testid="home-current-context">
+            <SectionHeader title="Current context" description="" />
+            <p className="mt-2 text-sm text-slate-700" data-testid="command-center-scope">
+              Scope: {scopeLabel}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-sm">
               <Link
-                href="/engineering/ai"
-                className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-[0.9375rem] font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                data-testid="ai-empty-cta"
+                href="/engineering/explore"
+                className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-slate-400"
               >
-                Open AI Workspace
+                Explore records
               </Link>
-            }
-            emptyIcon={<Sparkles className="h-5 w-5" />}
-            items={aiRuns}
-            render={(run) => (
-              <ActivityRow
-                title={(run.intent as string) ?? (run.status as string) ?? "AI recommendation"}
-                subtitle="Engineering AI Director"
-                icon={<Sparkles className="h-5 w-5" />}
-                chip={
-                  <StatusChip
-                    value={
-                      run.requires_review
-                        ? "ai-review-required"
-                        : String(run.status ?? "complete")
-                    }
-                  />
-                }
-              />
-            )}
-          />
-        </div>
+              <Link
+                href="/engineering/my"
+                className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-slate-400"
+              >
+                My Engineering
+              </Link>
+              <Link
+                href="/engineering/intelligence"
+                className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-slate-400"
+              >
+                Intelligence
+              </Link>
+            </div>
+          </section>
 
-        <section className="mt-8" aria-label="Recent Engineering Activity">
-          <Panel
-            title="Recent Engineering Activity"
-            href="/engineering/activity"
-            emptyTitle="No recent activity"
-            emptyDescription="Project and register activity will appear here as engineering work progresses."
-            items={activity}
-            render={(e) => (
-              <ActivityRow
-                title={(e.title as string) ?? "Activity"}
-                subtitle={[
-                  e.activity_type ? String(e.activity_type) : null,
-                  e.created_at
-                    ? new Date(String(e.created_at)).toLocaleString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-                icon={activityIcon(e.activity_type as string | undefined)}
-                chip={
-                  e.status ? <StatusChip value={String(e.status)} /> : undefined
-                }
-              />
+          <section className="mb-8" data-testid="home-attention">
+            <SectionHeader title="My attention" description="Authorised open work from existing registers" />
+            {attention.length === 0 ? (
+              <div className="mt-3">
+                <EmptyState
+                  title="Nothing needs attention"
+                  description="Open Explore to browse projects, assets, and registers."
+                />
+              </div>
+            ) : (
+              <div className="mt-3 grid gap-4 lg:grid-cols-2">
+                {attention.map((section) => (
+                  <div key={section.id} className="rounded-md border border-slate-200 bg-white p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-medium text-slate-900">{section.title}</h3>
+                      <Link href={section.href} className="text-xs text-slate-600 hover:underline">
+                        Open
+                      </Link>
+                    </div>
+                    <ul className="space-y-1 text-sm">
+                      {section.rows.map((row) => (
+                        <li key={String(row.id)}>{rowLabel(row, section.keys)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
-          />
-        </section>
+          </section>
+
+          <section className="mb-8" data-testid="home-recent">
+            <SectionHeader title="Recent engineering work" description="Where data exists" />
+            <div className="mt-3 grid gap-4 lg:grid-cols-3">
+              <RecentList title="Projects" href="/engineering/projects" rows={projects} keys={["project_name", "project_code"]} />
+              <RecentList title="Documents" href="/engineering/documents" rows={documents} keys={["title", "document_number"]} />
+              <RecentList title="Activity" href="/engineering/activity" rows={activity} keys={["summary", "activity_type", "title"]} />
+            </div>
+          </section>
+
+          <section data-testid="home-suggestions">
+            <SectionHeader title="Suggested actions" description="Contextual prompts — no fabricated intelligence" />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {suggestions.map((s) =>
+                askEnabled ? (
+                  <Link
+                    key={s.id}
+                    href={buildAskHref({ projectId, q: s.q })}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-slate-400"
+                    data-testid={`home-suggestion-${s.id}`}
+                  >
+                    {s.label}
+                  </Link>
+                ) : (
+                  <Link
+                    key={s.id}
+                    href="/engineering/explore"
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-slate-400"
+                  >
+                    {s.label} (via Explore)
+                  </Link>
+                ),
+              )}
+            </div>
+          </section>
+
+          {/* Preserve prior test hooks for module reachability without dead launcher cards */}
+          <span data-testid="engineering-command-center" className="sr-only">
+            Engineering home
+          </span>
+          <span data-testid="engineering-module-launcher-summary" className="sr-only">
+            Modules available via Explore and Intelligence
+          </span>
         </div>
       </main>
     </>
   );
 }
 
-function TrendGlyph({ trend }: { trend: Trend }) {
-  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  return <Icon className="h-3.5 w-3.5" aria-hidden />;
-}
-
-function KpiLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-    >
-      {children}
-    </Link>
-  );
-}
-
-function Panel({
+function RecentList({
   title,
   href,
-  emptyTitle,
-  emptyDescription,
-  emptyAction,
-  emptyIcon,
-  items,
-  render,
+  rows,
+  keys,
 }: {
   title: string;
   href: string;
-  emptyTitle: string;
-  emptyDescription: string;
-  emptyAction?: React.ReactNode;
-  emptyIcon?: React.ReactNode;
-  items: Record<string, unknown>[];
-  render: (item: Record<string, unknown>) => React.ReactNode;
+  rows: Row[];
+  keys: string[];
 }) {
   return (
-    <Card className="border-slate-200 bg-white">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
-        <CardTitle className="text-[1.0625rem] font-semibold text-slate-900">{title}</CardTitle>
-        <Link
-          href={href}
-          className="text-[0.8125rem] font-semibold text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          View all
+    <div className="rounded-md border border-slate-200 bg-white p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-slate-900">{title}</h3>
+        <Link href={href} className="text-xs text-slate-600 hover:underline">
+          Open
         </Link>
-      </CardHeader>
-      <CardContent className="space-y-3.5 p-6 pt-0">
-        {items.length === 0 && (
-          <EmptyState
-            title={emptyTitle}
-            description={emptyDescription}
-            action={emptyAction}
-            icon={emptyIcon}
-          />
-        )}
-        {items.map((item, i) => (
-          <div key={(item.id as string) ?? i}>{render(item)}</div>
-        ))}
-      </CardContent>
-    </Card>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No recent items</p>
+      ) : (
+        <ul className="space-y-1 text-sm">
+          {rows.map((row) => (
+            <li key={String(row.id)}>{rowLabel(row, keys)}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

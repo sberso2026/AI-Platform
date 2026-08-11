@@ -438,12 +438,55 @@ export const INTELLIGENCE_NAVIGATION: NavItem[] = [
 
 export const ENGINEERING_NAVIGATION: NavItem[] = [
   {
+    id: "eng-home",
+    label: "Home",
+    icon: "Home",
+    href: "/engineering",
+    group: "engineering",
+    audience: "viewer",
+  },
+  {
+    id: "eng-ask",
+    label: "Ask",
+    icon: "Brain",
+    href: "/engineering/ask",
+    group: "engineering",
+    audience: "engineer",
+    featureKey: "ai_assistant",
+  },
+  {
+    id: "eng-my",
+    label: "My Engineering",
+    icon: "UserRound",
+    href: "/engineering/my",
+    group: "engineering",
+    audience: "viewer",
+  },
+  {
+    id: "eng-explore",
+    label: "Explore",
+    icon: "Compass",
+    href: "/engineering/explore",
+    group: "engineering",
+    audience: "viewer",
+  },
+  {
+    id: "eng-intelligence",
+    label: "Intelligence",
+    icon: "Sparkles",
+    href: "/engineering/intelligence",
+    group: "engineering",
+    audience: "viewer",
+  },
+  /** Legacy / deep-link routes — reachable, not primary nav */
+  {
     id: "eng-dashboard",
     label: "Engineering Command Center",
     icon: "LayoutDashboard",
     href: "/engineering",
     group: "engineering",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-modules",
@@ -452,6 +495,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/modules",
     group: "engineering",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-projects",
@@ -460,6 +504,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/projects",
     group: "engineering",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-assets",
@@ -468,6 +513,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/assets",
     group: "engineering",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-documents",
@@ -476,6 +522,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/documents",
     group: "engineering",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-ai",
@@ -484,6 +531,8 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/ai",
     group: "engineering",
     audience: "engineer",
+    featureKey: "ai_assistant",
+    sidebarHidden: true,
   },
   {
     id: "eng-search",
@@ -492,6 +541,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/search",
     group: "engineering",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-reports",
@@ -500,6 +550,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/reports",
     group: "engineering",
     audience: "engineer",
+    sidebarHidden: true,
   },
   {
     id: "eng-decisions",
@@ -508,6 +559,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/decisions",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-actions",
@@ -516,6 +568,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/actions",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-risks",
@@ -524,6 +577,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/risks",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-issues",
@@ -532,6 +586,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/issues",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-tqs",
@@ -540,6 +595,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/technical-queries",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-lessons",
@@ -548,6 +604,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/lessons",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-timeline",
@@ -556,6 +613,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/timeline",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-activity",
@@ -564,6 +622,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/activity",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-disciplines",
@@ -764,7 +823,7 @@ export const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     id: "engineering_registers",
     label: "Engineering Registers",
     groups: ["engineering_registers"],
-    defaultExpanded: true,
+    defaultExpanded: false,
   },
   {
     id: "engineering_admin",
