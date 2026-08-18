@@ -137,4 +137,25 @@ describe("buildDeterministicBrief", () => {
     expect(brief.domainSections[0]?.id).toBe("growth");
     expect(brief.domainSections[0]?.title).toBe("Growth");
   });
+
+  it("adds a generic Revenue domain section from KPI provenance", () => {
+    const kpis = [
+      kpi({
+        key: "proposals_in_progress",
+        status: "warning",
+        name: "Proposals in progress",
+        provenance: { domain: "revenue" },
+      }),
+    ];
+    const brief = buildDeterministicBrief({
+      health: computeBusinessHealth(kpis, "2026-08-18T09:00:00.000Z"),
+      kpis,
+      signals: [],
+      decisions: [],
+      actions: [],
+      generatedAt: "2026-08-18T09:00:00.000Z",
+    });
+    expect(brief.domainSections[0]?.id).toBe("revenue");
+    expect(brief.domainSections[0]?.title).toBe("Revenue");
+  });
 });

@@ -31,7 +31,30 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "invalid_probability_bps" ||
     message === "organisation_name_required" ||
     message === "opportunity_name_required" ||
-    message === "segment_name_required"
+    message === "segment_name_required" ||
+    message === "objective_required" ||
+    message === "opportunity_id_required" ||
+    message === "draft_content_required" ||
+    message === "lead_suppressed" ||
+    message === "proposal_title_required" ||
+    message === "proposal_number_required" ||
+    message === "requirement_text_required" ||
+    message === "requirement_evidence_required" ||
+    message === "ai_cannot_mark_requirement_satisfied" ||
+    message === "scenario_name_required" ||
+    message === "invalid_discount_bps" ||
+    message === "invalid_engagement_status" ||
+    message === "invalid_draft_type" ||
+    message === "invalid_approval_status" ||
+    message === "invalid_proposal_status" ||
+    message === "invalid_compliance_status" ||
+    message === "invalid_target_margin_bps" ||
+    message === "external_send_forbidden" ||
+    message === "external_submit_forbidden" ||
+    message === "autonomous_approval_forbidden" ||
+    message === "agent_disabled" ||
+    message.startsWith("agent_authority_denied") ||
+    message.startsWith("agent_action_prohibited")
   ) {
     return NextResponse.json({ error: message, code: message }, { status: 400 });
   }

@@ -693,6 +693,14 @@ export const BUSINESS_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "bos-revenue",
+    label: "Revenue",
+    icon: "DollarSign",
+    href: "/business/revenue",
+    group: "business",
+    audience: "viewer",
+  },
+  {
     id: "bos-settings",
     label: "Settings",
     icon: "Settings",

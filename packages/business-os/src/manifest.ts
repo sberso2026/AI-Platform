@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Growth Intelligence preview (BOS-3)",
+      "AI-assisted business operations — Revenue Execution preview (BOS-4)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -25,6 +25,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business", title: "Owner Command Centre", component: "OwnerCommandCentre" },
       { path: "/business/finance", title: "Financial Intelligence", component: "FinancialIntelligence" },
       { path: "/business/growth", title: "Growth Intelligence", component: "GrowthIntelligence" },
+      { path: "/business/revenue", title: "Revenue Execution", component: "RevenueExecution" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -51,6 +52,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "Network",
         group: "business",
         order: 3,
+      },
+      {
+        id: "bos-revenue",
+        label: "Revenue",
+        path: "/business/revenue",
+        icon: "DollarSign",
+        group: "business",
+        order: 4,
       },
       {
         id: "bos-settings",
@@ -89,6 +98,15 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.growth.opportunity_lost", description: "Growth opportunity marked lost" },
       { type: "business_os.growth.metrics_updated", description: "Growth metrics published to Owner Command" },
       { type: "business_os.growth.signal_detected", description: "Growth rule produced a signal" },
+      { type: "business_os.revenue.engagement_created", description: "Engagement plan created" },
+      { type: "business_os.revenue.proposal_created", description: "Proposal draft created" },
+      { type: "business_os.revenue.proposal_updated", description: "Proposal updated" },
+      { type: "business_os.revenue.proposal_ready", description: "Proposal marked internally ready" },
+      { type: "business_os.revenue.pricing_evaluated", description: "Pricing scenario evaluated" },
+      { type: "business_os.revenue.pricing_exception", description: "Pricing guardrail exception detected" },
+      { type: "business_os.revenue.bid_decision_requested", description: "Bid/no-bid human decision requested" },
+      { type: "business_os.revenue.bid_decision_completed", description: "Bid/no-bid human decision recorded" },
+      { type: "business_os.revenue.draft_prepared", description: "Internal communication draft prepared" },
     ],
     knowledge: [
       {
@@ -96,7 +114,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         description: "Business OS knowledge namespace (unused in BOS-0; uses Platform Kernel graph)",
       },
     ],
-    agents: [],
+    agents: [
+      {
+        id: "business-development-agent",
+        name: "AI Business Development Agent",
+        description:
+          "Supervised A0–A2 preparation of research, engagement, drafts, and proposal intelligence. No external send.",
+      },
+    ],
   };
 }
 

@@ -42,7 +42,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   revenue_execution: {
     name: "Revenue Execution",
-    description: "Revenue execution workflows (not implemented)",
+    description:
+      "Supervised commercial preparation: engagement plans, proposal/pricing intelligence, and bid/no-bid support (not external send or autonomous approval)",
   },
   proposal_intelligence: {
     name: "Proposal Intelligence",
@@ -88,9 +89,15 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
     name: LABELS[id].name,
     description: LABELS[id].description,
     implemented:
-      id === "owner_command" || id === "financial_intelligence" || id === "growth_intelligence",
+      id === "owner_command" ||
+      id === "financial_intelligence" ||
+      id === "growth_intelligence" ||
+      id === "revenue_execution",
     activationStatus:
-      id === "owner_command" || id === "financial_intelligence" || id === "growth_intelligence"
+      id === "owner_command" ||
+      id === "financial_intelligence" ||
+      id === "growth_intelligence" ||
+      id === "revenue_execution"
         ? "preview"
         : "registered",
   }));
@@ -105,7 +112,12 @@ export class BusinessCapabilityRegistry {
   }
 
   isImplemented(id: BusinessCapabilityId): boolean {
-    return id === "owner_command" || id === "financial_intelligence" || id === "growth_intelligence";
+    return (
+      id === "owner_command" ||
+      id === "financial_intelligence" ||
+      id === "growth_intelligence" ||
+      id === "revenue_execution"
+    );
   }
 
   ids(): readonly BusinessCapabilityId[] {
