@@ -251,7 +251,7 @@ export function enrichmentStatus(input: {
   domain?: string | null;
   companySizeBand?: string | null;
   services?: string | null;
-  enrichment?: Record<string, unknown>;
+  enrichment?: object;
 }): "none" | "partial" | "complete" {
   const has = (value: string | null | undefined) => Boolean(norm(value));
   const org = has(input.organisationName);
