@@ -7,6 +7,7 @@ import { assertSharedAiStackOnly } from "./ai-framework";
 import { OwnerCommandService } from "./owner-command/service";
 import { FinancialIntelligenceService } from "./finance/service";
 import { GrowthIntelligenceService } from "./growth/service";
+import { RevenueExecutionService } from "./revenue/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -14,6 +15,7 @@ export interface BusinessOS {
   ownerCommand: OwnerCommandService;
   financialIntelligence: FinancialIntelligenceService;
   growthIntelligence: GrowthIntelligenceService;
+  revenueExecution: RevenueExecutionService;
 }
 
 export function createBusinessOS(
@@ -37,6 +39,13 @@ export function createBusinessOS(
     ownerCommand,
   );
   const growthIntelligence = new GrowthIntelligenceService(supabase, kernel, audit, ownerCommand);
-  return { status, capabilities, ownerCommand, financialIntelligence, growthIntelligence };
+  const revenueExecution = new RevenueExecutionService(
+    supabase,
+    kernel,
+    audit,
+    ownerCommand,
+    growthIntelligence,
+  );
+  return { status, capabilities, ownerCommand, financialIntelligence, growthIntelligence, revenueExecution };
 }
 

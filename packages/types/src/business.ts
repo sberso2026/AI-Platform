@@ -1,6 +1,8 @@
 /**
- * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence, BOS-3 Growth Intelligence).
- * Capabilities are identifiers — owner_command, financial_intelligence, and growth_intelligence are implemented.
+ * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
+ * BOS-3 Growth Intelligence, BOS-4 Revenue Execution).
+ * Capabilities are identifiers — owner_command, financial_intelligence, growth_intelligence,
+ * and revenue_execution are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -20,6 +22,9 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.financial_intelligence.manage",
   "business_os.growth_intelligence.view",
   "business_os.growth_intelligence.manage",
+  "business_os.revenue_execution.view",
+  "business_os.revenue_execution.manage",
+  "business_os.revenue_execution.approve",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -93,6 +98,15 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.growth.opportunity_lost",
   "business_os.growth.metrics_updated",
   "business_os.growth.signal_detected",
+  "business_os.revenue.engagement_created",
+  "business_os.revenue.proposal_created",
+  "business_os.revenue.proposal_updated",
+  "business_os.revenue.proposal_ready",
+  "business_os.revenue.pricing_evaluated",
+  "business_os.revenue.pricing_exception",
+  "business_os.revenue.bid_decision_requested",
+  "business_os.revenue.bid_decision_completed",
+  "business_os.revenue.draft_prepared",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -794,6 +808,387 @@ export interface BusinessGrowthMarketIngestInput {
   sourceType: BusinessGrowthSourceType;
   sourceRef?: string;
   sourceTimestamp?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export const BUSINESS_REVENUE_ENGAGEMENT_STATUSES = [
+  "draft",
+  "ready_for_review",
+  "approved",
+  "active",
+  "completed",
+  "cancelled",
+] as const;
+export type BusinessRevenueEngagementStatus = (typeof BUSINESS_REVENUE_ENGAGEMENT_STATUSES)[number];
+
+export const BUSINESS_REVENUE_COMMUNICATION_TYPES = [
+  "email",
+  "follow_up",
+  "meeting_request",
+  "call_brief",
+  "internal_note",
+] as const;
+export type BusinessRevenueCommunicationType = (typeof BUSINESS_REVENUE_COMMUNICATION_TYPES)[number];
+
+export const BUSINESS_REVENUE_APPROVAL_STATUSES = [
+  "draft",
+  "pending_review",
+  "approved",
+  "rejected",
+  "superseded",
+] as const;
+export type BusinessRevenueApprovalStatus = (typeof BUSINESS_REVENUE_APPROVAL_STATUSES)[number];
+
+export const BUSINESS_REVENUE_PROPOSAL_STATUSES = [
+  "draft",
+  "internal_review",
+  "pricing_review",
+  "approval_required",
+  "approved",
+  "ready_to_send",
+  "superseded",
+  "withdrawn",
+] as const;
+export type BusinessRevenueProposalStatus = (typeof BUSINESS_REVENUE_PROPOSAL_STATUSES)[number];
+
+export const BUSINESS_REVENUE_COMPLIANCE_STATUSES = [
+  "satisfied",
+  "partially_satisfied",
+  "unsatisfied",
+  "unknown",
+  "not_applicable",
+] as const;
+export type BusinessRevenueComplianceStatus = (typeof BUSINESS_REVENUE_COMPLIANCE_STATUSES)[number];
+
+export const BUSINESS_REVENUE_BID_RECOMMENDATIONS = [
+  "pursue",
+  "pursue_with_conditions",
+  "review",
+  "do_not_pursue",
+  "insufficient_evidence",
+] as const;
+export type BusinessRevenueBidRecommendation = (typeof BUSINESS_REVENUE_BID_RECOMMENDATIONS)[number];
+
+export const BUSINESS_REVENUE_KPI_KEYS = [
+  "qualified_opportunities",
+  "proposal_ready_opportunities",
+  "proposals_in_progress",
+  "proposal_turnaround_time",
+  "opportunities_without_next_action",
+  "bid_decisions_pending",
+  "average_proposed_margin",
+  "pricing_guardrail_breaches",
+] as const;
+export type BusinessRevenueKpiKey = (typeof BUSINESS_REVENUE_KPI_KEYS)[number];
+
+export const PRICING_GUARDRAIL_VERSION = "pricing_guardrail.v1" as const;
+export const BID_NOBID_VERSION = "bid_nobid.v1" as const;
+export const BUSINESS_DEVELOPMENT_AGENT_SLUG = "business-development-agent" as const;
+
+export const BUSINESS_AGENT_AUTHORITY_LEVELS = ["A0", "A1", "A2", "A3", "A4"] as const;
+export type BusinessAgentAuthorityLevel = (typeof BUSINESS_AGENT_AUTHORITY_LEVELS)[number];
+
+export const BUSINESS_REVENUE_DEFAULT_GUARDRAILS = {
+  minTargetMarginBps: 2000,
+  maxDiscountBpsWithoutApproval: 1000,
+  minAbsoluteContributionMinor: "0",
+  version: PRICING_GUARDRAIL_VERSION,
+} as const;
+
+export interface BusinessRevenueGuardrails {
+  minTargetMarginBps: number;
+  maxDiscountBpsWithoutApproval: number;
+  minAbsoluteContributionMinor: string;
+  currency?: string | null;
+  scale: number;
+  version: typeof PRICING_GUARDRAIL_VERSION;
+}
+
+export interface BusinessRevenueEngagementPlan {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  opportunityId: string;
+  objective: string;
+  stakeholderSummary?: string | null;
+  valueProposition?: string | null;
+  keyNeeds?: string | null;
+  proposedApproach?: string | null;
+  nextAction?: string | null;
+  owner?: string | null;
+  dueAt?: string | null;
+  status: BusinessRevenueEngagementStatus;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRevenueCommunicationDraft {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  opportunityId: string;
+  engagementPlanId?: string | null;
+  type: BusinessRevenueCommunicationType;
+  recipientContext?: string | null;
+  subject: string;
+  body: string;
+  purpose: string;
+  evidenceRefs: BusinessEvidenceRef[];
+  generatedBy: "user" | "deterministic_rule" | "platform_ai_director";
+  approvalStatus: BusinessRevenueApprovalStatus;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRevenueProposal {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  opportunityId: string;
+  proposalNumber: string;
+  title: string;
+  version: number;
+  status: BusinessRevenueProposalStatus;
+  scopeSummary?: string | null;
+  customerRequirements?: string | null;
+  assumptions?: string | null;
+  exclusions?: string | null;
+  deliverables?: string | null;
+  commercialTermsSummary?: string | null;
+  proposedPriceMinor: string | null;
+  estimatedCostMinor: string | null;
+  currency: string;
+  scale: number;
+  targetMarginBps: string | null;
+  owner?: string | null;
+  approvalDecisionId?: string | null;
+  sourceType: string;
+  sourceRef?: string | null;
+  evidenceRefs: BusinessEvidenceRef[];
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRevenueProposalRequirement {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  proposalId: string;
+  requirement: string;
+  sourceReference?: string | null;
+  mandatory: boolean;
+  response?: string | null;
+  status: "open" | "drafted" | "reviewed" | "closed";
+  complianceStatus: BusinessRevenueComplianceStatus;
+  evidenceRefs: BusinessEvidenceRef[];
+  generatedBy: "user" | "deterministic_rule" | "platform_ai_director";
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRevenuePricingScenario {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  opportunityId: string;
+  proposalId?: string | null;
+  scenarioName: string;
+  assumptions?: string | null;
+  revenueMinor: string | null;
+  estimatedDirectCostMinor: string | null;
+  allocatedCostMinor: string | null;
+  discountBps: string | null;
+  riskAllowanceMinor: string | null;
+  grossProfitMinor: string | null;
+  grossMarginBps: string | null;
+  currency: string;
+  scale: number;
+  exceptionDecisionId?: string | null;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRevenueBidEvaluation {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  opportunityId: string;
+  recommendation: BusinessRevenueBidRecommendation;
+  components: BusinessGrowthScoreComponent[];
+  missingInputs: string[];
+  version: typeof BID_NOBID_VERSION;
+  decisionId?: string | null;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  disclaimer: string;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRevenuePricingEvaluation {
+  revenue: MoneyJson | null;
+  estimatedDirectCost: MoneyJson | null;
+  allocatedCost: MoneyJson | null;
+  riskAllowance: MoneyJson | null;
+  grossProfit: MoneyJson | null;
+  contribution: MoneyJson | null;
+  grossMarginBps: string | null;
+  discountBps: string | null;
+  targetMarginPrice: MoneyJson | null;
+  violations: Array<{ ruleId: string; message: string; severity: "warning" | "critical" }>;
+  requiresApproval: boolean;
+  unknownReasons: string[];
+  version: typeof PRICING_GUARDRAIL_VERSION;
+  method: "deterministic_pricing_v1";
+  disclaimer: string;
+}
+
+export interface BusinessRevenueBidInput {
+  strategicFit?: string | null;
+  opportunityScore?: number | null;
+  estimatedValueMinor?: string | number | null;
+  currency?: string | null;
+  expectedMarginBps?: string | number | null;
+  deliveryCapability?: string | null;
+  expectedCloseDate?: string | null;
+  relationshipStrength?: string | null;
+  proposalEffort?: string | null;
+  evidenceQuality?: string | null;
+  commercialRisk?: string | null;
+  asOf?: string;
+}
+
+export interface BusinessRevenueAgentPassport {
+  id: typeof BUSINESS_DEVELOPMENT_AGENT_SLUG;
+  name: "AI Business Development Agent";
+  role: "AI Business Development Agent";
+  purpose: string;
+  authorityMax: "A2";
+  allowedTools: string[];
+  dataScope: string[];
+  prohibitedActions: string[];
+  approvalRequirements: string[];
+  modelPolicy: {
+    usesPlatformAiDirector: true;
+    implementsOwnAiStack: false;
+    noAutonomousApproval: true;
+    externalWritesDisabled: true;
+  };
+  auditRequirements: string[];
+  killSwitch: { disabled: boolean };
+  generatedContentMustRetainProvenance: true;
+}
+
+export interface BusinessRevenueEngagementIngestInput {
+  opportunityId: string;
+  objective: string;
+  stakeholderSummary?: string | null;
+  valueProposition?: string | null;
+  keyNeeds?: string | null;
+  proposedApproach?: string | null;
+  nextAction?: string | null;
+  owner?: string | null;
+  dueAt?: string | null;
+  status?: BusinessRevenueEngagementStatus;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRevenueDraftIngestInput {
+  opportunityId: string;
+  engagementPlanId?: string | null;
+  type: BusinessRevenueCommunicationType;
+  recipientContext?: string | null;
+  subject: string;
+  body: string;
+  purpose: string;
+  evidenceRefs?: BusinessEvidenceRef[];
+  generatedBy?: BusinessRevenueCommunicationDraft["generatedBy"];
+  approvalStatus?: BusinessRevenueApprovalStatus;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRevenueProposalIngestInput {
+  opportunityId: string;
+  proposalNumber: string;
+  title: string;
+  version?: number;
+  status?: BusinessRevenueProposalStatus;
+  scopeSummary?: string | null;
+  customerRequirements?: string | null;
+  assumptions?: string | null;
+  exclusions?: string | null;
+  deliverables?: string | null;
+  commercialTermsSummary?: string | null;
+  proposedPriceMinor?: string | number | null;
+  estimatedCostMinor?: string | number | null;
+  currency: string;
+  scale?: number;
+  targetMarginBps?: string | number | null;
+  owner?: string | null;
+  evidenceRefs?: BusinessEvidenceRef[];
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRevenueRequirementIngestInput {
+  proposalId: string;
+  requirement: string;
+  sourceReference?: string | null;
+  mandatory?: boolean;
+  response?: string | null;
+  status?: BusinessRevenueProposalRequirement["status"];
+  complianceStatus?: BusinessRevenueComplianceStatus;
+  evidenceRefs?: BusinessEvidenceRef[];
+  generatedBy?: BusinessRevenueProposalRequirement["generatedBy"];
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRevenuePricingIngestInput {
+  opportunityId: string;
+  proposalId?: string | null;
+  scenarioName: string;
+  assumptions?: string | null;
+  revenueMinor?: string | number | null;
+  estimatedDirectCostMinor?: string | number | null;
+  allocatedCostMinor?: string | number | null;
+  discountBps?: string | number | null;
+  riskAllowanceMinor?: string | number | null;
+  currency: string;
+  scale?: number;
+  sourceType: string;
+  sourceRef?: string;
   provenance?: Record<string, unknown>;
   isDemo?: boolean;
 }

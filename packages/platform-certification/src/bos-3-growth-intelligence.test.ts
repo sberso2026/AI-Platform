@@ -14,10 +14,10 @@ describe("BOS-3 Growth Intelligence", () => {
   it("reuses Platform AI Director and does not execute outreach", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-3");
+    expect(bos.status.snapshot().phase).toBe("BOS-4");
     expect(bos.growthIntelligence).toBeDefined();
     expect(bos.capabilities.isImplemented("growth_intelligence")).toBe(true);
-    expect(bos.capabilities.isImplemented("revenue_execution")).toBe(false);
+    expect(bos.capabilities.isImplemented("revenue_execution")).toBe(true);
   });
 
   it("registers /business/growth", () => {

@@ -61,8 +61,11 @@ describe("BOS BUSINESS_API_POLICIES", () => {
     expect(getBusinessApiPolicy("finance", "POST").cachePolicy).toBe("fresh");
     expect(getBusinessApiPolicy("growth", "GET").workspaceRequired).toBe(true);
     expect(getBusinessApiPolicy("growth", "POST").cachePolicy).toBe("fresh");
+    expect(getBusinessApiPolicy("revenue", "GET").workspaceRequired).toBe(true);
+    expect(getBusinessApiPolicy("revenue", "POST").cachePolicy).toBe("fresh");
     expect(BUSINESS_PAGE_POLICIES["/business/finance"]?.productKey).toBe("business-os");
     expect(BUSINESS_PAGE_POLICIES["/business/growth"]?.productKey).toBe("business-os");
+    expect(BUSINESS_PAGE_POLICIES["/business/revenue"]?.productKey).toBe("business-os");
     expect(BUSINESS_API_POLICIES["capabilities.read"]?.seatRequired).toBe(false);
     expect(BUSINESS_PAGE_POLICIES["/business"]?.productKey).toBe("business-os");
   });

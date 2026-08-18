@@ -24,6 +24,7 @@ const IMPACT_RANK: Record<string, number> = {
 const DOMAIN_TITLES: Record<string, string> = {
   finance: "Finance",
   growth: "Growth",
+  revenue: "Revenue",
 };
 
 function buildDomainSections(kpis: BusinessKpi[]): DeterministicDailyBrief["domainSections"] {
