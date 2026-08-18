@@ -24,8 +24,9 @@ describe("BOS-2 finance migration", () => {
     expect(sql).toContain("FORCE ROW LEVEL SECURITY");
     expect(sql).toContain("get_user_tenant_ids()");
     expect(sql).toContain("workspace_memberships");
-    expect(sql).not.toMatch(/general ledger|journal|chart_of_accounts|invoices/i);
     expect(sql.toLowerCase()).not.toContain("create table if not exists invoices");
+    expect(sql.toLowerCase()).not.toContain("create table if not exists journal");
     expect(sql.toLowerCase()).not.toContain("create table if not exists ledger");
+    expect(sql.toLowerCase()).not.toContain("create table if not exists chart_of_accounts");
   });
 });

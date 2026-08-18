@@ -82,7 +82,7 @@ export class FinanceRepository {
     const query = existing
       ? table(this.supabase, "business_os_finance_settings")
           .update(payload as never)
-          .eq("id", existing.id)
+          .eq("id", String(existing.id))
           .select("*")
           .single()
       : table(this.supabase, "business_os_finance_settings").insert(payload as never).select("*").single();
