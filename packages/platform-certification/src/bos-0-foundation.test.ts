@@ -20,7 +20,7 @@ describe("BOS-0 Business OS foundation", () => {
     expect(implementsOwnAiStack).toBe(false);
   });
 
-  it("does not flip catalog coming_soon and does not add domain migrations", () => {
+  it("does not flip catalog coming_soon and does not embed SQL in the OS factory", () => {
     expect(OPERATING_SYSTEMS.find((os) => os.id === "business")?.status).toBe("coming_soon");
     expect(BUSINESS_OS_RUNTIME_MANIFEST.catalogStatus).toBe("coming_soon");
     const files = readFileSync(resolve(ROOT, "packages/business-os/src/business-os.ts"), "utf8");
@@ -30,6 +30,8 @@ describe("BOS-0 Business OS foundation", () => {
   it("wires createBusinessOS through Platform Kernel", () => {
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
     expect(bos.status.configuration().kernelServices.aiDirector).toBe(true);
-    expect(bos.capabilities.list().every((c) => c.implemented === false)).toBe(true);
+    expect(bos.capabilities.list().filter((c) => c.implemented).map((c) => c.id)).toEqual([
+      "owner_command",
+    ]);
   });
 });

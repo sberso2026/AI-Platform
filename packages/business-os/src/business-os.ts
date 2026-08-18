@@ -1,16 +1,19 @@
 import type { SupabaseClient } from "@rtb/database";
 import type { PlatformKernel } from "@rtb/platform-kernel";
+import { AuditService } from "@rtb/platform-core";
 import { BusinessCapabilityRegistry } from "./capabilities";
 import { BusinessOsStatusService } from "./status";
 import { assertSharedAiStackOnly } from "./ai-framework";
+import { OwnerCommandService } from "./owner-command/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
   capabilities: BusinessCapabilityRegistry;
+  ownerCommand: OwnerCommandService;
 }
 
 export function createBusinessOS(
-  _supabase: SupabaseClient,
+  supabase: SupabaseClient,
   kernel: PlatformKernel,
 ): BusinessOS {
   assertSharedAiStackOnly("business-os");
@@ -21,5 +24,10 @@ export function createBusinessOS(
   }
   const capabilities = new BusinessCapabilityRegistry();
   const status = new BusinessOsStatusService(kernel, capabilities);
-  return { status, capabilities };
+  const ownerCommand = new OwnerCommandService(
+    supabase,
+    kernel,
+    new AuditService(supabase),
+  );
+  return { status, capabilities, ownerCommand };
 }

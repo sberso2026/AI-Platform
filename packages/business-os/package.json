@@ -1,6 +1,6 @@
 {
   "name": "@rtb/business-os",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@rtb/database": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
+    "@rtb/platform-core": "workspace:*",
     "@rtb/platform-kernel": "workspace:*",
     "@rtb/types": "workspace:*"
   },
