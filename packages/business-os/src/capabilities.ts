@@ -17,7 +17,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   growth_intelligence: {
     name: "Growth Intelligence",
-    description: "Growth and pipeline intelligence (not implemented)",
+    description:
+      "Vendor-neutral lead, opportunity, and pipeline intelligence feeding Owner Command Centre (not outreach or CRM execution)",
   },
   market_intelligence: {
     name: "Market Intelligence",
@@ -86,9 +87,12 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
     id,
     name: LABELS[id].name,
     description: LABELS[id].description,
-    implemented: id === "owner_command" || id === "financial_intelligence",
+    implemented:
+      id === "owner_command" || id === "financial_intelligence" || id === "growth_intelligence",
     activationStatus:
-      id === "owner_command" || id === "financial_intelligence" ? "preview" : "registered",
+      id === "owner_command" || id === "financial_intelligence" || id === "growth_intelligence"
+        ? "preview"
+        : "registered",
   }));
 
 export class BusinessCapabilityRegistry {
@@ -101,7 +105,7 @@ export class BusinessCapabilityRegistry {
   }
 
   isImplemented(id: BusinessCapabilityId): boolean {
-    return id === "owner_command" || id === "financial_intelligence";
+    return id === "owner_command" || id === "financial_intelligence" || id === "growth_intelligence";
   }
 
   ids(): readonly BusinessCapabilityId[] {

@@ -21,6 +21,39 @@ const IMPACT_RANK: Record<string, number> = {
   low: 3,
 };
 
+const DOMAIN_TITLES: Record<string, string> = {
+  finance: "Finance",
+  growth: "Growth",
+};
+
+function buildDomainSections(kpis: BusinessKpi[]): DeterministicDailyBrief["domainSections"] {
+  const byDomain = new Map<string, BusinessKpi[]>();
+  for (const kpi of kpis) {
+    const domain = typeof kpi.provenance?.domain === "string" ? kpi.provenance.domain : "";
+    if (!domain) continue;
+    const list = byDomain.get(domain) ?? [];
+    list.push(kpi);
+    byDomain.set(domain, list);
+  }
+  return [...byDomain.entries()].map(([id, rows]) => {
+    const unknown = rows.filter((k) => k.status === "unknown");
+    return {
+      id,
+      title: DOMAIN_TITLES[id] ?? id,
+      containsDemoData: rows.some((k) => k.isDemo),
+      lines: [
+        unknown.length
+          ? `${unknown.length} ${DOMAIN_TITLES[id] ?? id} KPI(s) unknown.`
+          : `${DOMAIN_TITLES[id] ?? id} KPIs are populated from ingested records.`,
+        ...rows
+          .filter((k) => k.status === "warning" || k.status === "critical")
+          .slice(0, 6)
+          .map((k) => `${k.name}: ${k.status}`),
+      ],
+    };
+  });
+}
+
 export function rankSignals(signals: BusinessSignal[]): BusinessSignal[] {
   return [...signals].sort((a, b) => {
     const sev = (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9);
@@ -65,8 +98,6 @@ export function buildDeterministicBrief(input: {
     const majorKpiChanges = input.kpis.filter(
       (k) => k.status === "warning" || k.status === "critical" || k.status === "unknown",
     );
-    const financeKpis = input.kpis.filter((k) => k.provenance?.domain === "finance");
-    const financeUnknown = financeKpis.filter((k) => k.status === "unknown");
     const pendingDecisions = input.decisions.filter((d) => d.status === "pending");
   const overdueOrBlockedActions = input.actions.filter((a) => isOverdueOrBlocked(a));
   const containsDemoData =
@@ -116,24 +147,7 @@ export function buildDeterministicBrief(input: {
         excerpt: k.status,
       })),
     ],
-    domainSections: financeKpis.length
-      ? [
-          {
-            id: "finance",
-            title: "Finance",
-            containsDemoData: financeKpis.some((k) => k.isDemo),
-            lines: [
-              financeUnknown.length
-                ? `${financeUnknown.length} finance KPI(s) unknown.`
-                : "Finance KPIs are populated from ingested snapshots.",
-              ...financeKpis
-                .filter((k) => k.status === "warning" || k.status === "critical")
-                .slice(0, 6)
-                .map((k) => `${k.name}: ${k.status}`),
-            ],
-          },
-        ]
-      : [],
+    domainSections: buildDomainSections(input.kpis),
   };
 }
 

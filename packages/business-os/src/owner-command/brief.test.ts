@@ -116,4 +116,25 @@ describe("buildDeterministicBrief", () => {
     expect(brief.domainSections[0]?.id).toBe("finance");
     expect(brief.domainSections[0]?.lines.some((line) => line.includes("Revenue"))).toBe(true);
   });
+
+  it("adds a generic Growth domain section from KPI provenance", () => {
+    const kpis = [
+      kpi({
+        key: "total_pipeline",
+        status: "warning",
+        name: "Total pipeline",
+        provenance: { domain: "growth" },
+      }),
+    ];
+    const brief = buildDeterministicBrief({
+      health: computeBusinessHealth(kpis, "2026-08-18T09:00:00.000Z"),
+      kpis,
+      signals: [],
+      decisions: [],
+      actions: [],
+      generatedAt: "2026-08-18T09:00:00.000Z",
+    });
+    expect(brief.domainSections[0]?.id).toBe("growth");
+    expect(brief.domainSections[0]?.title).toBe("Growth");
+  });
 });

@@ -33,6 +33,7 @@ describe("BOS-0 Business OS foundation", () => {
     expect(bos.capabilities.list().filter((c) => c.implemented).map((c) => c.id)).toEqual([
       "owner_command",
       "financial_intelligence",
+      "growth_intelligence",
     ]);
   });
 });

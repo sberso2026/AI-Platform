@@ -14,10 +14,10 @@ describe("BOS-2 Financial Intelligence", () => {
   it("reuses Platform AI Director and does not create a ledger", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-2");
+    expect(bos.status.snapshot().phase).toBe("BOS-3");
     expect(bos.financialIntelligence).toBeDefined();
     expect(bos.capabilities.isImplemented("financial_intelligence")).toBe(true);
-    expect(bos.capabilities.isImplemented("growth_intelligence")).toBe(false);
+    expect(bos.capabilities.isImplemented("growth_intelligence")).toBe(true);
   });
 
   it("registers /business/finance", () => {

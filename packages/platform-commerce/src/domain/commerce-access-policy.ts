@@ -17,7 +17,7 @@ export const ENGINEERING_PRODUCT = "engineering-os";
 export const BUSINESS_PRODUCT = "business-os";
 export const BUSINESS_OS_FEATURE_KEY = "business_os";
 
-/** Business OS API policies (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence). Seat not required; catalog remains coming_soon. */
+/** Business OS API policies (BOS-0 foundation through BOS-3 Growth Intelligence). Seat not required; catalog remains coming_soon. */
 export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "status.read": {
     productKey: BUSINESS_PRODUCT,
@@ -156,6 +156,21 @@ export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
     workspaceRequired: true,
     cachePolicy: "fresh",
   },
+  "growth.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "growth.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "growth.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "growth.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
 };
 
 export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
@@ -169,6 +184,13 @@ export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     productKey: BUSINESS_PRODUCT,
     featureKey: BUSINESS_OS_FEATURE_KEY,
     action: "finance.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "/business/growth": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "growth.read",
     seatRequired: false,
     workspaceRequired: true,
   },

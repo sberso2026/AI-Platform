@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Financial Intelligence preview (BOS-2)",
+      "AI-assisted business operations — Growth Intelligence preview (BOS-3)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -24,6 +24,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     routes: [
       { path: "/business", title: "Owner Command Centre", component: "OwnerCommandCentre" },
       { path: "/business/finance", title: "Financial Intelligence", component: "FinancialIntelligence" },
+      { path: "/business/growth", title: "Growth Intelligence", component: "GrowthIntelligence" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -42,6 +43,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "LineChart",
         group: "business",
         order: 2,
+      },
+      {
+        id: "bos-growth",
+        label: "Growth",
+        path: "/business/growth",
+        icon: "Network",
+        group: "business",
+        order: 3,
       },
       {
         id: "bos-settings",
@@ -71,6 +80,15 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.finance.snapshot_ingested", description: "Finance snapshot ingested" },
       { type: "business_os.finance.metrics_updated", description: "Finance metrics published to Owner Command" },
       { type: "business_os.finance.signal_detected", description: "Finance rule produced a signal" },
+      { type: "business_os.growth.lead_created", description: "Growth lead ingested" },
+      { type: "business_os.growth.lead_qualified", description: "Growth lead qualified" },
+      { type: "business_os.growth.lead_converted", description: "Growth lead converted" },
+      { type: "business_os.growth.opportunity_created", description: "Growth opportunity ingested" },
+      { type: "business_os.growth.opportunity_updated", description: "Growth opportunity updated" },
+      { type: "business_os.growth.opportunity_won", description: "Growth opportunity marked won" },
+      { type: "business_os.growth.opportunity_lost", description: "Growth opportunity marked lost" },
+      { type: "business_os.growth.metrics_updated", description: "Growth metrics published to Owner Command" },
+      { type: "business_os.growth.signal_detected", description: "Growth rule produced a signal" },
     ],
     knowledge: [
       {
