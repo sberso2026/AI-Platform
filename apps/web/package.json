@@ -13,6 +13,7 @@
   "dependencies": {
     "@rtb/database": "workspace:*",
     "@rtb/engineering-os": "workspace:*",
+    "@rtb/business-os": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
     "@rtb/platform-core": "workspace:*",
     "@rtb/platform-kernel": "workspace:*",
