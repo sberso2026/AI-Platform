@@ -51,6 +51,7 @@ const APPLICATION_BY_PATH_PREFIX: Array<{ prefix: string; key: string }> = [
 export function resolveEntitlementTarget(pathname: string): {
   productKey?: string;
   applicationKey?: string;
+  featureKey?: string;
 } {
   for (const { prefix, key } of APPLICATION_BY_PATH_PREFIX) {
     if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
@@ -59,6 +60,9 @@ export function resolveEntitlementTarget(pathname: string): {
   }
   if (pathname === "/engineering" || pathname.startsWith("/engineering/")) {
     return { productKey: "engineering-os" };
+  }
+  if (pathname === "/business" || pathname.startsWith("/business/")) {
+    return { productKey: "business-os", featureKey: "business_os" };
   }
   for (const [path, slug] of Object.entries(PRODUCT_SLUG_BY_PATH)) {
     if (pathname === path || pathname.startsWith(`${path}/`)) {

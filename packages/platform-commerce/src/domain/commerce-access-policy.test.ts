@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   ENGINEERING_API_POLICIES,
+  BUSINESS_API_POLICIES,
+  BUSINESS_PAGE_POLICIES,
   getEngineeringApiPolicy,
+  getBusinessApiPolicy,
   resolveApiPolicyKey,
 } from "./commerce-access-policy";
 
@@ -44,5 +47,14 @@ describe("ENGINEERING_API_POLICIES", () => {
   it("requires fresh cache for write operations", () => {
     const write = getEngineeringApiPolicy("projects", "POST");
     expect(write.cachePolicy).toBe("fresh");
+  });
+});
+
+describe("BOS-0 BUSINESS_API_POLICIES", () => {
+  it("binds foundation routes to business-os and the existing business_os feature", () => {
+    expect(getBusinessApiPolicy("status", "GET").productKey).toBe("business-os");
+    expect(getBusinessApiPolicy("status", "GET").featureKey).toBe("business_os");
+    expect(BUSINESS_API_POLICIES["capabilities.read"]?.seatRequired).toBe(false);
+    expect(BUSINESS_PAGE_POLICIES["/business"]?.productKey).toBe("business-os");
   });
 });

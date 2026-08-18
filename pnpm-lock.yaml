@@ -17,6 +17,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@rtb/business-os':
+        specifier: workspace:*
+        version: link:../../packages/business-os
       '@rtb/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -99,6 +102,37 @@ importers:
       tailwindcss:
         specifier: ^4.1.8
         version: 4.3.2
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
+  packages/business-os:
+    dependencies:
+      '@rtb/database':
+        specifier: workspace:*
+        version: link:../database
+      '@rtb/platform-commerce':
+        specifier: workspace:*
+        version: link:../platform-commerce
+      '@rtb/platform-intelligence':
+        specifier: workspace:*
+        version: link:../platform-intelligence
+      '@rtb/platform-kernel':
+        specifier: workspace:*
+        version: link:../platform-kernel
+      '@rtb/plugin-sdk':
+        specifier: workspace:*
+        version: link:../plugin-sdk
+      '@rtb/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
@@ -248,6 +282,9 @@ importers:
 
   packages/platform-certification:
     dependencies:
+      '@rtb/business-os':
+        specifier: workspace:*
+        version: link:../business-os
       '@rtb/engineering-os':
         specifier: workspace:*
         version: link:../engineering-os
