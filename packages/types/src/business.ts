@@ -1,6 +1,6 @@
 /**
- * Business OS contracts (BOS-0 foundation + BOS-1 Owner Command Centre).
- * Capabilities are identifiers — only owner_command is implemented in BOS-1.
+ * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence).
+ * Capabilities are identifiers — owner_command and financial_intelligence are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -16,6 +16,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.admin",
   "business_os.owner_command.view",
   "business_os.owner_command.manage",
+  "business_os.financial_intelligence.view",
+  "business_os.financial_intelligence.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -77,6 +79,9 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.decision.updated",
   "business_os.action.created",
   "business_os.action.completed",
+  "business_os.finance.snapshot_ingested",
+  "business_os.finance.metrics_updated",
+  "business_os.finance.signal_detected",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -287,6 +292,12 @@ export interface DeterministicDailyBrief {
   overdueOrBlockedActions: Array<{ id: string; title: string; status: BusinessActionStatus }>;
   containsDemoData: boolean;
   evidenceRefs: BusinessEvidenceRef[];
+  domainSections: Array<{
+    id: string;
+    title: string;
+    lines: string[];
+    containsDemoData?: boolean;
+  }>;
 }
 
 export interface AiDailyBriefNarrative {
@@ -297,4 +308,191 @@ export interface AiDailyBriefNarrative {
   evidenceRefs: BusinessEvidenceRef[];
   advisory: true;
   unavailableReason?: string;
+}
+
+export const BUSINESS_FINANCE_SOURCE_TYPES = [
+  "xero",
+  "myob",
+  "quickbooks",
+  "csv",
+  "excel",
+  "manual",
+  "api",
+  "demo",
+] as const;
+export type BusinessFinanceSourceType = (typeof BUSINESS_FINANCE_SOURCE_TYPES)[number];
+
+export const BUSINESS_FINANCE_PERIOD_STATUSES = ["draft", "open", "closed", "superseded"] as const;
+export type BusinessFinancePeriodStatus = (typeof BUSINESS_FINANCE_PERIOD_STATUSES)[number];
+
+export const BUSINESS_FINANCE_KPI_KEYS = [
+  "revenue",
+  "revenue_growth",
+  "cash_position",
+  "gross_margin",
+  "operating_margin",
+  "overdue_receivables",
+  "budget_variance",
+  "cash_runway",
+] as const;
+export type BusinessFinanceKpiKey = (typeof BUSINESS_FINANCE_KPI_KEYS)[number];
+
+export const BUSINESS_FINANCE_DEFAULT_THRESHOLDS = {
+  grossMarginWarningBps: 1800,
+  grossMarginCriticalBps: 1200,
+  operatingMarginWarningBps: 800,
+  operatingMarginCriticalBps: 300,
+  cashRunwayWarningMonthHundredths: 600,
+  cashRunwayCriticalMonthHundredths: 300,
+  overdueReceivableRatioWarningBps: 2500,
+  overdueReceivableRatioCriticalBps: 5000,
+  budgetRevenueAdverseBps: 500,
+  expenseIncreaseWarningBps: 1000,
+  revenueDeclineWarningBps: 500,
+} as const;
+
+export interface MoneyJson {
+  minor: string;
+  currency: string;
+  scale: number;
+}
+
+export interface BusinessFinancePeriod {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  periodStart: string;
+  periodEnd: string;
+  currency: string;
+  scale: number;
+  status: BusinessFinancePeriodStatus;
+  sourceType: BusinessFinanceSourceType;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  syncedAt: string;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessFinanceSnapshot {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  periodId: string;
+  currency: string;
+  scale: number;
+  revenueMinor: string | null;
+  costOfSalesMinor: string | null;
+  operatingExpensesMinor: string | null;
+  cashMinor: string | null;
+  accountsReceivableMinor: string | null;
+  accountsPayableMinor: string | null;
+  budgetRevenueMinor: string | null;
+  budgetExpensesMinor: string | null;
+  budgetProfitMinor: string | null;
+  sourceType: BusinessFinanceSourceType;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  syncedAt: string;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessFinanceReceivableSnapshot {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  periodId: string;
+  currency: string;
+  scale: number;
+  outstandingMinor: string | null;
+  overdueMinor: string | null;
+  ageingCurrentMinor: string | null;
+  ageing130Minor: string | null;
+  ageing3160Minor: string | null;
+  ageing6190Minor: string | null;
+  ageing90PlusMinor: string | null;
+  sourceType: BusinessFinanceSourceType;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  syncedAt: string;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessFinanceMetrics {
+  currency: string;
+  scale: number;
+  grossProfit: MoneyJson | null;
+  grossMarginBps: string | null;
+  operatingProfit: MoneyJson | null;
+  operatingMarginBps: string | null;
+  budgetRevenueVariance: MoneyJson | null;
+  budgetRevenueVarianceBps: string | null;
+  budgetExpenseVariance: MoneyJson | null;
+  budgetProfitVariance: MoneyJson | null;
+  receivablesOutstanding: MoneyJson | null;
+  receivablesOverdue: MoneyJson | null;
+  receivablesOverdueBps: string | null;
+  ageing: {
+    current: MoneyJson | null;
+    days1to30: MoneyJson | null;
+    days31to60: MoneyJson | null;
+    days61to90: MoneyJson | null;
+    days90Plus: MoneyJson | null;
+  };
+  cashRunwayMonthHundredths: string | null;
+  unknownReasons: string[];
+  method: "deterministic_finance_metrics_v1";
+  disclaimer: string;
+}
+
+export interface BusinessFinanceForecastPoint {
+  offsetMonths: number;
+  kind: "observed" | "forecast";
+  cash: MoneyJson | null;
+}
+
+export interface BusinessFinanceForecast {
+  currency: string;
+  scale: number;
+  points: BusinessFinanceForecastPoint[];
+  assumptions: string[];
+  unknownReason?: string;
+  method: "deterministic_cash_forecast_v1";
+}
+
+export interface BusinessFinanceIngestInput {
+  periodStart: string;
+  periodEnd: string;
+  currency: string;
+  scale?: number;
+  status?: BusinessFinancePeriodStatus;
+  sourceType: BusinessFinanceSourceType;
+  sourceRef?: string;
+  sourceTimestamp?: string;
+  revenueMinor?: string | number | null;
+  costOfSalesMinor?: string | number | null;
+  operatingExpensesMinor?: string | number | null;
+  cashMinor?: string | number | null;
+  accountsReceivableMinor?: string | number | null;
+  accountsPayableMinor?: string | number | null;
+  budgetRevenueMinor?: string | number | null;
+  budgetExpensesMinor?: string | number | null;
+  budgetProfitMinor?: string | number | null;
+  outstandingMinor?: string | number | null;
+  overdueMinor?: string | number | null;
+  ageingCurrentMinor?: string | number | null;
+  ageing130Minor?: string | number | null;
+  ageing3160Minor?: string | number | null;
+  ageing6190Minor?: string | number | null;
+  ageing90PlusMinor?: string | number | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
 }

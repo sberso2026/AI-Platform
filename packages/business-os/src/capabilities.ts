@@ -12,7 +12,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   financial_intelligence: {
     name: "Financial Intelligence",
-    description: "Financial intelligence and advisory surfaces (not implemented)",
+    description:
+      "Vendor-neutral financial management intelligence feeding Owner Command Centre (not a statutory ledger)",
   },
   growth_intelligence: {
     name: "Growth Intelligence",
@@ -85,8 +86,9 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
     id,
     name: LABELS[id].name,
     description: LABELS[id].description,
-    implemented: id === "owner_command",
-    activationStatus: id === "owner_command" ? "preview" : "registered",
+    implemented: id === "owner_command" || id === "financial_intelligence",
+    activationStatus:
+      id === "owner_command" || id === "financial_intelligence" ? "preview" : "registered",
   }));
 
 export class BusinessCapabilityRegistry {
@@ -99,7 +101,7 @@ export class BusinessCapabilityRegistry {
   }
 
   isImplemented(id: BusinessCapabilityId): boolean {
-    return id === "owner_command";
+    return id === "owner_command" || id === "financial_intelligence";
   }
 
   ids(): readonly BusinessCapabilityId[] {

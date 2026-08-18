@@ -677,6 +677,14 @@ export const BUSINESS_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "bos-finance",
+    label: "Finance",
+    icon: "LineChart",
+    href: "/business/finance",
+    group: "business",
+    audience: "viewer",
+  },
+  {
     id: "bos-settings",
     label: "Settings",
     icon: "Settings",

@@ -12,6 +12,8 @@ export const BUSINESS_PERMISSION_MAP: Record<
   "business_os.admin": { resource: "business", action: "admin" },
   "business_os.owner_command.view": { resource: "business", action: "read" },
   "business_os.owner_command.manage": { resource: "business", action: "execute" },
+  "business_os.financial_intelligence.view": { resource: "business", action: "read" },
+  "business_os.financial_intelligence.manage": { resource: "business", action: "execute" },
 };
 
 function hasPlatformPermission(
@@ -35,14 +37,22 @@ export function hasBusinessPermission(
   if (hasPlatformPermission(permissions, "tenant", "admin")) return true;
   const mapped = BUSINESS_PERMISSION_MAP[permission];
   if (!mapped) return false;
-  if (permission === "business_os.view" || permission === "business_os.owner_command.view") {
+  if (
+    permission === "business_os.view" ||
+    permission === "business_os.owner_command.view" ||
+    permission === "business_os.financial_intelligence.view"
+  ) {
     return (
       hasPlatformPermission(permissions, "business", "read") ||
       hasPlatformPermission(permissions, "business", "execute") ||
       hasPlatformPermission(permissions, "business", "admin")
     );
   }
-  if (permission === "business_os.manage" || permission === "business_os.owner_command.manage") {
+  if (
+    permission === "business_os.manage" ||
+    permission === "business_os.owner_command.manage" ||
+    permission === "business_os.financial_intelligence.manage"
+  ) {
     return (
       hasPlatformPermission(permissions, "business", "execute") ||
       hasPlatformPermission(permissions, "business", "admin")
