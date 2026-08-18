@@ -25,7 +25,13 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "invalid_source_type" ||
     message === "invalid_scale" ||
     message === "monetary_value_not_integer" ||
-    message === "scale_mismatch"
+    message === "scale_mismatch" ||
+    message === "invalid_qualification" ||
+    message === "invalid_stage" ||
+    message === "invalid_probability_bps" ||
+    message === "organisation_name_required" ||
+    message === "opportunity_name_required" ||
+    message === "segment_name_required"
   ) {
     return NextResponse.json({ error: message, code: message }, { status: 400 });
   }

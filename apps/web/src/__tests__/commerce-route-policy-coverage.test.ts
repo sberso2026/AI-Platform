@@ -130,6 +130,7 @@ describe("BUSINESS_PAGE_POLICIES route coverage", () => {
       "decisions",
       "demo",
       "finance",
+      "growth",
       "health",
       "kpis",
       "recommendations",

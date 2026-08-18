@@ -1,6 +1,6 @@
 /**
- * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence).
- * Capabilities are identifiers — owner_command and financial_intelligence are implemented.
+ * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence, BOS-3 Growth Intelligence).
+ * Capabilities are identifiers — owner_command, financial_intelligence, and growth_intelligence are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -18,6 +18,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.owner_command.manage",
   "business_os.financial_intelligence.view",
   "business_os.financial_intelligence.manage",
+  "business_os.growth_intelligence.view",
+  "business_os.growth_intelligence.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -82,6 +84,15 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.finance.snapshot_ingested",
   "business_os.finance.metrics_updated",
   "business_os.finance.signal_detected",
+  "business_os.growth.lead_created",
+  "business_os.growth.lead_qualified",
+  "business_os.growth.lead_converted",
+  "business_os.growth.opportunity_created",
+  "business_os.growth.opportunity_updated",
+  "business_os.growth.opportunity_won",
+  "business_os.growth.opportunity_lost",
+  "business_os.growth.metrics_updated",
+  "business_os.growth.signal_detected",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -493,6 +504,296 @@ export interface BusinessFinanceIngestInput {
   ageing3160Minor?: string | number | null;
   ageing6190Minor?: string | number | null;
   ageing90PlusMinor?: string | number | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export const BUSINESS_GROWTH_SOURCE_TYPES = [
+  "manual",
+  "referral",
+  "website",
+  "public_directory",
+  "public_tender",
+  "event",
+  "campaign",
+  "csv",
+  "api",
+  "demo",
+  "future_connector",
+] as const;
+export type BusinessGrowthSourceType = (typeof BUSINESS_GROWTH_SOURCE_TYPES)[number];
+
+export const BUSINESS_GROWTH_QUALIFICATION_STATUSES = [
+  "unqualified",
+  "researching",
+  "qualified",
+  "disqualified",
+  "converted",
+] as const;
+export type BusinessGrowthQualificationStatus = (typeof BUSINESS_GROWTH_QUALIFICATION_STATUSES)[number];
+
+export const BUSINESS_GROWTH_ENRICHMENT_STATUSES = ["none", "partial", "complete"] as const;
+export type BusinessGrowthEnrichmentStatus = (typeof BUSINESS_GROWTH_ENRICHMENT_STATUSES)[number];
+
+export const BUSINESS_GROWTH_OPPORTUNITY_STAGES = [
+  "identified",
+  "qualified",
+  "discovery",
+  "proposal_ready",
+  "proposal",
+  "negotiation",
+  "won",
+  "lost",
+  "on_hold",
+] as const;
+export type BusinessGrowthOpportunityStage = (typeof BUSINESS_GROWTH_OPPORTUNITY_STAGES)[number];
+
+export const BUSINESS_GROWTH_KPI_KEYS = [
+  "new_leads",
+  "qualified_leads",
+  "lead_qualification_rate",
+  "total_pipeline",
+  "qualified_pipeline",
+  "weighted_pipeline",
+  "pipeline_coverage",
+  "opportunities_won",
+  "opportunities_lost",
+  "win_rate",
+] as const;
+export type BusinessGrowthKpiKey = (typeof BUSINESS_GROWTH_KPI_KEYS)[number];
+
+export const LEAD_SCORE_VERSION = "lead_score.v1" as const;
+export const OPPORTUNITY_SCORE_VERSION = "opportunity_score.v1" as const;
+
+export const BUSINESS_GROWTH_DEFAULT_THRESHOLDS = {
+  qualifiedLeadWarningCount: 2,
+  pipelineCoverageWarningBps: 8000,
+  pipelineCoverageCriticalBps: 5000,
+  qualificationRateWarningBps: 2000,
+  winRateWarningBps: 2500,
+  minWinRateSample: 3,
+  stagnationDays: 30,
+  concentrationWarningBps: 5000,
+  highValueMinor: "50000000",
+} as const;
+
+export interface BusinessGrowthTargetProfile {
+  industries: string[];
+  geographies: string[];
+  companySizeBands: string[];
+  services: string[];
+  targetMarkets: string[];
+}
+
+export interface BusinessGrowthEnrichedField {
+  value: string;
+  source: string;
+  timestamp: string;
+  confidence?: "high" | "medium" | "low" | "unknown";
+}
+
+export interface BusinessGrowthEnrichment {
+  organisationName?: BusinessGrowthEnrichedField;
+  industry?: BusinessGrowthEnrichedField;
+  geography?: BusinessGrowthEnrichedField;
+  website?: BusinessGrowthEnrichedField;
+  companySizeBand?: BusinessGrowthEnrichedField;
+  services?: BusinessGrowthEnrichedField;
+  publicContext?: BusinessGrowthEnrichedField;
+}
+
+export interface BusinessGrowthScoreComponent {
+  id: string;
+  label: string;
+  weight: number;
+  score: number | null;
+  evidence: string;
+}
+
+export interface BusinessGrowthLeadScore {
+  total: number | null;
+  components: BusinessGrowthScoreComponent[];
+  missingInputs: string[];
+  version: typeof LEAD_SCORE_VERSION;
+  method: "deterministic_lead_score_v1";
+}
+
+export interface BusinessGrowthOpportunityScore {
+  total: number | null;
+  components: BusinessGrowthScoreComponent[];
+  missingInputs: string[];
+  version: typeof OPPORTUNITY_SCORE_VERSION;
+  method: "deterministic_opportunity_score_v1";
+  disclaimer: string;
+}
+
+export interface BusinessGrowthLead {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  organisationName: string;
+  website?: string | null;
+  domain?: string | null;
+  industry?: string | null;
+  geography?: string | null;
+  companySizeBand?: string | null;
+  services?: string | null;
+  targetMarket?: string | null;
+  contactName?: string | null;
+  contactRole?: string | null;
+  businessEmail?: string | null;
+  evidenceOfNeed?: boolean | null;
+  relationshipKind?: string | null;
+  sourceType: BusinessGrowthSourceType;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  enrichment: BusinessGrowthEnrichment;
+  enrichmentStatus: BusinessGrowthEnrichmentStatus;
+  qualificationStatus: BusinessGrowthQualificationStatus;
+  score: number | null;
+  scoreVersion: string;
+  scoreDetail: BusinessGrowthLeadScore;
+  owner?: string | null;
+  suppressed: boolean;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessGrowthOpportunity {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  leadId?: string | null;
+  name: string;
+  description?: string | null;
+  stage: BusinessGrowthOpportunityStage;
+  estimatedValueMinor: string | null;
+  currency: string;
+  scale: number;
+  probabilityBps: string | null;
+  expectedCloseDate?: string | null;
+  expectedMarginBps: string | null;
+  sourceType: BusinessGrowthSourceType;
+  sourceRef?: string | null;
+  owner?: string | null;
+  nextAction?: string | null;
+  strategicFit?: string | null;
+  relationshipStrength?: string | null;
+  deliveryCapability?: string | null;
+  commercialRisk?: string | null;
+  score: number | null;
+  scoreVersion: string;
+  scoreDetail: BusinessGrowthOpportunityScore;
+  provenance: Record<string, unknown>;
+  suppressed: boolean;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessGrowthMarketSegment {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  segmentName: string;
+  industry?: string | null;
+  geography?: string | null;
+  targetCustomerProfile?: string | null;
+  attractiveness: "high" | "medium" | "low" | "unknown";
+  status: "active" | "watch" | "inactive";
+  evidence: BusinessEvidenceRef[];
+  sourceType: BusinessGrowthSourceType;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  suppressed: boolean;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessGrowthPipelineMetrics {
+  currency: string | null;
+  scale: number;
+  totalPipeline: MoneyJson | null;
+  qualifiedPipeline: MoneyJson | null;
+  weightedPipeline: MoneyJson | null;
+  pipelineByStage: Array<{ stage: BusinessGrowthOpportunityStage; count: number; value: MoneyJson | null }>;
+  expectedCloseByPeriod: Array<{ period: string; value: MoneyJson | null; count: number }>;
+  wonCount: number;
+  lostCount: number;
+  winRateBps: string | null;
+  averageOpportunityValue: MoneyJson | null;
+  openCount: number;
+  qualifiedOpenCount: number;
+  pipelineCoverageBps: string | null;
+  unknownReasons: string[];
+  method: "deterministic_pipeline_metrics_v1";
+  disclaimer: string;
+}
+
+export interface BusinessGrowthLeadIngestInput {
+  organisationName: string;
+  website?: string | null;
+  domain?: string | null;
+  industry?: string | null;
+  geography?: string | null;
+  companySizeBand?: string | null;
+  services?: string | null;
+  targetMarket?: string | null;
+  contactName?: string | null;
+  contactRole?: string | null;
+  businessEmail?: string | null;
+  evidenceOfNeed?: boolean | null;
+  relationshipKind?: string | null;
+  sourceType: BusinessGrowthSourceType;
+  sourceRef?: string;
+  sourceTimestamp?: string;
+  enrichment?: BusinessGrowthEnrichment;
+  qualificationStatus?: BusinessGrowthQualificationStatus;
+  owner?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+  suppressed?: boolean;
+}
+
+export interface BusinessGrowthOpportunityIngestInput {
+  leadId?: string | null;
+  name: string;
+  description?: string | null;
+  stage?: BusinessGrowthOpportunityStage;
+  estimatedValueMinor?: string | number | null;
+  currency: string;
+  scale?: number;
+  probabilityBps?: string | number | null;
+  expectedCloseDate?: string | null;
+  expectedMarginBps?: string | number | null;
+  sourceType: BusinessGrowthSourceType;
+  sourceRef?: string;
+  owner?: string | null;
+  nextAction?: string | null;
+  strategicFit?: string | null;
+  relationshipStrength?: string | null;
+  deliveryCapability?: string | null;
+  commercialRisk?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+  suppressed?: boolean;
+}
+
+export interface BusinessGrowthMarketIngestInput {
+  segmentName: string;
+  industry?: string | null;
+  geography?: string | null;
+  targetCustomerProfile?: string | null;
+  attractiveness?: "high" | "medium" | "low" | "unknown";
+  status?: "active" | "watch" | "inactive";
+  evidence?: BusinessEvidenceRef[];
+  sourceType: BusinessGrowthSourceType;
+  sourceRef?: string;
+  sourceTimestamp?: string;
   provenance?: Record<string, unknown>;
   isDemo?: boolean;
 }
