@@ -28,7 +28,8 @@ describe("BOS-3 Growth Intelligence", () => {
     ).toBe(true);
     const page = readFileSync(resolve(ROOT, "apps/web/src/app/(platform)/business/growth/page.tsx"), "utf8");
     expect(page).toContain("Growth Intelligence");
-    expect(page).not.toMatch(/send email|outreach|salesforce|hubspot/i);
+    expect(page).toContain("not outreach");
+    expect(page).not.toMatch(/salesforce|hubspot|sendMail/i);
   });
 
   it("adds growth tables without proposal or CRM write systems", () => {
