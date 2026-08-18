@@ -50,10 +50,13 @@ describe("ENGINEERING_API_POLICIES", () => {
   });
 });
 
-describe("BOS-0 BUSINESS_API_POLICIES", () => {
-  it("binds foundation routes to business-os and the existing business_os feature", () => {
+describe("BOS BUSINESS_API_POLICIES", () => {
+  it("binds foundation and owner-command routes to business-os and business_os", () => {
     expect(getBusinessApiPolicy("status", "GET").productKey).toBe("business-os");
     expect(getBusinessApiPolicy("status", "GET").featureKey).toBe("business_os");
+    expect(getBusinessApiPolicy("command", "GET").workspaceRequired).toBe(true);
+    expect(getBusinessApiPolicy("kpis", "PATCH").cachePolicy).toBe("fresh");
+    expect(getBusinessApiPolicy("demo", "POST").action).toBe("demo.write");
     expect(BUSINESS_API_POLICIES["capabilities.read"]?.seatRequired).toBe(false);
     expect(BUSINESS_PAGE_POLICIES["/business"]?.productKey).toBe("business-os");
   });

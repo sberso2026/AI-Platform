@@ -14,7 +14,7 @@ export default async function BusinessOsSettingsPage() {
     <>
       <Header
         title="Business OS Settings"
-        description="Foundation configuration — no domain data is stored in BOS-0"
+        description="Business OS configuration — Owner Command Centre uses platform services only"
         showEngineeringChrome={false}
       />
       <PageMain data-testid="business-os-settings">

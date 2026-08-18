@@ -670,7 +670,7 @@ export const ADMIN_NAVIGATION: NavItem[] = [
 export const BUSINESS_NAVIGATION: NavItem[] = [
   {
     id: "bos-home",
-    label: "Business OS",
+    label: "Owner Command",
     icon: "Briefcase",
     href: "/business",
     group: "business",

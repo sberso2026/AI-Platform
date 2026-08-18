@@ -121,11 +121,26 @@ describe("BUSINESS_PAGE_POLICIES route coverage", () => {
           .filter((e) => e.isDirectory())
           .map((e) => e.name)
       : [];
-    expect(segments.sort()).toEqual(["capabilities", "config", "status"]);
+    expect(segments.sort()).toEqual([
+      "actions",
+      "brief",
+      "capabilities",
+      "command",
+      "config",
+      "decisions",
+      "demo",
+      "health",
+      "kpis",
+      "recommendations",
+      "signals",
+      "status",
+    ]);
     for (const segment of segments) {
-      expect(BUSINESS_API_POLICIES[`${segment}.read`]).toBeDefined();
-      expect(BUSINESS_API_POLICIES[`${segment}.read`]?.productKey).toBe("business-os");
-      expect(BUSINESS_API_POLICIES[`${segment}.read`]?.featureKey).toBe("business_os");
+      const read = BUSINESS_API_POLICIES[`${segment}.read`];
+      const write = BUSINESS_API_POLICIES[`${segment}.write`];
+      expect(read || write).toBeDefined();
+      expect((read ?? write)?.productKey).toBe("business-os");
+      expect((read ?? write)?.featureKey).toBe("business_os");
     }
   });
 });

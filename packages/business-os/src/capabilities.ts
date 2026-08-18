@@ -7,7 +7,8 @@ import { BUSINESS_CAPABILITY_IDS } from "@rtb/types";
 const LABELS: Record<BusinessCapabilityId, { name: string; description: string }> = {
   owner_command: {
     name: "Owner Command Centre",
-    description: "Owner-facing command centre for business operations (not implemented)",
+    description:
+      "Owner-facing command centre: health, KPIs, signals, recommendations, decisions, actions, and daily brief",
   },
   financial_intelligence: {
     name: "Financial Intelligence",
@@ -84,8 +85,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
     id,
     name: LABELS[id].name,
     description: LABELS[id].description,
-    implemented: false,
-    activationStatus: "registered",
+    implemented: id === "owner_command",
+    activationStatus: id === "owner_command" ? "preview" : "registered",
   }));
 
 export class BusinessCapabilityRegistry {
@@ -97,8 +98,8 @@ export class BusinessCapabilityRegistry {
     return this.list().find((c) => c.id === id);
   }
 
-  isImplemented(_id: BusinessCapabilityId): boolean {
-    return false;
+  isImplemented(id: BusinessCapabilityId): boolean {
+    return id === "owner_command";
   }
 
   ids(): readonly BusinessCapabilityId[] {

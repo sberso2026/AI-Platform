@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations, finance, and strategy — foundation preview (BOS-0)",
+      "AI-assisted business operations — Owner Command Centre preview (BOS-1)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -22,13 +22,13 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     modules: [],
     applications: [],
     routes: [
-      { path: "/business", title: "Business OS", component: "BusinessOsFoundation" },
+      { path: "/business", title: "Owner Command Centre", component: "OwnerCommandCentre" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
       {
         id: "bos-home",
-        label: "Business OS",
+        label: "Owner Command",
         path: "/business",
         icon: "Briefcase",
         group: "business",
@@ -51,6 +51,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.foundation.status.requested", description: "Foundation status read" },
       { type: "business_os.foundation.access.denied", description: "Foundation access denied" },
       { type: "business_os.foundation.access.granted", description: "Foundation access granted" },
+      { type: "business_os.kpi.updated", description: "KPI measurement or configuration updated" },
+      { type: "business_os.signal.created", description: "Business signal created" },
+      { type: "business_os.signal.resolved", description: "Business signal resolved" },
+      { type: "business_os.recommendation.created", description: "Advisory recommendation created" },
+      { type: "business_os.decision.created", description: "Owner decision recorded" },
+      { type: "business_os.decision.updated", description: "Owner decision updated" },
+      { type: "business_os.action.created", description: "Internal action recorded" },
+      { type: "business_os.action.completed", description: "Internal action completed" },
     ],
     knowledge: [
       {

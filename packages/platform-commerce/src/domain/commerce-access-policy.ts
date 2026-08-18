@@ -17,7 +17,7 @@ export const ENGINEERING_PRODUCT = "engineering-os";
 export const BUSINESS_PRODUCT = "business-os";
 export const BUSINESS_OS_FEATURE_KEY = "business_os";
 
-/** Business OS foundation API policies (BOS-0). Seat not required; catalog remains coming_soon. */
+/** Business OS API policies (BOS-0 foundation + BOS-1 Owner Command). Seat not required; catalog remains coming_soon. */
 export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "status.read": {
     productKey: BUSINESS_PRODUCT,
@@ -36,6 +36,110 @@ export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
     featureKey: BUSINESS_OS_FEATURE_KEY,
     action: "config.read",
     seatRequired: false,
+  },
+  "command.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "command.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "health.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "health.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "brief.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "brief.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "kpis.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "kpis.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "kpis.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "kpis.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
+  "signals.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "signals.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "signals.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "signals.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
+  "recommendations.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "recommendations.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "recommendations.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "recommendations.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
+  "decisions.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "decisions.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "decisions.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "decisions.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
+  "actions.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "actions.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "actions.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "actions.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
+  "demo.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "demo.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
   },
 };
 
