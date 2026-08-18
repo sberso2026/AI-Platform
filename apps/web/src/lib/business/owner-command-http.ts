@@ -18,6 +18,17 @@ export function ownerCommandError(error: unknown): NextResponse {
   if (message === "workspace_not_assigned") {
     return NextResponse.json({ error: "Workspace required", code: message }, { status: 400 });
   }
+  if (
+    message === "currency_mismatch" ||
+    message === "currency_required" ||
+    message === "invalid_period" ||
+    message === "invalid_source_type" ||
+    message === "invalid_scale" ||
+    message === "monetary_value_not_integer" ||
+    message === "scale_mismatch"
+  ) {
+    return NextResponse.json({ error: message, code: message }, { status: 400 });
+  }
   if (message.includes("not found")) {
     return NextResponse.json({ error: message, code: "not_found" }, { status: 404 });
   }

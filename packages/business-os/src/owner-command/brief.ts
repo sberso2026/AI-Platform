@@ -62,10 +62,12 @@ export function buildDeterministicBrief(input: {
   const criticalSignals = rankSignals(input.signals.filter((s) => s.status === "open")).filter(
     (s) => s.severity === "critical" || s.severity === "warning",
   );
-  const majorKpiChanges = input.kpis.filter(
-    (k) => k.status === "warning" || k.status === "critical" || k.status === "unknown",
-  );
-  const pendingDecisions = input.decisions.filter((d) => d.status === "pending");
+    const majorKpiChanges = input.kpis.filter(
+      (k) => k.status === "warning" || k.status === "critical" || k.status === "unknown",
+    );
+    const financeKpis = input.kpis.filter((k) => k.provenance?.domain === "finance");
+    const financeUnknown = financeKpis.filter((k) => k.status === "unknown");
+    const pendingDecisions = input.decisions.filter((d) => d.status === "pending");
   const overdueOrBlockedActions = input.actions.filter((a) => isOverdueOrBlocked(a));
   const containsDemoData =
     input.health.containsDemoData ||
@@ -114,6 +116,24 @@ export function buildDeterministicBrief(input: {
         excerpt: k.status,
       })),
     ],
+    domainSections: financeKpis.length
+      ? [
+          {
+            id: "finance",
+            title: "Finance",
+            containsDemoData: financeKpis.some((k) => k.isDemo),
+            lines: [
+              financeUnknown.length
+                ? `${financeUnknown.length} finance KPI(s) unknown.`
+                : "Finance KPIs are populated from ingested snapshots.",
+              ...financeKpis
+                .filter((k) => k.status === "warning" || k.status === "critical")
+                .slice(0, 6)
+                .map((k) => `${k.name}: ${k.status}`),
+            ],
+          },
+        ]
+      : [],
   };
 }
 
@@ -127,6 +147,7 @@ export function structuredBriefEvidence(brief: DeterministicDailyBrief) {
     pendingDecisions: brief.pendingDecisions,
     overdueOrBlockedActions: brief.overdueOrBlockedActions,
     containsDemoData: brief.containsDemoData,
+    domainSections: brief.domainSections,
     instructions: [
       "Use only the structured evidence provided.",
       "Do not invent financial figures, causes, or missing records.",

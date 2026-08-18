@@ -88,10 +88,32 @@ describe("buildDeterministicBrief", () => {
     expect(brief.overdueOrBlockedActions[0]?.title).toBe("Collect invoices");
     expect(brief.containsDemoData).toBe(true);
     expect(brief.evidenceRefs.some((e) => e.sourceType === "signal")).toBe(true);
+    expect(brief.domainSections).toEqual([]);
 
     const evidence = structuredBriefEvidence(brief);
     expect(evidence.kind).toBe("business_os.daily_brief.evidence");
     expect(evidence.instructions.join(" ")).toMatch(/do not invent/i);
     expect(evidence.instructions.join(" ")).not.toMatch(/chain-of-thought hidden/i);
+  });
+
+  it("adds a generic Finance domain section from KPI provenance, not hard-coded OCC finance logic", () => {
+    const kpis = [
+      kpi({
+        key: "revenue",
+        status: "warning",
+        name: "Revenue",
+        provenance: { domain: "finance" },
+      }),
+    ];
+    const brief = buildDeterministicBrief({
+      health: computeBusinessHealth(kpis, "2026-08-18T09:00:00.000Z"),
+      kpis,
+      signals: [],
+      decisions: [],
+      actions: [],
+      generatedAt: "2026-08-18T09:00:00.000Z",
+    });
+    expect(brief.domainSections[0]?.id).toBe("finance");
+    expect(brief.domainSections[0]?.lines.some((line) => line.includes("Revenue"))).toBe(true);
   });
 });

@@ -32,6 +32,7 @@ describe("BOS-0 Business OS foundation", () => {
     expect(bos.status.configuration().kernelServices.aiDirector).toBe(true);
     expect(bos.capabilities.list().filter((c) => c.implemented).map((c) => c.id)).toEqual([
       "owner_command",
+      "financial_intelligence",
     ]);
   });
 });

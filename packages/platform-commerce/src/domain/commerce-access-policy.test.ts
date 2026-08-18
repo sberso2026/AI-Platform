@@ -57,6 +57,9 @@ describe("BOS BUSINESS_API_POLICIES", () => {
     expect(getBusinessApiPolicy("command", "GET").workspaceRequired).toBe(true);
     expect(getBusinessApiPolicy("kpis", "PATCH").cachePolicy).toBe("fresh");
     expect(getBusinessApiPolicy("demo", "POST").action).toBe("demo.write");
+    expect(getBusinessApiPolicy("finance", "GET").workspaceRequired).toBe(true);
+    expect(getBusinessApiPolicy("finance", "POST").cachePolicy).toBe("fresh");
+    expect(BUSINESS_PAGE_POLICIES["/business/finance"]?.productKey).toBe("business-os");
     expect(BUSINESS_API_POLICIES["capabilities.read"]?.seatRequired).toBe(false);
     expect(BUSINESS_PAGE_POLICIES["/business"]?.productKey).toBe("business-os");
   });

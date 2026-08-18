@@ -55,6 +55,15 @@ function toneForStatus(status: BusinessKpiStatus): "green" | "blue" | "amber" | 
 function formatKpiValue(kpi: BusinessKpi): string {
   if (kpi.value === null || kpi.status === "unknown") return "Unknown";
   if (kpi.unit === "AUD") return `$${kpi.value.toLocaleString()}`;
+  if (kpi.unit === "minor") {
+    const scale = Number(kpi.provenance?.scale ?? 2);
+    const currency = String(kpi.provenance?.currency ?? "");
+    const denom = 10 ** scale;
+    const major = kpi.value / denom;
+    return `${currency ? `${currency} ` : ""}${major.toLocaleString(undefined, { minimumFractionDigits: scale, maximumFractionDigits: scale })}`;
+  }
+  if (kpi.unit === "bps") return `${(kpi.value / 100).toFixed(2)}%`;
+  if (kpi.unit === "month_hundredths") return `${(kpi.value / 100).toFixed(2)} months`;
   if (kpi.unit === "%") return `${kpi.value}%`;
   if (kpi.unit === "ratio") return `${kpi.value}x`;
   return `${kpi.value} ${kpi.unit}`;
@@ -433,6 +442,15 @@ export default function OwnerCommandCentrePage() {
                   : "None"}
               </p>
               {data?.brief.containsDemoData && <p>This brief includes demo fixtures.</p>}
+              {(data?.brief.domainSections ?? []).map((section) => (
+                <div key={section.id}>
+                  <p className="font-medium text-slate-900">{section.title}</p>
+                  {section.lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                  {section.containsDemoData && <p>Includes demo fixtures.</p>}
+                </div>
+              ))}
               {narrative && !narrative.unavailableReason && (
                 <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                   <p className="mb-1 flex items-center gap-2 font-medium text-slate-900">
@@ -461,6 +479,9 @@ export default function OwnerCommandCentrePage() {
           <Button variant="secondary" disabled={busy} onClick={() => void seedDemo()}>
             Load demo fixtures
           </Button>
+          <Link href="/business/finance" className="text-sm font-semibold text-blue-700 hover:underline">
+            Open Financial Intelligence
+          </Link>
           <Link href="/business/settings" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Business OS settings
           </Link>

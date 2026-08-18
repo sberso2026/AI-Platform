@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Owner Command Centre preview (BOS-1)",
+      "AI-assisted business operations — Financial Intelligence preview (BOS-2)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -23,6 +23,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     applications: [],
     routes: [
       { path: "/business", title: "Owner Command Centre", component: "OwnerCommandCentre" },
+      { path: "/business/finance", title: "Financial Intelligence", component: "FinancialIntelligence" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -33,6 +34,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "Briefcase",
         group: "business",
         order: 1,
+      },
+      {
+        id: "bos-finance",
+        label: "Finance",
+        path: "/business/finance",
+        icon: "LineChart",
+        group: "business",
+        order: 2,
       },
       {
         id: "bos-settings",
@@ -59,6 +68,9 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.decision.updated", description: "Owner decision updated" },
       { type: "business_os.action.created", description: "Internal action recorded" },
       { type: "business_os.action.completed", description: "Internal action completed" },
+      { type: "business_os.finance.snapshot_ingested", description: "Finance snapshot ingested" },
+      { type: "business_os.finance.metrics_updated", description: "Finance metrics published to Owner Command" },
+      { type: "business_os.finance.signal_detected", description: "Finance rule produced a signal" },
     ],
     knowledge: [
       {
