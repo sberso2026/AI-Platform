@@ -39,6 +39,11 @@ const REASON_MESSAGES: Record<string, { title: string; description: string; acti
     description: "This feature is not enabled on your current plan.",
     action: "Upgrade plan",
   },
+  permission_denied: {
+    title: "Permission denied",
+    description: "You do not have permission to access this resource in this tenant.",
+    action: "Request access",
+  },
   licence_expired: {
     title: "Licence expired",
     description: "The licence for this application has expired.",

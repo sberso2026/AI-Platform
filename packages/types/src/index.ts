@@ -119,6 +119,7 @@ export type PlatformResource =
   | "simulation"
   | "automation"
   | "engineering"
+  | "business"
   | "commerce";
 
 export type PlatformAction =
@@ -335,6 +336,8 @@ export type NavGroup =
   | "engineering"
   | "engineering_registers"
   | "engineering_admin"
+  | "business"
+  | "business_admin"
   | "reference_os"
   | "kernel"
   | "operations"
@@ -380,6 +383,7 @@ export interface PlatformContext {
 export * from "./kernel";
 export * from "./intelligence";
 export * from "./engineering";
+export * from "./business";
 export * from "./engineering-registers";
 export * from "./engineering-api-contracts";
 export * from "./engineering-event-contracts";

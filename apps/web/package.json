@@ -15,6 +15,7 @@
     "@rtb/engineering-execution-host": "workspace:*",
     "@rtb/engineering-model-interoperability": "workspace:*",
     "@rtb/engineering-os": "workspace:*",
+    "@rtb/business-os": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
     "@rtb/platform-core": "workspace:*",
     "@rtb/platform-kernel": "workspace:*",

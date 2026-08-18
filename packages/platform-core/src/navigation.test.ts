@@ -100,6 +100,8 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
       "engineering",
       "engineering_registers",
       "engineering_admin",
+      "business",
+      "business_admin",
       "reference_os",
       "platform_admin",
       "platform_advanced",

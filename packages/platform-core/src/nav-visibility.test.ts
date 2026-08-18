@@ -247,6 +247,27 @@ describe("Batch 2.12 — Engineering Command Center home", () => {
   });
 });
 
+describe("BOS-0 — Business OS navigation", () => {
+  it("hides Business OS when the OS is not active", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("owner"));
+    expect(visible.some((i) => i.group === "business")).toBe(false);
+  });
+
+  it("shows Business OS home when business is active", () => {
+    const visible = filterSidebarNavigation(
+      FULL_NAVIGATION,
+      ctx("viewer", { activeOperatingSystemIds: ["business"] }),
+    );
+    expect(visible.find((i) => i.id === "bos-home")?.href).toBe("/business");
+    expect(visible.some((i) => i.group === "engineering")).toBe(false);
+  });
+
+  it("does not treat owner role as a commercial BOS install", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("owner"));
+    expect(visible.find((i) => i.id === "bos-home")).toBeUndefined();
+  });
+});
+
 describe("Batch 2.12 — Tier ordering", () => {
   it("orders tiers correctly", () => {
     expect(hasMinimumNavTier("admin", "manager")).toBe(true);

@@ -14,6 +14,45 @@ export interface CommerceAccessPolicy {
 }
 
 export const ENGINEERING_PRODUCT = "engineering-os";
+export const BUSINESS_PRODUCT = "business-os";
+export const BUSINESS_OS_FEATURE_KEY = "business_os";
+
+/** Business OS foundation API policies (BOS-0). Seat not required; catalog remains coming_soon. */
+export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
+  "status.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "status.read",
+    seatRequired: false,
+  },
+  "capabilities.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "capabilities.read",
+    seatRequired: false,
+  },
+  "config.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "config.read",
+    seatRequired: false,
+  },
+};
+
+export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
+  "/business": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "access",
+    seatRequired: false,
+  },
+  "/business/settings": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "settings.read",
+    seatRequired: false,
+  },
+};
 
 /** Engineering API route key → entitlement policy */
 export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
@@ -338,6 +377,20 @@ export function getEngineeringApiPolicy(segment: string, method: string): Commer
     productKey: ENGINEERING_PRODUCT,
     action: `${segment}.${method.toLowerCase()}`,
     seatRequired: true,
+    cachePolicy: write ? "fresh" : "allow-short-cache",
+  };
+}
+
+export function getBusinessApiPolicy(segment: string, method: string): CommerceAccessPolicy {
+  const write = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+  const key = resolveApiPolicyKey(segment, method);
+  const policy = BUSINESS_API_POLICIES[key];
+  if (policy) return policy;
+  return {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: `${segment}.${method.toLowerCase()}`,
+    seatRequired: false,
     cachePolicy: write ? "fresh" : "allow-short-cache",
   };
 }
