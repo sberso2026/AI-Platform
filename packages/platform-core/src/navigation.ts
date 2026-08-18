@@ -5,6 +5,8 @@ export const NAV_GROUP_ORDER = [
   "engineering",
   "engineering_registers",
   "engineering_admin",
+  "business",
+  "business_admin",
   "reference_os",
   "platform",
   "platform_advanced",
@@ -665,6 +667,26 @@ export const ADMIN_NAVIGATION: NavItem[] = [
   },
 ];
 
+export const BUSINESS_NAVIGATION: NavItem[] = [
+  {
+    id: "bos-home",
+    label: "Business OS",
+    icon: "Briefcase",
+    href: "/business",
+    group: "business",
+    audience: "viewer",
+  },
+  {
+    id: "bos-settings",
+    label: "Settings",
+    icon: "Settings",
+    href: "/business/settings",
+    group: "business_admin",
+    audience: "manager",
+    permissions: [{ resource: "business", action: "admin" }],
+  },
+];
+
 /** Certification-only Reference OS nav — gated by activeOperatingSystemIds */
 export const REFERENCE_OS_NAVIGATION: NavItem[] = [
   {
@@ -680,6 +702,7 @@ export const REFERENCE_OS_NAVIGATION: NavItem[] = [
 /** All registered routes — engineering-first ordering */
 export const FULL_NAVIGATION: NavItem[] = [
   ...ENGINEERING_NAVIGATION,
+  ...BUSINESS_NAVIGATION,
   ...REFERENCE_OS_NAVIGATION,
   ...PLATFORM_NAVIGATION,
   ...ADVANCED_SIDEBAR_NAVIGATION,
@@ -729,6 +752,8 @@ export const NAV_GROUP_LABELS: Record<string, string> = {
   engineering: "Engineering OS",
   engineering_registers: "Engineering Registers",
   engineering_admin: "Engineering Administration",
+  business: "Business OS",
+  business_admin: "Business Administration",
   reference_os: "Reference OS",
   platform: "System Administration",
   platform_advanced: "Advanced Platform Tools",
@@ -770,6 +795,18 @@ export const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     id: "engineering_admin",
     label: "Engineering Administration",
     groups: ["engineering_admin"],
+    defaultExpanded: false,
+  },
+  {
+    id: "business",
+    label: "Business OS",
+    groups: ["business"],
+    defaultExpanded: true,
+  },
+  {
+    id: "business_admin",
+    label: "Business Administration",
+    groups: ["business_admin"],
     defaultExpanded: false,
   },
   {

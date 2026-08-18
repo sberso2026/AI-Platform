@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/kernel";
 import { PermissionService, resolveNavTier } from "@rtb/platform-core";
 import { activeOperatingSystemIds } from "@rtb/types";
+import { BUSINESS_OS_FEATURE_KEY, hasBusinessPermission } from "@rtb/business-os";
 
 function mapProductKeyToOsId(productKey: string): string | null {
   const key = productKey.toLowerCase();
@@ -62,6 +63,24 @@ export async function GET() {
   void permissionService;
 
   const activeOs = await resolveActiveOsIds(ctx.supabase, ctx.tenantId);
+
+  let businessPreview = false;
+  try {
+    businessPreview = await ctx.kernel.intelligence.features.evaluate({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      featureKey: BUSINESS_OS_FEATURE_KEY,
+    });
+  } catch {
+    businessPreview = false;
+  }
+  if (
+    businessPreview &&
+    hasBusinessPermission(ctx.permissions, "business_os.view") &&
+    !activeOs.includes("business")
+  ) {
+    activeOs.push("business");
+  }
 
   return NextResponse.json({
     data: {

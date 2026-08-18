@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import { createEngineeringOS } from "@rtb/engineering-os";
+import { createBusinessOS } from "@rtb/business-os";
 import { createPlatformCommerce } from "@rtb/platform-commerce";
 import { PermissionService, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
 import type { NavTier } from "@rtb/types";
@@ -22,6 +23,7 @@ export interface AuthContext {
   supabase: Awaited<ReturnType<typeof createClient>>;
   kernel: ReturnType<typeof createPlatformKernel>;
   engineering: ReturnType<typeof createEngineeringOS>;
+  business: ReturnType<typeof createBusinessOS>;
   commerce: ReturnType<typeof createPlatformCommerce>;
 }
 
@@ -99,6 +101,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 
   const kernel = createPlatformKernel(supabase);
   const engineering = createEngineeringOS(supabase, kernel);
+  const business = createBusinessOS(supabase, kernel);
   const commerce = createPlatformCommerce(supabase);
   const permissionService = new PermissionService(supabase);
   const permissions = await permissionService.getUserPermissions(
@@ -118,6 +121,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     supabase,
     kernel,
     engineering,
+    business,
     commerce,
   };
 }

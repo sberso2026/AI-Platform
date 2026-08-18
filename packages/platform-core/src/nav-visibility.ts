@@ -131,6 +131,8 @@ export function defaultNavAudience(item: NavItem): NavTier {
   const group = item.group ?? "platform";
   if (group === "engineering" || group === "engineering_registers") return "viewer";
   if (group === "engineering_admin") return "manager";
+  if (group === "business") return "viewer";
+  if (group === "business_admin") return "manager";
   if (group === "platform" || group === "platform_advanced") return "admin";
   return "admin";
 }
@@ -148,6 +150,12 @@ export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolea
   if (engGroups.has(item.group ?? "")) {
     const active = context.activeOperatingSystemIds ?? [];
     if (!active.includes("engineering")) return false;
+  }
+
+  const bosGroups = new Set(["business", "business_admin"]);
+  if (bosGroups.has(item.group ?? "")) {
+    const active = context.activeOperatingSystemIds ?? [];
+    if (!active.includes("business")) return false;
   }
 
   if (item.group === "reference_os") {
