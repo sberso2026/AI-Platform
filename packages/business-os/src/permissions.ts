@@ -51,4 +51,5 @@ export function hasBusinessPermission(
   return hasPlatformPermission(permissions, mapped.resource, mapped.action);
 }
 
+export type { BusinessPermission };
 export { BUSINESS_PERMISSIONS };

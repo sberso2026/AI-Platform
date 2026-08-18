@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@rtb/database";
 import { AuditService } from "@rtb/platform-core";
 import { createPlatformKernel } from "@rtb/platform-kernel";
+import type { AgentRunResponse, BusinessKpi } from "@rtb/types";
 import { computeBusinessHealth } from "./health";
 import { OwnerCommandService } from "./service";
-import type { BusinessKpi } from "@rtb/types";
 
 const kpi: BusinessKpi = {
   id: "k1",
@@ -95,7 +95,7 @@ describe("OwnerCommandService daily brief", () => {
           id: "run",
           tenant_id: scope.tenantId,
           agent_id: "director",
-          status: "completed",
+          status: "completed" as const,
           input: {},
           evidence_refs: [],
           requires_review: true,
@@ -104,7 +104,7 @@ describe("OwnerCommandService daily brief", () => {
           created_at: "2026-08-18T09:00:00.000Z",
           updated_at: "2026-08-18T09:00:00.000Z",
         },
-      };
+      } satisfies AgentRunResponse;
     });
 
     const result = await occ.brief(scope, { includeAi: true });
