@@ -7,6 +7,9 @@ export const BUSINESS_OS_ID = "business" as const;
 export const BUSINESS_OS_PRODUCT_SLUG = "business-os" as const;
 export const BUSINESS_OS_FEATURE_KEY = "business_os" as const;
 
+/** Foundation preview is feature-flag gated; catalog remains coming_soon. */
+export const BUSINESS_OS_PREVIEW_MODE = "feature_flag_foundation" as const;
+
 export const BUSINESS_PERMISSIONS = [
   "business_os.view",
   "business_os.manage",

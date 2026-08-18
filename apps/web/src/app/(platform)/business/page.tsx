@@ -63,8 +63,11 @@ export default function BusinessOsFoundationPage() {
             <Fact label="Catalog" value={data?.catalogStatus ?? "coming_soon"} />
           </div>
           <p className="mt-4 text-sm text-slate-600">
-            Feature flag <code className="rounded bg-slate-100 px-1">{data?.featureKey ?? "business_os"}</code>
-            {" "}controls preview access. Independent AI stacks are forbidden
+            Internal preview requires the experimental{" "}
+            <code className="rounded bg-slate-100 px-1">{data?.featureKey ?? "business_os"}</code>
+            {" "}feature flag (default off) and <code className="rounded bg-slate-100 px-1">business_os.view</code>.
+            Catalog remains coming_soon — this is not a commercial install.
+            Independent AI stacks are forbidden
             {data ? ` (implementsOwnAiStack=${String(data.implementsOwnAiStack)})` : ""}.
           </p>
         </section>

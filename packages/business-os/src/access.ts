@@ -18,14 +18,15 @@ const HARD_DENY_REASONS = new Set<string>([
   EntitlementReasonCode.DENY_PRODUCT_INACTIVE,
 ]);
 
-/** Commerce "product not commercially installed" reasons — BOS-0 preview may proceed if the feature flag is on. */
-const FOUNDATION_PREVIEW_REASONS = new Set<string>([
+/**
+ * Preview is allowed only when commerce has no business-os product presence.
+ * Licence/plan/feature-not-in-subscription denies stay closed — they are commercial
+ * states, not coming_soon absence. Feature-flag preview is separate (intelligence).
+ */
+export const FOUNDATION_PREVIEW_REASONS = new Set<string>([
   EntitlementReasonCode.DENY_PRODUCT_NOT_FOUND,
   EntitlementReasonCode.DENY_SUBSCRIPTION_NOT_FOUND,
   EntitlementReasonCode.DENY_INSTALLATION_NOT_FOUND,
-  EntitlementReasonCode.DENY_LICENCE_NOT_FOUND,
-  EntitlementReasonCode.DENY_FEATURE_NOT_ENABLED,
-  EntitlementReasonCode.DENY_APPLICATION_NOT_IN_PLAN,
 ]);
 
 export type BusinessAccessReason =

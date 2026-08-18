@@ -27,5 +27,6 @@ describe("BOS-0 web foundation wiring", () => {
     const kernel = createPlatformKernel({} as SupabaseClient);
     const bos = createBusinessOS({} as SupabaseClient, kernel);
     expect(bos.status.snapshot().foundationState).toBe("preview");
+    expect(bos.status.snapshot().catalogStatus).toBe("coming_soon");
   });
 });

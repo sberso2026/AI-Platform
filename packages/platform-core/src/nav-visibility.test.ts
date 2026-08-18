@@ -261,6 +261,11 @@ describe("BOS-0 — Business OS navigation", () => {
     expect(visible.find((i) => i.id === "bos-home")?.href).toBe("/business");
     expect(visible.some((i) => i.group === "engineering")).toBe(false);
   });
+
+  it("does not treat owner role as a commercial BOS install", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("owner"));
+    expect(visible.find((i) => i.id === "bos-home")).toBeUndefined();
+  });
 });
 
 describe("Batch 2.12 — Tier ordering", () => {

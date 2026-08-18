@@ -179,19 +179,16 @@ importers:
       '@rtb/platform-commerce':
         specifier: workspace:*
         version: link:../platform-commerce
-      '@rtb/platform-intelligence':
-        specifier: workspace:*
-        version: link:../platform-intelligence
       '@rtb/platform-kernel':
         specifier: workspace:*
         version: link:../platform-kernel
-      '@rtb/plugin-sdk':
-        specifier: workspace:*
-        version: link:../plugin-sdk
       '@rtb/types':
         specifier: workspace:*
         version: link:../types
     devDependencies:
+      '@rtb/plugin-sdk':
+        specifier: workspace:*
+        version: link:../plugin-sdk
       '@types/node':
         specifier: ^22.15.29
         version: 22.20.1

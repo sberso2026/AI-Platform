@@ -14,8 +14,10 @@ export function createBusinessOS(
   kernel: PlatformKernel,
 ): BusinessOS {
   assertSharedAiStackOnly("business-os");
-  if (!kernel?.aiDirector || !kernel.intelligence || !kernel.eventBus) {
-    throw new Error("Business OS requires Platform Kernel (AI Director, intelligence, event bus)");
+  if (!kernel?.aiDirector || !kernel.intelligence?.features || !kernel.eventBus) {
+    throw new Error(
+      "Business OS requires Platform Kernel (AI Director, intelligence feature flags, event bus)",
+    );
   }
   const capabilities = new BusinessCapabilityRegistry();
   const status = new BusinessOsStatusService(kernel, capabilities);

@@ -41,7 +41,7 @@ const REASON_MESSAGES: Record<string, { title: string; description: string; acti
   },
   permission_denied: {
     title: "Permission denied",
-    description: "You do not have permission to use Business OS in this tenant.",
+    description: "You do not have permission to access this resource in this tenant.",
     action: "Request access",
   },
   licence_expired: {

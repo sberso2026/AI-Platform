@@ -51,6 +51,9 @@ describe("BOS-0 identity and contracts", () => {
   it("keeps catalog coming_soon in BOS-0", () => {
     expect(BUSINESS_OS_RUNTIME_MANIFEST.catalogStatus).toBe("coming_soon");
     expect(getBusinessOsFoundationDeclaration().catalogStatus).toBe("coming_soon");
+    expect(getBusinessOsFoundationDeclaration().previewAccess.mode).toBe("feature_flag_foundation");
+    expect(getBusinessOsFoundationDeclaration().previewAccess.usesCommercePreviewLifecycle).toBe(false);
+    expect(getBusinessOsFoundationDeclaration().previewAccess.usesReleaseChannel).toBe(false);
   });
 
   it("does not implement an independent AI stack", () => {
@@ -161,6 +164,23 @@ describe("BOS-0 access evaluation", () => {
     });
     expect(decision.allowed).toBe(true);
     expect(decision.reason).toBe("allowed_preview");
+  });
+
+  it("fails closed when commerce reports licence or plan gaps (not coming_soon absence)", async () => {
+    for (const code of [
+      EntitlementReasonCode.DENY_LICENCE_NOT_FOUND,
+      EntitlementReasonCode.DENY_FEATURE_NOT_ENABLED,
+      EntitlementReasonCode.DENY_APPLICATION_NOT_IN_PLAN,
+    ]) {
+      const decision = await evaluateBusinessOsAccess({
+        ...base,
+        evaluateFeature: async () => true,
+        checkEntitlement: async () => deny(code),
+      });
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe("entitlement_denied");
+      expect(decision.entitlementReasonCode).toBe(code);
+    }
   });
 
   it("fails closed when a business-os installation is suspended", async () => {

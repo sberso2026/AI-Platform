@@ -22,6 +22,7 @@ describe("BOS-0 Business OS foundation", () => {
 
   it("does not flip catalog coming_soon and does not add domain migrations", () => {
     expect(OPERATING_SYSTEMS.find((os) => os.id === "business")?.status).toBe("coming_soon");
+    expect(BUSINESS_OS_RUNTIME_MANIFEST.catalogStatus).toBe("coming_soon");
     const files = readFileSync(resolve(ROOT, "packages/business-os/src/business-os.ts"), "utf8");
     expect(files).not.toMatch(/create table/i);
   });

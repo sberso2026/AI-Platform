@@ -11,18 +11,16 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "test": "vitest run"
   },
   "dependencies": {
     "@rtb/database": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
     "@rtb/platform-kernel": "workspace:*",
-    "@rtb/platform-intelligence": "workspace:*",
-    "@rtb/plugin-sdk": "workspace:*",
     "@rtb/types": "workspace:*"
   },
   "devDependencies": {
+    "@rtb/plugin-sdk": "workspace:*",
     "@types/node": "^22.15.29",
     "typescript": "^5.8.3",
     "vitest": "^3.2.1"

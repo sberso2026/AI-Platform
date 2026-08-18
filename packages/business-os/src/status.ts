@@ -65,6 +65,7 @@ export class BusinessOsStatusService {
         notifications: true,
         intelligence: {
           tools: true,
+          capabilities: true,
           policies: true,
           prompts: true,
           models: true,

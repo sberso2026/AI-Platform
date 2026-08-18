@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  BUSINESS_API_POLICIES,
+  BUSINESS_PAGE_POLICIES,
   ENGINEERING_API_POLICIES,
   ENGINEERING_PAGE_POLICIES,
 } from "@rtb/platform-commerce";
@@ -91,5 +93,39 @@ describe("ENGINEERING_API_POLICIES route coverage", () => {
     }
 
     expect(missing).toEqual([]);
+  });
+});
+
+describe("BUSINESS_PAGE_POLICIES route coverage", () => {
+  const BUSINESS_ROOT = path.resolve(__dirname, "../app/(platform)/business");
+  const BUSINESS_API_ROOT = path.resolve(__dirname, "../app/api/business");
+
+  it("covers every BOS page policy with the fail-closed foundation layout", () => {
+    for (const route of Object.keys(BUSINESS_PAGE_POLICIES)) {
+      expect(BUSINESS_PAGE_POLICIES[route]?.productKey).toBe("business-os");
+      expect(BUSINESS_PAGE_POLICIES[route]?.featureKey).toBe("business_os");
+      const segment = route.replace(/^\/business\/?/, "");
+      const pagePath = segment
+        ? path.join(BUSINESS_ROOT, segment, "page.tsx")
+        : path.join(BUSINESS_ROOT, "page.tsx");
+      expect(fs.existsSync(pagePath)).toBe(true);
+    }
+    const layout = fs.readFileSync(path.join(BUSINESS_ROOT, "layout.tsx"), "utf8");
+    expect(layout).toContain("requireBusinessOsAccess");
+  });
+
+  it("defines BUSINESS_API_POLICIES for each /api/business segment", () => {
+    const segments = fs.existsSync(BUSINESS_API_ROOT)
+      ? fs
+          .readdirSync(BUSINESS_API_ROOT, { withFileTypes: true })
+          .filter((e) => e.isDirectory())
+          .map((e) => e.name)
+      : [];
+    expect(segments.sort()).toEqual(["capabilities", "config", "status"]);
+    for (const segment of segments) {
+      expect(BUSINESS_API_POLICIES[`${segment}.read`]).toBeDefined();
+      expect(BUSINESS_API_POLICIES[`${segment}.read`]?.productKey).toBe("business-os");
+      expect(BUSINESS_API_POLICIES[`${segment}.read`]?.featureKey).toBe("business_os");
+    }
   });
 });

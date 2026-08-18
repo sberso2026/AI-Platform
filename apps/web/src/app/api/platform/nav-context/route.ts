@@ -66,6 +66,8 @@ export async function GET() {
 
   let businessPreview = false;
   try {
+    // Catalog remains coming_soon. Preview nav is an explicit intelligence flag gate,
+    // not ProductLifecycleStatus.preview or a release-channel install.
     businessPreview = await ctx.kernel.intelligence.features.evaluate({
       tenantId: ctx.tenantId,
       userId: ctx.userId,

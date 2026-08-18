@@ -23,6 +23,22 @@ export const BUSINESS_OS_FEATURE_KEY = "business_os" as const;
 export const BUSINESS_OS_ID = "business" as const;
 export const BUSINESS_OS_PRODUCT_SLUG = "business-os" as const;
 
+/**
+ * Explicit BOS-0 preview contract on current platform:
+ * intelligence feature flag `business_os` (default off, experimental) + RBAC.
+ * Missing coming_soon commerce installation is not a commercial entitlement.
+ * Do not use ProductLifecycleStatus.preview or ReleaseChannel for GA access.
+ */
+export const BUSINESS_OS_PREVIEW_ACCESS = {
+  mode: "feature_flag_foundation" as const,
+  catalogStatus: "coming_soon" as const,
+  commercialEntitlementRequired: false,
+  usesCommercePreviewLifecycle: false,
+  usesReleaseChannel: false,
+  featureDefaultEnabled: false,
+  featureIsExperimental: true,
+};
+
 export function getBusinessOsFoundationDeclaration() {
   return {
     version: BUSINESS_OS_VERSION,
@@ -42,6 +58,7 @@ export function getBusinessOsFoundationDeclaration() {
     duplicateAssistantStackDetected,
     duplicateWorkflowEngineDetected,
     duplicateEventBusDetected,
-    catalogStatus: "coming_soon" as const,
+    catalogStatus: BUSINESS_OS_PREVIEW_ACCESS.catalogStatus,
+    previewAccess: BUSINESS_OS_PREVIEW_ACCESS,
   } as const;
 }
