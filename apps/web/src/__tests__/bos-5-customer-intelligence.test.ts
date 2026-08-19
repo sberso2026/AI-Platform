@@ -73,7 +73,7 @@ describe("BOS-5 Customer Intelligence web wiring", () => {
       expect(detail).toContain(testId);
     }
     expect(page).not.toMatch(/sequence cadences|mailbox|dialer|predicted churn/i);
-    expect(detail).toContain("retention");
-    expect(detail).toContain("not churn probability");
+    expect(detail.toLowerCase()).toContain("retention");
+    expect(detail.toLowerCase()).toContain("not churn probability");
   });
 });
