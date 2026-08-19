@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Customer Intelligence preview (BOS-5)",
+      "AI-assisted business operations — Profit Intelligence preview (BOS-6)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -27,6 +27,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/growth", title: "Growth Intelligence", component: "GrowthIntelligence" },
       { path: "/business/revenue", title: "Revenue Execution", component: "RevenueExecution" },
       { path: "/business/customers", title: "Customer Intelligence", component: "CustomerIntelligence" },
+      { path: "/business/profit", title: "Profit Intelligence", component: "ProfitIntelligence" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -69,6 +70,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "Users",
         group: "business",
         order: 5,
+      },
+      {
+        id: "bos-profit",
+        label: "Profit",
+        path: "/business/profit",
+        icon: "PieChart",
+        group: "business",
+        order: 6,
       },
       {
         id: "bos-settings",
@@ -123,6 +132,10 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.customer.risk_detected", description: "Customer risk indicator detected" },
       { type: "business_os.customer.financial_fact_ingested", description: "Customer financial fact ingested" },
       { type: "business_os.customer.signal_detected", description: "Customer rule produced a signal" },
+      { type: "business_os.profit.fact_ingested", description: "Profit fact ingested" },
+      { type: "business_os.profit.metrics_updated", description: "Profit metrics published to Owner Command" },
+      { type: "business_os.profit.leakage_detected", description: "Profit leakage rule produced a signal" },
+      { type: "business_os.profit.classification_updated", description: "Profit classification or settings updated" },
     ],
     knowledge: [
       {

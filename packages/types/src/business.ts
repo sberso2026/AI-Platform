@@ -1,8 +1,9 @@
 /**
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
- * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence).
+ * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
+ * BOS-6 Profit Intelligence).
  * Capabilities are identifiers — owner_command, financial_intelligence, growth_intelligence,
- * revenue_execution, and customer_intelligence are implemented.
+ * revenue_execution, customer_intelligence, and profit_intelligence are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -27,6 +28,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.revenue_execution.approve",
   "business_os.customer_intelligence.view",
   "business_os.customer_intelligence.manage",
+  "business_os.profit_intelligence.view",
+  "business_os.profit_intelligence.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -116,6 +119,10 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.customer.risk_detected",
   "business_os.customer.financial_fact_ingested",
   "business_os.customer.signal_detected",
+  "business_os.profit.fact_ingested",
+  "business_os.profit.metrics_updated",
+  "business_os.profit.leakage_detected",
+  "business_os.profit.classification_updated",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -1489,6 +1496,257 @@ export interface CustomerRenewalIntelligenceContract {
 
 export interface CustomerAccountExpansionContract {
   capability: "account_expansion";
+  implemented: false;
+  inputs: readonly string[];
+  note: string;
+}
+
+export const BUSINESS_PROFIT_DIMENSION_TYPES = [
+  "customer",
+  "project",
+  "service",
+  "product",
+  "segment",
+  "business_unit",
+  "channel",
+  "opportunity",
+] as const;
+export type BusinessProfitDimensionType = (typeof BUSINESS_PROFIT_DIMENSION_TYPES)[number];
+
+export const BUSINESS_PROFIT_VALUE_STATES = ["actual", "forecast", "proposed", "budget", "derived"] as const;
+export type BusinessProfitValueState = (typeof BUSINESS_PROFIT_VALUE_STATES)[number];
+
+export const BUSINESS_PROFIT_ATTRIBUTION_METHODS = [
+  "source_direct",
+  "customer_fact",
+  "imported",
+  "manual",
+  "derived_from_known_components",
+  "unknown",
+] as const;
+export type BusinessProfitAttributionMethod = (typeof BUSINESS_PROFIT_ATTRIBUTION_METHODS)[number];
+
+export const BUSINESS_PROFIT_CONFIDENCE = ["high", "medium", "low", "unknown"] as const;
+export type BusinessProfitAttributionConfidence = (typeof BUSINESS_PROFIT_CONFIDENCE)[number];
+
+export const BUSINESS_PROFIT_CLASSIFICATIONS = [
+  "highly_profitable",
+  "profitable",
+  "low_margin",
+  "break_even",
+  "negative_contribution",
+  "unknown",
+] as const;
+export type BusinessProfitClassification = (typeof BUSINESS_PROFIT_CLASSIFICATIONS)[number];
+
+export const PROFIT_CLASSIFICATION_VERSION = "profit_classification.v1" as const;
+export const PROFIT_METRICS_VERSION = "profit_metrics.v1" as const;
+export const PROFIT_CONCENTRATION_VERSION = "profit_concentration.v1" as const;
+
+export const BUSINESS_PROFIT_KPI_KEYS = [
+  "total_contribution",
+  "contribution_margin",
+  "negative_contribution_count",
+  "low_margin_customer_count",
+  "top_customer_profit_share",
+  "top5_profit_concentration",
+  "profit_data_coverage",
+  "margin_deterioration_count",
+] as const;
+export type BusinessProfitKpiKey = (typeof BUSINESS_PROFIT_KPI_KEYS)[number];
+
+export const BUSINESS_PROFIT_DEFAULT_THRESHOLDS = {
+  highlyProfitableMinBps: 2500,
+  profitableMinBps: 1500,
+  lowMarginMinBps: 200,
+  breakEvenAbsBps: 200,
+  highRevenueMinor: "50000000",
+  lowMarginWarningBps: 1500,
+  concentrationTop1WarningBps: 4000,
+  concentrationTop5WarningBps: 8000,
+  missingCostMajorRevenueMinor: "10000000",
+  proposedRealizedDivergenceBps: 400,
+  marginDeteriorationBps: 200,
+} as const;
+
+export interface BusinessProfitFact {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  periodStart: string;
+  periodEnd: string;
+  dimensionType: BusinessProfitDimensionType;
+  dimensionId?: string | null;
+  dimensionRef?: string | null;
+  dimensionName: string;
+  revenueMinor: string | null;
+  directCostMinor: string | null;
+  allocatedCostMinor: string | null;
+  contributionMinor: string | null;
+  profitAfterAllocatedMinor: string | null;
+  currency: string;
+  scale: number;
+  valueState: BusinessProfitValueState;
+  attributionMethod: BusinessProfitAttributionMethod;
+  attributionConfidence: BusinessProfitAttributionConfidence;
+  sourceType: string;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessProfitMetrics {
+  revenue: MoneyJson | null;
+  directCost: MoneyJson | null;
+  contribution: MoneyJson | null;
+  contributionMarginBps: string | null;
+  allocatedCost: MoneyJson | null;
+  profitAfterAllocated: MoneyJson | null;
+  profitMarginBps: string | null;
+  unknownReasons: string[];
+  attributionMethod: BusinessProfitAttributionMethod;
+  valueState: BusinessProfitValueState;
+  version: typeof PROFIT_METRICS_VERSION;
+  method: "deterministic_profit_metrics_v1";
+  disclaimer: string;
+}
+
+export interface BusinessProfitClassificationResult {
+  classification: BusinessProfitClassification;
+  contributionMarginBps: string | null;
+  evidence: string;
+  missingInputs: string[];
+  version: typeof PROFIT_CLASSIFICATION_VERSION;
+  method: "deterministic_profit_classification_v1";
+  disclaimer: string;
+}
+
+export interface BusinessProfitRankRow {
+  factId: string;
+  dimensionType: BusinessProfitDimensionType;
+  dimensionId?: string | null;
+  dimensionName: string;
+  revenue: MoneyJson | null;
+  directCost: MoneyJson | null;
+  contribution: MoneyJson | null;
+  contributionMarginBps: string | null;
+  classification: BusinessProfitClassification;
+  attributionMethod: BusinessProfitAttributionMethod;
+  valueState: BusinessProfitValueState;
+  evidenceQuality: string[];
+  rankingUnknownReason?: string | null;
+}
+
+export interface BusinessProfitConcentration {
+  currency: string | null;
+  periodEnd: string | null;
+  totalContribution: MoneyJson | null;
+  shares: Array<{
+    dimensionType: BusinessProfitDimensionType;
+    dimensionName: string;
+    shareBps: string | null;
+    contribution: MoneyJson | null;
+  }>;
+  topShareBps: string | null;
+  top5ShareBps: string | null;
+  unknownReasons: string[];
+  version: typeof PROFIT_CONCENTRATION_VERSION;
+  method: "deterministic_profit_concentration_v1";
+  disclaimer: string;
+}
+
+export interface BusinessProfitCoverage {
+  revenueWithKnownCost: MoneyJson | null;
+  revenueWithoutKnownCost: MoneyJson | null;
+  coverageBps: string | null;
+  factCount: number;
+  knownContributionCount: number;
+  staleFactCount: number;
+  attributionMethods: Record<string, number>;
+  unknownReasons: string[];
+}
+
+export interface BusinessProfitTrendPoint {
+  periodEnd: string;
+  contribution: MoneyJson | null;
+  contributionMarginBps: string | null;
+  unknownReasons: string[];
+}
+
+export interface BusinessProfitTrend {
+  dimensionType: BusinessProfitDimensionType;
+  dimensionRef: string | null;
+  dimensionName: string;
+  points: BusinessProfitTrendPoint[];
+  comparable: boolean;
+  unknownReasons: string[];
+}
+
+export interface BusinessProfitLeakageSignal {
+  ruleId: string;
+  type: string;
+  severity: BusinessSignalSeverity;
+  title: string;
+  summary: string;
+  evidence: BusinessEvidenceRef[];
+  provenance: Record<string, unknown>;
+}
+
+export interface BusinessProfitSummary {
+  contribution: MoneyJson | null;
+  contributionMarginBps: string | null;
+  coverage: BusinessProfitCoverage;
+  negativeContributionCount: number;
+  lowMarginCount: number;
+  concentration: BusinessProfitConcentration;
+  ranking: BusinessProfitRankRow[];
+  leakage: BusinessProfitLeakageSignal[];
+  proposedCount: number;
+  workOperations: { available: false; reason: string };
+  containsDemoData: boolean;
+  disclaimer: string;
+  generatedAt: string;
+}
+
+export interface BusinessProfitCustomerView {
+  customerId: string;
+  organisationName: string;
+  revenue: MoneyJson | null;
+  contribution: MoneyJson | null;
+  contributionMarginBps: string | null;
+  classification: BusinessProfitClassification;
+  paymentOverdueRatioBps: string | null;
+  healthStatus: string | null;
+  unknownReasons: string[];
+}
+
+export interface BusinessProfitFactIngestInput {
+  periodStart: string;
+  periodEnd: string;
+  dimensionType: BusinessProfitDimensionType;
+  dimensionId?: string | null;
+  dimensionRef?: string | null;
+  dimensionName: string;
+  revenueMinor?: string | number | null;
+  directCostMinor?: string | number | null;
+  allocatedCostMinor?: string | number | null;
+  currency: string;
+  scale?: number;
+  valueState?: BusinessProfitValueState;
+  attributionMethod?: BusinessProfitAttributionMethod;
+  attributionConfidence?: BusinessProfitAttributionConfidence;
+  sourceType: string;
+  sourceRef?: string;
+  sourceTimestamp?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface WorkOperationsProfitContract {
+  capability: "work_operations";
   implemented: false;
   inputs: readonly string[];
   note: string;

@@ -14,10 +14,10 @@ describe("BOS-5 Customer Intelligence", () => {
   it("reuses Platform AI Director and forbids CRM writes, outreach, and credit decisions", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-5");
+    expect(bos.status.snapshot().phase).toBe("BOS-6");
     expect(bos.customerIntelligence).toBeDefined();
     expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(true);
-    expect(bos.capabilities.isImplemented("profit_intelligence")).toBe(false);
+    expect(bos.capabilities.isImplemented("profit_intelligence")).toBe(true);
     expect(() => bos.customerIntelligence.writeExternalCrm()).toThrow("external_crm_write_forbidden");
     expect(() => bos.customerIntelligence.sendToCustomer()).toThrow("external_customer_communication_forbidden");
     expect(() => bos.customerIntelligence.makeCreditDecision()).toThrow("credit_decision_forbidden");
