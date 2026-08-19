@@ -60,7 +60,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   profit_intelligence: {
     name: "Profit Intelligence",
-    description: "Profitability intelligence (not implemented)",
+    description:
+      "Vendor-neutral profitability intelligence: contribution, margin, leakage, and coverage feeding Owner Command Centre (not a ledger or cost-accounting subsystem)",
   },
   work_operations: {
     name: "Work & Operations",
@@ -94,13 +95,15 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
       id === "revenue_execution" ||
-      id === "customer_intelligence",
+      id === "customer_intelligence" ||
+      id === "profit_intelligence",
     activationStatus:
       id === "owner_command" ||
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
       id === "revenue_execution" ||
-      id === "customer_intelligence"
+      id === "customer_intelligence" ||
+      id === "profit_intelligence"
         ? "preview"
         : "registered",
   }));
@@ -120,7 +123,8 @@ export class BusinessCapabilityRegistry {
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
       id === "revenue_execution" ||
-      id === "customer_intelligence"
+      id === "customer_intelligence" ||
+      id === "profit_intelligence"
     );
   }
 

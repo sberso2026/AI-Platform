@@ -179,4 +179,25 @@ describe("buildDeterministicBrief", () => {
     expect(brief.domainSections[0]?.id).toBe("customer");
     expect(brief.domainSections[0]?.title).toBe("Customer");
   });
+
+  it("adds a generic Profit domain section from KPI provenance", () => {
+    const kpis = [
+      kpi({
+        key: "total_contribution",
+        status: "warning",
+        name: "Total contribution",
+        provenance: { domain: "profit" },
+      }),
+    ];
+    const brief = buildDeterministicBrief({
+      health: computeBusinessHealth(kpis, "2026-08-18T09:00:00.000Z"),
+      kpis,
+      signals: [],
+      decisions: [],
+      actions: [],
+      generatedAt: "2026-08-18T09:00:00.000Z",
+    });
+    expect(brief.domainSections[0]?.id).toBe("profit");
+    expect(brief.domainSections[0]?.title).toBe("Profit");
+  });
 });

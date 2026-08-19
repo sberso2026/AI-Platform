@@ -56,6 +56,12 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "external_crm_write_forbidden" ||
     message === "external_customer_communication_forbidden" ||
     message === "credit_decision_forbidden" ||
+    message === "autonomous_reprice_forbidden" ||
+    message === "autonomous_customer_action_forbidden" ||
+    message === "invalid_profit_dimension" ||
+    message === "invalid_value_state" ||
+    message === "invalid_attribution_method" ||
+    message === "dimension_name_required" ||
     message === "external_send_forbidden" ||
     message === "external_submit_forbidden" ||
     message === "autonomous_approval_forbidden" ||
