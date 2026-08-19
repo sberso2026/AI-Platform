@@ -15,8 +15,8 @@ describe("BOS-8 decision action service guards", () => {
     expect(bos.decisionAction.contract()).toEqual(DECISION_ACTION_INTELLIGENCE_CONTRACT);
     expect(bos.decisionAction.contract().implemented).toBe(true);
     expect(bos.decisionAction.contract().noAutonomousApproval).toBe(true);
-    expect(bos.decisionAction.businessRisk().available).toBe(false);
-    expect(BUSINESS_RISK_CONTRACT.implemented).toBe(false);
+    expect(bos.decisionAction.businessRisk().available).toBe(true);
+    expect(BUSINESS_RISK_CONTRACT.implemented).toBe(true);
     expect(bos.workOperations.decisionAction().available).toBe(true);
   });
 

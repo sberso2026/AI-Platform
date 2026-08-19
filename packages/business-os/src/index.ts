@@ -74,5 +74,16 @@ export {
   decisionActionIntelligenceStatus,
   businessRiskStatus,
 } from "./decisions/extensions";
+export {
+  BUSINESS_CONTEXT_GRAPH_CONTRACT,
+  businessContextGraphStatus,
+} from "./risk/extensions";
 export * from "./decisions/service";
 export * from "./decisions/demo";
+export * from "./risk/assessment";
+export * from "./risk/residual";
+export * from "./risk/priority";
+export * from "./risk/tolerance";
+export * from "./risk/signals";
+export * from "./risk/service";
+export * from "./risk/demo";

@@ -29,6 +29,7 @@ const DOMAIN_TITLES: Record<string, string> = {
   profit: "Profit",
   operations: "Operations",
   decision: "Decisions",
+  risk: "Risk",
 };
 
 function buildDomainSections(kpis: BusinessKpi[]): DeterministicDailyBrief["domainSections"] {

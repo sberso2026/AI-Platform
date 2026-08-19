@@ -1,4 +1,5 @@
-import type { DecisionActionIntelligenceContract, BusinessRiskContract } from "@rtb/types";
+import type { DecisionActionIntelligenceContract } from "@rtb/types";
+import { BUSINESS_RISK_CONTRACT, businessRiskStatus } from "../risk/extensions";
 
 export const DECISION_ACTION_INTELLIGENCE_CONTRACT: DecisionActionIntelligenceContract = {
   capability: "decision_action",
@@ -34,17 +35,4 @@ export function decisionActionIntelligenceStatus() {
   };
 }
 
-export const BUSINESS_RISK_CONTRACT: BusinessRiskContract = {
-  capability: "business_risk",
-  implemented: false,
-  inputs: ["decision_outcomes", "operational_signals", "financial_signals"],
-  note: "BOS-8 extension boundary only. Do not start BOS-9 Business Risk.",
-};
-
-export function businessRiskStatus() {
-  return {
-    available: false as const,
-    reason: "business_risk_not_implemented" as const,
-    contract: BUSINESS_RISK_CONTRACT.capability,
-  };
-}
+export { BUSINESS_RISK_CONTRACT, businessRiskStatus };

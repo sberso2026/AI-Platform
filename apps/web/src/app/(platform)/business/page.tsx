@@ -87,9 +87,19 @@ export default function OwnerCommandCentrePage() {
     blockedDecisionActions: Array<{ id: string; title: string }>;
     outcomeReviewsDue: Array<{ id: string; question: string }>;
   } | null>(null);
+  const [riskIntel, setRiskIntel] = useState<{
+    openHighRisks: number;
+    extremeResidualRisks: number;
+    outsideTolerance: number;
+    overdueReviews: number;
+    ineffectiveControls: number;
+    overdueObligations: number;
+    treatmentActionsOverdue: number;
+    materialRisksRequiringDecision: number;
+  } | null>(null);
 
   const load = useCallback(async () => {
-    const [parsed, intel] = await Promise.all([
+    const [parsed, intel, risk] = await Promise.all([
       parseApiJsonResponse<CommandSnapshot>(await fetch("/api/business/command")),
       parseApiJsonResponse<{
         criticalPending: Array<{ id: string; question: string; priority: { priority: string } }>;
@@ -98,6 +108,16 @@ export default function OwnerCommandCentrePage() {
         blockedDecisionActions: Array<{ id: string; title: string }>;
         outcomeReviewsDue: Array<{ id: string; question: string }>;
       }>(await fetch("/api/business/decisions/summary")),
+      parseApiJsonResponse<{
+        openHighRisks: number;
+        extremeResidualRisks: number;
+        outsideTolerance: number;
+        overdueReviews: number;
+        ineffectiveControls: number;
+        overdueObligations: number;
+        treatmentActionsOverdue: number;
+        materialRisksRequiringDecision: number;
+      }>(await fetch("/api/business/risk/summary")),
     ]);
     if (!parsed.ok) {
       setError(parsed.errorMessage ?? "Access denied");
@@ -107,6 +127,7 @@ export default function OwnerCommandCentrePage() {
     setError(null);
     setData(parsed.data);
     setDecisionIntel(intel.ok && intel.data ? intel.data : null);
+    setRiskIntel(risk.ok && risk.data ? risk.data : null);
   }, []);
 
   useEffect(() => {
@@ -344,6 +365,21 @@ export default function OwnerCommandCentrePage() {
           </div>
         </section>
 
+        <section className="mb-8" data-testid="bos-business-risk">
+          <SectionHeader
+            title="Business risk"
+            description="Extreme residual risks, risks outside tolerance, overdue obligations, ineffective controls, and material risks requiring a decision."
+          />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <MetricCard label="Extreme residual" value={String(riskIntel?.extremeResidualRisks ?? 0)} tone="red" />
+            <MetricCard label="Outside tolerance" value={String(riskIntel?.outsideTolerance ?? 0)} tone="amber" />
+            <MetricCard label="Overdue obligations" value={String(riskIntel?.overdueObligations ?? 0)} tone="amber" />
+            <MetricCard label="Ineffective controls" value={String(riskIntel?.ineffectiveControls ?? 0)} tone="amber" />
+            <MetricCard label="Material risks needing decision" value={String(riskIntel?.materialRisksRequiringDecision ?? 0)} tone="blue" />
+            <MetricCard label="Overdue treatment actions" value={String(riskIntel?.treatmentActionsOverdue ?? 0)} tone="amber" />
+          </div>
+        </section>
+
         <section className="mb-8" data-testid="bos-decisions">
           <SectionHeader title="Decisions" description="Pending and recent owner decisions. No autonomous approval." />
           <div className="mt-4 space-y-3">
@@ -529,6 +565,9 @@ export default function OwnerCommandCentrePage() {
           </Link>
           <Link href="/business/decisions" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Decision Intelligence
+          </Link>
+          <Link href="/business/risk" className="text-sm font-semibold text-blue-700 hover:underline">
+            Open Business Risk
           </Link>
           <Link href="/business/settings" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Business OS settings

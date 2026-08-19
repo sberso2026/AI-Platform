@@ -1,8 +1,9 @@
 /**
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
  * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
- * BOS-6 Profit Intelligence, BOS-7 Work & Operations, BOS-8 Decision & Action Intelligence).
- * Capabilities are identifiers — owner_command through decision_action are implemented.
+ * BOS-6 Profit Intelligence, BOS-7 Work & Operations, BOS-8 Decision & Action Intelligence,
+ * BOS-9 Business Risk).
+ * Capabilities are identifiers — owner_command through business_risk are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -34,6 +35,9 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.decision_action.view",
   "business_os.decision_action.manage",
   "business_os.decision_action.approve",
+  "business_os.business_risk.view",
+  "business_os.business_risk.manage",
+  "business_os.business_risk.approve",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -142,6 +146,14 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.operations.capacity_updated",
   "business_os.operations.risk_detected",
   "business_os.operations.metrics_updated",
+  "business_os.risk.created",
+  "business_os.risk.assessed",
+  "business_os.risk.residual_updated",
+  "business_os.risk.control_updated",
+  "business_os.risk.treatment_updated",
+  "business_os.risk.outside_tolerance",
+  "business_os.risk.obligation_overdue",
+  "business_os.risk.review_due",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -163,6 +175,7 @@ export const BUSINESS_KPI_CATEGORIES = [
   "pipeline",
   "operations",
   "decision",
+  "risk",
   "general",
 ] as const;
 export type BusinessKpiCategory = (typeof BUSINESS_KPI_CATEGORIES)[number];
@@ -2111,9 +2124,33 @@ export interface DecisionActionIntelligenceContract {
 
 export interface BusinessRiskContract {
   capability: "business_risk";
-  implemented: false;
+  implemented: true;
   inputs: readonly string[];
+  reuses: readonly [
+    "business_os_signals",
+    "business_os_recommendations",
+    "business_os_kpis",
+    "business_os_decisions",
+    "business_os_actions",
+  ];
+  threatFocused: true;
+  opportunityRiskDeferred: true;
+  residualRequiresEvidencedControls: true;
+  controlEffectivenessRequiresEvidence: true;
+  treatmentsReuseBosActions: true;
+  riskAcceptanceHumanOnly: true;
+  noAutonomousRiskAcceptance: true;
+  noStatutoryComplianceClaims: true;
+  noLegalAdvice: true;
+  noExternalRegulatorWrites: true;
+  implementsOwnAiStack: false;
   note: string;
+}
+
+export interface BusinessContextGraphContract {
+  capability: "business_context";
+  implemented: false;
+  note: "BOS-9 extension boundary only. Do not start BOS-10.";
 }
 
 export const BUSINESS_DECISION_DOMAINS = [
@@ -2126,6 +2163,7 @@ export const BUSINESS_DECISION_DOMAINS = [
   "signal",
   "kpi",
   "document",
+  "risk",
   "general",
 ] as const;
 export type BusinessDecisionDomain = (typeof BUSINESS_DECISION_DOMAINS)[number];
@@ -2220,6 +2258,20 @@ export const BUSINESS_DECISION_KPI_KEYS = [
   "decision_effectiveness_coverage",
 ] as const;
 export type BusinessDecisionKpiKey = (typeof BUSINESS_DECISION_KPI_KEYS)[number];
+
+export const BUSINESS_RISK_KPI_KEYS = [
+  "open_high_risks",
+  "extreme_residual_risks",
+  "overdue_risk_reviews",
+  "risks_without_owner",
+  "ineffective_controls",
+  "untested_controls",
+  "overdue_obligations",
+  "treatment_actions_overdue",
+  "risks_outside_tolerance",
+  "risk_data_coverage",
+] as const;
+export type BusinessRiskKpiKey = (typeof BUSINESS_RISK_KPI_KEYS)[number];
 
 export const BUSINESS_DECISION_DEFAULT_THRESHOLDS = {
   overdueGraceDays: 0,
@@ -2623,4 +2675,564 @@ export interface BusinessDecisionLessonInput {
   sourceRef?: string;
   provenance?: Record<string, unknown>;
   isDemo?: boolean;
+}
+
+export const BUSINESS_RISK_STATUSES = [
+  "identified",
+  "assessing",
+  "open",
+  "treating",
+  "monitoring",
+  "accepted",
+  "closed",
+  "archived",
+] as const;
+export type BusinessRiskStatus = (typeof BUSINESS_RISK_STATUSES)[number];
+
+export const BUSINESS_RISK_CATEGORIES = [
+  "strategic",
+  "financial",
+  "customer",
+  "commercial",
+  "operational",
+  "workforce",
+  "supplier",
+  "compliance",
+  "legal",
+  "cyber",
+  "technology",
+  "reputation",
+  "continuity",
+  "other",
+] as const;
+export type BusinessRiskCategory = (typeof BUSINESS_RISK_CATEGORIES)[number];
+
+export const BUSINESS_RISK_NATURES = ["threat"] as const;
+export type BusinessRiskNature = (typeof BUSINESS_RISK_NATURES)[number];
+
+export const BUSINESS_RISK_LIKELIHOODS = [
+  "rare",
+  "unlikely",
+  "possible",
+  "likely",
+  "almost_certain",
+  "unknown",
+] as const;
+export type BusinessRiskLikelihood = (typeof BUSINESS_RISK_LIKELIHOODS)[number];
+
+export const BUSINESS_RISK_IMPACTS = [
+  "insignificant",
+  "minor",
+  "moderate",
+  "major",
+  "severe",
+  "unknown",
+] as const;
+export type BusinessRiskImpact = (typeof BUSINESS_RISK_IMPACTS)[number];
+
+export const BUSINESS_RISK_LEVELS = ["low", "moderate", "high", "extreme", "unknown"] as const;
+export type BusinessRiskLevel = (typeof BUSINESS_RISK_LEVELS)[number];
+
+export const BUSINESS_RISK_CONTROL_TYPES = [
+  "preventive",
+  "detective",
+  "corrective",
+  "directive",
+] as const;
+export type BusinessRiskControlType = (typeof BUSINESS_RISK_CONTROL_TYPES)[number];
+
+export const BUSINESS_RISK_CONTROL_STATUSES = [
+  "planned",
+  "implemented",
+  "operating",
+  "ineffective",
+  "suspended",
+  "retired",
+] as const;
+export type BusinessRiskControlStatus = (typeof BUSINESS_RISK_CONTROL_STATUSES)[number];
+
+export const BUSINESS_RISK_CONTROL_EFFECTIVENESS = [
+  "effective",
+  "partially_effective",
+  "ineffective",
+  "untested",
+  "unknown",
+] as const;
+export type BusinessRiskControlEffectiveness = (typeof BUSINESS_RISK_CONTROL_EFFECTIVENESS)[number];
+
+export const BUSINESS_RISK_TREATMENT_STRATEGIES = [
+  "avoid",
+  "reduce",
+  "transfer",
+  "accept",
+  "exploit",
+  "monitor",
+] as const;
+export type BusinessRiskTreatmentStrategy = (typeof BUSINESS_RISK_TREATMENT_STRATEGIES)[number];
+
+export const BUSINESS_RISK_OBLIGATION_STATUSES = [
+  "identified",
+  "applicable",
+  "not_applicable",
+  "in_progress",
+  "compliant",
+  "non_compliant",
+  "overdue",
+  "unknown",
+] as const;
+export type BusinessRiskObligationStatus = (typeof BUSINESS_RISK_OBLIGATION_STATUSES)[number];
+
+export const BUSINESS_RISK_INCIDENT_SEVERITIES = ["low", "medium", "high", "critical", "unknown"] as const;
+export type BusinessRiskIncidentSeverity = (typeof BUSINESS_RISK_INCIDENT_SEVERITIES)[number];
+
+export const BUSINESS_RISK_EVIDENCE_SOURCE_TYPES = [
+  "finance",
+  "growth",
+  "revenue",
+  "customer",
+  "profit",
+  "operations",
+  "decision",
+  "action",
+  "signal",
+  "kpi",
+  "document",
+  "incident",
+  "obligation",
+  "control",
+] as const;
+export type BusinessRiskEvidenceSourceType = (typeof BUSINESS_RISK_EVIDENCE_SOURCE_TYPES)[number];
+
+export const BUSINESS_RISK_ASSESSMENT_METHOD = "risk_assessment.v1" as const;
+export const BUSINESS_RISK_RESIDUAL_METHOD = "residual_risk.v1" as const;
+export const BUSINESS_RISK_PRIORITY_METHOD = "risk_priority.v1" as const;
+
+export const BUSINESS_RISK_LIKELIHOOD_SCORES: Record<Exclude<BusinessRiskLikelihood, "unknown">, number> = {
+  rare: 1,
+  unlikely: 2,
+  possible: 3,
+  likely: 4,
+  almost_certain: 5,
+};
+
+export const BUSINESS_RISK_IMPACT_SCORES: Record<Exclude<BusinessRiskImpact, "unknown">, number> = {
+  insignificant: 1,
+  minor: 2,
+  moderate: 3,
+  major: 4,
+  severe: 5,
+};
+
+export interface BusinessRiskAssessmentRule {
+  method: typeof BUSINESS_RISK_ASSESSMENT_METHOD;
+  likelihoodScores: typeof BUSINESS_RISK_LIKELIHOOD_SCORES;
+  impactScores: typeof BUSINESS_RISK_IMPACT_SCORES;
+  scoreBands: {
+    low: { min: 1; max: 4 };
+    moderate: { min: 5; max: 9 };
+    high: { min: 10; max: 16 };
+    extreme: { min: 17; max: 25 };
+  };
+  note: "Score is likelihood × impact (1–25). Unknown inputs yield unknown. Not a statistical probability.";
+}
+
+export const BUSINESS_RISK_ASSESSMENT_RULE: BusinessRiskAssessmentRule = {
+  method: BUSINESS_RISK_ASSESSMENT_METHOD,
+  likelihoodScores: BUSINESS_RISK_LIKELIHOOD_SCORES,
+  impactScores: BUSINESS_RISK_IMPACT_SCORES,
+  scoreBands: {
+    low: { min: 1, max: 4 },
+    moderate: { min: 5, max: 9 },
+    high: { min: 10, max: 16 },
+    extreme: { min: 17, max: 25 },
+  },
+  note: "Score is likelihood × impact (1–25). Unknown inputs yield unknown. Not a statistical probability.",
+};
+
+export const BUSINESS_RISK_DEFAULT_THRESHOLDS = {
+  defaultMaxAcceptableLevel: "high" as Exclude<BusinessRiskLevel, "unknown">,
+  staleEvidenceDays: 90,
+  overdueGraceDays: 0,
+} as const;
+
+export const BUSINESS_RISK_DISCLAIMER =
+  "Business Risk is operational risk intelligence. It is not legal advice, statutory compliance certification, insurance underwriting, or a GRC suite. Risk levels are qualitative matrix outcomes, not statistical probabilities. Residual risk does not improve merely because a control record exists. Compliant obligations require evidence and authorized human confirmation. Risk acceptance remains human.";
+
+export interface BusinessRiskRecord {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  reference: string;
+  title: string;
+  description: string | null;
+  category: BusinessRiskCategory;
+  domain: string | null;
+  nature: BusinessRiskNature;
+  ownerLabel: string | null;
+  status: BusinessRiskStatus;
+  sourceType: string;
+  sourceRef: string;
+  identifiedAt: string;
+  reviewAt: string | null;
+  closedAt: string | null;
+  acceptedAt: string | null;
+  acceptedBy: string | null;
+  linkedDecisionId: string | null;
+  toleranceExceptionAt: string | null;
+  toleranceExceptionBy: string | null;
+  toleranceExceptionRationale: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRiskAssessment {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string;
+  version: number;
+  method: typeof BUSINESS_RISK_ASSESSMENT_METHOD;
+  likelihood: BusinessRiskLikelihood;
+  impact: BusinessRiskImpact;
+  inherentLevel: BusinessRiskLevel;
+  residualLevel: BusinessRiskLevel;
+  inherentScore: number | null;
+  residualScore: number | null;
+  assessorLabel: string | null;
+  rationale: string | null;
+  assumptions: string[];
+  evidenceRefs: BusinessEvidenceRef[];
+  residualMethod: typeof BUSINESS_RISK_RESIDUAL_METHOD;
+  residualRationale: string | null;
+  assessedAt: string;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+}
+
+export interface BusinessRiskControl {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  name: string;
+  description: string | null;
+  controlType: BusinessRiskControlType;
+  ownerLabel: string | null;
+  status: BusinessRiskControlStatus;
+  effectiveness: BusinessRiskControlEffectiveness;
+  frequency: string | null;
+  evidenceRefs: BusinessEvidenceRef[];
+  testedAt: string | null;
+  reviewAt: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRiskControlLink {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string;
+  controlId: string;
+  applicable: boolean;
+  createdAt: string;
+}
+
+export interface BusinessRiskTreatment {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string;
+  strategy: BusinessRiskTreatmentStrategy;
+  decisionId: string | null;
+  expectedResidualLevel: BusinessRiskLevel | null;
+  actualResidualLevel: BusinessRiskLevel | null;
+  acceptedAt: string | null;
+  acceptedBy: string | null;
+  notes: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRiskActionLink {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string;
+  treatmentId: string | null;
+  actionId: string;
+  createdAt: string;
+}
+
+export interface BusinessRiskObligation {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string | null;
+  controlId: string | null;
+  actionId: string | null;
+  title: string;
+  sourceRef: string | null;
+  jurisdiction: string | null;
+  ownerLabel: string | null;
+  dueAt: string | null;
+  reviewAt: string | null;
+  status: BusinessRiskObligationStatus;
+  evidenceRefs: BusinessEvidenceRef[];
+  authorizedConfirmation: boolean;
+  confirmationBy: string | null;
+  confirmationAt: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessRiskIncident {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string | null;
+  actionId: string | null;
+  title: string;
+  description: string | null;
+  occurredAt: string;
+  severity: BusinessRiskIncidentSeverity;
+  sourceType: string;
+  sourceRef: string;
+  impact: string | null;
+  evidenceRefs: BusinessEvidenceRef[];
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+}
+
+export interface BusinessRiskEvidenceLink {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  riskId: string;
+  sourceType: BusinessRiskEvidenceSourceType;
+  sourceRef: string;
+  snapshot: Record<string, unknown>;
+  capturedAt: string;
+  provenance: Record<string, unknown>;
+}
+
+export interface BusinessRiskToleranceRule {
+  domain?: string;
+  category?: BusinessRiskCategory;
+  maxAcceptableLevel: Exclude<BusinessRiskLevel, "unknown">;
+  escalationThreshold?: Exclude<BusinessRiskLevel, "unknown">;
+  requiresApproval: boolean;
+  unit?: string;
+  toleranceValue?: number | null;
+}
+
+export interface BusinessRiskSettings {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  version: number;
+  effectiveAt: string;
+  defaultMaxAcceptableLevel: Exclude<BusinessRiskLevel, "unknown">;
+  rules: BusinessRiskToleranceRule[];
+  provenance: Record<string, unknown>;
+  updatedAt: string;
+}
+
+export interface BusinessRiskPriorityComponent {
+  id: string;
+  label: string;
+  value: unknown;
+  contribution: BusinessDecisionPriorityLevel | "none";
+  known: boolean;
+}
+
+export interface BusinessRiskPriority {
+  priority: BusinessDecisionPriorityLevel;
+  score: number | null;
+  components: BusinessRiskPriorityComponent[];
+  evidence: BusinessEvidenceRef[];
+  missingInputs: string[];
+  version: typeof BUSINESS_RISK_PRIORITY_METHOD;
+  inspectable: true;
+  authoritativeAi: false;
+}
+
+export type BusinessRiskToleranceStatus = "within" | "outside" | "unknown";
+export type BusinessRiskEvidenceFreshness = "fresh" | "stale" | "missing";
+
+export interface BusinessRiskRegisterRow {
+  risk: BusinessRiskRecord;
+  latestAssessment: BusinessRiskAssessment | null;
+  inherentLevel: BusinessRiskLevel;
+  residualLevel: BusinessRiskLevel;
+  toleranceStatus: BusinessRiskToleranceStatus;
+  toleranceException: boolean;
+  treatmentStrategy: BusinessRiskTreatmentStrategy | null;
+  controlCount: number;
+  evidencedControlCount: number;
+  evidenceFreshness: BusinessRiskEvidenceFreshness;
+  priority: BusinessRiskPriority;
+}
+
+export interface BusinessRiskSummary {
+  generatedAt: string;
+  openHighRisks: number;
+  extremeResidualRisks: number;
+  outsideTolerance: number;
+  overdueReviews: number;
+  ineffectiveControls: number;
+  untestedControls: number;
+  overdueObligations: number;
+  risksWithoutOwner: number;
+  treatmentActionsOverdue: number;
+  materialRisksRequiringDecision: number;
+  containsDemoData: boolean;
+  disclaimer: string;
+}
+
+export interface BusinessRiskDetail {
+  risk: BusinessRiskRecord;
+  assessments: BusinessRiskAssessment[];
+  latestAssessment: BusinessRiskAssessment | null;
+  controls: BusinessRiskControl[];
+  controlLinks: BusinessRiskControlLink[];
+  treatments: BusinessRiskTreatment[];
+  actionLinks: BusinessRiskActionLink[];
+  actions: BusinessAction[];
+  obligations: BusinessRiskObligation[];
+  incidents: BusinessRiskIncident[];
+  evidence: BusinessRiskEvidenceLink[];
+  decisions: BusinessDecision[];
+  priority: BusinessRiskPriority;
+  toleranceStatus: BusinessRiskToleranceStatus;
+  evidenceFreshness: BusinessRiskEvidenceFreshness;
+  disclaimer: string;
+}
+
+export interface BusinessRiskIntelligence {
+  generatedAt: string;
+  method: "business_risk.v1";
+  summary: BusinessRiskSummary;
+  register: BusinessRiskRegisterRow[];
+  signals: BusinessSignal[];
+  recommendations: BusinessRecommendation[];
+  kpis: BusinessKpi[];
+  missingEvidence: string[];
+  disclaimer: string;
+}
+
+export interface BusinessRiskInput {
+  title: string;
+  description?: string | null;
+  category?: BusinessRiskCategory;
+  domain?: string | null;
+  ownerLabel?: string | null;
+  status?: BusinessRiskStatus;
+  sourceType: string;
+  sourceRef?: string;
+  identifiedAt?: string;
+  reviewAt?: string | null;
+  linkedDecisionId?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRiskAssessmentInput {
+  riskId: string;
+  likelihood: BusinessRiskLikelihood;
+  impact: BusinessRiskImpact;
+  assessorLabel?: string | null;
+  rationale?: string | null;
+  assumptions?: string[];
+  evidenceRefs?: BusinessEvidenceRef[];
+  assessedAt?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRiskControlInput {
+  name: string;
+  description?: string | null;
+  controlType?: BusinessRiskControlType;
+  ownerLabel?: string | null;
+  status?: BusinessRiskControlStatus;
+  effectiveness?: BusinessRiskControlEffectiveness;
+  frequency?: string | null;
+  evidenceRefs?: BusinessEvidenceRef[];
+  testedAt?: string | null;
+  reviewAt?: string | null;
+  riskId?: string;
+  applicable?: boolean;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRiskTreatmentInput {
+  riskId: string;
+  strategy: BusinessRiskTreatmentStrategy;
+  decisionId?: string | null;
+  expectedResidualLevel?: BusinessRiskLevel | null;
+  notes?: string | null;
+  actionId?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRiskObligationInput {
+  title: string;
+  riskId?: string | null;
+  controlId?: string | null;
+  actionId?: string | null;
+  sourceRef?: string | null;
+  jurisdiction?: string | null;
+  ownerLabel?: string | null;
+  dueAt?: string | null;
+  reviewAt?: string | null;
+  status?: BusinessRiskObligationStatus;
+  evidenceRefs?: BusinessEvidenceRef[];
+  authorizedConfirmation?: boolean;
+  confirmationBy?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRiskIncidentInput {
+  title: string;
+  description?: string | null;
+  riskId?: string | null;
+  actionId?: string | null;
+  occurredAt?: string;
+  severity?: BusinessRiskIncidentSeverity;
+  sourceType: string;
+  sourceRef?: string;
+  impact?: string | null;
+  evidenceRefs?: BusinessEvidenceRef[];
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessRiskEvidenceInput {
+  riskId: string;
+  sourceType: BusinessRiskEvidenceSourceType;
+  sourceRef: string;
+  snapshot?: Record<string, unknown>;
+  capturedAt?: string;
+  provenance?: Record<string, unknown>;
+}
+
+export interface BusinessRiskSettingsInput {
+  defaultMaxAcceptableLevel?: Exclude<BusinessRiskLevel, "unknown">;
+  rules?: BusinessRiskToleranceRule[];
+  version?: number;
+  effectiveAt?: string;
+  provenance?: Record<string, unknown>;
 }
