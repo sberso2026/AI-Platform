@@ -322,6 +322,7 @@ export class BosConnectorsService {
           cursor,
           secretId: installation.secretId,
           mode: installation.effectiveMode,
+          simulate: input.simulate,
         });
       }
       if (page.timedOut) {

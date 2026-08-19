@@ -342,7 +342,8 @@ describe("BOS-12 registry fail-closed", () => {
   it("blocks runs on agent_registry_mismatch while diagnostics remain available", async () => {
     const { workforce, context, store } = harness();
     const installed = await readyAdvisor(workforce, context);
-    await store.upsertInstallation({ ...installed, kernelAgentId: "not-the-registry-id" });
+    const current = await store.getInstallation(SCOPE, installed.id);
+    await store.upsertInstallation({ ...current!, kernelAgentId: "not-the-registry-id" });
     await expect(
       workforce.requestTask(
         SCOPE,
