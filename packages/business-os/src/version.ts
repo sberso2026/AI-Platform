@@ -1,9 +1,9 @@
 /**
  * BOS-0 Foundation version and platform-reuse contracts.
  */
-export const BUSINESS_OS_VERSION = "0.7.0" as const;
+export const BUSINESS_OS_VERSION = "0.8.0" as const;
 export const BUSINESS_OS_STATUS = "preview" as const;
-export const BUSINESS_OS_PHASE = "BOS-6" as const;
+export const BUSINESS_OS_PHASE = "BOS-7" as const;
 
 /** Business OS consumes Platform Kernel / Intelligence. Independent AI stacks are forbidden. */
 export const implementsOwnAiStack = false as const;

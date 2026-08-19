@@ -1,9 +1,9 @@
 /**
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
  * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
- * BOS-6 Profit Intelligence).
+ * BOS-6 Profit Intelligence, BOS-7 Work & Operations).
  * Capabilities are identifiers — owner_command, financial_intelligence, growth_intelligence,
- * revenue_execution, customer_intelligence, and profit_intelligence are implemented.
+ * revenue_execution, customer_intelligence, profit_intelligence, and work_operations are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -30,6 +30,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.customer_intelligence.manage",
   "business_os.profit_intelligence.view",
   "business_os.profit_intelligence.manage",
+  "business_os.work_operations.view",
+  "business_os.work_operations.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -123,6 +125,14 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.profit.metrics_updated",
   "business_os.profit.leakage_detected",
   "business_os.profit.classification_updated",
+  "business_os.operations.work_created",
+  "business_os.operations.work_updated",
+  "business_os.operations.work_completed",
+  "business_os.operations.milestone_updated",
+  "business_os.operations.cost_fact_ingested",
+  "business_os.operations.capacity_updated",
+  "business_os.operations.risk_detected",
+  "business_os.operations.metrics_updated",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -1406,7 +1416,7 @@ export interface BusinessCustomer360 {
   financialFacts: BusinessCustomerFinancialFact[];
   payment: BusinessCustomerPaymentBehaviour;
   health: BusinessCustomerHealth;
-  operations: { available: false; reason: "operations_domain_not_implemented" };
+  operations: BusinessCustomerOperationsEvidence;
   renewal: { available: false; reason: "renewal_intelligence_not_implemented"; contract: "renewal_intelligence" };
   expansion: { available: false; reason: "account_expansion_not_implemented"; contract: "account_expansion" };
   dataQuality: {
@@ -1510,6 +1520,7 @@ export const BUSINESS_PROFIT_DIMENSION_TYPES = [
   "business_unit",
   "channel",
   "opportunity",
+  "work",
 ] as const;
 export type BusinessProfitDimensionType = (typeof BUSINESS_PROFIT_DIMENSION_TYPES)[number];
 
@@ -1522,6 +1533,7 @@ export const BUSINESS_PROFIT_ATTRIBUTION_METHODS = [
   "imported",
   "manual",
   "derived_from_known_components",
+  "operations_fact",
   "unknown",
 ] as const;
 export type BusinessProfitAttributionMethod = (typeof BUSINESS_PROFIT_ATTRIBUTION_METHODS)[number];
@@ -1705,7 +1717,7 @@ export interface BusinessProfitSummary {
   ranking: BusinessProfitRankRow[];
   leakage: BusinessProfitLeakageSignal[];
   proposedCount: number;
-  workOperations: { available: false; reason: string };
+  workOperations: { available: boolean; reason: string };
   containsDemoData: boolean;
   disclaimer: string;
   generatedAt: string;
@@ -1747,6 +1759,338 @@ export interface BusinessProfitFactIngestInput {
 
 export interface WorkOperationsProfitContract {
   capability: "work_operations";
+  implemented: boolean;
+  inputs: readonly string[];
+  note: string;
+}
+
+export const BUSINESS_WORK_TYPES = [
+  "customer_job",
+  "service_engagement",
+  "internal_initiative",
+  "business_project",
+  "delivery_package",
+] as const;
+export type BusinessWorkType = (typeof BUSINESS_WORK_TYPES)[number];
+
+export const BUSINESS_WORK_STATUSES = [
+  "planned",
+  "ready",
+  "active",
+  "on_hold",
+  "completed",
+  "cancelled",
+] as const;
+export type BusinessWorkStatus = (typeof BUSINESS_WORK_STATUSES)[number];
+
+export const BUSINESS_WORK_MILESTONE_STATUSES = [
+  "not_started",
+  "in_progress",
+  "blocked",
+  "completed",
+  "cancelled",
+] as const;
+export type BusinessWorkMilestoneStatus = (typeof BUSINESS_WORK_MILESTONE_STATUSES)[number];
+
+export const BUSINESS_WORK_COST_TYPES = [
+  "labour",
+  "subcontractor",
+  "material",
+  "travel",
+  "equipment",
+  "other_direct",
+] as const;
+export type BusinessWorkCostType = (typeof BUSINESS_WORK_COST_TYPES)[number];
+
+export const BUSINESS_WORK_VALUE_STATES = ["actual", "forecast", "budget", "derived"] as const;
+export type BusinessWorkValueState = (typeof BUSINESS_WORK_VALUE_STATES)[number];
+
+export const BUSINESS_WORK_CAPACITY_DIMENSIONS = ["team", "role", "work_item", "period"] as const;
+export type BusinessWorkCapacityDimension = (typeof BUSINESS_WORK_CAPACITY_DIMENSIONS)[number];
+
+export const BUSINESS_WORK_HEALTH_STATUSES = ["healthy", "watch", "at_risk", "critical", "unknown"] as const;
+export type BusinessWorkHealthStatus = (typeof BUSINESS_WORK_HEALTH_STATUSES)[number];
+
+export const WORK_HEALTH_VERSION = "work_health.v1" as const;
+export const WORK_PROGRESS_VERSION = "work_progress.v1" as const;
+export const WORK_COST_PROGRESS_VERSION = "operations.cost_progress_variance.v1" as const;
+
+export const BUSINESS_OPERATIONS_KPI_KEYS = [
+  "active_work",
+  "overdue_work",
+  "blocked_work",
+  "milestone_on_time_rate",
+  "work_completion_rate",
+  "cost_progress_variance_count",
+  "capacity_utilization",
+  "overcommitted_capacity",
+  "operational_data_coverage",
+] as const;
+export type BusinessOperationsKpiKey = (typeof BUSINESS_OPERATIONS_KPI_KEYS)[number];
+
+export const BUSINESS_OPERATIONS_DEFAULT_THRESHOLDS = {
+  costProgressVarianceBps: 1500,
+  approachingFinishDays: 14,
+  lowProgressBps: 4000,
+  staleDays: 14,
+  overcommitUtilizationBps: 10000,
+} as const;
+
+export interface BusinessWorkItem {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  reference: string;
+  name: string;
+  description?: string | null;
+  workType: BusinessWorkType;
+  customerId?: string | null;
+  linkedOpportunityId?: string | null;
+  linkedProposalId?: string | null;
+  linkedEngineeringProjectId?: string | null;
+  linkedEngineeringProjectRef?: string | null;
+  owner?: string | null;
+  status: BusinessWorkStatus;
+  plannedStart?: string | null;
+  plannedFinish?: string | null;
+  actualStart?: string | null;
+  actualFinish?: string | null;
+  progressBps: string | null;
+  progressSource: "user_supplied" | "weighted_milestones" | "unknown";
+  currency: string;
+  scale: number;
+  contractedValueMinor: string | null;
+  budgetCostMinor: string | null;
+  actualCostMinor: string | null;
+  lastStatusAt: string;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessWorkMilestone {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  workId: string;
+  name: string;
+  dueAt?: string | null;
+  completedAt?: string | null;
+  status: BusinessWorkMilestoneStatus;
+  weightBps: string | null;
+  owner?: string | null;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessWorkActionLink {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  workId: string;
+  actionId: string;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessWorkCostFact {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  workId: string;
+  periodStart: string;
+  periodEnd: string;
+  costType: BusinessWorkCostType;
+  amountMinor: string;
+  currency: string;
+  scale: number;
+  valueState: BusinessWorkValueState;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessWorkCapacityFact {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  dimensionType: BusinessWorkCapacityDimension;
+  dimensionRef: string;
+  dimensionName: string;
+  workId?: string | null;
+  periodStart: string;
+  periodEnd: string;
+  availableHoursMinor: string | null;
+  committedHoursMinor: string | null;
+  utilizationBps: string | null;
+  capacityStatus: "ok" | "watch" | "overcommitted" | "unknown";
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessWorkProgress {
+  progressBps: string | null;
+  method: "user_supplied" | "weighted_milestones" | "unknown";
+  missingInputs: string[];
+  version: typeof WORK_PROGRESS_VERSION;
+  disclaimer: string;
+}
+
+export interface BusinessWorkHealth {
+  status: BusinessWorkHealthStatus;
+  score: number | null;
+  components: Array<{
+    id: string;
+    label: string;
+    status: BusinessWorkHealthStatus;
+    score: number | null;
+    evidence: string;
+  }>;
+  missingComponents: string[];
+  version: typeof WORK_HEALTH_VERSION;
+  method: "deterministic_work_health_v1";
+  disclaimer: string;
+}
+
+export interface BusinessWorkCostProgress {
+  actualCostBpsOfBudget: string | null;
+  progressBps: string | null;
+  varianceBps: string | null;
+  signal: boolean;
+  unknownReasons: string[];
+  version: typeof WORK_COST_PROGRESS_VERSION;
+  method: "deterministic_cost_progress_v1";
+  disclaimer: string;
+}
+
+export interface BusinessCustomerOperationsEvidence {
+  available: boolean;
+  reason?: string;
+  activeWorkCount?: number;
+  completedWorkCount?: number;
+  atRiskWorkCount?: number;
+  work?: Array<{
+    id: string;
+    reference: string;
+    name: string;
+    status: BusinessWorkStatus;
+    progressBps: string | null;
+    health: BusinessWorkHealthStatus;
+    plannedFinish: string | null;
+  }>;
+  signalTypes?: string[];
+}
+
+export interface BusinessWorkItemIngestInput {
+  reference: string;
+  name: string;
+  description?: string | null;
+  workType: BusinessWorkType;
+  customerId?: string | null;
+  linkedOpportunityId?: string | null;
+  linkedProposalId?: string | null;
+  linkedEngineeringProjectId?: string | null;
+  linkedEngineeringProjectRef?: string | null;
+  owner?: string | null;
+  status?: BusinessWorkStatus;
+  plannedStart?: string | null;
+  plannedFinish?: string | null;
+  actualStart?: string | null;
+  actualFinish?: string | null;
+  progressBps?: string | number | null;
+  currency: string;
+  scale?: number;
+  contractedValueMinor?: string | number | null;
+  budgetCostMinor?: string | number | null;
+  sourceType: string;
+  sourceRef?: string;
+  lastStatusAt?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessWorkMilestoneIngestInput {
+  workId: string;
+  name: string;
+  dueAt?: string | null;
+  completedAt?: string | null;
+  status?: BusinessWorkMilestoneStatus;
+  weightBps?: string | number | null;
+  owner?: string | null;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessWorkCostIngestInput {
+  workId: string;
+  periodStart: string;
+  periodEnd: string;
+  costType: BusinessWorkCostType;
+  amountMinor: string | number;
+  currency: string;
+  scale?: number;
+  valueState?: BusinessWorkValueState;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessWorkCapacityIngestInput {
+  dimensionType: BusinessWorkCapacityDimension;
+  dimensionRef: string;
+  dimensionName: string;
+  workId?: string | null;
+  periodStart: string;
+  periodEnd: string;
+  availableHoursMinor?: string | number | null;
+  committedHoursMinor?: string | number | null;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessWorkActionLinkIngestInput {
+  workId: string;
+  actionId: string;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface EngineeringProjectLinkContract {
+  capability: "engineering_project_link";
+  implemented: true;
+  mode: "stable_reference";
+  writesEngineeringOs: false;
+  readsEngineeringTables: false;
+  note: string;
+}
+
+export interface DecisionActionIntelligenceContract {
+  capability: "decision_action";
   implemented: false;
   inputs: readonly string[];
   note: string;

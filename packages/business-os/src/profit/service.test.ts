@@ -8,6 +8,6 @@ describe("BOS-6 profit service guards", () => {
     const bos = createBusinessOS({} as SupabaseClient, createPlatformKernel({} as SupabaseClient));
     expect(() => bos.profitIntelligence.repriceAutonomously()).toThrow("autonomous_reprice_forbidden");
     expect(() => bos.profitIntelligence.terminateCustomer()).toThrow("autonomous_customer_action_forbidden");
-    expect(bos.profitIntelligence.workOperations().available).toBe(false);
+    expect(bos.profitIntelligence.workOperations().available).toBe(true);
   });
 });

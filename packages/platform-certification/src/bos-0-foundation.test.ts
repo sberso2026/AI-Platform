@@ -37,6 +37,7 @@ describe("BOS-0 Business OS foundation", () => {
       "revenue_execution",
       "customer_intelligence",
       "profit_intelligence",
+      "work_operations",
     ]);
   });
 });

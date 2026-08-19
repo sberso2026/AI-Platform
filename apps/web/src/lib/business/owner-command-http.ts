@@ -58,6 +58,16 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "credit_decision_forbidden" ||
     message === "autonomous_reprice_forbidden" ||
     message === "autonomous_customer_action_forbidden" ||
+    message === "autonomous_assignment_forbidden" ||
+    message === "external_project_write_forbidden" ||
+    message === "autonomous_completion_forbidden" ||
+    message === "invalid_work_status" ||
+    message === "invalid_work_type" ||
+    message === "work_name_required" ||
+    message === "work_id_required" ||
+    message === "invalid_milestone_status" ||
+    message === "invalid_cost_type" ||
+    message === "invalid_progress_bps" ||
     message === "invalid_profit_dimension" ||
     message === "invalid_value_state" ||
     message === "invalid_attribution_method" ||

@@ -23,6 +23,8 @@ export const BUSINESS_PERMISSION_MAP: Record<
   "business_os.customer_intelligence.manage": { resource: "business", action: "execute" },
   "business_os.profit_intelligence.view": { resource: "business", action: "read" },
   "business_os.profit_intelligence.manage": { resource: "business", action: "execute" },
+  "business_os.work_operations.view": { resource: "business", action: "read" },
+  "business_os.work_operations.manage": { resource: "business", action: "execute" },
 };
 
 function hasPlatformPermission(
@@ -53,7 +55,8 @@ export function hasBusinessPermission(
     permission === "business_os.growth_intelligence.view" ||
     permission === "business_os.revenue_execution.view" ||
     permission === "business_os.customer_intelligence.view" ||
-    permission === "business_os.profit_intelligence.view"
+    permission === "business_os.profit_intelligence.view" ||
+    permission === "business_os.work_operations.view"
   ) {
     return (
       hasPlatformPermission(permissions, "business", "read") ||
@@ -68,7 +71,8 @@ export function hasBusinessPermission(
     permission === "business_os.growth_intelligence.manage" ||
     permission === "business_os.revenue_execution.manage" ||
     permission === "business_os.customer_intelligence.manage" ||
-    permission === "business_os.profit_intelligence.manage"
+    permission === "business_os.profit_intelligence.manage" ||
+    permission === "business_os.work_operations.manage"
   ) {
     return (
       hasPlatformPermission(permissions, "business", "execute") ||
