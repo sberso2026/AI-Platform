@@ -2,8 +2,8 @@
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
  * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
  * BOS-6 Profit Intelligence, BOS-7 Work & Operations, BOS-8 Decision & Action Intelligence,
- * BOS-9 Business Risk, BOS-10 Business Context Graph).
- * Capabilities are identifiers — owner_command through business_context are implemented.
+ * BOS-9 Business Risk, BOS-10 Business Context Graph, BOS-11 AI Workforce).
+ * Capabilities are identifiers — owner_command through ai_workforce are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -40,6 +40,10 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.business_risk.approve",
   "business_os.business_context.view",
   "business_os.business_context.manage",
+  "business_os.ai_workforce.view",
+  "business_os.ai_workforce.manage",
+  "business_os.ai_workforce.run",
+  "business_os.ai_workforce.approve",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -161,6 +165,18 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.context.projection_failed",
   "business_os.context.rebuild_completed",
   "business_os.context.unresolved_reference_detected",
+  "business_os.ai_workforce.agent_installed",
+  "business_os.ai_workforce.agent_enabled",
+  "business_os.ai_workforce.agent_suspended",
+  "business_os.ai_workforce.agent_revoked",
+  "business_os.ai_workforce.task_requested",
+  "business_os.ai_workforce.run_started",
+  "business_os.ai_workforce.approval_requested",
+  "business_os.ai_workforce.execution_started",
+  "business_os.ai_workforce.run_completed",
+  "business_os.ai_workforce.run_failed",
+  "business_os.ai_workforce.run_blocked",
+  "business_os.ai_workforce.handoff_requested",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -2176,8 +2192,101 @@ export interface BusinessContextGraphContract {
 
 export interface AiWorkforceContract {
   capability: "ai_workforce";
-  implemented: false;
-  note: "BOS-10 extension boundary only. Do not start BOS-11.";
+  implemented: true;
+  reuses: readonly [
+    "platform_kernel_agent_registry",
+    "platform_kernel_ai_director",
+    "platform_intelligence_policy_engine",
+    "platform_intelligence_tool_registry",
+    "platform_kernel_workflow_engine",
+    "platform_kernel_event_bus",
+    "platform_kernel_memory",
+    "platform_kernel_knowledge_graph",
+  ];
+  implementsOwnAiStack: false;
+  duplicateAgentRuntimeDetected: false;
+  autonomousApprovalEnabled: false;
+  directProviderAccess: false;
+  unrestrictedGraphAccess: false;
+  canonicalDomainMutationBypass: false;
+  crossTenantAgentAccess: false;
+  note: string;
+}
+
+export const BUSINESS_WORKFORCE_AUTHORITY_CLASSES = [
+  "observe",
+  "recommend",
+  "prepare",
+  "request_execution",
+  "execute_with_approval",
+] as const;
+export type BusinessWorkforceAuthorityClass = (typeof BUSINESS_WORKFORCE_AUTHORITY_CLASSES)[number];
+
+export const BUSINESS_WORKFORCE_INSTALL_STATUSES = [
+  "installed",
+  "enabled",
+  "suspended",
+  "revoked",
+] as const;
+export type BusinessWorkforceInstallStatus = (typeof BUSINESS_WORKFORCE_INSTALL_STATUSES)[number];
+
+export const BUSINESS_WORKFORCE_RUN_STATES = [
+  "requested",
+  "policy_check",
+  "context_assembled",
+  "planned",
+  "awaiting_approval",
+  "approved",
+  "executing",
+  "completed",
+  "failed",
+  "blocked",
+  "cancelled",
+] as const;
+export type BusinessWorkforceRunState = (typeof BUSINESS_WORKFORCE_RUN_STATES)[number];
+
+export const BUSINESS_WORKFORCE_APPROVAL_DECISIONS = ["pending", "approved", "rejected"] as const;
+export type BusinessWorkforceApprovalDecision = (typeof BUSINESS_WORKFORCE_APPROVAL_DECISIONS)[number];
+
+export const BUSINESS_WORKFORCE_READ_TOOLS = [
+  "bos.context.search",
+  "bos.context.entity",
+  "bos.context.neighbourhood",
+  "bos.context.explain",
+] as const;
+export type BusinessWorkforceReadTool = (typeof BUSINESS_WORKFORCE_READ_TOOLS)[number];
+
+export const BUSINESS_WORKFORCE_FORBIDDEN_TOOLS = [
+  "bos.canonical.write",
+  "bos.external.send",
+  "bos.external.submit",
+  "bos.engineering.mutate",
+  "bos.finance.commit",
+  "bos.pricing.commit",
+  "bos.proposal.submit",
+  "bos.customer.mutate",
+  "direct.model.provider",
+] as const;
+
+export type BusinessWorkforceAgentContextState =
+  | "ok"
+  | "insufficient_evidence"
+  | "needs_human_review";
+
+export interface BusinessWorkforceAgentContext {
+  state: BusinessWorkforceAgentContextState;
+  reasons: string[];
+  assembly: BusinessContextAiAssembly | null;
+  adjacencyIsNotCausation: true;
+  provenancePreserved: true;
+}
+
+export interface BusinessWorkforceExplanation {
+  evidence: Array<{ sourceRef: string; provenance: Record<string, unknown>; freshness: string | null }>;
+  derivedRecommendation: string;
+  assumption: string[];
+  missingEvidence: string[];
+  chainOfThoughtExposed: false;
 }
 
 export const BUSINESS_DECISION_DOMAINS = [
@@ -3449,7 +3558,8 @@ export interface BusinessContextDiagnosticFinding {
     | "cross_tenant_violation"
     | "schema_version_mismatch"
     | "ambiguous_mapping"
-    | "missing_source_domain";
+    | "missing_source_domain"
+    | "suppressed_context_leakage";
   severity: "info" | "watch" | "warning" | "critical";
   message: string;
   canonicalRef?: string;

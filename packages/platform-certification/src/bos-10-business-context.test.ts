@@ -16,10 +16,10 @@ describe("BOS-10 Business Context Graph", () => {
     expect(implementsOwnAiStack).toBe(false);
     expect(duplicateKnowledgeGraphDetected).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-10");
+    expect(bos.status.snapshot().phase).toBe("BOS-11");
     expect(bos.businessContextGraph).toBeDefined();
     expect(bos.capabilities.isImplemented("business_context")).toBe(true);
-    expect(bos.capabilities.isImplemented("ai_workforce")).toBe(false);
+    expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.businessContextGraph.contract().reuses).toEqual([
       "platform_kernel_knowledge_graph",
       "platform_kernel_event_bus",
@@ -31,7 +31,7 @@ describe("BOS-10 Business Context Graph", () => {
     expect(() => bos.businessContextGraph.projectEngineeringDomain()).toThrow(
       "engineering_os_internal_projection_forbidden",
     );
-    expect(bos.businessContextGraph.aiWorkforce().available).toBe(false);
+    expect(bos.businessContextGraph.aiWorkforce().available).toBe(true);
   });
 
   it("registers /business/context", () => {

@@ -10,7 +10,7 @@ import {
   type BusinessContextRelationshipType,
 } from "@rtb/types";
 import type { KnowledgeEdge, KnowledgeNode } from "@rtb/types";
-import { identityFromContent } from "./identity";
+import { identityFromContent, SUPPRESSED_CONTACT_LABEL } from "./identity";
 import { parseKernelNodeType } from "./ontology";
 import type { GraphSnapshot } from "./graph-port";
 import { emptyQuality } from "./diagnostics";
@@ -45,7 +45,7 @@ function visibleIdentity(node: KnowledgeNode, includeSuppressedContacts: boolean
     return null;
   }
   if (identity.suppressed && identity.entityType === "contact") {
-    return { ...identity, displayName: "Contact (suppressed)", sourceRef: null };
+    return { ...identity, displayName: SUPPRESSED_CONTACT_LABEL, sourceRef: null };
   }
   return identity;
 }

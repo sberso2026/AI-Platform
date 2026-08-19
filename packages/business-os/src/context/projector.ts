@@ -3,7 +3,7 @@ import {
   type BusinessContextCanonicalRecord,
   type BusinessContextRelationshipEvidence,
 } from "@rtb/types";
-import { assertSameTenant, assertSameWorkspace } from "./identity";
+import { assertSameTenant, assertSameWorkspace, redactSuppressedContactContent } from "./identity";
 import { kernelNodeType } from "./ontology";
 import { assertRelationshipType } from "./taxonomy";
 import type { GraphPort } from "./graph-port";
@@ -52,17 +52,15 @@ export async function projectRecords(
       if (existing) await graph.deleteNode(identity.tenantId, existing.id);
       continue;
     }
+    const content = redactSuppressedContactContent(identity);
     await graph.upsertNode({
       tenantId: identity.tenantId,
       workspaceId: identity.workspaceId,
       nodeType: kernelNodeType(identity.entityType),
-      title: identity.suppressed && identity.entityType === "contact" ? "Contact (suppressed)" : identity.displayName,
+      title: String(content.displayName ?? identity.displayName),
       sourceRef: identity.canonicalRef,
       createdBy: actorId,
-      content: {
-        ...identity,
-        personalFieldsSuppressed: Boolean(identity.suppressed && identity.entityType === "contact"),
-      },
+      content,
       metadata: {
         ontologyVersion: BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION,
         projection: true,

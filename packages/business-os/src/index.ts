@@ -99,4 +99,8 @@ export * from "./context/assembly";
 export * from "./context/graph-port";
 export * from "./context/service";
 export * from "./context/demo";
+export * from "./workforce/catalog";
+export * from "./workforce/service";
+export * from "./workforce/demo";
+export * from "./workforce/diagnostics";
 

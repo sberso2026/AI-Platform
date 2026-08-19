@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Business Context preview (BOS-10)",
+      "AI-assisted business operations — AI Workforce preview (BOS-11)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -32,6 +32,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/decisions", title: "Decision Intelligence", component: "DecisionIntelligence" },
       { path: "/business/risk", title: "Business Risk", component: "BusinessRisk" },
       { path: "/business/context", title: "Business Context", component: "BusinessContext" },
+      { path: "/business/ai-workforce", title: "AI Workforce", component: "AiWorkforce" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -114,6 +115,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "GitBranch",
         group: "business",
         order: 10,
+      },
+      {
+        id: "bos-ai-workforce",
+        label: "AI Workforce",
+        path: "/business/ai-workforce",
+        icon: "Bot",
+        group: "business",
+        order: 11,
       },
       {
         id: "bos-settings",
@@ -200,6 +209,18 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.context.projection_failed", description: "Business context projection failed" },
       { type: "business_os.context.rebuild_completed", description: "Business context projection rebuild completed" },
       { type: "business_os.context.unresolved_reference_detected", description: "Unresolved context graph reference detected" },
+      { type: "business_os.ai_workforce.agent_installed", description: "Governed workforce agent installed" },
+      { type: "business_os.ai_workforce.agent_enabled", description: "Governed workforce agent enabled" },
+      { type: "business_os.ai_workforce.agent_suspended", description: "Governed workforce agent suspended" },
+      { type: "business_os.ai_workforce.agent_revoked", description: "Governed workforce agent revoked" },
+      { type: "business_os.ai_workforce.task_requested", description: "Workforce task requested" },
+      { type: "business_os.ai_workforce.run_started", description: "Workforce run started" },
+      { type: "business_os.ai_workforce.approval_requested", description: "Workforce execution approval requested" },
+      { type: "business_os.ai_workforce.execution_started", description: "Workforce execution started after approval/policy" },
+      { type: "business_os.ai_workforce.run_completed", description: "Workforce run completed" },
+      { type: "business_os.ai_workforce.run_failed", description: "Workforce run failed" },
+      { type: "business_os.ai_workforce.run_blocked", description: "Workforce run blocked" },
+      { type: "business_os.ai_workforce.handoff_requested", description: "Bounded agent-to-agent handoff requested" },
     ],
     knowledge: [
       {

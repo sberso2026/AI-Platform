@@ -327,6 +327,78 @@ export class AIDirectorService {
     return data ?? [];
   }
 
+  async getAgentBySlug(tenantId: string, slug: string): Promise<{ id: string; slug: string; isActive: boolean } | null> {
+    const { data, error } = await this.supabase
+      .from("agents")
+      .select("id, slug, is_active")
+      .eq("tenant_id", tenantId)
+      .eq("slug", slug)
+      .limit(1);
+    if (error) throw new Error(`Failed to get agent: ${error.message}`);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return null;
+    return { id: String(row.id), slug: String(row.slug), isActive: Boolean(row.is_active) };
+  }
+
+  async setAgentActive(tenantId: string, agentId: string, isActive: boolean): Promise<void> {
+    const { error } = await this.supabase
+      .from("agents")
+      .update({ is_active: isActive })
+      .eq("id", agentId)
+      .eq("tenant_id", tenantId);
+    if (error) throw new Error(`Failed to update agent: ${error.message}`);
+  }
+
+  async upsertCatalogAgent(input: {
+    tenantId: string;
+    slug: string;
+    name: string;
+    description: string;
+    capabilities: string[];
+    metadata: Record<string, unknown>;
+    isActive: boolean;
+    requiresReview: boolean;
+    systemPrompt: string;
+  }): Promise<{ id: string; slug: string; isActive: boolean }> {
+    const existing = await this.getAgentBySlug(input.tenantId, input.slug);
+    if (existing) {
+      const { data, error } = await this.supabase
+        .from("agents")
+        .update({
+          name: input.name,
+          description: input.description,
+          capabilities: input.capabilities as unknown as Json,
+          metadata: input.metadata as Json,
+          is_active: input.isActive,
+          requires_review: input.requiresReview,
+          system_prompt: input.systemPrompt,
+        })
+        .eq("id", existing.id)
+        .eq("tenant_id", input.tenantId)
+        .select("id, slug, is_active")
+        .single();
+      if (error || !data) throw new Error(`Failed to update catalog agent: ${error?.message}`);
+      return { id: String(data.id), slug: String(data.slug), isActive: Boolean(data.is_active) };
+    }
+    const { data, error } = await this.supabase
+      .from("agents")
+      .insert({
+        tenant_id: input.tenantId,
+        slug: input.slug,
+        name: input.name,
+        description: input.description,
+        capabilities: input.capabilities as unknown as Json,
+        metadata: input.metadata as Json,
+        is_active: input.isActive,
+        requires_review: input.requiresReview,
+        system_prompt: input.systemPrompt,
+      })
+      .select("id, slug, is_active")
+      .single();
+    if (error || !data) throw new Error(`Failed to insert catalog agent: ${error?.message}`);
+    return { id: String(data.id), slug: String(data.slug), isActive: Boolean(data.is_active) };
+  }
+
   private async resolveAgent(tenantId: string, agentId?: string) {
     if (agentId) {
       const { data, error } = await this.supabase

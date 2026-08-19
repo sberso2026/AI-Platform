@@ -123,6 +123,7 @@ describe("BUSINESS_PAGE_POLICIES route coverage", () => {
       : [];
     expect(segments.sort()).toEqual([
       "actions",
+      "ai-workforce",
       "brief",
       "capabilities",
       "command",

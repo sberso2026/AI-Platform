@@ -89,7 +89,8 @@ describe("BOS-0 capability registry", () => {
         cap.id === "work_operations" ||
         cap.id === "decision_action" ||
         cap.id === "business_risk" ||
-        cap.id === "business_context"
+        cap.id === "business_context" ||
+        cap.id === "ai_workforce"
       ) {
         expect(cap.implemented).toBe(true);
         expect(cap.activationStatus).toBe("preview");
@@ -132,6 +133,10 @@ describe("BOS-0 permissions", () => {
       "business_os.business_risk.approve",
       "business_os.business_context.view",
       "business_os.business_context.manage",
+      "business_os.ai_workforce.view",
+      "business_os.ai_workforce.manage",
+      "business_os.ai_workforce.run",
+      "business_os.ai_workforce.approve",
     ]);
     expect(BUSINESS_PERMISSION_MAP["business_os.view"]).toEqual({
       resource: "business",
@@ -237,6 +242,22 @@ describe("BOS-0 permissions", () => {
       resource: "business",
       action: "execute",
     });
+    expect(BUSINESS_PERMISSION_MAP["business_os.ai_workforce.view"]).toEqual({
+      resource: "business",
+      action: "read",
+    });
+    expect(BUSINESS_PERMISSION_MAP["business_os.ai_workforce.manage"]).toEqual({
+      resource: "business",
+      action: "execute",
+    });
+    expect(BUSINESS_PERMISSION_MAP["business_os.ai_workforce.run"]).toEqual({
+      resource: "business",
+      action: "execute",
+    });
+    expect(BUSINESS_PERMISSION_MAP["business_os.ai_workforce.approve"]).toEqual({
+      resource: "business",
+      action: "admin",
+    });
   });
 
   it("grants owner tenant.admin all BOS permissions", () => {
@@ -266,6 +287,7 @@ describe("BOS-0 permissions", () => {
     expect(hasBusinessPermission(viewer, "business_os.decision_action.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.business_risk.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.business_context.view")).toBe(true);
+    expect(hasBusinessPermission(viewer, "business_os.ai_workforce.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.owner_command.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.financial_intelligence.manage")).toBe(false);
@@ -277,6 +299,9 @@ describe("BOS-0 permissions", () => {
     expect(hasBusinessPermission(viewer, "business_os.decision_action.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.business_risk.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.business_context.manage")).toBe(false);
+    expect(hasBusinessPermission(viewer, "business_os.ai_workforce.manage")).toBe(false);
+    expect(hasBusinessPermission(viewer, "business_os.ai_workforce.run")).toBe(false);
+    expect(hasBusinessPermission(viewer, "business_os.ai_workforce.approve")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.decision_action.approve")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.business_risk.approve")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.revenue_execution.approve")).toBe(false);
@@ -285,6 +310,9 @@ describe("BOS-0 permissions", () => {
       true,
     );
     expect(hasBusinessPermission([{ resource: "business", action: "execute" }], "business_os.revenue_execution.approve")).toBe(
+      false,
+    );
+    expect(hasBusinessPermission([{ resource: "business", action: "execute" }], "business_os.ai_workforce.approve")).toBe(
       false,
     );
   });
@@ -399,7 +427,7 @@ describe("createBusinessOS", () => {
     const bos = createBusinessOS(supabase, kernel);
     expect(bos.status.snapshot().implementsOwnAiStack).toBe(false);
     expect(bos.status.snapshot().osId).toBe("business");
-    expect(bos.status.snapshot().phase).toBe("BOS-10");
+    expect(bos.status.snapshot().phase).toBe("BOS-11");
     expect(bos.status.configuration().kernelServices.aiDirector).toBe(true);
     expect(bos.status.configuration().kernelServices.knowledgeGraph).toBe(true);
     expect(bos.capabilities.list()).toHaveLength(18);
@@ -413,7 +441,7 @@ describe("createBusinessOS", () => {
     expect(bos.capabilities.isImplemented("decision_action")).toBe(true);
     expect(bos.capabilities.isImplemented("business_risk")).toBe(true);
     expect(bos.capabilities.isImplemented("business_context")).toBe(true);
-    expect(bos.capabilities.isImplemented("ai_workforce")).toBe(false);
+    expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.capabilities.list().filter((c) => c.implemented).map((c) => c.id)).toEqual([
       "owner_command",
       "financial_intelligence",
@@ -425,6 +453,7 @@ describe("createBusinessOS", () => {
       "decision_action",
       "business_risk",
       "business_context",
+      "ai_workforce",
     ]);
     expect(bos.ownerCommand).toBeDefined();
     expect(bos.financialIntelligence).toBeDefined();
@@ -436,8 +465,11 @@ describe("createBusinessOS", () => {
     expect(bos.decisionAction).toBeDefined();
     expect(bos.businessRisk).toBeDefined();
     expect(bos.businessContextGraph).toBeDefined();
+    expect(bos.aiWorkforce).toBeDefined();
     expect(bos.businessContextGraph.contract().implementsOwnAiStack).toBe(false);
-    expect(bos.businessContextGraph.aiWorkforce().available).toBe(false);
+    expect(bos.businessContextGraph.aiWorkforce().available).toBe(true);
+    expect(bos.aiWorkforce.contract().implementsOwnAiStack).toBe(false);
+    expect(bos.aiWorkforce.contract().duplicateAgentRuntimeDetected).toBe(false);
   });
 });
 
@@ -484,6 +516,10 @@ describe("BOS-1 events and AI contract", () => {
         "business_os.context.projection_failed",
         "business_os.context.rebuild_completed",
         "business_os.context.unresolved_reference_detected",
+        "business_os.ai_workforce.agent_installed",
+        "business_os.ai_workforce.agent_enabled",
+        "business_os.ai_workforce.run_completed",
+        "business_os.ai_workforce.approval_requested",
       ]),
     );
   });

@@ -41,6 +41,7 @@ describe("BOS-0 Business OS foundation", () => {
       "decision_action",
       "business_risk",
       "business_context",
+      "ai_workforce",
     ]);
   });
 });

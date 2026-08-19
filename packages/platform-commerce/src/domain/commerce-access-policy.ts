@@ -261,6 +261,21 @@ export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
     workspaceRequired: true,
     cachePolicy: "fresh",
   },
+  "ai-workforce.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "ai-workforce.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "ai-workforce.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "ai-workforce.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
 };
 
 export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
@@ -330,6 +345,13 @@ export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     productKey: BUSINESS_PRODUCT,
     featureKey: BUSINESS_OS_FEATURE_KEY,
     action: "context.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "/business/ai-workforce": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "ai-workforce.read",
     seatRequired: false,
     workspaceRequired: true,
   },

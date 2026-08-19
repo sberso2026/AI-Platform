@@ -1,4 +1,4 @@
-import type { BusinessContextGraphContract, AiWorkforceContract } from "@rtb/types";
+import type { BusinessContextGraphContract } from "@rtb/types";
 import { BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION } from "@rtb/types";
 
 export const BUSINESS_CONTEXT_GRAPH_CONTRACT: BusinessContextGraphContract = {
@@ -29,16 +29,4 @@ export function businessContextGraphStatus() {
   };
 }
 
-export const AI_WORKFORCE_CONTRACT: AiWorkforceContract = {
-  capability: "ai_workforce",
-  implemented: false,
-  note: "BOS-10 extension boundary only. Do not start BOS-11.",
-};
-
-export function aiWorkforceStatus() {
-  return {
-    available: false as const,
-    reason: "ai_workforce_not_implemented" as const,
-    contract: AI_WORKFORCE_CONTRACT.capability,
-  };
-}
+export { AI_WORKFORCE_CONTRACT, aiWorkforceStatus, BOS_12_BOUNDARY_NOTE } from "../workforce/extensions";
