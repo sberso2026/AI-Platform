@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Decision & Action Intelligence preview (BOS-8)",
+      "AI-assisted business operations — Business Risk preview (BOS-9)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -30,6 +30,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/profit", title: "Profit Intelligence", component: "ProfitIntelligence" },
       { path: "/business/operations", title: "Work & Operations", component: "WorkOperations" },
       { path: "/business/decisions", title: "Decision Intelligence", component: "DecisionIntelligence" },
+      { path: "/business/risk", title: "Business Risk", component: "BusinessRisk" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -96,6 +97,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "Gavel",
         group: "business",
         order: 8,
+      },
+      {
+        id: "bos-risk",
+        label: "Risk",
+        path: "/business/risk",
+        icon: "ShieldAlert",
+        group: "business",
+        order: 9,
       },
       {
         id: "bos-settings",
@@ -169,6 +178,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.operations.capacity_updated", description: "Capacity fact updated" },
       { type: "business_os.operations.risk_detected", description: "Operational risk indicator detected" },
       { type: "business_os.operations.metrics_updated", description: "Operations metrics published to Owner Command" },
+      { type: "business_os.risk.created", description: "Business risk created" },
+      { type: "business_os.risk.assessed", description: "Business risk assessed" },
+      { type: "business_os.risk.residual_updated", description: "Residual risk updated from evidenced controls" },
+      { type: "business_os.risk.control_updated", description: "Risk control updated" },
+      { type: "business_os.risk.treatment_updated", description: "Risk treatment updated" },
+      { type: "business_os.risk.outside_tolerance", description: "Residual risk is outside configured tolerance" },
+      { type: "business_os.risk.obligation_overdue", description: "Risk obligation is overdue" },
+      { type: "business_os.risk.review_due", description: "Risk review is due or overdue" },
     ],
     knowledge: [
       {

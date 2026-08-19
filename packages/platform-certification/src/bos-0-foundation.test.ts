@@ -39,6 +39,7 @@ describe("BOS-0 Business OS foundation", () => {
       "profit_intelligence",
       "work_operations",
       "decision_action",
+      "business_risk",
     ]);
   });
 });

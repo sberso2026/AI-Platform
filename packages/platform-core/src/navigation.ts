@@ -733,6 +733,14 @@ export const BUSINESS_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "bos-risk",
+    label: "Risk",
+    icon: "ShieldAlert",
+    href: "/business/risk",
+    group: "business",
+    audience: "viewer",
+  },
+  {
     id: "bos-settings",
     label: "Settings",
     icon: "Settings",

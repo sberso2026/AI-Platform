@@ -12,6 +12,7 @@ import { CustomerIntelligenceService } from "./customers/service";
 import { ProfitIntelligenceService } from "./profit/service";
 import { WorkOperationsService } from "./operations/service";
 import { DecisionActionIntelligenceService } from "./decisions/service";
+import { BusinessRiskService } from "./risk/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -24,6 +25,7 @@ export interface BusinessOS {
   profitIntelligence: ProfitIntelligenceService;
   workOperations: WorkOperationsService;
   decisionAction: DecisionActionIntelligenceService;
+  businessRisk: BusinessRiskService;
 }
 
 export function createBusinessOS(
@@ -82,6 +84,7 @@ export function createBusinessOS(
     workOperations.customerEvidence(scope, customerId),
   );
   const decisionAction = new DecisionActionIntelligenceService(supabase, kernel, audit, ownerCommand);
+  const businessRisk = new BusinessRiskService(supabase, kernel, audit, ownerCommand);
   return {
     status,
     capabilities,
@@ -93,6 +96,7 @@ export function createBusinessOS(
     profitIntelligence,
     workOperations,
     decisionAction,
+    businessRisk,
   };
 }
 

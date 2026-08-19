@@ -84,6 +84,28 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "decision_question_required" ||
     message === "option_title_required" ||
     message === "outcome_evidence_required" ||
+    message === "autonomous_risk_acceptance_forbidden" ||
+    message === "external_regulator_write_forbidden" ||
+    message === "statutory_compliance_claim_forbidden" ||
+    message === "legal_advice_forbidden" ||
+    message === "control_evidence_required" ||
+    message === "obligation_evidence_required" ||
+    message === "invalid_risk_status" ||
+    message === "invalid_likelihood" ||
+    message === "invalid_impact" ||
+    message === "invalid_control_effectiveness" ||
+    message === "invalid_control_status" ||
+    message === "invalid_control_type" ||
+    message === "invalid_treatment_strategy" ||
+    message === "invalid_obligation_status" ||
+    message === "invalid_risk_category" ||
+    message === "invalid_incident_severity" ||
+    message === "invalid_risk_evidence_source" ||
+    message === "risk_title_required" ||
+    message === "control_name_required" ||
+    message === "obligation_title_required" ||
+    message === "incident_title_required" ||
+    message === "risk_not_material" ||
     message === "agent_disabled" ||
     message.startsWith("agent_authority_denied") ||
     message.startsWith("agent_action_prohibited")

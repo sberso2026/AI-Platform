@@ -14,10 +14,10 @@ describe("BOS-8 Decision & Action Intelligence", () => {
   it("reuses Platform AI Director and forbids autonomous approval", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-8");
+    expect(bos.status.snapshot().phase).toBe("BOS-9");
     expect(bos.decisionAction).toBeDefined();
     expect(bos.capabilities.isImplemented("decision_action")).toBe(true);
-    expect(bos.capabilities.isImplemented("business_risk")).toBe(false);
+    expect(bos.capabilities.isImplemented("business_risk")).toBe(true);
     expect(() => bos.decisionAction.approveAutonomously()).toThrow("autonomous_approval_forbidden");
     expect(() => bos.decisionAction.executeExternalAction()).toThrow("external_execution_forbidden");
     expect(() => bos.decisionAction.rewriteHistoricalEvidence()).toThrow("historical_evidence_rewrite_forbidden");
@@ -27,7 +27,7 @@ describe("BOS-8 Decision & Action Intelligence", () => {
       "business_os_decisions",
       "business_os_actions",
     ]);
-    expect(bos.decisionAction.businessRisk().available).toBe(false);
+    expect(bos.decisionAction.businessRisk().available).toBe(true);
   });
 
   it("registers /business/decisions", () => {
