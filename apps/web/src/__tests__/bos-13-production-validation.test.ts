@@ -13,10 +13,10 @@ import type { SupabaseClient } from "@rtb/database";
 import { resolveEntitlementTarget } from "../lib/commerce/guards";
 
 const ROOT = path.resolve(__dirname, "..");
-const OCC = fs.readFileSync(path.join(ROOT, "src/app/(platform)/business/page.tsx"), "utf8");
-const OPERATIONS = fs.readFileSync(path.join(ROOT, "src/app/(platform)/business/operations/page.tsx"), "utf8");
+const OCC = fs.readFileSync(path.join(ROOT, "app/(platform)/business/page.tsx"), "utf8");
+const OPERATIONS = fs.readFileSync(path.join(ROOT, "app/(platform)/business/operations/page.tsx"), "utf8");
 const OPERATIONS_DETAIL = fs.readFileSync(
-  path.join(ROOT, "src/app/(platform)/business/operations/[id]/page.tsx"),
+  path.join(ROOT, "app/(platform)/business/operations/[id]/page.tsx"),
   "utf8",
 );
 
@@ -58,7 +58,7 @@ describe("BOS-13 production validation web wiring", () => {
     expect(OPERATIONS).toContain("<StatusChip value={row.health} />");
     expect(OPERATIONS_DETAIL).toContain("<StatusChip value={data.health.status} />");
     expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.status === "RESOLVED")).toBe(true);
-    expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.classification !== "UNRELATED_BASELINE")).toBe(true);
+    expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.classification === "PRE_EXISTING_BEFORE_BOS_12")).toBe(true);
   });
 
   it("does not claim browser E2E certification from static wiring tests", () => {
