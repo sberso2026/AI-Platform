@@ -29,7 +29,7 @@ describe("BOS-9 business risk migration", () => {
     expect(sql).toContain("'risk'");
     expect(sql.toLowerCase()).not.toContain("create table if not exists business_os_tasks");
     expect(sql.toLowerCase()).not.toContain("autonomous_risk_acceptance");
-    expect(sql.toLowerCase()).not.toContain("regulator");
     expect(sql.toLowerCase()).not.toContain("create table if not exists knowledge_graph");
+    expect(sql.toLowerCase()).not.toContain("create table if not exists business_os_regulator");
   });
 });

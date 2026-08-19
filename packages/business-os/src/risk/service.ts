@@ -8,6 +8,7 @@ import type {
   BusinessRiskAssessmentInput,
   BusinessRiskControlInput,
   BusinessRiskEvidenceInput,
+  BusinessRiskEvidenceFreshness,
   BusinessRiskIncidentInput,
   BusinessRiskInput,
   BusinessRiskKpiKey,
@@ -922,7 +923,7 @@ export class BusinessRiskService {
       const tolerance = toleranceStatus(residual.residualLevel, maxAcceptable);
       const riskEvidence = evidence.filter((item) => item.riskId === risk.id);
       const newest = riskEvidence[0]?.capturedAt ?? null;
-      const evidenceFreshness =
+      const evidenceFreshness: BusinessRiskEvidenceFreshness =
         riskEvidence.length === 0
           ? "missing"
           : newest && Date.parse(asOf) - Date.parse(newest) > staleMs

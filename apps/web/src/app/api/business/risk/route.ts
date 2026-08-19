@@ -50,7 +50,7 @@ export const PATCH = withBusinessApi(async ({ ctx }, request) => {
       title: typeof body.title === "string" ? body.title : undefined,
       description: typeof body.description === "string" ? body.description : undefined,
       ownerLabel: typeof body.ownerLabel === "string" ? body.ownerLabel : undefined,
-      status: typeof body.status === "string" ? body.status : undefined,
+      status: typeof body.status === "string" ? (body.status as never) : undefined,
       reviewAt: typeof body.reviewAt === "string" ? body.reviewAt : undefined,
     });
     return NextResponse.json({ data });
