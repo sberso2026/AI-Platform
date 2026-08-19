@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Business Risk preview (BOS-9)",
+      "AI-assisted business operations — Business Context preview (BOS-10)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -31,6 +31,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/operations", title: "Work & Operations", component: "WorkOperations" },
       { path: "/business/decisions", title: "Decision Intelligence", component: "DecisionIntelligence" },
       { path: "/business/risk", title: "Business Risk", component: "BusinessRisk" },
+      { path: "/business/context", title: "Business Context", component: "BusinessContext" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -105,6 +106,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "ShieldAlert",
         group: "business",
         order: 9,
+      },
+      {
+        id: "bos-context",
+        label: "Business Context",
+        path: "/business/context",
+        icon: "GitBranch",
+        group: "business",
+        order: 10,
       },
       {
         id: "bos-settings",
@@ -186,11 +195,16 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.risk.outside_tolerance", description: "Residual risk is outside configured tolerance" },
       { type: "business_os.risk.obligation_overdue", description: "Risk obligation is overdue" },
       { type: "business_os.risk.review_due", description: "Risk review is due or overdue" },
+      { type: "business_os.context.node_projected", description: "Business context node projected into Kernel graph" },
+      { type: "business_os.context.relationship_projected", description: "Business context relationship projected into Kernel graph" },
+      { type: "business_os.context.projection_failed", description: "Business context projection failed" },
+      { type: "business_os.context.rebuild_completed", description: "Business context projection rebuild completed" },
+      { type: "business_os.context.unresolved_reference_detected", description: "Unresolved context graph reference detected" },
     ],
     knowledge: [
       {
         namespace: "business",
-        description: "Business OS knowledge namespace (unused in BOS-0; uses Platform Kernel graph)",
+        description: "Business OS projects canonical records into the Platform Kernel Knowledge Graph",
       },
     ],
     agents: [

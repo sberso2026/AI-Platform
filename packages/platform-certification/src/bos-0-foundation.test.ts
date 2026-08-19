@@ -40,6 +40,7 @@ describe("BOS-0 Business OS foundation", () => {
       "work_operations",
       "decision_action",
       "business_risk",
+      "business_context",
     ]);
   });
 });

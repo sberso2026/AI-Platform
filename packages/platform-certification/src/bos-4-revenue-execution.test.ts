@@ -15,7 +15,7 @@ describe("BOS-4 Revenue Execution", () => {
   it("reuses Platform AI Director with A2 agent authority", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-9");
+    expect(bos.status.snapshot().phase).toBe("BOS-10");
     expect(bos.revenueExecution).toBeDefined();
     expect(bos.capabilities.isImplemented("revenue_execution")).toBe(true);
     expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(true);

@@ -76,8 +76,10 @@ export {
 } from "./decisions/extensions";
 export {
   BUSINESS_CONTEXT_GRAPH_CONTRACT,
+  AI_WORKFORCE_CONTRACT,
   businessContextGraphStatus,
-} from "./risk/extensions";
+  aiWorkforceStatus,
+} from "./context/extensions";
 export * from "./decisions/service";
 export * from "./decisions/demo";
 export * from "./risk/assessment";
@@ -87,3 +89,14 @@ export * from "./risk/tolerance";
 export * from "./risk/signals";
 export * from "./risk/service";
 export * from "./risk/demo";
+export * from "./context/ontology";
+export * from "./context/identity";
+export * from "./context/taxonomy";
+export * from "./context/projector";
+export * from "./context/neighbourhood";
+export * from "./context/diagnostics";
+export * from "./context/assembly";
+export * from "./context/graph-port";
+export * from "./context/service";
+export * from "./context/demo";
+
