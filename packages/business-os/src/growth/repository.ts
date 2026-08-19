@@ -406,4 +406,52 @@ export class GrowthRepository {
       created: true,
     };
   }
+
+  async getLeadById(scope: Scope, id: string): Promise<BusinessGrowthLead | null> {
+    const { data, error } = await table(this.supabase, "business_os_growth_leads")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId)
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to load lead: ${error.message}`);
+    return data ? mapLead(data as Record<string, unknown>) : null;
+  }
+
+  async findLeadBySourceRef(scope: Scope, sourceRef: string): Promise<BusinessGrowthLead | null> {
+    const { data, error } = await table(this.supabase, "business_os_growth_leads")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId)
+      .eq("source_ref", sourceRef)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to find lead: ${error.message}`);
+    return data ? mapLead(data as Record<string, unknown>) : null;
+  }
+
+  async getOpportunityById(scope: Scope, id: string): Promise<BusinessGrowthOpportunity | null> {
+    const { data, error } = await table(this.supabase, "business_os_growth_opportunities")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId)
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to load opportunity: ${error.message}`);
+    return data ? mapOpportunity(data as Record<string, unknown>) : null;
+  }
+
+  async findOpportunityBySourceRef(scope: Scope, sourceRef: string): Promise<BusinessGrowthOpportunity | null> {
+    const { data, error } = await table(this.supabase, "business_os_growth_opportunities")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId)
+      .eq("source_ref", sourceRef)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to find opportunity: ${error.message}`);
+    return data ? mapOpportunity(data as Record<string, unknown>) : null;
+  }
 }

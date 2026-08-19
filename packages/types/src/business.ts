@@ -1,8 +1,8 @@
 /**
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
- * BOS-3 Growth Intelligence, BOS-4 Revenue Execution).
+ * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence).
  * Capabilities are identifiers — owner_command, financial_intelligence, growth_intelligence,
- * and revenue_execution are implemented.
+ * revenue_execution, and customer_intelligence are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -25,6 +25,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.revenue_execution.view",
   "business_os.revenue_execution.manage",
   "business_os.revenue_execution.approve",
+  "business_os.customer_intelligence.view",
+  "business_os.customer_intelligence.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -107,6 +109,13 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.revenue.bid_decision_requested",
   "business_os.revenue.bid_decision_completed",
   "business_os.revenue.draft_prepared",
+  "business_os.customer.created",
+  "business_os.customer.updated",
+  "business_os.customer.converted",
+  "business_os.customer.health_updated",
+  "business_os.customer.risk_detected",
+  "business_os.customer.financial_fact_ingested",
+  "business_os.customer.signal_detected",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -1191,4 +1200,296 @@ export interface BusinessRevenuePricingIngestInput {
   sourceRef?: string;
   provenance?: Record<string, unknown>;
   isDemo?: boolean;
+}
+
+export const BUSINESS_CUSTOMER_STATUSES = [
+  "prospect_converted",
+  "active",
+  "inactive",
+  "at_risk",
+  "former",
+  "archived",
+] as const;
+export type BusinessCustomerStatus = (typeof BUSINESS_CUSTOMER_STATUSES)[number];
+
+export const BUSINESS_CUSTOMER_LINK_ENTITY_TYPES = ["lead", "opportunity"] as const;
+export type BusinessCustomerLinkEntityType = (typeof BUSINESS_CUSTOMER_LINK_ENTITY_TYPES)[number];
+
+export const BUSINESS_CUSTOMER_HEALTH_STATUSES = [
+  "healthy",
+  "watch",
+  "at_risk",
+  "critical",
+  "unknown",
+] as const;
+export type BusinessCustomerHealthStatus = (typeof BUSINESS_CUSTOMER_HEALTH_STATUSES)[number];
+
+export const CUSTOMER_HEALTH_VERSION = "customer_health.v1" as const;
+export const CUSTOMER_CONCENTRATION_VERSION = "customer_concentration.v1" as const;
+export const CUSTOMER_PAYMENT_VERSION = "customer_payment.v1" as const;
+
+export const BUSINESS_CUSTOMER_KPI_KEYS = [
+  "active_customers",
+  "new_customers",
+  "customer_revenue",
+  "top_customer_concentration",
+  "top5_customer_concentration",
+  "customers_at_risk",
+  "overdue_customer_receivables",
+  "customer_health_coverage",
+] as const;
+export type BusinessCustomerKpiKey = (typeof BUSINESS_CUSTOMER_KPI_KEYS)[number];
+
+export const BUSINESS_CUSTOMER_DEFAULT_THRESHOLDS = {
+  topCustomerConcentrationWarningBps: 4000,
+  top5CustomerConcentrationWarningBps: 8000,
+  overdueRatioWarningBps: 2500,
+  inactivityDays: 60,
+  healthMinKnownComponents: 3,
+  newCustomerDays: 90,
+} as const;
+
+export interface BusinessCustomer {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  organisationName: string;
+  tradingName?: string | null;
+  externalIds: Record<string, string>;
+  website?: string | null;
+  domain?: string | null;
+  industry?: string | null;
+  geography?: string | null;
+  customerStatus: BusinessCustomerStatus;
+  relationshipOwner?: string | null;
+  acquiredAt?: string | null;
+  sourceType: string;
+  sourceRef?: string | null;
+  sourceTimestamp?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface BusinessCustomerContact {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  customerId: string;
+  name: string;
+  role?: string | null;
+  businessEmail?: string | null;
+  businessPhone?: string | null;
+  relationshipType?: string | null;
+  primary: boolean;
+  suppressed: boolean;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessCustomerLink {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  customerId: string;
+  entityType: BusinessCustomerLinkEntityType;
+  entityId: string;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessCustomerFinancialFact {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  customerId: string;
+  periodStart: string;
+  periodEnd: string;
+  revenueMinor: string | null;
+  directCostMinor: string | null;
+  grossContributionMinor: string | null;
+  receivableOutstandingMinor: string | null;
+  receivableOverdueMinor: string | null;
+  ageingCurrentMinor: string | null;
+  ageing130Minor: string | null;
+  ageing3160Minor: string | null;
+  ageing6190Minor: string | null;
+  ageing90PlusMinor: string | null;
+  dueDate?: string | null;
+  paidDate?: string | null;
+  currency: string;
+  scale: number;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessCustomerHealthComponent {
+  id: string;
+  label: string;
+  weight: number;
+  status: BusinessCustomerHealthStatus;
+  score: number | null;
+  evidence: string;
+}
+
+export interface BusinessCustomerHealth {
+  status: BusinessCustomerHealthStatus;
+  score: number | null;
+  components: BusinessCustomerHealthComponent[];
+  missingComponents: string[];
+  version: typeof CUSTOMER_HEALTH_VERSION;
+  method: "deterministic_customer_health_v1";
+  disclaimer: string;
+}
+
+export interface BusinessCustomerPaymentBehaviour {
+  outstanding: MoneyJson | null;
+  overdue: MoneyJson | null;
+  overdueRatioBps: string | null;
+  ageing: {
+    current: MoneyJson | null;
+    d1to30: MoneyJson | null;
+    d31to60: MoneyJson | null;
+    d61to90: MoneyJson | null;
+    d90plus: MoneyJson | null;
+  };
+  averagePaymentDelayDays: number | null;
+  unknownReasons: string[];
+  version: typeof CUSTOMER_PAYMENT_VERSION;
+  method: "deterministic_customer_payment_v1";
+  disclaimer: string;
+}
+
+export interface BusinessCustomerConcentration {
+  currency: string | null;
+  periodEnd: string | null;
+  totalRevenue: MoneyJson | null;
+  shares: Array<{ customerId: string; organisationName: string; shareBps: string | null; revenue: MoneyJson | null }>;
+  topCustomerShareBps: string | null;
+  top3ShareBps: string | null;
+  top5ShareBps: string | null;
+  unknownReasons: string[];
+  version: typeof CUSTOMER_CONCENTRATION_VERSION;
+  method: "deterministic_customer_concentration_v1";
+  disclaimer: string;
+}
+
+export interface BusinessCustomer360 {
+  customer: BusinessCustomer;
+  contacts: BusinessCustomerContact[];
+  leads: BusinessGrowthLead[];
+  opportunities: BusinessGrowthOpportunity[];
+  engagements: BusinessRevenueEngagementPlan[];
+  proposals: BusinessRevenueProposal[];
+  pricing: BusinessRevenuePricingScenario[];
+  financialFacts: BusinessCustomerFinancialFact[];
+  payment: BusinessCustomerPaymentBehaviour;
+  health: BusinessCustomerHealth;
+  operations: { available: false; reason: "operations_domain_not_implemented" };
+  renewal: { available: false; reason: "renewal_intelligence_not_implemented"; contract: "renewal_intelligence" };
+  expansion: { available: false; reason: "account_expansion_not_implemented"; contract: "account_expansion" };
+  dataQuality: {
+    sourceTypes: string[];
+    freshness: string | null;
+    missingFinancialAttribution: string[];
+    unknownHealthComponents: string[];
+    personalContactCount: number;
+  };
+}
+
+export interface BusinessCustomerIngestInput {
+  organisationName: string;
+  tradingName?: string | null;
+  externalIds?: Record<string, string>;
+  website?: string | null;
+  domain?: string | null;
+  industry?: string | null;
+  geography?: string | null;
+  customerStatus?: BusinessCustomerStatus;
+  relationshipOwner?: string | null;
+  acquiredAt?: string | null;
+  sourceType: string;
+  sourceRef?: string;
+  sourceTimestamp?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessCustomerContactIngestInput {
+  customerId: string;
+  name: string;
+  role?: string | null;
+  businessEmail?: string | null;
+  businessPhone?: string | null;
+  relationshipType?: string | null;
+  primary?: boolean;
+  suppressed?: boolean;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessCustomerFactIngestInput {
+  customerId: string;
+  periodStart: string;
+  periodEnd: string;
+  revenueMinor?: string | number | null;
+  directCostMinor?: string | number | null;
+  receivableOutstandingMinor?: string | number | null;
+  receivableOverdueMinor?: string | number | null;
+  ageingCurrentMinor?: string | number | null;
+  ageing130Minor?: string | number | null;
+  ageing3160Minor?: string | number | null;
+  ageing6190Minor?: string | number | null;
+  ageing90PlusMinor?: string | number | null;
+  dueDate?: string | null;
+  paidDate?: string | null;
+  currency: string;
+  scale?: number;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessCustomerSettings {
+  tenantId: string;
+  workspaceId: string;
+  concentrationTop1ThresholdBps: number;
+  concentrationTop5ThresholdBps: number;
+  inactivityDays: number;
+  staleDays: number;
+  overdueIncreaseWarningBps: number;
+  highValueInactivityMinor: string;
+  provenance: Record<string, unknown> | null;
+  updatedAt: string;
+}
+
+export interface CustomerRenewalIntelligenceContract {
+  capability: "renewal_intelligence";
+  implemented: false;
+  inputs: readonly string[];
+  note: string;
+}
+
+export interface CustomerAccountExpansionContract {
+  capability: "account_expansion";
+  implemented: false;
+  inputs: readonly string[];
+  note: string;
 }

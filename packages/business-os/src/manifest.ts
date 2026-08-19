@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Revenue Execution preview (BOS-4)",
+      "AI-assisted business operations — Customer Intelligence preview (BOS-5)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -26,6 +26,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/finance", title: "Financial Intelligence", component: "FinancialIntelligence" },
       { path: "/business/growth", title: "Growth Intelligence", component: "GrowthIntelligence" },
       { path: "/business/revenue", title: "Revenue Execution", component: "RevenueExecution" },
+      { path: "/business/customers", title: "Customer Intelligence", component: "CustomerIntelligence" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -60,6 +61,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "DollarSign",
         group: "business",
         order: 4,
+      },
+      {
+        id: "bos-customers",
+        label: "Customers",
+        path: "/business/customers",
+        icon: "Users",
+        group: "business",
+        order: 5,
       },
       {
         id: "bos-settings",
@@ -107,6 +116,13 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.revenue.bid_decision_requested", description: "Bid/no-bid human decision requested" },
       { type: "business_os.revenue.bid_decision_completed", description: "Bid/no-bid human decision recorded" },
       { type: "business_os.revenue.draft_prepared", description: "Internal communication draft prepared" },
+      { type: "business_os.customer.created", description: "Customer created" },
+      { type: "business_os.customer.updated", description: "Customer updated" },
+      { type: "business_os.customer.converted", description: "Lead or opportunity linked to a customer" },
+      { type: "business_os.customer.health_updated", description: "Customer health recomputed" },
+      { type: "business_os.customer.risk_detected", description: "Customer risk indicator detected" },
+      { type: "business_os.customer.financial_fact_ingested", description: "Customer financial fact ingested" },
+      { type: "business_os.customer.signal_detected", description: "Customer rule produced a signal" },
     ],
     knowledge: [
       {

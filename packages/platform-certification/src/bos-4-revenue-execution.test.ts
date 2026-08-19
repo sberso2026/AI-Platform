@@ -15,10 +15,10 @@ describe("BOS-4 Revenue Execution", () => {
   it("reuses Platform AI Director with A2 agent authority", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-4");
+    expect(bos.status.snapshot().phase).toBe("BOS-5");
     expect(bos.revenueExecution).toBeDefined();
     expect(bos.capabilities.isImplemented("revenue_execution")).toBe(true);
-    expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(false);
+    expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(true);
     expect(BUSINESS_DEVELOPMENT_AGENT_PASSPORT.authorityMax).toBe("A2");
     expect(() => bos.revenueExecution.sendExternally()).toThrow("external_send_forbidden");
   });
