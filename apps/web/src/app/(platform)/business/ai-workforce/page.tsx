@@ -29,7 +29,7 @@ type Run = {
   id: string;
   state: string;
   authority: string;
-  explanation: { derivedRecommendation: string; missingEvidence: string[]; chainOfThoughtExposed: false };
+  explanation: { derivedRecommendation: string; missingEvidence: string[]; hiddenReasoningExposed: false };
 };
 
 type Approval = { id: string; runId: string; decision: string; requestedBy: string };
@@ -72,7 +72,7 @@ export default function AiWorkforcePage() {
     setError(null);
     try {
       const parsed = await parseApiJsonResponse(await fetch("/api/business/ai-workforce/demo", { method: "POST" }));
-      if (!parsed.ok) setError(parsed.error ?? "Demo failed");
+      if (!parsed.ok) setError(parsed.errorMessage ?? "Demo failed");
       await refresh();
     } finally {
       setBusy(false);
@@ -222,13 +222,13 @@ export default function AiWorkforcePage() {
 
         {selectedRun && (
           <section className="mb-8" data-testid="bos-workforce-run-detail">
-            <SectionHeader title="Execution / audit detail" description="Evidence-based rationale only. Hidden chain-of-thought is not exposed." />
+            <SectionHeader title="Execution / audit detail" description="Evidence-based rationale only. Hidden model reasoning is not shown." />
             <Card className="mt-3">
               <CardContent className="space-y-2 pt-4 text-sm">
                 <p>State: {selectedRun.state}</p>
                 <p>Recommendation: {selectedRun.explanation.derivedRecommendation || "None"}</p>
                 <p>Missing evidence: {selectedRun.explanation.missingEvidence.join(", ") || "None"}</p>
-                <p>Chain-of-thought exposed: no</p>
+                <p>Hidden reasoning exposed: no</p>
               </CardContent>
             </Card>
           </section>
