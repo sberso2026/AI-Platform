@@ -55,7 +55,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   customer_intelligence: {
     name: "Customer Intelligence",
-    description: "Customer intelligence (not implemented)",
+    description:
+      "Vendor-neutral Customer 360: conversion, health, concentration, and retention risk signals (not a CRM, credit bureau, or outreach tool)",
   },
   profit_intelligence: {
     name: "Profit Intelligence",
@@ -92,12 +93,14 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "owner_command" ||
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
-      id === "revenue_execution",
+      id === "revenue_execution" ||
+      id === "customer_intelligence",
     activationStatus:
       id === "owner_command" ||
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
-      id === "revenue_execution"
+      id === "revenue_execution" ||
+      id === "customer_intelligence"
         ? "preview"
         : "registered",
   }));
@@ -116,7 +119,8 @@ export class BusinessCapabilityRegistry {
       id === "owner_command" ||
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
-      id === "revenue_execution"
+      id === "revenue_execution" ||
+      id === "customer_intelligence"
     );
   }
 

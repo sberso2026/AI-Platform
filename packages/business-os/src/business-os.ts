@@ -8,6 +8,7 @@ import { OwnerCommandService } from "./owner-command/service";
 import { FinancialIntelligenceService } from "./finance/service";
 import { GrowthIntelligenceService } from "./growth/service";
 import { RevenueExecutionService } from "./revenue/service";
+import { CustomerIntelligenceService } from "./customers/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -16,6 +17,7 @@ export interface BusinessOS {
   financialIntelligence: FinancialIntelligenceService;
   growthIntelligence: GrowthIntelligenceService;
   revenueExecution: RevenueExecutionService;
+  customerIntelligence: CustomerIntelligenceService;
 }
 
 export function createBusinessOS(
@@ -46,6 +48,22 @@ export function createBusinessOS(
     ownerCommand,
     growthIntelligence,
   );
-  return { status, capabilities, ownerCommand, financialIntelligence, growthIntelligence, revenueExecution };
+  const customerIntelligence = new CustomerIntelligenceService(
+    supabase,
+    kernel,
+    audit,
+    ownerCommand,
+    growthIntelligence,
+    revenueExecution,
+  );
+  return {
+    status,
+    capabilities,
+    ownerCommand,
+    financialIntelligence,
+    growthIntelligence,
+    revenueExecution,
+    customerIntelligence,
+  };
 }
 

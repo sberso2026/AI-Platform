@@ -74,7 +74,7 @@ describe("BOS-0 identity and contracts", () => {
 });
 
 describe("BOS-0 capability registry", () => {
-  it("registers all capability identifiers and implements owner_command through revenue_execution", () => {
+  it("registers all capability identifiers and implements owner_command through customer_intelligence", () => {
     const ids = defaultBusinessCapabilityRegistry.ids();
     expect([...ids]).toEqual([...BUSINESS_CAPABILITY_IDS]);
     expect(ids).toHaveLength(18);
@@ -83,7 +83,8 @@ describe("BOS-0 capability registry", () => {
         cap.id === "owner_command" ||
         cap.id === "financial_intelligence" ||
         cap.id === "growth_intelligence" ||
-        cap.id === "revenue_execution"
+        cap.id === "revenue_execution" ||
+        cap.id === "customer_intelligence"
       ) {
         expect(cap.implemented).toBe(true);
         expect(cap.activationStatus).toBe("preview");
@@ -112,6 +113,8 @@ describe("BOS-0 permissions", () => {
       "business_os.revenue_execution.view",
       "business_os.revenue_execution.manage",
       "business_os.revenue_execution.approve",
+      "business_os.customer_intelligence.view",
+      "business_os.customer_intelligence.manage",
     ]);
     expect(BUSINESS_PERMISSION_MAP["business_os.view"]).toEqual({
       resource: "business",
@@ -161,6 +164,14 @@ describe("BOS-0 permissions", () => {
       resource: "business",
       action: "admin",
     });
+    expect(BUSINESS_PERMISSION_MAP["business_os.customer_intelligence.view"]).toEqual({
+      resource: "business",
+      action: "read",
+    });
+    expect(BUSINESS_PERMISSION_MAP["business_os.customer_intelligence.manage"]).toEqual({
+      resource: "business",
+      action: "execute",
+    });
   });
 
   it("grants owner tenant.admin all BOS permissions", () => {
@@ -184,11 +195,13 @@ describe("BOS-0 permissions", () => {
     expect(hasBusinessPermission(viewer, "business_os.financial_intelligence.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.growth_intelligence.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.revenue_execution.view")).toBe(true);
+    expect(hasBusinessPermission(viewer, "business_os.customer_intelligence.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.owner_command.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.financial_intelligence.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.growth_intelligence.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.revenue_execution.manage")).toBe(false);
+    expect(hasBusinessPermission(viewer, "business_os.customer_intelligence.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.revenue_execution.approve")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.admin")).toBe(false);
     expect(hasBusinessPermission([{ resource: "business", action: "execute" }], "business_os.revenue_execution.manage")).toBe(
@@ -309,23 +322,26 @@ describe("createBusinessOS", () => {
     const bos = createBusinessOS(supabase, kernel);
     expect(bos.status.snapshot().implementsOwnAiStack).toBe(false);
     expect(bos.status.snapshot().osId).toBe("business");
-    expect(bos.status.snapshot().phase).toBe("BOS-4");
+    expect(bos.status.snapshot().phase).toBe("BOS-5");
     expect(bos.status.configuration().kernelServices.aiDirector).toBe(true);
     expect(bos.capabilities.list()).toHaveLength(18);
     expect(bos.capabilities.isImplemented("owner_command")).toBe(true);
     expect(bos.capabilities.isImplemented("financial_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("growth_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("revenue_execution")).toBe(true);
+    expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(true);
     expect(bos.capabilities.list().filter((c) => c.implemented).map((c) => c.id)).toEqual([
       "owner_command",
       "financial_intelligence",
       "growth_intelligence",
       "revenue_execution",
+      "customer_intelligence",
     ]);
     expect(bos.ownerCommand).toBeDefined();
     expect(bos.financialIntelligence).toBeDefined();
     expect(bos.growthIntelligence).toBeDefined();
     expect(bos.revenueExecution).toBeDefined();
+    expect(bos.customerIntelligence).toBeDefined();
   });
 });
 
@@ -353,6 +369,10 @@ describe("BOS-1 events and AI contract", () => {
         "business_os.revenue.proposal_created",
         "business_os.revenue.pricing_evaluated",
         "business_os.revenue.draft_prepared",
+        "business_os.customer.created",
+        "business_os.customer.converted",
+        "business_os.customer.health_updated",
+        "business_os.customer.signal_detected",
       ]),
     );
   });

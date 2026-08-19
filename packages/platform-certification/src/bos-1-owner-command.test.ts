@@ -15,11 +15,12 @@ describe("BOS-1 Owner Command Centre", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
     expect(bos.status.snapshot().implementsOwnAiStack).toBe(false);
-    expect(bos.status.snapshot().phase).toBe("BOS-4");
+    expect(bos.status.snapshot().phase).toBe("BOS-5");
     expect(bos.capabilities.isImplemented("owner_command")).toBe(true);
     expect(bos.capabilities.isImplemented("financial_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("growth_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("revenue_execution")).toBe(true);
+    expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(true);
   });
 
   it("registers Owner Command Centre as the /business route", () => {

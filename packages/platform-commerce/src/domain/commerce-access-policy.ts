@@ -17,7 +17,7 @@ export const ENGINEERING_PRODUCT = "engineering-os";
 export const BUSINESS_PRODUCT = "business-os";
 export const BUSINESS_OS_FEATURE_KEY = "business_os";
 
-/** Business OS API policies (BOS-0 foundation through BOS-4 Revenue Execution). Seat not required; catalog remains coming_soon. */
+/** Business OS API policies (BOS-0 foundation through BOS-5 Customer Intelligence). Seat not required; catalog remains coming_soon. */
 export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "status.read": {
     productKey: BUSINESS_PRODUCT,
@@ -186,6 +186,21 @@ export const BUSINESS_API_POLICIES: Record<string, CommerceAccessPolicy> = {
     workspaceRequired: true,
     cachePolicy: "fresh",
   },
+  "customers.read": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "customers.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "customers.write": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "customers.write",
+    seatRequired: false,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
 };
 
 export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
@@ -213,6 +228,13 @@ export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     productKey: BUSINESS_PRODUCT,
     featureKey: BUSINESS_OS_FEATURE_KEY,
     action: "revenue.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
+  "/business/customers": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "customers.read",
     seatRequired: false,
     workspaceRequired: true,
   },

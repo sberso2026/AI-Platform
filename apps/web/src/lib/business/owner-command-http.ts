@@ -49,6 +49,13 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "invalid_proposal_status" ||
     message === "invalid_compliance_status" ||
     message === "invalid_target_margin_bps" ||
+    message === "conversion_ambiguous" ||
+    message === "customer_id_required" ||
+    message === "contact_name_required" ||
+    message === "invalid_customer_status" ||
+    message === "external_crm_write_forbidden" ||
+    message === "external_customer_communication_forbidden" ||
+    message === "credit_decision_forbidden" ||
     message === "external_send_forbidden" ||
     message === "external_submit_forbidden" ||
     message === "autonomous_approval_forbidden" ||

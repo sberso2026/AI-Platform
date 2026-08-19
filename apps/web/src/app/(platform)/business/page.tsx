@@ -488,6 +488,9 @@ export default function OwnerCommandCentrePage() {
           <Link href="/business/revenue" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Revenue Execution
           </Link>
+          <Link href="/business/customers" className="text-sm font-semibold text-blue-700 hover:underline">
+            Open Customer Intelligence
+          </Link>
           <Link href="/business/settings" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Business OS settings
           </Link>
