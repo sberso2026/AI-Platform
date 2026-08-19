@@ -65,7 +65,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   work_operations: {
     name: "Work & Operations",
-    description: "Work and operations (not implemented)",
+    description:
+      "Vendor-neutral work/job operational intelligence: milestones, cost/capacity facts, and delivery risk feeding Owner Command Centre (not a scheduler, payroll, or Engineering OS)",
   },
   decision_action: {
     name: "Decision & Action Intelligence",
@@ -96,14 +97,16 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "growth_intelligence" ||
       id === "revenue_execution" ||
       id === "customer_intelligence" ||
-      id === "profit_intelligence",
+      id === "profit_intelligence" ||
+      id === "work_operations",
     activationStatus:
       id === "owner_command" ||
       id === "financial_intelligence" ||
       id === "growth_intelligence" ||
       id === "revenue_execution" ||
       id === "customer_intelligence" ||
-      id === "profit_intelligence"
+      id === "profit_intelligence" ||
+      id === "work_operations"
         ? "preview"
         : "registered",
   }));
@@ -124,7 +127,8 @@ export class BusinessCapabilityRegistry {
       id === "growth_intelligence" ||
       id === "revenue_execution" ||
       id === "customer_intelligence" ||
-      id === "profit_intelligence"
+      id === "profit_intelligence" ||
+      id === "work_operations"
     );
   }
 

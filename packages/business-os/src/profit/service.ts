@@ -524,7 +524,7 @@ export class ProfitIntelligenceService {
             leakageRuleIds: summary.leakage.map((row) => row.ruleId),
             coverageBps: summary.coverage.coverageBps,
             proposedCount: summary.proposedCount,
-            workOperationsImplemented: false,
+            workOperationsImplemented: true,
             instructions: [
               "Use only structured evidence.",
               "Do not invent costs or allocate overhead.",

@@ -14,10 +14,10 @@ describe("BOS-6 Profit Intelligence", () => {
   it("reuses Platform AI Director and forbids autonomous profit actions", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-6");
+    expect(bos.status.snapshot().phase).toBe("BOS-7");
     expect(bos.profitIntelligence).toBeDefined();
     expect(bos.capabilities.isImplemented("profit_intelligence")).toBe(true);
-    expect(bos.capabilities.isImplemented("work_operations")).toBe(false);
+    expect(bos.capabilities.isImplemented("work_operations")).toBe(true);
     expect(() => bos.profitIntelligence.repriceAutonomously()).toThrow("autonomous_reprice_forbidden");
     expect(() => bos.profitIntelligence.terminateCustomer()).toThrow("autonomous_customer_action_forbidden");
   });

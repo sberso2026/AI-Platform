@@ -10,6 +10,7 @@ import { GrowthIntelligenceService } from "./growth/service";
 import { RevenueExecutionService } from "./revenue/service";
 import { CustomerIntelligenceService } from "./customers/service";
 import { ProfitIntelligenceService } from "./profit/service";
+import { WorkOperationsService } from "./operations/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -20,6 +21,7 @@ export interface BusinessOS {
   revenueExecution: RevenueExecutionService;
   customerIntelligence: CustomerIntelligenceService;
   profitIntelligence: ProfitIntelligenceService;
+  workOperations: WorkOperationsService;
 }
 
 export function createBusinessOS(
@@ -65,6 +67,18 @@ export function createBusinessOS(
     ownerCommand,
     customerIntelligence,
   );
+  const workOperations = new WorkOperationsService(
+    supabase,
+    kernel,
+    audit,
+    ownerCommand,
+    customerIntelligence,
+    growthIntelligence,
+    profitIntelligence,
+  );
+  customerIntelligence.bindOperationsEvidence((scope, customerId) =>
+    workOperations.customerEvidence(scope, customerId),
+  );
   return {
     status,
     capabilities,
@@ -74,6 +88,7 @@ export function createBusinessOS(
     revenueExecution,
     customerIntelligence,
     profitIntelligence,
+    workOperations,
   };
 }
 

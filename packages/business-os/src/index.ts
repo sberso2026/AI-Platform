@@ -46,3 +46,16 @@ export * from "./profit/leakage";
 export * from "./profit/extensions";
 export * from "./profit/service";
 export * from "./profit/demo";
+export * from "./operations/progress";
+export * from "./operations/cost-progress";
+export * from "./operations/capacity";
+export * from "./operations/schedule";
+export * from "./operations/health";
+export * from "./operations/signals";
+export {
+  ENGINEERING_PROJECT_LINK_CONTRACT,
+  DECISION_ACTION_INTELLIGENCE_CONTRACT,
+  decisionActionIntelligenceStatus,
+} from "./operations/extensions";
+export * from "./operations/service";
+export * from "./operations/demo";

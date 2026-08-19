@@ -196,7 +196,14 @@ export default function Customer360Page() {
                 <CardContent className="p-4 text-sm text-slate-600">
                   <p>Renewal intelligence: {data.renewal.reason}</p>
                   <p>Account expansion: {data.expansion.reason}</p>
-                  <p>Operations: {data.operations.reason}</p>
+                  {data.operations.available ? (
+                    <p>
+                      Operations: {data.operations.activeWorkCount ?? 0} active / {data.operations.completedWorkCount ?? 0}{" "}
+                      completed / {data.operations.atRiskWorkCount ?? 0} at risk
+                    </p>
+                  ) : (
+                    <p>Operations: {data.operations.reason}</p>
+                  )}
                 </CardContent>
               </Card>
             </section>

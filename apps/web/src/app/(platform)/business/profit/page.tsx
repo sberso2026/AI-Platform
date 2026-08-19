@@ -157,7 +157,10 @@ export default function ProfitIntelligencePage() {
           </div>
           <p className="mt-3 text-sm text-slate-600">{data?.disclaimer}</p>
           <p className="mt-1 text-sm text-slate-600">
-            Work & Operations labour/delivery cost: {data?.workOperations?.reason ?? "work_operations_not_implemented"}
+            Work & Operations labour/delivery cost:{" "}
+            {data?.workOperations?.available
+              ? "available via operations_fact attribution"
+              : (data?.workOperations?.reason ?? "unavailable")}
           </p>
         </section>
 

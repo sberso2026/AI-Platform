@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Profit Intelligence preview (BOS-6)",
+      "AI-assisted business operations — Work & Operations preview (BOS-7)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -28,6 +28,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/revenue", title: "Revenue Execution", component: "RevenueExecution" },
       { path: "/business/customers", title: "Customer Intelligence", component: "CustomerIntelligence" },
       { path: "/business/profit", title: "Profit Intelligence", component: "ProfitIntelligence" },
+      { path: "/business/operations", title: "Work & Operations", component: "WorkOperations" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -78,6 +79,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "PieChart",
         group: "business",
         order: 6,
+      },
+      {
+        id: "bos-operations",
+        label: "Operations",
+        path: "/business/operations",
+        icon: "Wrench",
+        group: "business",
+        order: 7,
       },
       {
         id: "bos-settings",
@@ -136,6 +145,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.profit.metrics_updated", description: "Profit metrics published to Owner Command" },
       { type: "business_os.profit.leakage_detected", description: "Profit leakage rule produced a signal" },
       { type: "business_os.profit.classification_updated", description: "Profit classification or settings updated" },
+      { type: "business_os.operations.work_created", description: "Work item created" },
+      { type: "business_os.operations.work_updated", description: "Work item updated" },
+      { type: "business_os.operations.work_completed", description: "Work item completed" },
+      { type: "business_os.operations.milestone_updated", description: "Milestone updated" },
+      { type: "business_os.operations.cost_fact_ingested", description: "Operational cost fact ingested" },
+      { type: "business_os.operations.capacity_updated", description: "Capacity fact updated" },
+      { type: "business_os.operations.risk_detected", description: "Operational risk indicator detected" },
+      { type: "business_os.operations.metrics_updated", description: "Operations metrics published to Owner Command" },
     ],
     knowledge: [
       {

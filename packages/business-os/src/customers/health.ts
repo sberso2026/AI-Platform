@@ -40,6 +40,7 @@ export function computeCustomerHealth(input: {
   opportunities: BusinessGrowthOpportunity[];
   engagements: BusinessRevenueEngagementPlan[];
   concentrationShareBps?: string | null;
+  operationalIssueCount?: number | null;
   asOf?: string;
 }): BusinessCustomerHealth {
   const asOf = input.asOf ?? new Date().toISOString().slice(0, 10);
@@ -220,15 +221,29 @@ export function computeCustomerHealth(input: {
     });
   }
 
-  components.push({
-    id: "unresolved_risk",
-    label: "Unresolved operational issues",
-    weight: CUSTOMER_HEALTH_WEIGHTS.unresolvedRisk,
-    status: "unknown",
-    score: null,
-    evidence: "Operations domain is not implemented; issues remain unknown.",
-  });
-  missingComponents.push("unresolved_risk");
+  if (input.operationalIssueCount == null) {
+    components.push({
+      id: "unresolved_risk",
+      label: "Unresolved operational issues",
+      weight: CUSTOMER_HEALTH_WEIGHTS.unresolvedRisk,
+      status: "unknown",
+      score: null,
+      evidence: "Operational issue evidence was not supplied.",
+    });
+    missingComponents.push("unresolved_risk");
+  } else {
+    const count = input.operationalIssueCount;
+    const score =
+      count <= 0 ? CUSTOMER_HEALTH_WEIGHTS.unresolvedRisk : count === 1 ? 5 : 0;
+    components.push({
+      id: "unresolved_risk",
+      label: "Unresolved operational issues",
+      weight: CUSTOMER_HEALTH_WEIGHTS.unresolvedRisk,
+      status: bandStatus(score, CUSTOMER_HEALTH_WEIGHTS.unresolvedRisk),
+      score,
+      evidence: `${count} at-risk or blocked customer work item(s) from Work & Operations evidence.`,
+    });
+  }
 
   const scored = components.filter((c) => c.score !== null);
   let status: BusinessCustomerHealthStatus = "unknown";

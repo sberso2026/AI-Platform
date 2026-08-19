@@ -5,6 +5,7 @@ import type {
   AiDailyBriefNarrative,
   BusinessCustomer,
   BusinessCustomer360,
+  BusinessCustomerOperationsEvidence,
   BusinessCustomerContactIngestInput,
   BusinessCustomerFactIngestInput,
   BusinessCustomerHealth,
@@ -97,6 +98,10 @@ const CUSTOMER_KPI_META: Record<
 
 export class CustomerIntelligenceService {
   readonly repository: CustomerIntelligenceRepository;
+  private operationsEvidencePort?: (
+    scope: OwnerCommandScope,
+    customerId: string,
+  ) => Promise<BusinessCustomerOperationsEvidence>;
 
   constructor(
     private readonly supabase: SupabaseClient,
@@ -107,6 +112,12 @@ export class CustomerIntelligenceService {
     private readonly revenueExecution: RevenueExecutionService,
   ) {
     this.repository = new CustomerIntelligenceRepository(supabase);
+  }
+
+  bindOperationsEvidence(
+    port: (scope: OwnerCommandScope, customerId: string) => Promise<BusinessCustomerOperationsEvidence>,
+  ) {
+    this.operationsEvidencePort = port;
   }
 
   writeExternalCrm(): never {
@@ -593,13 +604,22 @@ export class CustomerIntelligenceService {
     const proposals = bundle.proposals.filter((row) => opportunityIds.has(row.opportunityId));
     const pricing = bundle.pricing.filter((row) => opportunityIds.has(row.opportunityId));
     const payment = bundle.paymentById.get(customer.id) ?? computePaymentBehaviour(facts);
-    const health = bundle.healthById.get(customer.id) ?? computeCustomerHealth({
+    const operations = this.operationsEvidencePort
+      ? await this.operationsEvidencePort(scope, customerId).catch(
+          (): BusinessCustomerOperationsEvidence => ({
+            available: false,
+            reason: "operations_evidence_unavailable",
+          }),
+        )
+      : { available: false, reason: "operations_domain_not_implemented" };
+    const health = computeCustomerHealth({
       customer,
       facts,
       payment,
       opportunities,
       engagements,
       concentrationShareBps: bundle.concentration.shares.find((s) => s.customerId === customer.id)?.shareBps ?? null,
+      operationalIssueCount: operations.available ? operations.atRiskWorkCount ?? 0 : null,
     });
     const sourceTypes = [...new Set([customer.sourceType, ...facts.map((f) => f.sourceType), ...contacts.map((c) => c.sourceType)])];
     const detail: BusinessCustomer360 = {
@@ -613,7 +633,7 @@ export class CustomerIntelligenceService {
       financialFacts: facts,
       payment,
       health,
-      operations: { available: false, reason: "operations_domain_not_implemented" },
+      operations,
       renewal: renewalIntelligenceStatus(),
       expansion: accountExpansionStatus(),
       dataQuality: {
