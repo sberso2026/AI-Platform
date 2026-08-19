@@ -2,8 +2,10 @@
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
  * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
  * BOS-6 Profit Intelligence, BOS-7 Work & Operations, BOS-8 Decision & Action Intelligence,
- * BOS-9 Business Risk, BOS-10 Business Context Graph, BOS-11 AI Workforce).
+ * BOS-9 Business Risk, BOS-10 Business Context Graph, BOS-11 AI Workforce,
+ * BOS-12 Connectors and Hardening).
  * Capabilities are identifiers — owner_command through ai_workforce are implemented.
+ * BOS-12 is integration + hardening, not a 19th capability id.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -44,6 +46,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.ai_workforce.manage",
   "business_os.ai_workforce.run",
   "business_os.ai_workforce.approve",
+  "business_os.connectors.view",
+  "business_os.connectors.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -177,6 +181,13 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.ai_workforce.run_failed",
   "business_os.ai_workforce.run_blocked",
   "business_os.ai_workforce.handoff_requested",
+  "business_os.connectors.configured",
+  "business_os.connectors.revoked",
+  "business_os.connectors.sync_started",
+  "business_os.connectors.sync_completed",
+  "business_os.connectors.sync_failed",
+  "business_os.connectors.import_committed",
+  "business_os.connectors.mapping_updated",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -2211,6 +2222,78 @@ export interface AiWorkforceContract {
   canonicalDomainMutationBypass: false;
   crossTenantAgentAccess: false;
   note: string;
+}
+
+export const BOS_CONNECTOR_IDS = ["xero", "microsoft_365", "hubspot", "csv_excel"] as const;
+export type BosConnectorId = (typeof BOS_CONNECTOR_IDS)[number];
+
+export const BOS_CONNECTOR_HEALTH_STATES = [
+  "unconfigured",
+  "configured",
+  "healthy",
+  "degraded",
+  "unavailable",
+  "revoked",
+] as const;
+export type BosConnectorHealth = (typeof BOS_CONNECTOR_HEALTH_STATES)[number];
+
+export const BOS_CONNECTOR_MODES = ["fixture", "sandbox", "live"] as const;
+export type BosConnectorMode = (typeof BOS_CONNECTOR_MODES)[number];
+
+export const BOS_CONNECTOR_WRITE_CLASSIFICATIONS = ["read_only"] as const;
+export type BosConnectorWriteClassification = (typeof BOS_CONNECTOR_WRITE_CLASSIFICATIONS)[number];
+
+export interface ConnectorsHardeningContract {
+  capability: "connectors_hardening";
+  implemented: true;
+  reuses: readonly [
+    "platform_intelligence_secret_management",
+    "platform_kernel_event_bus",
+    "platform_kernel_jobs",
+    "platform_intelligence_policy_engine",
+    "platform_kernel_workflow_engine",
+    "platform_kernel_audit",
+    "platform_kernel_knowledge_graph",
+    "platform_kernel_memory",
+    "platform_kernel_agent_registry",
+    "platform_kernel_ai_director",
+  ];
+  implementsOwnAiStack: false;
+  duplicateIntegrationStackDetected: false;
+  duplicateAgentRuntimeDetected: false;
+  duplicateKnowledgeGraphDetected: false;
+  ExternalWritesDisabled: true;
+  NoVendorHardDependency: true;
+  ReadFirst: true;
+  agentRegistryMismatchBlocksExecution: true;
+  suppressedIdentityReconstructionBlocked: true;
+  crossTenantConnectorAccess: false;
+  directAgentProviderAccess: false;
+  unrestrictedExternalProxy: false;
+  note: string;
+}
+
+export interface BosConnectorContract {
+  id: BosConnectorId;
+  version: string;
+  provider: string;
+  capabilities: readonly string[];
+  writeClassification: BosConnectorWriteClassification;
+  tenantWorkspaceScoped: true;
+  credentialRequirements: readonly string[];
+  dataClasses: readonly string[];
+  syncMode: "cursor" | "full_page" | "file_import";
+  cursorSemantics: string;
+  rateLimit: { maxPages: number; pageSize: number; cooldownMs: number };
+  retryPolicy: { maxAttempts: number; backoffMs: readonly number[]; timeoutMs: number };
+  idempotency: string;
+  freshnessPolicyHours: number;
+  sourceProvenanceRequired: true;
+  mappingVersion: string;
+  healthStates: typeof BOS_CONNECTOR_HEALTH_STATES;
+  revocation: string;
+  optional: true;
+  defaultMode: BosConnectorMode;
 }
 
 export const BUSINESS_WORKFORCE_AUTHORITY_CLASSES = [

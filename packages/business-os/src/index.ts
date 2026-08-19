@@ -103,4 +103,9 @@ export * from "./workforce/catalog";
 export * from "./workforce/service";
 export * from "./workforce/demo";
 export * from "./workforce/diagnostics";
+export * from "./connectors/extensions";
+export * from "./connectors/catalog";
+export * from "./connectors/service";
+export * from "./connectors/csv";
+export * from "./connectors/security";
 

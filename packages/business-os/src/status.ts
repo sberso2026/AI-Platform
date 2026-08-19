@@ -15,7 +15,7 @@ export interface BusinessOsStatusSnapshot {
   osId: typeof BUSINESS_OS_ID;
   name: string;
   version: string;
-  phase: "BOS-11";
+  phase: "BOS-12";
   foundationState: "preview";
   catalogStatus: "coming_soon";
   productSlug: typeof BUSINESS_OS_PRODUCT_SLUG;
@@ -38,7 +38,7 @@ export class BusinessOsStatusService {
       osId: BUSINESS_OS_ID,
       name: BUSINESS_OS_RUNTIME_MANIFEST.name,
       version: BUSINESS_OS_VERSION,
-      phase: "BOS-11",
+      phase: "BOS-12",
       foundationState: "preview",
       catalogStatus: declaration.catalogStatus,
       productSlug: BUSINESS_OS_PRODUCT_SLUG,

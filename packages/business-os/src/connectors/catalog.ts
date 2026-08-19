@@ -1,0 +1,115 @@
+import type { BosConnectorContract, BosConnectorId } from "@rtb/types";
+
+const SHARED_HEALTH = [
+  "unconfigured",
+  "configured",
+  "healthy",
+  "degraded",
+  "unavailable",
+  "revoked",
+] as const;
+
+const RETRY = { maxAttempts: 3, backoffMs: [50, 150, 450] as const, timeoutMs: 5_000 };
+
+export const BOS_CONNECTOR_CATALOG: readonly BosConnectorContract[] = [
+  {
+    id: "xero",
+    version: "bos12.xero.v1",
+    provider: "xero",
+    capabilities: ["accounting.read", "financial_facts.read"],
+    writeClassification: "read_only",
+    tenantWorkspaceScoped: true,
+    credentialRequirements: ["secret_id"],
+    dataClasses: ["invoice_read", "account_balance_read", "contact_financial_read"],
+    syncMode: "cursor",
+    cursorSemantics: "Opaque provider page cursor stored on the installation; resume is idempotent per cursor+mappingVersion.",
+    rateLimit: { maxPages: 10, pageSize: 100, cooldownMs: 1_000 },
+    retryPolicy: RETRY,
+    idempotency: "installationId + cursor + mappingVersion",
+    freshnessPolicyHours: 24,
+    sourceProvenanceRequired: true,
+    mappingVersion: "bos12.xero.map.v1",
+    healthStates: SHARED_HEALTH,
+    revocation: "Clears secret_id reference, marks revoked, cancels in-flight sync, retains staging with redacted payloads.",
+    optional: true,
+    defaultMode: "fixture",
+  },
+  {
+    id: "microsoft_365",
+    version: "bos12.m365.v1",
+    provider: "microsoft_365",
+    capabilities: ["directory.read", "calendar.read", "files.metadata.read"],
+    writeClassification: "read_only",
+    tenantWorkspaceScoped: true,
+    credentialRequirements: ["secret_id"],
+    dataClasses: ["user_profile_read", "calendar_event_read", "drive_item_metadata_read"],
+    syncMode: "cursor",
+    cursorSemantics: "Delta-link style cursor; never grants mail.send, calendar.write, or files.write.",
+    rateLimit: { maxPages: 10, pageSize: 50, cooldownMs: 1_000 },
+    retryPolicy: RETRY,
+    idempotency: "installationId + cursor + mappingVersion",
+    freshnessPolicyHours: 12,
+    sourceProvenanceRequired: true,
+    mappingVersion: "bos12.m365.map.v1",
+    healthStates: SHARED_HEALTH,
+    revocation: "Clears secret_id reference and approved scopes; no residual provider tokens in BOS.",
+    optional: true,
+    defaultMode: "fixture",
+  },
+  {
+    id: "hubspot",
+    version: "bos12.hubspot.v1",
+    provider: "hubspot",
+    capabilities: ["crm.contacts.read", "crm.companies.read", "crm.deals.read"],
+    writeClassification: "read_only",
+    tenantWorkspaceScoped: true,
+    credentialRequirements: ["secret_id"],
+    dataClasses: ["contact_read", "company_read", "deal_read"],
+    syncMode: "cursor",
+    cursorSemantics: "Provider after/offset cursor. CRM identifiers never bypass BOS permissions. Suppression overrides payload.",
+    rateLimit: { maxPages: 10, pageSize: 100, cooldownMs: 1_000 },
+    retryPolicy: RETRY,
+    idempotency: "installationId + cursor + mappingVersion",
+    freshnessPolicyHours: 24,
+    sourceProvenanceRequired: true,
+    mappingVersion: "bos12.hubspot.map.v1",
+    healthStates: SHARED_HEALTH,
+    revocation: "Clears secret_id; staging records remain non-canonical and suppression-filtered.",
+    optional: true,
+    defaultMode: "fixture",
+  },
+  {
+    id: "csv_excel",
+    version: "bos12.csv.v1",
+    provider: "file_import",
+    capabilities: ["file.import.read"],
+    writeClassification: "read_only",
+    tenantWorkspaceScoped: true,
+    credentialRequirements: [],
+    dataClasses: ["customer", "contact", "lead", "opportunity", "work"],
+    syncMode: "file_import",
+    cursorSemantics: "Batch id is the checkpoint; preview then explicit commit. No formula/macro execution.",
+    rateLimit: { maxPages: 1, pageSize: 10_000, cooldownMs: 0 },
+    retryPolicy: { maxAttempts: 1, backoffMs: [0] as const, timeoutMs: 5_000 },
+    idempotency: "tenant+workspace+filename+contentHash+mappingVersion",
+    freshnessPolicyHours: 0,
+    sourceProvenanceRequired: true,
+    mappingVersion: "bos12.csv.map.v1",
+    healthStates: SHARED_HEALTH,
+    revocation: "Rejects further commits; existing staging remains non-canonical.",
+    optional: true,
+    defaultMode: "fixture",
+  },
+];
+
+export function connectorContract(id: BosConnectorId): BosConnectorContract {
+  const row = BOS_CONNECTOR_CATALOG.find((item) => item.id === id);
+  if (!row) throw new Error("unknown_connector");
+  return row;
+}
+
+export const BOS_CONNECTOR_APPROVED_HOSTS: Record<Exclude<BosConnectorId, "csv_excel">, readonly string[]> = {
+  xero: ["api.xero.com"],
+  microsoft_365: ["graph.microsoft.com"],
+  hubspot: ["api.hubapi.com"],
+};

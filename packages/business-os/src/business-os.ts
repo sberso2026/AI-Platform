@@ -15,6 +15,7 @@ import { DecisionActionIntelligenceService } from "./decisions/service";
 import { BusinessRiskService } from "./risk/service";
 import { BusinessContextGraphService } from "./context/service";
 import { AiWorkforceService } from "./workforce/service";
+import { BosConnectorsService } from "./connectors/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -30,6 +31,7 @@ export interface BusinessOS {
   businessRisk: BusinessRiskService;
   businessContextGraph: BusinessContextGraphService;
   aiWorkforce: AiWorkforceService;
+  connectors: BosConnectorsService;
 }
 
 export function createBusinessOS(
@@ -92,7 +94,8 @@ export function createBusinessOS(
   const businessContextGraph = new BusinessContextGraphService(supabase, kernel, audit);
   businessContextGraph.registerSync();
   decisionAction.bindContextGraph((scope, decisionId) => businessContextGraph.suggestEvidence(scope, decisionId));
-  const aiWorkforce = new AiWorkforceService(supabase, kernel, audit, businessContextGraph);
+  const connectors = new BosConnectorsService(supabase, kernel, audit);
+  const aiWorkforce = new AiWorkforceService(supabase, kernel, audit, businessContextGraph, { connectors });
   return {
     status,
     capabilities,
@@ -107,6 +110,7 @@ export function createBusinessOS(
     businessRisk,
     businessContextGraph,
     aiWorkforce,
+    connectors,
   };
 }
 

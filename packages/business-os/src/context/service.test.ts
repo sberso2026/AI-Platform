@@ -192,3 +192,18 @@ describe("BOS-10 tenant isolation", () => {
     expect(otherSnapshot.nodes.every((n) => n.tenant_id === other.tenantId)).toBe(true);
   });
 });
+
+describe("BOS-12 incremental projection", () => {
+  it("projects affected nodes for an event without requiring a full rebuild", async () => {
+    const { service } = serviceWithMemory();
+    const records = demoContextRecords(SCOPE);
+    const result = await service.projectIncremental(SCOPE, {
+      eventType: "business_os.customer.updated",
+      payload: { entityId: BOS_10_DEMO_CUSTOMER_ID },
+      records,
+    });
+    expect(result.incremental).toBe(true);
+    expect(result.fullRebuild).toBe(false);
+    expect(result.nodesProjected).toBeGreaterThan(0);
+  });
+});

@@ -338,6 +338,29 @@ describe("BOS-11 handoffs, budget, memory, and audit", () => {
   });
 });
 
+describe("BOS-12 registry fail-closed", () => {
+  it("blocks runs on agent_registry_mismatch while diagnostics remain available", async () => {
+    const { workforce, context, store } = harness();
+    const installed = await readyAdvisor(workforce, context);
+    await store.upsertInstallation({ ...installed, kernelAgentId: "not-the-registry-id" });
+    await expect(
+      workforce.requestTask(
+        SCOPE,
+        {
+          installationId: installed.id,
+          intent: "observe",
+          entityType: "customer",
+          entityId: BOS_10_DEMO_CUSTOMER_ID,
+        },
+        HUMAN,
+      ),
+    ).rejects.toThrow("agent_registry_mismatch");
+    const diag = await workforce.diagnostics(SCOPE);
+    expect(diag.findings.some((row) => row.code === "agent_registry_mismatch")).toBe(true);
+    expect(diag.repaired).toBe(false);
+  });
+});
+
 describe("BOS-11 demo", () => {
   it("seeds deterministic demo workforce fixtures without live writes", async () => {
     const { workforce } = harness();
