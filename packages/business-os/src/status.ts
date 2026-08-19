@@ -5,6 +5,7 @@ import { BusinessCapabilityRegistry } from "./capabilities";
 import {
   BUSINESS_OS_FEATURE_KEY,
   BUSINESS_OS_ID,
+  BUSINESS_OS_PHASE,
   BUSINESS_OS_PRODUCT_SLUG,
   BUSINESS_OS_VERSION,
   getBusinessOsFoundationDeclaration,
@@ -15,7 +16,7 @@ export interface BusinessOsStatusSnapshot {
   osId: typeof BUSINESS_OS_ID;
   name: string;
   version: string;
-  phase: "BOS-12";
+  phase: typeof BUSINESS_OS_PHASE;
   foundationState: "preview";
   catalogStatus: "coming_soon";
   productSlug: typeof BUSINESS_OS_PRODUCT_SLUG;
@@ -38,7 +39,7 @@ export class BusinessOsStatusService {
       osId: BUSINESS_OS_ID,
       name: BUSINESS_OS_RUNTIME_MANIFEST.name,
       version: BUSINESS_OS_VERSION,
-      phase: "BOS-12",
+      phase: BUSINESS_OS_PHASE,
       foundationState: "preview",
       catalogStatus: declaration.catalogStatus,
       productSlug: BUSINESS_OS_PRODUCT_SLUG,

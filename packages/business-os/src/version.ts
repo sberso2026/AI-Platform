@@ -1,9 +1,10 @@
 /**
  * BOS-0 Foundation version and platform-reuse contracts.
+ * BOS-13 is production validation / release-candidate certification, not a new domain.
  */
-export const BUSINESS_OS_VERSION = "0.13.0" as const;
+export const BUSINESS_OS_VERSION = "0.13.1" as const;
 export const BUSINESS_OS_STATUS = "preview" as const;
-export const BUSINESS_OS_PHASE = "BOS-12" as const;
+export const BUSINESS_OS_PHASE = "BOS-13" as const;
 
 /** Business OS consumes Platform Kernel / Intelligence. Independent AI stacks are forbidden. */
 export const implementsOwnAiStack = false as const;

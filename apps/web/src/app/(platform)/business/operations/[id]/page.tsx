@@ -94,7 +94,7 @@ export default function WorkOperationsDetailPage() {
                   <p>Progress: {bpsLabel(data.progress.progressBps)} ({data.progress.method})</p>
                   <p>Schedule variance (days): {data.scheduleVarianceDays ?? "Unknown"}</p>
                   <p>
-                    Health: <StatusChip label={data.health.status} /> · {data.health.version}
+                    Health: <StatusChip value={data.health.status} /> · {data.health.version}
                   </p>
                   <p>{data.health.disclaimer}</p>
                 </CardContent>

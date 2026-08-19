@@ -97,6 +97,7 @@ export default function OwnerCommandCentrePage() {
     treatmentActionsOverdue: number;
     materialRisksRequiringDecision: number;
   } | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const [parsed, intel, risk] = await Promise.all([

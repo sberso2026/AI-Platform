@@ -1,4 +1,5 @@
 export * from "./version";
+export * from "./release";
 export * from "./manifest";
 export * from "./capabilities";
 export * from "./permissions";
