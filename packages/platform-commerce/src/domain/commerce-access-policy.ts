@@ -282,6 +282,13 @@ export const BUSINESS_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     seatRequired: false,
     workspaceRequired: true,
   },
+  "/business/decisions": {
+    productKey: BUSINESS_PRODUCT,
+    featureKey: BUSINESS_OS_FEATURE_KEY,
+    action: "decisions.read",
+    seatRequired: false,
+    workspaceRequired: true,
+  },
   "/business/settings": {
     productKey: BUSINESS_PRODUCT,
     featureKey: BUSINESS_OS_FEATURE_KEY,

@@ -11,6 +11,7 @@ import { RevenueExecutionService } from "./revenue/service";
 import { CustomerIntelligenceService } from "./customers/service";
 import { ProfitIntelligenceService } from "./profit/service";
 import { WorkOperationsService } from "./operations/service";
+import { DecisionActionIntelligenceService } from "./decisions/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -22,6 +23,7 @@ export interface BusinessOS {
   customerIntelligence: CustomerIntelligenceService;
   profitIntelligence: ProfitIntelligenceService;
   workOperations: WorkOperationsService;
+  decisionAction: DecisionActionIntelligenceService;
 }
 
 export function createBusinessOS(
@@ -79,6 +81,7 @@ export function createBusinessOS(
   customerIntelligence.bindOperationsEvidence((scope, customerId) =>
     workOperations.customerEvidence(scope, customerId),
   );
+  const decisionAction = new DecisionActionIntelligenceService(supabase, kernel, audit, ownerCommand);
   return {
     status,
     capabilities,
@@ -89,6 +92,7 @@ export function createBusinessOS(
     customerIntelligence,
     profitIntelligence,
     workOperations,
+    decisionAction,
   };
 }
 

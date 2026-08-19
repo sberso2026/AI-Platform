@@ -70,7 +70,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   decision_action: {
     name: "Decision & Action Intelligence",
-    description: "Business decisions and actions (not implemented)",
+    description:
+      "Evidence-backed decision intelligence over existing Decision/Action primitives (not a second task system or autonomous approver)",
   },
   business_risk: {
     name: "Business Risk",
@@ -98,7 +99,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "revenue_execution" ||
       id === "customer_intelligence" ||
       id === "profit_intelligence" ||
-      id === "work_operations",
+      id === "work_operations" ||
+      id === "decision_action",
     activationStatus:
       id === "owner_command" ||
       id === "financial_intelligence" ||
@@ -106,7 +108,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "revenue_execution" ||
       id === "customer_intelligence" ||
       id === "profit_intelligence" ||
-      id === "work_operations"
+      id === "work_operations" ||
+      id === "decision_action"
         ? "preview"
         : "registered",
   }));
@@ -128,7 +131,8 @@ export class BusinessCapabilityRegistry {
       id === "revenue_execution" ||
       id === "customer_intelligence" ||
       id === "profit_intelligence" ||
-      id === "work_operations"
+      id === "work_operations" ||
+      id === "decision_action"
     );
   }
 

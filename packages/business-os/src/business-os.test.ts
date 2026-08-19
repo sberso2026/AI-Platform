@@ -86,7 +86,8 @@ describe("BOS-0 capability registry", () => {
         cap.id === "revenue_execution" ||
         cap.id === "customer_intelligence" ||
         cap.id === "profit_intelligence" ||
-        cap.id === "work_operations"
+        cap.id === "work_operations" ||
+        cap.id === "decision_action"
       ) {
         expect(cap.implemented).toBe(true);
         expect(cap.activationStatus).toBe("preview");
@@ -121,6 +122,9 @@ describe("BOS-0 permissions", () => {
       "business_os.profit_intelligence.manage",
       "business_os.work_operations.view",
       "business_os.work_operations.manage",
+      "business_os.decision_action.view",
+      "business_os.decision_action.manage",
+      "business_os.decision_action.approve",
     ]);
     expect(BUSINESS_PERMISSION_MAP["business_os.view"]).toEqual({
       resource: "business",
@@ -194,6 +198,18 @@ describe("BOS-0 permissions", () => {
       resource: "business",
       action: "execute",
     });
+    expect(BUSINESS_PERMISSION_MAP["business_os.decision_action.view"]).toEqual({
+      resource: "business",
+      action: "read",
+    });
+    expect(BUSINESS_PERMISSION_MAP["business_os.decision_action.manage"]).toEqual({
+      resource: "business",
+      action: "execute",
+    });
+    expect(BUSINESS_PERMISSION_MAP["business_os.decision_action.approve"]).toEqual({
+      resource: "business",
+      action: "admin",
+    });
   });
 
   it("grants owner tenant.admin all BOS permissions", () => {
@@ -220,6 +236,7 @@ describe("BOS-0 permissions", () => {
     expect(hasBusinessPermission(viewer, "business_os.customer_intelligence.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.profit_intelligence.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.work_operations.view")).toBe(true);
+    expect(hasBusinessPermission(viewer, "business_os.decision_action.view")).toBe(true);
     expect(hasBusinessPermission(viewer, "business_os.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.owner_command.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.financial_intelligence.manage")).toBe(false);
@@ -228,6 +245,8 @@ describe("BOS-0 permissions", () => {
     expect(hasBusinessPermission(viewer, "business_os.customer_intelligence.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.profit_intelligence.manage")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.work_operations.manage")).toBe(false);
+    expect(hasBusinessPermission(viewer, "business_os.decision_action.manage")).toBe(false);
+    expect(hasBusinessPermission(viewer, "business_os.decision_action.approve")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.revenue_execution.approve")).toBe(false);
     expect(hasBusinessPermission(viewer, "business_os.admin")).toBe(false);
     expect(hasBusinessPermission([{ resource: "business", action: "execute" }], "business_os.revenue_execution.manage")).toBe(
@@ -348,7 +367,7 @@ describe("createBusinessOS", () => {
     const bos = createBusinessOS(supabase, kernel);
     expect(bos.status.snapshot().implementsOwnAiStack).toBe(false);
     expect(bos.status.snapshot().osId).toBe("business");
-    expect(bos.status.snapshot().phase).toBe("BOS-7");
+    expect(bos.status.snapshot().phase).toBe("BOS-8");
     expect(bos.status.configuration().kernelServices.aiDirector).toBe(true);
     expect(bos.capabilities.list()).toHaveLength(18);
     expect(bos.capabilities.isImplemented("owner_command")).toBe(true);
@@ -358,6 +377,7 @@ describe("createBusinessOS", () => {
     expect(bos.capabilities.isImplemented("customer_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("profit_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("work_operations")).toBe(true);
+    expect(bos.capabilities.isImplemented("decision_action")).toBe(true);
     expect(bos.capabilities.list().filter((c) => c.implemented).map((c) => c.id)).toEqual([
       "owner_command",
       "financial_intelligence",
@@ -366,6 +386,7 @@ describe("createBusinessOS", () => {
       "customer_intelligence",
       "profit_intelligence",
       "work_operations",
+      "decision_action",
     ]);
     expect(bos.ownerCommand).toBeDefined();
     expect(bos.financialIntelligence).toBeDefined();
@@ -374,6 +395,7 @@ describe("createBusinessOS", () => {
     expect(bos.customerIntelligence).toBeDefined();
     expect(bos.profitIntelligence).toBeDefined();
     expect(bos.workOperations).toBeDefined();
+    expect(bos.decisionAction).toBeDefined();
   });
 });
 

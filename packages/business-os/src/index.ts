@@ -52,10 +52,27 @@ export * from "./operations/capacity";
 export * from "./operations/schedule";
 export * from "./operations/health";
 export * from "./operations/signals";
-export {
-  ENGINEERING_PROJECT_LINK_CONTRACT,
-  DECISION_ACTION_INTELLIGENCE_CONTRACT,
-  decisionActionIntelligenceStatus,
-} from "./operations/extensions";
+export { ENGINEERING_PROJECT_LINK_CONTRACT } from "./operations/extensions";
 export * from "./operations/service";
 export * from "./operations/demo";
+export * from "./decisions/priority";
+export * from "./decisions/comparison";
+export {
+  normalizeImpactQuantification,
+  impactDisplay,
+  unknownDimensions,
+  mixedImpactCurrencies,
+} from "./decisions/impact";
+export * from "./decisions/outcomes";
+export * from "./decisions/effectiveness";
+export * from "./decisions/brief";
+export * from "./decisions/signals";
+export * from "./decisions/action-intelligence";
+export {
+  DECISION_ACTION_INTELLIGENCE_CONTRACT,
+  BUSINESS_RISK_CONTRACT,
+  decisionActionIntelligenceStatus,
+  businessRiskStatus,
+} from "./decisions/extensions";
+export * from "./decisions/service";
+export * from "./decisions/demo";

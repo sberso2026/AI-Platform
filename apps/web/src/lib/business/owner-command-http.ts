@@ -75,6 +75,15 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "external_send_forbidden" ||
     message === "external_submit_forbidden" ||
     message === "autonomous_approval_forbidden" ||
+    message === "external_execution_forbidden" ||
+    message === "historical_evidence_rewrite_forbidden" ||
+    message === "invalid_option_status" ||
+    message === "invalid_outcome_status" ||
+    message === "invalid_impact_dimension" ||
+    message === "invalid_decision_domain" ||
+    message === "decision_question_required" ||
+    message === "option_title_required" ||
+    message === "outcome_evidence_required" ||
     message === "agent_disabled" ||
     message.startsWith("agent_authority_denied") ||
     message.startsWith("agent_action_prohibited")

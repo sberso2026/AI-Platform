@@ -12,8 +12,8 @@ describe("BOS-7 work operations service guards", () => {
     expect(() => bos.workOperations.writeExternalProjectSystem()).toThrow("external_project_write_forbidden");
     expect(() => bos.workOperations.approveCompletionAutonomously()).toThrow("autonomous_completion_forbidden");
     expect(bos.workOperations.engineeringLink()).toEqual(ENGINEERING_PROJECT_LINK_CONTRACT);
-    expect(bos.workOperations.decisionAction().available).toBe(false);
-    expect(DECISION_ACTION_INTELLIGENCE_CONTRACT.implemented).toBe(false);
+    expect(bos.workOperations.decisionAction().available).toBe(true);
+    expect(DECISION_ACTION_INTELLIGENCE_CONTRACT.implemented).toBe(true);
   });
 });
 

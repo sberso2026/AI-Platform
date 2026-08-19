@@ -80,10 +80,25 @@ export default function OwnerCommandCentrePage() {
   const [data, setData] = useState<CommandSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [narrative, setNarrative] = useState<AiDailyBriefNarrative | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [decisionIntel, setDecisionIntel] = useState<{
+    criticalPending: Array<{ id: string; question: string; priority: { priority: string } }>;
+    overdue: Array<{ id: string; question: string }>;
+    missingEvidence: Array<{ id: string; question: string }>;
+    blockedDecisionActions: Array<{ id: string; title: string }>;
+    outcomeReviewsDue: Array<{ id: string; question: string }>;
+  } | null>(null);
 
   const load = useCallback(async () => {
-    const parsed = await parseApiJsonResponse<CommandSnapshot>(await fetch("/api/business/command"));
+    const [parsed, intel] = await Promise.all([
+      parseApiJsonResponse<CommandSnapshot>(await fetch("/api/business/command")),
+      parseApiJsonResponse<{
+        criticalPending: Array<{ id: string; question: string; priority: { priority: string } }>;
+        overdue: Array<{ id: string; question: string }>;
+        missingEvidence: Array<{ id: string; question: string }>;
+        blockedDecisionActions: Array<{ id: string; title: string }>;
+        outcomeReviewsDue: Array<{ id: string; question: string }>;
+      }>(await fetch("/api/business/decisions/summary")),
+    ]);
     if (!parsed.ok) {
       setError(parsed.errorMessage ?? "Access denied");
       setData(null);
@@ -91,6 +106,7 @@ export default function OwnerCommandCentrePage() {
     }
     setError(null);
     setData(parsed.data);
+    setDecisionIntel(intel.ok && intel.data ? intel.data : null);
   }, []);
 
   useEffect(() => {
@@ -314,6 +330,20 @@ export default function OwnerCommandCentrePage() {
           </div>
         </section>
 
+        <section className="mb-8" data-testid="bos-decision-intelligence">
+          <SectionHeader
+            title="Decision intelligence"
+            description="Critical pending, overdue, missing evidence, blocked decision actions, and outcome reviews due."
+          />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <MetricCard label="Critical pending" value={String(decisionIntel?.criticalPending.length ?? 0)} tone="red" />
+            <MetricCard label="Overdue decisions" value={String(decisionIntel?.overdue.length ?? 0)} tone="amber" />
+            <MetricCard label="Missing evidence" value={String(decisionIntel?.missingEvidence.length ?? 0)} tone="amber" />
+            <MetricCard label="Blocked decision actions" value={String(decisionIntel?.blockedDecisionActions.length ?? 0)} tone="amber" />
+            <MetricCard label="Outcome reviews due" value={String(decisionIntel?.outcomeReviewsDue.length ?? 0)} tone="blue" />
+          </div>
+        </section>
+
         <section className="mb-8" data-testid="bos-decisions">
           <SectionHeader title="Decisions" description="Pending and recent owner decisions. No autonomous approval." />
           <div className="mt-4 space-y-3">
@@ -496,6 +526,9 @@ export default function OwnerCommandCentrePage() {
           </Link>
           <Link href="/business/operations" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Work & Operations
+          </Link>
+          <Link href="/business/decisions" className="text-sm font-semibold text-blue-700 hover:underline">
+            Open Decision Intelligence
           </Link>
           <Link href="/business/settings" className="text-sm font-semibold text-blue-700 hover:underline">
             Open Business OS settings

@@ -14,15 +14,15 @@ describe("BOS-7 Work & Operations", () => {
   it("reuses Platform AI Director and forbids autonomous operations actions", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-7");
+    expect(bos.status.snapshot().phase).toBe("BOS-8");
     expect(bos.workOperations).toBeDefined();
     expect(bos.capabilities.isImplemented("work_operations")).toBe(true);
-    expect(bos.capabilities.isImplemented("decision_action")).toBe(false);
+    expect(bos.capabilities.isImplemented("decision_action")).toBe(true);
     expect(() => bos.workOperations.allocateResourcesAutonomously()).toThrow("autonomous_assignment_forbidden");
     expect(() => bos.workOperations.writeExternalProjectSystem()).toThrow("external_project_write_forbidden");
     expect(() => bos.workOperations.approveCompletionAutonomously()).toThrow("autonomous_completion_forbidden");
     expect(bos.workOperations.engineeringLink().writesEngineeringOs).toBe(false);
-    expect(bos.workOperations.decisionAction().available).toBe(false);
+    expect(bos.workOperations.decisionAction().available).toBe(true);
   });
 
   it("registers /business/operations", () => {
