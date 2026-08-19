@@ -69,6 +69,48 @@ const SYNC_EVENTS = [
   "business_os.action.created",
 ] as const;
 
+const EVENT_AFFECTED_NODE_TYPES: Record<string, BusinessContextNodeType[]> = {
+  "business_os.customer.created": ["customer", "contact"],
+  "business_os.customer.updated": ["customer", "contact"],
+  "business_os.growth.opportunity_created": ["opportunity", "organisation", "lead"],
+  "business_os.growth.opportunity_won": ["opportunity", "customer"],
+  "business_os.revenue.proposal_created": ["proposal", "opportunity"],
+  "business_os.operations.work_created": ["work", "customer"],
+  "business_os.profit.fact_ingested": ["profit_fact", "customer", "work"],
+  "business_os.risk.created": ["risk", "control", "obligation"],
+  "business_os.decision.selected": ["decision", "evidence"],
+  "business_os.action.created": ["action", "decision"],
+};
+
+export function affectedRecordsForEvent(
+  records: BusinessContextCanonicalRecord[],
+  eventType: string,
+  payload?: Record<string, unknown>,
+): BusinessContextCanonicalRecord[] {
+  const types = EVENT_AFFECTED_NODE_TYPES[eventType];
+  if (!types) return records;
+  const validTypes = types.filter((type) => (BUSINESS_CONTEXT_NODE_TYPES as readonly string[]).includes(type));
+  let affected = records.filter((row) => validTypes.includes(row.identity.entityType));
+  const entityId = String(
+    payload?.entityId ?? payload?.id ?? payload?.customerId ?? payload?.workId ?? payload?.decisionId ?? "",
+  );
+  if (entityId) {
+    const direct = affected.filter((row) => row.identity.entityId === entityId);
+    if (direct.length > 0) {
+      const ids = new Set(direct.map((row) => `${row.identity.entityType}:${row.identity.entityId}`));
+      for (const rec of direct) {
+        for (const link of rec.links) ids.add(`${link.toEntityType}:${link.toEntityId}`);
+      }
+      affected = records.filter(
+        (row) =>
+          ids.has(`${row.identity.entityType}:${row.identity.entityId}`) ||
+          row.links.some((link) => ids.has(`${link.toEntityType}:${link.toEntityId}`)),
+      );
+    }
+  }
+  return affected;
+}
+
 export class BusinessContextGraphService {
   readonly repository: BusinessContextRepository;
   private readonly graph: GraphPort;
@@ -155,9 +197,12 @@ export class BusinessContextGraphService {
         handle: async (event) => {
           if (!event.workspace_id) return;
           try {
-            await this.rebuild(
+            await this.projectIncremental(
               { tenantId: event.tenant_id, workspaceId: event.workspace_id, userId: event.tenant_id },
-              { trigger: "event", audit: false },
+              {
+                eventType,
+                payload: (event.payload ?? {}) as Record<string, unknown>,
+              },
             );
           } catch {
             try {
@@ -348,6 +393,7 @@ export class BusinessContextGraphService {
     const leakPayload = JSON.stringify(assembly ?? ctx);
     if (
       leakPayload.includes("Hidden Person") ||
+      /hidden@example\.com/i.test(leakPayload) ||
       (ctx.entity && suppressedContactLeaks({ ...ctx.entity })) ||
       ctx.neighbours.some((row) => suppressedContactLeaks({ ...row.node }))
     ) {
@@ -483,6 +529,80 @@ export class BusinessContextGraphService {
       });
     }
     return { ...result, missingDomains: loaded.missingDomains, idempotent: true };
+  }
+
+  /**
+   * Hot-path event projection: only affected nodes/edges for the source event.
+   * Full rebuild remains recovery/reconciliation tooling and is not required per event.
+   */
+  async projectIncremental(
+    raw: { tenantId: string; workspaceId?: string; userId: string },
+    input: {
+      eventType: string;
+      payload?: Record<string, unknown>;
+      records?: BusinessContextCanonicalRecord[];
+    },
+  ) {
+    const scope = requireWorkspace(raw);
+    const loaded = input.records
+      ? { records: input.records, missingDomains: [] as string[] }
+      : await loadCanonicalRecords(this.supabase, scope);
+    const affected = affectedRecordsForEvent(loaded.records, input.eventType, input.payload);
+    if (affected.length === 0) {
+      await this.repository.insertRun(scope, {
+        status: "completed",
+        trigger: "event",
+        nodesProjected: 0,
+        relationshipsProjected: 0,
+        unresolved: 0,
+        provenance: { mode: "incremental", empty: true, eventType: input.eventType },
+      });
+      return {
+        nodesProjected: 0,
+        relationshipsProjected: 0,
+        unresolved: [] as Array<{
+          fromCanonicalRef: string;
+          toEntityId: string;
+          relationshipType: string;
+          reason: string;
+        }>,
+        missingDomains: loaded.missingDomains,
+        incremental: true as const,
+        fullRebuild: false as const,
+      };
+    }
+    const result = await projectRecords(this.graph, affected, scope.userId);
+    await this.repository.replaceUnresolved(
+      scope,
+      result.unresolved.map((row) => ({
+        relationshipType: row.relationshipType,
+        fromCanonicalRef: row.fromCanonicalRef,
+        toRef: row.toEntityId,
+        reason: row.reason,
+        sourceDomain: "platform",
+      })),
+    );
+    await this.repository.insertRun(scope, {
+      status: "completed",
+      trigger: "event",
+      nodesProjected: result.nodesProjected,
+      relationshipsProjected: result.relationshipsProjected,
+      unresolved: result.unresolved.length,
+      provenance: { mode: "incremental", eventType: input.eventType, fullRebuild: false },
+    });
+    if (result.nodesProjected > 0) {
+      await this.emit(scope, "business_os.context.node_projected", {
+        count: result.nodesProjected,
+        incremental: true,
+      });
+    }
+    if (result.relationshipsProjected > 0) {
+      await this.emit(scope, "business_os.context.relationship_projected", {
+        count: result.relationshipsProjected,
+        incremental: true,
+      });
+    }
+    return { ...result, missingDomains: loaded.missingDomains, incremental: true as const, fullRebuild: false as const };
   }
 
   async createOverride(

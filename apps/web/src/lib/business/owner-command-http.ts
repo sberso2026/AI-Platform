@@ -145,6 +145,25 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "policy_rejected" ||
     message === "unrestricted_graph_access" ||
     message === "agent_disabled" ||
+    message === "agent_registry_mismatch" ||
+    message === "connector_unhealthy" ||
+    message === "connector_write_forbidden" ||
+    message === "unrestricted_external_proxy_forbidden" ||
+    message === "import_validation_failed" ||
+    message === "formula_injection_forbidden" ||
+    message === "secret_redaction_required" ||
+    message === "connector_not_configured" ||
+    message === "connector_revoked" ||
+    message === "mapping_conflict" ||
+    message === "duplicate_external_record" ||
+    message === "file_too_large" ||
+    message === "unsupported_import_type" ||
+    message === "macro_content_forbidden" ||
+    message === "freshness_policy_failed" ||
+    message === "provenance_required" ||
+    message === "cross_tenant_connector_forbidden" ||
+    message === "suppressed_identity_reconstruction_forbidden" ||
+    message === "unknown_connector" ||
     message.startsWith("agent_authority_denied") ||
     message.startsWith("agent_action_prohibited")
   ) {

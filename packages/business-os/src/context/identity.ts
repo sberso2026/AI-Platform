@@ -89,27 +89,53 @@ export function isSuppressedContact(input: { suppressed?: boolean; entityType?: 
   return Boolean(input.suppressed) && input.entityType === "contact";
 }
 
+const SUPPRESSED_IDENTITY_FIELDS = [
+  "email",
+  "phone",
+  "address",
+  "externalId",
+  "external_id",
+  "providerId",
+  "provider_id",
+  "providerIdentifier",
+  "sourceRef",
+  "source_ref",
+] as const;
+
 export function redactSuppressedContactContent(
   identity: BusinessContextNodeIdentity,
 ): Record<string, unknown> {
   if (!isSuppressedContact(identity)) {
     return { ...identity, personalFieldsSuppressed: false };
   }
-  return {
+  const redacted: Record<string, unknown> = {
     ...identity,
     displayName: SUPPRESSED_CONTACT_LABEL,
     sourceRef: null,
     personalFieldsSuppressed: true,
   };
+  for (const field of SUPPRESSED_IDENTITY_FIELDS) {
+    if (field in redacted) redacted[field] = null;
+  }
+  return redacted;
 }
 
-/** True when suppressed-contact content still holds a personal display name. Does not repair. */
+/** True when suppressed-contact content still holds reconstructable identity. Does not repair. */
 export function suppressedContactLeaks(content: Record<string, unknown>): boolean {
   if (!isSuppressedContact({ suppressed: Boolean(content.suppressed), entityType: String(content.entityType ?? "") })) {
     return false;
   }
   const displayName = String(content.displayName ?? "");
-  return displayName.length > 0 && displayName !== SUPPRESSED_CONTACT_LABEL;
+  if (displayName.length > 0 && displayName !== SUPPRESSED_CONTACT_LABEL) return true;
+  return Boolean(
+    content.email ||
+      content.phone ||
+      content.address ||
+      content.externalId ||
+      content.external_id ||
+      content.providerId ||
+      content.sourceRef,
+  );
 }
 
 export function identityFromContent(

@@ -1,9 +1,9 @@
 /**
  * BOS-0 Foundation version and platform-reuse contracts.
  */
-export const BUSINESS_OS_VERSION = "0.12.0" as const;
+export const BUSINESS_OS_VERSION = "0.13.0" as const;
 export const BUSINESS_OS_STATUS = "preview" as const;
-export const BUSINESS_OS_PHASE = "BOS-11" as const;
+export const BUSINESS_OS_PHASE = "BOS-12" as const;
 
 /** Business OS consumes Platform Kernel / Intelligence. Independent AI stacks are forbidden. */
 export const implementsOwnAiStack = false as const;
@@ -19,11 +19,17 @@ export const duplicateAssistantStackDetected = false as const;
 export const duplicateWorkflowEngineDetected = false as const;
 export const duplicateEventBusDetected = false as const;
 export const duplicateAgentRuntimeDetected = false as const;
+export const duplicateIntegrationStackDetected = false as const;
 export const autonomousApprovalEnabled = false as const;
 export const directProviderAccess = false as const;
 export const unrestrictedGraphAccess = false as const;
 export const canonicalDomainMutationBypass = false as const;
 export const crossTenantAgentAccess = false as const;
+export const agentRegistryMismatchBlocksExecution = true as const;
+export const suppressedIdentityReconstructionBlocked = true as const;
+export const crossTenantConnectorAccess = false as const;
+export const directAgentProviderAccess = false as const;
+export const unrestrictedExternalProxy = false as const;
 
 export const BUSINESS_OS_FEATURE_KEY = "business_os" as const;
 export const BUSINESS_OS_ID = "business" as const;
@@ -65,11 +71,17 @@ export function getBusinessOsFoundationDeclaration() {
     duplicateWorkflowEngineDetected,
     duplicateEventBusDetected,
     duplicateAgentRuntimeDetected,
+    duplicateIntegrationStackDetected,
     autonomousApprovalEnabled,
     directProviderAccess,
     unrestrictedGraphAccess,
     canonicalDomainMutationBypass,
     crossTenantAgentAccess,
+    agentRegistryMismatchBlocksExecution,
+    suppressedIdentityReconstructionBlocked,
+    crossTenantConnectorAccess,
+    directAgentProviderAccess,
+    unrestrictedExternalProxy,
     catalogStatus: BUSINESS_OS_PREVIEW_ACCESS.catalogStatus,
     previewAccess: BUSINESS_OS_PREVIEW_ACCESS,
   } as const;

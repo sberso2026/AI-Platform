@@ -16,7 +16,7 @@ describe("BOS-10 Business Context Graph", () => {
     expect(implementsOwnAiStack).toBe(false);
     expect(duplicateKnowledgeGraphDetected).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-11");
+    expect(bos.status.snapshot().phase).toBe("BOS-12");
     expect(bos.businessContextGraph).toBeDefined();
     expect(bos.capabilities.isImplemented("business_context")).toBe(true);
     expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);

@@ -33,6 +33,7 @@ import { createMemoryAgentRegistry, createMemoryWorkforceStore } from "./store";
 import { assertToolAllowlisted, isForbiddenTool, isReadTool, trimToolAllowlist } from "./tools";
 import { diagnoseWorkforce } from "./diagnostics";
 import { demoWorkforceSeed } from "./demo";
+import type { BosConnectorsService } from "../connectors/service";
 
 function requireWorkspace(scope: { tenantId: string; workspaceId?: string; userId: string }): OwnerCommandScope {
   if (!scope.workspaceId) throw new Error("workspace_not_assigned");
@@ -56,6 +57,7 @@ export type AiWorkforceOptions = {
   registry?: AgentRegistryPort;
   policy?: PolicyPort;
   now?: () => Date;
+  connectors?: BosConnectorsService;
 };
 
 export class AiWorkforceService {
@@ -63,6 +65,7 @@ export class AiWorkforceService {
   private readonly registry: AgentRegistryPort;
   private readonly policy: PolicyPort;
   private readonly now: () => Date;
+  private readonly connectors: BosConnectorsService | null;
 
   constructor(
     private readonly supabase: SupabaseClient,
@@ -75,6 +78,7 @@ export class AiWorkforceService {
     this.registry = options.registry ?? kernelAgentRegistry(kernel.aiDirector);
     this.policy = options.policy ?? kernelPolicyPort(kernel);
     this.now = options.now ?? (() => new Date());
+    this.connectors = options.connectors ?? null;
   }
 
   contract() {
@@ -328,6 +332,7 @@ export class AiWorkforceService {
     const installation = await this.requireInstallation(scope, input.installationId);
     if (installation.status !== "enabled") throw new Error("agent_not_enabled");
     this.assertScope(scope, installation);
+    await this.assertExecutionGates(scope, installation);
 
     const policy = await this.policy.evaluate({
       tenantId: scope.tenantId,
@@ -425,6 +430,10 @@ export class AiWorkforceService {
     if (approval.decision !== "pending") throw new Error("invalid_approval_status");
     if (approval.requestedBy === actor.userId) throw new Error("self_approval_forbidden");
     if (actor.agentId) throw new Error("self_approval_forbidden");
+    const runForGate = await this.store.getRun(scope, approval.runId);
+    if (!runForGate) throw new Error("workforce run not found");
+    const installationForGate = await this.requireInstallation(scope, runForGate.installationId);
+    await this.assertExecutionGates(scope, installationForGate);
 
     const decided = {
       ...approval,
@@ -463,6 +472,7 @@ export class AiWorkforceService {
     const targetDef = catalogEntry(input.toSlug);
     if (!targetDef) throw new Error("self_registration_forbidden");
     if (run.visitedAgents.includes(input.toSlug)) throw new Error("handoff_limit_exceeded");
+    await this.assertExecutionGates(scope, from);
     const settings = await this.store.getSettings(scope);
     const maxHandoffs = Math.min(from.budget.maxHandoffs, settings.maxHandoffs, targetDef.maxHandoffs);
     if (run.budgetUsed.handoffs >= maxHandoffs) throw new Error("handoff_limit_exceeded");
@@ -681,6 +691,7 @@ export class AiWorkforceService {
 
   private async executeApproved(scope: OwnerCommandScope, run: WorkforceRun, toolId = "bos.context.entity") {
     const installation = await this.requireInstallation(scope, run.installationId);
+    await this.assertExecutionGates(scope, installation);
     const task = await this.store.getTask(scope, run.taskId);
     if (!task) throw new Error("workforce task not found");
     const settings = await this.store.getSettings(scope);
@@ -716,7 +727,7 @@ export class AiWorkforceService {
         ...current.explanation,
         derivedRecommendation: authorityIsAdvisory(installation.authority)
           ? "Advisory recommendation based on structured evidence only."
-          : "Execution requested; canonical writes remain unauthorized in BOS-11.",
+          : "Execution requested; canonical writes remain unauthorized in BOS-12.",
       },
     });
 
@@ -829,6 +840,25 @@ export class AiWorkforceService {
     await this.emit(scope, "business_os.ai_workforce.run_blocked", { runId: next.id, code });
     await this.auditSafe(scope, "blocked", "business_os_workforce_run", next.id, { code, reasons });
     return { task: currentTask, run: next, approval: null };
+  }
+
+  private async assertExecutionGates(scope: OwnerCommandScope, installation: WorkforceInstallation) {
+    let registered: { slug: string; id: string; isActive: boolean } | null = null;
+    try {
+      registered = await this.registry.getAgentBySlug(scope.tenantId, installation.catalogSlug);
+    } catch {
+      registered = null;
+    }
+    if (
+      !registered ||
+      !installation.kernelAgentId ||
+      registered.id !== installation.kernelAgentId
+    ) {
+      throw new Error("agent_registry_mismatch");
+    }
+    if (this.connectors) {
+      await this.connectors.assertAgentContextGates(scope);
+    }
   }
 
   private async requireInstallation(scope: OwnerCommandScope, id: string) {

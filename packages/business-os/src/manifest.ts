@@ -9,7 +9,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — AI Workforce preview (BOS-11)",
+      "AI-assisted business operations — Connectors and Hardening preview (BOS-12)",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
@@ -33,6 +33,7 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { path: "/business/risk", title: "Business Risk", component: "BusinessRisk" },
       { path: "/business/context", title: "Business Context", component: "BusinessContext" },
       { path: "/business/ai-workforce", title: "AI Workforce", component: "AiWorkforce" },
+      { path: "/business/integrations", title: "Integrations", component: "BusinessIntegrations" },
       { path: "/business/settings", title: "Business OS Settings", component: "BusinessOsSettings" },
     ],
     navigation: [
@@ -123,6 +124,14 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
         icon: "Bot",
         group: "business",
         order: 11,
+      },
+      {
+        id: "bos-integrations",
+        label: "Integrations",
+        path: "/business/integrations",
+        icon: "Plug",
+        group: "business",
+        order: 12,
       },
       {
         id: "bos-settings",
@@ -221,6 +230,13 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
       { type: "business_os.ai_workforce.run_failed", description: "Workforce run failed" },
       { type: "business_os.ai_workforce.run_blocked", description: "Workforce run blocked" },
       { type: "business_os.ai_workforce.handoff_requested", description: "Bounded agent-to-agent handoff requested" },
+      { type: "business_os.connectors.configured", description: "Optional connector configured (secret reference only)" },
+      { type: "business_os.connectors.revoked", description: "Optional connector revoked and secret reference cleared" },
+      { type: "business_os.connectors.sync_started", description: "Connector sync started" },
+      { type: "business_os.connectors.sync_completed", description: "Connector sync completed or partial" },
+      { type: "business_os.connectors.sync_failed", description: "Connector sync failed" },
+      { type: "business_os.connectors.import_committed", description: "CSV/Excel import committed to staging" },
+      { type: "business_os.connectors.mapping_updated", description: "Connector mapping version updated" },
     ],
     knowledge: [
       {

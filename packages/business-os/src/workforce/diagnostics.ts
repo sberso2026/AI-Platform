@@ -47,7 +47,7 @@ export function diagnoseWorkforce(input: {
     if (!registered || (installation.kernelAgentId && registered.id !== installation.kernelAgentId)) {
       findings.push({
         code: "agent_registry_mismatch",
-        severity: "warning",
+        severity: "critical",
         message: `Kernel registry mismatch for ${installation.catalogSlug}`,
         repaired: false,
       });

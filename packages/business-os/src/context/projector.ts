@@ -70,6 +70,16 @@ export async function projectRecords(
     nodesProjected += 1;
   }
 
+  const snapshots = new Map<string, Awaited<ReturnType<GraphPort["loadSnapshot"]>>>();
+  const loadSnapshotOnce = async (tenantId: string, workspaceId: string) => {
+    const key = `${tenantId}:${workspaceId}`;
+    const existing = snapshots.get(key);
+    if (existing) return existing;
+    const snapshot = await graph.loadSnapshot(tenantId, workspaceId);
+    snapshots.set(key, snapshot);
+    return snapshot;
+  };
+
   let relationshipsProjected = 0;
   for (const record of records) {
     if (record.identity.deleted) continue;
@@ -79,7 +89,7 @@ export async function projectRecords(
       record.identity.canonicalRef,
     );
     if (!from) continue;
-    const snapshot = await graph.loadSnapshot(record.identity.tenantId, record.identity.workspaceId);
+    const snapshot = await loadSnapshotOnce(record.identity.tenantId, record.identity.workspaceId);
     for (const link of record.links) {
       const type = assertRelationshipType(link.relationshipType);
       const targetTenant = link.toTenantId ?? record.identity.tenantId;

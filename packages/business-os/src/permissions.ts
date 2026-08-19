@@ -37,6 +37,8 @@ export const BUSINESS_PERMISSION_MAP: Record<
   "business_os.ai_workforce.manage": { resource: "business", action: "execute" },
   "business_os.ai_workforce.run": { resource: "business", action: "execute" },
   "business_os.ai_workforce.approve": { resource: "business", action: "admin" },
+  "business_os.connectors.view": { resource: "business", action: "read" },
+  "business_os.connectors.manage": { resource: "business", action: "execute" },
 };
 
 function hasPlatformPermission(
@@ -72,7 +74,8 @@ export function hasBusinessPermission(
     permission === "business_os.decision_action.view" ||
     permission === "business_os.business_risk.view" ||
     permission === "business_os.business_context.view" ||
-    permission === "business_os.ai_workforce.view"
+    permission === "business_os.ai_workforce.view" ||
+    permission === "business_os.connectors.view"
   ) {
     return (
       hasPlatformPermission(permissions, "business", "read") ||
@@ -93,7 +96,8 @@ export function hasBusinessPermission(
     permission === "business_os.business_risk.manage" ||
     permission === "business_os.business_context.manage" ||
     permission === "business_os.ai_workforce.manage" ||
-    permission === "business_os.ai_workforce.run"
+    permission === "business_os.ai_workforce.run" ||
+    permission === "business_os.connectors.manage"
   ) {
     return (
       hasPlatformPermission(permissions, "business", "execute") ||

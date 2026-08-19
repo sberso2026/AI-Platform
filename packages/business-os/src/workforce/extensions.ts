@@ -32,5 +32,6 @@ export function aiWorkforceStatus() {
   };
 }
 
-/** BOS-11 extension boundary only. Do not start BOS-12. */
-export const BOS_12_BOUNDARY_NOTE = "BOS-11 extension boundary only. Do not start BOS-12." as const;
+/** BOS-12 connectors and hardening are implemented on the connectors_hardening contract. */
+export const BOS_12_BOUNDARY_NOTE =
+  "BOS-12 connectors and hardening implemented. Optional read-first connectors; not a 19th capability." as const;
