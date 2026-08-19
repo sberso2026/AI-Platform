@@ -14,7 +14,7 @@ describe("BOS-7 Work & Operations", () => {
   it("reuses Platform AI Director and forbids autonomous operations actions", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-9");
+    expect(bos.status.snapshot().phase).toBe("BOS-10");
     expect(bos.workOperations).toBeDefined();
     expect(bos.capabilities.isImplemented("work_operations")).toBe(true);
     expect(bos.capabilities.isImplemented("decision_action")).toBe(true);

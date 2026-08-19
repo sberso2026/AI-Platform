@@ -2,8 +2,8 @@
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
  * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
  * BOS-6 Profit Intelligence, BOS-7 Work & Operations, BOS-8 Decision & Action Intelligence,
- * BOS-9 Business Risk).
- * Capabilities are identifiers — owner_command through business_risk are implemented.
+ * BOS-9 Business Risk, BOS-10 Business Context Graph).
+ * Capabilities are identifiers — owner_command through business_context are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -38,6 +38,8 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.business_risk.view",
   "business_os.business_risk.manage",
   "business_os.business_risk.approve",
+  "business_os.business_context.view",
+  "business_os.business_context.manage",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -154,6 +156,11 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.risk.outside_tolerance",
   "business_os.risk.obligation_overdue",
   "business_os.risk.review_due",
+  "business_os.context.node_projected",
+  "business_os.context.relationship_projected",
+  "business_os.context.projection_failed",
+  "business_os.context.rebuild_completed",
+  "business_os.context.unresolved_reference_detected",
 ] as const;
 
 export type BusinessOsEventType = (typeof BUSINESS_OS_EVENT_TYPES)[number];
@@ -2149,8 +2156,28 @@ export interface BusinessRiskContract {
 
 export interface BusinessContextGraphContract {
   capability: "business_context";
+  implemented: true;
+  ontologyVersion: "business_context_graph.v1";
+  reuses: readonly [
+    "platform_kernel_knowledge_graph",
+    "platform_kernel_event_bus",
+    "platform_kernel_ai_director",
+  ];
+  projectionOnly: true;
+  noSecondGraphRuntime: true;
+  noSecondVectorStore: true;
+  noSecondSearchStack: true;
+  noSecondMemoryService: true;
+  adjacencyIsNotCausation: true;
+  engineeringOsReferenceOnly: true;
+  implementsOwnAiStack: false;
+  note: string;
+}
+
+export interface AiWorkforceContract {
+  capability: "ai_workforce";
   implemented: false;
-  note: "BOS-9 extension boundary only. Do not start BOS-10.";
+  note: "BOS-10 extension boundary only. Do not start BOS-11.";
 }
 
 export const BUSINESS_DECISION_DOMAINS = [
@@ -3235,4 +3262,213 @@ export interface BusinessRiskSettingsInput {
   version?: number;
   effectiveAt?: string;
   provenance?: Record<string, unknown>;
+}
+
+export const BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION = "business_context_graph.v1" as const;
+export type BusinessContextGraphOntologyVersion = typeof BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION;
+
+export const BUSINESS_CONTEXT_NODE_TYPES = [
+  "organisation",
+  "customer",
+  "contact",
+  "lead",
+  "opportunity",
+  "proposal",
+  "work",
+  "market_segment",
+  "financial_period",
+  "financial_fact",
+  "profit_fact",
+  "risk",
+  "control",
+  "obligation",
+  "decision",
+  "action",
+  "signal",
+  "recommendation",
+  "kpi",
+  "evidence",
+  "document_reference",
+  "agent_reference",
+  "engineering_project_reference",
+] as const;
+export type BusinessContextNodeType = (typeof BUSINESS_CONTEXT_NODE_TYPES)[number];
+
+export const BUSINESS_CONTEXT_SOURCE_DOMAINS = [
+  "finance",
+  "growth",
+  "revenue",
+  "customer",
+  "profit",
+  "operations",
+  "risk",
+  "decision",
+  "owner_command",
+  "platform",
+  "engineering_reference",
+] as const;
+export type BusinessContextSourceDomain = (typeof BUSINESS_CONTEXT_SOURCE_DOMAINS)[number];
+
+export const BUSINESS_CONTEXT_RELATIONSHIP_TYPES = [
+  "CUSTOMER_HAS_OPPORTUNITY",
+  "CUSTOMER_HAS_CONTACT",
+  "CUSTOMER_HAS_WORK",
+  "CUSTOMER_IN_SEGMENT",
+  "CUSTOMER_LINKED_TO_FINANCIAL_FACT",
+  "LEAD_CONVERTED_TO_CUSTOMER",
+  "OPPORTUNITY_HAS_PROPOSAL",
+  "OPPORTUNITY_CONVERTED_TO_CUSTOMER",
+  "WORK_LINKED_TO_PROFIT_FACT",
+  "WORK_LINKED_TO_OPERATIONAL_COST",
+  "WORK_LINKED_TO_ENGINEERING_PROJECT_REFERENCE",
+  "PROFIT_FACT_ATTRIBUTED_TO_CUSTOMER",
+  "PROFIT_FACT_ATTRIBUTED_TO_WORK",
+  "RISK_AFFECTS_CUSTOMER",
+  "RISK_AFFECTS_WORK",
+  "RISK_CONTROLLED_BY",
+  "RISK_REQUIRES_DECISION",
+  "RISK_HAS_OBLIGATION",
+  "DECISION_HAS_OPTION",
+  "DECISION_CREATES_ACTION",
+  "DECISION_HAS_EVIDENCE",
+  "DECISION_AFFECTS_CUSTOMER",
+  "DECISION_AFFECTS_WORK",
+  "DECISION_AFFECTS_RISK",
+  "SIGNAL_TRIGGERED_RECOMMENDATION",
+  "SIGNAL_AFFECTS_CUSTOMER",
+  "RECOMMENDATION_INFORMS_DECISION",
+  "ACTION_MITIGATES_RISK",
+  "ACTION_LINKED_TO_WORK",
+] as const;
+export type BusinessContextRelationshipType = (typeof BUSINESS_CONTEXT_RELATIONSHIP_TYPES)[number];
+
+export const BUSINESS_CONTEXT_RELATIONSHIP_STATUSES = [
+  "active",
+  "inactive",
+  "suppressed",
+  "deleted",
+  "override",
+  "reversed",
+] as const;
+export type BusinessContextRelationshipStatus = (typeof BUSINESS_CONTEXT_RELATIONSHIP_STATUSES)[number];
+
+export const BUSINESS_CONTEXT_DEFAULT_DEPTH = 2;
+export const BUSINESS_CONTEXT_MAX_DEPTH = 4;
+export const BUSINESS_CONTEXT_MAX_NEIGHBOURS = 80;
+
+export const BUSINESS_CONTEXT_KPI_KEYS = [
+  "graph_projection_freshness",
+  "unresolved_relationships",
+  "orphaned_nodes",
+  "relationship_evidence_coverage",
+  "customer_context_coverage",
+  "decision_context_coverage",
+] as const;
+export type BusinessContextKpiKey = (typeof BUSINESS_CONTEXT_KPI_KEYS)[number];
+
+export interface BusinessContextNodeIdentity {
+  tenantId: string;
+  workspaceId: string;
+  domain: BusinessContextSourceDomain;
+  entityType: BusinessContextNodeType;
+  entityId: string;
+  canonicalRef: string;
+  displayName: string;
+  sourceType: string;
+  sourceRef?: string | null;
+  classification?: string | null;
+  ontologyVersion: BusinessContextGraphOntologyVersion;
+  effectiveAt: string;
+  suppressed?: boolean;
+  deleted?: boolean;
+}
+
+export interface BusinessContextRelationshipEvidence {
+  sourceDomain: BusinessContextSourceDomain;
+  sourceEntityRef: string;
+  sourceEvent?: string | null;
+  provenance: Record<string, unknown>;
+  projectedAt: string;
+  relationshipVersion: typeof BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION;
+  confidence?: number | null;
+  status: BusinessContextRelationshipStatus;
+}
+
+export interface BusinessContextCanonicalRecord {
+  identity: BusinessContextNodeIdentity;
+  links: BusinessContextCanonicalLink[];
+}
+
+export interface BusinessContextCanonicalLink {
+  relationshipType: BusinessContextRelationshipType;
+  toEntityType: BusinessContextNodeType;
+  toEntityId: string;
+  toTenantId?: string;
+  toWorkspaceId?: string;
+  evidence: BusinessContextRelationshipEvidence;
+}
+
+export interface BusinessContextNeighbour {
+  node: BusinessContextNodeIdentity;
+  relationshipType: BusinessContextRelationshipType;
+  direction: "outbound" | "inbound";
+  evidence: BusinessContextRelationshipEvidence;
+  depth: number;
+}
+
+export interface BusinessContextQueryResult {
+  entity: BusinessContextNodeIdentity | null;
+  neighbours: BusinessContextNeighbour[];
+  missingLinks: string[];
+  unknown: string[];
+  truncated: boolean;
+  adjacencyIsNotCausation: true;
+  freshness: string | null;
+  dataQuality: BusinessContextDataQuality;
+}
+
+export interface BusinessContextDataQuality {
+  projectionFreshnessHours: number | null;
+  sourceCoverageBps: number;
+  unresolvedRefs: number;
+  orphanRateBps: number;
+  relationshipEvidenceCoverageBps: number;
+  domainCoverage: string[];
+  staleProjections: number;
+  schemaVersionMismatches: number;
+}
+
+export interface BusinessContextDiagnosticFinding {
+  code:
+    | "orphaned_node"
+    | "orphaned_relationship"
+    | "missing_source_entity"
+    | "duplicate_canonical_ref"
+    | "stale_projection"
+    | "unresolved_link"
+    | "cross_tenant_violation"
+    | "schema_version_mismatch"
+    | "ambiguous_mapping"
+    | "missing_source_domain";
+  severity: "info" | "watch" | "warning" | "critical";
+  message: string;
+  canonicalRef?: string;
+  repaired: false;
+}
+
+export interface BusinessContextAiAssembly {
+  entity: BusinessContextNodeIdentity | null;
+  neighbours: Array<{
+    nodeType: BusinessContextNodeType;
+    displayName: string;
+    relationshipType: BusinessContextRelationshipType;
+    evidence: BusinessContextRelationshipEvidence;
+    freshness: string;
+    sourceRefs: string[];
+  }>;
+  dataQuality: BusinessContextDataQuality;
+  unknown: string[];
+  missingLinks: string[];
+  adjacencyIsNotCausation: true;
+  narrativeSeparate: true;
 }

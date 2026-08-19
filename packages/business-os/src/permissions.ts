@@ -31,6 +31,8 @@ export const BUSINESS_PERMISSION_MAP: Record<
   "business_os.business_risk.view": { resource: "business", action: "read" },
   "business_os.business_risk.manage": { resource: "business", action: "execute" },
   "business_os.business_risk.approve": { resource: "business", action: "admin" },
+  "business_os.business_context.view": { resource: "business", action: "read" },
+  "business_os.business_context.manage": { resource: "business", action: "execute" },
 };
 
 function hasPlatformPermission(
@@ -64,7 +66,8 @@ export function hasBusinessPermission(
     permission === "business_os.profit_intelligence.view" ||
     permission === "business_os.work_operations.view" ||
     permission === "business_os.decision_action.view" ||
-    permission === "business_os.business_risk.view"
+    permission === "business_os.business_risk.view" ||
+    permission === "business_os.business_context.view"
   ) {
     return (
       hasPlatformPermission(permissions, "business", "read") ||
@@ -82,7 +85,8 @@ export function hasBusinessPermission(
     permission === "business_os.profit_intelligence.manage" ||
     permission === "business_os.work_operations.manage" ||
     permission === "business_os.decision_action.manage" ||
-    permission === "business_os.business_risk.manage"
+    permission === "business_os.business_risk.manage" ||
+    permission === "business_os.business_context.manage"
   ) {
     return (
       hasPlatformPermission(permissions, "business", "execute") ||

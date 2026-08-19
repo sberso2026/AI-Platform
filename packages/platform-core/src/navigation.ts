@@ -741,6 +741,14 @@ export const BUSINESS_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "bos-context",
+    label: "Business Context",
+    icon: "GitBranch",
+    href: "/business/context",
+    group: "business",
+    audience: "viewer",
+  },
+  {
     id: "bos-settings",
     label: "Settings",
     icon: "Settings",

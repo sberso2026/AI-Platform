@@ -13,6 +13,7 @@ import { ProfitIntelligenceService } from "./profit/service";
 import { WorkOperationsService } from "./operations/service";
 import { DecisionActionIntelligenceService } from "./decisions/service";
 import { BusinessRiskService } from "./risk/service";
+import { BusinessContextGraphService } from "./context/service";
 
 export interface BusinessOS {
   status: BusinessOsStatusService;
@@ -26,6 +27,7 @@ export interface BusinessOS {
   workOperations: WorkOperationsService;
   decisionAction: DecisionActionIntelligenceService;
   businessRisk: BusinessRiskService;
+  businessContextGraph: BusinessContextGraphService;
 }
 
 export function createBusinessOS(
@@ -85,6 +87,9 @@ export function createBusinessOS(
   );
   const decisionAction = new DecisionActionIntelligenceService(supabase, kernel, audit, ownerCommand);
   const businessRisk = new BusinessRiskService(supabase, kernel, audit, ownerCommand);
+  const businessContextGraph = new BusinessContextGraphService(supabase, kernel, audit);
+  businessContextGraph.registerSync();
+  decisionAction.bindContextGraph((scope, decisionId) => businessContextGraph.suggestEvidence(scope, decisionId));
   return {
     status,
     capabilities,
@@ -97,6 +102,7 @@ export function createBusinessOS(
     workOperations,
     decisionAction,
     businessRisk,
+    businessContextGraph,
   };
 }
 

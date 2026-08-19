@@ -79,8 +79,9 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
       "Evidence-backed business risk intelligence: assessment, controls, treatments, obligations, and residual risk feeding Owner Command Centre (not legal advice, certification, or a GRC suite)",
   },
   business_context: {
-    name: "Business Context Graph",
-    description: "Business context graph namespace (not implemented)",
+    name: "Business Context",
+    description:
+      "Bounded business relationship context projected into the Platform Kernel Knowledge Graph (not a second graph platform or causal engine)",
   },
   ai_workforce: {
     name: "AI Workforce",
@@ -102,7 +103,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "profit_intelligence" ||
       id === "work_operations" ||
       id === "decision_action" ||
-      id === "business_risk",
+      id === "business_risk" ||
+      id === "business_context",
     activationStatus:
       id === "owner_command" ||
       id === "financial_intelligence" ||
@@ -112,7 +114,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "profit_intelligence" ||
       id === "work_operations" ||
       id === "decision_action" ||
-      id === "business_risk"
+      id === "business_risk" ||
+      id === "business_context"
         ? "preview"
         : "registered",
   }));
@@ -136,7 +139,8 @@ export class BusinessCapabilityRegistry {
       id === "profit_intelligence" ||
       id === "work_operations" ||
       id === "decision_action" ||
-      id === "business_risk"
+      id === "business_risk" ||
+      id === "business_context"
     );
   }
 

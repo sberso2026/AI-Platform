@@ -127,6 +127,7 @@ describe("BUSINESS_PAGE_POLICIES route coverage", () => {
       "capabilities",
       "command",
       "config",
+      "context",
       "customers",
       "decisions",
       "demo",

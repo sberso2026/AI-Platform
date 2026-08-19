@@ -106,6 +106,26 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "obligation_title_required" ||
     message === "incident_title_required" ||
     message === "risk_not_material" ||
+    message === "unrestricted_graph_query_forbidden" ||
+    message === "external_graph_write_forbidden" ||
+    message === "cross_tenant_graph_forbidden" ||
+    message === "cross_workspace_graph_forbidden" ||
+    message === "inferred_relationship_forbidden" ||
+    message === "graph_adjacency_is_not_causation" ||
+    message === "graph_depth_exceeded" ||
+    message === "ambiguous_mapping" ||
+    message === "stale_projection" ||
+    message === "source_entity_missing" ||
+    message === "graph_projection_unavailable" ||
+    message === "manual_override_requires_reason" ||
+    message === "invalid_relationship_type" ||
+    message === "schema_version_mismatch" ||
+    message === "source_domain_mutation_forbidden" ||
+    message === "autonomous_graph_decision_forbidden" ||
+    message === "engineering_os_internal_projection_forbidden" ||
+    message === "profit_calculation_forbidden_in_graph" ||
+    message === "risk_assessment_forbidden_in_graph" ||
+    message === "customer_health_forbidden_in_graph" ||
     message === "agent_disabled" ||
     message.startsWith("agent_authority_denied") ||
     message.startsWith("agent_action_prohibited")

@@ -15,8 +15,8 @@ describe("BOS-9 business risk service guards", () => {
     expect(bos.businessRisk.contract().implementsOwnAiStack).toBe(false);
     expect(bos.businessRisk.contract().treatmentsReuseBosActions).toBe(true);
     expect(bos.businessRisk.status().available).toBe(true);
-    expect(bos.businessRisk.businessContextGraph().available).toBe(false);
-    expect(BUSINESS_CONTEXT_GRAPH_CONTRACT.implemented).toBe(false);
+    expect(bos.businessRisk.businessContextGraph().available).toBe(true);
+    expect(BUSINESS_CONTEXT_GRAPH_CONTRACT.implemented).toBe(true);
     expect(() => bos.businessRisk.acceptRiskAutonomously()).toThrow("autonomous_risk_acceptance_forbidden");
     expect(() => bos.businessRisk.declareStatutoryCompliance()).toThrow("statutory_compliance_claim_forbidden");
     expect(() => bos.businessRisk.writeExternalRegulator()).toThrow("external_regulator_write_forbidden");

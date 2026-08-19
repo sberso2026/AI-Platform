@@ -1,4 +1,8 @@
-import type { BusinessContextGraphContract, BusinessRiskContract } from "@rtb/types";
+import type { BusinessRiskContract } from "@rtb/types";
+import {
+  BUSINESS_CONTEXT_GRAPH_CONTRACT,
+  businessContextGraphStatus,
+} from "../context/extensions";
 
 export const BUSINESS_RISK_CONTRACT: BusinessRiskContract = {
   capability: "business_risk",
@@ -44,16 +48,4 @@ export function businessRiskStatus() {
   };
 }
 
-export const BUSINESS_CONTEXT_GRAPH_CONTRACT: BusinessContextGraphContract = {
-  capability: "business_context",
-  implemented: false,
-  note: "BOS-9 extension boundary only. Do not start BOS-10.",
-};
-
-export function businessContextGraphStatus() {
-  return {
-    available: false as const,
-    reason: "business_context_not_implemented" as const,
-    contract: BUSINESS_CONTEXT_GRAPH_CONTRACT.capability,
-  };
-}
+export { BUSINESS_CONTEXT_GRAPH_CONTRACT, businessContextGraphStatus };

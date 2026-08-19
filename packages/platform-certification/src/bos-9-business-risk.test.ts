@@ -14,10 +14,10 @@ describe("BOS-9 Business Risk", () => {
   it("reuses Platform AI Director and forbids autonomous risk acceptance", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-9");
+    expect(bos.status.snapshot().phase).toBe("BOS-10");
     expect(bos.businessRisk).toBeDefined();
     expect(bos.capabilities.isImplemented("business_risk")).toBe(true);
-    expect(bos.capabilities.isImplemented("business_context")).toBe(false);
+    expect(bos.capabilities.isImplemented("business_context")).toBe(true);
     expect(() => bos.businessRisk.acceptRiskAutonomously()).toThrow("autonomous_risk_acceptance_forbidden");
     expect(() => bos.businessRisk.declareStatutoryCompliance()).toThrow("statutory_compliance_claim_forbidden");
     expect(() => bos.businessRisk.writeExternalRegulator()).toThrow("external_regulator_write_forbidden");
@@ -29,7 +29,7 @@ describe("BOS-9 Business Risk", () => {
       "business_os_decisions",
       "business_os_actions",
     ]);
-    expect(bos.businessRisk.businessContextGraph().available).toBe(false);
+    expect(bos.businessRisk.businessContextGraph().available).toBe(true);
   });
 
   it("registers /business/risk", () => {

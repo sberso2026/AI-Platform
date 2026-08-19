@@ -98,6 +98,35 @@ export class DecisionActionIntelligenceService {
     this.repository = new DecisionActionRepository(supabase);
   }
 
+  private contextGraphSuggest?: (
+    scope: OwnerCommandScope,
+    decisionId: string,
+  ) => Promise<{
+    suggestions: Array<Record<string, unknown>>;
+    included: false;
+    adjacencyIsNotCausation: true;
+    note: string;
+  }>;
+
+  bindContextGraph(
+    fn: NonNullable<DecisionActionIntelligenceService["contextGraphSuggest"]>,
+  ) {
+    this.contextGraphSuggest = fn;
+  }
+
+  async suggestGraphEvidence(raw: { tenantId: string; workspaceId?: string; userId: string }, decisionId: string) {
+    const scope = requireWorkspace(raw);
+    if (!this.contextGraphSuggest) {
+      return {
+        suggestions: [],
+        included: false as const,
+        adjacencyIsNotCausation: true as const,
+        note: "Graph context may suggest evidence; evidence inclusion remains explicit and auditable.",
+      };
+    }
+    return this.contextGraphSuggest(scope, decisionId);
+  }
+
   approveAutonomously(): never {
     throw new Error("autonomous_approval_forbidden");
   }
