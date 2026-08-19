@@ -167,7 +167,7 @@ export default function WorkOperationsPage() {
                       {row.customerName ?? "No customer"} · {row.owner ?? "No owner"}
                     </p>
                   </div>
-                  <StatusChip label={row.health} />
+                  <StatusChip value={row.health} />
                 </CardHeader>
                 <CardContent className="space-y-1 p-4 pt-0 text-sm text-slate-600">
                   <p>Status: {row.status} · Progress: {bpsLabel(row.progress?.progressBps)}</p>

@@ -14,7 +14,7 @@ describe("BOS-9 Business Risk", () => {
   it("reuses Platform AI Director and forbids autonomous risk acceptance", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-12");
+    expect(bos.status.snapshot().phase).toBe("BOS-13");
     expect(bos.businessRisk).toBeDefined();
     expect(bos.capabilities.isImplemented("business_risk")).toBe(true);
     expect(bos.capabilities.isImplemented("business_context")).toBe(true);

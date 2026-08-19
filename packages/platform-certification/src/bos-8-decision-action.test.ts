@@ -14,7 +14,7 @@ describe("BOS-8 Decision & Action Intelligence", () => {
   it("reuses Platform AI Director and forbids autonomous approval", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-12");
+    expect(bos.status.snapshot().phase).toBe("BOS-13");
     expect(bos.decisionAction).toBeDefined();
     expect(bos.capabilities.isImplemented("decision_action")).toBe(true);
     expect(bos.capabilities.isImplemented("business_risk")).toBe(true);

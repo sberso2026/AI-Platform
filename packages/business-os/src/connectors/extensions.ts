@@ -41,6 +41,6 @@ export function connectorsHardeningStatus() {
   };
 }
 
-/** BOS-12 extension boundary only. Do not start a post-BOS-12 phase. */
+/** BOS-13 is RC certification only. Do not start a post-BOS-13 feature phase. */
 export const BOS_13_BOUNDARY_NOTE =
-  "BOS-12 extension boundary only. Do not start a post-BOS-12 phase." as const;
+  "BOS-13 production validation and release-candidate certification only. Do not start a post-BOS-13 feature phase." as const;
