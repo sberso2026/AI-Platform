@@ -221,4 +221,25 @@ describe("buildDeterministicBrief", () => {
     expect(brief.domainSections[0]?.id).toBe("operations");
     expect(brief.domainSections[0]?.title).toBe("Operations");
   });
+
+  it("adds a generic Decisions domain section from KPI provenance", () => {
+    const kpis = [
+      kpi({
+        key: "overdue_decisions",
+        status: "warning",
+        name: "Overdue decisions",
+        provenance: { domain: "decision" },
+      }),
+    ];
+    const brief = buildDeterministicBrief({
+      health: computeBusinessHealth(kpis, "2026-08-18T09:00:00.000Z"),
+      kpis,
+      signals: [],
+      decisions: [],
+      actions: [],
+      generatedAt: "2026-08-18T09:00:00.000Z",
+    });
+    expect(brief.domainSections[0]?.id).toBe("decision");
+    expect(brief.domainSections[0]?.title).toBe("Decisions");
+  });
 });

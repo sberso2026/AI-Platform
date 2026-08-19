@@ -725,6 +725,14 @@ export const BUSINESS_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "bos-decisions",
+    label: "Decisions",
+    icon: "Gavel",
+    href: "/business/decisions",
+    group: "business",
+    audience: "viewer",
+  },
+  {
     id: "bos-settings",
     label: "Settings",
     icon: "Settings",

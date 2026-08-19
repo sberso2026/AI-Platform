@@ -3,6 +3,10 @@ import type {
   EngineeringProjectLinkContract,
   WorkOperationsProfitContract,
 } from "@rtb/types";
+import {
+  DECISION_ACTION_INTELLIGENCE_CONTRACT,
+  decisionActionIntelligenceStatus,
+} from "../decisions/extensions";
 
 export const WORK_OPERATIONS_PROFIT_CONTRACT: WorkOperationsProfitContract = {
   capability: "work_operations",
@@ -36,17 +40,5 @@ export const ENGINEERING_PROJECT_LINK_CONTRACT: EngineeringProjectLinkContract =
     "Stores linked_engineering_project_id and linked_engineering_project_ref only. Engineering OS remains authoritative for engineering execution. No ad hoc engineering table queries or writes.",
 };
 
-export const DECISION_ACTION_INTELLIGENCE_CONTRACT: DecisionActionIntelligenceContract = {
-  capability: "decision_action",
-  implemented: false,
-  inputs: ["work_health", "operational_signals", "recommendations", "owner_decisions"],
-  note: "BOS-7 extension boundary only. Do not start BOS-8 Decision & Action Intelligence.",
-};
-
-export function decisionActionIntelligenceStatus() {
-  return {
-    available: false as const,
-    reason: "decision_action_not_implemented" as const,
-    contract: DECISION_ACTION_INTELLIGENCE_CONTRACT.capability,
-  };
-}
+export { DECISION_ACTION_INTELLIGENCE_CONTRACT, decisionActionIntelligenceStatus };
+export type { DecisionActionIntelligenceContract };

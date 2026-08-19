@@ -1,9 +1,8 @@
 /**
  * Business OS contracts (BOS-0 foundation, BOS-1 Owner Command, BOS-2 Financial Intelligence,
  * BOS-3 Growth Intelligence, BOS-4 Revenue Execution, BOS-5 Customer Intelligence,
- * BOS-6 Profit Intelligence, BOS-7 Work & Operations).
- * Capabilities are identifiers — owner_command, financial_intelligence, growth_intelligence,
- * revenue_execution, customer_intelligence, profit_intelligence, and work_operations are implemented.
+ * BOS-6 Profit Intelligence, BOS-7 Work & Operations, BOS-8 Decision & Action Intelligence).
+ * Capabilities are identifiers — owner_command through decision_action are implemented.
  */
 
 export const BUSINESS_OS_ID = "business" as const;
@@ -32,6 +31,9 @@ export const BUSINESS_PERMISSIONS = [
   "business_os.profit_intelligence.manage",
   "business_os.work_operations.view",
   "business_os.work_operations.manage",
+  "business_os.decision_action.view",
+  "business_os.decision_action.manage",
+  "business_os.decision_action.approve",
 ] as const;
 
 export type BusinessPermission = (typeof BUSINESS_PERMISSIONS)[number];
@@ -93,6 +95,13 @@ export const BUSINESS_OS_EVENT_TYPES = [
   "business_os.decision.updated",
   "business_os.action.created",
   "business_os.action.completed",
+  "business_os.decision.evidence_updated",
+  "business_os.decision.option_created",
+  "business_os.decision.brief_prepared",
+  "business_os.decision.selected",
+  "business_os.decision.outcome_recorded",
+  "business_os.decision.outcome_reviewed",
+  "business_os.decision.lesson_recorded",
   "business_os.finance.snapshot_ingested",
   "business_os.finance.metrics_updated",
   "business_os.finance.signal_detected",
@@ -153,6 +162,7 @@ export const BUSINESS_KPI_CATEGORIES = [
   "receivables",
   "pipeline",
   "operations",
+  "decision",
   "general",
 ] as const;
 export type BusinessKpiCategory = (typeof BUSINESS_KPI_CATEGORIES)[number];
@@ -2091,7 +2101,526 @@ export interface EngineeringProjectLinkContract {
 
 export interface DecisionActionIntelligenceContract {
   capability: "decision_action";
+  implemented: true;
+  inputs: readonly string[];
+  reuses: readonly ["business_os_signals", "business_os_recommendations", "business_os_decisions", "business_os_actions"];
+  advisoryOnly: true;
+  noAutonomousApproval: true;
+  note: string;
+}
+
+export interface BusinessRiskContract {
+  capability: "business_risk";
   implemented: false;
   inputs: readonly string[];
   note: string;
+}
+
+export const BUSINESS_DECISION_DOMAINS = [
+  "finance",
+  "growth",
+  "revenue",
+  "customer",
+  "profit",
+  "operations",
+  "signal",
+  "kpi",
+  "document",
+  "general",
+] as const;
+export type BusinessDecisionDomain = (typeof BUSINESS_DECISION_DOMAINS)[number];
+
+export const BUSINESS_DECISION_URGENCIES = ["low", "normal", "high", "urgent", "critical"] as const;
+export type BusinessDecisionUrgency = (typeof BUSINESS_DECISION_URGENCIES)[number];
+
+export const BUSINESS_DECISION_PRIORITIES = ["low", "normal", "high", "urgent", "critical", "unknown"] as const;
+export type BusinessDecisionPriorityLevel = (typeof BUSINESS_DECISION_PRIORITIES)[number];
+
+export const BUSINESS_DECISION_OPTION_STATUSES = [
+  "candidate",
+  "preferred",
+  "rejected",
+  "selected",
+  "superseded",
+] as const;
+export type BusinessDecisionOptionStatus = (typeof BUSINESS_DECISION_OPTION_STATUSES)[number];
+
+export const BUSINESS_DECISION_IMPACT_DIMENSIONS = [
+  "financial",
+  "revenue",
+  "customer",
+  "operational",
+  "capacity",
+  "profit",
+  "risk",
+  "timing",
+] as const;
+export type BusinessDecisionImpactDimension = (typeof BUSINESS_DECISION_IMPACT_DIMENSIONS)[number];
+
+export const BUSINESS_DECISION_QUANTIFICATIONS = ["quantitative", "qualitative", "unknown"] as const;
+export type BusinessDecisionQuantification = (typeof BUSINESS_DECISION_QUANTIFICATIONS)[number];
+
+export const BUSINESS_DECISION_REVERSIBILITIES = [
+  "reversible",
+  "partially_reversible",
+  "irreversible",
+  "unknown",
+] as const;
+export type BusinessDecisionReversibility = (typeof BUSINESS_DECISION_REVERSIBILITIES)[number];
+
+export const BUSINESS_DECISION_OUTCOME_STATUSES = [
+  "pending",
+  "measuring",
+  "achieved",
+  "partially_achieved",
+  "not_achieved",
+  "inconclusive",
+  "cancelled",
+] as const;
+export type BusinessDecisionOutcomeStatus = (typeof BUSINESS_DECISION_OUTCOME_STATUSES)[number];
+
+export const BUSINESS_DECISION_EFFECTIVENESS = [
+  "effective",
+  "partially_effective",
+  "ineffective",
+  "inconclusive",
+  "unknown",
+] as const;
+export type BusinessDecisionEffectivenessStatus = (typeof BUSINESS_DECISION_EFFECTIVENESS)[number];
+
+export const BUSINESS_DECISION_LESSON_STATUSES = ["draft", "proposed_ai", "accepted", "rejected"] as const;
+export type BusinessDecisionLessonStatus = (typeof BUSINESS_DECISION_LESSON_STATUSES)[number];
+
+export const BUSINESS_DECISION_EVIDENCE_QUALITY = ["high", "medium", "low", "unavailable"] as const;
+export type BusinessDecisionEvidenceQuality = (typeof BUSINESS_DECISION_EVIDENCE_QUALITY)[number];
+
+export const BUSINESS_DECISION_GENERATED_BY = [
+  "deterministic_rule",
+  "platform_ai_director",
+  "user",
+] as const;
+export type BusinessDecisionGeneratedBy = (typeof BUSINESS_DECISION_GENERATED_BY)[number];
+
+export const DECISION_PRIORITY_VERSION = "decision_priority.v1" as const;
+export const OPTION_COMPARISON_VERSION = "option_comparison.v1" as const;
+export const DECISION_BRIEF_VERSION = "decision_brief.v1" as const;
+export const DECISION_EFFECTIVENESS_VERSION = "decision_effectiveness.v1" as const;
+export const OPTION_RANKING_VERSION = "option_ranking.v1" as const;
+
+export const BUSINESS_DECISION_KPI_KEYS = [
+  "pending_decisions",
+  "overdue_decisions",
+  "critical_decisions",
+  "decisions_without_evidence",
+  "decision_cycle_time",
+  "action_completion_rate",
+  "overdue_actions",
+  "blocked_actions",
+  "outcome_measurement_coverage",
+  "decision_effectiveness_coverage",
+] as const;
+export type BusinessDecisionKpiKey = (typeof BUSINESS_DECISION_KPI_KEYS)[number];
+
+export const BUSINESS_DECISION_DEFAULT_THRESHOLDS = {
+  overdueGraceDays: 0,
+  criticalFinancialImpactMinor: 10_000_000,
+  highFinancialImpactMinor: 1_000_000,
+  materialVarianceBps: 2000,
+  outcomeReviewOverdueDays: 0,
+  ineffectiveRepeatSample: 3,
+  comparisonScoringEnabled: false,
+} as const;
+
+export interface BusinessDecisionContext {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  decisionId: string;
+  question: string;
+  problemStatement?: string | null;
+  originatingSignalId?: string | null;
+  originatingRecommendationId?: string | null;
+  domain: BusinessDecisionDomain;
+  ownerLabel?: string | null;
+  stakeholders: string[];
+  urgency: BusinessDecisionUrgency;
+  dueAt?: string | null;
+  evidenceCompletenessBps: string | null;
+  assumptions: string[];
+  constraints: string[];
+  selectedOptionId?: string | null;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessDecisionEvidenceItem {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  decisionId: string;
+  optionId?: string | null;
+  sourceType: string;
+  sourceDomain: BusinessDecisionDomain;
+  sourceId?: string | null;
+  sourceRef: string;
+  summary: string;
+  valueState: "known" | "unknown" | "qualitative";
+  valueText?: string | null;
+  valueMinor?: string | null;
+  currency?: string | null;
+  scale?: number | null;
+  unit?: string | null;
+  observedAt?: string | null;
+  linkedAt: string;
+  freshness?: string | null;
+  confidence: BusinessDecisionEvidenceQuality;
+  evidenceQuality: BusinessDecisionEvidenceQuality;
+  snapshot: Record<string, unknown>;
+  generatedBy: BusinessDecisionGeneratedBy;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessDecisionOption {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  decisionId: string;
+  title: string;
+  description?: string | null;
+  status: BusinessDecisionOptionStatus;
+  assumptions: string[];
+  constraints: string[];
+  expectedBenefits?: string | null;
+  expectedCosts?: string | null;
+  expectedRisks?: string | null;
+  reversibility: BusinessDecisionReversibility;
+  generatedBy: BusinessDecisionGeneratedBy;
+  aiGenerated: boolean;
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessDecisionImpact {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  optionId: string;
+  dimension: BusinessDecisionImpactDimension;
+  quantification: BusinessDecisionQuantification;
+  valueMinor?: string | null;
+  currency?: string | null;
+  scale?: number | null;
+  unit?: string | null;
+  period?: string | null;
+  qualitativeLabel?: string | null;
+  qualitativeOnly: boolean;
+  sourceDomain?: string | null;
+  sourceRef?: string | null;
+  ruleVersion?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessDecisionOutcome {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  decisionId: string;
+  selectedOptionId?: string | null;
+  expectedOutcome?: string | null;
+  expectedMetricKey?: string | null;
+  expectedValue?: string | null;
+  expectedUnit?: string | null;
+  expectedCurrency?: string | null;
+  expectedScale?: number | null;
+  expectedPeriod?: string | null;
+  actualOutcome?: string | null;
+  actualMetricKey?: string | null;
+  actualValue?: string | null;
+  actualUnit?: string | null;
+  actualCurrency?: string | null;
+  actualScale?: number | null;
+  actualPeriod?: string | null;
+  measurementDate?: string | null;
+  measurementWindowStart?: string | null;
+  measurementWindowEnd?: string | null;
+  status: BusinessDecisionOutcomeStatus;
+  varianceValue?: string | null;
+  varianceState: "computed" | "unknown";
+  explanation?: string | null;
+  evidenceRefs: BusinessEvidenceRef[];
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessDecisionLesson {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  decisionId: string;
+  selectedOptionId?: string | null;
+  assumptionsSnapshot: string[];
+  evidenceSnapshot: Record<string, unknown>;
+  expectedOutcome?: string | null;
+  actualOutcome?: string | null;
+  lessonText: string;
+  draftSource: BusinessDecisionGeneratedBy;
+  status: BusinessDecisionLessonStatus;
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
+  memoryId?: string | null;
+  reviewStatus: "pending" | "reviewed" | "not_required";
+  sourceType: string;
+  sourceRef?: string | null;
+  provenance: Record<string, unknown>;
+  isDemo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessDecisionPriorityComponent {
+  id: string;
+  label: string;
+  value: string | null;
+  contribution: BusinessDecisionPriorityLevel | "none";
+  known: boolean;
+}
+
+export interface BusinessDecisionPriorityResult {
+  priority: BusinessDecisionPriorityLevel;
+  components: BusinessDecisionPriorityComponent[];
+  evidence: BusinessEvidenceRef[];
+  missingInputs: string[];
+  version: typeof DECISION_PRIORITY_VERSION;
+  inspectable: true;
+  authoritativeAi: false;
+}
+
+export interface BusinessDecisionComparisonOption {
+  optionId: string;
+  title: string;
+  status: BusinessDecisionOptionStatus;
+  aiGenerated: boolean;
+  reversibility: BusinessDecisionReversibility;
+  advantages: string[];
+  disadvantages: string[];
+  constraints: string[];
+  requiredApprovals: string[];
+  knownImpacts: Partial<Record<BusinessDecisionImpactDimension, string>>;
+  unknownImpacts: BusinessDecisionImpactDimension[];
+  evidenceRefs: BusinessEvidenceRef[];
+}
+
+export interface BusinessDecisionComparison {
+  version: typeof OPTION_COMPARISON_VERSION;
+  scoringEnabled: boolean;
+  scoringDisclaimer: string;
+  rankingVersion: typeof OPTION_RANKING_VERSION | null;
+  ranking: Array<{ optionId: string; score: number; components: Record<string, number> }> | null;
+  objectiveTruth: false;
+  options: BusinessDecisionComparisonOption[];
+  preferredOptionId?: string | null;
+  recommendationText: string;
+}
+
+export interface BusinessDecisionBrief {
+  version: typeof DECISION_BRIEF_VERSION;
+  decisionId: string;
+  decisionQuestion: string;
+  currentSituation: string;
+  keyEvidence: BusinessEvidenceRef[];
+  missingEvidence: string[];
+  options: Array<{ id: string; title: string; status: BusinessDecisionOptionStatus; aiGenerated: boolean }>;
+  impactComparison: BusinessDecisionComparison;
+  recommendation: {
+    text: string;
+    preferredOptionId?: string | null;
+    evidenceRefs: BusinessEvidenceRef[];
+    assumptions: string[];
+    knownImpacts: string[];
+    unknownImpacts: string[];
+    ruleVersion: string;
+    generatedBy: BusinessDecisionGeneratedBy;
+    timestamp: string;
+    advisoryOnly: true;
+  };
+  assumptions: string[];
+  constraints: string[];
+  dueAt?: string | null;
+  reviewAt?: string | null;
+  generatedBy: "deterministic_rule";
+  requiresAi: false;
+}
+
+export interface BusinessDecisionEffectiveness {
+  status: BusinessDecisionEffectivenessStatus;
+  expectedOutcome?: string | null;
+  actualOutcome?: string | null;
+  evidence: BusinessEvidenceRef[];
+  measurementCoverage: "full" | "partial" | "none";
+  version: typeof DECISION_EFFECTIVENESS_VERSION;
+  authoritativeAi: false;
+}
+
+export interface BusinessDecisionQueueItem {
+  id: string;
+  statement: string;
+  question: string;
+  domain: BusinessDecisionDomain | "unknown";
+  priority: BusinessDecisionPriorityResult;
+  ownerId?: string | null;
+  ownerLabel?: string | null;
+  dueAt?: string | null;
+  originatingSignalId?: string | null;
+  evidenceCompletenessBps: string | null;
+  status: BusinessDecisionStatus;
+  isDemo: boolean;
+}
+
+export interface BusinessActionIntelligence {
+  overdue: BusinessAction[];
+  blocked: BusinessAction[];
+  highPriority: BusinessAction[];
+  decisionCritical: BusinessAction[];
+  completionLag: Array<{ actionId: string; dueDate: string | null; completedAt: string | null; lagDays: number | null }>;
+  unresolvedDependencies: Array<{ actionId: string; title: string; blocker: string }>;
+}
+
+export interface BusinessDecisionContextInput {
+  decisionId: string;
+  question: string;
+  problemStatement?: string | null;
+  originatingSignalId?: string | null;
+  originatingRecommendationId?: string | null;
+  domain?: BusinessDecisionDomain;
+  ownerLabel?: string | null;
+  stakeholders?: string[];
+  urgency?: BusinessDecisionUrgency;
+  dueAt?: string | null;
+  assumptions?: string[];
+  constraints?: string[];
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessDecisionEvidenceInput {
+  decisionId: string;
+  optionId?: string | null;
+  sourceType: string;
+  sourceDomain: BusinessDecisionDomain;
+  sourceId?: string | null;
+  sourceRef: string;
+  summary: string;
+  valueState?: "known" | "unknown" | "qualitative";
+  valueText?: string | null;
+  valueMinor?: string | number | null;
+  currency?: string | null;
+  scale?: number | null;
+  unit?: string | null;
+  observedAt?: string | null;
+  freshness?: string | null;
+  confidence?: BusinessDecisionEvidenceQuality;
+  evidenceQuality?: BusinessDecisionEvidenceQuality;
+  snapshot?: Record<string, unknown>;
+  generatedBy?: BusinessDecisionGeneratedBy;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessDecisionOptionInput {
+  decisionId: string;
+  title: string;
+  description?: string | null;
+  status?: BusinessDecisionOptionStatus;
+  assumptions?: string[];
+  constraints?: string[];
+  expectedBenefits?: string | null;
+  expectedCosts?: string | null;
+  expectedRisks?: string | null;
+  reversibility?: BusinessDecisionReversibility;
+  generatedBy?: BusinessDecisionGeneratedBy;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessDecisionImpactInput {
+  optionId: string;
+  dimension: BusinessDecisionImpactDimension;
+  quantification?: BusinessDecisionQuantification;
+  valueMinor?: string | number | null;
+  currency?: string | null;
+  scale?: number | null;
+  unit?: string | null;
+  period?: string | null;
+  qualitativeLabel?: string | null;
+  sourceDomain?: string | null;
+  sourceRef?: string | null;
+  ruleVersion?: string | null;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessDecisionOutcomeInput {
+  decisionId: string;
+  selectedOptionId?: string | null;
+  expectedOutcome?: string | null;
+  expectedMetricKey?: string | null;
+  expectedValue?: string | number | null;
+  expectedUnit?: string | null;
+  expectedCurrency?: string | null;
+  expectedScale?: number | null;
+  expectedPeriod?: string | null;
+  actualOutcome?: string | null;
+  actualMetricKey?: string | null;
+  actualValue?: string | number | null;
+  actualUnit?: string | null;
+  actualCurrency?: string | null;
+  actualScale?: number | null;
+  actualPeriod?: string | null;
+  measurementDate?: string | null;
+  measurementWindowStart?: string | null;
+  measurementWindowEnd?: string | null;
+  status?: BusinessDecisionOutcomeStatus;
+  explanation?: string | null;
+  evidenceRefs?: BusinessEvidenceRef[];
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
+}
+
+export interface BusinessDecisionLessonInput {
+  decisionId: string;
+  selectedOptionId?: string | null;
+  assumptionsSnapshot?: string[];
+  evidenceSnapshot?: Record<string, unknown>;
+  expectedOutcome?: string | null;
+  actualOutcome?: string | null;
+  lessonText: string;
+  draftSource?: BusinessDecisionGeneratedBy;
+  sourceType: string;
+  sourceRef?: string;
+  provenance?: Record<string, unknown>;
+  isDemo?: boolean;
 }
