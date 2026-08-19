@@ -83,6 +83,35 @@ export function buildIdentity(input: {
   };
 }
 
+export const SUPPRESSED_CONTACT_LABEL = "Contact (suppressed)";
+
+export function isSuppressedContact(input: { suppressed?: boolean; entityType?: string }): boolean {
+  return Boolean(input.suppressed) && input.entityType === "contact";
+}
+
+export function redactSuppressedContactContent(
+  identity: BusinessContextNodeIdentity,
+): Record<string, unknown> {
+  if (!isSuppressedContact(identity)) {
+    return { ...identity, personalFieldsSuppressed: false };
+  }
+  return {
+    ...identity,
+    displayName: SUPPRESSED_CONTACT_LABEL,
+    sourceRef: null,
+    personalFieldsSuppressed: true,
+  };
+}
+
+/** True when suppressed-contact content still holds a personal display name. Does not repair. */
+export function suppressedContactLeaks(content: Record<string, unknown>): boolean {
+  if (!isSuppressedContact({ suppressed: Boolean(content.suppressed), entityType: String(content.entityType ?? "") })) {
+    return false;
+  }
+  const displayName = String(content.displayName ?? "");
+  return displayName.length > 0 && displayName !== SUPPRESSED_CONTACT_LABEL;
+}
+
 export function identityFromContent(
   content: Record<string, unknown>,
   fallbackTitle: string,
@@ -92,6 +121,8 @@ export function identityFromContent(
   const entityType = content.entityType as BusinessContextNodeType | undefined;
   const entityId = String(content.entityId ?? "");
   if (!tenantId || !workspaceId || !entityType || !entityId) return null;
+  const suppressed = Boolean(content.suppressed);
+  const contactSuppressed = isSuppressedContact({ suppressed, entityType });
   return {
     tenantId,
     workspaceId,
@@ -99,13 +130,13 @@ export function identityFromContent(
     entityType,
     entityId,
     canonicalRef: String(content.canonicalRef ?? canonicalRef({ tenantId, workspaceId, entityType, entityId })),
-    displayName: String(content.displayName ?? fallbackTitle),
+    displayName: contactSuppressed ? SUPPRESSED_CONTACT_LABEL : String(content.displayName ?? fallbackTitle),
     sourceType: String(content.sourceType ?? "unknown"),
-    sourceRef: (content.sourceRef as string | null | undefined) ?? null,
+    sourceRef: contactSuppressed ? null : ((content.sourceRef as string | null | undefined) ?? null),
     classification: (content.classification as string | null | undefined) ?? null,
     ontologyVersion: BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION,
     effectiveAt: String(content.effectiveAt ?? content.freshness ?? new Date(0).toISOString()),
-    suppressed: Boolean(content.suppressed),
+    suppressed,
     deleted: Boolean(content.deleted),
   };
 }

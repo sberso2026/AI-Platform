@@ -78,6 +78,7 @@ describe("BOS BUSINESS_API_POLICIES", () => {
     expect(BUSINESS_PAGE_POLICIES["/business/decisions"]?.productKey).toBe("business-os");
     expect(BUSINESS_PAGE_POLICIES["/business/risk"]?.productKey).toBe("business-os");
     expect(BUSINESS_PAGE_POLICIES["/business/context"]?.productKey).toBe("business-os");
+    expect(BUSINESS_PAGE_POLICIES["/business/ai-workforce"]?.productKey).toBe("business-os");
     expect(BUSINESS_API_POLICIES["capabilities.read"]?.seatRequired).toBe(false);
     expect(BUSINESS_PAGE_POLICIES["/business"]?.productKey).toBe("business-os");
   });

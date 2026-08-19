@@ -30,7 +30,7 @@ describe("BOS-10 context graph service guards", () => {
     expect(service.contract()).toEqual(BUSINESS_CONTEXT_GRAPH_CONTRACT);
     expect(service.contract().implementsOwnAiStack).toBe(false);
     expect(service.status().available).toBe(true);
-    expect(service.aiWorkforce().available).toBe(false);
+    expect(service.aiWorkforce().available).toBe(true);
     expect(getBusinessOsFoundationDeclaration().duplicateKnowledgeGraphDetected).toBe(false);
     expect(() => service.executeRawGraphQuery()).toThrow("unrestricted_graph_query_forbidden");
     expect(() => service.writeExternalGraph()).toThrow("external_graph_write_forbidden");
@@ -68,6 +68,47 @@ describe("BOS-10 projection", () => {
     expect(ctx.neighbours.some((row) => row.node.entityId === "bos10-contact-deleted")).toBe(false);
     expect(ctx.neighbours.some((row) => row.node.displayName === "Hidden Person")).toBe(false);
     expect(ctx.neighbours.some((row) => row.node.displayName === "Contact (suppressed)")).toBe(false);
+  });
+
+  it("contains suppressed contacts across search, entity, relationships, AI, explain, and agent context", async () => {
+    const { service, graph } = serviceWithMemory();
+    await service.applyRecords(SCOPE, demoContextRecords(SCOPE));
+    const snapshot = await graph.loadSnapshot(SCOPE.tenantId, SCOPE.workspaceId);
+    expect(JSON.stringify(snapshot)).not.toContain("Hidden Person");
+
+    const searchHidden = await service.search(SCOPE, "Hidden Person");
+    const searchSuppressed = await service.search(SCOPE, "Contact (suppressed)");
+    expect(searchHidden).toEqual([]);
+    expect(searchSuppressed).toEqual([]);
+
+    const entity = await service.entityContext(SCOPE, { entityType: "contact", entityId: "bos10-contact-suppressed" });
+    expect(entity.entity).toBeNull();
+    expect(JSON.stringify(entity)).not.toContain("Hidden Person");
+
+    const relationships = await service.relationships(SCOPE, {
+      entityType: "customer",
+      entityId: BOS_10_DEMO_CUSTOMER_ID,
+    });
+    expect(JSON.stringify(relationships)).not.toContain("Hidden Person");
+
+    const customer = await service.customerContext(SCOPE, BOS_10_DEMO_CUSTOMER_ID);
+    const assembled = assembleStructuredContext(customer);
+    expect(JSON.stringify(assembled)).not.toContain("Hidden Person");
+
+    const explained = await service.explain(SCOPE, { entityType: "customer", entityId: BOS_10_DEMO_CUSTOMER_ID });
+    expect(JSON.stringify(explained.structured)).not.toContain("Hidden Person");
+
+    const agentOk = await service.agentContext(SCOPE, { entityType: "customer", entityId: BOS_10_DEMO_CUSTOMER_ID });
+    expect(agentOk.adjacencyIsNotCausation).toBe(true);
+    expect(JSON.stringify(agentOk)).not.toContain("Hidden Person");
+
+    const agentHidden = await service.agentContext(SCOPE, {
+      entityType: "contact",
+      entityId: "bos10-contact-suppressed",
+    });
+    expect(agentHidden.state).toBe("insufficient_evidence");
+    expect(agentHidden.assembly).toBeNull();
+    expect(JSON.stringify(agentHidden)).not.toContain("Hidden Person");
   });
 
   it("rejects cross-tenant relationship projection", async () => {

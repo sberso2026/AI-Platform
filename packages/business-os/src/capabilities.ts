@@ -85,7 +85,8 @@ const LABELS: Record<BusinessCapabilityId, { name: string; description: string }
   },
   ai_workforce: {
     name: "AI Workforce",
-    description: "Governed business agents (not implemented)",
+    description:
+      "Governed Business OS AI Workforce: orchestration over Kernel Agent Registry, AI Director, Policy Engine, and BOS-10 context (not a second AI stack)",
   },
 };
 
@@ -104,7 +105,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "work_operations" ||
       id === "decision_action" ||
       id === "business_risk" ||
-      id === "business_context",
+      id === "business_context" ||
+      id === "ai_workforce",
     activationStatus:
       id === "owner_command" ||
       id === "financial_intelligence" ||
@@ -115,7 +117,8 @@ export const BUSINESS_CAPABILITY_DEFINITIONS: BusinessCapabilityDefinition[] =
       id === "work_operations" ||
       id === "decision_action" ||
       id === "business_risk" ||
-      id === "business_context"
+      id === "business_context" ||
+      id === "ai_workforce"
         ? "preview"
         : "registered",
   }));
@@ -140,7 +143,8 @@ export class BusinessCapabilityRegistry {
       id === "work_operations" ||
       id === "decision_action" ||
       id === "business_risk" ||
-      id === "business_context"
+      id === "business_context" ||
+      id === "ai_workforce"
     );
   }
 

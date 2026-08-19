@@ -126,6 +126,24 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "profit_calculation_forbidden_in_graph" ||
     message === "risk_assessment_forbidden_in_graph" ||
     message === "customer_health_forbidden_in_graph" ||
+    message === "self_registration_forbidden" ||
+    message === "self_enable_forbidden" ||
+    message === "self_approval_forbidden" ||
+    message === "autonomous_approval_forbidden" ||
+    message === "direct_provider_access_forbidden" ||
+    message === "canonical_domain_mutation_forbidden" ||
+    message === "unrestricted_agent_execution_forbidden" ||
+    message === "handoff_limit_exceeded" ||
+    message === "budget_exceeded" ||
+    message === "insufficient_evidence" ||
+    message === "needs_human_review" ||
+    message === "invalid_authority" ||
+    message === "agent_not_enabled" ||
+    message === "tool_not_allowlisted" ||
+    message === "forbidden_tool" ||
+    message === "cross_tenant_agent_forbidden" ||
+    message === "policy_rejected" ||
+    message === "unrestricted_graph_access" ||
     message === "agent_disabled" ||
     message.startsWith("agent_authority_denied") ||
     message.startsWith("agent_action_prohibited")

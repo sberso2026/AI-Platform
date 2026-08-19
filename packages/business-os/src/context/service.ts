@@ -6,11 +6,13 @@ import type {
   BusinessContextCanonicalRecord,
   BusinessContextNodeType,
   BusinessContextRelationshipType,
+  BusinessWorkforceAgentContext,
 } from "@rtb/types";
 import {
   BUSINESS_CONTEXT_DEFAULT_DEPTH,
   BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION,
   BUSINESS_CONTEXT_MAX_DEPTH,
+  BUSINESS_CONTEXT_NODE_TYPES,
   BUSINESS_OS_EVENT_TYPES,
 } from "@rtb/types";
 import type { OwnerCommandScope } from "../owner-command/service";
@@ -24,7 +26,7 @@ import {
   businessContextGraphStatus,
 } from "./extensions";
 import { kernelGraphPort, type GraphPort } from "./graph-port";
-import { assertSameTenant, identityFromContent } from "./identity";
+import { assertSameTenant, identityFromContent, isSuppressedContact, suppressedContactLeaks } from "./identity";
 import { queryNeighbourhood } from "./neighbourhood";
 import { assertOntologyVersion } from "./ontology";
 import { projectRecords } from "./projector";
@@ -227,7 +229,11 @@ export class BusinessContextGraphService {
     } catch {
       throw new Error("graph_projection_unavailable");
     }
-    const result = queryNeighbourhood(snapshot, input, { depth, allowlist: input.allowlist });
+    const result = queryNeighbourhood(snapshot, input, {
+      depth,
+      allowlist: input.allowlist,
+      includeSuppressedContacts: false,
+    });
     if (result.entity) assertSameTenant(scope.tenantId, result.entity.tenantId);
     const settings = await this.repository.getSettings(scope);
     const unresolved = await this.repository.listUnresolved(scope);
@@ -276,6 +282,101 @@ export class BusinessContextGraphService {
 
   assembleAiContext(result: Awaited<ReturnType<BusinessContextGraphService["neighbourhood"]>>) {
     return assembleStructuredContext(result);
+  }
+
+  /**
+   * Bounded structured context for governed agents. Never treats adjacency as causation.
+   * Fail-closed on missing evidence, stale context, unresolved refs, schema mismatch,
+   * forbidden entities, and cross-tenant/workspace access. Does not repair graph data.
+   */
+  async agentContext(
+    raw: { tenantId: string; workspaceId?: string; userId: string },
+    input: { entityType: string; entityId: string; depth?: number; staleAfterHours?: number },
+  ): Promise<BusinessWorkforceAgentContext> {
+    const scope = requireWorkspace(raw);
+    if (!(BUSINESS_CONTEXT_NODE_TYPES as readonly string[]).includes(input.entityType)) {
+      return {
+        state: "insufficient_evidence",
+        reasons: ["forbidden_entity"],
+        assembly: null,
+        adjacencyIsNotCausation: true,
+        provenancePreserved: true,
+      };
+    }
+    const ctx = await this.entityContext(scope, {
+      entityType: input.entityType as BusinessContextNodeType,
+      entityId: input.entityId,
+      depth: input.depth,
+    });
+    if (ctx.entity) {
+      assertSameTenant(scope.tenantId, ctx.entity.tenantId);
+      if (ctx.entity.workspaceId !== scope.workspaceId) throw new Error("cross_workspace_graph_forbidden");
+    }
+
+    const reasons: string[] = [];
+    let state: BusinessWorkforceAgentContext["state"] = "ok";
+    const mark = (reason: string, next: BusinessWorkforceAgentContext["state"]) => {
+      reasons.push(reason);
+      if (state === "insufficient_evidence") return;
+      if (next === "insufficient_evidence") state = next;
+      else if (state === "ok") state = next;
+    };
+
+    if (!ctx.entity) mark("source_entity_missing", "insufficient_evidence");
+    if (ctx.entity && isSuppressedContact(ctx.entity)) mark("forbidden_entity", "insufficient_evidence");
+    if (ctx.entity && ctx.entity.ontologyVersion !== BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION) {
+      throw new Error("schema_version_mismatch");
+    }
+    if (ctx.unknown.length > 0 || ctx.missingLinks.length > 0) {
+      mark("unresolved_references", "insufficient_evidence");
+    }
+
+    const settings = await this.repository.getSettings(scope);
+    const staleAfterHours = input.staleAfterHours ?? settings.staleAfterHours;
+    for (const row of ctx.neighbours) {
+      if (!row.evidence?.sourceDomain || !row.evidence.sourceEntityRef || row.evidence.sourceEntityRef === "unknown") {
+        mark("missing_evidence", "insufficient_evidence");
+      }
+      const projected = Date.parse(row.evidence.projectedAt);
+      if (Number.isFinite(projected)) {
+        const ageHours = (Date.now() - projected) / 3_600_000;
+        if (ageHours > staleAfterHours) mark("stale_context", "needs_human_review");
+      }
+    }
+
+    const assembly = ctx.entity ? assembleStructuredContext(ctx) : null;
+    const leakPayload = JSON.stringify(assembly ?? ctx);
+    if (
+      leakPayload.includes("Hidden Person") ||
+      (ctx.entity && suppressedContactLeaks({ ...ctx.entity })) ||
+      ctx.neighbours.some((row) => suppressedContactLeaks({ ...row.node }))
+    ) {
+      return {
+        state: "insufficient_evidence",
+        reasons: [...reasons, "suppressed_context_leakage"],
+        assembly: null,
+        adjacencyIsNotCausation: true,
+        provenancePreserved: true,
+      };
+    }
+
+    if (state !== "ok") {
+      return {
+        state,
+        reasons,
+        assembly: null,
+        adjacencyIsNotCausation: true,
+        provenancePreserved: true,
+      };
+    }
+
+    return {
+      state: "ok",
+      reasons,
+      assembly,
+      adjacencyIsNotCausation: true,
+      provenancePreserved: true,
+    };
   }
 
   async suggestEvidence(raw: { tenantId: string; workspaceId?: string; userId: string }, decisionId: string) {

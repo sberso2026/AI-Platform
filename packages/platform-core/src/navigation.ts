@@ -749,6 +749,14 @@ export const BUSINESS_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "bos-ai-workforce",
+    label: "AI Workforce",
+    icon: "Bot",
+    href: "/business/ai-workforce",
+    group: "business",
+    audience: "viewer",
+  },
+  {
     id: "bos-settings",
     label: "Settings",
     icon: "Settings",

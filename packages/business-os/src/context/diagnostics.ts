@@ -3,7 +3,7 @@ import {
   type BusinessContextDataQuality,
   type BusinessContextDiagnosticFinding,
 } from "@rtb/types";
-import { identityFromContent, parseCanonicalRef } from "./identity";
+import { identityFromContent, parseCanonicalRef, suppressedContactLeaks } from "./identity";
 import type { GraphSnapshot } from "./graph-port";
 
 export function emptyQuality(): BusinessContextDataQuality {
@@ -47,7 +47,15 @@ export function diagnoseSnapshot(input: {
       });
       continue;
     }
-    domains.add(identity.domain);
+    if (suppressedContactLeaks(node.content ?? {})) {
+      findings.push({
+        code: "suppressed_context_leakage",
+        severity: "critical",
+        message: `Suppressed contact content still holds a personal display name on ${node.id}`,
+        canonicalRef: identity.canonicalRef,
+        repaired: false,
+      });
+    }
     const count = (refs.get(identity.canonicalRef) ?? 0) + 1;
     refs.set(identity.canonicalRef, count);
     if (count > 1) {
