@@ -61,12 +61,12 @@ export class BusinessContextRepository {
     };
     if (existing.data) {
       const { error } = await table(this.supabase, "business_os_context_settings")
-        .update(row)
+        .update(row as never)
         .eq("tenant_id", scope.tenantId)
         .eq("workspace_id", scope.workspaceId);
       if (error) throw new Error(error.message);
     } else {
-      const { error } = await table(this.supabase, "business_os_context_settings").insert(row);
+      const { error } = await table(this.supabase, "business_os_context_settings").insert(row as never);
       if (error) throw new Error(error.message);
     }
   }
@@ -95,7 +95,7 @@ export class BusinessContextRepository {
           completed_at: new Date().toISOString(),
           provenance: (input.provenance ?? {}) as Json,
           created_by: scope.userId,
-        })
+        } as never)
         .select()
         .single();
       if (error) return null;
@@ -155,7 +155,7 @@ export class BusinessContextRepository {
           source_domain: row.sourceDomain ?? null,
           status: "open",
           provenance: {} as Json,
-        })),
+        })) as never,
       );
     } catch {
       // Projection metadata must not fail-close rebuild.
@@ -181,7 +181,7 @@ export class BusinessContextRepository {
         evidence: input.evidence as Json,
         provenance: { reversible: true } as Json,
         created_by: scope.userId,
-      })
+      } as never)
       .select()
       .single();
     if (error || !data) throw new Error(error?.message ?? "override_failed");
@@ -194,7 +194,7 @@ export class BusinessContextRepository {
         status: "reversed",
         reversed_at: new Date().toISOString(),
         reversed_by: scope.userId,
-      })
+      } as never)
       .eq("id", id)
       .eq("tenant_id", scope.tenantId)
       .eq("workspace_id", scope.workspaceId)

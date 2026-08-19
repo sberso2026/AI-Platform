@@ -368,6 +368,14 @@ export class BusinessContextGraphService {
       relationshipsProjected: result.relationshipsProjected,
       unresolved: result.unresolved.length,
     });
+    if (result.nodesProjected > 0) {
+      await this.emit(scope, "business_os.context.node_projected", { count: result.nodesProjected });
+    }
+    if (result.relationshipsProjected > 0) {
+      await this.emit(scope, "business_os.context.relationship_projected", {
+        count: result.relationshipsProjected,
+      });
+    }
     if (result.unresolved.length > 0) {
       await this.emit(scope, "business_os.context.unresolved_reference_detected", {
         count: result.unresolved.length,
