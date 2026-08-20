@@ -22,7 +22,7 @@ const OPERATIONS_DETAIL = fs.readFileSync(
 
 describe("BOS-13 production validation web wiring", () => {
   it("keeps Business OS entitlement mapping and BOS-13 phase", () => {
-    expect(BUSINESS_OS_PHASE).toBe("BOS-14");
+    expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(resolveEntitlementTarget("/business")).toEqual({
       productKey: "business-os",
       featureKey: "business_os",

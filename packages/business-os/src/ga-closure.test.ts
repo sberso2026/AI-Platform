@@ -7,6 +7,9 @@ import {
   BOS14C_STATUS,
   BOS_13_CERTIFIED_SHA,
   BOS_14_BOUNDARY_NOTE,
+  BOS_14_CERTIFIED_SHA,
+  BOS_15_BOUNDARY_NOTE,
+  BOS_15_VERDICT,
   BOS_14_PERFORMANCE_CONCURRENCY,
   BOS_14_PERFORMANCE_DATASET_SIZE,
   BOS_14_PERFORMANCE_ENVIRONMENT,
@@ -51,15 +54,18 @@ function percentile(samples: number[], p: number): number {
 
 describe("BOS-14 GA closure honesty", () => {
   it("preserves RC invariants and refuses GA without live/browser execution", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.2");
-    expect(BUSINESS_OS_PHASE).toBe("BOS-14");
+    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_14_VERDICT).toBe("PASS_WITH_LIMITATIONS");
+    expect(BOS_15_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_14_BOUNDARY_NOTE).toContain("Do not implement new BOS modules");
+    expect(BOS_15_BOUNDARY_NOTE).toContain("Do not implement new BOS modules");
     expect(BOS_13_CERTIFIED_SHA).toBe("be2f7e14af2ed10c0a123c84ce9ac51d702474ee");
+    expect(BOS_14_CERTIFIED_SHA).toBe("1a52a8fedf065756ce78d1021e2a3bfda1546ea8");
     expect(defaultBusinessCapabilityRegistry.ids()).toHaveLength(18);
     expect([...defaultBusinessCapabilityRegistry.ids()]).toEqual([...BUSINESS_CAPABILITY_IDS]);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-14");
+    expect(bos.status.snapshot().phase).toBe("BOS-15");
     expect(bos.capabilities.list()).toHaveLength(18);
     expect(bosReleaseCandidate).toBe(true);
     expect(bosProductionEligible).toBe(false);
@@ -106,7 +112,7 @@ describe("BOS-14A live RLS", () => {
       "business_os_context_projection_runs",
       "business_os_connector_staging",
     ]);
-    expect(BOS_PRODUCTION_GA_REMAINING_GATES).toContain("BOS14A_BLOCKED_LIVE_RLS_ENV");
+    expect(BOS_PRODUCTION_GA_REMAINING_GATES).toContain("BOS15B_BLOCKED_LIVE_RLS_ENV");
   });
 });
 

@@ -46,13 +46,13 @@ const REPRESENTATIVE_TABLES = [
 
 describe("BOS-13 production validation", () => {
   it("certifies RC limitations without a 19th capability or new domain", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.2");
-    expect(BUSINESS_OS_PHASE).toBe("BOS-14");
+    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_13_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_13_BOUNDARY_NOTE).toContain("Do not start a post-BOS-13 feature phase");
     expect(defaultBusinessCapabilityRegistry.ids()).toHaveLength(18);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-14");
+    expect(bos.status.snapshot().phase).toBe("BOS-15");
     expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.connectors.contract().implemented).toBe(true);
     expect(bosReleaseCandidate).toBe(true);
@@ -66,11 +66,11 @@ describe("BOS-13 production validation", () => {
     expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
     expect(BOS_CONNECTOR_CERTIFICATION.xero.live).not.toBe("LIVE_PROVIDER_CERTIFIED");
     expect(BOS_PRODUCTION_GA_REMAINING_GATES).toEqual([
-      "BOS14A_BLOCKED_LIVE_RLS_ENV",
-      "BOS14B_XERO_BLOCKED_ENV",
-      "BOS14B_MICROSOFT_365_BLOCKED_ENV",
-      "BOS14B_HUBSPOT_BLOCKED_ENV",
-      "BOS14C_BLOCKED_BROWSER_ENV",
+      "BOS15B_BLOCKED_LIVE_RLS_ENV",
+      "BOS15C_XERO_BLOCKED_ENV",
+      "BOS15D_MICROSOFT_365_BLOCKED_ENV",
+      "BOS15E_HUBSPOT_BLOCKED_ENV",
+      "BOS15F_BLOCKED_BROWSER_ENV",
       "inherited_engineering_os_web_tsc_baseline_debt",
     ]);
   });

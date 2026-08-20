@@ -1,10 +1,10 @@
 /**
  * BOS-0 Foundation version and platform-reuse contracts.
- * BOS-14 is production GA closure only. Do not start post-GA feature work.
+ * BOS-15 is live GA certification only. Do not start post-GA feature work.
  */
-export const BUSINESS_OS_VERSION = "0.13.2" as const;
+export const BUSINESS_OS_VERSION = "0.13.3" as const;
 export const BUSINESS_OS_STATUS = "preview" as const;
-export const BUSINESS_OS_PHASE = "BOS-14" as const;
+export const BUSINESS_OS_PHASE = "BOS-15" as const;
 
 /** Business OS consumes Platform Kernel / Intelligence. Independent AI stacks are forbidden. */
 export const implementsOwnAiStack = false as const;
