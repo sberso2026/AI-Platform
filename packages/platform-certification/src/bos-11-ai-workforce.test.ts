@@ -26,7 +26,7 @@ describe("BOS-11 AI Workforce", () => {
     expect(canonicalDomainMutationBypass).toBe(false);
     expect(crossTenantAgentAccess).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-14");
+    expect(bos.status.snapshot().phase).toBe("BOS-15");
     expect(bos.aiWorkforce).toBeDefined();
     expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.aiWorkforce.contract().implemented).toBe(true);

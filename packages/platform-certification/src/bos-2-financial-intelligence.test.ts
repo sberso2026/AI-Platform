@@ -14,7 +14,7 @@ describe("BOS-2 Financial Intelligence", () => {
   it("reuses Platform AI Director and does not create a ledger", () => {
     expect(implementsOwnAiStack).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-14");
+    expect(bos.status.snapshot().phase).toBe("BOS-15");
     expect(bos.financialIntelligence).toBeDefined();
     expect(bos.capabilities.isImplemented("financial_intelligence")).toBe(true);
     expect(bos.capabilities.isImplemented("growth_intelligence")).toBe(true);

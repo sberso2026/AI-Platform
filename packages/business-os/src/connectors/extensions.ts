@@ -48,3 +48,7 @@ export const BOS_13_BOUNDARY_NOTE =
 /** BOS-14 is production GA closure only. Do not start post-GA feature work. */
 export const BOS_14_BOUNDARY_NOTE =
   "BOS-14 production GA closure only. Do not implement new BOS modules, capability 19, or post-GA feature work." as const;
+
+/** BOS-15 is live GA certification only. Do not start post-GA feature work. */
+export const BOS_15_BOUNDARY_NOTE =
+  "BOS-15 live GA certification only. Do not implement new BOS modules, capability 19, or post-GA feature work." as const;

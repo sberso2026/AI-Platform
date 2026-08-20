@@ -1,7 +1,7 @@
 /**
- * BOS-14 production GA closure indicators.
+ * BOS-15 live GA certification indicators.
  * Live RLS, live providers, and browser E2E stay false unless those tests actually executed.
- * Do not infer live certification from fixtures, SQL inspection, or skipped suites.
+ * Do not infer live certification from fixtures, SQL inspection, skipped suites, or preflight presence checks.
  */
 import {
   ExternalWritesDisabled,
@@ -23,8 +23,10 @@ import {
 
 export const BOS_12_BASELINE_SHA = "cc62457fc96ea2daf0bc9d38757562cd1c753f80" as const;
 export const BOS_13_CERTIFIED_SHA = "be2f7e14af2ed10c0a123c84ce9ac51d702474ee" as const;
+export const BOS_14_CERTIFIED_SHA = "1a52a8fedf065756ce78d1021e2a3bfda1546ea8" as const;
 export const BOS_13_VERDICT = "PASS_WITH_LIMITATIONS" as const;
 export const BOS_14_VERDICT = "PASS_WITH_LIMITATIONS" as const;
+export const BOS_15_VERDICT = "PASS_WITH_LIMITATIONS" as const;
 
 export const bosReleaseCandidate = true as const;
 export const bosProductionEligible = false as const;
@@ -36,8 +38,14 @@ export const bosBrowserE2eCertified = false as const;
 
 export const LIVE_RLS_STATUS = "LIVE_RLS_NOT_CERTIFIED" as const;
 export const BOS14A_STATUS = "BOS14A_BLOCKED_LIVE_RLS_ENV" as const;
+export const BOS15A_STATUS = "BOS15A_PREFLIGHT_COMPLETE" as const;
+export const BOS15B_STATUS = "BOS15B_BLOCKED_LIVE_RLS_ENV" as const;
 export const BROWSER_E2E_STATUS = "BROWSER_E2E_NOT_CERTIFIED" as const;
 export const BOS14C_STATUS = "BOS14C_BLOCKED_BROWSER_ENV" as const;
+export const BOS15F_STATUS = "BOS15F_BLOCKED_BROWSER_ENV" as const;
+export const BOS15C_STATUS = "BOS15C_XERO_BLOCKED_ENV" as const;
+export const BOS15D_STATUS = "BOS15D_MICROSOFT_365_BLOCKED_ENV" as const;
+export const BOS15E_STATUS = "BOS15E_HUBSPOT_BLOCKED_ENV" as const;
 
 export type ConnectorCertificationLevel =
   | "CONTRACT_CERTIFIED"
@@ -52,6 +60,8 @@ export const BOS14B_PROVIDER_STATUS = {
   microsoft_365: "BLOCKED_ENV",
   hubspot: "BLOCKED_ENV",
 } as const satisfies Record<"xero" | "microsoft_365" | "hubspot", ConnectorCertificationLevel>;
+
+export const BOS15_PROVIDER_STATUS = BOS14B_PROVIDER_STATUS;
 
 export const BOS_CONNECTOR_CERTIFICATION = {
   xero: {
@@ -107,11 +117,11 @@ export const BOS_13_WEB_TSC_RECONCILIATION = [
 ] as const;
 
 export const BOS_PRODUCTION_GA_REMAINING_GATES = [
-  "BOS14A_BLOCKED_LIVE_RLS_ENV",
-  "BOS14B_XERO_BLOCKED_ENV",
-  "BOS14B_MICROSOFT_365_BLOCKED_ENV",
-  "BOS14B_HUBSPOT_BLOCKED_ENV",
-  "BOS14C_BLOCKED_BROWSER_ENV",
+  "BOS15B_BLOCKED_LIVE_RLS_ENV",
+  "BOS15C_XERO_BLOCKED_ENV",
+  "BOS15D_MICROSOFT_365_BLOCKED_ENV",
+  "BOS15E_HUBSPOT_BLOCKED_ENV",
+  "BOS15F_BLOCKED_BROWSER_ENV",
   "inherited_engineering_os_web_tsc_baseline_debt",
 ] as const;
 
@@ -144,11 +154,31 @@ export const BOS_14_BROWSER_ROUTES = [
   "/business/integrations",
 ] as const;
 
+export const BOS_15_BROWSER_ROUTES = [
+  ...BOS_14_BROWSER_ROUTES,
+  "/business/customers/demo",
+  "/business/operations/demo",
+  "/business/decisions/demo",
+  "/business/risk/demo",
+  "/business/settings",
+] as const;
+
 export const BOS_13_PERFORMANCE_ENVIRONMENT = "cloud-agent-fixture" as const;
 export const BOS_13_PERFORMANCE_DATASET_SIZE = 400 as const;
 export const BOS_14_PERFORMANCE_ENVIRONMENT = "cloud-agent-fixture" as const;
 export const BOS_14_PERFORMANCE_DATASET_SIZE = 1200 as const;
 export const BOS_14_PERFORMANCE_CONCURRENCY = 4 as const;
+
+export type Bos15Presence = "present" | "missing";
+
+function envPresence(...keys: string[]): Bos15Presence {
+  return keys.some((key) => {
+    const value = process.env[key];
+    return typeof value === "string" && value.trim().length > 0;
+  })
+    ? "present"
+    : "missing";
+}
 
 export function liveRlsEnvironmentAvailable(): boolean {
   return Boolean(
@@ -178,6 +208,96 @@ export function browserE2eEnvironmentAvailable(): boolean {
   );
 }
 
+export function bos15EnvironmentPreflight() {
+  const supabaseRefs = {
+    SUPABASE_TEST_URL: envPresence("SUPABASE_TEST_URL"),
+    approvedTestAnonKey: envPresence("SUPABASE_TEST_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    provisioningServiceCredential: envPresence("SUPABASE_SERVICE_ROLE_KEY"),
+    tenantAJwt: envPresence("BOS_RLS_TENANT_A_JWT", "COMMERCE_RLS_TENANT_A_JWT"),
+    tenantBJwt: envPresence("BOS_RLS_TENANT_B_JWT", "COMMERCE_RLS_TENANT_B_JWT"),
+    tenantAId: envPresence("BOS_RLS_TENANT_A_ID", "COMMERCE_RLS_TENANT_A_ID"),
+    tenantBId: envPresence("BOS_RLS_TENANT_B_ID", "COMMERCE_RLS_TENANT_B_ID"),
+    workspaceAId: envPresence("BOS_RLS_WORKSPACE_A_ID"),
+    workspaceBId: envPresence("BOS_RLS_WORKSPACE_B_ID"),
+    workspaceAJwt: envPresence("BOS_RLS_WORKSPACE_A_JWT"),
+    workspaceBJwt: envPresence("BOS_RLS_WORKSPACE_B_JWT"),
+  };
+  const xeroRefs = {
+    clientId: envPresence("XERO_CLIENT_ID"),
+    clientSecret: envPresence("XERO_CLIENT_SECRET"),
+    secretReference: envPresence("XERO_SECRET_ID"),
+    organisationTenantId: envPresence("XERO_TENANT_ID"),
+    refreshToken: envPresence("XERO_REFRESH_TOKEN"),
+  };
+  const microsoft365Refs = {
+    clientId: envPresence("MS365_CLIENT_ID"),
+    clientSecret: envPresence("MS365_CLIENT_SECRET"),
+    secretReference: envPresence("MS365_SECRET_ID"),
+    entraTenantId: envPresence("MS365_TENANT_ID"),
+    testUser: envPresence("MS365_TEST_USER"),
+  };
+  const hubspotRefs = {
+    accessToken: envPresence("HUBSPOT_ACCESS_TOKEN"),
+    secretReference: envPresence("HUBSPOT_SECRET_ID"),
+    portalId: envPresence("HUBSPOT_PORTAL_ID"),
+  };
+  const browserRefs = {
+    RTB_TEST_BASE_URL: envPresence("RTB_TEST_BASE_URL"),
+    PLAYWRIGHT_BASE_URL: envPresence("PLAYWRIGHT_BASE_URL"),
+    E2E_BASE_URL: envPresence("E2E_BASE_URL"),
+    supabaseUrl: envPresence("SUPABASE_URL", "SUPABASE_TEST_URL", "NEXT_PUBLIC_SUPABASE_URL"),
+    supabaseAnonKey: envPresence("SUPABASE_ANON_KEY", "SUPABASE_TEST_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    testUser: envPresence("RTB_TEST_USER_EMAIL", "E2E_USER_EMAIL"),
+  };
+
+  const supabaseAvailable = liveRlsEnvironmentAvailable();
+  const xeroAvailable = liveProviderCredentialsAvailable("xero");
+  const microsoft365Available = liveProviderCredentialsAvailable("microsoft_365");
+  const hubspotAvailable = liveProviderCredentialsAvailable("hubspot");
+  const browserAvailable = browserE2eEnvironmentAvailable();
+
+  return {
+    identity: {
+      repository: "github.com/sberso2026/AI-Platform",
+      cursorEnvironment: "unlinked",
+      testEnvironment: "cloud-agent-unlinked",
+      phase: BUSINESS_OS_PHASE,
+      version: BUSINESS_OS_VERSION,
+      bos14CertifiedSha: BOS_14_CERTIFIED_SHA,
+    },
+    supabase: {
+      available: supabaseAvailable,
+      executed: false,
+      classification: supabaseAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
+      refs: supabaseRefs,
+    },
+    xero: {
+      available: xeroAvailable,
+      executed: false,
+      classification: xeroAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
+      refs: xeroRefs,
+    },
+    microsoft365: {
+      available: microsoft365Available,
+      executed: false,
+      classification: microsoft365Available ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
+      refs: microsoft365Refs,
+    },
+    hubspot: {
+      available: hubspotAvailable,
+      executed: false,
+      classification: hubspotAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
+      refs: hubspotRefs,
+    },
+    browser: {
+      available: browserAvailable,
+      executed: false,
+      classification: browserAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
+      refs: browserRefs,
+    },
+  } as const;
+}
+
 export const BOS_RELEASE_INDICATORS = {
   "bos.releaseCandidate": bosReleaseCandidate,
   "bos.productionEligible": bosProductionEligible,
@@ -202,22 +322,33 @@ export const BOS_RELEASE_INDICATORS = {
 } as const;
 
 export function getBosReleaseDeclaration() {
+  const preflight = bos15EnvironmentPreflight();
   return {
     version: BUSINESS_OS_VERSION,
     phase: BUSINESS_OS_PHASE,
-    verdict: BOS_14_VERDICT,
-    baselineSha: BOS_12_BASELINE_SHA,
+    verdict: BOS_15_VERDICT,
+    baselineSha: BOS_14_CERTIFIED_SHA,
+    bos12BaselineSha: BOS_12_BASELINE_SHA,
     bos13CertifiedSha: BOS_13_CERTIFIED_SHA,
+    bos14CertifiedSha: BOS_14_CERTIFIED_SHA,
     liveRlsStatus: LIVE_RLS_STATUS,
     bos14aStatus: BOS14A_STATUS,
     bos14bStatus: BOS14B_PROVIDER_STATUS,
     bos14cStatus: BOS14C_STATUS,
+    bos15aStatus: BOS15A_STATUS,
+    bos15bStatus: BOS15B_STATUS,
+    bos15cStatus: BOS15C_STATUS,
+    bos15dStatus: BOS15D_STATUS,
+    bos15eStatus: BOS15E_STATUS,
+    bos15fStatus: BOS15F_STATUS,
+    bos15ProviderStatus: BOS15_PROVIDER_STATUS,
     browserE2eStatus: BROWSER_E2E_STATUS,
     connectorCertification: BOS_CONNECTOR_CERTIFICATION,
     webTscReconciliation: BOS_13_WEB_TSC_RECONCILIATION,
     productionGaRemainingGates: BOS_PRODUCTION_GA_REMAINING_GATES,
     releaseCandidateReady: bosReleaseCandidate,
     productionGaReady: bosProductionEligible,
+    preflight,
     indicators: BOS_RELEASE_INDICATORS,
   } as const;
 }

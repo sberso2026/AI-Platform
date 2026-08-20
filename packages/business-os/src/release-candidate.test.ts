@@ -165,15 +165,15 @@ function opp(
 
 describe("BOS-13 release indicators", () => {
   it("declares RC with honest live/GA limitations and no new capability", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.2");
-    expect(BUSINESS_OS_PHASE).toBe("BOS-14");
+    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_13_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_13_BOUNDARY_NOTE).toContain("Do not start a post-BOS-13 feature phase");
     expect(defaultBusinessCapabilityRegistry.ids()).toHaveLength(18);
     expect([...defaultBusinessCapabilityRegistry.ids()]).toEqual([...BUSINESS_CAPABILITY_IDS]);
     expect(BUSINESS_CAPABILITY_IDS).not.toContain("connectors_hardening");
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-14");
+    expect(bos.status.snapshot().phase).toBe("BOS-15");
     expect(bos.capabilities.list()).toHaveLength(18);
     expect(BOS_RELEASE_INDICATORS).toEqual({
       "bos.releaseCandidate": true,
@@ -206,7 +206,7 @@ describe("BOS-13 release indicators", () => {
     expect(bosBrowserE2eCertified).toBe(false);
     expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
     expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
-    expect(BOS_PRODUCTION_GA_REMAINING_GATES).toContain("BOS14A_BLOCKED_LIVE_RLS_ENV");
+    expect(BOS_PRODUCTION_GA_REMAINING_GATES).toContain("BOS15B_BLOCKED_LIVE_RLS_ENV");
     expect(getBosReleaseDeclaration().productionGaReady).toBe(false);
     expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.status === "RESOLVED")).toBe(true);
     expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.classification === "PRE_EXISTING_BEFORE_BOS_12")).toBe(
