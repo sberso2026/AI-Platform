@@ -34,7 +34,7 @@ describe("BOS-12 Connectors and Hardening", () => {
     expect(directAgentProviderAccess).toBe(false);
     expect(unrestrictedExternalProxy).toBe(false);
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
-    expect(bos.status.snapshot().phase).toBe("BOS-13");
+    expect(bos.status.snapshot().phase).toBe("BOS-14");
     expect(bos.capabilities.list()).toHaveLength(18);
     expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.connectors.contract().implemented).toBe(true);

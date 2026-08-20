@@ -439,7 +439,7 @@ describe("createBusinessOS", () => {
     const bos = createBusinessOS(supabase, kernel);
     expect(bos.status.snapshot().implementsOwnAiStack).toBe(false);
     expect(bos.status.snapshot().osId).toBe("business");
-    expect(bos.status.snapshot().phase).toBe("BOS-13");
+    expect(bos.status.snapshot().phase).toBe("BOS-14");
     expect(bos.status.configuration().kernelServices.aiDirector).toBe(true);
     expect(bos.status.configuration().kernelServices.knowledgeGraph).toBe(true);
     expect(bos.capabilities.list()).toHaveLength(18);

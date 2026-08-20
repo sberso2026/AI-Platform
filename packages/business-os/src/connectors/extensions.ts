@@ -44,3 +44,7 @@ export function connectorsHardeningStatus() {
 /** BOS-13 is RC certification only. Do not start a post-BOS-13 feature phase. */
 export const BOS_13_BOUNDARY_NOTE =
   "BOS-13 production validation and release-candidate certification only. Do not start a post-BOS-13 feature phase." as const;
+
+/** BOS-14 is production GA closure only. Do not start post-GA feature work. */
+export const BOS_14_BOUNDARY_NOTE =
+  "BOS-14 production GA closure only. Do not implement new BOS modules, capability 19, or post-GA feature work." as const;
