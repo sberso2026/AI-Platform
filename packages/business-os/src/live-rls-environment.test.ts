@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BosLiveRlsEnvironmentError,
   assessBosLiveRlsEnvironment,
+  assessBosStagingTarget,
   liveRlsEnvironmentAvailable,
 } from "./release";
 
@@ -133,5 +134,19 @@ describe("BOS live RLS dedicated staging validation", () => {
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-fixture");
     expect(liveRlsEnvironmentAvailable()).toBe(false);
     expect(assessBosLiveRlsEnvironment().status).toBe("unavailable");
+  });
+
+  it("reuses a valid staging target then requires live-RLS identities separately", () => {
+    stubCompleteValidEnv();
+    expect(assessBosStagingTarget()).toEqual(assessBosLiveRlsEnvironment());
+    stubCompleteValidEnv({
+      SUPABASE_TEST_ANON_KEY: "",
+      BOS_RLS_TENANT_A_JWT: "",
+      BOS_RLS_TENANT_B_JWT: "",
+      BOS_RLS_TENANT_B_ID: "",
+    });
+    expect(assessBosStagingTarget().status).toBe("available");
+    expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
+    expect(() => liveRlsEnvironmentAvailable()).toThrow(/incomplete/);
   });
 });

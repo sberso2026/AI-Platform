@@ -171,6 +171,14 @@ export const BOS_14_PERFORMANCE_CONCURRENCY = 4 as const;
 
 export type Bos15Presence = "present" | "missing";
 
+export class BosStagingTargetError extends Error {
+  readonly code = "BOS_STAGING_TARGET_INVALID" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "BosStagingTargetError";
+  }
+}
+
 export class BosLiveRlsEnvironmentError extends Error {
   readonly code = "BOS_LIVE_RLS_ENV_INVALID" as const;
   constructor(message: string) {
@@ -179,13 +187,17 @@ export class BosLiveRlsEnvironmentError extends Error {
   }
 }
 
+export type BosStagingTargetAssessment =
+  | { status: "unavailable"; reason: "no_staging_target_configuration" }
+  | { status: "available"; projectRef: string; hostname: string };
+
 export type BosLiveRlsEnvironmentAssessment =
   | { status: "unavailable"; reason: "no_live_configuration" }
   | { status: "available"; projectRef: string; hostname: string };
 
-const BOS_LIVE_RLS_ATTEMPT_KEYS = [
-  "BOS_STAGING_PROJECT_REF",
-  "SUPABASE_TEST_URL",
+const BOS_STAGING_TARGET_KEYS = ["BOS_STAGING_PROJECT_REF", "SUPABASE_TEST_URL"] as const;
+
+const BOS_LIVE_RLS_IDENTITY_KEYS = [
   "SUPABASE_TEST_ANON_KEY",
   "BOS_RLS_TENANT_A_JWT",
   "COMMERCE_RLS_TENANT_A_JWT",
@@ -200,6 +212,8 @@ const BOS_LIVE_RLS_ATTEMPT_KEYS = [
   "BOS_RLS_WORKSPACE_A_JWT",
   "BOS_RLS_WORKSPACE_B_JWT",
 ] as const;
+
+const BOS_LIVE_RLS_ATTEMPT_KEYS = [...BOS_STAGING_TARGET_KEYS, ...BOS_LIVE_RLS_IDENTITY_KEYS] as const;
 
 const BOS_STAGING_PROJECT_REF_PATTERN = /^[a-z0-9]+$/;
 
@@ -223,22 +237,125 @@ function bosLiveRlsConfigAttempted(): boolean {
   return BOS_LIVE_RLS_ATTEMPT_KEYS.some((key) => Boolean(readTrimmedEnv(key)));
 }
 
+function failClosedBosStagingTarget(message: string): never {
+  throw new BosStagingTargetError(message);
+}
+
 function failClosedBosLiveRls(message: string): never {
   throw new BosLiveRlsEnvironmentError(message);
 }
 
-function sanitizedBosLiveRlsUrlError(
+function incompleteConfigMessage(
+  prefix: string,
+  required: Record<string, string | undefined>,
+): string {
+  const present = Object.entries(required)
+    .filter(([, value]) => Boolean(value))
+    .map(([key]) => key);
+  const missing = Object.entries(required)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+  return `${prefix} configuration incomplete: present=${present.join(",")} missing=${missing.join(",")}`;
+}
+
+function sanitizedStagingUrlError(
+  prefix: string,
   stagingRefPresent: boolean,
   stagingRef: string | undefined,
   urlPresent: boolean,
 ): string {
   if (!urlPresent) {
-    return "BOS live RLS SUPABASE_TEST_URL is missing";
+    return `${prefix} SUPABASE_TEST_URL is missing`;
   }
   if (!stagingRefPresent) {
-    return "BOS live RLS BOS_STAGING_PROJECT_REF is missing";
+    return `${prefix} BOS_STAGING_PROJECT_REF is missing`;
   }
-  return `BOS live RLS SUPABASE_TEST_URL rejected for staging ref ${stagingRef}`;
+  return `${prefix} SUPABASE_TEST_URL rejected for staging ref ${stagingRef}`;
+}
+
+function parseBosStagingTargetUrl(
+  prefix: string,
+  stagingRef: string,
+  testUrl: string,
+): { hostname: string } {
+  let parsed: URL;
+  try {
+    parsed = new URL(testUrl);
+  } catch {
+    failClosedBosStagingTarget(sanitizedStagingUrlError(prefix, true, stagingRef, true));
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const expectedHostname = `${stagingRef}.supabase.co`;
+  if (parsed.protocol !== "https:") {
+    failClosedBosStagingTarget(`${prefix} SUPABASE_TEST_URL must use HTTPS for staging ref ${stagingRef}`);
+  }
+  if (parsed.username || parsed.password) {
+    failClosedBosStagingTarget(sanitizedStagingUrlError(prefix, true, stagingRef, true));
+  }
+  if (!hostname.endsWith(".supabase.co") || hostname !== expectedHostname) {
+    failClosedBosStagingTarget(
+      `${prefix} project-ref mismatch: url_host=${hostname} expected_host=${expectedHostname}`,
+    );
+  }
+
+  return { hostname };
+}
+
+/**
+ * Dedicated BOS staging project identity only.
+ * Does not require live-RLS anon key, tenant JWTs, tenant IDs, or service role.
+ */
+export function assessBosStagingTarget(): BosStagingTargetAssessment {
+  const stagingRef = readTrimmedEnv("BOS_STAGING_PROJECT_REF");
+  const testUrl = readTrimmedEnv("SUPABASE_TEST_URL");
+  if (!stagingRef && !testUrl) {
+    return { status: "unavailable", reason: "no_staging_target_configuration" };
+  }
+
+  const required = {
+    BOS_STAGING_PROJECT_REF: stagingRef,
+    SUPABASE_TEST_URL: testUrl,
+  } as const;
+  if (!stagingRef || !testUrl) {
+    failClosedBosStagingTarget(incompleteConfigMessage("BOS staging target", required));
+  }
+
+  if (!BOS_STAGING_PROJECT_REF_PATTERN.test(stagingRef)) {
+    failClosedBosStagingTarget("BOS staging target BOS_STAGING_PROJECT_REF is malformed");
+  }
+
+  const { hostname } = parseBosStagingTargetUrl("BOS staging target", stagingRef, testUrl);
+  return { status: "available", projectRef: stagingRef, hostname };
+}
+
+export function bosStagingTargetAvailable(): boolean {
+  return assessBosStagingTarget().status === "available";
+}
+
+function requireBosStagingTargetForLiveRls(): Extract<BosStagingTargetAssessment, { status: "available" }> {
+  try {
+    const target = assessBosStagingTarget();
+    if (target.status === "available") {
+      return target;
+    }
+  } catch (error) {
+    if (error instanceof BosStagingTargetError) {
+      failClosedBosLiveRls(error.message.replaceAll("BOS staging target", "BOS live RLS"));
+    }
+    throw error;
+  }
+
+  failClosedBosLiveRls(
+    incompleteConfigMessage("BOS live RLS", {
+      BOS_STAGING_PROJECT_REF: undefined,
+      SUPABASE_TEST_URL: undefined,
+      SUPABASE_TEST_ANON_KEY: readTrimmedEnv("SUPABASE_TEST_ANON_KEY"),
+      tenantAJwt: readTrimmedEnv("BOS_RLS_TENANT_A_JWT") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_A_JWT"),
+      tenantBJwt: readTrimmedEnv("BOS_RLS_TENANT_B_JWT") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_B_JWT"),
+      tenantBId: readTrimmedEnv("BOS_RLS_TENANT_B_ID") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_B_ID"),
+    }),
+  );
 }
 
 export function assessBosLiveRlsEnvironment(): BosLiveRlsEnvironmentAssessment {
@@ -246,60 +363,28 @@ export function assessBosLiveRlsEnvironment(): BosLiveRlsEnvironmentAssessment {
     return { status: "unavailable", reason: "no_live_configuration" };
   }
 
-  const stagingRef = readTrimmedEnv("BOS_STAGING_PROJECT_REF");
-  const testUrl = readTrimmedEnv("SUPABASE_TEST_URL");
+  const target = requireBosStagingTargetForLiveRls();
   const anonKey = readTrimmedEnv("SUPABASE_TEST_ANON_KEY");
   const tenantAJwt = readTrimmedEnv("BOS_RLS_TENANT_A_JWT") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_A_JWT");
   const tenantBJwt = readTrimmedEnv("BOS_RLS_TENANT_B_JWT") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_B_JWT");
   const tenantBId = readTrimmedEnv("BOS_RLS_TENANT_B_ID") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_B_ID");
 
   const required = {
-    BOS_STAGING_PROJECT_REF: stagingRef,
-    SUPABASE_TEST_URL: testUrl,
+    BOS_STAGING_PROJECT_REF: target.projectRef,
+    SUPABASE_TEST_URL: readTrimmedEnv("SUPABASE_TEST_URL"),
     SUPABASE_TEST_ANON_KEY: anonKey,
     tenantAJwt,
     tenantBJwt,
     tenantBId,
   } as const;
-  const present = Object.entries(required)
-    .filter(([, value]) => Boolean(value))
-    .map(([key]) => key);
   const missing = Object.entries(required)
     .filter(([, value]) => !value)
     .map(([key]) => key);
-
   if (missing.length > 0) {
-    failClosedBosLiveRls(
-      `BOS live RLS configuration incomplete: present=${present.join(",")} missing=${missing.join(",")}`,
-    );
+    failClosedBosLiveRls(incompleteConfigMessage("BOS live RLS", required));
   }
 
-  if (!stagingRef || !BOS_STAGING_PROJECT_REF_PATTERN.test(stagingRef)) {
-    failClosedBosLiveRls("BOS live RLS BOS_STAGING_PROJECT_REF is malformed");
-  }
-
-  let parsed: URL;
-  try {
-    parsed = new URL(testUrl!);
-  } catch {
-    failClosedBosLiveRls(sanitizedBosLiveRlsUrlError(true, stagingRef, true));
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
-  const expectedHostname = `${stagingRef}.supabase.co`;
-  if (parsed.protocol !== "https:") {
-    failClosedBosLiveRls(`BOS live RLS SUPABASE_TEST_URL must use HTTPS for staging ref ${stagingRef}`);
-  }
-  if (parsed.username || parsed.password) {
-    failClosedBosLiveRls(sanitizedBosLiveRlsUrlError(true, stagingRef, true));
-  }
-  if (hostname !== expectedHostname) {
-    failClosedBosLiveRls(
-      `BOS live RLS project-ref mismatch: url_host=${hostname} expected_host=${expectedHostname}`,
-    );
-  }
-
-  return { status: "available", projectRef: stagingRef, hostname };
+  return { status: "available", projectRef: target.projectRef, hostname: target.hostname };
 }
 
 export function liveRlsEnvironmentAvailable(): boolean {
