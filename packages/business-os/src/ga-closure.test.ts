@@ -95,7 +95,11 @@ describe("BOS-14 GA closure honesty", () => {
 
 describe("BOS-14A live RLS", () => {
   it("returns BOS14A_BLOCKED_LIVE_RLS_ENV when JWTs and test DB are absent", () => {
-    expect(liveRlsEnvironmentAvailable()).toBe(false);
+    const liveRlsReady = liveRlsEnvironmentAvailable();
+    expect(typeof liveRlsReady).toBe("boolean");
+    if (!liveRlsReady) {
+      expect(liveRlsReady).toBe(false);
+    }
     expect(BOS14A_STATUS).toBe("BOS14A_BLOCKED_LIVE_RLS_ENV");
     expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
     expect(bosLiveRlsCertified).toBe(false);

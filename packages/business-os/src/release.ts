@@ -171,6 +171,38 @@ export const BOS_14_PERFORMANCE_CONCURRENCY = 4 as const;
 
 export type Bos15Presence = "present" | "missing";
 
+export class BosLiveRlsEnvironmentError extends Error {
+  readonly code = "BOS_LIVE_RLS_ENV_INVALID" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "BosLiveRlsEnvironmentError";
+  }
+}
+
+export type BosLiveRlsEnvironmentAssessment =
+  | { status: "unavailable"; reason: "no_live_configuration" }
+  | { status: "available"; projectRef: string; hostname: string };
+
+const BOS_LIVE_RLS_ATTEMPT_KEYS = [
+  "BOS_STAGING_PROJECT_REF",
+  "SUPABASE_TEST_URL",
+  "SUPABASE_TEST_ANON_KEY",
+  "BOS_RLS_TENANT_A_JWT",
+  "COMMERCE_RLS_TENANT_A_JWT",
+  "BOS_RLS_TENANT_B_JWT",
+  "COMMERCE_RLS_TENANT_B_JWT",
+  "BOS_RLS_TENANT_A_ID",
+  "COMMERCE_RLS_TENANT_A_ID",
+  "BOS_RLS_TENANT_B_ID",
+  "COMMERCE_RLS_TENANT_B_ID",
+  "BOS_RLS_WORKSPACE_A_ID",
+  "BOS_RLS_WORKSPACE_B_ID",
+  "BOS_RLS_WORKSPACE_A_JWT",
+  "BOS_RLS_WORKSPACE_B_JWT",
+] as const;
+
+const BOS_STAGING_PROJECT_REF_PATTERN = /^[a-z0-9]+$/;
+
 function envPresence(...keys: string[]): Bos15Presence {
   return keys.some((key) => {
     const value = process.env[key];
@@ -180,14 +212,98 @@ function envPresence(...keys: string[]): Bos15Presence {
     : "missing";
 }
 
+function readTrimmedEnv(key: string): string | undefined {
+  const value = process.env[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function bosLiveRlsConfigAttempted(): boolean {
+  return BOS_LIVE_RLS_ATTEMPT_KEYS.some((key) => Boolean(readTrimmedEnv(key)));
+}
+
+function failClosedBosLiveRls(message: string): never {
+  throw new BosLiveRlsEnvironmentError(message);
+}
+
+function sanitizedBosLiveRlsUrlError(
+  stagingRefPresent: boolean,
+  stagingRef: string | undefined,
+  urlPresent: boolean,
+): string {
+  if (!urlPresent) {
+    return "BOS live RLS SUPABASE_TEST_URL is missing";
+  }
+  if (!stagingRefPresent) {
+    return "BOS live RLS BOS_STAGING_PROJECT_REF is missing";
+  }
+  return `BOS live RLS SUPABASE_TEST_URL rejected for staging ref ${stagingRef}`;
+}
+
+export function assessBosLiveRlsEnvironment(): BosLiveRlsEnvironmentAssessment {
+  if (!bosLiveRlsConfigAttempted()) {
+    return { status: "unavailable", reason: "no_live_configuration" };
+  }
+
+  const stagingRef = readTrimmedEnv("BOS_STAGING_PROJECT_REF");
+  const testUrl = readTrimmedEnv("SUPABASE_TEST_URL");
+  const anonKey = readTrimmedEnv("SUPABASE_TEST_ANON_KEY");
+  const tenantAJwt = readTrimmedEnv("BOS_RLS_TENANT_A_JWT") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_A_JWT");
+  const tenantBJwt = readTrimmedEnv("BOS_RLS_TENANT_B_JWT") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_B_JWT");
+  const tenantBId = readTrimmedEnv("BOS_RLS_TENANT_B_ID") ?? readTrimmedEnv("COMMERCE_RLS_TENANT_B_ID");
+
+  const required = {
+    BOS_STAGING_PROJECT_REF: stagingRef,
+    SUPABASE_TEST_URL: testUrl,
+    SUPABASE_TEST_ANON_KEY: anonKey,
+    tenantAJwt,
+    tenantBJwt,
+    tenantBId,
+  } as const;
+  const present = Object.entries(required)
+    .filter(([, value]) => Boolean(value))
+    .map(([key]) => key);
+  const missing = Object.entries(required)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missing.length > 0) {
+    failClosedBosLiveRls(
+      `BOS live RLS configuration incomplete: present=${present.join(",")} missing=${missing.join(",")}`,
+    );
+  }
+
+  if (!stagingRef || !BOS_STAGING_PROJECT_REF_PATTERN.test(stagingRef)) {
+    failClosedBosLiveRls("BOS live RLS BOS_STAGING_PROJECT_REF is malformed");
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(testUrl!);
+  } catch {
+    failClosedBosLiveRls(sanitizedBosLiveRlsUrlError(true, stagingRef, true));
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const expectedHostname = `${stagingRef}.supabase.co`;
+  if (parsed.protocol !== "https:") {
+    failClosedBosLiveRls(`BOS live RLS SUPABASE_TEST_URL must use HTTPS for staging ref ${stagingRef}`);
+  }
+  if (parsed.username || parsed.password) {
+    failClosedBosLiveRls(sanitizedBosLiveRlsUrlError(true, stagingRef, true));
+  }
+  if (hostname !== expectedHostname) {
+    failClosedBosLiveRls(
+      `BOS live RLS project-ref mismatch: url_host=${hostname} expected_host=${expectedHostname}`,
+    );
+  }
+
+  return { status: "available", projectRef: stagingRef, hostname };
+}
+
 export function liveRlsEnvironmentAvailable(): boolean {
-  return Boolean(
-    process.env.SUPABASE_TEST_URL &&
-      process.env.SUPABASE_TEST_ANON_KEY &&
-      (process.env.BOS_RLS_TENANT_A_JWT || process.env.COMMERCE_RLS_TENANT_A_JWT) &&
-      (process.env.BOS_RLS_TENANT_B_JWT || process.env.COMMERCE_RLS_TENANT_B_JWT) &&
-      (process.env.BOS_RLS_TENANT_B_ID || process.env.COMMERCE_RLS_TENANT_B_ID),
-  );
+  return assessBosLiveRlsEnvironment().status === "available";
 }
 
 export function liveProviderCredentialsAvailable(provider: "xero" | "microsoft_365" | "hubspot"): boolean {
@@ -210,6 +326,7 @@ export function browserE2eEnvironmentAvailable(): boolean {
 
 export function bos15EnvironmentPreflight() {
   const supabaseRefs = {
+    BOS_STAGING_PROJECT_REF: envPresence("BOS_STAGING_PROJECT_REF"),
     SUPABASE_TEST_URL: envPresence("SUPABASE_TEST_URL"),
     approvedTestAnonKey: envPresence("SUPABASE_TEST_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     provisioningServiceCredential: envPresence("SUPABASE_SERVICE_ROLE_KEY"),
