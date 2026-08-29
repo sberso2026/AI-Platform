@@ -6,6 +6,8 @@ const BLOCKED_TELEMETRY = [
   "refresh_token",
   "client_secret",
   "hapikey",
+  "token",
+  "code",
   "payload",
   "email",
   "phone",

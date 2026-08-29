@@ -25,6 +25,7 @@ import { resolveMs365Secrets } from "./m365-secrets";
 import { m365SafeTelemetry } from "./m365-telemetry";
 import { MS365_ALLOWED_GRAPH_SCOPES, ms365ConnectionState } from "./m365-policy";
 import { HubSpotProviderClient } from "./hubspot-client";
+import { HubSpotConnectorError } from "./hubspot-errors";
 import { resolveHubSpotSecrets } from "./hubspot-secrets";
 import { hubspotSafeTelemetry } from "./hubspot-telemetry";
 import { HUBSPOT_ALLOWED_OAUTH_SCOPES, hubspotConnectionState } from "./hubspot-policy";
@@ -265,6 +266,8 @@ export class BosConnectorsService {
     const scope = requireWorkspace(raw);
     assertHuman(actor);
     const installation = await this.requireInstallation(scope, id);
+    const hubspotRevocation =
+      installation.connectorId === "hubspot" ? await this.attemptHubSpotProviderRevocation(installation) : null;
     const next: ConnectorInstallation = {
       ...installation,
       health: "revoked",
@@ -281,9 +284,10 @@ export class BosConnectorsService {
             ? await this.attemptXeroProviderRevocation(installation)
             : installation.connectorId === "microsoft_365"
               ? await this.attemptMs365ProviderRevocation(installation)
-              : installation.connectorId === "hubspot"
-                ? await this.attemptHubSpotProviderRevocation(installation)
+              : hubspotRevocation
+                ? hubspotRevocation.status
                 : "not_applicable",
+        providerRevocationError: hubspotRevocation?.errorCategory ?? null,
       },
     };
     await this.store.upsertInstallation(next);
@@ -857,8 +861,8 @@ export class BosConnectorsService {
 
   private async attemptHubSpotProviderRevocation(
     installation: ConnectorInstallation,
-  ): Promise<"submitted" | "unavailable" | "local_only"> {
-    if (!installation.secretId) return "local_only";
+  ): Promise<{ status: "submitted" | "unavailable" | "local_only"; errorCategory: string | null }> {
+    if (!installation.secretId) return { status: "local_only", errorCategory: null };
     try {
       const secrets = resolveHubSpotSecrets(installation.secretId);
       const expected =
@@ -869,9 +873,10 @@ export class BosConnectorsService {
         expectedProviderOrgId: expected,
       });
       const result = await client.revokeAuthorization();
-      return result.providerRevocation;
-    } catch {
-      return "local_only";
+      return { status: result.providerRevocation, errorCategory: result.errorCategory };
+    } catch (error) {
+      const errorCategory = error instanceof HubSpotConnectorError ? error.category : "hubspot_live_unavailable";
+      return { status: "unavailable", errorCategory };
     }
   }
 

@@ -5,6 +5,10 @@ import {
   HUBSPOT_CAPABILITY_CLASS,
   HUBSPOT_DENIED_OAUTH_SCOPES,
   HUBSPOT_MUTATION_OPERATIONS,
+  HUBSPOT_CURRENT_OAUTH_CONTRACT_VERIFIED,
+  HUBSPOT_OAUTH_API_VERSION,
+  HUBSPOT_OAUTH_REVOKE_PATH,
+  HUBSPOT_OAUTH_TOKEN_PATH,
   HUBSPOT_SCOPE_MINIMISATION_PASS,
   HUBSPOT_THREAT_MODEL,
   assertHubSpotCapabilityAllowed,
@@ -12,6 +16,9 @@ import {
   buildHubSpotAuthorizeUrl,
   hubspotConnectionState,
   hubspotCrmPathAllowed,
+  hubspotLegacyOauthPath,
+  hubspotOauthIdentityPostAllowed,
+  hubspotOauthRevokePathAllowed,
 } from "./hubspot-policy";
 
 describe("HubSpot capability allowlist", () => {
@@ -27,6 +34,19 @@ describe("HubSpot capability allowlist", () => {
       "crm.objects.deals.read",
     ]);
     expect(HUBSPOT_SCOPE_MINIMISATION_PASS).toBe(true);
+    expect(HUBSPOT_CURRENT_OAUTH_CONTRACT_VERIFIED).toBe(true);
+    expect(HUBSPOT_OAUTH_API_VERSION).toBe("2026-03");
+    expect(HUBSPOT_OAUTH_TOKEN_PATH).toBe("/oauth/2026-03/token");
+    expect(HUBSPOT_OAUTH_REVOKE_PATH).toBe("/oauth/2026-03/token/revoke");
+    expect(hubspotOauthIdentityPostAllowed("/oauth/2026-03/token")).toBe(true);
+    expect(hubspotOauthRevokePathAllowed("/oauth/2026-03/token/revoke")).toBe(true);
+    expect(hubspotOauthIdentityPostAllowed("/crm/v3/objects/contacts")).toBe(false);
+    expect(hubspotLegacyOauthPath("/oauth/v1/token")).toBe(true);
+    expect(hubspotLegacyOauthPath("/oauth/v1/refresh-tokens/abc")).toBe(true);
+    expect(hubspotLegacyOauthPath("/oauth/v3/refresh-tokens/abc")).toBe(true);
+    expect(hubspotLegacyOauthPath("/oauth/v3/token")).toBe(true);
+    expect(hubspotOauthRevokePathAllowed("/oauth/v1/refresh-tokens/abc")).toBe(false);
+    expect(hubspotOauthRevokePathAllowed("/oauth/v3/refresh-tokens/abc")).toBe(false);
     expect(HUBSPOT_DENIED_OAUTH_SCOPES).toContain("crm.objects.contacts.write");
     expect(HUBSPOT_DENIED_OAUTH_SCOPES).toContain("crm.objects.companies.write");
     expect(HUBSPOT_DENIED_OAUTH_SCOPES).toContain("crm.objects.deals.write");

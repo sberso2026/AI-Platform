@@ -51,6 +51,8 @@ export const HUBSPOT_DENIED_OAUTH_SCOPES = [
 ] as const;
 
 export const HUBSPOT_SCOPE_MINIMISATION_PASS = true as const;
+export const HUBSPOT_CURRENT_OAUTH_CONTRACT_VERIFIED = true as const;
+export const HUBSPOT_OAUTH_API_VERSION = "2026-03" as const;
 
 export type HubSpotReadOperation =
   | "getAccountIdentity"
@@ -93,8 +95,21 @@ export const HUBSPOT_ALLOWED_GET_PATHS = [
   "/crm/v3/objects/deals",
 ] as const;
 
-export const HUBSPOT_OAUTH_TOKEN_PATH = "/oauth/v3/token";
-export const HUBSPOT_OAUTH_REVOKE_PREFIX = "/oauth/v3/refresh-tokens/";
+export const HUBSPOT_OAUTH_TOKEN_PATH = "/oauth/2026-03/token";
+export const HUBSPOT_OAUTH_REVOKE_PATH = "/oauth/2026-03/token/revoke";
+
+export const HUBSPOT_LEGACY_OAUTH_PATHS = [
+  "/oauth/v1/token",
+  "/oauth/v3/token",
+] as const;
+
+export const HUBSPOT_LEGACY_OAUTH_PATH_PREFIXES = [
+  "/oauth/v1/access-tokens/",
+  "/oauth/v1/refresh-tokens/",
+  "/oauth/v3/refresh-tokens/",
+] as const;
+
+export const HUBSPOT_IDENTITY_GRANT_TYPES = ["authorization_code", "refresh_token"] as const;
 
 export const HUBSPOT_ALLOWED_QUERY_KEYS = ["limit", "after", "properties", "archived"] as const;
 
@@ -296,7 +311,7 @@ export const HUBSPOT_THREAT_MODEL: readonly HubSpotThreatControl[] = [
   },
   {
     id: "revoked_authorization",
-    control: "revoke clears secret_id and blocks sync; optional OAuth refresh-token DELETE is identity-lifecycle only",
+    control: "revoke clears secret_id and blocks sync; POST /oauth/2026-03/token/revoke is identity-lifecycle only and never puts tokens in the URL",
     failure: "connector_revoked",
     evidence: "hubspot-security.test.ts: disconnect blocks sync",
   },
@@ -341,7 +356,16 @@ export function hubspotOauthTokenPathAllowed(pathname: string): boolean {
 }
 
 export function hubspotOauthRevokePathAllowed(pathname: string): boolean {
-  return pathname.startsWith(HUBSPOT_OAUTH_REVOKE_PREFIX) && pathname.length > HUBSPOT_OAUTH_REVOKE_PREFIX.length;
+  return pathname === HUBSPOT_OAUTH_REVOKE_PATH;
+}
+
+export function hubspotOauthIdentityPostAllowed(pathname: string): boolean {
+  return hubspotOauthTokenPathAllowed(pathname) || hubspotOauthRevokePathAllowed(pathname);
+}
+
+export function hubspotLegacyOauthPath(pathname: string): boolean {
+  if ((HUBSPOT_LEGACY_OAUTH_PATHS as readonly string[]).includes(pathname)) return true;
+  return HUBSPOT_LEGACY_OAUTH_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 export function buildHubSpotAuthorizeUrl(input: { clientId: string; redirectUri: string; state: string }): string {

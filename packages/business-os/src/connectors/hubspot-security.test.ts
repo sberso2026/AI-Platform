@@ -9,7 +9,7 @@ import { createMemoryConnectorStore } from "./store";
 import { BOS_CONNECTOR_ADAPTERS, createHubSpotAdapter } from "./adapters";
 import { resolveHubSpotSecrets } from "./hubspot-secrets";
 import { hubspotSafeTelemetry } from "./hubspot-telemetry";
-import { HUBSPOT_SCOPE_MINIMISATION_PASS, HUBSPOT_THREAT_MODEL, buildHubSpotAuthorizeUrl } from "./hubspot-policy";
+import { HUBSPOT_SCOPE_MINIMISATION_PASS, HUBSPOT_THREAT_MODEL, HUBSPOT_CURRENT_OAUTH_CONTRACT_VERIFIED, buildHubSpotAuthorizeUrl } from "./hubspot-policy";
 import { containsSecretFields, redactSecrets } from "./security";
 import { reconstructableSuppressedIdentityLeak } from "./suppression";
 import {
@@ -64,6 +64,7 @@ describe("HubSpot security architecture", () => {
     expect(HUBSPOT_SECURITY_ARCHITECTURE_READY).toBe(true);
     expect(HUBSPOT_LIVE_CERTIFICATION_EXECUTED).toBe(false);
     expect(HUBSPOT_SCOPE_MINIMISATION_PASS).toBe(true);
+    expect(HUBSPOT_CURRENT_OAUTH_CONTRACT_VERIFIED).toBe(true);
     expect(bosLiveHubSpotCertified).toBe(false);
     expect(bosProductionEligible).toBe(false);
     expect(XERO_CONNECTOR_IMPLEMENTED).toBe(true);
@@ -165,6 +166,7 @@ describe("HubSpot security architecture", () => {
     expect(revoked.secretId).toBeNull();
     expect(revoked.connectionState).toBe("DISCONNECTED");
     expect(revoked.provenance.disconnectedAt).toBeTruthy();
+    expect(revoked.provenance.providerRevocation).toBe("local_only");
     await expect(connectors.sync(SCOPE, { installationId: installed.id }, HUMAN)).rejects.toThrow("connector_revoked");
   });
 
@@ -177,6 +179,7 @@ describe("HubSpot security architecture", () => {
       client_secret: "app-secret",
       email: "jordan@example.com",
       phone: "+1-555-0100",
+      token: "refresh-secret",
       payload: { name: "Jordan Buyer" },
       status: 200,
     });
@@ -188,6 +191,7 @@ describe("HubSpot security architecture", () => {
     expect(safe.email).toBe("[redacted]");
     expect(safe.phone).toBe("[redacted]");
     expect(safe.payload).toBe("[redacted]");
+    expect(safe.token).toBe("[redacted]");
     expect(JSON.stringify(redactSecrets({ accessToken: "tok", tenantId: SCOPE.tenantId }))).not.toContain("tok");
   });
 
@@ -237,5 +241,52 @@ describe("HubSpot security architecture", () => {
     expect(JSON.stringify(staged)).not.toContain("Hidden Person");
     expect(JSON.stringify(staged)).not.toContain("hidden@example.com");
     expect(connectors.status().suppressedIdentityReconstructionBlocked).toBe(true);
+  });
+
+  it("does not ship legacy token-in-path revocation", () => {
+    const clientSrc = readFileSync(resolve(ROOT, "packages/business-os/src/connectors/hubspot-client.ts"), "utf8");
+    const policySrc = readFileSync(resolve(ROOT, "packages/business-os/src/connectors/hubspot-policy.ts"), "utf8");
+    expect(clientSrc).toContain("HUBSPOT_OAUTH_REVOKE_PATH");
+    expect(clientSrc).toContain("HUBSPOT_OAUTH_TOKEN_PATH");
+    expect(clientSrc).not.toMatch(/oauth\/v1\/refresh-tokens|oauth\/v3\/refresh-tokens/);
+    expect(clientSrc).not.toMatch(/method:\s*"DELETE"/);
+    expect(policySrc).toContain('HUBSPOT_OAUTH_TOKEN_PATH = "/oauth/2026-03/token"');
+    expect(policySrc).toContain('HUBSPOT_OAUTH_REVOKE_PATH = "/oauth/2026-03/token/revoke"');
+  });
+
+  it("keeps local disconnect when live HubSpot provider revocation fails", async () => {
+    const { connectors } = harness();
+    clearBosCertificationEnv();
+    vi.stubEnv("HUBSPOT_CLIENT_ID", "client");
+    vi.stubEnv("HUBSPOT_CLIENT_SECRET", "super-secret");
+    vi.stubEnv("HUBSPOT_SECRET_ID", "sec_123");
+    vi.stubEnv("HUBSPOT_PORTAL_ID", PORTAL);
+    vi.stubEnv("HUBSPOT_REFRESH_TOKEN", "refresh-secret");
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input) => {
+      const url = String(input);
+      expect(url).not.toContain("refresh-secret");
+      expect(url).not.toContain("super-secret");
+      expect(new URL(url).pathname).toBe("/oauth/2026-03/token/revoke");
+      return new Response(JSON.stringify({ token: "refresh-secret" }), { status: 401 });
+    }) as typeof fetch;
+    try {
+      const installed = await connectors.configure(
+        SCOPE,
+        { connectorId: "hubspot", secretId: "sec_123", mode: "live", expectedProviderOrgId: PORTAL },
+        HUMAN,
+      );
+      const revoked = await connectors.revoke(SCOPE, installed.id, HUMAN);
+      expect(revoked.health).toBe("revoked");
+      expect(revoked.secretId).toBeNull();
+      expect(revoked.connectionState).toBe("DISCONNECTED");
+      expect(revoked.provenance.providerRevocation).toBe("unavailable");
+      expect(revoked.provenance.providerRevocationError).toBe("hubspot_unauthorized");
+      expect(JSON.stringify(revoked)).not.toContain("refresh-secret");
+      expect(JSON.stringify(revoked)).not.toContain("super-secret");
+      await expect(connectors.sync(SCOPE, { installationId: installed.id }, HUMAN)).rejects.toThrow("connector_revoked");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });

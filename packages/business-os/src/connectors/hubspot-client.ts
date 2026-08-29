@@ -1,7 +1,7 @@
 /**
  * Isolated HubSpot CRM client. Tokens never leave this boundary.
  * CRM data-plane operations are GET only. Mutations throw before fetch.
- * OAuth token exchange and refresh-token revocation are identity-lifecycle paths.
+ * OAuth issuance, refresh, and revocation are a separate identity-lifecycle POST surface.
  */
 import {
   HUBSPOT_ALLOWED_OAUTH_SCOPES,
@@ -10,10 +10,14 @@ import {
   HUBSPOT_COMPANY_PROPERTIES,
   HUBSPOT_CONTACT_PROPERTIES,
   HUBSPOT_DEAL_PROPERTIES,
+  HUBSPOT_IDENTITY_GRANT_TYPES,
   HUBSPOT_MUTATION_OPERATIONS,
-  HUBSPOT_OAUTH_REVOKE_PREFIX,
+  HUBSPOT_OAUTH_REVOKE_PATH,
+  HUBSPOT_OAUTH_TOKEN_PATH,
   type HubSpotReadOperation,
   hubspotCrmPathAllowed,
+  hubspotLegacyOauthPath,
+  hubspotOauthIdentityPostAllowed,
   hubspotOauthRevokePathAllowed,
   hubspotOauthTokenPathAllowed,
 } from "./hubspot-policy";
@@ -153,21 +157,45 @@ export class HubSpotProviderClient {
     return this.boundPortalId;
   }
 
-  async revokeAuthorization(): Promise<{ attempted: true; providerRevocation: "submitted" | "unavailable" }> {
-    const pathname = `${HUBSPOT_OAUTH_REVOKE_PREFIX}${encodeURIComponent(this.deps.secrets.refreshToken)}`;
-    if (!hubspotOauthRevokePathAllowed(pathname)) {
-      this.accessToken = null;
-      return { attempted: true, providerRevocation: "unavailable" };
-    }
+  async revokeAuthorization(): Promise<{
+    attempted: true;
+    providerRevocation: "submitted" | "unavailable";
+    errorCategory: string | null;
+  }> {
     try {
-      const url = new URL(`https://${HUBSPOT_API_HOST}${pathname}`);
-      await this.send("DELETE", url, { Accept: "application/json" });
+      await this.identityPost(HUBSPOT_OAUTH_REVOKE_PATH, {
+        client_id: this.deps.secrets.clientId,
+        client_secret: this.deps.secrets.clientSecret,
+        token: this.deps.secrets.refreshToken,
+        token_type_hint: "refresh_token",
+      });
       this.accessToken = null;
-      return { attempted: true, providerRevocation: "submitted" };
-    } catch {
+      return { attempted: true, providerRevocation: "submitted", errorCategory: null };
+    } catch (error) {
       this.accessToken = null;
-      return { attempted: true, providerRevocation: "unavailable" };
+      const errorCategory = error instanceof HubSpotConnectorError ? error.category : "hubspot_live_unavailable";
+      return { attempted: true, providerRevocation: "unavailable", errorCategory };
     }
+  }
+
+  async exchangeAuthorizationCode(input: { code: string; redirectUri: string }): Promise<{ boundPortalId: string }> {
+    if (!input.code.trim() || !input.redirectUri.trim()) {
+      throw new HubSpotConnectorError("hubspot_oauth_config_invalid");
+    }
+    const body = await this.identityPost(HUBSPOT_OAUTH_TOKEN_PATH, {
+      grant_type: "authorization_code",
+      client_id: this.deps.secrets.clientId,
+      client_secret: this.deps.secrets.clientSecret,
+      code: input.code,
+      redirect_uri: input.redirectUri,
+    });
+    this.applyAccessToken(body);
+    const expected = this.deps.expectedProviderOrgId;
+    if (!expected || !/^\d+$/.test(expected) || this.deps.secrets.portalId !== expected) {
+      throw new HubSpotConnectorError("hubspot_portal_mismatch");
+    }
+    this.boundPortalId = expected;
+    return { boundPortalId: expected };
   }
 
   private async ensureBound(): Promise<void> {
@@ -181,12 +209,16 @@ export class HubSpotProviderClient {
 
   private async ensureAccessToken(): Promise<void> {
     if (this.accessToken) return;
-    const body = await this.oauthTokenPost({
+    const body = await this.identityPost(HUBSPOT_OAUTH_TOKEN_PATH, {
       grant_type: "refresh_token",
       client_id: this.deps.secrets.clientId,
       client_secret: this.deps.secrets.clientSecret,
       refresh_token: this.deps.secrets.refreshToken,
     });
+    this.applyAccessToken(body);
+  }
+
+  private applyAccessToken(body: unknown): void {
     const token = body && typeof body === "object" ? (body as { access_token?: unknown }).access_token : null;
     if (typeof token !== "string" || token.length < 8) {
       throw new HubSpotConnectorError("hubspot_token_invalid");
@@ -228,34 +260,55 @@ export class HubSpotProviderClient {
     });
   }
 
-  private async oauthTokenPost(form: Record<string, string>): Promise<unknown> {
-    if (!hubspotOauthTokenPathAllowed("/oauth/v3/token")) {
+  private async identityPost(pathname: string, form: Record<string, string>): Promise<unknown> {
+    if (hubspotLegacyOauthPath(pathname) || !hubspotOauthIdentityPostAllowed(pathname)) {
       throw new HubSpotConnectorError("hubspot_endpoint_forbidden");
     }
-    const url = new URL(`https://${HUBSPOT_API_HOST}/oauth/v3/token`);
+    if (hubspotOauthTokenPathAllowed(pathname)) {
+      const grant = form.grant_type;
+      if (!(HUBSPOT_IDENTITY_GRANT_TYPES as readonly string[]).includes(grant)) {
+        throw new HubSpotConnectorError("hubspot_method_forbidden");
+      }
+      const allowed =
+        grant === "refresh_token"
+          ? ["grant_type", "client_id", "client_secret", "refresh_token"]
+          : ["grant_type", "client_id", "client_secret", "code", "redirect_uri"];
+      if (Object.keys(form).some((key) => !allowed.includes(key))) {
+        throw new HubSpotConnectorError("hubspot_method_forbidden");
+      }
+    }
+    if (hubspotOauthRevokePathAllowed(pathname)) {
+      const allowed = ["client_id", "client_secret", "token", "token_type_hint"];
+      if (Object.keys(form).some((key) => !allowed.includes(key))) {
+        throw new HubSpotConnectorError("hubspot_method_forbidden");
+      }
+      if (form.token_type_hint !== "refresh_token") {
+        throw new HubSpotConnectorError("hubspot_method_forbidden");
+      }
+    }
+    const url = new URL(`https://${HUBSPOT_API_HOST}${pathname}`);
+    if (url.search) throw new HubSpotConnectorError("hubspot_endpoint_forbidden");
     assertConnectorUrl("hubspot", url.toString());
     return this.send("POST", url, { "Content-Type": "application/x-www-form-urlencoded" }, new URLSearchParams(form).toString());
   }
 
   private async send(
-    method: "GET" | "POST" | "DELETE",
+    method: "GET" | "POST",
     url: URL,
     headers: Record<string, string>,
     body?: string,
   ): Promise<unknown> {
     const pathname = url.pathname;
-    const isOauthToken = method === "POST" && hubspotOauthTokenPathAllowed(pathname);
-    const isOauthRevoke = method === "DELETE" && hubspotOauthRevokePathAllowed(pathname);
-    if (url.hostname === HUBSPOT_API_HOST && method !== "GET" && !isOauthToken && !isOauthRevoke) {
+    if (hubspotLegacyOauthPath(pathname)) throw new HubSpotConnectorError("hubspot_endpoint_forbidden");
+    const isIdentityPost = method === "POST" && hubspotOauthIdentityPostAllowed(pathname);
+    if (url.hostname === HUBSPOT_API_HOST && method !== "GET" && !isIdentityPost) {
       throw new HubSpotConnectorError("hubspot_method_forbidden");
     }
     if (url.hostname === HUBSPOT_API_HOST && method === "GET" && !hubspotCrmPathAllowed(pathname)) {
       throw new HubSpotConnectorError("hubspot_endpoint_forbidden");
     }
-    const asserted = isOauthRevoke
-      ? `https://${HUBSPOT_API_HOST}${HUBSPOT_OAUTH_REVOKE_PREFIX}redacted`
-      : url.toString();
-    assertConnectorUrl("hubspot", asserted);
+    if (isIdentityPost && url.search) throw new HubSpotConnectorError("hubspot_endpoint_forbidden");
+    assertConnectorUrl("hubspot", url.toString());
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.deps.timeoutMs ?? TIMEOUT_MS);
     let response: Response;
@@ -272,7 +325,9 @@ export class HubSpotProviderClient {
     } finally {
       clearTimeout(timeout);
     }
-    if (isOauthRevoke && (response.status === 204 || response.ok)) return {};
+    if (isIdentityPost && hubspotOauthRevokePathAllowed(pathname) && (response.status === 204 || response.ok)) {
+      return {};
+    }
     if (!response.ok) throw hubspotErrorFromHttpStatus(response.status);
     if (response.status === 204) return {};
     try {

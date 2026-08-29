@@ -74,7 +74,7 @@ export const BOS_CONNECTOR_CATALOG: readonly BosConnectorContract[] = [
     sourceProvenanceRequired: true,
     mappingVersion: "bos12.hubspot.map.v1",
     healthStates: SHARED_HEALTH,
-    revocation: "Clears secret_id; optional OAuth refresh-token revocation is identity-lifecycle only; staging remains non-canonical and suppression-filtered.",
+    revocation: "Clears secret_id; optional POST /oauth/2026-03/token/revoke is identity-lifecycle only and never places tokens in the URL; staging remains non-canonical and suppression-filtered.",
     optional: true,
     defaultMode: "fixture",
   },
