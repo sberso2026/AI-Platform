@@ -35,4 +35,5 @@ export * from "./reports";
 export * from "./knowledge";
 export * from "./project-health";
 export * from "./command-centre";
+export * from "./schedule-intelligence";
 

@@ -12,6 +12,7 @@ import {
   SectionHeader,
   cn,
 } from "@rtb/ui";
+import { ScheduleCommandCentreCard, type ScheduleIntelligenceView } from "./project-schedule-intelligence";
 
 type HealthState = "green" | "amber" | "red" | "unknown";
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
@@ -78,6 +79,7 @@ type CommandCentreView = {
   decisionsActions: SectionProjection;
   forecast: SectionProjection;
   knowledge: SectionProjection;
+  scheduleIntelligence: ScheduleIntelligenceView;
   limitations: string[];
   evidenceReferences: EvidenceRef[];
   generatedAt: string;
@@ -377,7 +379,7 @@ export function ProjectCommandCentre() {
           </section>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <SectionCard section={view.schedule} testId="command-centre-section-schedule" />
+            <ScheduleCommandCentreCard view={view.scheduleIntelligence} projectId={view.project.projectId} />
             <SectionCard section={view.cost} testId="command-centre-section-cost" />
             <SectionCard section={view.progress} testId="command-centre-section-progress" />
             <SectionCard section={view.risk} testId="command-centre-section-risk" />

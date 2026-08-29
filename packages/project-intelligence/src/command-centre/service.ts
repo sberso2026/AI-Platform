@@ -6,7 +6,11 @@ import {
   emptyKnowledgeSnapshot,
 } from "../project-health/in-memory-sources";
 import type { ProjectHealthEvidenceReference } from "../project-health/types";
+import type { ProjectControlsSnapshot } from "../project-health/source-contracts";
 import { CommandCentreError, commandCentreCoreFailed, commandCentreForbidden } from "./errors";
+import { asPublishedPosture } from "../schedule-intelligence/interpreter";
+import { interpretScheduleIntelligence } from "../schedule-intelligence/service";
+import type { ScheduleIntelligenceSourceSnapshot } from "../schedule-intelligence/types";
 import { assertCommandCentreOwnershipLocks, PI_AI_REQUIRED } from "./ownership";
 import {
   buildAttentionItems,
@@ -114,6 +118,40 @@ function collectEvidence(viewSections: Array<{ evidenceReferences: readonly Proj
   return refs;
 }
 
+function snapshotFromControlsSchedule(
+  output: ProjectControlsSnapshot["schedule"],
+  availability: CommandCentreAvailability,
+): ScheduleIntelligenceSourceSnapshot {
+  if (!output) {
+    return {
+      availability: availability === "ok" ? "no_data" : availability,
+      latest: null,
+      history: [],
+      evidence: [],
+      priorEvidence: [],
+    };
+  }
+  const latest = {
+    assessmentId: output.assessmentId,
+    stateId: output.assessmentId,
+    projectId: output.projectId,
+    published: output.published,
+    abstained: output.abstained,
+    posture: asPublishedPosture(output.posture),
+    assessedAt: output.assessedAt,
+    publishedAt: output.publishedAt,
+    version: typeof output.version === "number" ? output.version : undefined,
+    storesCanonicalCopy: false as const,
+  };
+  return {
+    availability,
+    latest,
+    history: [latest],
+    evidence: [],
+    priorEvidence: [],
+  };
+}
+
 export class ProjectCommandCentreService {
   constructor(private readonly sources: CommandCentreSourceBundle) {}
 
@@ -151,6 +189,22 @@ export class ProjectCommandCentreService {
     ]);
     const controlsLoad = maskFailedControls(controlsRaw);
     const knowledgeLoad = maskFailedKnowledge(knowledgeRaw);
+
+    let scheduleSnapshot: ScheduleIntelligenceSourceSnapshot | undefined;
+    if (this.sources.schedule) {
+      if (this.sources.schedule.invokesControlsEngine || this.sources.schedule.computesCriticalPath || this.sources.schedule.computesFloat) {
+        throw new Error("Command Centre must not invoke a Project Controls engine");
+      }
+      try {
+        scheduleSnapshot = await this.sources.schedule.load(scope);
+      } catch (error) {
+        if (error instanceof CommandCentreError && error.code === "project_forbidden") {
+          scheduleSnapshot = snapshotFromControlsSchedule(null, "forbidden");
+        } else {
+          scheduleSnapshot = snapshotFromControlsSchedule(null, "error");
+        }
+      }
+    }
 
     const dimensions = evaluateProjectHealthDimensions({
       core: coreLoad.snapshot,
@@ -198,6 +252,15 @@ export class ProjectCommandCentreService {
       availability: scheduleAvailability,
       output: controlsLoad.snapshot.schedule,
       noDataSummary: "Schedule UNKNOWN — no published schedule state.",
+    });
+    const resolvedScheduleSnapshot =
+      scheduleSnapshot ?? snapshotFromControlsSchedule(controlsLoad.snapshot.schedule, scheduleAvailability);
+    const scheduleIntelligence = interpretScheduleIntelligence({
+      projectId: input.projectId,
+      tenantId,
+      workspaceId,
+      snapshot: resolvedScheduleSnapshot,
+      generatedAt,
     });
     const cost = projectControlsSection({
       title: "Cost",
@@ -295,6 +358,7 @@ export class ProjectCommandCentreService {
       decisionsActions,
       forecast,
       knowledge,
+      scheduleIntelligence,
       limitations,
       evidenceReferences,
       generatedAt,

@@ -129,6 +129,9 @@ describe("PI-1 command centre composition", () => {
     expect(view.aiRequired).toBe(false);
     expect(view.canonicalMutation).toBe(false);
     expect(view.generatedAt).toBe(generatedAt);
+    expect(view.scheduleIntelligence.health.classification).toBe("GREEN");
+    expect(view.scheduleIntelligence.aiRequired).toBe(false);
+    expect(view.scheduleIntelligence.mutatesSchedule).toBe(false);
   });
 
   it("denies a cross-tenant project", async () => {

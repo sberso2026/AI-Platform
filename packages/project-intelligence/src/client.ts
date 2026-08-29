@@ -41,3 +41,9 @@ export type {
   CommandCentreAttentionItem,
   CommandCentreSectionProjection,
 } from "./command-centre";
+export type {
+  ProjectScheduleIntelligence,
+  ScheduleAttentionItem,
+  ScheduleMilestoneInsight,
+  ScheduleFreshnessState,
+} from "./schedule-intelligence";

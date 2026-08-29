@@ -43,6 +43,7 @@ describe("PI-1 Command Centre web surface", () => {
   it("renders Command Centre on overview while preserving PI v1 dashboard markers", () => {
     const overview = read("app/(platform)/engineering/apps/project-intelligence/page.tsx");
     const ui = read("components/engineering/project-command-centre.tsx");
+    const scheduleUi = read("components/engineering/project-schedule-intelligence.tsx");
     expect(overview).toContain('data-testid="project-intelligence-ready"');
     expect(overview).toContain('data-testid="project-intelligence-dashboard"');
     expect(overview).toContain("project-intelligence-panel-${panel.id}");
@@ -57,7 +58,8 @@ describe("PI-1 Command Centre web surface", () => {
     expect(ui).toContain('data-testid="command-centre-attention"');
     expect(ui).toContain("health-state-");
     expect(ui).toContain("border-dashed");
-    expect(ui).toContain("command-centre-section-schedule");
+    expect(ui).toContain("ScheduleCommandCentreCard");
+    expect(scheduleUi).toContain("command-centre-section-schedule");
     expect(ui).toContain("-unavailable");
   });
 

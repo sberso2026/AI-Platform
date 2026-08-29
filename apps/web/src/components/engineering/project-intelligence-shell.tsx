@@ -6,6 +6,7 @@ import {
   Activity,
   ArrowRightLeft,
   BarChart3,
+  CalendarClock,
   ClipboardList,
   FileText,
   Network,
@@ -17,6 +18,11 @@ import {
 
 const primaryTabs = [
   { href: "/engineering/apps/project-intelligence", label: "Command Centre", icon: BarChart3 },
+  {
+    href: "/engineering/apps/project-intelligence/schedule",
+    label: "Schedule Intelligence",
+    icon: CalendarClock,
+  },
   {
     href: "/engineering/apps/project-intelligence/documents",
     label: "Document Intelligence",
@@ -81,6 +87,7 @@ const stateMessages: Record<Exclude<ProjectIntelligenceShellState, "ready">, str
 
 function navTestId(href: string): string | undefined {
   if (href === "/engineering/apps/project-intelligence") return "project-intelligence-nav-overview";
+  if (href.endsWith("/schedule")) return "project-intelligence-nav-schedule";
   if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
   if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
   if (href.endsWith("/findings")) return "project-intelligence-nav-findings";

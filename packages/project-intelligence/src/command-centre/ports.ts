@@ -53,4 +53,5 @@ export type CommandCentreSourceBundle = {
   core: CommandCentreCorePort;
   controls: CommandCentreControlsPort;
   knowledge: CommandCentreKnowledgePort;
+  schedule?: import("../schedule-intelligence/ports").ScheduleIntelligencePort;
 };

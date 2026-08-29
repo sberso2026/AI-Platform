@@ -64,3 +64,4 @@ export * from "./knowledge/reasoning-pipeline";
 export * from "./knowledge/shared-services-binding";
 export * from "./project-health";
 export * from "./command-centre";
+export * from "./schedule-intelligence";
