@@ -17,21 +17,39 @@ export const XERO_DENIED_CAPABILITIES = [
   "organisation.configure",
 ] as const;
 
+/**
+ * Minimum official OAuth scopes for the current BOS read-only contract.
+ * Verified 2026-08-29 against Xero OAuth scopes / token-types docs and the
+ * 2026-03-02 granular-scope change: new apps cannot request accounting.transactions.read.
+ * Organisation + Accounts -> accounting.settings.read
+ * Invoices GET -> accounting.invoices.read (not payments/bank/journals)
+ * Contacts GET -> accounting.contacts.read
+ * Refresh tokens -> offline_access
+ */
 export const XERO_ALLOWED_OAUTH_SCOPES = [
   "offline_access",
   "accounting.settings.read",
-  "accounting.transactions.read",
+  "accounting.invoices.read",
   "accounting.contacts.read",
 ] as const;
 
 export const XERO_DENIED_OAUTH_SCOPES = [
   "accounting.transactions",
+  "accounting.transactions.read",
+  "accounting.payments.read",
+  "accounting.banktransactions.read",
+  "accounting.manualjournals.read",
+  "accounting.reports.read",
   "accounting.contacts",
   "accounting.settings",
   "accounting.attachments",
   "payroll.employees",
   "files",
 ] as const;
+
+export const XERO_SCOPE_MINIMISATION_VERIFIED = true as const;
+export const XERO_OAUTH_TOKEN_PATH = "/connect/token" as const;
+export const XERO_OAUTH_REVOCATION_PATH = "/connect/revocation" as const;
 
 export type XeroReadOperation =
   | "getOrganisation"
@@ -75,7 +93,7 @@ export const XERO_ALLOWED_GET_PATHS = [
   "/api.xro/2.0/Contacts",
 ] as const;
 
-export const XERO_IDENTITY_POST_PATHS = ["/connect/token", "/connect/revocation"] as const;
+export const XERO_IDENTITY_POST_PATHS = [XERO_OAUTH_TOKEN_PATH, XERO_OAUTH_REVOCATION_PATH] as const;
 
 export const XERO_ALLOWED_QUERY_KEYS = ["page", "pageSize", "summaryOnly"] as const;
 
@@ -176,7 +194,7 @@ export const XERO_THREAT_MODEL: readonly XeroThreatControl[] = [
   },
   {
     id: "excessive_oauth_scopes",
-    control: "XERO_ALLOWED_OAUTH_SCOPES is read-only accounting plus offline_access",
+    control: "XERO_ALLOWED_OAUTH_SCOPES is granular read-only settings/invoices/contacts plus offline_access",
     failure: "xero_scope_forbidden",
     evidence: "xero-policy.test.ts: denied write scopes",
   },

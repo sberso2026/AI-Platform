@@ -62,6 +62,33 @@ describe("Xero provider client boundary", () => {
     expect(client.boundProviderOrgId()).toBe("xero-org-expected");
   });
 
+  it("lists connections without a Xero-Tenant-Id header", async () => {
+    let connectionHeaders: Record<string, string> | undefined;
+    const client = new XeroProviderClient({
+      fetch: async (input, init) => {
+        const url = String(input);
+        if (url.includes("/connect/token")) return jsonResponse(200, { access_token: "access-token-live-value" });
+        if (url.includes("/connections")) {
+          connectionHeaders = init?.headers as Record<string, string> | undefined;
+          expect(String(init?.method ?? "GET")).toBe("GET");
+          return jsonResponse(200, [{ tenantId: "xero-org-expected" }]);
+        }
+        if (url.includes("/Organisation")) {
+          return jsonResponse(200, {
+            Organisations: [{ OrganisationID: "xero-org-expected", Name: "Demo", IsDemoCompany: true }],
+          });
+        }
+        return jsonResponse(404, {});
+      },
+      secrets: SECRETS,
+      expectedProviderOrgId: "xero-org-expected",
+    });
+    await client.getOrganisation();
+    const headers = new Headers(connectionHeaders);
+    expect(headers.get("Xero-Tenant-Id")).toBeNull();
+    expect((headers.get("Authorization") ?? "").startsWith("Bearer ")).toBe(true);
+  });
+
   it("rejects the wrong provider org before accounting reads", async () => {
     const client = new XeroProviderClient({
       fetch: tokenThen(() => jsonResponse(200, [{ tenantId: "other-org" }])),

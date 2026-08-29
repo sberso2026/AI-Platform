@@ -170,7 +170,14 @@ export class XeroProviderClient {
   }
 
   private async listConnections(): Promise<XeroConnection[]> {
-    const json = await this.accountingGet("/connections");
+    if (!xeroAccountingPathAllowed("/connections")) throw new XeroConnectorError("xero_endpoint_forbidden");
+    const url = new URL(`https://${XERO_ACCOUNTING_HOST}/connections`);
+    assertConnectorUrl("xero", url.toString());
+    if (!this.accessToken) throw new XeroConnectorError("xero_unauthorized");
+    const json = await this.send("GET", url, {
+      Authorization: `Bearer ${this.accessToken}`,
+      Accept: "application/json",
+    });
     if (!Array.isArray(json)) throw new XeroConnectorError("xero_schema_invalid");
     return json.map((row) => {
       if (!row || typeof row !== "object") throw new XeroConnectorError("xero_schema_invalid");
