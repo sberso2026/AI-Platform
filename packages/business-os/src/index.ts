@@ -2,6 +2,7 @@ export * from "./version";
 export * from "./release";
 export * from "./certification-evidence";
 export * from "./certification-manifest";
+export * from "./release-scope";
 export * from "./manifest";
 export * from "./capabilities";
 export * from "./permissions";

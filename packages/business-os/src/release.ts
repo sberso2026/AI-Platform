@@ -140,11 +140,15 @@ export const BOS_13_WEB_TSC_RECONCILIATION = [
 
 export const BOS_PRODUCTION_GA_REMAINING_GATES = [
   "BOS15B_BLOCKED_LIVE_RLS_ENV",
-  "BOS15C_XERO_BLOCKED_ENV",
-  "BOS15D_MICROSOFT_365_BLOCKED_ENV",
-  "BOS15E_HUBSPOT_BLOCKED_ENV",
   "BOS15F_BLOCKED_BROWSER_ENV",
   "inherited_engineering_os_web_tsc_baseline_debt",
+  "BOS_V1_QUALIFICATION_PLAN_NOT_EXECUTED",
+] as const;
+
+export const BOS_PREVIEW_PROVIDER_PROMOTION_GATES = [
+  BOS15C_STATUS,
+  BOS15D_STATUS,
+  BOS15E_STATUS,
 ] as const;
 
 export const BOS_LIVE_RLS_REPRESENTATIVE_TABLES = [
@@ -777,6 +781,7 @@ export function getBosReleaseDeclaration() {
     connectorCertification: BOS_CONNECTOR_CERTIFICATION,
     webTscReconciliation: BOS_13_WEB_TSC_RECONCILIATION,
     productionGaRemainingGates: BOS_PRODUCTION_GA_REMAINING_GATES,
+    previewProviderPromotionGates: BOS_PREVIEW_PROVIDER_PROMOTION_GATES,
     releaseCandidateReady: bosReleaseCandidate,
     productionGaReady: bosProductionEligible,
     preflight,

@@ -5,6 +5,8 @@ import {
   BOS_16_BOUNDARY_NOTE,
   BOS_DEDICATED_STAGING_PROJECT_REF,
   BOS_SHARED_HOST_PROJECT_REF,
+  BOS_V1_GA_SCOPE_DEFINED,
+  BOS_V1_RELEASE_SCOPE,
   CERTIFICATION_MANIFEST_IMPLEMENTED,
   CERTIFICATION_SECOND_STACK_DETECTED,
   PRE_GA_INTERNAL_READINESS_PASS,
@@ -25,6 +27,12 @@ describe("BOS-16A9 pre-GA certification ownership", () => {
     expect(CERTIFICATION_MANIFEST_IMPLEMENTED).toBe(true);
     expect(CERTIFICATION_SECOND_STACK_DETECTED).toBe(false);
     expect(manifest.capabilityCount).toBe(18);
+    expect(manifest.releaseScope.previewIntegrations).toEqual(["xero", "microsoft_365", "hubspot"]);
+    expect(manifest.releaseScope.gaCertifiedProviders).toEqual([]);
+    expect(manifest.coreGaEligibilityComputed).toBe(true);
+    expect(manifest.productionEligible).toBe(false);
+    expect(BOS_V1_GA_SCOPE_DEFINED).toBe(true);
+    expect(BOS_V1_RELEASE_SCOPE.noVendorHardDependency).toBe(true);
     expect(manifest.rlsCertificationState.state).toBe("pass");
     expect(manifest.browserCertificationState.state).toBe("pass");
     expect(manifest.browserPreflight.evidenceResult).toBe("pass");

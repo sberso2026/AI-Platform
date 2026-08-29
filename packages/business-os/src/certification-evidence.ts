@@ -78,6 +78,7 @@ export type BosCertificationGateDefinition = {
   provider?: "xero" | "microsoft_365" | "hubspot";
   mandatoryForPreGaInternal: boolean;
   mandatoryForProduction: boolean;
+  mandatoryForCoreGa: boolean;
 };
 
 export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertificationGateDefinition> = {
@@ -89,6 +90,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     liveProvider: false,
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: true,
   },
   browser_e2e: {
     id: "browser_e2e",
@@ -98,6 +100,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     liveProvider: false,
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: true,
   },
   xero_live: {
     id: "xero_live",
@@ -108,6 +111,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     provider: "xero",
     mandatoryForPreGaInternal: false,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: false,
   },
   microsoft365_live: {
     id: "microsoft365_live",
@@ -118,6 +122,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     provider: "microsoft_365",
     mandatoryForPreGaInternal: false,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: false,
   },
   hubspot_live: {
     id: "hubspot_live",
@@ -128,6 +133,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     provider: "hubspot",
     mandatoryForPreGaInternal: false,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: false,
   },
   xero_security_architecture: {
     id: "xero_security_architecture",
@@ -138,6 +144,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     provider: "xero",
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: false,
   },
   microsoft365_security_architecture: {
     id: "microsoft365_security_architecture",
@@ -148,6 +155,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     provider: "microsoft_365",
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: false,
   },
   hubspot_security_architecture: {
     id: "hubspot_security_architecture",
@@ -158,6 +166,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     provider: "hubspot",
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: false,
   },
   ai_workforce_regression: {
     id: "ai_workforce_regression",
@@ -167,6 +176,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     liveProvider: false,
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: true,
   },
   internal_architecture: {
     id: "internal_architecture",
@@ -176,6 +186,7 @@ export const BOS_CERTIFICATION_GATES: Record<BosCertificationGateId, BosCertific
     liveProvider: false,
     mandatoryForPreGaInternal: true,
     mandatoryForProduction: true,
+    mandatoryForCoreGa: true,
   },
 };
 
@@ -312,10 +323,22 @@ export function bosProviderFeatureStatus(input: {
   liveExecutionPassed: boolean;
   liveCertified: boolean;
 }): BosProviderReleaseStatus {
+  if (input.liveCertified && !input.liveExecutionPassed) {
+    throw new Error("provider_certified_without_live_evidence");
+  }
   if (input.liveCertified && input.liveExecutionPassed) return "CERTIFIED";
   if (!input.implemented) return "NOT_AVAILABLE";
   if (input.securityArchitectureReady) return "PREVIEW";
   return "PREVIEW";
+}
+
+export function assertBosProviderCertifiedProjection(input: {
+  status: BosProviderReleaseStatus;
+  liveExecutionPassed: boolean;
+}): void {
+  if (input.status === "CERTIFIED" && !input.liveExecutionPassed) {
+    throw new Error("provider_certified_without_live_evidence");
+  }
 }
 
 export function assertNoSecretsInCertificationPayload(payload: unknown): void {

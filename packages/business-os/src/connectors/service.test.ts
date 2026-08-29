@@ -76,6 +76,37 @@ describe("BOS-12 connector contracts", () => {
     expect(overview.catalog).toHaveLength(4);
     expect(overview.catalog.every((row) => row.writeLabel === "READ ONLY" && row.live === false)).toBe(true);
   });
+
+  it("keeps BOS Core operational when a Preview connector is unavailable", async () => {
+    const { connectors } = harness();
+    for (const connectorId of ["xero", "microsoft_365", "hubspot"] as const) {
+      const down = await connectors.configure(SCOPE, { connectorId, mode: "live" }, HUMAN);
+      expect(down.health).toBe("unavailable");
+    }
+    const overview = await connectors.overview(SCOPE);
+    expect(overview.usableWithoutConnectors).toBe(true);
+    expect(connectors.status().requiredForBusinessOs).toBe(false);
+    expect(connectors.status().NoVendorHardDependency).toBe(true);
+    await expect(connectors.assertAgentContextGates(SCOPE)).resolves.toEqual({ applied: false });
+    const csv = await connectors.configure(SCOPE, { connectorId: "csv_excel", mode: "fixture" }, HUMAN);
+    expect(csv.health).not.toBe("unavailable");
+  });
+
+  it("isolates Xero, Microsoft 365, and HubSpot failures from each other and from Core", async () => {
+    const { connectors } = harness();
+    const xeroFixture = await connectors.configure(SCOPE, { connectorId: "xero", mode: "fixture" }, HUMAN);
+    await connectors.sync(SCOPE, { installationId: xeroFixture.id }, HUMAN);
+    const xeroDown = await connectors.configure(SCOPE, { connectorId: "xero", mode: "live" }, HUMAN);
+    expect(xeroDown.health).toBe("unavailable");
+    const hubspot = await connectors.configure(SCOPE, { connectorId: "hubspot", mode: "fixture" }, HUMAN);
+    await connectors.sync(SCOPE, { installationId: hubspot.id }, HUMAN);
+    expect(hubspot.health).not.toBe("unavailable");
+    const m365 = await connectors.configure(SCOPE, { connectorId: "microsoft_365", mode: "live" }, HUMAN);
+    expect(m365.health).toBe("unavailable");
+    const overview = await connectors.overview(SCOPE);
+    expect(overview.usableWithoutConnectors).toBe(true);
+    await expect(connectors.assertAgentContextGates(SCOPE)).resolves.toEqual({ applied: true });
+  });
 });
 
 describe("BOS-12 configure, sync, revoke", () => {

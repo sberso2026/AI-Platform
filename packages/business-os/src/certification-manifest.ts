@@ -15,10 +15,23 @@ import {
   type EvidenceCompatibilityClaim,
   type GateEvaluation,
   assessBosBrowserPreflightHonesty,
+  assertBosProviderCertifiedProjection,
   assertNoSecretsInCertificationPayload,
   bosProviderFeatureStatus,
   evaluateCertificationGate,
 } from "./certification-evidence";
+import {
+  BOS_GA_CERTIFIED_PROVIDERS,
+  BOS_V1_CORE_GA_GATES,
+  BOS_V1_FEATURE_SET,
+  BOS_V1_FINAL_QUALIFICATION_PLAN,
+  BOS_V1_PROVIDER_PROMOTION_STEPS,
+  BOS_V1_RELEASE_SCOPE,
+  assertBosV1ScopeIntegrity,
+  bosV1LiveGateId,
+  bosV1ProviderProductStatus,
+  bosV1ProviderPromotionPath,
+} from "./release-scope";
 import {
   BROWSER_E2E_EVIDENCE_PASS,
   HUBSPOT_CONNECTOR_IMPLEMENTED,
@@ -38,7 +51,7 @@ import {
 } from "./release";
 
 export const BOS_16_BOUNDARY_NOTE =
-  "BOS-16A9 closes internal AI Workforce regression debt and adds an auditable certification evidence manifest. Do not start BOS-17 or create a GA tag." as const;
+  "BOS-16A10 freezes v1.0 GA feature scope as vendor-neutral BOS Core with Preview connectors. Do not start BOS-17 or create a GA tag." as const;
 
 export const CERTIFICATION_MANIFEST_IMPLEMENTED = true as const;
 export const CERTIFICATION_SECOND_STACK_DETECTED = false as const;
@@ -55,8 +68,6 @@ export const BOS_CERTIFICATION_STATIC_FLAG_MIGRATION = {
     "productionEligible remains a declaration and stays false until an approved product decision.",
   ],
 } as const;
-
-export const BOS_GA_CERTIFIED_PROVIDERS = ["xero", "microsoft_365", "hubspot"] as const;
 
 const BASELINE_EXECUTED_AT = "2026-08-29T09:45:20.000Z";
 
@@ -234,7 +245,7 @@ export function bos16CompatibilityClaims(currentCommitSha: string): EvidenceComp
       currentSha: currentCommitSha,
       unaffectedBoundaries: ["tenant_workspace_rls", "browser_e2e_fixture", "connector_security_architecture"],
       provenance:
-        "BOS-16A9 remediates demo context generation-time freshness and adds a certification evidence projection. Tenant/workspace/RLS, browser integration UX, and connector security architecture were not modified.",
+        "BOS-16A10 freezes v1.0 GA scope as vendor-neutral BOS Core with Preview connectors. Tenant/workspace/RLS, browser integration UX, and connector security architecture remain compatible with the certified ancestor.",
     },
   ];
 }
@@ -245,6 +256,21 @@ export type BosReleaseManifest = {
   commitSha: string;
   capabilityCount: number;
   requiredGates: BosCertificationGateId[];
+  requiredCoreGates: readonly BosCertificationGateId[];
+  coreGateEvidence: ReadonlyArray<{
+    gateId: BosCertificationGateId;
+    gaMandatory: true;
+    evidencePresent: boolean;
+    state: GateEvaluation["state"];
+  }>;
+  featureEvidence: ReadonlyArray<{
+    featureId: string;
+    releaseStatus: string;
+    gaMandatory: boolean;
+    evidencePresent: boolean;
+    promotionRequirements: readonly string[];
+    knownLimitations: readonly string[];
+  }>;
   gateEvidenceState: Record<BosCertificationGateId, GateEvaluation>;
   providerCertificationState: {
     xero: { releaseStatus: BosProviderReleaseStatus; liveEvidence: GateEvaluation; securityArchitecture: GateEvaluation };
@@ -278,6 +304,15 @@ export type BosReleaseManifest = {
   };
   gaReady: false;
   preGaInternalReady: boolean;
+  featureSet: typeof BOS_V1_FEATURE_SET;
+  releaseScope: typeof BOS_V1_RELEASE_SCOPE;
+  coreGaEligibilityComputed: boolean;
+  previewPromotion: {
+    xero: ReturnType<typeof bosV1ProviderPromotionPath>;
+    microsoft_365: ReturnType<typeof bosV1ProviderPromotionPath>;
+    hubspot: ReturnType<typeof bosV1ProviderPromotionPath>;
+  };
+  qualificationPlan: typeof BOS_V1_FINAL_QUALIFICATION_PLAN;
 };
 
 function closedReason(evaluation: GateEvaluation): string {
@@ -291,6 +326,7 @@ export function buildBosReleaseManifest(input: {
   claims?: readonly EvidenceCompatibilityClaim[];
   gaCertifiedProviders?: readonly ("xero" | "microsoft_365" | "hubspot")[];
 }): BosReleaseManifest {
+  assertBosV1ScopeIntegrity();
   const claims = input.claims ?? bos16CompatibilityClaims(input.currentCommitSha);
   const gateIds = Object.keys(BOS_CERTIFICATION_GATES) as BosCertificationGateId[];
   const gateEvidenceState = Object.fromEntries(
@@ -333,53 +369,94 @@ export function buildBosReleaseManifest(input: {
   const m365Live = gateEvidenceState.microsoft365_live;
   const hubspotLive = gateEvidenceState.hubspot_live;
 
+  const xeroStatus = bosProviderFeatureStatus({
+    implemented: XERO_CONNECTOR_IMPLEMENTED,
+    securityArchitectureReady: XERO_SECURITY_ARCHITECTURE_READY,
+    liveExecutionPassed: xeroLive.state === "pass",
+    liveCertified: bosLiveXeroCertified,
+  });
+  const m365Status = bosProviderFeatureStatus({
+    implemented: M365_CONNECTOR_IMPLEMENTED,
+    securityArchitectureReady: M365_SECURITY_ARCHITECTURE_READY,
+    liveExecutionPassed: m365Live.state === "pass",
+    liveCertified: bosLiveMicrosoft365Certified,
+  });
+  const hubspotStatus = bosProviderFeatureStatus({
+    implemented: HUBSPOT_CONNECTOR_IMPLEMENTED,
+    securityArchitectureReady: HUBSPOT_SECURITY_ARCHITECTURE_READY,
+    liveExecutionPassed: hubspotLive.state === "pass",
+    liveCertified: bosLiveHubSpotCertified,
+  });
+  assertBosProviderCertifiedProjection({ status: xeroStatus, liveExecutionPassed: xeroLive.state === "pass" });
+  assertBosProviderCertifiedProjection({ status: m365Status, liveExecutionPassed: m365Live.state === "pass" });
+  assertBosProviderCertifiedProjection({ status: hubspotStatus, liveExecutionPassed: hubspotLive.state === "pass" });
+
   const providerCertificationState = {
     xero: {
-      releaseStatus: bosProviderFeatureStatus({
-        implemented: XERO_CONNECTOR_IMPLEMENTED,
-        securityArchitectureReady: XERO_SECURITY_ARCHITECTURE_READY,
-        liveExecutionPassed: xeroLive.state === "pass",
-        liveCertified: bosLiveXeroCertified,
-      }),
+      releaseStatus: bosV1ProviderProductStatus("xero"),
       liveEvidence: xeroLive,
       securityArchitecture: gateEvidenceState.xero_security_architecture,
     },
     microsoft_365: {
-      releaseStatus: bosProviderFeatureStatus({
-        implemented: M365_CONNECTOR_IMPLEMENTED,
-        securityArchitectureReady: M365_SECURITY_ARCHITECTURE_READY,
-        liveExecutionPassed: m365Live.state === "pass",
-        liveCertified: bosLiveMicrosoft365Certified,
-      }),
+      releaseStatus: bosV1ProviderProductStatus("microsoft_365"),
       liveEvidence: m365Live,
       securityArchitecture: gateEvidenceState.microsoft365_security_architecture,
     },
     hubspot: {
-      releaseStatus: bosProviderFeatureStatus({
-        implemented: HUBSPOT_CONNECTOR_IMPLEMENTED,
-        securityArchitectureReady: HUBSPOT_SECURITY_ARCHITECTURE_READY,
-        liveExecutionPassed: hubspotLive.state === "pass",
-        liveCertified: bosLiveHubSpotCertified,
-      }),
+      releaseStatus: bosV1ProviderProductStatus("hubspot"),
       liveEvidence: hubspotLive,
       securityArchitecture: gateEvidenceState.hubspot_security_architecture,
     },
   };
 
   const knownLimitations = [
-    "Live Xero certification not executed.",
-    "Live Microsoft 365 certification not executed.",
-    "Live HubSpot certification not executed.",
-    "No approved product decision to exclude live connectors from the GA certified feature set.",
+    "Live Xero certification not executed; Xero remains Preview.",
+    "Live Microsoft 365 certification not executed; Microsoft 365 remains Preview.",
+    "Live HubSpot certification not executed; HubSpot remains Preview.",
+    "A10 product decision: BOS Core is the v1.0 GA feature set; live connectors are Preview and not Core GA gates.",
+    "bos.productionEligible remains false until explicit GA promotion after the qualification plan.",
     "bos.liveRlsCertified and bos.browserE2eCertified remain static false; evidence is separate.",
     ...input.evidence.flatMap((row) => [...row.limitations]),
   ];
 
   const productionEligibilityComputed = productionBlockers.length === 0;
+  const coreGaEligibilityComputed = BOS_V1_CORE_GA_GATES.every(
+    (gateId) => gateEvidenceState[gateId].state === "pass",
+  );
   const decisionReason =
     productionBlockers.length > 0
-      ? `Fail closed: ${productionBlockers.join("; ")}. GA certified feature set still includes uncertified live connectors.`
-      : "Computed production eligibility is true, but A9 keeps the static declaration false pending an approved product decision.";
+      ? `Fail closed: ${productionBlockers.join("; ")}.`
+      : "BOS Core GA gates currently pass with Preview connectors excluded from the certified feature set. A10 keeps bos.productionEligible=false pending explicit GA promotion.";
+
+  const coreGateEvidence = BOS_V1_CORE_GA_GATES.map((gateId) => ({
+    gateId,
+    gaMandatory: true as const,
+    evidencePresent: gateEvidenceState[gateId].state === "pass",
+    state: gateEvidenceState[gateId].state,
+  }));
+
+  const featureEvidence = BOS_V1_FEATURE_SET.map((feature) => {
+    if (feature.liveProvider) {
+      const provider = feature.featureId.replace("connector.", "") as "xero" | "microsoft_365" | "hubspot";
+      const live = gateEvidenceState[bosV1LiveGateId(provider)];
+      return {
+        featureId: feature.featureId,
+        releaseStatus: feature.productStatus,
+        gaMandatory: feature.gaMandatory,
+        evidencePresent: live.state === "pass",
+        promotionRequirements: [...BOS_V1_PROVIDER_PROMOTION_STEPS],
+        knownLimitations: feature.knownLimitations,
+      };
+    }
+    return {
+      featureId: feature.featureId,
+      releaseStatus: feature.productStatus,
+      gaMandatory: feature.gaMandatory,
+      evidencePresent: feature.implemented,
+      promotionRequirements: [] as string[],
+      knownLimitations: feature.knownLimitations,
+    };
+  });
 
   const manifest: BosReleaseManifest = {
     product: BOS_CERTIFICATION_PRODUCT,
@@ -387,6 +464,9 @@ export function buildBosReleaseManifest(input: {
     commitSha: input.currentCommitSha,
     capabilityCount: BUSINESS_CAPABILITY_IDS.length,
     requiredGates: gateIds,
+    requiredCoreGates: BOS_V1_CORE_GA_GATES,
+    coreGateEvidence,
+    featureEvidence,
     gateEvidenceState,
     providerCertificationState,
     browserCertificationState: gateEvidenceState.browser_e2e,
@@ -412,6 +492,15 @@ export function buildBosReleaseManifest(input: {
     },
     gaReady: false,
     preGaInternalReady: preGaBlockers.length === 0,
+    featureSet: BOS_V1_FEATURE_SET,
+    releaseScope: BOS_V1_RELEASE_SCOPE,
+    coreGaEligibilityComputed,
+    previewPromotion: {
+      xero: bosV1ProviderPromotionPath("xero"),
+      microsoft_365: bosV1ProviderPromotionPath("microsoft_365"),
+      hubspot: bosV1ProviderPromotionPath("hubspot"),
+    },
+    qualificationPlan: BOS_V1_FINAL_QUALIFICATION_PLAN,
   };
   assertNoSecretsInCertificationPayload(manifest);
   return manifest;
@@ -478,8 +567,8 @@ export function assessBosPreGaReadiness(
     productionEligible: false,
     preGaInternalReady: manifest.preGaInternalReady,
     limitations: [
-      "Live connectors remain Preview until live execution evidence passes.",
-      "No automatic exclusion of connectors from the GA certified feature set.",
+      "Live connectors remain Preview until live execution evidence passes and an explicit promotion occurs.",
+      "A10 froze BOS Core as the v1.0 GA feature set; productionEligible stays false until the qualification plan is executed.",
     ],
   };
 }

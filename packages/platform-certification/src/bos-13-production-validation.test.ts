@@ -5,6 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   BOS_13_BOUNDARY_NOTE,
   BOS_CONNECTOR_CERTIFICATION,
+  BOS_PREVIEW_PROVIDER_PROMOTION_GATES,
   BOS_PRODUCTION_GA_REMAINING_GATES,
   BOS_RELEASE_INDICATORS,
   BOS_13_VERDICT,
@@ -75,11 +76,14 @@ describe("BOS-13 production validation", () => {
     expect(BOS_CONNECTOR_CERTIFICATION.xero.live).not.toBe("LIVE_PROVIDER_CERTIFIED");
     expect(BOS_PRODUCTION_GA_REMAINING_GATES).toEqual([
       "BOS15B_BLOCKED_LIVE_RLS_ENV",
+      "BOS15F_BLOCKED_BROWSER_ENV",
+      "inherited_engineering_os_web_tsc_baseline_debt",
+      "BOS_V1_QUALIFICATION_PLAN_NOT_EXECUTED",
+    ]);
+    expect(BOS_PREVIEW_PROVIDER_PROMOTION_GATES).toEqual([
       "BOS15C_XERO_BLOCKED_ENV",
       "BOS15D_MICROSOFT_365_BLOCKED_ENV",
       "BOS15E_HUBSPOT_BLOCKED_ENV",
-      "BOS15F_BLOCKED_BROWSER_ENV",
-      "inherited_engineering_os_web_tsc_baseline_debt",
     ]);
   });
 

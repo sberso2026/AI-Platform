@@ -771,13 +771,14 @@ export class BosConnectorsService {
     const staging = await this.store.listStaging(scope);
     if (staging.length === 0) return { applied: false as const };
     const installations = await this.store.listInstallations(scope);
+    let applied = false;
     for (const row of staging) {
       if (row.tenantId !== scope.tenantId) throw new Error("cross_tenant_connector_forbidden");
       if (row.workspaceId !== scope.workspaceId) throw new Error("cross_workspace_graph_forbidden");
       if (!row.provenance || !row.provider || !row.syncRunId) throw new Error("provenance_required");
       const installation = installations.find((item) => item.id === row.installationId);
       if (!installation || installation.health === "revoked" || installation.health === "unavailable") {
-        throw new Error("connector_unhealthy");
+        continue;
       }
       const contract = connectorContract(row.connectorId);
       if (contract.freshnessPolicyHours > 0 && row.freshness) {
@@ -785,8 +786,9 @@ export class BosConnectorsService {
         if (Number.isFinite(age) && age > contract.freshnessPolicyHours) throw new Error("freshness_policy_failed");
       }
       assertSuppressedIdentityBlocked(row);
+      applied = true;
     }
-    return { applied: true as const };
+    return { applied };
   }
 
   async seedDemo(raw: { tenantId: string; workspaceId?: string; userId: string }, actor?: ConnectorActor) {

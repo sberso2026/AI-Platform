@@ -2,6 +2,7 @@
  * Canonical connector UI states for Xero, Microsoft 365, and HubSpot.
  * Presentation-boundary only — does not duplicate provider runtimes.
  */
+import { bosV1ProviderProductStatus } from "../release-scope";
 
 export const BOS_CONNECTOR_UI_STATES = [
   "NOT_CONNECTED",
@@ -68,6 +69,15 @@ export function bosConnectorUiState(input: {
   if (input.health === "healthy" || input.health === "configured") return "CONNECTED";
   return "NOT_CONNECTED";
 }
+
+export const BOS_CONNECTOR_PRODUCT_STATUS = {
+  xero: bosV1ProviderProductStatus("xero"),
+  microsoft_365: bosV1ProviderProductStatus("microsoft_365"),
+  hubspot: bosV1ProviderProductStatus("hubspot"),
+} as const;
+
+export const BOS_CONNECTOR_PREVIEW_DISCLOSURE =
+  "Preview. Not live-provider certified. Business OS Core does not require this connector." as const;
 
 export const BOS_CONNECTOR_CONSENT = {
   xero: {

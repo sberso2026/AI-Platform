@@ -17,6 +17,8 @@ import { Plug } from "lucide-react";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
   BOS_CONNECTOR_CONSENT,
+  BOS_CONNECTOR_PREVIEW_DISCLOSURE,
+  BOS_CONNECTOR_PRODUCT_STATUS,
   connectorStatusChip,
   isBosOauthConnector,
   type BosConnectorUiState,
@@ -321,10 +323,11 @@ export default function BusinessIntegrationsPage() {
             <CardContent className="flex flex-wrap gap-2 text-sm">
               <StatusChip value="neutral">READ ONLY</StatusChip>
               <StatusChip value="pending">FIXTURE/SANDBOX</StatusChip>
-              <StatusChip value="approved">LIVE</StatusChip>
+              <StatusChip value="pending">Preview</StatusChip>
+              <StatusChip value="approved">LIVE MODE</StatusChip>
               <StatusChip value="medium">DEGRADED</StatusChip>
               <StatusChip value="rejected">REVOKED</StatusChip>
-              <span>Connectors are optional installation capabilities.</span>
+              <span>Connectors are optional installation capabilities. Preview is not production certification.</span>
             </CardContent>
           </Card>
         </div>
@@ -370,6 +373,9 @@ export default function BusinessIntegrationsPage() {
                           {consentCopy?.providerLabel ?? row.provider}
                         </span>
                         <StatusChip value="neutral">READ ONLY</StatusChip>
+                        {oauthId ? (
+                          <StatusChip value="pending">{BOS_CONNECTOR_PRODUCT_STATUS[oauthId]}</StatusChip>
+                        ) : null}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
@@ -381,6 +387,9 @@ export default function BusinessIntegrationsPage() {
                           {installation?.health ?? "unconfigured"}
                         </span>
                       </p>
+                      {oauthId ? (
+                        <p data-testid={`bos-connector-release-${row.id}`}>{BOS_CONNECTOR_PREVIEW_DISCLOSURE}</p>
+                      ) : null}
                       <p data-testid={`bos-connector-capabilities-${row.id}`}>
                         {installation?.capabilitySummary ??
                           consentCopy?.capabilitySummary ??

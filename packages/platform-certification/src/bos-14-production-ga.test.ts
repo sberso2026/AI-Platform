@@ -10,6 +10,7 @@ import {
   BOS_14_VERDICT,
   BOS_CONNECTOR_CERTIFICATION,
   BOS_LIVE_RLS_REPRESENTATIVE_TABLES,
+  BOS_PREVIEW_PROVIDER_PROMOTION_GATES,
   BOS_PRODUCTION_GA_REMAINING_GATES,
   BOS_RELEASE_INDICATORS,
   BUSINESS_OS_PHASE,
@@ -69,11 +70,14 @@ describe("BOS-14 production GA closure", () => {
     expect(liveProviderCredentialsAvailable("xero")).toBe(false);
     expect(BOS_PRODUCTION_GA_REMAINING_GATES).toEqual([
       "BOS15B_BLOCKED_LIVE_RLS_ENV",
+      "BOS15F_BLOCKED_BROWSER_ENV",
+      "inherited_engineering_os_web_tsc_baseline_debt",
+      "BOS_V1_QUALIFICATION_PLAN_NOT_EXECUTED",
+    ]);
+    expect(BOS_PREVIEW_PROVIDER_PROMOTION_GATES).toEqual([
       "BOS15C_XERO_BLOCKED_ENV",
       "BOS15D_MICROSOFT_365_BLOCKED_ENV",
       "BOS15E_HUBSPOT_BLOCKED_ENV",
-      "BOS15F_BLOCKED_BROWSER_ENV",
-      "inherited_engineering_os_web_tsc_baseline_debt",
     ]);
   });
 

@@ -307,7 +307,8 @@ describe("BOS-16A9 release manifest and pre-GA readiness", () => {
     expect(manifest.providerCertificationState.microsoft_365.liveEvidence.state).not.toBe("pass");
     expect(manifest.providerCertificationState.hubspot.liveEvidence.state).not.toBe("pass");
     expect(manifest.productionEligible).toBe(false);
-    expect(manifest.productionEligibilityComputed).toBe(false);
+    expect(manifest.productionEligibilityComputed).toBe(true);
+    expect(manifest.coreGaEligibilityComputed).toBe(true);
     expect(manifest.gaReady).toBe(false);
     expect(manifest.preGaInternalReady).toBe(true);
     expect(manifest.declarations.releaseCandidate).toBe(true);
@@ -494,5 +495,64 @@ describe("BOS-16A9.1 browser availability vs evidence vs declaration", () => {
     expect(bosBrowserCertificationState({ available: true }).certifiedDeclaration).toBe(false);
     expect(getBosCertificationManifest().declarations.browserE2eCertified).toBe(false);
     expect(bosBrowserE2eCertified).toBe(false);
+  });
+});
+
+describe("BOS-16A10 Core vs Preview honesty", () => {
+  it("does not treat missing live provider evidence as Xero/M365/HubSpot Certified", () => {
+    const manifest = getBosCertificationManifest();
+    expect(manifest.providerCertificationState.xero.releaseStatus).toBe("PREVIEW");
+    expect(manifest.providerCertificationState.microsoft_365.releaseStatus).toBe("PREVIEW");
+    expect(manifest.providerCertificationState.hubspot.releaseStatus).toBe("PREVIEW");
+    expect(manifest.providerCertificationState.xero.liveEvidence.state).not.toBe("pass");
+    expect(manifest.featureEvidence.find((row) => row.featureId === "connector.xero")?.evidencePresent).toBe(false);
+    expect(manifest.featureEvidence.find((row) => row.featureId === "connector.microsoft_365")?.gaMandatory).toBe(
+      false,
+    );
+    expect(JSON.stringify(manifest)).not.toMatch(/LIVE_PROVIDER_CERTIFIED/);
+  });
+
+  it("does not block BOS Core eligibility when Preview live evidence is absent", () => {
+    const manifest = getBosCertificationManifest();
+    expect(manifest.coreGaEligibilityComputed).toBe(true);
+    expect(manifest.productionEligibilityComputed).toBe(true);
+    expect(manifest.productionEligible).toBe(false);
+    expect(manifest.releaseScope.gaCertifiedProviders).toEqual([]);
+    expect(manifest.requiredCoreGates).not.toContain("xero_live");
+    expect(manifest.requiredCoreGates).not.toContain("microsoft365_live");
+    expect(manifest.requiredCoreGates).not.toContain("hubspot_live");
+  });
+
+  it("fails closed when a Preview connector is projected CERTIFIED without live evidence", () => {
+    expect(() =>
+      bosProviderFeatureStatus({
+        implemented: true,
+        securityArchitectureReady: true,
+        liveExecutionPassed: false,
+        liveCertified: true,
+      }),
+    ).toThrow("provider_certified_without_live_evidence");
+  });
+
+  it("fails production eligibility when a Core gate is missing, while Preview live skip stays Preview", () => {
+    const missingRls = buildBosReleaseManifest({
+      currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
+      evidence: currentBosCertificationEvidence().filter((row) => row.gateId !== "live_rls"),
+    });
+    expect(missingRls.coreGaEligibilityComputed).toBe(false);
+    expect(missingRls.productionEligibilityComputed).toBe(false);
+    expect(missingRls.productionEligible).toBe(false);
+    expect(missingRls.providerCertificationState.xero.releaseStatus).toBe("PREVIEW");
+
+    const promotedWithoutEvidence = buildBosReleaseManifest({
+      currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
+      evidence: currentBosCertificationEvidence(),
+      gaCertifiedProviders: ["xero"],
+    });
+    expect(promotedWithoutEvidence.coreGaEligibilityComputed).toBe(true);
+    expect(promotedWithoutEvidence.productionEligibilityComputed).toBe(false);
+    expect(promotedWithoutEvidence.providerCertificationState.xero.releaseStatus).toBe("PREVIEW");
+    expect(promotedWithoutEvidence.providerCertificationState.microsoft_365.releaseStatus).toBe("PREVIEW");
+    expect(promotedWithoutEvidence.providerCertificationState.hubspot.releaseStatus).toBe("PREVIEW");
   });
 });

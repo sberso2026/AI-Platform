@@ -88,6 +88,11 @@ describe("BOS-12 Connectors and Hardening web wiring", () => {
     expect(page).toContain("LIVE");
     expect(page).toContain("DEGRADED");
     expect(page).toContain("REVOKED");
+    expect(page).toContain("Preview");
+    expect(page).toContain("BOS_CONNECTOR_PREVIEW_DISCLOSURE");
+    expect(page).toContain("BOS_CONNECTOR_PRODUCT_STATUS");
+    expect(page).not.toMatch(/production certified/i);
+    expect(page).not.toMatch(/fully validated live integration/i);
     expect(page).not.toMatch(/this fixture is live/i);
   });
 });

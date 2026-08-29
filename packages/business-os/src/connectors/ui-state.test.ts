@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  BOS_CONNECTOR_PREVIEW_DISCLOSURE,
+  BOS_CONNECTOR_PRODUCT_STATUS,
   BOS_CONNECTOR_UI_STATES,
   assertConnectorUiTransition,
   bosConnectorUiState,
@@ -87,5 +89,15 @@ describe("canonical connector UI state", () => {
         errorCategory: "revoked",
       }),
     ).toBe("DISCONNECTED");
+  });
+
+  it("projects Preview product status without implying live certification", () => {
+    expect(BOS_CONNECTOR_PRODUCT_STATUS).toEqual({
+      xero: "PREVIEW",
+      microsoft_365: "PREVIEW",
+      hubspot: "PREVIEW",
+    });
+    expect(BOS_CONNECTOR_PREVIEW_DISCLOSURE).toMatch(/Not live-provider certified/);
+    expect(BOS_CONNECTOR_PREVIEW_DISCLOSURE).not.toMatch(/Certified/);
   });
 });
