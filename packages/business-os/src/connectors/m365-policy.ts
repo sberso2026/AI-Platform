@@ -2,6 +2,7 @@
  * BOS-16A6 Microsoft 365 security policy. Extends the existing BOS-12 connector.
  * Delegated, least-privilege, read-only Graph. Not a second integration stack.
  */
+import { bosConnectorUiState } from "./ui-state";
 
 export const MS365_ALLOWED_CAPABILITIES = ["directory.read", "calendar.read", "files.metadata.read"] as const;
 
@@ -330,14 +331,8 @@ export function ms365ConnectionState(input: {
   effectiveMode: string;
   secretId: string | null;
   errorCategory: string | null;
+  oauthPending?: boolean;
+  inFlightSync?: boolean;
 }): Ms365ConnectionState {
-  if (input.health === "revoked") return "DISCONNECTED";
-  if (input.effectiveMode === "live" && input.health === "unavailable") {
-    return input.errorCategory === "m365_unauthorized" ? "REAUTH_REQUIRED" : "ERROR";
-  }
-  if (input.effectiveMode === "live" && !input.secretId) return "CONNECTING";
-  if (input.effectiveMode === "live" && input.health === "configured") return "CONNECTING";
-  if (input.health === "degraded") return "ERROR";
-  if (input.health === "healthy" || input.health === "configured") return "CONNECTED";
-  return "NOT_CONNECTED";
+  return bosConnectorUiState({ ...input, unauthorizedCategory: "m365_unauthorized" });
 }

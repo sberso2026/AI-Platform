@@ -3,6 +3,7 @@
  * OAuth, read-only CRM objects. Not a second integration stack.
  * Scopes verified 2026-08-29 against HubSpot scopes reference.
  */
+import { bosConnectorUiState } from "./ui-state";
 
 export const HUBSPOT_ALLOWED_CAPABILITIES = ["crm.contacts.read", "crm.companies.read", "crm.deals.read"] as const;
 
@@ -385,14 +386,8 @@ export function hubspotConnectionState(input: {
   effectiveMode: string;
   secretId: string | null;
   errorCategory: string | null;
+  oauthPending?: boolean;
+  inFlightSync?: boolean;
 }): HubSpotConnectionState {
-  if (input.health === "revoked") return "DISCONNECTED";
-  if (input.effectiveMode === "live" && input.health === "unavailable") {
-    return input.errorCategory === "hubspot_unauthorized" ? "REAUTH_REQUIRED" : "ERROR";
-  }
-  if (input.effectiveMode === "live" && !input.secretId) return "CONNECTING";
-  if (input.effectiveMode === "live" && input.health === "configured") return "CONNECTING";
-  if (input.health === "degraded") return "ERROR";
-  if (input.health === "healthy" || input.health === "configured") return "CONNECTED";
-  return "NOT_CONNECTED";
+  return bosConnectorUiState({ ...input, unauthorizedCategory: "hubspot_unauthorized" });
 }

@@ -2,6 +2,7 @@
  * BOS-16A5A Xero security policy: capability, endpoint, scope, and threat controls.
  * Executable allowlist for the existing BOS-12 connector. Not a second integration stack.
  */
+import { bosConnectorUiState } from "./ui-state";
 export const XERO_ALLOWED_CAPABILITIES = ["accounting.read", "financial_facts.read"] as const;
 
 export const XERO_DENIED_CAPABILITIES = [
@@ -84,6 +85,7 @@ export const XERO_MUTATION_OPERATIONS = [
 
 export const XERO_ACCOUNTING_HOST = "api.xero.com";
 export const XERO_IDENTITY_HOST = "identity.xero.com";
+export const XERO_AUTHORIZE_HOST = "login.xero.com";
 
 export const XERO_ALLOWED_GET_PATHS = [
   "/connections",
@@ -284,4 +286,32 @@ export function xeroAccountingPathAllowed(pathname: string): boolean {
 
 export function xeroIdentityPostPathAllowed(pathname: string): boolean {
   return (XERO_IDENTITY_POST_PATHS as readonly string[]).includes(pathname);
+}
+
+export function buildXeroAuthorizeUrl(input: {
+  clientId: string;
+  redirectUri: string;
+  state: string;
+}): string {
+  if (!input.clientId.trim() || !input.redirectUri.trim() || !input.state.trim()) {
+    throw new Error("xero_oauth_config_invalid");
+  }
+  const url = new URL(`https://${XERO_AUTHORIZE_HOST}/identity/connect/authorize`);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("client_id", input.clientId);
+  url.searchParams.set("redirect_uri", input.redirectUri);
+  url.searchParams.set("scope", XERO_ALLOWED_OAUTH_SCOPES.join(" "));
+  url.searchParams.set("state", input.state);
+  return url.toString();
+}
+
+export function xeroConnectionState(input: {
+  health: string;
+  effectiveMode: string;
+  secretId: string | null;
+  errorCategory: string | null;
+  oauthPending?: boolean;
+  inFlightSync?: boolean;
+}) {
+  return bosConnectorUiState({ ...input, unauthorizedCategory: "xero_unauthorized" });
 }

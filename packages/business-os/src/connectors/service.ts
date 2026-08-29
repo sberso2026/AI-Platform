@@ -23,12 +23,33 @@ import { xeroSafeTelemetry } from "./xero-telemetry";
 import { Microsoft365ProviderClient } from "./m365-client";
 import { resolveMs365Secrets } from "./m365-secrets";
 import { m365SafeTelemetry } from "./m365-telemetry";
-import { MS365_ALLOWED_GRAPH_SCOPES, ms365ConnectionState } from "./m365-policy";
+import { MS365_ALLOWED_GRAPH_SCOPES } from "./m365-policy";
 import { HubSpotProviderClient } from "./hubspot-client";
 import { HubSpotConnectorError } from "./hubspot-errors";
 import { resolveHubSpotSecrets } from "./hubspot-secrets";
 import { hubspotSafeTelemetry } from "./hubspot-telemetry";
-import { HUBSPOT_ALLOWED_OAUTH_SCOPES, hubspotConnectionState } from "./hubspot-policy";
+import { HUBSPOT_ALLOWED_OAUTH_SCOPES } from "./hubspot-policy";
+import { XERO_ALLOWED_OAUTH_SCOPES } from "./xero-policy";
+import {
+  assertConnectorUiTransition,
+  bosConnectorUiState,
+  isBosOauthConnector,
+} from "./ui-state";
+import { connectorUserSafeMessage } from "./ui-errors";
+import {
+  BOS_BROWSER_OAUTH_FIXTURE_MODE,
+  BOS_FIXTURE_ORG,
+  BOS_OAUTH_CALLBACK_PATH,
+  BOS_OAUTH_STATE_TTL_MS,
+  assertOauthRedirectAllowed,
+  buildBosFixtureAuthorizeUrl,
+  decodeBosOAuthState,
+  fixtureSecretId,
+  interpretOauthCallbackInput,
+  signBosOAuthState,
+  verifyBosOAuthState,
+  type BosOauthFixtureOutcome,
+} from "./oauth-fixture";
 import {
   assertSuppressedIdentityBlocked,
   redactSuppressedPayload,
@@ -57,8 +78,8 @@ function assertHuman(actor: ConnectorActor): void {
   if (actor.actorType !== "human") throw new Error("self_registration_forbidden");
 }
 
-function newId(prefix: string): string {
-  return `${prefix}-${crypto.randomUUID()}`;
+function newId(_prefix: string): string {
+  return crypto.randomUUID();
 }
 
 function nowIso(): string {
@@ -310,10 +331,27 @@ export class BosConnectorsService {
     assertHuman(actor);
     const installation = await this.requireInstallation(scope, input.installationId);
     if (installation.health === "revoked") throw new Error("connector_revoked");
+    const uiBefore = this.uiStateFor(installation);
+    if (uiBefore === "REAUTH_REQUIRED") throw new Error("connector_reauth_required");
+    if (uiBefore === "DISCONNECTED") throw new Error("connector_revoked");
+    if (uiBefore === "CONNECTING" && installation.effectiveMode !== "live") {
+      throw new Error("invalid_connector_ui_transition");
+    }
     const contract = connectorContract(installation.connectorId);
-    const idempotencyKey = `${installation.id}:${installation.cursor ?? "start"}:${installation.mappingVersion}`;
+    const simulate =
+      installation.effectiveMode === "live"
+        ? undefined
+        : input.simulate ??
+          (installation.provenance.nextSimulate === "timeout" ||
+          installation.provenance.nextSimulate === "rate_limit" ||
+          installation.provenance.nextSimulate === "partial"
+            ? installation.provenance.nextSimulate
+            : undefined);
+    const idempotencyKey = `${installation.id}:${installation.cursor ?? "start"}:${installation.mappingVersion}${
+      simulate ? `:fixture:${simulate}:${crypto.randomUUID()}` : ""
+    }`;
     const prior = await this.store.getRunByIdempotency(scope, idempotencyKey);
-    if (prior && (prior.status === "completed" || prior.status === "partial") && !input.simulate) {
+    if (prior && (prior.status === "completed" || prior.status === "partial") && !simulate) {
       return prior;
     }
     if (input.cancel) {
@@ -383,7 +421,7 @@ export class BosConnectorsService {
         cursor,
         secretId: installation.secretId,
         mode: installation.effectiveMode,
-        simulate: input.simulate,
+        simulate,
         tenantId: installation.tenantId,
         workspaceId: installation.workspaceId,
         installationId: installation.id,
@@ -396,7 +434,7 @@ export class BosConnectorsService {
           cursor,
           secretId: installation.secretId,
           mode: installation.effectiveMode,
-          simulate: input.simulate,
+          simulate,
           tenantId: installation.tenantId,
           workspaceId: installation.workspaceId,
           installationId: installation.id,
@@ -517,6 +555,7 @@ export class BosConnectorsService {
         ...installation.provenance,
         live: installation.effectiveMode === "live",
         fixture: installation.effectiveMode !== "live",
+        nextSimulate: null,
         providerOrgId:
           installation.effectiveMode === "live" && status !== "failed"
             ? ((installation.provenance.expectedProviderOrgId as string | null | undefined) ??
@@ -764,26 +803,304 @@ export class BosConnectorsService {
     return { created: true, isDemo: true as const, fixture: true as const, live: false as const, configured };
   }
 
+  async beginOAuth(
+    raw: { tenantId: string; workspaceId?: string; userId: string },
+    input: { connectorId: string; origin: string },
+    actor: ConnectorActor,
+  ) {
+    const scope = requireWorkspace(raw);
+    assertHuman(actor);
+    if (!isBosOauthConnector(input.connectorId)) throw new Error("csv_oauth_not_supported");
+    let origin: string;
+    try {
+      origin = new URL(input.origin).origin;
+    } catch {
+      throw new Error("oauth_redirect_forbidden");
+    }
+    const redirectUri = `${origin}${BOS_OAUTH_CALLBACK_PATH}`;
+    assertOauthRedirectAllowed(redirectUri);
+    const existing = await this.store.getInstallationByConnector(scope, input.connectorId);
+    const from = existing ? this.uiStateFor(existing) : "NOT_CONNECTED";
+    assertConnectorUiTransition(from, "CONNECTING");
+    if (existing && existing.effectiveMode === "live") throw new Error("live_oauth_not_certified");
+    const nonce = crypto.randomUUID();
+    const claims = {
+      v: 1 as const,
+      nonce,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      connectorId: input.connectorId,
+      userId: actor.userId,
+      exp: Date.now() + BOS_OAUTH_STATE_TTL_MS,
+      redirectUri,
+      fixture: true as const,
+    };
+    const state = signBosOAuthState(claims);
+    const contract = connectorContract(input.connectorId);
+    const row: ConnectorInstallation = {
+      id: existing?.id ?? newId("bos12-install"),
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      connectorId: input.connectorId,
+      version: contract.version,
+      requestedMode: "fixture",
+      effectiveMode: "fixture",
+      health: "unavailable",
+      writeClassification: "read_only",
+      secretId: existing?.secretId ?? null,
+      dataClasses: [...contract.dataClasses],
+      mappingVersion: contract.mappingVersion,
+      cursor: existing?.cursor ?? null,
+      lastSuccessfulSyncAt: existing?.lastSuccessfulSyncAt ?? null,
+      lastSyncAt: existing?.lastSyncAt ?? null,
+      recordsProcessed: existing?.recordsProcessed ?? 0,
+      recordsRejected: existing?.recordsRejected ?? 0,
+      conflicts: existing?.conflicts ?? 0,
+      rateLimitState: "ok",
+      errorCategory: "oauth_pending",
+      errorMessage: "Waiting for you to finish connecting.",
+      revokedAt: null,
+      configuredBy: actor.userId,
+      provenance: {
+        contract: contract.version,
+        secretRefOnly: true,
+        live: false,
+        fixture: true,
+        browserFixture: BOS_BROWSER_OAUTH_FIXTURE_MODE,
+        oauthPending: true,
+        oauthNonce: nonce,
+        oauthExp: claims.exp,
+        expectedProviderOrgId: existing?.provenance.expectedProviderOrgId ?? null,
+        providerOrgId: existing?.provenance.providerOrgId ?? null,
+      },
+      createdAt: existing?.createdAt ?? nowIso(),
+      updatedAt: nowIso(),
+    };
+    await this.store.upsertInstallation(row);
+    await this.auditSafe(scope, "oauth_start", "business_os_connector_installation", row.id, {
+      connectorId: row.connectorId,
+      fixture: true,
+      live: false,
+    });
+    return {
+      ...this.publicInstallation(row),
+      authorizeUrl: buildBosFixtureAuthorizeUrl({ origin, connectorId: input.connectorId, state }),
+      fixture: true as const,
+      live: false as const,
+      browserFixture: BOS_BROWSER_OAUTH_FIXTURE_MODE,
+    };
+  }
+
+  async completeOAuthCallback(
+    raw: { tenantId: string; workspaceId?: string; userId: string },
+    input: { state: string; code?: string | null; error?: string | null },
+    actor: ConnectorActor,
+  ) {
+    const scope = requireWorkspace(raw);
+    assertHuman(actor);
+    let claims;
+    try {
+      claims = verifyBosOAuthState(input.state);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "oauth_state_invalid";
+      if (message === "oauth_state_expired") {
+        const expired = decodeBosOAuthState(input.state);
+        if (expired.tenantId !== scope.tenantId) throw new Error("oauth_tenant_mismatch");
+        const pending = await this.store.getInstallationByConnector(scope, expired.connectorId);
+        if (pending && pending.provenance.oauthNonce === expired.nonce) {
+          await this.failOAuth(scope, pending, "oauth_state_expired");
+        }
+      }
+      throw error instanceof Error ? error : new Error("oauth_state_invalid");
+    }
+    if (claims.tenantId !== scope.tenantId) throw new Error("oauth_tenant_mismatch");
+    if (claims.workspaceId !== scope.workspaceId) throw new Error("oauth_workspace_mismatch");
+    if (claims.userId !== actor.userId) throw new Error("oauth_state_mismatch");
+    const installation = await this.store.getInstallationByConnector(scope, claims.connectorId);
+    if (!installation || installation.provenance.oauthNonce !== claims.nonce) {
+      throw new Error("oauth_state_invalid");
+    }
+    let outcome: ReturnType<typeof interpretOauthCallbackInput>;
+    try {
+      outcome = interpretOauthCallbackInput(input);
+    } catch {
+      return this.failOAuth(scope, installation, "oauth_provider_error");
+    }
+    if (outcome === "denied") return this.failOAuth(scope, installation, "oauth_consent_denied");
+    if (outcome === "missing_code") return this.failOAuth(scope, installation, "oauth_code_missing");
+    if (outcome === "provider_error") return this.failOAuth(scope, installation, "oauth_provider_error");
+    if (outcome === "wrong_org") {
+      const category =
+        claims.connectorId === "xero"
+          ? "xero_org_mismatch"
+          : claims.connectorId === "microsoft_365"
+            ? "m365_tenant_mismatch"
+            : "hubspot_portal_mismatch";
+      return this.failOAuth(scope, installation, category);
+    }
+    const org = BOS_FIXTURE_ORG[claims.connectorId];
+    assertConnectorUiTransition(this.uiStateFor(installation), "CONNECTED");
+    const connected: ConnectorInstallation = {
+      ...installation,
+      health: "configured",
+      effectiveMode: "fixture",
+      requestedMode: "fixture",
+      secretId: fixtureSecretId(),
+      errorCategory: null,
+      errorMessage: null,
+      revokedAt: null,
+      configuredBy: actor.userId,
+      updatedAt: nowIso(),
+      provenance: {
+        ...installation.provenance,
+        live: false,
+        fixture: true,
+        browserFixture: BOS_BROWSER_OAUTH_FIXTURE_MODE,
+        oauthPending: false,
+        oauthNonce: null,
+        oauthExp: null,
+        secretRefOnly: true,
+        expectedProviderOrgId: org.id,
+        providerOrgId: org.id,
+        organisationName: org.name,
+        liveCertification: false,
+      },
+    };
+    await this.store.upsertInstallation(connected);
+    await this.auditSafe(scope, "oauth_callback", "business_os_connector_installation", connected.id, {
+      connectorId: connected.connectorId,
+      fixture: true,
+      live: false,
+    });
+    await this.emit(scope, "business_os.connectors.configured", {
+      installationId: connected.id,
+      connectorId: connected.connectorId,
+      effectiveMode: "fixture",
+    });
+    return this.publicInstallation(connected);
+  }
+
+  async applyFixtureOutcome(
+    raw: { tenantId: string; workspaceId?: string; userId: string },
+    input: { connectorId: string; outcome: BosOauthFixtureOutcome },
+    actor: ConnectorActor,
+  ) {
+    const scope = requireWorkspace(raw);
+    assertHuman(actor);
+    if (!isBosOauthConnector(input.connectorId)) throw new Error("csv_oauth_not_supported");
+    const installation = await this.store.getInstallationByConnector(scope, input.connectorId);
+    if (!installation) throw new Error("connector installation not found");
+    if (installation.effectiveMode === "live") throw new Error("live_oauth_not_certified");
+    if (input.outcome === "installation_revoked") {
+      return this.revoke(scope, installation.id, actor);
+    }
+    const from = this.uiStateFor(installation);
+    if (input.outcome === "reauth_required") {
+      assertConnectorUiTransition(from, "REAUTH_REQUIRED");
+      return this.patchInstallation(installation, {
+        health: "unavailable",
+        errorCategory: "reauth_required",
+        errorMessage: connectorUserSafeMessage("authentication_expired"),
+      });
+    }
+    if (input.outcome === "sync_error") {
+      return this.patchInstallation(installation, {
+        provenance: { ...installation.provenance, nextSimulate: "timeout" },
+      });
+    }
+    const category =
+      input.outcome === "provider_unavailable"
+        ? "provider_unavailable"
+        : input.outcome === "permission_denied"
+          ? "permission_denied"
+          : input.outcome === "rate_limit"
+            ? "rate_limited"
+            : input.outcome === "timeout"
+              ? "timeout"
+              : input.outcome === "schema_invalid"
+                ? "schema_invalid"
+                : input.outcome === "wrong_provider_org" || input.outcome === "wrong_org"
+                  ? input.connectorId === "xero"
+                    ? "xero_org_mismatch"
+                    : input.connectorId === "microsoft_365"
+                      ? "m365_tenant_mismatch"
+                      : "hubspot_portal_mismatch"
+                  : "oauth_provider_error";
+    if (from === "CONNECTED" || from === "SYNCING") assertConnectorUiTransition(from, "ERROR");
+    if (from === "CONNECTING") assertConnectorUiTransition(from, "ERROR");
+    return this.patchInstallation(installation, {
+      health: "unavailable",
+      errorCategory: category,
+      errorMessage: connectorUserSafeMessage(category),
+      provenance: { ...installation.provenance, oauthPending: false, oauthNonce: null },
+    });
+  }
+
+  private async failOAuth(
+    scope: OwnerCommandScope,
+    installation: ConnectorInstallation,
+    errorCategory: string,
+  ) {
+    assertConnectorUiTransition(this.uiStateFor(installation), "ERROR");
+    const failed: ConnectorInstallation = {
+      ...installation,
+      health: "unavailable",
+      errorCategory,
+      errorMessage: connectorUserSafeMessage(errorCategory),
+      updatedAt: nowIso(),
+      provenance: {
+        ...installation.provenance,
+        oauthPending: false,
+        oauthNonce: null,
+        oauthExp: null,
+        live: false,
+        fixture: true,
+      },
+    };
+    await this.store.upsertInstallation(failed);
+    return this.publicInstallation(failed);
+  }
+
+  private async patchInstallation(
+    installation: ConnectorInstallation,
+    patch: Partial<ConnectorInstallation>,
+  ) {
+    const next: ConnectorInstallation = {
+      ...installation,
+      ...patch,
+      provenance: patch.provenance ?? installation.provenance,
+      updatedAt: nowIso(),
+    };
+    await this.store.upsertInstallation(next);
+    return this.publicInstallation(next);
+  }
+
+  private uiStateFor(row: ConnectorInstallation) {
+    return bosConnectorUiState({
+      health: row.health,
+      effectiveMode: row.effectiveMode,
+      secretId: row.secretId,
+      errorCategory: row.errorCategory,
+      oauthPending: row.provenance.oauthPending === true,
+      unauthorizedCategory:
+        row.connectorId === "microsoft_365"
+          ? "m365_unauthorized"
+          : row.connectorId === "hubspot"
+            ? "hubspot_unauthorized"
+            : "xero_unauthorized",
+    });
+  }
+
   private publicInstallation(row: ConnectorInstallation) {
-    const connectionState =
-      row.connectorId === "microsoft_365"
-        ? ms365ConnectionState({
-            health: row.health,
-            effectiveMode: row.effectiveMode,
-            secretId: row.secretId,
-            errorCategory: row.errorCategory,
-          })
-        : row.connectorId === "hubspot"
-          ? hubspotConnectionState({
-              health: row.health,
-              effectiveMode: row.effectiveMode,
-              secretId: row.secretId,
-              errorCategory: row.errorCategory,
-            })
-          : null;
+    const connectionState = isBosOauthConnector(row.connectorId) ? this.uiStateFor(row) : null;
+    const organisationName =
+      (row.provenance.organisationName as string | null | undefined) ??
+      (row.provenance.expectedProviderOrgId as string | null | undefined) ??
+      null;
     return redactSecrets({
       ...row,
       secretId: row.secretId ? "secret_ref" : null,
+      errorMessage: connectorUserSafeMessage(row.errorCategory, row.errorMessage),
       writeLabel: "READ ONLY" as const,
       modeLabel:
         row.health === "revoked"
@@ -796,18 +1113,26 @@ export class BosConnectorsService {
                 ? ("LIVE" as const)
                 : ("FIXTURE/SANDBOX" as const),
       connectionState,
-      organisation:
-        row.connectorId === "microsoft_365" || row.connectorId === "hubspot"
-          ? ((row.provenance.expectedProviderOrgId as string | null | undefined) ?? null)
-          : undefined,
-      permissions:
-        row.connectorId === "microsoft_365"
+      organisation: isBosOauthConnector(row.connectorId) ? organisationName : undefined,
+      permissions: isBosOauthConnector(row.connectorId)
+        ? row.connectorId === "microsoft_365"
           ? [...MS365_ALLOWED_GRAPH_SCOPES]
           : row.connectorId === "hubspot"
             ? [...HUBSPOT_ALLOWED_OAUTH_SCOPES]
-            : undefined,
-      disconnectAvailable:
-        (row.connectorId === "microsoft_365" || row.connectorId === "hubspot") && row.health !== "revoked",
+            : [...XERO_ALLOWED_OAUTH_SCOPES]
+        : undefined,
+      disconnectAvailable: isBosOauthConnector(row.connectorId) && row.health !== "revoked",
+      fixture: row.effectiveMode !== "live",
+      live: row.effectiveMode === "live",
+      browserFixture: row.provenance.browserFixture === BOS_BROWSER_OAUTH_FIXTURE_MODE,
+      capabilitySummary:
+        row.connectorId === "xero"
+          ? "Read-only accounting, invoice, and contact information."
+          : row.connectorId === "microsoft_365"
+            ? "Approved profile, calendar, and file metadata only."
+            : row.connectorId === "hubspot"
+              ? "Approved CRM contacts, companies, and deals read-only."
+              : "File import only.",
     });
   }
 

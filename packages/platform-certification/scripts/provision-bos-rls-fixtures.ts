@@ -217,6 +217,24 @@ async function restrictToSingleTenant(
   }
 }
 
+async function enableBusinessOsFeature(admin: SupabaseClient, tenantId: string): Promise<void> {
+  const feature = await admin.from("features").select("id").eq("feature_key", "business_os").maybeSingle();
+  if (feature.error || !feature.data?.id) throw new Error("business_os feature row missing");
+  for (const environment of ["production", "development"] as const) {
+    const upserted = await admin.from("feature_flags").upsert(
+      {
+        feature_id: feature.data.id,
+        tenant_id: tenantId,
+        environment,
+        enabled: true,
+        rollout_pct: 100,
+      },
+      { onConflict: "feature_id,tenant_id,environment" },
+    );
+    if (upserted.error) throw new Error(`business_os flag ${environment}: ${upserted.error.message}`);
+  }
+}
+
 async function ensureIsolatedWorkspace(
   admin: SupabaseClient,
   tenantId: string,
@@ -802,6 +820,10 @@ async function main(): Promise<void> {
     };
     log(`user_${label}=provisioned email=${spec.email} tenant=${tenant.id} workspace=${workspace.id}`);
   }
+
+  await enableBusinessOsFeature(admin, identities.a.tenantId);
+  await enableBusinessOsFeature(admin, identities.b.tenantId);
+  log("business_os_feature_enabled=true");
 
   const isolatedWorkspaceId = await ensureIsolatedWorkspace(admin, identities.a.tenantId);
   await upsertKpi(

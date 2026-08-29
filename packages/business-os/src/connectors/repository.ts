@@ -116,15 +116,12 @@ export class BusinessConnectorRepository implements ConnectorStore {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async listInstallations(scope: { tenantId: string; workspaceId: string }) {
-    try {
-      const { data } = await table(this.supabase, "business_os_connector_installations")
-        .select("*")
-        .eq("tenant_id", scope.tenantId)
-        .eq("workspace_id", scope.workspaceId);
-      return ((data ?? []) as Record<string, unknown>[]).map(mapInstallation);
-    } catch {
-      return [];
-    }
+    const { data, error } = await table(this.supabase, "business_os_connector_installations")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapInstallation);
   }
 
   async getInstallation(scope: { tenantId: string; workspaceId: string }, id: string) {
@@ -137,7 +134,7 @@ export class BusinessConnectorRepository implements ConnectorStore {
   }
 
   async upsertInstallation(row: ConnectorInstallation) {
-    await table(this.supabase, "business_os_connector_installations").upsert({
+    const { error } = await table(this.supabase, "business_os_connector_installations").upsert({
       id: row.id,
       tenant_id: row.tenantId,
       workspace_id: row.workspaceId,
@@ -164,19 +161,17 @@ export class BusinessConnectorRepository implements ConnectorStore {
       provenance: row.provenance,
       updated_at: row.updatedAt,
     } as never);
+    if (error) throw new Error(error.message);
     return row;
   }
 
   async listRuns(scope: { tenantId: string; workspaceId: string }) {
-    try {
-      const { data } = await table(this.supabase, "business_os_connector_sync_runs")
-        .select("*")
-        .eq("tenant_id", scope.tenantId)
-        .eq("workspace_id", scope.workspaceId);
-      return ((data ?? []) as Record<string, unknown>[]).map(mapRun);
-    } catch {
-      return [];
-    }
+    const { data, error } = await table(this.supabase, "business_os_connector_sync_runs")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapRun);
   }
 
   async getRunByIdempotency(scope: { tenantId: string; workspaceId: string }, key: string) {
@@ -184,7 +179,7 @@ export class BusinessConnectorRepository implements ConnectorStore {
   }
 
   async upsertRun(row: ConnectorSyncRun) {
-    await table(this.supabase, "business_os_connector_sync_runs").upsert({
+    const { error } = await table(this.supabase, "business_os_connector_sync_runs").upsert({
       id: row.id,
       installation_id: row.installationId,
       tenant_id: row.tenantId,
@@ -203,23 +198,21 @@ export class BusinessConnectorRepository implements ConnectorStore {
       completed_at: row.completedAt,
       provenance: row.provenance,
     } as never);
+    if (error) throw new Error(error.message);
     return row;
   }
 
   async listStaging(scope: { tenantId: string; workspaceId: string }) {
-    try {
-      const { data } = await table(this.supabase, "business_os_connector_staging")
-        .select("*")
-        .eq("tenant_id", scope.tenantId)
-        .eq("workspace_id", scope.workspaceId);
-      return ((data ?? []) as Record<string, unknown>[]).map(mapStaging);
-    } catch {
-      return [];
-    }
+    const { data, error } = await table(this.supabase, "business_os_connector_staging")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapStaging);
   }
 
   async upsertStaging(row: ConnectorStagingRecord) {
-    await table(this.supabase, "business_os_connector_staging").upsert({
+    const { error } = await table(this.supabase, "business_os_connector_staging").upsert({
       id: row.id,
       tenant_id: row.tenantId,
       workspace_id: row.workspaceId,
@@ -242,19 +235,17 @@ export class BusinessConnectorRepository implements ConnectorStore {
       suppressed: row.suppressed,
       provenance: row.provenance,
     } as never);
+    if (error) throw new Error(error.message);
     return row;
   }
 
   async listImports(scope: { tenantId: string; workspaceId: string }) {
-    try {
-      const { data } = await table(this.supabase, "business_os_connector_import_batches")
-        .select("*")
-        .eq("tenant_id", scope.tenantId)
-        .eq("workspace_id", scope.workspaceId);
-      return ((data ?? []) as Record<string, unknown>[]).map(mapImport);
-    } catch {
-      return [];
-    }
+    const { data, error } = await table(this.supabase, "business_os_connector_import_batches")
+      .select("*")
+      .eq("tenant_id", scope.tenantId)
+      .eq("workspace_id", scope.workspaceId);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map(mapImport);
   }
 
   async getImport(scope: { tenantId: string; workspaceId: string }, id: string) {
@@ -262,7 +253,7 @@ export class BusinessConnectorRepository implements ConnectorStore {
   }
 
   async upsertImport(row: ConnectorImportBatch) {
-    await table(this.supabase, "business_os_connector_import_batches").upsert({
+    const { error } = await table(this.supabase, "business_os_connector_import_batches").upsert({
       id: row.id,
       tenant_id: row.tenantId,
       workspace_id: row.workspaceId,
@@ -280,6 +271,7 @@ export class BusinessConnectorRepository implements ConnectorStore {
       committed_at: row.committedAt,
       provenance: row.provenance,
     } as never);
+    if (error) throw new Error(error.message);
     return row;
   }
 }

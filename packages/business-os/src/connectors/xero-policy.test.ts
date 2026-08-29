@@ -9,7 +9,9 @@ import {
   XERO_THREAT_MODEL,
   assertXeroCapabilityAllowed,
   assertXeroScopeAllowed,
+  buildXeroAuthorizeUrl,
   xeroAccountingPathAllowed,
+  xeroConnectionState,
 } from "./xero-policy";
 
 describe("Xero capability allowlist", () => {
@@ -36,5 +38,15 @@ describe("Xero capability allowlist", () => {
     expect(xeroAccountingPathAllowed("/api.xro/2.0/Payments")).toBe(false);
     expect(XERO_THREAT_MODEL).toHaveLength(16);
     expect(XERO_SCOPE_MINIMISATION_VERIFIED).toBe(true);
+    const authorize = buildXeroAuthorizeUrl({
+      clientId: "public-client-id",
+      redirectUri: "http://localhost:8787/callback",
+      state: "csrf-state",
+    });
+    expect(authorize).toContain("login.xero.com/identity/connect/authorize");
+    expect(authorize).not.toMatch(/client_secret|refresh_token|password/i);
+    expect(
+      xeroConnectionState({ health: "revoked", effectiveMode: "fixture", secretId: null, errorCategory: "revoked" }),
+    ).toBe("DISCONNECTED");
   });
 });

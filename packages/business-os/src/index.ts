@@ -116,5 +116,8 @@ export * from "./connectors/m365-policy";
 export * from "./connectors/m365-errors";
 export * from "./connectors/hubspot-policy";
 export * from "./connectors/hubspot-errors";
+export * from "./connectors/ui-state";
+export * from "./connectors/ui-errors";
+export * from "./connectors/oauth-fixture";
 export * from "./connectors/adapters";
 

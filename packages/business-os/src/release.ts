@@ -44,6 +44,8 @@ export const HUBSPOT_CONNECTOR_IMPLEMENTED = true as const;
 export const HUBSPOT_SECURITY_ARCHITECTURE_READY = true as const;
 export const HUBSPOT_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosBrowserE2eCertified = false as const;
+export const BROWSER_E2E_EVIDENCE_PASS = true as const;
+export const BOS16_BROWSER_E2E_STAGE_COMPLETE = true as const;
 
 export const LIVE_RLS_STATUS = "LIVE_RLS_NOT_CERTIFIED" as const;
 export const BOS14A_STATUS = "BOS14A_BLOCKED_LIVE_RLS_ENV" as const;
