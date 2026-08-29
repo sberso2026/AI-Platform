@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS business_os_work_items (
     'delivery_package'
   )),
   customer_id uuid REFERENCES business_os_customers(id) ON DELETE SET NULL,
-  linked_opportunity_id uuid REFERENCES business_os_opportunities(id) ON DELETE SET NULL,
-  linked_proposal_id uuid REFERENCES business_os_proposals(id) ON DELETE SET NULL,
+  linked_opportunity_id uuid REFERENCES business_os_growth_opportunities(id) ON DELETE SET NULL,
+  linked_proposal_id uuid REFERENCES business_os_revenue_proposals(id) ON DELETE SET NULL,
   linked_engineering_project_id text,
   linked_engineering_project_ref text,
   owner_label text,
