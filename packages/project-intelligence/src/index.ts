@@ -62,3 +62,4 @@ export * from "./knowledge/reasoning-types";
 export * from "./knowledge/reasoning-stages";
 export * from "./knowledge/reasoning-pipeline";
 export * from "./knowledge/shared-services-binding";
+export * from "./project-health";

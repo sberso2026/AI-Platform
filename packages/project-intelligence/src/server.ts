@@ -33,4 +33,5 @@ export * from "./meetings";
 export * from "./findings";
 export * from "./reports";
 export * from "./knowledge";
+export * from "./project-health";
 

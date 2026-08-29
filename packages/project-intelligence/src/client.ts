@@ -20,3 +20,18 @@ export type {
 export { DocumentIntelligenceError, PHASE_BRIEF_DOCUMENT_ERROR_CODES } from "./documents/errors";
 export type { DocumentIntelligenceErrorCode } from "./documents/errors";
 export { DOCUMENT_ALLOWED_MIME_TYPES, DOCUMENT_MAX_UPLOAD_BYTES } from "./documents/storage-policy";
+export {
+  PROJECT_HEALTH_DIMENSIONS,
+  PROJECT_HEALTH_STATES,
+  PROJECT_HEALTH_OVERALL_CLASSIFICATIONS,
+  implementsOwnAiStack as projectHealthImplementsOwnAiStack,
+  SCHEMA_CHANGED as projectHealthSchemaChanged,
+  PROJECT_HEALTH_NUMERICAL_SCORE_IMPLEMENTED,
+  PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY,
+} from "./project-health";
+export type {
+  ProjectHealthDimension,
+  ProjectHealthState,
+  ProjectHealthAssessment,
+  ProjectHealthOverallClassification,
+} from "./project-health";
