@@ -8,6 +8,7 @@ export const BOS_CERTIFICATION_PRODUCT = "business-os" as const;
 export const BOS_DEDICATED_STAGING_PROJECT_REF = "rntonzigxwxcjlcsadip" as const;
 export const BOS_SHARED_HOST_PROJECT_REF = "wcydlhqiqdwgoaqrlget" as const;
 export const BOS_16_CERTIFIED_BASELINE_SHA = "571dac0d4423f04e5f28cbc4d2716768ecbe1f87" as const;
+export const BOS_16_A11_QUALIFICATION_SHA = "b89e019d0201e4fa1e848391d03ede03756b4f13" as const;
 
 export type CertificationExecutionMode = "static" | "fixture" | "sandbox" | "live" | "browser";
 export type CertificationEvidenceResult = "pass" | "fail" | "blocked" | "skipped";

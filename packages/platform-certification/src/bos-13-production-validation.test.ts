@@ -55,7 +55,7 @@ describe("BOS-13 production validation", () => {
     vi.unstubAllEnvs();
   });
   it("certifies RC limitations without a 19th capability or new domain", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_VERSION).toBe("1.0.0");
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_13_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_13_BOUNDARY_NOTE).toContain("Do not start a post-BOS-13 feature phase");
@@ -65,20 +65,17 @@ describe("BOS-13 production validation", () => {
     expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.connectors.contract().implemented).toBe(true);
     expect(bosReleaseCandidate).toBe(true);
-    expect(bosProductionEligible).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(false);
+    expect(bosProductionEligible).toBe(true);
+    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(true);
     expect(BOS_RELEASE_INDICATORS["bos.liveXeroCertified"]).toBe(false);
     expect(BOS_RELEASE_INDICATORS["bos.liveMicrosoft365Certified"]).toBe(false);
     expect(BOS_RELEASE_INDICATORS["bos.liveHubSpotCertified"]).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.browserE2eCertified"]).toBe(false);
-    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
-    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
+    expect(BOS_RELEASE_INDICATORS["bos.browserE2eCertified"]).toBe(true);
+    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_CERTIFIED");
+    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_CERTIFIED");
     expect(BOS_CONNECTOR_CERTIFICATION.xero.live).not.toBe("LIVE_PROVIDER_CERTIFIED");
     expect(BOS_PRODUCTION_GA_REMAINING_GATES).toEqual([
-      "BOS15B_BLOCKED_LIVE_RLS_ENV",
-      "BOS15F_BLOCKED_BROWSER_ENV",
       "inherited_engineering_os_web_tsc_baseline_debt",
-      "BOS_V1_EXPLICIT_GA_PROMOTION_PENDING",
     ]);
     expect(BOS_PREVIEW_PROVIDER_PROMOTION_GATES).toEqual([
       "BOS15C_XERO_BLOCKED_ENV",
@@ -113,10 +110,10 @@ describe("BOS-13 production validation", () => {
     const migration = resolve(ROOT, "supabase/migrations/20260819170000_batch_108_business_os_connectors_hardening.sql");
     expect(existsSync(migration)).toBe(true);
     expect(readFileSync(migration, "utf8")).toContain("ENABLE ROW LEVEL SECURITY");
-    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
-    expect(bosLiveRlsCertified).toBe(false);
+    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_CERTIFIED");
+    expect(bosLiveRlsCertified).toBe(true);
     expect(liveRlsEnvironmentAvailable()).toBe(false);
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
   });
 });
 

@@ -60,7 +60,7 @@ describe("Microsoft 365 security architecture", () => {
     expect(M365_SECURITY_ARCHITECTURE_READY).toBe(true);
     expect(M365_LIVE_CERTIFICATION_EXECUTED).toBe(false);
     expect(bosLiveMicrosoft365Certified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosProductionEligible).toBe(true);
     expect(XERO_CONNECTOR_IMPLEMENTED).toBe(true);
     expect(XERO_SECURITY_ARCHITECTURE_READY).toBe(true);
     expect(bosLiveXeroCertified).toBe(false);

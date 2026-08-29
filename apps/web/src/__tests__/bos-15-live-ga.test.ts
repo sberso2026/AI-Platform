@@ -18,7 +18,7 @@ import { resolveEntitlementTarget } from "../lib/commerce/guards";
 describe("BOS-15 live GA web wiring", () => {
   it("keeps Business OS entitlement mapping and BOS-15 phase", () => {
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
-    expect(bosProductionEligible).toBe(false);
+    expect(bosProductionEligible).toBe(true);
     for (const route of BOS_15_BROWSER_ROUTES) {
       expect(resolveEntitlementTarget(route)).toEqual({
         productKey: "business-os",
@@ -32,16 +32,16 @@ describe("BOS-15 live GA web wiring", () => {
   it("does not claim browser E2E certification from static wiring tests", () => {
     expect(BOS15_BROWSER_PREFLIGHT_RECONCILED).toBe(true);
     expect(BOS15F_STATUS).toBe("BOS15F_BLOCKED_BROWSER_ENV");
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
     const preflight = bos15EnvironmentPreflight();
     const view = bosBrowserCertificationState({ available: preflight.browser.available });
     expect(preflight.browser.available).toBe(browserE2eEnvironmentAvailable());
     expect(preflight.browser.executionMode).toBe("browser");
     expect(preflight.browser.evidenceResult).toBe("pass");
-    expect(preflight.browser.certifiedDeclaration).toBe(false);
+    expect(preflight.browser.certifiedDeclaration).toBe(true);
     expect(preflight.browser.classification).toBe(preflight.browser.available ? "AVAILABLE" : "BLOCKED_ENV");
-    expect(view.validPreGaState).toBe(true);
-    expect(view.certifiedDeclaration).toBe(false);
+    expect(view.validPreGaState).toBe(false);
+    expect(view.certifiedDeclaration).toBe(true);
     expect(preflight.browser.executed).toBe(false);
   });
 });

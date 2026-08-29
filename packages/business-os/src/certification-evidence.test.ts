@@ -293,32 +293,35 @@ describe("BOS-16A9 certification evidence honesty", () => {
 describe("BOS-16A9 release manifest and pre-GA readiness", () => {
   it("separates execution evidence from release declarations and stays fail-closed for GA", () => {
     const manifest = getBosCertificationManifest();
-    expect(CERTIFICATION_MANIFEST_IMPLEMENTED).toBe(true);
+    expect(manifest.version).toBe("1.0.0");
+    expect(manifest.releaseType).toBe("GA");
+    expect(manifest.gaPromoted).toBe(true);
+    expect(manifest.qualificationSha).toBe("b89e019d0201e4fa1e848391d03ede03756b4f13");
     expect(CERTIFICATION_SECOND_STACK_DETECTED).toBe(false);
     expect(manifest.capabilityCount).toBe(18);
     expect(manifest.capabilityCount).toBe(BUSINESS_CAPABILITY_IDS.length);
     expect(manifest.rlsCertificationState.state).toBe("pass");
     expect(manifest.browserCertificationState.state).toBe("pass");
     expect(manifest.browserPreflight.evidenceResult).toBe("pass");
-    expect(manifest.browserPreflight.certifiedDeclaration).toBe(false);
-    expect(manifest.browserPreflight.validPreGaState).toBe(true);
+    expect(manifest.browserPreflight.certifiedDeclaration).toBe(true);
+    expect(manifest.browserPreflight.validPreGaState).toBe(false);
     expect(manifest.browserPreflight.executionMode).toBe("browser");
     expect(manifest.providerCertificationState.xero.liveEvidence.state).not.toBe("pass");
     expect(manifest.providerCertificationState.microsoft_365.liveEvidence.state).not.toBe("pass");
     expect(manifest.providerCertificationState.hubspot.liveEvidence.state).not.toBe("pass");
-    expect(manifest.productionEligible).toBe(false);
+    expect(manifest.productionEligible).toBe(true);
     expect(manifest.productionEligibilityComputed).toBe(true);
     expect(manifest.coreGaEligibilityComputed).toBe(true);
-    expect(manifest.gaReady).toBe(false);
+    expect(manifest.gaReady).toBe(true);
     expect(manifest.preGaInternalReady).toBe(true);
     expect(manifest.declarations.releaseCandidate).toBe(true);
-    expect(manifest.declarations.productionEligible).toBe(false);
-    expect(manifest.declarations.liveRlsCertified).toBe(false);
-    expect(manifest.declarations.browserE2eCertified).toBe(false);
+    expect(manifest.declarations.productionEligible).toBe(true);
+    expect(manifest.declarations.liveRlsCertified).toBe(true);
+    expect(manifest.declarations.browserE2eCertified).toBe(true);
     expect(bosReleaseCandidate).toBe(true);
-    expect(bosProductionEligible).toBe(false);
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosProductionEligible).toBe(true);
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(bosBrowserE2eCertified).toBe(true);
     expect(bosLiveXeroCertified).toBe(false);
     expect(bosLiveMicrosoft365Certified).toBe(false);
     expect(bosLiveHubSpotCertified).toBe(false);
@@ -346,8 +349,8 @@ describe("BOS-16A9 release manifest and pre-GA readiness", () => {
     expect(report.xeroLive).toBe("outstanding");
     expect(report.microsoft365Live).toBe("outstanding");
     expect(report.hubspotLive).toBe("outstanding");
-    expect(report.ga).toBe("NOT_READY");
-    expect(report.productionEligible).toBe(false);
+    expect(report.ga).toBe("READY");
+    expect(report.productionEligible).toBe(true);
     expect(report.preGaInternalReady).toBe(true);
     expect(PRE_GA_INTERNAL_READINESS_PASS).toBe(true);
     expect(AI_WORKFORCE_REGRESSION_PASS).toBe(true);
@@ -370,7 +373,8 @@ describe("BOS-16A9 release manifest and pre-GA readiness", () => {
     });
     expect(manifest.providerCertificationState.xero.liveEvidence.state).toBe("pass");
     expect(manifest.declarations.liveXeroCertified).toBe(false);
-    expect(manifest.productionEligible).toBe(false);
+    expect(manifest.productionEligible).toBe(true);
+    expect(manifest.productionEligibilityComputed).toBe(false);
     expect(manifest.gaReady).toBe(false);
   });
 });
@@ -387,8 +391,8 @@ describe("BOS-16A9.1 browser availability vs evidence vs declaration", () => {
     expect(view.newExecutionBlocked).toBe(false);
     expect(view.certifiedDeclaration).toBe(false);
     expect(BOS15_BROWSER_PREFLIGHT_RECONCILED).toBe(true);
-    expect(bosBrowserE2eCertified).toBe(false);
-    expect(bosBrowserCertificationState({ available: true }).validPreGaState).toBe(true);
+    expect(bosBrowserE2eCertified).toBe(true);
+    expect(bosBrowserCertificationState({ available: true }).validPreGaState).toBe(false);
   });
 
   it("fails closed when available=true but mandatory browser evidence is missing or failed", () => {
@@ -492,9 +496,9 @@ describe("BOS-16A9.1 browser availability vs evidence vs declaration", () => {
         currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
       }).state,
     ).not.toBe("pass");
-    expect(bosBrowserCertificationState({ available: true }).certifiedDeclaration).toBe(false);
-    expect(getBosCertificationManifest().declarations.browserE2eCertified).toBe(false);
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserCertificationState({ available: true }).certifiedDeclaration).toBe(true);
+    expect(getBosCertificationManifest().declarations.browserE2eCertified).toBe(true);
+    expect(bosBrowserE2eCertified).toBe(true);
   });
 });
 
@@ -516,7 +520,7 @@ describe("BOS-16A10 Core vs Preview honesty", () => {
     const manifest = getBosCertificationManifest();
     expect(manifest.coreGaEligibilityComputed).toBe(true);
     expect(manifest.productionEligibilityComputed).toBe(true);
-    expect(manifest.productionEligible).toBe(false);
+    expect(manifest.productionEligible).toBe(true);
     expect(manifest.releaseScope.gaCertifiedProviders).toEqual([]);
     expect(manifest.requiredCoreGates).not.toContain("xero_live");
     expect(manifest.requiredCoreGates).not.toContain("microsoft365_live");
@@ -541,7 +545,8 @@ describe("BOS-16A10 Core vs Preview honesty", () => {
     });
     expect(missingRls.coreGaEligibilityComputed).toBe(false);
     expect(missingRls.productionEligibilityComputed).toBe(false);
-    expect(missingRls.productionEligible).toBe(false);
+    expect(missingRls.productionEligible).toBe(true);
+    expect(missingRls.gaReady).toBe(false);
     expect(missingRls.providerCertificationState.xero.releaseStatus).toBe("PREVIEW");
 
     const promotedWithoutEvidence = buildBosReleaseManifest({

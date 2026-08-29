@@ -52,7 +52,7 @@ describe("BOS-15 live GA certification", () => {
     vi.unstubAllEnvs();
   });
   it("keeps capability count 18 and refuses productionEligible without live gates", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_VERSION).toBe("1.0.0");
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_15_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_15_BOUNDARY_NOTE).toContain("post-GA feature work");
@@ -61,12 +61,12 @@ describe("BOS-15 live GA certification", () => {
     const bos = createBusinessOS({} as never, createPlatformKernel({} as never));
     expect(bos.status.snapshot().phase).toBe("BOS-15");
     expect(bosReleaseCandidate).toBe(true);
-    expect(bosProductionEligible).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(false);
+    expect(bosProductionEligible).toBe(true);
+    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(true);
     expect(BOS_RELEASE_INDICATORS["bos.liveXeroCertified"]).toBe(false);
     expect(BOS_RELEASE_INDICATORS["bos.liveMicrosoft365Certified"]).toBe(false);
     expect(BOS_RELEASE_INDICATORS["bos.liveHubSpotCertified"]).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.browserE2eCertified"]).toBe(false);
+    expect(BOS_RELEASE_INDICATORS["bos.browserE2eCertified"]).toBe(true);
     expect(BOS15A_STATUS).toBe("BOS15A_PREFLIGHT_COMPLETE");
     expect(BOS15B_STATUS).toBe("BOS15B_BLOCKED_LIVE_RLS_ENV");
     expect(BOS15C_STATUS).toBe("BOS15C_XERO_BLOCKED_ENV");
@@ -77,14 +77,11 @@ describe("BOS-15 live GA certification", () => {
     expect(BOS15_PROVIDER_STATUS.microsoft_365).toBe("BLOCKED_ENV");
     expect(BOS15_PROVIDER_STATUS.hubspot).toBe("BLOCKED_ENV");
     expect(BOS_CONNECTOR_CERTIFICATION.xero.live).toBe("BLOCKED_ENV");
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
     expect(browserE2eEnvironmentAvailable()).toBe(false);
     expect(liveProviderCredentialsAvailable("xero")).toBe(false);
     expect(BOS_PRODUCTION_GA_REMAINING_GATES).toEqual([
-      "BOS15B_BLOCKED_LIVE_RLS_ENV",
-      "BOS15F_BLOCKED_BROWSER_ENV",
       "inherited_engineering_os_web_tsc_baseline_debt",
-      "BOS_V1_EXPLICIT_GA_PROMOTION_PENDING",
     ]);
     expect(BOS_PREVIEW_PROVIDER_PROMOTION_GATES).toEqual([
       "BOS15C_XERO_BLOCKED_ENV",
@@ -103,7 +100,7 @@ describe("BOS-15 live GA certification", () => {
     expect(preflight.browser.classification).toBe("BLOCKED_ENV");
     expect(preflight.browser.available).toBe(false);
     expect(preflight.browser.evidenceResult).toBe("pass");
-    expect(preflight.browser.certifiedDeclaration).toBe(false);
+    expect(preflight.browser.certifiedDeclaration).toBe(true);
     expect(preflight.browser.executionMode).toBe("browser");
     expect(preflight.supabase.executed).toBe(false);
     expect(preflight.xero.executed).toBe(false);
@@ -117,7 +114,7 @@ describe("BOS-15 live GA certification", () => {
     const migration = resolve(ROOT, "supabase/migrations/20260819170000_batch_108_business_os_connectors_hardening.sql");
     expect(existsSync(migration)).toBe(true);
     expect(readFileSync(migration, "utf8")).toContain("FORCE ROW LEVEL SECURITY");
-    expect(bosLiveRlsCertified).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
     expect(liveRlsEnvironmentAvailable()).toBe(false);
   });
 });

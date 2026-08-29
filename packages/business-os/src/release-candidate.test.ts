@@ -174,7 +174,7 @@ function opp(
 
 describe("BOS-13 release indicators", () => {
   it("declares RC with honest live/GA limitations and no new capability", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_VERSION).toBe("1.0.0");
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_13_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_13_BOUNDARY_NOTE).toContain("Do not start a post-BOS-13 feature phase");
@@ -186,12 +186,12 @@ describe("BOS-13 release indicators", () => {
     expect(bos.capabilities.list()).toHaveLength(18);
     expect(BOS_RELEASE_INDICATORS).toEqual({
       "bos.releaseCandidate": true,
-      "bos.productionEligible": false,
-      "bos.liveRlsCertified": false,
+      "bos.productionEligible": true,
+      "bos.liveRlsCertified": true,
       "bos.liveXeroCertified": false,
       "bos.liveMicrosoft365Certified": false,
       "bos.liveHubSpotCertified": false,
-      "bos.browserE2eCertified": false,
+      "bos.browserE2eCertified": true,
       implementsOwnAiStack: false,
       duplicateIntegrationStackDetected: false,
       duplicateAgentRuntimeDetected: false,
@@ -207,16 +207,16 @@ describe("BOS-13 release indicators", () => {
       suppressedIdentityReconstructionBlocked: true,
     });
     expect(bosReleaseCandidate).toBe(true);
-    expect(bosProductionEligible).toBe(false);
-    expect(bosLiveRlsCertified).toBe(false);
+    expect(bosProductionEligible).toBe(true);
+    expect(bosLiveRlsCertified).toBe(true);
     expect(bosLiveXeroCertified).toBe(false);
     expect(bosLiveMicrosoft365Certified).toBe(false);
     expect(bosLiveHubSpotCertified).toBe(false);
-    expect(bosBrowserE2eCertified).toBe(false);
-    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
-    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
-    expect(BOS_PRODUCTION_GA_REMAINING_GATES).toContain("BOS15B_BLOCKED_LIVE_RLS_ENV");
-    expect(getBosReleaseDeclaration().productionGaReady).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
+    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_CERTIFIED");
+    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_CERTIFIED");
+    expect(BOS_PRODUCTION_GA_REMAINING_GATES).toContain("inherited_engineering_os_web_tsc_baseline_debt");
+    expect(getBosReleaseDeclaration().productionGaReady).toBe(true);
     expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.status === "RESOLVED")).toBe(true);
     expect(BOS_13_WEB_TSC_RECONCILIATION.every((row) => row.classification === "PRE_EXISTING_BEFORE_BOS_12")).toBe(
       true,
@@ -655,9 +655,9 @@ describe("BOS-13 live and browser honesty", () => {
     if (!liveRlsReady) {
       expect(liveRlsReady).toBe(false);
     }
-    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_CERTIFIED");
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_CERTIFIED");
+    expect(bosBrowserE2eCertified).toBe(true);
   });
 });

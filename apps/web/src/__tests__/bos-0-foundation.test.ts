@@ -19,14 +19,14 @@ describe("BOS-0 web foundation wiring", () => {
     expect(resolveEntitlementTarget("/engineering").productKey).toBe("engineering-os");
   });
 
-  it("keeps catalog identity coming_soon while wiring the OS factory", () => {
+  it("keeps catalog identity available after BOS Core v1.0 GA", () => {
     const catalog = OPERATING_SYSTEMS.find((os) => os.id === "business");
-    expect(catalog?.status).toBe("coming_soon");
+    expect(catalog?.status).toBe("available");
     expect(BUSINESS_OS_RUNTIME_MANIFEST.id).toBe("business");
     expect(implementsOwnAiStack).toBe(false);
     const kernel = createPlatformKernel({} as SupabaseClient);
     const bos = createBusinessOS({} as SupabaseClient, kernel);
-    expect(bos.status.snapshot().foundationState).toBe("preview");
-    expect(bos.status.snapshot().catalogStatus).toBe("coming_soon");
+    expect(bos.status.snapshot().foundationState).toBe("ga");
+    expect(bos.status.snapshot().catalogStatus).toBe("available");
   });
 });

@@ -14,6 +14,7 @@ import {
   BOS_V1_FEATURE_SET,
   BOS_V1_FINAL_QUALIFICATION_PLAN,
   BOS_V1_FINAL_QUALIFICATION_READY,
+  BOS_V1_GA_PROMOTED,
   BOS_V1_GA_SCOPE_DEFINED,
   BOS_V1_PREVIEW_PROVIDERS,
   BOS_V1_RELEASE_SCOPE,
@@ -30,6 +31,7 @@ describe("BOS-16A10 v1.0 GA feature scope", () => {
   it("freezes BOS Core as GA_REQUIRED and connectors as Preview without deleting registered capabilities", () => {
     assertBosV1ScopeIntegrity();
     expect(BOS_V1_GA_SCOPE_DEFINED).toBe(true);
+    expect(BOS_V1_GA_PROMOTED).toBe(true);
     expect(BUSINESS_CAPABILITY_IDS).toHaveLength(18);
     expect(BOS_V1_CORE_CAPABILITY_IDS).toHaveLength(11);
     expect(BOS_V1_EXCLUDED_CAPABILITY_IDS).toHaveLength(7);
@@ -43,8 +45,9 @@ describe("BOS-16A10 v1.0 GA feature scope", () => {
       expect(["GA_REQUIRED", "EXCLUDED"]).toContain(bosV1CapabilityReleaseClass(id));
     }
     expect(defaultBusinessCapabilityRegistry.ids()).toHaveLength(18);
-    expect(buildBusinessOsManifest().catalogStatus).toBe("coming_soon");
-    expect(BOS_V1_RELEASE_SCOPE.commerceCatalogUnchanged).toBe("coming_soon");
+    expect(buildBusinessOsManifest().catalogStatus).toBe("available");
+    expect(BOS_V1_RELEASE_SCOPE.commerceCatalogUnchanged).toBe("available");
+    expect(BOS_V1_RELEASE_SCOPE.commerceLifecycle).toBe("active");
     expect(BOS_V1_RELEASE_SCOPE.noVendorHardDependency).toBe(true);
     expect(NoVendorHardDependency).toBe(true);
     expect(BOS_CORE_VENDOR_NEUTRAL_PASS).toBe(true);

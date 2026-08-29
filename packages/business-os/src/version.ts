@@ -1,9 +1,8 @@
 /**
- * BOS-0 Foundation version and platform-reuse contracts.
- * BOS-15 is live GA certification only. Do not start post-GA feature work.
+ * BOS Core v1.0 GA. Preview connectors remain Preview. Do not start BOS-17.
  */
-export const BUSINESS_OS_VERSION = "0.13.3" as const;
-export const BUSINESS_OS_STATUS = "preview" as const;
+export const BUSINESS_OS_VERSION = "1.0.0" as const;
+export const BUSINESS_OS_STATUS = "ga" as const;
 export const BUSINESS_OS_PHASE = "BOS-15" as const;
 
 /** Business OS consumes Platform Kernel / Intelligence. Independent AI stacks are forbidden. */
@@ -37,19 +36,17 @@ export const BUSINESS_OS_ID = "business" as const;
 export const BUSINESS_OS_PRODUCT_SLUG = "business-os" as const;
 
 /**
- * Explicit BOS-0 preview contract on current platform:
- * intelligence feature flag `business_os` (default off, experimental) + RBAC.
- * Missing coming_soon commerce installation is not a commercial entitlement.
- * Do not use ProductLifecycleStatus.preview or ReleaseChannel for GA access.
+ * BOS Core v1.0 GA catalog contract. Feature-flag gating remains for runtime enablement.
+ * Commerce lifecycle is active; Preview connectors are not certified.
  */
 export const BUSINESS_OS_PREVIEW_ACCESS = {
   mode: "feature_flag_foundation" as const,
-  catalogStatus: "coming_soon" as const,
+  catalogStatus: "available" as const,
   commercialEntitlementRequired: false,
   usesCommercePreviewLifecycle: false,
   usesReleaseChannel: false,
   featureDefaultEnabled: false,
-  featureIsExperimental: true,
+  featureIsExperimental: false,
 };
 
 export function getBusinessOsFoundationDeclaration() {

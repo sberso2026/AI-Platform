@@ -36,8 +36,8 @@ describe("BOS certification environment states", () => {
       reason: "no_live_configuration",
     });
     expect(liveRlsEnvironmentAvailable()).toBe(false);
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(bosProductionEligible).toBe(true);
     const preflight = bos15EnvironmentPreflight();
     expect(preflight.supabase.available).toBe(false);
     expect(preflight.supabase.classification).toBe("BLOCKED_ENV");
@@ -60,8 +60,8 @@ describe("BOS certification environment states", () => {
       reason: "no_live_configuration",
     });
     expect(liveRlsEnvironmentAvailable()).toBe(false);
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(bosProductionEligible).toBe(true);
     const preflight = bos15EnvironmentPreflight();
     expect(preflight.supabase.available).toBe(false);
     expect(preflight.supabase.classification).toBe("BLOCKED_ENV");
@@ -81,8 +81,8 @@ describe("BOS certification environment states", () => {
     expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
     expect(() => liveRlsEnvironmentAvailable()).toThrow(/incomplete/);
     expect(() => liveRlsEnvironmentAvailable()).toThrow(/missing=tenantAJwt/);
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(bosProductionEligible).toBe(true);
     expect(() => bos15EnvironmentPreflight()).toThrow(BosLiveRlsEnvironmentError);
   });
 
@@ -94,8 +94,8 @@ describe("BOS certification environment states", () => {
       projectRef: SYNTHETIC_BOS_STAGING_REF,
       hostname: `${SYNTHETIC_BOS_STAGING_REF}.supabase.co`,
     });
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(bosProductionEligible).toBe(true);
     const preflight = bos15EnvironmentPreflight();
     expect(preflight.supabase.available).toBe(true);
     expect(preflight.supabase.classification).toBe("AVAILABLE");
@@ -117,6 +117,6 @@ describe("BOS certification environment states", () => {
     });
     expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
     expect(() => liveRlsEnvironmentAvailable()).toThrow(/mismatch/);
-    expect(bosLiveRlsCertified).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
   });
 });

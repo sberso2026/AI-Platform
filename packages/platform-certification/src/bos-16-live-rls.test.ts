@@ -60,11 +60,11 @@ function jwtRole(token: string): string | undefined {
 }
 
 describe("BOS-16 live RLS certification honesty", () => {
-  it("keeps liveRlsCertified and productionEligible static false", () => {
-    expect(bosLiveRlsCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.productionEligible"]).toBe(false);
+  it("promotes liveRlsCertified and productionEligible from A11 Core evidence", () => {
+    expect(bosLiveRlsCertified).toBe(true);
+    expect(bosProductionEligible).toBe(true);
+    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(true);
+    expect(BOS_RELEASE_INDICATORS["bos.productionEligible"]).toBe(true);
     expect(BOS_LIVE_RLS_REPRESENTATIVE_TABLES).toHaveLength(11);
   });
 });
@@ -81,7 +81,7 @@ describe.skipIf(!envReady)("BOS-16 live RLS execution", () => {
       projectRef: "rntonzigxwxcjlcsadip",
       hostname: "rntonzigxwxcjlcsadip.supabase.co",
     });
-    expect(bosLiveRlsCertified).toBe(false);
+    expect(bosLiveRlsCertified).toBe(true);
   });
 
   it("proves user JWTs are authenticated sessions and not service-role", () => {

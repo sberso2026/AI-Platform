@@ -48,9 +48,9 @@ describe("BOS-0 identity and contracts", () => {
     expect(getBusinessOsFoundationDeclaration().productSlug).toBe("business-os");
   });
 
-  it("keeps catalog coming_soon in BOS-0", () => {
-    expect(BUSINESS_OS_RUNTIME_MANIFEST.catalogStatus).toBe("coming_soon");
-    expect(getBusinessOsFoundationDeclaration().catalogStatus).toBe("coming_soon");
+  it("publishes catalog available for BOS Core v1.0 GA", () => {
+    expect(BUSINESS_OS_RUNTIME_MANIFEST.catalogStatus).toBe("available");
+    expect(getBusinessOsFoundationDeclaration().catalogStatus).toBe("available");
     expect(getBusinessOsFoundationDeclaration().previewAccess.mode).toBe("feature_flag_foundation");
     expect(getBusinessOsFoundationDeclaration().previewAccess.usesCommercePreviewLifecycle).toBe(false);
     expect(getBusinessOsFoundationDeclaration().previewAccess.usesReleaseChannel).toBe(false);

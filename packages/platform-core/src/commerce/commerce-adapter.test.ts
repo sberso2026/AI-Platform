@@ -59,7 +59,14 @@ describe("Platform Commerce UI — product catalog adapter", () => {
     const comingSoon = filterProductsByTab(products, "coming_soon");
     expect(comingSoon.length).toBeGreaterThan(0);
     expect(comingSoon.every((p) => p.catalogTab === "coming_soon")).toBe(true);
-    expect(comingSoon.some((p) => p.osId === "business")).toBe(true);
+    expect(comingSoon.some((p) => p.osId === "business")).toBe(false);
+  });
+
+  it("places Business OS in the Available tab after Core v1.0 GA", () => {
+    const products = mapRegistryToCommercialProducts(baseContext);
+    const business = getProductBySlug(products, "business-os");
+    expect(business?.catalogTab).toBe("available");
+    expect(filterProductsByTab(products, "available").some((p) => p.osId === "business")).toBe(true);
   });
 
   it("does not expose internal platform OS card", () => {

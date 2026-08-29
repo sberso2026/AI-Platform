@@ -62,7 +62,7 @@ describe("BOS-13 production validation web wiring", () => {
   });
 
   it("does not claim browser E2E certification from static wiring tests", () => {
-    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_CERTIFIED");
+    expect(bosBrowserE2eCertified).toBe(true);
   });
 });

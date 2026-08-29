@@ -56,7 +56,7 @@ describe("Xero security architecture", () => {
     expect(XERO_SECURITY_ARCHITECTURE_READY).toBe(true);
     expect(XERO_LIVE_CERTIFICATION_EXECUTED).toBe(false);
     expect(bosLiveXeroCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosProductionEligible).toBe(true);
     expect(liveProviderCredentialsAvailable("xero")).toBe(false);
     expect(assessBosLiveXeroEnvironment()).toEqual({ status: "unavailable", reason: "no_live_configuration" });
     expect(XERO_THREAT_MODEL.map((row) => row.id)).toHaveLength(16);

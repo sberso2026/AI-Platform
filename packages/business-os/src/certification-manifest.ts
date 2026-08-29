@@ -5,6 +5,7 @@
 import { BUSINESS_CAPABILITY_IDS } from "@rtb/types";
 import { BUSINESS_OS_VERSION } from "./version";
 import {
+  BOS_16_A11_QUALIFICATION_SHA,
   BOS_16_CERTIFIED_BASELINE_SHA,
   BOS_CERTIFICATION_GATES,
   BOS_CERTIFICATION_PRODUCT,
@@ -25,8 +26,10 @@ import {
   BOS_V1_CORE_GA_GATES,
   BOS_V1_FEATURE_SET,
   BOS_V1_FINAL_QUALIFICATION_PLAN,
+  BOS_V1_GA_PROMOTED,
   BOS_V1_PROVIDER_PROMOTION_STEPS,
   BOS_V1_RELEASE_SCOPE,
+  BOS_V1_RELEASE_TYPE,
   assertBosV1ScopeIntegrity,
   bosV1LiveGateId,
   bosV1ProviderProductStatus,
@@ -51,7 +54,7 @@ import {
 } from "./release";
 
 export const BOS_16_BOUNDARY_NOTE =
-  "BOS-16A11 qualifies BOS Core v1.0 against the A10 freeze. Do not start BOS-17 or create a GA tag." as const;
+  "BOS-16A12 promotes BOS Core v1.0 GA from A11 qualification. Xero, Microsoft 365, and HubSpot remain Preview. Do not start BOS-17." as const;
 
 export const CERTIFICATION_MANIFEST_IMPLEMENTED = true as const;
 export const CERTIFICATION_SECOND_STACK_DETECTED = false as const;
@@ -65,7 +68,7 @@ export const BOS_CERTIFICATION_STATIC_FLAG_MIGRATION = {
     "buildBosReleaseManifest derives gate evidence fail-closed.",
     "BOS_RELEASE_INDICATORS remain static declarations until a dedicated consumer-safe migration.",
     "Evidence pass must not assign bos.liveRlsCertified, bos.browserE2eCertified, or live provider certified flags.",
-    "productionEligible remains a declaration and stays false until an approved product decision.",
+    "BOS-16A12 is the approved product decision: Core productionEligible/liveRlsCertified/browserE2eCertified are true; live provider flags stay false.",
   ],
 } as const;
 
@@ -104,7 +107,7 @@ export function currentBosCertificationEvidence(
       supersedes: "bos16.live-rls.rntonzigxwxcjlcsadip.063c482",
       limitations: [
         "A11 refreshed live RLS against rntonzigxwxcjlcsadip using Platform identity sign-in.",
-        "Release declaration bos.liveRlsCertified remains false.",
+        "BOS-16A12 promoted bos.liveRlsCertified from this A11 evidence.",
       ],
     }),
     record({
@@ -122,7 +125,7 @@ export function currentBosCertificationEvidence(
       supersedes: "bos16.browser-e2e.fixture.063c482",
       limitations: [
         "Fixture/browser execution only. Does not satisfy live provider gates.",
-        "Release declaration bos.browserE2eCertified remains false.",
+        "BOS-16A12 promoted bos.browserE2eCertified from this A11 evidence.",
       ],
     }),
     record({
@@ -248,13 +251,17 @@ export function bos16CompatibilityClaims(currentCommitSha: string): EvidenceComp
       currentSha: currentCommitSha,
       unaffectedBoundaries: ["tenant_workspace_rls", "browser_e2e_fixture", "connector_security_architecture"],
       provenance:
-        "BOS-16A11 qualifies BOS Core v1.0 against the A10 freeze SHA. Tenant/workspace/RLS, browser integration UX, and connector security architecture remain compatible with the certified ancestor.",
+        "BOS-16A12 promotes BOS Core v1.0 GA from A11 qualification. Tenant/workspace/RLS, browser integration UX, and connector security architecture remain compatible with the certified ancestor.",
     },
   ];
 }
 
 export type BosReleaseManifest = {
   product: typeof BOS_CERTIFICATION_PRODUCT;
+  version: string;
+  releaseType: typeof BOS_V1_RELEASE_TYPE;
+  gaPromoted: typeof BOS_V1_GA_PROMOTED;
+  qualificationSha: typeof BOS_16_A11_QUALIFICATION_SHA;
   releaseCandidateVersion: string;
   commitSha: string;
   capabilityCount: number;
@@ -293,7 +300,7 @@ export type BosReleaseManifest = {
   rlsCertificationState: GateEvaluation;
   knownLimitations: string[];
   knownTestDebt: string[];
-  productionEligible: false;
+  productionEligible: boolean;
   productionEligibilityComputed: boolean;
   decisionReason: string;
   declarations: {
@@ -305,7 +312,7 @@ export type BosReleaseManifest = {
     liveHubSpotCertified: boolean;
     browserE2eCertified: boolean;
   };
-  gaReady: false;
+  gaReady: boolean;
   preGaInternalReady: boolean;
   featureSet: typeof BOS_V1_FEATURE_SET;
   releaseScope: typeof BOS_V1_RELEASE_SCOPE;
@@ -416,9 +423,8 @@ export function buildBosReleaseManifest(input: {
     "Live Xero certification not executed; Xero remains Preview.",
     "Live Microsoft 365 certification not executed; Microsoft 365 remains Preview.",
     "Live HubSpot certification not executed; HubSpot remains Preview.",
-    "A11 product decision: BOS Core is the v1.0 GA feature set; live connectors are Preview and not Core GA gates.",
-    "bos.productionEligible remains false until explicit GA promotion after A11 qualification.",
-    "bos.liveRlsCertified and bos.browserE2eCertified remain static false; evidence is separate.",
+    "BOS-16A12 promoted BOS Core v1.0 GA. Preview connectors are not Core GA gates and are not Certified.",
+    "bos.liveXeroCertified, bos.liveMicrosoft365Certified, and bos.liveHubSpotCertified remain false.",
     ...input.evidence.flatMap((row) => [...row.limitations]),
   ];
 
@@ -426,10 +432,11 @@ export function buildBosReleaseManifest(input: {
   const coreGaEligibilityComputed = BOS_V1_CORE_GA_GATES.every(
     (gateId) => gateEvidenceState[gateId].state === "pass",
   );
+  const gaReady = bosProductionEligible && coreGaEligibilityComputed && productionEligibilityComputed;
   const decisionReason =
     productionBlockers.length > 0
       ? `Fail closed: ${productionBlockers.join("; ")}.`
-      : "BOS Core GA gates currently pass with Preview connectors excluded from the certified feature set. A11 keeps bos.productionEligible=false pending explicit GA promotion.";
+      : "BOS Core v1.0 GA promoted from A11 qualification. Preview connectors remain Preview.";
 
   const coreGateEvidence = BOS_V1_CORE_GA_GATES.map((gateId) => ({
     gateId,
@@ -463,6 +470,10 @@ export function buildBosReleaseManifest(input: {
 
   const manifest: BosReleaseManifest = {
     product: BOS_CERTIFICATION_PRODUCT,
+    version: BUSINESS_OS_VERSION,
+    releaseType: BOS_V1_RELEASE_TYPE,
+    gaPromoted: BOS_V1_GA_PROMOTED,
+    qualificationSha: BOS_16_A11_QUALIFICATION_SHA,
     releaseCandidateVersion: BUSINESS_OS_VERSION,
     commitSha: input.currentCommitSha,
     capabilityCount: BUSINESS_CAPABILITY_IDS.length,
@@ -481,7 +492,7 @@ export function buildBosReleaseManifest(input: {
     rlsCertificationState: gateEvidenceState.live_rls,
     knownLimitations,
     knownTestDebt: [],
-    productionEligible: false,
+    productionEligible: bosProductionEligible,
     productionEligibilityComputed,
     decisionReason,
     declarations: {
@@ -493,7 +504,7 @@ export function buildBosReleaseManifest(input: {
       liveHubSpotCertified: bosLiveHubSpotCertified,
       browserE2eCertified: bosBrowserE2eCertified,
     },
-    gaReady: false,
+    gaReady,
     preGaInternalReady: preGaBlockers.length === 0,
     featureSet: BOS_V1_FEATURE_SET,
     releaseScope: BOS_V1_RELEASE_SCOPE,
@@ -547,8 +558,8 @@ export type BosPreGaReadinessReport = {
   xeroLive: "outstanding" | "pass";
   microsoft365Live: "outstanding" | "pass";
   hubspotLive: "outstanding" | "pass";
-  ga: "NOT_READY";
-  productionEligible: false;
+  ga: "READY" | "NOT_READY";
+  productionEligible: boolean;
   preGaInternalReady: boolean;
   limitations: string[];
 };
@@ -566,12 +577,12 @@ export function assessBosPreGaReadiness(
     microsoft365Live:
       manifest.providerCertificationState.microsoft_365.liveEvidence.state === "pass" ? "pass" : "outstanding",
     hubspotLive: manifest.providerCertificationState.hubspot.liveEvidence.state === "pass" ? "pass" : "outstanding",
-    ga: "NOT_READY",
-    productionEligible: false,
+    ga: manifest.gaReady ? "READY" : "NOT_READY",
+    productionEligible: manifest.productionEligible,
     preGaInternalReady: manifest.preGaInternalReady,
     limitations: [
       "Live connectors remain Preview until live execution evidence passes and an explicit promotion occurs.",
-      "A11 qualified BOS Core as the v1.0 GA feature set; productionEligible stays false until explicit GA promotion.",
+      "BOS-16A12 promoted BOS Core v1.0 GA. Xero, Microsoft 365, and HubSpot remain Preview.",
     ],
   };
 }

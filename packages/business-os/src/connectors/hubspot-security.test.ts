@@ -66,7 +66,7 @@ describe("HubSpot security architecture", () => {
     expect(HUBSPOT_SCOPE_MINIMISATION_PASS).toBe(true);
     expect(HUBSPOT_CURRENT_OAUTH_CONTRACT_VERIFIED).toBe(true);
     expect(bosLiveHubSpotCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
+    expect(bosProductionEligible).toBe(true);
     expect(XERO_CONNECTOR_IMPLEMENTED).toBe(true);
     expect(XERO_SECURITY_ARCHITECTURE_READY).toBe(true);
     expect(bosLiveXeroCertified).toBe(false);

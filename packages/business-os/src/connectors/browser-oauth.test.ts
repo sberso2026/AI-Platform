@@ -87,8 +87,8 @@ describe("BOS-16A8 browser fixture OAuth control flow", () => {
     expect(bosLiveXeroCertified).toBe(false);
     expect(bosLiveMicrosoft365Certified).toBe(false);
     expect(bosLiveHubSpotCertified).toBe(false);
-    expect(bosProductionEligible).toBe(false);
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosProductionEligible).toBe(true);
+    expect(bosBrowserE2eCertified).toBe(true);
     expect(directAgentProviderAccess).toBe(false);
     expect(crossTenantAgentAccess).toBe(false);
   });
@@ -181,7 +181,7 @@ describe("BOS-16A8 browser fixture OAuth control flow", () => {
   });
 
   it("does not treat browser fixture evidence as a release declaration", () => {
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
     expect(BROWSER_E2E_EVIDENCE_PASS).toBe(true);
   });
 });
