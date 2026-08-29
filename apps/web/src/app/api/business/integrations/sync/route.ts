@@ -12,6 +12,10 @@ export const POST = withBusinessApi(async ({ ctx }, request) => {
       {
         installationId: String(body.installationId ?? ""),
         cancel: Boolean(body.cancel),
+        simulate:
+          body.simulate === "timeout" || body.simulate === "rate_limit" || body.simulate === "partial"
+            ? body.simulate
+            : undefined,
       },
       { userId: ctx.userId, actorType: "human" },
     );

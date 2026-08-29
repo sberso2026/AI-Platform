@@ -1,7 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { clearBosCertificationEnv } from "../certification-env-harness";
 import {
   BOS14B_PROVIDER_STATUS,
   BOS_CONNECTOR_CERTIFICATION,
+  HUBSPOT_CONNECTOR_IMPLEMENTED,
+  HUBSPOT_LIVE_CERTIFICATION_EXECUTED,
+  HUBSPOT_SECURITY_ARCHITECTURE_READY,
+  M365_CONNECTOR_IMPLEMENTED,
+  M365_LIVE_CERTIFICATION_EXECUTED,
+  M365_SECURITY_ARCHITECTURE_READY,
+  XERO_CONNECTOR_IMPLEMENTED,
+  XERO_LIVE_CERTIFICATION_EXECUTED,
+  XERO_SECURITY_ARCHITECTURE_READY,
   bosLiveHubSpotCertified,
   bosLiveMicrosoft365Certified,
   bosLiveXeroCertified,
@@ -10,7 +20,12 @@ import {
 import { BOS_CONNECTOR_ADAPTERS } from "./adapters";
 
 describe("BOS-14B live provider honesty", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("keeps contract/sandbox certification and reports BLOCKED_ENV when live credentials are absent", () => {
+    clearBosCertificationEnv();
     expect(liveProviderCredentialsAvailable("xero")).toBe(false);
     expect(liveProviderCredentialsAvailable("microsoft_365")).toBe(false);
     expect(liveProviderCredentialsAvailable("hubspot")).toBe(false);
@@ -25,6 +40,15 @@ describe("BOS-14B live provider honesty", () => {
     expect(bosLiveXeroCertified).toBe(false);
     expect(bosLiveMicrosoft365Certified).toBe(false);
     expect(bosLiveHubSpotCertified).toBe(false);
+    expect(XERO_CONNECTOR_IMPLEMENTED).toBe(true);
+    expect(XERO_SECURITY_ARCHITECTURE_READY).toBe(true);
+    expect(XERO_LIVE_CERTIFICATION_EXECUTED).toBe(false);
+    expect(M365_CONNECTOR_IMPLEMENTED).toBe(true);
+    expect(M365_SECURITY_ARCHITECTURE_READY).toBe(true);
+    expect(M365_LIVE_CERTIFICATION_EXECUTED).toBe(false);
+    expect(HUBSPOT_CONNECTOR_IMPLEMENTED).toBe(true);
+    expect(HUBSPOT_SECURITY_ARCHITECTURE_READY).toBe(true);
+    expect(HUBSPOT_LIVE_CERTIFICATION_EXECUTED).toBe(false);
     expect(() => BOS_CONNECTOR_ADAPTERS.xero.write()).toThrow("connector_write_forbidden");
     expect(() => BOS_CONNECTOR_ADAPTERS.microsoft_365.write()).toThrow("connector_write_forbidden");
     expect(() => BOS_CONNECTOR_ADAPTERS.hubspot.write()).toThrow("connector_write_forbidden");

@@ -51,6 +51,21 @@ describe("BOS-12 connector contracts", () => {
       "unrestricted_external_proxy_forbidden",
     );
     expect(connectors.assertConnectorUrl("xero", "https://api.xero.com/api.xro/2.0/Invoices").host).toBe("api.xero.com");
+    expect(connectors.assertConnectorUrl("microsoft_365", "https://graph.microsoft.com/v1.0/me").host).toBe(
+      "graph.microsoft.com",
+    );
+    expect(
+      connectors.assertConnectorUrl(
+        "microsoft_365",
+        "https://login.microsoftonline.com/11111111-1111-4111-8111-111111111111/oauth2/v2.0/token",
+      ).host,
+    ).toBe("login.microsoftonline.com");
+    expect(
+      connectors.assertConnectorUrl("hubspot", "https://api.hubapi.com/crm/v3/objects/contacts").host,
+    ).toBe("api.hubapi.com");
+    expect(() => connectors.assertConnectorUrl("hubspot", "https://evil.example/crm")).toThrow(
+      "unrestricted_external_proxy_forbidden",
+    );
   });
 
   it("stays usable with zero connectors configured", async () => {
@@ -60,6 +75,37 @@ describe("BOS-12 connector contracts", () => {
     expect(overview.installations).toEqual([]);
     expect(overview.catalog).toHaveLength(4);
     expect(overview.catalog.every((row) => row.writeLabel === "READ ONLY" && row.live === false)).toBe(true);
+  });
+
+  it("keeps BOS Core operational when a Preview connector is unavailable", async () => {
+    const { connectors } = harness();
+    for (const connectorId of ["xero", "microsoft_365", "hubspot"] as const) {
+      const down = await connectors.configure(SCOPE, { connectorId, mode: "live" }, HUMAN);
+      expect(down.health).toBe("unavailable");
+    }
+    const overview = await connectors.overview(SCOPE);
+    expect(overview.usableWithoutConnectors).toBe(true);
+    expect(connectors.status().requiredForBusinessOs).toBe(false);
+    expect(connectors.status().NoVendorHardDependency).toBe(true);
+    await expect(connectors.assertAgentContextGates(SCOPE)).resolves.toEqual({ applied: false });
+    const csv = await connectors.configure(SCOPE, { connectorId: "csv_excel", mode: "fixture" }, HUMAN);
+    expect(csv.health).not.toBe("unavailable");
+  });
+
+  it("isolates Xero, Microsoft 365, and HubSpot failures from each other and from Core", async () => {
+    const { connectors } = harness();
+    const xeroFixture = await connectors.configure(SCOPE, { connectorId: "xero", mode: "fixture" }, HUMAN);
+    await connectors.sync(SCOPE, { installationId: xeroFixture.id }, HUMAN);
+    const xeroDown = await connectors.configure(SCOPE, { connectorId: "xero", mode: "live" }, HUMAN);
+    expect(xeroDown.health).toBe("unavailable");
+    const hubspot = await connectors.configure(SCOPE, { connectorId: "hubspot", mode: "fixture" }, HUMAN);
+    await connectors.sync(SCOPE, { installationId: hubspot.id }, HUMAN);
+    expect(hubspot.health).not.toBe("unavailable");
+    const m365 = await connectors.configure(SCOPE, { connectorId: "microsoft_365", mode: "live" }, HUMAN);
+    expect(m365.health).toBe("unavailable");
+    const overview = await connectors.overview(SCOPE);
+    expect(overview.usableWithoutConnectors).toBe(true);
+    await expect(connectors.assertAgentContextGates(SCOPE)).resolves.toEqual({ applied: true });
   });
 });
 
@@ -81,8 +127,8 @@ describe("BOS-12 configure, sync, revoke", () => {
     const { connectors } = harness();
     const row = await connectors.configure(SCOPE, { connectorId: "microsoft_365", mode: "live" }, HUMAN);
     expect(row.health).toBe("unavailable");
-    expect(row.effectiveMode).toBe("fixture");
-    expect(row.modeLabel).toBe("FIXTURE/SANDBOX");
+    expect(row.effectiveMode).toBe("live");
+    expect(row.modeLabel).toBe("LIVE_UNAVAILABLE");
   });
 
   it("syncs fixture data into staging without making it canonical", async () => {

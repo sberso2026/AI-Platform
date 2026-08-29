@@ -17,8 +17,8 @@ export interface BusinessOsStatusSnapshot {
   name: string;
   version: string;
   phase: typeof BUSINESS_OS_PHASE;
-  foundationState: "preview";
-  catalogStatus: "coming_soon";
+  foundationState: "ga";
+  catalogStatus: "available";
   productSlug: typeof BUSINESS_OS_PRODUCT_SLUG;
   featureKey: typeof BUSINESS_OS_FEATURE_KEY;
   implementsOwnAiStack: false;
@@ -40,7 +40,7 @@ export class BusinessOsStatusService {
       name: BUSINESS_OS_RUNTIME_MANIFEST.name,
       version: BUSINESS_OS_VERSION,
       phase: BUSINESS_OS_PHASE,
-      foundationState: "preview",
+      foundationState: "ga",
       catalogStatus: declaration.catalogStatus,
       productSlug: BUSINESS_OS_PRODUCT_SLUG,
       featureKey: BUSINESS_OS_FEATURE_KEY,
@@ -55,7 +55,7 @@ export class BusinessOsStatusService {
   configuration() {
     return {
       featureKey: BUSINESS_OS_FEATURE_KEY,
-      catalogStatus: "coming_soon" as const,
+      catalogStatus: "available" as const,
       kernelServices: {
         aiDirector: true,
         eventBus: true,

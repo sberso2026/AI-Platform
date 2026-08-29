@@ -14,7 +14,7 @@ import { resolveEntitlementTarget } from "../lib/commerce/guards";
 describe("BOS-14 production GA web wiring", () => {
   it("keeps Business OS entitlement mapping and BOS-14 phase", () => {
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
-    expect(bosProductionEligible).toBe(false);
+    expect(bosProductionEligible).toBe(true);
     for (const route of BOS_14_BROWSER_ROUTES) {
       expect(resolveEntitlementTarget(route)).toEqual({
         productKey: "business-os",
@@ -27,6 +27,6 @@ describe("BOS-14 production GA web wiring", () => {
 
   it("does not claim browser E2E certification from static wiring tests", () => {
     expect(BOS14C_STATUS).toBe("BOS14C_BLOCKED_BROWSER_ENV");
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
   });
 });

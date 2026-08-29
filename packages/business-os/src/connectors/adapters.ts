@@ -1,5 +1,14 @@
 import type { BosConnectorContract, BosConnectorId } from "@rtb/types";
 import { connectorContract } from "./catalog";
+import { XeroProviderClient, type XeroClientDeps } from "./xero-client";
+import { XeroConnectorError } from "./xero-errors";
+import { resolveXeroSecrets } from "./xero-secrets";
+import { Microsoft365ProviderClient, type Ms365ClientDeps } from "./m365-client";
+import { Ms365ConnectorError } from "./m365-errors";
+import { resolveMs365Secrets } from "./m365-secrets";
+import { HubSpotProviderClient, type HubSpotClientDeps } from "./hubspot-client";
+import { HubSpotConnectorError } from "./hubspot-errors";
+import { resolveHubSpotSecrets } from "./hubspot-secrets";
 
 export type AdapterPage = {
   records: Array<{
@@ -13,6 +22,7 @@ export type AdapterPage = {
   rateLimited: boolean;
   timedOut: boolean;
   partial: boolean;
+  errorCategory?: string | null;
 };
 
 export interface ConnectorAdapter {
@@ -22,6 +32,10 @@ export interface ConnectorAdapter {
     secretId: string | null;
     mode: "fixture" | "sandbox" | "live";
     simulate?: "timeout" | "rate_limit" | "partial";
+    tenantId?: string;
+    workspaceId?: string;
+    installationId?: string;
+    expectedProviderOrgId?: string | null;
   }): Promise<AdapterPage>;
   write(): never;
 }
@@ -126,9 +140,214 @@ export function createFixtureAdapter(connectorId: BosConnectorId): ConnectorAdap
   };
 }
 
+export function createXeroAdapter(options?: {
+  liveClientFactory?: (deps: XeroClientDeps) => XeroProviderClient;
+  fetch?: XeroClientDeps["fetch"];
+}): ConnectorAdapter {
+  const contract = connectorContract("xero");
+  const fixture = createFixtureAdapter("xero");
+  return {
+    contract,
+    async readPage(input) {
+      if (input.mode !== "live") {
+        return fixture.readPage(input);
+      }
+      const empty = (
+        errorCategory: string,
+        flags: Partial<Pick<AdapterPage, "rateLimited" | "timedOut" | "partial">> = {},
+      ): AdapterPage => ({
+        records: [],
+        nextCursor: null,
+        rateLimited: false,
+        timedOut: false,
+        partial: true,
+        errorCategory,
+        ...flags,
+      });
+      if (!input.secretId) return empty("xero_missing_secret");
+      if (!input.tenantId || !input.workspaceId || !input.installationId || !input.expectedProviderOrgId) {
+        return empty("xero_org_unbound");
+      }
+      try {
+        const secrets = resolveXeroSecrets(input.secretId);
+        if (secrets.tenantId !== input.expectedProviderOrgId) {
+          return empty("xero_org_mismatch");
+        }
+        const deps: XeroClientDeps = {
+          fetch: options?.fetch ?? globalThis.fetch.bind(globalThis),
+          secrets,
+          expectedProviderOrgId: input.expectedProviderOrgId,
+        };
+        const client = options?.liveClientFactory ? options.liveClientFactory(deps) : new XeroProviderClient(deps);
+        const records = [
+          await client.getOrganisation(),
+          ...(await client.getAccounts()),
+          ...(await client.getInvoicesReadOnly(1)),
+          ...(await client.getFinancialContacts(1)),
+        ];
+        return {
+          records,
+          nextCursor: null,
+          rateLimited: false,
+          timedOut: false,
+          partial: false,
+          errorCategory: null,
+        };
+      } catch (error) {
+        if (error instanceof XeroConnectorError) {
+          if (error.category === "xero_rate_limited") return empty(error.category, { rateLimited: true });
+          if (error.category === "xero_timeout") return empty(error.category, { timedOut: true });
+          return empty(error.category);
+        }
+        return empty("xero_live_unavailable");
+      }
+    },
+    write(): never {
+      throw new Error("connector_write_forbidden");
+    },
+  };
+}
+
+export function createMicrosoft365Adapter(options?: {
+  liveClientFactory?: (deps: Ms365ClientDeps) => Microsoft365ProviderClient;
+  fetch?: Ms365ClientDeps["fetch"];
+}): ConnectorAdapter {
+  const contract = connectorContract("microsoft_365");
+  const fixture = createFixtureAdapter("microsoft_365");
+  return {
+    contract,
+    async readPage(input) {
+      if (input.mode !== "live") {
+        return fixture.readPage(input);
+      }
+      const empty = (
+        errorCategory: string,
+        flags: Partial<Pick<AdapterPage, "rateLimited" | "timedOut" | "partial">> = {},
+      ): AdapterPage => ({
+        records: [],
+        nextCursor: null,
+        rateLimited: false,
+        timedOut: false,
+        partial: true,
+        errorCategory,
+        ...flags,
+      });
+      if (!input.secretId) return empty("m365_missing_secret");
+      if (!input.tenantId || !input.workspaceId || !input.installationId || !input.expectedProviderOrgId) {
+        return empty("m365_tenant_unbound");
+      }
+      try {
+        const secrets = resolveMs365Secrets(input.secretId);
+        if (secrets.tenantId !== input.expectedProviderOrgId) {
+          return empty("m365_tenant_mismatch");
+        }
+        const deps: Ms365ClientDeps = {
+          fetch: options?.fetch ?? globalThis.fetch.bind(globalThis),
+          secrets,
+          expectedProviderOrgId: input.expectedProviderOrgId,
+        };
+        const client = options?.liveClientFactory
+          ? options.liveClientFactory(deps)
+          : new Microsoft365ProviderClient(deps);
+        const records = [
+          await client.getSignedInUser(),
+          ...(await client.getCalendarEventsReadOnly()),
+          ...(await client.getDriveItemMetadata()),
+        ];
+        return {
+          records,
+          nextCursor: null,
+          rateLimited: false,
+          timedOut: false,
+          partial: false,
+          errorCategory: null,
+        };
+      } catch (error) {
+        if (error instanceof Ms365ConnectorError) {
+          if (error.category === "m365_rate_limited") return empty(error.category, { rateLimited: true });
+          if (error.category === "m365_timeout") return empty(error.category, { timedOut: true });
+          return empty(error.category);
+        }
+        return empty("m365_live_unavailable");
+      }
+    },
+    write(): never {
+      throw new Error("connector_write_forbidden");
+    },
+  };
+}
+
+export function createHubSpotAdapter(options?: {
+  liveClientFactory?: (deps: HubSpotClientDeps) => HubSpotProviderClient;
+  fetch?: HubSpotClientDeps["fetch"];
+}): ConnectorAdapter {
+  const contract = connectorContract("hubspot");
+  const fixture = createFixtureAdapter("hubspot");
+  return {
+    contract,
+    async readPage(input) {
+      if (input.mode !== "live") {
+        return fixture.readPage(input);
+      }
+      const empty = (
+        errorCategory: string,
+        flags: Partial<Pick<AdapterPage, "rateLimited" | "timedOut" | "partial">> = {},
+      ): AdapterPage => ({
+        records: [],
+        nextCursor: null,
+        rateLimited: false,
+        timedOut: false,
+        partial: true,
+        errorCategory,
+        ...flags,
+      });
+      if (!input.secretId) return empty("hubspot_missing_secret");
+      if (!input.tenantId || !input.workspaceId || !input.installationId || !input.expectedProviderOrgId) {
+        return empty("hubspot_portal_unbound");
+      }
+      try {
+        const secrets = resolveHubSpotSecrets(input.secretId);
+        if (secrets.portalId !== input.expectedProviderOrgId) {
+          return empty("hubspot_portal_mismatch");
+        }
+        const deps: HubSpotClientDeps = {
+          fetch: options?.fetch ?? globalThis.fetch.bind(globalThis),
+          secrets,
+          expectedProviderOrgId: input.expectedProviderOrgId,
+        };
+        const client = options?.liveClientFactory ? options.liveClientFactory(deps) : new HubSpotProviderClient(deps);
+        await client.getAccountIdentity();
+        const records = [
+          ...(await client.getContactsReadOnly()),
+          ...(await client.getCompaniesReadOnly()),
+          ...(await client.getDealsReadOnly()),
+        ];
+        return {
+          records,
+          nextCursor: null,
+          rateLimited: false,
+          timedOut: false,
+          partial: false,
+          errorCategory: null,
+        };
+      } catch (error) {
+        if (error instanceof HubSpotConnectorError) {
+          if (error.category === "hubspot_rate_limited") return empty(error.category, { rateLimited: true });
+          if (error.category === "hubspot_timeout") return empty(error.category, { timedOut: true });
+          return empty(error.category);
+        }
+        return empty("hubspot_live_unavailable");
+      }
+    },
+    write(): never {
+      throw new Error("connector_write_forbidden");
+    },
+  };
+}
+
 export const BOS_CONNECTOR_ADAPTERS: Record<BosConnectorId, ConnectorAdapter> = {
-  xero: createFixtureAdapter("xero"),
-  microsoft_365: createFixtureAdapter("microsoft_365"),
-  hubspot: createFixtureAdapter("hubspot"),
+  xero: createXeroAdapter(),
+  microsoft_365: createMicrosoft365Adapter(),
+  hubspot: createHubSpotAdapter(),
   csv_excel: createFixtureAdapter("csv_excel"),
 };

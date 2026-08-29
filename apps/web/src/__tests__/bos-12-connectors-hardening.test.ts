@@ -52,6 +52,9 @@ describe("BOS-12 Connectors and Hardening web wiring", () => {
       "import-commit",
       "demo",
       "diagnostics",
+      "oauth/start",
+      "oauth/callback",
+      "oauth/fixture",
     ]) {
       const file = fs.readFileSync(path.join(API_ROOT, "integrations", nested, "route.ts"), "utf8");
       expect(file).toContain("business_os.connectors.manage");
@@ -74,9 +77,22 @@ describe("BOS-12 Connectors and Hardening web wiring", () => {
     }
     expect(page).toContain("READ ONLY");
     expect(page).toContain("FIXTURE/SANDBOX");
+    expect(page).toContain("Connect Xero");
+    expect(page).toContain("Connect Microsoft 365");
+    expect(page).toContain("Connect HubSpot");
+    expect(page).toContain("bos-consent-dialog");
+    expect(page).toContain("bos-disconnect-dialog");
+    expect(page).toContain("bos-browser-fixture-banner");
+    expect(page).not.toMatch(/this fixture is live/i);
+    expect(page).not.toMatch(/NEXT_PUBLIC_(XERO|MS365|HUBSPOT)_/);
     expect(page).toContain("LIVE");
     expect(page).toContain("DEGRADED");
     expect(page).toContain("REVOKED");
+    expect(page).toContain("Preview");
+    expect(page).toContain("BOS_CONNECTOR_PREVIEW_DISCLOSURE");
+    expect(page).toContain("BOS_CONNECTOR_PRODUCT_STATUS");
+    expect(page).not.toMatch(/production certified/i);
+    expect(page).not.toMatch(/fully validated live integration/i);
     expect(page).not.toMatch(/this fixture is live/i);
   });
 });

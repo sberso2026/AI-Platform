@@ -47,6 +47,10 @@ describe("BOS-7 Work & Operations", () => {
     const sql = readFileSync(migration, "utf8");
     expect(sql).toContain("business_os_work_items");
     expect(sql).toContain("business_os_work_cost_facts");
+    expect(sql).toContain("linked_opportunity_id uuid REFERENCES business_os_growth_opportunities(id)");
+    expect(sql).toContain("linked_proposal_id uuid REFERENCES business_os_revenue_proposals(id)");
+    expect(sql).not.toMatch(/(^|[^a-z0-9_])business_os_opportunities([^a-z0-9_]|$)/);
+    expect(sql).not.toMatch(/(^|[^a-z0-9_])business_os_proposals([^a-z0-9_]|$)/);
     expect(sql).toContain("ENABLE ROW LEVEL SECURITY");
     expect(sql).toContain("FORCE ROW LEVEL SECURITY");
     expect(sql.toLowerCase()).not.toContain("create table if not exists payroll");

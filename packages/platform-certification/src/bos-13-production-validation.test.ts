@@ -1,10 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   BOS_13_BOUNDARY_NOTE,
   BOS_CONNECTOR_CERTIFICATION,
+  BOS_PREVIEW_PROVIDER_PROMOTION_GATES,
   BOS_PRODUCTION_GA_REMAINING_GATES,
   BOS_RELEASE_INDICATORS,
   BOS_13_VERDICT,
@@ -22,6 +23,8 @@ import {
   liveRlsEnvironmentAvailable,
 } from "@rtb/business-os";
 import { createPlatformKernel } from "@rtb/platform-kernel";
+import { ambientBosLiveRlsReady } from "./lib/bos-live-env";
+import { clearBosCertificationEnv } from "../../business-os/src/certification-env-harness";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const TEST_URL = process.env.SUPABASE_TEST_URL;
@@ -29,7 +32,7 @@ const TEST_ANON_KEY = process.env.SUPABASE_TEST_ANON_KEY;
 const TENANT_A_JWT = process.env.BOS_RLS_TENANT_A_JWT || process.env.COMMERCE_RLS_TENANT_A_JWT;
 const TENANT_B_ID = process.env.BOS_RLS_TENANT_B_ID || process.env.COMMERCE_RLS_TENANT_B_ID;
 const WORKSPACE_B_ID = process.env.BOS_RLS_WORKSPACE_B_ID;
-const envReady = liveRlsEnvironmentAvailable();
+const envReady = ambientBosLiveRlsReady();
 
 const REPRESENTATIVE_TABLES = [
   "business_os_kpis",
@@ -45,8 +48,14 @@ const REPRESENTATIVE_TABLES = [
 ] as const;
 
 describe("BOS-13 production validation", () => {
+  beforeEach(() => {
+    clearBosCertificationEnv();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
   it("certifies RC limitations without a 19th capability or new domain", () => {
-    expect(BUSINESS_OS_VERSION).toBe("0.13.3");
+    expect(BUSINESS_OS_VERSION).toBe("1.0.0");
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
     expect(BOS_13_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(BOS_13_BOUNDARY_NOTE).toContain("Do not start a post-BOS-13 feature phase");
@@ -56,22 +65,22 @@ describe("BOS-13 production validation", () => {
     expect(bos.capabilities.isImplemented("ai_workforce")).toBe(true);
     expect(bos.connectors.contract().implemented).toBe(true);
     expect(bosReleaseCandidate).toBe(true);
-    expect(bosProductionEligible).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(false);
+    expect(bosProductionEligible).toBe(true);
+    expect(BOS_RELEASE_INDICATORS["bos.liveRlsCertified"]).toBe(true);
     expect(BOS_RELEASE_INDICATORS["bos.liveXeroCertified"]).toBe(false);
     expect(BOS_RELEASE_INDICATORS["bos.liveMicrosoft365Certified"]).toBe(false);
     expect(BOS_RELEASE_INDICATORS["bos.liveHubSpotCertified"]).toBe(false);
-    expect(BOS_RELEASE_INDICATORS["bos.browserE2eCertified"]).toBe(false);
-    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
-    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_NOT_CERTIFIED");
+    expect(BOS_RELEASE_INDICATORS["bos.browserE2eCertified"]).toBe(true);
+    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_CERTIFIED");
+    expect(BROWSER_E2E_STATUS).toBe("BROWSER_E2E_CERTIFIED");
     expect(BOS_CONNECTOR_CERTIFICATION.xero.live).not.toBe("LIVE_PROVIDER_CERTIFIED");
     expect(BOS_PRODUCTION_GA_REMAINING_GATES).toEqual([
-      "BOS15B_BLOCKED_LIVE_RLS_ENV",
+      "inherited_engineering_os_web_tsc_baseline_debt",
+    ]);
+    expect(BOS_PREVIEW_PROVIDER_PROMOTION_GATES).toEqual([
       "BOS15C_XERO_BLOCKED_ENV",
       "BOS15D_MICROSOFT_365_BLOCKED_ENV",
       "BOS15E_HUBSPOT_BLOCKED_ENV",
-      "BOS15F_BLOCKED_BROWSER_ENV",
-      "inherited_engineering_os_web_tsc_baseline_debt",
     ]);
   });
 
@@ -101,10 +110,10 @@ describe("BOS-13 production validation", () => {
     const migration = resolve(ROOT, "supabase/migrations/20260819170000_batch_108_business_os_connectors_hardening.sql");
     expect(existsSync(migration)).toBe(true);
     expect(readFileSync(migration, "utf8")).toContain("ENABLE ROW LEVEL SECURITY");
-    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_NOT_CERTIFIED");
-    expect(bosLiveRlsCertified).toBe(false);
+    expect(LIVE_RLS_STATUS).toBe("LIVE_RLS_CERTIFIED");
+    expect(bosLiveRlsCertified).toBe(true);
     expect(liveRlsEnvironmentAvailable()).toBe(false);
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
   });
 });
 

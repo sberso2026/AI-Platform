@@ -9,11 +9,11 @@ export function buildBusinessOsManifest(): OperatingSystemManifest {
     id: OS_ID,
     name: "Business Operating System",
     description:
-      "AI-assisted business operations — Connectors and Hardening preview (BOS-12)",
+      "AI-assisted business operations — Business OS Core v1.0 GA. Xero, Microsoft 365, and HubSpot remain Preview.",
     version: BUSINESS_OS_VERSION,
     author: "RTB",
     certificationOnly: false,
-    catalogStatus: "coming_soon",
+    catalogStatus: "available",
     permissions: [
       { resource: "business", action: "read" },
       { resource: "business", action: "execute" },

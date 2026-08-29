@@ -14,6 +14,8 @@ export const POST = withBusinessApi(async ({ ctx }, request) => {
         connectorId: body.connectorId as BosConnectorId,
         secretId: typeof body.secretId === "string" ? body.secretId : null,
         mode: body.mode as BosConnectorMode | undefined,
+        expectedProviderOrgId:
+          typeof body.expectedProviderOrgId === "string" ? body.expectedProviderOrgId : null,
       },
       { userId: ctx.userId, actorType: "human" },
     );

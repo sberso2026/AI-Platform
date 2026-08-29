@@ -23,7 +23,8 @@ export const OPERATING_SYSTEMS: OperatingSystem[] = [
     name: "Business Operating System",
     description: "AI-assisted business operations, finance, and strategy",
     icon: "Briefcase",
-    status: "coming_soon",
+    status: "available",
+    version: "1.0.0",
   },
   {
     id: "engineering",

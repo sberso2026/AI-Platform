@@ -164,6 +164,19 @@ export function ownerCommandError(error: unknown): NextResponse {
     message === "cross_tenant_connector_forbidden" ||
     message === "suppressed_identity_reconstruction_forbidden" ||
     message === "unknown_connector" ||
+    message === "oauth_state_invalid" ||
+    message === "oauth_state_expired" ||
+    message === "oauth_state_mismatch" ||
+    message === "oauth_tenant_mismatch" ||
+    message === "oauth_workspace_mismatch" ||
+    message === "oauth_consent_denied" ||
+    message === "oauth_code_missing" ||
+    message === "oauth_provider_error" ||
+    message === "oauth_redirect_forbidden" ||
+    message === "live_oauth_not_certified" ||
+    message === "connector_reauth_required" ||
+    message === "invalid_connector_ui_transition" ||
+    message === "csv_oauth_not_supported" ||
     message.startsWith("agent_authority_denied") ||
     message.startsWith("agent_action_prohibited")
   ) {

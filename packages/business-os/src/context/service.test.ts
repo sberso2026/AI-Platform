@@ -99,6 +99,7 @@ describe("BOS-10 projection", () => {
     expect(JSON.stringify(explained.structured)).not.toContain("Hidden Person");
 
     const agentOk = await service.agentContext(SCOPE, { entityType: "customer", entityId: BOS_10_DEMO_CUSTOMER_ID });
+    expect(agentOk.state).toBe("ok");
     expect(agentOk.adjacencyIsNotCausation).toBe(true);
     expect(JSON.stringify(agentOk)).not.toContain("Hidden Person");
 

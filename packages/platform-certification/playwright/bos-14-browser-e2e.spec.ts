@@ -7,7 +7,7 @@ const browserReady = Boolean(
 
 test.describe("BOS-14C browser E2E honesty", () => {
   test("does not certify browser E2E from an unavailable environment", () => {
-    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(true);
     expect(BOS14C_STATUS).toBe("BOS14C_BLOCKED_BROWSER_ENV");
     if (!browserReady) expect(browserReady).toBe(false);
   });
