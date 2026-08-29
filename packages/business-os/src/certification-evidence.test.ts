@@ -6,6 +6,7 @@ import {
   BOS_DEDICATED_STAGING_PROJECT_REF,
   BOS_SHARED_HOST_PROJECT_REF,
   type CertificationEvidenceRecord,
+  assessBosBrowserPreflightHonesty,
   bosProviderFeatureStatus,
   evaluateCertificationGate,
   evidenceMaySatisfyGate,
@@ -16,12 +17,14 @@ import {
   CERTIFICATION_MANIFEST_IMPLEMENTED,
   CERTIFICATION_SECOND_STACK_DETECTED,
   assessBosPreGaReadiness,
+  bosBrowserCertificationState,
   buildBosReleaseManifest,
   currentBosCertificationEvidence,
   getBosCertificationManifest,
 } from "./certification-manifest";
 import {
   AI_WORKFORCE_REGRESSION_PASS,
+  BOS15_BROWSER_PREFLIGHT_RECONCILED,
   BOS16_PRE_GA_INTERNAL_STAGE_COMPLETE,
   HUBSPOT_LIVE_CERTIFICATION_EXECUTED,
   LIVE_RLS_EVIDENCE_PASS,
@@ -296,6 +299,10 @@ describe("BOS-16A9 release manifest and pre-GA readiness", () => {
     expect(manifest.capabilityCount).toBe(BUSINESS_CAPABILITY_IDS.length);
     expect(manifest.rlsCertificationState.state).toBe("pass");
     expect(manifest.browserCertificationState.state).toBe("pass");
+    expect(manifest.browserPreflight.evidenceResult).toBe("pass");
+    expect(manifest.browserPreflight.certifiedDeclaration).toBe(false);
+    expect(manifest.browserPreflight.validPreGaState).toBe(true);
+    expect(manifest.browserPreflight.executionMode).toBe("browser");
     expect(manifest.providerCertificationState.xero.liveEvidence.state).not.toBe("pass");
     expect(manifest.providerCertificationState.microsoft_365.liveEvidence.state).not.toBe("pass");
     expect(manifest.providerCertificationState.hubspot.liveEvidence.state).not.toBe("pass");
@@ -364,5 +371,128 @@ describe("BOS-16A9 release manifest and pre-GA readiness", () => {
     expect(manifest.declarations.liveXeroCertified).toBe(false);
     expect(manifest.productionEligible).toBe(false);
     expect(manifest.gaReady).toBe(false);
+  });
+});
+
+describe("BOS-16A9.1 browser availability vs evidence vs declaration", () => {
+  it("treats available=true + evidence PASS + declaration false as valid pre-GA state", () => {
+    const view = assessBosBrowserPreflightHonesty({
+      available: true,
+      evidenceResult: "pass",
+      certifiedDeclaration: false,
+    });
+    expect(view.validPreGaState).toBe(true);
+    expect(view.mandatoryEvidenceFailClosed).toBe(false);
+    expect(view.newExecutionBlocked).toBe(false);
+    expect(view.certifiedDeclaration).toBe(false);
+    expect(BOS15_BROWSER_PREFLIGHT_RECONCILED).toBe(true);
+    expect(bosBrowserE2eCertified).toBe(false);
+    expect(bosBrowserCertificationState({ available: true }).validPreGaState).toBe(true);
+  });
+
+  it("fails closed when available=true but mandatory browser evidence is missing or failed", () => {
+    expect(
+      assessBosBrowserPreflightHonesty({
+        available: true,
+        evidenceResult: "missing",
+        certifiedDeclaration: false,
+      }).mandatoryEvidenceFailClosed,
+    ).toBe(true);
+    expect(
+      assessBosBrowserPreflightHonesty({
+        available: true,
+        evidenceResult: "fail",
+        certifiedDeclaration: false,
+      }).validPreGaState,
+    ).toBe(false);
+    expect(
+      assessBosBrowserPreflightHonesty({
+        available: true,
+        evidenceResult: "blocked",
+        certifiedDeclaration: false,
+      }).mandatoryEvidenceFailClosed,
+    ).toBe(true);
+    expect(
+      evaluateCertificationGate({
+        gateId: "browser_e2e",
+        evidence: [],
+        currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
+      }).state,
+    ).toBe("missing");
+    expect(
+      evaluateCertificationGate({
+        gateId: "browser_e2e",
+        evidence: [
+          evidence({
+            gateId: "browser_e2e",
+            evidenceType: "browser_e2e",
+            executionMode: "browser",
+            result: "fail",
+          }),
+        ],
+        currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
+      }).state,
+    ).toBe("fail");
+  });
+
+  it("blocks a required new browser execution when the environment is unavailable", () => {
+    const view = assessBosBrowserPreflightHonesty({
+      available: false,
+      evidenceResult: "pass",
+      certifiedDeclaration: false,
+      requiredForNewExecution: true,
+    });
+    expect(view.newExecutionBlocked).toBe(true);
+    expect(view.validPreGaState).toBe(true);
+  });
+
+  it("fails closed on blocked or stale incompatible browser evidence", () => {
+    expect(
+      evaluateCertificationGate({
+        gateId: "browser_e2e",
+        evidence: [
+          evidence({
+            gateId: "browser_e2e",
+            evidenceType: "browser_e2e",
+            executionMode: "browser",
+            result: "blocked",
+          }),
+        ],
+        currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
+      }).state,
+    ).toBe("blocked");
+    expect(
+      evaluateCertificationGate({
+        gateId: "browser_e2e",
+        evidence: [
+          evidence({
+            gateId: "browser_e2e",
+            evidenceType: "browser_e2e",
+            executionMode: "browser",
+            result: "pass",
+          }),
+        ],
+        currentCommitSha: DESCENDANT_SHA,
+      }).state,
+    ).toBe("incompatible");
+  });
+
+  it("does not let browser evidence satisfy live-provider gates or auto-promote the declaration", () => {
+    const browserPass = evidence({
+      gateId: "xero_live",
+      evidenceType: "browser_e2e",
+      executionMode: "browser",
+      result: "pass",
+    });
+    expect(
+      evaluateCertificationGate({
+        gateId: "xero_live",
+        evidence: [browserPass],
+        currentCommitSha: BOS_16_CERTIFIED_BASELINE_SHA,
+      }).state,
+    ).not.toBe("pass");
+    expect(bosBrowserCertificationState({ available: true }).certifiedDeclaration).toBe(false);
+    expect(getBosCertificationManifest().declarations.browserE2eCertified).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(false);
   });
 });

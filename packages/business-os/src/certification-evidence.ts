@@ -327,3 +327,37 @@ export function assertNoSecretsInCertificationPayload(payload: unknown): void {
     throw new Error("certification_secret_leakage");
   }
 }
+
+export type BosBrowserPreflightHonesty = {
+  available: boolean;
+  executionMode: "browser";
+  evidenceResult: GateEvidenceState;
+  certifiedDeclaration: boolean;
+  validPreGaState: boolean;
+  newExecutionBlocked: boolean;
+  mandatoryEvidenceFailClosed: boolean;
+};
+
+/**
+ * Availability, execution evidence, and release declaration are independent.
+ * available=true + evidence pass + declaration false is a valid pre-GA state, not an error.
+ */
+export function assessBosBrowserPreflightHonesty(input: {
+  available: boolean;
+  evidenceResult: GateEvidenceState;
+  certifiedDeclaration: boolean;
+  requiredForNewExecution?: boolean;
+}): BosBrowserPreflightHonesty {
+  const mandatoryEvidenceFailClosed = input.evidenceResult !== "pass";
+  const newExecutionBlocked = Boolean(input.requiredForNewExecution) && !input.available;
+  const validPreGaState = input.evidenceResult === "pass" && input.certifiedDeclaration === false;
+  return {
+    available: input.available,
+    executionMode: "browser",
+    evidenceResult: input.evidenceResult,
+    certifiedDeclaration: input.certifiedDeclaration,
+    validPreGaState,
+    newExecutionBlocked,
+    mandatoryEvidenceFailClosed,
+  };
+}

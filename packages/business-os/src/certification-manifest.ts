@@ -14,6 +14,7 @@ import {
   type CertificationEvidenceRecord,
   type EvidenceCompatibilityClaim,
   type GateEvaluation,
+  assessBosBrowserPreflightHonesty,
   assertNoSecretsInCertificationPayload,
   bosProviderFeatureStatus,
   evaluateCertificationGate,
@@ -33,6 +34,7 @@ import {
   bosLiveXeroCertified,
   bosProductionEligible,
   bosReleaseCandidate,
+  browserE2eEnvironmentAvailable,
 } from "./release";
 
 export const BOS_16_BOUNDARY_NOTE =
@@ -258,6 +260,7 @@ export type BosReleaseManifest = {
     };
   };
   browserCertificationState: GateEvaluation;
+  browserPreflight: ReturnType<typeof assessBosBrowserPreflightHonesty>;
   rlsCertificationState: GateEvaluation;
   knownLimitations: string[];
   knownTestDebt: string[];
@@ -387,6 +390,11 @@ export function buildBosReleaseManifest(input: {
     gateEvidenceState,
     providerCertificationState,
     browserCertificationState: gateEvidenceState.browser_e2e,
+    browserPreflight: assessBosBrowserPreflightHonesty({
+      available: browserE2eEnvironmentAvailable(),
+      evidenceResult: gateEvidenceState.browser_e2e.state,
+      certifiedDeclaration: bosBrowserE2eCertified,
+    }),
     rlsCertificationState: gateEvidenceState.live_rls,
     knownLimitations,
     knownTestDebt: [],
@@ -416,6 +424,26 @@ export function getBosCertificationManifest(
     currentCommitSha,
     evidence: currentBosCertificationEvidence(currentCommitSha),
     claims: bos16CompatibilityClaims(currentCommitSha),
+  });
+}
+
+export function bosBrowserCertificationState(options?: {
+  available?: boolean;
+  requiredForNewExecution?: boolean;
+  currentCommitSha?: string;
+}) {
+  const currentCommitSha = options?.currentCommitSha ?? BOS_16_CERTIFIED_BASELINE_SHA;
+  const evidence = evaluateCertificationGate({
+    gateId: "browser_e2e",
+    evidence: currentBosCertificationEvidence(currentCommitSha),
+    currentCommitSha,
+    claims: bos16CompatibilityClaims(currentCommitSha),
+  });
+  return assessBosBrowserPreflightHonesty({
+    available: options?.available ?? browserE2eEnvironmentAvailable(),
+    evidenceResult: evidence.state,
+    certifiedDeclaration: bosBrowserE2eCertified,
+    requiredForNewExecution: options?.requiredForNewExecution,
   });
 }
 

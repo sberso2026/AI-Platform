@@ -97,6 +97,10 @@ describe("BOS-15 live GA certification", () => {
     expect(preflight.microsoft365.classification).toBe("BLOCKED_ENV");
     expect(preflight.hubspot.classification).toBe("BLOCKED_ENV");
     expect(preflight.browser.classification).toBe("BLOCKED_ENV");
+    expect(preflight.browser.available).toBe(false);
+    expect(preflight.browser.evidenceResult).toBe("pass");
+    expect(preflight.browser.certifiedDeclaration).toBe(false);
+    expect(preflight.browser.executionMode).toBe("browser");
     expect(preflight.supabase.executed).toBe(false);
     expect(preflight.xero.executed).toBe(false);
     expect(preflight.microsoft365.executed).toBe(false);

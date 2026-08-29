@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BOS16_PRE_GA_INTERNAL_STAGE_COMPLETE,
+  BOS15_BROWSER_PREFLIGHT_RECONCILED,
   BOS_16_BOUNDARY_NOTE,
   BOS_DEDICATED_STAGING_PROJECT_REF,
   BOS_SHARED_HOST_PROJECT_REF,
@@ -8,6 +9,8 @@ import {
   CERTIFICATION_SECOND_STACK_DETECTED,
   PRE_GA_INTERNAL_READINESS_PASS,
   assessBosPreGaReadiness,
+  bosBrowserCertificationState,
+  bosBrowserE2eCertified,
   bosLiveHubSpotCertified,
   bosLiveMicrosoft365Certified,
   bosLiveXeroCertified,
@@ -24,6 +27,12 @@ describe("BOS-16A9 pre-GA certification ownership", () => {
     expect(manifest.capabilityCount).toBe(18);
     expect(manifest.rlsCertificationState.state).toBe("pass");
     expect(manifest.browserCertificationState.state).toBe("pass");
+    expect(manifest.browserPreflight.evidenceResult).toBe("pass");
+    expect(manifest.browserPreflight.certifiedDeclaration).toBe(false);
+    expect(manifest.browserPreflight.validPreGaState).toBe(true);
+    expect(bosBrowserE2eCertified).toBe(false);
+    expect(BOS15_BROWSER_PREFLIGHT_RECONCILED).toBe(true);
+    expect(bosBrowserCertificationState({ available: true }).validPreGaState).toBe(true);
     expect(report.xeroLive).toBe("outstanding");
     expect(report.microsoft365Live).toBe("outstanding");
     expect(report.hubspotLive).toBe("outstanding");

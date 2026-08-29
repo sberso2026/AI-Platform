@@ -113,3 +113,12 @@ export function stubBosInvalidTarget(overrides: Record<string, string> = {}) {
     ...overrides,
   });
 }
+
+export function stubBosBrowserE2eAvailable(overrides: Record<string, string> = {}) {
+  applyEnv({
+    PLAYWRIGHT_BASE_URL: "https://bos-e2e.example.test",
+    NEXT_PUBLIC_SUPABASE_URL: `https://${SYNTHETIC_BOS_STAGING_REF}.supabase.co`,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-fixture",
+    ...overrides,
+  });
+}

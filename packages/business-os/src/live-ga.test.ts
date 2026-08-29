@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearBosCertificationEnv, stubBosStagingTargetOnly } from "./certification-env-harness";
+import { clearBosCertificationEnv, stubBosStagingTargetOnly, stubBosBrowserE2eAvailable } from "./certification-env-harness";
 import { BUSINESS_CAPABILITY_IDS } from "@rtb/types";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import {
@@ -127,6 +127,9 @@ describe("BOS-15A environment preflight", () => {
     expect(preflight.browser.available).toBe(false);
     expect(preflight.browser.executed).toBe(false);
     expect(preflight.browser.classification).toBe("BLOCKED_ENV");
+    expect(preflight.browser.executionMode).toBe("browser");
+    expect(preflight.browser.evidenceResult).toBe("pass");
+    expect(preflight.browser.certifiedDeclaration).toBe(false);
     for (const value of Object.values(preflight.xero.refs)) {
       expect(value).toBe("missing");
     }
@@ -207,5 +210,17 @@ describe("BOS-15F browser E2E", () => {
     expect(BOS_15_BROWSER_ROUTES).toContain("/business");
     expect(BOS_15_BROWSER_ROUTES).toContain("/business/settings");
     expect(BOS_15_BROWSER_ROUTES).toContain("/business/customers/demo");
+  });
+
+  it("keeps declaration false when the browser environment is available and evidence already passed", () => {
+    stubBosBrowserE2eAvailable();
+    expect(browserE2eEnvironmentAvailable()).toBe(true);
+    const preflight = bos15EnvironmentPreflight();
+    expect(preflight.browser.available).toBe(true);
+    expect(preflight.browser.classification).toBe("AVAILABLE");
+    expect(preflight.browser.evidenceResult).toBe("pass");
+    expect(preflight.browser.certifiedDeclaration).toBe(false);
+    expect(bosBrowserE2eCertified).toBe(false);
+    expect(BOS15F_STATUS).toBe("BOS15F_BLOCKED_BROWSER_ENV");
   });
 });

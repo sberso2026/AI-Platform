@@ -46,6 +46,7 @@ export const HUBSPOT_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosBrowserE2eCertified = false as const;
 export const BROWSER_E2E_EVIDENCE_PASS = true as const;
 export const BOS16_BROWSER_E2E_STAGE_COMPLETE = true as const;
+export const BOS15_BROWSER_PREFLIGHT_RECONCILED = true as const;
 export const BOS16_RLS_STAGE_COMPLETE = true as const;
 export const LIVE_RLS_BROWSER_REGRESSION_PASS = true as const;
 export const LIVE_RLS_EVIDENCE_PASS = true as const;
@@ -62,6 +63,7 @@ export const BOS15A_STATUS = "BOS15A_PREFLIGHT_COMPLETE" as const;
 export const BOS15B_STATUS = "BOS15B_BLOCKED_LIVE_RLS_ENV" as const;
 export const BROWSER_E2E_STATUS = "BROWSER_E2E_NOT_CERTIFIED" as const;
 export const BOS14C_STATUS = "BOS14C_BLOCKED_BROWSER_ENV" as const;
+/** Remaining production-GA gate identifier. Not live environment discovery. */
 export const BOS15F_STATUS = "BOS15F_BLOCKED_BROWSER_ENV" as const;
 export const BOS15C_STATUS = "BOS15C_XERO_BLOCKED_ENV" as const;
 export const BOS15D_STATUS = "BOS15D_MICROSOFT_365_BLOCKED_ENV" as const;
@@ -718,6 +720,9 @@ export function bos15EnvironmentPreflight() {
     browser: {
       available: browserAvailable,
       executed: false,
+      executionMode: "browser" as const,
+      evidenceResult: BROWSER_E2E_EVIDENCE_PASS ? ("pass" as const) : ("fail" as const),
+      certifiedDeclaration: bosBrowserE2eCertified,
       classification: browserAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
       refs: browserRefs,
     },
