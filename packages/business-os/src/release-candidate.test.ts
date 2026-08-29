@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearBosCertificationEnv } from "./certification-env-harness";
 import { BUSINESS_CAPABILITY_IDS } from "@rtb/types";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import type { SupabaseClient } from "@rtb/database";
@@ -65,6 +66,14 @@ import { AiWorkforceService } from "./workforce/service";
 import { allowPolicyPort, createMemoryAgentRegistry, createMemoryWorkforceStore } from "./workforce/store";
 import { testFact } from "./profit/test-facts";
 import type { BusinessFinanceSnapshot, BusinessGrowthOpportunity, BusinessKpi } from "@rtb/types";
+
+beforeEach(() => {
+  clearBosCertificationEnv();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const SCOPE = {
   tenantId: "11111111-1111-4111-8111-111111111111",

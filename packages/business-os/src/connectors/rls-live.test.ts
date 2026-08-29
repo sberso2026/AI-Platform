@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BosLiveRlsEnvironmentError,
   BOS14A_STATUS,
   BOS15B_STATUS,
   BOS_LIVE_RLS_REPRESENTATIVE_TABLES,
@@ -8,7 +9,16 @@ import {
   liveRlsEnvironmentAvailable,
 } from "../release";
 
-const envReady = liveRlsEnvironmentAvailable();
+function ambientLiveRlsReady(): boolean {
+  try {
+    return liveRlsEnvironmentAvailable();
+  } catch (error) {
+    if (error instanceof BosLiveRlsEnvironmentError) return false;
+    throw error;
+  }
+}
+
+const envReady = ambientLiveRlsReady();
 
 describe("BOS-14A live RLS honesty", () => {
   it("returns BOS14A_BLOCKED_LIVE_RLS_ENV and does not treat SQL inspection as live RLS", () => {

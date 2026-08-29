@@ -195,8 +195,6 @@ export type BosLiveRlsEnvironmentAssessment =
   | { status: "unavailable"; reason: "no_live_configuration" }
   | { status: "available"; projectRef: string; hostname: string };
 
-const BOS_STAGING_TARGET_KEYS = ["BOS_STAGING_PROJECT_REF", "SUPABASE_TEST_URL"] as const;
-
 const BOS_LIVE_RLS_IDENTITY_KEYS = [
   "SUPABASE_TEST_ANON_KEY",
   "BOS_RLS_TENANT_A_JWT",
@@ -213,7 +211,11 @@ const BOS_LIVE_RLS_IDENTITY_KEYS = [
   "BOS_RLS_WORKSPACE_B_JWT",
 ] as const;
 
-const BOS_LIVE_RLS_ATTEMPT_KEYS = [...BOS_STAGING_TARGET_KEYS, ...BOS_LIVE_RLS_IDENTITY_KEYS] as const;
+/**
+ * Live-RLS attempt is identity/credential presence only.
+ * A valid staging target without anon key/JWTs/tenant IDs is not a live-RLS attempt.
+ */
+const BOS_LIVE_RLS_ATTEMPT_KEYS = BOS_LIVE_RLS_IDENTITY_KEYS;
 
 const BOS_STAGING_PROJECT_REF_PATTERN = /^[a-z0-9]+$/;
 
@@ -358,6 +360,11 @@ function requireBosStagingTargetForLiveRls(): Extract<BosStagingTargetAssessment
   );
 }
 
+/**
+ * Live RLS is independent of staging-target presence.
+ * Staging-target-only configuration returns unavailable (legitimate skip).
+ * Any live-RLS identity/credential key without a complete valid contract fails closed.
+ */
 export function assessBosLiveRlsEnvironment(): BosLiveRlsEnvironmentAssessment {
   if (!bosLiveRlsConfigAttempted()) {
     return { status: "unavailable", reason: "no_live_configuration" };

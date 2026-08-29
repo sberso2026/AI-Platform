@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearBosCertificationEnv } from "./certification-env-harness";
 import { BUSINESS_CAPABILITY_IDS } from "@rtb/types";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import {
@@ -44,6 +45,14 @@ import {
 } from "./index";
 import { testFact } from "./profit/test-facts";
 import type { BusinessFinanceSnapshot, BusinessGrowthOpportunity, BusinessKpi } from "@rtb/types";
+
+beforeEach(() => {
+  clearBosCertificationEnv();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 function percentile(samples: number[], p: number): number {
   const sorted = [...samples].sort((a, b) => a - b);

@@ -69,9 +69,19 @@ describe("BOS live RLS dedicated staging validation", () => {
     expect(liveRlsEnvironmentAvailable()).toBe(false);
   });
 
-  it("fails closed on partial configuration without printing secrets", () => {
+  it("does not treat a staging-target-only URL as a live-RLS attempt", () => {
     clearLiveEnv();
     vi.stubEnv("SUPABASE_TEST_URL", `https://${STAGING_REF}.supabase.co`);
+    expect(liveRlsEnvironmentAvailable()).toBe(false);
+    expect(assessBosLiveRlsEnvironment().status).toBe("unavailable");
+  });
+
+  it("fails closed on partial live-RLS credentials without printing secrets", () => {
+    stubCompleteValidEnv({
+      BOS_RLS_TENANT_A_JWT: "",
+      BOS_RLS_TENANT_B_JWT: "",
+      BOS_RLS_TENANT_B_ID: "",
+    });
     expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
     try {
       liveRlsEnvironmentAvailable();
@@ -136,7 +146,7 @@ describe("BOS live RLS dedicated staging validation", () => {
     expect(assessBosLiveRlsEnvironment().status).toBe("unavailable");
   });
 
-  it("reuses a valid staging target then requires live-RLS identities separately", () => {
+  it("reuses a valid staging target then treats missing live-RLS identities as unavailable skip", () => {
     stubCompleteValidEnv();
     expect(assessBosStagingTarget()).toEqual(assessBosLiveRlsEnvironment());
     stubCompleteValidEnv({
@@ -146,7 +156,10 @@ describe("BOS live RLS dedicated staging validation", () => {
       BOS_RLS_TENANT_B_ID: "",
     });
     expect(assessBosStagingTarget().status).toBe("available");
-    expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
-    expect(() => liveRlsEnvironmentAvailable()).toThrow(/incomplete/);
+    expect(assessBosLiveRlsEnvironment()).toEqual({
+      status: "unavailable",
+      reason: "no_live_configuration",
+    });
+    expect(liveRlsEnvironmentAvailable()).toBe(false);
   });
 });

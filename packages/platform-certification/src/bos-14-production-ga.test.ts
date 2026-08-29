@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   BOS14A_STATUS,
@@ -25,6 +25,8 @@ import {
   liveRlsEnvironmentAvailable,
 } from "@rtb/business-os";
 import { createPlatformKernel } from "@rtb/platform-kernel";
+import { ambientBosLiveRlsReady } from "./lib/bos-live-env";
+import { clearBosCertificationEnv } from "../../business-os/src/certification-env-harness";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const TEST_URL = process.env.SUPABASE_TEST_URL;
@@ -32,9 +34,15 @@ const TEST_ANON_KEY = process.env.SUPABASE_TEST_ANON_KEY;
 const TENANT_A_JWT = process.env.BOS_RLS_TENANT_A_JWT || process.env.COMMERCE_RLS_TENANT_A_JWT;
 const TENANT_B_ID = process.env.BOS_RLS_TENANT_B_ID || process.env.COMMERCE_RLS_TENANT_B_ID;
 const WORKSPACE_B_ID = process.env.BOS_RLS_WORKSPACE_B_ID;
-const envReady = liveRlsEnvironmentAvailable();
+const envReady = ambientBosLiveRlsReady();
 
 describe("BOS-14 production GA closure", () => {
+  beforeEach(() => {
+    clearBosCertificationEnv();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
   it("keeps capability count 18 and refuses productionEligible without live gates", () => {
     expect(BUSINESS_OS_VERSION).toBe("0.13.3");
     expect(BUSINESS_OS_PHASE).toBe("BOS-15");
@@ -74,11 +82,7 @@ describe("BOS-14 production GA closure", () => {
     expect(existsSync(migration)).toBe(true);
     expect(readFileSync(migration, "utf8")).toContain("FORCE ROW LEVEL SECURITY");
     expect(bosLiveRlsCertified).toBe(false);
-    const liveRlsReady = liveRlsEnvironmentAvailable();
-    expect(typeof liveRlsReady).toBe("boolean");
-    if (!liveRlsReady) {
-      expect(liveRlsReady).toBe(false);
-    }
+    expect(liveRlsEnvironmentAvailable()).toBe(false);
     expect(BOS14A_STATUS).toBe("BOS14A_BLOCKED_LIVE_RLS_ENV");
   });
 });

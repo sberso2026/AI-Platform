@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearBosCertificationEnv, stubBosStagingTargetOnly } from "./certification-env-harness";
 import { BUSINESS_CAPABILITY_IDS } from "@rtb/types";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import {
@@ -36,6 +37,14 @@ import {
   liveProviderCredentialsAvailable,
   liveRlsEnvironmentAvailable,
 } from "./index";
+
+beforeEach(() => {
+  clearBosCertificationEnv();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("BOS-15 live GA certification honesty", () => {
   it("preserves the BOS-14 baseline and refuses GA without executed live gates", () => {
@@ -119,6 +128,23 @@ describe("BOS-15A environment preflight", () => {
       expect(value).toBe("missing");
     }
     expect(JSON.stringify(preflight)).not.toMatch(/eyJ|sk-|secret-|Bearer /i);
+  });
+});
+
+describe("BOS-15A staging-target-only preflight", () => {
+  it("reports staging refs present without treating them as live RLS", () => {
+    stubBosStagingTargetOnly();
+    const preflight = bos15EnvironmentPreflight();
+    expect(liveRlsEnvironmentAvailable()).toBe(false);
+    expect(preflight.supabase.available).toBe(false);
+    expect(preflight.supabase.classification).toBe("BLOCKED_ENV");
+    expect(preflight.supabase.executed).toBe(false);
+    expect(preflight.supabase.refs.BOS_STAGING_PROJECT_REF).toBe("present");
+    expect(preflight.supabase.refs.SUPABASE_TEST_URL).toBe("present");
+    expect(preflight.supabase.refs.tenantAJwt).toBe("missing");
+    expect(bosLiveRlsCertified).toBe(false);
+    expect(bosProductionEligible).toBe(false);
+    expect(BOS15B_STATUS).toBe("BOS15B_BLOCKED_LIVE_RLS_ENV");
   });
 });
 

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  BosLiveRlsEnvironmentError,
   BosStagingTargetError,
   assessBosLiveRlsEnvironment,
   assessBosStagingTarget,
@@ -152,12 +151,14 @@ describe("BOS staging target validation", () => {
     }
   });
 
-  it("does not require live-RLS identities for a valid staging target", () => {
+  it("does not treat a valid staging target as a live-RLS attempt", () => {
     stubValidTarget();
     expect(bosStagingTargetAvailable()).toBe(true);
-    expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
-    expect(() => liveRlsEnvironmentAvailable()).toThrow(/incomplete/);
-    expect(() => liveRlsEnvironmentAvailable()).toThrow(/missing=SUPABASE_TEST_ANON_KEY/);
+    expect(assessBosLiveRlsEnvironment()).toEqual({
+      status: "unavailable",
+      reason: "no_live_configuration",
+    });
+    expect(liveRlsEnvironmentAvailable()).toBe(false);
   });
 });
 
