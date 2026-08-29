@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { getAuthContext } from "@/lib/kernel";
+import { ProjectCommandCentre } from "@/components/engineering/project-command-centre";
 
 const DASHBOARD_PANELS = [
   {
@@ -76,16 +78,19 @@ export default async function ProjectIntelligenceOverviewPage() {
   return (
     <section data-testid="project-intelligence-ready">
       <p className="text-sm font-medium text-cyan-700">Engineering OS module</p>
-      <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Project Intelligence</h2>
+      <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Project Command Centre</h2>
       <p className="mt-3 max-w-2xl text-slate-600">
-        Flagship Engineering OS module for document, meeting, findings, and reporting intelligence —
-        consuming shared Engineering Domain, shared services, and Platform AI Runtime.
+        Live composition of canonical Engineering OS context, published Project Controls outputs, PI v1 knowledge,
+        and deterministic Project Health. Command Centre is read-only and works with AI disabled.
       </p>
 
-      <div
-        className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-        data-testid="project-intelligence-dashboard"
-      >
+      <div className="mt-8" data-testid="project-intelligence-dashboard">
+        <Suspense fallback={<p className="text-sm text-slate-600">Loading Command Centre…</p>}>
+          <ProjectCommandCentre />
+        </Suspense>
+      </div>
+
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {DASHBOARD_PANELS.map((panel) => (
           <article
             key={panel.id}

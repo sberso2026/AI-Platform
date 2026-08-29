@@ -463,6 +463,7 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "project-intelligence-reports.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reporting.intelligence.write", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
   "project-intelligence-knowledge.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "knowledge.intelligence.read", seatRequired: true, workspaceRequired: true },
   "project-intelligence-knowledge.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "knowledge.intelligence.write", seatRequired: true, workspaceRequired: true, cachePolicy: "fresh" },
+  "project-intelligence-command-centre.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
   "project-intelligence-reasoning.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.read", seatRequired: true, workspaceRequired: true },
   "project-intelligence-reasoning.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.execute", seatRequired: true, workspaceRequired: true, featureKey: "ai_assistant", cachePolicy: "fresh" },
   "model-interoperability.read": {

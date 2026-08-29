@@ -35,3 +35,9 @@ export type {
   ProjectHealthAssessment,
   ProjectHealthOverallClassification,
 } from "./project-health";
+export type {
+  ProjectCommandCentreView,
+  CommandCentreAvailability,
+  CommandCentreAttentionItem,
+  CommandCentreSectionProjection,
+} from "./command-centre";

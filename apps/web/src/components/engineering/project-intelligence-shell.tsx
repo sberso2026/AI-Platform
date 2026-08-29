@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const primaryTabs = [
-  { href: "/engineering/apps/project-intelligence", label: "Overview", icon: BarChart3 },
+  { href: "/engineering/apps/project-intelligence", label: "Command Centre", icon: BarChart3 },
   {
     href: "/engineering/apps/project-intelligence/documents",
     label: "Document Intelligence",

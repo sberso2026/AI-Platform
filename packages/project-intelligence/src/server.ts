@@ -34,4 +34,5 @@ export * from "./findings";
 export * from "./reports";
 export * from "./knowledge";
 export * from "./project-health";
+export * from "./command-centre";
 

@@ -50,6 +50,9 @@ importers:
       '@rtb/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      '@rtb/project-controls':
+        specifier: workspace:*
+        version: link:../../packages/project-controls
       '@rtb/project-intelligence':
         specifier: workspace:*
         version: link:../../packages/project-intelligence

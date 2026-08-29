@@ -16,6 +16,12 @@ export type BoundCollection<T> =
 
 export type ProjectIdentityRef = {
   projectId: string;
+  tenantId?: string;
+  workspaceId?: string;
+  projectCode?: string;
+  projectName?: string;
+  phase?: string;
+  status?: string;
   storesCanonicalCopy: false;
 };
 

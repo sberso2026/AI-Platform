@@ -14,7 +14,10 @@ export type ProjectIntelligenceErrorCode =
   | "mapping_transition_invalid"
   | "mapping_conflict"
   | "legacy_source_unavailable"
-  | "insufficient_evidence";
+  | "insufficient_evidence"
+  | "project_not_found"
+  | "project_forbidden"
+  | "core_source_failed";
 
 export class ProjectIntelligenceError extends Error {
   readonly name = "ProjectIntelligenceError";
