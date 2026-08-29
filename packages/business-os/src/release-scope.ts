@@ -10,7 +10,7 @@ import type { BosCertificationGateId } from "./certification-evidence";
 
 export const BOS_V1_GA_SCOPE_DEFINED = true as const;
 export const BOS_V1_BOUNDARY_NOTE =
-  "BOS-16A10 freezes v1.0 GA scope as vendor-neutral BOS Core with Xero, Microsoft 365, and HubSpot as Preview. Do not declare GA, set productionEligible, or start BOS-17." as const;
+  "BOS-16A11 qualifies BOS Core v1.0 against the A10 freeze. Do not declare GA, set productionEligible, create a GA tag, or start BOS-17." as const;
 
 export type BosV1FeatureReleaseClass = "GA_REQUIRED" | "PREVIEW" | "BETA" | "EXCLUDED";
 export type BosV1ProviderId = "xero" | "microsoft_365" | "hubspot";
@@ -162,10 +162,10 @@ export const BOS_PREVIEW_PROMOTION_GATES_DEFINED = true as const;
 export const BOS_PRODUCTION_ELIGIBILITY_SCOPE_PASS = true as const;
 
 export const BOS_V1_OUTSTANDING_CORE_GA_BLOCKERS = [
-  "qualification_plan_not_executed",
+  "A11 qualification executed; explicit GA promotion/tag is still required",
   "bos.productionEligible remains false until explicit GA promotion",
-  "bos.liveRlsCertified remains false; evidence is ingested, declaration is not promoted",
-  "bos.browserE2eCertified remains false; evidence is ingested, declaration is not promoted",
+  "bos.liveRlsCertified remains false; A11 refreshed evidence, declaration is not promoted",
+  "bos.browserE2eCertified remains false; A11 refreshed evidence, declaration is not promoted",
 ] as const;
 
 export const BOS_V1_OUTSTANDING_PREVIEW_PROMOTION_GATES = [

@@ -84,7 +84,7 @@ describe("BOS-15 live GA certification", () => {
       "BOS15B_BLOCKED_LIVE_RLS_ENV",
       "BOS15F_BLOCKED_BROWSER_ENV",
       "inherited_engineering_os_web_tsc_baseline_debt",
-      "BOS_V1_QUALIFICATION_PLAN_NOT_EXECUTED",
+      "BOS_V1_EXPLICIT_GA_PROMOTION_PENDING",
     ]);
     expect(BOS_PREVIEW_PROVIDER_PROMOTION_GATES).toEqual([
       "BOS15C_XERO_BLOCKED_ENV",

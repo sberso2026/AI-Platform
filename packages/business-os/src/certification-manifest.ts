@@ -51,7 +51,7 @@ import {
 } from "./release";
 
 export const BOS_16_BOUNDARY_NOTE =
-  "BOS-16A10 freezes v1.0 GA feature scope as vendor-neutral BOS Core with Preview connectors. Do not start BOS-17 or create a GA tag." as const;
+  "BOS-16A11 qualifies BOS Core v1.0 against the A10 freeze. Do not start BOS-17 or create a GA tag." as const;
 
 export const CERTIFICATION_MANIFEST_IMPLEMENTED = true as const;
 export const CERTIFICATION_SECOND_STACK_DETECTED = false as const;
@@ -70,6 +70,7 @@ export const BOS_CERTIFICATION_STATIC_FLAG_MIGRATION = {
 } as const;
 
 const BASELINE_EXECUTED_AT = "2026-08-29T09:45:20.000Z";
+const A11_EXECUTED_AT = "2026-08-29T13:04:56.000Z";
 
 function record(input: Omit<CertificationEvidenceRecord, "product" | "version">): CertificationEvidenceRecord {
   return {
@@ -81,14 +82,14 @@ function record(input: Omit<CertificationEvidenceRecord, "product" | "version">)
 
 /**
  * Honest current BOS evidence. Live provider gates are not executed.
- * RLS/browser PASS records are ingested from prior BOS-16 execution, not re-fabricated as live runs.
+ * A11 refreshed live RLS and fixture browser E2E against the A10 freeze SHA.
  */
 export function currentBosCertificationEvidence(
   currentCommitSha: string = BOS_16_CERTIFIED_BASELINE_SHA,
 ): CertificationEvidenceRecord[] {
   return [
     record({
-      certification_id: "bos16.live-rls.rntonzigxwxcjlcsadip.063c482",
+      certification_id: "bos16.live-rls.rntonzigxwxcjlcsadip.a11",
       commitSha: BOS_16_CERTIFIED_BASELINE_SHA,
       environmentId: BOS_DEDICATED_STAGING_PROJECT_REF,
       environmentClass: "staging",
@@ -97,16 +98,17 @@ export function currentBosCertificationEvidence(
       evidenceType: "rls_isolation",
       executionMode: "live",
       result: "pass",
-      executedAt: BASELINE_EXECUTED_AT,
+      executedAt: A11_EXECUTED_AT,
       suiteId: "packages/platform-certification/src/bos-16-live-rls.test.ts",
-      artifactRef: "BOS-16 live RLS 29/29 on dedicated staging; A9 did not re-run",
+      artifactRef: "BOS-16A11 fresh live RLS on dedicated staging; user JWTs not service-role",
+      supersedes: "bos16.live-rls.rntonzigxwxcjlcsadip.063c482",
       limitations: [
-        "Ingested from prior BOS-16 live execution. A9 does not claim a new live RLS run.",
+        "A11 refreshed live RLS against rntonzigxwxcjlcsadip using Platform identity sign-in.",
         "Release declaration bos.liveRlsCertified remains false.",
       ],
     }),
     record({
-      certification_id: "bos16.browser-e2e.fixture.063c482",
+      certification_id: "bos16.browser-e2e.fixture.a11",
       commitSha: BOS_16_CERTIFIED_BASELINE_SHA,
       environmentId: "fixture-browser",
       environmentClass: "fixture",
@@ -114,9 +116,10 @@ export function currentBosCertificationEvidence(
       evidenceType: "browser_e2e",
       executionMode: "browser",
       result: BROWSER_E2E_EVIDENCE_PASS ? "pass" : "fail",
-      executedAt: BASELINE_EXECUTED_AT,
+      executedAt: A11_EXECUTED_AT,
       suiteId: "packages/platform-certification/playwright/bos-16-browser-e2e.spec.ts",
-      artifactRef: "BOS-16A8 fixture browser E2E; A9 did not re-run unless required",
+      artifactRef: "BOS-16A11 fixture browser E2E including Core GA flows; repeat-each=2; HubSpot 2/2",
+      supersedes: "bos16.browser-e2e.fixture.063c482",
       limitations: [
         "Fixture/browser execution only. Does not satisfy live provider gates.",
         "Release declaration bos.browserE2eCertified remains false.",
@@ -215,9 +218,9 @@ export function currentBosCertificationEvidence(
       evidenceType: "internal_regression",
       executionMode: "fixture",
       result: "pass",
-      executedAt: new Date().toISOString(),
+      executedAt: A11_EXECUTED_AT,
       suiteId: "packages/business-os/src/workforce/service.test.ts",
-      artifactRef: "BOS-16A9 workforce stale-clock fixture remediation",
+      artifactRef: "BOS-16A11 AI Workforce fixture regression",
       limitations: ["Fixture regression only. Does not certify live providers."],
     }),
     record({
@@ -245,7 +248,7 @@ export function bos16CompatibilityClaims(currentCommitSha: string): EvidenceComp
       currentSha: currentCommitSha,
       unaffectedBoundaries: ["tenant_workspace_rls", "browser_e2e_fixture", "connector_security_architecture"],
       provenance:
-        "BOS-16A10 freezes v1.0 GA scope as vendor-neutral BOS Core with Preview connectors. Tenant/workspace/RLS, browser integration UX, and connector security architecture remain compatible with the certified ancestor.",
+        "BOS-16A11 qualifies BOS Core v1.0 against the A10 freeze SHA. Tenant/workspace/RLS, browser integration UX, and connector security architecture remain compatible with the certified ancestor.",
     },
   ];
 }
@@ -413,8 +416,8 @@ export function buildBosReleaseManifest(input: {
     "Live Xero certification not executed; Xero remains Preview.",
     "Live Microsoft 365 certification not executed; Microsoft 365 remains Preview.",
     "Live HubSpot certification not executed; HubSpot remains Preview.",
-    "A10 product decision: BOS Core is the v1.0 GA feature set; live connectors are Preview and not Core GA gates.",
-    "bos.productionEligible remains false until explicit GA promotion after the qualification plan.",
+    "A11 product decision: BOS Core is the v1.0 GA feature set; live connectors are Preview and not Core GA gates.",
+    "bos.productionEligible remains false until explicit GA promotion after A11 qualification.",
     "bos.liveRlsCertified and bos.browserE2eCertified remain static false; evidence is separate.",
     ...input.evidence.flatMap((row) => [...row.limitations]),
   ];
@@ -426,7 +429,7 @@ export function buildBosReleaseManifest(input: {
   const decisionReason =
     productionBlockers.length > 0
       ? `Fail closed: ${productionBlockers.join("; ")}.`
-      : "BOS Core GA gates currently pass with Preview connectors excluded from the certified feature set. A10 keeps bos.productionEligible=false pending explicit GA promotion.";
+      : "BOS Core GA gates currently pass with Preview connectors excluded from the certified feature set. A11 keeps bos.productionEligible=false pending explicit GA promotion.";
 
   const coreGateEvidence = BOS_V1_CORE_GA_GATES.map((gateId) => ({
     gateId,
@@ -568,7 +571,7 @@ export function assessBosPreGaReadiness(
     preGaInternalReady: manifest.preGaInternalReady,
     limitations: [
       "Live connectors remain Preview until live execution evidence passes and an explicit promotion occurs.",
-      "A10 froze BOS Core as the v1.0 GA feature set; productionEligible stays false until the qualification plan is executed.",
+      "A11 qualified BOS Core as the v1.0 GA feature set; productionEligible stays false until explicit GA promotion.",
     ],
   };
 }

@@ -4,6 +4,7 @@ import { test, expect, type Page } from "@playwright/test";
 import {
   BROWSER_E2E_EVIDENCE_PASS,
   BOS16_BROWSER_E2E_STAGE_COMPLETE,
+  BOS_15_BROWSER_ROUTES,
   bosBrowserE2eCertified,
   bosLiveHubSpotCertified,
   bosLiveMicrosoft365Certified,
@@ -33,7 +34,7 @@ function loadEnvFile(path: string): void {
     ) {
       value = value.slice(1, -1);
     }
-    if (!process.env[key]) process.env[key] = value;
+    process.env[key] = value;
   }
 }
 
@@ -255,5 +256,88 @@ test.describe("BOS-16A8 integrations browser workflows", () => {
     await expect(page.getByTestId("bos-integrations-catalog")).toBeVisible();
     await page.keyboard.press("Tab");
     await expect(page.getByRole("button", { name: /Connect Xero/i })).toBeVisible();
+  });
+});
+
+test.describe("BOS-16A11 Core GA browser flows", () => {
+  test.describe.configure({ retries: 1 });
+  test.beforeEach(() => {
+    test.skip(!browserReady, "BOS16_BROWSER_E2E blocked: no Playwright base URL");
+  });
+
+  test("authenticates and opens Owner Command Centre", async ({ page, context }) => {
+    await signInAs(context, emailA);
+    const res = await page.goto("/business");
+    expect(res?.status() ?? 500).toBeLessThan(500);
+    await expect(page.getByTestId("business-os-shell")).toBeVisible();
+    await expect(page.getByTestId("bos-header")).toBeVisible();
+    await expect(page.getByTestId("bos-kpis")).toBeVisible();
+    await expect(page.getByText("No autonomous approval.")).toBeVisible();
+    expect(await scanSecrets(page)).toEqual([]);
+  });
+
+  test("GA Core domain shells are reachable after login", async ({ page, context }) => {
+    await signInAs(context, emailA);
+    const shells: Array<{ route: string; testId: string }> = [
+      { route: "/business/finance", testId: "bos-finance-shell" },
+      { route: "/business/growth", testId: "bos-growth-shell" },
+      { route: "/business/revenue", testId: "bos-revenue-shell" },
+      { route: "/business/customers", testId: "bos-customers-shell" },
+      { route: "/business/profit", testId: "bos-profit-shell" },
+      { route: "/business/operations", testId: "bos-operations-shell" },
+      { route: "/business/decisions", testId: "bos-decisions-shell" },
+    ];
+    for (const row of shells) {
+      const res = await page.goto(row.route);
+      expect(res?.status() ?? 500, row.route).toBeLessThan(500);
+      await expect(page.getByTestId(row.testId)).toBeVisible();
+      expect(await scanSecrets(page), row.route).toEqual([]);
+    }
+    const risk = await page.goto("/business/risk");
+    expect(risk?.status() ?? 500).toBeLessThan(500);
+    await expect(page.getByTestId("bos-risk-summary")).toBeVisible();
+    const ctxRes = await page.goto("/business/context");
+    expect(ctxRes?.status() ?? 500).toBeLessThan(500);
+    await expect(page.getByTestId("bos-context-search")).toBeVisible();
+  });
+
+  test("AI Workforce supervised surface loads without provider tokens", async ({ page, context }) => {
+    await signInAs(context, emailA);
+    const res = await page.goto("/business/ai-workforce");
+    expect(res?.status() ?? 500).toBeLessThan(500);
+    await expect(page.getByTestId("bos-workforce-overview")).toBeVisible();
+    await expect(page.getByTestId("bos-workforce-approvals")).toBeVisible();
+    expect(await scanSecrets(page)).toEqual([]);
+  });
+
+  test("navigation integrity covers Core and remaining Business OS routes", async ({ page, context }) => {
+    await signInAs(context, emailA);
+    for (const route of BOS_15_BROWSER_ROUTES) {
+      const res = await page.goto(route, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      expect(res?.status() ?? 500, route).toBeLessThan(500);
+    }
+  });
+
+  test("unauthenticated Core and connector APIs are denied", async ({ request }) => {
+    const command = await request.get("/api/business/command");
+    expect([401, 403, 302, 303, 307], "GET /api/business/command").toContain(command.status());
+    expect(await command.text()).not.toMatch(SECRET_RE);
+
+    const commandPost = await request.post("/api/business/command", { data: { connectorId: "xero" } });
+    expect(commandPost.status(), "POST /api/business/command").toBe(405);
+    expect(await commandPost.text()).not.toMatch(SECRET_RE);
+
+    const oauthStart = await request.post("/api/business/integrations/oauth/start", {
+      data: { connectorId: "xero" },
+    });
+    expect([401, 403, 302, 303, 307], "POST oauth/start").toContain(oauthStart.status());
+    expect(await oauthStart.text()).not.toMatch(SECRET_RE);
+  });
+
+  test("unknown Business OS route fails closed without leaking secrets", async ({ page, context }) => {
+    await signInAs(context, emailA);
+    const res = await page.goto("/business/not-a-core-route", { waitUntil: "domcontentloaded", timeout: 30_000 });
+    expect(res?.status() ?? 500).not.toBe(500);
+    expect(await scanSecrets(page)).toEqual([]);
   });
 });
