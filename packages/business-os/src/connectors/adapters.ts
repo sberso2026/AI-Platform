@@ -6,6 +6,9 @@ import { resolveXeroSecrets } from "./xero-secrets";
 import { Microsoft365ProviderClient, type Ms365ClientDeps } from "./m365-client";
 import { Ms365ConnectorError } from "./m365-errors";
 import { resolveMs365Secrets } from "./m365-secrets";
+import { HubSpotProviderClient, type HubSpotClientDeps } from "./hubspot-client";
+import { HubSpotConnectorError } from "./hubspot-errors";
+import { resolveHubSpotSecrets } from "./hubspot-secrets";
 
 export type AdapterPage = {
   records: Array<{
@@ -274,9 +277,77 @@ export function createMicrosoft365Adapter(options?: {
   };
 }
 
+export function createHubSpotAdapter(options?: {
+  liveClientFactory?: (deps: HubSpotClientDeps) => HubSpotProviderClient;
+  fetch?: HubSpotClientDeps["fetch"];
+}): ConnectorAdapter {
+  const contract = connectorContract("hubspot");
+  const fixture = createFixtureAdapter("hubspot");
+  return {
+    contract,
+    async readPage(input) {
+      if (input.mode !== "live") {
+        return fixture.readPage(input);
+      }
+      const empty = (
+        errorCategory: string,
+        flags: Partial<Pick<AdapterPage, "rateLimited" | "timedOut" | "partial">> = {},
+      ): AdapterPage => ({
+        records: [],
+        nextCursor: null,
+        rateLimited: false,
+        timedOut: false,
+        partial: true,
+        errorCategory,
+        ...flags,
+      });
+      if (!input.secretId) return empty("hubspot_missing_secret");
+      if (!input.tenantId || !input.workspaceId || !input.installationId || !input.expectedProviderOrgId) {
+        return empty("hubspot_portal_unbound");
+      }
+      try {
+        const secrets = resolveHubSpotSecrets(input.secretId);
+        if (secrets.portalId !== input.expectedProviderOrgId) {
+          return empty("hubspot_portal_mismatch");
+        }
+        const deps: HubSpotClientDeps = {
+          fetch: options?.fetch ?? globalThis.fetch.bind(globalThis),
+          secrets,
+          expectedProviderOrgId: input.expectedProviderOrgId,
+        };
+        const client = options?.liveClientFactory ? options.liveClientFactory(deps) : new HubSpotProviderClient(deps);
+        await client.getAccountIdentity();
+        const records = [
+          ...(await client.getContactsReadOnly()),
+          ...(await client.getCompaniesReadOnly()),
+          ...(await client.getDealsReadOnly()),
+        ];
+        return {
+          records,
+          nextCursor: null,
+          rateLimited: false,
+          timedOut: false,
+          partial: false,
+          errorCategory: null,
+        };
+      } catch (error) {
+        if (error instanceof HubSpotConnectorError) {
+          if (error.category === "hubspot_rate_limited") return empty(error.category, { rateLimited: true });
+          if (error.category === "hubspot_timeout") return empty(error.category, { timedOut: true });
+          return empty(error.category);
+        }
+        return empty("hubspot_live_unavailable");
+      }
+    },
+    write(): never {
+      throw new Error("connector_write_forbidden");
+    },
+  };
+}
+
 export const BOS_CONNECTOR_ADAPTERS: Record<BosConnectorId, ConnectorAdapter> = {
   xero: createXeroAdapter(),
   microsoft_365: createMicrosoft365Adapter(),
-  hubspot: createFixtureAdapter("hubspot"),
+  hubspot: createHubSpotAdapter(),
   csv_excel: createFixtureAdapter("csv_excel"),
 };

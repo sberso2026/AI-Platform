@@ -120,6 +120,10 @@ describe("BOS-15A environment preflight", () => {
     expect(preflight.hubspot.available).toBe(false);
     expect(preflight.hubspot.executed).toBe(false);
     expect(preflight.hubspot.classification).toBe("BLOCKED_ENV");
+    expect(preflight.hubspot.readiness.connectorImplemented).toBe(true);
+    expect(preflight.hubspot.readiness.securityArchitectureReady).toBe(true);
+    expect(preflight.hubspot.readiness.liveCredentialsAvailable).toBe(false);
+    expect(preflight.hubspot.readiness.liveCertificationExecuted).toBe(false);
     expect(preflight.browser.available).toBe(false);
     expect(preflight.browser.executed).toBe(false);
     expect(preflight.browser.classification).toBe("BLOCKED_ENV");

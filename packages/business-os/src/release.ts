@@ -40,6 +40,9 @@ export const M365_CONNECTOR_IMPLEMENTED = true as const;
 export const M365_SECURITY_ARCHITECTURE_READY = true as const;
 export const M365_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosLiveHubSpotCertified = false as const;
+export const HUBSPOT_CONNECTOR_IMPLEMENTED = true as const;
+export const HUBSPOT_SECURITY_ARCHITECTURE_READY = true as const;
+export const HUBSPOT_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosBrowserE2eCertified = false as const;
 
 export const LIVE_RLS_STATUS = "LIVE_RLS_NOT_CERTIFIED" as const;
@@ -231,6 +234,26 @@ const BOS_LIVE_M365_KEYS = [
   "MS365_SECRET_ID",
   "MS365_TENANT_ID",
   "MS365_REFRESH_TOKEN",
+] as const;
+
+export class BosLiveHubSpotEnvironmentError extends Error {
+  readonly code = "BOS_LIVE_HUBSPOT_ENV_INVALID" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "BosLiveHubSpotEnvironmentError";
+  }
+}
+
+export type BosLiveHubSpotEnvironmentAssessment =
+  | { status: "unavailable"; reason: "no_live_configuration" }
+  | { status: "available" };
+
+const BOS_LIVE_HUBSPOT_KEYS = [
+  "HUBSPOT_CLIENT_ID",
+  "HUBSPOT_CLIENT_SECRET",
+  "HUBSPOT_SECRET_ID",
+  "HUBSPOT_PORTAL_ID",
+  "HUBSPOT_REFRESH_TOKEN",
 ] as const;
 
 export type BosStagingTargetAssessment =
@@ -527,6 +550,39 @@ export function assessBosLiveMicrosoft365Environment(): BosLiveMicrosoft365Envir
   return { status: "available" };
 }
 
+export function assessBosLiveHubSpotEnvironment(): BosLiveHubSpotEnvironmentAssessment {
+  if (Object.keys(process.env).some((key) => key.startsWith("NEXT_PUBLIC_HUBSPOT_") && readTrimmedEnv(key))) {
+    throw new BosLiveHubSpotEnvironmentError("BOS live HubSpot NEXT_PUBLIC credential rejected");
+  }
+  if (readTrimmedEnv("HUBSPOT_ACCESS_TOKEN") || readTrimmedEnv("HUBSPOT_HAPIKEY")) {
+    throw new BosLiveHubSpotEnvironmentError("BOS live HubSpot private-app credential rejected");
+  }
+  const required = {
+    HUBSPOT_CLIENT_ID: readTrimmedEnv("HUBSPOT_CLIENT_ID"),
+    HUBSPOT_CLIENT_SECRET: readTrimmedEnv("HUBSPOT_CLIENT_SECRET"),
+    HUBSPOT_SECRET_ID: readTrimmedEnv("HUBSPOT_SECRET_ID"),
+    HUBSPOT_PORTAL_ID: readTrimmedEnv("HUBSPOT_PORTAL_ID"),
+    HUBSPOT_REFRESH_TOKEN: readTrimmedEnv("HUBSPOT_REFRESH_TOKEN"),
+  } as const;
+  const attempted = BOS_LIVE_HUBSPOT_KEYS.some((key) => Boolean(required[key]));
+  if (!attempted) {
+    return { status: "unavailable", reason: "no_live_configuration" };
+  }
+  const missing = Object.entries(required)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+  if (missing.length > 0) {
+    throw new BosLiveHubSpotEnvironmentError(
+      incompleteConfigMessage("BOS live HubSpot", required as Record<string, string | undefined>),
+    );
+  }
+  const portalId = required.HUBSPOT_PORTAL_ID;
+  if (portalId && !/^\d+$/.test(portalId)) {
+    throw new BosLiveHubSpotEnvironmentError("BOS live HubSpot portal id must be numeric");
+  }
+  return { status: "available" };
+}
+
 export function liveProviderCredentialsAvailable(provider: "xero" | "microsoft_365" | "hubspot"): boolean {
   if (provider === "xero") {
     return assessBosLiveXeroEnvironment().status === "available";
@@ -534,7 +590,7 @@ export function liveProviderCredentialsAvailable(provider: "xero" | "microsoft_3
   if (provider === "microsoft_365") {
     return assessBosLiveMicrosoft365Environment().status === "available";
   }
-  return Boolean(process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_SECRET_ID);
+  return assessBosLiveHubSpotEnvironment().status === "available";
 }
 
 export function browserE2eEnvironmentAvailable(): boolean {
@@ -576,9 +632,11 @@ export function bos15EnvironmentPreflight() {
     testUser: envPresence("MS365_TEST_USER"),
   };
   const hubspotRefs = {
-    accessToken: envPresence("HUBSPOT_ACCESS_TOKEN"),
+    clientId: envPresence("HUBSPOT_CLIENT_ID"),
+    clientSecret: envPresence("HUBSPOT_CLIENT_SECRET"),
     secretReference: envPresence("HUBSPOT_SECRET_ID"),
     portalId: envPresence("HUBSPOT_PORTAL_ID"),
+    refreshToken: envPresence("HUBSPOT_REFRESH_TOKEN"),
   };
   const browserRefs = {
     RTB_TEST_BASE_URL: envPresence("RTB_TEST_BASE_URL"),
@@ -636,9 +694,15 @@ export function bos15EnvironmentPreflight() {
     },
     hubspot: {
       available: hubspotAvailable,
-      executed: false,
+      executed: HUBSPOT_LIVE_CERTIFICATION_EXECUTED,
       classification: hubspotAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
       refs: hubspotRefs,
+      readiness: {
+        connectorImplemented: HUBSPOT_CONNECTOR_IMPLEMENTED,
+        securityArchitectureReady: HUBSPOT_SECURITY_ARCHITECTURE_READY,
+        liveCredentialsAvailable: hubspotAvailable,
+        liveCertificationExecuted: HUBSPOT_LIVE_CERTIFICATION_EXECUTED,
+      },
     },
     browser: {
       available: browserAvailable,

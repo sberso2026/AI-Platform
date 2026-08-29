@@ -202,7 +202,9 @@ export default function BusinessIntegrationsPage() {
                     <CardContent className="space-y-2 text-sm">
                       <p>
                         Mode: {installation?.modeLabel ?? "FIXTURE/SANDBOX"} · Health: {installation?.health ?? "unconfigured"}
-                        {row.id === "microsoft_365" ? ` · ${installation?.connectionState ?? "NOT_CONNECTED"}` : ""}
+                        {row.id === "microsoft_365" || row.id === "hubspot"
+                          ? ` · ${installation?.connectionState ?? "NOT_CONNECTED"}`
+                          : ""}
                       </p>
                       {row.id === "microsoft_365" && (
                         <p>
@@ -210,15 +212,32 @@ export default function BusinessIntegrationsPage() {
                           {(installation?.permissions ?? ["User.Read", "Calendars.Read", "Files.Read"]).join(", ")}
                         </p>
                       )}
+                      {row.id === "hubspot" && (
+                        <p>
+                          HubSpot · Connected portal: {installation?.organisation ?? "not bound"} · permissions:{" "}
+                          {(
+                            installation?.permissions ?? [
+                              "oauth",
+                              "crm.objects.contacts.read",
+                              "crm.objects.companies.read",
+                              "crm.objects.deals.read",
+                            ]
+                          ).join(", ")}
+                        </p>
+                      )}
                       <p>Last sync: {installation?.lastSuccessfulSyncAt ?? "never"}</p>
                       {installation?.errorCategory && <p>Error: {installation.errorCategory}</p>}
                       <div className="flex gap-2">
                         <Button disabled={busy} onClick={() => void configure(row.id)}>
-                          {row.id === "microsoft_365" ? "Connect Microsoft 365" : "Configure"}
+                          {row.id === "microsoft_365"
+                            ? "Connect Microsoft 365"
+                            : row.id === "hubspot"
+                              ? "Connect HubSpot"
+                              : "Configure"}
                         </Button>
                         {installation && (
                           <Button disabled={busy} onClick={() => void revoke(installation.id)}>
-                            {row.id === "microsoft_365" ? "Disconnect" : "Revoke"}
+                            {row.id === "microsoft_365" || row.id === "hubspot" ? "Disconnect" : "Revoke"}
                           </Button>
                         )}
                       </div>

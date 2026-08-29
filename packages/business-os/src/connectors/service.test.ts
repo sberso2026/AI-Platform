@@ -60,6 +60,12 @@ describe("BOS-12 connector contracts", () => {
         "https://login.microsoftonline.com/11111111-1111-4111-8111-111111111111/oauth2/v2.0/token",
       ).host,
     ).toBe("login.microsoftonline.com");
+    expect(
+      connectors.assertConnectorUrl("hubspot", "https://api.hubapi.com/crm/v3/objects/contacts").host,
+    ).toBe("api.hubapi.com");
+    expect(() => connectors.assertConnectorUrl("hubspot", "https://evil.example/crm")).toThrow(
+      "unrestricted_external_proxy_forbidden",
+    );
   });
 
   it("stays usable with zero connectors configured", async () => {

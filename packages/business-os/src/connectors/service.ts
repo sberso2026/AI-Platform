@@ -24,6 +24,10 @@ import { Microsoft365ProviderClient } from "./m365-client";
 import { resolveMs365Secrets } from "./m365-secrets";
 import { m365SafeTelemetry } from "./m365-telemetry";
 import { MS365_ALLOWED_GRAPH_SCOPES, ms365ConnectionState } from "./m365-policy";
+import { HubSpotProviderClient } from "./hubspot-client";
+import { resolveHubSpotSecrets } from "./hubspot-secrets";
+import { hubspotSafeTelemetry } from "./hubspot-telemetry";
+import { HUBSPOT_ALLOWED_OAUTH_SCOPES, hubspotConnectionState } from "./hubspot-policy";
 import {
   assertSuppressedIdentityBlocked,
   redactSuppressedPayload,
@@ -175,8 +179,9 @@ export class BosConnectorsService {
         : ((existing?.provenance.expectedProviderOrgId as string | undefined) ?? "");
     const xeroLive = input.connectorId === "xero" && requestedMode === "live";
     const m365Live = input.connectorId === "microsoft_365" && requestedMode === "live";
-    const boundLive = (xeroLive || m365Live) && hasSecret && Boolean(expectedProviderOrgId);
-    const effectiveMode: BosConnectorMode = xeroLive || m365Live
+    const hubspotLive = input.connectorId === "hubspot" && requestedMode === "live";
+    const boundLive = (xeroLive || m365Live || hubspotLive) && hasSecret && Boolean(expectedProviderOrgId);
+    const effectiveMode: BosConnectorMode = xeroLive || m365Live || hubspotLive
       ? "live"
       : requestedMode === "live" && hasSecret
         ? "live"
@@ -184,7 +189,7 @@ export class BosConnectorsService {
           ? "fixture"
           : requestedMode;
     const health =
-      (xeroLive || m365Live) && !boundLive
+      (xeroLive || m365Live || hubspotLive) && !boundLive
         ? ("unavailable" as const)
         : requestedMode === "live" && !hasSecret
           ? ("unavailable" as const)
@@ -211,10 +216,12 @@ export class BosConnectorsService {
       rateLimitState: "ok",
       errorCategory:
         health === "unavailable"
-          ? (xeroLive || m365Live) && hasSecret && !expectedProviderOrgId
+          ? (xeroLive || m365Live || hubspotLive) && hasSecret && !expectedProviderOrgId
             ? xeroLive
               ? "xero_org_unbound"
-              : "m365_tenant_unbound"
+              : m365Live
+                ? "m365_tenant_unbound"
+                : "hubspot_portal_unbound"
             : "live_credentials_unavailable"
           : null,
       errorMessage:
@@ -223,6 +230,8 @@ export class BosConnectorsService {
             ? "LIVE Xero requested without complete secret_id and expected provider org binding; fixture data will not be returned as live"
             : m365Live
               ? "LIVE Microsoft 365 requested without complete secret_id and expected directory binding; fixture data will not be returned as live"
+              : hubspotLive
+                ? "LIVE HubSpot requested without complete secret_id and expected portal binding; fixture data will not be returned as live"
               : "LIVE requested but no platform secret_id is present; fixture/sandbox remains the honest mode"
           : null,
       revokedAt: null,
@@ -272,7 +281,9 @@ export class BosConnectorsService {
             ? await this.attemptXeroProviderRevocation(installation)
             : installation.connectorId === "microsoft_365"
               ? await this.attemptMs365ProviderRevocation(installation)
-              : "not_applicable",
+              : installation.connectorId === "hubspot"
+                ? await this.attemptHubSpotProviderRevocation(installation)
+                : "not_applicable",
       },
     };
     await this.store.upsertInstallation(next);
@@ -397,8 +408,8 @@ export class BosConnectorsService {
         break;
       }
       if (page.errorCategory && page.records.length === 0) {
-        timedOut = page.errorCategory === "xero_timeout" || page.errorCategory === "m365_timeout";
-        rateLimited = page.errorCategory === "xero_rate_limited" || page.errorCategory === "m365_rate_limited";
+        timedOut = page.errorCategory === "xero_timeout" || page.errorCategory === "m365_timeout" || page.errorCategory === "hubspot_timeout";
+        rateLimited = page.errorCategory === "xero_rate_limited" || page.errorCategory === "m365_rate_limited" || page.errorCategory === "hubspot_rate_limited";
         partial = true;
         run.errorCategory = page.errorCategory;
         break;
@@ -758,7 +769,14 @@ export class BosConnectorsService {
             secretId: row.secretId,
             errorCategory: row.errorCategory,
           })
-        : null;
+        : row.connectorId === "hubspot"
+          ? hubspotConnectionState({
+              health: row.health,
+              effectiveMode: row.effectiveMode,
+              secretId: row.secretId,
+              errorCategory: row.errorCategory,
+            })
+          : null;
     return redactSecrets({
       ...row,
       secretId: row.secretId ? "secret_ref" : null,
@@ -775,11 +793,17 @@ export class BosConnectorsService {
                 : ("FIXTURE/SANDBOX" as const),
       connectionState,
       organisation:
-        row.connectorId === "microsoft_365"
+        row.connectorId === "microsoft_365" || row.connectorId === "hubspot"
           ? ((row.provenance.expectedProviderOrgId as string | null | undefined) ?? null)
           : undefined,
-      permissions: row.connectorId === "microsoft_365" ? [...MS365_ALLOWED_GRAPH_SCOPES] : undefined,
-      disconnectAvailable: row.connectorId === "microsoft_365" && row.health !== "revoked",
+      permissions:
+        row.connectorId === "microsoft_365"
+          ? [...MS365_ALLOWED_GRAPH_SCOPES]
+          : row.connectorId === "hubspot"
+            ? [...HUBSPOT_ALLOWED_OAUTH_SCOPES]
+            : undefined,
+      disconnectAvailable:
+        (row.connectorId === "microsoft_365" || row.connectorId === "hubspot") && row.health !== "revoked",
     });
   }
 
@@ -831,8 +855,28 @@ export class BosConnectorsService {
     }
   }
 
+  private async attemptHubSpotProviderRevocation(
+    installation: ConnectorInstallation,
+  ): Promise<"submitted" | "unavailable" | "local_only"> {
+    if (!installation.secretId) return "local_only";
+    try {
+      const secrets = resolveHubSpotSecrets(installation.secretId);
+      const expected =
+        (installation.provenance.expectedProviderOrgId as string | undefined) ?? secrets.portalId;
+      const client = new HubSpotProviderClient({
+        fetch: globalThis.fetch.bind(globalThis),
+        secrets,
+        expectedProviderOrgId: expected,
+      });
+      const result = await client.revokeAuthorization();
+      return result.providerRevocation;
+    } catch {
+      return "local_only";
+    }
+  }
+
   private safeConnectorMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
-    return redactSecrets(m365SafeTelemetry(xeroSafeTelemetry(metadata)));
+    return redactSecrets(hubspotSafeTelemetry(m365SafeTelemetry(xeroSafeTelemetry(metadata))));
   }
 
   private async emit(

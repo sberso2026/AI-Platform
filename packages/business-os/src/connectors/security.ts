@@ -17,6 +17,7 @@ export const SECRET_FIELD_NAMES = [
   "authorization",
   "privateKey",
   "private_key",
+  "hapikey",
 ] as const;
 
 const PRIVATE_HOSTS = new Set([

@@ -114,5 +114,7 @@ export * from "./connectors/xero-policy";
 export * from "./connectors/xero-errors";
 export * from "./connectors/m365-policy";
 export * from "./connectors/m365-errors";
+export * from "./connectors/hubspot-policy";
+export * from "./connectors/hubspot-errors";
 export * from "./connectors/adapters";
 
