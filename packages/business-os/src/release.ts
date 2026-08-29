@@ -46,6 +46,15 @@ export const HUBSPOT_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosBrowserE2eCertified = false as const;
 export const BROWSER_E2E_EVIDENCE_PASS = true as const;
 export const BOS16_BROWSER_E2E_STAGE_COMPLETE = true as const;
+export const BOS16_RLS_STAGE_COMPLETE = true as const;
+export const LIVE_RLS_BROWSER_REGRESSION_PASS = true as const;
+export const LIVE_RLS_EVIDENCE_PASS = true as const;
+export const XERO_LIVE_EVIDENCE_PASS = false as const;
+export const M365_LIVE_EVIDENCE_PASS = false as const;
+export const HUBSPOT_LIVE_EVIDENCE_PASS = false as const;
+export const AI_WORKFORCE_REGRESSION_PASS = true as const;
+export const PRE_GA_INTERNAL_READINESS_PASS = true as const;
+export const BOS16_PRE_GA_INTERNAL_STAGE_COMPLETE = true as const;
 
 export const LIVE_RLS_STATUS = "LIVE_RLS_NOT_CERTIFIED" as const;
 export const BOS14A_STATUS = "BOS14A_BLOCKED_LIVE_RLS_ENV" as const;

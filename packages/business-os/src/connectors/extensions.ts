@@ -52,3 +52,7 @@ export const BOS_14_BOUNDARY_NOTE =
 /** BOS-15 is live GA certification only. Do not start post-GA feature work. */
 export const BOS_15_BOUNDARY_NOTE =
   "BOS-15 live GA certification only. Do not implement new BOS modules, capability 19, or post-GA feature work." as const;
+
+/** BOS-16A9 is pre-GA internal closure only. Do not start BOS-17 or create a GA tag. */
+export const BOS_16_PRE_GA_BOUNDARY_NOTE =
+  "BOS-16A9 pre-GA internal certification debt only. Do not start BOS-17, create a GA tag, or declare production eligibility." as const;

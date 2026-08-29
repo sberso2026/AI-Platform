@@ -165,6 +165,29 @@ describe("BOS-11 authority, tools, and approval", () => {
     expect(result.run.toolCalls[0]?.toolId).toBe("bos.context.entity");
   });
 
+  it("keeps stale graph evidence blocked and does not auto-approve", async () => {
+    const { workforce, context } = harness();
+    await context.applyRecords(SCOPE, demoContextRecords(SCOPE, { asOf: "2020-01-01T00:00:00.000Z" }));
+    const installed = await workforce.install(SCOPE, { slug: "business-advisor" }, HUMAN);
+    await workforce.enable(SCOPE, installed.id, HUMAN);
+    const result = await workforce.requestTask(
+      SCOPE,
+      {
+        installationId: installed.id,
+        intent: "recommend",
+        entityType: "customer",
+        entityId: BOS_10_DEMO_CUSTOMER_ID,
+        toolId: "bos.context.entity",
+      },
+      HUMAN,
+    );
+    expect(result.run.state).toBe("blocked");
+    expect(result.run.failureCode).toBe("needs_human_review");
+    expect(result.run.blockedReason).toBe("needs_human_review");
+    expect(result.approval).toBeNull();
+    expect(result.run.explanation.missingEvidence).toContain("stale_context");
+  });
+
   it("requires independent human approval for execution authority and forbids self-approval", async () => {
     const { workforce, context } = harness();
     await context.applyRecords(SCOPE, demoContextRecords(SCOPE));
