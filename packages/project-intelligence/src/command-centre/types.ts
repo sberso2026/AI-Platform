@@ -5,6 +5,7 @@
 import type { ProjectHealthDimensionResult, ProjectHealthEvidenceReference, ProjectHealthOverallClassification } from "../project-health/types";
 import type { ProjectScheduleIntelligence } from "../schedule-intelligence/types";
 import type { ProjectCostProgressIntelligence } from "../cost-progress-intelligence/types";
+import type { ProjectRiskChangeIntelligence } from "../risk-change-intelligence/types";
 
 export const COMMAND_CENTRE_AVAILABILITY = [
   "ok",
@@ -81,6 +82,7 @@ export type ProjectCommandCentreView = {
   knowledge: CommandCentreSectionProjection;
   scheduleIntelligence: ProjectScheduleIntelligence;
   costProgressIntelligence: ProjectCostProgressIntelligence;
+  riskChangeIntelligence: ProjectRiskChangeIntelligence;
   limitations: readonly string[];
   evidenceReferences: readonly ProjectHealthEvidenceReference[];
   generatedAt: string;

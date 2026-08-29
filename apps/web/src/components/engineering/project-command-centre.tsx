@@ -18,6 +18,11 @@ import {
   ProgressCommandCentreCard,
   type CostProgressView,
 } from "./project-cost-progress-intelligence";
+import {
+  ChangeCommandCentreCard,
+  RiskCommandCentreCard,
+  type RiskChangeView,
+} from "./project-risk-change-intelligence";
 
 type HealthState = "green" | "amber" | "red" | "unknown";
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
@@ -86,6 +91,7 @@ type CommandCentreView = {
   knowledge: SectionProjection;
   scheduleIntelligence: ScheduleIntelligenceView;
   costProgressIntelligence: CostProgressView;
+  riskChangeIntelligence: RiskChangeView;
   limitations: string[];
   evidenceReferences: EvidenceRef[];
   generatedAt: string;
@@ -401,9 +407,9 @@ export function ProjectCommandCentre() {
                 </CardContent>
               </Card>
             ) : null}
-            <SectionCard section={view.risk} testId="command-centre-section-risk" />
+            <RiskCommandCentreCard view={view.riskChangeIntelligence.risk} projectId={view.project.projectId} />
             <SectionCard section={view.quality} testId="command-centre-section-quality" />
-            <SectionCard section={view.change} testId="command-centre-section-change" />
+            <ChangeCommandCentreCard view={view.riskChangeIntelligence.change} projectId={view.project.projectId} />
             <SectionCard section={view.decisionsActions} testId="command-centre-section-decisions-actions" />
             <SectionCard section={view.forecast} testId="command-centre-section-forecast" />
             <SectionCard section={view.knowledge} testId="command-centre-section-knowledge" />

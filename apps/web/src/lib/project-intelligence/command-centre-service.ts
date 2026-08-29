@@ -6,6 +6,7 @@ import { HostedProjectControlsSource } from "./hosted-controls-source";
 import { HostedProjectKnowledgeSource } from "./hosted-knowledge-source";
 import { HostedScheduleIntelligenceSource } from "./hosted-schedule-source";
 import { HostedCostProgressIntelligenceSource } from "./hosted-cost-progress-source";
+import { HostedRiskChangeIntelligenceSource } from "./hosted-risk-change-source";
 
 export async function composeProjectCommandCentre(
   context: CommerceHandlerContext,
@@ -17,6 +18,7 @@ export async function composeProjectCommandCentre(
     knowledge: new HostedProjectKnowledgeSource(context.ctx),
     schedule: new HostedScheduleIntelligenceSource(context.ctx),
     costProgress: new HostedCostProgressIntelligenceSource(context.ctx),
+    riskChange: new HostedRiskChangeIntelligenceSource(context.ctx, context.commerce),
   });
   return service.compose({
     projectId,

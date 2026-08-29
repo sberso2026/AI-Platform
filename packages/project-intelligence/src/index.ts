@@ -66,3 +66,4 @@ export * from "./project-health";
 export * from "./command-centre";
 export * from "./schedule-intelligence";
 export * from "./cost-progress-intelligence";
+export * from "./risk-change-intelligence";

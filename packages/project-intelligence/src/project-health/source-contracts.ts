@@ -32,6 +32,15 @@ export type CanonicalRegisterItemRef = CanonicalEntityRef & {
   open: boolean;
   dueAt?: string;
   sourceTimestamp?: string;
+  ownerId?: string;
+  assignedTo?: string;
+  category?: string;
+  probability?: number;
+  consequence?: number;
+  residualScore?: number;
+  originatingObjectType?: string;
+  originatingObjectId?: string;
+  matrixId?: string;
 };
 
 export type CanonicalDocumentRef = CanonicalEntityRef & {

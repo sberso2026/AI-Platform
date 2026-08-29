@@ -6,7 +6,11 @@ import {
   emptyKnowledgeSnapshot,
 } from "../project-health/in-memory-sources";
 import type { ProjectHealthEvidenceReference } from "../project-health/types";
-import type { ProjectControlsSnapshot } from "../project-health/source-contracts";
+import type {
+  CanonicalRegisterItemRef,
+  ProjectControlsSnapshot,
+  ProjectCoreSnapshot,
+} from "../project-health/source-contracts";
 import { CommandCentreError, commandCentreCoreFailed, commandCentreForbidden } from "./errors";
 import { asPublishedPosture } from "../schedule-intelligence/interpreter";
 import { interpretScheduleIntelligence } from "../schedule-intelligence/service";
@@ -18,6 +22,15 @@ import {
 } from "../cost-progress-intelligence/interpreter";
 import { interpretCostProgressIntelligence } from "../cost-progress-intelligence/service";
 import type { CostProgressSourceSnapshot } from "../cost-progress-intelligence/types";
+import { asChangeStatusContext } from "../risk-change-intelligence/interpreter";
+import { interpretRiskChangeIntelligence } from "../risk-change-intelligence/service";
+import type {
+  CanonicalRiskActionRef,
+  CanonicalRiskRef,
+  ChangeSourceSlice,
+  RiskChangeSourceSnapshot,
+  RiskSourceSlice,
+} from "../risk-change-intelligence/types";
 import { assertCommandCentreOwnershipLocks, PI_AI_REQUIRED } from "./ownership";
 import {
   buildAttentionItems,
@@ -223,6 +236,101 @@ function snapshotFromControlsProgress(
   };
 }
 
+function toCanonicalRiskRef(item: CanonicalRegisterItemRef): CanonicalRiskRef {
+  return {
+    id: item.id,
+    status: item.status,
+    open: item.open,
+    priority: item.priority,
+    score: item.score,
+    probability: item.probability,
+    consequence: item.consequence,
+    residualScore: item.residualScore,
+    category: item.category,
+    ownerId: item.ownerId,
+    assignedTo: item.assignedTo,
+    dueAt: item.dueAt,
+    updatedAt: item.sourceTimestamp,
+    matrixId: item.matrixId,
+    matrixScale: "probability_1_5_consequence_1_5",
+    storesCanonicalCopy: false,
+  };
+}
+
+function toCanonicalRiskActionRef(item: CanonicalRegisterItemRef): CanonicalRiskActionRef {
+  return {
+    id: item.id,
+    open: item.open,
+    dueAt: item.dueAt,
+    originatingObjectType: item.originatingObjectType,
+    originatingObjectId: item.originatingObjectId,
+    updatedAt: item.sourceTimestamp,
+    storesCanonicalCopy: false,
+  };
+}
+
+function snapshotFromCoreRisks(
+  core: ProjectCoreSnapshot,
+  availability: CommandCentreAvailability,
+): RiskSourceSlice {
+  if (availability === "error" || availability === "unavailable" || availability === "forbidden") {
+    return { availability, bound: false, items: [], actions: [] };
+  }
+  if (!core.risks.bound) {
+    return { availability: "no_data", bound: false, items: [], actions: [] };
+  }
+  return {
+    availability: "ok",
+    bound: true,
+    items: core.risks.items.map(toCanonicalRiskRef),
+    actions: core.actions.bound ? core.actions.items.map(toCanonicalRiskActionRef) : [],
+    sourceTimestamp: core.risks.sourceTimestamp,
+  };
+}
+
+function snapshotFromControlsChange(
+  output: ProjectControlsSnapshot["change"],
+  availability: CommandCentreAvailability,
+): ChangeSourceSlice {
+  if (!output) {
+    return {
+      availability: availability === "ok" ? "no_data" : availability,
+      latest: null,
+      history: [],
+      evidence: [],
+    };
+  }
+  const latest = {
+    stateId: output.assessmentId,
+    projectId: output.projectId,
+    published: output.published,
+    abstained: output.abstained,
+    statusContext: asChangeStatusContext(output.posture),
+    assessedAt: output.assessedAt,
+    publishedAt: output.publishedAt,
+    version: typeof output.version === "number" ? output.version : undefined,
+    storesCanonicalCopy: false as const,
+  };
+  return {
+    availability,
+    latest,
+    history: [latest],
+    evidence: [],
+  };
+}
+
+function snapshotFromCoreAndControls(
+  core: ProjectCoreSnapshot,
+  output: ProjectControlsSnapshot["change"],
+  riskAvailability: CommandCentreAvailability,
+  changeAvailability: CommandCentreAvailability,
+): RiskChangeSourceSnapshot {
+  return {
+    risk: snapshotFromCoreRisks(core, riskAvailability),
+    change: snapshotFromControlsChange(output, changeAvailability),
+  };
+}
+
 export class ProjectCommandCentreService {
   constructor(private readonly sources: CommandCentreSourceBundle) {}
 
@@ -304,6 +412,25 @@ export class ProjectCommandCentreService {
       }
     }
 
+    let riskChangeSnapshot: RiskChangeSourceSnapshot | undefined;
+    if (this.sources.riskChange) {
+      if (
+        this.sources.riskChange.invokesControlsEngine ||
+        this.sources.riskChange.storesRiskRegister ||
+        this.sources.riskChange.mutatesRisk ||
+        this.sources.riskChange.mutatesChange ||
+        this.sources.riskChange.computesChangeImpact ||
+        this.sources.riskChange.computesIndependentRiskScore
+      ) {
+        throw new Error("Command Centre must not own a risk register or invoke a Project Controls engine");
+      }
+      try {
+        riskChangeSnapshot = await this.sources.riskChange.load(scope);
+      } catch {
+        riskChangeSnapshot = undefined;
+      }
+    }
+
     const dimensions = evaluateProjectHealthDimensions({
       core: coreLoad.snapshot,
       controls: controlsLoad.snapshot,
@@ -369,6 +496,21 @@ export class ProjectCommandCentreService {
       tenantId,
       workspaceId,
       snapshot: resolvedCostProgressSnapshot,
+      generatedAt,
+    });
+    const resolvedRiskChangeSnapshot: RiskChangeSourceSnapshot =
+      riskChangeSnapshot ??
+      snapshotFromCoreAndControls(
+        coreLoad.snapshot,
+        controlsLoad.snapshot.change,
+        coreLoad.snapshot.risks.bound ? "ok" : "no_data",
+        changeAvailability,
+      );
+    const riskChangeIntelligence = interpretRiskChangeIntelligence({
+      projectId: input.projectId,
+      tenantId,
+      workspaceId,
+      snapshot: resolvedRiskChangeSnapshot,
       generatedAt,
     });
     const cost = projectControlsSection({
@@ -469,6 +611,7 @@ export class ProjectCommandCentreService {
       knowledge,
       scheduleIntelligence,
       costProgressIntelligence,
+      riskChangeIntelligence,
       limitations,
       evidenceReferences,
       generatedAt,

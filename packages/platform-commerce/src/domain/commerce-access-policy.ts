@@ -466,6 +466,7 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "project-intelligence-command-centre.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
   "project-intelligence-schedule.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
   "project-intelligence-cost-progress.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
+  "project-intelligence-risk-change.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
   "project-intelligence-reasoning.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.read", seatRequired: true, workspaceRequired: true },
   "project-intelligence-reasoning.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.execute", seatRequired: true, workspaceRequired: true, featureKey: "ai_assistant", cachePolicy: "fresh" },
   "model-interoperability.read": {
@@ -693,6 +694,7 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
   "/engineering/apps/project-intelligence/knowledge": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "knowledge.intelligence.read", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/schedule": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/cost-progress": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
+  "/engineering/apps/project-intelligence/risk-change": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true, workspaceRequired: true },
   "/engineering/apps/project-intelligence/reasoning": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "reasoning.assistant.read", seatRequired: true, workspaceRequired: true },
 };
 

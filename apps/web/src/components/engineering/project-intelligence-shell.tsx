@@ -13,6 +13,7 @@ import {
   Network,
   SearchCheck,
   Settings,
+  ShieldAlert,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -28,6 +29,11 @@ const primaryTabs = [
     href: "/engineering/apps/project-intelligence/cost-progress",
     label: "Cost & Progress",
     icon: CircleDollarSign,
+  },
+  {
+    href: "/engineering/apps/project-intelligence/risk-change",
+    label: "Risk & Change",
+    icon: ShieldAlert,
   },
   {
     href: "/engineering/apps/project-intelligence/documents",
@@ -95,6 +101,7 @@ function navTestId(href: string): string | undefined {
   if (href === "/engineering/apps/project-intelligence") return "project-intelligence-nav-overview";
   if (href.endsWith("/schedule")) return "project-intelligence-nav-schedule";
   if (href.endsWith("/cost-progress")) return "project-intelligence-nav-cost-progress";
+  if (href.endsWith("/risk-change")) return "project-intelligence-nav-risk-change";
   if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
   if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
   if (href.endsWith("/findings")) return "project-intelligence-nav-findings";

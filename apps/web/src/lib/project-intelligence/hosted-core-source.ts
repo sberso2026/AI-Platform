@@ -36,6 +36,11 @@ function asRecord(value: unknown): Record<string, unknown> {
 function mapRegister(entityType: string, row: unknown): CanonicalRegisterItemRef {
   const data = asRecord(row);
   const status = String(data.status ?? "open");
+  const metadata = asRecord(data.metadata);
+  const matrixId =
+    metadata.matrix_id === undefined && metadata.matrixId === undefined
+      ? undefined
+      : String(metadata.matrix_id ?? metadata.matrixId);
   return {
     id: String(data.id),
     entityType,
@@ -45,6 +50,21 @@ function mapRegister(entityType: string, row: unknown): CanonicalRegisterItemRef
     open: !CLOSED_STATUSES.has(status.toLowerCase()),
     dueAt: data.due_date === undefined || data.due_date === null ? undefined : String(data.due_date),
     sourceTimestamp: String(data.updated_at ?? data.created_at ?? ""),
+    ownerId: data.owner_id === undefined || data.owner_id === null ? undefined : String(data.owner_id),
+    assignedTo: data.assigned_to === undefined || data.assigned_to === null ? undefined : String(data.assigned_to),
+    category: data.category === undefined || data.category === null ? undefined : String(data.category),
+    probability: typeof data.probability === "number" ? data.probability : undefined,
+    consequence: typeof data.consequence === "number" ? data.consequence : undefined,
+    residualScore: typeof data.residual_score === "number" ? data.residual_score : undefined,
+    originatingObjectType:
+      data.originating_object_type === undefined || data.originating_object_type === null
+        ? undefined
+        : String(data.originating_object_type),
+    originatingObjectId:
+      data.originating_object_id === undefined || data.originating_object_id === null
+        ? undefined
+        : String(data.originating_object_id),
+    matrixId,
     storesCanonicalCopy: false,
   };
 }

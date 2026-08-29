@@ -53,3 +53,9 @@ export type {
   ProjectProgressIntelligence,
   CostProgressFreshnessState,
 } from "./cost-progress-intelligence";
+export type {
+  ProjectRiskChangeIntelligence,
+  ProjectRiskIntelligence,
+  ProjectChangeIntelligence,
+  RiskChangeFreshnessState,
+} from "./risk-change-intelligence";

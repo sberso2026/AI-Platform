@@ -165,6 +165,10 @@ function openItems(items: readonly CanonicalRegisterItemRef[]): CanonicalRegiste
   return items.filter((item) => item.open);
 }
 
+/** Canonical Engineering OS 1–5 matrix thresholds. PI does not compute an independent score. */
+export const CANONICAL_RISK_CRITICAL_SCORE_THRESHOLD = 16;
+export const CANONICAL_RISK_HIGH_SCORE_THRESHOLD = 9;
+
 export function evaluateRiskDimension(
   core: ProjectCoreSnapshot,
   evaluatedAt: string,
@@ -177,7 +181,9 @@ export function evaluateRiskDimension(
   const freshness = core.risks.sourceTimestamp;
   const open = openItems(items);
   const red = open.filter(
-    (item) => item.priority === "critical" || (typeof item.score === "number" && item.score >= 16),
+    (item) =>
+      item.priority === "critical" ||
+      (typeof item.score === "number" && item.score >= CANONICAL_RISK_CRITICAL_SCORE_THRESHOLD),
   );
   if (red.length > 0) {
     return result(
@@ -192,7 +198,9 @@ export function evaluateRiskDimension(
     );
   }
   const amber = open.filter(
-    (item) => item.priority === "high" || (typeof item.score === "number" && item.score >= 9),
+    (item) =>
+      item.priority === "high" ||
+      (typeof item.score === "number" && item.score >= CANONICAL_RISK_HIGH_SCORE_THRESHOLD),
   );
   if (amber.length > 0) {
     return result(
