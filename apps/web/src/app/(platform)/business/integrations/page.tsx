@@ -37,6 +37,9 @@ type Installation = {
   recordsProcessed: number;
   recordsRejected: number;
   conflicts: number;
+  connectionState?: string | null;
+  organisation?: string | null;
+  permissions?: string[];
 };
 
 type Run = {
@@ -199,16 +202,23 @@ export default function BusinessIntegrationsPage() {
                     <CardContent className="space-y-2 text-sm">
                       <p>
                         Mode: {installation?.modeLabel ?? "FIXTURE/SANDBOX"} · Health: {installation?.health ?? "unconfigured"}
+                        {row.id === "microsoft_365" ? ` · ${installation?.connectionState ?? "NOT_CONNECTED"}` : ""}
                       </p>
+                      {row.id === "microsoft_365" && (
+                        <p>
+                          Microsoft 365 · organisation: {installation?.organisation ?? "not bound"} · permissions:{" "}
+                          {(installation?.permissions ?? ["User.Read", "Calendars.Read", "Files.Read"]).join(", ")}
+                        </p>
+                      )}
                       <p>Last sync: {installation?.lastSuccessfulSyncAt ?? "never"}</p>
                       {installation?.errorCategory && <p>Error: {installation.errorCategory}</p>}
                       <div className="flex gap-2">
                         <Button disabled={busy} onClick={() => void configure(row.id)}>
-                          Configure
+                          {row.id === "microsoft_365" ? "Connect Microsoft 365" : "Configure"}
                         </Button>
                         {installation && (
                           <Button disabled={busy} onClick={() => void revoke(installation.id)}>
-                            Revoke
+                            {row.id === "microsoft_365" ? "Disconnect" : "Revoke"}
                           </Button>
                         )}
                       </div>

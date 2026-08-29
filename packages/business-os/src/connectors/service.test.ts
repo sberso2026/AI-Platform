@@ -51,9 +51,15 @@ describe("BOS-12 connector contracts", () => {
       "unrestricted_external_proxy_forbidden",
     );
     expect(connectors.assertConnectorUrl("xero", "https://api.xero.com/api.xro/2.0/Invoices").host).toBe("api.xero.com");
-    expect(connectors.assertConnectorUrl("xero", "https://identity.xero.com/connect/token").host).toBe(
-      "identity.xero.com",
+    expect(connectors.assertConnectorUrl("microsoft_365", "https://graph.microsoft.com/v1.0/me").host).toBe(
+      "graph.microsoft.com",
     );
+    expect(
+      connectors.assertConnectorUrl(
+        "microsoft_365",
+        "https://login.microsoftonline.com/11111111-1111-4111-8111-111111111111/oauth2/v2.0/token",
+      ).host,
+    ).toBe("login.microsoftonline.com");
   });
 
   it("stays usable with zero connectors configured", async () => {
@@ -84,8 +90,8 @@ describe("BOS-12 configure, sync, revoke", () => {
     const { connectors } = harness();
     const row = await connectors.configure(SCOPE, { connectorId: "microsoft_365", mode: "live" }, HUMAN);
     expect(row.health).toBe("unavailable");
-    expect(row.effectiveMode).toBe("fixture");
-    expect(row.modeLabel).toBe("FIXTURE/SANDBOX");
+    expect(row.effectiveMode).toBe("live");
+    expect(row.modeLabel).toBe("LIVE_UNAVAILABLE");
   });
 
   it("syncs fixture data into staging without making it canonical", async () => {

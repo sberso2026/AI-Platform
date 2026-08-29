@@ -112,5 +112,7 @@ export * from "./connectors/csv";
 export * from "./connectors/security";
 export * from "./connectors/xero-policy";
 export * from "./connectors/xero-errors";
+export * from "./connectors/m365-policy";
+export * from "./connectors/m365-errors";
 export * from "./connectors/adapters";
 

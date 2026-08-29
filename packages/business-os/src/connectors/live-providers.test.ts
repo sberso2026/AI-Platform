@@ -3,6 +3,9 @@ import { clearBosCertificationEnv } from "../certification-env-harness";
 import {
   BOS14B_PROVIDER_STATUS,
   BOS_CONNECTOR_CERTIFICATION,
+  M365_CONNECTOR_IMPLEMENTED,
+  M365_LIVE_CERTIFICATION_EXECUTED,
+  M365_SECURITY_ARCHITECTURE_READY,
   XERO_CONNECTOR_IMPLEMENTED,
   XERO_LIVE_CERTIFICATION_EXECUTED,
   XERO_SECURITY_ARCHITECTURE_READY,
@@ -37,6 +40,9 @@ describe("BOS-14B live provider honesty", () => {
     expect(XERO_CONNECTOR_IMPLEMENTED).toBe(true);
     expect(XERO_SECURITY_ARCHITECTURE_READY).toBe(true);
     expect(XERO_LIVE_CERTIFICATION_EXECUTED).toBe(false);
+    expect(M365_CONNECTOR_IMPLEMENTED).toBe(true);
+    expect(M365_SECURITY_ARCHITECTURE_READY).toBe(true);
+    expect(M365_LIVE_CERTIFICATION_EXECUTED).toBe(false);
     expect(() => BOS_CONNECTOR_ADAPTERS.xero.write()).toThrow("connector_write_forbidden");
     expect(() => BOS_CONNECTOR_ADAPTERS.microsoft_365.write()).toThrow("connector_write_forbidden");
     expect(() => BOS_CONNECTOR_ADAPTERS.hubspot.write()).toThrow("connector_write_forbidden");

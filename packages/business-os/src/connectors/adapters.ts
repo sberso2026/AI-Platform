@@ -3,6 +3,9 @@ import { connectorContract } from "./catalog";
 import { XeroProviderClient, type XeroClientDeps } from "./xero-client";
 import { XeroConnectorError } from "./xero-errors";
 import { resolveXeroSecrets } from "./xero-secrets";
+import { Microsoft365ProviderClient, type Ms365ClientDeps } from "./m365-client";
+import { Ms365ConnectorError } from "./m365-errors";
+import { resolveMs365Secrets } from "./m365-secrets";
 
 export type AdapterPage = {
   records: Array<{
@@ -202,9 +205,78 @@ export function createXeroAdapter(options?: {
   };
 }
 
+export function createMicrosoft365Adapter(options?: {
+  liveClientFactory?: (deps: Ms365ClientDeps) => Microsoft365ProviderClient;
+  fetch?: Ms365ClientDeps["fetch"];
+}): ConnectorAdapter {
+  const contract = connectorContract("microsoft_365");
+  const fixture = createFixtureAdapter("microsoft_365");
+  return {
+    contract,
+    async readPage(input) {
+      if (input.mode !== "live") {
+        return fixture.readPage(input);
+      }
+      const empty = (
+        errorCategory: string,
+        flags: Partial<Pick<AdapterPage, "rateLimited" | "timedOut" | "partial">> = {},
+      ): AdapterPage => ({
+        records: [],
+        nextCursor: null,
+        rateLimited: false,
+        timedOut: false,
+        partial: true,
+        errorCategory,
+        ...flags,
+      });
+      if (!input.secretId) return empty("m365_missing_secret");
+      if (!input.tenantId || !input.workspaceId || !input.installationId || !input.expectedProviderOrgId) {
+        return empty("m365_tenant_unbound");
+      }
+      try {
+        const secrets = resolveMs365Secrets(input.secretId);
+        if (secrets.tenantId !== input.expectedProviderOrgId) {
+          return empty("m365_tenant_mismatch");
+        }
+        const deps: Ms365ClientDeps = {
+          fetch: options?.fetch ?? globalThis.fetch.bind(globalThis),
+          secrets,
+          expectedProviderOrgId: input.expectedProviderOrgId,
+        };
+        const client = options?.liveClientFactory
+          ? options.liveClientFactory(deps)
+          : new Microsoft365ProviderClient(deps);
+        const records = [
+          await client.getSignedInUser(),
+          ...(await client.getCalendarEventsReadOnly()),
+          ...(await client.getDriveItemMetadata()),
+        ];
+        return {
+          records,
+          nextCursor: null,
+          rateLimited: false,
+          timedOut: false,
+          partial: false,
+          errorCategory: null,
+        };
+      } catch (error) {
+        if (error instanceof Ms365ConnectorError) {
+          if (error.category === "m365_rate_limited") return empty(error.category, { rateLimited: true });
+          if (error.category === "m365_timeout") return empty(error.category, { timedOut: true });
+          return empty(error.category);
+        }
+        return empty("m365_live_unavailable");
+      }
+    },
+    write(): never {
+      throw new Error("connector_write_forbidden");
+    },
+  };
+}
+
 export const BOS_CONNECTOR_ADAPTERS: Record<BosConnectorId, ConnectorAdapter> = {
   xero: createXeroAdapter(),
-  microsoft_365: createFixtureAdapter("microsoft_365"),
+  microsoft_365: createMicrosoft365Adapter(),
   hubspot: createFixtureAdapter("hubspot"),
   csv_excel: createFixtureAdapter("csv_excel"),
 };

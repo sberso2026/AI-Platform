@@ -113,6 +113,10 @@ describe("BOS-15A environment preflight", () => {
     expect(preflight.microsoft365.available).toBe(false);
     expect(preflight.microsoft365.executed).toBe(false);
     expect(preflight.microsoft365.classification).toBe("BLOCKED_ENV");
+    expect(preflight.microsoft365.readiness.connectorImplemented).toBe(true);
+    expect(preflight.microsoft365.readiness.securityArchitectureReady).toBe(true);
+    expect(preflight.microsoft365.readiness.liveCredentialsAvailable).toBe(false);
+    expect(preflight.microsoft365.readiness.liveCertificationExecuted).toBe(false);
     expect(preflight.hubspot.available).toBe(false);
     expect(preflight.hubspot.executed).toBe(false);
     expect(preflight.hubspot.classification).toBe("BLOCKED_ENV");

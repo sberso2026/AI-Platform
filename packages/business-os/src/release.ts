@@ -36,6 +36,9 @@ export const XERO_CONNECTOR_IMPLEMENTED = true as const;
 export const XERO_SECURITY_ARCHITECTURE_READY = true as const;
 export const XERO_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosLiveMicrosoft365Certified = false as const;
+export const M365_CONNECTOR_IMPLEMENTED = true as const;
+export const M365_SECURITY_ARCHITECTURE_READY = true as const;
+export const M365_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosLiveHubSpotCertified = false as const;
 export const bosBrowserE2eCertified = false as const;
 
@@ -208,6 +211,26 @@ const BOS_LIVE_XERO_KEYS = [
   "XERO_SECRET_ID",
   "XERO_TENANT_ID",
   "XERO_REFRESH_TOKEN",
+] as const;
+
+export class BosLiveMicrosoft365EnvironmentError extends Error {
+  readonly code = "BOS_LIVE_M365_ENV_INVALID" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "BosLiveMicrosoft365EnvironmentError";
+  }
+}
+
+export type BosLiveMicrosoft365EnvironmentAssessment =
+  | { status: "unavailable"; reason: "no_live_configuration" }
+  | { status: "available" };
+
+const BOS_LIVE_M365_KEYS = [
+  "MS365_CLIENT_ID",
+  "MS365_CLIENT_SECRET",
+  "MS365_SECRET_ID",
+  "MS365_TENANT_ID",
+  "MS365_REFRESH_TOKEN",
 ] as const;
 
 export type BosStagingTargetAssessment =
@@ -478,12 +501,38 @@ export function assessBosLiveXeroEnvironment(): BosLiveXeroEnvironmentAssessment
   return { status: "available" };
 }
 
+export function assessBosLiveMicrosoft365Environment(): BosLiveMicrosoft365EnvironmentAssessment {
+  if (Object.keys(process.env).some((key) => key.startsWith("NEXT_PUBLIC_MS365_") && readTrimmedEnv(key))) {
+    throw new BosLiveMicrosoft365EnvironmentError("BOS live Microsoft 365 NEXT_PUBLIC credential rejected");
+  }
+  const required = {
+    MS365_CLIENT_ID: readTrimmedEnv("MS365_CLIENT_ID"),
+    MS365_CLIENT_SECRET: readTrimmedEnv("MS365_CLIENT_SECRET"),
+    MS365_SECRET_ID: readTrimmedEnv("MS365_SECRET_ID"),
+    MS365_TENANT_ID: readTrimmedEnv("MS365_TENANT_ID"),
+    MS365_REFRESH_TOKEN: readTrimmedEnv("MS365_REFRESH_TOKEN"),
+  } as const;
+  const attempted = BOS_LIVE_M365_KEYS.some((key) => Boolean(required[key]));
+  if (!attempted) {
+    return { status: "unavailable", reason: "no_live_configuration" };
+  }
+  const missing = Object.entries(required)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+  if (missing.length > 0) {
+    throw new BosLiveMicrosoft365EnvironmentError(
+      incompleteConfigMessage("BOS live Microsoft 365", required as Record<string, string | undefined>),
+    );
+  }
+  return { status: "available" };
+}
+
 export function liveProviderCredentialsAvailable(provider: "xero" | "microsoft_365" | "hubspot"): boolean {
   if (provider === "xero") {
     return assessBosLiveXeroEnvironment().status === "available";
   }
   if (provider === "microsoft_365") {
-    return Boolean(process.env.MS365_CLIENT_ID && process.env.MS365_CLIENT_SECRET && process.env.MS365_SECRET_ID);
+    return assessBosLiveMicrosoft365Environment().status === "available";
   }
   return Boolean(process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_SECRET_ID);
 }
@@ -523,6 +572,7 @@ export function bos15EnvironmentPreflight() {
     clientSecret: envPresence("MS365_CLIENT_SECRET"),
     secretReference: envPresence("MS365_SECRET_ID"),
     entraTenantId: envPresence("MS365_TENANT_ID"),
+    refreshToken: envPresence("MS365_REFRESH_TOKEN"),
     testUser: envPresence("MS365_TEST_USER"),
   };
   const hubspotRefs = {
@@ -574,9 +624,15 @@ export function bos15EnvironmentPreflight() {
     },
     microsoft365: {
       available: microsoft365Available,
-      executed: false,
+      executed: M365_LIVE_CERTIFICATION_EXECUTED,
       classification: microsoft365Available ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
       refs: microsoft365Refs,
+      readiness: {
+        connectorImplemented: M365_CONNECTOR_IMPLEMENTED,
+        securityArchitectureReady: M365_SECURITY_ARCHITECTURE_READY,
+        liveCredentialsAvailable: microsoft365Available,
+        liveCertificationExecuted: M365_LIVE_CERTIFICATION_EXECUTED,
+      },
     },
     hubspot: {
       available: hubspotAvailable,
