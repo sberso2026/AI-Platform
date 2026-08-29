@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  BUSINESS_CONTEXT_CATALOG_SOURCES,
   BUSINESS_OS_RUNTIME_MANIFEST,
   createBusinessOS,
   implementsOwnAiStack,
@@ -32,6 +33,15 @@ describe("BOS-10 Business Context Graph", () => {
       "engineering_os_internal_projection_forbidden",
     );
     expect(bos.businessContextGraph.aiWorkforce().available).toBe(true);
+    expect(BUSINESS_CONTEXT_CATALOG_SOURCES.some((row) => row.table === "business_os_growth_leads")).toBe(true);
+    expect(BUSINESS_CONTEXT_CATALOG_SOURCES.some((row) => row.table === "business_os_growth_opportunities")).toBe(
+      true,
+    );
+    expect(BUSINESS_CONTEXT_CATALOG_SOURCES.some((row) => row.table === "business_os_revenue_proposals")).toBe(true);
+    expect(BUSINESS_CONTEXT_CATALOG_SOURCES.some((row) => row.table === "business_os_growth_market_segments")).toBe(
+      true,
+    );
+    expect(BUSINESS_CONTEXT_CATALOG_SOURCES.some((row) => row.table === "business_os_leads")).toBe(false);
   });
 
   it("registers /business/context", () => {

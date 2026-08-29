@@ -1,21 +1,79 @@
 import type { SupabaseClient } from "@rtb/database";
 import type {
+  BusinessCapabilityId,
   BusinessContextCanonicalLink,
   BusinessContextCanonicalRecord,
   BusinessContextNodeType,
   BusinessContextRelationshipType,
   BusinessContextSourceDomain,
 } from "@rtb/types";
-import { BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION } from "@rtb/types";
+import { BUSINESS_CAPABILITY_IDS, BUSINESS_CONTEXT_GRAPH_ONTOLOGY_VERSION } from "@rtb/types";
 import { buildIdentity } from "./identity";
 import { NODE_TYPE_DOMAIN } from "./ontology";
 import type { OwnerCommandScope } from "../owner-command/service";
+
+export const STALE_BOS_CATALOG_TABLE_NAMES = [
+  "business_os_leads",
+  "business_os_market_segments",
+  "business_os_opportunities",
+  "business_os_proposals",
+] as const;
+
+export type BusinessContextCatalogSource = {
+  key: string;
+  table: string;
+  domain: BusinessContextSourceDomain;
+  capability: BusinessCapabilityId;
+};
+
+export const BUSINESS_CONTEXT_CATALOG_SOURCES: readonly BusinessContextCatalogSource[] = [
+  { key: "customers", table: "business_os_customers", domain: "customer", capability: "customer_intelligence" },
+  { key: "contacts", table: "business_os_customer_contacts", domain: "customer", capability: "customer_intelligence" },
+  { key: "leads", table: "business_os_growth_leads", domain: "growth", capability: "growth_intelligence" },
+  { key: "opportunities", table: "business_os_growth_opportunities", domain: "growth", capability: "growth_intelligence" },
+  { key: "proposals", table: "business_os_revenue_proposals", domain: "revenue", capability: "revenue_execution" },
+  { key: "work", table: "business_os_work_items", domain: "operations", capability: "work_operations" },
+  { key: "profit", table: "business_os_profit_facts", domain: "profit", capability: "profit_intelligence" },
+  { key: "financial", table: "business_os_customer_financial_facts", domain: "customer", capability: "customer_intelligence" },
+  { key: "segments", table: "business_os_growth_market_segments", domain: "growth", capability: "growth_intelligence" },
+  { key: "risks", table: "business_os_risks", domain: "risk", capability: "business_risk" },
+  { key: "controls", table: "business_os_risk_controls", domain: "risk", capability: "business_risk" },
+  { key: "controlLinks", table: "business_os_risk_control_links", domain: "risk", capability: "business_risk" },
+  { key: "obligations", table: "business_os_risk_obligations", domain: "risk", capability: "business_risk" },
+  { key: "decisions", table: "business_os_decisions", domain: "decision", capability: "decision_action" },
+  { key: "evidenceRows", table: "business_os_decision_evidence", domain: "decision", capability: "decision_action" },
+  { key: "actions", table: "business_os_actions", domain: "decision", capability: "decision_action" },
+  { key: "signals", table: "business_os_signals", domain: "owner_command", capability: "owner_command" },
+  { key: "recommendations", table: "business_os_recommendations", domain: "owner_command", capability: "owner_command" },
+  { key: "kpis", table: "business_os_kpis", domain: "owner_command", capability: "owner_command" },
+];
+
+export function assertBusinessContextCatalogUniqueness(
+  sources: readonly BusinessContextCatalogSource[] = BUSINESS_CONTEXT_CATALOG_SOURCES,
+): void {
+  const keys = new Set<string>();
+  const tables = new Set<string>();
+  for (const source of sources) {
+    if (keys.has(source.key)) throw new Error(`duplicate_catalog_key:${source.key}`);
+    if (tables.has(source.table)) throw new Error(`duplicate_catalog_table:${source.table}`);
+    if (!(BUSINESS_CAPABILITY_IDS as readonly string[]).includes(source.capability)) {
+      throw new Error(`unknown_catalog_capability:${source.capability}`);
+    }
+    keys.add(source.key);
+    tables.add(source.table);
+  }
+}
+
+assertBusinessContextCatalogUniqueness();
 
 async function loadTable(
   supabase: SupabaseClient,
   table: string,
   scope: OwnerCommandScope,
 ): Promise<{ missing: boolean; rows: Record<string, unknown>[] }> {
+  if ((STALE_BOS_CATALOG_TABLE_NAMES as readonly string[]).includes(table)) {
+    throw new Error(`stale_catalog_table:${table}`);
+  }
   try {
     const { data, error } = await supabase
       .from(table as never)
@@ -73,10 +131,11 @@ function recordOf(
       displayName,
       sourceType: str(row.source_type || extra?.sourceType || "canonical"),
       sourceRef: opt(row.source_ref),
-      classification: extra?.classification ?? opt(row.status),
+      classification: extra?.classification ?? opt(row.status) ?? opt(row.qualification_status) ?? opt(row.stage),
       effectiveAt: str(row.updated_at || row.created_at || new Date().toISOString()),
       suppressed: Boolean(row.suppressed),
-      deleted: String(row.status) === "archived" || String(row.status) === "deleted",
+      deleted:
+        Boolean(row.deleted_at) || String(row.status) === "archived" || String(row.status) === "deleted",
     }),
     links: [],
   };
@@ -103,40 +162,19 @@ export async function loadCanonicalRecords(
   supabase: SupabaseClient,
   scope: OwnerCommandScope,
 ): Promise<{ records: BusinessContextCanonicalRecord[]; missingDomains: string[] }> {
-  const missingDomains: string[] = [];
-  const tables = {
-    customers: await loadTable(supabase, "business_os_customers", scope),
-    contacts: await loadTable(supabase, "business_os_customer_contacts", scope),
-    leads: await loadTable(supabase, "business_os_leads", scope),
-    opportunities: await loadTable(supabase, "business_os_opportunities", scope),
-    proposals: await loadTable(supabase, "business_os_proposals", scope),
-    work: await loadTable(supabase, "business_os_work_items", scope),
-    profit: await loadTable(supabase, "business_os_profit_facts", scope),
-    financial: await loadTable(supabase, "business_os_customer_financial_facts", scope),
-    segments: await loadTable(supabase, "business_os_market_segments", scope),
-    risks: await loadTable(supabase, "business_os_risks", scope),
-    controls: await loadTable(supabase, "business_os_risk_controls", scope),
-    controlLinks: await loadTable(supabase, "business_os_risk_control_links", scope),
-    obligations: await loadTable(supabase, "business_os_risk_obligations", scope),
-    decisions: await loadTable(supabase, "business_os_decisions", scope),
-    evidenceRows: await loadTable(supabase, "business_os_decision_evidence", scope),
-    actions: await loadTable(supabase, "business_os_actions", scope),
-    signals: await loadTable(supabase, "business_os_signals", scope),
-    recommendations: await loadTable(supabase, "business_os_recommendations", scope),
-    kpis: await loadTable(supabase, "business_os_kpis", scope),
-  };
+  const loaded = await Promise.all(
+    BUSINESS_CONTEXT_CATALOG_SOURCES.map(async (source) => [source.key, await loadTable(supabase, source.table, scope)] as const),
+  );
+  const tables = Object.fromEntries(loaded) as Record<
+    (typeof BUSINESS_CONTEXT_CATALOG_SOURCES)[number]["key"],
+    { missing: boolean; rows: Record<string, unknown>[] }
+  >;
 
-  const domainTables: Array<[string, { missing: boolean }]> = [
-    ["customer", tables.customers],
-    ["growth", tables.leads],
-    ["revenue", tables.proposals],
-    ["operations", tables.work],
-    ["profit", tables.profit],
-    ["risk", tables.risks],
-    ["decision", tables.decisions],
-  ];
-  for (const [domain, table] of domainTables) {
-    if (table.missing) missingDomains.push(domain);
+  const missingDomains: string[] = [];
+  for (const source of BUSINESS_CONTEXT_CATALOG_SOURCES) {
+    if (tables[source.key].missing && !missingDomains.includes(source.domain)) {
+      missingDomains.push(source.domain);
+    }
   }
 
   const records: BusinessContextCanonicalRecord[] = [];
@@ -212,7 +250,7 @@ export async function loadCanonicalRecords(
     push(rec);
   }
   for (const row of tables.segments.rows) {
-    push(recordOf(scope, "market_segment", row, str(row.name || "Segment")));
+    push(recordOf(scope, "market_segment", row, str(row.segment_name || row.name || "Segment")));
   }
   for (const row of tables.risks.rows) {
     const rec = recordOf(scope, "risk", row, str(row.title || row.reference || "Risk"));

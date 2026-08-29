@@ -90,6 +90,7 @@ export * from "./risk/tolerance";
 export * from "./risk/signals";
 export * from "./risk/service";
 export * from "./risk/demo";
+export * from "./context/catalog";
 export * from "./context/ontology";
 export * from "./context/identity";
 export * from "./context/taxonomy";
