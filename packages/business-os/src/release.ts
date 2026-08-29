@@ -235,6 +235,31 @@ function readTrimmedEnv(key: string): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+const PRIVILEGED_JWT_ROLES = new Set(["service_role", "supabase_admin", "anon"]);
+
+function decodeJwtRole(token: string): string | undefined {
+  const parts = token.split(".");
+  if (parts.length !== 3) return undefined;
+  try {
+    const json = Buffer.from(parts[1], "base64url").toString("utf8");
+    const payload = JSON.parse(json) as { role?: unknown };
+    return typeof payload.role === "string" ? payload.role : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function rejectPrivilegedAccessToken(label: string, token: string): void {
+  const serviceRole = readTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceRole && token === serviceRole) {
+    failClosedBosLiveRls(`${label} rejected: privileged credential cannot certify live RLS`);
+  }
+  const role = decodeJwtRole(token);
+  if (role && PRIVILEGED_JWT_ROLES.has(role)) {
+    failClosedBosLiveRls(`${label} rejected: privileged credential cannot certify live RLS`);
+  }
+}
+
 function bosLiveRlsConfigAttempted(): boolean {
   return BOS_LIVE_RLS_ATTEMPT_KEYS.some((key) => Boolean(readTrimmedEnv(key)));
 }
@@ -390,6 +415,12 @@ export function assessBosLiveRlsEnvironment(): BosLiveRlsEnvironmentAssessment {
   if (missing.length > 0) {
     failClosedBosLiveRls(incompleteConfigMessage("BOS live RLS", required));
   }
+  if (!tenantAJwt || !tenantBJwt) {
+    failClosedBosLiveRls(incompleteConfigMessage("BOS live RLS", required));
+  }
+
+  rejectPrivilegedAccessToken("tenantAJwt", tenantAJwt);
+  rejectPrivilegedAccessToken("tenantBJwt", tenantBJwt);
 
   return { status: "available", projectRef: target.projectRef, hostname: target.hostname };
 }

@@ -146,6 +146,29 @@ describe("BOS live RLS dedicated staging validation", () => {
     expect(assessBosLiveRlsEnvironment().status).toBe("unavailable");
   });
 
+  it("fails closed when a tenant JWT carries a privileged role", () => {
+    const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify({ role: "service_role" })).toString("base64url");
+    stubCompleteValidEnv({ BOS_RLS_TENANT_A_JWT: `${header}.${payload}.sig` });
+    expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
+    expect(() => liveRlsEnvironmentAvailable()).toThrow(/privileged credential/);
+  });
+
+  it("fails closed when a tenant JWT is replaced by the service-role key", () => {
+    stubCompleteValidEnv({
+      SUPABASE_SERVICE_ROLE_KEY: "service-role-fixture-key",
+      BOS_RLS_TENANT_A_JWT: "service-role-fixture-key",
+    });
+    expect(() => liveRlsEnvironmentAvailable()).toThrow(BosLiveRlsEnvironmentError);
+    expect(() => liveRlsEnvironmentAvailable()).toThrow(/privileged credential/);
+    try {
+      liveRlsEnvironmentAvailable();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      expect(message).not.toContain("service-role-fixture-key");
+    }
+  });
+
   it("reuses a valid staging target then treats missing live-RLS identities as unavailable skip", () => {
     stubCompleteValidEnv();
     expect(assessBosStagingTarget()).toEqual(assessBosLiveRlsEnvironment());
