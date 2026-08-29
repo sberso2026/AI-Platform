@@ -1,5 +1,8 @@
 import type { BosConnectorContract, BosConnectorId } from "@rtb/types";
 import { connectorContract } from "./catalog";
+import { XeroProviderClient, type XeroClientDeps } from "./xero-client";
+import { XeroConnectorError } from "./xero-errors";
+import { resolveXeroSecrets } from "./xero-secrets";
 
 export type AdapterPage = {
   records: Array<{
@@ -13,6 +16,7 @@ export type AdapterPage = {
   rateLimited: boolean;
   timedOut: boolean;
   partial: boolean;
+  errorCategory?: string | null;
 };
 
 export interface ConnectorAdapter {
@@ -22,6 +26,10 @@ export interface ConnectorAdapter {
     secretId: string | null;
     mode: "fixture" | "sandbox" | "live";
     simulate?: "timeout" | "rate_limit" | "partial";
+    tenantId?: string;
+    workspaceId?: string;
+    installationId?: string;
+    expectedProviderOrgId?: string | null;
   }): Promise<AdapterPage>;
   write(): never;
 }
@@ -126,8 +134,76 @@ export function createFixtureAdapter(connectorId: BosConnectorId): ConnectorAdap
   };
 }
 
+export function createXeroAdapter(options?: {
+  liveClientFactory?: (deps: XeroClientDeps) => XeroProviderClient;
+  fetch?: XeroClientDeps["fetch"];
+}): ConnectorAdapter {
+  const contract = connectorContract("xero");
+  const fixture = createFixtureAdapter("xero");
+  return {
+    contract,
+    async readPage(input) {
+      if (input.mode !== "live") {
+        return fixture.readPage(input);
+      }
+      const empty = (
+        errorCategory: string,
+        flags: Partial<Pick<AdapterPage, "rateLimited" | "timedOut" | "partial">> = {},
+      ): AdapterPage => ({
+        records: [],
+        nextCursor: null,
+        rateLimited: false,
+        timedOut: false,
+        partial: true,
+        errorCategory,
+        ...flags,
+      });
+      if (!input.secretId) return empty("xero_missing_secret");
+      if (!input.tenantId || !input.workspaceId || !input.installationId || !input.expectedProviderOrgId) {
+        return empty("xero_org_unbound");
+      }
+      try {
+        const secrets = resolveXeroSecrets(input.secretId);
+        if (secrets.tenantId !== input.expectedProviderOrgId) {
+          return empty("xero_org_mismatch");
+        }
+        const deps: XeroClientDeps = {
+          fetch: options?.fetch ?? globalThis.fetch.bind(globalThis),
+          secrets,
+          expectedProviderOrgId: input.expectedProviderOrgId,
+        };
+        const client = options?.liveClientFactory ? options.liveClientFactory(deps) : new XeroProviderClient(deps);
+        const records = [
+          await client.getOrganisation(),
+          ...(await client.getAccounts()),
+          ...(await client.getInvoicesReadOnly(1)),
+          ...(await client.getFinancialContacts(1)),
+        ];
+        return {
+          records,
+          nextCursor: null,
+          rateLimited: false,
+          timedOut: false,
+          partial: false,
+          errorCategory: null,
+        };
+      } catch (error) {
+        if (error instanceof XeroConnectorError) {
+          if (error.category === "xero_rate_limited") return empty(error.category, { rateLimited: true });
+          if (error.category === "xero_timeout") return empty(error.category, { timedOut: true });
+          return empty(error.category);
+        }
+        return empty("xero_live_unavailable");
+      }
+    },
+    write(): never {
+      throw new Error("connector_write_forbidden");
+    },
+  };
+}
+
 export const BOS_CONNECTOR_ADAPTERS: Record<BosConnectorId, ConnectorAdapter> = {
-  xero: createFixtureAdapter("xero"),
+  xero: createXeroAdapter(),
   microsoft_365: createFixtureAdapter("microsoft_365"),
   hubspot: createFixtureAdapter("hubspot"),
   csv_excel: createFixtureAdapter("csv_excel"),

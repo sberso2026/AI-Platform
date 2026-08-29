@@ -51,6 +51,9 @@ describe("BOS-12 connector contracts", () => {
       "unrestricted_external_proxy_forbidden",
     );
     expect(connectors.assertConnectorUrl("xero", "https://api.xero.com/api.xro/2.0/Invoices").host).toBe("api.xero.com");
+    expect(connectors.assertConnectorUrl("xero", "https://identity.xero.com/connect/token").host).toBe(
+      "identity.xero.com",
+    );
   });
 
   it("stays usable with zero connectors configured", async () => {

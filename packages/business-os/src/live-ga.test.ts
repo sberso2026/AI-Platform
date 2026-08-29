@@ -106,6 +106,10 @@ describe("BOS-15A environment preflight", () => {
     expect(preflight.xero.available).toBe(false);
     expect(preflight.xero.executed).toBe(false);
     expect(preflight.xero.classification).toBe("BLOCKED_ENV");
+    expect(preflight.xero.readiness.connectorImplemented).toBe(true);
+    expect(preflight.xero.readiness.securityArchitectureReady).toBe(true);
+    expect(preflight.xero.readiness.liveCredentialsAvailable).toBe(false);
+    expect(preflight.xero.readiness.liveCertificationExecuted).toBe(false);
     expect(preflight.microsoft365.available).toBe(false);
     expect(preflight.microsoft365.executed).toBe(false);
     expect(preflight.microsoft365.classification).toBe("BLOCKED_ENV");

@@ -17,6 +17,9 @@ import type {
 } from "./ports";
 import { assertNoInlineSecrets, assertConnectorUrl, redactSecrets } from "./security";
 import { BusinessConnectorRepository } from "./repository";
+import { XeroProviderClient } from "./xero-client";
+import { resolveXeroSecrets } from "./xero-secrets";
+import { xeroSafeTelemetry } from "./xero-telemetry";
 import {
   assertSuppressedIdentityBlocked,
   redactSuppressedPayload,
@@ -144,7 +147,12 @@ export class BosConnectorsService {
 
   async configure(
     raw: { tenantId: string; workspaceId?: string; userId: string },
-    input: { connectorId: BosConnectorId; secretId?: string | null; mode?: BosConnectorMode },
+    input: {
+      connectorId: BosConnectorId;
+      secretId?: string | null;
+      mode?: BosConnectorMode;
+      expectedProviderOrgId?: string | null;
+    },
     actor: ConnectorActor,
   ) {
     const scope = requireWorkspace(raw);
@@ -157,11 +165,25 @@ export class BosConnectorsService {
     }
     const requestedMode = input.mode ?? contract.defaultMode;
     const hasSecret = Boolean(input.secretId);
-    const effectiveMode: BosConnectorMode = requestedMode === "live" && hasSecret ? "live" : requestedMode === "live" ? "fixture" : requestedMode;
+    const expectedProviderOrgId =
+      typeof input.expectedProviderOrgId === "string" && input.expectedProviderOrgId.trim()
+        ? input.expectedProviderOrgId.trim()
+        : ((existing?.provenance.expectedProviderOrgId as string | undefined) ?? "");
+    const xeroLive = input.connectorId === "xero" && requestedMode === "live";
+    const xeroLiveBound = xeroLive && hasSecret && Boolean(expectedProviderOrgId);
+    const effectiveMode: BosConnectorMode = xeroLive
+      ? "live"
+      : requestedMode === "live" && hasSecret
+        ? "live"
+        : requestedMode === "live"
+          ? "fixture"
+          : requestedMode;
     const health =
-      requestedMode === "live" && !hasSecret
+      xeroLive && !xeroLiveBound
         ? ("unavailable" as const)
-        : ("configured" as const);
+        : requestedMode === "live" && !hasSecret
+          ? ("unavailable" as const)
+          : ("configured" as const);
     const row: ConnectorInstallation = {
       id: existing?.id ?? newId("bos12-install"),
       tenantId: scope.tenantId,
@@ -182,14 +204,27 @@ export class BosConnectorsService {
       recordsRejected: existing?.recordsRejected ?? 0,
       conflicts: existing?.conflicts ?? 0,
       rateLimitState: "ok",
-      errorCategory: health === "unavailable" ? "live_credentials_unavailable" : null,
+      errorCategory:
+        health === "unavailable"
+          ? xeroLive && hasSecret && !expectedProviderOrgId
+            ? "xero_org_unbound"
+            : "live_credentials_unavailable"
+          : null,
       errorMessage:
         health === "unavailable"
-          ? "LIVE requested but no platform secret_id is present; fixture/sandbox remains the honest mode"
+          ? xeroLive
+            ? "LIVE Xero requested without complete secret_id and expected provider org binding; fixture data will not be returned as live"
+            : "LIVE requested but no platform secret_id is present; fixture/sandbox remains the honest mode"
           : null,
       revokedAt: null,
       configuredBy: actor.userId,
-      provenance: { contract: contract.version, secretRefOnly: true, live: effectiveMode === "live" && hasSecret },
+      provenance: {
+        contract: contract.version,
+        secretRefOnly: true,
+        live: effectiveMode === "live" && hasSecret,
+        expectedProviderOrgId: expectedProviderOrgId || null,
+        providerOrgId: (existing?.provenance.providerOrgId as string | null | undefined) ?? null,
+      },
       createdAt: existing?.createdAt ?? nowIso(),
       updatedAt: nowIso(),
     };
@@ -198,6 +233,7 @@ export class BosConnectorsService {
       connectorId: row.connectorId,
       effectiveMode: row.effectiveMode,
       secretIdPresent: Boolean(row.secretId),
+      expectedProviderOrgId: expectedProviderOrgId || null,
     });
     await this.emit(scope, "business_os.connectors.configured", {
       installationId: row.id,
@@ -219,6 +255,11 @@ export class BosConnectorsService {
       updatedAt: nowIso(),
       errorCategory: "revoked",
       errorMessage: "Connector revoked; secret reference cleared",
+      provenance: {
+        ...installation.provenance,
+        disconnectedAt: nowIso(),
+        providerRevocation: installation.connectorId === "xero" ? await this.attemptXeroProviderRevocation(installation) : "not_applicable",
+      },
     };
     await this.store.upsertInstallation(next);
     await this.auditSafe(scope, "revoke", "business_os_connector_installation", next.id, {
@@ -314,6 +355,10 @@ export class BosConnectorsService {
         secretId: installation.secretId,
         mode: installation.effectiveMode,
         simulate: input.simulate,
+        tenantId: installation.tenantId,
+        workspaceId: installation.workspaceId,
+        installationId: installation.id,
+        expectedProviderOrgId: (installation.provenance.expectedProviderOrgId as string | null | undefined) ?? null,
       });
       while (page.timedOut && attempt < contract.retryPolicy.maxAttempts) {
         attempt += 1;
@@ -323,6 +368,10 @@ export class BosConnectorsService {
           secretId: installation.secretId,
           mode: installation.effectiveMode,
           simulate: input.simulate,
+          tenantId: installation.tenantId,
+          workspaceId: installation.workspaceId,
+          installationId: installation.id,
+          expectedProviderOrgId: (installation.provenance.expectedProviderOrgId as string | null | undefined) ?? null,
         });
       }
       if (page.timedOut) {
@@ -331,6 +380,13 @@ export class BosConnectorsService {
       }
       if (page.rateLimited) {
         rateLimited = true;
+        break;
+      }
+      if (page.errorCategory && page.records.length === 0) {
+        timedOut = page.errorCategory === "xero_timeout";
+        rateLimited = page.errorCategory === "xero_rate_limited";
+        partial = true;
+        run.errorCategory = page.errorCategory;
         break;
       }
       if (page.partial) partial = true;
@@ -389,12 +445,18 @@ export class BosConnectorsService {
       if (!cursor) break;
     }
 
-    const status: ConnectorSyncRun["status"] = timedOut
+    const status: ConnectorSyncRun["status"] = timedOut || (Boolean(run.errorCategory) && processed === 0 && !rateLimited)
       ? "failed"
       : rateLimited || partial
         ? "partial"
         : "completed";
-    const errorCategory = timedOut ? "timeout" : rateLimited ? "rate_limited" : null;
+    const errorCategory = timedOut
+      ? "timeout"
+      : rateLimited
+        ? "rate_limited"
+        : run.errorCategory && processed === 0
+          ? run.errorCategory
+          : null;
     const completed: ConnectorSyncRun = {
       ...run,
       status,
@@ -422,6 +484,17 @@ export class BosConnectorsService {
       errorCategory,
       errorMessage: errorCategory,
       updatedAt: nowIso(),
+      provenance: {
+        ...installation.provenance,
+        live: installation.effectiveMode === "live",
+        fixture: installation.effectiveMode !== "live",
+        providerOrgId:
+          installation.effectiveMode === "live" && status !== "failed"
+            ? ((installation.provenance.expectedProviderOrgId as string | null | undefined) ??
+              (installation.provenance.providerOrgId as string | null | undefined) ??
+              null)
+            : (installation.provenance.providerOrgId as string | null | undefined) ?? null,
+      },
     });
     const event =
       status === "failed" ? "business_os.connectors.sync_failed" : "business_os.connectors.sync_completed";
@@ -672,9 +745,11 @@ export class BosConnectorsService {
           ? ("REVOKED" as const)
           : row.health === "degraded"
             ? ("DEGRADED" as const)
-            : row.effectiveMode === "live" && row.health === "healthy"
-              ? ("LIVE" as const)
-              : ("FIXTURE/SANDBOX" as const),
+            : row.effectiveMode === "live" && row.health === "unavailable"
+              ? ("LIVE_UNAVAILABLE" as const)
+              : row.effectiveMode === "live"
+                ? ("LIVE" as const)
+                : ("FIXTURE/SANDBOX" as const),
     });
   }
 
@@ -684,6 +759,26 @@ export class BosConnectorsService {
     if (installation.tenantId !== scope.tenantId) throw new Error("cross_tenant_connector_forbidden");
     if (installation.workspaceId !== scope.workspaceId) throw new Error("cross_workspace_graph_forbidden");
     return installation;
+  }
+
+  private async attemptXeroProviderRevocation(
+    installation: ConnectorInstallation,
+  ): Promise<"submitted" | "unavailable" | "local_only"> {
+    if (!installation.secretId) return "local_only";
+    try {
+      const secrets = resolveXeroSecrets(installation.secretId);
+      const expected =
+        (installation.provenance.expectedProviderOrgId as string | undefined) ?? secrets.tenantId;
+      const client = new XeroProviderClient({
+        fetch: globalThis.fetch.bind(globalThis),
+        secrets,
+        expectedProviderOrgId: expected,
+      });
+      const result = await client.revokeAuthorization();
+      return result.providerRevocation;
+    } catch {
+      return "local_only";
+    }
   }
 
   private async emit(
@@ -697,7 +792,7 @@ export class BosConnectorsService {
         workspaceId: scope.workspaceId,
         eventType,
         source: "business-os",
-        payload: redactSecrets(payload),
+        payload: redactSecrets(xeroSafeTelemetry(payload)),
       });
     } catch {
       // Connector events must not take Business OS down.
@@ -719,7 +814,7 @@ export class BosConnectorsService {
         action,
         resourceType,
         resourceId,
-        metadata: redactSecrets(metadata),
+        metadata: redactSecrets(xeroSafeTelemetry(metadata)),
       });
     } catch {
       // Audit persistence must not fail-close connector management.

@@ -109,7 +109,7 @@ export function connectorContract(id: BosConnectorId): BosConnectorContract {
 }
 
 export const BOS_CONNECTOR_APPROVED_HOSTS: Record<Exclude<BosConnectorId, "csv_excel">, readonly string[]> = {
-  xero: ["api.xero.com"],
+  xero: ["api.xero.com", "identity.xero.com"],
   microsoft_365: ["graph.microsoft.com"],
   hubspot: ["api.hubapi.com"],
 };

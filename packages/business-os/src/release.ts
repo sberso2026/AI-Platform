@@ -32,6 +32,9 @@ export const bosReleaseCandidate = true as const;
 export const bosProductionEligible = false as const;
 export const bosLiveRlsCertified = false as const;
 export const bosLiveXeroCertified = false as const;
+export const XERO_CONNECTOR_IMPLEMENTED = true as const;
+export const XERO_SECURITY_ARCHITECTURE_READY = true as const;
+export const XERO_LIVE_CERTIFICATION_EXECUTED = false as const;
 export const bosLiveMicrosoft365Certified = false as const;
 export const bosLiveHubSpotCertified = false as const;
 export const bosBrowserE2eCertified = false as const;
@@ -186,6 +189,26 @@ export class BosLiveRlsEnvironmentError extends Error {
     this.name = "BosLiveRlsEnvironmentError";
   }
 }
+
+export class BosLiveXeroEnvironmentError extends Error {
+  readonly code = "BOS_LIVE_XERO_ENV_INVALID" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "BosLiveXeroEnvironmentError";
+  }
+}
+
+export type BosLiveXeroEnvironmentAssessment =
+  | { status: "unavailable"; reason: "no_live_configuration" }
+  | { status: "available" };
+
+const BOS_LIVE_XERO_KEYS = [
+  "XERO_CLIENT_ID",
+  "XERO_CLIENT_SECRET",
+  "XERO_SECRET_ID",
+  "XERO_TENANT_ID",
+  "XERO_REFRESH_TOKEN",
+] as const;
 
 export type BosStagingTargetAssessment =
   | { status: "unavailable"; reason: "no_staging_target_configuration" }
@@ -429,9 +452,35 @@ export function liveRlsEnvironmentAvailable(): boolean {
   return assessBosLiveRlsEnvironment().status === "available";
 }
 
+export function assessBosLiveXeroEnvironment(): BosLiveXeroEnvironmentAssessment {
+  if (Object.keys(process.env).some((key) => key.startsWith("NEXT_PUBLIC_XERO_") && readTrimmedEnv(key))) {
+    throw new BosLiveXeroEnvironmentError("BOS live Xero NEXT_PUBLIC credential rejected");
+  }
+  const required = {
+    XERO_CLIENT_ID: readTrimmedEnv("XERO_CLIENT_ID"),
+    XERO_CLIENT_SECRET: readTrimmedEnv("XERO_CLIENT_SECRET"),
+    XERO_SECRET_ID: readTrimmedEnv("XERO_SECRET_ID"),
+    XERO_TENANT_ID: readTrimmedEnv("XERO_TENANT_ID"),
+    XERO_REFRESH_TOKEN: readTrimmedEnv("XERO_REFRESH_TOKEN"),
+  } as const;
+  const attempted = BOS_LIVE_XERO_KEYS.some((key) => Boolean(required[key]));
+  if (!attempted) {
+    return { status: "unavailable", reason: "no_live_configuration" };
+  }
+  const missing = Object.entries(required)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+  if (missing.length > 0) {
+    throw new BosLiveXeroEnvironmentError(
+      incompleteConfigMessage("BOS live Xero", required as Record<string, string | undefined>),
+    );
+  }
+  return { status: "available" };
+}
+
 export function liveProviderCredentialsAvailable(provider: "xero" | "microsoft_365" | "hubspot"): boolean {
   if (provider === "xero") {
-    return Boolean(process.env.XERO_CLIENT_ID && process.env.XERO_CLIENT_SECRET && process.env.XERO_SECRET_ID);
+    return assessBosLiveXeroEnvironment().status === "available";
   }
   if (provider === "microsoft_365") {
     return Boolean(process.env.MS365_CLIENT_ID && process.env.MS365_CLIENT_SECRET && process.env.MS365_SECRET_ID);
@@ -513,9 +562,15 @@ export function bos15EnvironmentPreflight() {
     },
     xero: {
       available: xeroAvailable,
-      executed: false,
+      executed: XERO_LIVE_CERTIFICATION_EXECUTED,
       classification: xeroAvailable ? ("AVAILABLE" as const) : ("BLOCKED_ENV" as const),
       refs: xeroRefs,
+      readiness: {
+        connectorImplemented: XERO_CONNECTOR_IMPLEMENTED,
+        securityArchitectureReady: XERO_SECURITY_ARCHITECTURE_READY,
+        liveCredentialsAvailable: xeroAvailable,
+        liveCertificationExecuted: XERO_LIVE_CERTIFICATION_EXECUTED,
+      },
     },
     microsoft365: {
       available: microsoft365Available,

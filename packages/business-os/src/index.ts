@@ -110,4 +110,7 @@ export * from "./connectors/catalog";
 export * from "./connectors/service";
 export * from "./connectors/csv";
 export * from "./connectors/security";
+export * from "./connectors/xero-policy";
+export * from "./connectors/xero-errors";
+export * from "./connectors/adapters";
 
