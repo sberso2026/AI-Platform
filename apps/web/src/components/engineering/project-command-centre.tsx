@@ -13,6 +13,11 @@ import {
   cn,
 } from "@rtb/ui";
 import { ScheduleCommandCentreCard, type ScheduleIntelligenceView } from "./project-schedule-intelligence";
+import {
+  CostCommandCentreCard,
+  ProgressCommandCentreCard,
+  type CostProgressView,
+} from "./project-cost-progress-intelligence";
 
 type HealthState = "green" | "amber" | "red" | "unknown";
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
@@ -80,6 +85,7 @@ type CommandCentreView = {
   forecast: SectionProjection;
   knowledge: SectionProjection;
   scheduleIntelligence: ScheduleIntelligenceView;
+  costProgressIntelligence: CostProgressView;
   limitations: string[];
   evidenceReferences: EvidenceRef[];
   generatedAt: string;
@@ -380,8 +386,21 @@ export function ProjectCommandCentre() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <ScheduleCommandCentreCard view={view.scheduleIntelligence} projectId={view.project.projectId} />
-            <SectionCard section={view.cost} testId="command-centre-section-cost" />
-            <SectionCard section={view.progress} testId="command-centre-section-progress" />
+            <CostCommandCentreCard view={view.costProgressIntelligence.cost} projectId={view.project.projectId} />
+            <ProgressCommandCentreCard
+              view={view.costProgressIntelligence.progress}
+              projectId={view.project.projectId}
+            />
+            {view.costProgressIntelligence.consistency.available ? (
+              <Card data-testid="command-centre-cost-progress-consistency">
+                <CardHeader className="pb-2">
+                  <CardTitle>Cost vs Progress</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-700">{view.costProgressIntelligence.consistency.explanation}</p>
+                </CardContent>
+              </Card>
+            ) : null}
             <SectionCard section={view.risk} testId="command-centre-section-risk" />
             <SectionCard section={view.quality} testId="command-centre-section-quality" />
             <SectionCard section={view.change} testId="command-centre-section-change" />

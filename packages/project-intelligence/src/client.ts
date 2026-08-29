@@ -47,3 +47,9 @@ export type {
   ScheduleMilestoneInsight,
   ScheduleFreshnessState,
 } from "./schedule-intelligence";
+export type {
+  ProjectCostProgressIntelligence,
+  ProjectCostIntelligence,
+  ProjectProgressIntelligence,
+  CostProgressFreshnessState,
+} from "./cost-progress-intelligence";

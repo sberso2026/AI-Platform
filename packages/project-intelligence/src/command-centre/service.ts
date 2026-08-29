@@ -11,6 +11,13 @@ import { CommandCentreError, commandCentreCoreFailed, commandCentreForbidden } f
 import { asPublishedPosture } from "../schedule-intelligence/interpreter";
 import { interpretScheduleIntelligence } from "../schedule-intelligence/service";
 import type { ScheduleIntelligenceSourceSnapshot } from "../schedule-intelligence/types";
+import {
+  asCostPosture,
+  asProgressBand,
+  asProgressTrend,
+} from "../cost-progress-intelligence/interpreter";
+import { interpretCostProgressIntelligence } from "../cost-progress-intelligence/service";
+import type { CostProgressSourceSnapshot } from "../cost-progress-intelligence/types";
 import { assertCommandCentreOwnershipLocks, PI_AI_REQUIRED } from "./ownership";
 import {
   buildAttentionItems,
@@ -152,6 +159,70 @@ function snapshotFromControlsSchedule(
   };
 }
 
+function snapshotFromControlsCost(
+  output: ProjectControlsSnapshot["cost"],
+  availability: CommandCentreAvailability,
+): CostProgressSourceSnapshot["cost"] {
+  if (!output) {
+    return {
+      availability: availability === "ok" ? "no_data" : availability,
+      latest: null,
+      history: [],
+      evidence: [],
+    };
+  }
+  const latest = {
+    stateId: output.assessmentId,
+    projectId: output.projectId,
+    published: output.published,
+    abstained: output.abstained,
+    posture: asCostPosture(output.posture),
+    assessedAt: output.assessedAt,
+    publishedAt: output.publishedAt,
+    version: typeof output.version === "number" ? output.version : undefined,
+    storesCanonicalCopy: false as const,
+  };
+  return {
+    availability,
+    latest,
+    history: [latest],
+    evidence: [],
+  };
+}
+
+function snapshotFromControlsProgress(
+  output: ProjectControlsSnapshot["progress"],
+  availability: CommandCentreAvailability,
+): CostProgressSourceSnapshot["progress"] {
+  if (!output) {
+    return {
+      availability: availability === "ok" ? "no_data" : availability,
+      latest: null,
+      history: [],
+      evidence: [],
+    };
+  }
+  const latest = {
+    assessmentId: output.assessmentId,
+    stateId: output.assessmentId,
+    projectId: output.projectId,
+    published: output.published,
+    abstained: output.abstained,
+    band: asProgressBand(output.posture),
+    trendDirection: asProgressTrend(output.posture),
+    assessedAt: output.assessedAt,
+    publishedAt: output.publishedAt,
+    version: typeof output.version === "number" ? output.version : undefined,
+    storesCanonicalCopy: false as const,
+  };
+  return {
+    availability,
+    latest,
+    history: [latest],
+    evidence: [],
+  };
+}
+
 export class ProjectCommandCentreService {
   constructor(private readonly sources: CommandCentreSourceBundle) {}
 
@@ -202,6 +273,33 @@ export class ProjectCommandCentreService {
           scheduleSnapshot = snapshotFromControlsSchedule(null, "forbidden");
         } else {
           scheduleSnapshot = snapshotFromControlsSchedule(null, "error");
+        }
+      }
+    }
+
+    let costProgressSnapshot: CostProgressSourceSnapshot | undefined;
+    if (this.sources.costProgress) {
+      if (
+        this.sources.costProgress.invokesControlsEngine ||
+        this.sources.costProgress.computesEarnedValue ||
+        this.sources.costProgress.computesForecast ||
+        this.sources.costProgress.computesPhysicalProgress
+      ) {
+        throw new Error("Command Centre must not invoke a Project Controls engine");
+      }
+      try {
+        costProgressSnapshot = await this.sources.costProgress.load(scope);
+      } catch (error) {
+        if (error instanceof CommandCentreError && error.code === "project_forbidden") {
+          costProgressSnapshot = {
+            cost: snapshotFromControlsCost(null, "forbidden"),
+            progress: snapshotFromControlsProgress(null, "forbidden"),
+          };
+        } else {
+          costProgressSnapshot = {
+            cost: snapshotFromControlsCost(null, "error"),
+            progress: snapshotFromControlsProgress(null, "error"),
+          };
         }
       }
     }
@@ -260,6 +358,17 @@ export class ProjectCommandCentreService {
       tenantId,
       workspaceId,
       snapshot: resolvedScheduleSnapshot,
+      generatedAt,
+    });
+    const resolvedCostProgressSnapshot: CostProgressSourceSnapshot = costProgressSnapshot ?? {
+      cost: snapshotFromControlsCost(controlsLoad.snapshot.cost, costAvailability),
+      progress: snapshotFromControlsProgress(controlsLoad.snapshot.progress, progressAvailability),
+    };
+    const costProgressIntelligence = interpretCostProgressIntelligence({
+      projectId: input.projectId,
+      tenantId,
+      workspaceId,
+      snapshot: resolvedCostProgressSnapshot,
       generatedAt,
     });
     const cost = projectControlsSection({
@@ -359,6 +468,7 @@ export class ProjectCommandCentreService {
       forecast,
       knowledge,
       scheduleIntelligence,
+      costProgressIntelligence,
       limitations,
       evidenceReferences,
       generatedAt,

@@ -5,6 +5,7 @@ import { HostedProjectCoreSource } from "./hosted-core-source";
 import { HostedProjectControlsSource } from "./hosted-controls-source";
 import { HostedProjectKnowledgeSource } from "./hosted-knowledge-source";
 import { HostedScheduleIntelligenceSource } from "./hosted-schedule-source";
+import { HostedCostProgressIntelligenceSource } from "./hosted-cost-progress-source";
 
 export async function composeProjectCommandCentre(
   context: CommerceHandlerContext,
@@ -15,6 +16,7 @@ export async function composeProjectCommandCentre(
     controls: new HostedProjectControlsSource(context.ctx),
     knowledge: new HostedProjectKnowledgeSource(context.ctx),
     schedule: new HostedScheduleIntelligenceSource(context.ctx),
+    costProgress: new HostedCostProgressIntelligenceSource(context.ctx),
   });
   return service.compose({
     projectId,
