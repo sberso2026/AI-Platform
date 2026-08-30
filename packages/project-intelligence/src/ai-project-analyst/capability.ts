@@ -1,6 +1,5 @@
 export const AI_PROJECT_ANALYST_CAPABILITY = "project_intelligence.ai_project_analyst" as const;
 export const AI_PROJECT_ANALYST_AGENT_SLUG = "project-intelligence-analyst" as const;
-export const AI_PROJECT_ANALYST_PROMPT_KEY = "project_intelligence.ai_project_analyst" as const;
 
 export const ANALYST_MAY = [
   "answer_project_questions",

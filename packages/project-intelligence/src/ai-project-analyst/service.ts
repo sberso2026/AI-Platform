@@ -2,7 +2,7 @@ import { ANALYST_KNOWN_LIMITATIONS, AI_PROJECT_ANALYST_CAPABILITY } from "./capa
 import { assembleAnalystContext, unknownOrUnavailable } from "./context";
 import { buildManagementBrief } from "./brief";
 import { causalSafetyClaim } from "./causality";
-import { aiSummary, containsFabricatedMetric, fact, interpretation, limitation, phraseHealth, phraseInsufficient } from "./claims";
+import { aiSummary, containsUnsafeAiOverlay, fact, interpretation, limitation, phraseHealth, phraseInsufficient } from "./claims";
 import { detectPromptInjection, routeAnalystIntent } from "./intent";
 import { listPiAnalystPlatformTools } from "./tools";
 import type { AnalystAnswer, AnalystClaim, AnalystContext, AnalystIntent, PiAnalystPlatformToolKey } from "./types";
@@ -18,6 +18,8 @@ export type AnswerAnalystQuestionInput = {
   aiSummaryText?: string;
   directorRunId?: string;
   overlaySkippedReason?: string;
+  promptKey?: string;
+  promptVersion?: string;
 };
 
 const INTENT_TOOLS: Record<AnalystIntent, readonly PiAnalystPlatformToolKey[]> = {
@@ -212,7 +214,7 @@ export function answerAnalystQuestion(input: AnswerAnalystQuestionInput): Analys
   const intent = routeAnalystIntent(input.question);
   const refused = intent === "injection" || intent === "mutation";
   const claims = buildClaims(intent, context, input.question);
-  if (input.aiSummaryText && !containsFabricatedMetric(input.aiSummaryText) && !detectPromptInjection(input.aiSummaryText) && !refused) {
+  if (input.aiSummaryText && !containsUnsafeAiOverlay(input.aiSummaryText) && !detectPromptInjection(input.aiSummaryText) && !refused) {
     claims.push(aiSummary(`Advisory phrasing from Platform AI Director (not canonical fact): ${input.aiSummaryText.slice(0, 600)}`));
   }
   const citations = claims.flatMap((claim) => claim.citations);
@@ -241,6 +243,8 @@ export function answerAnalystQuestion(input: AnswerAnalystQuestionInput): Analys
     aiModel: input.aiModel,
     directorRunId: input.directorRunId,
     overlaySkippedReason: input.overlaySkippedReason,
+    promptKey: input.promptKey,
+    promptVersion: input.promptVersion,
     refused,
     refusedReason: refused ? (intent === "injection" ? "prompt_injection" : "mutation_request") : undefined,
   };

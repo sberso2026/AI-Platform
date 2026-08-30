@@ -1,6 +1,7 @@
 export * from "./ownership";
 export * from "./errors";
 export * from "./capability";
+export * from "./prompt";
 export * from "./types";
 export * from "./tools";
 export * from "./intent";

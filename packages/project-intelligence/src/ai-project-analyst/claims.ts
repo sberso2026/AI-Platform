@@ -28,6 +28,12 @@ export function containsFabricatedMetric(text: string): boolean {
   return FABRICATED_METRIC.some((pattern) => pattern.test(text));
 }
 
+const UNSAFE_CAUSALITY = [/this change caused/i, /caused the (schedule )?delay/i];
+
+export function containsUnsafeAiOverlay(text: string): boolean {
+  return containsFabricatedMetric(text) || UNSAFE_CAUSALITY.some((pattern) => pattern.test(text));
+}
+
 export function phraseHealth(state: string): string {
   return `The published overall Project Health classification is ${state}.`;
 }

@@ -20,7 +20,7 @@ export class PromptRegistryService {
       .select("id, is_safety_critical")
       .eq("tenant_id", tenantId)
       .eq("prompt_key", promptKey)
-      .single();
+      .maybeSingle();
     if (!prompt) return null;
 
     const { data: version } = await this.supabase
@@ -30,7 +30,7 @@ export class PromptRegistryService {
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     return version ? { prompt, version } : null;
   }
@@ -41,6 +41,69 @@ export class PromptRegistryService {
     if (result) return result;
 
     return this.getActiveVersion(tenantId, "platform-assistant");
+  }
+
+  async ensureActivePrompt(input: {
+    tenantId: string;
+    promptKey: string;
+    name: string;
+    content: string;
+    description?: string;
+    agentType?: string;
+    version?: string;
+    createdBy?: string;
+  }) {
+    const active = await this.getActiveVersion(input.tenantId, input.promptKey);
+    if (active) return active;
+
+    const { data: existing } = await this.supabase
+      .from("prompts")
+      .select("id, is_safety_critical")
+      .eq("tenant_id", input.tenantId)
+      .eq("prompt_key", input.promptKey)
+      .maybeSingle();
+
+    let promptId = existing?.id as string | undefined;
+    if (!promptId) {
+      const created = await this.createPrompt({
+        tenantId: input.tenantId,
+        promptKey: input.promptKey,
+        name: input.name,
+        content: input.content,
+        description: input.description,
+        agentType: input.agentType,
+        createdBy: input.createdBy,
+      });
+      promptId = created.prompt.id as string;
+      const version = await this.activateVersion(input.tenantId, promptId, created.version.id as string);
+      return { prompt: created.prompt, version };
+    }
+
+    const { data: latest } = await this.supabase
+      .from("prompt_versions")
+      .select("*")
+      .eq("prompt_id", promptId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!latest) {
+      const { data: version, error } = await this.supabase
+        .from("prompt_versions")
+        .insert({
+          prompt_id: promptId,
+          version: input.version ?? "1.0.0",
+          content: input.content,
+          status: "draft",
+          created_by: input.createdBy ?? null,
+        })
+        .select()
+        .single();
+      if (error || !version) throw new Error(`Failed to create prompt version: ${error?.message}`);
+      return { prompt: existing, version: await this.activateVersion(input.tenantId, promptId, version.id as string) };
+    }
+
+    return { prompt: existing, version: await this.activateVersion(input.tenantId, promptId, latest.id as string) };
   }
 
   async createPrompt(input: {

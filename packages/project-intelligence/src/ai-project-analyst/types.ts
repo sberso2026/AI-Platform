@@ -122,6 +122,8 @@ export type AnalystAnswer = {
   aiModel?: string;
   directorRunId?: string;
   overlaySkippedReason?: string;
+  promptKey?: string;
+  promptVersion?: string;
   refused: boolean;
   refusedReason?: string;
 };
@@ -132,12 +134,17 @@ export type AnalystRuntimeProbe = {
   agentActive: boolean;
   promptResolvable: boolean;
   promptKey?: string;
+  promptVersion?: string;
+  promptFallback?: "none" | "catalog_system_prompt" | "unresolved";
+  promptFallbackPolicy?: string;
   modelPolicyResolvable: boolean;
   modelKey?: string;
   providerType?: string;
   toolsResolvable: boolean;
   toolCatalogRowsFound: number;
   providerRouteAvailable: boolean;
+  realProviderAvailable: boolean;
+  realModelAvailable: boolean;
   toolRegistryModel: string;
 };
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@rtb/database";
 import { createPlatformIntelligence, type PlatformIntelligence } from "@rtb/platform-intelligence";
 import { AIDirectorService } from "./ai-director";
+import { tryCreateVendorChatAdapter } from "./ai-director/adapters/http-chat-adapter";
 import { ApiGatewayService } from "./api-gateway";
 import { DigitalTwinService } from "./digital-twin";
 import { EventBusService } from "./event-bus";
@@ -31,12 +32,15 @@ export function createPlatformKernel(supabase: SupabaseClient): PlatformKernel {
   const eventBus = new EventBusService(supabase);
   const notifications = new NotificationService(supabase, eventBus);
   const intelligence = createPlatformIntelligence(supabase);
+  const aiDirector = new AIDirectorService(supabase, eventBus, intelligence);
+  const vendorAdapter = tryCreateVendorChatAdapter();
+  if (vendorAdapter) aiDirector.registerAdapter(vendorAdapter);
 
   return {
     eventBus,
     notifications,
     intelligence,
-    aiDirector: new AIDirectorService(supabase, eventBus, intelligence),
+    aiDirector,
     jobs: new JobService(supabase),
     workflow: new WorkflowService(supabase, eventBus),
     knowledgeGraph: new KnowledgeGraphService(supabase),

@@ -18,7 +18,14 @@ function sanitizeUntrustedText(value: string): string {
   return trimmed;
 }
 
-export function buildDirectorOverlayMessage(question: string, context: AnalystContext): string {
+export function buildDirectorOverlayMessage(
+  question: string,
+  context: AnalystContext,
+  options?: { mode?: "compact" | "expanded" },
+): string {
+  const expanded = options?.mode === "expanded";
+  const limitationLimit = expanded ? 20 : 8;
+  const attentionLimit = expanded ? 12 : 6;
   const pack = {
     untrusted: true as const,
     advisoryOnly: true as const,
@@ -28,6 +35,9 @@ export function buildDirectorOverlayMessage(question: string, context: AnalystCo
       name: sanitizeUntrustedText(context.project.projectName),
       phase: sanitizeUntrustedText(context.project.phase),
       status: sanitizeUntrustedText(context.project.status),
+      tenantBound: true as const,
+      workspaceBound: true as const,
+      projectIdBound: true as const,
     },
     health: context.health.state,
     schedule: context.schedule.state,
@@ -39,11 +49,22 @@ export function buildDirectorOverlayMessage(question: string, context: AnalystCo
     decisions: context.decisions.state,
     actions: context.actions.state,
     forecast: context.forecast.state,
-    limitations: context.limitations.map(sanitizeUntrustedText).slice(0, 8),
-    attention: context.attention.slice(0, 6).map((item) => ({
+    summaries: expanded
+      ? {
+          schedule: sanitizeUntrustedText(context.schedule.summary),
+          risk: sanitizeUntrustedText(context.risk.summary),
+          forecast: sanitizeUntrustedText(context.forecast.summary),
+        }
+      : undefined,
+    limitations: context.limitations.map(sanitizeUntrustedText).slice(0, limitationLimit),
+    attention: context.attention.slice(0, attentionLimit).map((item) => ({
       severity: item.severity,
       reasonCode: sanitizeUntrustedText(item.reasonCode),
     })),
+    truncated: {
+      limitations: context.limitations.length > limitationLimit,
+      attention: context.attention.length > attentionLimit,
+    },
   };
 
   return [

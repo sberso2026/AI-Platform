@@ -117,13 +117,17 @@ export class AIDirectorService {
         if (promptSelection) {
           systemPrompt = promptSelection.version.content as string;
           promptVersionId = promptSelection.version.id as string;
-          await this.intelligence.prompts.logUsage({
-            tenantId: request.tenantId,
-            promptId: promptSelection.prompt.id as string,
-            promptVersionId,
-            agentId: agent.id as string,
-            runId: run.id as string,
-          });
+          try {
+            await this.intelligence.prompts.logUsage({
+              tenantId: request.tenantId,
+              promptId: promptSelection.prompt.id as string,
+              promptVersionId,
+              agentId: agent.id as string,
+              runId: run.id as string,
+            });
+          } catch {
+            // Prompt usage logging is best-effort and must not fail a resolved run.
+          }
           await this.supabase
             .from("agent_runs")
             .update({ prompt_version_id: promptVersionId })
@@ -136,7 +140,12 @@ export class AIDirectorService {
         ? await this.intelligence.models.resolveRoute(request.tenantId, intent)
         : await this.resolveLegacyModelRoute(request.tenantId, intent);
 
-      const adapter = this.adapters.get(route.providerType) ?? new MockModelAdapter();
+      const adapter =
+        this.adapters.get(route.providerType) ??
+        (route.providerType === "mock" ? new MockModelAdapter() : undefined);
+      if (!adapter) {
+        throw new Error(`No model adapter registered for provider ${route.providerType}`);
+      }
       const modelStart = Date.now();
 
       const result = await adapter.complete({
@@ -172,17 +181,21 @@ export class AIDirectorService {
           outputTokens,
           latencyMs: modelLatency,
         });
-        await this.intelligence.observability.recordMetric(
-          request.tenantId,
-          "agent_latency",
-          modelLatency,
-          { intent, model: route.modelKey }
-        );
-        await this.intelligence.observability.recordMetric(
-          request.tenantId,
-          "token_usage",
-          inputTokens + outputTokens
-        );
+        try {
+          await this.intelligence.observability.recordMetric(
+            request.tenantId,
+            "agent_latency",
+            modelLatency,
+            { intent, model: route.modelKey }
+          );
+          await this.intelligence.observability.recordMetric(
+            request.tenantId,
+            "token_usage",
+            inputTokens + outputTokens
+          );
+        } catch {
+          // Non-critical telemetry must not fail a completed model call.
+        }
       }
 
       // Policy evaluation
@@ -203,11 +216,15 @@ export class AIDirectorService {
         }
         requiresReview = requiresReview || policyResult.requiresReview || result.confidence < 0.7;
         if (policyResult.violations.length) {
-          await this.intelligence.observability.recordMetric(
-            request.tenantId,
-            "policy_violation_rate",
-            policyResult.violations.length
-          );
+          try {
+            await this.intelligence.observability.recordMetric(
+              request.tenantId,
+              "policy_violation_rate",
+              policyResult.violations.length
+            );
+          } catch {
+            // Non-critical telemetry must not fail a completed model call.
+          }
         }
       } else {
         requiresReview = requiresReview || result.confidence < 0.7;

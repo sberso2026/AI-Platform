@@ -3,7 +3,7 @@ import { withEngineeringApiParams } from "@/lib/commerce/engineering-api";
 import { requireProjectIntelligenceRead } from "@/lib/project-intelligence/access";
 import {
   getAnalystCapability,
-  probeAnalystRuntime,
+  prepareAnalystRuntime,
   runProjectAnalyst,
 } from "@/lib/project-intelligence/ai-project-analyst-service";
 import { handleCommerceDomainError, lifecycleErrorResponse } from "@/lib/lifecycle-api";
@@ -13,7 +13,7 @@ export const GET = withEngineeringApiParams(
   async (context, _request, { projectId }) => {
     try {
       requireProjectIntelligenceRead(context);
-      const runtime = await probeAnalystRuntime(context);
+      const runtime = await prepareAnalystRuntime(context);
       return NextResponse.json({
         data: {
           ...getAnalystCapability(),

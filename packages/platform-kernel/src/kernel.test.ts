@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createHash } from "crypto";
 import { KeywordIntentClassifier } from "./ai-director/intent-classifier";
 import { MockModelAdapter } from "./ai-director/adapters/mock-adapter";
+import { tryCreateVendorChatAdapter } from "./ai-director/adapters/http-chat-adapter";
 import { ApiGatewayService } from "./api-gateway/api-gateway-service";
 
 describe("KeywordIntentClassifier", () => {
@@ -33,6 +34,23 @@ describe("MockModelAdapter", () => {
     expect(result.content).toContain("operational");
     expect(result.confidence).toBeGreaterThan(0.5);
     expect(result.evidenceRefs?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("Vendor chat adapter", () => {
+  it("is not constructed without credentials so mock remains the default", () => {
+    expect(tryCreateVendorChatAdapter({})).toBeNull();
+  });
+
+  it("fails closed on provider errors instead of returning mock content", async () => {
+    const adapter = tryCreateVendorChatAdapter(
+      { PLATFORM_LLM_API_KEY: "test-key", PLATFORM_LLM_TIMEOUT_MS: "50" },
+      (async () => new Response("unavailable", { status: 503 })) as typeof fetch,
+    );
+    expect(adapter?.providerType).toBe("openai");
+    await expect(
+      adapter!.complete({ model: "test-model", messages: [{ role: "user", content: "hi" }] }),
+    ).rejects.toThrow(/503/);
   });
 });
 

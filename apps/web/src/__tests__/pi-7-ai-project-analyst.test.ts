@@ -24,7 +24,7 @@ describe("PI-7 AI Project Analyst web surface", () => {
     expect(route).not.toMatch(/export const (PUT|PATCH|DELETE)/);
     expect(route).toContain("requireProjectIntelligenceRead");
     expect(route).toContain("project-intelligence-analyst");
-    expect(route).toContain("probeAnalystRuntime");
+    expect(route).toContain("prepareAnalystRuntime");
     expect(ENGINEERING_API_POLICIES["project-intelligence-analyst.read"]?.applicationKey).toBe("project_intelligence");
     expect(ENGINEERING_PAGE_POLICIES["/engineering/apps/project-intelligence/analyst"]?.action).toBe("access");
   });
@@ -63,9 +63,13 @@ describe("PI-7 AI Project Analyst web surface", () => {
     expect(hosted).toContain("composeProjectCommandCentre");
     expect(hosted).toContain("kernel.aiDirector.run");
     expect(hosted).toContain("probeAnalystRuntime");
+    expect(hosted).toContain("prepareAnalystRuntime");
+    expect(hosted).toContain("ensureActivePrompt");
     expect(hosted).toContain("upsertCatalogAgent");
     expect(hosted).toContain("AuditService");
     expect(hosted).toContain("buildDirectorOverlayMessage");
+    expect(hosted).toContain("AI_PROJECT_ANALYST_PROMPT_KEY");
+    expect(hosted).not.toContain("new OpenAI");
   });
 
   it("preserves existing PI routes", () => {

@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createHash } from "crypto";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { PolicyEngineService } from "./policy-engine/policy-engine-service";
 import { FeatureFlagService } from "./feature-flags/feature-flag-service";
 
@@ -159,6 +161,16 @@ describe("Prompt version selection", () => {
     const versionA = "1.0.0";
     const versionB = "1.1.0";
     expect(versionA).not.toBe(versionB);
+  });
+
+  it("Prompt Registry can ensure an active version without a second registry", () => {
+    const source = readFileSync(
+      resolve(__dirname, "prompt-registry/prompt-registry-service.ts"),
+      "utf8",
+    );
+    expect(source).toContain("async ensureActivePrompt");
+    expect(source).toContain("activateVersion");
+    expect(source).toContain("prompt_key");
   });
 });
 

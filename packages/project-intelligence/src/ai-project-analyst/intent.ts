@@ -23,6 +23,8 @@ const MUTATION_PATTERNS = [
 
 const UNSUPPORTED_FORECAST = [
   /completion (date|probability)/i,
+  /when will (the |this )?project finish/i,
+  /when (is|does) (the |this )?project (finish|complete)/i,
   /will finish \d+/i,
   /days late/i,
   /monte carlo/i,
