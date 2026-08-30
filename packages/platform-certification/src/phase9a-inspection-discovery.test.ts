@@ -85,7 +85,7 @@ describe("Phase 9A Inspection Intelligence discovery boundaries", () => {
   it("preserves Project Intelligence v1 version identity", () => {
     expect(
       readFileSync(resolve(ROOT, "packages/project-intelligence/src/version.ts"), "utf8"),
-    ).toMatch(/PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
+    ).toMatch(/PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/);
   });
 
   it("exposes discovery-ready marker without product workflows", () => {

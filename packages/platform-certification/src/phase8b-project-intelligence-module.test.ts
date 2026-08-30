@@ -50,7 +50,7 @@ describe("Phase 8B Project Intelligence production module", () => {
     expect(mod).toBeDefined();
     expect(mod!.enabled).toBe(true);
     expect(mod!.workspaceVisibility).toBe("assigned");
-    expect(mod!.version).toBe("1.0.0");
+    expect(mod!.version).toBe("1.1.0");
     expect(mod!.features?.map((f) => f.id).sort()).toEqual(
       [
         "document_intelligence",
@@ -79,6 +79,7 @@ describe("Phase 8B Project Intelligence production module", () => {
       .sort();
     expect(packageIds).toEqual(engIds);
     expect(PROJECT_INTELLIGENCE_FEATURES.every((f) => f.implementsOwnAiStack === false)).toBe(true);
+    expect(PROJECT_INTELLIGENCE_FEATURES.every((f) => f.version === "1.0.0")).toBe(true);
   });
 
   it("consumes shared Engineering services and AI framework only", () => {

@@ -1,6 +1,8 @@
 import { ENGINEERING_PAGE_POLICIES } from "@rtb/platform-commerce";
 import {
   PROJECT_INTELLIGENCE_RELEASE_TAG,
+  PROJECT_INTELLIGENCE_V1_CERTIFICATION_TAG,
+  PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
   PROJECT_INTELLIGENCE_VERSION,
   getProjectIntelligenceVersionDeclaration,
   listProjectIntelligenceFeatures,
@@ -31,6 +33,18 @@ export default function ProjectIntelligenceAboutPage() {
             <dd data-testid="project-intelligence-release-tag">{PROJECT_INTELLIGENCE_RELEASE_TAG}</dd>
           </div>
           <div>
+            <dt className="font-medium text-slate-900">V1 certification version</dt>
+            <dd data-testid="project-intelligence-v1-certification-version">
+              {PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-900">V1 certification tag</dt>
+            <dd data-testid="project-intelligence-v1-certification-tag">
+              {PROJECT_INTELLIGENCE_V1_CERTIFICATION_TAG}
+            </dd>
+          </div>
+          <div>
             <dt className="font-medium text-slate-900">Required Platform phase</dt>
             <dd>{declaration.requiredPlatformPhase}</dd>
           </div>
@@ -39,7 +53,7 @@ export default function ProjectIntelligenceAboutPage() {
             <dd>{declaration.requiredEngineeringOsPhase}</dd>
           </div>
           <div>
-            <dt className="font-medium text-slate-900">Freeze</dt>
+            <dt className="font-medium text-slate-900">V1 feature contracts frozen</dt>
             <dd>{String(declaration.freeze)}</dd>
           </div>
         </dl>

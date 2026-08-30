@@ -44,7 +44,7 @@ describe("Phase 9F Inspection Intelligence mobile product", () => {
     expect(version).toMatch(/INSPECTION_ASSET_INTELLIGENCE_IMPLEMENTED = false/);
     expect(
       readFileSync(resolve(ROOT, "packages/project-intelligence/src/version.ts"), "utf8"),
-    ).toMatch(/PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
+    ).toMatch(/PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/);
   });
 
   it("exposes mobile UI markers and field surfaces", () => {

@@ -51,7 +51,11 @@ describe("Engineering OS installation seed", () => {
     for (const app of ENGINEERING_APPLICATIONS) {
       expect(app.enabled).toBe(true);
       expect(app.status).not.toBe("coming_soon");
-      expect(app.version).toBe("1.0.0");
+      if (app.app_key === "project_intelligence") {
+        expect(app.version).toBe("1.1.0");
+      } else {
+        expect(app.version).toBe("1.0.0");
+      }
     }
   });
 

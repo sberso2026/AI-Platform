@@ -107,10 +107,13 @@ function main() {
   // C — Certified commit identity
   {
     const ok =
-      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/) &&
       fileContains(
         "packages/project-intelligence/src/version.ts",
-        /PROJECT_INTELLIGENCE_RELEASE_TAG = "project-intelligence-v1\.0\.0"/,
+        /PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/,
+      ) &&
+      fileContains(
+        "packages/project-intelligence/src/version.ts",
+        /PROJECT_INTELLIGENCE_V1_CERTIFICATION_TAG = "project-intelligence-v1\.0\.0"/,
       ) &&
       PI_V1_CERTIFIED_COMMIT.startsWith("34975b1");
     push("C", "Certified commit identity", ok ? "pass" : "fail", `certified=${PI_V1_CERTIFIED_COMMIT}`);
@@ -242,7 +245,7 @@ function main() {
     const ok =
       fileContains("docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md", /Document Intelligence/) &&
       fileContains("docs/architecture/ENGINEERING_OS_MODULE_BOUNDARIES.md", /Engineering Reasoning Assistant/) &&
-      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
+      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/);
     push("J", "Project Intelligence boundary", ok ? "pass" : "fail");
   }
 
@@ -326,8 +329,14 @@ function main() {
   // P — Project Intelligence v1 regression
   {
     const versionOk =
-      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/) &&
-      fileContains("packages/project-intelligence/package.json", /"version": "1\.0\.0"/);
+      fileContains(
+        "packages/project-intelligence/src/version.ts",
+        /PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/,
+      ) &&
+      fileContains(
+        "packages/project-intelligence/src/version.ts",
+        /PROJECT_INTELLIGENCE_V1_CERTIFICATION_TAG = "project-intelligence-v1\.0\.0"/,
+      );
     const reasoning = run(
       "pnpm --filter @rtb/project-intelligence exec vitest run tests/deterministic-reasoning-pipeline.test.ts",
     );

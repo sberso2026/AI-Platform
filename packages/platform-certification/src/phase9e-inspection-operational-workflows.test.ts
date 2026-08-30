@@ -56,7 +56,7 @@ describe("Phase 9E Inspection Intelligence operational workflows", () => {
     expect(version).toMatch(/INSPECTION_ENGINEERING_DOMAIN_COMPLETE = true/);
     expect(
       readFileSync(resolve(ROOT, "packages/project-intelligence/src/version.ts"), "utf8"),
-    ).toMatch(/PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
+    ).toMatch(/PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/);
   });
 
   it("exposes operational workflow UI markers", () => {

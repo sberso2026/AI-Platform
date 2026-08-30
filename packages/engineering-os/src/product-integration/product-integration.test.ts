@@ -129,4 +129,12 @@ describe("Phase 14B Engineering OS product integration", () => {
     );
     expect(aggregateEngineeringOSCapabilities().ok).toBe(true);
   });
+
+  it("separates PI application release version from frozen V1 public contract", () => {
+    const pi = ENGINEERING_OS_AGGREGATE_MANIFEST.installedModules.find(
+      (m) => m.moduleKey === "project_intelligence",
+    );
+    expect(pi?.version).toBe("1.1.0");
+    expect(pi?.publicContractVersion).toBe("1.0.0");
+  });
 });

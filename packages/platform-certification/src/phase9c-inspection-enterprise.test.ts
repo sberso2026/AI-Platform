@@ -49,7 +49,7 @@ describe("Phase 9C Inspection Intelligence enterprise foundation", () => {
   it("keeps PI v1 frozen and architectural reservations intact", () => {
     expect(
       readFileSync(resolve(ROOT, "packages/project-intelligence/src/version.ts"), "utf8"),
-    ).toMatch(/PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/);
+    ).toMatch(/PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/);
     expect(
       readFileSync(resolve(ROOT, "packages/inspection-intelligence/src/version.ts"), "utf8"),
     ).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);

@@ -75,11 +75,13 @@ function main() {
 
   {
     const ok =
-      fileContains("packages/project-intelligence/src/version.ts", /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/) &&
-      fileContains("packages/project-intelligence/package.json", /"version": "1\.0\.0"/) &&
-      fileContains("packages/engineering-os/src/module-registry.ts", /version: "1\.0\.0"/) &&
-      fileContains("packages/project-intelligence/src/features/registry.ts", /engineering_reasoning_assistant/);
-    push("C", "Version identity", ok ? "pass" : "fail");
+      fileContains(
+        "packages/project-intelligence/src/version.ts",
+        /PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/,
+      ) &&
+      fileContains("packages/project-intelligence/src/features/registry.ts", /engineering_reasoning_assistant/) &&
+      fileContains("packages/engineering-os/src/module-registry.ts", /version: "1\.0\.0"/);
+    push("C", "Version identity", ok ? "pass" : "fail", "historical V1 contract + V1 feature registry");
   }
 
   {

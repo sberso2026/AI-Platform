@@ -269,7 +269,7 @@ function main() {
   {
     const versionOk = fileContains(
       "packages/project-intelligence/src/version.ts",
-      /PROJECT_INTELLIGENCE_VERSION = "1\.0\.0"/,
+      /PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/,
     );
     const moduleTest = run(
       "pnpm --filter @rtb/platform-certification exec vitest run src/phase8b-project-intelligence-module.test.ts",

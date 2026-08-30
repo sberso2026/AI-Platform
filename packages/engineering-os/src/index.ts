@@ -1,4 +1,5 @@
 export * from "./version";
+export * from "./release/application-release-identity";
 export * from "./security-readiness";
 export * from "./security-closure";
 export * from "./manifest";

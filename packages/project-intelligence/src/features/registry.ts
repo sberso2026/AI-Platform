@@ -4,7 +4,7 @@
  */
 import type { FeatureManifest, RouteRegistration, NavigationRegistration } from "@rtb/types";
 import {
-  PROJECT_INTELLIGENCE_VERSION,
+  PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
   type ProjectIntelligenceV1FeatureId,
 } from "../version";
 
@@ -29,7 +29,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Document Intelligence",
     description: "Ingestion, retrieval, grounded answers, and document review",
-    version: PROJECT_INTELLIGENCE_VERSION,
+    version: PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
     capabilities: [
       { id: "document.intelligence.read" },
       { id: "document.intelligence.write" },
@@ -73,7 +73,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Meeting Intelligence",
     description: "Meeting capture, minutes, review, and provider integrations",
-    version: PROJECT_INTELLIGENCE_VERSION,
+    version: PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
     capabilities: [
       { id: "meeting.intelligence.read" },
       { id: "meeting.intelligence.write" },
@@ -116,7 +116,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Findings Intelligence",
     description: "Cross-document and meeting findings consolidation",
-    version: PROJECT_INTELLIGENCE_VERSION,
+    version: PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
     capabilities: [
       { id: "findings.intelligence.read" },
       { id: "findings.intelligence.write" },
@@ -165,7 +165,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Reporting Intelligence",
     description: "Module reports over shared Engineering reporting services",
-    version: PROJECT_INTELLIGENCE_VERSION,
+    version: PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
     capabilities: [
       { id: "reporting.intelligence.read" },
       { id: "reporting.intelligence.write" },
@@ -210,7 +210,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Knowledge Intelligence",
     description: "Unified knowledge graph and hybrid intelligence search with cited retrieval",
-    version: PROJECT_INTELLIGENCE_VERSION,
+    version: PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
     capabilities: [
       { id: "knowledge.intelligence.read" },
       { id: "knowledge.intelligence.write" },
@@ -255,7 +255,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     name: "Engineering Reasoning Assistant",
     description:
       "Deterministic grounded reasoning over the knowledge graph with citations, confidence, and abstention",
-    version: PROJECT_INTELLIGENCE_VERSION,
+    version: PROJECT_INTELLIGENCE_V1_CERTIFICATION_VERSION,
     capabilities: [
       { id: "reasoning.assistant.read" },
       { id: "reasoning.assistant.execute" },

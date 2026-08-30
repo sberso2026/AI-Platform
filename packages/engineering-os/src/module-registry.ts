@@ -23,7 +23,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
     commerceApplicationKey: "project_intelligence",
     name: "Project Intelligence",
     description: "Documents, meetings, findings, reporting, knowledge search, and reasoning",
-    version: "1.0.0",
+    version: "1.1.0",
     operatingSystemId: OS_ID,
     status: "registered",
     enabled: true,
