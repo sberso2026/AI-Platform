@@ -16,7 +16,7 @@ import {
   implementsOwnAiStack,
 } from "../project-health/ownership";
 
-import { PI_10_IMPLEMENTED } from "../project-reporting/ownership";
+import { PI_11_IMPLEMENTED } from "../project-reporting/ownership";
 
 export const AI_PROJECT_ANALYST_PHASE = "PI-7" as const;
 export const AI_PROJECT_ANALYST_IMPLEMENTED = true as const;
@@ -91,5 +91,5 @@ export function assertAiProjectAnalystOwnershipLocks(): void {
   if (PI_ANALYST_MUTATION_ENABLED) throw new Error("analyst mutation forbidden");
   if (PI_AUTONOMOUS_APPROVAL_ENABLED) throw new Error("autonomous approval forbidden");
   if (!PI_AI_OPTIONAL) throw new Error("Command Centre / PI must remain AI-optional");
-  if (PI_10_IMPLEMENTED) throw new Error("PI-10 must not start in PI-9");
+  if (PI_11_IMPLEMENTED) throw new Error("PI-11 must not start in PI-10");
 }

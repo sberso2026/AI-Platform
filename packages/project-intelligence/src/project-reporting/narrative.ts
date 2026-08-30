@@ -7,6 +7,12 @@ function freeze<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+/** Refuse mock/local overlay substitution based on the actual Director run, not the registry probe. */
+export function reportOverlayIsMockSubstitution(provider?: string, aiAvailable?: boolean): boolean {
+  if (!aiAvailable) return false;
+  return provider === "mock" || provider === "local";
+}
+
 /**
  * AI may only attach as AI_SUMMARY. Canonical sections are never rewritten.
  */

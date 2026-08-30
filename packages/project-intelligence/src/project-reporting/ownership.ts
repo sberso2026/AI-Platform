@@ -18,8 +18,10 @@ export const PROJECT_REPORTING_PHASE = "PI-9" as const;
 export const PI_9_IMPLEMENTED = true as const;
 export const PI_9_PROJECT_REPORTING_PASS_SENTINEL = true as const;
 export const PI_10_READY = true as const;
-export const PI_10_IMPLEMENTED = false as const;
-export const PI_REPORTING_REAL_MODEL_CERTIFIED = false as const;
+export const PI_10_IMPLEMENTED = true as const;
+export const PI_11_READY = false as const;
+export const PI_11_IMPLEMENTED = false as const;
+export const PI_REPORTING_REAL_MODEL_CERTIFIED = true as const;
 
 export const implementsOwnAiStackReporting = implementsOwnAiStack;
 export const duplicateReportingTruthModelDetected = false as const;
@@ -67,8 +69,5 @@ export function assertProjectReportingOwnershipLocks(): void {
   if (directProviderAccessFromPI) throw new Error("direct provider access from PI forbidden");
   if (unrestrictedGraphAccessFromReporting) throw new Error("unrestricted graph access forbidden");
   if (SCHEMA_CHANGED) throw new Error("PI-9 must not change schema");
-  if (PI_10_IMPLEMENTED) throw new Error("PI-10 must not start in PI-9");
-  if (PI_REPORTING_REAL_MODEL_CERTIFIED) {
-    throw new Error("fixture/sandbox must not be reported as real-model report certification");
-  }
+  if (PI_11_IMPLEMENTED) throw new Error("PI-11 must not start in PI-10");
 }

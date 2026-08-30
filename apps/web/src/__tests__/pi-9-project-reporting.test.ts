@@ -55,7 +55,8 @@ describe("PI-9 Project Reporting web surface", () => {
     expect(hosted).toContain("loadHostedConnectorContext");
     expect(hosted).toContain("overlayAnalystAnswer");
     expect(hosted).toContain("assembleProjectReport");
-    expect(hosted).toContain("mock_provider_not_substituted");
+    expect(hosted).toContain("reportOverlayIsMockSubstitution");
+    expect(hosted).toContain("answer.aiProvider");
     expect(hosted).toContain("AuditService");
     expect(hosted).not.toContain("@rtb/business-os");
     expect(hosted).not.toContain("new OpenAI");

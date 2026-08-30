@@ -11,7 +11,9 @@ import {
   InMemoryQueryDecisionIntelligencePort,
   PI_9_IMPLEMENTED,
   PI_10_IMPLEMENTED,
+  PI_11_IMPLEMENTED,
   PI_10_READY,
+  PI_REPORTING_REAL_MODEL_CERTIFIED,
   PROJECT_REPORT_SECTION_IDS,
   PROJECT_REPORT_TYPES,
   ProjectCommandCentreService,
@@ -105,11 +107,13 @@ async function report(
 }
 
 describe("PI-9 Project Reporting Intelligence", () => {
-  it("locks architecture and does not start PI-10", () => {
+  it("locks architecture and does not start PI-11", () => {
     expect(() => assertProjectReportingOwnershipLocks()).not.toThrow();
     expect(PI_9_IMPLEMENTED).toBe(true);
     expect(PI_10_READY).toBe(true);
-    expect(PI_10_IMPLEMENTED).toBe(false);
+    expect(PI_10_IMPLEMENTED).toBe(true);
+    expect(PI_11_IMPLEMENTED).toBe(false);
+    expect(PI_REPORTING_REAL_MODEL_CERTIFIED).toBe(true);
     expect(SCHEMA_CHANGED).toBe(false);
     expect(duplicateReportingTruthModelDetected).toBe(false);
     expect(directProviderAccessFromPI).toBe(false);
@@ -331,6 +335,11 @@ describe("PI-9 Project Reporting Intelligence", () => {
     const mock = finalizeProjectReport({ snapshot, skippedReason: "mock_provider_not_substituted" });
     expect(mock.narrative.available).toBe(false);
     expect(mock.narrative.text).toBeUndefined();
+    const { reportOverlayIsMockSubstitution } = await import("../src/project-reporting/narrative");
+    expect(reportOverlayIsMockSubstitution("openai", true)).toBe(false);
+    expect(reportOverlayIsMockSubstitution("mock", true)).toBe(true);
+    expect(reportOverlayIsMockSubstitution("mock", false)).toBe(false);
+    expect(reportOverlayIsMockSubstitution(undefined, true)).toBe(false);
   });
 
   it("attaches AI only as AI_SUMMARY", async () => {

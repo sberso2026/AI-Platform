@@ -4,6 +4,7 @@ import {
   assembleProjectReport,
   exportProjectReportMarkdown,
   finalizeProjectReport,
+  reportOverlayIsMockSubstitution,
   type ProjectReportSnapshot,
   type ProjectReportType,
 } from "@rtb/project-intelligence";
@@ -12,10 +13,6 @@ import { overlayAnalystAnswer } from "./ai-project-analyst-service";
 import { projectIntelligenceAccessContext } from "./access";
 import { composeProjectCommandCentre } from "./command-centre-service";
 import { loadHostedConnectorContext } from "./hosted-connector-context-source";
-
-function isMockProvider(provider?: string): boolean {
-  return provider === "mock" || provider === "local";
-}
 
 export async function generateProjectReport(
   context: CommerceHandlerContext,
@@ -50,7 +47,7 @@ export async function generateProjectReport(
       view,
       connectorContext,
     );
-    if (isMockProvider(answer.aiProvider) || isMockProvider(answer.runtime.providerType)) {
+    if (reportOverlayIsMockSubstitution(answer.aiProvider, answer.aiAvailable)) {
       return finalizeProjectReport({ snapshot, skippedReason: "mock_provider_not_substituted" });
     }
     const finalized = finalizeProjectReport({
