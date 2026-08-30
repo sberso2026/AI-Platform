@@ -53,10 +53,17 @@ describe("II-0 certification foundation", () => {
     ).toBe(true);
   });
 
-  it("records no schema change and no V1 replacement models", () => {
+  it("records no inspection truth-model schema change", () => {
     expect(SCHEMA_CHANGED).toBe(false);
     expect(INSPECTION_V1_REPLACEMENT_MODELS_CREATED).toBe(false);
     const migrationDiff = git(`git diff --name-only ${BASELINE} -- supabase/migrations`);
-    expect(migrationDiff).toBe("");
+    const files = migrationDiff ? migrationDiff.split(/\r?\n/) : [];
+    expect(files.every((file) => file.includes("inspection_hosted_write_rls") || file === "")).toBe(
+      true,
+    );
+    if (files.some((file) => file.includes("write_rls"))) {
+      const sql = readFileSync(resolve(ROOT, files.find((file) => file.includes("write_rls"))!), "utf8");
+      expect(sql).not.toMatch(/CREATE TABLE/i);
+    }
   });
 });

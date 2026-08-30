@@ -24,8 +24,10 @@ export const INSPECTION_INTELLIGENCE_RELEASE_TAG = "inspection-intelligence-v1.0
 export const INSPECTION_INTELLIGENCE_NEXT_GEN_RELEASE_STATUS = "unreleased" as const;
 export const INSPECTION_INTELLIGENCE_NEXT_GA_VERSION = null;
 export const INSPECTION_INTELLIGENCE_II_0_IMPLEMENTED = true as const;
-/** II-0 foundation complete. Next phase is hosted persistence of existing inspection_* tables. */
+/** II-1 hosted persistence of existing inspection_* tables. */
+export const INSPECTION_INTELLIGENCE_II_1_IMPLEMENTED = true as const;
 export const INSPECTION_INTELLIGENCE_II_1_READY = true as const;
+export const INSPECTION_INTELLIGENCE_II_2_READY = true as const;
 
 export const INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = true as const;
 export const INSPECTION_VERTICAL_SLICE_READY = true as const;
@@ -176,6 +178,8 @@ export function getInspectionIntelligenceDomainDeclaration() {
       nextGaVersion: INSPECTION_INTELLIGENCE_NEXT_GA_VERSION,
       ii0Implemented: INSPECTION_INTELLIGENCE_II_0_IMPLEMENTED,
       ii1Ready: INSPECTION_INTELLIGENCE_II_1_READY,
+      ii1Implemented: INSPECTION_INTELLIGENCE_II_1_IMPLEMENTED,
+      ii2Ready: INSPECTION_INTELLIGENCE_II_2_READY,
     },
   };
 }

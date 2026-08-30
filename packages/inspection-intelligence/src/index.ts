@@ -46,3 +46,4 @@ export * from "./domain/slo-catalog";
 export * from "./domain/ga-closure-product";
 export * from "./pack-sdk";
 export * from "./next-gen";
+export * from "./hosted";

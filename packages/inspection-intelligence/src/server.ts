@@ -45,3 +45,4 @@ export * from "./domain/registry-drift";
 export * from "./domain/slo-catalog";
 export * from "./domain/ga-closure-product";
 export * from "./pack-sdk";
+export * from "./hosted";

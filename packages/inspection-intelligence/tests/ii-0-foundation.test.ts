@@ -70,6 +70,7 @@ describe("II-0 Inspection Intelligence next-gen foundation", () => {
     expect(decl.currentRelease.status).toBe("unreleased");
     expect(decl.currentRelease.ii0Implemented).toBe(true);
     expect(decl.currentRelease.ii1Ready).toBe(true);
+    expect(decl.currentRelease.ii1Implemented).toBe(true);
   });
 
   it("freezes canonical ownership and architecture guardrails", () => {
@@ -92,7 +93,7 @@ describe("II-0 Inspection Intelligence next-gen foundation", () => {
     expect(INSPECTION_INTELLIGENCE_MUST_NOT_OWN).toContain("project_intelligence_findings");
     expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(false);
     expect(II_AI_INSPECTION_ENGINEER_IMPLEMENTED).toBe(false);
-    expect(II_HOSTED_PERSISTENCE_WIRED).toBe(false);
+    expect(II_HOSTED_PERSISTENCE_WIRED).toBe(true);
     expect(II_1_READY).toBe(true);
   });
 

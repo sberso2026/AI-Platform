@@ -19,9 +19,13 @@ export const externalWritesEnabled = false as const;
 export const SCHEMA_CHANGED = false as const;
 export const II_COMMAND_CENTRE_IMPLEMENTED = false as const;
 export const II_AI_INSPECTION_ENGINEER_IMPLEMENTED = false as const;
-export const II_HOSTED_PERSISTENCE_WIRED = false as const;
-/** Hosted persistence of existing inspection_* tables is the II-1 objective. */
+export const II_HOSTED_PERSISTENCE_WIRED = true as const;
+export const duplicatePersistenceModelDetected = false as const;
+/** Hosted persistence of existing inspection_* tables is wired. */
 export const II_1_READY = true as const;
+export const II_1_IMPLEMENTED = true as const;
+/** Next phase is Inspection Command Centre composition over hosted records. */
+export const II_2_READY = true as const;
 
 export const INSPECTION_INTELLIGENCE_PLATFORM_OWNERSHIP = {
   project: "engineering_os_shared_project_domain",
@@ -86,8 +90,9 @@ export function assertInspectionIntelligenceOwnershipLocks(): void {
   }
   if (autonomousRemediationApprovalEnabled) throw new Error("autonomous remediation approval forbidden");
   if (externalWritesEnabled) throw new Error("external writes forbidden");
-  if (SCHEMA_CHANGED) throw new Error("II-0 must not change schema");
-  if (II_COMMAND_CENTRE_IMPLEMENTED) throw new Error("Inspection Command Centre must not start in II-0");
-  if (II_AI_INSPECTION_ENGINEER_IMPLEMENTED) throw new Error("AI Inspection Engineer must not start in II-0");
-  if (II_HOSTED_PERSISTENCE_WIRED) throw new Error("hosted persistence must not start in II-0");
+  if (SCHEMA_CHANGED) throw new Error("II-0/II-1 must not change inspection truth-model schema");
+  if (II_COMMAND_CENTRE_IMPLEMENTED) throw new Error("Inspection Command Centre must not start in II-0/II-1");
+  if (II_AI_INSPECTION_ENGINEER_IMPLEMENTED) throw new Error("AI Inspection Engineer must not start in II-0/II-1");
+  if (duplicatePersistenceModelDetected) throw new Error("duplicate persistence model");
+  if (!II_HOSTED_PERSISTENCE_WIRED) throw new Error("hosted persistence must be wired in II-1");
 }

@@ -443,6 +443,21 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
     workspaceRequired: true,
     cachePolicy: "fresh",
   },
+  "inspection-intelligence-hosted.read": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "inspection.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  "inspection-intelligence-hosted.write": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "inspection.write",
+    seatRequired: true,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
   "inspection-intelligence-review.read": {
     productKey: ENGINEERING_PRODUCT,
     applicationKey: "inspection_intelligence",
