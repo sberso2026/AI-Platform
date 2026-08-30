@@ -2,6 +2,7 @@ import type { AnalystIntent } from "./types";
 
 const INJECTION_PATTERNS = [
   /ignore (all )?(previous|prior|above) instructions/i,
+  /ignore (the |your )?system prompt/i,
   /disregard (your )?system (prompt|instructions)/i,
   /you are now/i,
   /send this externally/i,
@@ -65,5 +66,6 @@ export function routeAnalystIntent(question: string): AnalystIntent {
   if (/missing|unavailable|stale|insufficient|what information/.test(q)) return "missing";
   if (/evidence|support this finding|cited/.test(q)) return "evidence";
   if (/caused|because of|due to the change/.test(q)) return "cross_domain";
+  if (/\bconnector\b|external context|\bemail\b|outlook|microsoft 365/.test(q)) return "external_context";
   return "cross_domain";
 }

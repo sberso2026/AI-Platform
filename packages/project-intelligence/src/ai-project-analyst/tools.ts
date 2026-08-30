@@ -16,6 +16,7 @@ export const PI_ANALYST_PLATFORM_TOOLS: readonly {
   { toolKey: "project_intelligence.get_query_decision_intelligence", name: "Get query, decision, and action intelligence", category: "read", riskLevel: "low", mutates: false },
   { toolKey: "project_intelligence.get_forecast_intelligence", name: "Get forecast intelligence", category: "read", riskLevel: "low", mutates: false },
   { toolKey: "project_intelligence.get_project_evidence", name: "Get project evidence references", category: "read", riskLevel: "low", mutates: false },
+  { toolKey: "project_intelligence.get_connector_context", name: "Get project-bound connector context", category: "read", riskLevel: "low", mutates: false },
 ] as const;
 
 export function listPiAnalystPlatformTools() {

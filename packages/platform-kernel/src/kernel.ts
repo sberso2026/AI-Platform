@@ -12,6 +12,7 @@ import { NotificationService } from "./notifications";
 import { PluginLifecycleService } from "./plugins";
 import { TelemetryService } from "./telemetry";
 import { WorkflowService } from "./workflow";
+import { PlatformConnectorContextService } from "./connector-context";
 
 export interface PlatformKernel {
   aiDirector: AIDirectorService;
@@ -26,6 +27,7 @@ export interface PlatformKernel {
   telemetry: TelemetryService;
   plugins: PluginLifecycleService;
   intelligence: PlatformIntelligence;
+  connectorContext: PlatformConnectorContextService;
 }
 
 export function createPlatformKernel(supabase: SupabaseClient): PlatformKernel {
@@ -49,5 +51,6 @@ export function createPlatformKernel(supabase: SupabaseClient): PlatformKernel {
     apiGateway: new ApiGatewayService(supabase),
     telemetry: new TelemetryService(supabase),
     plugins: new PluginLifecycleService(supabase, eventBus),
+    connectorContext: new PlatformConnectorContextService(supabase),
   };
 }

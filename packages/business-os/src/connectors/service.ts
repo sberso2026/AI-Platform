@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@rtb/database";
-import type { PlatformKernel } from "@rtb/platform-kernel";
+import { assemblePlatformConnectorContext, type PlatformKernel } from "@rtb/platform-kernel";
 import { AuditService } from "@rtb/platform-core";
 import { BUSINESS_OS_EVENT_TYPES, type BosConnectorId, type BosConnectorMode } from "@rtb/types";
 import type { OwnerCommandScope } from "../owner-command/service";
@@ -11,6 +11,7 @@ import type {
   ConnectorActor,
   ConnectorImportBatch,
   ConnectorInstallation,
+  ConnectorStagedContextRecord,
   ConnectorStagingRecord,
   ConnectorStore,
   ConnectorSyncRun,
@@ -175,6 +176,76 @@ export class BosConnectorsService {
     };
   }
 
+  /**
+   * Governed, credential-stripped staging read for downstream consumers (e.g. Project Intelligence).
+   * Does not filter by project — callers must apply explicit project binding.
+   * Never returns secretId or raw connector credentials.
+   */
+  async readStagedContext(raw: { tenantId: string; workspaceId?: string; userId: string }): Promise<{
+    availability: "ok" | "unavailable" | "error";
+    records: ConnectorStagedContextRecord[];
+    liveExecution: boolean;
+    usableWithoutConnectors: true;
+    writeLabel: "READ ONLY";
+    secretIdPresent: false;
+  }> {
+    const scope = requireWorkspace(raw);
+    try {
+      const [installations, staging] = await Promise.all([
+        this.store.listInstallations(scope),
+        this.store.listStaging(scope),
+      ]);
+      return assemblePlatformConnectorContext({
+        scope,
+        installations: installations.map((row) => ({
+          id: row.id,
+          tenantId: row.tenantId,
+          workspaceId: row.workspaceId,
+          health: row.health,
+          effectiveMode: row.effectiveMode,
+          provenance: row.provenance,
+        })),
+        staging: staging.map((row) => ({
+          id: row.id,
+          tenantId: row.tenantId,
+          workspaceId: row.workspaceId,
+          connectorId: row.connectorId,
+          installationId: row.installationId,
+          provider: row.provider,
+          externalSourceId: row.externalSourceId,
+          dataClass: row.dataClass,
+          retrievedAt: row.retrievedAt,
+          sourceUpdatedAt: row.sourceUpdatedAt,
+          freshness: row.freshness,
+          mappingVersion: row.mappingVersion,
+          payload: row.payload,
+          matchStatus: row.matchStatus,
+          canonicalEntityType: row.canonicalEntityType,
+          canonicalEntityId: row.canonicalEntityId,
+          suppressed: row.suppressed,
+          provenance: row.provenance,
+        })),
+        freshnessPolicyHoursFor: (connectorId) => connectorContract(connectorId as BosConnectorId).freshnessPolicyHours,
+      }) as {
+        availability: "ok" | "unavailable" | "error";
+        records: ConnectorStagedContextRecord[];
+        liveExecution: boolean;
+        usableWithoutConnectors: true;
+        writeLabel: "READ ONLY";
+        secretIdPresent: false;
+      };
+    } catch {
+      return {
+        availability: "error" as const,
+        records: [],
+        liveExecution: false,
+        usableWithoutConnectors: true as const,
+        writeLabel: "READ ONLY" as const,
+        secretIdPresent: false as const,
+      };
+    }
+  }
+
   async configure(
     raw: { tenantId: string; workspaceId?: string; userId: string },
     input: {
@@ -262,6 +333,7 @@ export class BosConnectorsService {
         contract: contract.version,
         secretRefOnly: true,
         live: effectiveMode === "live" && hasSecret,
+        freshnessPolicyHours: contract.freshnessPolicyHours,
         expectedProviderOrgId: expectedProviderOrgId || null,
         providerOrgId: (existing?.provenance.providerOrgId as string | null | undefined) ?? null,
       },

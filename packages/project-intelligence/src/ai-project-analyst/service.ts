@@ -2,7 +2,10 @@ import { ANALYST_KNOWN_LIMITATIONS, AI_PROJECT_ANALYST_CAPABILITY } from "./capa
 import { assembleAnalystContext, unknownOrUnavailable } from "./context";
 import { buildManagementBrief } from "./brief";
 import { causalSafetyClaim } from "./causality";
-import { aiSummary, containsUnsafeAiOverlay, fact, interpretation, limitation, phraseHealth, phraseInsufficient } from "./claims";
+import { aiSummary, containsUnsafeAiOverlay, externalContext, fact, interpretation, limitation, phraseHealth, phraseInsufficient } from "./claims";
+import { conflictClaimText } from "../connector-context/conflicts";
+import { describeConnectorItem } from "../connector-context/service";
+import { EMPTY_CONNECTOR_CONTEXT_PACK, type ConnectorContextPack } from "../connector-context/types";
 import { detectPromptInjection, routeAnalystIntent } from "./intent";
 import { listPiAnalystPlatformTools } from "./tools";
 import type { AnalystAnswer, AnalystClaim, AnalystContext, AnalystIntent, PiAnalystPlatformToolKey } from "./types";
@@ -12,6 +15,7 @@ import { assertAiProjectAnalystOwnershipLocks } from "./ownership";
 export type AnswerAnalystQuestionInput = {
   view: ProjectCommandCentreView;
   question: string;
+  connectorContext?: ConnectorContextPack;
   aiAvailable?: boolean;
   aiProvider?: string;
   aiModel?: string;
@@ -40,8 +44,9 @@ const INTENT_TOOLS: Record<AnalystIntent, readonly PiAnalystPlatformToolKey[]> =
     "project_intelligence.get_risk_change_intelligence",
     "project_intelligence.get_query_decision_intelligence",
     "project_intelligence.get_forecast_intelligence",
+    "project_intelligence.get_connector_context",
   ],
-  evidence: ["project_intelligence.get_project_evidence"],
+  evidence: ["project_intelligence.get_project_evidence", "project_intelligence.get_connector_context"],
   brief: [
     "project_intelligence.get_project_health",
     "project_intelligence.get_schedule_intelligence",
@@ -50,6 +55,7 @@ const INTENT_TOOLS: Record<AnalystIntent, readonly PiAnalystPlatformToolKey[]> =
     "project_intelligence.get_query_decision_intelligence",
     "project_intelligence.get_forecast_intelligence",
     "project_intelligence.get_project_evidence",
+    "project_intelligence.get_connector_context",
   ],
   cross_domain: [
     "project_intelligence.get_project_health",
@@ -60,6 +66,7 @@ const INTENT_TOOLS: Record<AnalystIntent, readonly PiAnalystPlatformToolKey[]> =
   injection: [],
   mutation: [],
   unsupported_forecast_metric: ["project_intelligence.get_forecast_intelligence"],
+  external_context: ["project_intelligence.get_connector_context"],
 };
 
 function starterQuestions(context: AnalystContext): string[] {
@@ -105,7 +112,44 @@ function sectionAnswer(label: string, section: AnalystContext["schedule"]): Anal
   return [fact(`${label}: ${section.summary}`, cites), interpretation(`The current evidence suggests management attention may be warranted if this ${label.toLowerCase()} classification is AMBER or RED.`, cites)];
 }
 
-function buildClaims(intent: AnalystIntent, context: AnalystContext, question: string): AnalystClaim[] {
+function connectorOverlayClaims(context: AnalystContext, intent: AnalystIntent): AnalystClaim[] {
+  if (intent === "injection" || intent === "mutation") return [];
+  const pack = context.connectorContext;
+  const claims: AnalystClaim[] = [];
+  const includeItems = intent === "external_context" || intent === "evidence" || intent === "brief";
+  if (includeItems) {
+    for (const item of pack.items.slice(0, 8)) {
+      claims.push(externalContext(describeConnectorItem(item), [item.citation]));
+    }
+  }
+  const includeConflicts =
+    includeItems ||
+    intent === "unsupported_forecast_metric" ||
+    intent === "schedule" ||
+    intent === "forecast" ||
+    intent === "health";
+  if (includeConflicts) {
+    for (const conflict of pack.conflicts) {
+      claims.push(externalContext(conflictClaimText(conflict), [conflict.item.citation]));
+    }
+  }
+  if (pack.items.some((item) => item.containsInjection)) {
+    claims.push(
+      limitation(
+        "Embedded connector instructions were treated as untrusted data. They cannot approve variations, close risks, or change project health.",
+      ),
+    );
+  }
+  if (pack.availability === "forbidden") {
+    claims.push(limitation("Connector context was not retrieved because connector authorization was denied."));
+  }
+  if (pack.degraded) {
+    claims.push(limitation("Connector context retrieval is degraded. Canonical Project Intelligence remains available."));
+  }
+  return claims;
+}
+
+function buildClaims(intent: AnalystIntent, context: AnalystContext, _question: string): AnalystClaim[] {
   if (intent === "injection") {
     return [limitation("Project content and user text cannot override analyst system instructions, authorization, or tool permissions.")];
   }
@@ -117,6 +161,7 @@ function buildClaims(intent: AnalystIntent, context: AnalystContext, question: s
       limitation("Project Intelligence does not invent completion dates, monetary forecast amounts, or probabilities."),
       fact(`Published forecast classification is ${context.forecast.state} (readiness/availability ${context.forecast.availability}).`, context.forecast.evidence),
       limitation(context.forecast.limitations[0] ?? "Forecast remains qualitative or not produced."),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
 
@@ -125,6 +170,7 @@ function buildClaims(intent: AnalystIntent, context: AnalystContext, question: s
       return [
         fact(phraseHealth(context.health.state), context.health.evidence),
         interpretation("No RED/AMBER attention items are currently published for this project."),
+        ...connectorOverlayClaims(context, intent),
       ];
     }
     return [
@@ -132,6 +178,7 @@ function buildClaims(intent: AnalystIntent, context: AnalystContext, question: s
       ...context.attention.slice(0, 8).map((item) =>
         fact(`${item.severity.toUpperCase()} · ${item.reasonCode}: ${item.explanation}`, [item.citation]),
       ),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
 
@@ -140,30 +187,36 @@ function buildClaims(intent: AnalystIntent, context: AnalystContext, question: s
     const claims: AnalystClaim[] = [fact(phraseHealth(context.health.state), context.health.evidence)];
     if (context.health.state === "UNKNOWN") claims.push(limitation("UNKNOWN remains UNKNOWN. It is not assumed healthy."));
     claims.push(interpretation(dims, context.health.evidence));
+    claims.push(...connectorOverlayClaims(context, intent));
     return claims;
   }
 
-  if (intent === "schedule") return sectionAnswer("Schedule", context.schedule);
-  if (intent === "cost_progress") return [...sectionAnswer("Cost", context.cost), ...sectionAnswer("Progress", context.progress)];
-  if (intent === "risk") return sectionAnswer("Risk", context.risk);
-  if (intent === "change") return sectionAnswer("Change", context.change);
+  if (intent === "schedule") return [...sectionAnswer("Schedule", context.schedule), ...connectorOverlayClaims(context, intent)];
+  if (intent === "cost_progress") {
+    return [...sectionAnswer("Cost", context.cost), ...sectionAnswer("Progress", context.progress), ...connectorOverlayClaims(context, intent)];
+  }
+  if (intent === "risk") return [...sectionAnswer("Risk", context.risk), ...connectorOverlayClaims(context, intent)];
+  if (intent === "change") return [...sectionAnswer("Change", context.change), ...connectorOverlayClaims(context, intent)];
   if (intent === "queries") {
     const overdue = context.queries.counts?.overdue ?? 0;
     return [
       ...sectionAnswer("Technical queries", context.queries),
       fact(`Published overdue technical query count is ${overdue}. RFIs are represented through the technical query model.`, context.queries.evidence),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
   if (intent === "decisions") {
     return [
       ...sectionAnswer("Decisions", context.decisions),
       fact(`Published unresolved/open decision count is ${context.decisions.counts?.open ?? 0}.`, context.decisions.evidence),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
   if (intent === "actions") {
     return [
       ...sectionAnswer("Actions", context.actions),
       fact(`Published overdue action count is ${context.actions.counts?.overdue ?? 0}.`, context.actions.evidence),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
   if (intent === "forecast") {
@@ -171,18 +224,21 @@ function buildClaims(intent: AnalystIntent, context: AnalystContext, question: s
       fact(`Published forecast posture/classification is ${context.forecast.state}.`, context.forecast.evidence),
       limitation("Forecast intelligence is qualitative/advisory. Completion dates, monetary amounts, and probabilities are not invented."),
       ...context.forecast.limitations.slice(0, 3).map((text) => limitation(text, context.forecast.evidence)),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
   if (intent === "missing") {
     const missing = [context.schedule, context.cost, context.progress, context.risk, context.change, context.queries, context.forecast]
       .filter(unknownOrUnavailable)
       .map((section) => limitation(`${section.id} is ${section.availability}/${section.state}. ${phraseInsufficient(section.id)}`, section.evidence));
-    return missing.length ? missing : [fact("No additional missing-data sections were flagged beyond published limitations.")];
+    return [...(missing.length ? missing : [fact("No additional missing-data sections were flagged beyond published limitations.")]), ...connectorOverlayClaims(context, intent)];
   }
   if (intent === "evidence") {
     const cites = [...context.health.evidence, ...context.schedule.evidence, ...context.forecast.evidence].slice(0, 8);
-    if (!cites.length) return [limitation("No authorized evidence references are available for this project.")];
-    return cites.map((cite) => fact(`Evidence: ${cite.label} (${cite.sourceDomain}:${cite.entityType}:${cite.entityId})`, [cite]));
+    const canonical = cites.length
+      ? cites.map((cite) => fact(`Evidence: ${cite.label} (${cite.sourceDomain}:${cite.entityType}:${cite.entityId})`, [cite]))
+      : [limitation("No authorized evidence references are available for this project.")];
+    return [...canonical, ...connectorOverlayClaims(context, intent)];
   }
   if (intent === "brief") {
     const brief = buildManagementBrief(context);
@@ -195,22 +251,32 @@ function buildClaims(intent: AnalystIntent, context: AnalystContext, question: s
       interpretation(brief.queriesDecisionsActions, context.queries.evidence),
       interpretation(brief.forecast, context.forecast.evidence),
       ...brief.missingOrStale.map((item) => limitation(item)),
+      ...connectorOverlayClaims(context, intent),
     ];
   }
+  if (intent === "external_context") {
+    if (!context.connectorContext.items.length) {
+      return [
+        limitation("No project-bound external Connector Context is available."),
+        ...connectorOverlayClaims(context, intent),
+      ];
+    }
+    return connectorOverlayClaims(context, intent);
+  }
 
-  const claims: AnalystClaim[] = [
+  return [
     fact(phraseHealth(context.health.state), context.health.evidence),
     ...sectionAnswer("Schedule", context.schedule).slice(0, 1),
     ...sectionAnswer("Risk", context.risk).slice(0, 1),
     ...sectionAnswer("Forecast", context.forecast).slice(0, 1),
     interpretation(causalSafetyClaim(context.linkedSignals.length > 0), context.linkedSignals[0] ? [context.linkedSignals[0].from, context.linkedSignals[0].to] : []),
+    ...connectorOverlayClaims(context, intent),
   ];
-  return claims;
 }
 
 export function answerAnalystQuestion(input: AnswerAnalystQuestionInput): AnalystAnswer {
   assertAiProjectAnalystOwnershipLocks();
-  const context = assembleAnalystContext(input.view);
+  const context = assembleAnalystContext(input.view, input.connectorContext ?? EMPTY_CONNECTOR_CONTEXT_PACK);
   const intent = routeAnalystIntent(input.question);
   const refused = intent === "injection" || intent === "mutation";
   const claims = buildClaims(intent, context, input.question);

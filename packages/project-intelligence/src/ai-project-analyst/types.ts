@@ -1,10 +1,12 @@
 import type { ProjectHealthEvidenceReference, ProjectHealthOverallClassification } from "../project-health/types";
 import type { CommandCentreAvailability } from "../command-centre/types";
+import type { ConnectorContextPack } from "../connector-context/types";
 import type { AI_PROJECT_ANALYST_CAPABILITY } from "./capability";
 
 export const ANALYST_CLAIM_KINDS = [
   "FACT",
   "DETERMINISTIC_INTERPRETATION",
+  "EXTERNAL_CONTEXT",
   "AI_SUMMARY",
   "AI_INFERENCE",
   "LIMITATION",
@@ -29,6 +31,7 @@ export const ANALYST_INTENTS = [
   "injection",
   "mutation",
   "unsupported_forecast_metric",
+  "external_context",
 ] as const;
 export type AnalystIntent = (typeof ANALYST_INTENTS)[number];
 
@@ -40,6 +43,7 @@ export const PI_ANALYST_PLATFORM_TOOL_KEYS = [
   "project_intelligence.get_query_decision_intelligence",
   "project_intelligence.get_forecast_intelligence",
   "project_intelligence.get_project_evidence",
+  "project_intelligence.get_connector_context",
 ] as const;
 export type PiAnalystPlatformToolKey = (typeof PI_ANALYST_PLATFORM_TOOL_KEYS)[number];
 
@@ -98,6 +102,7 @@ export type AnalystContext = {
   limitations: readonly string[];
   freshness: Readonly<Record<string, string>>;
   linkedSignals: readonly { explanation: string; from: AnalystCitation; to: AnalystCitation }[];
+  connectorContext: ConnectorContextPack;
   readOnly: true;
   mutationEnabled: false;
 };

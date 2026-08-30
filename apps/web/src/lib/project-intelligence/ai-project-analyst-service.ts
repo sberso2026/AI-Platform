@@ -17,6 +17,7 @@ import {
 } from "@rtb/project-intelligence";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
 import { composeProjectCommandCentre } from "./command-centre-service";
+import { loadHostedConnectorContext } from "./hosted-connector-context-source";
 
 function classifyDirectorFailure(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
@@ -194,7 +195,12 @@ export async function runProjectAnalyst(
   question: string,
 ): Promise<AnalystAnswer & { runtime: AnalystRuntimeProbe }> {
   const view = await composeProjectCommandCentre(context, projectId);
-  const analystContext = assembleAnalystContext(view);
+  const connectorContext = await loadHostedConnectorContext(context, projectId, {
+    health: view.overallHealth,
+    scheduleState: view.scheduleIntelligence.health.classification,
+    scheduleAvailability: view.scheduleIntelligence.availability,
+  });
+  const analystContext = assembleAnalystContext(view, connectorContext);
   const runtime = await prepareAnalystRuntime(context);
 
   let aiAvailable = false;
@@ -268,6 +274,7 @@ export async function runProjectAnalyst(
   const answer = answerAnalystQuestion({
     view,
     question,
+    connectorContext,
     aiAvailable,
     aiProvider,
     aiModel,
@@ -299,6 +306,9 @@ export async function runProjectAnalyst(
         promptKey: runtime.promptKey,
         promptVersion: runtime.promptVersion,
         promptFallback: runtime.promptFallback,
+        connectorAvailability: connectorContext.availability,
+        connectorItemCount: connectorContext.items.length,
+        connectorLiveExecution: connectorContext.liveExecution,
         success: true,
         refused: answer.refused,
       },

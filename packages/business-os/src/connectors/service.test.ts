@@ -193,4 +193,20 @@ describe("BOS-12 CSV import", () => {
     const staged = await store.listStaging(SCOPE);
     expect(staged.some((row) => row.connectorId === "csv_excel" && row.becomesCanonical === false)).toBe(true);
   });
+
+  it("exposes a credential-stripped staged context read without writes or live promotion", async () => {
+    const { connectors } = harness();
+    await connectors.seedDemo(SCOPE, HUMAN);
+    const context = await connectors.readStagedContext(SCOPE);
+    expect(context.writeLabel).toBe("READ ONLY");
+    expect(context.secretIdPresent).toBe(false);
+    expect(context.liveExecution).toBe(false);
+    expect(context.availability).toBe("ok");
+    expect(context.records.length).toBeGreaterThan(0);
+    expect(context.records.every((row) => row.becomesCanonical === false)).toBe(true);
+    expect(JSON.stringify(context.records)).not.toMatch(/secretId|access_token|refresh_token/i);
+    expect(() => connectors.writeExternal()).toThrow("connector_write_forbidden");
+    const other = await connectors.readStagedContext(OTHER);
+    expect(other.records).toEqual([]);
+  });
 });

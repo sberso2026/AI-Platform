@@ -16,6 +16,10 @@ export function aiSummary(text: string, citations: readonly AnalystCitation[] = 
   return { kind: "AI_SUMMARY", text, citations };
 }
 
+export function externalContext(text: string, citations: readonly AnalystCitation[] = []): AnalystClaim {
+  return { kind: "EXTERNAL_CONTEXT", text, citations };
+}
+
 const FABRICATED_METRIC = [
   /will finish \d+\s*days/i,
   /completion probability/i,

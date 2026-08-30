@@ -224,13 +224,56 @@ export function ProjectAiAnalystView() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-slate-800">
               <p data-testid="analyst-answer-text">{answer.answer}</p>
-              <ul data-testid="analyst-claims" className="space-y-1">
-                {answer.claims.map((claim, index) => (
-                  <li key={`${claim.kind}-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
-                    <span className="font-medium">{claim.kind}:</span> {claim.text}
-                  </li>
-                ))}
-              </ul>
+              {(["FACT", "DETERMINISTIC_INTERPRETATION", "LIMITATION"] as const).some((kind) =>
+                answer.claims.some((claim) => claim.kind === kind),
+              ) ? (
+                <div data-testid="analyst-canonical-claims">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Canonical Project Intelligence
+                  </p>
+                  <ul data-testid="analyst-claims" className="mt-1 space-y-1">
+                    {answer.claims
+                      .filter((claim) =>
+                        claim.kind === "FACT" ||
+                        claim.kind === "DETERMINISTIC_INTERPRETATION" ||
+                        claim.kind === "LIMITATION",
+                      )
+                      .map((claim, index) => (
+                        <li key={`${claim.kind}-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
+                          <span className="font-medium">{claim.kind}:</span> {claim.text}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
+              {answer.claims.some((claim) => claim.kind === "EXTERNAL_CONTEXT") ? (
+                <div data-testid="analyst-external-context">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">External Context</p>
+                  <ul className="mt-1 space-y-1">
+                    {answer.claims
+                      .filter((claim) => claim.kind === "EXTERNAL_CONTEXT")
+                      .map((claim, index) => (
+                        <li key={`external-${index}`} data-testid="analyst-claim-EXTERNAL_CONTEXT">
+                          <span className="font-medium">EXTERNAL_CONTEXT:</span> {claim.text}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
+              {answer.claims.some((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE") ? (
+                <div data-testid="analyst-ai-interpretation">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">AI Interpretation</p>
+                  <ul className="mt-1 space-y-1">
+                    {answer.claims
+                      .filter((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE")
+                      .map((claim, index) => (
+                        <li key={`ai-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
+                          <span className="font-medium">{claim.kind}:</span> {claim.text}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
           <Card data-testid="analyst-citations">

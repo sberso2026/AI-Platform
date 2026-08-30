@@ -75,6 +75,35 @@ export type ConnectorStagingRecord = {
   provenance: Record<string, unknown>;
 };
 
+/** Credential-stripped staging row for governed read consumers. Never includes secretId. */
+export type ConnectorStagedContextRecord = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  connectorId: BosConnectorId;
+  connectionId: string;
+  provider: string;
+  externalSourceId: string;
+  dataClass: string;
+  retrievedAt: string;
+  sourceUpdatedAt: string | null;
+  freshness: string;
+  mappingVersion: string;
+  payload: Record<string, unknown>;
+  matchStatus: ConnectorStagingRecord["matchStatus"];
+  canonicalEntityType: string | null;
+  canonicalEntityId: string | null;
+  becomesCanonical: false;
+  suppressed: boolean;
+  provenance: Record<string, unknown>;
+  installationHealth: ConnectorInstallation["health"];
+  installationMode: ConnectorInstallation["effectiveMode"];
+  live: boolean;
+  fixture: boolean;
+  freshnessPolicyHours: number;
+  writeClassification: "read_only";
+};
+
 export type ConnectorImportBatch = {
   id: string;
   tenantId: string;

@@ -11,6 +11,7 @@ export const ANALYST_MAY = [
   "surface_missing_data",
   "navigate_to_pi_views",
   "generate_bounded_management_brief",
+  "surface_external_connector_context",
 ] as const;
 
 export const ANALYST_MUST_NEVER = [
@@ -28,6 +29,7 @@ export const ANALYST_MUST_NEVER = [
   "tq_rfi_response",
   "action_closure",
   "forecast_approval",
+  "invoke_connector_writes",
 ] as const;
 
 export const ANALYST_KNOWN_LIMITATIONS = [

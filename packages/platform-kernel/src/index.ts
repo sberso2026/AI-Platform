@@ -9,4 +9,5 @@ export * from "./notifications";
 export * from "./plugins";
 export * from "./telemetry";
 export * from "./workflow";
+export * from "./connector-context";
 export { createPlatformKernel, type PlatformKernel } from "./kernel";

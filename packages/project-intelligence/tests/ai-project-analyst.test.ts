@@ -113,8 +113,9 @@ describe("PI-7 AI Project Analyst", () => {
     expect(unrestrictedGraphAccess).toBe(false);
     expect(duplicateCanonicalProjectDomainDetected).toBe(false);
     expect(SCHEMA_CHANGED).toBe(false);
-    expect(PI_8_CONNECTOR_CONTEXT_READY).toBe(false);
+    expect(PI_8_CONNECTOR_CONTEXT_READY).toBe(true);
     expect(ANALYST_MUST_NEVER).toContain("mutate_canonical_data");
+    expect(ANALYST_MUST_NEVER).toContain("invoke_connector_writes");
     expect(PI_ANALYST_PLATFORM_TOOL_KEYS).toContain("project_intelligence.get_project_health");
     expect(PI_ANALYST_TOOL_REGISTRY_MODEL).toMatch(/director_has_no_tool_loop/);
     expect(AI_PROJECT_ANALYST_PROMPT_KEY).toBe("project-intelligence-analyst");

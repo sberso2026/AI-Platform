@@ -16,6 +16,8 @@ import {
   implementsOwnAiStack,
 } from "../project-health/ownership";
 
+import { PI_9_IMPLEMENTED } from "../connector-context/ownership";
+
 export const AI_PROJECT_ANALYST_PHASE = "PI-7" as const;
 export const AI_PROJECT_ANALYST_IMPLEMENTED = true as const;
 export const PI_AI_OPTIONAL = true as const;
@@ -23,7 +25,7 @@ export const PI_ANALYST_MUTATION_ENABLED = false as const;
 export const PI_AUTONOMOUS_APPROVAL_ENABLED = false as const;
 export const PI_ANALYST_STATELESS = true as const;
 export const PI_ANALYST_MEMORY_MODE = "session_bounded" as const;
-export const PI_8_CONNECTOR_CONTEXT_READY = false as const;
+export const PI_8_CONNECTOR_CONTEXT_READY = true as const;
 /**
  * PI-6 freeze sentinel. Remains false so PI-6 ownership still forbids in-phase PI-7.
  * Runtime implementation is AI_PROJECT_ANALYST_IMPLEMENTED.
@@ -89,5 +91,5 @@ export function assertAiProjectAnalystOwnershipLocks(): void {
   if (PI_ANALYST_MUTATION_ENABLED) throw new Error("analyst mutation forbidden");
   if (PI_AUTONOMOUS_APPROVAL_ENABLED) throw new Error("autonomous approval forbidden");
   if (!PI_AI_OPTIONAL) throw new Error("Command Centre / PI must remain AI-optional");
-  if (PI_8_CONNECTOR_CONTEXT_READY) throw new Error("PI-8 must not start in PI-7");
+  if (PI_9_IMPLEMENTED) throw new Error("PI-9 must not start in PI-8");
 }

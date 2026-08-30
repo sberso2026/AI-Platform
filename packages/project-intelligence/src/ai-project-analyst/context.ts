@@ -1,5 +1,6 @@
 import { ANALYST_KNOWN_LIMITATIONS, AI_PROJECT_ANALYST_CAPABILITY } from "./capability";
 import type { ProjectCommandCentreView } from "../command-centre/types";
+import { EMPTY_CONNECTOR_CONTEXT_PACK, type ConnectorContextPack } from "../connector-context/types";
 import { citationFromEvidence, sectionCitation } from "./tools";
 import type { AnalystCitation, AnalystContext, AnalystSectionContext } from "./types";
 
@@ -31,7 +32,10 @@ function fromSection(
   };
 }
 
-export function assembleAnalystContext(view: ProjectCommandCentreView): AnalystContext {
+export function assembleAnalystContext(
+  view: ProjectCommandCentreView,
+  connectorContext: ConnectorContextPack = EMPTY_CONNECTOR_CONTEXT_PACK,
+): AnalystContext {
   const asOf = view.generatedAt;
   const projectPath = `${BASE}?projectId=${encodeURIComponent(view.project.projectId)}`;
   const q = view.queryDecisionIntelligence;
@@ -211,9 +215,22 @@ export function assembleAnalystContext(view: ProjectCommandCentreView): AnalystC
       view.knowledge.evidenceReferences.map((ref) => citationFromEvidence(ref)),
     ),
     attention,
-    limitations: [...view.limitations, ...ANALYST_KNOWN_LIMITATIONS],
+    limitations: [
+      ...view.limitations,
+      ...ANALYST_KNOWN_LIMITATIONS,
+      ...(connectorContext.unboundExcludedCount
+        ? [`${connectorContext.unboundExcludedCount} unbound connector records were excluded from project context.`]
+        : []),
+      ...(connectorContext.availability === "forbidden"
+        ? ["Connector context is unavailable because connector authorization was denied."]
+        : []),
+      ...(connectorContext.availability === "error"
+        ? ["Connector context retrieval failed. Canonical Project Intelligence remains available."]
+        : []),
+    ],
     freshness,
     linkedSignals,
+    connectorContext,
     readOnly: true,
     mutationEnabled: false,
   };
