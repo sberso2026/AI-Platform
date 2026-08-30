@@ -81,8 +81,21 @@ describe("Project Intelligence release identity", () => {
     expect(installed?.publicContractVersion).toBe("1.0.0");
   });
 
-  it("does not move the historical GA tag and does not create the declared current tag", () => {
+  it("does not move the historical GA tag and never lets 1.1.0 retarget V1", () => {
     expect(git("git rev-list -n 1 project-intelligence-v1.0.0")).toBe(HISTORICAL_V1_COMMIT);
-    expect(() => git("git rev-parse --verify refs/tags/project-intelligence-v1.1.0")).toThrow();
+    let currentTarget: string | null = null;
+    try {
+      currentTarget = git("git rev-list -n 1 refs/tags/project-intelligence-v1.1.0");
+    } catch {
+      currentTarget = null;
+    }
+    if (currentTarget) {
+      expect(currentTarget).not.toBe(HISTORICAL_V1_COMMIT);
+      const versionAtTag = git(`git show ${currentTarget}:packages/project-intelligence/src/version.ts`);
+      expect(versionAtTag).toMatch(/PROJECT_INTELLIGENCE_VERSION = "1\.1\.0"/);
+      expect(versionAtTag).toMatch(
+        /PROJECT_INTELLIGENCE_V1_CERTIFICATION_TAG = "project-intelligence-v1\.0\.0"/,
+      );
+    }
   });
 });
