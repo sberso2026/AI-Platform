@@ -125,7 +125,9 @@ export class HostedProjectCoreSource implements CommandCentreCorePort {
   async load(scope: CommandCentreScope): Promise<CommandCentreCoreLoad> {
     let project;
     try {
-      project = await this.ctx.engineering.projects.get(this.commerce, scope.tenantId, scope.projectId);
+      project = await this.ctx.engineering.projects.get(this.commerce, scope.tenantId, scope.projectId, {
+        aggregate: true,
+      });
     } catch (error) {
       throw error;
     }
@@ -141,27 +143,27 @@ export class HostedProjectCoreSource implements CommandCentreCorePort {
 
     const [risks, issues, decisions, actions, technicalQueries, documents, assets] = await Promise.all([
       loadBoundRegister(
-        () => this.ctx.engineering.risks.list(this.commerce, scope.tenantId, scope.projectId),
+        () => this.ctx.engineering.risks.list(this.commerce, scope.tenantId, scope.projectId, 50, { aggregate: true }),
         "risk",
         scope.workspaceId,
       ),
       loadBoundRegister(
-        () => this.ctx.engineering.issues.list(this.commerce, scope.tenantId, scope.projectId),
+        () => this.ctx.engineering.issues.list(this.commerce, scope.tenantId, scope.projectId, 50, { aggregate: true }),
         "issue",
         scope.workspaceId,
       ),
       loadBoundRegister(
-        () => this.ctx.engineering.decisions.list(this.commerce, scope.tenantId, scope.projectId),
+        () => this.ctx.engineering.decisions.list(this.commerce, scope.tenantId, scope.projectId, 50, { aggregate: true }),
         "decision",
         scope.workspaceId,
       ),
       loadBoundRegister(
-        () => this.ctx.engineering.actions.list(this.commerce, scope.tenantId, scope.projectId),
+        () => this.ctx.engineering.actions.list(this.commerce, scope.tenantId, scope.projectId, 50, { aggregate: true }),
         "action",
         scope.workspaceId,
       ),
       loadBoundRegister(
-        () => this.ctx.engineering.technicalQueries.list(this.commerce, scope.tenantId, scope.projectId),
+        () => this.ctx.engineering.technicalQueries.list(this.commerce, scope.tenantId, scope.projectId, 50, { aggregate: true }),
         "technical_query",
         scope.workspaceId,
       ),
@@ -176,7 +178,7 @@ export class HostedProjectCoreSource implements CommandCentreCorePort {
         workspaceId: project.workspace_id ?? scope.workspaceId,
         projectCode: project.project_code,
         projectName: project.project_name,
-        phase: project.project_phase,
+        phase: project.project_phase ?? "unknown",
         status: project.status,
         storesCanonicalCopy: false,
       },
@@ -196,7 +198,7 @@ export class HostedProjectCoreSource implements CommandCentreCorePort {
         workspaceId: project.workspace_id ?? scope.workspaceId,
         projectCode: project.project_code,
         projectName: project.project_name,
-        phase: project.project_phase,
+        phase: project.project_phase ?? "unknown",
         status: project.status,
         storesCanonicalCopy: false,
       },
@@ -206,7 +208,9 @@ export class HostedProjectCoreSource implements CommandCentreCorePort {
 
   private async loadDocuments(scope: CommandCentreScope) {
     try {
-      const rows = await this.ctx.engineering.documents.list(this.commerce, scope.tenantId, scope.projectId);
+      const rows = await this.ctx.engineering.documents.list(this.commerce, scope.tenantId, scope.projectId, 50, {
+        aggregate: true,
+      });
       const items: CanonicalDocumentRef[] = rows.map((row) => ({
         id: row.id,
         entityType: "document" as const,
@@ -221,7 +225,9 @@ export class HostedProjectCoreSource implements CommandCentreCorePort {
 
   private async loadAssets(scope: CommandCentreScope) {
     try {
-      const rows = await this.ctx.engineering.assets.list(this.commerce, scope.tenantId, scope.projectId);
+      const rows = await this.ctx.engineering.assets.list(this.commerce, scope.tenantId, scope.projectId, 50, {
+        aggregate: true,
+      });
       const items: CanonicalAssetRef[] = rows.map((row) => ({
         id: row.id,
         entityType: "asset" as const,

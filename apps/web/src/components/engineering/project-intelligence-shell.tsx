@@ -133,20 +133,23 @@ function NavLink({
   label,
   icon: Icon,
   pathname,
+  projectId,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   pathname: string;
+  projectId?: string | null;
 }) {
   const active =
     href === "/engineering/apps/project-intelligence"
       ? pathname === href
       : pathname === href || pathname.startsWith(`${href}/`);
   const testId = navTestId(href);
+  const nextHref = projectId ? `${href}?projectId=${encodeURIComponent(projectId)}` : href;
   return (
     <Link
-      href={href}
+      href={nextHref}
       {...(testId ? { "data-testid": testId } : {})}
       className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
         active
@@ -169,6 +172,7 @@ export function ProjectIntelligenceShell({
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
+  const projectId = params.get("projectId");
   const requestedState = params.get("certState");
   const resolvedState: ProjectIntelligenceShellState =
     requestedState && requestedState in stateMessages
@@ -189,7 +193,7 @@ export function ProjectIntelligenceShell({
         </p>
         <nav className="mt-8 space-y-1" aria-label="Project Intelligence features">
           {primaryTabs.map((tab) => (
-            <NavLink key={tab.href} {...tab} pathname={pathname} />
+            <NavLink key={tab.href} {...tab} pathname={pathname} projectId={projectId} />
           ))}
         </nav>
         <p className="mt-8 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -197,7 +201,7 @@ export function ProjectIntelligenceShell({
         </p>
         <nav className="mt-2 space-y-1" aria-label="Project Intelligence operations">
           {secondaryTabs.map((tab) => (
-            <NavLink key={tab.href} {...tab} pathname={pathname} />
+            <NavLink key={tab.href} {...tab} pathname={pathname} projectId={projectId} />
           ))}
         </nav>
       </aside>

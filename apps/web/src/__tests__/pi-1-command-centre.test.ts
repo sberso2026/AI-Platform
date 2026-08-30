@@ -84,6 +84,7 @@ describe("PI-1 Command Centre web surface", () => {
     expect(controls).toContain("invokesControlsEngine = false");
     expect(controls).not.toContain(".insert(");
     expect(controls).not.toContain(".update(");
+    expect(read("lib/project-intelligence/hosted-core-source.ts")).toContain("aggregate: true");
   });
 
   it("preserves existing PI v1 routes", () => {
@@ -109,6 +110,15 @@ describe("PI-1 Command Centre web surface", () => {
     );
     expect(read("components/engineering/project-intelligence-shell.tsx")).toContain(
       "project-intelligence-nav-documents",
+    );
+    expect(read("components/engineering/project-intelligence-shell.tsx")).toContain(
+      "projectId=${encodeURIComponent(projectId)}",
+    );
+    expect(read("components/engineering/project-command-centre.tsx")).toContain(
+      "router.replace(query ? `${pathname}?${query}` : pathname",
+    );
+    expect(read("components/engineering/project-command-centre.tsx")).toContain(
+      "router.replace(query ? `${pathname}?${query}` : pathname",
     );
   });
 });

@@ -216,7 +216,9 @@ export class HostedRiskChangeIntelligenceSource implements RiskChangeIntelligenc
   private async loadRisk(scope: CommandCentreScope): Promise<RiskSourceSlice> {
     let items: CanonicalRiskRef[];
     try {
-      const rows = (await this.ctx.engineering.risks.list(this.commerce, scope.tenantId, scope.projectId)).filter(
+      const rows = (
+        await this.ctx.engineering.risks.list(this.commerce, scope.tenantId, scope.projectId, 50, { aggregate: true })
+      ).filter(
         (row) => inWorkspace(row, scope.workspaceId),
       );
       items = rows.map(mapRisk);
@@ -226,7 +228,11 @@ export class HostedRiskChangeIntelligenceSource implements RiskChangeIntelligenc
 
     let actions: CanonicalRiskActionRef[] = [];
     try {
-      const rows = (await this.ctx.engineering.actions.list(this.commerce, scope.tenantId, scope.projectId)).filter(
+      const rows = (
+        await this.ctx.engineering.actions.list(this.commerce, scope.tenantId, scope.projectId, 50, {
+          aggregate: true,
+        })
+      ).filter(
         (row) => inWorkspace(row, scope.workspaceId),
       );
       actions = rows.map(mapAction);

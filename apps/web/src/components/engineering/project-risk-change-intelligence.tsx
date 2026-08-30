@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -274,6 +274,7 @@ export function ChangeCommandCentreCard({
 
 export function ProjectRiskChangeIntelligenceView() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("projectId") ?? "";
   const [projects, setProjects] = useState<ListedProject[]>([]);
@@ -344,7 +345,7 @@ export function ProjectRiskChangeIntelligenceView() {
             if (next) params.set("projectId", next);
             else params.delete("projectId");
             const query = params.toString();
-            router.replace(query ? `?${query}` : "?", { scroll: false });
+            router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
           }}
         >
           <option value="">Select a project</option>

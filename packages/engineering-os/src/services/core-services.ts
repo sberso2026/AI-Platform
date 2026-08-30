@@ -35,8 +35,13 @@ export class EngineeringProjectService {
     return (data ?? []).map(mapProject);
   }
 
-  async get(commerce: CommerceExecutionContext, tenantId: string, projectId: string): Promise<EngineeringProject | null> {
-    assertEngineeringService(commerce, "project.get", tenantId);
+  async get(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    projectId: string,
+    options?: { aggregate?: boolean }
+  ): Promise<EngineeringProject | null> {
+    assertEngineeringService(commerce, "project.get", tenantId, options);
     const { data, error } = await this.supabase
       .from("engineering_projects")
       .select("*")

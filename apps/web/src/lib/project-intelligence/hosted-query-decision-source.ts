@@ -156,7 +156,9 @@ export class HostedQueryDecisionIntelligenceSource implements QueryDecisionIntel
   private async loadQueries(scope: CommandCentreScope): Promise<QuerySourceSlice> {
     try {
       const rows = (
-        await this.ctx.engineering.technicalQueries.list(this.commerce, scope.tenantId, scope.projectId)
+        await this.ctx.engineering.technicalQueries.list(this.commerce, scope.tenantId, scope.projectId, 50, {
+          aggregate: true,
+        })
       ).filter((row) => inWorkspace(row, scope.workspaceId));
       const items = rows.map(mapQuery);
       return {
@@ -173,7 +175,11 @@ export class HostedQueryDecisionIntelligenceSource implements QueryDecisionIntel
 
   private async loadDecisions(scope: CommandCentreScope): Promise<DecisionSourceSlice> {
     try {
-      const rows = (await this.ctx.engineering.decisions.list(this.commerce, scope.tenantId, scope.projectId)).filter(
+      const rows = (
+        await this.ctx.engineering.decisions.list(this.commerce, scope.tenantId, scope.projectId, 50, {
+          aggregate: true,
+        })
+      ).filter(
         (row) => inWorkspace(row, scope.workspaceId),
       );
       const items = rows.map(mapDecision);
@@ -191,7 +197,11 @@ export class HostedQueryDecisionIntelligenceSource implements QueryDecisionIntel
 
   private async loadActions(scope: CommandCentreScope): Promise<ActionSourceSlice> {
     try {
-      const rows = (await this.ctx.engineering.actions.list(this.commerce, scope.tenantId, scope.projectId)).filter(
+      const rows = (
+        await this.ctx.engineering.actions.list(this.commerce, scope.tenantId, scope.projectId, 50, {
+          aggregate: true,
+        })
+      ).filter(
         (row) => inWorkspace(row, scope.workspaceId),
       );
       const items = rows.map(mapAction);
