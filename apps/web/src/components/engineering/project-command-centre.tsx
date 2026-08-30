@@ -30,6 +30,7 @@ import {
   type QueryDecisionView,
 } from "./project-query-decision-intelligence";
 import { ForecastCommandCentreCard, type ForecastView } from "./project-forecast-intelligence";
+import { AnalystCommandCentreEntry } from "./project-ai-analyst";
 
 type HealthState = "green" | "amber" | "red" | "unknown";
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
@@ -399,6 +400,8 @@ export function ProjectCommandCentre() {
               </ul>
             )}
           </section>
+
+          <AnalystCommandCentreEntry projectId={view.project.projectId} />
 
           <div className="grid gap-4 lg:grid-cols-2">
             <ScheduleCommandCentreCard view={view.scheduleIntelligence} projectId={view.project.projectId} />

@@ -17,6 +17,7 @@ import {
   Settings,
   ShieldAlert,
   Sparkles,
+  Bot,
   Users,
 } from "lucide-react";
 
@@ -46,6 +47,11 @@ const primaryTabs = [
     href: "/engineering/apps/project-intelligence/forecasting",
     label: "Forecasting",
     icon: LineChart,
+  },
+  {
+    href: "/engineering/apps/project-intelligence/analyst",
+    label: "AI Project Analyst",
+    icon: Bot,
   },
   {
     href: "/engineering/apps/project-intelligence/documents",
@@ -116,6 +122,7 @@ function navTestId(href: string): string | undefined {
   if (href.endsWith("/risk-change")) return "project-intelligence-nav-risk-change";
   if (href.endsWith("/queries-decisions")) return "project-intelligence-nav-queries-decisions";
   if (href.endsWith("/forecasting")) return "project-intelligence-nav-forecasting";
+  if (href.endsWith("/analyst")) return "project-intelligence-nav-analyst";
   if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
   if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
   if (href.endsWith("/findings")) return "project-intelligence-nav-findings";

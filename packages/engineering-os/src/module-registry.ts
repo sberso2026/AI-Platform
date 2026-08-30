@@ -47,6 +47,7 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
       "project_intelligence.reporting",
       "project_intelligence.knowledge_retrieval",
       "project_intelligence.reasoning_assistant",
+      "project_intelligence.ai_project_analyst",
     ],
     eventHandlers: [
       "project_intelligence.document.*",
@@ -91,6 +92,11 @@ export const ENGINEERING_MODULE_REGISTRATIONS: EngineeringModuleRegistration[] =
         path: "/engineering/apps/project-intelligence/reasoning",
         title: "Engineering Reasoning Assistant",
         component: "EngineeringReasoningAssistantHome",
+      },
+      {
+        path: "/engineering/apps/project-intelligence/analyst",
+        title: "AI Project Analyst",
+        component: "AiProjectAnalystHome",
       },
     ],
     navigation: [

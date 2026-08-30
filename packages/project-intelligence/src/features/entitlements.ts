@@ -19,6 +19,8 @@ export type ProjectIntelligenceEntitlementAction =
   | "knowledge.intelligence.write"
   | "reasoning.assistant.read"
   | "reasoning.assistant.execute"
+  | "ai_project_analyst.read"
+  | "ai_project_analyst.execute"
   | "ai.execute"
   | "health.read"
   | "settings.read"
@@ -125,6 +127,22 @@ export const PROJECT_INTELLIGENCE_FEATURE_ENTITLEMENTS: ProjectIntelligenceFeatu
     seatRequired: true,
     workspaceRequired: true,
     featureKey: "ai_assistant",
+  },
+  {
+    featureId: "module",
+    moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    applicationKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    action: "ai_project_analyst.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  {
+    featureId: "module",
+    moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    applicationKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    action: "ai_project_analyst.execute",
+    seatRequired: true,
+    workspaceRequired: true,
   },
 ];
 
