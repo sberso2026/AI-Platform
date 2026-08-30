@@ -13,12 +13,19 @@ import {
   planTargetSummary,
   type InspectionRow,
 } from "@/lib/inspection-intelligence/hosted-client";
+import { InspectionSessionIntelligence } from "@/components/engineering/inspection-session-intelligence";
 
 type Workspace = {
   session: InspectionRow;
   observations: InspectionRow[];
   measurements: InspectionRow[];
   evidence: InspectionRow[];
+  defects?: InspectionRow[];
+  recommendations?: InspectionRow[];
+  correctiveActions?: InspectionRow[];
+  assessments?: InspectionRow[];
+  conditionRatings?: InspectionRow[];
+  verifications?: InspectionRow[];
 };
 
 async function fileSha256(file: File): Promise<string> {
@@ -36,7 +43,11 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
   const [busy, setBusy] = useState<string>();
   const [canWrite, setCanWrite] = useState(true);
 
-  async function load() {
+  async function load(options?: { skipCapabilities?: boolean }) {
+    if (options?.skipCapabilities) {
+      setWorkspace(await hostedGet<Workspace>("execution", { id: sessionId }));
+      return;
+    }
     const [data, caps] = await Promise.all([
       hostedGet<Workspace>("execution", { id: sessionId }),
       hostedGet<{ canWrite: boolean }>("capabilities").catch(() => ({ canWrite: true })),
@@ -52,17 +63,29 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
   const status = String(workspace?.session.status ?? "");
   const canRecord = writable(status) && canWrite;
 
-  async function run(label: string, work: () => Promise<void>) {
+  async function mutate<T>(
+    label: string,
+    work: () => Promise<T>,
+    apply?: (current: Workspace, data: T) => Workspace,
+  ) {
     setBusy(label);
     setError(undefined);
     try {
-      await work();
-      await load();
+      const data = await work();
+      if (apply) {
+        setWorkspace((current) => (current ? apply(current, data) : current));
+      } else {
+        await load({ skipCapabilities: true });
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Action failed");
     } finally {
       setBusy(undefined);
     }
+  }
+
+  async function run(label: string, work: () => Promise<void>) {
+    await mutate(label, work);
   }
 
   async function addObservation(event: FormEvent<HTMLFormElement>) {
@@ -74,10 +97,12 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
       setError("Observation type and notes are required.");
       return;
     }
-    await run("observation", async () => {
-      await hostedIntent("record_observation", { sessionId, checklistItemType, body });
-      form.reset();
-    });
+    await mutate(
+      "observation",
+      () => hostedIntent<InspectionRow>("record_observation", { sessionId, checklistItemType, body }),
+      (current, row) => ({ ...current, observations: [...current.observations, row] }),
+    );
+    form.reset();
   }
 
   async function addMeasurement(event: FormEvent<HTMLFormElement>) {
@@ -95,17 +120,20 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
     }
     const observedValue = Number.isNaN(Number(rawValue)) ? rawValue : Number(rawValue);
     const expectedValue = rawExpected === "" ? undefined : Number.isNaN(Number(rawExpected)) ? rawExpected : Number(rawExpected);
-    await run("measurement", async () => {
-      await hostedIntent("record_measurement", {
-        sessionId,
-        measurementType,
-        observedValue,
-        expectedValue,
-        unit: unit || undefined,
-        observationId: observationId || undefined,
-      });
-      form.reset();
-    });
+    await mutate(
+      "measurement",
+      () =>
+        hostedIntent<InspectionRow>("record_measurement", {
+          sessionId,
+          measurementType,
+          observedValue,
+          expectedValue,
+          unit: unit || undefined,
+          observationId: observationId || undefined,
+        }),
+      (current, row) => ({ ...current, measurements: [...current.measurements, row] }),
+    );
+    form.reset();
   }
 
   async function addEvidence(event: FormEvent<HTMLFormElement>) {
@@ -126,16 +154,19 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
       setError("Register an existing Platform file or choose a file to hash. Inspection Intelligence does not store a second copy.");
       return;
     }
-    await run("evidence", async () => {
-      await hostedIntent("register_evidence", {
-        sessionId,
-        kind,
-        fileId,
-        contentHash,
-        observationId: observationId || undefined,
-      });
-      form.reset();
-    });
+    await mutate(
+      "evidence",
+      () =>
+        hostedIntent<InspectionRow>("register_evidence", {
+          sessionId,
+          kind,
+          fileId,
+          contentHash,
+          observationId: observationId || undefined,
+        }),
+      (current, row) => ({ ...current, evidence: [...current.evidence, row] }),
+    );
+    form.reset();
   }
 
   async function transition(to: InspectionSessionState) {
@@ -311,6 +342,15 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
           render={(row) => `${String(row.kind)} · ${String(row.file_id ?? row.content_hash ?? "metadata")}`}
         />
       </div>
+      <InspectionSessionIntelligence
+        sessionId={sessionId}
+        workspace={workspace}
+        canRecord={canRecord}
+        busy={busy}
+        onAction={async (work) => {
+          await run("intelligence", work);
+        }}
+      />
     </section>
   );
 }

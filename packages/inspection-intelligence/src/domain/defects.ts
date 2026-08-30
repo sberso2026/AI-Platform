@@ -59,6 +59,10 @@ export function assertDefectTransition(from: DefectLifecycleState, to: DefectLif
   }
 }
 
+export function nextDefectStates(from: DefectLifecycleState): readonly DefectLifecycleState[] {
+  return DEFECT_TRANSITIONS[from] ?? [];
+}
+
 export function createDefect(input: {
   tenantId: string;
   workspaceId: string;

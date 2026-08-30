@@ -3,6 +3,10 @@ import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse, resolveRequestId } from "@/lib/lifecycle-api";
 import { createHostedInspectionFromRequest, transitionAuthAction } from "@/lib/inspection-intelligence/hosted-service";
 import type { InspectionSessionState } from "@rtb/inspection-intelligence";
+import {
+  GENERIC_NUMERIC_SCHEME_V1,
+  STRUCTURAL_ORDINAL_SCHEME_V1,
+} from "@rtb/inspection-intelligence";
 
 type HostedIntent =
   | "create_plan"
@@ -16,6 +20,7 @@ type HostedIntent =
   | "record_measurement"
   | "register_evidence"
   | "create_defect"
+  | "transition_defect"
   | "link_recommendation"
   | "create_corrective_action"
   | "progress_corrective_action"
@@ -63,13 +68,62 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
     if (resource === "locations") {
       return NextResponse.json({ data: await repo.listSpatialLocations(), requestId });
     }
+    if (resource === "intelligence") {
+      return NextResponse.json({ data: await repo.getIntelligence(), requestId });
+    }
+    if (resource === "defects") {
+      return NextResponse.json({
+        data: await repo.listDefects(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
+    if (resource === "recommendations") {
+      return NextResponse.json({
+        data: await repo.listRecommendations(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
+    if (resource === "corrective_actions") {
+      return NextResponse.json({
+        data: await repo.listCorrectiveActions(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
+    if (resource === "assessments") {
+      return NextResponse.json({
+        data: await repo.listAssessments(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
+    if (resource === "conditions") {
+      return NextResponse.json({
+        data: await repo.listConditionRatings(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
+    if (resource === "verifications") {
+      return NextResponse.json({
+        data: await repo.listVerifications(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
+    if (resource === "evidence") {
+      return NextResponse.json({
+        data: await repo.listEvidence(url.searchParams.get("sessionId") ?? undefined),
+        requestId,
+      });
+    }
     if (!id) {
       return lifecycleErrorResponse("invalid_hosted_read", "id is required", 400, requestId);
     }
     if (resource === "plan") return NextResponse.json({ data: await repo.getPlan(id), requestId });
     if (resource === "session") return NextResponse.json({ data: await repo.getSession(id), requestId });
     if (resource === "execution") {
-      return NextResponse.json({ data: await repo.getSessionWorkspace(id), requestId });
+      const profile = url.searchParams.get("profile") === "1";
+      return NextResponse.json({ data: await repo.getSessionWorkspace(id, { profile }), requestId });
+    }
+    if (resource === "defect") {
+      return NextResponse.json({ data: await repo.getDefectWorkspace(id), requestId });
     }
     if (resource === "condition") {
       return NextResponse.json({ data: await repo.getConditionRating(id), requestId });
@@ -177,6 +231,8 @@ async function dispatchIntent(
         description: String(body.description),
         taxonomy: body.taxonomy as never,
       });
+    case "transition_defect":
+      return repo.transitionDefectRecord(String(body.defectId), body.to as never);
     case "link_recommendation":
       return repo.linkRecommendation({
         sessionId: String(body.sessionId),
@@ -189,7 +245,10 @@ async function dispatchIntent(
         sessionId: String(body.sessionId),
         defectId: String(body.defectId),
         recommendationId: typeof body.recommendationId === "string" ? body.recommendationId : undefined,
-        ownerPersonId: String(body.ownerPersonId),
+        ownerPersonId:
+          typeof body.ownerPersonId === "string" && body.ownerPersonId && body.ownerPersonId !== "self"
+            ? body.ownerPersonId
+            : actorUserId,
         dueAt: String(body.dueAt),
         description: String(body.description),
       });
@@ -202,20 +261,33 @@ async function dispatchIntent(
         title: String(body.title),
         body: String(body.body),
       });
-    case "persist_condition_rating":
+    case "persist_condition_rating": {
+      const schemeId = typeof body.schemeId === "string" ? body.schemeId : undefined;
+      const scheme =
+        body.scheme && typeof body.scheme === "object"
+          ? (body.scheme as never)
+          : schemeId === STRUCTURAL_ORDINAL_SCHEME_V1.schemeId
+            ? STRUCTURAL_ORDINAL_SCHEME_V1
+            : GENERIC_NUMERIC_SCHEME_V1;
       return repo.persistConditionRating({
         sessionId: String(body.sessionId),
         componentScope: String(body.componentScope),
         inspectionScope: String(body.inspectionScope),
         observationIds: Array.isArray(body.observationIds) ? (body.observationIds as string[]) : [],
-        scheme: body.scheme as never,
+        scheme,
         ordinalCode: typeof body.ordinalCode === "string" ? body.ordinalCode : undefined,
-        numericScore: typeof body.numericScore === "number" ? body.numericScore : undefined,
+        numericScore:
+          typeof body.numericScore === "number"
+            ? body.numericScore
+            : typeof body.numericScore === "string" && body.numericScore.trim() !== ""
+              ? Number(body.numericScore)
+              : undefined,
         confidence: Number(body.confidence),
         uncertainty: Number(body.uncertainty),
         evidenceSufficiency: body.evidenceSufficiency as never,
-        packId: String(body.packId ?? "generic"),
+        packId: String(body.packId ?? scheme.packId ?? "generic"),
       });
+    }
     case "get_condition_rating":
       return repo.getConditionRating(String(body.ratingId));
     case "request_verification":

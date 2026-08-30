@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { hostedGet, planTargetSummary, type InspectionRow } from "@/lib/inspection-intelligence/hosted-client";
+import { InspectionIntelligenceBoard } from "@/components/engineering/inspection-intelligence-board";
 
 type Overview = {
   planned: InspectionRow[];
@@ -77,7 +78,7 @@ export function InspectionOverviewBoard() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Inspection Intelligence</h1>
           <p className="mt-2 max-w-2xl text-slate-600">
-            Plan inspections, run sessions, and record observations, measurements, and evidence
+            Plan inspections, run sessions, and inspect hosted defects, condition ratings, evidence, and remediation
             against canonical project, asset, and location targets.
           </p>
         </div>
@@ -124,6 +125,7 @@ export function InspectionOverviewBoard() {
           evidence yet. That is unset, not a failed result.
         </p>
       ) : null}
+      <InspectionIntelligenceBoard />
     </div>
   );
 }

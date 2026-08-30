@@ -15,6 +15,15 @@ export const directProviderAccessFromInspectionIntelligence = false as const;
 export const autonomousInspectionApprovalEnabled = false as const;
 export const autonomousConditionRatingCertificationEnabled = false as const;
 export const autonomousRemediationApprovalEnabled = false as const;
+export const AUTONOMOUS_INSPECTION_APPROVAL_ENABLED = autonomousInspectionApprovalEnabled;
+export const AUTONOMOUS_CONDITION_CERTIFICATION_ENABLED = autonomousConditionRatingCertificationEnabled;
+export const AUTONOMOUS_REMEDIATION_APPROVAL_ENABLED = autonomousRemediationApprovalEnabled;
+export const DUPLICATE_FINDING_MODEL_DETECTED = false as const;
+export const DUPLICATE_ACTION_MODEL_DETECTED = false as const;
+export const DUPLICATE_CONDITION_MODEL_DETECTED = false as const;
+export const DUPLICATE_FILE_MODEL_DETECTED = false as const;
+export const DUPLICATE_ENGINEERING_TRUTH_MODEL_DETECTED = duplicateEngineeringTruthModelDetected;
+export const DATABASE_POLICY_CHANGED = false as const;
 export const externalWritesEnabled = false as const;
 export const SCHEMA_CHANGED = false as const;
 export const II_COMMAND_CENTRE_IMPLEMENTED = false as const;
@@ -27,8 +36,11 @@ export const II_1_IMPLEMENTED = true as const;
 /** Planning and execution operational surfaces over hosted records. */
 export const II_2_READY = true as const;
 export const II_2_IMPLEMENTED = true as const;
-/** Next phase is Defect Intelligence / Inspection History — not started. */
+/** Defect, condition, recommendation, CA, and evidence operational surfaces. */
 export const II_3_READY = true as const;
+export const II_3_IMPLEMENTED = true as const;
+/** Next phase is Inspection History / reporting — not started. */
+export const II_4_READY = true as const;
 
 export const INSPECTION_INTELLIGENCE_PLATFORM_OWNERSHIP = {
   project: "engineering_os_shared_project_domain",

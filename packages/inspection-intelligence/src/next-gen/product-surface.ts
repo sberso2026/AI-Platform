@@ -34,12 +34,14 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     id: "defect_intelligence",
     title: "Defect Intelligence",
     implementedInIi0: false,
+    implementedInIi3: true,
     canonicalBasis: "inspection_defects",
   },
   {
     id: "condition_assessment",
     title: "Condition Assessment",
     implementedInIi0: false,
+    implementedInIi3: true,
     canonicalBasis: "inspection_condition_ratings",
   },
   {
@@ -47,12 +49,14 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     title: "Evidence / Photos",
     implementedInIi0: false,
     implementedInIi2: true,
+    implementedInIi3: true,
     canonicalBasis: "inspection_evidence via Platform Files",
   },
   {
     id: "remediation",
     title: "Remediation",
     implementedInIi0: false,
+    implementedInIi3: true,
     canonicalBasis:
       "inspection corrective-action process state; link Engineering Core actions when enterprise tracking is required",
   },

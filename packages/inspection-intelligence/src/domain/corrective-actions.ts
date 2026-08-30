@@ -44,6 +44,12 @@ export function assertCorrectiveActionTransition(
   }
 }
 
+export function nextCorrectiveActionStates(
+  from: CorrectiveActionStatus,
+): readonly CorrectiveActionStatus[] {
+  return CA_TRANSITIONS[from] ?? [];
+}
+
 export function createCorrectiveAction(input: {
   tenantId: string;
   workspaceId: string;

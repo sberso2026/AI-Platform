@@ -8,12 +8,16 @@ const OPERATIONAL = [
   { href: "/engineering/apps/inspection-intelligence", label: "Overview" },
   { href: "/engineering/apps/inspection-intelligence/plans", label: "Plans" },
   { href: "/engineering/apps/inspection-intelligence/sessions", label: "Sessions" },
+  { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },
+  { href: "/engineering/apps/inspection-intelligence/condition", label: "Condition" },
+  { href: "/engineering/apps/inspection-intelligence/evidence", label: "Evidence" },
+  { href: "/engineering/apps/inspection-intelligence/actions", label: "Remediation" },
+  { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
 ] as const;
 
 const MORE = [
   { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
   { href: "/engineering/apps/inspection-intelligence/my-work", label: "My Work" },
-  { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
 ] as const;
 
 function classifyViewport(width: number, height: number): string {

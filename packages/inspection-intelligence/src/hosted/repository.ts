@@ -11,7 +11,7 @@ import {
   type InspectionSessionState,
   type TransitionAuth,
 } from "../domain/state-machine";
-import { createDefect, type DefectTaxonomy, type InspectionDefect } from "../domain/defects";
+import { createDefect, transitionDefect, type DefectLifecycleState, type DefectTaxonomy, type InspectionDefect } from "../domain/defects";
 import {
   createRecommendation,
   issueRecommendation,
@@ -39,6 +39,7 @@ import {
 } from "../domain/condition-rating";
 import { createEngineeringInspectionEvent } from "../domain/engineering-events";
 import { PLAN_UPDATE_STATUSES } from "../domain/plan-statuses";
+import { computeDeterministicIntelligence } from "../domain/deterministic-intelligence";
 import {
   INSPECTION_HOSTED_TABLE_MAPPING as T,
   notFound,
@@ -328,15 +329,138 @@ export class HostedInspectionRepository {
     };
   }
 
-  async getSessionWorkspace(sessionId: string) {
+  async getSessionWorkspace(sessionId: string, options?: { profile?: boolean }) {
+    const started = Date.now();
     const session = await this.requireRow(T.sessions, sessionId);
+    const afterSession = Date.now();
     if (!coupledToProject(asTargets(session.targets), this.context.projectId)) notFound("session");
-    const [observations, measurements, evidence] = await Promise.all([
+    const [
+      observations,
+      measurements,
+      evidence,
+      defects,
+      recommendations,
+      correctiveActions,
+      assessments,
+      conditionRatings,
+      verifications,
+    ] = await Promise.all([
       this.listBySession(T.observations, sessionId),
       this.listBySession(T.measurements, sessionId),
       this.listBySession(T.evidence, sessionId),
+      this.listBySession(T.defects, sessionId),
+      this.listBySession(T.recommendations, sessionId),
+      this.listBySession(T.correctiveActions, sessionId),
+      this.listBySession(T.assessments, sessionId),
+      this.listBySession(T.conditionRatings, sessionId),
+      this.listBySession(T.verifications, sessionId),
     ]);
-    return { session, observations, measurements, evidence };
+    const afterReads = Date.now();
+    const data = {
+      session,
+      observations,
+      measurements,
+      evidence,
+      defects,
+      recommendations,
+      correctiveActions,
+      assessments,
+      conditionRatings,
+      verifications,
+    };
+    if (!options?.profile) return data;
+    return {
+      ...data,
+      profile: {
+        requireSessionMs: afterSession - started,
+        parallelReadsMs: afterReads - afterSession,
+        totalMs: afterReads - started,
+        readCount: 9,
+      },
+    };
+  }
+
+  async listDefects(sessionId?: string) {
+    const sessionIds = await this.sessionIdsInScope();
+    const rows = sessionId ? await this.listBySession(T.defects, sessionId) : await this.listScoped(T.defects);
+    return rows
+      .filter((row) => !sessionIds || sessionIds.has(String(row.session_id)))
+      .sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")));
+  }
+
+  async getDefectWorkspace(defectId: string) {
+    const defect = await this.requireRow(T.defects, defectId);
+    const session = await this.requireRow(T.sessions, String(defect.session_id));
+    if (!coupledToProject(asTargets(session.targets), this.context.projectId)) notFound("defect");
+    const [recommendations, correctiveActions, assessments, verifications, evidence, observation] = await Promise.all([
+      this.listEq(T.recommendations, "defect_id", defectId),
+      this.listEq(T.correctiveActions, "defect_id", defectId),
+      this.listEq(T.assessments, "defect_id", defectId),
+      this.listEq(T.verifications, "subject_id", defectId),
+      defect.observation_id
+        ? this.listEq(T.evidence, "observation_id", String(defect.observation_id))
+        : this.listBySession(T.evidence, String(defect.session_id)),
+      defect.observation_id ? this.requireRow(T.observations, String(defect.observation_id)).catch(() => null) : Promise.resolve(null),
+    ]);
+    return {
+      defect,
+      session,
+      observation,
+      recommendations,
+      correctiveActions,
+      assessments,
+      verifications,
+      evidence,
+      ownership: {
+        inspectionDefect: true,
+        projectIntelligenceFinding: false,
+        engineeringCoreAction: false,
+        assetDefect: false,
+      },
+    };
+  }
+
+  async listRecommendations(sessionId?: string) {
+    return this.listScopedBySession(T.recommendations, sessionId);
+  }
+
+  async listCorrectiveActions(sessionId?: string) {
+    return this.listScopedBySession(T.correctiveActions, sessionId);
+  }
+
+  async listAssessments(sessionId?: string) {
+    return this.listScopedBySession(T.assessments, sessionId);
+  }
+
+  async listConditionRatings(sessionId?: string) {
+    return this.listScopedBySession(T.conditionRatings, sessionId);
+  }
+
+  async listVerifications(sessionId?: string) {
+    return this.listScopedBySession(T.verifications, sessionId);
+  }
+
+  async listEvidence(sessionId?: string) {
+    return this.listScopedBySession(T.evidence, sessionId);
+  }
+
+  async getIntelligence() {
+    const [defects, correctiveActions, verifications, sessions, evidence, conditionRatings] = await Promise.all([
+      this.listDefects(),
+      this.listCorrectiveActions(),
+      this.listVerifications(),
+      this.listSessions(),
+      this.listEvidence(),
+      this.listConditionRatings(),
+    ]);
+    return computeDeterministicIntelligence({
+      defects,
+      correctiveActions,
+      verifications,
+      sessions,
+      evidence,
+      conditionRatings,
+    });
   }
 
   async listSpatialLocations() {
@@ -596,6 +720,32 @@ export class HostedInspectionRepository {
     return defect;
   }
 
+  async transitionDefectRecord(defectId: string, to: DefectLifecycleState): Promise<InspectionDefect> {
+    const row = await this.requireRow(T.defects, defectId);
+    const current: InspectionDefect = {
+      id: String(row.id),
+      tenantId: this.context.tenantId,
+      workspaceId: this.context.workspaceId,
+      sessionId: String(row.session_id),
+      observationId: row.observation_id ? String(row.observation_id) : undefined,
+      taxonomy: row.taxonomy as DefectTaxonomy,
+      status: row.status as DefectLifecycleState,
+      title: String(row.title),
+      description: String(row.description),
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    };
+    const next = transitionDefect(current, to);
+    await this.update(T.defects, defectId, { status: next.status });
+    await this.audit?.log({
+      action: "inspection.defect.transitioned",
+      resourceType: "inspection",
+      resourceId: defectId,
+      metadata: { from: current.status, to, actorUserId: this.context.actorUserId },
+    });
+    return next;
+  }
+
   async linkRecommendation(input: {
     sessionId: string;
     defectId: string;
@@ -648,6 +798,12 @@ export class HostedInspectionRepository {
       description: action.description,
       status: action.status,
     });
+    await this.audit?.log({
+      action: "inspection.corrective_action.created",
+      resourceType: "inspection",
+      resourceId: action.id,
+      metadata: { sessionId: action.sessionId, defectId: action.defectId, actorUserId: this.context.actorUserId },
+    });
     return action;
   }
 
@@ -669,6 +825,12 @@ export class HostedInspectionRepository {
     };
     const next = transitionCorrectiveAction(current, to);
     await this.update(T.correctiveActions, actionId, { status: next.status });
+    await this.audit?.log({
+      action: "inspection.corrective_action.progressed",
+      resourceType: "inspection",
+      resourceId: actionId,
+      metadata: { from: current.status, to, actorUserId: this.context.actorUserId },
+    });
     return next;
   }
 
@@ -692,6 +854,17 @@ export class HostedInspectionRepository {
       body: assessment.body,
       ai_generated: false,
       status: assessment.status,
+    });
+    await this.audit?.log({
+      action: "inspection.assessment.recorded",
+      resourceType: "inspection",
+      resourceId: assessment.id,
+      metadata: {
+        sessionId: assessment.sessionId,
+        defectId: assessment.defectId,
+        aiGenerated: false,
+        actorUserId: this.context.actorUserId,
+      },
     });
     return assessment;
   }
@@ -731,6 +904,17 @@ export class HostedInspectionRepository {
       evidence_sufficiency: rating.evidenceSufficiency,
       payload: rating,
     });
+    await this.audit?.log({
+      action: "inspection.condition_rating.persisted",
+      resourceType: "inspection",
+      resourceId: rating.ratingId,
+      metadata: {
+        sessionId: rating.sessionId,
+        assessorUserId: rating.assessorUserId,
+        evidenceSufficiency: rating.evidenceSufficiency,
+        reviewState: rating.reviewState,
+      },
+    });
     return rating;
   }
 
@@ -760,6 +944,12 @@ export class HostedInspectionRepository {
       kind: verification.kind,
       subject_id: verification.subjectId,
       status: verification.status,
+    });
+    await this.audit?.log({
+      action: "inspection.verification.requested",
+      resourceType: "inspection",
+      resourceId: verification.id,
+      metadata: { sessionId: verification.sessionId, kind: verification.kind, subjectId: verification.subjectId },
     });
     return verification;
   }
@@ -851,6 +1041,20 @@ export class HostedInspectionRepository {
       generated_at: new Date().toISOString(),
     });
     return updated;
+  }
+
+  private async sessionIdsInScope(): Promise<Set<string> | null> {
+    if (!this.context.projectId) return null;
+    const sessions = await this.listSessions();
+    return new Set(sessions.map((row) => String(row.id)));
+  }
+
+  private async listScopedBySession(table: string, sessionId?: string): Promise<InspectionDbRow[]> {
+    const sessionIds = await this.sessionIdsInScope();
+    const rows = sessionId ? await this.listBySession(table, sessionId) : await this.listScoped(table);
+    return rows
+      .filter((row) => !sessionIds || sessionIds.has(String(row.session_id)))
+      .sort((a, b) => String(b.updated_at ?? b.recorded_at ?? "").localeCompare(String(a.updated_at ?? a.recorded_at ?? "")));
   }
 
   private async listBySession(table: string, sessionId: string): Promise<InspectionDbRow[]> {

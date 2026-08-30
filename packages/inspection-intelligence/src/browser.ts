@@ -8,3 +8,10 @@ export {
   requiredActionForSessionState,
   type InspectionSessionState,
 } from "./domain/state-machine";
+export { nextDefectStates, type DefectLifecycleState, type DefectSeverity } from "./domain/defects";
+export {
+  nextCorrectiveActionStates,
+  type CorrectiveActionStatus,
+} from "./domain/corrective-actions";
+export type { RecommendationAction } from "./domain/recommendations";
+export { II_DETERMINISTIC_INDICATORS } from "./domain/deterministic-intelligence";
