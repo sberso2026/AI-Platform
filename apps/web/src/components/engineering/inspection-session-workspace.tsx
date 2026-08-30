@@ -200,14 +200,19 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
           </p>
           <p className="text-sm text-slate-500">Target: {planTargetSummary(workspace.session)}</p>
         </div>
-        {workspace.session.plan_id ? (
-          <Link
-            className="text-cyan-700 hover:underline"
-            href={`/engineering/apps/inspection-intelligence/plans/${workspace.session.plan_id}`}
-          >
-            Back to plan
+        <div className="flex flex-wrap gap-3 text-sm">
+          {workspace.session.plan_id ? (
+            <Link
+              className="text-cyan-700 hover:underline"
+              href={`/engineering/apps/inspection-intelligence/plans/${workspace.session.plan_id}`}
+            >
+              Back to plan
+            </Link>
+          ) : null}
+          <Link className="text-cyan-700 hover:underline" href="/engineering/apps/inspection-intelligence/reports">
+            Compose governed report
           </Link>
-        ) : null}
+        </div>
       </div>
       {error ? <p className="mt-3 text-red-700" role="alert">{error}</p> : null}
       {canWrite === false ? (

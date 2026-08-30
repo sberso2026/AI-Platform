@@ -5,6 +5,8 @@ import { createHostedInspectionFromRequest, transitionAuthAction } from "@/lib/i
 import type { InspectionSessionState } from "@rtb/inspection-intelligence";
 import {
   GENERIC_NUMERIC_SCHEME_V1,
+  II_GOVERNED_REPORT_TYPES,
+  II_PDF_EXPORT_AVAILABLE,
   STRUCTURAL_ORDINAL_SCHEME_V1,
 } from "@rtb/inspection-intelligence";
 
@@ -29,7 +31,9 @@ type HostedIntent =
   | "get_condition_rating"
   | "request_verification"
   | "complete_verification"
-  | "close_out";
+  | "close_out"
+  | "compose_report"
+  | "transition_report";
 
 export const GET = withEngineeringApi("inspection-intelligence-hosted", async (context, request) => {
   const requestId = resolveRequestId(request) ?? context.correlationId;
@@ -113,6 +117,49 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
         requestId,
       });
     }
+    if (resource === "history") {
+      return NextResponse.json({
+        data: await repo.listHistory({
+          targetKind: url.searchParams.get("targetKind") ?? undefined,
+          targetCanonicalId: url.searchParams.get("targetCanonicalId") ?? undefined,
+          planId: url.searchParams.get("planId") ?? undefined,
+          sessionId: url.searchParams.get("sessionId") ?? undefined,
+          from: url.searchParams.get("from") ?? undefined,
+          to: url.searchParams.get("to") ?? undefined,
+          inspectionType: url.searchParams.get("inspectionType") ?? undefined,
+        }),
+        requestId,
+      });
+    }
+    if (resource === "history_intelligence") {
+      return NextResponse.json({
+        data: await repo.getHistoryIntelligence({
+          targetKind: url.searchParams.get("targetKind") ?? undefined,
+          targetCanonicalId: url.searchParams.get("targetCanonicalId") ?? undefined,
+          planId: url.searchParams.get("planId") ?? undefined,
+          from: url.searchParams.get("from") ?? undefined,
+          to: url.searchParams.get("to") ?? undefined,
+        }),
+        requestId,
+      });
+    }
+    if (resource === "target_history") {
+      const kind = url.searchParams.get("kind");
+      const canonicalId = url.searchParams.get("canonicalId") ?? id;
+      if (!kind || !canonicalId) {
+        return lifecycleErrorResponse("invalid_hosted_read", "kind and canonicalId are required", 400, requestId);
+      }
+      return NextResponse.json({ data: await repo.getTargetHistory({ kind, canonicalId }), requestId });
+    }
+    if (resource === "reports") {
+      return NextResponse.json({ data: await repo.listReports(), requestId });
+    }
+    if (resource === "report_types") {
+      return NextResponse.json({
+        data: { types: II_GOVERNED_REPORT_TYPES, pdfAvailable: II_PDF_EXPORT_AVAILABLE },
+        requestId,
+      });
+    }
     if (!id) {
       return lifecycleErrorResponse("invalid_hosted_read", "id is required", 400, requestId);
     }
@@ -127,6 +174,13 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
     }
     if (resource === "condition") {
       return NextResponse.json({ data: await repo.getConditionRating(id), requestId });
+    }
+    if (resource === "report") {
+      return NextResponse.json({ data: await repo.getReport(id), requestId });
+    }
+    if (resource === "report_export") {
+      const row = await repo.getReport(id);
+      return NextResponse.json({ data: repo.exportReportMarkdown(row), requestId });
     }
     return lifecycleErrorResponse("unsupported_hosted_read", resource, 400, requestId);
   } catch (error) {
@@ -303,6 +357,18 @@ async function dispatchIntent(
       });
     case "close_out":
       return repo.closeOut(String(body.sessionId));
+    case "compose_report":
+      return repo.composeReport({
+        sessionId: String(body.sessionId),
+        reportKey: String(body.reportKey),
+      });
+    case "transition_report": {
+      const to = String(body.to);
+      if (to === "approved" || to === "published") {
+        if (authAction !== "inspection.approve") throw new Error("unauthorized_report_authority");
+      }
+      return repo.transitionReport(String(body.outputId), to as "draft" | "reviewed" | "approved" | "published");
+    }
     default:
       throw new Error("unsupported_hosted_intent");
   }

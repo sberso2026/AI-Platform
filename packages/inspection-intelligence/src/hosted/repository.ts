@@ -41,6 +41,21 @@ import { createEngineeringInspectionEvent } from "../domain/engineering-events";
 import { PLAN_UPDATE_STATUSES } from "../domain/plan-statuses";
 import { computeDeterministicIntelligence } from "../domain/deterministic-intelligence";
 import {
+  buildTargetTimeline,
+  computeChangeOverTime,
+  computeHistoryIntelligence,
+  projectInspectionHistory,
+  type HistoryFilter,
+} from "../domain/inspection-history";
+import {
+  assertReportAuthorityTransition,
+  composeGovernedReport,
+  II_GOVERNED_REPORT_TYPES,
+  II_PDF_EXPORT_AVAILABLE,
+  renderReportMarkdown,
+  type ReportAuthorityState,
+} from "../domain/governed-reporting";
+import {
   INSPECTION_HOSTED_TABLE_MAPPING as T,
   notFound,
   rejectCallerTenantOverride,
@@ -461,6 +476,202 @@ export class HostedInspectionRepository {
       evidence,
       conditionRatings,
     });
+  }
+
+  async listHistory(filter: HistoryFilter = {}) {
+    const started = Date.now();
+    const [sessions, plans, templates] = await Promise.all([
+      this.listSessions(),
+      this.listPlans(),
+      this.listTemplates(),
+    ]);
+    const data = projectInspectionHistory({ sessions, plans, templates, filter });
+    return { ...data, profile: { totalMs: Date.now() - started, sessionCount: data.rows.length } };
+  }
+
+  async getTargetHistory(input: { kind: string; canonicalId: string }) {
+    const started = Date.now();
+    if (!input.kind || !input.canonicalId) notFound("target");
+    const sessions = (await this.listSessions()).filter((row) =>
+      asTargets(row.targets).some((target) => target.kind === input.kind && target.canonicalId === input.canonicalId),
+    );
+    const sessionIds = new Set(sessions.map((row) => String(row.id)));
+    const [
+      observations,
+      measurements,
+      evidence,
+      defects,
+      recommendations,
+      correctiveActions,
+      assessments,
+      conditionRatings,
+      verifications,
+    ] = await Promise.all([
+      this.listScoped(T.observations),
+      this.listScoped(T.measurements),
+      this.listScoped(T.evidence),
+      this.listScoped(T.defects),
+      this.listScoped(T.recommendations),
+      this.listScoped(T.correctiveActions),
+      this.listScoped(T.assessments),
+      this.listScoped(T.conditionRatings),
+      this.listScoped(T.verifications),
+    ]);
+    const inSessions = (rows: InspectionDbRow[]) =>
+      rows.filter((row) => sessionIds.has(String(row.session_id)));
+    const scoped = {
+      sessions,
+      observations: inSessions(observations),
+      measurements: inSessions(measurements),
+      evidence: inSessions(evidence),
+      defects: inSessions(defects),
+      recommendations: inSessions(recommendations),
+      correctiveActions: inSessions(correctiveActions),
+      assessments: inSessions(assessments),
+      conditionRatings: inSessions(conditionRatings),
+      verifications: inSessions(verifications),
+    };
+    return {
+      target: { kind: input.kind, canonicalId: input.canonicalId },
+      sessions,
+      timeline: buildTargetTimeline(scoped),
+      changeOverTime: computeChangeOverTime(scoped),
+      missingContinuity: sessions.length === 0,
+      profile: { totalMs: Date.now() - started, sessionCount: sessions.length },
+    };
+  }
+
+  async getHistoryIntelligence(filter: HistoryFilter = {}) {
+    const [sessions, defects, correctiveActions, verifications, evidence, conditionRatings] = await Promise.all([
+      this.listSessions(),
+      this.listDefects(),
+      this.listCorrectiveActions(),
+      this.listVerifications(),
+      this.listEvidence(),
+      this.listConditionRatings(),
+    ]);
+    const history = projectInspectionHistory({ sessions, filter });
+    const sessionIds = new Set(history.rows.map((row) => row.sessionId));
+    const inHistory = (rows: InspectionDbRow[]) => rows.filter((row) => sessionIds.has(String(row.session_id ?? row.id)));
+    return computeHistoryIntelligence({
+      sessions: sessions.filter((row) => sessionIds.has(String(row.id))),
+      defects: inHistory(defects),
+      correctiveActions: inHistory(correctiveActions),
+      verifications: inHistory(verifications),
+      evidence: inHistory(evidence),
+      conditionRatings: inHistory(conditionRatings),
+      from: filter.from,
+      to: filter.to,
+    });
+  }
+
+  async listReports() {
+    const rows = await this.listScoped(T.reportingOutputs);
+    const sessionIds = await this.sessionIdsInScope();
+    return rows
+      .filter((row) => !sessionIds || sessionIds.has(String(row.entity_id)))
+      .sort((a, b) => String(b.generated_at ?? "").localeCompare(String(a.generated_at ?? "")));
+  }
+
+  async getReport(outputId: string) {
+    const row = await this.requireRow(T.reportingOutputs, outputId);
+    await this.assertReportInScope(row);
+    return row;
+  }
+
+  async composeReport(input: { sessionId: string; reportKey: string }) {
+    const started = Date.now();
+    const type = II_GOVERNED_REPORT_TYPES.find((item) => item.reportKey === input.reportKey);
+    if (!type) throw new Error(`unsupported_report_key:${input.reportKey}`);
+    const workspace = await this.getSessionWorkspace(input.sessionId);
+    const plan = workspace.session.plan_id
+      ? await this.requireRow(T.plans, String(workspace.session.plan_id)).catch(() => null)
+      : null;
+    const template = plan?.template_id
+      ? await this.requireRow(T.templates, String(plan.template_id)).catch(() => null)
+      : null;
+    const snapshot = composeGovernedReport({
+      reportKey: input.reportKey,
+      workspace: {
+        session: workspace.session,
+        plan,
+        template,
+        observations: workspace.observations,
+        measurements: workspace.measurements,
+        evidence: workspace.evidence,
+        defects: workspace.defects ?? [],
+        recommendations: workspace.recommendations ?? [],
+        correctiveActions: workspace.correctiveActions ?? [],
+        assessments: workspace.assessments ?? [],
+        conditionRatings: workspace.conditionRatings ?? [],
+        verifications: workspace.verifications ?? [],
+      },
+      actorUserId: this.context.actorUserId,
+    });
+    const row = await this.insert(T.reportingOutputs, {
+      id: `rpt_${type.kind}_${input.sessionId}_${Date.now()}`,
+      report_key: snapshot.reportKey,
+      kind: snapshot.kind,
+      entity_type: snapshot.entityType,
+      entity_id: snapshot.entityId,
+      payload: snapshot,
+      mobile_ready: false,
+      generated_at: snapshot.generatedAt,
+    });
+    await this.audit?.log({
+      action: "inspection.report.composed",
+      resourceType: "inspection",
+      resourceId: String(row.id),
+      metadata: {
+        sessionId: input.sessionId,
+        reportKey: snapshot.reportKey,
+        actorUserId: this.context.actorUserId,
+        authority: snapshot.authority.state,
+      },
+    });
+    return { ...row, profile: { composeMs: Date.now() - started }, pdfAvailable: II_PDF_EXPORT_AVAILABLE };
+  }
+
+  async transitionReport(outputId: string, to: ReportAuthorityState) {
+    const row = await this.requireRow(T.reportingOutputs, outputId);
+    await this.assertReportInScope(row);
+    const payload = (row.payload && typeof row.payload === "object" ? row.payload : {}) as {
+      authority?: { state?: ReportAuthorityState };
+    };
+    const from = payload.authority?.state ?? "draft";
+    assertReportAuthorityTransition(from, to);
+    const nextPayload = {
+      ...payload,
+      authority: { state: to, actorUserId: this.context.actorUserId, at: new Date().toISOString() },
+    };
+    const { data, error } = await this.db
+      .from(T.reportingOutputs)
+      .update({ payload: nextPayload })
+      .eq("id", outputId)
+      .eq("tenant_id", this.context.tenantId)
+      .eq("workspace_id", this.context.workspaceId)
+      .select("*")
+      .single();
+    if (error || !data) notFound("report");
+    const updated = data;
+    await this.audit?.log({
+      action: "inspection.report.authority",
+      resourceType: "inspection",
+      resourceId: outputId,
+      metadata: { from, to, actorUserId: this.context.actorUserId },
+    });
+    return updated;
+  }
+
+  exportReportMarkdown(row: InspectionDbRow): { markdown: string; pdfAvailable: false } {
+    const payload = row.payload && typeof row.payload === "object" ? row.payload : null;
+    if (!payload || typeof (payload as { reportKey?: string }).reportKey !== "string") {
+      throw new Error("report_snapshot_missing");
+    }
+    return {
+      markdown: renderReportMarkdown(payload as Parameters<typeof renderReportMarkdown>[0]),
+      pdfAvailable: II_PDF_EXPORT_AVAILABLE,
+    };
   }
 
   async listSpatialLocations() {
@@ -1047,6 +1258,11 @@ export class HostedInspectionRepository {
     if (!this.context.projectId) return null;
     const sessions = await this.listSessions();
     return new Set(sessions.map((row) => String(row.id)));
+  }
+
+  private async assertReportInScope(row: InspectionDbRow): Promise<void> {
+    const sessionIds = await this.sessionIdsInScope();
+    if (sessionIds && !sessionIds.has(String(row.entity_id))) notFound("report");
   }
 
   private async listScopedBySession(table: string, sessionId?: string): Promise<InspectionDbRow[]> {

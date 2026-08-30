@@ -15,3 +15,10 @@ export {
 } from "./domain/corrective-actions";
 export type { RecommendationAction } from "./domain/recommendations";
 export { II_DETERMINISTIC_INDICATORS } from "./domain/deterministic-intelligence";
+export { II_HISTORY_INDICATORS } from "./domain/inspection-history";
+export {
+  II_GOVERNED_REPORT_TYPES,
+  II_PDF_EXPORT_AVAILABLE,
+  nextReportAuthorityStates,
+  type ReportAuthorityState,
+} from "./domain/governed-reporting";

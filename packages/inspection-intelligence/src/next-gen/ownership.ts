@@ -39,8 +39,16 @@ export const II_2_IMPLEMENTED = true as const;
 /** Defect, condition, recommendation, CA, and evidence operational surfaces. */
 export const II_3_READY = true as const;
 export const II_3_IMPLEMENTED = true as const;
-/** Next phase is Inspection History / reporting — not started. */
+/** Inspection History and governed reporting over canonical inspection_* records. */
 export const II_4_READY = true as const;
+export const II_4_IMPLEMENTED = true as const;
+/** Next phase is AI Inspection Engineer — not started. */
+export const II_5_READY = true as const;
+export const DUPLICATE_HISTORY_MODEL_DETECTED = false as const;
+export const DUPLICATE_REPORTING_TRUTH_MODEL_DETECTED = false as const;
+export const DUPLICATE_ASSET_TRUTH_MODEL_DETECTED = false as const;
+export const DIRECT_PROVIDER_ACCESS_FROM_II = directProviderAccessFromInspectionIntelligence;
+export const EXTERNAL_WRITES_ENABLED = externalWritesEnabled;
 
 export const INSPECTION_INTELLIGENCE_PLATFORM_OWNERSHIP = {
   project: "engineering_os_shared_project_domain",

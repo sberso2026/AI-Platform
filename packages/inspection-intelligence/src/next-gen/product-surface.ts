@@ -64,13 +64,16 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     id: "inspection_history",
     title: "Inspection History",
     implementedInIi0: false,
-    canonicalBasis: "inspection_sessions / inspection_events",
+    implementedInIi4: true,
+    canonicalBasis:
+      "projection over inspection_sessions and related inspection_* records; not a second history store",
   },
   {
     id: "inspection_reporting",
     title: "Inspection Reporting",
     implementedInIi0: false,
-    canonicalBasis: "inspection reporting preparation/snapshots; PI snapshot pattern only",
+    implementedInIi4: true,
+    canonicalBasis: "inspection_reporting_outputs deterministic snapshots; PI snapshot pattern only",
   },
   {
     id: "ai_inspection_engineer",

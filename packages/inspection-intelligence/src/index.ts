@@ -45,6 +45,8 @@ export * from "./domain/registry-drift";
 export * from "./domain/slo-catalog";
 export * from "./domain/ga-closure-product";
 export * from "./domain/deterministic-intelligence";
+export * from "./domain/inspection-history";
+export * from "./domain/governed-reporting";
 export * from "./pack-sdk";
 export * from "./next-gen";
 export * from "./hosted";
