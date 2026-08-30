@@ -247,14 +247,18 @@ export class AIDirectorService {
       });
 
       if (this.intelligence && traceId) {
-        if (modelSpan) {
-          await this.intelligence.observability.completeSpan(
-            modelSpan.spanId,
-            modelSpan.startedAt,
-            "completed"
-          );
+        try {
+          if (modelSpan) {
+            await this.intelligence.observability.completeSpan(
+              modelSpan.spanId,
+              modelSpan.startedAt,
+              "completed"
+            );
+          }
+          await this.intelligence.observability.completeTrace(traceId, "completed");
+        } catch {
+          // Observability completion must not fail a completed Director run.
         }
-        await this.intelligence.observability.completeTrace(traceId, "completed");
       }
 
       if (requiresReview) {
@@ -283,13 +287,17 @@ export class AIDirectorService {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       if (this.intelligence && traceId) {
-        await this.intelligence.observability.logError({
-          tenantId: request.tenantId,
-          traceId,
-          source: "ai-director",
-          message: errorMessage,
-        });
-        await this.intelligence.observability.completeTrace(traceId, "failed");
+        try {
+          await this.intelligence.observability.logError({
+            tenantId: request.tenantId,
+            traceId,
+            source: "ai-director",
+            message: errorMessage,
+          });
+          await this.intelligence.observability.completeTrace(traceId, "failed");
+        } catch {
+          // Observability failure must not mask the original Director error.
+        }
       }
       await this.supabase
         .from("agent_runs")

@@ -8,5 +8,6 @@ export * from "./context";
 export * from "./claims";
 export * from "./causality";
 export * from "./brief";
+export * from "./overlay";
 export * from "./service";
 export * from "./evaluation";

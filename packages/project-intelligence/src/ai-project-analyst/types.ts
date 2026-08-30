@@ -120,8 +120,25 @@ export type AnalystAnswer = {
   aiAvailable: boolean;
   aiProvider?: string;
   aiModel?: string;
+  directorRunId?: string;
+  overlaySkippedReason?: string;
   refused: boolean;
   refusedReason?: string;
+};
+
+export type AnalystRuntimeProbe = {
+  featureFlagEnabled: boolean;
+  agentRegistered: boolean;
+  agentActive: boolean;
+  promptResolvable: boolean;
+  promptKey?: string;
+  modelPolicyResolvable: boolean;
+  modelKey?: string;
+  providerType?: string;
+  toolsResolvable: boolean;
+  toolCatalogRowsFound: number;
+  providerRouteAvailable: boolean;
+  toolRegistryModel: string;
 };
 
 export type AnalystBrief = {

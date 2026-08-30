@@ -31,6 +31,8 @@ type AnalystAnswer = {
   aiAvailable: boolean;
   aiProvider?: string;
   aiModel?: string;
+  directorRunId?: string;
+  overlaySkippedReason?: string;
   refused: boolean;
   advisory: true;
   mutationEnabled: false;
@@ -204,6 +206,7 @@ export function ProjectAiAnalystView() {
           {answer.aiAvailable ? (
             <p className="text-xs text-slate-500" data-testid="analyst-ai-available">
               Platform AI Director overlay: {answer.aiProvider ?? "routed"} / {answer.aiModel ?? "policy model"}
+              {answer.directorRunId ? ` · run ${answer.directorRunId}` : ""}
             </p>
           ) : (
             <p
@@ -211,7 +214,8 @@ export function ProjectAiAnalystView() {
               data-testid="analyst-ai-unavailable"
             >
               Deterministic Project Intelligence answered this question. The Platform AI Director overlay is
-              unavailable. Command Centre and other PI views remain available.
+              unavailable{answer.overlaySkippedReason ? ` (${answer.overlaySkippedReason})` : ""}. Command Centre and
+              other PI views remain available.
             </p>
           )}
           <Card>

@@ -223,7 +223,7 @@ describe("PI-0 project health foundation", () => {
     ).rejects.toThrow("active tenant-scoped principal");
   });
 
-  it("keeps implementsOwnAiStack false and does not build PI-7", () => {
+  it("keeps implementsOwnAiStack false and abstains from a second health-explanation stack", () => {
     assertProjectIntelligenceAiRuntime();
     expect(implementsOwnAiStack).toBe(false);
     expect(PROJECT_INTELLIGENCE_AI_CONSUMPTION.implementsOwnAiStack).toBe(false);
@@ -242,7 +242,12 @@ describe("PI-0 project health foundation", () => {
       },
       intent: "summarize_health",
     });
-    expect(explanation).toMatchObject({ abstained: true, reason: "pi_7_not_implemented", deterministicStateUnchanged: true });
+    expect(explanation).toMatchObject({
+      abstained: true,
+      reason: "canonical_analyst_required",
+      canonicalCapability: "project_intelligence.ai_project_analyst",
+      deterministicStateUnchanged: true,
+    });
   });
 
   it("reconciles risk register read semantics for GREEN versus UNKNOWN", async () => {

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "@rtb/types",
     "@rtb/platform-core",
     "@rtb/platform-kernel",
+    "@rtb/platform-intelligence",
     "@rtb/platform-commerce",
     "@rtb/plugin-sdk",
     "@rtb/database",

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { withEngineeringApiParams } from "@/lib/commerce/engineering-api";
 import { requireProjectIntelligenceRead } from "@/lib/project-intelligence/access";
-import { getAnalystCapability, runProjectAnalyst } from "@/lib/project-intelligence/ai-project-analyst-service";
+import {
+  getAnalystCapability,
+  probeAnalystRuntime,
+  runProjectAnalyst,
+} from "@/lib/project-intelligence/ai-project-analyst-service";
 import { handleCommerceDomainError, lifecycleErrorResponse } from "@/lib/lifecycle-api";
 
 export const GET = withEngineeringApiParams(
@@ -9,12 +13,14 @@ export const GET = withEngineeringApiParams(
   async (context, _request, { projectId }) => {
     try {
       requireProjectIntelligenceRead(context);
+      const runtime = await probeAnalystRuntime(context);
       return NextResponse.json({
         data: {
           ...getAnalystCapability(),
           projectId: projectId || undefined,
           aiOptional: true,
           mutationEnabled: false,
+          runtime,
         },
       });
     } catch (error) {

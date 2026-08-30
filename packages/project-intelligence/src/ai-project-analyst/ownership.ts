@@ -24,6 +24,11 @@ export const PI_AUTONOMOUS_APPROVAL_ENABLED = false as const;
 export const PI_ANALYST_STATELESS = true as const;
 export const PI_ANALYST_MEMORY_MODE = "session_bounded" as const;
 export const PI_8_CONNECTOR_CONTEXT_READY = false as const;
+/**
+ * PI-6 freeze sentinel. Remains false so PI-6 ownership still forbids in-phase PI-7.
+ * Runtime implementation is AI_PROJECT_ANALYST_IMPLEMENTED.
+ */
+export const PI_6_FREEZE_PI_7_SENTINEL_MUST_REMAIN_FALSE = true as const;
 
 export const duplicateToolRegistryDetected = false as const;
 export const duplicatePromptRegistryDetected = false as const;

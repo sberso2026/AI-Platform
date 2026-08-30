@@ -38,7 +38,7 @@ export class ObservabilityService {
       .update({ status, completed_at: new Date().toISOString() })
       .eq("id", traceId)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw new Error(`Failed to complete trace: ${error.message}`);
     return data;
   }
@@ -76,7 +76,7 @@ export class ObservabilityService {
       .update({ status, completed_at: completedAt, duration_ms: durationMs })
       .eq("id", spanId)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw new Error(`Failed to complete span: ${error.message}`);
     return data;
   }

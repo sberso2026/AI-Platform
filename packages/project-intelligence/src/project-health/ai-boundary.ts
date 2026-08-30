@@ -1,8 +1,12 @@
 /**
- * Future AI explanation contract. PI-7 is not implemented here.
+ * Project Health AI boundary.
+ * PI-7 implemented the canonical Analyst surface separately.
+ * This method remains an abstention so Project Health does not grow a second
+ * explanation stack or own an AI runtime.
  */
 
 import { implementsOwnAiStack } from "./ownership";
+import { AI_PROJECT_ANALYST_CAPABILITY } from "../ai-project-analyst/capability";
 import type { ProjectHealthAssessment } from "./types";
 
 export const PROJECT_HEALTH_AI_MAY = [
@@ -31,9 +35,18 @@ export type ProjectHealthExplanationRequest = {
   intent: ProjectHealthAiMay;
 };
 
+/** Historical PI-0 placeholder. No longer returned. */
+export const LEGACY_PI_7_NOT_IMPLEMENTED_REASON = "pi_7_not_implemented" as const;
+
+export const PROJECT_HEALTH_EXPLANATION_ABSTAIN_REASON = "canonical_analyst_required" as const;
+export const PROJECT_HEALTH_EXPLANATION_CANONICAL_SURFACE =
+  "/engineering/apps/project-intelligence/analyst" as const;
+
 export type ProjectHealthExplanationResult = {
   abstained: true;
-  reason: "pi_7_not_implemented";
+  reason: typeof PROJECT_HEALTH_EXPLANATION_ABSTAIN_REASON;
+  canonicalCapability: typeof AI_PROJECT_ANALYST_CAPABILITY;
+  canonicalSurface: typeof PROJECT_HEALTH_EXPLANATION_CANONICAL_SURFACE;
   implementsOwnAiStack: false;
   deterministicStateUnchanged: true;
 };
@@ -43,7 +56,9 @@ export function requestProjectHealthExplanation(
 ): ProjectHealthExplanationResult {
   return {
     abstained: true,
-    reason: "pi_7_not_implemented",
+    reason: PROJECT_HEALTH_EXPLANATION_ABSTAIN_REASON,
+    canonicalCapability: AI_PROJECT_ANALYST_CAPABILITY,
+    canonicalSurface: PROJECT_HEALTH_EXPLANATION_CANONICAL_SURFACE,
     implementsOwnAiStack,
     deterministicStateUnchanged: true,
   };

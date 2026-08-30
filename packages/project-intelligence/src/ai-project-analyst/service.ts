@@ -16,6 +16,8 @@ export type AnswerAnalystQuestionInput = {
   aiProvider?: string;
   aiModel?: string;
   aiSummaryText?: string;
+  directorRunId?: string;
+  overlaySkippedReason?: string;
 };
 
 const INTENT_TOOLS: Record<AnalystIntent, readonly PiAnalystPlatformToolKey[]> = {
@@ -237,6 +239,8 @@ export function answerAnalystQuestion(input: AnswerAnalystQuestionInput): Analys
     aiAvailable: Boolean(input.aiAvailable),
     aiProvider: input.aiProvider,
     aiModel: input.aiModel,
+    directorRunId: input.directorRunId,
+    overlaySkippedReason: input.overlaySkippedReason,
     refused,
     refusedReason: refused ? (intent === "injection" ? "prompt_injection" : "mutation_request") : undefined,
   };
