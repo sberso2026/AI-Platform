@@ -76,8 +76,12 @@ function main() {
     "Version identity",
     fileContains(
       "packages/inspection-intelligence/src/version.ts",
-      /INSPECTION_INTELLIGENCE_VERSION = "1\.0\.0"/,
+      /INSPECTION_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1\.0\.0"/,
     ) &&
+      fileContains(
+        "packages/inspection-intelligence/src/version.ts",
+        /INSPECTION_INTELLIGENCE_VERSION = "1\.0\.0"/,
+      ) &&
       !fileContains(
         "packages/inspection-intelligence/src/version.ts",
         /1\.0\.0-ii-release/,

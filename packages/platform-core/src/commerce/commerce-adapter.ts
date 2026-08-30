@@ -39,6 +39,18 @@ const AVAILABLE_ENGINEERING_APP_KEYS = new Set([
 
 const PI_ENGINEERING_OS_APP_DESCRIPTION =
   "Engineering OS application for project command, health, and intelligence. Licensed through Engineering OS — not a standalone product plan.";
+const II_ENGINEERING_OS_APP_DESCRIPTION =
+  "Engineering OS application for inspection planning, execution, and governed inspection findings. Licensed through Engineering OS — not a standalone product plan.";
+
+const ENGINEERING_OS_APPLICATION_PRODUCT_SLUGS = new Set([
+  "project-intelligence",
+  "inspection-intelligence",
+]);
+
+const ENGINEERING_OS_APPLICATION_KEYS = new Set([
+  "project_intelligence",
+  "inspection_intelligence",
+]);
 
 /** Display alias for standards_intelligence per commerce UI spec */
 const APPLICATION_DISPLAY_NAMES: Record<string, string> = {
@@ -222,7 +234,7 @@ function mapFromPlatformCommerce(
   _context: CommerceAdapterContext
 ): CommercialProductView[] {
   return (data.commercial_products ?? [])
-    .filter((product) => product.slug !== "project-intelligence")
+    .filter((product) => !ENGINEERING_OS_APPLICATION_PRODUCT_SLUGS.has(product.slug))
     .map((product) => {
     const plan = data.commercial_plans?.find((p) => p.product_id === product.id);
     const subscription = data.commercial_subscriptions?.find(
@@ -366,22 +378,26 @@ export function mapEngineeringApplications(
 
   for (const app of apps) {
     const displayName = displayAppName(app);
+    const isEosLicensedApp = ENGINEERING_OS_APPLICATION_KEYS.has(app.app_key);
+    const eosDescription = isEosLicensedApp
+      ? app.app_key === "inspection_intelligence"
+        ? II_ENGINEERING_OS_APP_DESCRIPTION
+        : PI_ENGINEERING_OS_APP_DESCRIPTION
+      : app.description;
 
     if (app.enabled) {
       views.push({
         appKey: app.app_key,
         name: displayName,
-        description:
-          app.app_key === "project_intelligence" ? PI_ENGINEERING_OS_APP_DESCRIPTION : app.description,
+        description: eosDescription,
         version: app.version,
         licenceStatus: "active",
         installationStatus: "active",
         section: "installed",
         openHref: app.routes?.[0],
-        manageHref:
-          app.app_key === "project_intelligence"
-            ? "/system/products/engineering-os?tab=applications"
-            : undefined,
+        manageHref: isEosLicensedApp
+          ? "/system/products/engineering-os?tab=applications"
+          : undefined,
         primaryAction: "open",
         secondaryAction: canManageApplications(context.roleSlug)
           ? "manage"
@@ -395,22 +411,21 @@ export function mapEngineeringApplications(
     }
 
     if (AVAILABLE_ENGINEERING_APP_KEYS.has(app.app_key)) {
-      const isProjectIntelligence = app.app_key === "project_intelligence";
       views.push({
         appKey: app.app_key,
         name: displayName,
-        description: isProjectIntelligence ? PI_ENGINEERING_OS_APP_DESCRIPTION : app.description,
+        description: eosDescription,
         version: app.version,
         licenceStatus: "expired",
         installationStatus: "not_installed",
         section: "available",
-        installHref: isProjectIntelligence
-          ? "/system/applications/project-intelligence/install"
+        installHref: isEosLicensedApp
+          ? `/system/applications/${app.app_key.replace(/_/g, "-")}/install`
           : undefined,
         primaryAction: canManageApplications(context.roleSlug)
           ? "install"
           : undefined,
-        secondaryAction: isProjectIntelligence
+        secondaryAction: isEosLicensedApp
           ? undefined
           : canManageApplications(context.roleSlug)
             ? "start_trial"

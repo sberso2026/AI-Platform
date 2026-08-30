@@ -17,7 +17,7 @@ import { assertServiceRegistryComplete } from "./service-registry";
 import { assertSloCatalogComplete } from "./slo-catalog";
 import { assertVersioningFormalized } from "./versioning-compatibility";
 import {
-  INSPECTION_INTELLIGENCE_VERSION,
+  INSPECTION_INTELLIGENCE_V1_CERTIFICATION_VERSION,
   INSPECTION_INTELLIGENCE_V1_FROZEN,
   INSPECTION_PRODUCTION_READY,
 } from "../version";
@@ -58,7 +58,7 @@ export function runInspectionV1GaClosure(input: {
   if (!input.actorUserId.trim() || !input.reason.trim()) {
     throw new Error("ga_closure_requires_actor_and_reason");
   }
-  if (INSPECTION_INTELLIGENCE_VERSION !== "1.0.0") {
+  if (INSPECTION_INTELLIGENCE_V1_CERTIFICATION_VERSION !== "1.0.0") {
     throw new Error("ga_version_must_be_1_0_0");
   }
   if (!INSPECTION_INTELLIGENCE_V1_FROZEN || !INSPECTION_PRODUCTION_READY) {

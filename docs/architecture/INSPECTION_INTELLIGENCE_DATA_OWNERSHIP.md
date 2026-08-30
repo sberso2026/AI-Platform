@@ -32,3 +32,7 @@ No reverse dependency that puts inspection business logic into Platform Core.
 ## Digital Twin
 
 Inspection observations may emit timeline/condition/risk **inputs** and twin **references**. II does not own Digital Twin models or layers.
+
+## II-0 ownership freeze
+
+Next-gen work must not create duplicate projects, assets, documents, users, risks, actions, decisions, Project Intelligence findings, or knowledge records. `InspectionTarget` remains the coupling boundary to shared Engineering entities. See `docs/architecture/INSPECTION_INTELLIGENCE_II_0_FOUNDATION.md`.

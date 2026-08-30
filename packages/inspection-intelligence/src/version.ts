@@ -1,13 +1,31 @@
 /**
- * Phase 9K — Inspection Intelligence V1.0 Production GA identity.
+ * Inspection Intelligence identity.
+ * Historical Phase 9K V1 GA is immutable. Next-gen current release stays unreleased
+ * until ADR_APPLICATION_RELEASE_IDENTITY justifies a new version/tag.
  */
 export const INSPECTION_INTELLIGENCE_PRODUCT_NAME = "Inspection Intelligence" as const;
 export const INSPECTION_INTELLIGENCE_MODULE_KEY = "inspection_intelligence" as const;
-/** GA baseline — authoritative module version. */
+export const INSPECTION_INTELLIGENCE_PRODUCT_SLUG = "inspection-intelligence" as const;
+
+/** Historical Phase 9K Product GA. Do not treat as a movable current tag. */
+export const INSPECTION_INTELLIGENCE_V1_CERTIFICATION_VERSION = "1.0.0" as const;
+export const INSPECTION_INTELLIGENCE_V1_CERTIFICATION_TAG = "inspection-intelligence-v1.0.0" as const;
+export const INSPECTION_INTELLIGENCE_V1_CERTIFIED_COMMIT =
+  "d47c4ffa4c7147d3e2053b0764dfe5c80b56eb09" as const;
+
+/**
+ * Declared product version remains the last GA until a later semver is justified.
+ * Next-gen work must not invent an ad hoc GA tag here.
+ */
 export const INSPECTION_INTELLIGENCE_VERSION = "1.0.0" as const;
 export const INSPECTION_INTELLIGENCE_ROUTE_PREFIX =
   "/engineering/apps/inspection-intelligence" as const;
 export const INSPECTION_INTELLIGENCE_RELEASE_TAG = "inspection-intelligence-v1.0.0" as const;
+export const INSPECTION_INTELLIGENCE_NEXT_GEN_RELEASE_STATUS = "unreleased" as const;
+export const INSPECTION_INTELLIGENCE_NEXT_GA_VERSION = null;
+export const INSPECTION_INTELLIGENCE_II_0_IMPLEMENTED = true as const;
+/** II-0 foundation complete. Next phase is hosted persistence of existing inspection_* tables. */
+export const INSPECTION_INTELLIGENCE_II_1_READY = true as const;
 
 export const INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = true as const;
 export const INSPECTION_VERTICAL_SLICE_READY = true as const;
@@ -146,7 +164,28 @@ export function getInspectionIntelligenceDomainDeclaration() {
     couplesVia: "inspection_target" as const,
     hierarchy:
       "RTB AI Platform → Engineering OS → Inspection Intelligence V1.0 (GA) / Project Intelligence / future Asset Intelligence / Project Controls / Digital Twin" as const,
+    historicalCertification: {
+      version: INSPECTION_INTELLIGENCE_V1_CERTIFICATION_VERSION,
+      tag: INSPECTION_INTELLIGENCE_V1_CERTIFICATION_TAG,
+      certifiedCommit: INSPECTION_INTELLIGENCE_V1_CERTIFIED_COMMIT,
+    },
+    currentRelease: {
+      version: INSPECTION_INTELLIGENCE_VERSION,
+      tag: INSPECTION_INTELLIGENCE_RELEASE_TAG,
+      status: INSPECTION_INTELLIGENCE_NEXT_GEN_RELEASE_STATUS,
+      nextGaVersion: INSPECTION_INTELLIGENCE_NEXT_GA_VERSION,
+      ii0Implemented: INSPECTION_INTELLIGENCE_II_0_IMPLEMENTED,
+      ii1Ready: INSPECTION_INTELLIGENCE_II_1_READY,
+    },
   };
+}
+
+export function getInspectionIntelligenceHistoricalCertification() {
+  return {
+    version: INSPECTION_INTELLIGENCE_V1_CERTIFICATION_VERSION,
+    tag: INSPECTION_INTELLIGENCE_V1_CERTIFICATION_TAG,
+    certifiedCommit: INSPECTION_INTELLIGENCE_V1_CERTIFIED_COMMIT,
+  } as const;
 }
 
 export const getInspectionIntelligenceOfflineDeclaration =

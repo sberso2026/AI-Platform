@@ -21,7 +21,8 @@ export async function POST(request: Request) {
       tenantId: ctx!.tenantId,
       productId:
         body.productId ||
-        (body.applicationKey === "project_intelligence"
+        (body.applicationKey === "project_intelligence" ||
+        body.applicationKey === "inspection_intelligence"
           ? "c1000000-0000-4000-8000-000000000001"
           : undefined),
       applicationKey: body.applicationKey,

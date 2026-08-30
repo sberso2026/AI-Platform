@@ -32,6 +32,7 @@ const baseContext: CommerceAdapterContext = {
       description: "Inspection planning",
       version: "0.0.0",
       enabled: false,
+      routes: ["/engineering/apps/inspection-intelligence"],
     },
     {
       app_key: "standards_intelligence",
@@ -127,6 +128,13 @@ describe("Platform Commerce UI — Engineering OS product detail", () => {
     expect(pi?.description).toContain("Engineering OS");
     expect(pi?.description).not.toMatch(/Business OS/i);
     expect(pi?.description).toContain("not a standalone product plan");
+    const ii = available.find((a) => a.appKey === "inspection_intelligence");
+    expect(ii?.primaryAction).toBe("install");
+    expect(ii?.secondaryAction).toBeUndefined();
+    expect(ii?.installHref).toBe("/system/applications/inspection-intelligence/install");
+    expect(ii?.description).toContain("Engineering OS");
+    expect(ii?.description).not.toMatch(/Business OS/i);
+    expect(ii?.description).toContain("not a standalone product plan");
   });
 
   it("shows Project Intelligence as installed when enabled", () => {
@@ -147,6 +155,26 @@ describe("Platform Commerce UI — Engineering OS product detail", () => {
     expect(pi?.openHref).toBe("/engineering/apps/project-intelligence");
     expect(pi?.secondaryAction).toBe("manage");
     expect(pi?.description).toContain("Engineering OS");
+  });
+
+  it("shows Inspection Intelligence as installed when enabled", () => {
+    const enabledContext: CommerceAdapterContext = {
+      ...baseContext,
+      engineeringApplications: baseContext.engineeringApplications?.map((app) =>
+        app.app_key === "inspection_intelligence" ? { ...app, enabled: true } : app
+      ),
+    };
+    const apps = mapEngineeringApplications(
+      enabledContext.engineeringApplications as EngineeringApplicationSeed[],
+      enabledContext
+    );
+    const installed = filterApplicationsBySection(apps, "installed");
+    const ii = installed.find((a) => a.appKey === "inspection_intelligence");
+    expect(ii).toBeDefined();
+    expect(ii?.primaryAction).toBe("open");
+    expect(ii?.openHref).toBe("/engineering/apps/inspection-intelligence");
+    expect(ii?.secondaryAction).toBe("manage");
+    expect(ii?.description).toContain("Engineering OS");
   });
 });
 
@@ -206,8 +234,9 @@ describe("Platform Commerce UI — Project Intelligence catalog isolation", () =
       product_installations: [{ id: "i1", product_id: "eos", status: "active" }],
     });
     expect(products.map((p) => p.slug)).toContain("engineering-os");
-    expect(products.map((p) => p.slug)).toContain("inspection-intelligence");
+    expect(products.map((p) => p.slug)).not.toContain("inspection-intelligence");
     expect(products.map((p) => p.slug)).not.toContain("project-intelligence");
     expect(products.some((p) => p.name === "Project Intelligence")).toBe(false);
+    expect(products.some((p) => p.name === "Inspection Intelligence")).toBe(false);
   });
 });

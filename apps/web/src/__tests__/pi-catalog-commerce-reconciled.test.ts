@@ -37,7 +37,7 @@ describe("PI catalog/commerce reconciliation", () => {
     expect(installRoute).toContain("c1000000-0000-4000-8000-000000000001");
     expect(installPage).toContain("Engineering OS application");
     expect(installPage).toContain("not Business OS");
-    expect(catalogAdapter).toContain('product.slug !== "project-intelligence"');
+    expect(catalogAdapter).toContain("ENGINEERING_OS_APPLICATION_PRODUCT_SLUGS");
     expect(catalogAdapter).toContain("PI_ENGINEERING_OS_APP_DESCRIPTION");
   });
 });
