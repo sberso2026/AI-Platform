@@ -17,7 +17,6 @@ import {
 export const PI_8_IMPLEMENTED = true as const;
 export const PI_8_CONNECTOR_CONTEXT_PASS_SENTINEL = true as const;
 export const PI_9_READY = true as const;
-export const PI_9_IMPLEMENTED = false as const;
 export const PI_8_LIVE_CONNECTOR_EXECUTION = false as const;
 
 export const duplicateIntegrationStackDetected = false as const;
@@ -53,7 +52,6 @@ export const FORBIDDEN_CONNECTOR_CONTEXT_TOKENS = [
 
 export function assertConnectorContextOwnershipLocks(): void {
   if (!PI_8_IMPLEMENTED) throw new Error("PI-8 implementation sentinel must be true after certification");
-  if (PI_9_IMPLEMENTED) throw new Error("PI-9 must not start in PI-8");
   if (implementsOwnAiStack) throw new Error("Connector Context must not implement its own AI stack");
   if (duplicateAgentRuntimeDetected) throw new Error("duplicate agent runtime");
   if (duplicateIntegrationStackDetected) throw new Error("duplicate integration stack");

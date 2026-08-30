@@ -189,17 +189,13 @@ export async function prepareAnalystRuntime(
   return probeAnalystRuntime(context);
 }
 
-export async function runProjectAnalyst(
+export async function overlayAnalystAnswer(
   context: CommerceHandlerContext,
   projectId: string,
   question: string,
+  view: Awaited<ReturnType<typeof composeProjectCommandCentre>>,
+  connectorContext: Awaited<ReturnType<typeof loadHostedConnectorContext>>,
 ): Promise<AnalystAnswer & { runtime: AnalystRuntimeProbe }> {
-  const view = await composeProjectCommandCentre(context, projectId);
-  const connectorContext = await loadHostedConnectorContext(context, projectId, {
-    health: view.overallHealth,
-    scheduleState: view.scheduleIntelligence.health.classification,
-    scheduleAvailability: view.scheduleIntelligence.availability,
-  });
   const analystContext = assembleAnalystContext(view, connectorContext);
   const runtime = await prepareAnalystRuntime(context);
 
@@ -318,4 +314,18 @@ export async function runProjectAnalyst(
   }
 
   return { ...answer, runtime };
+}
+
+export async function runProjectAnalyst(
+  context: CommerceHandlerContext,
+  projectId: string,
+  question: string,
+): Promise<AnalystAnswer & { runtime: AnalystRuntimeProbe }> {
+  const view = await composeProjectCommandCentre(context, projectId);
+  const connectorContext = await loadHostedConnectorContext(context, projectId, {
+    health: view.overallHealth,
+    scheduleState: view.scheduleIntelligence.health.classification,
+    scheduleAvailability: view.scheduleIntelligence.availability,
+  });
+  return overlayAnalystAnswer(context, projectId, question, view, connectorContext);
 }

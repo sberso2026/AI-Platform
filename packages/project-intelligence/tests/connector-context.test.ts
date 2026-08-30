@@ -91,7 +91,7 @@ describe("PI-8 Connector Context", () => {
     expect(() => assertConnectorContextOwnershipLocks()).not.toThrow();
     expect(PI_8_IMPLEMENTED).toBe(true);
     expect(PI_9_READY).toBe(true);
-    expect(PI_9_IMPLEMENTED).toBe(false);
+    expect(PI_9_IMPLEMENTED).toBe(true);
     expect(PI_8_LIVE_CONNECTOR_EXECUTION).toBe(false);
     expect(duplicateIntegrationStackDetected).toBe(false);
     expect(directConnectorAccessFromPI).toBe(false);

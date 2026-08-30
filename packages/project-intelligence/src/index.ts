@@ -71,3 +71,4 @@ export * from "./query-decision-intelligence";
 export * from "./forecast-intelligence";
 export * from "./ai-project-analyst";
 export * from "./connector-context";
+export * from "./project-reporting";
