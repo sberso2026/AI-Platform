@@ -61,7 +61,17 @@ currentRelease:
 Engineering OS `publicContractVersion` for `project_intelligence` remains
 `1.0.0`. Module / package / `PROJECT_INTELLIGENCE_VERSION` are `1.1.0`.
 
+## GA limitations (not promotion blockers)
+
+| Class | Items |
+|---|---|
+| POST_GA_CAPABILITY | Durable historical report snapshots; PDF export |
+| PREVIEW_SEPARATE_CERTIFICATION | Live connector execution (`PI_8_LIVE_CONNECTOR_EXECUTION=false`) |
+| GA_LIMITATION | Shared authenticated route/client wall latency (Command Centre) |
+| CLOSED | Catalog/plan mismatch (`catalogCommerceReconciled=true`, `planMismatchResolved=true`) |
+
 ## Promotion
 
-Creating `project-intelligence-v1.1.0` is a separate operation. This document
-does not create it.
+GA tag `project-intelligence-v1.1.0` is an annotated Production GA tag created in a
+separate promotion operation on a commit that already declares version `1.1.0`.
+Do not move `project-intelligence-v1.0.0`.
