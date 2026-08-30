@@ -7,3 +7,4 @@ export * from "./evaluator";
 export * from "./overall";
 export * from "./service";
 export * from "./in-memory-sources";
+export * from "./register-read-semantics";

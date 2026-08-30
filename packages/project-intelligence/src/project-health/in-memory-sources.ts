@@ -14,7 +14,7 @@ function unbound<T>(): BoundCollection<T> {
 }
 
 function emptyBound<T>(sourceTimestamp?: string): BoundCollection<T> {
-  return { bound: true, items: [], sourceTimestamp };
+  return { bound: true, items: [], sourceTimestamp, completeness: "complete" };
 }
 
 export function emptyCoreSnapshot(): ProjectCoreSnapshot {

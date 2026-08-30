@@ -245,6 +245,33 @@ describe("PI-0 project health foundation", () => {
     expect(explanation).toMatchObject({ abstained: true, reason: "pi_7_not_implemented", deterministicStateUnchanged: true });
   });
 
+  it("reconciles risk register read semantics for GREEN versus UNKNOWN", async () => {
+    const completeEmpty = await evaluator({
+      core: {
+        ...emptyCoreSnapshot(),
+        project: { projectId: "p1", storesCanonicalCopy: false },
+        risks: { bound: true, items: [], completeness: "complete", sourceTimestamp: evaluatedAt },
+      },
+    }).evaluateProjectHealth({ projectId: "p1", context: access, evaluatedAt });
+    expect(completeEmpty.dimensions.find((row) => row.dimension === "risk")?.state).toBe("green");
+
+    const unread = await evaluator().evaluateProjectHealth({ projectId: "p1", context: access, evaluatedAt });
+    expect(unread.dimensions.find((row) => row.dimension === "risk")?.state).toBe("unknown");
+    expect(unread.dimensions.find((row) => row.dimension === "risk")?.reasonCodes).toContain("risk_register_unbound");
+
+    const unknownCompleteness = await evaluator({
+      core: {
+        ...emptyCoreSnapshot(),
+        project: { projectId: "p1", storesCanonicalCopy: false },
+        risks: { bound: true, items: [], completeness: "unknown", sourceTimestamp: evaluatedAt },
+      },
+    }).evaluateProjectHealth({ projectId: "p1", context: access, evaluatedAt });
+    expect(unknownCompleteness.dimensions.find((row) => row.dimension === "risk")?.state).toBe("unknown");
+    expect(unknownCompleteness.dimensions.find((row) => row.dimension === "risk")?.reasonCodes).toContain(
+      "risk_register_completeness_unknown",
+    );
+  });
+
   it("proves canonical entities are referenced rather than copied", () => {
     expect(duplicateCanonicalProjectDomainDetected).toBe(false);
     const item = risk({ id: "r-ref", score: 9, priority: "high" });

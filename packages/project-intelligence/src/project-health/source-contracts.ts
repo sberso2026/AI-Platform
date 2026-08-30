@@ -12,7 +12,13 @@ export type CanonicalEntityRef = {
 
 export type BoundCollection<T> =
   | { bound: false }
-  | { bound: true; items: readonly T[]; sourceTimestamp?: string };
+  | {
+      bound: true;
+      items: readonly T[];
+      sourceTimestamp?: string;
+      /** Absent means complete. Unknown means the read may be truncated or unfinished. */
+      completeness?: "complete" | "unknown";
+    };
 
 export type ProjectIdentityRef = {
   projectId: string;
@@ -41,6 +47,17 @@ export type CanonicalRegisterItemRef = CanonicalEntityRef & {
   originatingObjectType?: string;
   originatingObjectId?: string;
   matrixId?: string;
+  createdAt?: string;
+  closedAt?: string;
+  number?: string;
+  approvalStatus?: string;
+  reviewStatus?: string;
+  decisionDate?: string;
+  requesterId?: string;
+  responderId?: string;
+  responseDue?: string;
+  disciplineId?: string;
+  raisedBy?: string;
 };
 
 export type CanonicalDocumentRef = CanonicalEntityRef & {

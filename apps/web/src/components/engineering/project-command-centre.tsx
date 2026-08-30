@@ -23,6 +23,12 @@ import {
   RiskCommandCentreCard,
   type RiskChangeView,
 } from "./project-risk-change-intelligence";
+import {
+  ActionCommandCentreCard,
+  DecisionCommandCentreCard,
+  QueryCommandCentreCard,
+  type QueryDecisionView,
+} from "./project-query-decision-intelligence";
 
 type HealthState = "green" | "amber" | "red" | "unknown";
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
@@ -92,6 +98,7 @@ type CommandCentreView = {
   scheduleIntelligence: ScheduleIntelligenceView;
   costProgressIntelligence: CostProgressView;
   riskChangeIntelligence: RiskChangeView;
+  queryDecisionIntelligence: QueryDecisionView;
   limitations: string[];
   evidenceReferences: EvidenceRef[];
   generatedAt: string;
@@ -410,6 +417,18 @@ export function ProjectCommandCentre() {
             <RiskCommandCentreCard view={view.riskChangeIntelligence.risk} projectId={view.project.projectId} />
             <SectionCard section={view.quality} testId="command-centre-section-quality" />
             <ChangeCommandCentreCard view={view.riskChangeIntelligence.change} projectId={view.project.projectId} />
+            <QueryCommandCentreCard
+              view={view.queryDecisionIntelligence.query}
+              projectId={view.project.projectId}
+            />
+            <DecisionCommandCentreCard
+              view={view.queryDecisionIntelligence.decision}
+              projectId={view.project.projectId}
+            />
+            <ActionCommandCentreCard
+              view={view.queryDecisionIntelligence.action}
+              projectId={view.project.projectId}
+            />
             <SectionCard section={view.decisionsActions} testId="command-centre-section-decisions-actions" />
             <SectionCard section={view.forecast} testId="command-centre-section-forecast" />
             <SectionCard section={view.knowledge} testId="command-centre-section-knowledge" />

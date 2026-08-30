@@ -59,3 +59,9 @@ export type {
   ProjectChangeIntelligence,
   RiskChangeFreshnessState,
 } from "./risk-change-intelligence";
+export type {
+  ProjectQueryDecisionIntelligence,
+  ProjectQueryIntelligence,
+  ProjectDecisionIntelligence,
+  ProjectActionIntelligence,
+} from "./query-decision-intelligence";

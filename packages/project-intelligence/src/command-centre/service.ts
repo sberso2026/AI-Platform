@@ -31,6 +31,16 @@ import type {
   RiskChangeSourceSnapshot,
   RiskSourceSlice,
 } from "../risk-change-intelligence/types";
+import { interpretQueryDecisionIntelligence } from "../query-decision-intelligence/service";
+import type {
+  ActionSourceSlice,
+  CanonicalActionRef,
+  CanonicalDecisionRef,
+  CanonicalQueryRef,
+  DecisionSourceSlice,
+  QueryDecisionSourceSnapshot,
+  QuerySourceSlice,
+} from "../query-decision-intelligence/types";
 import { assertCommandCentreOwnershipLocks, PI_AI_REQUIRED } from "./ownership";
 import {
   buildAttentionItems,
@@ -282,6 +292,7 @@ function snapshotFromCoreRisks(
   return {
     availability: "ok",
     bound: true,
+    completeness: core.risks.completeness ?? "complete",
     items: core.risks.items.map(toCanonicalRiskRef),
     actions: core.actions.bound ? core.actions.items.map(toCanonicalRiskActionRef) : [],
     sourceTimestamp: core.risks.sourceTimestamp,
@@ -328,6 +339,99 @@ function snapshotFromCoreAndControls(
   return {
     risk: snapshotFromCoreRisks(core, riskAvailability),
     change: snapshotFromControlsChange(output, changeAvailability),
+  };
+}
+
+function toCanonicalQueryRef(item: CanonicalRegisterItemRef): CanonicalQueryRef {
+  return {
+    id: item.id,
+    number: item.number,
+    status: item.status,
+    open: item.open,
+    priority: item.priority,
+    ownerId: item.ownerId,
+    assignedTo: item.assignedTo,
+    raisedBy: item.raisedBy,
+    requesterId: item.requesterId,
+    responderId: item.responderId,
+    dueAt: item.dueAt,
+    responseDue: item.responseDue,
+    createdAt: item.createdAt,
+    closedAt: item.closedAt,
+    updatedAt: item.sourceTimestamp,
+    disciplineId: item.disciplineId,
+    storesCanonicalCopy: false,
+  };
+}
+
+function toCanonicalDecisionRef(item: CanonicalRegisterItemRef): CanonicalDecisionRef {
+  return {
+    id: item.id,
+    number: item.number,
+    status: item.status,
+    open: item.open,
+    priority: item.priority,
+    ownerId: item.ownerId,
+    assignedTo: item.assignedTo,
+    raisedBy: item.raisedBy,
+    approvalStatus: item.approvalStatus,
+    reviewStatus: item.reviewStatus,
+    dueAt: item.dueAt,
+    createdAt: item.createdAt,
+    decisionDate: item.decisionDate,
+    closedAt: item.closedAt,
+    updatedAt: item.sourceTimestamp,
+    storesCanonicalCopy: false,
+  };
+}
+
+function toCanonicalActionRef(item: CanonicalRegisterItemRef): CanonicalActionRef {
+  return {
+    id: item.id,
+    number: item.number,
+    status: item.status,
+    open: item.open,
+    priority: item.priority,
+    ownerId: item.ownerId,
+    assignedTo: item.assignedTo,
+    dueAt: item.dueAt,
+    createdAt: item.createdAt,
+    closedAt: item.closedAt,
+    updatedAt: item.sourceTimestamp,
+    originatingObjectType: item.originatingObjectType,
+    originatingObjectId: item.originatingObjectId,
+    storesCanonicalCopy: false,
+  };
+}
+
+function sliceFromBound<T>(
+  bound: ProjectCoreSnapshot["decisions"],
+  availability: CommandCentreAvailability,
+  map: (item: CanonicalRegisterItemRef) => T,
+): { availability: CommandCentreAvailability; bound: boolean; completeness?: "complete" | "unknown"; items: T[]; sourceTimestamp?: string } {
+  if (availability === "error" || availability === "unavailable" || availability === "forbidden") {
+    return { availability, bound: false, items: [] };
+  }
+  if (!bound.bound) {
+    return { availability: "no_data", bound: false, items: [] };
+  }
+  return {
+    availability: "ok",
+    bound: true,
+    completeness: bound.completeness ?? "complete",
+    items: bound.items.map(map),
+    sourceTimestamp: bound.sourceTimestamp,
+  };
+}
+
+function snapshotFromCoreQueryDecision(
+  core: ProjectCoreSnapshot,
+  availability: CommandCentreAvailability,
+): QueryDecisionSourceSnapshot {
+  return {
+    query: sliceFromBound(core.technicalQueries, availability, toCanonicalQueryRef) as QuerySourceSlice,
+    decision: sliceFromBound(core.decisions, availability, toCanonicalDecisionRef) as DecisionSourceSlice,
+    action: sliceFromBound(core.actions, availability, toCanonicalActionRef) as ActionSourceSlice,
   };
 }
 
@@ -431,6 +535,25 @@ export class ProjectCommandCentreService {
       }
     }
 
+    let queryDecisionSnapshot: QueryDecisionSourceSnapshot | undefined;
+    if (this.sources.queryDecision) {
+      if (
+        this.sources.queryDecision.storesQueryRegister ||
+        this.sources.queryDecision.storesDecisionRegister ||
+        this.sources.queryDecision.storesActionRegister ||
+        this.sources.queryDecision.mutatesQuery ||
+        this.sources.queryDecision.mutatesDecision ||
+        this.sources.queryDecision.mutatesAction
+      ) {
+        throw new Error("Command Centre must not store or mutate canonical query, decision, or action registers");
+      }
+      try {
+        queryDecisionSnapshot = await this.sources.queryDecision.load(scope);
+      } catch {
+        queryDecisionSnapshot = undefined;
+      }
+    }
+
     const dimensions = evaluateProjectHealthDimensions({
       core: coreLoad.snapshot,
       controls: controlsLoad.snapshot,
@@ -511,6 +634,15 @@ export class ProjectCommandCentreService {
       tenantId,
       workspaceId,
       snapshot: resolvedRiskChangeSnapshot,
+      generatedAt,
+    });
+    const resolvedQueryDecisionSnapshot =
+      queryDecisionSnapshot ?? snapshotFromCoreQueryDecision(coreLoad.snapshot, "ok");
+    const queryDecisionIntelligence = interpretQueryDecisionIntelligence({
+      projectId: input.projectId,
+      tenantId,
+      workspaceId,
+      snapshot: resolvedQueryDecisionSnapshot,
       generatedAt,
     });
     const cost = projectControlsSection({
@@ -612,6 +744,7 @@ export class ProjectCommandCentreService {
       scheduleIntelligence,
       costProgressIntelligence,
       riskChangeIntelligence,
+      queryDecisionIntelligence,
       limitations,
       evidenceReferences,
       generatedAt,

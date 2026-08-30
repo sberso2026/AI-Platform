@@ -142,14 +142,21 @@ describe("PI-4 risk and change intelligence", () => {
     expect(view.risk.portfolio.staleReviewCount).toBe(1);
   });
 
-  it("does not treat an empty or unread register as GREEN", () => {
+  it("does not treat an unread register as GREEN and treats a complete empty read as GREEN", () => {
     const empty = interpret([], null);
-    expect(empty.risk.health.classification).toBe("UNKNOWN");
-    expect(empty.risk.health.reasonCodes).toContain("empty_or_unread_risk_register");
+    expect(empty.risk.health.classification).toBe("GREEN");
+    expect(empty.risk.health.reasonCodes).toContain("no_open_elevated_risks");
 
     const unread = interpret([], null, { risk: { availability: "no_data", bound: false } });
     expect(unread.risk.health.classification).toBe("UNKNOWN");
     expect(unread.risk.health.classification).not.toBe("GREEN");
+    expect(unread.risk.health.reasonCodes).toContain("unread_risk_register");
+
+    const unknownCompleteness = interpret([], null, {
+      risk: { availability: "ok", bound: true, completeness: "unknown" },
+    });
+    expect(unknownCompleteness.risk.health.classification).toBe("UNKNOWN");
+    expect(unknownCompleteness.risk.health.reasonCodes).toContain("risk_register_completeness_unknown");
   });
 
   it("does not silently normalize incompatible risk matrices", () => {

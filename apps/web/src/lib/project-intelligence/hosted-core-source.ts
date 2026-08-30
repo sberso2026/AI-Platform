@@ -3,6 +3,8 @@ import {
   commandCentreNotFound,
   emptyBound,
   unbound,
+  completenessFromPageSize,
+  REGISTER_LIST_PAGE_LIMIT,
   type CanonicalAssetRef,
   type CanonicalDocumentRef,
   type CanonicalRegisterItemRef,
@@ -65,6 +67,26 @@ function mapRegister(entityType: string, row: unknown): CanonicalRegisterItemRef
         ? undefined
         : String(data.originating_object_id),
     matrixId,
+    createdAt: data.created_at === undefined || data.created_at === null ? undefined : String(data.created_at),
+    closedAt: data.closed_date === undefined || data.closed_date === null ? undefined : String(data.closed_date),
+    number: String(
+      data.tq_number ?? data.decision_number ?? data.action_number ?? data.risk_number ?? data.issue_number ?? "",
+    ) || undefined,
+    approvalStatus:
+      data.approval_status === undefined || data.approval_status === null ? undefined : String(data.approval_status),
+    reviewStatus:
+      data.review_status === undefined || data.review_status === null ? undefined : String(data.review_status),
+    decisionDate:
+      data.decision_date === undefined || data.decision_date === null ? undefined : String(data.decision_date),
+    requesterId:
+      data.requester_id === undefined || data.requester_id === null ? undefined : String(data.requester_id),
+    responderId:
+      data.responder_id === undefined || data.responder_id === null ? undefined : String(data.responder_id),
+    responseDue:
+      data.response_due === undefined || data.response_due === null ? undefined : String(data.response_due),
+    disciplineId:
+      data.discipline_id === undefined || data.discipline_id === null ? undefined : String(data.discipline_id),
+    raisedBy: data.created_by === undefined || data.created_by === null ? undefined : String(data.created_by),
     storesCanonicalCopy: false,
   };
 }
@@ -85,7 +107,7 @@ async function loadBoundRegister(
     const rows = (await load()).filter((row) => inWorkspace(row, workspaceId));
     const items = rows.map((row) => mapRegister(entityType, row));
     const sourceTimestamp = items[0]?.sourceTimestamp;
-    return { bound: true, items, sourceTimestamp };
+    return { bound: true, items, sourceTimestamp, completeness: completenessFromPageSize(items.length, REGISTER_LIST_PAGE_LIMIT) };
   } catch {
     return unbound();
   }

@@ -3,6 +3,10 @@ import {
   CANONICAL_RISK_CRITICAL_SCORE_THRESHOLD,
   CANONICAL_RISK_HIGH_SCORE_THRESHOLD,
 } from "../project-health/evaluator";
+import {
+  classifySourcedRegisterRead,
+  registerReadMayEvaluateGreen,
+} from "../project-health/register-read-semantics";
 import type { ProjectHealthOverallClassification } from "../project-health/types";
 import type {
   CanonicalRiskActionRef,
@@ -168,32 +172,37 @@ export function interpretRiskMatrix(items: readonly CanonicalRiskRef[]): RiskMat
 }
 
 export function classifyRiskHealth(slice: RiskSourceSlice): RiskHealthSummary {
-  if (slice.availability === "error" || slice.availability === "unavailable") {
+  const readState = classifySourcedRegisterRead({
+    bound: slice.bound,
+    completeness: slice.completeness,
+    availability: slice.availability,
+  });
+  if (readState === "unavailable") {
     return {
       classification: "UNKNOWN",
       headline: "Risk intelligence is unavailable.",
       reasonCodes: ["risk_source_unavailable"],
     };
   }
-  if (slice.availability === "forbidden") {
+  if (readState === "forbidden") {
     return {
       classification: "UNKNOWN",
       headline: "Risk access denied.",
       reasonCodes: ["risk_forbidden"],
     };
   }
-  if (!slice.bound || slice.availability === "no_data") {
+  if (readState === "unread") {
     return {
       classification: "UNKNOWN",
       headline: "Canonical risk register is unread or unbound.",
-      reasonCodes: ["empty_or_unread_risk_register"],
+      reasonCodes: ["unread_risk_register"],
     };
   }
-  if (slice.items.length === 0) {
+  if (readState === "unknown_completeness" || !registerReadMayEvaluateGreen(readState)) {
     return {
       classification: "UNKNOWN",
-      headline: "Canonical risk register is empty. Empty is not treated as low risk.",
-      reasonCodes: ["empty_or_unread_risk_register"],
+      headline: "Canonical risk register completeness is unknown.",
+      reasonCodes: ["risk_register_completeness_unknown"],
     };
   }
 
@@ -216,7 +225,10 @@ export function classifyRiskHealth(slice: RiskSourceSlice): RiskHealthSummary {
   }
   return {
     classification: "GREEN",
-    headline: "Canonical risk register is bound and has no open critical or high risks.",
+    headline:
+      slice.items.length === 0
+        ? "Canonical risk register was read completely and has no applicable open risks."
+        : "Canonical risk register is bound and has no open critical or high risks.",
     reasonCodes: ["no_open_elevated_risks"],
   };
 }

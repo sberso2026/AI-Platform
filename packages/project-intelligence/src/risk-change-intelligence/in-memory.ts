@@ -100,6 +100,7 @@ export function riskSliceFrom(
   extra?: {
     availability?: CommandCentreAvailability;
     bound?: boolean;
+    completeness?: "complete" | "unknown";
     actions?: readonly CanonicalRiskActionRef[];
     sourceTimestamp?: string;
   },
@@ -108,6 +109,7 @@ export function riskSliceFrom(
   return {
     availability: extra?.availability ?? (bound ? "ok" : "no_data"),
     bound,
+    completeness: extra?.completeness ?? (bound ? "complete" : undefined),
     items,
     actions: extra?.actions ?? [],
     sourceTimestamp: extra?.sourceTimestamp ?? items[0]?.updatedAt,

@@ -53,12 +53,12 @@ export function buildRiskAttention(input: {
     return items;
   }
 
-  if (input.slice.items.length === 0) {
+  if (input.slice.completeness === "unknown") {
     push({
-      id: "gap:empty-risk-register",
+      id: "gap:unknown-risk-completeness",
       severity: "info",
-      reasonCode: "missing_unread_risk_evidence",
-      explanation: "Canonical risk register is empty. Empty is not treated as low risk.",
+      reasonCode: "risk_register_completeness_unknown",
+      explanation: "Canonical risk register completeness is unknown, so low risk is not inferred.",
       evidenceReference: {
         sourceDomain: "engineering_core",
         entityType: "risk",
@@ -67,7 +67,6 @@ export function buildRiskAttention(input: {
       },
       asOf: input.generatedAt,
     });
-    return items;
   }
 
   for (const risk of input.slice.items.filter(isOpenRisk)) {

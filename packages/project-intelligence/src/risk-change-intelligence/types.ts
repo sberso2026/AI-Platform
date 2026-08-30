@@ -265,6 +265,7 @@ export type ProjectRiskChangeIntelligence = {
 export type RiskSourceSlice = {
   availability: CommandCentreAvailability;
   bound: boolean;
+  completeness?: "complete" | "unknown";
   items: readonly CanonicalRiskRef[];
   actions: readonly CanonicalRiskActionRef[];
   sourceTimestamp?: string;

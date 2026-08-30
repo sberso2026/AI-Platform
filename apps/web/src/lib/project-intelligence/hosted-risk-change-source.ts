@@ -11,6 +11,8 @@ import {
   type RiskSourceSlice,
   asChangeImpactContext,
   asChangeStatusContext,
+  completenessFromPageSize,
+  REGISTER_LIST_PAGE_LIMIT,
 } from "@rtb/project-intelligence";
 import { createProjectControlsRepository } from "@rtb/project-controls";
 import type { CommerceExecutionContext } from "@rtb/types";
@@ -235,6 +237,7 @@ export class HostedRiskChangeIntelligenceSource implements RiskChangeIntelligenc
     return {
       availability: "ok",
       bound: true,
+      completeness: completenessFromPageSize(items.length, REGISTER_LIST_PAGE_LIMIT),
       items,
       actions,
       sourceTimestamp: items[0]?.updatedAt,

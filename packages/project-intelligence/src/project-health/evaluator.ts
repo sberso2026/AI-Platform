@@ -8,6 +8,9 @@ import {
   type ProjectCoreSnapshot,
   type ProjectKnowledgeSnapshot,
 } from "./source-contracts";
+import {
+  classifyBoundRegisterRead,
+} from "./register-read-semantics";
 import type {
   ProjectHealthDimension,
   ProjectHealthDimensionResult,
@@ -173,12 +176,24 @@ export function evaluateRiskDimension(
   core: ProjectCoreSnapshot,
   evaluatedAt: string,
 ): ProjectHealthDimensionResult {
-  if (!core.risks.bound) {
+  const readState = classifyBoundRegisterRead(core.risks);
+  if (readState === "unread") {
     return unknownResult("risk", evaluatedAt, ["risk_register_unbound"], ["canonical_risks_not_bound"]);
   }
-  const items = core.risks.items;
+  if (readState === "unknown_completeness") {
+    return unknownResult(
+      "risk",
+      evaluatedAt,
+      ["risk_register_completeness_unknown"],
+      ["canonical_risk_register_completeness_unknown"],
+      "engineering_core",
+      core.risks.bound ? core.risks.items.map((item) => evidenceFromCanonical("engineering_core", item)) : [],
+      core.risks.bound ? core.risks.sourceTimestamp : undefined,
+    );
+  }
+  const items = core.risks.bound ? core.risks.items : [];
   const evidence = items.map((item) => evidenceFromCanonical("engineering_core", item));
-  const freshness = core.risks.sourceTimestamp;
+  const freshness = core.risks.bound ? core.risks.sourceTimestamp : undefined;
   const open = openItems(items);
   const red = open.filter(
     (item) =>
@@ -301,6 +316,14 @@ export function evaluateDecisionsActionsDimension(
   const limitations: string[] = [];
   if (!core.decisions.bound) limitations.push("canonical_decisions_unbound");
   if (!core.actions.bound) limitations.push("canonical_actions_unbound");
+  const decisionsRead = classifyBoundRegisterRead(core.decisions);
+  const actionsRead = classifyBoundRegisterRead(core.actions);
+  if (core.decisions.bound && decisionsRead === "unknown_completeness") {
+    limitations.push("canonical_decisions_completeness_unknown");
+  }
+  if (core.actions.bound && actionsRead === "unknown_completeness") {
+    limitations.push("canonical_actions_completeness_unknown");
+  }
 
   const evidence: ProjectHealthEvidenceReference[] = [];
   const evaluatedMs = Date.parse(evaluatedAt);
@@ -329,6 +352,21 @@ export function evaluateDecisionsActionsDimension(
       state = "amber";
       reasonCodes.push("open_decision");
     }
+  }
+
+  const completenessUnknown =
+    (core.actions.bound && actionsRead === "unknown_completeness") ||
+    (core.decisions.bound && decisionsRead === "unknown_completeness");
+  if (state === "green" && completenessUnknown) {
+    return unknownResult(
+      "decisions_actions",
+      evaluatedAt,
+      ["decisions_actions_completeness_unknown"],
+      limitations,
+      "engineering_core",
+      evidence,
+      core.actions.bound ? core.actions.sourceTimestamp : core.decisions.bound ? core.decisions.sourceTimestamp : undefined,
+    );
   }
 
   if (state === "green") reasonCodes.push("no_open_overdue_decisions_or_actions");
