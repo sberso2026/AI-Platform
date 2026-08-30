@@ -24,8 +24,11 @@ export const duplicatePersistenceModelDetected = false as const;
 /** Hosted persistence of existing inspection_* tables is wired. */
 export const II_1_READY = true as const;
 export const II_1_IMPLEMENTED = true as const;
-/** Next phase is Inspection Command Centre composition over hosted records. */
+/** Planning and execution operational surfaces over hosted records. */
 export const II_2_READY = true as const;
+export const II_2_IMPLEMENTED = true as const;
+/** Next phase is Defect Intelligence / Inspection History — not started. */
+export const II_3_READY = true as const;
 
 export const INSPECTION_INTELLIGENCE_PLATFORM_OWNERSHIP = {
   project: "engineering_os_shared_project_domain",

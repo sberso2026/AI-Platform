@@ -82,3 +82,15 @@ export function canTransition(
 ): boolean {
   return (TRANSITIONS[from] ?? []).includes(to);
 }
+
+export function nextInspectionSessionStates(
+  from: InspectionSessionState,
+): readonly InspectionSessionState[] {
+  return TRANSITIONS[from] ?? [];
+}
+
+export function requiredActionForSessionState(
+  to: InspectionSessionState,
+): TransitionAuth["action"] {
+  return REQUIRED_ACTION[to] ?? "inspection.write";
+}

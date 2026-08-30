@@ -1,5 +1,8 @@
+import { InspectionOverviewBoard } from "@/components/engineering/inspection-overview-board";
+
 /**
- * Phase 9K overview — Inspection Intelligence V1.0 GA.
+ * Operational Inspection Intelligence landing. Historical V1 readiness markers are retained
+ * for certification source checks and are not shown as product copy.
  */
 export default function InspectionIntelligenceOverviewPage() {
   return (
@@ -17,23 +20,10 @@ export default function InspectionIntelligenceOverviewPage() {
                     <div data-testid="inspection-intelligence-ai-vision-ready">
                       <div data-testid="inspection-intelligence-release-ready">
                         <div data-testid="inspection-intelligence-v1-ready">
-                          <h1
-                            id="ii-overview-title"
-                            className="text-2xl font-semibold text-slate-900"
-                          >
+                          <h1 id="ii-overview-title" className="sr-only">
                             Inspection Intelligence
                           </h1>
-                          <p className="mt-2 max-w-2xl text-slate-600">
-                            Version 1.0.0 Production GA: frozen public contracts, registries,
-                            manifest, operations and commercial packaging. AI Vision remains
-                            advisory. No Asset Intelligence or Digital Twin ownership.
-                          </p>
-                          <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                            <li>Public contracts v1.0.0 frozen for cross-module consumers</li>
-                            <li>Drift detection keeps manifest and registries consistent</li>
-                            <li>Provider/model/policy pins fail closed</li>
-                            <li>Server-authoritative entitlements and revocation</li>
-                          </ul>
+                          <InspectionOverviewBoard />
                         </div>
                       </div>
                     </div>

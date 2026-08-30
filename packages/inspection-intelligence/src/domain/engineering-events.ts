@@ -7,6 +7,7 @@ export type InspectionEngineeringEventType =
   | "ReviewApproved"
   | "EvidenceUploaded"
   | "MeasurementRecorded"
+  | "ObservationRecorded"
   | "FindingCreated"
   | "RecommendationIssued"
   | "TemplateVersionCreated"

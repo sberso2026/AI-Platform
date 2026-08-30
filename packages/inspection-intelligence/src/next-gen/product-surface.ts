@@ -12,18 +12,21 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     id: "inspection_planning",
     title: "Inspection Planning",
     implementedInIi0: false,
+    implementedInIi2: true,
     canonicalBasis: "inspection_plans / inspection_templates",
   },
   {
     id: "inspection_execution",
     title: "Inspection Execution",
     implementedInIi0: false,
+    implementedInIi2: true,
     canonicalBasis: "inspection_sessions / inspection_assignments",
   },
   {
     id: "observations_findings",
     title: "Observations / Findings",
     implementedInIi0: false,
+    implementedInIi2: true,
     canonicalBasis:
       "inspection_observations and inspection_defects — must not duplicate Project Intelligence findings",
   },
@@ -43,6 +46,7 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     id: "evidence_photos",
     title: "Evidence / Photos",
     implementedInIi0: false,
+    implementedInIi2: true,
     canonicalBasis: "inspection_evidence via Platform Files",
   },
   {

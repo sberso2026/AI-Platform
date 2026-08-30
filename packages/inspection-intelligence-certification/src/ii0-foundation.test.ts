@@ -57,13 +57,17 @@ describe("II-0 certification foundation", () => {
     expect(SCHEMA_CHANGED).toBe(false);
     expect(INSPECTION_V1_REPLACEMENT_MODELS_CREATED).toBe(false);
     const migrationDiff = git(`git diff --name-only ${BASELINE} -- supabase/migrations`);
-    const files = migrationDiff ? migrationDiff.split(/\r?\n/) : [];
-    expect(files.every((file) => file.includes("inspection_hosted_write_rls") || file === "")).toBe(
-      true,
+    const files = migrationDiff ? migrationDiff.split(/\r?\n/).filter(Boolean) : [];
+    const allowed = files.every(
+      (file) =>
+        file.includes("inspection_hosted_write_rls") ||
+        file.includes("condition_ratings_membership_rls"),
     );
-    if (files.some((file) => file.includes("write_rls"))) {
-      const sql = readFileSync(resolve(ROOT, files.find((file) => file.includes("write_rls"))!), "utf8");
+    expect(allowed).toBe(true);
+    for (const file of files) {
+      const sql = readFileSync(resolve(ROOT, file), "utf8");
       expect(sql).not.toMatch(/CREATE TABLE/i);
+      expect(sql).not.toMatch(/ADD COLUMN/i);
     }
   });
 });

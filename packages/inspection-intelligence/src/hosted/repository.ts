@@ -38,6 +38,7 @@ import {
   type ConditionRatingScheme,
 } from "../domain/condition-rating";
 import { createEngineeringInspectionEvent } from "../domain/engineering-events";
+import { PLAN_UPDATE_STATUSES } from "../domain/plan-statuses";
 import {
   INSPECTION_HOSTED_TABLE_MAPPING as T,
   notFound,
@@ -50,7 +51,27 @@ import {
 
 const measurementEngine = createMeasurementEngine();
 
-const PLAN_UPDATE_STATUSES = new Set(["planned", "scheduled", "assigned", "cancelled"]);
+export { PLAN_UPDATE_STATUSES };
+
+const PLAN_ACTIVE_STATUSES = new Set(["planned", "scheduled", "assigned"]);
+const SESSION_IN_PROGRESS_STATUSES = new Set(["assigned", "started", "paused"]);
+const SESSION_RECENT_STATUSES = new Set([
+  "completed",
+  "submitted",
+  "reviewed",
+  "approved",
+  "verified",
+  "closed",
+]);
+
+function asTargets(value: unknown): InspectionTarget[] {
+  return Array.isArray(value) ? (value as InspectionTarget[]) : [];
+}
+
+function coupledToProject(targets: InspectionTarget[], projectId?: string): boolean {
+  if (!projectId) return true;
+  return targets.some((target) => target.kind === "project" && target.canonicalId === projectId);
+}
 
 export class HostedInspectionRepository {
   constructor(
@@ -166,8 +187,8 @@ export class HostedInspectionRepository {
     if (target.kind === "location") {
       const { data } = await this.db
         .from("engineering_spatial_references")
-        .select("id")
-        .eq("id", target.canonicalId)
+        .select("spatial_reference_id")
+        .eq("spatial_reference_id", target.canonicalId)
         .eq("tenant_id", this.context.tenantId)
         .maybeSingle();
       if (!data) notFound("canonical_location");
@@ -200,26 +221,44 @@ export class HostedInspectionRepository {
     targets: InspectionTarget[];
     checklistItemTypes?: string[];
     templateTitle?: string;
+    templateId?: string;
+    templateVersionId?: string;
+    nextDueAt?: string;
+    frequency?: string;
   }) {
     rejectCallerTenantOverride(this.context, input.tenantId);
     for (const target of input.targets) await this.assertTarget(target);
     await this.assertProjectScope(input.targets);
 
-    const template = await this.insert(T.templates, {
-      id: randomUUID(),
-      pack_id: "generic",
-      title: input.templateTitle ?? input.title,
-      revision: 1,
-      checklist_item_types: input.checklistItemTypes ?? ["pass_fail"],
-    });
-    const version = await this.insert(T.templateVersions, {
-      id: randomUUID(),
-      template_id: template.id,
-      version: 1,
-      checklist_item_types: input.checklistItemTypes ?? ["pass_fail"],
-      content: {},
-      immutable: true,
-    });
+    let template: InspectionDbRow;
+    let version: InspectionDbRow;
+    if (input.templateId) {
+      template = await this.requireRow(T.templates, input.templateId);
+      if (input.templateVersionId) {
+        version = await this.requireRow(T.templateVersions, input.templateVersionId);
+        if (String(version.template_id) !== String(template.id)) notFound("template_version");
+      } else {
+        const versions = await this.listEq(T.templateVersions, "template_id", String(template.id));
+        version = [...versions].sort((a, b) => Number(b.version) - Number(a.version))[0];
+        if (!version) notFound("template_version");
+      }
+    } else {
+      template = await this.insert(T.templates, {
+        id: randomUUID(),
+        pack_id: "generic",
+        title: input.templateTitle ?? input.title,
+        revision: 1,
+        checklist_item_types: input.checklistItemTypes ?? ["pass_fail"],
+      });
+      version = await this.insert(T.templateVersions, {
+        id: randomUUID(),
+        template_id: template.id,
+        version: 1,
+        checklist_item_types: input.checklistItemTypes ?? ["pass_fail"],
+        content: {},
+        immutable: true,
+      });
+    }
     const plan = await this.insert(T.plans, {
       id: randomUUID(),
       template_id: template.id,
@@ -227,6 +266,8 @@ export class HostedInspectionRepository {
       title: input.title,
       status: "planned",
       targets: input.targets,
+      next_due_at: input.nextDueAt ?? null,
+      frequency: input.frequency ?? null,
     });
     for (const target of input.targets) {
       await this.insert(T.targets, {
@@ -243,7 +284,75 @@ export class HostedInspectionRepository {
     return this.requireRow(T.plans, planId);
   }
 
-  async updatePlan(planId: string, patch: { title?: string; status?: string }) {
+  async listPlans() {
+    const rows = (await this.listScoped(T.plans)).filter((row) =>
+      coupledToProject(asTargets(row.targets), this.context.projectId),
+    );
+    return rows.sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")));
+  }
+
+  async listTemplates() {
+    return (await this.listScoped(T.templates)).sort((a, b) =>
+      String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")),
+    );
+  }
+
+  async listSessions() {
+    const rows = (await this.listScoped(T.sessions)).filter((row) =>
+      coupledToProject(asTargets(row.targets), this.context.projectId),
+    );
+    return rows.sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")));
+  }
+
+  async getOverview() {
+    const [plans, sessions, evidence] = await Promise.all([
+      this.listPlans(),
+      this.listSessions(),
+      this.listScoped(T.evidence),
+    ]);
+    const evidenceBySession = new Map<string, number>();
+    for (const row of evidence) {
+      const sessionId = String(row.session_id ?? "");
+      evidenceBySession.set(sessionId, (evidenceBySession.get(sessionId) ?? 0) + 1);
+    }
+    const inProgress = sessions.filter((row) => SESSION_IN_PROGRESS_STATUSES.has(String(row.status)));
+    return {
+      planned: plans.filter((row) => PLAN_ACTIVE_STATUSES.has(String(row.status))),
+      inProgress,
+      recentlyCompleted: sessions
+        .filter((row) => SESSION_RECENT_STATUSES.has(String(row.status)))
+        .slice(0, 20),
+      sessionsWithoutRegisteredEvidence: inProgress
+        .filter((row) => (evidenceBySession.get(String(row.id)) ?? 0) === 0)
+        .map((row) => String(row.id)),
+    };
+  }
+
+  async getSessionWorkspace(sessionId: string) {
+    const session = await this.requireRow(T.sessions, sessionId);
+    if (!coupledToProject(asTargets(session.targets), this.context.projectId)) notFound("session");
+    const [observations, measurements, evidence] = await Promise.all([
+      this.listBySession(T.observations, sessionId),
+      this.listBySession(T.measurements, sessionId),
+      this.listBySession(T.evidence, sessionId),
+    ]);
+    return { session, observations, measurements, evidence };
+  }
+
+  async listSpatialLocations() {
+    const { data, error } = await this.db
+      .from("engineering_spatial_references")
+      .select("spatial_reference_id, name, code, reference_type")
+      .eq("tenant_id", this.context.tenantId)
+      .eq("workspace_id", this.context.workspaceId);
+    if (error) return [];
+    return data ?? [];
+  }
+
+  async updatePlan(
+    planId: string,
+    patch: { title?: string; status?: string; nextDueAt?: string; frequency?: string },
+  ) {
     const current = await this.requireRow(T.plans, planId);
     if (patch.status && !PLAN_UPDATE_STATUSES.has(patch.status)) {
       throw new Error(`invalid_plan_status:${patch.status}`);
@@ -251,10 +360,25 @@ export class HostedInspectionRepository {
     if (patch.status && !PLAN_UPDATE_STATUSES.has(String(current.status))) {
       throw new Error(`plan_status_not_updatable:${String(current.status)}`);
     }
-    return this.update(T.plans, planId, {
+    const updated = await this.update(T.plans, planId, {
       ...(patch.title ? { title: patch.title } : {}),
       ...(patch.status ? { status: patch.status } : {}),
+      ...(patch.nextDueAt !== undefined ? { next_due_at: patch.nextDueAt || null } : {}),
+      ...(patch.frequency !== undefined ? { frequency: patch.frequency || null } : {}),
     });
+    await this.audit?.log({
+      action: "inspection.plan.updated",
+      resourceType: "inspection",
+      resourceId: planId,
+      metadata: {
+        actorUserId: this.context.actorUserId,
+        tenantId: this.context.tenantId,
+        workspaceId: this.context.workspaceId,
+        title: patch.title,
+        status: patch.status,
+      },
+    });
+    return updated;
   }
 
   async startSession(input: { planId: string; tenantId?: string }) {
@@ -307,13 +431,18 @@ export class HostedInspectionRepository {
 
   async recordObservation(input: { sessionId: string; checklistItemType: string; body: string }) {
     await this.requireRow(T.sessions, input.sessionId);
-    return this.insert(T.observations, {
+    const row = await this.insert(T.observations, {
       id: randomUUID(),
       session_id: input.sessionId,
       checklist_item_type: input.checklistItemType,
       body: input.body,
       recorded_at: new Date().toISOString(),
     });
+    await this.writeEvent("ObservationRecorded", String(row.id), {
+      sessionId: input.sessionId,
+      checklistItemType: input.checklistItemType,
+    });
+    return row;
   }
 
   async recordMeasurement(input: {
@@ -369,28 +498,25 @@ export class HostedInspectionRepository {
     const contentHash =
       input.contentHash ??
       createHash("sha256").update(input.content ?? input.fileId ?? "").digest("hex");
-    const previous = await this.db
-      .from(T.evidence)
-      .select("*")
-      .eq("tenant_id", this.context.tenantId)
-      .eq("workspace_id", this.context.workspaceId)
-      .eq("session_id", input.sessionId)
-      .maybeSingle();
+    const existing = await this.listBySession(T.evidence, input.sessionId);
+    const previousRow = [...existing].sort(
+      (a, b) => Number(b.version ?? 1) - Number(a.version ?? 1),
+    )[0];
     const record = appendEvidenceVersion(
-      previous.data
+      previousRow
         ? {
-            id: String(previous.data.id),
+            id: String(previousRow.id),
             sessionId: input.sessionId,
             kind: input.kind,
-            fileId: previous.data.file_id ? String(previous.data.file_id) : undefined,
-            contentHash: String(previous.data.content_hash),
+            fileId: previousRow.file_id ? String(previousRow.file_id) : undefined,
+            contentHash: String(previousRow.content_hash),
             hashAlgorithm: "sha256",
-            version: Number(previous.data.version ?? 1),
-            provenance: (previous.data.provenance as never) ?? {
+            version: Number(previousRow.version ?? 1),
+            provenance: (previousRow.provenance as never) ?? {
               capturedAt: new Date().toISOString(),
               source: "human",
             },
-            chainOfCustody: (previous.data.chain_of_custody as never) ?? { custodyEvents: [] },
+            chainOfCustody: (previousRow.chain_of_custody as never) ?? { custodyEvents: [] },
             immutable: true as const,
           }
         : null,
@@ -729,6 +855,18 @@ export class HostedInspectionRepository {
 
   private async listBySession(table: string, sessionId: string): Promise<InspectionDbRow[]> {
     const result = await this.scoped(table).eq("session_id", sessionId);
+    if (result.error) throw new Error(result.error.message);
+    return result.data ?? [];
+  }
+
+  private async listScoped(table: string): Promise<InspectionDbRow[]> {
+    const result = await this.scoped(table);
+    if (result.error) throw new Error(result.error.message);
+    return result.data ?? [];
+  }
+
+  private async listEq(table: string, column: string, value: string): Promise<InspectionDbRow[]> {
+    const result = await this.scoped(table).eq(column, value);
     if (result.error) throw new Error(result.error.message);
     return result.data ?? [];
   }

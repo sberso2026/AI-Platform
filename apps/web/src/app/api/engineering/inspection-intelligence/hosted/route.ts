@@ -9,6 +9,7 @@ type HostedIntent =
   | "update_plan"
   | "get_plan"
   | "start_session"
+  | "resume_session"
   | "get_session"
   | "transition_session"
   | "record_observation"
@@ -30,16 +31,46 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
   const url = new URL(request.url);
   const resource = url.searchParams.get("resource");
   const id = url.searchParams.get("id");
-  if (!resource || !id) {
-    return lifecycleErrorResponse("invalid_hosted_read", "resource and id are required", 400, requestId);
+  if (!resource) {
+    return lifecycleErrorResponse("invalid_hosted_read", "resource is required", 400, requestId);
   }
   try {
     const repo = createHostedInspectionFromRequest(
       context,
       url.searchParams.get("projectId") ?? undefined,
     );
+    if (resource === "capabilities") {
+      return NextResponse.json({
+        data: {
+          canWrite: context.ctx.roleSlug !== "viewer",
+          action: transitionAuthAction(context),
+        },
+        requestId,
+      });
+    }
+    if (resource === "overview") {
+      return NextResponse.json({
+        data: {
+          ...(await repo.getOverview()),
+          canWrite: context.ctx.roleSlug !== "viewer",
+        },
+        requestId,
+      });
+    }
+    if (resource === "plans") return NextResponse.json({ data: await repo.listPlans(), requestId });
+    if (resource === "sessions") return NextResponse.json({ data: await repo.listSessions(), requestId });
+    if (resource === "templates") return NextResponse.json({ data: await repo.listTemplates(), requestId });
+    if (resource === "locations") {
+      return NextResponse.json({ data: await repo.listSpatialLocations(), requestId });
+    }
+    if (!id) {
+      return lifecycleErrorResponse("invalid_hosted_read", "id is required", 400, requestId);
+    }
     if (resource === "plan") return NextResponse.json({ data: await repo.getPlan(id), requestId });
     if (resource === "session") return NextResponse.json({ data: await repo.getSession(id), requestId });
+    if (resource === "execution") {
+      return NextResponse.json({ data: await repo.getSessionWorkspace(id), requestId });
+    }
     if (resource === "condition") {
       return NextResponse.json({ data: await repo.getConditionRating(id), requestId });
     }
@@ -82,11 +113,18 @@ async function dispatchIntent(
         checklistItemTypes: Array.isArray(body.checklistItemTypes)
           ? (body.checklistItemTypes as string[])
           : undefined,
+        templateTitle: typeof body.templateTitle === "string" ? body.templateTitle : undefined,
+        templateId: typeof body.templateId === "string" ? body.templateId : undefined,
+        templateVersionId: typeof body.templateVersionId === "string" ? body.templateVersionId : undefined,
+        nextDueAt: typeof body.nextDueAt === "string" ? body.nextDueAt : undefined,
+        frequency: typeof body.frequency === "string" ? body.frequency : undefined,
       });
     case "update_plan":
       return repo.updatePlan(String(body.planId), {
         title: typeof body.title === "string" ? body.title : undefined,
         status: typeof body.status === "string" ? body.status : undefined,
+        nextDueAt: typeof body.nextDueAt === "string" ? body.nextDueAt : undefined,
+        frequency: typeof body.frequency === "string" ? body.frequency : undefined,
       });
     case "get_plan":
       return repo.getPlan(String(body.planId));
@@ -94,6 +132,11 @@ async function dispatchIntent(
       return repo.startSession({
         planId: String(body.planId),
         tenantId: typeof body.tenantId === "string" ? body.tenantId : undefined,
+      });
+    case "resume_session":
+      return repo.transitionSession(String(body.sessionId), "started", {
+        action: authAction,
+        actorUserId,
       });
     case "get_session":
       return repo.getSession(String(body.sessionId));
@@ -115,6 +158,7 @@ async function dispatchIntent(
         measurementType: String(body.measurementType),
         observedValue: body.observedValue as number | string | boolean,
         expectedValue: (body.expectedValue as number | string | boolean | null) ?? undefined,
+        unit: typeof body.unit === "string" ? body.unit : undefined,
         criteria: body.criteria as never,
       });
     case "register_evidence":

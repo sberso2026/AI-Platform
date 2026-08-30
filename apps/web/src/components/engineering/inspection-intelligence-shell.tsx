@@ -1,23 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 
-const LINKS = [
+const OPERATIONAL = [
   { href: "/engineering/apps/inspection-intelligence", label: "Overview" },
-  { href: "/engineering/apps/inspection-intelligence/my-work", label: "My Work" },
-  { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
   { href: "/engineering/apps/inspection-intelligence/plans", label: "Plans" },
   { href: "/engineering/apps/inspection-intelligence/sessions", label: "Sessions" },
-  { href: "/engineering/apps/inspection-intelligence/workflows", label: "Workflows" },
-  { href: "/engineering/apps/inspection-intelligence/assignments", label: "Assignments" },
-  { href: "/engineering/apps/inspection-intelligence/field", label: "Field" },
-  { href: "/engineering/apps/inspection-intelligence/sync", label: "Sync" },
-  { href: "/engineering/apps/inspection-intelligence/condition", label: "Condition" },
-  { href: "/engineering/apps/inspection-intelligence/predictive", label: "Predictive" },
-  { href: "/engineering/apps/inspection-intelligence/vision", label: "Vision" },
-  { href: "/engineering/apps/inspection-intelligence/release", label: "Release" },
-  { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },
-  { href: "/engineering/apps/inspection-intelligence/actions", label: "Actions" },
+] as const;
+
+const MORE = [
+  { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
+  { href: "/engineering/apps/inspection-intelligence/my-work", label: "My Work" },
   { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
 ] as const;
 
@@ -37,6 +32,7 @@ function classifyViewport(width: number, height: number): string {
  * Responsive Inspection Intelligence field shell — one host for desktop/tablet/phone.
  */
 export function InspectionIntelligenceShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [width] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1280,
   );
@@ -71,14 +67,27 @@ export function InspectionIntelligenceShell({ children }: { children: React.Reac
           className="mt-3 flex flex-wrap gap-4 text-sm"
           aria-label="Inspection Intelligence features"
         >
-          {LINKS.map((link) => (
-            <a
+          {OPERATIONAL.map((link) => (
+            <Link
               key={link.href}
               href={link.href}
-              className="inline-flex min-h-11 min-w-11 items-center text-slate-800 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700"
+              className={`inline-flex min-h-11 min-w-11 items-center underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700 ${
+                pathname === link.href || (link.href !== "/engineering/apps/inspection-intelligence" && pathname.startsWith(link.href))
+                  ? "font-semibold text-slate-900"
+                  : "text-slate-800"
+              }`}
             >
               {link.label}
-            </a>
+            </Link>
+          ))}
+          {MORE.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex min-h-11 min-w-11 items-center text-slate-500 underline-offset-2 hover:underline"
+            >
+              {link.label}
+            </Link>
           ))}
         </nav>
       </header>
