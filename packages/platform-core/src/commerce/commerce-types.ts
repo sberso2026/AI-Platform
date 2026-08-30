@@ -89,6 +89,8 @@ export interface CommercialApplicationView {
   installationStatus: InstallationStatus;
   section: "installed" | "available";
   openHref?: string;
+  installHref?: string;
+  manageHref?: string;
   primaryAction?: CommercialActionId;
   secondaryAction?: CommercialActionId;
 }

@@ -48,8 +48,9 @@ export default function ApplicationInstallPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Application installation requires an active parent Operating System, valid licence,
-              and entitlement. Progress is recorded in the installation workflow.
+              {applicationSlug === "project-intelligence"
+                ? "Project Intelligence is an Engineering OS application. Installation requires an active Engineering OS licence and application entitlement — not a standalone Project Intelligence plan, and not Business OS."
+                : "Application installation requires an active parent Operating System, valid licence, and entitlement. Progress is recorded in the installation workflow."}
             </p>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="flex gap-2">

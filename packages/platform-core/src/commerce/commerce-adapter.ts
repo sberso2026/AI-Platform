@@ -26,6 +26,7 @@ const OS_PRODUCT_SLUG: Record<string, string> = {
 };
 
 const AVAILABLE_ENGINEERING_APP_KEYS = new Set([
+  "project_intelligence",
   "inspection_intelligence",
   "project_controls",
   "digital_twin",
@@ -35,6 +36,9 @@ const AVAILABLE_ENGINEERING_APP_KEYS = new Set([
   "structural_intelligence",
   "standards_intelligence",
 ]);
+
+const PI_ENGINEERING_OS_APP_DESCRIPTION =
+  "Engineering OS application for project command, health, and intelligence. Licensed through Engineering OS — not a standalone product plan.";
 
 /** Display alias for standards_intelligence per commerce UI spec */
 const APPLICATION_DISPLAY_NAMES: Record<string, string> = {
@@ -215,9 +219,11 @@ export function mapRegistryToCommercialProducts(
 
 function mapFromPlatformCommerce(
   data: PlatformCommerceData,
-  context: CommerceAdapterContext
+  _context: CommerceAdapterContext
 ): CommercialProductView[] {
-  return (data.commercial_products ?? []).map((product) => {
+  return (data.commercial_products ?? [])
+    .filter((product) => product.slug !== "project-intelligence")
+    .map((product) => {
     const plan = data.commercial_plans?.find((p) => p.product_id === product.id);
     const subscription = data.commercial_subscriptions?.find(
       (s) => s.product_id === product.id
@@ -365,12 +371,17 @@ export function mapEngineeringApplications(
       views.push({
         appKey: app.app_key,
         name: displayName,
-        description: app.description,
+        description:
+          app.app_key === "project_intelligence" ? PI_ENGINEERING_OS_APP_DESCRIPTION : app.description,
         version: app.version,
         licenceStatus: "active",
         installationStatus: "active",
         section: "installed",
         openHref: app.routes?.[0],
+        manageHref:
+          app.app_key === "project_intelligence"
+            ? "/system/products/engineering-os?tab=applications"
+            : undefined,
         primaryAction: "open",
         secondaryAction: canManageApplications(context.roleSlug)
           ? "manage"
@@ -379,25 +390,31 @@ export function mapEngineeringApplications(
       continue;
     }
 
-    if (app.app_key === "project_intelligence" || app.app_key === "engineering_reports") {
+    if (app.app_key === "engineering_reports") {
       continue;
     }
 
     if (AVAILABLE_ENGINEERING_APP_KEYS.has(app.app_key)) {
+      const isProjectIntelligence = app.app_key === "project_intelligence";
       views.push({
         appKey: app.app_key,
         name: displayName,
-        description: app.description,
+        description: isProjectIntelligence ? PI_ENGINEERING_OS_APP_DESCRIPTION : app.description,
         version: app.version,
         licenceStatus: "expired",
         installationStatus: "not_installed",
         section: "available",
+        installHref: isProjectIntelligence
+          ? "/system/applications/project-intelligence/install"
+          : undefined,
         primaryAction: canManageApplications(context.roleSlug)
           ? "install"
           : undefined,
-        secondaryAction: canManageApplications(context.roleSlug)
-          ? "start_trial"
-          : "request_quote",
+        secondaryAction: isProjectIntelligence
+          ? undefined
+          : canManageApplications(context.roleSlug)
+            ? "start_trial"
+            : "request_quote",
       });
     }
   }

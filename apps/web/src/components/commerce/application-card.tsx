@@ -30,7 +30,14 @@ function ApplicationAction({
 }) {
   if (!isActionVisible(action, roleSlug)) return null;
 
-  const href = action === "open" ? app.openHref : undefined;
+  const href =
+    action === "open"
+      ? app.openHref
+      : action === "install"
+        ? app.installHref
+        : action === "manage"
+          ? app.manageHref
+          : undefined;
   const label = COMMERCIAL_ACTION_LABELS[action];
 
   if (href) {

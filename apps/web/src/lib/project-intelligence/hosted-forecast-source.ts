@@ -146,17 +146,10 @@ export class HostedForecastIntelligenceSource implements ForecastIntelligencePor
     }
 
     const latest = published[0] ?? null;
-    let evidence: PublishedForecastEvidenceRef[] = [];
-    if (latest) {
-      try {
-        const rows = await repository.listForecastEvidence(scope.tenantId, scope.workspaceId, latest.stateId);
-        evidence = rows.map(mapForecastEvidence);
-      } catch {
-        evidence = [];
-      }
-    }
-
-    const currentStates = await this.loadCurrentStates(repository, scope);
+    const [evidence, currentStates] = await Promise.all([
+      latest ? this.readEvidence(repository, scope, latest.stateId) : Promise.resolve([]),
+      this.loadCurrentStates(repository, scope),
+    ]);
 
     return {
       availability: latest ? "ok" : "no_data",
@@ -167,11 +160,23 @@ export class HostedForecastIntelligenceSource implements ForecastIntelligencePor
     };
   }
 
+  private async readEvidence(
+    repository: ReturnType<typeof createProjectControlsRepository>,
+    scope: CommandCentreScope,
+    stateId: string,
+  ): Promise<PublishedForecastEvidenceRef[]> {
+    try {
+      const rows = await repository.listForecastEvidence(scope.tenantId, scope.workspaceId, stateId);
+      return rows.map(mapForecastEvidence);
+    } catch {
+      return [];
+    }
+  }
+
   private async loadCurrentStates(
     repository: ReturnType<typeof createProjectControlsRepository>,
     scope: CommandCentreScope,
   ): Promise<PublishedCurrentPostureRef[]> {
-    const states: PublishedCurrentPostureRef[] = [];
     const latestOf = <T extends { status: string; publishedAt?: string; recordedAt: string }>(rows: T[]) =>
       [...rows]
         .filter((row) => row.status === "published")
@@ -179,66 +184,81 @@ export class HostedForecastIntelligenceSource implements ForecastIntelligencePor
           (a, b) => Date.parse(b.publishedAt ?? b.recordedAt) - Date.parse(a.publishedAt ?? a.recordedAt),
         )[0];
 
-    try {
-      const latest = latestOf(
-        await repository.listScheduleAssessments(scope.tenantId, scope.workspaceId, scope.projectId),
-      );
-      if (latest) {
-        states.push({
-          domain: "schedule",
-          posture: latest.milestonePosture,
-          published: true,
-          assessmentId: latest.assessmentId,
-          publishedAt: latest.publishedAt,
-        });
-      }
-    } catch {
-      /* isolate */
-    }
-    try {
-      const latest = latestOf(await repository.listCostStates(scope.tenantId, scope.workspaceId, scope.projectId));
-      if (latest) {
-        states.push({
-          domain: "cost",
-          posture: latest.costPosture,
-          published: true,
-          assessmentId: latest.stateId,
-          publishedAt: latest.publishedAt,
-        });
-      }
-    } catch {
-      /* isolate */
-    }
-    try {
-      const latest = latestOf(
-        await repository.listProgressAssessments(scope.tenantId, scope.workspaceId, scope.projectId),
-      );
-      if (latest) {
-        states.push({
-          domain: "progress",
-          posture: latest.trendDirection,
-          published: true,
-          assessmentId: latest.assessmentId,
-          publishedAt: latest.publishedAt,
-        });
-      }
-    } catch {
-      /* isolate */
-    }
-    try {
-      const latest = latestOf(await repository.listChangeStates(scope.tenantId, scope.workspaceId, scope.projectId));
-      if (latest) {
-        states.push({
-          domain: "change",
-          posture: latest.changeStatusContext,
-          published: true,
-          assessmentId: latest.stateId,
-          publishedAt: latest.publishedAt,
-        });
-      }
-    } catch {
-      /* isolate */
-    }
-    return states;
+    const [schedule, cost, progress, change] = await Promise.all([
+      (async (): Promise<PublishedCurrentPostureRef | null> => {
+        try {
+          const latest = latestOf(
+            await repository.listScheduleAssessments(scope.tenantId, scope.workspaceId, scope.projectId),
+          );
+          return latest
+            ? {
+                domain: "schedule",
+                posture: latest.milestonePosture,
+                published: true,
+                assessmentId: latest.assessmentId,
+                publishedAt: latest.publishedAt,
+              }
+            : null;
+        } catch {
+          return null;
+        }
+      })(),
+      (async (): Promise<PublishedCurrentPostureRef | null> => {
+        try {
+          const latest = latestOf(
+            await repository.listCostStates(scope.tenantId, scope.workspaceId, scope.projectId),
+          );
+          return latest
+            ? {
+                domain: "cost",
+                posture: latest.costPosture,
+                published: true,
+                assessmentId: latest.stateId,
+                publishedAt: latest.publishedAt,
+              }
+            : null;
+        } catch {
+          return null;
+        }
+      })(),
+      (async (): Promise<PublishedCurrentPostureRef | null> => {
+        try {
+          const latest = latestOf(
+            await repository.listProgressAssessments(scope.tenantId, scope.workspaceId, scope.projectId),
+          );
+          return latest
+            ? {
+                domain: "progress",
+                posture: latest.trendDirection,
+                published: true,
+                assessmentId: latest.assessmentId,
+                publishedAt: latest.publishedAt,
+              }
+            : null;
+        } catch {
+          return null;
+        }
+      })(),
+      (async (): Promise<PublishedCurrentPostureRef | null> => {
+        try {
+          const latest = latestOf(
+            await repository.listChangeStates(scope.tenantId, scope.workspaceId, scope.projectId),
+          );
+          return latest
+            ? {
+                domain: "change",
+                posture: latest.changeStatusContext,
+                published: true,
+                assessmentId: latest.stateId,
+                publishedAt: latest.publishedAt,
+              }
+            : null;
+        } catch {
+          return null;
+        }
+      })(),
+    ]);
+
+    return [schedule, cost, progress, change].filter((row): row is PublishedCurrentPostureRef => row !== null);
   }
 }

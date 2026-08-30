@@ -25,7 +25,7 @@ import type { InstallationHealthService } from "./installation-health-service";
 
 export interface ApplicationInstallationRequestInput {
   tenantId: string;
-  productId: string;
+  productId?: string;
   applicationKey: string;
   requestedVersion?: string;
   requestedBy: string;
@@ -56,7 +56,17 @@ export class ApplicationInstallationLifecycleService {
   async requestInstallation(
     input: ApplicationInstallationRequestInput
   ): Promise<CommercialApplicationInstallation> {
-    const parent = await this.productInstallations.getByProduct(input.tenantId, input.productId);
+    const productId =
+      input.productId ||
+      (input.applicationKey === "project_intelligence" ? ENGINEERING_PRODUCT_ID : "");
+    if (!productId) {
+      throw new InstallationDependencyError(
+        "Parent product is required",
+        InstallationErrorCode.PARENT_OS_NOT_INSTALLED
+      );
+    }
+
+    const parent = await this.productInstallations.getByProduct(input.tenantId, productId);
     if (!parent || !InstallationStateMachine.isAccessGranting(parent.status)) {
       throw new InstallationDependencyError(
         "Active parent product installation required",
@@ -71,7 +81,7 @@ export class ApplicationInstallationLifecycleService {
 
     const existing = await this.appInstallations.getByKey(
       input.tenantId,
-      input.productId,
+      productId,
       input.applicationKey
     );
     if (existing && InstallationStateMachine.isAccessGranting(existing.status as never)) {
@@ -84,7 +94,7 @@ export class ApplicationInstallationLifecycleService {
     const subs = await this.subscriptions.listByTenant(input.tenantId);
     const activeSub = subs.find(
       (s) =>
-        s.product_id === input.productId &&
+        s.product_id === productId &&
         SubscriptionStateMachine.isAccessGranting(s.status as never)
     );
     if (!activeSub) {
@@ -97,7 +107,7 @@ export class ApplicationInstallationLifecycleService {
     const licences = await this.licenses.listByTenant(input.tenantId);
     const appLicence = licences.find(
       (l) =>
-        l.product_id === input.productId &&
+        l.product_id === productId &&
         l.status === "active" &&
         l.subscription_id === activeSub.id &&
         (l.application_key === input.applicationKey || l.license_type === "product")
@@ -113,7 +123,7 @@ export class ApplicationInstallationLifecycleService {
       existing ??
       (await this.appInstallations.create({
         tenantId: input.tenantId,
-        productId: input.productId,
+        productId,
         applicationKey: input.applicationKey,
         parentProductInstallationId: parent.id,
         subscriptionId: activeSub.id,

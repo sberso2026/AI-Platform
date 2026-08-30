@@ -19,7 +19,11 @@ export async function POST(request: Request) {
   try {
     const data = await ctx!.commerce.applicationInstallationLifecycle.requestInstallation({
       tenantId: ctx!.tenantId,
-      productId: body.productId,
+      productId:
+        body.productId ||
+        (body.applicationKey === "project_intelligence"
+          ? "c1000000-0000-4000-8000-000000000001"
+          : undefined),
       applicationKey: body.applicationKey,
       workspaceId: body.workspaceId ?? ctx!.workspaceId,
       requestedVersion: body.requestedVersion,

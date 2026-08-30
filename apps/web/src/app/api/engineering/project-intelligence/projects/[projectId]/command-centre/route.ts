@@ -6,7 +6,7 @@ import { handleCommerceDomainError, lifecycleErrorResponse } from "@/lib/lifecyc
 
 export const GET = withEngineeringApiParams(
   "project-intelligence-command-centre",
-  async (context, _request, { projectId }) => {
+  async (context, request, { projectId }) => {
     try {
       requireProjectIntelligenceRead(context);
       if (!context.ctx.workspaceId) {
@@ -17,8 +17,23 @@ export const GET = withEngineeringApiParams(
           context.correlationId,
         );
       }
-      const data = await composeProjectCommandCentre(context, projectId);
-      return NextResponse.json({ data });
+      const started = Date.now();
+      const { view, profile } = await composeProjectCommandCentre(context, projectId);
+      if (request.headers.get("x-pi-command-centre-profile") === "1") {
+        return NextResponse.json({
+          data: view,
+          profile: {
+            ...profile,
+            handlerMs: Date.now() - started,
+            authAndEntitlementOutsideCompose: true,
+            sequentialIndependentIntelligenceLoads: false,
+            parallelIndependentIntelligenceLoads: true,
+            aiWait: false,
+            connectorWait: false,
+          },
+        });
+      }
+      return NextResponse.json({ data: view });
     } catch (error) {
       return handleCommerceDomainError(error, context.correlationId);
     }

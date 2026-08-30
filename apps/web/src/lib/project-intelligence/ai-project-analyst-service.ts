@@ -14,6 +14,7 @@ import {
   buildDirectorOverlayMessage,
   type AnalystAnswer,
   type AnalystRuntimeProbe,
+  type ProjectCommandCentreView,
 } from "@rtb/project-intelligence";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
 import { composeProjectCommandCentre } from "./command-centre-service";
@@ -193,7 +194,7 @@ export async function overlayAnalystAnswer(
   context: CommerceHandlerContext,
   projectId: string,
   question: string,
-  view: Awaited<ReturnType<typeof composeProjectCommandCentre>>,
+  view: ProjectCommandCentreView,
   connectorContext: Awaited<ReturnType<typeof loadHostedConnectorContext>>,
 ): Promise<AnalystAnswer & { runtime: AnalystRuntimeProbe }> {
   const analystContext = assembleAnalystContext(view, connectorContext);
@@ -321,7 +322,7 @@ export async function runProjectAnalyst(
   projectId: string,
   question: string,
 ): Promise<AnalystAnswer & { runtime: AnalystRuntimeProbe }> {
-  const view = await composeProjectCommandCentre(context, projectId);
+  const { view } = await composeProjectCommandCentre(context, projectId);
   const connectorContext = await loadHostedConnectorContext(context, projectId, {
     health: view.overallHealth,
     scheduleState: view.scheduleIntelligence.health.classification,

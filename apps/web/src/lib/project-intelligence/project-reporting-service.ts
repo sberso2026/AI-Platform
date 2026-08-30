@@ -20,7 +20,7 @@ export async function generateProjectReport(
   reportType: ProjectReportType,
   options: { includeAi?: boolean } = {},
 ): Promise<ProjectReportSnapshot> {
-  const view = await composeProjectCommandCentre(context, projectId);
+  const { view } = await composeProjectCommandCentre(context, projectId);
   const connectorContext = await loadHostedConnectorContext(context, projectId, {
     health: view.overallHealth,
     scheduleState: view.scheduleIntelligence.health.classification,

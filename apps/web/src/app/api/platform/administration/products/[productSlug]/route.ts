@@ -55,7 +55,38 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   if (tab === "applications" && productSlug === "engineering-os") {
-    payload.applications = catalogData.application_installations ?? [];
+    const { ENGINEERING_APPLICATIONS } = await import("@rtb/engineering-os/manifest");
+    const { mapEngineeringApplications } = await import("@rtb/platform-core");
+    const [installs, piDecision] = await Promise.all([
+      ctx.commerce.applicationInstallationLifecycle.listByTenant(ctx.tenantId),
+      ctx.commerce.entitlements.check({
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        userId: ctx.userId,
+        productKey: "engineering-os",
+        applicationKey: "project_intelligence",
+        action: "access",
+        cachePolicy: "allow-short-cache",
+      }),
+    ]);
+    const installedKeys = new Set(
+      installs
+        .filter((row) => row.status === "active" || row.status === "degraded")
+        .map((row) => row.application_key)
+    );
+    if (piDecision.allowed) installedKeys.add("project_intelligence");
+    const seeds = ENGINEERING_APPLICATIONS.map((app) => ({
+      app_key: app.app_key,
+      name: app.name,
+      description: app.description,
+      version: app.version,
+      enabled: installedKeys.has(app.app_key),
+      routes: app.routes,
+    }));
+    payload.applicationViews = mapEngineeringApplications(seeds, {
+      roleSlug: ctx.roleSlug,
+      engineeringOsEnabled: true,
+    }).filter((view) => view.appKey === "project_intelligence" || view.section === "installed");
   }
 
   if (tab === "workspaces") {

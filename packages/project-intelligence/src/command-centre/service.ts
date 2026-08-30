@@ -59,6 +59,7 @@ import {
 import type {
   CommandCentreControlsLoad,
   CommandCentreKnowledgeLoad,
+  CommandCentreScope,
   CommandCentreSourceBundle,
 } from "./ports";
 import type {
@@ -522,6 +523,118 @@ function snapshotFromCoreQueryDecision(
   };
 }
 
+async function loadScheduleSnapshot(
+  port: CommandCentreSourceBundle["schedule"],
+  scope: CommandCentreScope,
+): Promise<ScheduleIntelligenceSourceSnapshot | undefined> {
+  if (!port) return undefined;
+  if (port.invokesControlsEngine || port.computesCriticalPath || port.computesFloat) {
+    throw new Error("Command Centre must not invoke a Project Controls engine");
+  }
+  try {
+    return await port.load(scope);
+  } catch (error) {
+    if (error instanceof CommandCentreError && error.code === "project_forbidden") {
+      return snapshotFromControlsSchedule(null, "forbidden");
+    }
+    return snapshotFromControlsSchedule(null, "error");
+  }
+}
+
+async function loadCostProgressSnapshot(
+  port: CommandCentreSourceBundle["costProgress"],
+  scope: CommandCentreScope,
+): Promise<CostProgressSourceSnapshot | undefined> {
+  if (!port) return undefined;
+  if (
+    port.invokesControlsEngine ||
+    port.computesEarnedValue ||
+    port.computesForecast ||
+    port.computesPhysicalProgress
+  ) {
+    throw new Error("Command Centre must not invoke a Project Controls engine");
+  }
+  try {
+    return await port.load(scope);
+  } catch (error) {
+    if (error instanceof CommandCentreError && error.code === "project_forbidden") {
+      return {
+        cost: snapshotFromControlsCost(null, "forbidden"),
+        progress: snapshotFromControlsProgress(null, "forbidden"),
+      };
+    }
+    return {
+      cost: snapshotFromControlsCost(null, "error"),
+      progress: snapshotFromControlsProgress(null, "error"),
+    };
+  }
+}
+
+async function loadRiskChangeSnapshot(
+  port: CommandCentreSourceBundle["riskChange"],
+  scope: CommandCentreScope,
+): Promise<RiskChangeSourceSnapshot | undefined> {
+  if (!port) return undefined;
+  if (
+    port.invokesControlsEngine ||
+    port.storesRiskRegister ||
+    port.mutatesRisk ||
+    port.mutatesChange ||
+    port.computesChangeImpact ||
+    port.computesIndependentRiskScore
+  ) {
+    throw new Error("Command Centre must not own a risk register or invoke a Project Controls engine");
+  }
+  try {
+    return await port.load(scope);
+  } catch {
+    return undefined;
+  }
+}
+
+async function loadQueryDecisionSnapshot(
+  port: CommandCentreSourceBundle["queryDecision"],
+  scope: CommandCentreScope,
+): Promise<QueryDecisionSourceSnapshot | undefined> {
+  if (!port) return undefined;
+  if (
+    port.storesQueryRegister ||
+    port.storesDecisionRegister ||
+    port.storesActionRegister ||
+    port.mutatesQuery ||
+    port.mutatesDecision ||
+    port.mutatesAction
+  ) {
+    throw new Error("Command Centre must not store or mutate canonical query, decision, or action registers");
+  }
+  try {
+    return await port.load(scope);
+  } catch {
+    return undefined;
+  }
+}
+
+async function loadForecastSnapshot(
+  port: CommandCentreSourceBundle["forecast"],
+  scope: CommandCentreScope,
+): Promise<ForecastIntelligenceSourceSnapshot | undefined> {
+  if (!port) return undefined;
+  if (
+    port.invokesControlsEngine ||
+    port.computesForecast ||
+    port.computesCompletionDate ||
+    port.computesCostForecast ||
+    port.computesMonteCarlo
+  ) {
+    throw new Error("Command Centre must not invoke a Project Controls forecast engine");
+  }
+  try {
+    return await port.load(scope);
+  } catch {
+    return undefined;
+  }
+}
+
 export class ProjectCommandCentreService {
   constructor(private readonly sources: CommandCentreSourceBundle) {}
 
@@ -553,111 +666,25 @@ export class ProjectCommandCentreService {
       throw commandCentreForbidden(input.projectId, "cross_workspace");
     }
 
-    const [controlsRaw, knowledgeRaw] = await Promise.all([
+    const [
+      controlsRaw,
+      knowledgeRaw,
+      scheduleSnapshot,
+      costProgressSnapshot,
+      riskChangeSnapshot,
+      queryDecisionSnapshot,
+      forecastSnapshot,
+    ] = await Promise.all([
       isolateControls(() => this.sources.controls.load(scope)),
       isolateKnowledge(() => this.sources.knowledge.load(scope)),
+      loadScheduleSnapshot(this.sources.schedule, scope),
+      loadCostProgressSnapshot(this.sources.costProgress, scope),
+      loadRiskChangeSnapshot(this.sources.riskChange, scope),
+      loadQueryDecisionSnapshot(this.sources.queryDecision, scope),
+      loadForecastSnapshot(this.sources.forecast, scope),
     ]);
     const controlsLoad = maskFailedControls(controlsRaw);
     const knowledgeLoad = maskFailedKnowledge(knowledgeRaw);
-
-    let scheduleSnapshot: ScheduleIntelligenceSourceSnapshot | undefined;
-    if (this.sources.schedule) {
-      if (this.sources.schedule.invokesControlsEngine || this.sources.schedule.computesCriticalPath || this.sources.schedule.computesFloat) {
-        throw new Error("Command Centre must not invoke a Project Controls engine");
-      }
-      try {
-        scheduleSnapshot = await this.sources.schedule.load(scope);
-      } catch (error) {
-        if (error instanceof CommandCentreError && error.code === "project_forbidden") {
-          scheduleSnapshot = snapshotFromControlsSchedule(null, "forbidden");
-        } else {
-          scheduleSnapshot = snapshotFromControlsSchedule(null, "error");
-        }
-      }
-    }
-
-    let costProgressSnapshot: CostProgressSourceSnapshot | undefined;
-    if (this.sources.costProgress) {
-      if (
-        this.sources.costProgress.invokesControlsEngine ||
-        this.sources.costProgress.computesEarnedValue ||
-        this.sources.costProgress.computesForecast ||
-        this.sources.costProgress.computesPhysicalProgress
-      ) {
-        throw new Error("Command Centre must not invoke a Project Controls engine");
-      }
-      try {
-        costProgressSnapshot = await this.sources.costProgress.load(scope);
-      } catch (error) {
-        if (error instanceof CommandCentreError && error.code === "project_forbidden") {
-          costProgressSnapshot = {
-            cost: snapshotFromControlsCost(null, "forbidden"),
-            progress: snapshotFromControlsProgress(null, "forbidden"),
-          };
-        } else {
-          costProgressSnapshot = {
-            cost: snapshotFromControlsCost(null, "error"),
-            progress: snapshotFromControlsProgress(null, "error"),
-          };
-        }
-      }
-    }
-
-    let riskChangeSnapshot: RiskChangeSourceSnapshot | undefined;
-    if (this.sources.riskChange) {
-      if (
-        this.sources.riskChange.invokesControlsEngine ||
-        this.sources.riskChange.storesRiskRegister ||
-        this.sources.riskChange.mutatesRisk ||
-        this.sources.riskChange.mutatesChange ||
-        this.sources.riskChange.computesChangeImpact ||
-        this.sources.riskChange.computesIndependentRiskScore
-      ) {
-        throw new Error("Command Centre must not own a risk register or invoke a Project Controls engine");
-      }
-      try {
-        riskChangeSnapshot = await this.sources.riskChange.load(scope);
-      } catch {
-        riskChangeSnapshot = undefined;
-      }
-    }
-
-    let queryDecisionSnapshot: QueryDecisionSourceSnapshot | undefined;
-    if (this.sources.queryDecision) {
-      if (
-        this.sources.queryDecision.storesQueryRegister ||
-        this.sources.queryDecision.storesDecisionRegister ||
-        this.sources.queryDecision.storesActionRegister ||
-        this.sources.queryDecision.mutatesQuery ||
-        this.sources.queryDecision.mutatesDecision ||
-        this.sources.queryDecision.mutatesAction
-      ) {
-        throw new Error("Command Centre must not store or mutate canonical query, decision, or action registers");
-      }
-      try {
-        queryDecisionSnapshot = await this.sources.queryDecision.load(scope);
-      } catch {
-        queryDecisionSnapshot = undefined;
-      }
-    }
-
-    let forecastSnapshot: ForecastIntelligenceSourceSnapshot | undefined;
-    if (this.sources.forecast) {
-      if (
-        this.sources.forecast.invokesControlsEngine ||
-        this.sources.forecast.computesForecast ||
-        this.sources.forecast.computesCompletionDate ||
-        this.sources.forecast.computesCostForecast ||
-        this.sources.forecast.computesMonteCarlo
-      ) {
-        throw new Error("Command Centre must not invoke a Project Controls forecast engine");
-      }
-      try {
-        forecastSnapshot = await this.sources.forecast.load(scope);
-      } catch {
-        forecastSnapshot = undefined;
-      }
-    }
 
     const dimensions = evaluateProjectHealthDimensions({
       core: coreLoad.snapshot,

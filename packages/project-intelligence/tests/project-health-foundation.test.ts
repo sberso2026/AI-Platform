@@ -290,6 +290,11 @@ describe("PI-0 project health foundation", () => {
     expect(SCHEMA_CHANGED).toBe(false);
     expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.createPlansInPi0).toBe(false);
     expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.standaloneCatalogProductHasPlans).toBe(false);
+    expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.uiMismatch).toBe(false);
+    expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.catalogCommerceReconciled).toBe(true);
+    expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.planMismatchResolved).toBe(true);
+    expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.standaloneLicensingCreated).toBe(false);
+    expect(PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY.businessOsEntitlementRequired).toBe(false);
   });
 
   it("does not import Project Controls engines", () => {

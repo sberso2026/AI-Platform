@@ -110,7 +110,7 @@ describe("Platform Commerce UI — Engineering OS product detail", () => {
     expect(engineering?.manageHref).toBe("/system/products/engineering-os");
   });
 
-  it("lists available engineering applications per commerce spec", () => {
+  it("lists Project Intelligence as an Engineering OS application, not a standalone trial", () => {
     const apps = mapEngineeringApplications(
       baseContext.engineeringApplications as EngineeringApplicationSeed[],
       baseContext
@@ -119,10 +119,17 @@ describe("Platform Commerce UI — Engineering OS product detail", () => {
     const names = available.map((a) => a.name);
     expect(names).toContain("Inspection Intelligence");
     expect(names).toContain("Engineering Knowledge");
-    expect(names).not.toContain("Project Intelligence");
+    expect(names).toContain("Project Intelligence");
+    const pi = available.find((a) => a.appKey === "project_intelligence");
+    expect(pi?.primaryAction).toBe("install");
+    expect(pi?.secondaryAction).toBeUndefined();
+    expect(pi?.installHref).toBe("/system/applications/project-intelligence/install");
+    expect(pi?.description).toContain("Engineering OS");
+    expect(pi?.description).not.toMatch(/Business OS/i);
+    expect(pi?.description).toContain("not a standalone product plan");
   });
 
-  it("shows Project Intelligence only when enabled", () => {
+  it("shows Project Intelligence as installed when enabled", () => {
     const enabledContext: CommerceAdapterContext = {
       ...baseContext,
       engineeringApplications: baseContext.engineeringApplications?.map((app) =>
@@ -134,7 +141,12 @@ describe("Platform Commerce UI — Engineering OS product detail", () => {
       enabledContext
     );
     const installed = filterApplicationsBySection(apps, "installed");
-    expect(installed.some((a) => a.name === "Project Intelligence")).toBe(true);
+    const pi = installed.find((a) => a.appKey === "project_intelligence");
+    expect(pi).toBeDefined();
+    expect(pi?.primaryAction).toBe("open");
+    expect(pi?.openHref).toBe("/engineering/apps/project-intelligence");
+    expect(pi?.secondaryAction).toBe("manage");
+    expect(pi?.description).toContain("Engineering OS");
   });
 });
 
@@ -156,5 +168,46 @@ describe("Platform Commerce UI — role-based action visibility", () => {
     expect(canManageBilling("owner")).toBe(true);
     expect(isActionVisible("view_billing", "owner")).toBe(true);
     expect(isActionVisible("manage", "owner")).toBe(true);
+  });
+});
+
+describe("Platform Commerce UI — Project Intelligence catalog isolation", () => {
+  it("does not expose Project Intelligence as a standalone catalog product with Start Trial", () => {
+    const products = mapRegistryToCommercialProducts(baseContext, {
+      commercial_products: [
+        {
+          id: "eos",
+          slug: "engineering-os",
+          name: "Engineering OS",
+          product_type: "operating_system",
+          description: "Engineering operating system",
+          lifecycle_status: "active",
+        },
+        {
+          id: "pi",
+          slug: "project-intelligence",
+          name: "Project Intelligence",
+          product_type: "application",
+          description: "Project analytics",
+          lifecycle_status: "active",
+        },
+        {
+          id: "ii",
+          slug: "inspection-intelligence",
+          name: "Inspection Intelligence",
+          product_type: "application",
+          description: "Inspection planning",
+          lifecycle_status: "active",
+        },
+      ],
+      commercial_plans: [{ id: "p1", product_id: "eos", edition: "Enterprise" }],
+      commercial_subscriptions: [{ id: "s1", product_id: "eos", status: "active" }],
+      commercial_licenses: [{ id: "l1", product_id: "eos", status: "active" }],
+      product_installations: [{ id: "i1", product_id: "eos", status: "active" }],
+    });
+    expect(products.map((p) => p.slug)).toContain("engineering-os");
+    expect(products.map((p) => p.slug)).toContain("inspection-intelligence");
+    expect(products.map((p) => p.slug)).not.toContain("project-intelligence");
+    expect(products.some((p) => p.name === "Project Intelligence")).toBe(false);
   });
 });

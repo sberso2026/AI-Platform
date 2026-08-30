@@ -13,7 +13,11 @@ export const PROJECT_INTELLIGENCE_COMMERCE_BOUNDARY = {
   workspaceRequired: true,
   entitlementModel: "application_access_on_engineering_os_plans",
   standaloneCatalogProductHasPlans: false,
-  uiMismatch:
-    "Standalone catalog card currently expects a product plan although PI is licensed through Engineering OS.",
+  catalogSurface: "engineering_os_application",
+  uiMismatch: false,
+  catalogCommerceReconciled: true,
+  planMismatchResolved: true,
+  standaloneLicensingCreated: false,
+  businessOsEntitlementRequired: false,
   createPlansInPi0: false,
 } as const;

@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header";
 import { PageMain } from "@/components/layout/page-main";
 import { buttonVariants } from "@rtb/ui";
 import type {
+  CommercialApplicationView,
   InstallationProgressView,
   LicenceSeatPoolView,
   ProductAdministrationView,
@@ -21,10 +22,12 @@ import { InstallationProgressPanel } from "@/components/commerce/installation-pr
 import { ProductDetailTabs } from "@/components/commerce/product-detail/product-detail-tabs";
 import { ProductWorkspacePanel } from "@/components/commerce/product-detail/product-workspace-panel";
 import { EntitlementDiagnoseButton } from "@/components/commerce/entitlement-diagnose-button";
+import { ApplicationCard } from "@/components/commerce/application-card";
 
 type TabPayload = {
   product: ProductAdministrationView;
   applications?: unknown[];
+  applicationViews?: CommercialApplicationView[];
   workspaces?: WorkspaceProductAssignmentView[];
   availableWorkspaces?: Array<{ id: string; name: string }>;
   installationId?: string;
@@ -237,6 +240,7 @@ function TabPanel({
   tab,
   product,
   payload,
+  roleSlug,
   onRefresh,
 }: {
   tab: ProductDetailTab;
@@ -298,14 +302,28 @@ function TabPanel({
           </dl>
         </div>
       );
-    case "applications":
-      return product.slug === "engineering-os" ? (
-        <p className="text-sm text-muted-foreground">
-          Application cards load from Engineering OS registry and Commerce licences.
-        </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">Application catalogue not available for this product.</p>
+    case "applications": {
+      if (product.slug !== "engineering-os") {
+        return (
+          <p className="text-sm text-muted-foreground">Application catalogue not available for this product.</p>
+        );
+      }
+      const apps = payload?.applicationViews ?? [];
+      if (apps.length === 0) {
+        return (
+          <p className="text-sm text-muted-foreground">
+            No Engineering OS application entitlements are available for this tenant.
+          </p>
+        );
+      }
+      return (
+        <div className="grid gap-4 sm:grid-cols-2" data-testid="engineering-os-application-cards">
+          {apps.map((app) => (
+            <ApplicationCard key={app.appKey} app={app} roleSlug={roleSlug} />
+          ))}
+        </div>
       );
+    }
     case "workspaces":
       return (
         <ProductWorkspacePanel
