@@ -48,6 +48,17 @@ describe("ENGINEERING_API_POLICIES", () => {
     const write = getEngineeringApiPolicy("projects", "POST");
     expect(write.cachePolicy).toBe("fresh");
   });
+
+  it("binds inspection intelligence hosted API to Engineering OS application access", () => {
+    const read = getEngineeringApiPolicy("inspection-intelligence-hosted", "GET");
+    const write = getEngineeringApiPolicy("inspection-intelligence-hosted", "POST");
+    expect(read.applicationKey).toBe("inspection_intelligence");
+    expect(write.applicationKey).toBe("inspection_intelligence");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.seatRequired).toBe(true);
+    expect(write.workspaceRequired).toBe(true);
+    expect(write.cachePolicy).toBe("fresh");
+  });
 });
 
 describe("BOS BUSINESS_API_POLICIES", () => {

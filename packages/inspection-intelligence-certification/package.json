@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:ii1c-live": "vitest run src/ii1-hosted-live.test.ts",
     "certify:phase9a": "tsx scripts/run-phase9a-certification.ts",
     "certify:phase9b": "tsx scripts/run-phase9b-certification.ts",
     "certify:phase9c": "tsx scripts/run-phase9c-certification.ts",
@@ -27,7 +28,9 @@
     "test:unit": "vitest run src"
   },
   "dependencies": {
-    "@rtb/inspection-intelligence": "workspace:*"
+    "@rtb/inspection-intelligence": "workspace:*",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

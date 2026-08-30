@@ -10,7 +10,7 @@ II-1 wires the certified V1 domain engine to existing `inspection_*` tables. It 
 
 `SCHEMA_CHANGED=false` for the inspection truth model: no new tables or columns.
 
-Batches 43–45 shipped **SELECT-only RLS** while persistence was in-memory. That blocked user-JWT hosted writes. II-1 adds a **policy-only** migration (`20260830220000_batch_ii1_inspection_hosted_write_rls.sql`) that clones the existing tenant + workspace membership predicate for INSERT/UPDATE. Classification: V1 hosted-wiring implementation defect, not a missing durable representation.
+Batches 43–45 shipped **SELECT-only RLS** while persistence was in-memory. That blocked user-JWT hosted writes. II-1 adds a **policy-only** migration (`20260830220000_batch_ii1_inspection_hosted_write_rls.sql`) that clones the existing tenant + workspace membership predicate for INSERT/UPDATE. II-1C found a second hosted-wiring defect: batch 49 `inspection_condition_ratings` used `auth.jwt()->>'tenant_id'`, which is absent on real user JWTs; `20260830230000_batch_ii1c_condition_ratings_membership_rls.sql` aligns that table to the same membership predicate. Classification: V1 hosted-wiring implementation defect, not a missing durable representation.
 
 Close-out remains session state + corrective actions + verifications (no dedicated close-out table), matching V1.
 
@@ -60,6 +60,10 @@ Authenticated Engineering OS context only. Tenant from membership, not caller bo
 
 `AUTONOMOUS_* = false`. Approvals, condition certification, and close-out require human `inspection.approve`. Missing measurements stay `unknown`.
 
+## Live hosted certification (II-1C)
+
+Live JWT roundtrip uses `/api/engineering/inspection-intelligence/hosted` against the approved Engineering OS certification project (`wcydlhqiqdwgoaqrlget`). User-path reads/writes use authenticated sessions, not service-role impersonation or the in-memory adapter.
+
 ## Next phase
 
-`II_2_READY=true`. II-2 is Inspection Command Centre composition over these hosted records.
+`II_2_READY` is true only after II-1C live hosted JWT certification passes. II-2 is Inspection Command Centre composition over these hosted records.
