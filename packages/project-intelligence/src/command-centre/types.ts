@@ -7,6 +7,7 @@ import type { ProjectScheduleIntelligence } from "../schedule-intelligence/types
 import type { ProjectCostProgressIntelligence } from "../cost-progress-intelligence/types";
 import type { ProjectRiskChangeIntelligence } from "../risk-change-intelligence/types";
 import type { ProjectQueryDecisionIntelligence } from "../query-decision-intelligence/types";
+import type { ProjectForecastIntelligence } from "../forecast-intelligence/types";
 
 export const COMMAND_CENTRE_AVAILABILITY = [
   "ok",
@@ -85,6 +86,7 @@ export type ProjectCommandCentreView = {
   costProgressIntelligence: ProjectCostProgressIntelligence;
   riskChangeIntelligence: ProjectRiskChangeIntelligence;
   queryDecisionIntelligence: ProjectQueryDecisionIntelligence;
+  forecastIntelligence: ProjectForecastIntelligence;
   limitations: readonly string[];
   evidenceReferences: readonly ProjectHealthEvidenceReference[];
   generatedAt: string;

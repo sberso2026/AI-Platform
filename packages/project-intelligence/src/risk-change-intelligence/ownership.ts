@@ -21,6 +21,11 @@ export const duplicateProjectControlsEngineDetectedInPi4 = duplicateProjectContr
 export const duplicateCanonicalProjectDomainDetectedInPi4 = duplicateCanonicalProjectDomainDetected;
 export const duplicateAiStackDetected = implementsOwnAiStack;
 export const duplicateGraphDetected = duplicateKnowledgeGraphDetected;
+/**
+ * Phase-ownership freeze, not PI-5 implementation state.
+ * Must remain false so PI-4 locks reject in-phase PI-5 work.
+ * PI-5 implementation is QUERY_DECISION_INTELLIGENCE_IMPLEMENTED.
+ */
 export const PI_5_RFI_TQ_DECISION_INTELLIGENCE_IMPLEMENTED = false as const;
 export const PI_5_RFI_TQ_DECISION_INTELLIGENCE_READY = true as const;
 

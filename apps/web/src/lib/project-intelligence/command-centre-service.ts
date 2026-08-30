@@ -8,6 +8,7 @@ import { HostedScheduleIntelligenceSource } from "./hosted-schedule-source";
 import { HostedCostProgressIntelligenceSource } from "./hosted-cost-progress-source";
 import { HostedRiskChangeIntelligenceSource } from "./hosted-risk-change-source";
 import { HostedQueryDecisionIntelligenceSource } from "./hosted-query-decision-source";
+import { HostedForecastIntelligenceSource } from "./hosted-forecast-source";
 
 export async function composeProjectCommandCentre(
   context: CommerceHandlerContext,
@@ -21,6 +22,7 @@ export async function composeProjectCommandCentre(
     costProgress: new HostedCostProgressIntelligenceSource(context.ctx),
     riskChange: new HostedRiskChangeIntelligenceSource(context.ctx, context.commerce),
     queryDecision: new HostedQueryDecisionIntelligenceSource(context.ctx, context.commerce),
+    forecast: new HostedForecastIntelligenceSource(context.ctx),
   });
   return service.compose({
     projectId,

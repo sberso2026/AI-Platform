@@ -29,6 +29,7 @@ import {
   QueryCommandCentreCard,
   type QueryDecisionView,
 } from "./project-query-decision-intelligence";
+import { ForecastCommandCentreCard, type ForecastView } from "./project-forecast-intelligence";
 
 type HealthState = "green" | "amber" | "red" | "unknown";
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
@@ -99,6 +100,7 @@ type CommandCentreView = {
   costProgressIntelligence: CostProgressView;
   riskChangeIntelligence: RiskChangeView;
   queryDecisionIntelligence: QueryDecisionView;
+  forecastIntelligence: ForecastView;
   limitations: string[];
   evidenceReferences: EvidenceRef[];
   generatedAt: string;
@@ -430,7 +432,7 @@ export function ProjectCommandCentre() {
               projectId={view.project.projectId}
             />
             <SectionCard section={view.decisionsActions} testId="command-centre-section-decisions-actions" />
-            <SectionCard section={view.forecast} testId="command-centre-section-forecast" />
+            <ForecastCommandCentreCard view={view.forecastIntelligence} projectId={view.project.projectId} />
             <SectionCard section={view.knowledge} testId="command-centre-section-knowledge" />
           </div>
 

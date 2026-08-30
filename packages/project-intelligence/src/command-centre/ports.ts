@@ -57,4 +57,5 @@ export type CommandCentreSourceBundle = {
   costProgress?: import("../cost-progress-intelligence/ports").CostProgressIntelligencePort;
   riskChange?: import("../risk-change-intelligence/ports").RiskChangeIntelligencePort;
   queryDecision?: import("../query-decision-intelligence/ports").QueryDecisionIntelligencePort;
+  forecast?: import("../forecast-intelligence/ports").ForecastIntelligencePort;
 };

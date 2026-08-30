@@ -11,7 +11,14 @@ import {
 } from "../project-health/ownership";
 
 export const QUERY_DECISION_INTELLIGENCE_PHASE = "PI-5" as const;
+/** PI-5 implementation state. Distinct from the PI-4 phase-ownership freeze flag. */
 export const QUERY_DECISION_INTELLIGENCE_IMPLEMENTED = true as const;
+/**
+ * Implementation state must not be overloaded as phase ownership/freeze permission.
+ * Freeze: PI_5_RFI_TQ_DECISION_INTELLIGENCE_IMPLEMENTED in PI-4 (remains false).
+ * Implementation: QUERY_DECISION_INTELLIGENCE_IMPLEMENTED (true after PI-5).
+ */
+export const PI_5_IMPLEMENTATION_FLAG_SEMANTICS_RECONCILED = true as const;
 export const PI_AI_REQUIRED = false as const;
 export const PI_QUERY_MUTATION_ENABLED = false as const;
 export const PI_DECISION_MUTATION_ENABLED = false as const;

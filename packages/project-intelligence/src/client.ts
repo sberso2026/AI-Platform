@@ -65,3 +65,8 @@ export type {
   ProjectDecisionIntelligence,
   ProjectActionIntelligence,
 } from "./query-decision-intelligence";
+export type {
+  ProjectForecastIntelligence,
+  ForecastReadinessState,
+  ForecastFreshnessState,
+} from "./forecast-intelligence";

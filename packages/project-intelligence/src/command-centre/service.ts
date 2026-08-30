@@ -41,6 +41,13 @@ import type {
   QueryDecisionSourceSnapshot,
   QuerySourceSlice,
 } from "../query-decision-intelligence/types";
+import { asForecastPosture } from "../forecast-intelligence/interpreter";
+import { interpretForecastIntelligence } from "../forecast-intelligence/service";
+import type {
+  ForecastIntelligenceSourceSnapshot,
+  PublishedCurrentPostureRef,
+  PublishedForecastStateRef,
+} from "../forecast-intelligence/types";
 import { assertCommandCentreOwnershipLocks, PI_AI_REQUIRED } from "./ownership";
 import {
   buildAttentionItems,
@@ -330,6 +337,86 @@ function snapshotFromControlsChange(
   };
 }
 
+function currentStatesFromControls(snapshot: ProjectControlsSnapshot): PublishedCurrentPostureRef[] {
+  const states: PublishedCurrentPostureRef[] = [];
+  if (snapshot.schedule) {
+    states.push({
+      domain: "schedule",
+      posture: snapshot.schedule.posture,
+      published: snapshot.schedule.published,
+      assessmentId: snapshot.schedule.assessmentId,
+      publishedAt: snapshot.schedule.publishedAt,
+    });
+  }
+  if (snapshot.cost) {
+    states.push({
+      domain: "cost",
+      posture: snapshot.cost.posture,
+      published: snapshot.cost.published,
+      assessmentId: snapshot.cost.assessmentId,
+      publishedAt: snapshot.cost.publishedAt,
+    });
+  }
+  if (snapshot.progress) {
+    states.push({
+      domain: "progress",
+      posture: snapshot.progress.posture,
+      published: snapshot.progress.published,
+      assessmentId: snapshot.progress.assessmentId,
+      publishedAt: snapshot.progress.publishedAt,
+    });
+  }
+  if (snapshot.change) {
+    states.push({
+      domain: "change",
+      posture: snapshot.change.posture,
+      published: snapshot.change.published,
+      assessmentId: snapshot.change.assessmentId,
+      publishedAt: snapshot.change.publishedAt,
+    });
+  }
+  return states;
+}
+
+function snapshotFromControlsForecast(
+  output: ProjectControlsSnapshot["forecast"],
+  availability: CommandCentreAvailability,
+  currentStates: readonly PublishedCurrentPostureRef[] = [],
+): ForecastIntelligenceSourceSnapshot {
+  if (!output) {
+    return {
+      availability: availability === "ok" ? "no_data" : availability,
+      latest: null,
+      history: [],
+      evidence: [],
+      currentStates,
+    };
+  }
+  const latest: PublishedForecastStateRef = {
+    stateId: output.assessmentId,
+    projectId: output.projectId,
+    published: output.published,
+    abstained: output.abstained,
+    posture: asForecastPosture(output.posture),
+    assessedAt: output.assessedAt,
+    publishedAt: output.publishedAt,
+    version: typeof output.version === "number" ? output.version : undefined,
+    contributingContributors: [],
+    limitations: ["advisory_qualitative_forecast_only"],
+    completionDatePredicted: false,
+    costForecastComputed: false,
+    scenarioIdPublished: false,
+    storesCanonicalCopy: false,
+  };
+  return {
+    availability,
+    latest,
+    history: [latest],
+    evidence: [],
+    currentStates,
+  };
+}
+
 function snapshotFromCoreAndControls(
   core: ProjectCoreSnapshot,
   output: ProjectControlsSnapshot["change"],
@@ -554,6 +641,24 @@ export class ProjectCommandCentreService {
       }
     }
 
+    let forecastSnapshot: ForecastIntelligenceSourceSnapshot | undefined;
+    if (this.sources.forecast) {
+      if (
+        this.sources.forecast.invokesControlsEngine ||
+        this.sources.forecast.computesForecast ||
+        this.sources.forecast.computesCompletionDate ||
+        this.sources.forecast.computesCostForecast ||
+        this.sources.forecast.computesMonteCarlo
+      ) {
+        throw new Error("Command Centre must not invoke a Project Controls forecast engine");
+      }
+      try {
+        forecastSnapshot = await this.sources.forecast.load(scope);
+      } catch {
+        forecastSnapshot = undefined;
+      }
+    }
+
     const dimensions = evaluateProjectHealthDimensions({
       core: coreLoad.snapshot,
       controls: controlsLoad.snapshot,
@@ -643,6 +748,20 @@ export class ProjectCommandCentreService {
       tenantId,
       workspaceId,
       snapshot: resolvedQueryDecisionSnapshot,
+      generatedAt,
+    });
+    const resolvedForecastSnapshot =
+      forecastSnapshot ??
+      snapshotFromControlsForecast(
+        controlsLoad.snapshot.forecast,
+        forecastAvailability,
+        currentStatesFromControls(controlsLoad.snapshot),
+      );
+    const forecastIntelligence = interpretForecastIntelligence({
+      projectId: input.projectId,
+      tenantId,
+      workspaceId,
+      snapshot: resolvedForecastSnapshot,
       generatedAt,
     });
     const cost = projectControlsSection({
@@ -745,6 +864,7 @@ export class ProjectCommandCentreService {
       costProgressIntelligence,
       riskChangeIntelligence,
       queryDecisionIntelligence,
+      forecastIntelligence,
       limitations,
       evidenceReferences,
       generatedAt,

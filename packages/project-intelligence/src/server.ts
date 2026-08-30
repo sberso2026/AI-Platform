@@ -39,4 +39,5 @@ export * from "./schedule-intelligence";
 export * from "./cost-progress-intelligence";
 export * from "./risk-change-intelligence";
 export * from "./query-decision-intelligence";
+export * from "./forecast-intelligence";
 

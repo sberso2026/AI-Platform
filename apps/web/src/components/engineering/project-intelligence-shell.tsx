@@ -10,6 +10,7 @@ import {
   CircleDollarSign,
   ClipboardList,
   FileText,
+  LineChart,
   MessageSquare,
   Network,
   SearchCheck,
@@ -40,6 +41,11 @@ const primaryTabs = [
     href: "/engineering/apps/project-intelligence/queries-decisions",
     label: "Queries & Decisions",
     icon: MessageSquare,
+  },
+  {
+    href: "/engineering/apps/project-intelligence/forecasting",
+    label: "Forecasting",
+    icon: LineChart,
   },
   {
     href: "/engineering/apps/project-intelligence/documents",
@@ -109,6 +115,7 @@ function navTestId(href: string): string | undefined {
   if (href.endsWith("/cost-progress")) return "project-intelligence-nav-cost-progress";
   if (href.endsWith("/risk-change")) return "project-intelligence-nav-risk-change";
   if (href.endsWith("/queries-decisions")) return "project-intelligence-nav-queries-decisions";
+  if (href.endsWith("/forecasting")) return "project-intelligence-nav-forecasting";
   if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
   if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
   if (href.endsWith("/findings")) return "project-intelligence-nav-findings";
