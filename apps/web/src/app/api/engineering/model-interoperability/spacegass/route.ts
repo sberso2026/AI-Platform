@@ -70,7 +70,6 @@ export async function POST(req: Request) {
       workspaceId: scope.workspaceId,
       selectedMethod: SPACEGASS_BOUNDED_METHOD,
       qualification: bundle,
-      spaceGassHostedExecutionCertified: false,
       ...INTEROP_GOVERNANCE,
     });
   }
@@ -141,8 +140,6 @@ export async function POST(req: Request) {
       workspaceId: scope.workspaceId,
       modelRefId,
       execution: execResult,
-      spaceGassHostedExecutionCertified: false,
-      silentSolverFallbackAllowed: false,
       truthLabels: {
         existingExternalResult: "EXISTING EXTERNAL RESULT",
         rtbCertifiedExecution: "RTB-CERTIFIED EXECUTION",

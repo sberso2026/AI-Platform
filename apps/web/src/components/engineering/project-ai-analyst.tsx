@@ -323,7 +323,7 @@ export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) 
         <CardTitle>AI Project Analyst</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-slate-700">
-        <p>Ask grounded questions about this project's published intelligence. Advisory only.</p>
+        <p>Ask grounded questions about published intelligence for this project. Advisory only.</p>
         <Link
           href={`/engineering/apps/project-intelligence/analyst?projectId=${encodeURIComponent(projectId)}`}
           data-testid="command-centre-analyst-open"

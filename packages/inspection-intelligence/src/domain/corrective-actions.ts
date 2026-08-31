@@ -1,7 +1,9 @@
 /**
  * Corrective Action Framework — ownership, due dates, verification, closure (Phase 9D).
  */
-import { randomUUID } from "node:crypto";
+function randomUUID(): string {
+  return globalThis.crypto.randomUUID();
+}
 
 export type CorrectiveActionStatus =
   | "open"

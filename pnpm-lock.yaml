@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  next@15.5.20:
+    hash: qbw2uph62lyxhidtkwe4vywa5m
+    path: patches/next@15.5.20.patch
+
 importers:
 
   .:
@@ -26,6 +31,9 @@ importers:
       '@rtb/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@rtb/digital-twin':
+        specifier: workspace:*
+        version: link:../../packages/digital-twin
       '@rtb/engineering-execution-host':
         specifier: workspace:*
         version: link:../../packages/engineering-execution-host
@@ -79,7 +87,7 @@ importers:
         version: 0.511.0(react@19.2.7)
       next:
         specifier: ^15.3.3
-        version: 15.5.20(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 15.5.20(patch_hash=qbw2uph62lyxhidtkwe4vywa5m)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -5455,7 +5463,7 @@ snapshots:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
-  next@15.5.20(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  next@15.5.20(patch_hash=qbw2uph62lyxhidtkwe4vywa5m)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@next/env': 15.5.20
       '@swc/helpers': 0.5.15

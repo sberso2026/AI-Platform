@@ -1,8 +1,11 @@
 /**
  * Defect Framework — generic defect lifecycle and taxonomy (Phase 9D).
  */
-import { randomUUID } from "node:crypto";
 import type { EngineeringAssetRef, EngineeringDefectRef } from "@rtb/engineering-os";
+
+function randomUUID(): string {
+  return globalThis.crypto.randomUUID();
+}
 
 export type DefectSeverity = "low" | "medium" | "high" | "critical";
 export type DefectUrgency = "routine" | "priority" | "immediate";

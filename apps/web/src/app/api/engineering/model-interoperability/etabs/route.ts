@@ -73,8 +73,6 @@ export async function POST(req: Request) {
       workspaceId: scope.workspaceId,
       selectedMethod: ETABS_BOUNDED_METHOD,
       qualification: bundle,
-      ETABSHostedExecutionCertified: false,
-      ETABSControlledExecutionCertified: false,
       federationPath: "export_fixture",
       liveNativeCom: false,
       ...INTEROP_GOVERNANCE,
@@ -152,9 +150,6 @@ export async function POST(req: Request) {
       workspaceId: scope.workspaceId,
       modelRefId,
       execution: execResult,
-      ETABSHostedExecutionCertified: false,
-      ETABSControlledExecutionCertified: false,
-      silentSolverFallbackAllowed: false,
       federationPath: "export_fixture",
       liveNativeCom: false,
       truthLabels: {

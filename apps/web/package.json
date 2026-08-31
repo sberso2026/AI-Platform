@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@rtb/database": "workspace:*",
+    "@rtb/digital-twin": "workspace:*",
     "@rtb/engineering-execution-host": "workspace:*",
     "@rtb/engineering-model-interoperability": "workspace:*",
     "@rtb/engineering-os": "workspace:*",

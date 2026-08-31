@@ -64,7 +64,6 @@ export async function POST(req: Request) {
     tenantId: scope.tenantId,
     workspaceId: scope.workspaceId,
     probe,
-    SPACEGASSLiveExecutionCertified: false,
     ...EXEC_HOST_GOVERNANCE,
   });
 }
