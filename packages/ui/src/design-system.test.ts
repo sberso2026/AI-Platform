@@ -82,10 +82,13 @@ describe("Batch 2.11 — Branding", () => {
 
 describe("Batch 2.09/2.10 — StatusChip contracts", () => {
   it("resolves engineering statuses", () => {
-    expect(resolveStatusChip("in_progress").status).toBe("pending");
-    expect(resolveStatusChip("in_progress").label).toBe("Pending");
+    expect(resolveStatusChip("in_progress").status).toBe("in-progress");
+    expect(resolveStatusChip("in_progress").label).toBe("In Progress");
     expect(resolveStatusChip("OPEN").label).toBe("Open");
     expect(resolveStatusChip("active").label).toBe("Open");
+    expect(resolveStatusChip("cancelled").label).toBe("Cancelled");
+    expect(resolveStatusChip("concept").label).toBe("Concept");
+    expect(resolveStatusChip("operational").label).toBe("Operational");
   });
 
   it("exposes required labels", () => {
@@ -98,6 +101,7 @@ describe("Batch 2.09/2.10 — StatusChip contracts", () => {
       "low",
       "critical",
       "complete",
+      "in-progress",
       "ai-review",
     ] as const) {
       expect(STATUS_LABELS[key]).toBeTruthy();

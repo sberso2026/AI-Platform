@@ -17,6 +17,7 @@ const statusChipVariants = cva(
         critical: "border-red-300 bg-red-100 text-red-950",
         overdue: "border-rose-300 bg-rose-50 text-rose-950",
         complete: "border-emerald-200 bg-emerald-50 text-emerald-900",
+        "in-progress": "border-blue-200 bg-blue-50 text-blue-900",
         "ai-review": "border-violet-200 bg-violet-50 text-violet-950",
         neutral: "border-slate-200 bg-white text-slate-700",
       },
@@ -43,6 +44,7 @@ const STATUS_LABELS: Record<StatusChipStatus, string> = {
   critical: "Critical",
   overdue: "Overdue",
   complete: "Complete",
+  "in-progress": "In Progress",
   "ai-review": "AI Review Required",
   neutral: "Unknown",
 };
@@ -60,8 +62,8 @@ export function resolveStatusChip(value: string | null | undefined): {
     pending: "pending",
     "in-review": "pending",
     review: "pending",
-    "in-progress": "pending",
-    progress: "pending",
+    "in-progress": "in-progress",
+    progress: "in-progress",
     draft: "pending",
     "review-required": "ai-review",
     "ai-review": "ai-review",
@@ -72,11 +74,8 @@ export function resolveStatusChip(value: string | null | undefined): {
     verified: "approved",
     rejected: "rejected",
     declined: "rejected",
-    cancelled: "rejected",
-    canceled: "rejected",
     open: "open",
     active: "open",
-    concept: "open",
     closed: "closed",
     resolved: "closed",
     inactive: "closed",
@@ -91,7 +90,6 @@ export function resolveStatusChip(value: string | null | undefined): {
     complete: "complete",
     completed: "complete",
     done: "complete",
-    operational: "complete",
   };
 
   const status = aliases[key] ?? "neutral";
