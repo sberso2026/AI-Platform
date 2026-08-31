@@ -18,23 +18,26 @@ import { filterSidebarNavigation } from "./nav-visibility";
 describe("Batch 2.07 — Navigation grouping", () => {
   it("places Engineering OS groups first", () => {
     expect(NAV_GROUP_ORDER[0]).toBe("engineering");
-    expect(NAV_GROUP_ORDER[1]).toBe("engineering_registers");
-    expect(NAV_GROUP_ORDER[2]).toBe("engineering_admin");
+    expect(NAV_GROUP_ORDER[1]).toBe("engineering_work");
+    expect(NAV_GROUP_ORDER[2]).toBe("engineering_registers");
+    expect(NAV_GROUP_ORDER[3]).toBe("engineering_analysis");
   });
 
-  it("labels Home as primary engineering entry", () => {
+  it("labels Command Centre as primary engineering entry", () => {
     const home = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home");
-    expect(home?.label).toBe("Home");
+    expect(home?.label).toBe("Command Centre");
     expect(home?.href).toBe("/engineering");
     expect(home?.group).toBe("engineering");
   });
 
-  it("splits registers and administration away from primary eng ops", () => {
+  it("splits work, engineering, analysis, and administration", () => {
     const grouped = groupNavigation(FULL_NAVIGATION);
     expect(Object.keys(grouped)[0]).toBe("engineering");
+    expect(grouped.engineering_work?.some((i) => i.id === "eng-projects")).toBe(true);
     expect(grouped.engineering_registers?.some((i) => i.id === "eng-risks")).toBe(true);
+    expect(grouped.engineering_analysis?.some((i) => i.id === "eng-digital-twin")).toBe(true);
     expect(grouped.engineering_admin?.some((i) => i.id === "eng-settings")).toBe(true);
-    expect(NAV_GROUP_LABELS.engineering_registers).toBe("Engineering Registers");
+    expect(NAV_GROUP_LABELS.engineering_registers).toBe("Engineering");
     expect(NAV_GROUP_LABELS.administration).toBe("Administration");
   });
 
@@ -98,7 +101,10 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
   it("defines sidebar sections including Engineering, reference-os, and advanced tools", () => {
     expect(SIDEBAR_SECTIONS.map((s) => s.id)).toEqual([
       "engineering",
+      "engineering_work",
       "engineering_registers",
+      "engineering_analysis",
+      "engineering_ai",
       "engineering_admin",
       "reference_os",
       "platform_admin",
@@ -109,7 +115,8 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
   it("expands Engineering OS by default; registers collapse by default", () => {
     const defaults = getDefaultSidebarGroupState();
     expect(defaults.engineering).toBe(true);
-    expect(defaults.engineering_registers).toBe(false);
+    expect(defaults.engineering_work).toBe(true);
+    expect(defaults.engineering_registers).toBe(true);
     expect(defaults.engineering_admin).toBe(false);
     expect(defaults.platform_admin).toBe(false);
   });
@@ -122,8 +129,8 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
     const parsed = parseSidebarGroupState(
       JSON.stringify({ engineering_admin: true, platform_admin: true, unknown: false })
     );
-    expect(parsed.engineering).toBe(true);
-    expect(parsed.engineering_registers).toBe(false);
+      expect(parsed.engineering).toBe(true);
+      expect(parsed.engineering_registers).toBe(true);
     expect(parsed.engineering_admin).toBe(true);
     expect(parsed.platform_admin).toBe(true);
     expect(parsed).not.toHaveProperty("unknown");
@@ -165,7 +172,7 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
         "/engineering/companies",
         "/engineering/settings",
         "/engineering/health",
-        "/engineering/test-runner",
+        "/engineering/governance",
       ])
     );
   });
@@ -201,20 +208,30 @@ describe("Platform Commerce UI — Engineering OS access", () => {
     );
   });
 
-  it("exposes E1 primary experience surfaces without dead tabs", () => {
-    const primary = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden && i.group === "engineering");
-    expect(primary.map((i) => i.id)).toEqual([
-      "eng-home",
-      "eng-ask",
-      "eng-my",
-      "eng-explore",
-      "eng-intelligence",
-    ]);
+  it("exposes work-first primary experience surfaces without dead tabs", () => {
+    const primary = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden);
+    expect(primary.map((i) => i.id)).toEqual(
+      expect.arrayContaining([
+        "eng-home",
+        "eng-projects",
+        "eng-assets",
+        "eng-inspections",
+        "eng-documents",
+        "eng-risks",
+        "eng-tqs",
+        "eng-decisions",
+        "eng-actions",
+        "eng-models",
+        "eng-digital-twin",
+        "eng-reports",
+        "eng-ask",
+      ]),
+    );
     expect(primary.every((i) => Boolean(i.href))).toBe(true);
   });
 
-  it("preserves structured module deep links as sidebarHidden", () => {
-    for (const id of ["eng-projects", "eng-assets", "eng-documents", "eng-ai", "eng-decisions"]) {
+  it("keeps assistant-first E1 routes reachable but not as the primary work nav", () => {
+    for (const id of ["eng-my", "eng-explore", "eng-intelligence", "eng-ai"]) {
       const item = ENGINEERING_NAVIGATION.find((i) => i.id === id);
       expect(item?.sidebarHidden).toBe(true);
       expect(item?.href).toBeTruthy();

@@ -1,27 +1,38 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { ModuleSectionNav } from "@/components/engineering/module-section-nav";
 
-const LINKS = [
-  { href: "/engineering/apps/inspection-intelligence", label: "Overview" },
-  { href: "/engineering/apps/inspection-intelligence/my-work", label: "My Work" },
-  { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
+const PRIMARY = [
+  { href: "/engineering/apps/inspection-intelligence", label: "Overview", exact: true },
+  { href: "/engineering/apps/inspection-intelligence/my-work", label: "My work" },
   { href: "/engineering/apps/inspection-intelligence/plans", label: "Plans" },
-  { href: "/engineering/apps/inspection-intelligence/sessions", label: "Sessions" },
-  { href: "/engineering/apps/inspection-intelligence/workflows", label: "Workflows" },
-  { href: "/engineering/apps/inspection-intelligence/assignments", label: "Assignments" },
-  { href: "/engineering/apps/inspection-intelligence/field", label: "Field" },
-  { href: "/engineering/apps/inspection-intelligence/sync", label: "Sync" },
-  { href: "/engineering/apps/inspection-intelligence/condition", label: "Condition" },
-  { href: "/engineering/apps/inspection-intelligence/predictive", label: "Predictive" },
-  { href: "/engineering/apps/inspection-intelligence/vision", label: "Vision" },
-  { href: "/engineering/apps/inspection-intelligence/release", label: "Release" },
+  { href: "/engineering/apps/inspection-intelligence/sessions", label: "Inspections" },
   { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },
   { href: "/engineering/apps/inspection-intelligence/actions", label: "Actions" },
-  { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
+  { href: "/engineering/apps/inspection-intelligence/review", label: "Verification" },
 ] as const;
 
-function classifyViewport(width: number, height: number): string {
+const MORE = [
+  { href: "/engineering/apps/inspection-intelligence/templates", label: "Templates" },
+  { href: "/engineering/apps/inspection-intelligence/assignments", label: "Assignments" },
+  { href: "/engineering/apps/inspection-intelligence/field", label: "Field" },
+  { href: "/engineering/apps/inspection-intelligence/condition", label: "Condition" },
+  { href: "/engineering/apps/inspection-intelligence/release", label: "Governance" },
+] as const;
+
+export const INSPECTION_SHELL_SSR_VIEWPORT = "desktop" as const;
+
+export type InspectionViewport =
+  | "phone"
+  | "tablet_portrait"
+  | "tablet_landscape"
+  | "desktop";
+
+export function classifyInspectionViewport(
+  width: number,
+  height: number,
+): InspectionViewport {
   const min = Math.min(width, height);
   const max = Math.max(width, height);
   if (max < 600 || min < 768) {
@@ -34,20 +45,30 @@ function classifyViewport(width: number, height: number): string {
 }
 
 /**
- * Responsive Inspection Intelligence field shell — one host for desktop/tablet/phone.
+ * Inspection Intelligence operational shell — one host for desktop/tablet/phone.
+ * Certification/release lives under Governance, not as a primary tab wall.
  */
 export function InspectionIntelligenceShell({ children }: { children: React.ReactNode }) {
-  const [width] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth : 1280,
+  const [viewport, setViewport] = useState<InspectionViewport>(
+    INSPECTION_SHELL_SSR_VIEWPORT,
   );
-  const [height] = useState(() =>
-    typeof window !== "undefined" ? window.innerHeight : 800,
-  );
-  const viewport = useMemo(() => classifyViewport(width, height), [width, height]);
+
+  useEffect(() => {
+    function syncViewport() {
+      setViewport(classifyInspectionViewport(window.innerWidth, window.innerHeight));
+    }
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    window.addEventListener("orientationchange", syncViewport);
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      window.removeEventListener("orientationchange", syncViewport);
+    };
+  }, []);
 
   return (
     <div
-      className="mx-auto max-w-5xl px-4 py-6"
+      className="mx-auto max-w-6xl px-4 py-6"
       data-testid="inspection-intelligence-shell"
       data-viewport={viewport}
       data-touch-optimized="true"
@@ -59,24 +80,18 @@ export function InspectionIntelligenceShell({ children }: { children: React.Reac
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
           Engineering OS
         </p>
-        <h2 className="text-lg font-semibold text-slate-900">Inspection Intelligence</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Inspections</h2>
         <p
-          className="mt-1 text-xs text-slate-500"
+          className="mt-1 text-sm text-slate-600"
           data-testid="inspection-sync-readiness"
           aria-live="polite"
         >
-          Connectivity: online · Offline sync: enabled
+          Inspection workflow — online · Offline sync enabled
         </p>
-        <nav
-          className="mt-3 flex flex-wrap gap-4 text-sm"
-          aria-label="Inspection Intelligence features"
-        >
-          {LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="inline-flex min-h-11 min-w-11 items-center text-slate-800 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700"
-            >
+        <ModuleSectionNav links={PRIMARY} ariaLabel="Inspection Intelligence" />
+        <nav className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" aria-label="More inspection tools">
+          {MORE.map((link) => (
+            <a key={link.href} href={link.href} className="inline-flex min-h-11 items-center hover:underline">
               {link.label}
             </a>
           ))}

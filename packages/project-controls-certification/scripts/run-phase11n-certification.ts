@@ -1015,11 +1015,12 @@ async function main() {
   push(
     "BH",
     "Unavailable labels in UI",
-    fileOk(UI_PAGE, /data-testid="project-controls-unavailable-capabilities"/) &&
-      fileOk(UI_PAGE, /CPM|Critical path/i) &&
-      fileOk(UI_PAGE, /Earned value|EV\/CPI\/SPI/i) &&
-      fileOk(UI_PAGE, /Financial posting|budget ledger/i) &&
-      fileOk(UI_PAGE, /UNAVAILABLE/) &&
+    fileOk(UI_RELEASE, /data-testid="project-controls-unavailable-capabilities"/) &&
+      fileOk(UI_RELEASE, /CPM|Critical path/i) &&
+      fileOk(UI_RELEASE, /Earned value|EV\/CPI\/SPI/i) &&
+      fileOk(UI_RELEASE, /Financial posting|budget ledger/i) &&
+      fileOk(UI_RELEASE, /UNAVAILABLE/) &&
+      fileOk(UI_PAGE, /Native CPM/) &&
       fileOk(UI_RELEASE, /UNAVAILABLE — not production functions of V1\.0/)
       ? "pass"
       : "fail",

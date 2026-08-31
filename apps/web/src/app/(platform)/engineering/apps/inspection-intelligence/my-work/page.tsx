@@ -4,10 +4,9 @@ export default function InspectionMyWorkPage() {
       <h1 id="ii-my-work-title" className="text-xl font-semibold text-slate-900">
         My Work
       </h1>
-      <p className="mt-2 text-slate-600">
-        Compact assignment queue for tablet and phone. Guided steps reuse Engineering Workflow SDK
-        assignments — not a separate mobile workflow engine.
-      </p>
+        <p className="mt-2 text-slate-600">
+          Assigned inspections, in-progress work, and pending attestations for this inspector.
+        </p>
       <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-700">
         <li>Assigned inspections</li>
         <li>In-progress sessions</li>

@@ -1,41 +1,91 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle, Badge } from "@rtb/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
-import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
+import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
+import {
+  AskEngineeringAI,
+  ContextTabs,
+  OperationalError,
+  OperationalMetricCard,
+  OperationalSkeleton,
+  ProjectContextHeader,
+  WorkQueue,
+  recordLabel,
+  type OperationalRow,
+} from "@/components/engineering/operational";
+
+type ProjectPayload = {
+  project: Record<string, unknown>;
+  assets: Record<string, unknown>[];
+  documents: Record<string, unknown>[];
+};
+
+type DashboardPayload = {
+  openActionsCount?: number;
+  pendingDecisionsCount?: number;
+  openRisksCount?: number;
+  openTechnicalQueriesCount?: number;
+  openIssuesCount?: number;
+  recentDocuments?: OperationalRow[];
+  attention?: {
+    openActions?: OperationalRow[];
+    pendingDecisions?: OperationalRow[];
+    highRisks?: OperationalRow[];
+    openRisks?: OperationalRow[];
+    openTqs?: OperationalRow[];
+  };
+};
+
+const WORKSPACE_TABS = (projectId: string) =>
+  [
+    { href: `/engineering/projects/${projectId}`, label: "Overview", exact: true },
+    { href: `/engineering/documents?projectId=${projectId}`, label: "Documents" },
+    { href: `/engineering/apps/inspection-intelligence?projectId=${projectId}`, label: "Inspections" },
+    { href: `/engineering/apps/model-interoperability/models?projectId=${projectId}`, label: "Models" },
+    { href: `/engineering/risks?projectId=${projectId}`, label: "Risks" },
+    { href: `/engineering/technical-queries?projectId=${projectId}`, label: "Technical Queries" },
+    { href: `/engineering/decisions?projectId=${projectId}`, label: "Decisions" },
+    { href: `/engineering/actions?projectId=${projectId}`, label: "Actions" },
+    { href: `/engineering/reports?projectId=${projectId}`, label: "Reports" },
+    { href: `/engineering/apps/project-intelligence?projectId=${projectId}`, label: "Intelligence" },
+    { href: `/engineering/ask?projectId=${projectId}&objectType=project&objectId=${projectId}`, label: "AI" },
+  ] as const;
 
 export default function EngineeringProjectDetailPage() {
   const params = useParams();
   const projectId = params.projectId as string;
-  const [tab, setTab] = useState("overview");
-  const [data, setData] = useState<{
-    project: Record<string, unknown>;
-    assets: Record<string, unknown>[];
-    documents: Record<string, unknown>[];
-  } | null>(null);
+  const [data, setData] = useState<ProjectPayload | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/engineering/projects/${projectId}`)
-      .then((r) =>
-        parseApiJsonResponse<{
-          project: Record<string, unknown>;
-          assets: Record<string, unknown>[];
-          documents: Record<string, unknown>[];
-        }>(r),
-      )
-      .then((parsed) => {
-        if (!parsed.ok || !parsed.data) {
-          setError(
-            parsed.errorMessage ?? `Request failed with status ${parsed.status}`,
-          );
+    persistEngineeringProjectFilter(projectId);
+    const started = performance.now();
+    Promise.all([
+      fetch(`/api/engineering/projects/${projectId}`).then((r) =>
+        parseApiJsonResponse<ProjectPayload>(r),
+      ),
+      fetch(`/api/engineering/dashboard?projectId=${encodeURIComponent(projectId)}`).then((r) =>
+        parseApiJsonResponse<DashboardPayload>(r),
+      ),
+    ])
+      .then(([projectParsed, dashParsed]) => {
+        if (!projectParsed.ok || !projectParsed.data) {
+          setError(projectParsed.errorMessage ?? "Failed to load project");
           return;
         }
-        setData(parsed.data);
+        setData(projectParsed.data);
+        if (dashParsed.ok && dashParsed.data) setDashboard(dashParsed.data);
+        if (typeof window !== "undefined") {
+          console.info(
+            `[eos-ux-1] project-workspace wall_ms=${Math.round(performance.now() - started)}`,
+          );
+        }
       })
       .catch((e: unknown) =>
         setError(e instanceof Error ? e.message : "Failed to load project"),
@@ -43,7 +93,8 @@ export default function EngineeringProjectDetailPage() {
   }, [projectId]);
 
   const project = data?.project;
-  const tabs = ["overview", "assets", "documents", "ai", "knowledge", "settings"];
+  const tabs = useMemo(() => WORKSPACE_TABS(projectId), [projectId]);
+  const attention = dashboard?.attention ?? {};
 
   return (
     <>
@@ -53,152 +104,190 @@ export default function EngineeringProjectDetailPage() {
             ? `${project.project_code as string} — ${project.project_name as string}`
             : "Project"
         }
-        description="Engineering project foundation"
+        description="Project workspace — status, unresolved work, and next actions"
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
-        {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
-        {!project && !error && (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        )}
-        {project && (
-          <>
-            <div className="mb-4 flex flex-wrap gap-2">
-              <Badge>{project.status as string}</Badge>
-              <Badge variant="secondary">{project.project_phase as string}</Badge>
-              {project.client_name ? (
-                <Badge variant="outline">{project.client_name as string}</Badge>
-              ) : null}
-              <AskThisObjectLink
-                label="Ask this project"
+        {error ? <OperationalError message={error} retryHref={`/engineering/projects/${projectId}`} /> : null}
+        {!project && !error ? <OperationalSkeleton label="Loading project workspace…" /> : null}
+        {project ? (
+          <div data-testid="project-workspace">
+            <ProjectContextHeader
+              code={project.project_code as string}
+              name={project.project_name as string}
+              status={project.status as string}
+              phase={project.project_phase as string}
+              projectId={projectId}
+            />
+            <ContextTabs links={tabs} ariaLabel="Project workspace" />
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <OperationalMetricCard
+                label="Critical / open risks"
+                value={dashboard?.openRisksCount ?? 0}
+                href={`/engineering/risks?projectId=${projectId}`}
+                tone={(dashboard?.openRisksCount ?? 0) > 0 ? "attention" : "neutral"}
+              />
+              <OperationalMetricCard
+                label="Open TQs"
+                value={dashboard?.openTechnicalQueriesCount ?? 0}
+                href={`/engineering/technical-queries?projectId=${projectId}`}
+              />
+              <OperationalMetricCard
+                label="Outstanding actions"
+                value={dashboard?.openActionsCount ?? 0}
+                href={`/engineering/actions?projectId=${projectId}`}
+              />
+              <OperationalMetricCard
+                label="Decisions awaiting attention"
+                value={dashboard?.pendingDecisionsCount ?? 0}
+                href={`/engineering/decisions?projectId=${projectId}`}
+              />
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Current status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <Row label="Code" value={project.project_code as string} />
+                  <Row label="Phase" value={project.project_phase as string} />
+                  <Row label="Status" value={project.status as string} />
+                  <Row label="Site" value={project.site_name as string} />
+                  <Row label="Location" value={project.location as string} />
+                  <Row label="Client" value={project.client_name as string} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Recorded evidence</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <Row label="Assets" value={String(data?.assets.length ?? 0)} />
+                  <Row label="Documents" value={String(data?.documents.length ?? 0)} />
+                  <Row
+                    label="Unresolved issues"
+                    value={String(dashboard?.openIssuesCount ?? 0)}
+                  />
+                  <p className="pt-2">
+                    <Link
+                      href={`/engineering/apps/project-controls?projectId=${projectId}`}
+                      className="text-sm font-medium underline-offset-2 hover:underline"
+                    >
+                      Open Project Controls
+                    </Link>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <WorkQueue
+                title="Critical risks"
+                href={`/engineering/risks?projectId=${projectId}`}
+                rows={attention.highRisks ?? attention.openRisks ?? []}
+                labelKeys={["title", "risk_title"]}
+                statusKey="status"
+                emptyTitle="No recorded risks"
+                emptyDescription="Risks for this project will appear here when entered in the register."
+              />
+              <WorkQueue
+                title="Open technical queries"
+                href={`/engineering/technical-queries?projectId=${projectId}`}
+                rows={attention.openTqs ?? []}
+                labelKeys={["title", "query_number", "subject"]}
+                statusKey="status"
+                emptyTitle="No open TQs"
+                emptyDescription="Technical queries for this project will appear here."
+              />
+              <WorkQueue
+                title="Outstanding actions"
+                href={`/engineering/actions?projectId=${projectId}`}
+                rows={attention.openActions ?? []}
+                labelKeys={["title", "action_title", "summary"]}
+                statusKey="status"
+                emptyTitle="No outstanding actions"
+                emptyDescription="Actions for this project will appear here."
+              />
+              <WorkQueue
+                title="Decisions awaiting attention"
+                href={`/engineering/decisions?projectId=${projectId}`}
+                rows={attention.pendingDecisions ?? []}
+                labelKeys={["title", "decision_title"]}
+                statusKey="approval_status"
+                emptyTitle="No pending decisions"
+                emptyDescription="Decisions requiring review will appear here."
+              />
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <section className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Documents</h3>
+                  <Link
+                    href={`/engineering/documents?projectId=${projectId}`}
+                    className="text-xs font-medium underline-offset-2 hover:underline"
+                  >
+                    View all
+                  </Link>
+                </div>
+                {(data?.documents.length ?? 0) === 0 ? (
+                  <p className="text-sm text-slate-600">No documents linked to this project.</p>
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {(data?.documents ?? []).slice(0, 8).map((doc) => (
+                      <li key={String(doc.id)}>
+                        <Link
+                          href={`/engineering/documents/${doc.id}`}
+                          className="hover:underline"
+                        >
+                          {recordLabel(doc, ["title", "document_number"])}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Assets</h3>
+                  <Link
+                    href="/engineering/assets"
+                    className="text-xs font-medium underline-offset-2 hover:underline"
+                  >
+                    View all
+                  </Link>
+                </div>
+                {(data?.assets.length ?? 0) === 0 ? (
+                  <p className="text-sm text-slate-600">No assets linked to this project.</p>
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {(data?.assets ?? []).slice(0, 8).map((asset) => (
+                      <li key={String(asset.id)}>
+                        <Link
+                          href={`/engineering/assets/${asset.id}`}
+                          className="hover:underline"
+                        >
+                          {recordLabel(asset, ["asset_tag", "asset_name"])}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            <div className="mt-6">
+              <AskEngineeringAI
+                label="Ask Engineering AI about this project"
                 projectId={projectId}
                 objectType="project"
                 objectId={projectId}
-                q="Summarise this project"
-                testId="ask-this-project"
+                q="What changed on this project?"
               />
             </div>
-            <div className="mb-4 flex gap-2 border-b">
-              {tabs.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`px-3 py-2 text-sm capitalize ${
-                    tab === t
-                      ? "border-b-2 border-primary font-medium"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {t === "ai" ? "AI Workspace" : t}
-                </button>
-              ))}
-            </div>
-
-            {tab === "overview" && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <Row label="Code" value={project.project_code as string} />
-                    <Row label="Site" value={project.site_name as string} />
-                    <Row label="Location" value={project.location as string} />
-                    <Row label="Industry" value={project.industry as string} />
-                    <Row label="Type" value={project.project_type as string} />
-                    <Row
-                      label="Knowledge"
-                      value={
-                        (project.presentation as
-                          | {
-                              knowledgeLinkStatus?: string;
-                              knowledgeNodeTitle?: string | null;
-                            }
-                          | undefined)?.knowledgeLinkStatus === "linked"
-                          ? (project.presentation as { knowledgeNodeTitle?: string | null })
-                              .knowledgeNodeTitle
-                            ? `Linked — ${(project.presentation as { knowledgeNodeTitle?: string | null }).knowledgeNodeTitle}`
-                            : "Linked"
-                          : "Not linked"
-                      }
-                    />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Linked Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <Row label="Assets" value={String(data?.assets.length ?? 0)} />
-                    <Row label="Documents" value={String(data?.documents.length ?? 0)} />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {tab === "assets" && (
-              <EntityList
-                items={data?.assets ?? []}
-                empty="No assets linked."
-                href={(id) => `/engineering/assets/${id}`}
-                title={(i) =>
-                  `${i.asset_tag as string} — ${i.asset_name as string}`
-                }
-              />
-            )}
-
-            {tab === "documents" && (
-              <EntityList
-                items={data?.documents ?? []}
-                empty="No documents linked."
-                href={(id) => `/engineering/documents/${id}`}
-                title={(i) =>
-                  `${i.document_number as string} — ${i.title as string}`
-                }
-              />
-            )}
-
-            {tab === "ai" && (
-              <Card>
-                <CardContent className="p-6">
-                  <p className="mb-3 text-sm text-muted-foreground">
-                    Open the Engineering AI Workspace with this project selected.
-                  </p>
-                  <Link
-                    href={`/engineering/ai?projectId=${projectId}`}
-                    className="text-sm font-medium text-primary underline"
-                  >
-                    Open AI Workspace
-                  </Link>
-                </CardContent>
-              </Card>
-            )}
-
-            {tab === "knowledge" && (
-              <Card>
-                <CardContent className="p-6 text-sm">
-                  {(project.presentation as
-                    | {
-                        knowledgeLinkStatus?: string;
-                        knowledgeNodeTitle?: string | null;
-                      }
-                    | undefined)?.knowledgeLinkStatus === "linked"
-                    ? (project.presentation as { knowledgeNodeTitle?: string | null })
-                        .knowledgeNodeTitle
-                      ? `Linked — ${(project.presentation as { knowledgeNodeTitle?: string | null }).knowledgeNodeTitle}`
-                      : "Knowledge linked via shared Knowledge Graph"
-                    : "Knowledge not linked"}
-                </CardContent>
-              </Card>
-            )}
-            {tab === "settings" && (
-              <Card>
-                <CardContent className="p-6 text-sm text-muted-foreground">
-                  Project settings shell — advanced Project Intelligence comes in Batch 2.1.
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
+          </div>
+        ) : null}
       </main>
     </>
   );
@@ -209,35 +298,6 @@ function Row({ label, value }: { label: string; value?: string }) {
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
       <span>{value || "—"}</span>
-    </div>
-  );
-}
-
-function EntityList({
-  items,
-  empty,
-  href,
-  title,
-}: {
-  items: Record<string, unknown>[];
-  empty: string;
-  href: (id: string) => string;
-  title: (item: Record<string, unknown>) => string;
-}) {
-  if (!items.length) {
-    return <p className="text-sm text-muted-foreground">{empty}</p>;
-  }
-  return (
-    <div className="grid gap-2">
-      {items.map((item) => (
-        <Link
-          key={item.id as string}
-          href={href(item.id as string)}
-          className="rounded border p-3 text-sm hover:bg-muted/50"
-        >
-          {title(item)}
-        </Link>
-      ))}
     </div>
   );
 }

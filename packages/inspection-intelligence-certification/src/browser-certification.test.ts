@@ -13,7 +13,7 @@ describe("Phase 9K browser certification (source)", () => {
     const overview = readFileSync(
       resolve(
         ROOT,
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
       ),
       "utf8",
     );

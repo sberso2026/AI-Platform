@@ -678,25 +678,33 @@ export class EngineeringDashboardService {
     }
   ) {}
 
-  async getDashboard(commerce: CommerceExecutionContext, tenantId: string) {
+  async getDashboard(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    options?: { projectId?: string },
+  ) {
     assertEngineeringService(commerce, "dashboard.read", tenantId);
     const aggregate = { aggregate: true as const };
+    const projectId = options?.projectId?.trim() || undefined;
     const [projects, assets, documents, apps, runs, actions, decisions, risks, issues, technicalQueries, lessons] =
       await Promise.all([
-      this.projects.list(commerce, tenantId, 10, aggregate),
-      this.assets.list(commerce, tenantId, undefined, 10, aggregate),
-      this.documents.list(commerce, tenantId, undefined, 10, aggregate),
+      this.projects.list(commerce, tenantId, 50, aggregate),
+      this.assets.list(commerce, tenantId, projectId, 50, aggregate),
+      this.documents.list(commerce, tenantId, projectId, 50, aggregate),
       this.applications.listApplications(commerce, aggregate),
       this.kernel?.aiDirector.listRuns(tenantId, 10) ?? Promise.resolve([]),
-      this.registers?.actions.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.decisions.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.risks.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.issues.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.technicalQueries.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.lessons.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.actions.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.decisions.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.risks.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.issues.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.technicalQueries.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.lessons.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
     ]);
 
-    const activeProjects = projects.filter((p) => p.status === "active");
+    const scopedProjects = projectId
+      ? projects.filter((p) => String(p.id) === projectId)
+      : projects;
+    const activeProjects = scopedProjects.filter((p) => p.status === "active");
     const highRiskAssets = assets.filter(
       (a) => a.criticality === "high" || a.criticality === "critical"
     );
@@ -706,6 +714,17 @@ export class EngineeringDashboardService {
     const openRisks = risks.filter((r) => r.status !== "closed");
     const openIssues = issues.filter((i) => !["resolved", "closed"].includes(String(i.status)));
     const openTqs = technicalQueries.filter((t) => t.status !== "answered" && t.status !== "closed");
+
+    const highRisks = openRisks.filter((r) => {
+      const score = Number(r.score ?? Number(r.probability ?? 0) * Number(r.consequence ?? 0));
+      return score >= 15;
+    });
+    const overdueActions = openActions.filter((a) => {
+      const due = a.due_date ?? a.dueAt ?? a.due_at;
+      if (typeof due !== "string" || !due.trim()) return false;
+      const ts = Date.parse(due);
+      return Number.isFinite(ts) && ts < Date.now();
+    });
 
     return {
       activeProjects,
@@ -720,11 +739,26 @@ export class EngineeringDashboardService {
       openIssuesCount: openIssues.length,
       openTechnicalQueriesCount: openTqs.length,
       lessonsCount: lessons.length,
+      attention: {
+        openActions: openActions.slice(0, 8),
+        overdueActions: overdueActions.slice(0, 8),
+        pendingDecisions: pendingDecisions.slice(0, 8),
+        openRisks: openRisks.slice(0, 8),
+        highRisks: (highRisks.length ? highRisks : openRisks).slice(0, 8),
+        openTqs: openTqs.slice(0, 8),
+        openIssues: openIssues.slice(0, 8),
+        projects: scopedProjects.slice(0, 8),
+      },
       platformHealth: {
         engineeringOs: "operational",
         aiDirector: "operational",
         knowledgeGraph: "operational",
         digitalTwin: "operational",
+      },
+      meta: {
+        projectId: projectId ?? null,
+        scoped: Boolean(projectId),
+        scopeLabel: projectId ? "selected_project" : "all_projects",
       },
     };
   }

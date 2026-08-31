@@ -7,8 +7,8 @@ import { EngineeringListPage } from "@/components/engineering/engineering-list-p
 export default function EngineeringProjectsPage() {
   return (
     <EngineeringListPage
-      title="Engineering Projects"
-      description="Engineering project register and foundation for Project Intelligence"
+      title="Projects"
+      description="Select a project to open the workspace — status, documents, risks, TQs, and actions"
       apiEndpoint="/api/engineering/projects"
       createHref="/engineering/projects/new"
       createLabel="New Project"

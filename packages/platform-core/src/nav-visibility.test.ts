@@ -241,12 +241,13 @@ describe("Batch 2.12 — Sidebar section defaults", () => {
 });
 
 describe("Phase E1 — Experience primary nav", () => {
-  it("shows Home and hides Ask without ai_assistant entitlement", () => {
+  it("shows Command Centre and work queues; hides Ask without ai_assistant entitlement", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
     expect(visible.find((i) => i.id === "eng-home")?.href).toBe("/engineering");
+    expect(visible.some((i) => i.id === "eng-projects")).toBe(true);
     expect(visible.some((i) => i.id === "eng-ask")).toBe(false);
-    expect(visible.some((i) => i.id === "eng-explore")).toBe(true);
-    expect(visible.some((i) => i.id === "eng-intelligence")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-explore")).toBe(false);
+    expect(visible.some((i) => i.id === "eng-intelligence")).toBe(false);
   });
 
   it("shows Ask when ai_assistant is entitled", () => {
@@ -257,13 +258,14 @@ describe("Phase E1 — Experience primary nav", () => {
     expect(visible.find((i) => i.id === "eng-ask")?.href).toBe("/engineering/ask");
   });
 
-  it("hides register deep links from primary sidebar", () => {
+  it("shows work and engineering registers in primary sidebar", () => {
     const visible = filterSidebarNavigation(
       FULL_NAVIGATION,
       ctx("engineer", { entitledFeatureKeys: ["ai_assistant"] }),
     );
-    expect(visible.some((i) => i.id === "eng-risks")).toBe(false);
-    expect(visible.some((i) => i.id === "eng-projects")).toBe(false);
+    expect(visible.some((i) => i.id === "eng-risks")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-projects")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-ask")).toBe(true);
   });
 
   it("hides platform internals from ordinary engineers", () => {

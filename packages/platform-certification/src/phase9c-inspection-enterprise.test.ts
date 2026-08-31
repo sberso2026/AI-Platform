@@ -65,7 +65,7 @@ describe("Phase 9C Inspection Intelligence enterprise foundation", () => {
     const page = readFileSync(
       resolve(
         ROOT,
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
       ),
       "utf8",
     );

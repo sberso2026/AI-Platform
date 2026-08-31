@@ -60,7 +60,7 @@ describe("Phase 9D Inspection Intelligence engineering domain", () => {
     const page = readFileSync(
       resolve(
         ROOT,
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
       ),
       "utf8",
     );

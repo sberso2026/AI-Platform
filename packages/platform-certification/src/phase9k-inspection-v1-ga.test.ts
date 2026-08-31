@@ -43,11 +43,11 @@ describe("Phase 9K Inspection Intelligence V1 GA", () => {
     expect(version).toMatch(/INSPECTION_AI_VISION_IMPLEMENTED = true/);
   });
 
-  it("exposes v1-ready marker", () => {
+  it("exposes v1-ready marker on Governance / release", () => {
     const page = readFileSync(
       resolve(
         ROOT,
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
       ),
       "utf8",
     );

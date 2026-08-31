@@ -53,7 +53,7 @@ describe("Phase 9G Inspection Intelligence offline synchronization", () => {
     const page = readFileSync(
       resolve(
         ROOT,
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
       ),
       "utf8",
     );

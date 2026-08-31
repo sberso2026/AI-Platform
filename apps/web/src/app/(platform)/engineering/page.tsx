@@ -4,32 +4,54 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Button, EmptyState, Input, SectionHeader } from "@rtb/ui";
+import { Button, Input } from "@rtb/ui";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
-  asRecordArray,
-  parseApiJsonResponse,
-} from "@/lib/api/parse-json-response";
-import {
+  persistEngineeringProjectFilter,
   useEngineeringProjectFilter,
   withProjectQuery,
 } from "@/hooks/use-engineering-project-filter";
 import { buildAskHref } from "@/hooks/use-engineering-context";
 import { useExperiencePerf } from "@/hooks/use-experience-perf";
 import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
+import {
+  AskEngineeringAI,
+  AttentionSummary,
+  OperationalError,
+  OperationalMetricCard,
+  OperationalPageIntro,
+  OperationalSkeleton,
+  WorkQueue,
+  type OperationalRow,
+} from "@/components/engineering/operational";
 
-type Row = Record<string, unknown>;
-
-function rowLabel(row: Row, keys: string[]) {
-  for (const k of keys) {
-    const v = row[k];
-    if (typeof v === "string" && v.trim()) return v;
-  }
-  return String(row.id ?? "Item");
-}
+type DashboardPayload = {
+  activeProjects?: OperationalRow[];
+  highRiskAssets?: OperationalRow[];
+  recentDocuments?: OperationalRow[];
+  recentAiRuns?: OperationalRow[];
+  reviewRequiredCount?: number;
+  openActionsCount?: number;
+  pendingDecisionsCount?: number;
+  openRisksCount?: number;
+  openIssuesCount?: number;
+  openTechnicalQueriesCount?: number;
+  attention?: {
+    openActions?: OperationalRow[];
+    overdueActions?: OperationalRow[];
+    pendingDecisions?: OperationalRow[];
+    openRisks?: OperationalRow[];
+    highRisks?: OperationalRow[];
+    openTqs?: OperationalRow[];
+    openIssues?: OperationalRow[];
+    projects?: OperationalRow[];
+  };
+  meta?: { scopeLabel?: string; projectId?: string | null };
+};
 
 /**
- * Engineering OS Home — assistant-first experience foundation.
- * Composes existing APIs only; no fabricated cards.
+ * Engineering Command Centre — work-first operational entry.
+ * Composes the existing dashboard service only (no extra client N+1).
  */
 export default function EngineeringHomePage() {
   useExperiencePerf("home");
@@ -37,51 +59,49 @@ export default function EngineeringHomePage() {
   const projectId = useEngineeringProjectFilter();
   const capabilities = useEngineeringCapabilities();
   const [askDraft, setAskDraft] = useState("");
-  const [actions, setActions] = useState<Row[]>([]);
-  const [tqs, setTqs] = useState<Row[]>([]);
-  const [decisions, setDecisions] = useState<Row[]>([]);
-  const [risks, setRisks] = useState<Row[]>([]);
-  const [projects, setProjects] = useState<Row[]>([]);
-  const [documents, setDocuments] = useState<Row[]>([]);
-  const [activity, setActivity] = useState<Row[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch(withProjectQuery("/api/engineering/actions", projectId)).then((r) =>
-        parseApiJsonResponse(r),
-      ),
-      fetch(withProjectQuery("/api/engineering/technical-queries", projectId)).then((r) =>
-        parseApiJsonResponse(r),
-      ),
-      fetch(withProjectQuery("/api/engineering/decisions", projectId)).then((r) =>
-        parseApiJsonResponse(r),
-      ),
-      fetch(withProjectQuery("/api/engineering/risks", projectId)).then((r) =>
-        parseApiJsonResponse(r),
-      ),
-      fetch("/api/engineering/projects").then((r) => parseApiJsonResponse(r)),
-      fetch(withProjectQuery("/api/engineering/documents", projectId)).then((r) =>
-        parseApiJsonResponse(r),
-      ),
-      fetch("/api/engineering/activity").then((r) => parseApiJsonResponse(r)),
-    ])
-      .then(([a, t, d, r, p, docs, act]) => {
-        setActions(asRecordArray(a.data).slice(0, 5));
-        setTqs(asRecordArray(t.data).slice(0, 5));
-        setDecisions(asRecordArray(d.data).slice(0, 5));
-        setRisks(asRecordArray(r.data).slice(0, 5));
-        setProjects(asRecordArray(p.data).slice(0, 5));
-        setDocuments(asRecordArray(docs.data).slice(0, 5));
-        setActivity(asRecordArray(act.data).slice(0, 6));
+    const started = performance.now();
+    setLoading(true);
+    fetch(withProjectQuery("/api/engineering/dashboard", projectId))
+      .then((r) => parseApiJsonResponse<DashboardPayload>(r))
+      .then((parsed) => {
+        if (!parsed.ok || !parsed.data) {
+          setError(parsed.errorMessage ?? "Failed to load Command Centre");
+          setDashboard(null);
+          return;
+        }
+        setDashboard(parsed.data);
+        setError(null);
+        if (typeof window !== "undefined") {
+          window.setTimeout(() => {
+            console.info(
+              `[eos-ux-1] command-centre wall_ms=${Math.round(performance.now() - started)}`,
+            );
+          }, 0);
+        }
       })
       .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : "Failed to load home"),
-      );
+        setError(e instanceof Error ? e.message : "Failed to load Command Centre"),
+      )
+      .finally(() => setLoading(false));
   }, [projectId]);
 
   const askEnabled = capabilities.visiblePrimaryNavIds.includes("eng-ask");
   const scopeLabel = projectId ? "Selected project" : "All projects (workspace)";
+  const attention = dashboard?.attention ?? {};
+  const openActions = attention.openActions ?? [];
+  const overdueActions = attention.overdueActions ?? [];
+  const pendingDecisions = attention.pendingDecisions ?? [];
+  const highRisks = attention.highRisks ?? attention.openRisks ?? [];
+  const openTqs = attention.openTqs ?? [];
+  const projects = attention.projects ?? dashboard?.activeProjects ?? [];
+  const documents = dashboard?.recentDocuments ?? [];
+  const highRiskAssets = dashboard?.highRiskAssets ?? [];
+  const reviews = dashboard?.reviewRequiredCount ?? 0;
 
   function submitAsk(e: React.FormEvent) {
     e.preventDefault();
@@ -89,132 +109,221 @@ export default function EngineeringHomePage() {
     router.push(
       buildAskHref({
         projectId,
-        q: askDraft.trim() || null,
+        q: askDraft.trim() || "What needs my attention?",
       }),
     );
   }
 
-  const attention = [
-    { id: "actions", title: "Open actions", href: "/engineering/actions", rows: actions, keys: ["title", "action_title", "summary"] },
-    { id: "tqs", title: "TQs / RFIs", href: "/engineering/technical-queries", rows: tqs, keys: ["title", "query_number", "subject"] },
-    { id: "decisions", title: "Decisions", href: "/engineering/decisions", rows: decisions, keys: ["title", "decision_title"] },
-    { id: "risks", title: "Risks", href: "/engineering/risks", rows: risks, keys: ["title", "risk_title"] },
-  ].filter((s) => s.rows.length > 0);
-
-  const suggestions = [
-    { id: "summarise", label: "Summarise project", q: "Summarise this project" },
-    { id: "tqs", label: "Review open TQs", q: "Review open technical queries" },
-    { id: "changes", label: "Find recent changes", q: "What changed recently?" },
-    { id: "actions", label: "Inspect outstanding actions", q: "What actions are outstanding?" },
+  const attentionItems = [
+    { id: "reviews", label: "Pending reviews", count: reviews, href: "/engineering/apps/project-intelligence/documents/review" },
+    { id: "risks", label: "Open risks", count: dashboard?.openRisksCount ?? 0, href: "/engineering/risks" },
+    { id: "tqs", label: "Open TQs", count: dashboard?.openTechnicalQueriesCount ?? 0, href: "/engineering/technical-queries" },
+    { id: "actions", label: "Open actions", count: dashboard?.openActionsCount ?? 0, href: "/engineering/actions" },
+    { id: "decisions", label: "Pending decisions", count: dashboard?.pendingDecisionsCount ?? 0, href: "/engineering/decisions" },
+    { id: "overdue", label: "Overdue actions", count: overdueActions.length, href: "/engineering/actions" },
   ];
 
   return (
     <>
       <Header
-        title="Engineering OS"
-        description="Assistant-first engineering workspace"
+        title="Command Centre"
+        description="What needs attention, what changed, and what to do next"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
         data-testid="engineering-os-v1-ready"
       >
-        <span data-testid="engineering-os-product-ready" className="sr-only">
-          Engineering OS product ready
-        </span>
-        <div data-testid="engineering-home" className="contents">
-          {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+        <div data-testid="engineering-os-shell" className="contents">
+          <div data-testid="engineering-os-product-ready" className="contents">
+            <div data-testid="engineering-command-center" className="contents">
+              <div data-testid="engineering-home" className="contents">
+          <OperationalPageIntro
+            purpose="Live engineering work for this workspace. Cards open real records."
+            primaryAction={
+              askEnabled ? (
+                <AskEngineeringAI projectId={projectId} q="What needs my attention?" />
+              ) : null
+            }
+          />
+
+          {error ? <OperationalError message={error} retryHref="/engineering" /> : null}
+          {loading ? <OperationalSkeleton label="Loading Command Centre…" /> : null}
 
           <section className="mb-8" data-testid="home-ask">
             <form onSubmit={submitAsk} className="flex flex-col gap-3 sm:flex-row">
               <Input
                 value={askDraft}
                 onChange={(e) => setAskDraft(e.target.value)}
-                placeholder="Ask Engineering OS…"
+                placeholder="Ask Engineering AI…"
                 className="text-base sm:flex-1"
                 data-testid="home-ask-input"
                 disabled={!askEnabled}
               />
               <Button type="submit" disabled={!askEnabled} data-testid="home-ask-submit">
-                Ask
+                Ask Engineering AI
               </Button>
             </form>
             {!askEnabled ? (
               <p className="mt-2 text-xs text-muted-foreground" data-testid="home-ask-unavailable">
-                Ask is hidden until the assistant capability is entitled.
+                Engineering AI is hidden until the assistant capability is entitled.
               </p>
             ) : null}
           </section>
 
-          <section className="mb-8" data-testid="home-current-context">
-            <SectionHeader title="Current context" description="" />
-            <p className="mt-2 text-sm text-slate-700" data-testid="command-center-scope">
+          <section className="mb-6" data-testid="home-current-context">
+            <p className="text-sm text-slate-700" data-testid="command-center-scope">
               Scope: {scopeLabel}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-sm">
-              <Link
-                href="/engineering/explore"
-                className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-slate-400"
-              >
-                Explore records
-              </Link>
-              <Link
-                href="/engineering/my"
-                className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-slate-400"
-              >
-                My Engineering
-              </Link>
-              <Link
-                href="/engineering/intelligence"
-                className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-slate-400"
-              >
-                Intelligence
-              </Link>
-            </div>
           </section>
 
           <section className="mb-8" data-testid="home-attention">
-            <SectionHeader title="My attention" description="Authorised open work from existing registers" />
-            {attention.length === 0 ? (
-              <div className="mt-3">
-                <EmptyState
-                  title="Nothing needs attention"
-                  description="Open Explore to browse projects, assets, and registers."
-                />
-              </div>
-            ) : (
-              <div className="mt-3 grid gap-4 lg:grid-cols-2">
-                {attention.map((section) => (
-                  <div key={section.id} className="rounded-md border border-slate-200 bg-white p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-slate-900">{section.title}</h3>
-                      <Link href={section.href} className="text-xs text-slate-600 hover:underline">
-                        Open
-                      </Link>
-                    </div>
-                    <ul className="space-y-1 text-sm">
-                      {section.rows.map((row) => (
-                        <li key={String(row.id)}>{rowLabel(row, section.keys)}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
+            <AttentionSummary items={attentionItems} />
           </section>
 
-          <section className="mb-8" data-testid="home-recent">
-            <SectionHeader title="Recent engineering work" description="Where data exists" />
-            <div className="mt-3 grid gap-4 lg:grid-cols-3">
-              <RecentList title="Projects" href="/engineering/projects" rows={projects} keys={["project_name", "project_code"]} />
-              <RecentList title="Documents" href="/engineering/documents" rows={documents} keys={["title", "document_number"]} />
-              <RecentList title="Activity" href="/engineering/activity" rows={activity} keys={["summary", "activity_type", "title"]} />
-            </div>
+          <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <OperationalMetricCard
+              label="Open risks"
+              value={dashboard?.openRisksCount ?? 0}
+              href="/engineering/risks"
+              tone={(dashboard?.openRisksCount ?? 0) > 0 ? "attention" : "neutral"}
+              testId="cc-metric-risks"
+            />
+            <OperationalMetricCard
+              label="Open TQs"
+              value={dashboard?.openTechnicalQueriesCount ?? 0}
+              href="/engineering/technical-queries"
+              tone={(dashboard?.openTechnicalQueriesCount ?? 0) > 0 ? "attention" : "neutral"}
+              testId="cc-metric-tqs"
+            />
+            <OperationalMetricCard
+              label="Open actions"
+              value={dashboard?.openActionsCount ?? 0}
+              href="/engineering/actions"
+              testId="cc-metric-actions"
+            />
+            <OperationalMetricCard
+              label="Pending decisions"
+              value={dashboard?.pendingDecisionsCount ?? 0}
+              href="/engineering/decisions"
+              testId="cc-metric-decisions"
+            />
           </section>
+
+          <section className="mb-8 grid gap-4 lg:grid-cols-2" data-testid="home-my-work">
+            <WorkQueue
+              title="My work — actions"
+              href="/engineering/actions"
+              rows={overdueActions.length ? overdueActions : openActions}
+              labelKeys={["title", "action_title", "summary"]}
+              statusKey="status"
+              emptyTitle="No open actions"
+              emptyDescription="Outstanding actions will appear here when recorded."
+              testId="cc-queue-actions"
+            />
+            <WorkQueue
+              title="Technical queries"
+              href="/engineering/technical-queries"
+              rows={openTqs}
+              labelKeys={["title", "query_number", "subject"]}
+              statusKey="status"
+              emptyTitle="No open technical queries"
+              emptyDescription="Open TQs will appear here when recorded."
+              testId="cc-queue-tqs"
+            />
+            <WorkQueue
+              title="Critical / high risks"
+              href="/engineering/risks"
+              rows={highRisks}
+              labelKeys={["title", "risk_title"]}
+              statusKey="status"
+              emptyTitle="No open risks"
+              emptyDescription="Recorded risks will appear here."
+              testId="cc-queue-risks"
+            />
+            <WorkQueue
+              title="Decisions awaiting attention"
+              href="/engineering/decisions"
+              rows={pendingDecisions}
+              labelKeys={["title", "decision_title"]}
+              statusKey="approval_status"
+              emptyTitle="No pending decisions"
+              emptyDescription="Decisions requiring review will appear here."
+              testId="cc-queue-decisions"
+            />
+          </section>
+
+          <section className="mb-8 grid gap-4 lg:grid-cols-2" data-testid="home-recent">
+            <WorkQueue
+              title="Projects"
+              href="/engineering/projects"
+              rows={projects}
+              labelKeys={["project_name", "project_code"]}
+              statusKey="status"
+              emptyTitle="No projects yet"
+              emptyDescription="Create a project to start engineering work."
+              testId="cc-queue-projects"
+              itemHref={(row) => `/engineering/projects/${row.id}`}
+            />
+            <WorkQueue
+              title="Recent documents"
+              href="/engineering/documents"
+              rows={documents}
+              labelKeys={["title", "document_number"]}
+              statusKey="status"
+              emptyTitle="No recent documents"
+              emptyDescription="Uploaded documents will appear here."
+              testId="cc-queue-documents"
+              itemHref={(row) => `/engineering/documents/${row.id}`}
+            />
+            <WorkQueue
+              title="Assets requiring attention"
+              href="/engineering/apps/asset-intelligence"
+              rows={highRiskAssets}
+              labelKeys={["asset_tag", "asset_name"]}
+              statusKey="criticality"
+              emptyTitle="No high-criticality assets"
+              emptyDescription="Assets with recorded high or critical criticality appear here."
+              testId="cc-queue-assets"
+              itemHref={(row) => `/engineering/apps/asset-intelligence/assets/${row.id}`}
+            />
+          </section>
+
+          {projects.length > 0 ? (
+            <section className="mb-8" data-testid="home-project-status">
+              <h3 className="mb-3 text-sm font-semibold text-slate-900">Project status</h3>
+              <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                {projects.slice(0, 6).map((row) => {
+                  const id = String(row.id ?? "");
+                  return (
+                    <li key={id}>
+                      <Link
+                        href={`/engineering/projects/${id}`}
+                        className="flex min-h-11 items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-slate-50"
+                        onClick={() => persistEngineeringProjectFilter(id)}
+                      >
+                        <span>
+                          {String(row.project_code ?? "")} — {String(row.project_name ?? id)}
+                        </span>
+                        <span className="text-xs text-slate-500">{String(row.status ?? "")}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
 
           <section data-testid="home-suggestions">
-            <SectionHeader title="Suggested actions" description="Contextual prompts — no fabricated intelligence" />
-            <div className="mt-3 flex flex-wrap gap-2">
-              {suggestions.map((s) =>
+            <h3 className="mb-3 text-sm font-semibold text-slate-900">Suggested next steps</h3>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { id: "attention", label: "What needs my attention?", q: "What needs my attention?" },
+                  { id: "changes", label: "What changed?", q: "What changed recently?" },
+                  { id: "risks", label: "Summarise critical risks", q: "Summarize critical engineering risks." },
+                  { id: "tqs", label: "Show overdue TQs", q: "Show overdue technical queries." },
+                ] as const
+              ).map((s) =>
                 askEnabled ? (
                   <Link
                     key={s.id}
@@ -225,59 +334,21 @@ export default function EngineeringHomePage() {
                     {s.label}
                   </Link>
                 ) : (
-                  <Link
+                  <span
                     key={s.id}
-                    href="/engineering/explore"
-                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-slate-400"
+                    className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
                   >
-                    {s.label} (via Explore)
-                  </Link>
+                    {s.label}
+                  </span>
                 ),
               )}
             </div>
           </section>
-
-          {/* Preserve prior test hooks for module reachability without dead launcher cards */}
-          <span data-testid="engineering-command-center" className="sr-only">
-            Engineering home
-          </span>
-          <span data-testid="engineering-module-launcher-summary" className="sr-only">
-            Modules available via Explore and Intelligence
-          </span>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </>
-  );
-}
-
-function RecentList({
-  title,
-  href,
-  rows,
-  keys,
-}: {
-  title: string;
-  href: string;
-  rows: Row[];
-  keys: string[];
-}) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-white p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-900">{title}</h3>
-        <Link href={href} className="text-xs text-slate-600 hover:underline">
-          Open
-        </Link>
-      </div>
-      {rows.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No recent items</p>
-      ) : (
-        <ul className="space-y-1 text-sm">
-          {rows.map((row) => (
-            <li key={String(row.id)}>{rowLabel(row, keys)}</li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }

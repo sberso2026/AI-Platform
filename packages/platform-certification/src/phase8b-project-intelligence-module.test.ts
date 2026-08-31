@@ -150,11 +150,18 @@ describe("Phase 8B Project Intelligence production module", () => {
       ),
       "utf8",
     );
+    const documents = readFileSync(
+      resolve(
+        ROOT,
+        "apps/web/src/app/(platform)/engineering/apps/project-intelligence/documents/page.tsx",
+      ),
+      "utf8",
+    );
     expect(shell).toContain('data-testid="project-intelligence-shell"');
-    expect(shell).toContain("Document Intelligence");
-    expect(shell).toContain("Meeting Intelligence");
-    expect(shell).toContain("Findings Intelligence");
-    expect(shell).toContain("Reporting Intelligence");
+    expect(documents).toContain("Document Intelligence");
+    expect(findings).toContain("Meeting Intelligence");
+    expect(findings).toContain("Document Intelligence");
+    expect(reports).toContain("project-intelligence-reports-ready");
     expect(overview).toContain('data-testid="project-intelligence-ready"');
     expect(overview).toContain('data-testid="project-intelligence-dashboard"');
     expect(overview).toContain("project-intelligence-panel-${panel.id}");

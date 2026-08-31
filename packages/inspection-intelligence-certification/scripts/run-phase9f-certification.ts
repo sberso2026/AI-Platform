@@ -416,7 +416,7 @@ function main() {
       /768.*1024|390.*844/,
     ) &&
       fileContains(
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
         /inspection-intelligence-mobile-ready/,
       )
       ? "pass"

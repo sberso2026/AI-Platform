@@ -125,6 +125,20 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
               ))}
             </select>
 
+            <Button
+              variant="outline"
+              className={cn(CONTROL_H, "shrink-0 px-3")}
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (projectId !== "all") params.set("projectId", projectId);
+                params.set("q", "What needs my attention?");
+                router.push(`/engineering/ask?${params.toString()}`);
+              }}
+              data-testid="header-ask-engineering-ai"
+            >
+              Ask Engineering AI
+            </Button>
+
             <form
               onSubmit={onSearchSubmit}
               className={cn(

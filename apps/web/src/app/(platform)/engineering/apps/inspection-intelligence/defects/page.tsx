@@ -4,10 +4,10 @@ export default function InspectionDefectsPage() {
       <h1 id="ii-defects-title" className="text-xl font-semibold text-slate-900">
         Defects
       </h1>
-      <p className="mt-2 text-slate-600">
-        Generic defect lifecycle and taxonomy. Defects reference Engineering Domain SDK asset
-        contracts; Inspection Intelligence does not own the asset registry.
-      </p>
+        <p className="mt-2 text-slate-600">
+          Open, unverified, and closed defects recorded against inspection targets. Defects
+          reference Engineering OS assets — they do not replace the asset register.
+        </p>
     </section>
   );
 }

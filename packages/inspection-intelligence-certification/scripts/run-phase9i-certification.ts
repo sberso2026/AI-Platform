@@ -237,7 +237,7 @@ function main() {
       ),
     ) &&
       fileContains(
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
         /inspection-intelligence-ai-vision-ready/,
       )
       ? "pass"

@@ -5,8 +5,8 @@ export default function InspectionReviewPage() {
         Inspection review
       </h1>
       <p className="mt-2 text-slate-600">
-        Human review for submitted sessions. Approvals integrate with Platform Workflow patterns;
-        no private workflow runtime.
+        Human verification for submitted inspections. Approvals stay with people — AI cannot close
+        or approve inspections.
       </p>
     </section>
   );

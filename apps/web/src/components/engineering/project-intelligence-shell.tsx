@@ -2,57 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-  Activity,
-  ArrowRightLeft,
-  BarChart3,
-  ClipboardList,
-  FileText,
-  Network,
-  SearchCheck,
-  Settings,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { ContextTabs, ProvenanceLink } from "@/components/engineering/operational";
 
 const primaryTabs = [
-  { href: "/engineering/apps/project-intelligence", label: "Overview", icon: BarChart3 },
-  {
-    href: "/engineering/apps/project-intelligence/documents",
-    label: "Document Intelligence",
-    icon: FileText,
-  },
-  {
-    href: "/engineering/apps/project-intelligence/meetings",
-    label: "Meeting Intelligence",
-    icon: Users,
-  },
-  {
-    href: "/engineering/apps/project-intelligence/findings",
-    label: "Findings Intelligence",
-    icon: SearchCheck,
-  },
-  {
-    href: "/engineering/apps/project-intelligence/reports",
-    label: "Reporting Intelligence",
-    icon: ClipboardList,
-  },
-  {
-    href: "/engineering/apps/project-intelligence/knowledge",
-    label: "Knowledge Intelligence",
-    icon: Network,
-  },
-  {
-    href: "/engineering/apps/project-intelligence/reasoning",
-    label: "Reasoning Assistant",
-    icon: Sparkles,
-  },
+  { href: "/engineering/apps/project-intelligence", label: "Project status", exact: true, testId: "project-intelligence-nav-overview" },
+  { href: "/engineering/apps/project-intelligence/documents", label: "Documents", testId: "project-intelligence-nav-documents" },
+  { href: "/engineering/apps/project-intelligence/meetings", label: "Meetings", testId: "project-intelligence-nav-meetings" },
+  { href: "/engineering/apps/project-intelligence/findings", label: "Findings", testId: "project-intelligence-nav-findings" },
+  { href: "/engineering/apps/project-intelligence/reports", label: "Reports", testId: "project-intelligence-nav-reports" },
+  { href: "/engineering/apps/project-intelligence/reasoning", label: "AI Project Analyst", testId: "project-intelligence-nav-reasoning" },
 ] as const;
 
-const secondaryTabs = [
-  { href: "/engineering/apps/project-intelligence/migration", label: "Migration", icon: ArrowRightLeft },
-  { href: "/engineering/apps/project-intelligence/health", label: "Health", icon: Activity },
-  { href: "/engineering/apps/project-intelligence/settings", label: "Settings", icon: Settings },
+const moreTabs = [
+  { href: "/engineering/apps/project-intelligence/knowledge", label: "Knowledge", testId: "project-intelligence-nav-knowledge" },
+  { href: "/engineering/apps/project-intelligence/health", label: "Health", testId: "project-intelligence-nav-health" },
+  { href: "/engineering/apps/project-intelligence/settings", label: "Governance", testId: "project-intelligence-nav-settings" },
+  { href: "/engineering/apps/project-intelligence/migration", label: "Migration", testId: "project-intelligence-nav-migration" },
 ] as const;
 
 export type ProjectIntelligenceShellState =
@@ -79,52 +44,6 @@ const stateMessages: Record<Exclude<ProjectIntelligenceShellState, "ready">, str
   failed: "Project Intelligence is currently unavailable.",
 };
 
-function navTestId(href: string): string | undefined {
-  if (href === "/engineering/apps/project-intelligence") return "project-intelligence-nav-overview";
-  if (href.endsWith("/documents")) return "project-intelligence-nav-documents";
-  if (href.endsWith("/meetings")) return "project-intelligence-nav-meetings";
-  if (href.endsWith("/findings")) return "project-intelligence-nav-findings";
-  if (href.endsWith("/reports")) return "project-intelligence-nav-reports";
-  if (href.endsWith("/knowledge")) return "project-intelligence-nav-knowledge";
-  if (href.endsWith("/reasoning")) return "project-intelligence-nav-reasoning";
-  if (href.endsWith("/migration")) return "project-intelligence-nav-migration";
-  if (href.endsWith("/health")) return "project-intelligence-nav-health";
-  if (href.endsWith("/settings")) return "project-intelligence-nav-settings";
-  return undefined;
-}
-
-function NavLink({
-  href,
-  label,
-  icon: Icon,
-  pathname,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  pathname: string;
-}) {
-  const active =
-    href === "/engineering/apps/project-intelligence"
-      ? pathname === href
-      : pathname === href || pathname.startsWith(`${href}/`);
-  const testId = navTestId(href);
-  return (
-    <Link
-      href={href}
-      {...(testId ? { "data-testid": testId } : {})}
-      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
-        active
-          ? "bg-cyan-400/15 font-medium text-cyan-200"
-          : "text-slate-300 hover:bg-slate-800 hover:text-white"
-      }`}
-    >
-      <Icon className="size-4" />
-      {label}
-    </Link>
-  );
-}
-
 export function ProjectIntelligenceShell({
   children,
   state = "ready",
@@ -132,7 +51,7 @@ export function ProjectIntelligenceShell({
   children: React.ReactNode;
   state?: ProjectIntelligenceShellState;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const params = useSearchParams();
   const requestedState = params.get("certState");
   const resolvedState: ProjectIntelligenceShellState =
@@ -142,31 +61,38 @@ export function ProjectIntelligenceShell({
   const ready = resolvedState === "ready";
 
   return (
-    <div
-      className="min-h-[calc(100vh-4rem)] bg-slate-100 lg:grid lg:grid-cols-[15rem_1fr]"
-      data-testid="project-intelligence-shell"
-    >
-      <aside className="bg-slate-950 px-4 py-6 text-slate-100">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">Engineering OS</p>
-        <h1 className="mt-2 text-xl font-semibold">Project Intelligence</h1>
-        <p className="mt-2 text-sm text-slate-400">
-          Production module — documents, meetings, findings, reporting, knowledge, and reasoning.
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50" data-testid="project-intelligence-shell">
+      <header className="border-b border-slate-200 bg-white px-4 py-5 sm:px-8">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Engineering OS</p>
+        <h1 className="mt-1 text-xl font-semibold text-slate-900">Project Intelligence</h1>
+        <p className="mt-1 max-w-2xl text-sm text-slate-600">
+          Project status, schedule and cost signals, risks, queries, and recent activity — from
+          recorded engineering evidence.
         </p>
-        <nav className="mt-8 space-y-1" aria-label="Project Intelligence features">
-          {primaryTabs.map((tab) => (
-            <NavLink key={tab.href} {...tab} pathname={pathname} />
-          ))}
+        <div className="mt-2">
+          <ProvenanceLink
+            href="/engineering/apps/project-intelligence/settings"
+            label="About this insight · Methodology · Governance"
+          />
+        </div>
+        <ContextTabs links={primaryTabs} ariaLabel="Project Intelligence" />
+        <nav className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" aria-label="Project Intelligence more">
+          {moreTabs.map((tab) => {
+            const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                data-testid={tab.testId}
+                className={active ? "font-semibold text-slate-900" : "hover:underline"}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </nav>
-        <p className="mt-8 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-          Operations
-        </p>
-        <nav className="mt-2 space-y-1" aria-label="Project Intelligence operations">
-          {secondaryTabs.map((tab) => (
-            <NavLink key={tab.href} {...tab} pathname={pathname} />
-          ))}
-        </nav>
-      </aside>
-      <main className="bg-white p-6 lg:p-10">
+      </header>
+      <main className="px-4 py-6 sm:px-8">
         {!ready && (
           <div
             data-testid={`project-intelligence-state-${resolvedState}`}

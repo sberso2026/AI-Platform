@@ -333,9 +333,7 @@ function main() {
       "packages/inspection-intelligence/src/version.ts",
       /INSPECTION_MOBILE_PRODUCT_IMPLEMENTED = true/,
     ) &&
-      fileContains(
-        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/page.tsx",
-        /inspection-intelligence-mobile-ready/,
+      fileContains("apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx", /inspection-intelligence-mobile-ready/,
       )
       ? "pass"
       : "fail",

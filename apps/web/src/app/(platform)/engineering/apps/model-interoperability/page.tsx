@@ -1,127 +1,180 @@
-/**
- * Production module entry for Engineering Model Interoperability V1.0 GA.
- * Truthful AVAILABLE vs NOT CERTIFIED for live execution.
- */
-export default function EngineeringModelInteropGaPage() {
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  AskEngineeringAI,
+  OperationalError,
+  OperationalMetricCard,
+  OperationalPageIntro,
+  OperationalSkeleton,
+  StatusTable,
+  type OperationalRow,
+} from "@/components/engineering/operational";
+
+type SurfaceBlock = {
+  surface: string;
+  present: boolean;
+  data: unknown;
+};
+
+function asRows(data: unknown): OperationalRow[] {
+  if (!Array.isArray(data)) return [];
+  return data.map((item, index) => {
+    const rec = (item && typeof item === "object" ? item : { value: item }) as Record<string, unknown>;
+    const id = String(rec.id ?? rec.modelId ?? rec.model_id ?? index);
+    const software = String(
+      rec.sourceSoftware ?? rec.source_software ?? rec.software ?? rec.provider ?? rec.format ?? "—",
+    );
+    return {
+      id,
+      model: String(rec.name ?? rec.modelName ?? rec.title ?? rec.fileName ?? id),
+      project: String(rec.projectName ?? rec.project_id ?? rec.assetId ?? rec.asset_id ?? "—"),
+      software: humanSoftware(software),
+      revision: String(rec.revision ?? rec.version ?? rec.revisionId ?? "—"),
+      status: String(rec.status ?? rec.federationStatus ?? "recorded"),
+      updated: String(rec.updatedAt ?? rec.updated_at ?? rec.lastUpdated ?? "—"),
+      href: "/engineering/apps/model-interoperability/models",
+    };
+  });
+}
+
+function humanSoftware(raw: string): string {
+  const key = raw.toLowerCase();
+  if (key.includes("etabs")) return "ETABS";
+  if (key.includes("space") && key.includes("gass")) return "SPACE GASS";
+  if (key.includes("spacegass")) return "SPACE GASS";
+  if (key.includes("ifc")) return "IFC";
+  return raw === "—" ? "—" : raw;
+}
+
+export default function EngineeringModelInteropOverviewPage() {
+  const [surfaces, setSurfaces] = useState<Record<string, SurfaceBlock> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const started = performance.now();
+    fetch("/api/engineering/model-interoperability/workspace-snapshot")
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`snapshot_${r.status}`);
+        return r.json();
+      })
+      .then((json) => {
+        if (!cancelled) {
+          setSurfaces(json.data?.surfaces ?? null);
+          console.info(`[eos-ux-1] model-interoperability wall_ms=${Math.round(performance.now() - started)}`);
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "load_failed");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const models = asRows(surfaces?.models?.data);
+  const mappingCount = Array.isArray(surfaces?.mappings?.data)
+    ? (surfaces?.mappings?.data as unknown[]).length
+    : 0;
+  const resultCount = Array.isArray(surfaces?.results?.data)
+    ? (surfaces?.results?.data as unknown[]).length
+    : 0;
+
   return (
-    <main className="p-8">
-      <div data-testid="engineering-model-interoperability-v1-ready">
-        <h1>Engineering Model Interoperability</h1>
-        <p>
-          Version{" "}
-          <span data-testid="engineering-model-interoperability-ga-version">
-            1.0.0
-          </span>{" "}
-          Production GA — release tag{" "}
-          <span data-testid="engineering-model-interoperability-release-tag">
-            engineering-model-interoperability-v1.0.0
-          </span>
-        </p>
+    <section aria-labelledby="emi-overview-title">
+      <h1 id="emi-overview-title" className="text-2xl font-semibold text-slate-900">
+        Engineering Models
+      </h1>
+      <OperationalPageIntro
+        purpose="Connected and imported models, revisions, and available review actions."
+        primaryAction={
+          <Link
+            href="/engineering/apps/model-interoperability/models"
+            className="inline-flex min-h-11 items-center rounded-md bg-slate-900 px-3 text-sm font-medium text-white"
+          >
+            Import / view models
+          </Link>
+        }
+      />
+      <AskEngineeringAI q="Summarize connected engineering models in this workspace." />
+
+      {loading ? <div className="mt-6"><OperationalSkeleton /></div> : null}
+      {error ? (
+        <div className="mt-6">
+          <OperationalError message={error} />
+        </div>
+      ) : null}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <OperationalMetricCard
+          label="Models"
+          value={models.length}
+          href="/engineering/apps/model-interoperability/models"
+          testId="emi-model-count"
+        />
+        <OperationalMetricCard
+          label="Mappings"
+          value={mappingCount}
+          href="/engineering/apps/model-interoperability/mappings"
+        />
+        <OperationalMetricCard
+          label="Results"
+          value={resultCount}
+          href="/engineering/apps/model-interoperability/results"
+        />
       </div>
 
-      <p data-testid="engineering-model-ifc-federation-ready">
-        IFC Federation — AVAILABLE (bounded IFC2X3 / IFC4 / IFC4X3 STEP federation;
-        no full BIM viewer).
-      </p>
-      <p data-testid="engineering-model-spacegass-ready">
-        SPACE GASS Federation — AVAILABLE (export/model + existing-result federation;
-        fail-closed solver adapter). SPACE GASS Live Execution — NOT CERTIFIED
-        (phase13DStatus=blocked_external_dependency).
-      </p>
-      <p data-testid="engineering-model-etabs-ready">
-        ETABS Federation — AVAILABLE (export/fixture model + existing-result
-        federation; fail-closed solver adapter). ETABS Live Execution — NOT CERTIFIED
-        (NOT live native COM; ETABSHostedExecutionCertified=false;
-        ETABSControlledExecutionCertified=false).
-      </p>
-      <p data-testid="engineering-execution-host-ready">
-        Controlled Engineering Execution Host — AVAILABLE (host registry / health /
-        workspace isolation; host certification ≠ solver certification).
-      </p>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Connected / imported models</h2>
+      <div className="mt-3">
+        <StatusTable
+          testId="emi-models-table"
+          columns={[
+            { key: "model", label: "Model", hrefKey: true },
+            { key: "project", label: "Project / Asset" },
+            { key: "software", label: "Source software" },
+            { key: "revision", label: "Revision" },
+            { key: "status", label: "Status", status: true },
+            { key: "updated", label: "Last updated" },
+          ]}
+          rows={models}
+          emptyTitle="No federated models yet"
+          emptyDescription="Imported models appear here. This empty state is truthful."
+          emptyTestId="emi-empty-models"
+        />
+      </div>
 
-      <ul
-        data-testid="emi-v1-surfaces"
-        aria-label="Engineering Model Interoperability V1 surfaces"
-      >
-        <li data-testid="emi-surface-models">Models — AVAILABLE</li>
-        <li data-testid="emi-surface-versions">Versions — AVAILABLE</li>
-        <li data-testid="emi-surface-elements">Elements — AVAILABLE</li>
-        <li data-testid="emi-surface-mappings">Mappings — AVAILABLE</li>
-        <li data-testid="emi-surface-source-properties">Source properties — AVAILABLE</li>
-        <li data-testid="emi-surface-bindings">
-          Spatial / Asset / Twin binding — AVAILABLE
-        </li>
-        <li data-testid="emi-surface-change-impact">Change-impact — AVAILABLE</li>
-        <li data-testid="emi-surface-spacegass-models">SPACE GASS models — AVAILABLE</li>
-        <li data-testid="emi-surface-spacegass-results">
-          SPACE GASS results — AVAILABLE
-        </li>
-        <li data-testid="emi-surface-spacegass-qualification">
-          SPACE GASS qualification — AVAILABLE
-        </li>
-        <li data-testid="emi-surface-spacegass-execution">
-          SPACE GASS execution — NOT CERTIFIED (fail-closed)
-        </li>
-        <li data-testid="emi-surface-etabs-models">
-          ETABS models (export federation) — AVAILABLE
-        </li>
-        <li data-testid="emi-surface-etabs-results">
-          ETABS results (export federation) — AVAILABLE
-        </li>
-        <li data-testid="emi-surface-etabs-qualification">
-          ETABS qualification — AVAILABLE
-        </li>
-        <li data-testid="emi-surface-etabs-execution">
-          ETABS execution — NOT CERTIFIED (fail-closed)
-        </li>
-      </ul>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <IntegrationCard
+          name="ETABS"
+          body="Model import and exported-result federation available. Live ETABS execution is not currently certified."
+          href="/engineering/apps/model-interoperability/results"
+        />
+        <IntegrationCard
+          name="SPACE GASS"
+          body="Model import and exported-result federation available. Live SPACE GASS execution is not currently certified."
+          href="/engineering/apps/model-interoperability/results"
+        />
+        <IntegrationCard
+          name="IFC"
+          body="Bounded IFC federation is available. A full BIM viewer is not part of this workspace."
+          href="/engineering/apps/model-interoperability/federation"
+        />
+      </div>
+    </section>
+  );
+}
 
-      <section aria-label="Capability status">
-        <ul
-          data-testid="emi-unavailable-capabilities"
-          aria-label="Capabilities not certified in V1.0"
-        >
-          <li data-testid="emi-unavailable-spacegass-live">
-            SPACE GASS Live Execution — NOT CERTIFIED /
-            blocked_external_dependency
-          </li>
-          <li data-testid="emi-unavailable-etabs-live">
-            ETABS Live Execution — NOT CERTIFIED
-          </li>
-          <li data-testid="emi-unavailable-sap2000">
-            SAP2000 / SAFE / CSiBridge — UNAVAILABLE — reserved
-          </li>
-          <li data-testid="emi-unavailable-analysis-generation">
-            Analysis-model generation — UNAVAILABLE — reserved
-          </li>
-        </ul>
-      </section>
-
-      <section aria-label="Result trust distinction">
-        <p data-testid="emi-existing-external-result-label">
-          EXISTING EXTERNAL RESULT — imported ETABS / SPACE GASS results remain
-          source_declared; never auto-promoted to rtb_execution_certified.
-        </p>
-        <p data-testid="emi-rtb-certified-execution-label">
-          RTB-CERTIFIED EXECUTION — requires RTB-governed execution evidence;
-          ETABSHostedExecutionCertified=false; spaceGassHostedExecutionCertified=false.
-        </p>
-        <p data-testid="emi-export-federation-label">
-          EXPORT FEDERATION — ETABS/SPACE GASS paths are export/fixture federation,
-          not live native COM.
-        </p>
-      </section>
-
-      <p data-testid="emi-full-bim-viewer-flag">fullBimViewerImplemented=false</p>
-      <p data-testid="emi-solver-execution-flag">solverExecutionImplemented=false</p>
-      <p data-testid="emi-spacegass-hosted-flag">spaceGassHostedExecutionCertified=false</p>
-      <p data-testid="emi-spacegass-live-flag">SPACEGASSLiveExecutionCertified=false</p>
-      <p data-testid="emi-etabs-adapter-flag">ETABSAdapterImplemented=true</p>
-      <p data-testid="emi-etabs-hosted-flag">ETABSHostedExecutionCertified=false</p>
-      <p data-testid="emi-etabs-controlled-flag">ETABSControlledExecutionCertified=false</p>
-      <p data-testid="emi-phase13d-status">
-        phase13DStatus=blocked_external_dependency
-      </p>
-    </main>
+function IntegrationCard({ name, body, href }: { name: string; body: string; href: string }) {
+  return (
+    <Link href={href} className="rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-400">
+      <h3 className="text-sm font-semibold text-slate-900">{name}</h3>
+      <p className="mt-1 text-sm text-slate-600">{body}</p>
+    </Link>
   );
 }

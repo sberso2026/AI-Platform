@@ -133,7 +133,15 @@ export function isPlatformAdmin(roleSlug: string): boolean {
 export function defaultNavAudience(item: NavItem): NavTier {
   if (item.audience) return item.audience;
   const group = item.group ?? "platform";
-  if (group === "engineering" || group === "engineering_registers") return "viewer";
+  if (
+    group === "engineering" ||
+    group === "engineering_work" ||
+    group === "engineering_registers" ||
+    group === "engineering_analysis" ||
+    group === "engineering_ai"
+  ) {
+    return "viewer";
+  }
   if (group === "engineering_admin") return "manager";
   if (group === "platform" || group === "platform_advanced") return "admin";
   return "admin";
@@ -148,7 +156,14 @@ export function isOwnerOnlyCommerceRoute(pathname: string): boolean {
 export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolean {
   if (item.sidebarHidden) return false;
 
-  const engGroups = new Set(["engineering", "engineering_registers", "engineering_admin"]);
+  const engGroups = new Set([
+    "engineering",
+    "engineering_work",
+    "engineering_registers",
+    "engineering_analysis",
+    "engineering_ai",
+    "engineering_admin",
+  ]);
   if (engGroups.has(item.group ?? "")) {
     const active = context.activeOperatingSystemIds ?? [];
     if (!active.includes("engineering")) return false;

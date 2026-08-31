@@ -126,7 +126,7 @@ describe("Phase 8C Document Intelligence integration", () => {
     expect(page).toContain('data-testid="document-intelligence-ready"');
     expect(page).toContain('data-testid="project-intelligence-documents-ready"');
     expect(shell).toContain('data-testid="project-intelligence-shell"');
-    expect(shell).toContain("Document Intelligence");
+    expect(page).toContain("Document Intelligence");
   });
 
   it("preserves durable runtime markers and embedding contract", () => {

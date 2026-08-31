@@ -6,7 +6,7 @@ export default function DigitalTwinLayout({ children }: { children: React.ReactN
   return (
     <ApplicationEntitlementLayout
       policy={ENGINEERING_PAGE_POLICIES["/engineering/apps/digital-twin"]}
-      returnPath="/system/products"
+      returnPath="/engineering/modules"
     >
       <DigitalTwinShell>{children}</DigitalTwinShell>
     </ApplicationEntitlementLayout>

@@ -72,8 +72,15 @@ describe("Phase 9B Inspection Intelligence vertical slice", () => {
       ),
       "utf8",
     );
+    const release = readFileSync(
+      resolve(
+        ROOT,
+        "apps/web/src/app/(platform)/engineering/apps/inspection-intelligence/release/page.tsx",
+      ),
+      "utf8",
+    );
     expect(overview).toContain("inspection-intelligence-discovery-ready");
-    expect(overview).toContain("inspection-intelligence-vertical-slice-ready");
+    expect(release).toContain("inspection-intelligence-vertical-slice-ready");
     expect(
       existsSync(
         resolve(

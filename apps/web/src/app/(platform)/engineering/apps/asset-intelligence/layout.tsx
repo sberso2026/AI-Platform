@@ -6,7 +6,7 @@ export default function AssetIntelligenceLayout({ children }: { children: React.
   return (
     <ApplicationEntitlementLayout
       policy={ENGINEERING_PAGE_POLICIES["/engineering/apps/asset-intelligence"]}
-      returnPath="/system/products"
+      returnPath="/engineering/modules"
     >
       <AssetIntelligenceShell>{children}</AssetIntelligenceShell>
     </ApplicationEntitlementLayout>

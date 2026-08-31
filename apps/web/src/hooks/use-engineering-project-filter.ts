@@ -46,3 +46,19 @@ export function withProjectQuery(endpoint: string, projectId: string | null): st
   url.searchParams.set("projectId", projectId);
   return `${url.pathname}${url.search}`;
 }
+
+export function persistEngineeringProjectFilter(projectId: string | null): void {
+  const value = projectId && projectId !== "all" ? projectId : "all";
+  try {
+    sessionStorage.setItem(ENGINEERING_PROJECT_FILTER_KEY, value);
+  } catch {
+    // ignore
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("rtb:project-filter", {
+        detail: { projectId: value === "all" ? null : value },
+      }),
+    );
+  }
+}

@@ -999,7 +999,7 @@ export function AskEngineeringShell({
   return (
     <>
       <Header
-        title="Ask Engineering OS"
+        title="Engineering AI"
         description="Evidence-based engineering answers with Why?, sources, and abstention"
       />
       {body}
