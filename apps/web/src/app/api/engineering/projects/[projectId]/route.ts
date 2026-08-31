@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { withEngineeringApiParams } from "@/lib/commerce/engineering-api";
+import {
+  authorizeEngineeringSegment,
+  withEngineeringApiParams,
+} from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 
 export const GET = withEngineeringApiParams(
   "projects",
   async ({ ctx, commerce, correlationId }, _request, { projectId }) => {
-    const [project, assets, documents] = await Promise.all([
-      ctx.engineering.projects.get(commerce, ctx.tenantId, projectId),
-      ctx.engineering.assets.list(commerce, ctx.tenantId, projectId),
-      ctx.engineering.documents.list(commerce, ctx.tenantId, projectId),
-    ]);
+    const project = await ctx.engineering.projects.get(commerce, ctx.tenantId, projectId);
     if (!project) {
       return lifecycleErrorResponse(
         "not_found",
@@ -18,6 +17,20 @@ export const GET = withEngineeringApiParams(
         correlationId,
       );
     }
+
+    const [assetCommerce, documentCommerce] = await Promise.all([
+      authorizeEngineeringSegment(ctx, "assets", "GET", correlationId),
+      authorizeEngineeringSegment(ctx, "documents", "GET", correlationId),
+    ]);
+
+    const [assets, documents] = await Promise.all([
+      assetCommerce
+        ? ctx.engineering.assets.list(assetCommerce, ctx.tenantId, projectId)
+        : Promise.resolve([]),
+      documentCommerce
+        ? ctx.engineering.documents.list(documentCommerce, ctx.tenantId, projectId)
+        : Promise.resolve([]),
+    ]);
 
     return NextResponse.json(
       { data: { project, assets, documents } },

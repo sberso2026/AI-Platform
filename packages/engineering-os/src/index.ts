@@ -75,3 +75,4 @@ export {
   type EngineeringHealthReport,
   type HealthCheckItem,
 } from "./services/health-service";
+export { workspaceScopeId, isRecordInWorkspace } from "./commerce/workspace-scope";

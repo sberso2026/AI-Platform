@@ -268,6 +268,18 @@ describe("Phase E1 — Experience primary nav", () => {
     expect(visible.some((i) => i.id === "eng-ask")).toBe(true);
   });
 
+  it("hides Documents and Actions unless those applications are entitled", () => {
+    const hidden = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
+    expect(hidden.some((i) => i.id === "eng-documents")).toBe(false);
+    expect(hidden.some((i) => i.id === "eng-actions")).toBe(false);
+    const shown = filterSidebarNavigation(
+      FULL_NAVIGATION,
+      ctx("engineer", { entitledApplicationKeys: ["documents", "project_controls"] }),
+    );
+    expect(shown.some((i) => i.id === "eng-documents")).toBe(true);
+    expect(shown.some((i) => i.id === "eng-actions")).toBe(true);
+  });
+
   it("hides platform internals from ordinary engineers", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
     expect(visible.some((i) => i.href === "/platform/prompts")).toBe(false);

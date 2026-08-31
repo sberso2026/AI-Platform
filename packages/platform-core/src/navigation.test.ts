@@ -12,6 +12,7 @@ import {
   groupNavigation,
   itemsForSidebarSection,
   parseSidebarGroupState,
+  isNavItemActive,
 } from "./navigation";
 import { filterSidebarNavigation } from "./nav-visibility";
 
@@ -307,5 +308,23 @@ describe("Batch 2.09 — Design system persistence contracts", () => {
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
       "/engineering"
     );
+  });
+});
+
+describe("EOS-UX-1R — primary nav exact root match", () => {
+  const hrefs = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden).map((i) => i.href);
+
+  it("activates Command Centre only on the exact /engineering route", () => {
+    expect(isNavItemActive("/engineering", "/engineering", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/projects", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/assets", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/governance", "/engineering", hrefs)).toBe(false);
+  });
+
+  it("activates the longest matching primary item", () => {
+    expect(isNavItemActive("/engineering/projects", "/engineering/projects", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/projects/abc", "/engineering/projects", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/assets/xyz", "/engineering/assets", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/risks", "/engineering/risks", hrefs)).toBe(true);
   });
 });

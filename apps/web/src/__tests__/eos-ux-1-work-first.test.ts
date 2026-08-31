@@ -31,6 +31,11 @@ describe("EOS-UX-1 work-first navigation", () => {
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-ask")?.label).toBe("Engineering AI");
   });
 
+  it("gates Documents and Actions on existing application entitlements", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-documents")?.applicationKey).toBe("documents");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-actions")?.applicationKey).toBe("project_controls");
+  });
+
   it("does not keep Explore / Intelligence / My Engineering in primary nav", () => {
     for (const id of ["eng-my", "eng-explore", "eng-intelligence"]) {
       expect(ENGINEERING_NAVIGATION.find((i) => i.id === id)?.sidebarHidden).toBe(true);
@@ -49,6 +54,15 @@ describe("EOS-UX-1 operational screens", () => {
     expect(page).toContain("/api/engineering/dashboard");
     expect(page).toContain("Command Centre");
     expect(page).toContain("data-testid=\"engineering-command-center\"");
+  });
+
+  it("project workspace GET authorizes asset and document reads separately", () => {
+    const route = readApp("src/app/api/engineering/projects/[projectId]/route.ts");
+    expect(route).toContain("authorizeEngineeringSegment");
+    expect(route).toContain('"assets"');
+    expect(route).toContain('"documents"');
+    expect(route).not.toMatch(/assets\.list\(\s*commerce/);
+    expect(route).not.toMatch(/documents\.list\(\s*commerce/);
   });
 
   it("project workspace exposes operational tabs without duplicating registers", () => {

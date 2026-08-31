@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/kernel";
+import { getAuthContext, type AuthContext } from "@/lib/kernel";
 import { getEngineeringApiPolicy } from "@rtb/platform-commerce";
 import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
+import type { CommerceExecutionContext } from "@rtb/types";
 import { enforceCommercePolicy, type CommerceHandlerContext } from "./with-commerce-entitlement";
 import {
   handleCommerceDomainError,
@@ -87,6 +88,26 @@ export async function guardEngineeringApi(
     correlationId,
     commerce,
   };
+}
+
+/** Authorize a distinct engineering API segment with its own commerce action. */
+export async function authorizeEngineeringSegment(
+  ctx: AuthContext,
+  segment: string,
+  method: string,
+  correlationId: string,
+): Promise<CommerceExecutionContext | null> {
+  const policy = getEngineeringApiPolicy(segment, method);
+  const result = await enforceCommercePolicy(ctx, policy);
+  if (result instanceof NextResponse) return null;
+  return createCommerceExecutionContext({
+    tenantId: ctx.tenantId,
+    workspaceId: ctx.workspaceId,
+    actorUserId: ctx.userId,
+    correlationId,
+    decision: result,
+    policy,
+  });
 }
 
 export function withEngineeringApi(

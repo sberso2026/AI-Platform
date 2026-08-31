@@ -11,6 +11,7 @@ import {
   SIDEBAR_SECTIONS,
   filterSidebarNavigation,
   groupNavigation,
+  isNavItemActive,
   itemsForSidebarSection,
   parseSidebarGroupState,
   resolveNavTier,
@@ -120,6 +121,11 @@ export function Sidebar() {
     [grouped, navContext]
   );
 
+  const siblingHrefs = useMemo(
+    () => sections.flatMap((section) => section.items.map((item) => item.href)),
+    [sections],
+  );
+
   useEffect(() => {
     try {
       const storedCollapsed = sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY);
@@ -134,9 +140,7 @@ export function Sidebar() {
   useEffect(() => {
     if (!hydrated || collapsed) return;
     const activeSection = sections.find((section) =>
-      section.items.some(
-        (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
-      )
+      section.items.some((item) => isNavItemActive(pathname, item.href, siblingHrefs))
     );
     if (!activeSection) return;
     setGroupState((prev) => {
@@ -149,7 +153,7 @@ export function Sidebar() {
       }
       return next;
     });
-  }, [pathname, hydrated, collapsed, sections]);
+  }, [pathname, hydrated, collapsed, sections, siblingHrefs]);
 
   useEffect(() => {
     const el = navRef.current;
@@ -272,8 +276,7 @@ export function Sidebar() {
               >
                 {section.items.map((item) => {
                   const Icon = getIcon(item.icon);
-                  const isActive =
-                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const isActive = isNavItemActive(pathname, item.href, siblingHrefs);
 
                   return (
                     <li key={item.id}>

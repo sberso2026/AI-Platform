@@ -480,6 +480,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/documents",
     group: "engineering_work",
     audience: "viewer",
+    applicationKey: "documents",
   },
   {
     id: "eng-risks",
@@ -512,6 +513,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/actions",
     group: "engineering_registers",
     audience: "viewer",
+    applicationKey: "project_controls",
   },
   {
     id: "eng-models",
@@ -952,5 +954,22 @@ export function itemsForSidebarSection(
     if (list?.length) items.push(...list);
   }
   return items;
+}
+
+/**
+ * Longest-prefix active match so `/engineering` is exact-only when a more
+ * specific primary href such as `/engineering/projects` also matches.
+ */
+export function isNavItemActive(
+  pathname: string,
+  href: string,
+  siblingHrefs: readonly string[],
+): boolean {
+  const matches = (candidate: string) =>
+    pathname === candidate || pathname.startsWith(`${candidate}/`);
+  if (!matches(href)) return false;
+  return !siblingHrefs.some(
+    (other) => other !== href && other.length > href.length && matches(other),
+  );
 }
 
