@@ -22,3 +22,10 @@ export {
   nextReportAuthorityStates,
   type ReportAuthorityState,
 } from "./domain/governed-reporting";
+export {
+  COMMAND_CENTRE_CARD_IDS,
+  composeInspectionCommandCentre,
+  COMMAND_CENTRE_STORES_CANONICAL_COPY,
+  COMMAND_CENTRE_USES_AI_METRICS,
+  type InspectionCommandCentreView,
+} from "./command-centre";

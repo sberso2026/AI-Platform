@@ -61,11 +61,14 @@ export async function guardEngineeringApi(
   segment: string,
   method: string
 ): Promise<CommerceHandlerContext | NextResponse> {
+  const started = Date.now();
   const ctx = await getAuthContext();
+  const afterAuth = Date.now();
   if (!ctx) return unauthenticatedResponse(crypto.randomUUID());
 
   const policy = getEngineeringApiPolicy(segment, method);
   const result = await enforceCommercePolicy(ctx, policy);
+  const afterEntitlement = Date.now();
   const correlationId = crypto.randomUUID();
   if (result instanceof NextResponse) {
     return segment.startsWith("project-intelligence")
@@ -86,6 +89,11 @@ export async function guardEngineeringApi(
     decision: result,
     correlationId,
     commerce,
+    securityProfile: {
+      getAuthContextMs: afterAuth - started,
+      entitlementMs: afterEntitlement - afterAuth,
+      totalMs: afterEntitlement - started,
+    },
   };
 }
 

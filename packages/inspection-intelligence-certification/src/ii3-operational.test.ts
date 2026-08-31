@@ -27,7 +27,7 @@ describe("II-3 operational certification", () => {
     expect(II_4_READY).toBe(true);
     expect(SCHEMA_CHANGED).toBe(false);
     expect(DATABASE_POLICY_CHANGED).toBe(false);
-    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(false);
+    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(true);
     expect(II_AI_INSPECTION_ENGINEER_IMPLEMENTED).toBe(true);
     expect(AUTONOMOUS_INSPECTION_APPROVAL_ENABLED).toBe(false);
     expect(AUTONOMOUS_CONDITION_CERTIFICATION_ENABLED).toBe(false);

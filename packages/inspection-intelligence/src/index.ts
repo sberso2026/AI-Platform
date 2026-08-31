@@ -50,4 +50,5 @@ export * from "./domain/governed-reporting";
 export * from "./pack-sdk";
 export * from "./next-gen";
 export * from "./ai-inspection-engineer";
+export * from "./command-centre";
 export * from "./hosted";

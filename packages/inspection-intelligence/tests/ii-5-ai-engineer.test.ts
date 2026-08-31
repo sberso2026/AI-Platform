@@ -92,7 +92,7 @@ describe("II-5 AI Inspection Engineer", () => {
     expect(INSPECTION_INTELLIGENCE_II_5_IMPLEMENTED).toBe(true);
     expect(II_5_IMPLEMENTED).toBe(true);
     expect(II_6_READY).toBe(true);
-    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(false);
+    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(true);
     expect(IMPLEMENTS_OWN_AI_STACK).toBe(false);
     expect(DUPLICATE_AGENT_RUNTIME_DETECTED).toBe(false);
     expect(DUPLICATE_PROMPT_REGISTRY_DETECTED).toBe(false);

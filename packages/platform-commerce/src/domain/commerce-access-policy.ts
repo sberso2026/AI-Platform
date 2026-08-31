@@ -639,6 +639,13 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
     seatRequired: true,
     workspaceRequired: true,
   },
+  "/engineering/apps/inspection-intelligence/command-centre": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "inspection.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
   "/engineering/apps/inspection-intelligence/actions": {
     productKey: ENGINEERING_PRODUCT,
     applicationKey: "inspection_intelligence",

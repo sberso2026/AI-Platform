@@ -58,6 +58,7 @@ export const POST = withEngineeringApi("inspection-intelligence-engineer", async
       targetKind?: string;
       targetCanonicalId?: string;
       projectId?: string;
+      commandCentre?: boolean;
     };
     const question = typeof body.question === "string" ? body.question.trim() : "";
     if (!question) {
@@ -70,6 +71,7 @@ export const POST = withEngineeringApi("inspection-intelligence-engineer", async
       targetKind: typeof body.targetKind === "string" ? body.targetKind : undefined,
       targetCanonicalId: typeof body.targetCanonicalId === "string" ? body.targetCanonicalId : undefined,
       projectId: typeof body.projectId === "string" ? body.projectId : undefined,
+      commandCentre: body.commandCentre === true,
     });
     return NextResponse.json({ data, requestId });
   } catch (error) {

@@ -71,12 +71,14 @@ export function InspectionEngineerEntry({
   targetKind,
   targetCanonicalId,
   projectId,
+  commandCentre,
 }: {
   sessionId?: string;
   reportId?: string;
   targetKind?: string;
   targetCanonicalId?: string;
   projectId?: string;
+  commandCentre?: boolean;
 }) {
   const params = new URLSearchParams();
   if (sessionId) params.set("sessionId", sessionId);
@@ -84,6 +86,7 @@ export function InspectionEngineerEntry({
   if (targetKind) params.set("targetKind", targetKind);
   if (targetCanonicalId) params.set("targetCanonicalId", targetCanonicalId);
   if (projectId) params.set("projectId", projectId);
+  if (commandCentre) params.set("commandCentre", "1");
   const query = params.toString();
   return (
     <Link
@@ -104,6 +107,7 @@ export function InspectionAiEngineerView() {
   const reportId = searchParams.get("reportId") ?? "";
   const targetKind = searchParams.get("targetKind") ?? "";
   const targetCanonicalId = searchParams.get("targetCanonicalId") ?? "";
+  const commandCentre = searchParams.get("commandCentre") === "1";
   const [sessions, setSessions] = useState<InspectionRow[]>([]);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<EngineerAnswer | null>(null);
@@ -140,6 +144,7 @@ export function InspectionAiEngineerView() {
             targetKind: targetKind || undefined,
             targetCanonicalId: targetCanonicalId || undefined,
             projectId: selectedProjectId(),
+            commandCentre: commandCentre || undefined,
           }),
         });
         const body = (await response.json()) as { data?: EngineerAnswer; error?: { message?: string } };
@@ -152,7 +157,7 @@ export function InspectionAiEngineerView() {
         setLoading(false);
       }
     },
-    [sessionId, reportId, targetKind, targetCanonicalId],
+    [sessionId, reportId, targetKind, targetCanonicalId, commandCentre],
   );
 
   const starters = answer?.starterQuestions?.length ? answer.starterQuestions : DEFAULT_STARTERS;

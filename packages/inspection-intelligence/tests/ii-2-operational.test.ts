@@ -28,7 +28,7 @@ describe("II-2 operational hosted listing", () => {
     expect(INSPECTION_INTELLIGENCE_II_2_IMPLEMENTED).toBe(true);
     expect(II_2_IMPLEMENTED).toBe(true);
     expect(INSPECTION_INTELLIGENCE_II_3_READY).toBe(true);
-    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(false);
+    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(true);
     expect(SCHEMA_CHANGED).toBe(false);
     expect(PLAN_UPDATE_STATUSES.has("planned")).toBe(true);
     expect(nextInspectionSessionStates("started")).toEqual(["paused", "completed", "cancelled"]);

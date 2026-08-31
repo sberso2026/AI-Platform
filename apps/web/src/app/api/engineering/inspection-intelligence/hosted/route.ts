@@ -75,6 +75,19 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
     if (resource === "intelligence") {
       return NextResponse.json({ data: await repo.getIntelligence(), requestId });
     }
+    if (resource === "command_centre") {
+      const domainStarted = Date.now();
+      const view = await repo.getCommandCentre({ canWrite: context.ctx.roleSlug !== "viewer" });
+      return NextResponse.json({
+        data: view,
+        requestId,
+        profile: {
+          security: context.securityProfile,
+          domainMs: Date.now() - domainStarted,
+          composition: view.profile,
+        },
+      });
+    }
     if (resource === "defects") {
       return NextResponse.json({
         data: await repo.listDefects(url.searchParams.get("sessionId") ?? undefined),
@@ -118,17 +131,24 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
       });
     }
     if (resource === "history") {
+      const domainStarted = Date.now();
+      const data = await repo.listHistory({
+        targetKind: url.searchParams.get("targetKind") ?? undefined,
+        targetCanonicalId: url.searchParams.get("targetCanonicalId") ?? undefined,
+        planId: url.searchParams.get("planId") ?? undefined,
+        sessionId: url.searchParams.get("sessionId") ?? undefined,
+        from: url.searchParams.get("from") ?? undefined,
+        to: url.searchParams.get("to") ?? undefined,
+        inspectionType: url.searchParams.get("inspectionType") ?? undefined,
+      });
       return NextResponse.json({
-        data: await repo.listHistory({
-          targetKind: url.searchParams.get("targetKind") ?? undefined,
-          targetCanonicalId: url.searchParams.get("targetCanonicalId") ?? undefined,
-          planId: url.searchParams.get("planId") ?? undefined,
-          sessionId: url.searchParams.get("sessionId") ?? undefined,
-          from: url.searchParams.get("from") ?? undefined,
-          to: url.searchParams.get("to") ?? undefined,
-          inspectionType: url.searchParams.get("inspectionType") ?? undefined,
-        }),
+        data,
         requestId,
+        profile: {
+          security: context.securityProfile,
+          domainMs: Date.now() - domainStarted,
+          composition: (data as { profile?: unknown }).profile,
+        },
       });
     }
     if (resource === "history_intelligence") {
@@ -149,7 +169,17 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
       if (!kind || !canonicalId) {
         return lifecycleErrorResponse("invalid_hosted_read", "kind and canonicalId are required", 400, requestId);
       }
-      return NextResponse.json({ data: await repo.getTargetHistory({ kind, canonicalId }), requestId });
+      const domainStarted = Date.now();
+      const data = await repo.getTargetHistory({ kind, canonicalId });
+      return NextResponse.json({
+        data,
+        requestId,
+        profile: {
+          security: context.securityProfile,
+          domainMs: Date.now() - domainStarted,
+          composition: (data as { profile?: unknown }).profile,
+        },
+      });
     }
     if (resource === "reports") {
       return NextResponse.json({ data: await repo.listReports(), requestId });
@@ -176,7 +206,13 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
       return NextResponse.json({ data: await repo.getConditionRating(id), requestId });
     }
     if (resource === "report") {
-      return NextResponse.json({ data: await repo.getReport(id), requestId });
+      const domainStarted = Date.now();
+      const data = await repo.getReport(id);
+      return NextResponse.json({
+        data,
+        requestId,
+        profile: { security: context.securityProfile, domainMs: Date.now() - domainStarted },
+      });
     }
     if (resource === "report_export") {
       const row = await repo.getReport(id);
@@ -198,8 +234,23 @@ export const POST = withEngineeringApi("inspection-intelligence-hosted", async (
       typeof body.projectId === "string" ? body.projectId : undefined,
     );
     const actorUserId = context.ctx.userId;
+    const domainStarted = Date.now();
     const data = await dispatchIntent(intent, repo, body, transitionAuthAction(context), actorUserId);
-    return NextResponse.json({ data, requestId }, { status: 201 });
+    const wantProfile = body.profile === true || new URL(request.url).searchParams.get("profile") === "1";
+    return NextResponse.json(
+      wantProfile
+        ? {
+            data,
+            requestId,
+            profile: {
+              security: context.securityProfile,
+              domainMs: Date.now() - domainStarted,
+              intent,
+            },
+          }
+        : { data, requestId },
+      { status: 201 },
+    );
   } catch (error) {
     return mapHostedError(error, requestId);
   }

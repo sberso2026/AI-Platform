@@ -68,7 +68,7 @@ export function routeEngineerIntent(question: string): EngineerIntent {
   const q = question.toLowerCase();
   if (/draft (a |the )?(report|narrative)|report narrative|assist with (the )?report/.test(q)) return "report_draft";
   if (/history|over time|previous inspection|compare inspection/.test(q)) return "history";
-  if (/indicator|open defects over|awaiting verification|evidence completeness/.test(q)) return "indicators";
+  if (/indicator|open defects over|awaiting verification|evidence completeness|command centre|command-centre/.test(q)) return "indicators";
   if (/condition rating|condition assessment|condition information|unrated/.test(q)) return "condition";
   if (/measurement|observed value|like-for-like/.test(q)) return "measurements";
   if (/\bevidence\b|photo|file id/.test(q)) return "evidence";

@@ -12,7 +12,6 @@ import {
   autonomousConditionRatingCertificationEnabled,
   autonomousRemediationApprovalEnabled,
   externalWritesEnabled,
-  II_COMMAND_CENTRE_IMPLEMENTED,
 } from "../next-gen/ownership";
 
 export const AI_INSPECTION_ENGINEER_PHASE = "II-5" as const;
@@ -76,5 +75,4 @@ export function assertAiInspectionEngineerOwnershipLocks(): void {
   if (autonomousRemediationApprovalEnabled) throw new Error("autonomous remediation approval forbidden");
   if (externalWritesEnabled) throw new Error("external writes forbidden");
   if (SCHEMA_CHANGED) throw new Error("II-5 must not change schema");
-  if (II_COMMAND_CENTRE_IMPLEMENTED) throw new Error("Inspection Command Centre must not start in II-5");
 }

@@ -6,6 +6,7 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     id: "inspection_command_centre",
     title: "Inspection Command Centre",
     implementedInIi0: false,
+    implementedInIi6: true,
     canonicalBasis: "compose existing inspection sessions/condition/defects; PI Command Centre pattern only",
   },
   {

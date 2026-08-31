@@ -229,6 +229,7 @@ export type RunInspectionEngineerInput = {
   targetKind?: string;
   targetCanonicalId?: string;
   projectId?: string;
+  commandCentre?: boolean;
 };
 
 async function loadEngineerContext(
@@ -254,6 +255,13 @@ async function loadEngineerContext(
   let incompatibleMeasurements = false;
   let historyIncomplete = false;
   let sessionId = input.sessionId;
+  let workspaceIntelligence:
+    | ReturnType<typeof computeDeterministicIntelligence>
+    | undefined;
+
+  if (input.commandCentre && !sessionId && !input.reportId && !(input.targetKind && input.targetCanonicalId)) {
+    workspaceIntelligence = await repo.getIntelligence();
+  }
 
   if (input.reportId) {
     report = (await repo.getReport(input.reportId)) as Record<string, unknown>;
@@ -295,14 +303,16 @@ async function loadEngineerContext(
     }
   }
 
-  const intelligence = computeDeterministicIntelligence({
-    defects,
-    correctiveActions,
-    verifications,
-    sessions: session ? [session] : [],
-    evidence,
-    conditionRatings,
-  });
+  const intelligence =
+    workspaceIntelligence ??
+    computeDeterministicIntelligence({
+      defects,
+      correctiveActions,
+      verifications,
+      sessions: session ? [session] : [],
+      evidence,
+      conditionRatings,
+    });
   const toolMs = Date.now() - toolStarted;
   const assembleStarted = Date.now();
   const packContext = assembleEngineerContext({

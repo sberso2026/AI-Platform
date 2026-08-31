@@ -26,7 +26,7 @@ export const DUPLICATE_ENGINEERING_TRUTH_MODEL_DETECTED = duplicateEngineeringTr
 export const DATABASE_POLICY_CHANGED = false as const;
 export const externalWritesEnabled = false as const;
 export const SCHEMA_CHANGED = false as const;
-export const II_COMMAND_CENTRE_IMPLEMENTED = false as const;
+export const II_COMMAND_CENTRE_IMPLEMENTED = true as const;
 export const II_AI_INSPECTION_ENGINEER_IMPLEMENTED = true as const;
 export const II_HOSTED_PERSISTENCE_WIRED = true as const;
 export const duplicatePersistenceModelDetected = false as const;
@@ -45,9 +45,18 @@ export const II_4_IMPLEMENTED = true as const;
 /** AI Inspection Engineer — governed advisory assistant over Platform AI. */
 export const II_5_READY = true as const;
 export const II_5_IMPLEMENTED = true as const;
-/** Next phase is Inspection Command Centre — not started. */
+/** Inspection Command Centre composition over existing inspection_* records. */
 export const II_6_READY = true as const;
+export const II_6_IMPLEMENTED = true as const;
+export const DUPLICATE_COMMAND_CENTRE_MODEL_DETECTED = false as const;
+/** Classified from live profiles in II-6. Updated after measurement. */
+export const II_OPERATIONAL_WRITE_GA_PERFORMANCE_ACCEPTABLE = false as const;
+export const II_HISTORY_GA_PERFORMANCE_ACCEPTABLE = false as const;
+export const II_TARGET_HISTORY_GA_PERFORMANCE_ACCEPTABLE = false as const;
+export const II_REPORT_GA_PERFORMANCE_ACCEPTABLE = false as const;
+export const II_COMMAND_CENTRE_GA_PERFORMANCE_ACCEPTABLE = false as const;
 export const II_PERFORMANCE_GA_BLOCKER_OPEN = true as const;
+export const II_RELEASE_CANDIDATE_READY = false as const;
 export const DUPLICATE_HISTORY_MODEL_DETECTED = false as const;
 export const DUPLICATE_REPORTING_TRUTH_MODEL_DETECTED = false as const;
 export const DUPLICATE_ASSET_TRUTH_MODEL_DETECTED = false as const;
@@ -118,7 +127,8 @@ export function assertInspectionIntelligenceOwnershipLocks(): void {
   if (autonomousRemediationApprovalEnabled) throw new Error("autonomous remediation approval forbidden");
   if (externalWritesEnabled) throw new Error("external writes forbidden");
   if (SCHEMA_CHANGED) throw new Error("II-0/II-1 must not change inspection truth-model schema");
-  if (II_COMMAND_CENTRE_IMPLEMENTED) throw new Error("Inspection Command Centre must not start in II-0 through II-5");
+  if (DUPLICATE_COMMAND_CENTRE_MODEL_DETECTED) throw new Error("duplicate command centre model");
   if (duplicatePersistenceModelDetected) throw new Error("duplicate persistence model");
+  if (!II_COMMAND_CENTRE_IMPLEMENTED) throw new Error("Inspection Command Centre must be implemented in II-6");
   if (!II_HOSTED_PERSISTENCE_WIRED) throw new Error("hosted persistence must be wired in II-1");
 }

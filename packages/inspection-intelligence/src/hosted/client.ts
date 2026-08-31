@@ -13,6 +13,7 @@ export interface InspectionQueryBuilder {
   insert(values: InspectionDbRow | InspectionDbRow[]): InspectionQueryBuilder;
   update(values: InspectionDbRow): InspectionQueryBuilder;
   eq(column: string, value: unknown): InspectionQueryBuilder;
+  in(column: string, values: readonly unknown[]): InspectionQueryBuilder;
   is(column: string, value: null): InspectionQueryBuilder;
   maybeSingle(): Promise<{ data: InspectionDbRow | null; error: InspectionDbError }>;
   single(): Promise<{ data: InspectionDbRow | null; error: InspectionDbError }>;

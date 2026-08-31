@@ -14,6 +14,11 @@ export interface CommerceHandlerContext {
   decision: EntitlementDecision;
   correlationId: string;
   commerce: CommerceExecutionContext;
+  securityProfile?: {
+    getAuthContextMs: number;
+    entitlementMs: number;
+    totalMs: number;
+  };
 }
 
 function correlationId(): string {

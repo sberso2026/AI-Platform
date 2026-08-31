@@ -23,7 +23,7 @@ class MemoryQuery implements InspectionQueryBuilder {
   private op: "select" | "insert" | "update" = "select";
   private pendingInsert: InspectionDbRow | null = null;
   private pendingUpdate: InspectionDbRow | null = null;
-  private filters: Array<{ column: string; value: unknown; kind: "eq" | "is" }> = [];
+  private filters: Array<{ column: string; value: unknown; kind: "eq" | "is" | "in"; values?: readonly unknown[] }> = [];
 
   constructor(
     private readonly store: Store,
@@ -49,6 +49,11 @@ class MemoryQuery implements InspectionQueryBuilder {
 
   eq(column: string, value: unknown): InspectionQueryBuilder {
     this.filters.push({ column, value, kind: "eq" });
+    return this;
+  }
+
+  in(column: string, values: readonly unknown[]): InspectionQueryBuilder {
+    this.filters.push({ column, value: null, kind: "in", values });
     return this;
   }
 
@@ -102,6 +107,7 @@ class MemoryQuery implements InspectionQueryBuilder {
   private matchesFilters(row: InspectionDbRow): boolean {
     return this.filters.every((filter) => {
       if (filter.kind === "is") return row[filter.column] == null;
+      if (filter.kind === "in") return (filter.values ?? []).includes(row[filter.column]);
       return row[filter.column] === filter.value;
     });
   }

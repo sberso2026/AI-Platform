@@ -16,7 +16,7 @@ describe("II-2 operational planning and execution certification", () => {
     expect(INSPECTION_INTELLIGENCE_II_2_IMPLEMENTED).toBe(true);
     expect(II_2_IMPLEMENTED).toBe(true);
     expect(II_3_READY).toBe(true);
-    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(false);
+    expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(true);
     expect(SCHEMA_CHANGED).toBe(false);
     expect(
       existsSync(
@@ -45,6 +45,6 @@ describe("II-2 operational planning and execution certification", () => {
       "utf8",
     );
     expect(overview).toContain("inspection-intelligence-v1-ready");
-    expect(overview).toContain("InspectionOverviewBoard");
+    expect(overview).toContain("InspectionCommandCentre");
   });
 });

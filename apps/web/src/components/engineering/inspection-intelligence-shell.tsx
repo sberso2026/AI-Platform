@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 
 const OPERATIONAL = [
-  { href: "/engineering/apps/inspection-intelligence", label: "Overview" },
+  { href: "/engineering/apps/inspection-intelligence", label: "Command Centre" },
   { href: "/engineering/apps/inspection-intelligence/plans", label: "Plans" },
   { href: "/engineering/apps/inspection-intelligence/sessions", label: "Sessions" },
   { href: "/engineering/apps/inspection-intelligence/defects", label: "Defects" },

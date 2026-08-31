@@ -40,6 +40,7 @@ import {
 import { createEngineeringInspectionEvent } from "../domain/engineering-events";
 import { PLAN_UPDATE_STATUSES } from "../domain/plan-statuses";
 import { computeDeterministicIntelligence } from "../domain/deterministic-intelligence";
+import { composeInspectionCommandCentre } from "../command-centre/compose";
 import {
   buildTargetTimeline,
   computeChangeOverTime,
@@ -90,6 +91,9 @@ function coupledToProject(targets: InspectionTarget[], projectId?: string): bool
 }
 
 export class HostedInspectionRepository {
+  private sessionsPromise?: Promise<InspectionDbRow[]>;
+  private sessionIdsPromise?: Promise<Set<string> | null>;
+
   constructor(
     private readonly context: HostedInspectionContext,
     private readonly db: InspectionDbClient,
@@ -98,6 +102,11 @@ export class HostedInspectionRepository {
     if (!context.tenantId) throw new Error("tenant_required");
     if (!context.workspaceId) throw new Error("workspace_required");
     if (!context.actorUserId) throw new Error("actor_required");
+  }
+
+  private invalidateSessionCache(): void {
+    this.sessionsPromise = undefined;
+    this.sessionIdsPromise = undefined;
   }
 
   private auth(action: TransitionAuth["action"] = "inspection.write"): TransitionAuth {
@@ -120,6 +129,7 @@ export class HostedInspectionRepository {
     };
     const { data, error } = await this.db.from(table).insert(payload).select("*").single();
     if (error || !data) throw new Error(error?.message ?? `${table}_insert_failed`);
+    if (table === T.sessions || table === T.plans) this.invalidateSessionCache();
     return data;
   }
 
@@ -137,6 +147,7 @@ export class HostedInspectionRepository {
       .select("*")
       .single();
     if (error || !data) notFound(table);
+    if (table === T.sessions || table === T.plans) this.invalidateSessionCache();
     return data;
   }
 
@@ -155,25 +166,27 @@ export class HostedInspectionRepository {
       entityId,
       payload,
     });
-    await this.insert(T.events, {
-      id: randomUUID(),
-      event_type: event.type,
-      entity_id: entityId,
-      payload,
-      pipeline_stage: "platform_event_bus",
-      occurred_at: event.occurredAt,
-    });
-    await this.audit?.log({
-      action: `inspection.${type}`,
-      resourceType: "inspection",
-      resourceId: entityId,
-      metadata: {
-        actorUserId: this.context.actorUserId,
-        tenantId: this.context.tenantId,
-        workspaceId: this.context.workspaceId,
-        ...payload,
-      },
-    });
+    await Promise.all([
+      this.insert(T.events, {
+        id: randomUUID(),
+        event_type: event.type,
+        entity_id: entityId,
+        payload,
+        pipeline_stage: "platform_event_bus",
+        occurred_at: event.occurredAt,
+      }),
+      this.audit?.log({
+        action: `inspection.${type}`,
+        resourceType: "inspection",
+        resourceId: entityId,
+        metadata: {
+          actorUserId: this.context.actorUserId,
+          tenantId: this.context.tenantId,
+          workspaceId: this.context.workspaceId,
+          ...payload,
+        },
+      }) ?? Promise.resolve(),
+    ]);
   }
 
   private async assertTarget(target: InspectionTarget): Promise<void> {
@@ -285,13 +298,15 @@ export class HostedInspectionRepository {
       next_due_at: input.nextDueAt ?? null,
       frequency: input.frequency ?? null,
     });
-    for (const target of input.targets) {
-      await this.insert(T.targets, {
-        id: randomUUID(),
-        plan_id: plan.id,
-        target,
-      });
-    }
+    await Promise.all(
+      input.targets.map((target) =>
+        this.insert(T.targets, {
+          id: randomUUID(),
+          plan_id: plan.id,
+          target,
+        }),
+      ),
+    );
     await this.writeEvent("InspectionCreated", String(plan.id), { kind: "plan" });
     return { template, version, plan };
   }
@@ -314,10 +329,12 @@ export class HostedInspectionRepository {
   }
 
   async listSessions() {
-    const rows = (await this.listScoped(T.sessions)).filter((row) =>
-      coupledToProject(asTargets(row.targets), this.context.projectId),
+    this.sessionsPromise ??= this.listScoped(T.sessions).then((rows) =>
+      rows
+        .filter((row) => coupledToProject(asTargets(row.targets), this.context.projectId))
+        .sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? ""))),
     );
-    return rows.sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")));
+    return this.sessionsPromise;
   }
 
   async getOverview() {
@@ -478,6 +495,58 @@ export class HostedInspectionRepository {
     });
   }
 
+  async getCommandCentre(options?: { canWrite?: boolean }) {
+    const started = Date.now();
+    const stages: Record<string, number> = {};
+    const timed = async <T>(name: string, work: Promise<T>): Promise<T> => {
+      const began = Date.now();
+      try {
+        return await work;
+      } finally {
+        stages[name] = Date.now() - began;
+      }
+    };
+    const [plans, sessions, evidence, defects, correctiveActions, verifications, conditionRatings, reports] =
+      await Promise.all([
+        timed("plans", this.listPlans()),
+        timed("sessions", this.listSessions()),
+        timed("evidence", this.listScoped(T.evidence)),
+        timed("defects", this.listScoped(T.defects)),
+        timed("correctiveActions", this.listScoped(T.correctiveActions)),
+        timed("verifications", this.listScoped(T.verifications)),
+        timed("conditionRatings", this.listScoped(T.conditionRatings)),
+        timed("reports", this.listScoped(T.reportingOutputs)),
+      ]);
+    const afterReads = Date.now();
+    const sessionIds = this.context.projectId ? new Set(sessions.map((row) => String(row.id))) : null;
+    const inSessionScope = (rows: InspectionDbRow[]) =>
+      sessionIds ? rows.filter((row) => sessionIds.has(String(row.session_id))) : rows;
+    const composeStarted = Date.now();
+    const view = composeInspectionCommandCentre({
+      plans,
+      sessions,
+      evidence: inSessionScope(evidence),
+      defects: inSessionScope(defects),
+      correctiveActions: inSessionScope(correctiveActions),
+      verifications: inSessionScope(verifications),
+      conditionRatings: inSessionScope(conditionRatings),
+      reports: sessionIds
+        ? reports.filter((row) => sessionIds.has(String(row.entity_id)))
+        : reports,
+      canWrite: options?.canWrite,
+    });
+    return {
+      ...view,
+      profile: {
+        totalMs: Date.now() - started,
+        parallelReadsMs: afterReads - started,
+        compositionMs: Date.now() - composeStarted,
+        readCount: 8,
+        stages,
+      },
+    };
+  }
+
   async listHistory(filter: HistoryFilter = {}) {
     const started = Date.now();
     const [sessions, plans, templates] = await Promise.all([
@@ -495,7 +564,7 @@ export class HostedInspectionRepository {
     const sessions = (await this.listSessions()).filter((row) =>
       asTargets(row.targets).some((target) => target.kind === input.kind && target.canonicalId === input.canonicalId),
     );
-    const sessionIds = new Set(sessions.map((row) => String(row.id)));
+    const sessionIdList = sessions.map((row) => String(row.id));
     const [
       observations,
       measurements,
@@ -507,29 +576,27 @@ export class HostedInspectionRepository {
       conditionRatings,
       verifications,
     ] = await Promise.all([
-      this.listScoped(T.observations),
-      this.listScoped(T.measurements),
-      this.listScoped(T.evidence),
-      this.listScoped(T.defects),
-      this.listScoped(T.recommendations),
-      this.listScoped(T.correctiveActions),
-      this.listScoped(T.assessments),
-      this.listScoped(T.conditionRatings),
-      this.listScoped(T.verifications),
+      this.listInSessionIds(T.observations, sessionIdList),
+      this.listInSessionIds(T.measurements, sessionIdList),
+      this.listInSessionIds(T.evidence, sessionIdList),
+      this.listInSessionIds(T.defects, sessionIdList),
+      this.listInSessionIds(T.recommendations, sessionIdList),
+      this.listInSessionIds(T.correctiveActions, sessionIdList),
+      this.listInSessionIds(T.assessments, sessionIdList),
+      this.listInSessionIds(T.conditionRatings, sessionIdList),
+      this.listInSessionIds(T.verifications, sessionIdList),
     ]);
-    const inSessions = (rows: InspectionDbRow[]) =>
-      rows.filter((row) => sessionIds.has(String(row.session_id)));
     const scoped = {
       sessions,
-      observations: inSessions(observations),
-      measurements: inSessions(measurements),
-      evidence: inSessions(evidence),
-      defects: inSessions(defects),
-      recommendations: inSessions(recommendations),
-      correctiveActions: inSessions(correctiveActions),
-      assessments: inSessions(assessments),
-      conditionRatings: inSessions(conditionRatings),
-      verifications: inSessions(verifications),
+      observations,
+      measurements,
+      evidence,
+      defects,
+      recommendations,
+      correctiveActions,
+      assessments,
+      conditionRatings,
+      verifications,
     };
     return {
       target: { kind: input.kind, canonicalId: input.canonicalId },
@@ -1256,13 +1323,32 @@ export class HostedInspectionRepository {
 
   private async sessionIdsInScope(): Promise<Set<string> | null> {
     if (!this.context.projectId) return null;
-    const sessions = await this.listSessions();
-    return new Set(sessions.map((row) => String(row.id)));
+    this.sessionIdsPromise ??= this.listSessions().then(
+      (sessions) => new Set(sessions.map((row) => String(row.id))),
+    );
+    return this.sessionIdsPromise;
   }
 
   private async assertReportInScope(row: InspectionDbRow): Promise<void> {
     const sessionIds = await this.sessionIdsInScope();
     if (sessionIds && !sessionIds.has(String(row.entity_id))) notFound("report");
+  }
+
+  private async listInSessionIds(table: string, sessionIds: string[]): Promise<InspectionDbRow[]> {
+    if (sessionIds.length === 0) return [];
+    const chunkSize = 80;
+    const chunks: string[][] = [];
+    for (let index = 0; index < sessionIds.length; index += chunkSize) {
+      chunks.push(sessionIds.slice(index, index + chunkSize));
+    }
+    const parts = await Promise.all(
+      chunks.map(async (ids) => {
+        const result = await this.scoped(table).in("session_id", ids);
+        if (result.error) throw new Error(result.error.message);
+        return result.data ?? [];
+      }),
+    );
+    return parts.flat();
   }
 
   private async listScopedBySession(table: string, sessionId?: string): Promise<InspectionDbRow[]> {

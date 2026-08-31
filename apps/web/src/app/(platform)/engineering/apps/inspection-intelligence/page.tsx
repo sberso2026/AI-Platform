@@ -1,4 +1,4 @@
-import { InspectionOverviewBoard } from "@/components/engineering/inspection-overview-board";
+import { InspectionCommandCentre } from "@/components/engineering/inspection-command-centre";
 
 /**
  * Operational Inspection Intelligence landing. Historical V1 readiness markers are retained
@@ -23,7 +23,7 @@ export default function InspectionIntelligenceOverviewPage() {
                           <h1 id="ii-overview-title" className="sr-only">
                             Inspection Intelligence
                           </h1>
-                          <InspectionOverviewBoard />
+                          <InspectionCommandCentre />
                         </div>
                       </div>
                     </div>
