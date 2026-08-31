@@ -27,7 +27,16 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react", "@rtb/ui"],
   },
   webpack: (config, { isServer, webpack }) => {
-    if (!isServer) {
+    if (isServer) {
+      config.plugins.push(
+        new webpack.BannerPlugin({
+          banner:
+            'typeof globalThis.DOMMatrix==="undefined"&&(globalThis.DOMMatrix=class DOMMatrix{});',
+          raw: true,
+          test: /\.js$/,
+        }),
+      );
+    } else {
       config.plugins.push(
         new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: { request: string }) => {
           if (resource.request === "node:crypto") {
