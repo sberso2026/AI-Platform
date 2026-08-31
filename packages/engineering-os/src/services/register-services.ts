@@ -404,6 +404,35 @@ export class EngineeringActionService {
     if (error) throw new Error(error.message);
     return data ?? [];
   }
+
+  async updateStatus(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    status: string
+  ) {
+    assertEngineeringService(commerce, "action.update", tenantId);
+    const allowed = ["open", "in_progress", "completed", "cancelled"] as const;
+    if (!allowed.includes(status as (typeof allowed)[number])) {
+      throw new Error(`Unsupported action status: ${status}`);
+    }
+    const { data: existing, error: lookupError } = await this.supabase
+      .from("engineering_actions")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (lookupError || !existing) throw new Error("Action not found");
+    const { data, error } = await this.supabase
+      .from("engineering_actions")
+      .update({ status })
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update action: ${error?.message}`);
+    return data;
+  }
 }
 
 export class EngineeringRiskService {
@@ -529,6 +558,46 @@ export class EngineeringRiskService {
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  }
+
+  async update(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    patch: {
+      status?: string;
+      mitigation?: string;
+      probability?: number;
+      consequence?: number;
+    }
+  ) {
+    assertEngineeringService(commerce, "risk.update", tenantId);
+    const { data: existing, error: lookupError } = await this.supabase
+      .from("engineering_risks")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (lookupError || !existing) throw new Error("Risk not found");
+    const allowedStatus = ["open", "mitigated", "closed", "accepted"] as const;
+    if (patch.status && !allowedStatus.includes(patch.status as (typeof allowedStatus)[number])) {
+      throw new Error(`Unsupported risk status: ${patch.status}`);
+    }
+    const update: Record<string, unknown> = {};
+    if (patch.status) update.status = patch.status;
+    if (patch.mitigation !== undefined) update.mitigation = patch.mitigation;
+    if (patch.probability !== undefined) update.probability = patch.probability;
+    if (patch.consequence !== undefined) update.consequence = patch.consequence;
+    if (Object.keys(update).length === 0) return existing;
+    const { data, error } = await this.supabase
+      .from("engineering_risks")
+      .update(update)
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update risk: ${error?.message}`);
+    return data;
   }
 }
 
@@ -774,6 +843,43 @@ export class EngineeringTechnicalQueryService {
       data,
       { ...input, numberField: number }
     );
+  }
+
+  async respond(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    input: { response: string; status?: string; responderId?: string }
+  ) {
+    assertEngineeringService(commerce, "technical_query.update", tenantId);
+    const { data: existing, error: lookupError } = await this.supabase
+      .from("engineering_technical_queries")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (lookupError || !existing) throw new Error("Technical query not found");
+    const status = input.status ?? "responded";
+    const allowedStatus = ["open", "responded", "closed"] as const;
+    if (!allowedStatus.includes(status as (typeof allowedStatus)[number])) {
+      throw new Error(`Unsupported TQ status: ${status}`);
+    }
+    const { data, error } = await this.supabase
+      .from("engineering_technical_queries")
+      .update({
+        response: input.response,
+        status,
+        responder_id: input.responderId ?? null,
+      })
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to respond to TQ: ${error?.message}`);
+    const comments = await this.framework
+      .listComments(tenantId, "technical_query", id)
+      .catch(() => []);
+    return { query: data, comments };
   }
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {

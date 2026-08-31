@@ -18,9 +18,11 @@ import {
 import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { asRecordArray } from "@/lib/api/parse-json-response";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 export default function TechnicalQueriesPage() {
   const projectId = useResolvedEngineeringProjectId();
+  const { canMutate } = useEngineeringWriteAccess();
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [question, setQuestion] = useState("");
   const [responseDue, setResponseDue] = useState("");
@@ -73,6 +75,7 @@ export default function TechnicalQueriesPage() {
             ]}
           />
         ) : null}
+        {canMutate ? (
         <form
           className="mb-6 grid gap-2 rounded border p-4 md:grid-cols-2"
           onSubmit={async (e) => {
@@ -110,6 +113,48 @@ export default function TechnicalQueriesPage() {
             </Button>
           </div>
         </form>
+        ) : (
+          <p className="mb-4 text-sm text-muted-foreground">Read-only — technical queries are visible, not editable.</p>
+        )}
+
+        {canMutate && items.length > 0 ? (
+          <div className="mb-6 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-sm font-medium">Respond / close TQ</p>
+            {items.slice(0, 8).map((item) => (
+              <form
+                key={String(item.id)}
+                className="grid gap-2 md:grid-cols-[1fr_auto_auto]"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const response = (form.elements.namedItem("response") as HTMLInputElement).value;
+                  const status = (form.elements.namedItem("status") as HTMLSelectElement).value;
+                  await fetch("/api/engineering/technical-queries", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: item.id, response, status }),
+                  });
+                  reload();
+                }}
+              >
+                <Input
+                  name="response"
+                  defaultValue={String(item.response ?? "")}
+                  placeholder={`${String(item.tq_number ?? "")} response`}
+                  required
+                />
+                <select name="status" defaultValue={String(item.status ?? "open")} className="rounded border px-2 py-1 text-sm">
+                  <option value="open">open</option>
+                  <option value="responded">responded</option>
+                  <option value="closed">closed</option>
+                </select>
+                <Button type="submit" size="sm" variant="secondary">
+                  Save
+                </Button>
+              </form>
+            ))}
+          </div>
+        ) : null}
 
         {error ? <OperationalError message={error} /> : null}
         {loading ? <OperationalSkeleton /> : null}

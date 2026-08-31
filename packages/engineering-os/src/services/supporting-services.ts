@@ -8,7 +8,7 @@ import type {
   EngineeringDiscipline,
   EngineeringSettings,
 } from "@rtb/types";
-import { assertEngineeringService } from "../commerce/service-guard";
+import { assertEngineeringService, assertEngineeringTenantScope } from "../commerce/service-guard";
 import {
   EngineeringAssetService,
   EngineeringDocumentService,
@@ -326,7 +326,11 @@ export class EngineeringSearchService {
     status?: string;
     includeKnowledgeGraph?: boolean;
   }) {
-    assertEngineeringService(commerce, "search.query", tenantId);
+    if (commerce.authorization?.action === "ai.execute") {
+      assertEngineeringTenantScope(commerce, tenantId);
+    } else {
+      assertEngineeringService(commerce, "search.query", tenantId);
+    }
     const type = filters?.type ?? "all";
     const aggregate = { aggregate: true as const };
     const [projects, assets, documents, decisions, actions, risks, issues, technicalQueries, lessons] =

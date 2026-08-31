@@ -17,9 +17,11 @@ import {
 } from "@/components/engineering/operational";
 import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 export default function RisksPage() {
   const projectId = useResolvedEngineeringProjectId();
+  const { canMutate } = useEngineeringWriteAccess();
   const [risks, setRisks] = useState<Record<string, unknown>[]>([]);
   const [cells, setCells] = useState<Record<string, number>>({});
   const [title, setTitle] = useState("");
@@ -76,6 +78,7 @@ export default function RisksPage() {
             ]}
           />
         ) : null}
+        {canMutate ? (
         <form
           className="mb-6 flex flex-wrap gap-2"
           onSubmit={async (e) => {
@@ -101,6 +104,9 @@ export default function RisksPage() {
             Add Risk
           </Button>
         </form>
+        ) : (
+          <p className="mb-4 text-sm text-muted-foreground">Read-only — risk records are visible, not editable.</p>
+        )}
 
         {error ? <OperationalError message={error} /> : null}
         {loading ? <OperationalSkeleton /> : null}
@@ -153,6 +159,41 @@ export default function RisksPage() {
             emptyDescription="No risks are recorded in this scope yet."
           />
         )}
+        {canMutate && risks.length > 0 ? (
+          <div className="mt-4 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-sm font-medium">Update risk status / mitigation</p>
+            {risks.slice(0, 8).map((risk) => (
+              <form
+                key={String(risk.id)}
+                className="flex flex-wrap items-center gap-2 text-sm"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const status = (form.elements.namedItem("status") as HTMLSelectElement).value;
+                  const mitigation = (form.elements.namedItem("mitigation") as HTMLInputElement).value;
+                  await fetch("/api/engineering/risks", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: risk.id, status, mitigation }),
+                  });
+                  reload();
+                }}
+              >
+                <span className="min-w-40 truncate">{String(risk.risk_number ?? risk.title)}</span>
+                <select name="status" defaultValue={String(risk.status ?? "open")} className="rounded border px-2 py-1">
+                  <option value="open">open</option>
+                  <option value="mitigated">mitigated</option>
+                  <option value="accepted">accepted</option>
+                  <option value="closed">closed</option>
+                </select>
+                <Input name="mitigation" defaultValue={String(risk.mitigation ?? "")} placeholder="Mitigation" />
+                <Button type="submit" size="sm" variant="secondary">
+                  Save
+                </Button>
+              </form>
+            ))}
+          </div>
+        ) : null}
       </main>
     </>
   );

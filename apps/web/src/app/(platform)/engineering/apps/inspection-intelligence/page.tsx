@@ -5,6 +5,8 @@ import {
   AskEngineeringAI,
   OperationalPageIntro,
 } from "@/components/engineering/operational";
+import { InspectionHostedWorkbench } from "@/components/engineering/inspection-hosted-workbench";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 const WORKFLOW = [
   { href: "/engineering/apps/inspection-intelligence/plans", label: "Plan" },
@@ -53,6 +55,10 @@ const QUEUES = [
 ] as const;
 
 export default function InspectionIntelligenceOverviewPage() {
+  const { canMutate } = useEngineeringWriteAccess();
+  const actions = canMutate
+    ? ACTIONS
+    : ACTIONS.filter((action) => !/start|create/i.test(action.label));
   return (
     <section
       data-testid="inspection-intelligence-discovery-ready"
@@ -64,16 +70,21 @@ export default function InspectionIntelligenceOverviewPage() {
       <OperationalPageIntro
         purpose="Today’s inspections, open defects, verification, and corrective actions from recorded data."
         primaryAction={
-          <Link
-            href="/engineering/apps/inspection-intelligence/sessions"
-            className="inline-flex min-h-11 items-center rounded-md bg-slate-900 px-3 text-sm font-medium text-white"
-          >
-            Start inspection
-          </Link>
+          canMutate ? (
+            <Link
+              href="/engineering/apps/inspection-intelligence/sessions"
+              className="inline-flex min-h-11 items-center rounded-md bg-slate-900 px-3 text-sm font-medium text-white"
+            >
+              Start inspection
+            </Link>
+          ) : undefined
         }
       />
       <div className="mb-6">
         <AskEngineeringAI q="Summarize recent inspections." />
+      </div>
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+        <InspectionHostedWorkbench focus="overview" />
       </div>
 
       <ol
@@ -95,7 +106,7 @@ export default function InspectionIntelligenceOverviewPage() {
       </ol>
 
       <div className="flex flex-wrap gap-2">
-        {ACTIONS.map((action) => (
+        {actions.map((action) => (
           <Link
             key={action.label}
             href={action.href}

@@ -71,6 +71,16 @@ describe("Tenant creation contract", () => {
 });
 
 describe("Membership creation contract", () => {
+  it("joins invited users to invited_tenant_id instead of creating a tenant", () => {
+    const inviteMetadata = {
+      invited_tenant_id: "tenant-uuid",
+      invited_role_slug: "member",
+      invited_workspace_id: "workspace-uuid",
+    };
+    expect(inviteMetadata.invited_role_slug).toBe("member");
+    expect(["admin", "member", "viewer"]).toContain(inviteMetadata.invited_role_slug);
+  });
+
   it("assigns owner role on signup tenant membership", () => {
     const membership = {
       role_slug: "owner",

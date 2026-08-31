@@ -1,3 +1,5 @@
+import { InspectionHostedWorkbench } from "@/components/engineering/inspection-hosted-workbench";
+
 export default function InspectionReviewPage() {
   return (
     <section data-testid="inspection-review-ready" aria-labelledby="ii-review-title">
@@ -8,6 +10,9 @@ export default function InspectionReviewPage() {
         Human verification for submitted inspections. Approvals stay with people — AI cannot close
         or approve inspections.
       </p>
+      <div className="mt-4">
+        <InspectionHostedWorkbench focus="review" />
+      </div>
     </section>
   );
 }

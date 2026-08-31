@@ -20,7 +20,7 @@ export type EngineeringCapabilitySnapshot = {
   loaded: boolean;
 };
 
-const CACHE_KEY = "rtb.engineering.capability.snapshot.v2";
+const CACHE_KEY = "rtb.engineering.capability.snapshot.v3";
 const CACHE_TTL_MS = 60_000;
 
 type CachedSnapshot = {

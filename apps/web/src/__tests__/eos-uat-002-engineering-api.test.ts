@@ -18,4 +18,16 @@ describe("EOS-UAT-002 engineering API JSON error contract", () => {
     expect(body.error.requestId).toBe("eos-uat-002");
     expect(body.error.message).toBeTruthy();
   });
+
+  it("maps row-level security denials to 403, not 500", async () => {
+    const response = handleCommerceDomainError(
+      new Error("new row violates row-level security policy for table engineering_risks"),
+      "eos-pilot-1r",
+    );
+    expect(response.status).toBe(403);
+    const body = JSON.parse(await response.text()) as {
+      error: { code: string };
+    };
+    expect(body.error.code).toBe("forbidden");
+  });
 });

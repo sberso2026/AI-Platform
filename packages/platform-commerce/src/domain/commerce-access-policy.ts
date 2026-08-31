@@ -73,6 +73,21 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
     workspaceRequired: true,
     cachePolicy: "fresh",
   },
+  "inspection-intelligence-workflow.read": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "inspection.read",
+    seatRequired: true,
+    workspaceRequired: true,
+  },
+  "inspection-intelligence-workflow.write": {
+    productKey: ENGINEERING_PRODUCT,
+    applicationKey: "inspection_intelligence",
+    action: "inspection.write",
+    seatRequired: true,
+    workspaceRequired: true,
+    cachePolicy: "fresh",
+  },
   "inspection-intelligence-review.read": {
     productKey: ENGINEERING_PRODUCT,
     applicationKey: "inspection_intelligence",
@@ -418,14 +433,16 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
 };
 
 export function resolveApiPolicyKey(segment: string, method: string): string {
-  const write = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+  const normalized = method.toUpperCase();
+  const write = normalized === "POST" || normalized === "PUT" || normalized === "PATCH" || normalized === "DELETE";
   const suffix = write ? "write" : "read";
   return `${segment}.${suffix}`;
 }
 
 export function getEngineeringApiPolicy(segment: string, method: string): CommerceAccessPolicy {
-  const write = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
-  const key = resolveApiPolicyKey(segment, method);
+  const normalized = method.toUpperCase();
+  const write = normalized === "POST" || normalized === "PUT" || normalized === "PATCH" || normalized === "DELETE";
+  const key = resolveApiPolicyKey(segment, normalized);
   const policy = ENGINEERING_API_POLICIES[key];
   if (policy) return policy;
   const fallbackKey = `${segment}.read`;

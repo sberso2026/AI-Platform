@@ -25,3 +25,17 @@ export const POST = withEngineeringApi("actions", async ({ ctx, commerce }, requ
   });
   return NextResponse.json({ data }, { status: 201 });
 });
+
+export const PATCH = withEngineeringApi("actions", async ({ ctx, commerce }, request) => {
+  const body = await request.json();
+  if (!body.id || !body.status) {
+    return NextResponse.json({ error: "id and status required" }, { status: 422 });
+  }
+  const data = await ctx.engineering.actions.updateStatus(
+    commerce,
+    ctx.tenantId,
+    body.id,
+    body.status,
+  );
+  return NextResponse.json({ data });
+});

@@ -636,6 +636,61 @@ export class EngineeringDocumentService {
     if (error) throw new Error(`Failed to search documents: ${error.message}`);
     return (data ?? []).map(mapDocument);
   }
+
+  async attachFile(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    documentId: string,
+    input: {
+      filePath: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+      uploadedBy?: string;
+      revision?: string;
+    }
+  ): Promise<EngineeringDocument> {
+    assertEngineeringService(commerce, "document.update", tenantId);
+    const { data: existing, error: lookupError } = await this.supabase
+      .from("engineering_documents")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("id", documentId)
+      .maybeSingle();
+    if (lookupError || !existing) throw new Error("Document not found");
+    const current = mapDocument(existing);
+    if (!isRecordInWorkspace(current.workspace_id, commerce)) throw new Error("Document not found");
+    const revision = input.revision ?? current.revision ?? "A";
+    const { data, error } = await this.supabase
+      .from("engineering_documents")
+      .update({
+        file_path: input.filePath,
+        file_name: input.fileName,
+        file_size: input.fileSize,
+        mime_type: input.mimeType,
+        revision,
+        uploaded_by: input.uploadedBy ?? current.uploaded_by ?? null,
+        uploaded_at: new Date().toISOString(),
+      })
+      .eq("tenant_id", tenantId)
+      .eq("id", documentId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to attach document file: ${error?.message}`);
+
+    await this.supabase.from("engineering_document_versions").insert({
+      document_id: documentId,
+      revision,
+      file_path: input.filePath,
+      file_name: input.fileName,
+      file_size: input.fileSize,
+      mime_type: input.mimeType,
+      status: current.status,
+      uploaded_by: input.uploadedBy ?? null,
+    });
+
+    return mapDocument(data);
+  }
 }
 
 function mapDocument(row: Record<string, unknown>): EngineeringDocument {

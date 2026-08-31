@@ -20,6 +20,7 @@ import {
   type OperationalRow,
 } from "@/components/engineering/operational";
 import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 export function useRegisterList(endpoint: string) {
   const projectId = useResolvedEngineeringProjectId();
@@ -65,15 +66,18 @@ export function CreateForm({
   endpoint,
   extra,
   onCreated,
+  enabled,
 }: {
   fields: { key: string; label: string; required?: boolean; multiline?: boolean; type?: string }[];
   endpoint: string;
   extra?: Record<string, unknown>;
   onCreated: () => void;
+  enabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  if (enabled === false) return null;
   if (!open) {
     return (
       <Button size="sm" onClick={() => setOpen(true)}>
@@ -152,6 +156,7 @@ export function RegisterShell({
   emptyDescription?: string;
 }) {
   const { items, loading, error, reload, projectId } = useRegisterList(endpoint);
+  const { canMutate } = useEngineeringWriteAccess();
   const rows: OperationalRow[] = items.map((item) => ({
     ...item,
     record: `${String(item[numberKey] ?? "")} — ${String(item.title ?? "")}`.replace(/^ — /, ""),
@@ -185,6 +190,7 @@ export function RegisterShell({
             endpoint={endpoint}
             extra={{ ...createExtra, ...(projectId ? { projectId } : {}) }}
             onCreated={reload}
+            enabled={canMutate}
           />
         </div>
         {error ? <OperationalError message={error} /> : null}

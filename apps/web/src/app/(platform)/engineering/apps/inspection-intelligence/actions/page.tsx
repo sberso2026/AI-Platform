@@ -1,3 +1,5 @@
+import { InspectionHostedWorkbench } from "@/components/engineering/inspection-hosted-workbench";
+
 export default function InspectionActionsPage() {
   return (
     <section data-testid="inspection-corrective-actions-ready" aria-labelledby="ii-actions-title">
@@ -5,9 +7,11 @@ export default function InspectionActionsPage() {
         Corrective actions
       </h1>
       <p className="mt-2 text-slate-600">
-        Ownership, due dates, verification, and closure. Inspection close-out is blocked until
-        corrective actions are verified.
+        Ownership, due dates, verification, and closure recorded against hosted inspection sessions.
       </p>
+      <div className="mt-4">
+        <InspectionHostedWorkbench focus="actions" />
+      </div>
     </section>
   );
 }

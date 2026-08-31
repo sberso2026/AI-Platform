@@ -124,8 +124,11 @@ export default function EngineeringReportsPage() {
 
         if (cancelled) return;
 
-        for (const res of responses) {
+        for (let index = 0; index < responses.length; index += 1) {
+          const res = responses[index];
           if (!res.ok) {
+            const optionalEntitlement = index === 1 || index === 5 || index === 7;
+            if (optionalEntitlement && res.status === 403) continue;
             setError(res.errorMessage ?? "Unable to load register summary");
             setSummary(EMPTY_SUMMARY);
             return;
@@ -141,7 +144,7 @@ export default function EngineeringReportsPage() {
           lessons,
           assets,
           documents,
-        ] = responses.map((res) => asRecordArray(res.data));
+        ] = responses.map((res) => (res.ok ? asRecordArray(res.data) : []));
 
         const presentation =
           (risks[0]?.presentation as { projectLabel?: string | null } | undefined) ??

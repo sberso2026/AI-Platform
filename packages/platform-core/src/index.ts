@@ -8,3 +8,4 @@ export * from "./commerce";
 export * from "./administration";
 export * from "./permissions";
 export * from "./tenant";
+export * from "./membership-admin";

@@ -17,9 +17,11 @@ import {
 } from "@/components/engineering/operational";
 import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
 import { asRecordArray, parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 export default function ActionsPage() {
   const projectId = useResolvedEngineeringProjectId();
+  const { canMutate } = useEngineeringWriteAccess();
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [view, setView] = useState<"table" | "kanban">("table");
   const [title, setTitle] = useState("");
@@ -81,6 +83,7 @@ export default function ActionsPage() {
           <Button size="sm" variant={view === "kanban" ? "default" : "outline"} onClick={() => setView("kanban")}>
             Kanban
           </Button>
+          {canMutate ? (
           <form
             className="ml-auto flex gap-2"
             onSubmit={async (e) => {
@@ -104,6 +107,9 @@ export default function ActionsPage() {
               Add
             </Button>
           </form>
+          ) : (
+            <p className="ml-auto text-sm text-muted-foreground">Read-only</p>
+          )}
         </div>
 
         {error ? <OperationalError message={error} /> : null}
@@ -143,6 +149,30 @@ export default function ActionsPage() {
                   .map((item) => (
                     <div key={item.id as string} className="mb-2 rounded border border-slate-100 p-2 text-sm">
                       {(item.action_number as string) ?? ""} {(item.title as string) ?? ""}
+                      {canMutate ? (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {columns
+                            .filter((next) => next !== (item.status as string))
+                            .map((next) => (
+                              <Button
+                                key={next}
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  await fetch("/api/engineering/actions", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ id: item.id, status: next }),
+                                  });
+                                  reload();
+                                }}
+                              >
+                                {next}
+                              </Button>
+                            ))}
+                        </div>
+                      ) : null}
                     </div>
                   ))}
               </section>

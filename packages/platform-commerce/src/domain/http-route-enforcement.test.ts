@@ -9,6 +9,9 @@ describe("HTTP route policy enforcement", () => {
     expect(getEngineeringApiPolicy("projects", "POST").action).toBe("project.create");
     expect(getEngineeringApiPolicy("documents", "GET").applicationKey).toBe("documents");
     expect(getEngineeringApiPolicy("ai", "POST").featureKey).toBe("ai_assistant");
+    expect(getEngineeringApiPolicy("inspection-intelligence-workflow", "POST").applicationKey).toBe(
+      "inspection_intelligence",
+    );
   });
 
   it("requires fresh cache policy for writes", () => {

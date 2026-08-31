@@ -1,3 +1,5 @@
+import { InspectionHostedWorkbench } from "@/components/engineering/inspection-hosted-workbench";
+
 export default function InspectionFieldPage() {
   return (
     <section data-testid="inspection-field-ready" aria-labelledby="ii-field-title">
@@ -5,19 +7,12 @@ export default function InspectionFieldPage() {
         Field Capture
       </h1>
       <p className="mt-2 text-slate-600">
-        Device camera, QR/barcode identification, governed photo annotation, and authenticated
-        attestation via the Engineering Mobile SDK. Original evidence remains immutable.
+        Record observations, measurements, and immutable evidence against a hosted inspection
+        session. Device camera and QR capture remain mobile-SDK reserved.
       </p>
-      <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-700">
-        <li data-testid="inspection-field-camera">Camera capture → Platform Files evidence</li>
-        <li data-testid="inspection-field-scan">QR / barcode → shared-domain target resolution</li>
-        <li data-testid="inspection-field-annotate">Annotation derivatives (hash preserved)</li>
-        <li data-testid="inspection-field-attest">Authenticated attestation + supplementary signature</li>
-      </ul>
-      <p className="mt-4 text-xs text-slate-500" data-testid="inspection-field-draft-state">
-        Draft states: local_draft → media_staged → upload_pending → uploading → uploaded →
-        server_confirmed
-      </p>
+      <div className="mt-4">
+        <InspectionHostedWorkbench focus="sessions" />
+      </div>
     </section>
   );
 }

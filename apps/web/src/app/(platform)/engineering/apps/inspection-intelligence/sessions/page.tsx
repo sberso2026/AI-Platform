@@ -1,3 +1,5 @@
+import { InspectionHostedWorkbench } from "@/components/engineering/inspection-hosted-workbench";
+
 export default function InspectionSessionsPage() {
   return (
     <section data-testid="inspection-sessions-ready" aria-labelledby="ii-sessions-title">
@@ -5,9 +7,12 @@ export default function InspectionSessionsPage() {
         Inspection sessions
       </h1>
       <p className="mt-2 text-slate-600">
-        Session execution for observations, Measurement Engine evaluations, and immutable evidence
-        append. AI Vision and offline/mobile capture remain reserved.
+        Session execution for observations, measurements, and immutable evidence. Records persist in
+        hosted Inspection Intelligence tables.
       </p>
+      <div className="mt-4">
+        <InspectionHostedWorkbench focus="sessions" />
+      </div>
     </section>
   );
 }

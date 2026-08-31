@@ -5,10 +5,12 @@ import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { enforceCommercePolicy, type CommerceHandlerContext } from "./with-commerce-entitlement";
 import {
+  forbiddenResponse,
   handleCommerceDomainError,
   lifecycleErrorResponse,
   unauthenticatedResponse,
 } from "@/lib/lifecycle-api";
+import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
 
 export type { CommerceHandlerContext };
 
@@ -64,6 +66,15 @@ export async function guardEngineeringApi(
 ): Promise<CommerceHandlerContext | NextResponse> {
   const ctx = await getAuthContext();
   if (!ctx) return unauthenticatedResponse(crypto.randomUUID());
+
+  const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
+  if (mutating && isReadOnlyEngineeringRole(ctx.roleSlug)) {
+    return forbiddenResponse(
+      crypto.randomUUID(),
+      "Read-only role cannot mutate engineering records",
+      "read_only",
+    );
+  }
 
   const policy = getEngineeringApiPolicy(segment, method);
   const result = await enforceCommercePolicy(ctx, policy);

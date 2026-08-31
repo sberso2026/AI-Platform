@@ -63,6 +63,14 @@ export function handleCommerceDomainError(
   if (err instanceof DocumentIntelligenceError) {
     return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
   }
+  if (isAuthorizationDenial(err)) {
+    return lifecycleErrorResponse(
+      "forbidden",
+      "You do not have authority to perform this action",
+      403,
+      requestId
+    );
+  }
   console.error("[lifecycle-api] unhandled error", { requestId, err });
   return lifecycleErrorResponse(
     "internal_error",
@@ -70,6 +78,14 @@ export function handleCommerceDomainError(
     500,
     requestId
   );
+}
+
+export function isAuthorizationDenial(err: unknown): boolean {
+  const code =
+    err && typeof err === "object" && "code" in err ? String((err as { code?: unknown }).code ?? "") : "";
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  if (code === "42501" || code === "PGRST301") return true;
+  return /row-level security|violates row-level security/i.test(message);
 }
 
 export function parseLifecycleErrorBody(body: unknown): { code: string; message: string; requestId?: string; details?: Record<string, unknown> } {

@@ -41,6 +41,13 @@ describe("ENGINEERING_API_POLICIES", () => {
     }
   });
 
+  it("maps inspection workflow segment to inspection_intelligence", () => {
+    const policy = getEngineeringApiPolicy("inspection-intelligence-workflow", "POST");
+    expect(policy.applicationKey).toBe("inspection_intelligence");
+    expect(policy.action).toBe("inspection.write");
+    expect(policy.cachePolicy).toBe("fresh");
+  });
+
   it("requires fresh cache for write operations", () => {
     const write = getEngineeringApiPolicy("projects", "POST");
     expect(write.cachePolicy).toBe("fresh");

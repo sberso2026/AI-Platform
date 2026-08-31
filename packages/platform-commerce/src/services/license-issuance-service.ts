@@ -98,6 +98,86 @@ export class LicenseIssuanceService {
     return issued;
   }
 
+  static readonly PILOT_APPLICATION_KEYS = [
+    "project_intelligence",
+    "documents",
+    "inspection_intelligence",
+    "project_controls",
+  ] as const;
+
+  static readonly PILOT_FEATURE_KEYS = ["ai_assistant"] as const;
+
+  async reconcilePilotProfile(input: {
+    tenantId: string;
+    productId: string;
+    subscriptionId: string;
+    issuedBy?: string;
+  }): Promise<{ issued: CommercialLicense[]; skipped: string[] }> {
+    const existing = await this.licenses.listByProduct(input.tenantId, input.productId);
+    const issued: CommercialLicense[] = [];
+    const skipped: string[] = [];
+
+    for (const applicationKey of LicenseIssuanceService.PILOT_APPLICATION_KEYS) {
+      const found = existing.find(
+        (l) =>
+          l.license_type === "application" &&
+          l.application_key === applicationKey &&
+          l.status === "active"
+      );
+      if (found) {
+        skipped.push(applicationKey);
+        continue;
+      }
+      const licence = await this.licenses.create({
+        tenantId: input.tenantId,
+        productId: input.productId,
+        applicationKey,
+        subscriptionId: input.subscriptionId,
+        licenseType: "application",
+        createdBy: input.issuedBy,
+      });
+      issued.push(licence);
+      await this.events.emit({
+        eventType: "licence.issued",
+        tenantId: input.tenantId,
+        actorUserId: input.issuedBy,
+        aggregateType: "licence",
+        aggregateId: licence.id,
+        payload: { licenceId: licence.id, applicationKey, source: "pilot_reconcile" },
+      });
+    }
+
+    for (const featureKey of LicenseIssuanceService.PILOT_FEATURE_KEYS) {
+      const found = existing.find(
+        (l) => l.license_type === "feature" && l.feature_key === featureKey && l.status === "active"
+      );
+      if (found) {
+        skipped.push(featureKey);
+        continue;
+      }
+      const licence = await this.licenses.create({
+        tenantId: input.tenantId,
+        productId: input.productId,
+        featureKey,
+        subscriptionId: input.subscriptionId,
+        licenseType: "feature",
+        createdBy: input.issuedBy,
+      });
+      issued.push(licence);
+      await this.events.emit({
+        eventType: "licence.issued",
+        tenantId: input.tenantId,
+        actorUserId: input.issuedBy,
+        aggregateType: "licence",
+        aggregateId: licence.id,
+        payload: { licenceId: licence.id, featureKey, source: "pilot_reconcile" },
+      });
+    }
+
+    this.cache.invalidateTenant(input.tenantId);
+    return { issued, skipped };
+  }
+
   async revoke(tenantId: string, licenceId: string, revokedBy?: string, reason?: string) {
     const updated = await this.licenses.updateStatus(tenantId, licenceId, "revoked");
     await this.events.emit({

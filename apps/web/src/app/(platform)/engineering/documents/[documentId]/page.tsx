@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, Badge, Button } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 type DocumentPresentation = {
   projectLabel?: string | null;
@@ -33,6 +34,7 @@ const ACCEPT =
 export default function EngineeringDocumentDetailPage() {
   const params = useParams();
   const documentId = params.documentId as string;
+  const { canMutate } = useEngineeringWriteAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [doc, setDoc] = useState<DocRow | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +179,26 @@ export default function EngineeringDocumentDetailPage() {
                 }
               />
 
-              {fileState === "none" && (
+              {fileState === "uploaded" && (
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    data-testid="document-open-file"
+                    onClick={async () => {
+                      const parsed = await parseApiJsonResponse<{ url?: string }>(
+                        await fetch(`/api/engineering/documents/${documentId}/file`),
+                      );
+                      if (parsed.data?.url) window.open(parsed.data.url, "_blank", "noopener,noreferrer");
+                      else setAttachError(parsed.errorMessage ?? "Unable to open file");
+                    }}
+                  >
+                    Open file
+                  </Button>
+                </div>
+              )}
+
+              {fileState === "none" && canMutate && (
                 <div className="mt-4 space-y-2 rounded-md border border-dashed p-4">
                   <p className="text-sm font-medium">Attach source file</p>
                   <p className="text-xs text-muted-foreground">
