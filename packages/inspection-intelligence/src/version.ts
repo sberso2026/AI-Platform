@@ -38,6 +38,7 @@ export const INSPECTION_INTELLIGENCE_II_5_IMPLEMENTED = true as const;
 export const INSPECTION_INTELLIGENCE_II_6_READY = true as const;
 export const INSPECTION_INTELLIGENCE_II_6_IMPLEMENTED = true as const;
 export const INSPECTION_INTELLIGENCE_II_6P_IMPLEMENTED = true as const;
+export const INSPECTION_INTELLIGENCE_II_6R_IMPLEMENTED = true as const;
 
 export const INSPECTION_PRODUCT_FEATURES_IMPLEMENTED = true as const;
 export const INSPECTION_VERTICAL_SLICE_READY = true as const;
@@ -200,6 +201,7 @@ export function getInspectionIntelligenceDomainDeclaration() {
       ii6Ready: INSPECTION_INTELLIGENCE_II_6_READY,
       ii6Implemented: INSPECTION_INTELLIGENCE_II_6_IMPLEMENTED,
       ii6pImplemented: INSPECTION_INTELLIGENCE_II_6P_IMPLEMENTED,
+      ii6rImplemented: INSPECTION_INTELLIGENCE_II_6R_IMPLEMENTED,
     },
   };
 }

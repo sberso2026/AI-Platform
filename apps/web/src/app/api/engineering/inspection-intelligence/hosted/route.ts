@@ -64,6 +64,22 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
       }
       return NextResponse.json(payload);
     }
+    if (resource === "runtime_ping") {
+      const pingStarted = Date.now();
+      const { error, count } = await context.ctx.supabase
+        .from("tenants")
+        .select("id", { count: "exact", head: true })
+        .eq("id", context.ctx.tenantId);
+      return NextResponse.json({
+        data: { ok: !error, count: count ?? 0 },
+        requestId,
+        profile: {
+          security: context.securityProfile,
+          domainMs: Date.now() - pingStarted,
+          pingMs: Date.now() - pingStarted,
+        },
+      });
+    }
     if (resource === "overview") {
       return NextResponse.json({
         data: {
@@ -244,6 +260,10 @@ export const POST = withEngineeringApi("inspection-intelligence-hosted", async (
     const domainStarted = Date.now();
     const data = await dispatchIntent(intent, repo, body, transitionAuthAction(context), actorUserId);
     const wantProfile = body.profile === true || new URL(request.url).searchParams.get("profile") === "1";
+    const domainProfile =
+      data && typeof data === "object" && "profile" in (data as Record<string, unknown>)
+        ? (data as { profile?: unknown }).profile
+        : undefined;
     return NextResponse.json(
       wantProfile
         ? {
@@ -253,6 +273,7 @@ export const POST = withEngineeringApi("inspection-intelligence-hosted", async (
               security: context.securityProfile,
               domainMs: Date.now() - domainStarted,
               intent,
+              domain: domainProfile,
             },
           }
         : { data, requestId },

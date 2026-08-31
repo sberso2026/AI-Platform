@@ -90,6 +90,11 @@ function coupledToProject(targets: InspectionTarget[], projectId?: string): bool
   return targets.some((target) => target.kind === "project" && target.canonicalId === projectId);
 }
 
+function payloadStats(rows: InspectionDbRow[] | InspectionDbRow | null | undefined) {
+  const list = !rows ? [] : Array.isArray(rows) ? rows : [rows];
+  return { rows: list.length, bytes: Buffer.byteLength(JSON.stringify(list)) };
+}
+
 export class HostedInspectionRepository {
   private sessionsPromise?: Promise<InspectionDbRow[]>;
   private sessionIdsPromise?: Promise<Set<string> | null>;
@@ -376,6 +381,7 @@ export class HostedInspectionRepository {
       assessments,
       conditionRatings,
       verifications,
+      plan,
     ] = await Promise.all([
       this.listBySession(T.observations, sessionId),
       this.listBySession(T.measurements, sessionId),
@@ -386,10 +392,14 @@ export class HostedInspectionRepository {
       this.listBySession(T.assessments, sessionId),
       this.listBySession(T.conditionRatings, sessionId),
       this.listBySession(T.verifications, sessionId),
+      session.plan_id
+        ? this.requireRow(T.plans, String(session.plan_id)).catch(() => null)
+        : Promise.resolve(null),
     ]);
     const afterReads = Date.now();
     const data = {
       session,
+      plan,
       observations,
       measurements,
       evidence,
@@ -407,7 +417,7 @@ export class HostedInspectionRepository {
         requireSessionMs: afterSession - started,
         parallelReadsMs: afterReads - afterSession,
         totalMs: afterReads - started,
-        readCount: 9,
+        readCount: 10,
       },
     };
   }
@@ -543,6 +553,16 @@ export class HostedInspectionRepository {
         compositionMs: Date.now() - composeStarted,
         readCount: 8,
         stages,
+        payload: {
+          plans: payloadStats(plans),
+          sessions: payloadStats(sessions),
+          evidence: payloadStats(evidence),
+          defects: payloadStats(defects),
+          correctiveActions: payloadStats(correctiveActions),
+          verifications: payloadStats(verifications),
+          conditionRatings: payloadStats(conditionRatings),
+          reports: payloadStats(reports),
+        },
       },
     };
   }
@@ -561,31 +581,53 @@ export class HostedInspectionRepository {
   async getTargetHistory(input: { kind: string; canonicalId: string }) {
     const started = Date.now();
     if (!input.kind || !input.canonicalId) notFound("target");
-    const sessions = (await this.listSessions()).filter((row) =>
+    const stages: Record<string, number> = {};
+    const timed = async <T>(name: string, work: Promise<T>): Promise<T> => {
+      const began = Date.now();
+      try {
+        return await work;
+      } finally {
+        stages[name] = Date.now() - began;
+      }
+    };
+    const [
+      allSessions,
+      observationsAll,
+      measurementsAll,
+      evidenceAll,
+      defectsAll,
+      recommendationsAll,
+      correctiveActionsAll,
+      assessmentsAll,
+      conditionRatingsAll,
+      verificationsAll,
+    ] = await Promise.all([
+      timed("sessions", this.listSessions()),
+      timed("observations", this.listScoped(T.observations)),
+      timed("measurements", this.listScoped(T.measurements)),
+      timed("evidence", this.listScoped(T.evidence)),
+      timed("defects", this.listScoped(T.defects)),
+      timed("recommendations", this.listScoped(T.recommendations)),
+      timed("correctiveActions", this.listScoped(T.correctiveActions)),
+      timed("assessments", this.listScoped(T.assessments)),
+      timed("conditionRatings", this.listScoped(T.conditionRatings)),
+      timed("verifications", this.listScoped(T.verifications)),
+    ]);
+    const sessions = allSessions.filter((row) =>
       asTargets(row.targets).some((target) => target.kind === input.kind && target.canonicalId === input.canonicalId),
     );
-    const sessionIdList = sessions.map((row) => String(row.id));
-    const [
-      observations,
-      measurements,
-      evidence,
-      defects,
-      recommendations,
-      correctiveActions,
-      assessments,
-      conditionRatings,
-      verifications,
-    ] = await Promise.all([
-      this.listInSessionIds(T.observations, sessionIdList),
-      this.listInSessionIds(T.measurements, sessionIdList),
-      this.listInSessionIds(T.evidence, sessionIdList),
-      this.listInSessionIds(T.defects, sessionIdList),
-      this.listInSessionIds(T.recommendations, sessionIdList),
-      this.listInSessionIds(T.correctiveActions, sessionIdList),
-      this.listInSessionIds(T.assessments, sessionIdList),
-      this.listInSessionIds(T.conditionRatings, sessionIdList),
-      this.listInSessionIds(T.verifications, sessionIdList),
-    ]);
+    const sessionIdSet = new Set(sessions.map((row) => String(row.id)));
+    const inSessionScope = (rows: InspectionDbRow[]) =>
+      rows.filter((row) => sessionIdSet.has(String(row.session_id)));
+    const observations = inSessionScope(observationsAll);
+    const measurements = inSessionScope(measurementsAll);
+    const evidence = inSessionScope(evidenceAll);
+    const defects = inSessionScope(defectsAll);
+    const recommendations = inSessionScope(recommendationsAll);
+    const correctiveActions = inSessionScope(correctiveActionsAll);
+    const assessments = inSessionScope(assessmentsAll);
+    const conditionRatings = inSessionScope(conditionRatingsAll);
+    const verifications = inSessionScope(verificationsAll);
     const scoped = {
       sessions,
       observations,
@@ -604,7 +646,25 @@ export class HostedInspectionRepository {
       timeline: buildTargetTimeline(scoped),
       changeOverTime: computeChangeOverTime(scoped),
       missingContinuity: sessions.length === 0,
-      profile: { totalMs: Date.now() - started, sessionCount: sessions.length },
+      profile: {
+        totalMs: Date.now() - started,
+        sessionCount: sessions.length,
+        parallelAfterSessionScope: true,
+        parallelWithSessionScope: true,
+        stages,
+        payload: {
+          sessions: payloadStats(sessions),
+          observations: payloadStats(observations),
+          measurements: payloadStats(measurements),
+          evidence: payloadStats(evidence),
+          defects: payloadStats(defects),
+          recommendations: payloadStats(recommendations),
+          correctiveActions: payloadStats(correctiveActions),
+          assessments: payloadStats(assessments),
+          conditionRatings: payloadStats(conditionRatings),
+          verifications: payloadStats(verifications),
+        },
+      },
     };
   }
 
@@ -650,13 +710,14 @@ export class HostedInspectionRepository {
     const started = Date.now();
     const type = II_GOVERNED_REPORT_TYPES.find((item) => item.reportKey === input.reportKey);
     if (!type) throw new Error(`unsupported_report_key:${input.reportKey}`);
-    const workspace = await this.getSessionWorkspace(input.sessionId);
-    const plan = workspace.session.plan_id
-      ? await this.requireRow(T.plans, String(workspace.session.plan_id)).catch(() => null)
-      : null;
+    const workspace = await this.getSessionWorkspace(input.sessionId, { profile: true });
+    const afterWorkspace = Date.now();
+    const plan = workspace.plan;
+    const afterPlan = Date.now();
     const template = plan?.template_id
       ? await this.requireRow(T.templates, String(plan.template_id)).catch(() => null)
       : null;
+    const afterTemplate = Date.now();
     const snapshot = composeGovernedReport({
       reportKey: input.reportKey,
       workspace: {
@@ -675,6 +736,7 @@ export class HostedInspectionRepository {
       },
       actorUserId: this.context.actorUserId,
     });
+    const afterCompose = Date.now();
     const row = await this.insert(T.reportingOutputs, {
       id: `rpt_${type.kind}_${input.sessionId}_${Date.now()}`,
       report_key: snapshot.reportKey,
@@ -685,6 +747,7 @@ export class HostedInspectionRepository {
       mobile_ready: false,
       generated_at: snapshot.generatedAt,
     });
+    const afterInsert = Date.now();
     await this.audit?.log({
       action: "inspection.report.composed",
       resourceType: "inspection",
@@ -696,7 +759,20 @@ export class HostedInspectionRepository {
         authority: snapshot.authority.state,
       },
     });
-    return { ...row, profile: { composeMs: Date.now() - started }, pdfAvailable: II_PDF_EXPORT_AVAILABLE };
+    return {
+      ...row,
+      profile: {
+        composeMs: Date.now() - started,
+        sourceReadsMs: afterWorkspace - started,
+        planMs: afterPlan - afterWorkspace,
+        templateMs: afterTemplate - afterPlan,
+        snapshotMs: afterCompose - afterTemplate,
+        insertMs: afterInsert - afterCompose,
+        auditMs: Date.now() - afterInsert,
+        workspace: (workspace as { profile?: unknown }).profile,
+      },
+      pdfAvailable: II_PDF_EXPORT_AVAILABLE,
+    };
   }
 
   async transitionReport(outputId: string, to: ReportAuthorityState) {
@@ -832,7 +908,9 @@ export class HostedInspectionRepository {
   }
 
   async recordObservation(input: { sessionId: string; checklistItemType: string; body: string }) {
+    const started = Date.now();
     await this.requireRow(T.sessions, input.sessionId);
+    const afterSession = Date.now();
     const row = await this.insert(T.observations, {
       id: randomUUID(),
       session_id: input.sessionId,
@@ -840,11 +918,20 @@ export class HostedInspectionRepository {
       body: input.body,
       recorded_at: new Date().toISOString(),
     });
+    const afterInsert = Date.now();
     await this.writeEvent("ObservationRecorded", String(row.id), {
       sessionId: input.sessionId,
       checklistItemType: input.checklistItemType,
     });
-    return row;
+    return {
+      ...row,
+      profile: {
+        sessionLookupMs: afterSession - started,
+        insertMs: afterInsert - afterSession,
+        eventAuditMs: Date.now() - afterInsert,
+        totalMs: Date.now() - started,
+      },
+    };
   }
 
   async recordMeasurement(input: {

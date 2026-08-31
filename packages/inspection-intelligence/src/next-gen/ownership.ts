@@ -50,6 +50,8 @@ export const II_6_READY = true as const;
 export const II_6_IMPLEMENTED = true as const;
 /** II-6P shared-platform latency classification and request-scoped reuse. */
 export const II_6P_IMPLEMENTED = true as const;
+/** II-6R runtime topology + query-plan closure. */
+export const II_6R_IMPLEMENTED = true as const;
 export const PLATFORM_SHARED_BEHAVIOR_CHANGED = true as const;
 export const DUPLICATE_COMMAND_CENTRE_MODEL_DETECTED = false as const;
 /** Classified from live profiles in II-6/II-6P. Updated after measurement. */
