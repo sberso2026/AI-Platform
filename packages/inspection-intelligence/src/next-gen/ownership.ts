@@ -48,8 +48,11 @@ export const II_5_IMPLEMENTED = true as const;
 /** Inspection Command Centre composition over existing inspection_* records. */
 export const II_6_READY = true as const;
 export const II_6_IMPLEMENTED = true as const;
+/** II-6P shared-platform latency classification and request-scoped reuse. */
+export const II_6P_IMPLEMENTED = true as const;
+export const PLATFORM_SHARED_BEHAVIOR_CHANGED = true as const;
 export const DUPLICATE_COMMAND_CENTRE_MODEL_DETECTED = false as const;
-/** Classified from live profiles in II-6. Updated after measurement. */
+/** Classified from live profiles in II-6/II-6P. Updated after measurement. */
 export const II_OPERATIONAL_WRITE_GA_PERFORMANCE_ACCEPTABLE = false as const;
 export const II_HISTORY_GA_PERFORMANCE_ACCEPTABLE = false as const;
 export const II_TARGET_HISTORY_GA_PERFORMANCE_ACCEPTABLE = false as const;
@@ -57,6 +60,9 @@ export const II_REPORT_GA_PERFORMANCE_ACCEPTABLE = false as const;
 export const II_COMMAND_CENTRE_GA_PERFORMANCE_ACCEPTABLE = false as const;
 export const II_PERFORMANCE_GA_BLOCKER_OPEN = true as const;
 export const II_RELEASE_CANDIDATE_READY = false as const;
+export const II_LATENCY_CLASSIFICATION = "MIXED" as const;
+export const II_PERFORMANCE_ROOT_CAUSE_ESTABLISHED = true as const;
+export const II_PERFORMANCE_OPTIMIZATION_PASS = true as const;
 export const DUPLICATE_HISTORY_MODEL_DETECTED = false as const;
 export const DUPLICATE_REPORTING_TRUTH_MODEL_DETECTED = false as const;
 export const DUPLICATE_ASSET_TRUTH_MODEL_DETECTED = false as const;

@@ -54,6 +54,7 @@ function createMocks() {
     seats,
     seatAssignments,
     products,
+    overrides,
   };
 }
 
@@ -150,5 +151,36 @@ describe("EntitlementService integration", () => {
     expect(subscriptions.findActiveByProduct).toHaveBeenCalledTimes(2);
 
     cache.invalidateTenant("t1");
+  });
+
+  it("lists active overrides once and does not reserialize deny/allow lookups", async () => {
+    const { service, products, subscriptions, licenses, seats, seatAssignments, overrides } =
+      createMocks();
+    products.getProductBySlug = vi.fn().mockResolvedValue({
+      id: "prod-1",
+      lifecycle_status: "active",
+    });
+    subscriptions.findActiveByProduct = vi.fn().mockResolvedValue({
+      id: "sub-1",
+      status: "active",
+      product_id: "prod-1",
+    });
+    licenses.listByProduct = vi.fn().mockResolvedValue([
+      { id: "lic-1", license_type: "product", status: "active", product_id: "prod-1", max_seats: 0 },
+    ]);
+    seats.getByProduct = vi.fn().mockResolvedValue(null);
+    seatAssignments.getActiveAssignment = vi.fn().mockResolvedValue(null);
+
+    await service.check({
+      tenantId: "t1",
+      userId: "u1",
+      productKey: "engineering-os",
+      action: "access",
+      cachePolicy: "fresh",
+    });
+
+    expect(overrides.listActive).toHaveBeenCalledTimes(1);
+    expect(service.lastProfile?.overrideListCalls).toBe(1);
+    expect(service.lastProfile?.waves).toBeGreaterThanOrEqual(2);
   });
 });

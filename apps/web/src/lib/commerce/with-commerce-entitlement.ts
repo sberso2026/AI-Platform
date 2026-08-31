@@ -4,6 +4,7 @@ import { getAuthContext } from "@/lib/kernel";
 import type {
   CommerceAccessPolicy,
   EntitlementDecision,
+  EntitlementEvalProfile,
 } from "@rtb/platform-commerce";
 import { EntitlementDeniedError } from "@rtb/platform-commerce";
 import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
@@ -18,6 +19,8 @@ export interface CommerceHandlerContext {
     getAuthContextMs: number;
     entitlementMs: number;
     totalMs: number;
+    auth?: AuthContext["authProfile"];
+    entitlement?: EntitlementEvalProfile;
   };
 }
 

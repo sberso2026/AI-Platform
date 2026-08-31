@@ -49,13 +49,20 @@ export const GET = withEngineeringApi("inspection-intelligence-hosted", async (c
       url.searchParams.get("projectId") ?? undefined,
     );
     if (resource === "capabilities") {
-      return NextResponse.json({
+      const payload = {
         data: {
           canWrite: context.ctx.roleSlug !== "viewer",
           action: transitionAuthAction(context),
         },
         requestId,
-      });
+      };
+      if (url.searchParams.get("profile") === "1") {
+        return NextResponse.json({
+          ...payload,
+          profile: { security: context.securityProfile },
+        });
+      }
+      return NextResponse.json(payload);
     }
     if (resource === "overview") {
       return NextResponse.json({

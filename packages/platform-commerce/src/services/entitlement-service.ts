@@ -1,4 +1,11 @@
-import type { CommercialLicense, CommercialSubscription, EntitlementDiagnosticResult, EntitlementDiagnosticStep } from "@rtb/types";
+import type {
+  CommercialEntitlementOverride,
+  CommercialInstallation,
+  CommercialLicense,
+  CommercialSubscription,
+  EntitlementDiagnosticResult,
+  EntitlementDiagnosticStep,
+} from "@rtb/types";
 import { SubscriptionStateMachine } from "../domain/subscription-state-machine";
 import {
   EntitlementReasonCode,
@@ -16,7 +23,25 @@ import type { EntitlementVersionRepository } from "../repositories/entitlement-v
 import type { InstallationVersionRepository } from "../repositories/installation-version-repository";
 import { EntitlementCache } from "./entitlement-cache";
 
+export type EntitlementEvalProfile = {
+  totalMs: number;
+  waves: number;
+  stages: Record<string, number>;
+  overrideListCalls: number;
+  usedCache: boolean;
+};
+
+type InstallationPrefetch = {
+  fetched: boolean;
+  value?: CommercialInstallation | null;
+  error?: unknown;
+};
+
 export class EntitlementService {
+  lastProfile: EntitlementEvalProfile | null = null;
+  private evalStages: Record<string, number> | null = null;
+  private evalWaves = 0;
+
   constructor(
     private readonly subscriptions: SubscriptionRepository,
     private readonly licenses: LicenseRepository,
@@ -36,6 +61,8 @@ export class EntitlementService {
   }
 
   async check(input: EntitlementCheckInput): Promise<EntitlementDecision> {
+    const started = Date.now();
+    this.lastProfile = null;
     const useCache = input.cachePolicy !== "fresh";
     const cacheKey = this.cache.buildKey({
       tenantId: input.tenantId,
@@ -47,20 +74,43 @@ export class EntitlementService {
       action: input.action,
     });
 
-    if (useCache) {
+    if (useCache && this.cache.hasStoredDecisions()) {
       await this.syncVersionStamps(input.tenantId);
       const cached = this.cache.get<EntitlementDecision>(cacheKey, input.tenantId);
-      if (cached) return cached;
+      if (cached) {
+        this.lastProfile = {
+          totalMs: Date.now() - started,
+          waves: 0,
+          stages: { cacheHit: Date.now() - started },
+          overrideListCalls: 0,
+          usedCache: true,
+        };
+        return cached;
+      }
     }
 
     try {
       const decision = await this.evaluate(input);
-      if (useCache) {
+      if (useCache && this.cache.hasStoredDecisions()) {
         const versions = await this.readVersionStamps(input.tenantId);
         this.cache.set(cacheKey, decision, false, versions);
       }
+      if (this.lastProfile) {
+        this.lastProfile = {
+          ...this.lastProfile,
+          totalMs: Date.now() - started,
+          usedCache: false,
+        };
+      }
       return decision;
     } catch {
+      this.lastProfile = {
+        totalMs: Date.now() - started,
+        waves: this.lastProfile?.waves ?? 0,
+        stages: this.lastProfile?.stages ?? {},
+        overrideListCalls: this.lastProfile?.overrideListCalls ?? 0,
+        usedCache: false,
+      };
       return {
         allowed: false,
         decision: "error",
@@ -80,14 +130,15 @@ export class EntitlementService {
     const freshInput = { ...input, cachePolicy: "fresh" as const };
 
     try {
-      const overrideDeny = await this.checkOverrides(freshInput, "deny");
+      const overrideRows = await this.overrides.listActive(freshInput.tenantId);
+      const overrideDeny = this.matchOverride(overrideRows, freshInput, "deny");
       if (overrideDeny) {
         steps.push({ step: "override_deny", passed: false, detail: overrideDeny.reasonCode });
         return { allowed: false, reasonCode: overrideDeny.reasonCode, steps };
       }
       steps.push({ step: "override_deny", passed: true });
 
-      const overrideAllow = await this.checkOverrides(freshInput, "allow");
+      const overrideAllow = this.matchOverride(overrideRows, freshInput, "allow");
       if (overrideAllow) {
         steps.push({ step: "override_allow", passed: true, detail: overrideAllow.reasonCode });
         return { allowed: true, reasonCode: overrideAllow.reasonCode, steps };
@@ -198,71 +249,148 @@ export class EntitlementService {
     }
   }
 
-  private async evaluate(input: EntitlementCheckInput): Promise<EntitlementDecision> {
-    const overrideDeny = await this.checkOverrides(input, "deny");
-    if (overrideDeny) return overrideDeny;
+  private async markEval<T>(name: string, work: Promise<T>): Promise<T> {
+    const began = Date.now();
+    try {
+      return await work;
+    } finally {
+      if (this.evalStages) this.evalStages[name] = Date.now() - began;
+    }
+  }
 
-    const overrideAllow = await this.checkOverrides(input, "allow");
-    if (overrideAllow) return overrideAllow;
+  private finishEvaluate(
+    decision: EntitlementDecision,
+    started: number,
+    waves: number,
+    stages: Record<string, number>,
+    overrideListCalls: number
+  ): EntitlementDecision {
+    this.lastProfile = {
+      totalMs: Date.now() - started,
+      waves: Math.max(waves, this.evalWaves),
+      stages,
+      overrideListCalls,
+      usedCache: false,
+    };
+    return decision;
+  }
+
+  private async evaluate(input: EntitlementCheckInput): Promise<EntitlementDecision> {
+    const started = Date.now();
+    const stages: Record<string, number> = {};
+    this.evalStages = stages;
+    this.evalWaves = 0;
+    let waves = 0;
+    let overrideListCalls = 0;
+    const mark = async <T>(name: string, work: Promise<T>): Promise<T> => {
+      const began = Date.now();
+      try {
+        return await work;
+      } finally {
+        stages[name] = Date.now() - began;
+      }
+    };
+    const finish = (decision: EntitlementDecision) =>
+      this.finishEvaluate(decision, started, waves, stages, overrideListCalls);
+
+    waves += 1;
+    this.evalWaves = waves;
+    const [overrideRows, product] = await Promise.all([
+      mark("overrides", this.overrides.listActive(input.tenantId)),
+      input.productKey
+        ? mark("product", this.products.getProductBySlug(input.productKey))
+        : Promise.resolve(undefined),
+    ]);
+    overrideListCalls = 1;
+
+    const overrideDeny = this.matchOverride(overrideRows, input, "deny");
+    if (overrideDeny) return finish(overrideDeny);
+    const overrideAllow = this.matchOverride(overrideRows, input, "allow");
+    if (overrideAllow) return finish(overrideAllow);
 
     let productId: string | undefined;
     if (input.productKey) {
-      const product = await this.products.getProductBySlug(input.productKey);
       if (!product) {
-        return deny(EntitlementReasonCode.DENY_PRODUCT_NOT_FOUND);
+        return finish(deny(EntitlementReasonCode.DENY_PRODUCT_NOT_FOUND));
       }
       if (product.lifecycle_status !== "active" && product.lifecycle_status !== "preview") {
-        return deny(EntitlementReasonCode.DENY_PRODUCT_INACTIVE);
+        return finish(deny(EntitlementReasonCode.DENY_PRODUCT_INACTIVE));
       }
       productId = product.id as string;
     }
 
     if (!productId && input.applicationKey) {
-      const eng = await this.products.getProductBySlug("engineering-os");
+      waves += 1;
+      this.evalWaves = waves;
+      const eng = await mark("product_implicit", this.products.getProductBySlug("engineering-os"));
       productId = eng?.id as string | undefined;
     }
 
     if (!productId) {
-      return deny(EntitlementReasonCode.DENY_PRODUCT_NOT_FOUND);
+      return finish(deny(EntitlementReasonCode.DENY_PRODUCT_NOT_FOUND));
     }
 
-    const subscription = await this.subscriptions.findActiveByProduct(input.tenantId, productId);
+    waves += 1;
+    this.evalWaves = waves;
+    const [subResult, licResult, instResult] = await Promise.allSettled([
+      mark("subscription", this.subscriptions.findActiveByProduct(input.tenantId, productId)),
+      mark("licences", this.licenses.listByProduct(input.tenantId, productId)),
+      this.installations
+        ? mark("installation", this.installations.getByProduct(input.tenantId, productId))
+        : Promise.resolve(null),
+    ]);
+
+    if (subResult.status === "rejected") throw subResult.reason;
+    const subscription = subResult.value;
     if (!subscription) {
-      return deny(EntitlementReasonCode.DENY_SUBSCRIPTION_NOT_FOUND);
+      return finish(deny(EntitlementReasonCode.DENY_SUBSCRIPTION_NOT_FOUND));
     }
 
     const subDecision = this.evaluateSubscription(subscription);
-    if (subDecision) return subDecision;
+    if (subDecision) return finish(subDecision);
 
-    const tenantLicences = await this.licenses.listByProduct(input.tenantId, productId);
+    if (licResult.status === "rejected") throw licResult.reason;
+    const tenantLicences = licResult.value ?? [];
     const activeLicences = tenantLicences.filter((l) => l.status === "active" || l.status === "expiring_soon");
+    const installationPrefetch: InstallationPrefetch = {
+      fetched: Boolean(this.installations),
+      value: instResult.status === "fulfilled" ? instResult.value : undefined,
+      error: instResult.status === "rejected" ? instResult.reason : undefined,
+    };
 
     if (input.featureKey) {
-      return this.evaluateFeature(input, subscription, activeLicences);
+      return finish(await this.evaluateFeature(input, subscription, activeLicences));
     }
 
     if (input.applicationKey) {
-      return this.evaluateApplication(input, subscription, activeLicences);
+      return finish(await this.evaluateApplication(input, subscription, activeLicences, installationPrefetch));
     }
 
     const productLicence = activeLicences.find((l) => l.license_type === "product");
     if (!productLicence) {
-      return deny(EntitlementReasonCode.DENY_LICENCE_NOT_FOUND);
+      return finish(deny(EntitlementReasonCode.DENY_LICENCE_NOT_FOUND));
     }
 
-    const installationDecision = await this.evaluateInstallation(input, productId);
-    if (installationDecision) return installationDecision;
+    const installationDecision = await this.evaluateInstallation(input, productId, installationPrefetch, {
+      skipWorkspaceAssignments: true,
+    });
+    if (installationDecision) return finish(installationDecision);
 
-    return this.evaluateSeatAndAllow(input, subscription, productLicence);
+    return finish(await this.evaluateSeatAndAllow(input, subscription, productLicence, installationPrefetch));
   }
 
   private async evaluateInstallation(
     input: EntitlementCheckInput,
-    productId: string
+    productId: string,
+    prefetch?: InstallationPrefetch,
+    options?: { skipWorkspaceAssignments?: boolean }
   ): Promise<EntitlementDecision | null> {
     if (!this.installations) return null;
+    if (prefetch?.error) throw prefetch.error;
 
-    const installation = await this.installations.getByProduct(input.tenantId, productId);
+    const installation = prefetch?.fetched
+      ? prefetch.value ?? null
+      : await this.markEval("installation", this.installations.getByProduct(input.tenantId, productId));
     if (!installation) {
       return deny(EntitlementReasonCode.DENY_INSTALLATION_NOT_FOUND);
     }
@@ -271,10 +399,11 @@ export class EntitlementService {
       return deny(EntitlementReasonCode.DENY_INSTALLATION_NOT_ACTIVE);
     }
 
-    if (input.workspaceId) {
-      const assignments = await this.installations.listWorkspaceAssignments(
-        input.tenantId,
-        installation.id
+    if (input.workspaceId && !options?.skipWorkspaceAssignments) {
+      this.evalWaves += 1;
+      const assignments = await this.markEval(
+        "workspaceAssignments",
+        this.installations.listWorkspaceAssignments(input.tenantId, installation.id)
       );
       if (
         assignments.length > 0 &&
@@ -351,7 +480,8 @@ export class EntitlementService {
   private async evaluateApplication(
     input: EntitlementCheckInput,
     subscription: CommercialSubscription,
-    licences: CommercialLicense[]
+    licences: CommercialLicense[],
+    installationPrefetch?: InstallationPrefetch
   ): Promise<EntitlementDecision> {
     const appLicence = licences.find(
       (l) => l.license_type === "application" && l.application_key === input.applicationKey
@@ -388,28 +518,53 @@ export class EntitlementService {
 
     const installationDecision = await this.evaluateInstallation(
       input,
-      subscription.product_id as string
+      subscription.product_id as string,
+      installationPrefetch,
+      { skipWorkspaceAssignments: true }
     );
     if (installationDecision) return installationDecision;
 
-    return this.evaluateSeatAndAllow(input, subscription, appLicence);
+    return this.evaluateSeatAndAllow(input, subscription, appLicence, installationPrefetch);
   }
 
   private async evaluateSeatAndAllow(
     input: EntitlementCheckInput,
     subscription: CommercialSubscription,
-    licence: CommercialLicense
+    licence: CommercialLicense,
+    installationPrefetch?: InstallationPrefetch
   ): Promise<EntitlementDecision> {
     const seatRequired = (licence.max_seats ?? 0) > 0 || licence.license_type !== "feature";
     let seatAssigned = !seatRequired;
+    const installation = installationPrefetch?.fetched ? installationPrefetch.value ?? null : null;
+
+    const assignmentPromise =
+      this.installations && input.workspaceId && installation
+        ? this.markEval(
+            "workspaceAssignments",
+            this.installations.listWorkspaceAssignments(input.tenantId, installation.id)
+          )
+        : Promise.resolve([]);
+    const poolPromise =
+      seatRequired && input.userId
+        ? this.markEval("seatPool", this.seats.getByProduct(input.tenantId, licence.product_id!))
+        : Promise.resolve(null);
+
+    this.evalWaves += 1;
+    const [assignments, pool] = await Promise.all([assignmentPromise, poolPromise]);
+    if (
+      input.workspaceId &&
+      assignments.length > 0 &&
+      !assignments.some((a) => a.workspace_id === input.workspaceId)
+    ) {
+      return deny(EntitlementReasonCode.DENY_WORKSPACE_NOT_ASSIGNED);
+    }
 
     if (seatRequired && input.userId) {
-      const pool = await this.seats.getByProduct(input.tenantId, licence.product_id!);
       if (pool) {
-        const assignment = await this.seatAssignments.getActiveAssignment(
-          input.tenantId,
-          pool.id,
-          input.userId
+        this.evalWaves += 1;
+        const assignment = await this.markEval(
+          "seatAssignment",
+          this.seatAssignments.getActiveAssignment(input.tenantId, pool.id, input.userId)
         );
         seatAssigned = !!assignment;
       } else {
@@ -440,11 +595,11 @@ export class EntitlementService {
     };
   }
 
-  private async checkOverrides(
+  private matchOverride(
+    rows: CommercialEntitlementOverride[],
     input: EntitlementCheckInput,
     effect: "allow" | "deny"
-  ): Promise<EntitlementDecision | null> {
-    const rows = await this.overrides.listActive(input.tenantId);
+  ): EntitlementDecision | null {
     const match = rows.find((o) => {
       if (o.effect !== effect) return false;
       if (o.user_id && input.userId && o.user_id !== input.userId) return false;
@@ -466,6 +621,14 @@ export class EntitlementService {
       seatAssigned: true,
       workspaceAllowed: true,
     };
+  }
+
+  private async checkOverrides(
+    input: EntitlementCheckInput,
+    effect: "allow" | "deny"
+  ): Promise<EntitlementDecision | null> {
+    const rows = await this.overrides.listActive(input.tenantId);
+    return this.matchOverride(rows, input, effect);
   }
 
   private async readVersionStamps(tenantId: string): Promise<{

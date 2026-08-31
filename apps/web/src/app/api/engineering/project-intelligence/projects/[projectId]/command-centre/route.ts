@@ -24,6 +24,7 @@ export const GET = withEngineeringApiParams(
           data: view,
           profile: {
             ...profile,
+            security: context.securityProfile,
             handlerMs: Date.now() - started,
             authAndEntitlementOutsideCompose: true,
             sequentialIndependentIntelligenceLoads: false,

@@ -1,6 +1,16 @@
 import type { Permission, PlatformAction, PlatformResource } from "@rtb/types";
 import type { SupabaseClient } from "@rtb/database";
 
+export function permissionsFromRole(
+  slug: string | null | undefined,
+  permissions: Permission[] | null | undefined,
+): Permission[] {
+  if (slug === "owner") {
+    return [{ resource: "tenant" as PlatformResource, action: "admin" as PlatformAction }];
+  }
+  return permissions ?? [];
+}
+
 export class PermissionService {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -23,11 +33,7 @@ export class PermissionService {
 
     if (roleError || !role) return [];
 
-    if (role.slug === "owner") {
-      return [{ resource: "tenant" as PlatformResource, action: "admin" as PlatformAction }];
-    }
-
-    return (role.permissions as unknown as Permission[]) ?? [];
+    return permissionsFromRole(role.slug, role.permissions as unknown as Permission[]);
   }
 
   hasPermission(

@@ -93,6 +93,8 @@ export async function guardEngineeringApi(
       getAuthContextMs: afterAuth - started,
       entitlementMs: afterEntitlement - afterAuth,
       totalMs: afterEntitlement - started,
+      auth: ctx.authProfile,
+      entitlement: ctx.commerce.entitlements.lastProfile ?? undefined,
     },
   };
 }

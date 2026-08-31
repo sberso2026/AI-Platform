@@ -6,11 +6,18 @@ import type {
 import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 
-export const GET = withEngineeringApi("projects", async ({ ctx, commerce }) => {
+export const GET = withEngineeringApi("projects", async ({ ctx, commerce, securityProfile }, request) => {
+  const domainStarted = Date.now();
   const data = await ctx.engineering.projects.list(commerce, ctx.tenantId);
+  const wantProfile = new URL(request.url).searchParams.get("profile") === "1";
   // Consistent JSON contract for zero/one/many projects (never an empty body).
   return NextResponse.json(
-    { data: Array.isArray(data) ? data : [] },
+    wantProfile
+      ? {
+          data: Array.isArray(data) ? data : [],
+          profile: { security: securityProfile, domainMs: Date.now() - domainStarted },
+        }
+      : { data: Array.isArray(data) ? data : [] },
     {
       status: 200,
       headers: { "Content-Type": "application/json; charset=utf-8" },

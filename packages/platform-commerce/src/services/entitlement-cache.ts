@@ -101,4 +101,8 @@ export class EntitlementCache {
     this.store.clear();
     this.tenantVersions.clear();
   }
+
+  hasStoredDecisions(): boolean {
+    return this.store.size > 0;
+  }
 }
