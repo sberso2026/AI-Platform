@@ -2,8 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 import { CommerceDomainError } from "@rtb/platform-commerce";
-import { ProjectIntelligenceError, MeetingIntelligenceError } from "@rtb/project-intelligence";
-import { DocumentIntelligenceError } from "@rtb/project-intelligence/server";
+import {
+  ProjectIntelligenceError,
+  MeetingIntelligenceError,
+  DocumentIntelligenceError,
+} from "@rtb/project-intelligence";
 
 export function resolveRequestId(request: Request): string {
   return (
