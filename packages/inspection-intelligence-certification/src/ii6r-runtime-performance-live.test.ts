@@ -304,10 +304,122 @@ describe.skipIf(!LIVE_ENABLED || !CERT_ENABLED || !SUPABASE_URL || !ANON_KEY || 
 
       let deployed: unknown = null;
       if (DEPLOYED_BASE_URL) {
-        const deployedCc = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
-          query: { resource: "command_centre", projectId: String(projectA.id) },
+        const sydney: Record<string, number[]> = {
+          runtimePing: [],
+          capabilities: [],
+          eosProjects: [],
+          piCommandCentre: [],
+          iiCommandCentre: [],
+          write: [],
+          history: [],
+          targetHistory: [],
+          reportRead: [],
+          reportCompose: [],
+        };
+        let sydneyCc: unknown;
+        let sydneyWrite: unknown;
+        let sydneyTarget: unknown;
+        let sydneyCompose: unknown;
+        const sydneyComposeCall = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+          method: "POST",
+          body: {
+            intent: "compose_report",
+            sessionId,
+            reportKey: "inspection.session_summary",
+            projectId: projectA.id,
+            profile: true,
+          },
         });
-        deployed = { commandCentre: { status: deployedCc.status, ms: deployedCc.ms, server: deployedCc.json.profile } };
+        expect(sydneyComposeCall.status).toBe(201);
+        sydney.reportCompose.push(sydneyComposeCall.ms);
+        sydneyCompose = sydneyComposeCall.json.profile;
+        const sydneyReportId = String((sydneyComposeCall.json.data as { id?: string }).id);
+        for (let i = 0; i < 5; i += 1) {
+          const runtimePing = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            query: { resource: "runtime_ping", profile: "1", projectId: String(projectA.id) },
+          });
+          expect(runtimePing.status).toBe(200);
+          sydney.runtimePing.push(runtimePing.ms);
+
+          const capabilities = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            query: { resource: "capabilities", profile: "1", projectId: String(projectA.id) },
+          });
+          expect(capabilities.status).toBe(200);
+          sydney.capabilities.push(capabilities.ms);
+
+          const eos = await call(DEPLOYED_BASE_URL, "/api/engineering/projects", owner, { query: { profile: "1" } });
+          expect(eos.status).toBe(200);
+          sydney.eosProjects.push(eos.ms);
+
+          const pi = await call(
+            DEPLOYED_BASE_URL,
+            `/api/engineering/project-intelligence/projects/${projectA.id}/command-centre`,
+            owner,
+            { headers: { "x-pi-command-centre-profile": "1" } },
+          );
+          expect(pi.status).toBe(200);
+          sydney.piCommandCentre.push(pi.ms);
+
+          const cc = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            query: { resource: "command_centre", projectId: String(projectA.id) },
+          });
+          expect(cc.status).toBe(200);
+          sydney.iiCommandCentre.push(cc.ms);
+          sydneyCc = cc.json.profile;
+
+          const history = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            query: { resource: "history", projectId: String(projectA.id) },
+          });
+          expect(history.status).toBe(200);
+          sydney.history.push(history.ms);
+
+          const target = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            query: {
+              resource: "target_history",
+              kind: "project",
+              canonicalId: String(projectA.id),
+              projectId: String(projectA.id),
+            },
+          });
+          expect(target.status).toBe(200);
+          sydney.targetHistory.push(target.ms);
+          sydneyTarget = target.json.profile;
+
+          const report = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            query: { resource: "report", id: sydneyReportId, projectId: String(projectA.id) },
+          });
+          expect(report.status).toBe(200);
+          sydney.reportRead.push(report.ms);
+
+          const write = await call(DEPLOYED_BASE_URL, HOSTED_PATH, owner, {
+            method: "POST",
+            body: {
+              intent: "record_observation",
+              sessionId,
+              checklistItemType: "visual",
+              body: `ii6r sydney sample ${i}`,
+              projectId: projectA.id,
+              profile: true,
+            },
+          });
+          expect(write.status).toBe(201);
+          sydney.write.push(write.ms);
+          sydneyWrite = write.json.profile;
+        }
+        deployed = {
+          runtime: "vercel syd1 Next.js",
+          deploymentId: "dpl_FJbVbzedDxz9Y7NUm5UkUdTcNTVs",
+          runtimePing: summarize("sydney II runtime_ping", sydney.runtimePing),
+          capabilities: summarize("sydney II capabilities", sydney.capabilities),
+          eosProjects: summarize("sydney EOS projects", sydney.eosProjects),
+          piCommandCentre: summarize("sydney PI command-centre", sydney.piCommandCentre),
+          iiCommandCentre: summarize("sydney II command_centre", sydney.iiCommandCentre, sydneyCc),
+          write: summarize("sydney II write", sydney.write, sydneyWrite),
+          history: summarize("sydney II history", sydney.history),
+          targetHistory: summarize("sydney II target_history", sydney.targetHistory, sydneyTarget),
+          reportRead: summarize("sydney II report", sydney.reportRead),
+          reportCompose: summarize("sydney II compose", sydney.reportCompose, sydneyCompose),
+        };
       }
 
       const localhostPing = percentile(pingSamples, 50);
@@ -344,6 +456,6 @@ describe.skipIf(!LIVE_ENABLED || !CERT_ENABLED || !SUPABASE_URL || !ANON_KEY || 
           networkContributionMs: networkContribution,
         }),
       );
-    }, 360_000);
+    }, 600_000);
   },
 );
