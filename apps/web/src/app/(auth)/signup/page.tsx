@@ -77,7 +77,9 @@ export default function SignupPage() {
             <RtbLogo size="lg" variant="full" inverted={false} />
           </div>
           <CardTitle>Create Account</CardTitle>
-          <CardDescription>Get started with RTB Engineering OS</CardDescription>
+          <CardDescription>
+            Canonical owner onboarding is self-service: create the tenant here, then invite engineers from Users.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">

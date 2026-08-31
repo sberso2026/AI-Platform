@@ -64,6 +64,7 @@ export async function POST(req: Request) {
       evidenceId: requestId.slice(0, 8),
     });
     return NextResponse.json({
+      ...INTEROP_GOVERNANCE,
       accepted: true,
       requestId,
       correlationId,
@@ -77,7 +78,6 @@ export async function POST(req: Request) {
       ETABSControlledExecutionCertified: false,
       federationPath: "export_fixture",
       liveNativeCom: false,
-      ...INTEROP_GOVERNANCE,
     });
   }
 
@@ -152,17 +152,17 @@ export async function POST(req: Request) {
       workspaceId: scope.workspaceId,
       modelRefId,
       execution: execResult,
-      ETABSHostedExecutionCertified: false,
-      ETABSControlledExecutionCertified: false,
-      silentSolverFallbackAllowed: false,
-      federationPath: "export_fixture",
-      liveNativeCom: false,
       truthLabels: {
         existingExternalResult: "EXISTING EXTERNAL RESULT",
         rtbCertifiedExecution: "RTB-CERTIFIED EXECUTION",
         exportFederation: "EXPORT FEDERATION",
       },
       ...INTEROP_GOVERNANCE,
+      ETABSHostedExecutionCertified: false,
+      ETABSControlledExecutionCertified: false,
+      silentSolverFallbackAllowed: false,
+      federationPath: "export_fixture",
+      liveNativeCom: false,
     },
     { status: failClosed ? 422 : 202 },
   );

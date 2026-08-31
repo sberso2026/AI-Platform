@@ -6,7 +6,7 @@ import {
   createEmptyEngineeringContext,
   parseDeepLinkContext,
   type EngineeringExperienceContext,
-} from "@rtb/engineering-os";
+} from "@rtb/engineering-os/browser";
 import { ENGINEERING_PROJECT_FILTER_KEY } from "@/hooks/use-engineering-project-filter";
 
 export const ENGINEERING_CONTEXT_EVENT = "rtb:engineering-context";

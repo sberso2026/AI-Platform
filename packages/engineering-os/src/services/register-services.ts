@@ -4,6 +4,8 @@ import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import { EngineeringObjectFramework } from "./object-framework";
+import { mapTechnicalQueryStatus } from "./technical-query-status";
+import { CommerceDomainError } from "@rtb/platform-commerce";
 
 type EngineeringRegisterTable =
   | "engineering_decisions"
@@ -852,18 +854,27 @@ export class EngineeringTechnicalQueryService {
     input: { response: string; status?: string; responderId?: string }
   ) {
     assertEngineeringService(commerce, "technical_query.update", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
     const { data: existing, error: lookupError } = await this.supabase
       .from("engineering_technical_queries")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("id", id)
       .maybeSingle();
-    if (lookupError || !existing) throw new Error("Technical query not found");
-    const status = input.status ?? "responded";
-    const allowedStatus = ["open", "responded", "closed"] as const;
-    if (!allowedStatus.includes(status as (typeof allowedStatus)[number])) {
-      throw new Error(`Unsupported TQ status: ${status}`);
+    if (lookupError) {
+      throw new CommerceDomainError(
+        lookupError.message,
+        "technical_query_lookup_failed",
+        lookupError.code === "42501" ? 403 : 500,
+      );
     }
+    if (!existing) {
+      throw new CommerceDomainError("Technical query not found", "not_found", 404);
+    }
+    if (workspaceId && existing.workspace_id && existing.workspace_id !== workspaceId) {
+      throw new CommerceDomainError("Technical query not found", "not_found", 404);
+    }
+    const status = mapTechnicalQueryStatus(input.status);
     const { data, error } = await this.supabase
       .from("engineering_technical_queries")
       .update({
@@ -874,8 +885,17 @@ export class EngineeringTechnicalQueryService {
       .eq("tenant_id", tenantId)
       .eq("id", id)
       .select()
-      .single();
-    if (error || !data) throw new Error(`Failed to respond to TQ: ${error?.message}`);
+      .maybeSingle();
+    if (error) {
+      throw new CommerceDomainError(
+        error.message,
+        "technical_query_update_failed",
+        error.code === "42501" ? 403 : 422,
+      );
+    }
+    if (!data) {
+      throw new CommerceDomainError("Technical query not found", "not_found", 404);
+    }
     const comments = await this.framework
       .listComments(tenantId, "technical_query", id)
       .catch(() => []);

@@ -23,6 +23,9 @@ importers:
       '@rtb/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@rtb/digital-twin':
+        specifier: workspace:*
+        version: link:../../packages/digital-twin
       '@rtb/engineering-execution-host':
         specifier: workspace:*
         version: link:../../packages/engineering-execution-host
@@ -47,6 +50,9 @@ importers:
       '@rtb/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+      '@rtb/project-controls':
+        specifier: workspace:*
+        version: link:../../packages/project-controls
       '@rtb/project-intelligence':
         specifier: workspace:*
         version: link:../../packages/project-intelligence

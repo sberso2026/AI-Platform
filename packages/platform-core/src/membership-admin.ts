@@ -7,6 +7,9 @@ function randomTemporaryPassword(): string {
   return `Eos1rc-${token}`;
 }
 
+/** Canonical owner path: /signup creates the tenant. Members join by admin invite email. */
+export const CANONICAL_TENANT_ONBOARDING_MODEL = "SELF_SERVICE" as const;
+
 export const PILOT_INVITE_ROLE_SLUGS = ["admin", "member", "viewer"] as const;
 export type PilotInviteRoleSlug = (typeof PILOT_INVITE_ROLE_SLUGS)[number];
 
@@ -31,6 +34,8 @@ export interface InviteMemberInput {
   email: string;
   roleSlug: string;
   invitedBy: string;
+  /** Internal/break-glass only. Never the external invite default. */
+  breakGlass?: boolean;
 }
 
 export interface InviteMemberResult {
@@ -134,17 +139,18 @@ export class MembershipAdminService {
 
     if (!userId) {
       const invited = await this.admin.auth.admin.inviteUserByEmail(email, { data: metadata });
-      if (!invited.error && invited.data.user?.id) {
+      if (invited.data.user?.id) {
         userId = invited.data.user.id;
         created = true;
         delivery = "invite_email";
-      } else {
+      } else if (input.breakGlass) {
         temporaryPassword = randomTemporaryPassword();
         const createdUser = await this.admin.auth.admin.createUser({
           email,
           password: temporaryPassword,
           email_confirm: true,
           user_metadata: metadata,
+          app_metadata: metadata,
         });
         if (createdUser.error || !createdUser.data.user?.id) {
           throw new Error(createdUser.error?.message ?? invited.error?.message ?? "Failed to create invited user");
@@ -152,6 +158,8 @@ export class MembershipAdminService {
         userId = createdUser.data.user.id;
         created = true;
         delivery = "temporary_password";
+      } else {
+        throw new Error(invited.error?.message ?? "Invite email could not be sent");
       }
     }
 
@@ -161,9 +169,16 @@ export class MembershipAdminService {
       userId,
       roleId: role.id as string,
     });
-    await this.dropStraySignupTenant(userId, input.tenantId);
 
-    return { userId, email, roleSlug, workspaceId: input.workspaceId, created, delivery, temporaryPassword };
+    return {
+      userId,
+      email,
+      roleSlug,
+      workspaceId: input.workspaceId,
+      created,
+      delivery,
+      temporaryPassword: delivery === "temporary_password" ? temporaryPassword : undefined,
+    };
   }
 
   async assignRole(input: { tenantId: string; userId: string; roleSlug: string; workspaceId?: string }) {
@@ -221,6 +236,27 @@ export class MembershipAdminService {
     if (error || !data?.id) throw new Error("Workspace not found for tenant");
   }
 
+  async createWorkspace(input: { tenantId: string; name: string; slug?: string }) {
+    const slugBase =
+      input.slug?.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) ||
+      input.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) ||
+      "workspace";
+    const slug = `${slugBase}-${Date.now().toString(36).slice(-6)}`;
+    const { data, error } = await this.admin
+      .from("workspaces")
+      .insert({
+        tenant_id: input.tenantId,
+        name: input.name.trim() || slug,
+        slug,
+        type: "project",
+        status: "active",
+      })
+      .select("id, name, slug")
+      .single();
+    if (error || !data?.id) throw new Error(error?.message ?? "Failed to create workspace");
+    return data;
+  }
+
   private async attachMembership(input: { tenantId: string; workspaceId: string; userId: string; roleId: string }) {
     const { error } = await this.admin.from("tenant_memberships").upsert(
       {
@@ -243,30 +279,5 @@ export class MembershipAdminService {
       { onConflict: "workspace_id,user_id" },
     );
     if (error) throw new Error(error.message);
-  }
-
-  private async dropStraySignupTenant(userId: string, keepTenantId: string) {
-    const { data: memberships, error } = await this.admin
-      .from("tenant_memberships")
-      .select("tenant_id")
-      .eq("user_id", userId);
-    if (error) return;
-    for (const row of memberships ?? []) {
-      const tenantId = row.tenant_id as string;
-      if (tenantId === keepTenantId) continue;
-      const { data: tenant } = await this.admin
-        .from("tenants")
-        .select("id, settings, created_at")
-        .eq("id", tenantId)
-        .maybeSingle();
-      const settings = (tenant?.settings ?? {}) as { created_via?: string; owner_user_id?: string };
-      if (settings.created_via !== "signup" || settings.owner_user_id !== userId) continue;
-      const createdAt = tenant?.created_at ? Date.parse(String(tenant.created_at)) : 0;
-      if (createdAt && Date.now() - createdAt > 10 * 60 * 1000) continue;
-      const { data: others } = await this.admin.from("tenant_memberships").select("user_id").eq("tenant_id", tenantId);
-      if ((others ?? []).length > 1) continue;
-      await this.admin.from("tenant_memberships").delete().eq("tenant_id", tenantId);
-      await this.admin.from("tenants").delete().eq("id", tenantId);
-    }
   }
 }

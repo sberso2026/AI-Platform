@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   forbiddenResponse,
   handleCommerceDomainError,
+  lifecycleErrorResponse,
   resolveRequestId,
   unauthenticatedResponse,
 } from "@/lib/lifecycle-api";
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       email: String(body.email ?? ""),
       roleSlug: String(body.roleSlug ?? "member"),
       invitedBy: ctx.userId,
+      breakGlass: body.breakGlass === true,
     });
     if (body.assignSeat === true && typeof body.seatPoolId === "string") {
       await ctx.commerce.seatAssignment.assign({
@@ -54,8 +56,21 @@ export async function POST(request: Request) {
         assignedBy: ctx.userId,
       });
     }
-    return NextResponse.json({ data: invited, requestId }, { status: 201 });
+    const data =
+      invited.delivery === "temporary_password" && body.breakGlass === true
+        ? invited
+        : { ...invited, temporaryPassword: undefined };
+    return NextResponse.json({ data, requestId }, { status: 201 });
   } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    if (/rate limit/i.test(message) || /over_email_send_rate_limit/i.test(message)) {
+      return lifecycleErrorResponse(
+        "invite_email_rate_limited",
+        "Invite email could not be sent because the Auth mailer rate limit was exceeded. Retry later. Temporary passwords are internal break-glass only.",
+        429,
+        requestId,
+      );
+    }
     return handleCommerceDomainError(err, requestId);
   }
 }

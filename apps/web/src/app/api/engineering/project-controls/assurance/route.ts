@@ -70,7 +70,6 @@ const GOVERNANCE_FLAGS = {
   aiMayPublishAssuranceForbidden: true,
   phase11iReady: true,
   phase11lReady: true,
-  phase11lReady: true,
 } as const;
 
 export async function POST(req: Request) {

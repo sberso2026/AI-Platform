@@ -541,14 +541,29 @@ export class EngineeringAIService {
         });
 
         return {
-          message: grounded.message,
+          message:
+            (grounded.message ?? "").trim() ||
+            grounded.grounded?.answer?.trim() ||
+            "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.",
           requiresReview: grounded.requiresReview,
           evidence: grounded.evidence,
           evidenceState: grounded.evidenceState,
           scope: grounded.scope,
-          limitations: grounded.limitations,
+          limitations: grounded.limitations.length
+            ? grounded.limitations
+            : ["Insufficient authorised evidence for a client-specific claim."],
           retrievalMode: grounded.retrievalMode,
-          grounded: grounded.grounded,
+          grounded: {
+            ...grounded.grounded,
+            abstained:
+              grounded.grounded?.abstained === true ||
+              !(grounded.message ?? "").trim() ||
+              grounded.evidenceState === "INSUFFICIENT",
+            answer:
+              (grounded.message ?? "").trim() ||
+              grounded.grounded?.answer?.trim() ||
+              "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.",
+          },
           reasoning: grounded.reasoning ?? null,
           why: grounded.why ?? null,
           recommendedNextActions: grounded.recommendedNextActions ?? [],
@@ -641,8 +656,17 @@ export class EngineeringAIService {
       .resolveRoute(input.tenantId, result.run.intent ?? "engineering")
       .catch(() => ({ modelKey: result.run.model_name ?? "mock-gpt", providerType: "mock" }));
 
+    const fallbackMessage =
+      (result.message ?? "").trim() ||
+      "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.";
+
     return {
       ...result,
+      message: fallbackMessage,
+      grounded: {
+        abstained: true,
+        answer: fallbackMessage,
+      },
       requiresReview,
       evidence: [],
       evidenceState: "INSUFFICIENT" as const,

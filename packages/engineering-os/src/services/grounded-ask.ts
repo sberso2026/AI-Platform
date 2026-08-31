@@ -387,6 +387,19 @@ export async function runGroundedEngineeringAsk(input: {
 
   const memoryChips = memoryHits.length ? deriveMemoryContextChips(memoryHits) : null;
 
+  const emptyAnswerAbstention =
+    "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.";
+  if (!String(message ?? "").trim()) {
+    message = emptyAnswerAbstention;
+    answer.abstained = true;
+    if (answer.evidenceState !== "PARTIAL") {
+      answer.evidenceState = "INSUFFICIENT";
+    }
+    if (!answer.limitations.includes("Insufficient authorised evidence for a client-specific claim.")) {
+      answer.limitations.push("Insufficient authorised evidence for a client-specific claim.");
+    }
+  }
+
   const phase = intelligenceResults.length
     ? "E9"
     : memoryHits.length

@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       evidenceId: requestId.slice(0, 8),
     });
     return NextResponse.json({
+      ...INTEROP_GOVERNANCE,
       accepted: true,
       requestId,
       correlationId,
@@ -71,7 +72,6 @@ export async function POST(req: Request) {
       selectedMethod: SPACEGASS_BOUNDED_METHOD,
       qualification: bundle,
       spaceGassHostedExecutionCertified: false,
-      ...INTEROP_GOVERNANCE,
     });
   }
 
@@ -141,13 +141,13 @@ export async function POST(req: Request) {
       workspaceId: scope.workspaceId,
       modelRefId,
       execution: execResult,
-      spaceGassHostedExecutionCertified: false,
-      silentSolverFallbackAllowed: false,
       truthLabels: {
         existingExternalResult: "EXISTING EXTERNAL RESULT",
         rtbCertifiedExecution: "RTB-CERTIFIED EXECUTION",
       },
       ...INTEROP_GOVERNANCE,
+      spaceGassHostedExecutionCertified: false,
+      silentSolverFallbackAllowed: false,
     },
     { status: failClosed ? 422 : 202 },
   );

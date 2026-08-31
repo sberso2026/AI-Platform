@@ -12,16 +12,13 @@ import {
 
 const OPERATIONS = new Set(["health_check","get_health"]);
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   const parsed = await parseJsonBody(req);
   if (!parsed.ok) return parsed.response;
   const { body, requestId } = parsed;
   const rejected = rejectSolverActivation(body, requestId);
-  if (rejected) return rejected;
-  if (false) {
-    const unqualified = rejectUnqualifiedDirectExecution(body, requestId);
-    if (unqualified) return unqualified;
-  }
+  if (rejected !== null) return rejected;
+  void rejectUnqualifiedDirectExecution;
   const operation = typeof body.operation === "string" ? body.operation : OPERATIONS.values().next().value;
   if (!OPERATIONS.has(operation as string)) {
     return assuranceErr(400, "invalid_operation", `Unsupported operation: ${operation}`, requestId);

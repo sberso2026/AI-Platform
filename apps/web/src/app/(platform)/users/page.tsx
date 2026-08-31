@@ -51,12 +51,12 @@ export default function UsersPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error?.message ?? json.error ?? "Invite failed");
       const delivery = json.data?.delivery as string;
-      if (delivery === "temporary_password" && json.data?.temporaryPassword) {
-        setInfo(`Invited ${email}. Share this one-time password: ${json.data.temporaryPassword}`);
-      } else if (delivery === "invite_email") {
-        setInfo(`Invite email sent to ${email}.`);
-      } else {
+      if (delivery === "invite_email") {
+        setInfo(`Invite email sent to ${email}. The user activates from that email, then signs in.`);
+      } else if (delivery === "existing_user") {
         setInfo(`${email} added to this tenant.`);
+      } else {
+        setInfo(`Invite recorded for ${email}.`);
       }
       setEmail("");
       await reload();
@@ -90,7 +90,8 @@ export default function UsersPage() {
           <CardHeader>
             <CardTitle>Invite user</CardTitle>
             <CardDescription>
-              Canonical path: email → tenant role (admin / member / viewer) → current workspace membership.
+              Canonical path: admin invite email → activation → login → tenant role (admin / member / viewer)
+              → current workspace membership. Temporary passwords are not used for external onboarding.
               Seats stay on System → Seats.
             </CardDescription>
           </CardHeader>

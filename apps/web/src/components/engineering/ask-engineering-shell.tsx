@@ -399,7 +399,7 @@ export function AskEngineeringShell({
         scope?: string;
         limitations?: string[];
         retrievalMode?: string;
-        grounded?: { abstained?: boolean };
+        grounded?: { abstained?: boolean; answer?: string };
         why?: WhyPayload | null;
         basis?: Array<{ kind: string; statement: string }>;
         assumptions?: Array<{ statement: string }>;
@@ -442,14 +442,18 @@ export function AskEngineeringShell({
       }
 
       const data = parsed.data;
+      const message =
+        (typeof data.message === "string" && data.message.trim()) ||
+        (typeof data.grounded?.answer === "string" && data.grounded.answer.trim()) ||
+        "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.";
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: "assistant",
           content: data.requiresReview
-            ? `${data.message}\n\nHuman review required — advisory only.`
-            : data.message,
+            ? `${message}\n\nHuman review required — advisory only.`
+            : message,
           evidence: data.evidence ?? [],
           evidenceState: data.evidenceState,
           scope: data.scope ?? scope,

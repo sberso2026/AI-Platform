@@ -8,7 +8,7 @@ import {
   EngineeringAdoptionEventBuffer,
   type EngineeringAdoptionEventType,
   type EngineeringFeedbackReason,
-} from "@rtb/engineering-os";
+} from "@rtb/engineering-os/browser";
 
 const buffer = new EngineeringAdoptionEventBuffer();
 

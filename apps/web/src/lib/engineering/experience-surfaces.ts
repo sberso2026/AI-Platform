@@ -10,7 +10,7 @@ import {
   resolveUxDensity,
   type DeploymentProfile,
   type EngineeringUxDensity,
-} from "@rtb/engineering-os";
+} from "@rtb/engineering-os/browser";
 import { ENGINEERING_CERTIFIED_V1_MODULES } from "./certified-modules";
 
 /** Default progressive profile when tenant profile is not yet configured. */

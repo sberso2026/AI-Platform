@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { EmptyState, SectionHeader } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
-import { listUserFacingCatalogConcepts } from "@rtb/engineering-os";
+import { listUserFacingCatalogConcepts } from "@rtb/engineering-os/browser";
 import { useExperiencePerf } from "@/hooks/use-experience-perf";
 
 type ModuleRow = {

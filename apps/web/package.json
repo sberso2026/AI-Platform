@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@rtb/database": "workspace:*",
+    "@rtb/digital-twin": "workspace:*",
     "@rtb/engineering-execution-host": "workspace:*",
     "@rtb/engineering-model-interoperability": "workspace:*",
     "@rtb/engineering-os": "workspace:*",
@@ -20,6 +21,7 @@
     "@rtb/platform-kernel": "workspace:*",
     "@rtb/plugin-sdk": "workspace:*",
     "@rtb/project-intelligence": "workspace:*",
+    "@rtb/project-controls": "workspace:*",
     "@rtb/inspection-intelligence": "workspace:*",
     "@rtb/asset-intelligence": "workspace:*",
     "@rtb/types": "workspace:*",

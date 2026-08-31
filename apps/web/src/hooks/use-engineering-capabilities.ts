@@ -7,7 +7,7 @@ import {
   resolveExperienceUxDensity,
   resolveVisiblePrimaryNavIds,
 } from "@/lib/engineering/experience-surfaces";
-import type { DeploymentProfile, EngineeringUxDensity } from "@rtb/engineering-os";
+import type { DeploymentProfile, EngineeringUxDensity } from "@rtb/engineering-os/browser";
 
 export type EngineeringCapabilitySnapshot = {
   productEntitled: boolean;

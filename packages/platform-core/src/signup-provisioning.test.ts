@@ -1,4 +1,12 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const inviteMigration = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "../../../supabase/migrations/20260901013000_batch_99_invite_no_stray_tenant.sql"),
+  "utf8",
+);
 
 /**
  * Signup provisioning contract tests (Batch 2.06b).
@@ -79,6 +87,18 @@ describe("Membership creation contract", () => {
     };
     expect(inviteMetadata.invited_role_slug).toBe("member");
     expect(["admin", "member", "viewer"]).toContain(inviteMetadata.invited_role_slug);
+  });
+
+  it("invite handle_new_user never bootstraps a signup tenant", () => {
+    expect(inviteMigration).toContain("signup tenant bootstrap is forbidden for invited users");
+    expect(inviteMigration).toMatch(/IF v_invite_marker IS NOT NULL THEN[\s\S]*RETURN NEW;/);
+    const inviteBranch = inviteMigration.slice(
+      inviteMigration.indexOf("IF v_invite_marker IS NOT NULL THEN"),
+      inviteMigration.indexOf("v_tenant_name :="),
+    );
+    expect(inviteBranch).not.toMatch(/INSERT INTO public\.tenants/);
+    expect(inviteBranch).toContain("INSERT INTO public.tenant_memberships");
+    expect(inviteBranch).toContain("INSERT INTO public.workspace_memberships");
   });
 
   it("assigns owner role on signup tenant membership", () => {

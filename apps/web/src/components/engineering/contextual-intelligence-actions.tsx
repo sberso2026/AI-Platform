@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   contextualIntelligenceActions,
   getDefaultIntelligenceCatalog,
-} from "@rtb/engineering-os";
+} from "@rtb/engineering-os/browser";
 
 export function ContextualIntelligenceActions(props: {
   objectType?: string | null;

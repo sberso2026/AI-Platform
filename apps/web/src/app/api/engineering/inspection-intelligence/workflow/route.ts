@@ -5,7 +5,7 @@ import { createDefect } from "@rtb/inspection-intelligence";
 import { CommerceDomainError } from "@rtb/platform-commerce";
 
 /** Pilot-supported Inspection Intelligence subset. Not Inspection Intelligence GA. */
-export const INSPECTION_PILOT_SUBSET = [
+const INSPECTION_PILOT_SUBSET = [
   "plan",
   "start",
   "observe",
@@ -231,6 +231,8 @@ export const POST = withEngineeringApi(
     if (!sessionId) fail("sessionId required");
 
     if (action === "observe") {
+      const observationBody = String(body.body ?? body.notes ?? "").trim();
+      if (!observationBody) fail("observation body required");
       const inserted = await ctx.supabase
         .from("inspection_observations")
         .insert({
@@ -238,7 +240,7 @@ export const POST = withEngineeringApi(
           workspace_id: workspaceId,
           session_id: sessionId,
           checklist_item_type: String(body.checklistItemType ?? "visual"),
-          body: String(body.body ?? "").trim() || fail("observation body required"),
+          body: observationBody,
         })
         .select("*")
         .single();
