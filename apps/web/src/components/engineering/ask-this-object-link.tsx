@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { buildAskHref } from "@/hooks/use-engineering-context";
+import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 
 export function AskThisObjectLink(props: {
   label: string;
@@ -11,6 +12,10 @@ export function AskThisObjectLink(props: {
   q?: string | null;
   testId?: string;
 }) {
+  const capabilities = useEngineeringCapabilities();
+  if (!capabilities.loaded || !capabilities.visiblePrimaryNavIds.includes("eng-ask")) {
+    return null;
+  }
   const href = buildAskHref({
     projectId: props.projectId,
     objectType: props.objectType,

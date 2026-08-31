@@ -143,13 +143,17 @@ export default function EngineeringModelInteropOverviewPage() {
             { key: "updated", label: "Last updated" },
           ]}
           rows={models}
-          emptyTitle="No federated models yet"
-          emptyDescription="Imported models appear here. This empty state is truthful."
+          emptyTitle="No models connected"
+          emptyDescription="No imported models are recorded in this workspace yet. That is normal before a model is federated."
           emptyTestId="emi-empty-models"
         />
       </div>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Source systems in this workspace</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Review recorded models and results. Live solver execution is not implied.
+      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <IntegrationCard
           name="ETABS"
           body="Model import and exported-result federation available. Live ETABS execution is not currently certified."

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, PageHeader, SearchInput, SPACING, cn } from "@rtb/ui";
 import { Bell, LogOut } from "lucide-react";
+import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 import { createClient } from "@/lib/supabase/client";
 
 interface HeaderProps {
@@ -21,6 +22,9 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
   const [projectId, setProjectId] = useState("all");
   const [query, setQuery] = useState("");
 
+  const capabilities = useEngineeringCapabilities();
+  const askEnabled =
+    capabilities.loaded && capabilities.visiblePrimaryNavIds.includes("eng-ask");
   const engineeringChrome = showEngineeringChrome ?? true;
 
   useEffect(() => {
@@ -43,6 +47,13 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
         );
       })
       .catch(() => undefined);
+
+    const onFilter = (event: Event) => {
+      const next = (event as CustomEvent<{ projectId?: string | null }>).detail?.projectId;
+      setProjectId(next && next !== "all" ? next : "all");
+    };
+    window.addEventListener("rtb:project-filter", onFilter as EventListener);
+    return () => window.removeEventListener("rtb:project-filter", onFilter as EventListener);
   }, []);
 
   const projectOptions = useMemo(
@@ -77,8 +88,8 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
       return;
     }
     const params = new URLSearchParams({ q });
-    if (projectId !== "all") params.set("projectId", projectId);
-    router.push(`/engineering/search?${params.toString()}`);
+                if (projectId !== "all") params.set("projectId", projectId);
+                router.push(`/engineering/search?${params.toString()}`);
   }
 
   return (
@@ -125,6 +136,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
               ))}
             </select>
 
+            {askEnabled ? (
             <Button
               variant="outline"
               className={cn(CONTROL_H, "shrink-0 px-3")}
@@ -138,6 +150,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
             >
               Ask Engineering AI
             </Button>
+            ) : null}
 
             <form
               onSubmit={onSearchSubmit}

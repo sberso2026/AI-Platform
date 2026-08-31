@@ -60,18 +60,27 @@ export function resolveStatusChip(value: string | null | undefined): {
     pending: "pending",
     "in-review": "pending",
     review: "pending",
+    "in-progress": "pending",
+    progress: "pending",
+    draft: "pending",
     "review-required": "ai-review",
     "ai-review": "ai-review",
     "ai-review-required": "ai-review",
     "requires-review": "ai-review",
     approved: "approved",
     accepted: "approved",
+    verified: "approved",
     rejected: "rejected",
     declined: "rejected",
+    cancelled: "rejected",
+    canceled: "rejected",
     open: "open",
     active: "open",
+    concept: "open",
     closed: "closed",
     resolved: "closed",
+    inactive: "closed",
+    archived: "closed",
     high: "high",
     medium: "medium",
     med: "medium",
@@ -86,9 +95,13 @@ export function resolveStatusChip(value: string | null | undefined): {
   };
 
   const status = aliases[key] ?? "neutral";
+  const presented =
+    status === "neutral"
+      ? raw.replace(/[_-]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase())
+      : STATUS_LABELS[status];
   return {
     status,
-    label: status === "neutral" ? raw : STATUS_LABELS[status],
+    label: presented,
   };
 }
 

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Badge } from "@rtb/ui";
+import { StatusChip } from "@rtb/ui";
 import { EngineeringListPage } from "@/components/engineering/engineering-list-page";
+import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
 
 export default function EngineeringProjectsPage() {
   return (
@@ -12,11 +13,21 @@ export default function EngineeringProjectsPage() {
       apiEndpoint="/api/engineering/projects"
       createHref="/engineering/projects/new"
       createLabel="New Project"
-      emptyMessage="No projects yet. Create your first engineering project."
+      emptyTitle="No projects yet"
+      emptyDescription="No engineering projects exist in this workspace yet. Create a project to start work."
+      columns={[
+        { key: "project", label: "Project", hrefKey: true },
+        { key: "client_name", label: "Client" },
+        { key: "project_phase", label: "Phase" },
+        { key: "status", label: "Status", status: true },
+        { key: "updated", label: "Last update" },
+      ]}
+      rowHref={(item) => `/engineering/projects/${item.id}`}
       renderItem={(item) => (
         <Link
           href={`/engineering/projects/${item.id}`}
           className="flex items-start justify-between gap-4"
+          onClick={() => persistEngineeringProjectFilter(String(item.id))}
         >
           <div>
             <p className="font-medium">
@@ -26,9 +37,7 @@ export default function EngineeringProjectsPage() {
               {(item.client_name as string) ?? "No client"} · {(item.project_phase as string) ?? ""}
             </p>
           </div>
-          <Badge variant={item.status === "active" ? "success" : "secondary"}>
-            {item.status as string}
-          </Badge>
+          <StatusChip value={(item.status as string) ?? ""} />
         </Link>
       )}
     />

@@ -6,6 +6,18 @@ import {
   OperationalPageIntro,
 } from "@/components/engineering/operational";
 
+const WORKFLOW = [
+  { href: "/engineering/apps/inspection-intelligence/plans", label: "Plan" },
+  { href: "/engineering/apps/inspection-intelligence/sessions", label: "Execute" },
+  { href: "/engineering/apps/inspection-intelligence/field", label: "Capture evidence" },
+  { href: "/engineering/apps/inspection-intelligence/sessions", label: "Record observation" },
+  { href: "/engineering/apps/inspection-intelligence/defects", label: "Defect / condition" },
+  { href: "/engineering/apps/inspection-intelligence/actions", label: "Recommendation / action" },
+  { href: "/engineering/apps/inspection-intelligence/review", label: "Verification" },
+  { href: "/engineering/apps/inspection-intelligence/sessions", label: "Report" },
+  { href: "/engineering/apps/inspection-intelligence/sessions", label: "History" },
+] as const;
+
 const ACTIONS = [
   {
     href: "/engineering/apps/inspection-intelligence/sessions",
@@ -63,6 +75,24 @@ export default function InspectionIntelligenceOverviewPage() {
       <div className="mb-6">
         <AskEngineeringAI q="Summarize recent inspections." />
       </div>
+
+      <ol
+        className="mb-6 flex flex-wrap gap-2 overflow-x-auto text-sm"
+        data-testid="inspection-workflow-strip"
+        aria-label="Inspection workflow"
+      >
+        {WORKFLOW.map((step, index) => (
+          <li key={`${step.label}-${index}`} className="flex items-center gap-2">
+            {index > 0 ? <span className="text-slate-400" aria-hidden>→</span> : null}
+            <Link
+              href={step.href}
+              className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3 hover:border-slate-400"
+            >
+              {step.label}
+            </Link>
+          </li>
+        ))}
+      </ol>
 
       <div className="flex flex-wrap gap-2">
         {ACTIONS.map((action) => (

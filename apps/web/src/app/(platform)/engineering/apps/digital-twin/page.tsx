@@ -9,6 +9,8 @@ import {
   OperationalMetricCard,
   OperationalPageIntro,
   OperationalSkeleton,
+  StatusTable,
+  type OperationalRow,
 } from "@/components/engineering/operational";
 
 type TwinIdentity = {
@@ -91,48 +93,46 @@ export default function DigitalTwinOverviewPage() {
           />
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-slate-500">
-              Boundaries
+              Last snapshot
             </p>
-            <p className="mt-1 text-xs text-slate-600">
-              No actuation, control, predictive twin, or native solver. Unavailable capabilities are
-              listed under Governance ({unavailable.length} entries).
+            <p className="mt-1 text-sm text-slate-700">
+              {twins.length > 0 ? "Recorded identities in this workspace" : "No twins recorded"}
             </p>
           </div>
         </div>
 
         <h2 className="mt-8 text-lg font-semibold">Selectable twins</h2>
-        {twins.length === 0 && !loading ? (
-          <>
+        {!loading && twins.length === 0 ? (
             <EmptyOperationalState
-              title="No twins in this workspace yet"
-              description="Twin identities appear here when recorded. This empty state is truthful."
+              title="No models connected"
+              description="No twin identities are recorded in this workspace yet. That is normal before a twin is registered. Technical certification remains under Governance."
               testId="dt-empty-twins"
             />
-          </>
-        ) : (
-          <ul className="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
-            {twins.slice(0, 12).map((twin) => {
+        ) : null}
+        {!loading && twins.length > 0 ? (
+          <StatusTable
+            testId="dt-twins-table"
+            columns={[
+              { key: "twin", label: "Twin / asset identity", hrefKey: true },
+              { key: "entity", label: "Linked record" },
+              { key: "status", label: "Current state", status: true },
+              { key: "source", label: "Source system" },
+            ]}
+            rows={twins.slice(0, 12).map((twin) => {
               const id = String(twin.twinId ?? twin.id ?? "");
-              return (
-                <li key={id} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className="font-medium">{id.slice(0, 12)}…</p>
-                    <p className="text-xs text-slate-500">
-                      Linked record: {String(twin.canonicalEntityType ?? "—")}{" "}
-                      {String(twin.canonicalEntityId ?? "")}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/engineering/apps/digital-twin/twins/${id}`}
-                    className="text-sm font-medium underline-offset-2 hover:underline"
-                  >
-                    Open twin
-                  </Link>
-                </li>
-              );
+              return {
+                id,
+                twin: id,
+                entity: `${String(twin.canonicalEntityType ?? "—")} ${String(twin.canonicalEntityId ?? "")}`.trim(),
+                status: String(twin.status ?? "recorded"),
+                source: "recorded",
+                href: `/engineering/apps/digital-twin/twins/${id}`,
+              } satisfies OperationalRow;
             })}
-          </ul>
-        )}
+            emptyTitle="No models connected"
+            emptyDescription="No twin identities are recorded in this workspace yet."
+          />
+        ) : null}
 
         <p className="mt-6 text-xs text-slate-500" data-testid="dt-unavailable-count">
           Unavailable capabilities documented on Governance ({unavailable.length} entries).

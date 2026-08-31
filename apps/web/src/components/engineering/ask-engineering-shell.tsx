@@ -14,7 +14,10 @@ import {
   useEngineeringContext,
 } from "@/hooks/use-engineering-context";
 import { useExperiencePerf } from "@/hooks/use-experience-perf";
-import { ENGINEERING_PROJECT_FILTER_KEY } from "@/hooks/use-engineering-project-filter";
+import {
+  ENGINEERING_PROJECT_FILTER_KEY,
+} from "@/hooks/use-engineering-project-filter";
+import { contextualAskStarters, describeAskContext } from "@/lib/engineering/enterprise-ux";
 
 type EvidenceItem = {
   sourceId: string;
@@ -494,6 +497,13 @@ export function AskEngineeringShell({
         <span className="text-muted-foreground" data-testid="ask-scope-indicator">
           Scope: {scopeLabel}
         </span>
+        <span className="text-slate-800" data-testid="ask-object-context">
+          Context: {describeAskContext({
+            objectType: context.objectType,
+            objectId: context.objectId,
+            projectId: context.projectId,
+          })}
+        </span>
         {SCOPE_OPTIONS.map((opt) => (
           <button
             key={opt.id}
@@ -520,6 +530,24 @@ export function AskEngineeringShell({
         >
           Clear context
         </Link>
+      </div>
+      <p className="border-b px-4 py-2 text-xs text-slate-600" data-testid="ask-advisory-notice">
+        Advisory only — Engineering AI cannot approve engineering work. Evidence and provenance stay visible.
+      </p>
+      <div className="flex flex-wrap gap-2 border-b px-4 py-2" data-testid="ask-starters">
+        {contextualAskStarters({
+          objectType: context.objectType,
+          projectId: context.projectId,
+        }).map((starter) => (
+          <button
+            key={starter.id}
+            type="button"
+            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 hover:border-slate-400"
+            onClick={() => setInput(starter.q)}
+          >
+            {starter.label}
+          </button>
+        ))}
       </div>
 
       <div className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">

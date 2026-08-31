@@ -318,7 +318,10 @@ describe("EOS-UX-1R — primary nav exact root match", () => {
     expect(isNavItemActive("/engineering", "/engineering", hrefs)).toBe(true);
     expect(isNavItemActive("/engineering/projects", "/engineering", hrefs)).toBe(false);
     expect(isNavItemActive("/engineering/assets", "/engineering", hrefs)).toBe(false);
-    expect(isNavItemActive("/engineering/governance", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/apps/inspection-intelligence", "/engineering", hrefs)).toBe(
+      false,
+    );
+    expect(isNavItemActive("/engineering/ask", "/engineering", hrefs)).toBe(false);
   });
 
   it("activates the longest matching primary item", () => {

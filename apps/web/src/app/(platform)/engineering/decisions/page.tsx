@@ -15,12 +15,8 @@ export default function DecisionsPage() {
         { key: "recommendation", label: "Recommendation", multiline: true },
         { key: "rationale", label: "Rationale", multiline: true },
       ]}
-      renderMeta={(item) => (
-        <p className="text-xs text-muted-foreground">
-          approval: {(item.approval_status as string) ?? "pending"} · confidence{" "}
-          {item.confidence != null ? String(item.confidence) : "—"}
-        </p>
-      )}
+      emptyTitle="No pending decisions"
+      emptyDescription="No decisions requiring review are recorded in this scope yet."
     />
   );
 }

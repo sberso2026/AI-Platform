@@ -2,20 +2,35 @@
 
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, Badge, Button, Input } from "@rtb/ui";
+import { Button, Input, StatusChip } from "@rtb/ui";
 import {
   asRecordArray,
   parseApiJsonResponse,
 } from "@/lib/api/parse-json-response";
+import {
+  useResolvedEngineeringProjectId,
+  withProjectQuery,
+} from "@/hooks/use-engineering-project-filter";
+import {
+  EmptyOperationalState,
+  EngineeringBreadcrumb,
+  OperationalError,
+  OperationalSkeleton,
+  StatusTable,
+  type OperationalRow,
+} from "@/components/engineering/operational";
+import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
 
 export function useRegisterList(endpoint: string) {
+  const projectId = useResolvedEngineeringProjectId();
+  const scoped = withProjectQuery(endpoint, projectId);
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const reload = () => {
     setLoading(true);
     setError(null);
-    fetch(endpoint)
+    fetch(scoped)
       .then((r) => parseApiJsonResponse(r))
       .then((parsed) => {
         if (!parsed.ok) {
@@ -41,8 +56,8 @@ export function useRegisterList(endpoint: string) {
         setLoading(false);
       });
   };
-  useEffect(reload, [endpoint]);
-  return { items, loading, error, reload };
+  useEffect(reload, [scoped]);
+  return { items, loading, error, reload, projectId };
 }
 
 export function CreateForm({
@@ -123,6 +138,8 @@ export function RegisterShell({
   numberKey,
   renderMeta,
   createExtra,
+  emptyTitle,
+  emptyDescription,
 }: {
   title: string;
   description: string;
@@ -131,42 +148,93 @@ export function RegisterShell({
   numberKey: string;
   renderMeta?: (item: Record<string, unknown>) => React.ReactNode;
   createExtra?: Record<string, unknown>;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
-  const { items, loading, error, reload } = useRegisterList(endpoint);
+  const { items, loading, error, reload, projectId } = useRegisterList(endpoint);
+  const rows: OperationalRow[] = items.map((item) => ({
+    ...item,
+    record: `${String(item[numberKey] ?? "")} — ${String(item.title ?? "")}`.replace(/^ — /, ""),
+    owner: pickExistingField(item, ["assigned_to", "owner_id", "owner"]),
+    due: formatOperationalDate(item.due_date ?? item.response_due),
+    updated: formatOperationalDate(item.updated_at),
+    status: item.approval_status ?? item.status ?? "—",
+    priority: item.priority ?? item.severity ?? item.criticality ?? "—",
+  }));
+
   return (
     <>
       <Header title={title} description={description} />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
+        {projectId ? (
+          <EngineeringBreadcrumb
+            items={[
+              { href: "/engineering/projects", label: "Projects" },
+              { href: `/engineering/projects/${projectId}`, label: "Selected project" },
+              { label: title },
+            ]}
+          />
+        ) : null}
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {loading ? "Loading..." : `${items.length} records`}
+            {loading ? "Loading…" : `${items.length} records`}
+            {projectId ? " · selected project" : " · workspace"}
           </p>
-          <CreateForm fields={fields} endpoint={endpoint} extra={createExtra} onCreated={reload} />
+          <CreateForm
+            fields={fields}
+            endpoint={endpoint}
+            extra={{ ...createExtra, ...(projectId ? { projectId } : {}) }}
+            onCreated={reload}
+          />
         </div>
-        {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
-        <div className="grid gap-3">
-          {items.map((item) => (
-            <Card key={item.id as string}>
-              <CardContent className="flex items-start justify-between gap-4 p-4">
-                <div>
-                  <p className="font-medium">
-                    {(item[numberKey] as string) ?? ""} — {(item.title as string) ?? ""}
-                  </p>
-                  {renderMeta?.(item)}
+        {error ? <OperationalError message={error} /> : null}
+        {loading ? <OperationalSkeleton /> : null}
+        {!loading && !error && items.length === 0 ? (
+          <EmptyOperationalState
+            title={emptyTitle ?? `No ${title.toLowerCase()} recorded`}
+            description={
+              emptyDescription ??
+              `Nothing is recorded in this scope yet. That can be normal before work is captured.`
+            }
+          />
+        ) : null}
+        {!loading && items.length > 0 ? (
+          renderMeta ? (
+            <div className="grid gap-3">
+              {items.map((item) => (
+                <div
+                  key={item.id as string}
+                  className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {(item[numberKey] as string) ?? ""} — {(item.title as string) ?? ""}
+                    </p>
+                    {renderMeta(item)}
+                  </div>
+                  <div className="flex gap-2">
+                    {item.priority ? <StatusChip value={item.priority as string} /> : null}
+                    <StatusChip value={(item.approval_status as string) ?? (item.status as string) ?? ""} />
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  {item.priority ? <Badge variant="outline">{item.priority as string}</Badge> : null}
-                  <Badge variant="secondary">{(item.status as string) ?? "—"}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {!loading && items.length === 0 && (
-            <Card>
-              <CardContent className="p-6 text-sm text-muted-foreground">No records yet.</CardContent>
-            </Card>
-          )}
-        </div>
+              ))}
+            </div>
+          ) : (
+            <StatusTable
+              columns={[
+                { key: "record", label: "Record" },
+                { key: "status", label: "Status", status: true },
+                { key: "priority", label: "Priority", status: true },
+                { key: "owner", label: "Owner" },
+                { key: "due", label: "Due" },
+                { key: "updated", label: "Last update" },
+              ]}
+              rows={rows}
+              emptyTitle={emptyTitle ?? "No records yet"}
+              emptyDescription={emptyDescription ?? "No records yet."}
+            />
+          )
+        ) : null}
       </main>
     </>
   );

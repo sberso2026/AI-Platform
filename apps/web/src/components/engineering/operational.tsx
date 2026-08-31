@@ -5,6 +5,11 @@ import Link from "next/link";
 import { Card, CardContent, EmptyState, StatusChip, cn } from "@rtb/ui";
 import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
 import { ModuleSectionNav, type ModuleNavLink } from "@/components/engineering/module-section-nav";
+import {
+  formatOperationalDate,
+  humanizeOperationalError,
+  pickExistingField,
+} from "@/lib/engineering/enterprise-ux";
 
 export type OperationalRow = Record<string, unknown>;
 
@@ -153,13 +158,23 @@ export function WorkQueue({
           {rows.map((row) => {
             const id = String(row.id ?? recordLabel(row, labelKeys));
             const dest = itemHref?.(row) ?? href;
+            const meta = [
+              pickExistingField(row, ["assigned_to", "owner_id", "owner"]),
+              formatOperationalDate(row.due_date ?? row.response_due ?? row.dueDate),
+              formatOperationalDate(row.updated_at ?? row.updatedAt),
+            ].filter((part) => part !== "—");
             return (
               <li key={id}>
                 <Link
                   href={dest}
                   className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm text-slate-800 hover:text-slate-950"
                 >
-                  <span className="truncate">{recordLabel(row, labelKeys)}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate">{recordLabel(row, labelKeys)}</span>
+                    {meta.length > 0 ? (
+                      <span className="block truncate text-xs text-slate-500">{meta.join(" · ")}</span>
+                    ) : null}
+                  </span>
                   {statusKey ? <StatusChip value={String(row[statusKey] ?? "")} /> : null}
                 </Link>
               </li>
@@ -196,10 +211,11 @@ export function StatusTable({
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white" data-testid={testId}>
       <table className="min-w-full text-left text-sm">
+        <caption className="sr-only">{testId ?? "Operational records"}</caption>
         <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             {columns.map((col) => (
-              <th key={col.key} className="px-4 py-3 font-semibold">
+              <th key={col.key} scope="col" className="px-4 py-3 font-semibold">
                 {col.label}
               </th>
             ))}
@@ -255,9 +271,69 @@ export function EmptyOperationalState({
   testId?: string;
 }) {
   return (
-    <div data-testid={testId}>
+    <div data-testid={testId ?? "empty-operational-state"}>
       <EmptyState title={title} description={description} action={action} />
     </div>
+  );
+}
+
+export function EntitlementLimitedState({
+  title = "This feature is not included in your current plan",
+  description = "The application is not licensed for this workspace. Direct URL authorization remains enforced.",
+  testId,
+}: {
+  title?: string;
+  description?: string;
+  testId?: string;
+}) {
+  return (
+    <div
+      className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-7"
+      data-testid={testId ?? "entitlement-limited-state"}
+      role="status"
+    >
+      <p className="text-sm font-semibold text-amber-950">{title}</p>
+      <p className="mt-1.5 max-w-prose text-sm text-amber-900">{description}</p>
+    </div>
+  );
+}
+
+export type BreadcrumbItem = { href?: string; label: string };
+
+export function EngineeringBreadcrumb({
+  items,
+  testId,
+}: {
+  items: BreadcrumbItem[];
+  testId?: string;
+}) {
+  if (items.length < 2) return null;
+  return (
+    <nav
+      className="mb-4 text-sm text-slate-600"
+      aria-label="Breadcrumb"
+      data-testid={testId ?? "engineering-breadcrumb"}
+    >
+      <ol className="flex flex-wrap items-center gap-1">
+        {items.map((item, index) => {
+          const last = index === items.length - 1;
+          return (
+            <li key={`${item.label}-${index}`} className="flex items-center gap-1">
+              {index > 0 ? <span aria-hidden className="text-slate-400">/</span> : null}
+              {last || !item.href ? (
+                <span className="font-medium text-slate-900" aria-current={last ? "page" : undefined}>
+                  {item.label}
+                </span>
+              ) : (
+                <Link href={item.href} className="underline-offset-2 hover:underline">
+                  {item.label}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }
 
@@ -358,11 +434,29 @@ export function AskEngineeringAI(props: {
   );
 }
 
-export function OperationalSkeleton({ label = "Loading operational data…" }: { label?: string }) {
+export function OperationalSkeleton({
+  label = "Loading operational data…",
+  rows = 6,
+}: {
+  label?: string;
+  rows?: number;
+}) {
   return (
-    <p className="text-sm text-slate-500" data-testid="operational-loading" role="status">
-      {label}
-    </p>
+    <div data-testid="operational-loading" role="status" aria-live="polite" aria-busy="true">
+      <p className="sr-only">{label}</p>
+      <div className="mb-6 h-16 animate-pulse rounded-lg border border-slate-200 bg-slate-100" />
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="h-10 border-b border-slate-200 bg-slate-50" />
+        {Array.from({ length: rows }).map((_, index) => (
+          <div
+            key={index}
+            className="h-12 border-b border-slate-100 bg-white last:border-0"
+          >
+            <div className="mx-4 mt-4 h-4 w-2/3 animate-pulse rounded bg-slate-100" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -373,9 +467,20 @@ export function OperationalError({
   message: string;
   retryHref?: string;
 }) {
+  const copy = humanizeOperationalError(message);
   return (
-    <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
-      <p>{message}</p>
+    <div
+      className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+      role="alert"
+      data-testid="operational-error"
+    >
+      <p className="font-semibold">{copy.title}</p>
+      <p className="mt-1">{copy.description}</p>
+      {copy.diagnostic ? (
+        <p className="mt-2 font-mono text-xs text-red-700/80" data-testid="operational-error-diagnostic">
+          {copy.diagnostic}
+        </p>
+      ) : null}
       {retryHref ? (
         <Link href={retryHref} className="mt-2 inline-block font-medium underline">
           Try again

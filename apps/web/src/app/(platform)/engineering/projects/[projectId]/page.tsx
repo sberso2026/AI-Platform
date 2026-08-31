@@ -10,6 +10,8 @@ import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project
 import {
   AskEngineeringAI,
   ContextTabs,
+  EmptyOperationalState,
+  EngineeringBreadcrumb,
   OperationalError,
   OperationalMetricCard,
   OperationalSkeleton,
@@ -41,16 +43,20 @@ type DashboardPayload = {
   };
 };
 
-const WORKSPACE_TABS = (projectId: string) =>
+const WORKSPACE_PRIMARY_TABS = (projectId: string) =>
   [
     { href: `/engineering/projects/${projectId}`, label: "Overview", exact: true },
-    { href: `/engineering/documents?projectId=${projectId}`, label: "Documents" },
     { href: `/engineering/apps/inspection-intelligence?projectId=${projectId}`, label: "Inspections" },
-    { href: `/engineering/apps/model-interoperability/models?projectId=${projectId}`, label: "Models" },
     { href: `/engineering/risks?projectId=${projectId}`, label: "Risks" },
     { href: `/engineering/technical-queries?projectId=${projectId}`, label: "Technical Queries" },
     { href: `/engineering/decisions?projectId=${projectId}`, label: "Decisions" },
     { href: `/engineering/actions?projectId=${projectId}`, label: "Actions" },
+  ] as const;
+
+const WORKSPACE_MORE_TABS = (projectId: string) =>
+  [
+    { href: `/engineering/documents?projectId=${projectId}`, label: "Documents" },
+    { href: `/engineering/apps/model-interoperability/models?projectId=${projectId}`, label: "Models" },
     { href: `/engineering/reports?projectId=${projectId}`, label: "Reports" },
     { href: `/engineering/apps/project-intelligence?projectId=${projectId}`, label: "Intelligence" },
     { href: `/engineering/ask?projectId=${projectId}&objectType=project&objectId=${projectId}`, label: "AI" },
@@ -93,7 +99,8 @@ export default function EngineeringProjectDetailPage() {
   }, [projectId]);
 
   const project = data?.project;
-  const tabs = useMemo(() => WORKSPACE_TABS(projectId), [projectId]);
+  const primaryTabs = useMemo(() => WORKSPACE_PRIMARY_TABS(projectId), [projectId]);
+  const moreTabs = useMemo(() => WORKSPACE_MORE_TABS(projectId), [projectId]);
   const attention = dashboard?.attention ?? {};
 
   return (
@@ -111,6 +118,14 @@ export default function EngineeringProjectDetailPage() {
         {!project && !error ? <OperationalSkeleton label="Loading project workspace…" /> : null}
         {project ? (
           <div data-testid="project-workspace">
+            <EngineeringBreadcrumb
+              items={[
+                { href: "/engineering/projects", label: "Projects" },
+                {
+                  label: `${String(project.project_code ?? "")} ${String(project.project_name ?? "Project")}`.trim(),
+                },
+              ]}
+            />
             <ProjectContextHeader
               code={project.project_code as string}
               name={project.project_name as string}
@@ -118,7 +133,14 @@ export default function EngineeringProjectDetailPage() {
               phase={project.project_phase as string}
               projectId={projectId}
             />
-            <ContextTabs links={tabs} ariaLabel="Project workspace" />
+            <ContextTabs links={primaryTabs} ariaLabel="Project workspace" />
+            <nav className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" aria-label="More project tools">
+              {moreTabs.map((link) => (
+                <Link key={link.href} href={link.href} className="inline-flex min-h-11 items-center hover:underline">
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <OperationalMetricCard
@@ -232,7 +254,10 @@ export default function EngineeringProjectDetailPage() {
                   </Link>
                 </div>
                 {(data?.documents.length ?? 0) === 0 ? (
-                  <p className="text-sm text-slate-600">No documents linked to this project.</p>
+                  <EmptyOperationalState
+                    title="No documents linked"
+                    description="No documents are recorded on this project yet. Upload or link documents when they exist."
+                  />
                 ) : (
                   <ul className="space-y-1 text-sm">
                     {(data?.documents ?? []).slice(0, 8).map((doc) => (
@@ -252,20 +277,23 @@ export default function EngineeringProjectDetailPage() {
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold">Assets</h3>
                   <Link
-                    href="/engineering/assets"
+                    href={`/engineering/assets?projectId=${projectId}`}
                     className="text-xs font-medium underline-offset-2 hover:underline"
                   >
                     View all
                   </Link>
                 </div>
                 {(data?.assets.length ?? 0) === 0 ? (
-                  <p className="text-sm text-slate-600">No assets linked to this project.</p>
+                  <EmptyOperationalState
+                    title="No assets linked"
+                    description="No assets are recorded on this project yet. Register assets when they exist."
+                  />
                 ) : (
                   <ul className="space-y-1 text-sm">
                     {(data?.assets ?? []).slice(0, 8).map((asset) => (
                       <li key={String(asset.id)}>
                         <Link
-                          href={`/engineering/assets/${asset.id}`}
+                          href={`/engineering/assets/${asset.id}?projectId=${projectId}`}
                           className="hover:underline"
                         >
                           {recordLabel(asset, ["asset_tag", "asset_name"])}

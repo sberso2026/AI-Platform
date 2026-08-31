@@ -2,34 +2,80 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, Badge, Button, Input } from "@rtb/ui";
+import { Button, Input } from "@rtb/ui";
+import {
+  useResolvedEngineeringProjectId,
+  withProjectQuery,
+} from "@/hooks/use-engineering-project-filter";
+import {
+  EmptyOperationalState,
+  EngineeringBreadcrumb,
+  OperationalError,
+  OperationalSkeleton,
+  StatusTable,
+  type OperationalRow,
+} from "@/components/engineering/operational";
+import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 export default function RisksPage() {
+  const projectId = useResolvedEngineeringProjectId();
   const [risks, setRisks] = useState<Record<string, unknown>[]>([]);
   const [cells, setCells] = useState<Record<string, number>>({});
   const [title, setTitle] = useState("");
   const [probability, setProbability] = useState("3");
   const [consequence, setConsequence] = useState("3");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const reload = () =>
-    fetch("/api/engineering/risks?view=matrix")
-      .then((r) => r.json())
-      .then((j) => {
-        setRisks(j.data?.risks ?? []);
-        setCells(j.data?.cells ?? {});
-      });
+  const reload = () => {
+    setLoading(true);
+    fetch(withProjectQuery("/api/engineering/risks?view=matrix", projectId))
+      .then((r) => parseApiJsonResponse<{ risks?: Record<string, unknown>[]; cells?: Record<string, number> }>(r))
+      .then((parsed) => {
+        if (!parsed.ok) {
+          setError(parsed.errorMessage ?? "Cannot load this risk register");
+          setRisks([]);
+          return;
+        }
+        setError(null);
+        setRisks(parsed.data?.risks ?? []);
+        setCells(parsed.data?.cells ?? {});
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Cannot load this risk register"))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     reload();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const rows: OperationalRow[] = risks.map((item) => ({
+    ...item,
+    record: `${String(item.risk_number ?? "")} — ${String(item.title ?? "")}`.replace(/^ — /, ""),
+    owner: pickExistingField(item, ["assigned_to", "owner_id", "owner"]),
+    due: formatOperationalDate(item.due_date),
+    updated: formatOperationalDate(item.updated_at),
+    priority: item.severity ?? item.priority ?? item.score ?? "—",
+  }));
 
   return (
-      <>
-        <Header
+    <>
+      <Header
         title="Risk Register"
         description="Engineering risk matrix with probability × consequence scoring"
       />
-              <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
+      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
+        {projectId ? (
+          <EngineeringBreadcrumb
+            items={[
+              { href: "/engineering/projects", label: "Projects" },
+              { href: `/engineering/projects/${projectId}`, label: "Selected project" },
+              { label: "Risks" },
+            ]}
+          />
+        ) : null}
         <form
           className="mb-6 flex flex-wrap gap-2"
           onSubmit={async (e) => {
@@ -41,6 +87,7 @@ export default function RisksPage() {
                 title,
                 probability: Number(probability),
                 consequence: Number(consequence),
+                ...(projectId ? { projectId } : {}),
               }),
             });
             setTitle("");
@@ -55,56 +102,58 @@ export default function RisksPage() {
           </Button>
         </form>
 
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <p className="mb-3 text-sm font-medium">Risk Matrix (P × C counts)</p>
-            <div className="grid grid-cols-6 gap-1 text-center text-xs">
-              <div />
-              {[1, 2, 3, 4, 5].map((c) => (
-                <div key={c} className="font-medium text-muted-foreground">
-                  C{c}
-                </div>
-              ))}
-              {[5, 4, 3, 2, 1].map((p) => (
-                <Fragment key={`row-${p}`}>
-                  <div className="font-medium text-muted-foreground">P{p}</div>
-                  {[1, 2, 3, 4, 5].map((c) => {
-                    const count = cells[`${p}x${c}`] ?? 0;
-                    const score = p * c;
-                    const tone =
-                      score >= 15 ? "bg-destructive/20" : score >= 8 ? "bg-amber-500/20" : "bg-muted";
-                    return (
-                      <div key={`${p}-${c}`} className={`rounded p-2 ${tone}`}>
-                        {count || "·"}
-                      </div>
-                    );
-                  })}
-                </Fragment>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {error ? <OperationalError message={error} /> : null}
+        {loading ? <OperationalSkeleton /> : null}
 
-        <div className="grid gap-2">
-          {risks.map((item) => (
-            <Card key={item.id as string}>
-              <CardContent className="flex justify-between p-4 text-sm">
-                <div>
-                  <p className="font-medium">
-                    {(item.risk_number as string) ?? ""} — {(item.title as string) ?? ""}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    P{String(item.probability)} × C{String(item.consequence)} = score {String(item.score)}
-                  </p>
-                </div>
-                <Badge variant={(item.score as number) >= 15 ? "destructive" : "secondary"}>
-                  {item.status as string}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-white p-4">
+          <p className="mb-3 text-sm font-medium">Risk matrix (P × C counts)</p>
+          <div className="grid grid-cols-6 gap-1 text-center text-xs">
+            <div />
+            {[1, 2, 3, 4, 5].map((c) => (
+              <div key={c} className="font-medium text-muted-foreground">
+                C{c}
+              </div>
+            ))}
+            {[5, 4, 3, 2, 1].map((p) => (
+              <Fragment key={`row-${p}`}>
+                <div className="font-medium text-muted-foreground">P{p}</div>
+                {[1, 2, 3, 4, 5].map((c) => {
+                  const count = cells[`${p}x${c}`] ?? 0;
+                  const score = p * c;
+                  const tone =
+                    score >= 15 ? "bg-red-100" : score >= 8 ? "bg-amber-100" : "bg-slate-50";
+                  return (
+                    <div key={`${p}-${c}`} className={`rounded p-2 ${tone}`}>
+                      {count || "·"}
+                    </div>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </div>
         </div>
+
+        {!loading && risks.length === 0 && !error ? (
+          <EmptyOperationalState
+            title="No open risks recorded"
+            description="No risks are recorded in this scope yet. That is normal before a risk workshop or register entry."
+          />
+        ) : (
+          <StatusTable
+            columns={[
+              { key: "record", label: "Risk" },
+              { key: "status", label: "Status", status: true },
+              { key: "priority", label: "Score / severity" },
+              { key: "owner", label: "Owner" },
+              { key: "due", label: "Due" },
+              { key: "updated", label: "Last update" },
+            ]}
+            rows={rows}
+            emptyTitle="No open risks recorded"
+            emptyDescription="No risks are recorded in this scope yet."
+          />
+        )}
       </main>
-      </>
+    </>
   );
 }

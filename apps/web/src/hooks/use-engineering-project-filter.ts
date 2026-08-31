@@ -47,6 +47,31 @@ export function withProjectQuery(endpoint: string, projectId: string | null): st
   return `${url.pathname}${url.search}`;
 }
 
+/**
+ * Prefer ?projectId= on the current URL, then the header session filter.
+ * Persists URL scope so subsequent routes keep project context.
+ */
+export function useResolvedEngineeringProjectId(): string | null {
+  const stored = useEngineeringProjectFilter();
+  const [urlId, setUrlId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("projectId");
+      if (fromUrl && fromUrl !== "all") {
+        setUrlId(fromUrl);
+        if (stored !== fromUrl) persistEngineeringProjectFilter(fromUrl);
+        return;
+      }
+      setUrlId(null);
+    } catch {
+      setUrlId(null);
+    }
+  }, [stored]);
+
+  return urlId ?? stored;
+}
+
 export function persistEngineeringProjectFilter(projectId: string | null): void {
   const value = projectId && projectId !== "all" ? projectId : "all";
   try {

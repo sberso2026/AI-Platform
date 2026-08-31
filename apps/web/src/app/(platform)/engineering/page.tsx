@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Button, Input } from "@rtb/ui";
+import { Button, Input, StatusChip } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
   persistEngineeringProjectFilter,
@@ -12,6 +12,7 @@ import {
   withProjectQuery,
 } from "@/hooks/use-engineering-project-filter";
 import { buildAskHref } from "@/hooks/use-engineering-context";
+import { withProjectHref } from "@/lib/engineering/enterprise-ux";
 import { useExperiencePerf } from "@/hooks/use-experience-perf";
 import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 import {
@@ -91,6 +92,11 @@ export default function EngineeringHomePage() {
   }, [projectId]);
 
   const askEnabled = capabilities.visiblePrimaryNavIds.includes("eng-ask");
+  const documentsEnabled = capabilities.entitledApplicationKeys.includes("documents");
+  const assetsEnabled =
+    capabilities.entitledApplicationKeys.includes("asset_intelligence") ||
+    capabilities.visiblePrimaryNavIds.includes("eng-assets");
+  const actionsEnabled = capabilities.entitledApplicationKeys.includes("project_controls");
   const scopeLabel = projectId ? "Selected project" : "All projects (workspace)";
   const attention = dashboard?.attention ?? {};
   const openActions = attention.openActions ?? [];
@@ -115,13 +121,16 @@ export default function EngineeringHomePage() {
   }
 
   const attentionItems = [
-    { id: "reviews", label: "Pending reviews", count: reviews, href: "/engineering/apps/project-intelligence/documents/review" },
-    { id: "risks", label: "Open risks", count: dashboard?.openRisksCount ?? 0, href: "/engineering/risks" },
-    { id: "tqs", label: "Open TQs", count: dashboard?.openTechnicalQueriesCount ?? 0, href: "/engineering/technical-queries" },
-    { id: "actions", label: "Open actions", count: dashboard?.openActionsCount ?? 0, href: "/engineering/actions" },
-    { id: "decisions", label: "Pending decisions", count: dashboard?.pendingDecisionsCount ?? 0, href: "/engineering/decisions" },
-    { id: "overdue", label: "Overdue actions", count: overdueActions.length, href: "/engineering/actions" },
-  ];
+    { id: "reviews", label: "Pending reviews", count: reviews, href: withProjectHref("/engineering/apps/project-intelligence/documents/review", projectId) },
+    { id: "risks", label: "Open risks", count: dashboard?.openRisksCount ?? 0, href: withProjectHref("/engineering/risks", projectId) },
+    { id: "tqs", label: "Open TQs", count: dashboard?.openTechnicalQueriesCount ?? 0, href: withProjectHref("/engineering/technical-queries", projectId) },
+    { id: "actions", label: "Open actions", count: dashboard?.openActionsCount ?? 0, href: withProjectHref("/engineering/actions", projectId) },
+    { id: "decisions", label: "Pending decisions", count: dashboard?.pendingDecisionsCount ?? 0, href: withProjectHref("/engineering/decisions", projectId) },
+    { id: "overdue", label: "Overdue actions", count: overdueActions.length, href: withProjectHref("/engineering/actions", projectId) },
+  ].filter((item) => {
+    if (item.id === "actions" || item.id === "overdue") return actionsEnabled;
+    return true;
+  });
 
   return (
     <>
@@ -138,7 +147,7 @@ export default function EngineeringHomePage() {
             <div data-testid="engineering-command-center" className="contents">
               <div data-testid="engineering-home" className="contents">
           <OperationalPageIntro
-            purpose="Live engineering work for this workspace. Cards open real records."
+            purpose="Exceptions, my work, and recent change — cards open authorized records."
             primaryAction={
               askEnabled ? (
                 <AskEngineeringAI projectId={projectId} q="What needs my attention?" />
@@ -149,6 +158,7 @@ export default function EngineeringHomePage() {
           {error ? <OperationalError message={error} retryHref="/engineering" /> : null}
           {loading ? <OperationalSkeleton label="Loading Command Centre…" /> : null}
 
+          {askEnabled ? (
           <section className="mb-8" data-testid="home-ask">
             <form onSubmit={submitAsk} className="flex flex-col gap-3 sm:flex-row">
               <Input
@@ -157,19 +167,16 @@ export default function EngineeringHomePage() {
                 placeholder="Ask Engineering AI…"
                 className="text-base sm:flex-1"
                 data-testid="home-ask-input"
-                disabled={!askEnabled}
               />
-              <Button type="submit" disabled={!askEnabled} data-testid="home-ask-submit">
+              <Button type="submit" data-testid="home-ask-submit">
                 Ask Engineering AI
               </Button>
             </form>
-            {!askEnabled ? (
-              <p className="mt-2 text-xs text-muted-foreground" data-testid="home-ask-unavailable">
-                Engineering AI is hidden until the assistant capability is entitled.
-              </p>
-            ) : null}
           </section>
+          ) : null}
 
+          {!loading ? (
+          <>
           <section className="mb-6" data-testid="home-current-context">
             <p className="text-sm text-slate-700" data-testid="command-center-scope">
               Scope: {scopeLabel}
@@ -184,70 +191,74 @@ export default function EngineeringHomePage() {
             <OperationalMetricCard
               label="Open risks"
               value={dashboard?.openRisksCount ?? 0}
-              href="/engineering/risks"
+              href={withProjectHref("/engineering/risks", projectId)}
               tone={(dashboard?.openRisksCount ?? 0) > 0 ? "attention" : "neutral"}
               testId="cc-metric-risks"
             />
             <OperationalMetricCard
               label="Open TQs"
               value={dashboard?.openTechnicalQueriesCount ?? 0}
-              href="/engineering/technical-queries"
+              href={withProjectHref("/engineering/technical-queries", projectId)}
               tone={(dashboard?.openTechnicalQueriesCount ?? 0) > 0 ? "attention" : "neutral"}
               testId="cc-metric-tqs"
             />
+            {actionsEnabled ? (
             <OperationalMetricCard
               label="Open actions"
               value={dashboard?.openActionsCount ?? 0}
-              href="/engineering/actions"
+              href={withProjectHref("/engineering/actions", projectId)}
               testId="cc-metric-actions"
             />
+            ) : null}
             <OperationalMetricCard
               label="Pending decisions"
               value={dashboard?.pendingDecisionsCount ?? 0}
-              href="/engineering/decisions"
+              href={withProjectHref("/engineering/decisions", projectId)}
               testId="cc-metric-decisions"
             />
           </section>
 
           <section className="mb-8 grid gap-4 lg:grid-cols-2" data-testid="home-my-work">
+            {actionsEnabled ? (
             <WorkQueue
               title="My work — actions"
-              href="/engineering/actions"
+              href={withProjectHref("/engineering/actions", projectId)}
               rows={overdueActions.length ? overdueActions : openActions}
               labelKeys={["title", "action_title", "summary"]}
               statusKey="status"
               emptyTitle="No open actions"
-              emptyDescription="Outstanding actions will appear here when recorded."
+              emptyDescription="Nothing is assigned yet. Outstanding actions appear here when recorded for this workspace."
               testId="cc-queue-actions"
             />
+            ) : null}
             <WorkQueue
               title="Technical queries"
-              href="/engineering/technical-queries"
+              href={withProjectHref("/engineering/technical-queries", projectId)}
               rows={openTqs}
-              labelKeys={["title", "query_number", "subject"]}
+              labelKeys={["title", "query_number", "subject", "tq_number"]}
               statusKey="status"
               emptyTitle="No open technical queries"
-              emptyDescription="Open TQs will appear here when recorded."
+              emptyDescription="No TQs are open in this scope. That is normal when none have been raised."
               testId="cc-queue-tqs"
             />
             <WorkQueue
               title="Critical / high risks"
-              href="/engineering/risks"
+              href={withProjectHref("/engineering/risks", projectId)}
               rows={highRisks}
               labelKeys={["title", "risk_title"]}
               statusKey="status"
               emptyTitle="No open risks"
-              emptyDescription="Recorded risks will appear here."
+              emptyDescription="No high-severity risks are recorded in this scope."
               testId="cc-queue-risks"
             />
             <WorkQueue
               title="Decisions awaiting attention"
-              href="/engineering/decisions"
+              href={withProjectHref("/engineering/decisions", projectId)}
               rows={pendingDecisions}
               labelKeys={["title", "decision_title"]}
               statusKey="approval_status"
               emptyTitle="No pending decisions"
-              emptyDescription="Decisions requiring review will appear here."
+              emptyDescription="No decisions currently require review."
               testId="cc-queue-decisions"
             />
           </section>
@@ -260,32 +271,36 @@ export default function EngineeringHomePage() {
               labelKeys={["project_name", "project_code"]}
               statusKey="status"
               emptyTitle="No projects yet"
-              emptyDescription="Create a project to start engineering work."
+              emptyDescription="No engineering projects exist in this workspace yet. Create a project to start work."
               testId="cc-queue-projects"
               itemHref={(row) => `/engineering/projects/${row.id}`}
             />
+            {documentsEnabled ? (
             <WorkQueue
               title="Recent documents"
-              href="/engineering/documents"
+              href={withProjectHref("/engineering/documents", projectId)}
               rows={documents}
               labelKeys={["title", "document_number"]}
               statusKey="status"
               emptyTitle="No recent documents"
-              emptyDescription="Uploaded documents will appear here."
+              emptyDescription="No documents are recorded in this scope yet."
               testId="cc-queue-documents"
               itemHref={(row) => `/engineering/documents/${row.id}`}
             />
+            ) : null}
+            {assetsEnabled ? (
             <WorkQueue
               title="Assets requiring attention"
-              href="/engineering/apps/asset-intelligence"
+              href={withProjectHref("/engineering/apps/asset-intelligence", projectId)}
               rows={highRiskAssets}
               labelKeys={["asset_tag", "asset_name"]}
               statusKey="criticality"
               emptyTitle="No high-criticality assets"
               emptyDescription="Assets with recorded high or critical criticality appear here."
               testId="cc-queue-assets"
-              itemHref={(row) => `/engineering/apps/asset-intelligence/assets/${row.id}`}
+              itemHref={(row) => `/engineering/assets/${row.id}`}
             />
+            ) : null}
           </section>
 
           {projects.length > 0 ? (
@@ -304,7 +319,7 @@ export default function EngineeringHomePage() {
                         <span>
                           {String(row.project_code ?? "")} — {String(row.project_name ?? id)}
                         </span>
-                        <span className="text-xs text-slate-500">{String(row.status ?? "")}</span>
+                        <StatusChip value={String(row.status ?? "")} />
                       </Link>
                     </li>
                   );
@@ -313,6 +328,7 @@ export default function EngineeringHomePage() {
             </section>
           ) : null}
 
+          {askEnabled ? (
           <section data-testid="home-suggestions">
             <h3 className="mb-3 text-sm font-semibold text-slate-900">Suggested next steps</h3>
             <div className="flex flex-wrap gap-2">
@@ -323,8 +339,7 @@ export default function EngineeringHomePage() {
                   { id: "risks", label: "Summarise critical risks", q: "Summarize critical engineering risks." },
                   { id: "tqs", label: "Show overdue TQs", q: "Show overdue technical queries." },
                 ] as const
-              ).map((s) =>
-                askEnabled ? (
+              ).map((s) => (
                   <Link
                     key={s.id}
                     href={buildAskHref({ projectId, q: s.q })}
@@ -333,17 +348,12 @@ export default function EngineeringHomePage() {
                   >
                     {s.label}
                   </Link>
-                ) : (
-                  <span
-                    key={s.id}
-                    className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
-                  >
-                    {s.label}
-                  </span>
-                ),
-              )}
+              ))}
             </div>
           </section>
+          ) : null}
+          </>
+          ) : null}
               </div>
             </div>
           </div>

@@ -965,6 +965,9 @@ export function isNavItemActive(
   href: string,
   siblingHrefs: readonly string[],
 ): boolean {
+  if (href === "/engineering") {
+    return pathname === "/engineering" || pathname === "/engineering/";
+  }
   const matches = (candidate: string) =>
     pathname === candidate || pathname.startsWith(`${candidate}/`);
   if (!matches(href)) return false;

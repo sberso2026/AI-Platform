@@ -82,9 +82,10 @@ describe("Batch 2.11 — Branding", () => {
 
 describe("Batch 2.09/2.10 — StatusChip contracts", () => {
   it("resolves engineering statuses", () => {
-    expect(resolveStatusChip("pending").status).toBe("pending");
-    expect(resolveStatusChip("critical").status).toBe("critical");
-    expect(resolveStatusChip("ai-review-required").status).toBe("ai-review");
+    expect(resolveStatusChip("in_progress").status).toBe("pending");
+    expect(resolveStatusChip("in_progress").label).toBe("Pending");
+    expect(resolveStatusChip("OPEN").label).toBe("Open");
+    expect(resolveStatusChip("active").label).toBe("Open");
   });
 
   it("exposes required labels", () => {

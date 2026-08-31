@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   FULL_NAVIGATION,
   SIDEBAR_COLLAPSED_KEY,
@@ -49,6 +49,82 @@ function hasPermissionFromList(
   );
 }
 
+const NAV_CONTEXT_CACHE_KEY = "rtb.platform.nav-context.v1";
+const NAV_CONTEXT_TTL_MS = 60_000;
+
+type CachedNavContext = {
+  at: number;
+  value: Omit<SidebarNavContext, "hasPermission">;
+};
+
+function permissionsFromCache(
+  permissions: SidebarNavContext["permissions"],
+): SidebarNavContext["hasPermission"] {
+  return (resource, action) => hasPermissionFromList(permissions, resource, action);
+}
+
+function readNavContextCache(): SidebarNavContext | null {
+  try {
+    const raw = sessionStorage.getItem(NAV_CONTEXT_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedNavContext;
+    if (!parsed?.at || Date.now() - parsed.at > NAV_CONTEXT_TTL_MS || !parsed.value) return null;
+    return {
+      ...parsed.value,
+      hasPermission: permissionsFromCache(parsed.value.permissions ?? []),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeNavContextCache(ctx: SidebarNavContext) {
+  try {
+    const { hasPermission: _ignored, ...value } = ctx;
+    sessionStorage.setItem(
+      NAV_CONTEXT_CACHE_KEY,
+      JSON.stringify({ at: Date.now(), value }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function SidebarNavSkeleton({ collapsed }: { collapsed: boolean }) {
+  const sections = [
+    { id: "engineering", label: "Engineering OS", bars: 2 },
+    { id: "engineering_work", label: "Work", bars: 4 },
+    { id: "engineering_registers", label: "Engineering", bars: 4 },
+    { id: "engineering_analysis", label: "Analysis", bars: 3 },
+  ];
+  return (
+    <div
+      className="space-y-5"
+      data-testid="sidebar-nav-skeleton"
+      aria-busy="true"
+      aria-label="Loading navigation"
+    >
+      {sections.map((section) => (
+        <div key={section.id}>
+          {!collapsed ? (
+            <p className={cn("mb-2.5 px-4 py-2", TYPOGRAPHY.sidebarGroup, "text-sidebar-foreground/55")}>
+              {section.label}
+            </p>
+          ) : null}
+          <div className="space-y-1">
+            {Array.from({ length: section.bars }).map((_, index) => (
+              <div
+                key={index}
+                className="h-10 animate-pulse rounded-md bg-sidebar-accent/40"
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -61,6 +137,11 @@ export function Sidebar() {
   const [navContext, setNavContext] = useState<SidebarNavContext | null>(null);
   const capabilities = useEngineeringCapabilities();
 
+  useLayoutEffect(() => {
+    const cached = readNavContextCache();
+    if (cached) setNavContext(cached);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     fetch("/api/platform/nav-context")
@@ -69,7 +150,7 @@ export function Sidebar() {
         if (cancelled || !json?.data) return;
         const { roleSlug, showAdvancedPlatformTools, permissions, tier, activeOperatingSystemIds } =
           json.data;
-        setNavContext({
+        const next: SidebarNavContext = {
           roleSlug,
           tier: tier ?? resolveNavTier(roleSlug),
           permissions: permissions ?? [],
@@ -77,10 +158,12 @@ export function Sidebar() {
           activeOperatingSystemIds: activeOperatingSystemIds ?? [],
           hasPermission: (resource, action) =>
             hasPermissionFromList(permissions ?? [], resource, action),
-        });
+        };
+        writeNavContextCache(next);
+        setNavContext(next);
       })
       .catch(() => {
-        // Fall back to platform-only navigation until context loads
+        // Keep cached context or skeleton — never flash System Administration as the primary nav.
       });
     return () => {
       cancelled = true;
@@ -88,13 +171,7 @@ export function Sidebar() {
   }, []);
 
   const visibleNavigation = useMemo(() => {
-    if (!navContext) {
-      return FULL_NAVIGATION.filter(
-        (item) =>
-          !item.sidebarHidden &&
-          (item.group === "platform" || item.href === "/platform/home"),
-      );
-    }
+    if (!navContext) return [];
     const withCapabilities: SidebarNavContext = {
       ...navContext,
       entitledFeatureKeys: capabilities.loaded
@@ -232,7 +309,10 @@ export function Sidebar() {
         data-testid="sidebar-nav-scroll"
         aria-label="Sidebar sections"
       >
-        {sections.map((section, index) => {
+        {!navContext ? (
+          <SidebarNavSkeleton collapsed={collapsed} />
+        ) : (
+        sections.map((section, index) => {
           const expanded = collapsed ? true : Boolean(groupState[section.id]);
           const panelId = `nav-section-${section.id}`;
 
@@ -299,7 +379,8 @@ export function Sidebar() {
               </ul>
             </div>
           );
-        })}
+        })
+        )}
       </nav>
 
       <div className="border-t border-sidebar-border p-3">

@@ -11,6 +11,10 @@ export type ModuleNavLink = {
   testId?: string;
 };
 
+function hrefPath(href: string): string {
+  return href.split("?")[0] ?? href;
+}
+
 export function ModuleSectionNav({
   links,
   ariaLabel,
@@ -23,15 +27,17 @@ export function ModuleSectionNav({
   return (
     <nav className="mt-3 flex flex-wrap gap-2 text-sm" aria-label={ariaLabel} role="tablist">
       {links.map((link) => {
+        const path = hrefPath(link.href);
         const active = link.exact
-          ? pathname === link.href
-          : pathname === link.href || pathname.startsWith(`${link.href}/`);
+          ? pathname === path
+          : pathname === path || pathname.startsWith(`${path}/`);
         return (
           <Link
             key={link.href}
             href={link.href}
             role="tab"
             aria-selected={active}
+            aria-current={active ? "page" : undefined}
             {...(link.testId ? { "data-testid": link.testId } : {})}
             data-active={active ? "true" : "false"}
             className={

@@ -82,7 +82,7 @@ export function InspectionIntelligenceShell({ children }: { children: React.Reac
         </p>
         <h2 className="text-lg font-semibold text-slate-900">Inspections</h2>
         <p
-          className="mt-1 text-sm text-slate-600"
+          className="sr-only"
           data-testid="inspection-sync-readiness"
           aria-live="polite"
         >
