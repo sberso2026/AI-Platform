@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { nextCorrectiveActionStates, nextDefectStates, type DefectLifecycleState } from "@rtb/inspection-intelligence/browser";
 import { hostedGet, hostedIntent, planTargetSummary, type InspectionRow } from "@/lib/inspection-intelligence/hosted-client";
+import { InspectionEngineerEntry } from "@/components/engineering/inspection-ai-engineer";
 
 type Workspace = {
   defect: InspectionRow;
@@ -77,6 +78,8 @@ export function InspectionDefectDetail({ defectId }: { defectId: string }) {
         <Link className="text-cyan-700 hover:underline" href={`/engineering/apps/inspection-intelligence/sessions/${workspace.session.id}`}>
           {String(workspace.session.id).slice(0, 8)}
         </Link>
+        {" · "}
+        <InspectionEngineerEntry sessionId={String(workspace.session.id)} />
       </p>
       <p className="mt-2 text-sm text-slate-600">{String(workspace.defect.description)}</p>
       <p className="mt-2 text-xs text-slate-500">

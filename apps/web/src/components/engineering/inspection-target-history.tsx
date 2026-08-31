@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { hostedGet } from "@/lib/inspection-intelligence/hosted-client";
+import { InspectionEngineerEntry } from "@/components/engineering/inspection-ai-engineer";
 
 type TimelineEvent = { at: string; kind: string; id: string; sessionId: string; summary: string };
 
@@ -42,6 +43,9 @@ export function InspectionTargetHistory({ kind, canonicalId }: { kind: string; c
       </h1>
       <p className="mt-2 max-w-2xl text-slate-600">
         Inspection-derived chronology for this InspectionTarget. Missing records stay missing; continuity is not inferred.
+      </p>
+      <p className="mt-2 text-sm">
+        <InspectionEngineerEntry targetKind={kind} targetCanonicalId={canonicalId} />
       </p>
       {data.missingContinuity ? <p className="mt-4 text-slate-500">No inspection sessions couple to this target.</p> : null}
       <div className="mt-6 grid gap-6 md:grid-cols-2">

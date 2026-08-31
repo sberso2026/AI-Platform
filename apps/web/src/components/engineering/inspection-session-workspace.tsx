@@ -14,6 +14,7 @@ import {
   type InspectionRow,
 } from "@/lib/inspection-intelligence/hosted-client";
 import { InspectionSessionIntelligence } from "@/components/engineering/inspection-session-intelligence";
+import { InspectionEngineerEntry } from "@/components/engineering/inspection-ai-engineer";
 
 type Workspace = {
   session: InspectionRow;
@@ -212,6 +213,7 @@ export function InspectionSessionWorkspace({ sessionId }: { sessionId: string })
           <Link className="text-cyan-700 hover:underline" href="/engineering/apps/inspection-intelligence/reports">
             Compose governed report
           </Link>
+          <InspectionEngineerEntry sessionId={sessionId} />
         </div>
       </div>
       {error ? <p className="mt-3 text-red-700" role="alert">{error}</p> : null}

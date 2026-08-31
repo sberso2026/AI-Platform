@@ -49,4 +49,5 @@ export * from "./domain/inspection-history";
 export * from "./domain/governed-reporting";
 export * from "./pack-sdk";
 export * from "./next-gen";
+export * from "./ai-inspection-engineer";
 export * from "./hosted";

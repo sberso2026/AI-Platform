@@ -15,6 +15,7 @@ const OPERATIONAL = [
   { href: "/engineering/apps/inspection-intelligence/review", label: "Review" },
   { href: "/engineering/apps/inspection-intelligence/history", label: "History" },
   { href: "/engineering/apps/inspection-intelligence/reports", label: "Reports" },
+  { href: "/engineering/apps/inspection-intelligence/engineer", label: "Engineer" },
 ] as const;
 
 const MORE = [

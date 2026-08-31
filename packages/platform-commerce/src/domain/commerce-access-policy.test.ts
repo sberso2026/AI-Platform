@@ -59,6 +59,16 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(write.workspaceRequired).toBe(true);
     expect(write.cachePolicy).toBe("fresh");
   });
+
+  it("binds AI Inspection Engineer advisory API to inspection.read without write authority", () => {
+    const read = getEngineeringApiPolicy("inspection-intelligence-engineer", "GET");
+    const write = getEngineeringApiPolicy("inspection-intelligence-engineer", "POST");
+    expect(read.applicationKey).toBe("inspection_intelligence");
+    expect(write.applicationKey).toBe("inspection_intelligence");
+    expect(read.action).toBe("inspection.read");
+    expect(write.action).toBe("inspection.read");
+    expect(write.cachePolicy).toBe("fresh");
+  });
 });
 
 describe("BOS BUSINESS_API_POLICIES", () => {

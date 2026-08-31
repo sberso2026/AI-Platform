@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { nextReportAuthorityStates, type ReportAuthorityState } from "@rtb/inspection-intelligence/browser";
 import { hostedGet, hostedIntent, type InspectionRow } from "@/lib/inspection-intelligence/hosted-client";
+import { InspectionEngineerEntry } from "@/components/engineering/inspection-ai-engineer";
 
 export function InspectionReportDetail({ outputId }: { outputId: string }) {
   const [row, setRow] = useState<InspectionRow>();
@@ -82,6 +83,7 @@ export function InspectionReportDetail({ outputId }: { outputId: string }) {
             Export Markdown
           </a>
         ) : null}
+        <InspectionEngineerEntry reportId={outputId} />
       </div>
       <pre className="mt-6 overflow-auto rounded border bg-slate-50 p-4 text-xs" data-testid="inspection-report-snapshot">
         {JSON.stringify(payload.sections ?? payload, null, 2)}

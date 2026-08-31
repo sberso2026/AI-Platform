@@ -79,6 +79,7 @@ export const INSPECTION_INTELLIGENCE_NEXT_GEN_SURFACES = [
     id: "ai_inspection_engineer",
     title: "AI Inspection Engineer",
     implementedInIi0: false,
+    implementedInIi5: true,
     canonicalBasis: "advisory Platform AI Director / prompt-registry pattern; no private AI stack",
   },
 ] as const;

@@ -32,7 +32,7 @@ describe("II-4 history and reporting certification", () => {
     expect(DATABASE_POLICY_CHANGED).toBe(false);
     expect(II_PDF_EXPORT_AVAILABLE).toBe(false);
     expect(II_COMMAND_CENTRE_IMPLEMENTED).toBe(false);
-    expect(II_AI_INSPECTION_ENGINEER_IMPLEMENTED).toBe(false);
+    expect(II_AI_INSPECTION_ENGINEER_IMPLEMENTED).toBe(true);
     expect(AUTONOMOUS_INSPECTION_APPROVAL_ENABLED).toBe(false);
     expect(AUTONOMOUS_CONDITION_CERTIFICATION_ENABLED).toBe(false);
     expect(AUTONOMOUS_REMEDIATION_APPROVAL_ENABLED).toBe(false);
