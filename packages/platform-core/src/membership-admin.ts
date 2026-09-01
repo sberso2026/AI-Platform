@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@rtb/database";
+import { createSupabaseAuthMailAdapter, deliverActivationMail, type AuthMailAdapter } from "./auth-mail-adapter";
 import { invitationStatusFromAuth } from "./invite-auth-error";
-
-function randomTemporaryPassword(): string {
-  const bytes = new Uint8Array(12);
-  crypto.getRandomValues(bytes);
-  const token = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  return `Eos1rc-${token}`;
-}
+import {
+  IdentityProvisioningError,
+  assertActivationResendAllowed,
+  buildInviteUserMetadata,
+  classifyIdentityFailure,
+  deriveOnboardingState,
+} from "./identity-onboarding";
 
 /** Canonical owner path: /signup creates the tenant. Members join by admin invite email.
  * Locked for EOS external pilot — do not add a parallel RTB_ADMIN_PROVISIONED owner path. */
@@ -42,9 +43,9 @@ export interface InviteMemberInput {
   email: string;
   roleSlug: string;
   invitedBy: string;
-  /** HTTPS origin + /login so invite activation does not land on localhost site_url. */
+  /** HTTPS origin + /reset-password so activation uses the custom-domain recovery page. */
   redirectTo?: string;
-  /** Internal/break-glass only. Never the external invite default. */
+  /** Rejected on the canonical path. Temporary passwords are not used for external onboarding. */
   breakGlass?: boolean;
 }
 
@@ -54,12 +55,20 @@ export interface InviteMemberResult {
   roleSlug: PilotInviteRoleSlug;
   workspaceId: string;
   created: boolean;
-  delivery: "invite_email" | "temporary_password" | "existing_user";
-  temporaryPassword?: string;
+  delivery: "activation_sent" | "activation_delivery_failed" | "existing_user";
+  onboardingState: "pending_activation" | "active" | "activation_delivery_failed" | "suspended";
+  applicationAccess: "not_assigned";
 }
 
 export class MembershipAdminService {
-  constructor(private readonly admin: SupabaseClient) {}
+  constructor(
+    private readonly admin: SupabaseClient,
+    private readonly mailer?: AuthMailAdapter,
+  ) {}
+
+  private mailAdapter(): AuthMailAdapter {
+    return this.mailer ?? createSupabaseAuthMailAdapter(this.admin);
+  }
 
   async listMembers(tenantId: string) {
     const { data: rawMemberships, error } = await this.admin
@@ -110,11 +119,21 @@ export class MembershipAdminService {
       const profile = profileMap.get(row.user_id as string);
       let emailConfirmed = false;
       let invited = Boolean(row.invited_at);
+      let activationDelivery: string | null = null;
+      let activationSentAt: string | null = null;
       const authUser = await this.admin.auth.admin.getUserById(row.user_id);
       if (!authUser.error && authUser.data.user) {
         emailConfirmed = Boolean(authUser.data.user.email_confirmed_at);
         invited = invited || Boolean(authUser.data.user.invited_at);
+        const meta = (authUser.data.user.user_metadata ?? {}) as Record<string, unknown>;
+        activationDelivery = typeof meta.activation_delivery === "string" ? meta.activation_delivery : null;
+        activationSentAt = typeof meta.activation_sent_at === "string" ? meta.activation_sent_at : null;
       }
+      const onboardingState = deriveOnboardingState({
+        emailConfirmed,
+        membershipStatus: row.status,
+        activationDelivery,
+      });
       return {
         membershipId: row.id,
         userId: row.user_id,
@@ -128,6 +147,9 @@ export class MembershipAdminService {
         workspaces: workspacesByUser.get(row.user_id as string) ?? [],
         emailConfirmed,
         invitationStatus: invitationStatusFromAuth({ emailConfirmed, invited }),
+        onboardingState,
+        activationStatus: onboardingState,
+        activationSentAt,
       };
     }),
     );
@@ -150,51 +172,67 @@ export class MembershipAdminService {
   }
 
   async invite(input: InviteMemberInput): Promise<InviteMemberResult> {
+    if (input.breakGlass) {
+      throw new IdentityProvisioningError(
+        "identity_failed",
+        "Temporary passwords are not used for canonical onboarding.",
+        422,
+      );
+    }
     const email = input.email.trim().toLowerCase();
-    if (!email.includes("@")) throw new Error("Valid email required");
+    if (!email.includes("@")) {
+      throw new IdentityProvisioningError("invalid_recipient", "Valid email required", 422);
+    }
+    if (input.roleSlug.trim().toLowerCase() === "owner") {
+      throw new IdentityProvisioningError("invalid_recipient", "Owner cannot be assigned through invite", 422);
+    }
     const roleSlug = mapPilotInviteRole(input.roleSlug);
     const role = await this.requireRole(input.tenantId, roleSlug);
     await this.requireWorkspace(input.tenantId, input.workspaceId);
 
-    const metadata = {
-      invited_tenant_id: input.tenantId,
-      invited_role_slug: roleSlug,
-      invited_workspace_id: input.workspaceId,
-      invited_by: input.invitedBy,
-    };
+    const metadata = buildInviteUserMetadata({
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      roleSlug,
+      invitedBy: input.invitedBy,
+    });
 
-    const existingId = await this.findUserIdByEmail(email);
-    let userId = existingId;
+    const existing = await this.findAuthUserByEmail(email);
+    let userId: string;
     let created = false;
-    let delivery: InviteMemberResult["delivery"] = "existing_user";
-    let temporaryPassword: string | undefined;
 
-    if (!userId) {
-      const invited = await this.admin.auth.admin.inviteUserByEmail(email, {
-        data: metadata,
-        redirectTo: input.redirectTo,
+    if (existing) {
+      const memberships = await this.listTenantMembershipsForUser(existing.id);
+      const inThisTenant = memberships.some((row) => row.tenant_id === input.tenantId);
+      const inOtherTenant = memberships.some((row) => row.tenant_id !== input.tenantId);
+      if (inOtherTenant && !inThisTenant) {
+        throw new IdentityProvisioningError(
+          "identity_exists",
+          "An Auth user with this email already exists on another tenant. Do not create a duplicate or cross-link.",
+          409,
+          { userId: existing.id },
+        );
+      }
+      userId = existing.id;
+      created = false;
+    } else {
+      const createdUser = await this.admin.auth.admin.createUser({
+        email,
+        email_confirm: false,
+        user_metadata: metadata,
+        app_metadata: metadata,
       });
-      if (invited.data.user?.id) {
-        userId = invited.data.user.id;
-        created = true;
-        delivery = "invite_email";
-      } else if (input.breakGlass) {
-        temporaryPassword = randomTemporaryPassword();
-        const createdUser = await this.admin.auth.admin.createUser({
-          email,
-          password: temporaryPassword,
-          email_confirm: true,
-          user_metadata: metadata,
-          app_metadata: metadata,
-        });
-        if (createdUser.error || !createdUser.data.user?.id) {
-          throw new Error(createdUser.error?.message ?? invited.error?.message ?? "Failed to create invited user");
+      if (createdUser.error || !createdUser.data.user?.id) {
+        const duplicate = await this.findAuthUserByEmail(email);
+        if (duplicate?.id) {
+          userId = duplicate.id;
+          created = false;
+        } else {
+          throw classifyIdentityFailure(createdUser.error ?? new Error("Failed to create Auth user"));
         }
+      } else {
         userId = createdUser.data.user.id;
         created = true;
-        delivery = "temporary_password";
-      } else {
-        throw new Error(invited.error?.message ?? "Invite email could not be sent");
       }
     }
 
@@ -205,15 +243,71 @@ export class MembershipAdminService {
       roleId: role.id as string,
     });
 
-    return {
+    let delivery: InviteMemberResult["delivery"] = created ? "activation_delivery_failed" : "existing_user";
+    if (!existing?.emailConfirmed) {
+      delivery = await this.tryDeliverActivation(userId, email, input.redirectTo);
+    } else {
+      delivery = "existing_user";
+    }
+
+    const onboardingState =
+      existing?.emailConfirmed
+        ? "active"
+        : delivery === "activation_sent"
+          ? "pending_activation"
+          : "activation_delivery_failed";
+
+    const result: InviteMemberResult = {
       userId,
       email,
       roleSlug,
       workspaceId: input.workspaceId,
       created,
       delivery,
-      temporaryPassword: delivery === "temporary_password" ? temporaryPassword : undefined,
+      onboardingState,
+      applicationAccess: "not_assigned",
     };
+
+    if (delivery === "activation_delivery_failed") {
+      throw new IdentityProvisioningError(
+        "activation_delivery_failed",
+        "Pending Auth identity was kept, but the activation email could not be delivered. Use Resend activation after SMTP is ready.",
+        502,
+        { ...result },
+      );
+    }
+
+    return result;
+  }
+
+  async resendActivation(input: { tenantId: string; userId: string; redirectTo?: string; actorUserId: string }) {
+    const authUser = await this.admin.auth.admin.getUserById(input.userId);
+    if (authUser.error || !authUser.data.user) {
+      throw new IdentityProvisioningError("identity_failed", "Auth user not found", 404);
+    }
+    const user = authUser.data.user;
+    if (user.email_confirmed_at) {
+      throw new IdentityProvisioningError("identity_exists", "This account is already activated.", 409, {
+        userId: input.userId,
+      });
+    }
+    const memberships = await this.listTenantMembershipsForUser(input.userId);
+    if (!memberships.some((row) => row.tenant_id === input.tenantId)) {
+      throw new IdentityProvisioningError("unauthorized", "User is not a member of this tenant", 403);
+    }
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+    assertActivationResendAllowed(typeof meta.activation_sent_at === "string" ? meta.activation_sent_at : null);
+    const email = (user.email ?? "").toLowerCase();
+    const delivery = await this.tryDeliverActivation(input.userId, email, input.redirectTo);
+    if (delivery !== "activation_sent") {
+      throw new IdentityProvisioningError(
+        "activation_delivery_failed",
+        "Pending Auth identity was kept, but the activation email could not be delivered. Use Resend activation after SMTP is ready.",
+        502,
+        { userId: input.userId },
+      );
+    }
+    return { userId: input.userId, email, delivery, onboardingState: "pending_activation" as const };
   }
 
   async assignRole(input: { tenantId: string; userId: string; roleSlug: string; workspaceId?: string }) {
@@ -259,16 +353,71 @@ export class MembershipAdminService {
     return { userId: input.userId, workspaceId: input.workspaceId };
   }
 
-  private async findUserIdByEmail(email: string): Promise<string | null> {
+  private async findAuthUserByEmail(email: string): Promise<{
+    id: string;
+    emailConfirmed: boolean;
+    metadata: Record<string, unknown>;
+  } | null> {
     for (let page = 1; page <= 20; page++) {
       const listed = await this.admin.auth.admin.listUsers({ page, perPage: 200 });
       if (listed.error) throw new Error(listed.error.message);
       const users = listed.data.users ?? [];
       const hit = users.find((user) => (user.email ?? "").toLowerCase() === email);
-      if (hit?.id) return hit.id;
+      if (hit?.id) {
+        return {
+          id: hit.id,
+          emailConfirmed: Boolean(hit.email_confirmed_at),
+          metadata: (hit.user_metadata ?? {}) as Record<string, unknown>,
+        };
+      }
       if (users.length < 200) break;
     }
     return null;
+  }
+
+  private async findUserIdByEmail(email: string): Promise<string | null> {
+    return (await this.findAuthUserByEmail(email))?.id ?? null;
+  }
+
+  private async listTenantMembershipsForUser(userId: string): Promise<Array<{ tenant_id: string }>> {
+    const { data, error } = await this.admin
+      .from("tenant_memberships")
+      .select("tenant_id")
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Array<{ tenant_id: string }>;
+  }
+
+  private async tryDeliverActivation(
+    userId: string,
+    email: string,
+    redirectTo?: string,
+  ): Promise<"activation_sent" | "activation_delivery_failed"> {
+    const authUser = await this.admin.auth.admin.getUserById(userId);
+    const currentMeta = ((authUser.data.user?.user_metadata ?? {}) as Record<string, unknown>) ?? {};
+    try {
+      await deliverActivationMail(this.mailAdapter(), {
+        email,
+        redirectTo: redirectTo ?? "",
+        template: "activation",
+      });
+      await this.admin.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          ...currentMeta,
+          activation_delivery: "sent",
+          activation_sent_at: new Date().toISOString(),
+        },
+      });
+      return "activation_sent";
+    } catch {
+      await this.admin.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          ...currentMeta,
+          activation_delivery: "failed",
+        },
+      });
+      return "activation_delivery_failed";
+    }
   }
 
   private async requireRole(tenantId: string, slug: PilotInviteRoleSlug) {

@@ -31,6 +31,7 @@ describe("password recovery contract", () => {
     expect(forgot).toContain("buildAuthRecoveryRedirect");
     expect(reset).toContain("PASSWORD_RECOVERY");
     expect(reset).toContain("updateUser");
+    expect(reset).toContain("activation");
     expect(forgot).not.toContain("temporaryPassword");
     expect(reset).not.toContain("breakGlass");
   });

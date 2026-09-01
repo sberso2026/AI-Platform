@@ -27,6 +27,8 @@ const PILOT_PATHS = [
   "packages/platform-core/src/map-auth-error.ts",
   "packages/platform-core/src/invite-auth-error.ts",
   "packages/platform-core/src/canonical-auth-origin.ts",
+  "packages/platform-core/src/identity-onboarding.ts",
+  "packages/platform-core/src/auth-mail-adapter.ts",
   "apps/web/src/middleware.ts",
 ];
 

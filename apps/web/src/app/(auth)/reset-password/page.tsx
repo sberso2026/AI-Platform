@@ -57,12 +57,12 @@ export default function ResetPasswordPage() {
             <RtbLogo size="lg" variant="full" inverted={false} />
           </div>
           <CardTitle>Set a new password</CardTitle>
-          <CardDescription>Complete Auth recovery, then sign in. No temporary passwords.</CardDescription>
+          <CardDescription>Complete activation or password recovery, then sign in. No temporary passwords.</CardDescription>
         </CardHeader>
         <CardContent>
           {!ready ? (
             <p className="text-sm text-muted-foreground">
-              Open the reset link from your email to continue. The link must land on this custom domain.
+              Open the activation or reset link from your email to continue. The link must land on this custom domain.
             </p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

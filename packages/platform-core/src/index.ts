@@ -11,3 +11,5 @@ export * from "./permissions";
 export * from "./tenant";
 export * from "./membership-admin";
 export * from "./invite-auth-error";
+export * from "./identity-onboarding";
+export * from "./auth-mail-adapter";

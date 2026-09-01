@@ -2,6 +2,7 @@
 
 export const CANONICAL_AUTH_LOGIN_PATH = "/login";
 export const CANONICAL_AUTH_RECOVERY_PATH = "/reset-password";
+export const CANONICAL_AUTH_ACTIVATION_PATH = CANONICAL_AUTH_RECOVERY_PATH;
 
 export type CanonicalAuthOriginInput = {
   /** Preferred public application origin (`NEXT_PUBLIC_APP_URL`). */
@@ -87,5 +88,9 @@ export function buildAuthLoginRedirect(input: CanonicalAuthOriginInput): string 
 }
 
 export function buildAuthRecoveryRedirect(input: CanonicalAuthOriginInput): string | undefined {
+  return buildAuthRedirectTo(CANONICAL_AUTH_RECOVERY_PATH, input);
+}
+
+export function buildAuthActivationRedirect(input: CanonicalAuthOriginInput): string | undefined {
   return buildAuthRedirectTo(CANONICAL_AUTH_RECOVERY_PATH, input);
 }
