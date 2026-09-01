@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { isPilotInviteRoleSlug, mapPilotInviteRole } from "./membership-admin";
+import {
+  CANONICAL_TENANT_ONBOARDING_MODEL,
+  isPilotInviteRoleSlug,
+  mapPilotInviteRole,
+} from "./membership-admin";
 
 describe("pilot invite role mapping", () => {
+  it("locks self-service as the only canonical owner onboarding model", () => {
+    expect(CANONICAL_TENANT_ONBOARDING_MODEL).toBe("SELF_SERVICE");
+  });
   it("maps canonical admin/engineer/reviewer labels onto platform slugs", () => {
     expect(mapPilotInviteRole("admin")).toBe("admin");
     expect(mapPilotInviteRole("project manager")).toBe("admin");

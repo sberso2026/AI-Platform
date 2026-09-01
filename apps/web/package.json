@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "typecheck:pilot": "node ./scripts/pilot-typecheck.mjs",
     "test": "vitest run"
   },
   "dependencies": {

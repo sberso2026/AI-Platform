@@ -15,6 +15,49 @@ import {
   EngineeringProjectService,
 } from "./core-services";
 import { dedupeDisciplinesForDisplay } from "./discipline-dedupe";
+import { isOperationalRegisterQuery } from "./engineering-evidence";
+
+type RegisterOps = {
+  search: (
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    q: string,
+    options?: { aggregate?: boolean },
+  ) => Promise<unknown[]>;
+  list: (
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    projectId?: string,
+    limit?: number,
+    options?: { aggregate?: boolean },
+  ) => Promise<unknown[]>;
+};
+
+type InspectionOps = {
+  list: (
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    projectId?: string,
+  ) => Promise<unknown[]>;
+};
+
+function rowProjectId(row: unknown): string | null {
+  if (!row || typeof row !== "object") return null;
+  const record = row as Record<string, unknown>;
+  const value = record.project_id ?? record.engineering_project_id;
+  return typeof value === "string" ? value : null;
+}
+
+function filterRowsToProject<T>(rows: T[], projectId?: string, entity: "project" | "record" = "record"): T[] {
+  if (!projectId) return rows;
+  return rows.filter((row) => {
+    if (!row || typeof row !== "object") return false;
+    const record = row as Record<string, unknown>;
+    if (entity === "project") return record.id === projectId;
+    const pid = rowProjectId(row);
+    return !pid || pid === projectId;
+  });
+}
 
 export class EngineeringDisciplineService {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -311,13 +354,14 @@ export class EngineeringSearchService {
     private readonly documents: EngineeringDocumentService,
     private readonly kernel?: PlatformKernel,
     private readonly registers?: {
-      decisions: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      actions: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      risks: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      issues: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      technicalQueries: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      lessons: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-    }
+      decisions: RegisterOps;
+      actions: RegisterOps;
+      risks: RegisterOps;
+      issues: RegisterOps;
+      technicalQueries: RegisterOps;
+      lessons: RegisterOps;
+    },
+    private readonly inspections?: InspectionOps,
   ) {}
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, filters?: {
@@ -332,29 +376,51 @@ export class EngineeringSearchService {
       assertEngineeringService(commerce, "search.query", tenantId);
     }
     const type = filters?.type ?? "all";
+    const projectId = filters?.projectId;
     const aggregate = { aggregate: true as const };
-    const [projects, assets, documents, decisions, actions, risks, issues, technicalQueries, lessons] =
+    const operational = isOperationalRegisterQuery(query);
+
+    const loadRegister = (ops: RegisterOps | undefined, wanted: boolean) => {
+      if (!wanted || !ops) return Promise.resolve([] as unknown[]);
+      if (operational) return ops.list(commerce, tenantId, projectId, 30, aggregate);
+      return ops.search(commerce, tenantId, query, aggregate).then((rows) =>
+        filterRowsToProject(rows, projectId),
+      );
+    };
+
+    const [projects, assets, documents, decisions, actions, risks, issues, technicalQueries, lessons, inspections] =
       await Promise.all([
-        type === "all" || type === "project" ? this.projects.search(commerce, tenantId, query, aggregate) : Promise.resolve([]),
-        type === "all" || type === "asset" ? this.assets.search(commerce, tenantId, query, aggregate) : Promise.resolve([]),
-        type === "all" || type === "document" ? this.documents.search(commerce, tenantId, query, aggregate) : Promise.resolve([]),
-        (type === "all" || type === "decision") && this.registers
-          ? this.registers.decisions.search(commerce, tenantId, query, aggregate)
+        type === "all" || type === "project"
+          ? operational
+            ? this.projects.list(commerce, tenantId, 20, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId, "project"),
+              )
+            : this.projects.search(commerce, tenantId, query, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId, "project"),
+              )
           : Promise.resolve([]),
-        (type === "all" || type === "action") && this.registers
-          ? this.registers.actions.search(commerce, tenantId, query, aggregate)
+        type === "all" || type === "asset"
+          ? operational
+            ? this.assets.list(commerce, tenantId, projectId, 20, aggregate)
+            : this.assets.search(commerce, tenantId, query, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId),
+              )
           : Promise.resolve([]),
-        (type === "all" || type === "risk") && this.registers
-          ? this.registers.risks.search(commerce, tenantId, query, aggregate)
+        type === "all" || type === "document"
+          ? operational
+            ? this.documents.list(commerce, tenantId, projectId, 20, aggregate)
+            : this.documents.search(commerce, tenantId, query, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId),
+              )
           : Promise.resolve([]),
-        (type === "all" || type === "issue") && this.registers
-          ? this.registers.issues.search(commerce, tenantId, query, aggregate)
-          : Promise.resolve([]),
-        (type === "all" || type === "technical_query") && this.registers
-          ? this.registers.technicalQueries.search(commerce, tenantId, query, aggregate)
-          : Promise.resolve([]),
-        (type === "all" || type === "lesson") && this.registers
-          ? this.registers.lessons.search(commerce, tenantId, query, aggregate)
+        loadRegister(this.registers?.decisions, type === "all" || type === "decision"),
+        loadRegister(this.registers?.actions, type === "all" || type === "action"),
+        loadRegister(this.registers?.risks, type === "all" || type === "risk"),
+        loadRegister(this.registers?.issues, type === "all" || type === "issue"),
+        loadRegister(this.registers?.technicalQueries, type === "all" || type === "technical_query"),
+        loadRegister(this.registers?.lessons, type === "all" || type === "lesson"),
+        (type === "all" || type === "inspection") && this.inspections
+          ? this.inspections.list(commerce, tenantId, projectId)
           : Promise.resolve([]),
       ]);
 
@@ -384,6 +450,7 @@ export class EngineeringSearchService {
       issues,
       technicalQueries,
       lessons,
+      inspections,
       knowledgeNodes,
     };
   }

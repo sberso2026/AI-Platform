@@ -49,6 +49,7 @@ export {
   synthesizeGroundedAnswer,
   bucketsToEvidence,
   sourceTypeHref,
+  isOperationalRegisterQuery,
 } from "./services/engineering-evidence";
 export { runGroundedEngineeringAsk } from "./services/grounded-ask";
 export {

@@ -7,7 +7,8 @@ function randomTemporaryPassword(): string {
   return `Eos1rc-${token}`;
 }
 
-/** Canonical owner path: /signup creates the tenant. Members join by admin invite email. */
+/** Canonical owner path: /signup creates the tenant. Members join by admin invite email.
+ * Locked for EOS external pilot — do not add a parallel RTB_ADMIN_PROVISIONED owner path. */
 export const CANONICAL_TENANT_ONBOARDING_MODEL = "SELF_SERVICE" as const;
 
 export const PILOT_INVITE_ROLE_SLUGS = ["admin", "member", "viewer"] as const;
@@ -34,6 +35,8 @@ export interface InviteMemberInput {
   email: string;
   roleSlug: string;
   invitedBy: string;
+  /** HTTPS origin + /login so invite activation does not land on localhost site_url. */
+  redirectTo?: string;
   /** Internal/break-glass only. Never the external invite default. */
   breakGlass?: boolean;
 }
@@ -52,27 +55,38 @@ export class MembershipAdminService {
   constructor(private readonly admin: SupabaseClient) {}
 
   async listMembers(tenantId: string) {
-    const { data: memberships, error } = await this.admin
+    const { data: rawMemberships, error } = await this.admin
       .from("tenant_memberships")
       .select("id, user_id, status, invited_at, joined_at, roles(slug, name)")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const userIds = (memberships ?? []).map((row) => row.user_id as string);
+    const memberships = (rawMemberships ?? []) as Array<{
+      id: string;
+      user_id: string;
+      status: string;
+      invited_at: string | null;
+      joined_at: string | null;
+      roles: { slug?: string; name?: string } | { slug?: string; name?: string }[] | null;
+    }>;
+    const userIds = memberships.map((row) => row.user_id);
     const { data: profiles, error: profileError } = userIds.length
       ? await this.admin.from("profiles").select("id, email, full_name").in("id", userIds)
       : { data: [], error: null };
     if (profileError) throw new Error(profileError.message);
     const profileMap = new Map((profiles ?? []).map((row) => [row.id as string, row]));
 
-    const { data: workspaceRows, error: workspaceError } = await this.admin
+    const { data: rawWorkspaceRows, error: workspaceError } = await this.admin
       .from("workspace_memberships")
       .select("user_id, workspace_id, workspaces!inner(id, name, slug, tenant_id)")
       .eq("workspaces.tenant_id", tenantId);
     if (workspaceError) throw new Error(workspaceError.message);
     const workspacesByUser = new Map<string, Array<{ id: string; name?: string; slug?: string }>>();
-    for (const row of workspaceRows ?? []) {
+    for (const row of (rawWorkspaceRows ?? []) as Array<{
+      user_id: string;
+      workspaces: { id: string; name?: string; slug?: string } | { id: string }[] | null;
+    }>) {
       const joined = row.workspaces as { id: string; name?: string; slug?: string } | { id: string }[] | null;
       const workspace = Array.isArray(joined) ? joined[0] : joined;
       if (!workspace?.id) continue;
@@ -138,7 +152,10 @@ export class MembershipAdminService {
     let temporaryPassword: string | undefined;
 
     if (!userId) {
-      const invited = await this.admin.auth.admin.inviteUserByEmail(email, { data: metadata });
+      const invited = await this.admin.auth.admin.inviteUserByEmail(email, {
+        data: metadata,
+        redirectTo: input.redirectTo,
+      });
       if (invited.data.user?.id) {
         userId = invited.data.user.id;
         created = true;

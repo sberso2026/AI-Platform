@@ -10,6 +10,14 @@ import {
   unauthenticatedResponse,
 } from "@/lib/lifecycle-api";
 
+function activationRedirect(request: Request): string | undefined {
+  const vercel = process.env.VERCEL_URL?.replace(/^https?:\/\//, "");
+  if (vercel) return `https://${vercel}/login`;
+  const origin = request.headers.get("origin");
+  if (origin && /^https?:\/\//i.test(origin)) return `${origin.replace(/\/$/, "")}/login`;
+  return undefined;
+}
+
 export async function GET(request: Request) {
   const requestId = resolveRequestId(request);
   const ctx = await getAuthContext();
@@ -46,6 +54,7 @@ export async function POST(request: Request) {
       roleSlug: String(body.roleSlug ?? "member"),
       invitedBy: ctx.userId,
       breakGlass: body.breakGlass === true,
+      redirectTo: activationRedirect(request),
     });
     if (body.assignSeat === true && typeof body.seatPoolId === "string") {
       await ctx.commerce.seatAssignment.assign({

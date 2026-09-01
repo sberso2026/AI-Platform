@@ -82,6 +82,7 @@ export type EngineeringSearchableSourceType =
   | "issue"
   | "technical_query"
   | "lesson"
+  | "inspection"
   | "timeline"
   | "activity";
 

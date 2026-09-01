@@ -290,10 +290,13 @@ export class EngineeringDecisionService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "decision.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_decisions")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .or(`decision_number.ilike.%${query}%,title.ilike.%${query}%`)
       .limit(20);
     if (error) throw new Error(error.message);
@@ -397,10 +400,13 @@ export class EngineeringActionService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "action.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_actions")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .or(`action_number.ilike.%${query}%,title.ilike.%${query}%`)
       .limit(20);
     if (error) throw new Error(error.message);
@@ -552,10 +558,13 @@ export class EngineeringRiskService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "risk.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_risks")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .or(`risk_number.ilike.%${query}%,title.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(20);
     if (error) throw new Error(error.message);
@@ -725,10 +734,13 @@ export class EngineeringIssueService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "issue.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_issues")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .or(`issue_number.ilike.%${query}%,title.ilike.%${query}%`)
       .limit(20);
     if (error) throw new Error(error.message);
@@ -904,10 +916,13 @@ export class EngineeringTechnicalQueryService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "technical_query.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_technical_queries")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .or(`tq_number.ilike.%${query}%,title.ilike.%${query}%,question.ilike.%${query}%`)
       .limit(20);
     if (error) throw new Error(error.message);
@@ -1018,10 +1033,13 @@ export class EngineeringLessonService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "lesson.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_lessons")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .or(`lesson_number.ilike.%${query}%,title.ilike.%${query}%,lesson.ilike.%${query}%`)
       .limit(20);
     if (error) throw new Error(error.message);

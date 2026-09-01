@@ -136,7 +136,12 @@ describe("dashboard workspace scope", () => {
     };
     const dashboard = new EngineeringDashboardService(
       {
-        list: (commerce, tenantId, limit, options) =>
+        list: (
+          commerce: Parameters<EngineeringProjectService["list"]>[0],
+          tenantId: Parameters<EngineeringProjectService["list"]>[1],
+          limit: Parameters<EngineeringProjectService["list"]>[2],
+          options: Parameters<EngineeringProjectService["list"]>[3],
+        ) =>
           new EngineeringProjectService(supabase as never).list(commerce, tenantId, limit, options),
       } as never,
       { list: async () => [] } as never,

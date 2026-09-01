@@ -40,6 +40,8 @@ export function sourceTypeHref(
       return `/engineering/technical-queries`;
     case "lesson":
       return `/engineering/lessons`;
+    case "inspection":
+      return `/engineering/apps/inspection-intelligence`;
     case "timeline":
       return `/engineering/timeline`;
     case "activity":
@@ -61,13 +63,63 @@ function pickText(row: Record<string, unknown>, keys: string[]): string {
   return "";
 }
 
+const LEXICAL_STOPWORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "at",
+  "be",
+  "by",
+  "for",
+  "from",
+  "in",
+  "is",
+  "me",
+  "my",
+  "of",
+  "on",
+  "or",
+  "please",
+  "show",
+  "tell",
+  "that",
+  "the",
+  "this",
+  "to",
+  "was",
+  "were",
+  "what",
+  "which",
+  "who",
+]);
+
+/** Natural-language register questions must retrieve authorised project records, not ILIKE the whole sentence. */
+export function isOperationalRegisterQuery(query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q || q === "*") return true;
+  if (q.split(/\s+/).length < 3 && !q.includes("?")) return false;
+  return /\b(risks?|tqs?|technical quer(?:y|ies)|actions?|decisions?|documents?|inspections?|findings?|attention|weekly|outstanding|unresolved)\b/.test(
+    q,
+  );
+}
+
+function significantTokens(query: string): string[] {
+  return query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((t) => t.replace(/[^a-z0-9_-]/g, ""))
+    .filter((t) => t.length > 1 && !LEXICAL_STOPWORDS.has(t));
+}
+
 function lexicalScore(query: string, haystack: string): number {
   const q = query.trim().toLowerCase();
   const h = haystack.toLowerCase();
   if (!q || !h) return 0;
   if (h === q) return 1000;
   if (h.startsWith(q)) return 800;
-  const tokens = q.split(/\s+/).filter(Boolean);
+  const tokens = significantTokens(q);
   if (tokens.length > 1 && tokens.every((t) => h.includes(t))) return 600;
   if (h.includes(q)) return 500;
   return tokens.some((t) => h.includes(t)) ? 200 : 0;
@@ -117,6 +169,7 @@ export function mapRowToEvidence(input: {
       "impact",
       "lesson",
       "summary",
+      "body",
       "client_name",
       "system",
       "title",
@@ -130,7 +183,7 @@ export function mapRowToEvidence(input: {
     isSuperseded: status.toLowerCase() === "superseded",
   });
 
-  const haystack = `${title} ${excerpt} ${pickText(row, ["project_code", "asset_tag", "document_number", "decision_number", "tq_number", "risk_number", "issue_number", "action_number", "lesson_number"])}`;
+  const haystack = `${title} ${excerpt} ${status} ${pickText(row, ["project_code", "asset_tag", "document_number", "decision_number", "tq_number", "risk_number", "issue_number", "action_number", "lesson_number", "checklist_item_type"])}`;
   const score = lexicalScore(input.query, haystack);
   // Always keep rows when query is a wildcard / empty object-context probe.
   const keepSparseContext =
@@ -275,6 +328,7 @@ export type SearchBuckets = {
   issues?: unknown[];
   technicalQueries?: unknown[];
   lessons?: unknown[];
+  inspections?: unknown[];
 };
 
 export function bucketsToEvidence(
@@ -284,7 +338,9 @@ export function bucketsToEvidence(
   const projectFilter = query.projectId ?? null;
   const mapped: EngineeringEvidence[] = [];
   const mappingQuery =
-    query.objectId || !query.query.trim() ? "*" : query.query;
+    query.objectId || !query.query.trim() || isOperationalRegisterQuery(query.query)
+      ? "*"
+      : query.query;
 
   const push = (rows: unknown[] | undefined, type: EngineeringSearchableSourceType) => {
     for (const row of rows ?? []) {
@@ -324,6 +380,7 @@ export function bucketsToEvidence(
   push(buckets.issues, "issue");
   push(buckets.technicalQueries, "technical_query");
   push(buckets.lessons, "lesson");
+  push(buckets.inspections, "inspection");
 
   let filtered = mapped;
   if (query.objectId && query.objectType) {
@@ -371,6 +428,7 @@ export function buildSearchResultEnvelope(input: {
       "issue",
       "technical_query",
       "lesson",
+      "inspection",
     ],
     limitations: input.limitations,
     timingMs: {

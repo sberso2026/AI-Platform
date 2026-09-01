@@ -31,6 +31,41 @@ const ERROR_RULES: Array<{ match: RegExp; title: string; description: string }> 
     description: "The requested capability is not enabled for your organisation.",
   },
   {
+    match: /invite_email_rate_limited|over_email_send_rate_limit|email rate limit/i,
+    title: "Invite email was not sent",
+    description: "The Auth mailer rate limit was exceeded. Retry later. Do not issue a temporary password as the external invite path.",
+  },
+  {
+    match: /email_not_confirmed|confirm your email/i,
+    title: "Activation is incomplete",
+    description: "The user must open the confirmation or invite link from their inbox before signing in.",
+  },
+  {
+    match: /workspace_required|workspace not found|wrong workspace/i,
+    title: "Wrong workspace",
+    description: "The user is authenticated but is not in the intended workspace. Check Users → workspace membership.",
+  },
+  {
+    match: /document_storage_unavailable|file not found/i,
+    title: "Document access denied",
+    description: "The document is missing, outside this workspace, or storage is unavailable. Direct URLs remain scoped.",
+  },
+  {
+    match: /invalid_transition|technical_query_update_failed/i,
+    title: "Technical query could not be updated",
+    description: "The TQ status change is not allowed. Use a valid respond/close transition.",
+  },
+  {
+    match: /inspection_workflow_failed/i,
+    title: "Inspection step failed",
+    description: "The inspection workflow action was rejected. Check session state and required fields (body/notes).",
+  },
+  {
+    match: /not enough authorised evidence|insufficient evidence|ai_retrieval/i,
+    title: "AI retrieval did not find authorised evidence",
+    description: "Engineering AI abstained or returned no provenance. Confirm the project has authorised records in this workspace.",
+  },
+  {
     match: /seat_not_assigned/i,
     title: "You do not have access to this application",
     description: "A licence is active, but no seat has been assigned to your account.",

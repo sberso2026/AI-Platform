@@ -343,4 +343,99 @@ describe("Phase E2 evaluation fixtures", () => {
     expect(answer.limitations.join(" ")).toMatch(/superseded|authorised|./i);
     expect(answer.abstained).toBe(false);
   });
+
+  it("retrieves authorised register records for operational NL questions", () => {
+    const evidence = bucketsToEvidence(
+      {
+        ...fixtureBuckets,
+        risks: [
+          {
+            id: "rsk-open",
+            project_id: "p1",
+            risk_number: "RSK-1",
+            title: "Cooling water pump seal failure",
+            status: "open",
+            description: "Leak at pump P-101",
+          },
+        ],
+        technicalQueries: [
+          {
+            id: "tq-open",
+            project_id: "p1",
+            tq_number: "TQ-1",
+            title: "Confirm seal material",
+            question: "Is PTFE acceptable?",
+            status: "open",
+          },
+        ],
+        actions: [
+          {
+            id: "act-open",
+            project_id: "p1",
+            action_number: "ACT-1",
+            title: "Replace pump seal",
+            status: "open",
+          },
+        ],
+        inspections: [
+          {
+            id: "obs-1",
+            workspace_id: "ws1",
+            body: "Visible weepage at pump packing",
+            checklist_item_type: "visual",
+          },
+        ],
+      },
+      {
+        tenantId: "t1",
+        userId: "u1",
+        query: "What risks are open?",
+        projectId: "p1",
+        scope: "project",
+      },
+    );
+    expect(evidence.some((e) => e.sourceId === "rsk-open" && e.provenance === "engineering_os_native")).toBe(
+      true,
+    );
+    const tqs = bucketsToEvidence(
+      {
+        technicalQueries: [
+          {
+            id: "tq-open",
+            project_id: "p1",
+            tq_number: "TQ-1",
+            title: "Confirm seal material",
+            status: "open",
+          },
+        ],
+      },
+      {
+        tenantId: "t1",
+        userId: "u1",
+        query: "Which TQs are unresolved?",
+        projectId: "p1",
+        scope: "project",
+      },
+    );
+    expect(tqs.some((e) => e.sourceId === "tq-open")).toBe(true);
+    const findings = bucketsToEvidence(
+      {
+        inspections: [
+          {
+            id: "obs-1",
+            body: "Visible weepage at pump packing",
+            title: "Inspection finding: Visible weepage at pump packing",
+          },
+        ],
+      },
+      {
+        tenantId: "t1",
+        userId: "u1",
+        query: "Summarize recent inspection findings.",
+        projectId: "p1",
+        scope: "project",
+      },
+    );
+    expect(findings.some((e) => e.sourceId === "obs-1" && e.sourceType === "inspection")).toBe(true);
+  });
 });

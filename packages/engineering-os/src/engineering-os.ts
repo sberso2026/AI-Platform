@@ -29,6 +29,7 @@ import {
 } from "./services/register-services";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
 import { EngineeringHealthService } from "./services/health-service";
+import { workspaceScopeId } from "./commerce/workspace-scope";
 
 export interface EngineeringOS {
   projects: EngineeringProjectService;
@@ -76,12 +77,35 @@ export function createEngineeringOS(
   const objects = new EngineeringObjectFramework(supabase, kernel);
   const demo = new EngineeringDemoDataService(supabase, kernel);
   const health = new EngineeringHealthService(supabase, kernel, demo);
+  const inspections = {
+    async list(
+      commerce: Parameters<typeof workspaceScopeId>[0],
+      tenantId: string,
+    ) {
+      const workspaceId = workspaceScopeId(commerce);
+      if (!workspaceId) return [];
+      const { data, error } = await supabase
+        .from("inspection_observations")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("workspace_id", workspaceId)
+        .order("recorded_at", { ascending: false })
+        .limit(20);
+      if (error) return [];
+      return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+        ...row,
+        title: `Inspection finding: ${String(row.body ?? "").slice(0, 120)}`,
+        description: row.body,
+      }));
+    },
+  };
   const search = new EngineeringSearchService(
     projects,
     assets,
     documents,
     kernel,
-    { decisions, actions, risks, issues, technicalQueries, lessons }
+    { decisions, actions, risks, issues, technicalQueries, lessons },
+    inspections,
   );
   const ai = new EngineeringAIService(supabase, kernel, search);
   const dashboard = new EngineeringDashboardService(
