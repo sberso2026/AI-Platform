@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@rtb/ui";
 
@@ -11,8 +11,22 @@ type Member = {
   roleSlug: string;
   roleName: string;
   status: string;
+  invitationStatus?: string;
+  emailConfirmed?: boolean;
   workspaces: Array<{ id: string; name?: string; slug?: string }>;
 };
+
+const INVITEABLE_ROLES = ["admin", "member", "viewer"] as const;
+
+function lifecycleMessage(json: { error?: { message?: string; code?: string } | string }): string {
+  if (typeof json.error === "string") return json.error;
+  return json.error?.message ?? "Request failed";
+}
+
+function lifecycleCode(json: { error?: { code?: string } | string }): string | null {
+  if (json.error && typeof json.error === "object") return json.error.code ?? null;
+  return null;
+}
 
 export default function UsersPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -21,24 +35,62 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [rateLimitedUntil, setRateLimitedUntil] = useState<number | null>(null);
+  const [seatByUser, setSeatByUser] = useState<Record<string, string>>({});
+  const [seatCapacity, setSeatCapacity] = useState<string | null>(null);
+
+  const rateLimited = rateLimitedUntil != null && Date.now() < rateLimitedUntil;
 
   async function reload() {
     const res = await fetch("/api/platform/identity/members");
     const json = await res.json();
     if (!res.ok) {
-      setError(json.error?.message ?? json.error ?? "Unable to load members");
+      setError(lifecycleMessage(json));
       return;
     }
     setError(null);
     setMembers(json.data ?? []);
   }
 
+  async function reloadSeats() {
+    const poolsRes = await fetch("/api/platform/commerce/seats/pools");
+    if (!poolsRes.ok) return;
+    const poolsJson = await poolsRes.json();
+    const pool = (poolsJson.data ?? [])[0] as { id?: string; total_seats?: number; assigned_seats?: number } | undefined;
+    if (!pool?.id) return;
+    setSeatCapacity(`${pool.assigned_seats ?? "?"}/${pool.total_seats ?? "?"}`);
+    const assignRes = await fetch(`/api/platform/commerce/seats/assignments?seatPoolId=${pool.id}`);
+    if (!assignRes.ok) return;
+    const assignJson = await assignRes.json();
+    const next: Record<string, string> = {};
+    for (const row of assignJson.data ?? []) {
+      if (row.user_id && row.status === "active") next[row.user_id] = "assigned";
+    }
+    setSeatByUser(next);
+  }
+
   useEffect(() => {
     void reload();
+    void reloadSeats();
   }, []);
+
+  useEffect(() => {
+    if (!rateLimitedUntil) return;
+    const id = window.setInterval(() => {
+      if (Date.now() >= rateLimitedUntil) setRateLimitedUntil(null);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [rateLimitedUntil]);
+
+  const rateLimitLabel = useMemo(() => {
+    if (!rateLimitedUntil) return null;
+    const mins = Math.max(1, Math.ceil((rateLimitedUntil - Date.now()) / 60000));
+    return `Auth mailer rate limited. Wait about ${mins} min before inviting again.`;
+  }, [rateLimitedUntil, rateLimited]);
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
+    if (rateLimited) return;
     setLoading(true);
     setError(null);
     setInfo(null);
@@ -49,9 +101,15 @@ export default function UsersPage() {
         body: JSON.stringify({ email, roleSlug }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error?.message ?? json.error ?? "Invite failed");
+      const code = lifecycleCode(json);
+      if (res.status === 429 || code === "invite_email_rate_limited") {
+        setRateLimitedUntil(Date.now() + 60 * 60 * 1000);
+        throw new Error(lifecycleMessage(json));
+      }
+      if (!res.ok) throw new Error(lifecycleMessage(json));
       const delivery = json.data?.delivery as string;
-      if (delivery === "invite_email") {
+      const inviteState = json.data?.inviteState as string | undefined;
+      if (delivery === "invite_email" || inviteState === "sent") {
         setInfo(`Invite email sent to ${email}. The user activates from that email, then signs in.`);
       } else if (delivery === "existing_user") {
         setInfo(`${email} added to this tenant.`);
@@ -60,6 +118,7 @@ export default function UsersPage() {
       }
       setEmail("");
       await reload();
+      await reloadSeats();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invite failed");
     } finally {
@@ -76,7 +135,7 @@ export default function UsersPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setError(json.error?.message ?? json.error ?? "Role update failed");
+      setError(lifecycleMessage(json));
       return;
     }
     await reload();
@@ -92,7 +151,8 @@ export default function UsersPage() {
             <CardDescription>
               Canonical path: admin invite email → activation → login → tenant role (admin / member / viewer)
               → current workspace membership. Temporary passwords are not used for external onboarding.
-              Seats stay on System → Seats.
+              Engineering OS seats stay on System → Seats and are not assigned from this form.
+              {seatCapacity ? ` Current seat pool ${seatCapacity}.` : ""}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -104,21 +164,28 @@ export default function UsersPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="user@company.com"
                 aria-label="Invite email"
+                disabled={rateLimited}
               />
               <select
                 className="h-10 rounded-md border border-slate-200 bg-white px-2 text-sm"
                 value={roleSlug}
                 onChange={(e) => setRoleSlug(e.target.value)}
-                aria-label="Role"
+                aria-label="Tenant role"
+                disabled={rateLimited}
               >
                 <option value="admin">Administrator / project manager</option>
                 <option value="member">Engineer (member)</option>
                 <option value="viewer">Licensed reviewer (viewer)</option>
               </select>
-              <Button type="submit" disabled={loading}>
-                Invite
+              <Button type="submit" disabled={loading || rateLimited}>
+                {rateLimited ? "Rate limited" : "Invite"}
               </Button>
             </form>
+            {rateLimitLabel ? (
+              <p className="mt-3 text-sm text-amber-800" role="status">
+                {rateLimitLabel}
+              </p>
+            ) : null}
             {error ? (
               <p className="mt-3 text-sm text-destructive" role="alert">
                 {error}
@@ -131,30 +198,49 @@ export default function UsersPage() {
         <Card>
           <CardHeader>
             <CardTitle>Directory</CardTitle>
-            <CardDescription>Existing tenant_memberships and workspace_memberships</CardDescription>
+            <CardDescription>
+              Tenant role is owner / admin / member / viewer. The selector only changes inviteable tenant roles
+              (admin / member / viewer). Owner is locked. Workspace membership scopes projects; it does not use a
+              separate workspace-role selector.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {members.map((member) => (
-              <div key={member.userId} className="flex flex-wrap items-center justify-between gap-3 rounded border border-slate-200 p-3">
-                <div>
-                  <p className="font-medium">{member.fullName || member.email || member.userId}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {member.email} · {member.roleName} · {member.status}
-                    {member.workspaces[0] ? ` · ${member.workspaces[0].name ?? member.workspaces[0].slug}` : ""}
-                  </p>
-                </div>
-                <select
-                  className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm"
-                  value={["admin", "member", "viewer"].includes(member.roleSlug) ? member.roleSlug : "member"}
-                  onChange={(e) => void changeRole(member.userId, e.target.value)}
-                  aria-label={`Role for ${member.email ?? member.userId}`}
+            {members.map((member) => {
+              const isOwner = member.roleSlug === "owner";
+              const workspace = member.workspaces[0];
+              return (
+                <div
+                  key={member.userId}
+                  className="flex flex-wrap items-start justify-between gap-3 rounded border border-slate-200 p-3"
                 >
-                  <option value="admin">admin</option>
-                  <option value="member">member</option>
-                  <option value="viewer">viewer</option>
-                </select>
-              </div>
-            ))}
+                  <div className="min-w-0 space-y-1">
+                    <p className="font-medium">{member.fullName || member.email || member.userId}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {member.email} · tenant role {member.roleName} ({member.roleSlug}) · account {member.status}
+                      {member.invitationStatus ? ` · invite ${member.invitationStatus}` : ""}
+                      {workspace ? ` · workspace ${workspace.name ?? workspace.slug}` : " · no workspace"}
+                      {` · product access ${seatByUser[member.userId] === "assigned" ? "seat assigned" : "no seat"}`}
+                    </p>
+                  </div>
+                  {isOwner ? (
+                    <p className="h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm leading-9" aria-label="Owner tenant role locked">
+                      Owner (locked)
+                    </p>
+                  ) : (
+                    <select
+                      className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm"
+                      value={INVITEABLE_ROLES.includes(member.roleSlug as (typeof INVITEABLE_ROLES)[number]) ? member.roleSlug : "member"}
+                      onChange={(e) => void changeRole(member.userId, e.target.value)}
+                      aria-label={`Tenant role for ${member.email ?? member.userId}`}
+                    >
+                      <option value="admin">admin</option>
+                      <option value="member">member</option>
+                      <option value="viewer">viewer</option>
+                    </select>
+                  )}
+                </div>
+              );
+            })}
             {members.length === 0 && !error ? (
               <p className="text-sm text-muted-foreground">No members loaded.</p>
             ) : null}

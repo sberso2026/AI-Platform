@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { isPlatformAdmin, MembershipAdminService } from "@rtb/platform-core";
+import {
+  buildAuthLoginRedirect,
+  classifyInviteFailure,
+  isPlatformAdmin,
+  MembershipAdminService,
+} from "@rtb/platform-core";
 import { getAuthContext } from "@/lib/kernel";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -11,11 +16,11 @@ import {
 } from "@/lib/lifecycle-api";
 
 function activationRedirect(request: Request): string | undefined {
-  const vercel = process.env.VERCEL_URL?.replace(/^https?:\/\//, "");
-  if (vercel) return `https://${vercel}/login`;
-  const origin = request.headers.get("origin");
-  if (origin && /^https?:\/\//i.test(origin)) return `${origin.replace(/\/$/, "")}/login`;
-  return undefined;
+  return buildAuthLoginRedirect({
+    appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    requestOrigin: request.headers.get("origin"),
+    vercelUrl: process.env.VERCEL_URL,
+  });
 }
 
 export async function GET(request: Request) {
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Workspace required" }, { status: 403 });
   }
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const redirectTo = activationRedirect(request);
   try {
     const admin = new MembershipAdminService(createServiceClient());
     const invited = await admin.invite({
@@ -54,7 +60,7 @@ export async function POST(request: Request) {
       roleSlug: String(body.roleSlug ?? "member"),
       invitedBy: ctx.userId,
       breakGlass: body.breakGlass === true,
-      redirectTo: activationRedirect(request),
+      redirectTo,
     });
     if (body.assignSeat === true && typeof body.seatPoolId === "string") {
       await ctx.commerce.seatAssignment.assign({
@@ -69,16 +75,13 @@ export async function POST(request: Request) {
       invited.delivery === "temporary_password" && body.breakGlass === true
         ? invited
         : { ...invited, temporaryPassword: undefined };
-    return NextResponse.json({ data, requestId }, { status: 201 });
+    return NextResponse.json({ data: { ...data, authRedirectTo: redirectTo, inviteState: invited.delivery === "invite_email" ? "sent" : invited.delivery === "existing_user" ? "accepted" : "pending" }, requestId }, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "";
-    if (/rate limit/i.test(message) || /over_email_send_rate_limit/i.test(message)) {
-      return lifecycleErrorResponse(
-        "invite_email_rate_limited",
-        "Invite email could not be sent because the Auth mailer rate limit was exceeded. Retry later. Temporary passwords are internal break-glass only.",
-        429,
-        requestId,
-      );
+    const classified = classifyInviteFailure(err);
+    if (classified.code !== "invite_failed") {
+      return lifecycleErrorResponse(classified.code, classified.message, classified.status, requestId, {
+        inviteState: classified.inviteState,
+      });
     }
     return handleCommerceDomainError(err, requestId);
   }
@@ -116,6 +119,9 @@ export async function PATCH(request: Request) {
     }
     return NextResponse.json({ error: "roleSlug or workspaceId required" }, { status: 422 });
   } catch (err) {
+    if (err instanceof Error && /Owner tenant role cannot be changed/i.test(err.message)) {
+      return lifecycleErrorResponse("owner_role_locked", err.message, 409, requestId);
+    }
     return handleCommerceDomainError(err, requestId);
   }
 }

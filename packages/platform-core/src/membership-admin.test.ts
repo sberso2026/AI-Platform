@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CANONICAL_TENANT_ONBOARDING_MODEL,
+  assertCanAssignInviteRole,
   isPilotInviteRoleSlug,
   mapPilotInviteRole,
 } from "./membership-admin";
@@ -22,5 +23,12 @@ describe("pilot invite role mapping", () => {
     expect(isPilotInviteRoleSlug("admin")).toBe(true);
     expect(isPilotInviteRoleSlug("owner")).toBe(false);
     expect(isPilotInviteRoleSlug("engineer")).toBe(false);
+  });
+
+  it("refuses invite-role mutation of an existing owner", () => {
+    expect(() => assertCanAssignInviteRole("owner")).toThrow(/Owner tenant role cannot be changed/);
+    expect(() => assertCanAssignInviteRole("admin")).not.toThrow();
+    expect(() => assertCanAssignInviteRole("member")).not.toThrow();
+    expect(() => assertCanAssignInviteRole("viewer")).not.toThrow();
   });
 });

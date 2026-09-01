@@ -25,6 +25,9 @@ const PILOT_PATHS = [
   "packages/engineering-os/",
   "packages/platform-core/src/membership-admin.ts",
   "packages/platform-core/src/map-auth-error.ts",
+  "packages/platform-core/src/invite-auth-error.ts",
+  "packages/platform-core/src/canonical-auth-origin.ts",
+  "apps/web/src/middleware.ts",
 ];
 
 function run(command, args, cwd) {

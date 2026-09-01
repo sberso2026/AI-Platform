@@ -1,5 +1,6 @@
 export * from "./audit";
 export * from "./auth";
+export * from "./canonical-auth-origin";
 export * from "./map-auth-error";
 export * from "./navigation";
 export * from "./nav-visibility";
@@ -9,3 +10,4 @@ export * from "./administration";
 export * from "./permissions";
 export * from "./tenant";
 export * from "./membership-admin";
+export * from "./invite-auth-error";

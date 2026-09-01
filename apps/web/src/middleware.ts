@@ -96,9 +96,12 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup");
-  const isPublicRoute = isAuthRoute || request.nextUrl.pathname === "/";
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password");
+  const isRecoveryRoute = pathname.startsWith("/reset-password");
+  const isPublicRoute = isAuthRoute || isRecoveryRoute || pathname === "/";
   const isApiRoute = pathname.startsWith("/api/");
 
   if (!user && !isPublicRoute && !isApiRoute) {

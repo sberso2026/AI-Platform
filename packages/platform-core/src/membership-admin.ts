@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@rtb/database";
+import { invitationStatusFromAuth } from "./invite-auth-error";
 
 function randomTemporaryPassword(): string {
   const bytes = new Uint8Array(12);
@@ -16,6 +17,12 @@ export type PilotInviteRoleSlug = (typeof PILOT_INVITE_ROLE_SLUGS)[number];
 
 export function isPilotInviteRoleSlug(value: string): value is PilotInviteRoleSlug {
   return (PILOT_INVITE_ROLE_SLUGS as readonly string[]).includes(value);
+}
+
+export function assertCanAssignInviteRole(currentSlug: string): void {
+  if (currentSlug === "owner") {
+    throw new Error("Owner tenant role cannot be changed with the invite role selector");
+  }
 }
 
 export function mapPilotInviteRole(input: string): PilotInviteRoleSlug {
@@ -95,11 +102,19 @@ export class MembershipAdminService {
       workspacesByUser.set(row.user_id as string, list);
     }
 
-    return (memberships ?? []).map((row) => {
+    return await Promise.all(
+      (memberships ?? []).map(async (row) => {
       const role = row.roles as { slug?: string; name?: string } | { slug?: string; name?: string }[] | null;
       const slug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
       const name = (Array.isArray(role) ? role[0]?.name : role?.name) ?? slug;
       const profile = profileMap.get(row.user_id as string);
+      let emailConfirmed = false;
+      let invited = Boolean(row.invited_at);
+      const authUser = await this.admin.auth.admin.getUserById(row.user_id);
+      if (!authUser.error && authUser.data.user) {
+        emailConfirmed = Boolean(authUser.data.user.email_confirmed_at);
+        invited = invited || Boolean(authUser.data.user.invited_at);
+      }
       return {
         membershipId: row.id,
         userId: row.user_id,
@@ -111,8 +126,11 @@ export class MembershipAdminService {
         invitedAt: row.invited_at,
         joinedAt: row.joined_at,
         workspaces: workspacesByUser.get(row.user_id as string) ?? [],
+        emailConfirmed,
+        invitationStatus: invitationStatusFromAuth({ emailConfirmed, invited }),
       };
-    });
+    }),
+    );
   }
 
   async listAssignableRoles(tenantId: string) {
@@ -199,6 +217,21 @@ export class MembershipAdminService {
   }
 
   async assignRole(input: { tenantId: string; userId: string; roleSlug: string; workspaceId?: string }) {
+    const { data: membership, error: currentError } = await this.admin
+      .from("tenant_memberships")
+      .select("role_id")
+      .eq("tenant_id", input.tenantId)
+      .eq("user_id", input.userId)
+      .maybeSingle();
+    if (currentError) throw new Error(currentError.message);
+    if (!membership?.role_id) throw new Error("Tenant membership not found");
+    const { data: currentRoleRow, error: roleLookupError } = await this.admin
+      .from("roles")
+      .select("slug")
+      .eq("id", membership.role_id)
+      .maybeSingle();
+    if (roleLookupError) throw new Error(roleLookupError.message);
+    assertCanAssignInviteRole(String(currentRoleRow?.slug ?? ""));
     const roleSlug = mapPilotInviteRole(input.roleSlug);
     const role = await this.requireRole(input.tenantId, roleSlug);
     const { error } = await this.admin
@@ -227,9 +260,15 @@ export class MembershipAdminService {
   }
 
   private async findUserIdByEmail(email: string): Promise<string | null> {
-    const listed = await this.admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (listed.error) throw new Error(listed.error.message);
-    return listed.data.users.find((user) => (user.email ?? "").toLowerCase() === email)?.id ?? null;
+    for (let page = 1; page <= 20; page++) {
+      const listed = await this.admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (listed.error) throw new Error(listed.error.message);
+      const users = listed.data.users ?? [];
+      const hit = users.find((user) => (user.email ?? "").toLowerCase() === email);
+      if (hit?.id) return hit.id;
+      if (users.length < 200) break;
+    }
+    return null;
   }
 
   private async requireRole(tenantId: string, slug: PilotInviteRoleSlug) {

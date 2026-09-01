@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Button, Input, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@rtb/ui";
 import { RtbLogo } from "@/components/brand/rtb-logo";
-import { logAuthError, mapAuthError } from "@rtb/platform-core";
+import { buildAuthLoginRedirect, logAuthError, mapAuthError } from "@rtb/platform-core";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,7 +29,10 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: buildAuthLoginRedirect({
+            appUrl: process.env.NEXT_PUBLIC_APP_URL,
+            requestOrigin: window.location.origin,
+          }),
           data: {
             full_name: fullName,
             tenant_name: organization.trim() || undefined,

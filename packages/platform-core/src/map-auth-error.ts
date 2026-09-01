@@ -25,6 +25,8 @@ export const AUTH_ERROR_MESSAGES = {
   rateLimited: "Too many attempts. Please wait a moment and try again.",
   network: "Unable to reach the authentication service. Check your connection and try again.",
   fallback: "Something went wrong. Please try again.",
+  recoveryDispatched:
+    "If an account exists for that email, a reset link has been sent.",
 } as const;
 
 function normalize(value: string | null | undefined): string {

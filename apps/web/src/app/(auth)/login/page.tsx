@@ -209,7 +209,10 @@ export default function LoginPage() {
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Need help? Contact your administrator. Recovery is separate from RTB break-glass.
+            <a href="/forgot-password" className="text-primary hover:underline">
+              Forgot password
+            </a>
+            . Recovery uses the same Auth account and custom domain. It is not break-glass.
           </p>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             No account?{" "}
