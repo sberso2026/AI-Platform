@@ -19,7 +19,14 @@ export const AUTH_ERROR_MESSAGES = {
   missingPassword: "Please enter your password.",
   weakPassword:
     "Password is too weak. Use at least 8 characters with a mix of letters and numbers.",
-  emailTaken: "An account with this email already exists. Try signing in instead.",
+  emailTaken: "An account already exists for this email. Sign in or reset your password.",
+  signupEmailInvalid:
+    "This email address could not be accepted. Please check the address or contact support.",
+  signupEmailNotAuthorized:
+    "This email cannot be used for signup until organization mail delivery is configured. Contact support.",
+  signupCreatedConfirmEmail:
+    "Account created. Check your email to confirm your address.",
+  signupCreatedSession: "Account created successfully.",
   emailNotConfirmed:
     "Please confirm your email address before signing in. Check your inbox for a confirmation link.",
   rateLimited: "Too many attempts. Please wait a moment and try again.",
@@ -33,7 +40,12 @@ function normalize(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase().replace(/[_-]+/g, " ");
 }
 
-function isInvalidCredentials(code: string, message: string, status: string): boolean {
+function isInvalidCredentials(
+  code: string,
+  message: string,
+  status: string,
+  context: "signin" | "signup" | "reset",
+): boolean {
   if (
     code.includes("invalid login") ||
     code.includes("invalid credentials") ||
@@ -50,8 +62,13 @@ function isInvalidCredentials(code: string, message: string, status: string): bo
   ) {
     return true;
   }
-  // Auth API often returns 400 for bad password / unknown user
-  if (status === "400" && (message.includes("credentials") || message.includes("invalid"))) {
+  // Sign-in only: Auth API often returns 400 for bad password / unknown user.
+  // Do not treat signup "email address is invalid" as a credential failure.
+  if (
+    context === "signin" &&
+    status === "400" &&
+    (message.includes("credentials") || message.includes("invalid"))
+  ) {
     return true;
   }
   return false;
@@ -71,6 +88,35 @@ export function mapAuthError(error: AuthErrorLike, context: "signin" | "signup" 
   if (!code && !message && !status) return AUTH_ERROR_MESSAGES.fallback;
 
   if (
+    code.includes("email address invalid") ||
+    code.includes("email_address_invalid") ||
+    (message.includes("email address") && message.includes("is invalid")) ||
+    message.includes("email_address_invalid")
+  ) {
+    return AUTH_ERROR_MESSAGES.signupEmailInvalid;
+  }
+
+  if (
+    code.includes("email address not authorized") ||
+    code.includes("email_address_not_authorized") ||
+    message.includes("email address not authorized") ||
+    (message.includes("not authorized") && message.includes("email"))
+  ) {
+    return AUTH_ERROR_MESSAGES.signupEmailNotAuthorized;
+  }
+
+  if (
+    code.includes("user already registered") ||
+    code.includes("email exists") ||
+    code.includes("user_already_exists") ||
+    message.includes("user already registered") ||
+    message.includes("already been registered") ||
+    message.includes("email address is already")
+  ) {
+    return AUTH_ERROR_MESSAGES.emailTaken;
+  }
+
+  if (
     code.includes("user not found") ||
     message.includes("user not found") ||
     message.includes("no user found")
@@ -78,7 +124,7 @@ export function mapAuthError(error: AuthErrorLike, context: "signin" | "signup" 
     return AUTH_ERROR_MESSAGES.accountOrPassword;
   }
 
-  if (isInvalidCredentials(code, message, status)) {
+  if (isInvalidCredentials(code, message, status, context)) {
     return AUTH_ERROR_MESSAGES.invalidCredentials;
   }
 
@@ -115,16 +161,6 @@ export function mapAuthError(error: AuthErrorLike, context: "signin" | "signup" 
   }
 
   if (
-    code.includes("user already registered") ||
-    code.includes("email exists") ||
-    message.includes("user already registered") ||
-    message.includes("already been registered") ||
-    message.includes("email address is already")
-  ) {
-    return AUTH_ERROR_MESSAGES.emailTaken;
-  }
-
-  if (
     status === "429" ||
     code.includes("over request") ||
     message.includes("rate limit") ||
@@ -147,6 +183,32 @@ export function mapAuthError(error: AuthErrorLike, context: "signin" | "signup" 
   }
 
   return AUTH_ERROR_MESSAGES.fallback;
+}
+
+export type SignupAuthResult = {
+  user?: { identities?: unknown[] | null } | null;
+  session?: unknown;
+} | null | undefined;
+
+/**
+ * Derive signup success/error copy from the Auth response, not a hard-coded message.
+ * Empty identities with no session is Supabase's existing-user anti-enumeration payload.
+ */
+export function describeSignupAuthResult(data: SignupAuthResult): {
+  kind: "existing" | "pending_confirmation" | "session" | "failed";
+  message: string;
+} {
+  if (!data?.user) {
+    return { kind: "failed", message: AUTH_ERROR_MESSAGES.fallback };
+  }
+  const identities = data.user.identities;
+  if (!data.session && Array.isArray(identities) && identities.length === 0) {
+    return { kind: "existing", message: AUTH_ERROR_MESSAGES.emailTaken };
+  }
+  if (!data.session) {
+    return { kind: "pending_confirmation", message: AUTH_ERROR_MESSAGES.signupCreatedConfirmEmail };
+  }
+  return { kind: "session", message: AUTH_ERROR_MESSAGES.signupCreatedSession };
 }
 
 /**
