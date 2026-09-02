@@ -331,3 +331,54 @@ describe("service-role exposure contract", () => {
     }
   });
 });
+
+describe("removeTenantAccess", () => {
+  it("deletes only the requested tenant and its workspace memberships", async () => {
+    const deleted: Array<Record<string, unknown>> = [];
+    const admin = {
+      from(table: string) {
+        if (table === "tenant_memberships") {
+          return {
+            select: () => ({
+              eq: () => Promise.resolve({ data: [{ tenant_id: "worley" }, { tenant_id: TENANT }], error: null }),
+            }),
+            delete: () => ({
+              eq: (col: string, val: string) => ({
+                eq: (col2: string, val2: string) => {
+                  deleted.push({ table, col, val, col2, val2 });
+                  return Promise.resolve({ error: null });
+                },
+              }),
+            }),
+          };
+        }
+        if (table === "workspaces") {
+          return {
+            select: () => ({
+              eq: () => Promise.resolve({ data: [{ id: "ws-worley" }], error: null }),
+            }),
+          };
+        }
+        if (table === "workspace_memberships") {
+          return {
+            delete: () => ({
+              eq: () => ({
+                in: (_col: string, ids: string[]) => {
+                  deleted.push({ table, ids });
+                  return Promise.resolve({ error: null });
+                },
+              }),
+            }),
+          };
+        }
+        return chain({ data: null, error: null });
+      },
+    };
+    const service = new MembershipAdminService(admin as never);
+    const result = await service.removeTenantAccess({ tenantId: "worley", userId: "founder" });
+    expect(result.removed).toBe(true);
+    expect(deleted.some((row) => row.table === "workspace_memberships" && (row.ids as string[]).includes("ws-worley"))).toBe(true);
+    expect(deleted.some((row) => row.table === "tenant_memberships" && row.val === "worley" && row.val2 === "founder")).toBe(true);
+    expect(deleted.some((row) => row.val === TENANT)).toBe(false);
+  });
+});

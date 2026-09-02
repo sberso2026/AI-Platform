@@ -353,6 +353,38 @@ export class MembershipAdminService {
     return { userId: input.userId, workspaceId: input.workspaceId };
   }
 
+  /**
+   * Remove tenant + workspace memberships for one tenant only.
+   * Does not delete auth.users or profiles.
+   */
+  async removeTenantAccess(input: { tenantId: string; userId: string }) {
+    const memberships = await this.listTenantMembershipsForUser(input.userId);
+    if (!memberships.some((row) => row.tenant_id === input.tenantId)) {
+      return { userId: input.userId, tenantId: input.tenantId, removed: false as const };
+    }
+    const { data: workspaces, error: workspaceError } = await this.admin
+      .from("workspaces")
+      .select("id")
+      .eq("tenant_id", input.tenantId);
+    if (workspaceError) throw new Error(workspaceError.message);
+    const workspaceIds = (workspaces ?? []).map((row) => row.id as string);
+    if (workspaceIds.length) {
+      const { error: wsMembershipError } = await this.admin
+        .from("workspace_memberships")
+        .delete()
+        .eq("user_id", input.userId)
+        .in("workspace_id", workspaceIds);
+      if (wsMembershipError) throw new Error(wsMembershipError.message);
+    }
+    const { error: tenantError } = await this.admin
+      .from("tenant_memberships")
+      .delete()
+      .eq("tenant_id", input.tenantId)
+      .eq("user_id", input.userId);
+    if (tenantError) throw new Error(tenantError.message);
+    return { userId: input.userId, tenantId: input.tenantId, removed: true as const };
+  }
+
   private async findAuthUserByEmail(email: string): Promise<{
     id: string;
     emailConfirmed: boolean;
