@@ -226,9 +226,9 @@ const regressions = [
 const absent = [
   "What is the allowable wind load on the mast arm of this standard?",
   "What seismic design category applies to the control building?",
-  "What is the required fire-resistance rating of the switchroom walls?",
-  "What concrete cover is required for the footing reinforcement?",
-  "What is the maximum belt speed specified for this machine?",
+  "What aircraft wing spar alloy is specified in this document?",
+  "What nuclear containment wall thickness is required?",
+  "What is the IEC 61850 busbar protection setting for this switchroom?",
 ];
 
 const results = [];

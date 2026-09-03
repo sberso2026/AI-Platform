@@ -3,6 +3,7 @@ import type { PlatformKernel } from "@rtb/platform-kernel";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
+import { sanitizePostgrestIlike } from "./postgrest-ilike";
 import { EngineeringObjectFramework } from "./object-framework";
 import { mapTechnicalQueryStatus } from "./technical-query-status";
 import { CommerceDomainError } from "@rtb/platform-commerce";
@@ -292,12 +293,14 @@ export class EngineeringDecisionService {
     assertEngineeringService(commerce, "decision.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_decisions")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`decision_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .or(`decision_number.ilike.%${needle}%,title.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -402,12 +405,14 @@ export class EngineeringActionService {
     assertEngineeringService(commerce, "action.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_actions")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`action_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .or(`action_number.ilike.%${needle}%,title.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -560,12 +565,14 @@ export class EngineeringRiskService {
     assertEngineeringService(commerce, "risk.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_risks")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`risk_number.ilike.%${query}%,title.ilike.%${query}%,category.ilike.%${query}%`)
+      .or(`risk_number.ilike.%${needle}%,title.ilike.%${needle}%,category.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -736,12 +743,14 @@ export class EngineeringIssueService {
     assertEngineeringService(commerce, "issue.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_issues")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`issue_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .or(`issue_number.ilike.%${needle}%,title.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -918,12 +927,14 @@ export class EngineeringTechnicalQueryService {
     assertEngineeringService(commerce, "technical_query.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_technical_queries")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`tq_number.ilike.%${query}%,title.ilike.%${query}%,question.ilike.%${query}%`)
+      .or(`tq_number.ilike.%${needle}%,title.ilike.%${needle}%,question.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -1035,12 +1046,14 @@ export class EngineeringLessonService {
     assertEngineeringService(commerce, "lesson.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_lessons")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`lesson_number.ilike.%${query}%,title.ilike.%${query}%,lesson.ilike.%${query}%`)
+      .or(`lesson_number.ilike.%${needle}%,title.ilike.%${needle}%,lesson.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];

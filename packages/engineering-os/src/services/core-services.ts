@@ -12,6 +12,23 @@ import type {
 } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { isRecordInWorkspace, workspaceScopeId } from "../commerce/workspace-scope";
+import {
+  buildDocumentMetadataReviewFields,
+  fallbackDocumentNumber,
+  fallbackDocumentTitle,
+  isFilenameFallbackNumber,
+  normalizeEngineeringDocumentType,
+  proposeDocumentMetadataFromFilename,
+} from "./document-registration";
+import {
+  inferStandardDocumentNumber,
+  isTimestampRevisionArtifact,
+  normalizeDocumentNumber,
+  normalizeEngineeringRevision,
+  resolveCanonicalDocumentRegistration,
+  sourceChecksumOf,
+} from "./document-identity";
+import { sanitizePostgrestIlike } from "./postgrest-ilike";
 
 export class EngineeringProjectService {
   constructor(
@@ -36,7 +53,7 @@ export class EngineeringProjectService {
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (error) throw new Error(`Failed to list projects: ${error.message}`);
-    return (data ?? []).map(mapProject);
+    return (data ?? []).map(mapProject).filter((project) => !isHiddenFromPilotProjectList(project.metadata));
   }
 
   async get(commerce: CommerceExecutionContext, tenantId: string, projectId: string): Promise<EngineeringProject | null> {
@@ -152,7 +169,12 @@ export class EngineeringProjectService {
       metadata: Record<string, unknown>;
     }>
   ): Promise<EngineeringProject> {
-    assertEngineeringService(commerce, "project.update", tenantId);
+    // HTTP projects.write authorizes project.create for POST and PATCH.
+    assertEngineeringService(commerce, "project.create", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) {
+      throw new Error("Failed to update project: workspace required");
+    }
     const payload: Record<string, unknown> = {};
     if (updates.projectName !== undefined) payload.project_name = updates.projectName;
     if (updates.clientName !== undefined) payload.client_name = updates.clientName;
@@ -171,6 +193,7 @@ export class EngineeringProjectService {
       .update(payload)
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .select()
       .single();
     if (error || !data) throw new Error(`Failed to update project: ${error?.message}`);
@@ -186,16 +209,24 @@ export class EngineeringProjectService {
     assertEngineeringService(commerce, "project.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_projects")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`project_code.ilike.%${query}%,project_name.ilike.%${query}%,client_name.ilike.%${query}%`)
+      .or(`project_code.ilike.%${needle}%,project_name.ilike.%${needle}%,client_name.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(`Failed to search projects: ${error.message}`);
-    return (data ?? []).map(mapProject);
+    return (data ?? []).map(mapProject).filter((project) => !isHiddenFromPilotProjectList(project.metadata));
   }
+}
+
+/** Certification / isolation fixtures stay in the database but are omitted from customer project lists. */
+export function isHiddenFromPilotProjectList(metadata: Record<string, unknown> | undefined): boolean {
+  if (!metadata) return false;
+  return metadata.certification_fixture === true || metadata.hidden_from_pilot_ui === true;
 }
 
 function mapProject(row: Record<string, unknown>): EngineeringProject {
@@ -406,12 +437,14 @@ export class EngineeringAssetService {
     assertEngineeringService(commerce, "asset.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_assets")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`asset_tag.ilike.%${query}%,asset_name.ilike.%${query}%,system.ilike.%${query}%`)
+      .or(`asset_tag.ilike.%${needle}%,asset_name.ilike.%${needle}%,system.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(`Failed to search assets: ${error.message}`);
     return (data ?? []).map(mapAsset);
@@ -464,6 +497,7 @@ export class EngineeringDocumentService {
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
+      .not("status", "in", "(superseded,obsolete)")
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) query = query.eq("engineering_project_id", projectId);
@@ -474,25 +508,34 @@ export class EngineeringDocumentService {
 
   async get(commerce: CommerceExecutionContext, tenantId: string, documentId: string): Promise<EngineeringDocument | null> {
     assertEngineeringService(commerce, "document.get", tenantId);
+    return this.loadInWorkspace(commerce, tenantId, documentId);
+  }
+
+  private async loadInWorkspace(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    documentId: string,
+  ): Promise<EngineeringDocument | null> {
     const { data, error } = await this.supabase
       .from("engineering_documents")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("id", documentId)
-      .single();
-    if (error) return null;
-    const document = mapDocument(data);
+      .maybeSingle();
+    if (error || !data) return null;
+    const document = mapDocument(data as Record<string, unknown>);
     if (!isRecordInWorkspace(document.workspace_id, commerce)) return null;
     return document;
   }
 
   async create(commerce: CommerceExecutionContext, input: {
+    id?: string;
     tenantId: string;
     workspaceId?: string;
     engineeringProjectId?: string;
     assetId?: string;
-    documentNumber: string;
-    title: string;
+    documentNumber?: string;
+    title?: string;
     documentType?: string;
     disciplineId?: string;
     revision?: string;
@@ -503,36 +546,155 @@ export class EngineeringDocumentService {
     mimeType?: string;
     source?: string;
     uploadedBy?: string;
+    sourceChecksum?: string;
+    metadata?: Record<string, unknown>;
   }): Promise<EngineeringDocument> {
     assertEngineeringService(commerce, "document.create", input.tenantId);
+    const workspaceId = input.workspaceId ?? workspaceScopeId(commerce);
+    if (!workspaceId) {
+      throw new Error("Failed to create document: workspace required");
+    }
+    if (input.engineeringProjectId) {
+      const { data: project } = await this.supabase
+        .from("engineering_projects")
+        .select("id, workspace_id, tenant_id")
+        .eq("id", input.engineeringProjectId)
+        .eq("tenant_id", input.tenantId)
+        .eq("workspace_id", workspaceId)
+        .maybeSingle();
+      if (!project) {
+        throw new Error("Failed to create document: project not in workspace");
+      }
+    }
+    const fileName = input.fileName ?? "document";
+    const documentNumber =
+      normalizeDocumentNumber(input.documentNumber) ??
+      inferStandardDocumentNumber(fileName) ??
+      fallbackDocumentNumber(fileName);
+    const title = (input.title ?? "").trim() || fallbackDocumentTitle(fileName);
+    const revisionNorm = normalizeEngineeringRevision(
+      isTimestampRevisionArtifact(input.revision) ? "" : input.revision,
+    );
+    const revision = revisionNorm.revision;
+    const documentType = normalizeEngineeringDocumentType(input.documentType) ?? input.documentType ?? null;
+    const sourceChecksum = typeof input.sourceChecksum === "string" ? input.sourceChecksum.trim().toLowerCase() : "";
+    const existingByChecksum = sourceChecksum
+      ? await this.findByChecksum(commerce, input.tenantId, sourceChecksum)
+      : null;
+    const duplicate = await this.findDuplicate(commerce, input.tenantId, documentNumber, revision);
+    const decision = resolveCanonicalDocumentRegistration({
+      sourceChecksum: sourceChecksum || null,
+      fileName: input.fileName ?? null,
+      fileSize: input.fileSize ?? null,
+      filePath: input.filePath ?? null,
+      existingByChecksum,
+      existingByNumberRevision: duplicate,
+    });
+    if (decision.action === "conflict" && decision.canonical) {
+      throw new Error(
+        "A document with this number and revision already exists with a different source file",
+      );
+    }
+    if (decision.action === "reuse" && decision.canonical) {
+      return this.reuseExistingDocument(commerce, decision.canonical, {
+        tenantId: input.tenantId,
+        filePath: input.filePath,
+        fileName: input.fileName,
+        fileSize: input.fileSize,
+        mimeType: input.mimeType,
+        uploadedBy: input.uploadedBy,
+        revision,
+        sourceChecksum: sourceChecksum || undefined,
+        revisionPendingReview: revisionNorm.pendingReview,
+        rejectedRevision: revisionNorm.rejected,
+        metadata: input.metadata,
+      });
+    }
+
+    const payload: Record<string, unknown> = {
+      tenant_id: input.tenantId,
+      workspace_id: workspaceId,
+      engineering_project_id: input.engineeringProjectId ?? null,
+      asset_id: input.assetId ?? null,
+      document_number: documentNumber,
+      title,
+      document_type: documentType,
+      discipline_id: input.disciplineId ?? null,
+      revision,
+      status: input.status ?? "draft",
+      file_path: input.filePath ?? null,
+      file_name: input.fileName ?? null,
+      file_size: input.fileSize ?? null,
+      mime_type: input.mimeType ?? null,
+      source: input.source ?? "upload",
+      uploaded_by: input.uploadedBy ?? null,
+      uploaded_at: new Date().toISOString(),
+      metadata: buildDocumentMetadataReviewFields({
+        registerNumber: documentNumber,
+        registerRevision: revision,
+        proposal: proposeDocumentMetadataFromFilename(fileName),
+        existing: {
+          ...(input.metadata ?? {}),
+          ...(sourceChecksum ? { source_sha256: sourceChecksum } : {}),
+          ...(revisionNorm.pendingReview
+            ? { revision_pending_review: true, rejected_revision: revisionNorm.rejected }
+            : {}),
+        },
+        numberSource: isFilenameFallbackNumber(documentNumber)
+          ? "filename_fallback"
+          : input.documentNumber
+            ? "manual"
+            : inferStandardDocumentNumber(fileName)
+              ? "filename"
+              : "filename_fallback",
+      }),
+    };
+    if (input.id) payload.id = input.id;
+
     const { data, error } = await this.supabase
       .from("engineering_documents")
-      .insert({
-        tenant_id: input.tenantId,
-        workspace_id: input.workspaceId ?? null,
-        engineering_project_id: input.engineeringProjectId ?? null,
-        asset_id: input.assetId ?? null,
-        document_number: input.documentNumber,
-        title: input.title,
-        document_type: input.documentType ?? null,
-        discipline_id: input.disciplineId ?? null,
-        revision: input.revision ?? "A",
-        status: input.status ?? "draft",
-        file_path: input.filePath ?? null,
-        file_name: input.fileName ?? null,
-        file_size: input.fileSize ?? null,
-        mime_type: input.mimeType ?? null,
-        source: input.source ?? "upload",
-        uploaded_by: input.uploadedBy ?? null,
-        uploaded_at: new Date().toISOString(),
-      })
+      .insert(payload)
       .select()
       .single();
-    if (error || !data) throw new Error(`Failed to create document: ${error?.message}`);
+    if (error || !data) {
+      if (error?.code === "23505") {
+        const existing = await this.findDuplicate(commerce, input.tenantId, documentNumber, revision);
+        if (existing) {
+          const retry = resolveCanonicalDocumentRegistration({
+            sourceChecksum: sourceChecksum || null,
+            fileName: input.fileName ?? null,
+            fileSize: input.fileSize ?? null,
+            filePath: input.filePath ?? null,
+            existingByChecksum,
+            existingByNumberRevision: existing,
+          });
+          if (retry.action === "reuse" && retry.canonical) {
+            return this.reuseExistingDocument(commerce, retry.canonical, {
+              tenantId: input.tenantId,
+              filePath: input.filePath,
+              fileName: input.fileName,
+              fileSize: input.fileSize,
+              mimeType: input.mimeType,
+              uploadedBy: input.uploadedBy,
+              revision,
+              sourceChecksum: sourceChecksum || undefined,
+              revisionPendingReview: revisionNorm.pendingReview,
+              rejectedRevision: revisionNorm.rejected,
+              metadata: input.metadata,
+            });
+          }
+          throw new Error(
+            "A document with this number and revision already exists with a different source file",
+          );
+        }
+        throw new Error("A document with this number and revision already exists");
+      }
+      throw new Error(`Failed to create document: ${error?.message}`);
+    }
 
     await this.supabase.from("engineering_document_versions").insert({
       document_id: data.id,
-      revision: input.revision ?? "A",
+      revision,
       file_path: input.filePath ?? null,
       file_name: input.fileName ?? null,
       file_size: input.fileSize ?? null,
@@ -546,13 +708,13 @@ export class EngineeringDocumentService {
       try {
         const node = await this.kernel.knowledgeGraph.createNode({
           tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
+          workspaceId,
           nodeType: "engineering_document",
-          title: `${input.documentNumber} — ${input.title}`,
+          title: `${documentNumber} — ${title}`,
           content: {
             document_id: data.id,
-            document_number: input.documentNumber,
-            revision: input.revision ?? "A",
+            document_number: documentNumber,
+            revision,
           },
           sourceRef: data.id as string,
           createdBy: input.uploadedBy,
@@ -626,15 +788,294 @@ export class EngineeringDocumentService {
     assertEngineeringService(commerce, "document.search", tenantId, options);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_documents")
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId)
-      .or(`document_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .or(`document_number.ilike.%${needle}%,title.ilike.%${needle}%`)
+      .not("status", "in", "(superseded,obsolete)")
       .limit(20);
     if (error) throw new Error(`Failed to search documents: ${error.message}`);
     return (data ?? []).map(mapDocument);
+  }
+
+  async findDuplicate(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    documentNumber: string,
+    revision: string,
+  ): Promise<EngineeringDocument | null> {
+    const { data, error } = await this.supabase
+      .from("engineering_documents")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("document_number", documentNumber)
+      .eq("revision", revision)
+      .maybeSingle();
+    if (error || !data) return null;
+    const document = mapDocument(data);
+    if (!isRecordInWorkspace(document.workspace_id, commerce)) return null;
+    return document;
+  }
+
+  async findByChecksum(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    checksum: string,
+  ): Promise<EngineeringDocument | null> {
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId || !checksum) return null;
+    const { data, error } = await this.supabase
+      .from("engineering_documents")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
+      .filter("metadata->>source_sha256", "eq", checksum)
+      .not("status", "in", "(superseded,obsolete)")
+      .limit(1);
+    if (error) return null;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return null;
+    const document = mapDocument(row as Record<string, unknown>);
+    if (!isRecordInWorkspace(document.workspace_id, commerce)) return null;
+    return document;
+  }
+
+  private async reuseExistingDocument(
+    commerce: CommerceExecutionContext,
+    existing: { id: string },
+    input: {
+      tenantId: string;
+      filePath?: string;
+      fileName?: string;
+      fileSize?: number;
+      mimeType?: string;
+      uploadedBy?: string;
+      revision: string;
+      sourceChecksum?: string;
+      revisionPendingReview?: boolean;
+      rejectedRevision?: string | null;
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<EngineeringDocument> {
+    const current = await this.loadInWorkspace(commerce, input.tenantId, existing.id);
+    if (!current) throw new Error("Document not found");
+    const metadata = {
+      ...(current.metadata ?? {}),
+      ...(input.metadata ?? {}),
+      identity_reused: true,
+      reused_at: new Date().toISOString(),
+      ...(input.sourceChecksum ? { source_sha256: input.sourceChecksum } : {}),
+      ...(sourceChecksumOf(current.metadata) && !input.sourceChecksum
+        ? { source_sha256: sourceChecksumOf(current.metadata) }
+        : {}),
+      ...(input.revisionPendingReview
+        ? { revision_pending_review: true, rejected_revision: input.rejectedRevision }
+        : {}),
+    };
+    const { data, error } = await this.supabase
+      .from("engineering_documents")
+      .update({
+        file_path: input.filePath ?? current.file_path ?? null,
+        file_name: input.fileName ?? current.file_name ?? null,
+        file_size: input.fileSize ?? current.file_size ?? null,
+        mime_type: input.mimeType ?? current.mime_type ?? null,
+        uploaded_by: input.uploadedBy ?? current.uploaded_by ?? null,
+        uploaded_at: new Date().toISOString(),
+        metadata: metadata as Json,
+      })
+      .eq("tenant_id", input.tenantId)
+      .eq("id", current.id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to reuse document: ${error?.message}`);
+    if (input.filePath) {
+      const versionInsert = await this.supabase.from("engineering_document_versions").insert({
+        document_id: current.id,
+        revision: current.revision ?? input.revision,
+        file_path: input.filePath,
+        file_name: input.fileName ?? null,
+        file_size: input.fileSize ?? null,
+        mime_type: input.mimeType ?? null,
+        status: current.status,
+        uploaded_by: input.uploadedBy ?? null,
+      });
+      if (versionInsert.error && versionInsert.error.code !== "23505") {
+        throw new Error(`Failed to reuse document: ${versionInsert.error.message}`);
+      }
+    }
+    return mapDocument(data as Record<string, unknown>);
+  }
+
+  async supersedeIdentityArtifacts(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      canonicalDocumentId: string;
+      artifactIds: string[];
+      reason: string;
+      canonicalRevision?: string;
+      canonicalNumber?: string;
+      extraCanonicalMetadata?: Record<string, unknown>;
+    },
+  ): Promise<{ canonical: EngineeringDocument | null; superseded: string[] }> {
+    assertEngineeringService(commerce, "document.update", tenantId);
+    const canonical = await this.loadInWorkspace(commerce, tenantId, input.canonicalDocumentId);
+    if (!canonical) throw new Error("Canonical document not found");
+    const superseded: string[] = [];
+    const now = new Date().toISOString();
+    for (const artifactId of input.artifactIds) {
+      if (!artifactId || artifactId === canonical.id) continue;
+      const artifact = await this.loadInWorkspace(commerce, tenantId, artifactId);
+      if (!artifact) continue;
+      const metadata = {
+        ...(artifact.metadata ?? {}),
+        retry_artifact: true,
+        reconciled_into: canonical.id,
+        reconciled_at: now,
+        reconciled_reason: input.reason,
+        original_revision: artifact.revision,
+        original_document_number: artifact.document_number,
+      };
+      const { error } = await this.supabase
+        .from("engineering_documents")
+        .update({
+          status: "superseded",
+          metadata: metadata as Json,
+        })
+        .eq("tenant_id", tenantId)
+        .eq("id", artifactId);
+      if (!error) superseded.push(artifactId);
+    }
+    if (input.canonicalRevision || input.canonicalNumber || input.extraCanonicalMetadata) {
+      const metadata = {
+        ...(canonical.metadata ?? {}),
+        ...(input.extraCanonicalMetadata ?? {}),
+        identity_canonical: true,
+        reconciled_at: now,
+        reconciled_reason: input.reason,
+      };
+      await this.supabase
+        .from("engineering_documents")
+        .update({
+          ...(input.canonicalRevision ? { revision: input.canonicalRevision } : {}),
+          ...(input.canonicalNumber ? { document_number: input.canonicalNumber } : {}),
+          metadata: metadata as Json,
+        })
+        .eq("tenant_id", tenantId)
+        .eq("id", canonical.id);
+    }
+    return {
+      canonical: await this.loadInWorkspace(commerce, tenantId, canonical.id),
+      superseded,
+    };
+  }
+
+  async reviewMetadata(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    documentId: string,
+    input: {
+      action: "propose" | "confirm";
+      documentNumber?: string | null;
+      title?: string | null;
+      revision?: string | null;
+      documentType?: string | null;
+      numberSource?: string | null;
+      reviewedBy?: string | null;
+    },
+  ): Promise<EngineeringDocument> {
+    assertEngineeringService(commerce, "document.update", tenantId);
+    const current = await this.loadInWorkspace(commerce, tenantId, documentId);
+    if (!current) throw new Error("Document not found");
+
+    const nextNumber =
+      normalizeDocumentNumber(input.documentNumber) ??
+      (typeof current.metadata?.proposed_document_number === "string"
+        ? normalizeDocumentNumber(current.metadata.proposed_document_number)
+        : null) ??
+      current.document_number;
+    const nextRevision = input.revision
+      ? normalizeEngineeringRevision(input.revision).revision
+      : current.revision;
+    const nextTitle = (input.title ?? "").trim() || current.title;
+    const nextType =
+      normalizeEngineeringDocumentType(input.documentType ?? null) ??
+      input.documentType ??
+      current.document_type ??
+      null;
+    const now = new Date().toISOString();
+
+    if (input.action === "propose") {
+      const metadata = buildDocumentMetadataReviewFields({
+        registerNumber: current.document_number,
+        registerRevision: current.revision,
+        existing: {
+          ...(current.metadata ?? {}),
+          metadata_review_state: "review_required",
+          proposed_document_number: nextNumber,
+          proposed_title: nextTitle,
+          proposed_revision: nextRevision,
+          proposed_document_type: nextType,
+          document_number_source: input.numberSource ?? current.metadata?.document_number_source ?? "extracted_header",
+        },
+        numberSource: input.numberSource ?? "extracted_header",
+      });
+      const { data, error } = await this.supabase
+        .from("engineering_documents")
+        .update({ metadata: metadata as Json })
+        .eq("tenant_id", tenantId)
+        .eq("id", documentId)
+        .select()
+        .maybeSingle();
+      if (error || !data) {
+        throw new Error(`Failed to propose document metadata: ${error?.message ?? "update returned no row"}`);
+      }
+      return mapDocument(data as Record<string, unknown>);
+    }
+
+    if (nextNumber !== current.document_number || nextRevision !== current.revision) {
+      const duplicate = await this.findDuplicate(commerce, tenantId, nextNumber, nextRevision);
+      if (duplicate && duplicate.id !== current.id) {
+        throw new Error("A document with this number and revision already exists");
+      }
+    }
+
+    const metadata = {
+      ...(current.metadata ?? {}),
+      metadata_review_state: "confirmed",
+      proposed_document_number: nextNumber,
+      proposed_title: nextTitle,
+      proposed_revision: nextRevision,
+      proposed_document_type: nextType,
+      document_number_source: input.numberSource ?? "manual",
+      revision_source: input.revision ? "manual" : current.metadata?.revision_source ?? "manual",
+      metadata_reviewed_at: now,
+      metadata_reviewed_by: input.reviewedBy ?? null,
+      filename_fallback_number: isFilenameFallbackNumber(current.document_number)
+        ? current.document_number
+        : current.metadata?.filename_fallback_number ?? null,
+    };
+    const { data, error } = await this.supabase
+      .from("engineering_documents")
+      .update({
+        document_number: nextNumber,
+        title: nextTitle,
+        revision: nextRevision,
+        document_type: nextType,
+        metadata: metadata as Json,
+      })
+      .eq("tenant_id", tenantId)
+      .eq("id", documentId)
+      .select()
+      .maybeSingle();
+    if (error || !data) {
+      throw new Error(`Failed to confirm document metadata: ${error?.message ?? "update returned no row"}`);
+    }
+    return mapDocument(data as Record<string, unknown>);
   }
 
   async attachFile(
@@ -648,6 +1089,7 @@ export class EngineeringDocumentService {
       mimeType: string;
       uploadedBy?: string;
       revision?: string;
+      sourceChecksum?: string;
     }
   ): Promise<EngineeringDocument> {
     assertEngineeringService(commerce, "document.update", tenantId);
@@ -660,7 +1102,15 @@ export class EngineeringDocumentService {
     if (lookupError || !existing) throw new Error("Document not found");
     const current = mapDocument(existing);
     if (!isRecordInWorkspace(current.workspace_id, commerce)) throw new Error("Document not found");
-    const revision = input.revision ?? current.revision ?? "A";
+    const revisionNorm = normalizeEngineeringRevision(input.revision ?? current.revision ?? "A");
+    const revision = revisionNorm.pendingReview ? (current.revision ?? "A") : revisionNorm.revision;
+    const metadata = {
+      ...(current.metadata ?? {}),
+      ...(input.sourceChecksum ? { source_sha256: input.sourceChecksum } : {}),
+      ...(revisionNorm.pendingReview
+        ? { revision_pending_review: true, rejected_revision: revisionNorm.rejected }
+        : {}),
+    };
     const { data, error } = await this.supabase
       .from("engineering_documents")
       .update({
@@ -671,6 +1121,7 @@ export class EngineeringDocumentService {
         revision,
         uploaded_by: input.uploadedBy ?? current.uploaded_by ?? null,
         uploaded_at: new Date().toISOString(),
+        metadata: metadata as Json,
       })
       .eq("tenant_id", tenantId)
       .eq("id", documentId)
@@ -678,7 +1129,7 @@ export class EngineeringDocumentService {
       .single();
     if (error || !data) throw new Error(`Failed to attach document file: ${error?.message}`);
 
-    await this.supabase.from("engineering_document_versions").insert({
+    const versionInsert = await this.supabase.from("engineering_document_versions").insert({
       document_id: documentId,
       revision,
       file_path: input.filePath,
@@ -688,8 +1139,38 @@ export class EngineeringDocumentService {
       status: current.status,
       uploaded_by: input.uploadedBy ?? null,
     });
+    if (versionInsert.error && versionInsert.error.code !== "23505") {
+      throw new Error(`Failed to attach document file: ${versionInsert.error.message}`);
+    }
 
-    return mapDocument(data);
+    let knowledgeNodeId = current.knowledge_node_id;
+    if (this.kernel && !knowledgeNodeId) {
+      try {
+        const node = await this.kernel.knowledgeGraph.createNode({
+          tenantId,
+          workspaceId: current.workspace_id,
+          nodeType: "engineering_document",
+          title: `${current.document_number} — ${current.title}`,
+          content: {
+            document_id: documentId,
+            document_number: current.document_number,
+            revision,
+          },
+          sourceRef: documentId,
+          createdBy: input.uploadedBy,
+        });
+        knowledgeNodeId = node.id;
+        await this.supabase
+          .from("engineering_documents")
+          .update({ knowledge_node_id: knowledgeNodeId })
+          .eq("id", documentId)
+          .eq("tenant_id", tenantId);
+      } catch {
+        // best-effort
+      }
+    }
+
+    return mapDocument({ ...data, knowledge_node_id: knowledgeNodeId ?? data.knowledge_node_id });
   }
 }
 
@@ -714,6 +1195,7 @@ function mapDocument(row: Record<string, unknown>): EngineeringDocument {
     knowledge_node_id: row.knowledge_node_id as string | undefined,
     uploaded_by: row.uploaded_by as string | undefined,
     uploaded_at: row.uploaded_at as string | undefined,
+    metadata: (row.metadata as Record<string, unknown> | undefined) ?? {},
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };

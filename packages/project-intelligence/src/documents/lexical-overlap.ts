@@ -29,7 +29,7 @@ const PROPERTY_VARIANTS: Record<string, readonly string[]> = {
 
 export function termSearchVariants(term: string): string[] {
   const variants = PROPERTY_VARIANTS[term] ?? [term];
-  const extra = term.length >= 4 ? [`${term}ing`] : [];
+  const extra = term.length >= 5 ? [`${term}ing`] : [];
   return [...new Set([...variants, ...extra])];
 }
 

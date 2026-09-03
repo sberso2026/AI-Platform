@@ -161,11 +161,22 @@ export class EngineeringRetrievalService {
     }
 
     if (!buckets) {
-      const projectId = scope === "workspace" ? undefined : query.projectId ?? undefined;
-      buckets = await this.search.search(commerce, query.tenantId, query.query || "*", {
-        projectId,
-        type: "all",
-      });
+      if (bodyEvidence.length && scope === "document") {
+        buckets = {};
+      } else {
+        try {
+          const projectId = scope === "workspace" ? undefined : query.projectId ?? undefined;
+          buckets = await this.search.search(commerce, query.tenantId, query.query || "*", {
+            projectId,
+            type: "all",
+          });
+        } catch (error) {
+          diagnosticLimitations.push(
+            `register_search_failed:${error instanceof Error ? error.message : "search_error"}`,
+          );
+          buckets = {};
+        }
+      }
       if (retrievalMode !== "lexical_fallback" && retrievalMode !== "hybrid") retrievalMode = "lexical";
     }
 
