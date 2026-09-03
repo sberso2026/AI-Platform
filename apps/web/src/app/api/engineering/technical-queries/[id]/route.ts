@@ -28,12 +28,3 @@ export const GET = withEngineeringApiParams(
     });
   },
 );
-
-export const GET = withEngineeringApiParams(
-  "technical-queries",
-  async ({ ctx, commerce }, _request, { id }) => {
-    const data = await ctx.engineering.technicalQueries.getPresented(commerce, ctx.tenantId, id);
-    if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ data });
-  },
-);
