@@ -19,6 +19,11 @@ import {
   type TechnicalQueryPresentation,
   type TechnicalQueryReference,
 } from "./technical-query-workflow";
+import {
+  extractTqQueryImageIds,
+  sanitizeTqQueryHtml,
+  tqQueryTitleFromHtml,
+} from "./tq-query-content";
 
 type CreateTechnicalQueryInput = {
   tenantId: string;
@@ -57,6 +62,7 @@ type CreateTechnicalQueryInput = {
   approverUserId?: string;
   watchers?: string[];
   requireActionBy?: boolean;
+  assetEquipmentText?: string | null;
 };
 
 function privilegedRole(roleSlug?: string | null): boolean {
@@ -65,6 +71,75 @@ function privilegedRole(roleSlug?: string | null): boolean {
 
 function asId(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
+}
+
+function applyDraftFields(
+  input: {
+    question?: string;
+    title?: string;
+    description?: string;
+    suggestedSolution?: string;
+    responseDue?: string;
+    assignedTo?: string;
+    requesterId?: string;
+    reviewerUserId?: string;
+    approverUserId?: string;
+    priority?: string;
+    projectId?: string;
+    disciplineId?: string;
+    assetId?: string | null;
+    assetEquipmentText?: string | null;
+    classification?: string;
+    area?: string;
+    system?: string;
+    subsystem?: string;
+    workPackage?: string;
+    contractPackage?: string;
+    originatingCompany?: string;
+    respondingCompany?: string;
+    externalReference?: string;
+    documentId?: string;
+  },
+  tqId: string,
+  patch: Record<string, unknown>,
+  metaPatch: Record<string, unknown | undefined>,
+) {
+  if (typeof input.question === "string") {
+    const sanitized = sanitizeTqQueryHtml(input.question, tqId);
+    patch.question = sanitized;
+    metaPatch.query_image_ids = extractTqQueryImageIds(sanitized);
+  }
+  if (typeof input.title === "string") patch.title = input.title.slice(0, 240);
+  if (typeof input.description === "string") patch.description = input.description;
+  if (typeof input.responseDue === "string") {
+    patch.response_due = input.responseDue || null;
+    patch.due_date = input.responseDue || null;
+  }
+  if (typeof input.assignedTo === "string") {
+    patch.assigned_to = input.assignedTo || null;
+    patch.responder_id = input.assignedTo || null;
+  }
+  if (typeof input.requesterId === "string" && input.requesterId) patch.requester_id = input.requesterId;
+  if (typeof input.priority === "string") patch.priority = persistPriority(input.priority);
+  if (typeof input.projectId === "string") patch.project_id = input.projectId || null;
+  if (typeof input.disciplineId === "string") patch.discipline_id = input.disciplineId || null;
+  if (input.assetId !== undefined) patch.asset_id = input.assetId || null;
+  if (typeof input.documentId === "string") patch.document_id = input.documentId || null;
+  metaPatch.suggested_solution = input.suggestedSolution;
+  metaPatch.reviewer_user_id = input.reviewerUserId;
+  metaPatch.approver_user_id = input.approverUserId;
+  metaPatch.classification = input.classification;
+  metaPatch.area = input.area;
+  metaPatch.system = input.system;
+  metaPatch.subsystem = input.subsystem;
+  metaPatch.work_package = input.workPackage;
+  metaPatch.contract_package = input.contractPackage;
+  metaPatch.originating_company = input.originatingCompany;
+  metaPatch.responding_company = input.respondingCompany;
+  metaPatch.external_reference = input.externalReference;
+  if (input.assetEquipmentText !== undefined) {
+    metaPatch.asset_equipment_text = input.assetEquipmentText?.trim() || null;
+  }
 }
 
 function mergeMetadata(
@@ -217,12 +292,12 @@ export class EngineeringTechnicalQueryService {
 
   async create(commerce: CommerceExecutionContext, input: CreateTechnicalQueryInput) {
     assertEngineeringService(commerce, "technical_query.create", input.tenantId);
-    const question = input.question?.trim() ?? "";
+    const question = sanitizeTqQueryHtml(input.question ?? "");
     const due = input.responseDue ?? input.dueDate ?? null;
     const explicitSubmit = input.submit === true;
     const draft = input.submit === false || input.status === "draft";
     if (explicitSubmit) {
-      if (!question) {
+      if (!tqQueryTitleFromHtml(question) && !question.trim()) {
         throw new CommerceDomainError("Query / Information Required is required", "invalid_request", 422);
       }
       if (!due) {
@@ -253,8 +328,10 @@ export class EngineeringTechnicalQueryService {
       approver_user_id: input.approverUserId ?? null,
       watchers: input.watchers ?? [],
       date_raised: new Date().toISOString(),
+      asset_equipment_text: input.assetEquipmentText?.trim() || null,
+      query_image_ids: extractTqQueryImageIds(question),
     });
-    const title = (input.title ?? question).slice(0, 240) || number;
+    const title = (input.title || tqQueryTitleFromHtml(question) || number).slice(0, 240);
     const { data, error } = await this.supabase
       .from("engineering_technical_queries")
       .insert({
@@ -284,6 +361,16 @@ export class EngineeringTechnicalQueryService {
       .select()
       .single();
     if (error || !data) throw new Error(`Failed to create TQ: ${error?.message}`);
+
+    const tqId = data.id as string;
+    const rewritten = sanitizeTqQueryHtml(question, tqId);
+    if (rewritten !== question) {
+      await this.supabase
+        .from("engineering_technical_queries")
+        .update({ question: rewritten, metadata: mergeMetadata(metadata, { query_image_ids: extractTqQueryImageIds(rewritten) }) as Json })
+        .eq("id", tqId);
+      data.question = rewritten;
+    }
 
     if (input.documentId) {
       await this.framework
@@ -357,6 +444,21 @@ export class EngineeringTechnicalQueryService {
       toId?: string;
       relationship?: string;
       metadata?: Record<string, unknown>;
+      priority?: string;
+      projectId?: string;
+      disciplineId?: string;
+      assetId?: string | null;
+      assetEquipmentText?: string | null;
+      classification?: string;
+      area?: string;
+      system?: string;
+      subsystem?: string;
+      workPackage?: string;
+      contractPackage?: string;
+      originatingCompany?: string;
+      respondingCompany?: string;
+      externalReference?: string;
+      documentId?: string;
     },
   ) {
     assertEngineeringService(commerce, "technical_query.update", tenantId);
@@ -388,40 +490,37 @@ export class EngineeringTechnicalQueryService {
         if (!canEditDraft) {
           throw new CommerceDomainError("This technical query can no longer be edited as a draft", "forbidden", 403);
         }
-        if (typeof input.question === "string") patch.question = input.question;
-        if (typeof input.title === "string") patch.title = input.title;
-        if (typeof input.description === "string") patch.description = input.description;
-        if (typeof input.responseDue === "string") {
-          patch.response_due = input.responseDue;
-          patch.due_date = input.responseDue;
-        }
-        if (typeof input.assignedTo === "string") {
-          patch.assigned_to = input.assignedTo || null;
-          patch.responder_id = input.assignedTo || null;
-        }
-        metaPatch.suggested_solution = input.suggestedSolution;
-        eventSuffix = "created";
+        applyDraftFields(input, id, patch, metaPatch);
+        eventSuffix = "draft_updated";
         eventTitle = `${existing.tq_number} draft updated`;
+        if (typeof input.question === "string") {
+          eventSuffix = "query_updated";
+          eventTitle = `${existing.tq_number} query updated`;
+        }
         break;
       }
       case "submit": {
-        if (!canEditDraft && persistWorkflowStatus(String(existing.status ?? "")) !== "draft") {
+        if (persistWorkflowStatus(String(existing.status ?? "")) !== "draft") {
           throw new CommerceDomainError("Only a draft technical query can be submitted", "invalid_transition", 422);
         }
-        if (!String(existing.question ?? input.question ?? "").trim()) {
+        if (!canEditDraft) {
+          throw new CommerceDomainError("You cannot submit this technical query", "forbidden", 403);
+        }
+        applyDraftFields(input, id, patch, metaPatch);
+        const question = String(patch.question ?? existing.question ?? "").trim();
+        if (!question) {
           throw new CommerceDomainError("Query / Information Required is required", "invalid_request", 422);
         }
-        const due = input.responseDue ?? asId(existing.response_due) ?? asId(existing.due_date);
+        const due = (typeof patch.response_due === "string" && patch.response_due) ||
+          input.responseDue ||
+          asId(existing.response_due) ||
+          asId(existing.due_date);
         if (!due) {
           throw new CommerceDomainError("Response Due Date is required", "invalid_request", 422);
         }
         patch.status = "awaiting_response";
         patch.response_due = due;
         patch.due_date = due;
-        if (typeof input.assignedTo === "string") {
-          patch.assigned_to = input.assignedTo || null;
-          patch.responder_id = input.assignedTo || null;
-        }
         eventSuffix = "submitted";
         eventTitle = `${existing.tq_number} submitted`;
         notify = "assigned";
@@ -560,11 +659,14 @@ export class EngineeringTechnicalQueryService {
           relationship: input.relationship ?? "references",
           createdBy: actorUserId,
         });
-        if (input.toType === "document" && !existing.document_id) {
+        if (input.toType === "document" && !existing.document_id && input.relationship !== "query_image") {
           patch.document_id = input.toId;
         }
-        eventSuffix = "reference_added";
-        eventTitle = `${existing.tq_number} reference added`;
+        eventSuffix = input.relationship === "query_image" ? "query_image_linked" : "reference_added";
+        eventTitle =
+          input.relationship === "query_image"
+            ? `${existing.tq_number} query image linked`
+            : `${existing.tq_number} reference added`;
         break;
       }
       default:

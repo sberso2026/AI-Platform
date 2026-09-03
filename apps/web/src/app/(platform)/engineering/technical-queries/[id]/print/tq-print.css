@@ -51,8 +51,22 @@
   .tq-print-sheet td,
   .tq-print-sheet li {
     overflow: visible !important;
-    white-space: pre-wrap;
     word-break: break-word;
+  }
+
+  .tq-print-query,
+  .tq-print-query .tq-query-content {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .tq-print-query .tq-query-figure,
+  .tq-print-query img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+    height: auto !important;
   }
 
   .tq-page-number::after {

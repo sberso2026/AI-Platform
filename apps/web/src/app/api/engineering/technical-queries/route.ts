@@ -54,6 +54,7 @@ export const POST = withEngineeringApi("technical-queries", async ({ ctx, commer
     watchers: body.watchers,
     requireActionBy: body.requireActionBy === true,
     metadata: body.metadata,
+    assetEquipmentText: body.assetEquipmentText,
   });
   return NextResponse.json({ data: created }, { status: 201 });
 });
@@ -102,6 +103,21 @@ export const PATCH = withEngineeringApi("technical-queries", async ({ ctx, comme
     toId: body.toId,
     relationship: body.relationship,
     metadata: body.metadata,
+    priority: body.priority,
+    projectId: body.projectId,
+    disciplineId: body.disciplineId,
+    assetId: body.assetId,
+    assetEquipmentText: body.assetEquipmentText,
+    classification: body.classification,
+    area: body.area,
+    system: body.system,
+    subsystem: body.subsystem,
+    workPackage: body.workPackage,
+    contractPackage: body.contractPackage,
+    originatingCompany: body.originatingCompany,
+    respondingCompany: body.respondingCompany,
+    externalReference: body.externalReference,
+    documentId: body.documentId,
   });
   return NextResponse.json({ data });
 });

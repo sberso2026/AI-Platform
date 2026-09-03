@@ -8,6 +8,7 @@ import { Button, Input, StatusChip } from "@rtb/ui";
 import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
 import { EngineeringBreadcrumb, OperationalError, OperationalSkeleton } from "@/components/engineering/operational";
 import { TqBackLink, TqMultiline, TqNextActionPanel, TqPersonBlock, TqSection, TQ_SCROLL_MAIN } from "@/components/engineering/technical-query-ui";
+import { TqQueryHtml } from "@/components/engineering/tq-query-html";
 import { parseApiJsonResponse, asRecordArray } from "@/lib/api/parse-json-response";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { formatTqDate, formatTqDateTime, type TqDetailPayload } from "@/lib/engineering/technical-query-ux";
@@ -132,6 +133,7 @@ export default function TechnicalQueryDetailPage() {
   const awaitingResponse = p.status === "awaiting_response" || p.status === "clarification_required";
   const awaitingReview = p.status === "response_submitted" || p.status === "under_review";
   const canClose = canReview && p.status === "accepted";
+  const canEditDraft = canMutate && Boolean(caps.canEditDraft) && p.status === "draft";
   const linkOptions =
     linkType === "document"
       ? documents
@@ -164,6 +166,15 @@ export default function TechnicalQueryDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {canEditDraft ? (
+              <Link
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                href={`/engineering/technical-queries/new?id=${id}`}
+                data-testid="tq-edit-draft"
+              >
+                Edit Draft
+              </Link>
+            ) : null}
             <AskThisObjectLink
               label="Ask Engineering AI"
               projectId={typeof data.query.project_id === "string" ? data.query.project_id : null}
@@ -193,6 +204,21 @@ export default function TechnicalQueryDetailPage() {
             <p className={`mt-0.5 text-sm font-medium ${p.overdue ? "text-rose-800" : ""}`}>{formatTqDate(p.due)}</p>
           </div>
         </div>
+
+        {canEditDraft ? (
+          <aside className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4" data-testid="tq-draft-banner">
+            <p className="text-sm font-semibold uppercase tracking-wide text-amber-900">[DRAFT]</p>
+            <p className="mt-1 text-sm text-amber-950">This technical query has not been submitted.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" href={`/engineering/technical-queries/new?id=${id}`}>
+                Edit Draft
+              </Link>
+              <Button type="button" disabled={busy} onClick={() => void mutate({ action: "submit" })} data-testid="tq-submit-draft">
+                Submit Technical Query
+              </Button>
+            </div>
+          </aside>
+        ) : null}
 
         <TqNextActionPanel nextAction={p.nextAction} overdue={p.overdue} />
 
@@ -239,8 +265,8 @@ export default function TechnicalQueryDetailPage() {
 
         {tab === "overview" ? (
           <div className="mt-4 space-y-4" data-testid="tq-overview">
-            <TqSection title="Query">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">{p.query || "—"}</p>
+            <TqSection title="Query / Information Required">
+              <TqQueryHtml html={p.query} tqId={id} testId="tq-query-html" />
               {p.queryLocked ? <p className="text-xs text-slate-500">The original query is controlled and cannot be silently overwritten.</p> : null}
             </TqSection>
             <TqSection title="Suggested Solution" hint="Initiator proposal — not an approved engineering solution.">

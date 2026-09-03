@@ -8,6 +8,7 @@ import { Button, Input } from "@rtb/ui";
 import {
   TECHNICAL_QUERY_CLASSIFICATIONS,
   TECHNICAL_QUERY_PRIORITIES,
+  tqQueryPlainText,
   type TechnicalQueryPerson,
 } from "@rtb/engineering-os/browser";
 import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
@@ -19,6 +20,8 @@ import {
   TqPersonSelect,
   TqSection,
 } from "@/components/engineering/technical-query-ui";
+import { TqAssetHybridInput } from "@/components/engineering/tq-asset-hybrid-input";
+import { TqQueryEditor } from "@/components/engineering/tq-query-editor";
 import { parseApiJsonResponse, asRecordArray } from "@/lib/api/parse-json-response";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { formatTqDate } from "@/lib/engineering/technical-query-ux";
@@ -41,6 +44,11 @@ type Confirmation = {
 
 const REGISTER_HREF = "/engineering/technical-queries";
 
+function toDateInput(value: unknown): string {
+  const match = String(value ?? "").match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : "";
+}
+
 export default function NewTechnicalQueryPage() {
   const router = useRouter();
   const projectId = useResolvedEngineeringProjectId();
@@ -49,7 +57,8 @@ export default function NewTechnicalQueryPage() {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [disciplines, setDisciplines] = useState<Array<{ id: string; name: string }>>([]);
   const [documents, setDocuments] = useState<Array<Record<string, unknown>>>([]);
-  const [assets, setAssets] = useState<Array<Record<string, unknown>>>([]);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [tqNumber, setTqNumber] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [query, setQuery] = useState("");
   const [suggestedSolution, setSuggestedSolution] = useState("");
@@ -68,16 +77,24 @@ export default function NewTechnicalQueryPage() {
   const [approverUserId, setApproverUserId] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? "");
   const [assetId, setAssetId] = useState("");
+  const [assetEquipmentText, setAssetEquipmentText] = useState("");
   const [documentId, setDocumentId] = useState("");
   const [externalReference, setExternalReference] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageMessage, setImageMessage] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [currentUser, setCurrentUser] = useState<{ name: string; company: string | null } | null>(null);
 
+  function markDirty() {
+    setDirty(true);
+  }
+
   useEffect(() => {
-    if (projectId) setSelectedProjectId(projectId);
-  }, [projectId]);
+    if (projectId && !draftId) setSelectedProjectId(projectId);
+  }, [projectId, draftId]);
 
   useEffect(() => {
     fetch("/api/platform/current-user")
@@ -133,25 +150,63 @@ export default function NewTechnicalQueryPage() {
         if (parsed.ok) setDocuments(asRecordArray(parsed.data));
       })
       .catch(() => undefined);
-    fetch("/api/engineering/assets")
-      .then((r) => parseApiJsonResponse(r))
-      .then((parsed) => {
-        if (parsed.ok) setAssets(asRecordArray(parsed.data));
-      })
-      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    const existingId = new URLSearchParams(window.location.search).get("id");
+    if (!existingId) return;
+    void (async () => {
+      const parsed = await parseApiJsonResponse<TqDetailPayload>(
+        await fetch(`/api/engineering/technical-queries/${existingId}`),
+      );
+      if (!parsed.ok || !parsed.data) {
+        setError(parsed.errorMessage ?? "Cannot open this draft");
+        return;
+      }
+      if (!parsed.data.capabilities?.canEditDraft || parsed.data.presentation.status !== "draft") {
+        setError("This technical query can no longer be edited as a draft");
+        return;
+      }
+      const p = parsed.data.presentation;
+      const row = parsed.data.query;
+      setDraftId(String(row.id ?? existingId));
+      setTqNumber(p.tqNumber);
+      setTitle(p.title);
+      setQuery(p.query);
+      setSuggestedSolution(p.suggestedSolution ?? "");
+      setReason(p.reason ?? "");
+      setDue(toDateInput(p.due));
+      setPriority(p.priorityValue || "medium");
+      setClassification(p.classification || "technical_clarification");
+      setDisciplineId(typeof row.discipline_id === "string" ? row.discipline_id : "");
+      setArea(p.area ?? "");
+      setSystem(p.system ?? "");
+      setSubsystem(p.subsystem ?? "");
+      setWorkPackage(p.workPackage ?? "");
+      setContractPackage(p.contractPackage ?? "");
+      setAssignedTo(typeof row.assigned_to === "string" ? row.assigned_to : p.actionBy?.id ?? "");
+      setReviewerUserId(p.reviewer?.id ?? "");
+      setApproverUserId(p.approver?.id ?? "");
+      setSelectedProjectId(typeof row.project_id === "string" ? row.project_id : "");
+      setAssetId(p.assetId ?? "");
+      setAssetEquipmentText(p.assetLabel ?? "");
+      setDocumentId(typeof row.document_id === "string" ? row.document_id : "");
+      setExternalReference(p.externalReference ?? "");
+      setDirty(false);
+    })();
   }, []);
 
   const actionBy = people.find((person) => person.id === assignedTo);
   const selectedProjectName = projects.find((item) => item.id === selectedProjectId)?.name ?? "Current project";
-  const dirty =
-    Boolean(title || query || suggestedSolution || reason || due || assignedTo || documentId || area || system);
+  const queryPlain = tqQueryPlainText(query);
   const submitBlockers = useMemo(() => {
     const reasons: string[] = [];
-    if (!query.trim()) reasons.push("Enter Query / Information Required.");
+    if (!queryPlain && !query.includes("data-document-id")) reasons.push("Enter Query / Information Required.");
     if (!due) reasons.push("Enter a Response Due Date.");
     if (!selectedProjectId) reasons.push("Select a Project.");
+    if (imageBusy) reasons.push("Wait for the image upload to complete.");
     return reasons;
-  }, [query, due, selectedProjectId]);
+  }, [query, queryPlain, due, selectedProjectId, imageBusy]);
   const canSubmit = submitBlockers.length === 0;
 
   useEffect(() => {
@@ -166,12 +221,12 @@ export default function NewTechnicalQueryPage() {
 
   function confirmLeave(): boolean {
     if (!dirty) return true;
-    return window.confirm("This technical query has unsaved changes. Leave without saving?");
+    return window.confirm("You have unsaved changes. Leave without saving?");
   }
 
   const body = useMemo(
     () => ({
-      title: title || query.slice(0, 120),
+      title: title || queryPlain.slice(0, 120),
       question: query,
       description: reason,
       suggestedSolution,
@@ -180,7 +235,8 @@ export default function NewTechnicalQueryPage() {
       classification,
       disciplineId: disciplineId || undefined,
       projectId: selectedProjectId || undefined,
-      assetId: assetId || undefined,
+      assetId: assetId || null,
+      assetEquipmentText: assetEquipmentText || null,
       documentId: documentId || undefined,
       assignedTo: assignedTo || undefined,
       reviewerUserId: reviewerUserId || undefined,
@@ -195,6 +251,7 @@ export default function NewTechnicalQueryPage() {
     [
       title,
       query,
+      queryPlain,
       reason,
       suggestedSolution,
       due,
@@ -203,6 +260,7 @@ export default function NewTechnicalQueryPage() {
       disciplineId,
       selectedProjectId,
       assetId,
+      assetEquipmentText,
       documentId,
       assignedTo,
       reviewerUserId,
@@ -216,35 +274,87 @@ export default function NewTechnicalQueryPage() {
     ],
   );
 
-  async function save(submit: boolean) {
-    setSaving(true);
-    setError(null);
+  async function persistDraft(fields = body): Promise<string> {
+    if (draftId) {
+      const parsed = await parseApiJsonResponse<TqDetailPayload>(
+        await fetch(`/api/engineering/technical-queries/${draftId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save_draft", ...fields }),
+        }),
+      );
+      if (!parsed.ok || !parsed.data) {
+        throw new Error(parsed.errorMessage ?? "Could not save the technical query");
+      }
+      const id = String(parsed.data.query?.id ?? draftId);
+      setTqNumber(parsed.data.presentation?.tqNumber ?? tqNumber);
+      return id;
+    }
     const parsed = await parseApiJsonResponse<TqDetailPayload>(
       await fetch("/api/engineering/technical-queries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...body, submit }),
+        body: JSON.stringify({ ...fields, submit: false }),
       }),
     );
-    setSaving(false);
     if (!parsed.ok || !parsed.data) {
-      setError(parsed.errorMessage ?? "Could not save the technical query");
-      return;
+      throw new Error(parsed.errorMessage ?? "Could not save the technical query");
     }
-    const presentation = parsed.data.presentation;
     const id = String(parsed.data.query?.id ?? "");
-    if (submit) {
+    setDraftId(id);
+    setTqNumber(parsed.data.presentation?.tqNumber ?? null);
+    window.history.replaceState(null, "", `/engineering/technical-queries/new?id=${id}`);
+    return id;
+  }
+
+  async function ensureDraft(): Promise<string> {
+    if (draftId) return draftId;
+    const id = await persistDraft();
+    setDirty(false);
+    return id;
+  }
+
+  async function save(submit: boolean) {
+    setSaving(true);
+    setError(null);
+    try {
+      if (imageBusy) {
+        setError("Wait for the image upload to complete.");
+        setSaving(false);
+        return;
+      }
+      const id = await persistDraft();
+      if (!submit) {
+        setDirty(false);
+        window.location.href = `/engineering/technical-queries/${id}`;
+        return;
+      }
+      const parsed = await parseApiJsonResponse<TqDetailPayload>(
+        await fetch(`/api/engineering/technical-queries/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "submit", ...body }),
+        }),
+      );
+      if (!parsed.ok || !parsed.data) {
+        setError(parsed.errorMessage ?? "Could not submit the technical query");
+        setSaving(false);
+        return;
+      }
+      const presentation = parsed.data.presentation;
+      setDirty(false);
       setConfirmation({
-        id,
-        tqNumber: presentation?.tqNumber ?? "TQ",
+        id: String(parsed.data.query?.id ?? id),
+        tqNumber: presentation?.tqNumber ?? tqNumber ?? "TQ",
         actionByName: presentation?.actionBy?.name ?? "Unassigned",
         due: presentation?.due ?? due,
         statusLabel: presentation?.statusLabel ?? "Awaiting Response",
         assigned: Boolean(presentation?.assigned),
       });
-      return;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save the technical query");
     }
-    window.location.href = `/engineering/technical-queries/${id}`;
+    setSaving(false);
   }
 
   async function onUpload(file: File) {
@@ -263,6 +373,7 @@ export default function NewTechnicalQueryPage() {
       });
       const uploadedId = String(completed.data?.id ?? session.documentId);
       setDocumentId(uploadedId);
+      markDirty();
       setDocuments((current) => [
         { id: uploadedId, document_number: file.name, title: file.name, revision: session.revision, status: "uploaded" },
         ...current,
@@ -332,7 +443,10 @@ export default function NewTechnicalQueryPage() {
 
   return (
     <>
-      <Header title="New Technical Query" description="Create a controlled technical query / RFI" />
+      <Header
+        title={draftId ? `Edit Draft ${tqNumber ?? ""}`.trim() : "New Technical Query"}
+        description={draftId ? "Complete and submit this technical query" : "Create a controlled technical query / RFI"}
+      />
       <main className={`${TQ_SCROLL_MAIN} mx-auto max-w-5xl scroll-pb-28 pb-32`} data-testid="tq-create">
         <TqBackLink href={REGISTER_HREF} onNavigate={confirmLeave}>
           Back to Technical Queries
@@ -340,7 +454,7 @@ export default function NewTechnicalQueryPage() {
         <EngineeringBreadcrumb
           items={[
             { href: "/engineering/technical-queries", label: "Technical Queries" },
-            { label: "New Technical Query" },
+            { label: draftId ? `Edit Draft ${tqNumber ?? ""}`.trim() : "New Technical Query" },
           ]}
         />
         {error ? <OperationalError message={error} /> : null}
@@ -358,23 +472,66 @@ export default function NewTechnicalQueryPage() {
               <label htmlFor="tq-title" className="mb-1 block text-xs font-medium text-slate-600">
                 Title / Subject
               </label>
-              <Input id="tq-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Sealant suitability at pipe sleeper isolation joint" />
+              <Input
+                id="tq-title"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  markDirty();
+                }}
+                placeholder="Sealant suitability at pipe sleeper isolation joint"
+              />
             </div>
-            <TqMultiline id="tq-query" label="Query / Information Required" value={query} onChange={setQuery} required />
+            <TqQueryEditor
+              id="tq-query"
+              tqId={draftId}
+              projectId={selectedProjectId}
+              value={query}
+              onChange={(html) => {
+                setQuery(html);
+                markDirty();
+              }}
+              onEnsureDraft={ensureDraft}
+              onUploadBusy={(busy, message) => {
+                setImageBusy(busy);
+                setImageMessage(message);
+              }}
+            />
             <TqMultiline
               id="tq-suggested"
               label="Suggested Solution / Proposed Resolution"
               value={suggestedSolution}
-              onChange={setSuggestedSolution}
+              onChange={(value) => {
+                setSuggestedSolution(value);
+                markDirty();
+              }}
               rows={4}
             />
             <p className="text-xs text-slate-500">Optional initiator proposal. This is not an approved engineering solution.</p>
-            <TqMultiline id="tq-reason" label="Reason / Context" value={reason} onChange={setReason} rows={3} />
+            <TqMultiline
+              id="tq-reason"
+              label="Reason / Context"
+              value={reason}
+              onChange={(value) => {
+                setReason(value);
+                markDirty();
+              }}
+              rows={3}
+            />
             <div>
               <label htmlFor="tq-due" className="mb-1 block text-xs font-medium text-slate-600">
                 Response Due Date *
               </label>
-              <Input id="tq-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} required />
+              <Input
+                id="tq-due"
+                type="date"
+                value={due}
+                onChange={(e) => {
+                  setDue(e.target.value);
+                  markDirty();
+                }}
+                required
+              />
             </div>
           </TqSection>
 
@@ -387,9 +544,36 @@ export default function NewTechnicalQueryPage() {
                   {currentUser?.company ? ` · ${currentUser.company}` : ""}
                 </p>
               </div>
-              <TqPersonSelect id="tq-action-by" label="Action By" value={assignedTo} people={people} onChange={setAssignedTo} />
-              <TqPersonSelect id="tq-reviewer" label="Reviewer" value={reviewerUserId} people={people} onChange={setReviewerUserId} />
-              <TqPersonSelect id="tq-approver" label="Approver / Technical Authority" value={approverUserId} people={people} onChange={setApproverUserId} />
+              <TqPersonSelect
+                id="tq-action-by"
+                label="Action By"
+                value={assignedTo}
+                people={people}
+                onChange={(value) => {
+                  setAssignedTo(value);
+                  markDirty();
+                }}
+              />
+              <TqPersonSelect
+                id="tq-reviewer"
+                label="Reviewer"
+                value={reviewerUserId}
+                people={people}
+                onChange={(value) => {
+                  setReviewerUserId(value);
+                  markDirty();
+                }}
+              />
+              <TqPersonSelect
+                id="tq-approver"
+                label="Approver / Technical Authority"
+                value={approverUserId}
+                people={people}
+                onChange={(value) => {
+                  setApproverUserId(value);
+                  markDirty();
+                }}
+              />
             </div>
             {!assignedTo ? (
               <p className="text-sm text-amber-800">Nobody is currently assigned to respond to this TQ.</p>
@@ -404,7 +588,15 @@ export default function NewTechnicalQueryPage() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Project *</label>
-                <select className="h-10 w-full rounded-md border border-input px-3 text-sm" value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} required>
+                <select
+                  className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                  value={selectedProjectId}
+                  onChange={(e) => {
+                    setSelectedProjectId(e.target.value);
+                    markDirty();
+                  }}
+                  required
+                >
                   <option value="">Select project</option>
                   {projects.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -415,11 +607,20 @@ export default function NewTechnicalQueryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">TQ Number</label>
-                <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">Assigned on submit</p>
+                <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  {tqNumber ?? "Assigned when saved"}
+                </p>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Priority</label>
-                <select className="h-10 w-full rounded-md border border-input px-3 text-sm" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <select
+                  className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                  value={priority}
+                  onChange={(e) => {
+                    setPriority(e.target.value);
+                    markDirty();
+                  }}
+                >
                   {TECHNICAL_QUERY_PRIORITIES.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
@@ -429,7 +630,14 @@ export default function NewTechnicalQueryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Discipline</label>
-                <select className="h-10 w-full rounded-md border border-input px-3 text-sm" value={disciplineId} onChange={(e) => setDisciplineId(e.target.value)}>
+                <select
+                  className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                  value={disciplineId}
+                  onChange={(e) => {
+                    setDisciplineId(e.target.value);
+                    markDirty();
+                  }}
+                >
                   <option value="">Select discipline</option>
                   {disciplines.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -440,7 +648,14 @@ export default function NewTechnicalQueryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Classification</label>
-                <select className="h-10 w-full rounded-md border border-input px-3 text-sm" value={classification} onChange={(e) => setClassification(e.target.value)}>
+                <select
+                  className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                  value={classification}
+                  onChange={(e) => {
+                    setClassification(e.target.value);
+                    markDirty();
+                  }}
+                >
                   {TECHNICAL_QUERY_CLASSIFICATIONS.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
@@ -450,34 +665,65 @@ export default function NewTechnicalQueryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Area</label>
-                <Input value={area} onChange={(e) => setArea(e.target.value)} />
+                <Input
+                  value={area}
+                  onChange={(e) => {
+                    setArea(e.target.value);
+                    markDirty();
+                  }}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">System</label>
-                <Input value={system} onChange={(e) => setSystem(e.target.value)} />
+                <Input
+                  value={system}
+                  onChange={(e) => {
+                    setSystem(e.target.value);
+                    markDirty();
+                  }}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Subsystem</label>
-                <Input value={subsystem} onChange={(e) => setSubsystem(e.target.value)} />
+                <Input
+                  value={subsystem}
+                  onChange={(e) => {
+                    setSubsystem(e.target.value);
+                    markDirty();
+                  }}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Work Package</label>
-                <Input value={workPackage} onChange={(e) => setWorkPackage(e.target.value)} />
+                <Input
+                  value={workPackage}
+                  onChange={(e) => {
+                    setWorkPackage(e.target.value);
+                    markDirty();
+                  }}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Contract / Package</label>
-                <Input value={contractPackage} onChange={(e) => setContractPackage(e.target.value)} />
+                <Input
+                  value={contractPackage}
+                  onChange={(e) => {
+                    setContractPackage(e.target.value);
+                    markDirty();
+                  }}
+                />
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Asset / Equipment</label>
-                <select className="h-10 w-full rounded-md border border-input px-3 text-sm" value={assetId} onChange={(e) => setAssetId(e.target.value)}>
-                  <option value="">None</option>
-                  {assets.map((item) => (
-                    <option key={String(item.id)} value={String(item.id)}>
-                      {String(item.asset_name ?? item.name ?? "Asset")}
-                    </option>
-                  ))}
-                </select>
+              <div className="md:col-span-2 lg:col-span-3">
+                <TqAssetHybridInput
+                  projectId={selectedProjectId}
+                  assetId={assetId}
+                  text={assetEquipmentText}
+                  onChange={(next) => {
+                    setAssetId(next.assetId);
+                    setAssetEquipmentText(next.text);
+                    markDirty();
+                  }}
+                />
               </div>
             </div>
           </TqSection>
@@ -485,7 +731,14 @@ export default function NewTechnicalQueryPage() {
           <TqSection title="4. References & attachments" hint="Link canonical documents, drawings, and assets. Do not duplicate source records.">
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">Reference Document / Drawing</label>
-              <select className="h-10 w-full rounded-md border border-input px-3 text-sm" value={documentId} onChange={(e) => setDocumentId(e.target.value)}>
+              <select
+                className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                value={documentId}
+                onChange={(e) => {
+                  setDocumentId(e.target.value);
+                  markDirty();
+                }}
+              >
                 <option value="">None</option>
                 {documents.map((item) => (
                   <option key={String(item.id)} value={String(item.id)}>
@@ -496,7 +749,13 @@ export default function NewTechnicalQueryPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">External Reference Number</label>
-              <Input value={externalReference} onChange={(e) => setExternalReference(e.target.value)} />
+              <Input
+                value={externalReference}
+                onChange={(e) => {
+                  setExternalReference(e.target.value);
+                  markDirty();
+                }}
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">Upload attachment</label>
@@ -513,8 +772,10 @@ export default function NewTechnicalQueryPage() {
           </TqSection>
 
           <aside className="rounded-lg border border-slate-200 bg-slate-50 p-4" data-testid="tq-submit-summary">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">You are creating</p>
-            <p className="mt-1 text-sm font-medium">A controlled technical query on {selectedProjectName}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{draftId ? "You are editing" : "You are creating"}</p>
+            <p className="mt-1 text-sm font-medium">
+              {draftId ? `${tqNumber ?? "Draft"} on ${selectedProjectName}` : `A controlled technical query on ${selectedProjectName}`}
+            </p>
             <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-xs uppercase text-slate-500">Initiator</dt>
@@ -558,6 +819,9 @@ export default function NewTechnicalQueryPage() {
               {submitBlockers[0]}
             </p>
           ) : null}
+          {imageMessage && imageBusy ? (
+            <p className="mb-2 text-sm text-slate-600">{imageMessage}</p>
+          ) : null}
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               type="button"
@@ -570,7 +834,7 @@ export default function NewTechnicalQueryPage() {
             >
               Cancel
             </Button>
-            <Button type="button" variant="outline" disabled={saving} onClick={() => void save(false)}>
+            <Button type="button" variant="outline" disabled={saving || imageBusy} onClick={() => void save(false)}>
               Save Draft
             </Button>
             <Button

@@ -4,7 +4,10 @@ import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 export const GET = withEngineeringApi("assets", async ({ ctx, commerce }, request) => {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId") ?? undefined;
-  const data = await ctx.engineering.assets.list(commerce, ctx.tenantId, projectId);
+  const q = searchParams.get("q")?.trim() ?? "";
+  const data = q
+    ? await ctx.engineering.assets.search(commerce, ctx.tenantId, q)
+    : await ctx.engineering.assets.list(commerce, ctx.tenantId, projectId);
   return NextResponse.json({ data });
 });
 

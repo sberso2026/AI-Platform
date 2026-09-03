@@ -188,6 +188,8 @@ export default function TechnicalQueriesPage() {
       priority: presentation?.priority ?? "—",
       updated: formatTqDate(presentation?.lastActivity ?? item.updated_at),
       overdue: presentation?.overdue ? "overdue" : "",
+      isDraft: presentation?.status === "draft",
+      editHref: `/engineering/technical-queries/new?id=${String(item.id)}`,
     };
   });
 
@@ -429,6 +431,16 @@ export default function TechnicalQueriesPage() {
                     <td className="whitespace-nowrap px-3 py-1.5">{String(row.discipline)}</td>
                     <td className="whitespace-nowrap px-3 py-1.5">
                       <StatusChip value={String(row.status)}>{String(row.status)}</StatusChip>
+                      {row.isDraft && canMutate ? (
+                        <Link
+                          href={String(row.editHref)}
+                          className="relative z-10 ml-2 text-xs font-medium text-slate-700 underline"
+                          data-testid="tq-register-edit-draft"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          Edit Draft
+                        </Link>
+                      ) : null}
                     </td>
                     <td className="whitespace-nowrap px-3 py-1.5">{String(row.initiator)}</td>
                     <td className="whitespace-nowrap px-3 py-1.5">{String(row.actionBy)}</td>

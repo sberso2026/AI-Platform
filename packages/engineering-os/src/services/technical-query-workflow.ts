@@ -153,9 +153,9 @@ export function describeTechnicalQueryNextAction(input: {
   if (status === "draft") {
     return {
       currentStatus: displayWorkflowStatus(status),
-      actionRequired: `${initiator} to submit this technical query`,
+      actionRequired: `${initiator} to complete and submit this technical query.`,
       due,
-      nextStep: "After submission, Action By receives the query for a technical response.",
+      nextStep: "Edit the draft or submit it when ready.",
     };
   }
   if (status === "awaiting_response" || status === "clarification_required") {
@@ -264,6 +264,7 @@ export type TechnicalQueryPresentation = {
   projectName: string | null;
   disciplineName: string | null;
   assetLabel: string | null;
+  assetId: string | null;
   initiator: TechnicalQueryPerson | null;
   actionBy: TechnicalQueryPerson | null;
   reviewer: TechnicalQueryPerson | null;
@@ -349,7 +350,8 @@ export function presentTechnicalQuery(input: {
     externalReference: metadataString(metadata, "external_reference"),
     projectName: input.projectName ?? null,
     disciplineName: input.disciplineName ?? null,
-    assetLabel: input.assetLabel ?? null,
+    assetLabel: metadataString(metadata, "asset_equipment_text") ?? input.assetLabel ?? null,
+    assetId: typeof row.asset_id === "string" && row.asset_id ? row.asset_id : null,
     initiator,
     actionBy,
     reviewer: reviewerId ? people.get(reviewerId) ?? null : null,

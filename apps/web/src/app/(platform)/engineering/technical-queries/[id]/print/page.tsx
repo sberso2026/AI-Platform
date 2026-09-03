@@ -7,6 +7,7 @@ import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { formatTqDate, formatTqDateTime, type TqDetailPayload } from "@/lib/engineering/technical-query-ux";
 import { personLabel } from "@/lib/engineering/technical-query-ux";
 import { TqBackLink } from "@/components/engineering/technical-query-ui";
+import { TqQueryHtml } from "@/components/engineering/tq-query-html";
 import "./tq-print.css";
 
 export default function TechnicalQueryPrintPage() {
@@ -80,9 +81,9 @@ export default function TechnicalQueryPrintPage() {
               </tbody>
             </table>
 
-            <section className="mt-5">
+            <section className="mt-5 tq-print-query" data-testid="tq-print-query">
               <h2 className="text-sm font-semibold uppercase tracking-wide">Query / Information Required</h2>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{p.query || "—"}</p>
+              <TqQueryHtml html={p.query} tqId={id} className="mt-1" testId="tq-print-query-content" />
             </section>
             <section className="mt-4">
               <h2 className="text-sm font-semibold uppercase tracking-wide">Suggested Solution</h2>

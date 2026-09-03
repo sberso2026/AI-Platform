@@ -101,6 +101,20 @@ export {
   type TechnicalQueryNextAction,
 } from "./services/technical-query-workflow";
 export {
+  TQ_QUERY_IMAGE_MAX_BYTES,
+  TQ_QUERY_IMAGE_MIMES,
+  inferTqQueryImageMime,
+  detectTqQueryImageMimeFromBytes,
+  validateTqQueryImagePolicy,
+  tqQueryPlainText,
+  extractTqQueryImageIds,
+  sanitizeTqQueryHtml,
+  tqQueryImageFigure,
+  tqQueryLooksLikeHtml,
+  tqQueryPrintTokens,
+  tqQueryTitleFromHtml,
+} from "./services/tq-query-content";
+export {
   EngineeringDecisionService,
   EngineeringActionService,
   EngineeringRiskService,

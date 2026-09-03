@@ -13,7 +13,7 @@ describe("technical query workflow presentation", () => {
   it("never presents a raw UUID as a person name", () => {
     const uuid = "6f1a2c3e-4b5d-6789-abcd-ef0123456789";
     expect(isRawUuid(uuid)).toBe(true);
-    expect(displayPersonName({ fullName: uuid, email: "jane.smith@example.com" })).toBe("jane.smith");
+    expect(displayPersonName({ fullName: uuid, email: "jane.smith@example.com" })).toBe("jane.smith@example.com");
     expect(displayPersonName({ fullName: "Jane Smith", fallback: uuid })).toBe("Jane Smith");
   });
 
@@ -36,6 +36,34 @@ describe("technical query workflow presentation", () => {
     expect(next.currentStatus).toBe("Awaiting Response");
     expect(next.actionRequired).toBe("Jane Smith to provide technical response");
     expect(next.nextStep).toContain("Silvestre Berso");
+  });
+
+  it("tells the initiator to complete and submit a draft", () => {
+    const next = describeTechnicalQueryNextAction({
+      status: "draft",
+      initiatorName: "Silvestre Berso",
+      assigned: false,
+    });
+    expect(next.currentStatus).toBe("Draft");
+    expect(next.actionRequired).toMatch(/Silvestre Berso to complete and submit/i);
+    expect(next.nextStep).toMatch(/Edit the draft or submit it when ready/i);
+  });
+
+  it("prefers free-text asset equipment over the canonical register label", () => {
+    const presented = presentTechnicalQuery({
+      row: {
+        tq_number: "TQ-017",
+        title: "Bund floor cracking",
+        question: "Inspect bund floor",
+        status: "draft",
+        asset_id: "asset-1",
+        metadata: { asset_equipment_text: "Bund Floor" },
+      },
+      assetLabel: "V-101",
+    });
+    expect(presented.assetLabel).toBe("Bund Floor");
+    expect(presented.assetId).toBe("asset-1");
+    expect(presented.queryLocked).toBe(false);
   });
 
   it("does not imply a TQ was sent when Action By is missing", () => {
