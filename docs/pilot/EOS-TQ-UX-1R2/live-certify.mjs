@@ -26,7 +26,7 @@ const env = { ...loadEnv(resolve("apps/web/.env.local")), ...process.env };
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const host = "https://rtb-ai-platform-h5gr9fujg-rtbea.vercel.app";
+const host = "https://rtb-ai-platform-d1nopgd4t-rtbea.vercel.app";
 const email = "silvestre.berso@rtbea.com.au";
 const PROJECT_REF = "wcydlhqiqdwgoaqrlget";
 const OUT = resolve("docs/pilot/EOS-TQ-UX-1R2");
@@ -337,8 +337,8 @@ const notifyLivePass =
   clarificationNotificationPass && acceptNotificationPass;
 
 const report = {
-  FINAL_SHA: "ba22248581a3407a346458317df38aceedde8906",
-  PREVIEW_DEPLOYMENT_ID: "dpl_2bHTymS3bUkQbHAPGgKKSVjwGkBw",
+  FINAL_SHA: "c5712be0f0d07ff0721a8627fd187e75f2f64411",
+  PREVIEW_DEPLOYMENT_ID: "dpl_3ehWVv4BEmWdbC4hMqQfn1fj1Kmu",
   WORKING_TREE_CLEAN: true,
   PREVIEW_MATCHES_FINAL_SHA: true,
   host,

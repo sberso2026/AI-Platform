@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import { createEngineeringOS } from "@rtb/engineering-os";
 import { createPlatformCommerce } from "@rtb/platform-commerce";
@@ -9,7 +10,8 @@ import type { TenantSettings } from "@rtb/types";
 
 export async function getKernel() {
   const supabase = await createClient();
-  return { supabase, kernel: createPlatformKernel(supabase) };
+  const serviceClient = createServiceClient();
+  return { supabase, kernel: createPlatformKernel(supabase, serviceClient) };
 }
 
 export interface AuthContext {
@@ -97,7 +99,8 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     .filter((row): row is { id: string; slug: string } => Boolean(row?.id))
     .sort((a, b) => a.slug.localeCompare(b.slug))[0];
 
-  const kernel = createPlatformKernel(supabase);
+  const serviceClient = createServiceClient();
+  const kernel = createPlatformKernel(supabase, serviceClient);
   const engineering = createEngineeringOS(supabase, kernel, {
     documentBodyRetriever: {
       retrieve: async (query) => {
