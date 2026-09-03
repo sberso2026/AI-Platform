@@ -43,3 +43,19 @@ export {
   inferStandardDocumentNumber,
   preferCompleteStandardNumber,
 } from "./services/document-identity";
+
+export {
+  TECHNICAL_QUERY_CLASSIFICATIONS,
+  TECHNICAL_QUERY_PRIORITIES,
+  presentTechnicalQuery,
+  describeTechnicalQueryNextAction,
+  displayWorkflowStatus,
+  displayPersonName,
+  displayPriority,
+  personDisplayLine,
+  isRawUuid,
+  isOverdue,
+  type TechnicalQueryPresentation,
+  type TechnicalQueryPerson,
+  type TechnicalQueryNextAction,
+} from "./services/technical-query-workflow";

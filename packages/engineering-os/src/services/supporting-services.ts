@@ -878,7 +878,10 @@ export class EngineeringDashboardService {
     const pendingDecisions = decisions.filter((d) => d.approval_status !== "approved");
     const openRisks = risks.filter((r) => r.status !== "closed");
     const openIssues = issues.filter((i) => !["resolved", "closed"].includes(String(i.status)));
-    const openTqs = technicalQueries.filter((t) => t.status !== "answered" && t.status !== "closed");
+    const openTqs = technicalQueries.filter((t) => {
+      const status = String(t.status ?? "");
+      return !["closed", "cancelled", "canceled", "superseded", "answered", "draft"].includes(status);
+    });
 
     const highRisks = openRisks.filter((r) => {
       const score = Number(r.score ?? Number(r.probability ?? 0) * Number(r.consequence ?? 0));

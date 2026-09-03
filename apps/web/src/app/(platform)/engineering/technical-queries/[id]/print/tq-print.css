@@ -1,0 +1,49 @@
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+
+  header,
+  nav,
+  aside,
+  [data-sidebar],
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .tq-print-sheet {
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+
+  .tq-print-sheet table {
+    page-break-inside: avoid;
+  }
+
+  .tq-print-sheet p,
+  .tq-print-sheet td,
+  .tq-print-sheet li {
+    overflow: visible !important;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .tq-page-number::after {
+    content: counter(page);
+  }
+
+  .tq-page-count::after {
+    content: counter(pages);
+  }
+}
+
+.tq-print-sheet {
+  font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.45;
+  color: #0f172a;
+}

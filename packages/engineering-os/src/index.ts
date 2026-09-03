@@ -78,6 +78,29 @@ export {
   EngineeringActivityService,
 } from "./services/object-framework";
 export {
+  mapTechnicalQueryStatus,
+  TECHNICAL_QUERY_STATUSES,
+  type TechnicalQueryStatus,
+} from "./services/technical-query-status";
+export {
+  TECHNICAL_QUERY_WORKFLOW_STATUSES,
+  TECHNICAL_QUERY_CLASSIFICATIONS,
+  TECHNICAL_QUERY_PRIORITIES,
+  presentTechnicalQuery,
+  describeTechnicalQueryNextAction,
+  displayWorkflowStatus,
+  displayPersonName,
+  displayPriority,
+  persistPriority,
+  personDisplayLine,
+  isRawUuid,
+  isOverdue,
+  metadataRecord,
+  type TechnicalQueryPresentation,
+  type TechnicalQueryPerson,
+  type TechnicalQueryNextAction,
+} from "./services/technical-query-workflow";
+export {
   EngineeringDecisionService,
   EngineeringActionService,
   EngineeringRiskService,

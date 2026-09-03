@@ -223,16 +223,24 @@ export function StatusTable({
         </thead>
         <tbody className="divide-y divide-slate-100">
           {rows.map((row, index) => (
-            <tr key={String(row.id ?? index)} className="hover:bg-slate-50">
+            <tr
+                key={String(row.id ?? index)}
+                className={typeof row.href === "string" ? "relative hover:bg-slate-50" : "hover:bg-slate-50"}
+              >
               {columns.map((col) => {
                 const raw = row[col.key];
                 const text = raw == null || raw === "" ? "—" : String(raw);
+                const href = typeof row.href === "string" ? row.href : null;
                 return (
                   <td key={col.key} className="px-4 py-3 text-slate-800">
                     {col.status ? (
-                      <StatusChip value={text === "—" ? null : text} />
-                    ) : col.hrefKey && typeof row.href === "string" ? (
-                      <Link href={row.href as string} className="font-medium underline-offset-2 hover:underline">
+                      <StatusChip value={text === "—" ? null : text}>{text === "—" ? undefined : text}</StatusChip>
+                    ) : col.hrefKey && href ? (
+                      <Link href={href} className="font-medium underline-offset-2 hover:underline after:absolute after:inset-0">
+                        {text}
+                      </Link>
+                    ) : href && col.key === columns[0]?.key ? (
+                      <Link href={href} className="font-medium underline-offset-2 hover:underline after:absolute after:inset-0">
                         {text}
                       </Link>
                     ) : (
