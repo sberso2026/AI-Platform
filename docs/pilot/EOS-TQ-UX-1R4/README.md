@@ -2,8 +2,10 @@
 
 Draft editing, hybrid Asset / Equipment input, rich Query / Information Required, and print auto-expand.
 
-- **Target:** Preview only. Do not promote Production. Do not invite external users.
-- **Baseline:** EOS-TQ-UX-1R3 technically certified.
+- **Preview:** https://rtb-ai-platform-9a7cub7ra-rtbea.vercel.app
+- **Deployment:** `dpl_129hLKRdfcNF3g1JEo84TAzrBT9G` (Preview, not Production)
+- **App SHA:** `ee6eb7fc2ef1650ce81d7e30cddd8963a78bb916`
+- **Live TQ:** TQ-022 (`375c6394-25c1-489f-a399-057ff8b5b41e`)
 - **Cursor cannot grant founder acceptance.** `TQ_ENTERPRISE_UX_PASS=false`.
 
 See:
@@ -17,3 +19,4 @@ See:
 - `audit.md`
 - `founder-regression.md`
 - `screenshots/`
+- `live-results.json`
