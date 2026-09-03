@@ -8,7 +8,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
+    "./retrieval": "./src/retrieval.ts",
     "./client": "./src/client.ts",
+    "./metadata-proposal": "./src/documents/metadata-proposal.ts",
     "./version": "./src/version.ts"
   },
   "scripts": {

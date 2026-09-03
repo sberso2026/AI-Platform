@@ -95,8 +95,9 @@ export default function TechnicalQueriesPage() {
           }}
         >
           <div className="md:col-span-2">
-            <label className="mb-1 block text-xs text-muted-foreground">Question</label>
+            <label htmlFor="tq-question" className="mb-1 block text-xs text-muted-foreground">Question</label>
             <textarea
+              id="tq-question"
               className="min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
@@ -104,8 +105,8 @@ export default function TechnicalQueriesPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Response due</label>
-            <Input type="date" value={responseDue} onChange={(e) => setResponseDue(e.target.value)} />
+            <label htmlFor="tq-response-due" className="mb-1 block text-xs text-muted-foreground">Response due</label>
+            <Input id="tq-response-due" type="date" value={responseDue} onChange={(e) => setResponseDue(e.target.value)} />
           </div>
           <div className="flex items-end">
             <Button type="submit" size="sm">

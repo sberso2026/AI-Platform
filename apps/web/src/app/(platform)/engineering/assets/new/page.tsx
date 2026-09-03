@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, Button, Input } from "@rtb/ui";
+import { Card, CardContent, Button } from "@rtb/ui";
+import { LabeledTextField } from "@/components/engineering/labeled-field";
 
 export default function NewEngineeringAssetPage() {
   const router = useRouter();
@@ -48,15 +49,16 @@ export default function NewEngineeringAssetPage() {
         <Card className="max-w-2xl">
           <CardContent className="p-6">
             <form onSubmit={onSubmit} className="space-y-4">
-              <Field label="Asset Tag" value={form.assetTag} onChange={(v) => setForm({ ...form, assetTag: v })} required />
-              <Field label="Asset Name" value={form.assetName} onChange={(v) => setForm({ ...form, assetName: v })} required />
-              <Field label="Project ID (optional)" value={form.engineeringProjectId} onChange={(v) => setForm({ ...form, engineeringProjectId: v })} />
-              <Field label="Location" value={form.location} onChange={(v) => setForm({ ...form, location: v })} />
-              <Field label="System" value={form.system} onChange={(v) => setForm({ ...form, system: v })} />
-              <Field label="Subsystem" value={form.subsystem} onChange={(v) => setForm({ ...form, subsystem: v })} />
+              <LabeledTextField label="Asset Tag" value={form.assetTag} onChange={(v) => setForm({ ...form, assetTag: v })} required />
+              <LabeledTextField label="Asset Name" value={form.assetName} onChange={(v) => setForm({ ...form, assetName: v })} required />
+              <LabeledTextField label="Project ID (optional)" value={form.engineeringProjectId} onChange={(v) => setForm({ ...form, engineeringProjectId: v })} />
+              <LabeledTextField label="Location" value={form.location} onChange={(v) => setForm({ ...form, location: v })} />
+              <LabeledTextField label="System" value={form.system} onChange={(v) => setForm({ ...form, system: v })} />
+              <LabeledTextField label="Subsystem" value={form.subsystem} onChange={(v) => setForm({ ...form, subsystem: v })} />
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">Criticality</label>
+                <label htmlFor="asset-criticality" className="mb-1 block text-xs font-medium text-muted-foreground">Criticality</label>
                 <select
+                  id="asset-criticality"
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                   value={form.criticality}
                   onChange={(e) => setForm({ ...form, criticality: e.target.value })}
@@ -76,24 +78,5 @@ export default function NewEngineeringAssetPage() {
         </Card>
       </main>
       </>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} required={required} />
-    </div>
   );
 }

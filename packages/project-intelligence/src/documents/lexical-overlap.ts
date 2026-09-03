@@ -44,9 +44,58 @@ export function contentContainsTerm(content: string, term: string): boolean {
       return new RegExp(escaped, "i").test(hay);
     }
     if (new RegExp(`\\b${escaped}s?\\b`, "i").test(hay)) return true;
-    if (candidate.length >= 4 && new RegExp(`\\b${escaped}ing\\b`, "i").test(hay)) return true;
+    if (/(?:ch|sh|s|x|z)$/i.test(candidate) && new RegExp(`\\b${escaped}es\\b`, "i").test(hay)) return true;
+    if (candidate.length >= 5 && new RegExp(`\\b${escaped}ing\\b`, "i").test(hay)) return true;
+    if (
+      candidate.length >= 4
+      && candidate.endsWith("e")
+      && new RegExp(`\\b${escaped.slice(0, -1)}ing\\b`, "i").test(hay)
+    ) return true;
+    if (
+      candidate.endsWith("ing")
+      && candidate.length >= 7
+      && new RegExp(`\\b${escaped.slice(0, -3)}e?s?\\b`, "i").test(hay)
+    ) return true;
     return false;
   });
+}
+
+const ENTITY_PROPERTY_SKIP = new Set([
+  ...Object.keys(PROPERTY_VARIANTS),
+  ...GENERIC_ENGINEERING_TERMS,
+  "load",
+  "capacity",
+  "interval",
+  "minimum",
+  "maximum",
+  "required",
+  "shall",
+  "designing",
+  "engineering",
+  "review",
+  "specified",
+  "specify",
+  "material",
+  "materials",
+]);
+
+const LIGHT_VERBS = new Set([
+  "using", "used", "based", "including", "include", "applies", "apply",
+  "making", "made", "taking", "given", "shown",
+]);
+
+export function entityEvidenceNeedles(entity: string): string[] {
+  const parts = entity
+    .toLowerCase()
+    .replace(/-/g, " ")
+    .match(/[a-z][a-z0-9./'-]{2,}|\d+(?:\.\d+)*/g) ?? [];
+  return parts.filter((part) => !ENTITY_PROPERTY_SKIP.has(part) && !/\d/.test(part) && !LIGHT_VERBS.has(part));
+}
+
+export function contentContainsEntity(content: string, entity: string): boolean {
+  const parts = entityEvidenceNeedles(entity);
+  if (parts.length === 0) return false;
+  return parts.every((part) => contentContainsTerm(content, part));
 }
 
 export function excerptAroundQuery(content: string, query: string, maxChars = 420): string {
@@ -83,12 +132,28 @@ export function isLexicallyRelevantEvidence(
   content: string,
   query: string,
   distinctiveTerms?: readonly string[],
+  entities?: readonly string[],
 ): boolean {
   const planned = (distinctiveTerms ?? []).filter(Boolean);
   const terms = planned.length ? [...planned] : engineeringQueryTerms(query);
   if (terms.length === 0) return false;
   const { matched, score } = lexicalOverlap(`${content}`, terms);
   const specific = matched.filter((term) => !GENERIC_ENGINEERING_TERMS.has(term));
+  const entityPhrases = (entities ?? [])
+    .map((value) => value.trim())
+    .filter((entity) => {
+      if (entityEvidenceNeedles(entity).length === 0) return false;
+      const words = entity.toLowerCase().split(/\s+/);
+      return !words.some((word) => LIGHT_VERBS.has(word));
+    });
+  if (entityPhrases.length > 0) {
+    const topicHit = contentContainsEntity(content, entityPhrases[0]!);
+    const supportHit = entityPhrases.slice(1).some((entity) => (
+      entityEvidenceNeedles(entity).length >= 2
+      && contentContainsEntity(content, entity)
+    ));
+    if (!topicHit && !supportHit) return false;
+  }
   if (specific.some((term) => /\d/.test(term))) return true;
   if (specific.length >= 2) return true;
   const specificQueryTerms = terms.filter((term) => !GENERIC_ENGINEERING_TERMS.has(term));
@@ -101,6 +166,7 @@ export function rerankHitsByQueryOverlap<T extends { chunk: { content: string; s
   hits: readonly T[],
   query: string,
   distinctiveTerms?: readonly string[],
+  entities?: readonly string[],
 ): T[] {
   const terms = (distinctiveTerms?.length ? [...distinctiveTerms] : engineeringQueryTerms(query));
   return hits
@@ -113,6 +179,7 @@ export function rerankHitsByQueryOverlap<T extends { chunk: { content: string; s
       `${row.hit.chunk.sectionPath ?? ""} ${row.hit.chunk.content}`,
       query,
       distinctiveTerms,
+      entities,
     ))
     .sort((a, b) => b.hit.score - a.hit.score)
     .map((row) => row.hit);

@@ -104,9 +104,10 @@ export function CreateForm({
     >
       {fields.map((f) => (
         <div key={f.key} className={f.multiline ? "md:col-span-2" : ""}>
-          <label className="mb-1 block text-xs text-muted-foreground">{f.label}</label>
+          <label htmlFor={`register-${f.key}`} className="mb-1 block text-xs text-muted-foreground">{f.label}</label>
           {f.multiline ? (
             <textarea
+              id={`register-${f.key}`}
               className="min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
               required={f.required}
               value={values[f.key] ?? ""}
@@ -114,6 +115,7 @@ export function CreateForm({
             />
           ) : (
             <Input
+              id={`register-${f.key}`}
               type={f.type ?? "text"}
               required={f.required}
               value={values[f.key] ?? ""}

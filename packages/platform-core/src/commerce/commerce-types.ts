@@ -39,6 +39,7 @@ export type CommercialActionId =
   | "manage"
   | "install"
   | "start_trial"
+  | "seat_required"
   | "request_quote"
   | "upgrade"
   | "manage_seats"
@@ -77,6 +78,12 @@ export interface CommercialProductView {
   trialEligible: boolean;
   primaryAction?: CommercialActionId;
   secondaryAction?: CommercialActionId;
+  /** Canonical commercial_products.id when mapping from Platform Commerce */
+  productId?: string;
+  /** Whether the current user holds an active seat for this product (or its parent OS). */
+  currentUserSeated?: boolean;
+  /** Hidden-marketplace / certification fixture shown only because the tenant is entitled */
+  certificationOnly?: boolean;
 }
 
 export interface CommercialApplicationView {
@@ -120,6 +127,8 @@ export interface CommerceAdapterContext {
   seatUsage?: SeatUsage;
   renewalDate?: string;
   currentPlan?: string;
+  /** Product IDs (OS or parent OS) where the current user has an active seat */
+  seatedProductIds?: string[];
 }
 
 /** Future Platform Commerce table shapes (adapter target contract) */
@@ -131,6 +140,7 @@ export interface CommercialProductRecord {
   description: string;
   icon?: string;
   lifecycle_status?: string;
+  marketplace_visible?: boolean;
 }
 
 export interface CommercialPlanRecord {
@@ -144,12 +154,15 @@ export interface CommercialSubscriptionRecord {
   product_id: string;
   status: SubscriptionStatus;
   renewal_date?: string;
+  plan_id?: string;
 }
 
 export interface CommercialLicenseRecord {
   id: string;
   product_id: string;
   status: LicenceStatus;
+  license_type?: string;
+  application_key?: string;
 }
 
 export interface ProductInstallationRecord {
@@ -189,4 +202,5 @@ export interface PlatformCommerceData {
   application_installations?: ApplicationInstallationRecord[];
   commercial_seat_pools?: CommercialSeatPoolRecord[];
   commercial_usage_aggregates?: CommercialUsageAggregateRecord[];
+  current_user_seated_product_ids?: string[];
 }

@@ -204,13 +204,83 @@ export function describeAskContext(input: {
   objectType?: string | null;
   objectId?: string | null;
   projectId?: string | null;
+  documentNumber?: string | null;
+  documentTitle?: string | null;
+  revision?: string | null;
+  projectLabel?: string | null;
+  assetLabel?: string | null;
 }): string {
   const type = (input.objectType ?? "").toLowerCase();
-  if (type === "asset" && input.objectId) return `Asset ${input.objectId}`;
-  if (type === "inspection" && input.objectId) return `Inspection ${input.objectId}`;
-  if (type === "defect" && input.objectId) return `Defect ${input.objectId}`;
-  if (type === "document" && input.objectId) return `Document ${input.objectId}`;
-  if (type === "model" && input.objectId) return `Model ${input.objectId}`;
-  if (input.projectId) return `Project ${input.projectId}`;
-  return "Workspace";
+  if (type === "document") {
+    const parts = [
+      input.documentNumber?.trim() || null,
+      input.documentTitle?.trim() || null,
+      input.revision?.trim() ? `Revision ${input.revision.trim()}` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "Current Document";
+  }
+  if (type === "asset") return input.assetLabel?.trim() || "Current Asset/Object";
+  if (type === "inspection") return "Current Inspection";
+  if (type === "defect") return "Current Defect";
+  if (type === "model") return "Current Model";
+  if (input.projectId || type === "project") return input.projectLabel?.trim() || "Current Project";
+  return "All Engineering";
+}
+
+export function formatEvidenceSection(sectionPath?: string | null, figureLabel?: string | null): string | null {
+  const figure = figureLabel?.replace(/\s+/g, " ").trim();
+  if (figure) {
+    const number = figure.match(/([0-9]+(?:\.[0-9]+)*)/)?.[1];
+    return number ? `Figure ${number}` : figure;
+  }
+  const raw = (sectionPath ?? "").replace(/\s+/g, " ").trim();
+  if (!raw) return null;
+  const clause = raw.match(/\b(\d+(?:\.\d+){1,4})\b/);
+  if (clause) return `Section ${clause[1]}`;
+  const fig = raw.match(/(?:figure|fig\.?)\s*([0-9.]+)/i);
+  if (fig) return `Figure ${fig[1]}`;
+  return raw.slice(0, 72);
+}
+
+export function presentAskAnswer(input: {
+  content: string;
+  excerpt?: string | null;
+  whyFinding?: string | null;
+  abstained?: boolean;
+  query?: string | null;
+}): { answer: string; why: string } {
+  const stripped = input.content.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+  if (input.abstained) {
+    return {
+      answer: stripped.split(/(?<=\.)\s/)[0] || stripped,
+      why: "No authorised excerpt in the current document supports this question.",
+    };
+  }
+  const answerMatch = stripped.match(/answer:\s*(.+?)(?=\swhy:|\ssources|\slimitations|$)/i);
+  const whyMatch = stripped.match(/why[?:]?\s*(.+?)(?=\ssources|\slimitations|$)/i);
+  const generated = (answerMatch?.[1] ?? stripped).trim();
+  const quantity = (input.excerpt ?? "").match(/(\d+(?:\.\d+)?)\s*(mm|m|kPa|MPa|lux|dB(?:\(A\))?|degrees|m\/s)/i);
+  const topic = (input.query ?? "")
+    .replace(/[?]/g, "")
+    .replace(/^(please\s+)?(what is|tell me|find|identify|confirm|how)\s+/i, "")
+    .replace(/^(the|a|an)\s+/i, "")
+    .trim();
+  const groundedQuantity = quantity && generated.includes(quantity[1])
+    ? `${topic.charAt(0).toUpperCase()}${topic.slice(1)}: ${quantity[1]} ${quantity[2]}`.replace(/\s+/g, " ")
+    : null;
+  const answer = (groundedQuantity && topic.length >= 8 && topic.length <= 90
+    ? groundedQuantity
+    : generated.length > 280
+      ? (generated.match(/^(.+?[.!?])(?:\s|$)/)?.[1] ?? generated.slice(0, 240).trim())
+      : generated
+  ).trim();
+  const why = (input.whyFinding || whyMatch?.[1] || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 420);
+  return { answer, why };
+}
+
+export function isInternalAskMeta(value: string): boolean {
+  return /retrieval_only|generationProvider|chunk=|scope document|evidence state|openai|hybrid|lexical_fallback/i.test(value);
 }

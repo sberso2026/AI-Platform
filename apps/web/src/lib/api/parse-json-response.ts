@@ -70,11 +70,15 @@ export async function parseApiJsonResponse<T = unknown>(
     trimmed.startsWith("[");
 
   if (!looksJson) {
+    const sizeHint =
+      status === 413
+        ? "This file is too large to send through the app server. Use a file within the 25 MB pilot limit, uploaded directly to storage."
+        : "The server returned an unexpected response. Try again or use a smaller supported file.";
     return {
       ok: false,
       status,
       data: null,
-      errorMessage: `Unexpected non-JSON response (${status})`,
+      errorMessage: sizeHint,
       raw: trimmed.slice(0, 200),
     };
   }

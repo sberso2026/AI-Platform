@@ -151,3 +151,147 @@ describe("Platform Commerce UI — role-based action visibility", () => {
     expect(isActionVisible("manage", "owner")).toBe(true);
   });
 });
+
+describe("Platform Commerce UI — live tenant commerce projection", () => {
+  const eosId = "c1000000-0000-4000-8000-000000000001";
+  const commerceData = {
+    commercial_products: [
+      {
+        id: eosId,
+        slug: "engineering-os",
+        name: "Engineering Operating System",
+        product_type: "operating_system",
+        description: "EOS",
+        lifecycle_status: "active",
+        marketplace_visible: true,
+      },
+      {
+        id: "app-pi",
+        slug: "project-intelligence",
+        name: "Project Intelligence",
+        product_type: "application",
+        description: "PI",
+        lifecycle_status: "active",
+        marketplace_visible: true,
+      },
+      {
+        id: "app-ii",
+        slug: "inspection-intelligence",
+        name: "Inspection Intelligence",
+        product_type: "application",
+        description: "II",
+        lifecycle_status: "active",
+        marketplace_visible: true,
+      },
+      {
+        id: "ref-os",
+        slug: "reference-os",
+        name: "Reference OS",
+        product_type: "operating_system",
+        description: "Certification fixture",
+        lifecycle_status: "active",
+        marketplace_visible: false,
+      },
+    ],
+    commercial_plans: [
+      { id: "plan-enterprise", product_id: eosId, edition: "enterprise" },
+      { id: "plan-trial", product_id: eosId, edition: "trial" },
+    ],
+    commercial_subscriptions: [
+      {
+        id: "sub-1",
+        product_id: eosId,
+        plan_id: "plan-trial",
+        status: "trialing" as const,
+        renewal_date: "2026-09-14",
+      },
+    ],
+    commercial_licenses: [
+      { id: "lic-os", product_id: eosId, status: "active" as const, license_type: "product" },
+      {
+        id: "lic-pi",
+        product_id: eosId,
+        status: "active" as const,
+        license_type: "application",
+        application_key: "project_intelligence",
+      },
+      {
+        id: "lic-ii",
+        product_id: eosId,
+        status: "active" as const,
+        license_type: "application",
+        application_key: "inspection_intelligence",
+      },
+      {
+        id: "lic-docs",
+        product_id: eosId,
+        status: "active" as const,
+        license_type: "application",
+        application_key: "documents",
+      },
+    ],
+    product_installations: [
+      { id: "inst-1", product_id: eosId, status: "active" as const, version: "0.2.0" },
+    ],
+    commercial_seat_pools: [{ id: "pool-1", product_id: eosId, assigned: 4, total: 5 }],
+  };
+
+  it("places licensed provisioned EOS on Installed, not Available/Start Trial", () => {
+    const products = mapRegistryToCommercialProducts(baseContext, commerceData);
+    const engineering = getProductBySlug(products, "engineering-os");
+    expect(engineering?.catalogTab).toBe("installed");
+    expect(engineering?.subscriptionStatus).toBe("trialing");
+    expect(engineering?.licenceStatus).toBe("active");
+    expect(engineering?.installationStatus).toBe("active");
+    expect(engineering?.primaryAction).toBe("manage_seats");
+    expect(engineering?.openHref).toBe("/engineering");
+    expect(engineering?.edition).toBe("trial");
+    expect(engineering?.seatUsage).toEqual({ assigned: 4, total: 5 });
+  });
+
+  it("does not treat current-user unseated as product not installed", () => {
+    const products = mapRegistryToCommercialProducts(
+      { ...baseContext, seatedProductIds: [] },
+      commerceData
+    );
+    const engineering = getProductBySlug(products, "engineering-os");
+    expect(engineering?.catalogTab).toBe("installed");
+    expect(engineering?.currentUserSeated).toBe(false);
+    expect(engineering?.primaryAction).not.toBe("start_trial");
+    expect(engineering?.primaryAction).not.toBe("open");
+  });
+
+  it("opens EOS when the current user is seated", () => {
+    const products = mapRegistryToCommercialProducts(
+      { ...baseContext, seatedProductIds: [eosId] },
+      commerceData
+    );
+    const engineering = getProductBySlug(products, "engineering-os");
+    expect(engineering?.primaryAction).toBe("open");
+    expect(engineering?.currentUserSeated).toBe(true);
+  });
+
+  it("shows governed applications as installed without Start Trial", () => {
+    const products = mapRegistryToCommercialProducts(baseContext, commerceData);
+    const pi = getProductBySlug(products, "project-intelligence");
+    const ii = getProductBySlug(products, "inspection-intelligence");
+    expect(pi?.catalogTab).toBe("installed");
+    expect(ii?.catalogTab).toBe("installed");
+    expect(pi?.primaryAction).not.toBe("start_trial");
+    expect(pi?.openHref).toBe("/engineering/apps/project-intelligence");
+  });
+
+  it("hides certification-only products from ordinary catalog", () => {
+    const products = mapRegistryToCommercialProducts(baseContext, commerceData);
+    expect(products.some((p) => p.slug === "reference-os")).toBe(false);
+  });
+
+  it("summarizes installed OS, applications, and seat pool from tenant commerce", () => {
+    const products = mapRegistryToCommercialProducts(baseContext, commerceData);
+    const summary = buildCatalogSummary(products, baseContext);
+    expect(summary.installedProducts).toBe(1);
+    expect(summary.installedApplications).toBeGreaterThanOrEqual(3);
+    expect(summary.assignedSeats).toBe(4);
+    expect(summary.totalSeats).toBe(5);
+  });
+});

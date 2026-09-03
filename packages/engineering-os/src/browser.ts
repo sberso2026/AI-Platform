@@ -30,3 +30,16 @@ export {
   type EngineeringAdoptionEventType,
   type EngineeringFeedbackReason,
 } from "./phase-e11/adoption";
+
+export {
+  ENGINEERING_DOCUMENT_TYPES,
+  proposeDocumentMetadataFromFilename,
+  type EngineeringDocumentTypeValue,
+} from "./services/document-registration";
+export {
+  isTimestampRevisionArtifact,
+  isValidEngineeringRevision,
+  normalizeEngineeringRevision,
+  inferStandardDocumentNumber,
+  preferCompleteStandardNumber,
+} from "./services/document-identity";

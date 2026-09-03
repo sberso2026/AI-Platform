@@ -35,9 +35,69 @@ function actionHref(action: CommercialActionId, product: CommercialProductView):
       return "/system/licenses-seats";
     case "view_usage":
       return "/system/usage";
+    case "start_trial":
+      return product.productId ? undefined : `/system/products/${product.slug}`;
     default:
       return undefined;
   }
+}
+
+function StartTrialActionButton({
+  product,
+  roleSlug,
+}: {
+  product: CommercialProductView;
+  roleSlug: string;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isActionVisible("start_trial", roleSlug)) return null;
+  if (!product.productId) {
+    return (
+      <Link
+        href={`/system/products/${product.slug}`}
+        className={buttonVariants({ variant: "default", size: "sm" })}
+        data-testid="action-start_trial"
+      >
+        {COMMERCIAL_ACTION_LABELS.start_trial}
+      </Link>
+    );
+  }
+
+  async function runTrial() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/platform/commerce/trials/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.productId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Trial could not be started");
+      window.location.href = `/system/products/${product.slug}`;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Trial could not be started");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <Button
+        variant="default"
+        size="sm"
+        disabled={loading}
+        onClick={runTrial}
+        data-testid="action-start_trial"
+      >
+        {loading ? "Starting…" : COMMERCIAL_ACTION_LABELS.start_trial}
+      </Button>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
 }
 
 function InstallActionButton({
@@ -105,9 +165,37 @@ function ActionButton({
   if (action === "install") {
     return <InstallActionButton product={product} roleSlug={roleSlug} />;
   }
+  if (action === "start_trial") {
+    return <StartTrialActionButton product={product} roleSlug={roleSlug} />;
+  }
 
   const href = actionHref(action, product);
   const label = COMMERCIAL_ACTION_LABELS[action];
+
+  if (action === "seat_required") {
+    if (isActionVisible("manage_seats", roleSlug)) {
+      return (
+        <Link
+          href="/system/licenses-seats"
+          className={buttonVariants({ variant, size: "sm" })}
+          data-testid="action-seat_required"
+        >
+          {COMMERCIAL_ACTION_LABELS.manage_seats}
+        </Link>
+      );
+    }
+    return (
+      <Button
+        variant={variant}
+        size="sm"
+        disabled
+        data-testid="action-seat_required"
+        title="A seat must be assigned before this product can be opened"
+      >
+        {label}
+      </Button>
+    );
+  }
 
   if (href) {
     return (
@@ -182,6 +270,11 @@ export function ProductCard({
               <CardTitle className="text-base text-slate-800">{product.name}</CardTitle>
               <CardDescription>{product.description}</CardDescription>
               <p className="mt-1 text-xs text-slate-500">{product.productType}</p>
+              {product.certificationOnly && (
+                <p className="mt-1 text-[0.65rem] font-medium uppercase tracking-wide text-amber-700">
+                  Certification only
+                </p>
+              )}
             </div>
           </div>
           {product.edition && (
@@ -219,6 +312,14 @@ export function ProductCard({
               <dt className="font-medium text-slate-500">Seats</dt>
               <dd data-testid="seat-usage">
                 {product.seatUsage.assigned} / {product.seatUsage.total}
+              </dd>
+            </div>
+          )}
+          {product.catalogTab === "installed" && product.currentUserSeated !== undefined && (
+            <div>
+              <dt className="font-medium text-slate-500">Your seat</dt>
+              <dd data-testid="current-user-seat">
+                {product.currentUserSeated ? "Assigned" : "Not assigned"}
               </dd>
             </div>
           )}

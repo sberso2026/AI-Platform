@@ -14,6 +14,7 @@ import { assertDocumentTransition } from "./ingestion-state-machine";
 import type { DocumentProcessingStatus } from "./types";
 import { assertWithinBudget, emptyUsageCounters, estimateEmbeddingCostUsd } from "./cost-controls";
 import { isHashEmbeddingProvider } from "./runtime-mode";
+import { documentStorageBucket, isAuthorizedDocumentObjectPath } from "./storage-fetch";
 
 export interface DocumentWorkerOptions {
   workerId?: string;
@@ -55,7 +56,8 @@ export class ProjectIntelligenceDocumentWorker {
   private readonly workerId: string;
   private readonly batchSize: number;
   private readonly leaseSeconds: number;
-  private readonly embeddings: ProjectIntelligenceEmbeddingAdapter;
+  private readonly embeddings: ProjectIntelligenceEmbeddingAdapter | null;
+  private readonly embeddingsConfigured: boolean;
   private readonly parserRouter: ProjectIntelligenceParserRouter;
 
   constructor(
@@ -65,8 +67,19 @@ export class ProjectIntelligenceDocumentWorker {
     this.workerId = options.workerId ?? `pi-doc-worker-${randomUUID().slice(0, 8)}`;
     this.batchSize = options.batchSize ?? 5;
     this.leaseSeconds = options.leaseSeconds ?? 180;
-    this.embeddings = options.embeddings ?? new GovernedEmbeddingAdapter();
     this.parserRouter = new ProjectIntelligenceParserRouter();
+    if (options.embeddings) {
+      this.embeddings = options.embeddings;
+      this.embeddingsConfigured = true;
+      return;
+    }
+    try {
+      this.embeddings = new GovernedEmbeddingAdapter();
+      this.embeddingsConfigured = true;
+    } catch {
+      this.embeddings = null;
+      this.embeddingsConfigured = false;
+    }
   }
 
   get identity(): string {
@@ -245,6 +258,7 @@ export class ProjectIntelligenceDocumentWorker {
 
     await this.transition(job, "parsing", "normalizing");
     await this.checkpoint(job, "normalize", "completed", { evidence_count: parsed.pages.length });
+    await this.proposeEngineeringMetadata(job, parsed.pages.map((page) => page.text).join("\n"));
 
     await this.transition(job, "normalizing", "chunking");
     const chunks = chunkParsedDocument(parsed, {
@@ -256,11 +270,20 @@ export class ProjectIntelligenceDocumentWorker {
       processingVersion,
     });
 
-    // Idempotent replace: soft-delete prior chunks for same run scope then insert
+    // Idempotent replace: supersede prior indexed chunks for this document revision, then insert.
+    const supersededAt = new Date().toISOString();
+    await this.supabase
+      .from("project_intelligence_document_chunks")
+      .update({ deleted_at: supersededAt, status: "superseded" })
+      .eq("tenant_id", job.tenant_id)
+      .eq("workspace_id", job.workspace_id)
+      .eq("engineering_document_id", job.engineering_document_id)
+      .eq("source_revision", revision)
+      .is("deleted_at", null);
     if (job.ingestion_id) {
       await this.supabase
         .from("project_intelligence_document_chunks")
-        .update({ deleted_at: new Date().toISOString(), status: "superseded" })
+        .update({ deleted_at: supersededAt, status: "superseded" })
         .eq("ingestion_id", job.ingestion_id)
         .is("deleted_at", null);
     }
@@ -301,75 +324,102 @@ export class ProjectIntelligenceDocumentWorker {
     }
 
     await this.transition(job, "chunking", "embedding");
-    const embedded = await this.embeddings.embed({
-      texts: chunks.map((chunk) => chunk.content),
-      dimensions: 1536,
-      correlationId: job.correlation_id ?? job.id,
-    });
-    if (embedded.dimensions !== 1536) {
-      throw Object.assign(new Error("embedding dimension mismatch"), { code: "embedding_failed" });
-    }
-    if (
-      process.env.PI_PROVIDER_CERTIFICATION === "1"
-      && isHashEmbeddingProvider(embedded.provider)
-    ) {
-      throw Object.assign(new Error("Hash embeddings are forbidden during provider certification"), {
-        code: "embedding_failed",
+    const embeddingWarnings: string[] = [];
+    let embeddedCount = 0;
+    if (!this.embeddings || !this.embeddingsConfigured) {
+      embeddingWarnings.push("embeddings_unavailable_lexical_index_only");
+      await this.checkpoint(job, "embed", "skipped", {
+        warning_count: 1,
+        metrics: { lexicalFallback: true, embeddingsConfigured: false },
       });
+    } else {
+      try {
+        const embedded = await this.embeddings.embed({
+          texts: chunks.map((chunk) => chunk.content),
+          dimensions: 1536,
+          correlationId: job.correlation_id ?? job.id,
+        });
+        if (embedded.dimensions !== 1536) {
+          throw Object.assign(new Error("embedding dimension mismatch"), { code: "embedding_failed" });
+        }
+        if (
+          process.env.PI_PROVIDER_CERTIFICATION === "1"
+          && isHashEmbeddingProvider(embedded.provider)
+        ) {
+          throw Object.assign(new Error("Hash embeddings are forbidden during provider certification"), {
+            code: "embedding_failed",
+          });
+        }
+        usage.embeddingRequests += 1;
+        usage.embeddingTokens += chunks.reduce((sum, chunk) => sum + Math.ceil(chunk.content.length / 4), 0);
+        usage.vectorCount += embedded.embeddings.length;
+        usage.estimatedCostUsd += estimateEmbeddingCostUsd(usage.embeddingTokens);
+
+        const { data: persistedChunks, error: loadErr } = await this.supabase
+          .from("project_intelligence_document_chunks")
+          .select("id, stable_chunk_id, chunk_index")
+          .eq("ingestion_id", job.ingestion_id!)
+          .is("deleted_at", null)
+          .order("chunk_index", { ascending: true });
+        if (loadErr) throw Object.assign(new Error(loadErr.message), { code: "embedding_failed" });
+
+        for (let i = 0; i < (persistedChunks ?? []).length; i += 1) {
+          const row = persistedChunks![i]!;
+          const vector = embedded.embeddings[i];
+          if (!vector) continue;
+          const { error: embErr } = await this.supabase.from("project_intelligence_document_embeddings").upsert({
+            tenant_id: job.tenant_id,
+            workspace_id: job.workspace_id,
+            engineering_project_id: job.engineering_project_id,
+            engineering_document_id: job.engineering_document_id,
+            chunk_id: row.id,
+            source_revision: revision,
+            processing_version: processingVersion,
+            embedding_provider: embedded.provider,
+            embedding_model: embedded.model,
+            embedding_dimensions: 1536,
+            embedding: vector,
+            status: "ready",
+            metadata: { traceId: embedded.traceId },
+          }, { onConflict: "chunk_id,embedding_provider,embedding_model,processing_version" });
+          if (embErr) throw Object.assign(new Error(embErr.message), { code: "embedding_failed" });
+
+          const { error: vectorErr } = await this.supabase.rpc("pi_document_set_embedding_vector", {
+            p_chunk_id: row.id,
+            p_provider: embedded.provider,
+            p_model: embedded.model,
+            p_processing_version: processingVersion,
+            p_vector: vector,
+          });
+          if (vectorErr) throw Object.assign(new Error(vectorErr.message), { code: "embedding_failed" });
+          embeddedCount += 1;
+        }
+        await this.checkpoint(job, "embed", "completed", {
+          provider: embedded.provider,
+          version: embedded.model,
+          evidence_count: embedded.embeddings.length,
+          metrics: {
+            embeddingTokens: usage.embeddingTokens,
+            estimatedCostUsd: usage.estimatedCostUsd,
+            hashDisabled: process.env.PI_PROVIDER_CERTIFICATION === "1",
+            embeddingsConfigured: true,
+          },
+        });
+      } catch (embedError) {
+        embeddingWarnings.push(
+          embedError instanceof Error ? `embeddings_skipped:${embedError.message}` : "embeddings_skipped",
+        );
+        await this.checkpoint(job, "embed", "skipped", {
+          warning_count: 1,
+          error_code: "embedding_failed",
+          metrics: { lexicalFallback: true, embeddingsConfigured: this.embeddingsConfigured },
+        });
+      }
     }
-    usage.embeddingRequests += 1;
-    usage.embeddingTokens += chunks.reduce((sum, chunk) => sum + Math.ceil(chunk.content.length / 4), 0);
-    usage.vectorCount += embedded.embeddings.length;
-    usage.estimatedCostUsd += estimateEmbeddingCostUsd(usage.embeddingTokens);
-
-    const { data: persistedChunks, error: loadErr } = await this.supabase
-      .from("project_intelligence_document_chunks")
-      .select("id, stable_chunk_id, chunk_index")
-      .eq("ingestion_id", job.ingestion_id!)
-      .is("deleted_at", null)
-      .order("chunk_index", { ascending: true });
-    if (loadErr) throw Object.assign(new Error(loadErr.message), { code: "embedding_failed" });
-
-    for (let i = 0; i < (persistedChunks ?? []).length; i += 1) {
-      const row = persistedChunks![i]!;
-      const vector = embedded.embeddings[i];
-      if (!vector) continue;
-      const { error: embErr } = await this.supabase.from("project_intelligence_document_embeddings").upsert({
-        tenant_id: job.tenant_id,
-        workspace_id: job.workspace_id,
-        engineering_project_id: job.engineering_project_id,
-        engineering_document_id: job.engineering_document_id,
-        chunk_id: row.id,
-        source_revision: revision,
-        processing_version: processingVersion,
-        embedding_provider: embedded.provider,
-        embedding_model: embedded.model,
-        embedding_dimensions: 1536,
-        embedding: vector,
-        status: "ready",
-        metadata: { traceId: embedded.traceId },
-      }, { onConflict: "chunk_id,embedding_provider,embedding_model,processing_version" });
-      if (embErr) throw Object.assign(new Error(embErr.message), { code: "embedding_failed" });
-
-      const { error: vectorErr } = await this.supabase.rpc("pi_document_set_embedding_vector", {
-        p_chunk_id: row.id,
-        p_provider: embedded.provider,
-        p_model: embedded.model,
-        p_processing_version: processingVersion,
-        p_vector: vector,
-      });
-      if (vectorErr) throw Object.assign(new Error(vectorErr.message), { code: "embedding_failed" });
-    }
-    await this.checkpoint(job, "embed", "completed", {
-      provider: embedded.provider,
-      version: embedded.model,
-      evidence_count: embedded.embeddings.length,
-      metrics: {
-        embeddingTokens: usage.embeddingTokens,
-        estimatedCostUsd: usage.estimatedCostUsd,
-        hashDisabled: process.env.PI_PROVIDER_CERTIFICATION === "1",
-      },
-    });
+    parsed = {
+      ...parsed,
+      warnings: [...parsed.warnings, ...embeddingWarnings],
+    };
 
     await this.transition(job, "embedding", "indexing");
     await this.checkpoint(job, "index", "completed", { evidence_count: chunks.length });
@@ -377,7 +427,8 @@ export class ProjectIntelligenceDocumentWorker {
     await this.transition(job, "indexing", "extracting");
     const extractTraceId = job.correlation_id ?? randomUUID();
     let findingCount = 0;
-    if (parsed.warnings.length > 0) {
+    const reviewWarnings = parsed.warnings.filter((warning) => !warning.includes("embeddings_"));
+    if (reviewWarnings.length > 0) {
       const findingId = randomUUID();
       const evidenceExcerpt = chunks[0]?.content?.slice(0, 400) ?? parsed.warnings[0] ?? "parser_warning";
       const { error: findingErr } = await this.supabase.from("project_intelligence_document_findings").insert({
@@ -389,7 +440,7 @@ export class ProjectIntelligenceDocumentWorker {
         finding_type: "incomplete_document_set",
         severity: "medium",
         title: "Document processing warning requires review",
-        description: parsed.warnings.slice(0, 5).join("; "),
+        description: reviewWarnings.slice(0, 5).join("; "),
         evidence: [
           {
             engineeringDocumentId: job.engineering_document_id,
@@ -422,7 +473,7 @@ export class ProjectIntelligenceDocumentWorker {
           finding_id: findingId,
           review_type: "document_finding",
           title: "Review document processing warning",
-          description: parsed.warnings.slice(0, 3).join("; "),
+          description: reviewWarnings.slice(0, 3).join("; "),
           review_state: "pending",
           confidence: 0.55,
           metadata: { source: "document_worker_extract", traceId: extractTraceId },
@@ -452,6 +503,14 @@ export class ProjectIntelligenceDocumentWorker {
       lease_expires_at: null,
       last_error_code: null,
       last_error_message: null,
+      payload: {
+        ...payload,
+        parserProvider: parsed.parserProvider,
+        parserVersion: parsed.parserVersion,
+        embeddingsConfigured: this.embeddingsConfigured,
+        embeddedChunkCount: embeddedCount,
+        lexicalFallback: embeddingWarnings.length > 0,
+      },
     }).eq("id", job.id);
 
     await this.supabase.from("project_intelligence_document_outbox").insert({
@@ -465,11 +524,45 @@ export class ProjectIntelligenceDocumentWorker {
         processingRunId: job.processing_run_id,
         chunkCount: chunks.length,
         status: readyStatus,
+        embeddingsConfigured: this.embeddingsConfigured,
+        lexicalFallback: embeddingWarnings.length > 0,
       },
       correlation_id: job.correlation_id,
       idempotency_key: `${job.id}:completed`,
       status: "pending",
     });
+  }
+
+  private async proposeEngineeringMetadata(job: JobRow, text: string): Promise<void> {
+    try {
+      const { data: current } = await this.supabase
+        .from("engineering_documents")
+        .select("id, document_number, revision, file_name, metadata")
+        .eq("id", job.engineering_document_id)
+        .eq("tenant_id", job.tenant_id)
+        .maybeSingle();
+      if (!current) return;
+      const metadata = (current.metadata as Record<string, unknown> | null) ?? {};
+      if (String(metadata.metadata_review_state ?? "") === "confirmed") return;
+      const { buildDocumentMetadataReviewFields, proposeDocumentMetadataFromText } = await import(
+        "@rtb/engineering-os"
+      );
+      const proposal = proposeDocumentMetadataFromText(text, String(current.file_name ?? ""));
+      const next = buildDocumentMetadataReviewFields({
+        registerNumber: String(current.document_number ?? ""),
+        registerRevision: String(current.revision ?? "A"),
+        proposal,
+        existing: metadata,
+        numberSource: proposal.provenance,
+      });
+      await this.supabase
+        .from("engineering_documents")
+        .update({ metadata: next })
+        .eq("id", job.engineering_document_id)
+        .eq("tenant_id", job.tenant_id);
+    } catch {
+      // Metadata proposal is advisory and must not fail ingestion.
+    }
   }
 
   private async fetchAuthorizedBytes(job: JobRow, payload: Record<string, unknown>): Promise<Uint8Array> {
@@ -478,6 +571,7 @@ export class ProjectIntelligenceDocumentWorker {
       .select("id, tenant_id, workspace_id, file_path, mime_type")
       .eq("id", job.engineering_document_id)
       .eq("tenant_id", job.tenant_id)
+      .eq("workspace_id", job.workspace_id)
       .maybeSingle();
     if (error || !core) {
       throw Object.assign(new Error("Document was not found"), { code: "document_not_found" });
@@ -485,7 +579,6 @@ export class ProjectIntelligenceDocumentWorker {
     if (core.workspace_id && core.workspace_id !== job.workspace_id) {
       throw Object.assign(new Error("Document access denied"), { code: "document_access_denied" });
     }
-    // Private storage signed access integration point — without a stored object, require fixture/source bytes.
     if (!core.file_path) {
       const inline = typeof payload.inlineText === "string" ? payload.inlineText : "";
       if (!inline) {
@@ -493,9 +586,17 @@ export class ProjectIntelligenceDocumentWorker {
       }
       return new TextEncoder().encode(inline);
     }
-    throw Object.assign(new Error("Storage object fetch not configured for this path"), {
-      code: "source_file_unavailable",
-    });
+
+    const objectPath = String(core.file_path);
+    if (!isAuthorizedDocumentObjectPath(objectPath, job.tenant_id, job.workspace_id, job.engineering_document_id)) {
+      throw Object.assign(new Error("Document access denied"), { code: "document_access_denied" });
+    }
+
+    const downloaded = await this.supabase.storage.from(documentStorageBucket()).download(objectPath);
+    if (downloaded.error || !downloaded.data) {
+      throw Object.assign(new Error("Source file unavailable"), { code: "source_file_unavailable" });
+    }
+    return new Uint8Array(await downloaded.data.arrayBuffer());
   }
 
   private async transition(job: JobRow, from: DocumentProcessingStatus, to: DocumentProcessingStatus): Promise<void> {

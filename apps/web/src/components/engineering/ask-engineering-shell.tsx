@@ -17,7 +17,7 @@ import { useExperiencePerf } from "@/hooks/use-experience-perf";
 import {
   ENGINEERING_PROJECT_FILTER_KEY,
 } from "@/hooks/use-engineering-project-filter";
-import { contextualAskStarters, describeAskContext } from "@/lib/engineering/enterprise-ux";
+import { contextualAskStarters, describeAskContext, formatEvidenceSection, presentAskAnswer } from "@/lib/engineering/enterprise-ux";
 
 type EvidenceItem = {
   sourceId: string;
@@ -30,6 +30,10 @@ type EvidenceItem = {
   conflicting?: boolean;
   supersededWarning?: boolean;
   provenance?: string;
+  pageStart?: number | null;
+  sectionPath?: string | null;
+  documentNumber?: string | null;
+  figureLabel?: string | null;
 };
 
 type WhyPayload = {
@@ -56,10 +60,12 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  query?: string;
   evidence?: EvidenceItem[];
   evidenceState?: string;
   scope?: string;
   limitations?: string[];
+  diagnosticLimitations?: string[];
   retrievalMode?: string;
   abstained?: boolean;
   why?: WhyPayload | null;
@@ -108,7 +114,7 @@ export function AskEngineeringShell({
   ]);
   const [input, setInput] = useState(searchParams.get("q") ?? "");
   const [isLoading, setIsLoading] = useState(false);
-  const [expandedWhy, setExpandedWhy] = useState<Record<string, boolean>>({});
+  const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
   const [toolAction, setToolAction] = useState<string | null>(null);
   const [toolLength, setToolLength] = useState("");
   const [toolWidth, setToolWidth] = useState("");
@@ -139,6 +145,54 @@ export function AskEngineeringShell({
             ? "project"
             : "workspace"),
   );
+  const [contextLabels, setContextLabels] = useState<{
+    documentNumber?: string;
+    documentTitle?: string;
+    revision?: string;
+    projectLabel?: string;
+    assetLabel?: string;
+  }>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadLabels() {
+      const next: typeof contextLabels = {};
+      try {
+        if (context.objectType === "document" && context.objectId) {
+          const parsed = await parseApiJsonResponse<Record<string, unknown>>(
+            await fetch(`/api/engineering/documents/${context.objectId}`),
+          );
+          const row = (parsed.data ?? {}) as Record<string, unknown>;
+          next.documentNumber = String(row.document_number ?? row.documentNumber ?? "").trim() || undefined;
+          next.documentTitle = String(row.title ?? "").trim() || undefined;
+          next.revision = String(row.revision ?? "").trim() || undefined;
+        }
+        if (context.objectType === "asset" && context.objectId) {
+          const parsed = await parseApiJsonResponse<Record<string, unknown>>(
+            await fetch(`/api/engineering/assets/${context.objectId}`),
+          );
+          const row = (parsed.data ?? {}) as Record<string, unknown>;
+          next.assetLabel = String(row.asset_tag ?? row.name ?? row.title ?? "").trim() || undefined;
+        }
+        if (context.projectId) {
+          const parsed = await parseApiJsonResponse<Record<string, unknown>>(
+            await fetch(`/api/engineering/projects/${context.projectId}`),
+          );
+          const row = (parsed.data ?? {}) as Record<string, unknown>;
+          const code = String(row.project_code ?? "").trim();
+          const name = String(row.project_name ?? row.name ?? "").trim();
+          next.projectLabel = [code, name].filter(Boolean).join(" — ") || undefined;
+        }
+      } catch {
+        // Labels stay human fallbacks; UUID is not shown.
+      }
+      if (!cancelled) setContextLabels(next);
+    }
+    void loadLabels();
+    return () => {
+      cancelled = true;
+    };
+  }, [context.objectType, context.objectId, context.projectId]);
 
   useEffect(() => {
     initFromDeepLink({
@@ -398,6 +452,7 @@ export function AskEngineeringShell({
         evidenceState?: string;
         scope?: string;
         limitations?: string[];
+        diagnosticLimitations?: string[];
         retrievalMode?: string;
         grounded?: { abstained?: boolean; answer?: string };
         why?: WhyPayload | null;
@@ -426,16 +481,21 @@ export function AskEngineeringShell({
       }
 
       if (!parsed.ok || !parsed.data) {
+        const technical = parsed.errorMessage ?? "Ask request failed";
         setMessages((prev) => [
           ...prev,
           {
             id: crypto.randomUUID(),
             role: "assistant",
             content:
-              parsed.errorMessage ??
-              "The assistant backend could not complete this request. No fabricated answer was generated.",
+              /unexpected error/i.test(technical)
+                ? "Engineering AI could not generate an answer. No fabricated answer was generated."
+                : technical,
             evidenceState: "INSUFFICIENT",
-            limitations: ["Provider or API failure"],
+            limitations: [
+              "Engineering AI could not complete generation for this request.",
+            ],
+            diagnosticLimitations: [technical],
           },
         ]);
         return;
@@ -454,10 +514,12 @@ export function AskEngineeringShell({
           content: data.requiresReview
             ? `${message}\n\nHuman review required — advisory only.`
             : message,
+          query: userMessage.content,
           evidence: data.evidence ?? [],
           evidenceState: data.evidenceState,
           scope: data.scope ?? scope,
           limitations: data.limitations ?? [],
+          diagnosticLimitations: data.diagnosticLimitations ?? [],
           retrievalMode: data.retrievalMode,
           abstained: Boolean(data.grounded?.abstained ?? data.meta?.abstained),
           why: data.why ?? null,
@@ -502,10 +564,15 @@ export function AskEngineeringShell({
           Scope: {scopeLabel}
         </span>
         <span className="text-slate-800" data-testid="ask-object-context">
-          Context: {describeAskContext({
+          {describeAskContext({
             objectType: context.objectType,
             objectId: context.objectId,
             projectId: context.projectId,
+            documentNumber: contextLabels.documentNumber,
+            documentTitle: contextLabels.documentTitle,
+            revision: contextLabels.revision,
+            projectLabel: contextLabels.projectLabel,
+            assetLabel: contextLabels.assetLabel,
           })}
         </span>
         {SCOPE_OPTIONS.map((opt) => (
@@ -573,8 +640,40 @@ export function AskEngineeringShell({
                     message.role === "user" ? "bg-primary text-primary-foreground" : "",
                   )}
                 >
-                  <CardContent className="whitespace-pre-wrap p-3 text-sm">
-                    {message.content}
+                  <CardContent className="p-3 text-sm">
+                    {message.role === "user" || !message.evidenceState ? (
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                    ) : (
+                      <div className="space-y-3" data-testid="ask-answer-workspace">
+                        {(() => {
+                          const presented = presentAskAnswer({
+                            content: message.content,
+                            excerpt: message.evidence?.[0]?.excerpt,
+                            whyFinding: message.why?.finding,
+                            abstained: message.abstained,
+                            query: message.query,
+                          });
+                          return (
+                            <>
+                              <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Answer</p>
+                                <p className="mt-1 text-sm font-medium text-slate-900" data-testid="ask-answer-headline">
+                                  {presented.answer}
+                                </p>
+                              </div>
+                              {presented.why ? (
+                                <div data-testid="ask-why-panel">
+                                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Why</p>
+                                  <p className="mt-1 text-sm text-slate-800" data-testid="ask-why-finding">
+                                    {presented.why}
+                                  </p>
+                                </div>
+                              ) : null}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
                 {message.role === "user" && (
@@ -622,116 +721,26 @@ export function AskEngineeringShell({
                       ) : null}
                     </div>
                   ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    Evidence state: {message.evidenceState}
-                    {message.explanationStatus ? ` · ${message.explanationStatus}` : ""}
-                    {message.authorityStatus ? ` · ${message.authorityStatus}` : ""}
-                    {message.retrievalMode ? ` · ${message.retrievalMode}` : ""}
-                    {message.scope ? ` · scope ${message.scope}` : ""}
+                  <p className="sr-only">
+                    Evidence recorded. Advisory only.
                   </p>
 
-                  {message.why ? (
-                    <div
-                      className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
-                      data-testid="ask-why-panel"
-                    >
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between text-left text-sm font-medium text-slate-900"
-                        onClick={() => {
-                          const next = !expandedWhy[message.id];
-                          setExpandedWhy((prev) => ({
-                            ...prev,
-                            [message.id]: next,
-                          }));
-                          if (next) {
-                            recordEngineeringAdoptionEvent({
-                              type: "why_opened",
-                              surface: "ask",
-                            });
-                          }
-                        }}
-                        data-testid="ask-why-toggle"
-                      >
-                        <span>Why?</span>
-                        <span className="text-xs font-normal text-muted-foreground">
-                          {expandedWhy[message.id] ? "Hide details" : "Show details"}
-                        </span>
-                      </button>
-                      <p className="mt-1 text-sm text-slate-800" data-testid="ask-why-finding">
-                        {message.why.finding}
-                      </p>
-                      {expandedWhy[message.id] ? (
-                        <div className="mt-2 space-y-2 text-xs text-slate-700" data-testid="ask-why-details">
-                          {(message.basis?.length ?? 0) > 0 ? (
-                            <div>
-                              <p className="font-medium">Basis</p>
-                              <ul className="mt-1 list-disc space-y-1 pl-4">
-                                {message.basis!.map((b) => (
-                                  <li key={`${b.kind}-${b.statement}`}>
-                                    <span className="font-medium">{b.kind}:</span> {b.statement}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ) : null}
-                          {(message.why.ruleOrToolBasis?.length ?? 0) > 0 ? (
-                            <div>
-                              <p className="font-medium">Rules / models / tools</p>
-                              <ul className="mt-1 list-disc space-y-1 pl-4">
-                                {message.why.ruleOrToolBasis!.map((r) => (
-                                  <li key={r}>{r}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          ) : null}
-                          {(message.assumptions?.length ?? 0) > 0 ||
-                          (message.why.assumptions?.length ?? 0) > 0 ? (
-                            <div>
-                              <p className="font-medium">Assumptions</p>
-                              <ul className="mt-1 list-disc space-y-1 pl-4">
-                                {(message.assumptions?.map((a) => a.statement) ??
-                                  message.why.assumptions ??
-                                  []
-                                ).map((a) => (
-                                  <li key={a}>{a}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          ) : null}
-                          <p className="text-muted-foreground">
-                            Authority: {message.why.authorityState ?? message.authorityStatus ?? "ADVISORY"} — no
-                            autonomous approval.
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-
                   <div>
-                    <p className="text-xs font-medium text-slate-800">Sources</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Evidence</p>
                     {(message.evidence?.length ?? 0) > 0 ? (
                       <ul className="mt-1 space-y-2" data-testid="ask-evidence-list">
                         {message.evidence!.map((ev) => (
                           <li key={`${ev.sourceType}-${ev.sourceId}`}>
-                            <Link
-                              href={ev.sourceLocation}
-                              className="block rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-slate-400"
-                              data-testid="ask-evidence-link"
-                              onClick={() =>
-                                recordEngineeringAdoptionEvent({
-                                  type: "evidence_opened",
-                                  surface: "ask",
-                                })
-                              }
-                            >
+                            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
                               <div className="font-medium text-slate-900">
-                                {ev.title}
-                                {ev.revision ? ` (rev ${ev.revision})` : ""}
-                                {ev.authorityStatus ? ` · ${ev.authorityStatus}` : ""}
-                                {ev.provenance === "connector_external" ? " · connector" : ""}
+                                {ev.documentNumber || ev.title}
+                                {ev.revision ? ` · Revision ${ev.revision}` : ""}
                               </div>
-                              <p className="mt-1 text-xs text-muted-foreground">{ev.excerpt}</p>
+                              <p className="mt-0.5 text-xs text-slate-700">
+                                {[formatEvidenceSection(ev.sectionPath, ev.figureLabel), ev.pageStart ? `Page ${ev.pageStart}` : null]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
                               {ev.supersededWarning || ev.conflicting ? (
                                 <p className="mt-1 text-xs text-amber-700">
                                   {ev.conflicting
@@ -739,7 +748,20 @@ export function AskEngineeringShell({
                                     : "One supporting source is superseded."}
                                 </p>
                               ) : null}
-                            </Link>
+                              <Link
+                                href={ev.sourceLocation}
+                                className="mt-1 inline-flex text-xs font-medium text-slate-900 underline-offset-2 hover:underline"
+                                data-testid="ask-evidence-link"
+                                onClick={() =>
+                                  recordEngineeringAdoptionEvent({
+                                    type: "evidence_opened",
+                                    surface: "ask",
+                                  })
+                                }
+                              >
+                                Open source
+                              </Link>
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -750,17 +772,38 @@ export function AskEngineeringShell({
                     )}
                   </div>
 
-                  {(message.limitations?.length ?? 0) > 0 ? (
+                  {(message.limitations?.length ?? 0) > 0 || (message.diagnosticLimitations?.length ?? 0) > 0 ? (
                     <div>
-                      <p className="text-xs font-medium text-slate-800">Limitations / conflicts</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Limitations</p>
                       <ul
                         className="mt-1 list-disc space-y-1 pl-4 text-xs text-muted-foreground"
                         data-testid="ask-limitations"
                       >
-                        {message.limitations!.map((l) => (
+                        {(message.limitations ?? []).map((l) => (
                           <li key={l}>{l}</li>
                         ))}
                       </ul>
+                      {(message.diagnosticLimitations?.length ?? 0) > 0 ? (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            className="text-[11px] text-muted-foreground underline"
+                            data-testid="ask-limitations-details-toggle"
+                            onClick={() =>
+                              setExpandedDetails((prev) => ({ ...prev, [message.id]: !prev[message.id] }))
+                            }
+                          >
+                            {expandedDetails[message.id] ? "Hide details" : "Show details"}
+                          </button>
+                          {expandedDetails[message.id] ? (
+                            <ul className="mt-1 list-disc space-y-1 pl-4 text-[11px] text-muted-foreground" data-testid="ask-limitations-details">
+                              {message.diagnosticLimitations!.map((l) => (
+                                <li key={l}>{l}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 

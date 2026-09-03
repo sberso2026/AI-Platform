@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@rtb/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
+import { LabeledTextField } from "@/components/engineering/labeled-field";
 import {
   AskEngineeringAI,
   ContextTabs,
@@ -68,6 +70,7 @@ export default function EngineeringProjectDetailPage() {
   const [data, setData] = useState<ProjectPayload | null>(null);
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { canMutate } = useEngineeringWriteAccess();
 
   useEffect(() => {
     persistEngineeringProjectFilter(projectId);
@@ -178,6 +181,24 @@ export default function EngineeringProjectDetailPage() {
                   <Row label="Site" value={project.site_name as string} />
                   <Row label="Location" value={project.location as string} />
                   <Row label="Client" value={project.client_name as string} />
+                  {canMutate ? (
+                    <ProjectMetadataEditor
+                      projectId={projectId}
+                      clientName={String(project.client_name ?? "")}
+                      siteName={String(project.site_name ?? "")}
+                      location={String(project.location ?? "")}
+                      onSaved={(next) =>
+                        setData((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                project: { ...prev.project, ...next },
+                              }
+                            : prev,
+                        )
+                      }
+                    />
+                  ) : null}
                 </CardContent>
               </Card>
               <Card>
@@ -327,5 +348,73 @@ function Row({ label, value }: { label: string; value?: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span>{value || "—"}</span>
     </div>
+  );
+}
+
+function ProjectMetadataEditor({
+  projectId,
+  clientName,
+  siteName,
+  location,
+  onSaved,
+}: {
+  projectId: string;
+  clientName: string;
+  siteName: string;
+  location: string;
+  onSaved: (next: { client_name: string; site_name: string; location: string }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [client, setClient] = useState(clientName);
+  const [site, setSite] = useState(siteName);
+  const [loc, setLoc] = useState(location);
+
+  if (!open) {
+    return (
+      <div className="pt-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>
+          Edit project details
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="space-y-3 border-t border-slate-200 pt-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError(null);
+        const res = await fetch(`/api/engineering/projects/${projectId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientName: client, siteName: site, location: loc }),
+        });
+        const parsed = await parseApiJsonResponse(res);
+        setSaving(false);
+        if (!parsed.ok) {
+          setError(parsed.errorMessage ?? "Could not save project details");
+          return;
+        }
+        onSaved({ client_name: client, site_name: site, location: loc });
+        setOpen(false);
+      }}
+    >
+      <LabeledTextField label="Client" value={client} onChange={setClient} />
+      <LabeledTextField label="Site" value={site} onChange={setSite} />
+      <LabeledTextField label="Location" value={loc} onChange={setLoc} />
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={saving}>
+          {saving ? "Saving…" : "Save"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 }

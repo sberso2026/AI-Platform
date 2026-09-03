@@ -6,7 +6,7 @@ export default function EngineeringDocumentsPage() {
   return (
     <EngineeringListPage
       title="Engineering Documents"
-      description="Document register — revision, type, and recorded status"
+      description="Document register — revision, source, and AI searchable status"
       apiEndpoint="/api/engineering/documents"
       createHref="/engineering/documents/upload"
       createLabel="Register Document"
@@ -16,7 +16,9 @@ export default function EngineeringDocumentsPage() {
         { key: "title", label: "Document", hrefKey: true },
         { key: "document_number", label: "Number" },
         { key: "revision", label: "Revision" },
-        { key: "document_type", label: "Type" },
+        { key: "source_status", label: "Source" },
+        { key: "ingestion_status", label: "Ingestion" },
+        { key: "ai_searchable_label", label: "AI searchable" },
         { key: "status", label: "Status", status: true },
         { key: "updated", label: "Last update" },
       ]}

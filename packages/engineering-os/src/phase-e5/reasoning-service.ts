@@ -9,6 +9,7 @@ import {
   type EngineeringEvidence,
   type EngineeringEvidenceState,
 } from "../phase-e2/contracts";
+import { buildDocumentGroundedAnswer, isDocumentBodyEvidence } from "../services/document-grounded-answer";
 import type {
   EngineeringApplicableRuleRef,
   EngineeringAuthorityStatusE5,
@@ -258,6 +259,15 @@ function synthesiseFinding(
   evidence: EngineeringEvidence[],
   evidenceState: EngineeringEvidenceState,
 ): { finding: string; answer: string; abstained: boolean; missing?: string[] } {
+  if (isDocumentBodyEvidence(evidence) && evidenceState !== "INSUFFICIENT") {
+    const grounded = buildDocumentGroundedAnswer({ query, evidence });
+    return {
+      abstained: grounded.abstained,
+      finding: grounded.abstained ? "Insufficient authorised document evidence." : "Supported by authorised document excerpts.",
+      answer: grounded.answer,
+      missing: grounded.limitations,
+    };
+  }
   if (evidence.length === 0 || evidenceState === "INSUFFICIENT") {
     const missing = [
       "Authorised native or connector records matching the query",
@@ -407,10 +417,16 @@ function buildWhy(input: {
 /**
  * Reject fabricated calculation/standard claims in provider output.
  */
-export function stripFabricatedAuthorityClaims(text: string): string {
+export function stripFabricatedAuthorityClaims(text: string, evidencedText = ""): string {
+  const evidenced = evidencedText.toLowerCase();
+  const keepStandard = (match: string) => {
+    const needle = match.replace(/\s+/g, " ").toLowerCase();
+    const compact = needle.replace(/\s/g, "");
+    if (!evidenced) return "[standard citation omitted — not evidenced]";
+    return evidenced.includes(needle) || evidenced.includes(compact) ? match : "[standard citation omitted — not evidenced]";
+  };
   return text
-    .replace(/\bAS\/NZS\s*\d+[^\s,]*/gi, "[standard citation omitted — not evidenced]")
-    .replace(/\bISO\s*\d+[^\s,]*/gi, "[standard citation omitted — not evidenced]")
+    .replace(/\b(?:AS\/NZS|AS|ISO)\s*[\d.]+/gi, keepStandard)
     .replace(/\bapproved\s+by\s+[A-Z][a-z]+/gi, "approval status not evidenced")
     .replace(/\bcalculated\s+(?:stress|load|deflection)\s*[:=]\s*[\d.]+/gi, "calculation not performed by an approved tool");
 }
@@ -532,7 +548,10 @@ export class EngineeringReasoningService {
             "Reasoning provider failed; returned deterministic retrieval-grounded answer.",
           );
         } else if (refined?.content?.trim()) {
-          answer = stripFabricatedAuthorityClaims(refined.content.trim());
+          answer = stripFabricatedAuthorityClaims(
+            refined.content.trim(),
+            assembled.evidence.map((item) => `${item.title} ${item.excerpt}`).join("\n"),
+          );
           answer += "\n\n—\nAdvisory only. Humans retain engineering authority.";
         }
       } catch {

@@ -37,6 +37,10 @@ import {
   EngineeringIntelligenceService,
 } from "../phase-e9/invocation";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
+import { formatGeneratedDocumentAnswer, isDocumentBodyEvidence } from "./document-grounded-answer";
+
+export const ENGINEERING_AI_DEGRADED_USER_MESSAGE =
+  "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning.";
 
 export type GroundedAskResult = {
   message: string;
@@ -70,7 +74,14 @@ export async function runGroundedEngineeringAsk(input: {
   tryGenerate?: (args: {
     message: string;
     evidenceSummary: string;
-  }) => Promise<{ content: string; failed?: boolean } | null>;
+  }) => Promise<{
+    content: string;
+    failed?: boolean;
+    failureLayer?: string;
+    failureCause?: string;
+    provider?: string;
+    model?: string | null;
+  } | null>;
   /** E3 optional — when absent or failing, E2 lexical path is unchanged. */
   contextProvider?: ContextDomainProvider | null;
   contextAuth?: AuthorisationGate | null;
@@ -95,6 +106,21 @@ export async function runGroundedEngineeringAsk(input: {
   skipIntelligence?: boolean;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
+  let lastGenerateMeta: {
+    content?: string;
+    failed?: boolean;
+    failureLayer?: string;
+    failureCause?: string;
+    provider?: string;
+    model?: string | null;
+  } | null = null;
+  const tryGenerate = input.tryGenerate
+    ? async (args: { message: string; evidenceSummary: string }) => {
+        const generated = await input.tryGenerate!(args);
+        lastGenerateMeta = generated;
+        return generated;
+      }
+    : undefined;
 
   const enrichment = await enrichAskQueryWithContext({
     query: input.query,
@@ -199,15 +225,17 @@ export async function runGroundedEngineeringAsk(input: {
   if (!input.skipReasoning) {
     const reasoningService = new EngineeringReasoningService(
       input.reasoningProvider ??
-        (input.tryGenerate
+        (tryGenerate
           ? {
               refine: async ({ finding, evidenceSummary, mode }) => {
                 try {
-                  const generated = await input.tryGenerate!({
+                  const generated = await tryGenerate({
                     message: [
                       "You refine an evidence-grounded engineering finding.",
-                      "Answer ONLY using the authorised evidence below.",
-                      "Distinguish facts (from evidence) vs inferences. Do not invent standards, revisions, approvals, calculations, or citations.",
+                      "Answer ONLY using the authorised evidence below. Do not invent standards, revisions, approvals, calculations, or citations.",
+                      "Return a concise answer, then Why?, then Sources with page / clause / section / figure when present.",
+                      "Classify each claim as FACT, INFERENCE, ASSUMPTION, or MISSING EVIDENCE.",
+                      "This is advisory only. No autonomous engineering approval.",
                       "Do not expose chain-of-thought or platform internals.",
                       `Mode: ${mode}`,
                       `Finding: ${finding}`,
@@ -243,15 +271,21 @@ export async function runGroundedEngineeringAsk(input: {
   let message = reasoning?.answer ?? answer.answer;
   let generationAvailable = false;
   let generationFailed = false;
+  let generationFailureLayer: string | null = null;
+  let generationFailureCause: string | null = null;
+  let generationProvider: string | null = null;
   let retrievalMode = answer.retrievalMode;
 
   if (reasoning?.degradedToRetrievalOnly) {
     generationFailed = true;
+    generationFailureLayer = lastGenerateMeta?.failureLayer ?? "reasoning_provider";
+    generationFailureCause = lastGenerateMeta?.failureCause ?? "refine_failed";
     retrievalMode = "retrieval_only";
     message = reasoning.answer;
     answer.limitations.push(...reasoning.limitations);
   } else if (reasoning) {
-    generationAvailable = Boolean(input.tryGenerate) && !reasoning.degradedToRetrievalOnly;
+    generationAvailable = Boolean(tryGenerate) && !reasoning.degradedToRetrievalOnly;
+    generationProvider = lastGenerateMeta?.provider ?? null;
     answer.evidence = reasoning.evidence;
     answer.evidenceState = reasoning.evidenceState;
     answer.abstained = reasoning.abstained;
@@ -262,8 +296,16 @@ export async function runGroundedEngineeringAsk(input: {
     answer.limitations = [
       ...new Set([...answer.limitations, ...reasoning.limitations]),
     ];
+    if (lastGenerateMeta?.content?.trim() && isDocumentBodyEvidence(reasoning.evidence)) {
+      reasoning.answer = formatGeneratedDocumentAnswer({
+        generated: reasoning.answer,
+        query: input.query.query,
+        evidence: reasoning.evidence,
+      });
+    }
     answer.answer = reasoning.answer;
-  } else if (!answer.abstained && input.tryGenerate) {
+    message = reasoning.answer;
+  } else if (!answer.abstained && tryGenerate) {
     // Legacy E2 path when reasoning skipped
     const evidenceSummary = answer.evidence
       .slice(0, 8)
@@ -273,11 +315,13 @@ export async function runGroundedEngineeringAsk(input: {
       )
       .join("\n");
     try {
-      const generated = await input.tryGenerate({
+      const generated = await tryGenerate({
         message: [
           "Answer ONLY using the authorised Engineering OS evidence below.",
-          "Cite sources by number. Do not invent IDs, revisions, approvals, calculations, or history.",
-          "If evidence is insufficient, say so.",
+          "Return a concise answer, then Why?, then Sources with page / clause / section / figure when present.",
+          "Classify each claim as FACT, INFERENCE, ASSUMPTION, or MISSING EVIDENCE.",
+          "Do not invent IDs, revisions, approvals, calculations, or history.",
+          "If evidence is insufficient, say so. Advisory only — no autonomous engineering approval.",
           "",
           `User question: ${input.query.query}`,
           "",
@@ -297,12 +341,21 @@ export async function runGroundedEngineeringAsk(input: {
     }
   }
 
-  if (generationFailed && !reasoning) {
+  if (generationFailed) {
     answer.limitations.push(
-      "AI generation unavailable; returned retrieval-grounded answer without fabricated fallback.",
+      answer.evidence.length > 0
+        ? "generation_failed_retrieval_shown"
+        : "AI generation unavailable; returned retrieval-grounded answer without fabricated fallback.",
     );
-    message = answer.answer;
     retrievalMode = "retrieval_only";
+    if (answer.evidence.length > 0) {
+      const body = (reasoning?.answer ?? answer.answer ?? "").trim();
+      message = body
+        ? `${ENGINEERING_AI_DEGRADED_USER_MESSAGE}\n\n${body}`
+        : ENGINEERING_AI_DEGRADED_USER_MESSAGE;
+    } else if (!reasoning) {
+      message = answer.answer;
+    }
   }
 
   // E7: fold memory provenance into Why? after reasoning
@@ -396,7 +449,9 @@ export async function runGroundedEngineeringAsk(input: {
       answer.evidenceState = "INSUFFICIENT";
     }
     if (!answer.limitations.includes("Insufficient authorised evidence for a client-specific claim.")) {
-      answer.limitations.push("Insufficient authorised evidence for a client-specific claim.");
+      if (!isDocumentBodyEvidence(answer.evidence)) {
+        answer.limitations.push("Insufficient authorised evidence for a client-specific claim.");
+      }
     }
   }
 
@@ -461,6 +516,9 @@ export async function runGroundedEngineeringAsk(input: {
       semanticAvailable: search.timingMs.semanticAvailable,
       generationAvailable,
       generationFailed,
+      generationFailureLayer,
+      generationFailureCause,
+      generationProvider,
       abstained: reasoning?.abstained ?? answer.abstained,
       policyApplied: true,
       contextApplied: enrichment.contextApplied,

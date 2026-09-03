@@ -126,11 +126,13 @@ export class EngineeringRetrievalService {
     let semanticAvailable = this.semantic.available;
     let buckets: SearchBuckets | null = null;
     let bodyEvidence: EngineeringEvidence[] = [];
+    let bodyRetrievalAttempted = false;
 
     if (this.documentBody.retrieve && (scope === "document" || scope === "project")) {
       try {
         const body = await this.documentBody.retrieve(query);
         if (body) {
+          bodyRetrievalAttempted = true;
           bodyEvidence = body.evidence;
           limitations.push(...body.limitations);
           diagnosticLimitations.push(...(body.diagnosticLimitations ?? []));
@@ -146,7 +148,9 @@ export class EngineeringRetrievalService {
       }
     }
 
-    if (this.semantic.available && this.semantic.retrieve && bodyEvidence.length === 0) {
+    const documentBodyResolved = scope === "document" && bodyRetrievalAttempted;
+
+    if (!documentBodyResolved && this.semantic.available && this.semantic.retrieve && bodyEvidence.length === 0) {
       semanticAttempted = true;
       try {
         buckets = await this.semantic.retrieve(query);
@@ -156,12 +160,12 @@ export class EngineeringRetrievalService {
         retrievalMode = "lexical_fallback";
         buckets = null;
       }
-    } else if (!semanticAvailable && bodyEvidence.length === 0) {
+    } else if (!documentBodyResolved && !semanticAvailable && bodyEvidence.length === 0) {
       diagnosticLimitations.push("Semantic embeddings not configured; lexical retrieval active.");
     }
 
     if (!buckets) {
-      if (bodyEvidence.length && scope === "document") {
+      if (documentBodyResolved || (bodyEvidence.length && scope === "document")) {
         buckets = {};
       } else {
         try {
@@ -180,7 +184,7 @@ export class EngineeringRetrievalService {
       if (retrievalMode !== "lexical_fallback" && retrievalMode !== "hybrid") retrievalMode = "lexical";
     }
 
-    if (scope === "document" && query.objectId && bodyEvidence.length === 0) {
+    if (scope === "document" && query.objectId && bodyEvidence.length === 0 && !bodyRetrievalAttempted) {
       const docs = (buckets.documents ?? []).filter(
         (d) => String((d as { id?: string }).id ?? "") === query.objectId,
       );
@@ -267,7 +271,9 @@ export class EngineeringRetrievalService {
       );
     });
 
-    if (bodyEvidence.length) {
+    if (documentBodyResolved) {
+      evidence = [...bodyEvidence];
+    } else if (bodyEvidence.length) {
       evidence = scope === "document"
         ? [...bodyEvidence]
         : [...bodyEvidence, ...evidence.filter((item) => item.sourceType !== "document")];

@@ -1,5 +1,5 @@
 ﻿import type { Json, SupabaseClient } from "@rtb/database";
-import type { PlatformKernel } from "@rtb/platform-kernel";
+import { parseDirectorFailure, type PlatformKernel } from "@rtb/platform-kernel";
 import type {
   CommerceExecutionContext,
   EngineeringApplication,
@@ -16,6 +16,7 @@ import {
 } from "./core-services";
 import { dedupeDisciplinesForDisplay } from "./discipline-dedupe";
 import { isOperationalRegisterQuery } from "./engineering-evidence";
+import type { DocumentBodyRetrievalProbe } from "./engineering-retrieval-service";
 
 type RegisterOps = {
   search: (
@@ -461,6 +462,7 @@ export class EngineeringAIService {
     private readonly supabase: SupabaseClient,
     private readonly kernel: PlatformKernel,
     private readonly search?: EngineeringSearchService,
+    private readonly documentBody?: DocumentBodyRetrievalProbe,
   ) {}
 
   async run(commerce: CommerceExecutionContext, input: {
@@ -494,15 +496,19 @@ export class EngineeringAIService {
 
     // E2/E3 grounded path: context resolver enriches retrieval; degrades to E2 on failure.
     if (this.search) {
+      try {
       const { EngineeringRetrievalService } = await import("./engineering-retrieval-service");
       const { runGroundedEngineeringAsk } = await import("./grounded-ask");
       const { createSupabaseContextProvider } = await import("./supabase-context-provider");
       const { PlatformEngineeringMemoryAdapter } = await import("../phase-e7/store");
       const { EngineeringMemoryCaptureService } = await import("../phase-e7/capture");
       const { EngineeringIntelligenceService } = await import("../phase-e9/invocation");
-      const retrieval = new EngineeringRetrievalService(this.search, {
-        available: false,
-      });
+      const retrieval = new EngineeringRetrievalService(
+        this.search,
+        { available: false },
+        { enabled: false },
+        this.documentBody ?? {},
+      );
       const memoryStore = new PlatformEngineeringMemoryAdapter(this.kernel.memory);
       const memoryCapture = new EngineeringMemoryCaptureService(memoryStore);
       const intelligence = new EngineeringIntelligenceService();
@@ -584,52 +590,82 @@ export class EngineeringAIService {
                   phase: input.toolAction ? "E6" : "E5",
                 },
               });
-              return { content: result.message ?? "", failed: false };
-            } catch {
-              return { content: "", failed: true };
+              const provider = (result.run.model_provider ?? "mock").toLowerCase();
+              if (provider === "mock") {
+                return {
+                  content: "",
+                  failed: true,
+                  failureLayer: "provider_adapter",
+                  failureCause: "mock_adapter_selected",
+                };
+              }
+              return {
+                content: result.message ?? "",
+                failed: false,
+                provider,
+                model: result.run.model_name ?? null,
+              };
+            } catch (error) {
+              const failure = parseDirectorFailure(error);
+              return {
+                content: "",
+                failed: true,
+                failureLayer: failure.layer,
+                failureCause: failure.cause,
+              };
             }
           },
         });
 
-        await this.kernel.eventBus.publish({
-          tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
-          eventType: "engineering.ai.run.completed",
-          source: "engineering-os",
-          payload: {
-            grounded: true,
-            evidence_state: grounded.evidenceState,
-            requires_review: grounded.requiresReview,
-            sources: grounded.evidence.length,
-            explanation_status: grounded.reasoning?.explanationStatus ?? null,
-            tool_invocation_id: grounded.toolResult?.invocationId ?? null,
-            memory_hit_count: grounded.memoryHits?.length ?? 0,
-          },
-        });
+        try {
+          await this.kernel.eventBus.publish({
+            tenantId: input.tenantId,
+            workspaceId: input.workspaceId,
+            eventType: "engineering.ai.run.completed",
+            source: "engineering-os",
+            payload: {
+              grounded: true,
+              evidence_state: grounded.evidenceState,
+              requires_review: grounded.requiresReview,
+              sources: grounded.evidence.length,
+              explanation_status: grounded.reasoning?.explanationStatus ?? null,
+              tool_invocation_id: grounded.toolResult?.invocationId ?? null,
+              memory_hit_count: grounded.memoryHits?.length ?? 0,
+            },
+          });
+        } catch {
+          // Event persistence must not discard a grounded answer.
+        }
 
+        const { presentAskLimitations } = await import("./engineering-retrieval-service");
+        const presented = presentAskLimitations(grounded.limitations);
+        const generationFailed = Boolean(grounded.meta?.generationFailed);
+        const degradedMessage =
+          generationFailed && grounded.evidence.length > 0
+            ? (grounded.message ?? "").trim() ||
+              "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning."
+            : (grounded.message ?? "").trim() ||
+              grounded.grounded?.answer?.trim() ||
+              "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.";
         return {
-          message:
-            (grounded.message ?? "").trim() ||
-            grounded.grounded?.answer?.trim() ||
-            "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.",
+          message: degradedMessage,
           requiresReview: grounded.requiresReview,
           evidence: grounded.evidence,
           evidenceState: grounded.evidenceState,
           scope: grounded.scope,
-          limitations: grounded.limitations.length
-            ? grounded.limitations
-            : ["Insufficient authorised evidence for a client-specific claim."],
+          limitations: presented.user.length
+            ? presented.user
+            : grounded.evidence.length
+              ? generationFailed
+                ? ["Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning."]
+                : []
+              : ["Insufficient authorised evidence for a client-specific claim."],
+          diagnosticLimitations: presented.details,
           retrievalMode: grounded.retrievalMode,
           grounded: {
             ...grounded.grounded,
-            abstained:
-              grounded.grounded?.abstained === true ||
-              !(grounded.message ?? "").trim() ||
-              grounded.evidenceState === "INSUFFICIENT",
-            answer:
-              (grounded.message ?? "").trim() ||
-              grounded.grounded?.answer?.trim() ||
-              "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.",
+            abstained: Boolean(grounded.grounded?.abstained),
+            answer: degradedMessage,
           },
           reasoning: grounded.reasoning ?? null,
           why: grounded.why ?? null,
@@ -649,7 +685,41 @@ export class EngineeringAIService {
             phase: grounded.meta.phase ?? (input.toolAction ? "E6" : "E5"),
           },
         };
+      } catch (error) {
+        return {
+          message:
+            "Engineering AI could not generate an answer. No fabricated answer was generated.",
+          requiresReview: true,
+          evidence: [],
+          evidenceState: "INSUFFICIENT" as const,
+          limitations: ["Engineering AI could not complete this request."],
+          diagnosticLimitations: [
+            error instanceof Error ? error.message : "grounded_ask_failed",
+          ],
+          retrievalMode: "retrieval_only",
+          grounded: {
+            abstained: true,
+            answer:
+              "Engineering AI could not generate an answer. No fabricated answer was generated.",
+          },
+          why: null,
+          recommendedNextActions: [],
+          basis: [],
+          assumptions: [],
+          authorityStatus: null,
+          explanationStatus: null,
+          toolResult: null,
+          memoryHits: [],
+          memoryChips: null,
+          meta: {
+            generationFailed: true,
+            grounded: true,
+            phase: "E2",
+            policyApplied: true,
+          },
+        };
       }
+    }
 
     let agentId: string | undefined;
     const slug = input.agentSlug ?? "engineering-director";

@@ -1,4 +1,4 @@
-export * from "./version";
+export * from "./pilot/eos-ai-doc-2-flags";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";
@@ -34,6 +34,7 @@ export {
   EngineeringProjectService,
   EngineeringAssetService,
   EngineeringDocumentService,
+  isHiddenFromPilotProjectList,
 } from "./services/core-services";
 export {
   EngineeringDisciplineService,
@@ -44,13 +45,21 @@ export {
   EngineeringAIService,
   EngineeringDashboardService,
 } from "./services/supporting-services";
-export { EngineeringRetrievalService } from "./services/engineering-retrieval-service";
+export { EngineeringRetrievalService, presentAskLimitations } from "./services/engineering-retrieval-service";
+export { ENGINEERING_AI_DEGRADED_USER_MESSAGE } from "./services/grounded-ask";
+export type { DocumentBodyRetrievalProbe, DocumentBodyRetrievalResult } from "./services/engineering-retrieval-service";
 export {
   synthesizeGroundedAnswer,
   bucketsToEvidence,
   sourceTypeHref,
   isOperationalRegisterQuery,
 } from "./services/engineering-evidence";
+export {
+  buildDocumentGroundedAnswer,
+  formatDocumentCitation,
+  formatGeneratedDocumentAnswer,
+  isDocumentBodyEvidence,
+} from "./services/document-grounded-answer";
 export { runGroundedEngineeringAsk } from "./services/grounded-ask";
 export {
   EngineeringObjectFramework,
@@ -77,3 +86,34 @@ export {
   type HealthCheckItem,
 } from "./services/health-service";
 export { workspaceScopeId, isRecordInWorkspace } from "./commerce/workspace-scope";
+export {
+  DOCUMENT_METADATA_LOW_CONFIDENCE,
+  ENGINEERING_DOCUMENT_TYPES,
+  buildDocumentMetadataReviewFields,
+  fallbackDocumentNumber,
+  fallbackDocumentTitle,
+  fileStem,
+  isEngineeringDocumentType,
+  isFilenameFallbackNumber,
+  metadataReviewStateFromProposal,
+  normalizeEngineeringDocumentType,
+  proposeDocumentMetadataFromFilename,
+  proposeDocumentMetadataFromText,
+  sanitizeDocumentFileName,
+  type DocumentMetadataReviewState,
+  type DocumentNumberProvenance,
+  type EngineeringDocumentTypeValue,
+  type ProposedDocumentMetadata,
+} from "./services/document-registration";
+export {
+  canonicalDocumentIdentityKey,
+  inferStandardDocumentNumber,
+  preferCompleteStandardNumber,
+  isTimestampRevisionArtifact,
+  isValidEngineeringRevision,
+  normalizeDocumentNumber,
+  normalizeEngineeringRevision,
+  resolveCanonicalDocumentRegistration,
+  sourceChecksumOf,
+  type DocumentIdentityRecord,
+} from "./services/document-identity";

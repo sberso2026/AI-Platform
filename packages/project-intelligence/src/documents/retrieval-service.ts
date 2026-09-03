@@ -103,24 +103,63 @@ function toCitation(hit: DocumentIndexHit, query: string): DocumentCitation {
 }
 
 function uniqueChunkWindows(hits: readonly DocumentIndexHit[], limit: number): DocumentIndexHit[] {
-  const seen = new Set<string>();
   const selected: DocumentIndexHit[] = [];
   for (const hit of hits) {
-    const clause = (hit.chunk.sectionPath ?? "").match(/\b(\d+(?:\.\d+){1,4})\b/)?.[1] ?? "";
-    const key = clause
-      ? [hit.chunk.engineeringDocumentId, String(hit.chunk.pageStart ?? ""), clause].join("|")
-      : [
-          hit.chunk.engineeringDocumentId,
-          String(hit.chunk.pageStart ?? ""),
-          (hit.chunk.sectionPath ?? "").replace(/\s+/g, " ").slice(0, 24),
-          hit.chunk.content.replace(/\s+/g, " ").trim().slice(0, 48),
-        ].join("|");
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (selected.some((existing) => isDuplicateProvenance(existing, hit))) continue;
     selected.push(hit);
     if (selected.length >= limit) break;
   }
   return selected;
+}
+
+function normalizeEvidenceText(value: string): string {
+  return value.replace(/\s+/g, " ").toLowerCase().replace(/[^a-z0-9.\s]/g, "").trim();
+}
+
+function provenanceKey(hit: DocumentIndexHit): string {
+  const hash = hit.chunk.contentHash?.trim();
+  if (hash) {
+    return `${hit.chunk.engineeringDocumentId}|${hit.chunk.revision}|hash:${hash}`;
+  }
+  return `${hit.chunk.engineeringDocumentId}|${hit.chunk.revision}|text:${normalizeEvidenceText(hit.chunk.content).slice(0, 160)}`;
+}
+
+function textOverlapRatio(left: string, right: string): number {
+  const a = normalizeEvidenceText(left);
+  const b = normalizeEvidenceText(right);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const shorter = a.length <= b.length ? a : b;
+  const longer = a.length <= b.length ? b : a;
+  const window = Math.min(48, shorter.length);
+  if (window < 24) return longer.includes(shorter) ? 1 : 0;
+  let hits = 0;
+  let trials = 0;
+  for (let start = 0; start + window <= shorter.length; start += 24) {
+    trials += 1;
+    if (longer.includes(shorter.slice(start, start + window))) hits += 1;
+  }
+  return trials === 0 ? 0 : hits / trials;
+}
+
+function clauseNumber(hit: DocumentIndexHit): string | null {
+  return (hit.chunk.sectionPath ?? "").match(/\b(\d+(?:\.\d+){1,4})\b/)?.[1] ?? null;
+}
+
+function isDuplicateProvenance(left: DocumentIndexHit, right: DocumentIndexHit): boolean {
+  if (left.chunk.stableChunkId === right.chunk.stableChunkId) return true;
+  if (left.chunk.engineeringDocumentId !== right.chunk.engineeringDocumentId) return false;
+  if (provenanceKey(left) === provenanceKey(right)) return true;
+  const samePage =
+    left.chunk.pageStart != null
+    && right.chunk.pageStart != null
+    && left.chunk.pageStart === right.chunk.pageStart;
+  const clauseLeft = clauseNumber(left);
+  const clauseRight = clauseNumber(right);
+  if (samePage && clauseLeft && clauseLeft === clauseRight) return true;
+  const overlap = textOverlapRatio(left.chunk.content, right.chunk.content);
+  if (samePage && overlap >= 0.5) return true;
+  return overlap >= 0.8;
 }
 
 function rejectionReason(input: {
@@ -225,10 +264,12 @@ export class ProjectIntelligenceDocumentRetrievalService {
     }
 
     const fused = combineHits(lexical, vector);
-    const ranked = rerankHitsByQueryOverlap(fused, plan.normalizedQuery, plan.distinctiveTerms);
+    const ranked = rerankHitsByQueryOverlap(fused, plan.normalizedQuery, plan.distinctiveTerms, plan.entities);
     const rankedById = new Map(ranked.map((hit) => [hit.chunk.stableChunkId, hit.score]));
     const rankedIds = new Set(ranked.map((hit) => hit.chunk.stableChunkId));
-    const combined = sameDocument ? uniqueChunkWindows(ranked, limit) : diversify(ranked, limit);
+    const uniqueRanked = uniqueChunkWindows(ranked, ranked.length);
+    const evidenceLimit = sameDocument ? Math.min(limit, 6) : limit;
+    const combined = sameDocument ? uniqueRanked.slice(0, evidenceLimit) : diversify(ranked, limit);
     const filtered = sameDocument
       ? combined.filter((hit) => hit.score > 0)
       : combined.filter((hit) => hit.score >= threshold);
@@ -238,6 +279,10 @@ export class ProjectIntelligenceDocumentRetrievalService {
         `${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`,
         plan.distinctiveTerms,
       ).score;
+      const duplicate = uniqueRanked.some((row) => (
+        row.chunk.stableChunkId !== hit.chunk.stableChunkId
+        && isDuplicateProvenance(row, hit)
+      ));
       return {
         rank: index + 1,
         chunkId: hit.chunk.stableChunkId,
@@ -253,12 +298,15 @@ export class ProjectIntelligenceDocumentRetrievalService {
         combinedScore: hit.score,
         threshold,
         selected: selectedIds.has(hit.chunk.stableChunkId),
-        rejectionReason: rejectionReason({ hit, selectedIds, rankedIds, threshold, sameDocument }),
+        rejectionReason: duplicate && !selectedIds.has(hit.chunk.stableChunkId)
+          ? "duplicate_provenance"
+          : rejectionReason({ hit, selectedIds, rankedIds, threshold, sameDocument }),
       };
     });
-    const rank1Margin = candidates.length >= 2
-      ? (candidates[0]?.fusionScore ?? 0) - (candidates[1]?.fusionScore ?? 0)
-      : candidates.length === 1 ? (candidates[0]?.fusionScore ?? 0) : null;
+    const uniqueFusion = uniqueRanked.map((hit) => fused.find((row) => row.chunk.stableChunkId === hit.chunk.stableChunkId)?.score ?? hit.score);
+    const rank1Margin = uniqueFusion.length >= 2
+      ? (uniqueFusion[0] ?? 0) - (uniqueFusion[1] ?? 0)
+      : uniqueFusion.length === 1 ? (uniqueFusion[0] ?? 0) : null;
     const citations = filtered.map((hit) => toCitation(hit, plan.normalizedQuery));
 
     return {

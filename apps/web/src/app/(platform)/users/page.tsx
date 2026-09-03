@@ -36,6 +36,7 @@ export default function UsersPage() {
   const [roleSlug, setRoleSlug] = useState("member");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [directoryLoading, setDirectoryLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [rateLimitedUntil, setRateLimitedUntil] = useState<number | null>(null);
   const [seatByUser, setSeatByUser] = useState<Record<string, string>>({});
@@ -44,14 +45,17 @@ export default function UsersPage() {
   const rateLimited = rateLimitedUntil != null && Date.now() < rateLimitedUntil;
 
   async function reload() {
+    setDirectoryLoading(true);
     const res = await fetch("/api/platform/identity/members");
     const json = await res.json();
     if (!res.ok) {
       setError(lifecycleMessage(json));
+      setDirectoryLoading(false);
       return;
     }
     setError(null);
     setMembers(json.data ?? []);
+    setDirectoryLoading(false);
   }
 
   async function reloadSeats() {
@@ -189,10 +193,9 @@ export default function UsersPage() {
           <CardHeader>
             <CardTitle>Invite user</CardTitle>
             <CardDescription>
-              Canonical path: create pending Auth identity → activation link to /reset-password → login → tenant role
-              (admin / member / viewer) → workspace membership. Identity is created even if activation mail fails.
-              Temporary passwords are not used. Engineering OS seats stay on System → Seats and are not assigned from
-              this form.
+              Invite a colleague with their work email. They set a password from the activation
+              email, then sign in to this tenant. Assign Engineering OS seats under Licences & Seats,
+              not from this form.
               {seatCapacity ? ` Current seat pool ${seatCapacity}.` : ""}
             </CardDescription>
           </CardHeader>
@@ -295,8 +298,10 @@ export default function UsersPage() {
                 </div>
               );
             })}
-            {members.length === 0 && !error ? (
-              <p className="text-sm text-muted-foreground">No members loaded.</p>
+            {directoryLoading ? (
+              <p className="text-sm text-muted-foreground">Loading directory…</p>
+            ) : members.length === 0 && !error ? (
+              <p className="text-sm text-muted-foreground">No tenant members in this directory yet.</p>
             ) : null}
           </CardContent>
         </Card>

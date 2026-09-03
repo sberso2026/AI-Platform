@@ -14,6 +14,7 @@ function mockSupabase(rows: Row[]) {
     limit: () => unknown;
     or: () => unknown;
     single: () => unknown;
+    update: () => unknown;
     then: (resolve: (value: { data: Row[]; error: null }) => void) => void;
   } = {
     select: () => query,
@@ -24,7 +25,18 @@ function mockSupabase(rows: Row[]) {
     order: () => query,
     limit: () => query,
     or: () => query,
-    single: () => query,
+    single: () => ({
+      then: (resolve: (value: { data: Row | null; error: { message: string } | null }) => void) => {
+        const tenant = captured.find(([col]) => col === "tenant_id")?.[1];
+        const workspace = captured.find(([col]) => col === "workspace_id")?.[1];
+        let data = rows.filter((row) => row.tenant_id === tenant);
+        if (workspace) data = data.filter((row) => row.workspace_id === workspace);
+        resolve({
+          data: data[0] ?? null,
+          error: data[0] ? null : { message: "not found" },
+        });
+      },
+    }),
     then: (resolve) => {
       const tenant = captured.find(([col]) => col === "tenant_id")?.[1];
       const workspace = captured.find(([col]) => col === "workspace_id")?.[1];
@@ -32,6 +44,7 @@ function mockSupabase(rows: Row[]) {
       if (workspace) data = data.filter((row) => row.workspace_id === workspace);
       resolve({ data, error: null });
     },
+    update: () => query,
   };
   return {
     captured,
@@ -52,6 +65,18 @@ const rows: Row[] = [
     project_phase: "concept",
     status: "active",
     metadata: {},
+    created_at: "2026-01-01",
+    updated_at: "2026-01-01",
+  },
+  {
+    id: "proj-cert",
+    tenant_id: tenant,
+    workspace_id: "workspace-a",
+    project_code: "WSB-1RC",
+    project_name: "Workspace B Isolation",
+    project_phase: "concept",
+    status: "draft",
+    metadata: { certification_fixture: true, hidden_from_pilot_ui: true },
     created_at: "2026-01-01",
     updated_at: "2026-01-01",
   },
@@ -92,6 +117,38 @@ describe("project list workspace scope", () => {
     expect(listed.map((p) => p.id)).toEqual(["proj-a"]);
     expect(listed.map((p) => p.project_code)).not.toContain("PI-B");
     expect(listed.map((p) => p.project_name)).not.toContain("Workspace B Project");
+    expect(listed.map((p) => p.project_code)).not.toContain("WSB-1RC");
+  });
+
+  it("omits certification fixtures from the customer project list in the same workspace", async () => {
+    const { client } = mockSupabase(rows);
+    const service = new EngineeringProjectService(client as never);
+    const engineerA = createTestCommerceExecutionContext({
+      tenantId: tenant,
+      workspaceId: "workspace-a",
+      policy: projectPolicy(),
+    });
+    const listed = await service.list(engineerA, tenant);
+    expect(listed.map((p) => p.id)).toEqual(["proj-a"]);
+    expect(listed.map((p) => p.project_name)).not.toContain("Workspace B Isolation");
+  });
+
+  it("scopes project metadata updates to the active workspace", async () => {
+    const { captured, client } = mockSupabase(rows);
+    const service = new EngineeringProjectService(client as never);
+    const engineerA = createTestCommerceExecutionContext({
+      tenantId: tenant,
+      workspaceId: "workspace-a",
+      policy: {
+        productKey: "engineering-os",
+        applicationKey: "project_intelligence",
+        action: "project.create",
+        seatRequired: true,
+      },
+    });
+    await service.update(engineerA, tenant, "proj-a", { clientName: "RTB Engineering" });
+    expect(captured).toContainEqual(["workspace_id", "workspace-a"]);
+    expect(captured).not.toContainEqual(["workspace_id", "workspace-b"]);
   });
 
   it("does not return workspace-A project ids or titles to a workspace-B engineer", async () => {

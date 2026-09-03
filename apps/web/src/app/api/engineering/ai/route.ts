@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 
+export const maxDuration = 60;
+
 export const GET = withEngineeringApi("ai", async ({ ctx, commerce }) => {
   const data = await ctx.engineering.dashboard.getDashboard(commerce, ctx.tenantId);
   return NextResponse.json({ data });

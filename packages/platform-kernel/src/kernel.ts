@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@rtb/database";
 import { createPlatformIntelligence, type PlatformIntelligence } from "@rtb/platform-intelligence";
 import { AIDirectorService } from "./ai-director";
+import { AzureOpenAIModelAdapter, OpenAIModelAdapter } from "./ai-director/adapters/openai-adapter";
 import { ApiGatewayService } from "./api-gateway";
 import { DigitalTwinService } from "./digital-twin";
 import { EventBusService } from "./event-bus";
@@ -31,12 +32,15 @@ export function createPlatformKernel(supabase: SupabaseClient): PlatformKernel {
   const eventBus = new EventBusService(supabase);
   const notifications = new NotificationService(supabase, eventBus);
   const intelligence = createPlatformIntelligence(supabase);
+  const aiDirector = new AIDirectorService(supabase, eventBus, intelligence);
+  aiDirector.registerAdapter(new OpenAIModelAdapter());
+  aiDirector.registerAdapter(new AzureOpenAIModelAdapter());
 
   return {
     eventBus,
     notifications,
     intelligence,
-    aiDirector: new AIDirectorService(supabase, eventBus, intelligence),
+    aiDirector,
     jobs: new JobService(supabase),
     workflow: new WorkflowService(supabase, eventBus),
     knowledgeGraph: new KnowledgeGraphService(supabase),

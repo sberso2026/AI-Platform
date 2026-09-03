@@ -70,6 +70,30 @@ export class MembershipAdminService {
     return this.mailer ?? createSupabaseAuthMailAdapter(this.admin);
   }
 
+  private async authUsersById(userIds: string[]) {
+    const wanted = new Set(userIds);
+    const found = new Map<
+      string,
+      {
+        email_confirmed_at?: string | null;
+        invited_at?: string | null;
+        user_metadata?: Record<string, unknown>;
+      }
+    >();
+    if (wanted.size === 0) return found;
+    let page = 1;
+    while (found.size < wanted.size && page <= 10) {
+      const { data, error } = await this.admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) throw new Error(error.message);
+      for (const user of data.users) {
+        if (wanted.has(user.id)) found.set(user.id, user);
+      }
+      if (data.users.length < 200) break;
+      page += 1;
+    }
+    return found;
+  }
+
   async listMembers(tenantId: string) {
     const { data: rawMemberships, error } = await this.admin
       .from("tenant_memberships")
@@ -111,24 +135,19 @@ export class MembershipAdminService {
       workspacesByUser.set(row.user_id as string, list);
     }
 
-    return await Promise.all(
-      (memberships ?? []).map(async (row) => {
+    const authUsers = await this.authUsersById(userIds);
+
+    return (memberships ?? []).map((row) => {
       const role = row.roles as { slug?: string; name?: string } | { slug?: string; name?: string }[] | null;
       const slug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
       const name = (Array.isArray(role) ? role[0]?.name : role?.name) ?? slug;
       const profile = profileMap.get(row.user_id as string);
-      let emailConfirmed = false;
-      let invited = Boolean(row.invited_at);
-      let activationDelivery: string | null = null;
-      let activationSentAt: string | null = null;
-      const authUser = await this.admin.auth.admin.getUserById(row.user_id);
-      if (!authUser.error && authUser.data.user) {
-        emailConfirmed = Boolean(authUser.data.user.email_confirmed_at);
-        invited = invited || Boolean(authUser.data.user.invited_at);
-        const meta = (authUser.data.user.user_metadata ?? {}) as Record<string, unknown>;
-        activationDelivery = typeof meta.activation_delivery === "string" ? meta.activation_delivery : null;
-        activationSentAt = typeof meta.activation_sent_at === "string" ? meta.activation_sent_at : null;
-      }
+      const authUser = authUsers.get(row.user_id);
+      const emailConfirmed = Boolean(authUser?.email_confirmed_at);
+      const invited = Boolean(row.invited_at) || Boolean(authUser?.invited_at);
+      const meta = (authUser?.user_metadata ?? {}) as Record<string, unknown>;
+      const activationDelivery = typeof meta.activation_delivery === "string" ? meta.activation_delivery : null;
+      const activationSentAt = typeof meta.activation_sent_at === "string" ? meta.activation_sent_at : null;
       const onboardingState = deriveOnboardingState({
         emailConfirmed,
         membershipStatus: row.status,
@@ -151,8 +170,7 @@ export class MembershipAdminService {
         activationStatus: onboardingState,
         activationSentAt,
       };
-    }),
-    );
+    });
   }
 
   async listAssignableRoles(tenantId: string) {

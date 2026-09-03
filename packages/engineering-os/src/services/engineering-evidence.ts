@@ -16,6 +16,7 @@ import {
   type EngineeringGroundedSearchResult,
   type EngineeringSearchScope,
 } from "../phase-e2/contracts";
+import { buildDocumentGroundedAnswer, isDocumentBodyEvidence } from "./document-grounded-answer";
 
 export function sourceTypeHref(
   sourceType: EngineeringSearchableSourceType,
@@ -271,7 +272,7 @@ export function synthesizeGroundedAnswer(input: {
       scope: input.scope,
       limitations: [
         ...input.limitations,
-        "No adequate authorised native Engineering OS evidence matched this query.",
+        "MISSING EVIDENCE: no adequate authorised native Engineering OS evidence matched this query.",
         `Searched scope: ${input.scope}.`,
       ],
       evidenceState: "INSUFFICIENT",
@@ -280,6 +281,22 @@ export function synthesizeGroundedAnswer(input: {
       generationAvailable: input.generationAvailable,
       abstained: true,
       requiresReview: false,
+    };
+  }
+
+  if (isDocumentBodyEvidence(input.evidence)) {
+    const grounded = buildDocumentGroundedAnswer({ query: input.query, evidence: input.evidence });
+    return {
+      answer: grounded.answer,
+      evidence: input.evidence,
+      scope: input.scope,
+      limitations: [...input.limitations, ...grounded.limitations],
+      evidenceState: grounded.abstained ? "INSUFFICIENT" : input.evidenceState,
+      retrievalMode: input.retrievalMode,
+      generatedAt,
+      generationAvailable: input.generationAvailable,
+      abstained: grounded.abstained,
+      requiresReview: true,
     };
   }
 

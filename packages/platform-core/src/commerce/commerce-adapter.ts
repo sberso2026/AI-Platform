@@ -39,6 +39,10 @@ const AVAILABLE_ENGINEERING_APP_KEYS = new Set([
 /** Display alias for standards_intelligence per commerce UI spec */
 const APPLICATION_DISPLAY_NAMES: Record<string, string> = {
   standards_intelligence: "Engineering Knowledge",
+  project_intelligence: "Project Intelligence",
+  inspection_intelligence: "Inspection Intelligence",
+  project_controls: "Project Controls",
+  documents: "Documents",
 };
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
@@ -213,69 +217,206 @@ export function mapRegistryToCommercialProducts(
   return products;
 }
 
+const APPLICATION_OPEN_HREFS: Record<string, string> = {
+  "engineering-os": "/engineering",
+  "project-intelligence": "/engineering/apps/project-intelligence",
+  "inspection-intelligence": "/engineering/apps/inspection-intelligence",
+};
+
+function slugToAppKey(slug: string): string {
+  return slug.replace(/-/g, "_");
+}
+
+function displayNameForAppKey(appKey: string): string {
+  if (APPLICATION_DISPLAY_NAMES[appKey]) return APPLICATION_DISPLAY_NAMES[appKey];
+  return appKey
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function isOperatingSystemType(productType: string): boolean {
+  return /operating[_ ]system/i.test(productType);
+}
+
+function isApplicationType(productType: string): boolean {
+  return /application/i.test(productType);
+}
+
+function isSubscriptionAccessGranting(status?: SubscriptionStatus): boolean {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+function tenantEntitledToProduct(
+  product: { id: string; slug: string },
+  data: PlatformCommerceData
+): boolean {
+  if (data.commercial_subscriptions?.some((s) => s.product_id === product.id && isSubscriptionAccessGranting(s.status))) {
+    return true;
+  }
+  if (data.commercial_licenses?.some((l) => l.product_id === product.id && l.status === "active")) {
+    return true;
+  }
+  if (data.product_installations?.some((i) => i.product_id === product.id && isInstallationAccessGranting(i.status))) {
+    return true;
+  }
+  const appKey = slugToAppKey(product.slug);
+  return Boolean(
+    data.commercial_licenses?.some(
+      (l) => l.license_type === "application" && l.application_key === appKey && l.status === "active"
+    )
+  );
+}
+
+function shouldExposeCatalogProduct(
+  product: { id: string; slug: string; lifecycle_status?: string; marketplace_visible?: boolean },
+  data: PlatformCommerceData
+): boolean {
+  if (tenantEntitledToProduct(product, data)) return true;
+  if (product.lifecycle_status === "draft" || product.lifecycle_status === "retired") return false;
+  if (product.marketplace_visible === false) return false;
+  return true;
+}
+
+function resolveOpenHref(slug: string): string {
+  return APPLICATION_OPEN_HREFS[slug] ?? `/system/products/${slug}`;
+}
+
+function resolveProductActions(input: {
+  catalogTab: ProductCatalogTab;
+  productType: string;
+  subscriptionStatus?: SubscriptionStatus;
+  installationStatus?: string;
+  currentUserSeated: boolean;
+  roleSlug: string;
+  seatRequired: boolean;
+}): { primary?: CommercialActionId; secondary?: CommercialActionId } {
+  if (input.catalogTab === "installed") {
+    if (!input.seatRequired || input.currentUserSeated) {
+      return { primary: "open", secondary: "manage" };
+    }
+    if (canManageSeats(input.roleSlug)) {
+      return { primary: "manage_seats", secondary: "manage" };
+    }
+    return { primary: "seat_required", secondary: "manage" };
+  }
+
+  if (
+    isSubscriptionAccessGranting(input.subscriptionStatus) &&
+    !isInstallationAccessGranting(input.installationStatus)
+  ) {
+    return { primary: "install", secondary: "manage" };
+  }
+
+  if (input.catalogTab === "available") {
+    if (isApplicationType(input.productType)) {
+      return { primary: "request_quote", secondary: "contact_support" };
+    }
+    return { primary: "start_trial", secondary: "request_quote" };
+  }
+
+  if (input.catalogTab === "trials") {
+    return { primary: "open", secondary: "manage" };
+  }
+
+  return { primary: undefined, secondary: "contact_support" };
+}
+
 function mapFromPlatformCommerce(
   data: PlatformCommerceData,
   context: CommerceAdapterContext
 ): CommercialProductView[] {
-  return (data.commercial_products ?? []).map((product) => {
-    const plan = data.commercial_plans?.find((p) => p.product_id === product.id);
-    const subscription = data.commercial_subscriptions?.find(
-      (s) => s.product_id === product.id
-    );
-    const license = data.commercial_licenses?.find((l) => l.product_id === product.id);
-    const installation = data.product_installations?.find(
-      (i) => i.product_id === product.id
-    );
-    const seats = data.commercial_seat_pools?.find((s) => s.product_id === product.id);
-    const usage = data.commercial_usage_aggregates?.find(
-      (u) => u.product_id === product.id
-    );
+  const seatedIds = new Set([
+    ...(context.seatedProductIds ?? []),
+    ...(data.current_user_seated_product_ids ?? []),
+  ]);
 
-    const catalogTab = resolveCatalogTabFromProduct(
-      product.lifecycle_status,
-      subscription?.status,
-      installation?.status
-    );
+  return (data.commercial_products ?? [])
+    .filter((product) => shouldExposeCatalogProduct(product, data))
+    .map((product) => {
+      const appKey = slugToAppKey(product.slug);
+      const appLicense = data.commercial_licenses?.find(
+        (l) => l.license_type === "application" && l.application_key === appKey && l.status === "active"
+      );
+      const parentProductId = isApplicationType(product.product_type)
+        ? appLicense?.product_id ?? product.id
+        : product.id;
 
-    const mappedOsId = osIdForProductSlug(product.slug);
+      const subscription = data.commercial_subscriptions?.find((s) => s.product_id === parentProductId);
+      const plan =
+        data.commercial_plans?.find((p) => subscription?.plan_id && p.id === subscription.plan_id) ??
+        data.commercial_plans?.find((p) => p.product_id === parentProductId);
+      const productLicense = data.commercial_licenses?.find(
+        (l) => l.product_id === parentProductId && (l.license_type === "product" || !l.license_type)
+      );
+      const license = appLicense ?? productLicense;
+      const installation = data.product_installations?.find((i) => i.product_id === parentProductId);
+      const appInstallation = data.application_installations?.find((i) => i.application_key === appKey);
+      const seats = data.commercial_seat_pools?.find((s) => s.product_id === parentProductId);
+      const usage = data.commercial_usage_aggregates?.find((u) => u.product_id === parentProductId);
 
-    return {
-      slug: product.slug,
-      osId: mappedOsId as CommercialProductView["osId"],
-      name: product.name,
-      productType: product.product_type,
-      description: product.description,
-      edition: plan?.edition,
-      subscriptionStatus: subscription?.status ?? "expired",
-      licenceStatus: license?.status ?? "expired",
-      installationStatus: normalizeInstallationStatus(installation?.status),
-      version: installation?.installed_version ?? installation?.version,
-      seatUsage: seats ? { assigned: seats.assigned, total: seats.total } : undefined,
-      renewalDate: subscription?.renewal_date,
-      includedApplications: [],
-      installedApplications: [],
-      usageSummary: usage?.summary,
-      catalogTab,
-      icon: product.icon ?? "Boxes",
-      openHref: catalogTab === "installed" ? `/system/products/${product.slug}` : undefined,
-      manageHref: `/system/products/${product.slug}`,
-      trialEligible: catalogTab === "available" || catalogTab === "trials",
-      primaryAction:
-        catalogTab === "installed"
-          ? "open"
-          : subscription?.status === "active" && !isInstallationAccessGranting(installation?.status)
-            ? "install"
-            : catalogTab === "available"
-              ? "start_trial"
-              : undefined,
-      secondaryAction:
-        catalogTab === "installed"
-          ? "manage"
-          : catalogTab === "available"
-            ? "request_quote"
-            : undefined,
-    };
-  });
+      const catalogTab = resolveCatalogTabFromProduct(
+        product.lifecycle_status,
+        subscription?.status,
+        installation?.status,
+        Boolean(license && license.status === "active" && isInstallationAccessGranting(installation?.status))
+      );
+
+      const installedAppNames = (data.commercial_licenses ?? [])
+        .filter(
+          (l) =>
+            l.product_id === parentProductId &&
+            l.license_type === "application" &&
+            l.status === "active" &&
+            l.application_key
+        )
+        .map((l) => displayNameForAppKey(l.application_key as string));
+
+      const mappedOsId = osIdForProductSlug(product.slug);
+      const currentUserSeated = seatedIds.has(parentProductId);
+      const seatRequired = Boolean(seats && seats.total > 0);
+      const actions = resolveProductActions({
+        catalogTab,
+        productType: product.product_type,
+        subscriptionStatus: subscription?.status,
+        installationStatus: installation?.status,
+        currentUserSeated,
+        roleSlug: context.roleSlug,
+        seatRequired,
+      });
+
+      return {
+        slug: product.slug,
+        productId: product.id,
+        osId: mappedOsId as CommercialProductView["osId"],
+        name: product.name,
+        productType: product.product_type,
+        description: product.description,
+        edition: plan?.edition,
+        subscriptionStatus: subscription?.status ?? "expired",
+        licenceStatus: license?.status ?? "expired",
+        installationStatus: normalizeInstallationStatus(
+          isApplicationType(product.product_type)
+            ? appInstallation?.status ?? installation?.status
+            : installation?.status
+        ),
+        version: installation?.installed_version ?? installation?.version,
+        seatUsage: seats ? { assigned: seats.assigned, total: seats.total } : undefined,
+        renewalDate: subscription?.renewal_date,
+        includedApplications: installedAppNames,
+        installedApplications: isOperatingSystemType(product.product_type) ? installedAppNames : [],
+        usageSummary: usage?.summary,
+        catalogTab,
+        icon: product.icon ?? "Boxes",
+        openHref: resolveOpenHref(product.slug),
+        manageHref: `/system/products/${product.slug}`,
+        trialEligible: catalogTab === "available" && isOperatingSystemType(product.product_type),
+        primaryAction: actions.primary,
+        secondaryAction: actions.secondary,
+        currentUserSeated,
+        certificationOnly: product.marketplace_visible === false,
+      };
+    });
 }
 
 function normalizeInstallationStatus(status?: string): InstallationStatus {
@@ -293,15 +434,17 @@ function isInstallationAccessGranting(status?: string): boolean {
 function resolveCatalogTabFromProduct(
   lifecycleStatus: string | undefined,
   subscriptionStatus?: SubscriptionStatus,
-  installationStatus?: string
+  installationStatus?: string,
+  licensedAndInstalled = false
 ): ProductCatalogTab {
+  const entitledAndInstalled =
+    licensedAndInstalled ||
+    (isSubscriptionAccessGranting(subscriptionStatus) && isInstallationAccessGranting(installationStatus));
+  if (entitledAndInstalled) return "installed";
   if (subscriptionStatus === "trialing") return "trials";
-  if (subscriptionStatus === "active" && isInstallationAccessGranting(installationStatus)) {
-    return "installed";
-  }
-  if (subscriptionStatus === "active") return "available";
+  if (isSubscriptionAccessGranting(subscriptionStatus)) return "available";
   if (lifecycleStatus === "draft" || lifecycleStatus === "retired") return "coming_soon";
-  if (lifecycleStatus === "preview") return "trials";
+  if (lifecycleStatus === "preview") return "coming_soon";
   if (lifecycleStatus === "active") return "available";
   return "coming_soon";
 }
@@ -318,11 +461,16 @@ export function buildCatalogSummary(
   context: CommerceAdapterContext
 ): CommercialCatalogSummary {
   const installed = products.filter((p) => p.catalogTab === "installed");
-  const installedAppCount = installed.reduce(
-    (sum, p) => sum + p.installedApplications.length,
-    0
-  );
-  const seatTotals = installed.reduce(
+  const installedOs = installed.filter((p) => isOperatingSystemType(p.productType));
+  const installedAppProducts = installed.filter((p) => isApplicationType(p.productType));
+  const appNames = new Set<string>();
+  for (const product of installedOs) {
+    for (const name of product.installedApplications) appNames.add(name);
+  }
+  for (const product of installedAppProducts) {
+    appNames.add(product.name);
+  }
+  const seatTotals = installedOs.reduce(
     (acc, p) => {
       if (p.seatUsage) {
         acc.assigned += p.seatUsage.assigned;
@@ -333,11 +481,11 @@ export function buildCatalogSummary(
     { assigned: 0, total: 0 }
   );
 
-  const engineering = installed.find((p) => p.osId === "engineering");
+  const engineering = installed.find((p) => p.osId === "engineering" || p.slug === "engineering-os");
 
   return {
-    installedProducts: installed.length,
-    installedApplications: installedAppCount,
+    installedProducts: installedOs.length,
+    installedApplications: appNames.size,
     assignedSeats: seatTotals.assigned || context.seatUsage?.assigned || 0,
     totalSeats: seatTotals.total || context.seatUsage?.total || 0,
     renewalDate: engineering?.renewalDate ?? context.renewalDate,
@@ -452,6 +600,8 @@ export function isActionVisible(
     case "start_trial":
     case "request_quote":
       return canManageProducts(roleSlug);
+    case "seat_required":
+      return true;
     case "contact_support":
       return true;
     default:
@@ -464,6 +614,7 @@ export const COMMERCIAL_ACTION_LABELS: Record<CommercialActionId, string> = {
   manage: "Manage",
   install: "Install",
   start_trial: "Start Trial",
+  seat_required: "Seat required",
   request_quote: "Request Quote",
   upgrade: "Upgrade",
   manage_seats: "Manage Seats",

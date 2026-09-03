@@ -316,6 +316,18 @@ const control = results.find((row) => row.id === "control");
 const perturbed = results.find((row) => row.id === "perturbed");
 const variantPassCount = results.filter((row) => row.retrievalOk).length;
 const generationPassAll = results.filter((row) => row.id === "control" || row.id === "perturbed" || row.retrievalOk).every((row) => row.generationOk);
+function uniqueCitationKeys(evidence) {
+  return evidence.map((row) => `${row.pageStart ?? ""}|${clip(row.excerpt).slice(0, 72)}`);
+}
+function citationsDeduped(evidence) {
+  const keys = uniqueCitationKeys(evidence);
+  return keys.length <= 1 || new Set(keys).size === keys.length;
+}
+const uniqueMargin = (row) => {
+  const value = String(row?.rank1_margin ?? "").replace(/^rank1_margin:/, "");
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
 const providers = [...new Set(results.map((row) => row.generationProvider).filter(Boolean))];
 
 const report = {
@@ -344,6 +356,9 @@ const report = {
   PERTURBED_CORRECT_CHUNK_RANK: perturbed?.candidates?.find((row) => row.selected)?.rank ?? perturbed?.candidates?.[0]?.rank ?? null,
   CONTROL_RANK_1_MARGIN: control?.rank1_margin ?? null,
   PERTURBED_RANK_1_MARGIN: perturbed?.rank1_margin ?? null,
+  CONTROL_UNIQUE_RANK_1_MARGIN: uniqueMargin(control),
+  PERTURBED_UNIQUE_RANK_1_MARGIN: uniqueMargin(perturbed),
+  CITATION_DEDUPLICATION_PASS: citationsDeduped(control?.citations ?? []) && citationsDeduped(perturbed?.citations ?? []),
   PLATFORM_WIDTH_REGRESSION_PASS: Boolean(regressionResults.find((row) => row.id === "platform_width")?.pass),
   CROSSOVER_REGRESSION_PASS: Boolean(regressionResults.find((row) => row.id === "crossover")?.pass),
   NUT_TEST_METHOD_REGRESSION_PASS: Boolean(regressionResults.find((row) => row.id === "nut_test_method")?.pass),
@@ -367,6 +382,9 @@ console.log(JSON.stringify({
   PERTURBED_CORRECT_CHUNK_RANK: report.PERTURBED_CORRECT_CHUNK_RANK,
   CONTROL_RANK_1_MARGIN: report.CONTROL_RANK_1_MARGIN,
   PERTURBED_RANK_1_MARGIN: report.PERTURBED_RANK_1_MARGIN,
+  CONTROL_UNIQUE_RANK_1_MARGIN: report.CONTROL_UNIQUE_RANK_1_MARGIN,
+  PERTURBED_UNIQUE_RANK_1_MARGIN: report.PERTURBED_UNIQUE_RANK_1_MARGIN,
+  CITATION_DEDUPLICATION_PASS: report.CITATION_DEDUPLICATION_PASS,
   PLATFORM_WIDTH_REGRESSION_PASS: report.PLATFORM_WIDTH_REGRESSION_PASS,
   CROSSOVER_REGRESSION_PASS: report.CROSSOVER_REGRESSION_PASS,
   NUT_TEST_METHOD_REGRESSION_PASS: report.NUT_TEST_METHOD_REGRESSION_PASS,

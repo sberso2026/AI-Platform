@@ -98,7 +98,16 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     .sort((a, b) => a.slug.localeCompare(b.slug))[0];
 
   const kernel = createPlatformKernel(supabase);
-  const engineering = createEngineeringOS(supabase, kernel);
+  const engineering = createEngineeringOS(supabase, kernel, {
+    documentBodyRetriever: {
+      retrieve: async (query) => {
+        const { createDocumentBodyRetrievalProbe } = await import(
+          "@/lib/engineering/document-body-retrieval"
+        );
+        return createDocumentBodyRetrievalProbe().retrieve!(query);
+      },
+    },
+  });
   const commerce = createPlatformCommerce(supabase);
   const permissionService = new PermissionService(supabase);
   const permissions = await permissionService.getUserPermissions(

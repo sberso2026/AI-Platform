@@ -68,9 +68,34 @@ describe("PdfDocumentParser pdf-parse v2", () => {
     expect(typeof mod.PDFParse).toBe("function");
     expect(typeof (mod as { default?: unknown }).default).not.toBe("function");
     const source = readFileSync(resolve(process.cwd(), "src/documents/native-parsers.ts"), "utf8");
-    expect(source).toMatch(/import\s*\{[^}]*PDFParse[^}]*\}\s*from\s*["']pdf-parse["']/);
+    expect(source).toContain("PDFParse");
+    expect(source).toContain('await import("pdf-parse")');
+    expect(source).not.toMatch(/from\s+["']pdf-parse["']/);
     expect(source).not.toMatch(/mod\.default\s*\?\?\s*mod/);
     expect(source).not.toMatch(/await\s+pdfParse\s*\(/);
+    expect(source).toContain("ensureNodeDomMatrix");
+    expect(source).toContain("configurePdfJsWorker");
+  });
+
+  it("polyfills DOMMatrix before pdf-parse on serverless-like globals", async () => {
+    const previous = (globalThis as { DOMMatrix?: unknown }).DOMMatrix;
+    // @ts-expect-error test isolation
+    delete (globalThis as { DOMMatrix?: unknown }).DOMMatrix;
+    try {
+      const parser = new PdfDocumentParser();
+      const parsed = await parser.parse({
+        engineeringDocumentId: "pdf-dommatrix-1",
+        revision: "A",
+        mimeType: "application/pdf",
+        fileName: "valid-text.pdf",
+        bytes: buildTextPdf(["AS 1755 conveyor platform width."]),
+        correlationId: "corr-dommatrix",
+      });
+      expect(parsed.pages.length).toBeGreaterThan(0);
+      expect((globalThis as { DOMMatrix?: unknown }).DOMMatrix).toBeTypeOf("function");
+    } finally {
+      if (previous) (globalThis as { DOMMatrix?: unknown }).DOMMatrix = previous;
+    }
   });
 
   it("extracts expected text from a valid text PDF and destroys the parser", async () => {
@@ -150,6 +175,14 @@ describe("PdfDocumentParser pdf-parse v2", () => {
     });
     expect(parsed.warnings.join(" ")).toMatch(/insufficient_extracted_text/);
     expect(parsed.confidence).toBeLessThan(0.5);
+  });
+
+  it("loads the pdf.js worker into globalThis before parse", async () => {
+    const { configurePdfJsWorker } = await import("../src/documents/configure-pdfjs-worker");
+    const { PDFParse } = await import("pdf-parse");
+    const configured = await configurePdfJsWorker(PDFParse);
+    expect(configured.length).toBeGreaterThan(0);
+    expect((globalThis as { pdfjsWorker?: { WorkerMessageHandler?: unknown } }).pdfjsWorker?.WorkerMessageHandler).toBeTruthy();
   });
 
   it("does not leak stack traces or paths in parser error envelopes", async () => {

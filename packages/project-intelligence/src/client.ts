@@ -19,4 +19,4 @@ export type {
 } from "./documents/types";
 export { DocumentIntelligenceError, PHASE_BRIEF_DOCUMENT_ERROR_CODES } from "./documents/errors";
 export type { DocumentIntelligenceErrorCode } from "./documents/errors";
-export { DOCUMENT_ALLOWED_MIME_TYPES, DOCUMENT_MAX_UPLOAD_BYTES } from "./documents/storage-policy";
+export { DOCUMENT_ALLOWED_MIME_TYPES, DOCUMENT_MAX_UPLOAD_BYTES, DOCUMENT_MAX_UPLOAD_MB } from "./documents/storage-policy";

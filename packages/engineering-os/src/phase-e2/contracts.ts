@@ -121,6 +121,13 @@ export type EngineeringEvidence = {
   permissionsApplied: true | false;
   conflicting?: boolean;
   supersededWarning?: boolean;
+  pageStart?: number | null;
+  pageEnd?: number | null;
+  sectionPath?: string | null;
+  documentNumber?: string | null;
+  figureLabel?: string | null;
+  chunkId?: string | null;
+  claimKind?: "DOCUMENT_FACT" | "INFERENCE" | "ASSUMPTION" | "MISSING_EVIDENCE";
 };
 
 export type EngineeringGroundedSearchResult = {

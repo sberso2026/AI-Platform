@@ -1,0 +1,720 @@
+{
+  "tenant": "8195e176-5f9f-449a-a1d3-2aedaf403989",
+  "workspace": "776aab04-e2eb-4a2a-855f-e04a81f0a0ce",
+  "project_id": "",
+  "document_id": "008ff87c-ede6-4007-b94d-480ef54a77e0",
+  "document_revision": "A",
+  "indexed_chunk_count": 1966,
+  "gold_chunk_id": "a5b6a04cbbf9efbd6cf1af63f5a796e6",
+  "QUERY_PERTURBATION_ROOT_CAUSE": "lexical_conjunction_and_generic_term_fallback_flood",
+  "live_rpc_control_gold_rank": null,
+  "live_rpc_perturbed_gold_rank": null,
+  "live_rpc_control_hit_count": 0,
+  "live_rpc_perturbed_hit_count": 0,
+  "CONTROL_CORRECT_CHUNK_RANK": 1,
+  "PERTURBED_CORRECT_CHUNK_RANK": 1,
+  "CONTROL_CORRECT_CHUNK_SCORE": 1,
+  "PERTURBED_CORRECT_CHUNK_SCORE": 1,
+  "control_plan": {
+    "rawQuery": "what is the minimum sheet metal guard thickness",
+    "normalizedQuery": "minimum sheet metal guard thickness",
+    "engineeringIntent": "property_lookup",
+    "entities": [
+      "minimum sheet",
+      "sheet metal",
+      "metal guard",
+      "guard thickness"
+    ],
+    "properties": [
+      "thickness"
+    ],
+    "constraints": [
+      "minimum"
+    ],
+    "distinctiveTerms": [
+      "minimum",
+      "sheet",
+      "metal",
+      "guard",
+      "thickness"
+    ],
+    "retrievalQueries": [
+      "minimum sheet metal guard thickness",
+      "minimum sheet sheet metal thickness minimum",
+      "minimum OR sheet OR metal OR guard OR thickness"
+    ]
+  },
+  "perturbed_plan": {
+    "rawQuery": "in the design of sheet metal guard, what is the minimum sheet metal guard thickness?",
+    "normalizedQuery": "minimum sheet metal guard thickness",
+    "engineeringIntent": "property_lookup",
+    "entities": [
+      "sheet metal",
+      "metal guard",
+      "minimum sheet",
+      "guard thickness"
+    ],
+    "properties": [
+      "thickness"
+    ],
+    "constraints": [
+      "minimum"
+    ],
+    "distinctiveTerms": [
+      "sheet",
+      "metal",
+      "guard",
+      "minimum",
+      "thickness"
+    ],
+    "retrievalQueries": [
+      "minimum sheet metal guard thickness",
+      "sheet metal metal guard thickness minimum",
+      "sheet OR metal OR guard OR minimum OR thickness",
+      "sheet metal guard minimum thickness"
+    ]
+  },
+  "control_candidates": [
+    {
+      "rank": 1,
+      "chunkId": "a5b6a04cbbf9efbd6cf1af63f5a796e6",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 2,
+      "chunkId": "9a995c5be3926853512c1cf63c667e21",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 3,
+      "chunkId": "e97a5f60929977fd918a94da7fa027ab",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 4,
+      "chunkId": "55dc1355d7a36373b61d7297faf315e5",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 5,
+      "chunkId": "72ce07037919369b78a4cbad0fc39b53",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 6,
+      "chunkId": "e373d6bdb41dcc837ae8de6e059cbb6e",
+      "page": 14,
+      "sectionPath": "Figure 5.1 ).",
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 7,
+      "chunkId": "07a3f9f3d82a37d43a75c7c061054a99",
+      "page": 14,
+      "sectionPath": "Figure 5.1 ).",
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 8,
+      "chunkId": "7b42a6ca7129136d0ea0fbc718059b8f",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 9,
+      "chunkId": "9545909aaa7c9fa784c5b4d1d67bef1f",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 10,
+      "chunkId": "f370ef285bd8ecee80d85b99ebdd487f",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 11,
+      "chunkId": "69e71dcc20aca7965f8168f15d1d24ed",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 12,
+      "chunkId": "425b9c95f5179c7943c56b46484ca9ae",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 13,
+      "chunkId": "80beeb80a023934f08dfe242e26a5bcb",
+      "page": 14,
+      "sectionPath": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 14,
+      "chunkId": "a8ee1c1ab81736a2b9e1b9d055ef05f4",
+      "page": 17,
+      "sectionPath": "5.3.3 Rotating \tparts. \tThe \tuse \tof \texposed",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 15,
+      "chunkId": "fd4c6d9978739e194c3208f4ea588e79",
+      "page": 14,
+      "sectionPath": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 16,
+      "chunkId": "bdc75c551c706b9e40c99164b0728ad8",
+      "page": 17,
+      "sectionPath": "5.3.3 Rotating \tparts. \tThe \tuse \tof \texposed",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 17,
+      "chunkId": "88a5dc3176b104a74e80e5ac01720d3d",
+      "page": 14,
+      "sectionPath": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "lexicalScore": 0.5,
+      "semanticScore": null,
+      "combinedScore": 0.5,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 18,
+      "chunkId": "81d8d42b0a1a64db8f4e514ed390084b",
+      "page": 14,
+      "sectionPath": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "lexicalScore": 0.5,
+      "semanticScore": null,
+      "combinedScore": 0.5,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 19,
+      "chunkId": "17ce4bdd431051e883751cafa34114ab",
+      "page": 10,
+      "sectionPath": "3.2.8 Raising and lowering systems. Fixed or mobile",
+      "lexicalScore": null,
+      "semanticScore": 0.407603407810155,
+      "combinedScore": 0.407603407810155,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_lexically_relevant"
+    },
+    {
+      "rank": 20,
+      "chunkId": "234c42f73ea5b334a23d408e8109f08f",
+      "page": 10,
+      "sectionPath": "3.2.8 Raising and lowering systems. Fixed or mobile",
+      "lexicalScore": null,
+      "semanticScore": 0.407603407810155,
+      "combinedScore": 0.407603407810155,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_lexically_relevant"
+    }
+  ],
+  "perturbed_candidates": [
+    {
+      "rank": 1,
+      "chunkId": "a5b6a04cbbf9efbd6cf1af63f5a796e6",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 2,
+      "chunkId": "9a995c5be3926853512c1cf63c667e21",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 3,
+      "chunkId": "e97a5f60929977fd918a94da7fa027ab",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 4,
+      "chunkId": "55dc1355d7a36373b61d7297faf315e5",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 5,
+      "chunkId": "72ce07037919369b78a4cbad0fc39b53",
+      "page": 14,
+      "sectionPath": null,
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 6,
+      "chunkId": "e373d6bdb41dcc837ae8de6e059cbb6e",
+      "page": 14,
+      "sectionPath": "Figure 5.1 ).",
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 7,
+      "chunkId": "07a3f9f3d82a37d43a75c7c061054a99",
+      "page": 14,
+      "sectionPath": "Figure 5.1 ).",
+      "lexicalScore": 1,
+      "semanticScore": null,
+      "combinedScore": 1,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 8,
+      "chunkId": "7b42a6ca7129136d0ea0fbc718059b8f",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 9,
+      "chunkId": "9545909aaa7c9fa784c5b4d1d67bef1f",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 10,
+      "chunkId": "f370ef285bd8ecee80d85b99ebdd487f",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 11,
+      "chunkId": "69e71dcc20aca7965f8168f15d1d24ed",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 12,
+      "chunkId": "425b9c95f5179c7943c56b46484ca9ae",
+      "page": 17,
+      "sectionPath": null,
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 13,
+      "chunkId": "80beeb80a023934f08dfe242e26a5bcb",
+      "page": 14,
+      "sectionPath": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 14,
+      "chunkId": "a8ee1c1ab81736a2b9e1b9d055ef05f4",
+      "page": 17,
+      "sectionPath": "5.3.3 Rotating \tparts. \tThe \tuse \tof \texposed",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 15,
+      "chunkId": "fd4c6d9978739e194c3208f4ea588e79",
+      "page": 14,
+      "sectionPath": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 16,
+      "chunkId": "bdc75c551c706b9e40c99164b0728ad8",
+      "page": 17,
+      "sectionPath": "5.3.3 Rotating \tparts. \tThe \tuse \tof \texposed",
+      "lexicalScore": 0.6,
+      "semanticScore": null,
+      "combinedScore": 0.6,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_selected_after_window_dedupe"
+    },
+    {
+      "rank": 17,
+      "chunkId": "17ce4bdd431051e883751cafa34114ab",
+      "page": 10,
+      "sectionPath": "3.2.8 Raising and lowering systems. Fixed or mobile",
+      "lexicalScore": null,
+      "semanticScore": 0.407603407810155,
+      "combinedScore": 0.407603407810155,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_lexically_relevant"
+    },
+    {
+      "rank": 18,
+      "chunkId": "234c42f73ea5b334a23d408e8109f08f",
+      "page": 10,
+      "sectionPath": "3.2.8 Raising and lowering systems. Fixed or mobile",
+      "lexicalScore": null,
+      "semanticScore": 0.407603407810155,
+      "combinedScore": 0.407603407810155,
+      "threshold": 0,
+      "selected": false,
+      "rejectionReason": "not_lexically_relevant"
+    },
+    {
+      "rank": 19,
+      "chunkId": "4f6c9aed93a9f2344c642ca7bc70722b",
+      "page": 2,
+      "sectionPath": null,
+      "lexicalScore": 0.4,
+      "semanticScore": null,
+      "combinedScore": 0.4,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    },
+    {
+      "rank": 20,
+      "chunkId": "8e90d99ccf2fab116597674895545255",
+      "page": 10,
+      "sectionPath": null,
+      "lexicalScore": 0.4,
+      "semanticScore": null,
+      "combinedScore": 0.4,
+      "threshold": 0,
+      "selected": true,
+      "rejectionReason": null
+    }
+  ],
+  "control_selected": [
+    {
+      "chunkId": "a5b6a04cbbf9efbd6cf1af63f5a796e6",
+      "page": 14,
+      "score": 1,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "e373d6bdb41dcc837ae8de6e059cbb6e",
+      "section": "Figure 5.1 ).",
+      "page": 14,
+      "score": 1,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "7b42a6ca7129136d0ea0fbc718059b8f",
+      "page": 17,
+      "score": 0.6,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "80beeb80a023934f08dfe242e26a5bcb",
+      "section": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "page": 14,
+      "score": 0.6,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "a8ee1c1ab81736a2b9e1b9d055ef05f4",
+      "section": "5.3.3 Rotating \tparts. \tThe \tuse \tof \texposed",
+      "page": 17,
+      "score": 0.6,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "4f6c9aed93a9f2344c642ca7bc70722b",
+      "page": 2,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "8e90d99ccf2fab116597674895545255",
+      "page": 10,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "e7057b0e1de7a042b411e2b0ffbd6cbf",
+      "page": 11,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "7d738ac01a90e97efc51a7ab08e0d559",
+      "page": 11,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "ce009a1c5b5ee39fba550d36fd11cd81",
+      "page": 15,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "85507b047d28b8f50f681126acde596f",
+      "page": 17,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "a9bac5d2589ad3043afda9aa771aa733",
+      "page": 17,
+      "score": 0.4,
+      "source": "lexical"
+    }
+  ],
+  "perturbed_selected": [
+    {
+      "chunkId": "a5b6a04cbbf9efbd6cf1af63f5a796e6",
+      "page": 14,
+      "score": 1,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "e373d6bdb41dcc837ae8de6e059cbb6e",
+      "section": "Figure 5.1 ).",
+      "page": 14,
+      "score": 1,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "7b42a6ca7129136d0ea0fbc718059b8f",
+      "page": 17,
+      "score": 0.6,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "80beeb80a023934f08dfe242e26a5bcb",
+      "section": "1.5 mm thick; 50 mm mesh shall be of not less than",
+      "page": 14,
+      "score": 0.6,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "a8ee1c1ab81736a2b9e1b9d055ef05f4",
+      "section": "5.3.3 Rotating \tparts. \tThe \tuse \tof \texposed",
+      "page": 17,
+      "score": 0.6,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "4f6c9aed93a9f2344c642ca7bc70722b",
+      "page": 2,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "8e90d99ccf2fab116597674895545255",
+      "page": 10,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "e7057b0e1de7a042b411e2b0ffbd6cbf",
+      "page": 11,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "7d738ac01a90e97efc51a7ab08e0d559",
+      "page": 11,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "ce009a1c5b5ee39fba550d36fd11cd81",
+      "page": 15,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "85507b047d28b8f50f681126acde596f",
+      "page": 17,
+      "score": 0.4,
+      "source": "lexical"
+    },
+    {
+      "chunkId": "a9bac5d2589ad3043afda9aa771aa733",
+      "page": 17,
+      "score": 0.4,
+      "source": "lexical"
+    }
+  ],
+  "vector_attempted": true,
+  "vector_hit_count": {
+    "control": 24,
+    "perturbed": 24
+  }
+}

@@ -97,9 +97,9 @@ export default function RisksPage() {
             reload();
           }}
         >
-          <Input className="min-w-[200px]" placeholder="Risk title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          <Input className="w-24" type="number" min={1} max={5} value={probability} onChange={(e) => setProbability(e.target.value)} />
-          <Input className="w-24" type="number" min={1} max={5} value={consequence} onChange={(e) => setConsequence(e.target.value)} />
+          <Input id="risk-title" className="min-w-[200px]" placeholder="Risk title" aria-label="Risk title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <Input id="risk-probability" className="w-24" type="number" min={1} max={5} aria-label="Probability" value={probability} onChange={(e) => setProbability(e.target.value)} />
+          <Input id="risk-consequence" className="w-24" type="number" min={1} max={5} aria-label="Consequence" value={consequence} onChange={(e) => setConsequence(e.target.value)} />
           <Button type="submit" size="sm">
             Add Risk
           </Button>

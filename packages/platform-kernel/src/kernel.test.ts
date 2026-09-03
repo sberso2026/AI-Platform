@@ -36,6 +36,22 @@ describe("MockModelAdapter", () => {
   });
 });
 
+describe("OpenAIModelAdapter", () => {
+  it("fails closed when credentials are missing", async () => {
+    const previous = process.env.OPENAI_API_KEY;
+    const previousPlatform = process.env.PLATFORM_LLM_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.PLATFORM_LLM_API_KEY;
+    const { OpenAIModelAdapter } = await import("./ai-director/adapters/openai-adapter");
+    const adapter = new OpenAIModelAdapter();
+    await expect(
+      adapter.complete({ model: "gpt-4o-mini", messages: [{ role: "user", content: "hello" }] }),
+    ).rejects.toThrow(/provider_credentials/);
+    if (previous !== undefined) process.env.OPENAI_API_KEY = previous;
+    if (previousPlatform !== undefined) process.env.PLATFORM_LLM_API_KEY = previousPlatform;
+  });
+});
+
 describe("ApiGatewayService.validatePermission", () => {
   it("validates permission logic via key hash", () => {
     const secret = "rtb_test_secret_key";

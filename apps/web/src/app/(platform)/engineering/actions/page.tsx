@@ -101,8 +101,8 @@ export default function ActionsPage() {
               reload();
             }}
           >
-            <Input placeholder="New action title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <Input id="action-title" placeholder="New action title" aria-label="Action title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <Input id="action-due" type="date" aria-label="Due date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             <Button type="submit" size="sm">
               Add
             </Button>

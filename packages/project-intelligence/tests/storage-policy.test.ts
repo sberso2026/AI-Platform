@@ -43,6 +43,6 @@ describe("storage policy", () => {
         fileName: "big.pdf",
         sizeBytes: DOCUMENT_MAX_UPLOAD_BYTES + 1,
       }),
-    ).toThrow(/maximum upload size/i);
+    ).toThrow(/25 MB pilot upload limit/i);
   });
 });

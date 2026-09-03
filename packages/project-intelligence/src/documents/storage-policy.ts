@@ -8,8 +8,9 @@ export const DOCUMENT_ALLOWED_MIME_TYPES = [
 
 export type DocumentAllowedMimeType = (typeof DOCUMENT_ALLOWED_MIME_TYPES)[number];
 
-/** Freeze default: 25 MiB unless Platform policy tightens. */
-export const DOCUMENT_MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+/** Pilot / freeze default: 25 MiB unless Platform policy tightens. */
+export const DOCUMENT_MAX_UPLOAD_MB = 25;
+export const DOCUMENT_MAX_UPLOAD_BYTES = DOCUMENT_MAX_UPLOAD_MB * 1024 * 1024;
 
 const EXTENSION_BY_MIME: Record<DocumentAllowedMimeType, readonly string[]> = {
   "application/pdf": [".pdf"],
@@ -46,7 +47,7 @@ export function validateDocumentStoragePolicy(
   if (!(DOCUMENT_ALLOWED_MIME_TYPES as readonly string[]).includes(mimeType)) {
     throw new DocumentIntelligenceError(
       "document_unsupported_file_type",
-      "Unsupported document MIME type",
+      "This file type is not supported. Use PDF, TXT, or DOCX.",
       422,
       { mimeType, allowed: DOCUMENT_ALLOWED_MIME_TYPES },
     );
@@ -57,7 +58,7 @@ export function validateDocumentStoragePolicy(
   if (extension && !EXTENSION_BY_MIME[allowed].includes(extension)) {
     throw new DocumentIntelligenceError(
       "document_unsupported_file_type",
-      "File extension does not match allowed MIME type",
+      "This file type is not supported. Use PDF, TXT, or DOCX.",
       422,
       { mimeType, extension },
     );
@@ -68,9 +69,10 @@ export function validateDocumentStoragePolicy(
   }
 
   if (input.sizeBytes > maxBytes) {
+    const maxMb = Math.round(maxBytes / (1024 * 1024));
     throw new DocumentIntelligenceError(
       "document_file_too_large",
-      "Document exceeds maximum upload size",
+      `This file exceeds the ${maxMb} MB pilot upload limit.`,
       422,
       { sizeBytes: input.sizeBytes, maxBytes },
     );

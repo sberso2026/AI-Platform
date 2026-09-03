@@ -40,7 +40,18 @@ describe("EOS-UX-2 enterprise presentation helpers", () => {
     expect(asset.some((s) => /condition/i.test(s.q))).toBe(true);
     const project = contextualAskStarters({ objectType: "project", projectId: "p1" });
     expect(project.some((s) => /attention/i.test(s.q))).toBe(true);
-    expect(describeAskContext({ objectType: "asset", objectId: "a1" })).toContain("Asset");
+    expect(describeAskContext({ objectType: "asset", objectId: "a1" })).toBe("Current Asset/Object");
+    expect(describeAskContext({
+      objectType: "document",
+      objectId: "008ff87c-ede6-4007-b94d-480ef54a77e0",
+      documentNumber: "AS 1755:1986",
+      documentTitle: "Conveyors - Safety requirements",
+      revision: "A",
+    })).toBe("AS 1755:1986 · Conveyors - Safety requirements · Revision A");
+    expect(describeAskContext({
+      objectType: "document",
+      objectId: "008ff87c-ede6-4007-b94d-480ef54a77e0",
+    })).toBe("Current Document");
   });
 });
 

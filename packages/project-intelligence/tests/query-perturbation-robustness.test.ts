@@ -458,6 +458,18 @@ describe("query perturbation robustness", () => {
     expect(selectedGold(control, NEEDS[0]!)).toBe(true);
     expect(selectedGold(perturbed, NEEDS[0]!)).toBe(true);
 
+    const absentQueries = [
+      "What is the allowable wind load on the mast arm of this standard?",
+      "What seismic design category applies to the control building?",
+      "What aircraft wing spar alloy is specified in this document?",
+      "What nuclear containment wall thickness is required?",
+      "What is the IEC 61850 busbar protection setting for this switchroom?",
+    ];
+    for (const query of absentQueries) {
+      const absent = await retrieve(query);
+      expect(absent.hits, query).toHaveLength(0);
+    }
+
     const retrievalFiles = [
       join(PRODUCTION_ROOT, "documents/query-plan.ts"),
       join(PRODUCTION_ROOT, "documents/retrieval-service.ts"),

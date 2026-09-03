@@ -14,6 +14,7 @@ import {
   EngineeringSearchService,
   EngineeringSettingsService,
 } from "./services/supporting-services";
+import type { DocumentBodyRetrievalProbe } from "./services/engineering-retrieval-service";
 import {
   EngineeringActivityService,
   EngineeringObjectFramework,
@@ -57,7 +58,8 @@ export interface EngineeringOS {
 
 export function createEngineeringOS(
   supabase: SupabaseClient,
-  kernel: PlatformKernel
+  kernel: PlatformKernel,
+  options?: { documentBodyRetriever?: DocumentBodyRetrievalProbe },
 ): EngineeringOS {
   const projects = new EngineeringProjectService(supabase, kernel);
   const assets = new EngineeringAssetService(supabase, kernel);
@@ -107,7 +109,7 @@ export function createEngineeringOS(
     { decisions, actions, risks, issues, technicalQueries, lessons },
     inspections,
   );
-  const ai = new EngineeringAIService(supabase, kernel, search);
+  const ai = new EngineeringAIService(supabase, kernel, search, options?.documentBodyRetriever);
   const dashboard = new EngineeringDashboardService(
     projects,
     assets,

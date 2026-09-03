@@ -1,15 +1,25 @@
 import { randomUUID } from "node:crypto";
-import {
-  AbortException,
-  InvalidPDFException,
-  PasswordException,
-  PDFParse,
-} from "pdf-parse";
+import { configurePdfJsWorker } from "./configure-pdfjs-worker";
 import { DocumentIntelligenceError, type DocumentIntelligenceErrorCode } from "./errors";
-import type { DocumentParseInput, ParsedDocument, ProjectIntelligenceDocumentParser } from "./parser";
-import { NativeTextDocumentParser } from "./parser";
+import { ensureNodeDomMatrix } from "./dom-matrix-polyfill";
+import {
+  NativeTextDocumentParser,
+  type DocumentParseInput,
+  type ParsedDocument,
+  type ParsedDocumentPage,
+  type ProjectIntelligenceDocumentParser,
+} from "./parser";
+import { segmentEngineeringPage } from "./engineering-text";
 
-function mapPdfParseError(error: unknown, correlationId: string): DocumentIntelligenceError {
+function isExceptionInstance(error: unknown, ctor: unknown): boolean {
+  return typeof ctor === "function" && error instanceof (ctor as new (...args: never[]) => object);
+}
+
+function mapPdfParseError(
+  error: unknown,
+  correlationId: string,
+  exceptions: { PasswordException?: unknown; AbortException?: unknown; InvalidPDFException?: unknown } = {},
+): DocumentIntelligenceError {
   if (error instanceof DocumentIntelligenceError) {
     return new DocumentIntelligenceError(error.code, error.message, error.statusCode, {
       ...error.details,
@@ -26,7 +36,7 @@ function mapPdfParseError(error: unknown, correlationId: string): DocumentIntell
   let safeMessage = "PDF text parser failed";
 
   if (
-    error instanceof PasswordException
+    isExceptionInstance(error, exceptions.PasswordException)
     || name === "PasswordException"
     || lower.includes("password")
   ) {
@@ -34,7 +44,7 @@ function mapPdfParseError(error: unknown, correlationId: string): DocumentIntell
     statusCode = 422;
     safeMessage = "PDF requires a password";
   } else if (
-    error instanceof AbortException
+    isExceptionInstance(error, exceptions.AbortException)
     || name === "AbortException"
     || lower.includes("timeout")
     || lower.includes("aborted")
@@ -43,7 +53,7 @@ function mapPdfParseError(error: unknown, correlationId: string): DocumentIntell
     statusCode = 504;
     safeMessage = "PDF text parser timed out";
   } else if (
-    error instanceof InvalidPDFException
+    isExceptionInstance(error, exceptions.InvalidPDFException)
     || name === "InvalidPDFException"
     || name === "FormatError"
     || lower.includes("invalid pdf")
@@ -54,9 +64,10 @@ function mapPdfParseError(error: unknown, correlationId: string): DocumentIntell
     safeMessage = "Invalid PDF";
   }
 
-  return new DocumentIntelligenceError(code, safeMessage, statusCode, {
+  return new DocumentIntelligenceError(code, `${safeMessage}${message ? `: ${message.slice(0, 180)}` : ""}`, statusCode, {
     correlationId,
     parserProvider: "pdf-text",
+    parserErrorName: name || undefined,
   });
 }
 
@@ -79,35 +90,45 @@ export class PdfDocumentParser implements ProjectIntelligenceDocumentParser {
       );
     }
 
+    ensureNodeDomMatrix();
+    const pdfParse = await import("pdf-parse");
+    const { PDFParse, AbortException, InvalidPDFException, PasswordException } = pdfParse;
+    await configurePdfJsWorker(PDFParse);
     const parser = new PDFParse({ data: Buffer.from(input.bytes) });
     try {
       const extracted = await parser.getText();
-      const text = (extracted.text ?? "").replace(/\n\n-- \d+ of \d+ --\n\n/g, "\n").trim();
-      const pageCount = Math.max(extracted.total ?? extracted.pages?.length ?? 1, 1);
-      const native = new NativeTextDocumentParser();
-      const asText = await native.parse({
-        ...input,
-        mimeType: "text/plain",
-        bytes: new TextEncoder().encode(text || " "),
-      });
-      const charsPerPage = text.length / pageCount;
-      const ocrLikely = text.length < 40 || charsPerPage < 20;
+      const pages = pdfPagesFromExtracted(extracted);
+      const combinedText = pages.map((page) => page.text).join("\n").trim();
+      const pageCount = Math.max(pages.length, extracted.total ?? 1, 1);
+      const charsPerPage = combinedText.length / pageCount;
+      const ocrLikely = combinedText.length < 40 || charsPerPage < 20;
+      const parsedPages: ParsedDocumentPage[] = pages.map((page) => ({
+        pageNumber: page.pageNumber,
+        text: page.text,
+        blocks: segmentEngineeringPage(page.text, page.pageNumber),
+      }));
       const warnings = [
-        ...asText.warnings,
         ...(ocrLikely ? ["insufficient_extracted_text:ocr_recommended"] : []),
+        ...(ocrLikely ? ["native_text_preferred_ocr_not_applied_silently"] : []),
         `correlation:${correlationId}`,
         ...(input.fileName ? [`fileName:${input.fileName}`] : []),
+        `pages:${parsedPages.length}`,
       ];
 
       return {
-        ...asText,
+        pages: parsedPages.length ? parsedPages : [{ pageNumber: 1, text: " ", blocks: [] }],
+        language: "en",
         parserProvider: this.provider,
         parserVersion: this.version,
-        confidence: ocrLikely ? 0.35 : Math.max(asText.confidence, 0.7),
+        confidence: ocrLikely ? 0.35 : parsedPages.some((page) => page.blocks.length > 0) ? 0.75 : 0.2,
         warnings,
       };
     } catch (error) {
-      throw mapPdfParseError(error, correlationId);
+      throw mapPdfParseError(error, correlationId, {
+        AbortException,
+        InvalidPDFException,
+        PasswordException,
+      });
     } finally {
       try {
         await parser.destroy();
@@ -149,3 +170,31 @@ export class DocxDocumentParser implements ProjectIntelligenceDocumentParser {
     };
   }
 }
+
+type PdfExtractedPage = { text?: string; num?: number; pageNumber?: number } | string;
+
+function pdfPagesFromExtracted(extracted: {
+  text?: string;
+  total?: number;
+  pages?: PdfExtractedPage[];
+}): Array<{ pageNumber: number; text: string }> {
+  const rawPages = extracted.pages;
+  if (Array.isArray(rawPages) && rawPages.length > 0) {
+    return rawPages.map((page, index) => {
+      if (typeof page === "string") {
+        return { pageNumber: index + 1, text: page.replace(/\n\n-- \d+ of \d+ --\n\n/g, "\n").trim() };
+      }
+      return {
+        pageNumber: Number(page.num ?? page.pageNumber ?? index + 1),
+        text: String(page.text ?? "").replace(/\n\n-- \d+ of \d+ --\n\n/g, "\n").trim(),
+      };
+    });
+  }
+  const concatenated = String(extracted.text ?? "").replace(/\n\n-- \d+ of \d+ --\n\n/g, "\n\f");
+  const split = concatenated.split(/\f/).map((page) => page.trim());
+  if (split.length > 1) {
+    return split.map((text, index) => ({ pageNumber: index + 1, text }));
+  }
+  return [{ pageNumber: 1, text: concatenated.trim() }];
+}
+

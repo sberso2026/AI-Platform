@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Button, Input, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@rtb/ui";
@@ -29,6 +29,18 @@ export default function LoginPage() {
   const [ssoMode, setSsoMode] = useState<"unknown" | "optional" | "required" | "none">(
     ssoRequired ? "required" : "unknown",
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.location.hash.includes("access_token")) return;
+    const supabase = createClient();
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        router.replace("/engineering");
+        router.refresh();
+      }
+    });
+  }, [router]);
 
   const domain = useMemo(() => {
     const at = email.lastIndexOf("@");

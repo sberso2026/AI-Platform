@@ -106,6 +106,7 @@ export interface EngineeringDocument {
   knowledge_node_id?: string;
   uploaded_by?: string;
   uploaded_at?: string;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
