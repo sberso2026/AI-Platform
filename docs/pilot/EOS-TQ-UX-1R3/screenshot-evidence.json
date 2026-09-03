@@ -1,0 +1,17 @@
+{
+  "host": "https://rtb-ai-platform-hz4jerb1p-rtbea.vercel.app",
+  "tqId": "7b7d2a91-670f-4cc6-adc0-0cd683486f91",
+  "tqNumber": "TQ-016",
+  "backVisible": true,
+  "newTqScroll": true,
+  "sectionsReachable": true,
+  "stickyVisible": true,
+  "submitVisible": true,
+  "submitReason": true,
+  "printButton": true,
+  "printBack": true,
+  "printScroll": true,
+  "columnFilters": true,
+  "activeFilters": true,
+  "vercelToolbarHidden": true
+}

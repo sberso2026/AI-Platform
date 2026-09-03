@@ -333,7 +333,7 @@ export default function NewTechnicalQueryPage() {
   return (
     <>
       <Header title="New Technical Query" description="Create a controlled technical query / RFI" />
-      <main className={`${TQ_SCROLL_MAIN} mx-auto max-w-5xl pb-28`} data-testid="tq-create">
+      <main className={`${TQ_SCROLL_MAIN} mx-auto max-w-5xl scroll-pb-28 pb-32`} data-testid="tq-create">
         <TqBackLink href={REGISTER_HREF} onNavigate={confirmLeave}>
           Back to Technical Queries
         </TqBackLink>
