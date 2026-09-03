@@ -63,10 +63,26 @@ export default function NewTechnicalQueryPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; company: string | null } | null>(null);
 
   useEffect(() => {
     if (projectId) setSelectedProjectId(projectId);
   }, [projectId]);
+
+  useEffect(() => {
+    fetch("/api/platform/current-user")
+      .then((r) => r.json())
+      .then((json: unknown) => {
+        const data = (json as Record<string, unknown>)?.data as Record<string, unknown> | undefined;
+        if (data) {
+          const fullName = typeof data.full_name === "string" ? data.full_name.trim() : null;
+          const email = typeof data.email === "string" ? data.email.trim() : null;
+          const company = typeof data.company === "string" ? data.company : null;
+          setCurrentUser({ name: fullName || email || "You", company });
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     fetch("/api/engineering/technical-queries/directory")
@@ -116,7 +132,6 @@ export default function NewTechnicalQueryPage() {
   }, []);
 
   const actionBy = people.find((person) => person.id === assignedTo);
-  const initiator = people[0];
   const selectedProjectName = projects.find((item) => item.id === selectedProjectId)?.name ?? "Current project";
 
   const body = useMemo(
@@ -327,8 +342,8 @@ export default function NewTechnicalQueryPage() {
               <div>
                 <p className="mb-1 text-xs font-medium text-slate-600">Initiator *</p>
                 <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                  Authenticated user (defaults to you)
-                  {initiator ? ` · ${initiator.name}` : ""}
+                  {currentUser ? currentUser.name : "Loading…"}
+                  {currentUser?.company ? ` · ${currentUser.company}` : ""}
                 </p>
               </div>
               <TqPersonSelect id="tq-action-by" label="Action By" value={assignedTo} people={people} onChange={setAssignedTo} />
@@ -462,7 +477,7 @@ export default function NewTechnicalQueryPage() {
             <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-xs uppercase text-slate-500">Initiator</dt>
-                <dd>Authenticated user</dd>
+                <dd>{currentUser ? currentUser.name : "You"}</dd>
               </div>
               <div>
                 <dt className="text-xs uppercase text-slate-500">Action By</dt>

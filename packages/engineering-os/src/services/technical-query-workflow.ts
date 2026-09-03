@@ -54,7 +54,7 @@ export function displayPersonName(input: {
   const name = input.fullName?.trim();
   if (name && !isRawUuid(name)) return name;
   const email = input.email?.trim();
-  if (email && email.includes("@")) return email.split("@")[0] ?? "Unknown person";
+  if (email && email.includes("@")) return email;
   if (input.fallback && !isRawUuid(input.fallback)) return input.fallback;
   return "Unknown person";
 }

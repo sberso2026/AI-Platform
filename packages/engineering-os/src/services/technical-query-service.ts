@@ -201,7 +201,18 @@ export class EngineeringTechnicalQueryService {
       .eq("workspace_id", workspaceId);
     if (error) return [];
     const ids = (data ?? []).map((row) => String((row as { user_id?: string }).user_id ?? "")).filter(Boolean);
-    return [...(await this.loadPeople(ids, workspaceId)).values()];
+    const people = [...(await this.loadPeople(ids, workspaceId)).values()];
+    // Filter to eligible assignable users: must have a real full_name (not a fixture/service account).
+    // Fixtures/service accounts typically lack a full_name or have metadata.is_fixture = true or
+    // metadata.disabled = true. We never delete them — just exclude from the selector.
+    return people.filter((person) => {
+      // Require a non-empty name that is not an email-style string (which indicates no full_name)
+      const name = person.name ?? "";
+      if (!name || name === "Unknown person") return false;
+      // If the resolved name looks like an email address, the profile has no full_name — exclude.
+      if (name.includes("@")) return false;
+      return true;
+    });
   }
 
   async create(commerce: CommerceExecutionContext, input: CreateTechnicalQueryInput) {
@@ -487,6 +498,7 @@ export class EngineeringTechnicalQueryService {
         metaPatch.accepted_by_user_id = actorUserId ?? null;
         eventSuffix = "accepted";
         eventTitle = `${existing.tq_number} accepted`;
+        notify = "accept";
         break;
       }
       case "close": {
@@ -589,8 +601,9 @@ export class EngineeringTechnicalQueryService {
     await this.recordEvent(data, eventSuffix, eventTitle, actorUserId);
     if (notify === "assigned") await this.notifyAssigned(data, actorUserId);
     if (notify === "review") await this.notifyReview(data, actorUserId);
-    if (notify === "clarification") await this.notifyAssigned(data, actorUserId, "Clarification requested");
-    if (notify === "closed") await this.notifyWatchers(data, `${data.tq_number} closed`);
+    if (notify === "clarification") await this.notifyAssigned(data, actorUserId, "Clarification requested — please resubmit your response");
+    if (notify === "accept") await this.notifyAccept(data, actorUserId);
+    if (notify === "closed") await this.notifyWatchers(data, `Technical Query ${data.tq_number} closed`);
 
     return this.presentAfterWrite(commerce, tenantId, data);
   }
@@ -970,37 +983,67 @@ export class EngineeringTechnicalQueryService {
 
   private async notifyAssigned(row: Record<string, unknown>, actorId?: string | null, title?: string) {
     const userId = asId(row.assigned_to) ?? asId(row.responder_id);
-    if (!userId || userId === actorId) return;
+    // Notify the recipient unless they themselves triggered the assignment.
+    if (!userId) return;
+    const tqNumber = String(row.tq_number ?? "");
+    const dueDate = typeof row.response_due === "string" || typeof row.due_date === "string"
+      ? String(row.response_due ?? row.due_date ?? "")
+      : null;
+    const notifyTitle = title
+      ? `${tqNumber}: ${title}`
+      : `Technical Query ${tqNumber} assigned to you`;
     await this.kernel?.notifications
       .create({
         tenantId: String(row.tenant_id),
         userId,
         type: "task.assigned",
-        title: title ?? `${row.tq_number} assigned to you`,
-        body: String(row.title ?? row.question ?? ""),
+        title: notifyTitle,
+        body: [String(row.title ?? row.question ?? ""), dueDate ? `Due ${dueDate}` : null].filter(Boolean).join(" · "),
         linkTarget: `/engineering/technical-queries/${row.id}`,
-        metadata: { tq_number: row.tq_number, object_type: "technical_query" },
+        metadata: { tq_number: row.tq_number, object_type: "technical_query", actor_id: actorId },
       })
       .catch(() => undefined);
   }
 
   private async notifyReview(row: Record<string, unknown>, actorId?: string | null) {
-    const userId = asId(row.requester_id);
-    if (!userId || userId === actorId) return;
+    // Notify the initiator (or reviewer if set) that a response is ready.
+    const metadata = metadataRecord(row.metadata);
+    const reviewerId = asId(metadata.reviewer_user_id);
+    const recipientId = reviewerId ?? asId(row.requester_id);
+    if (!recipientId) return;
+    const tqNumber = String(row.tq_number ?? "");
     await this.kernel?.notifications
       .create({
         tenantId: String(row.tenant_id),
-        userId,
+        userId: recipientId,
         type: "review.required",
-        title: `${row.tq_number} response submitted for review`,
+        title: `Technical Query ${tqNumber} response submitted for review`,
         body: String(row.title ?? ""),
         linkTarget: `/engineering/technical-queries/${row.id}`,
-        metadata: { tq_number: row.tq_number, object_type: "technical_query" },
+        metadata: { tq_number: row.tq_number, object_type: "technical_query", actor_id: actorId },
       })
       .catch(() => undefined);
   }
 
-  private async notifyWatchers(row: Record<string, unknown>, title: string) {
+  private async notifyAccept(row: Record<string, unknown>, actorId?: string | null) {
+    // Notify the responder / Action By that their response was accepted.
+    const userId = asId(row.assigned_to) ?? asId(row.responder_id);
+    if (!userId) return;
+    const tqNumber = String(row.tq_number ?? "");
+    await this.kernel?.notifications
+      .create({
+        tenantId: String(row.tenant_id),
+        userId,
+        type: "task.assigned",
+        title: `Technical Query ${tqNumber} response accepted`,
+        body: String(row.title ?? ""),
+        linkTarget: `/engineering/technical-queries/${row.id}`,
+        metadata: { tq_number: row.tq_number, object_type: "technical_query", actor_id: actorId },
+      })
+      .catch(() => undefined);
+  }
+
+  private async notifyWatchers(row: Record<string, unknown>, title: string, excludeId?: string | null) {
     const metadata = metadataRecord(row.metadata);
     const ids = new Set<string>();
     for (const key of [row.requester_id, row.assigned_to, metadata.reviewer_user_id, metadata.approver_user_id]) {
@@ -1012,14 +1055,16 @@ export class EngineeringTechnicalQueryService {
         if (typeof id === "string") ids.add(id);
       }
     }
+    const tqNumber = String(row.tq_number ?? "");
+    const notifyTitle = title.startsWith("Technical Query") ? title : `Technical Query ${tqNumber} ${title}`;
     await Promise.all(
-      [...ids].map((userId) =>
+      [...ids].filter((id) => id !== excludeId).map((userId) =>
         this.kernel?.notifications
           .create({
             tenantId: String(row.tenant_id),
             userId,
             type: "task.assigned",
-            title,
+            title: notifyTitle,
             body: String(row.title ?? ""),
             linkTarget: `/engineering/technical-queries/${row.id}`,
             metadata: { tq_number: row.tq_number, object_type: "technical_query" },
