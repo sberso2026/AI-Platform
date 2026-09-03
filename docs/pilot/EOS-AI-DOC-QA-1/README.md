@@ -3,6 +3,8 @@
 **Host:** https://eos-pilot.rtbea.com.au  
 **Preview only.** Production was not promoted. External users were not invited.
 
+Live Preview (this pack): `dpl_6ZmCfse53cmQyLFDTrFSP35bjSMB` / SHA `ffdcb1ec93dc98e916d8bf79739be2464596e1c3` until a follow-up docs deploy. Production remains `dpl_EF2DKHT59waxGKL28HSvGMpgtDBG`.
+
 ## A. Failure trace (pre-remediation)
 
 Both founder questions retrieved the 4.5 m body window, but **rank 1 was neighbouring clause (d) force (70 N / 230 N)**. The 4.5 m sentence was selected at fused rank 8. Generation ran (OpenAI) and answered the force requirement. Sufficiency did not abstain. Degraded mode was the previously observed UX when generation failed; this run showed wrong-fact generation instead.
@@ -35,6 +37,12 @@ Five authorised fixture documents, 256 supported questions, 50 unsupported. Spli
 
 Do not treat meeting intelligence, inspection AI, asset intelligence, or digital twin as certified by this ticket. Each needs its own evaluation pack.
 
+## Live founder (O)
+
+`live-qa.json`: ten mandatory cases PASS, including four lanyard/pull-wire formulations returning `4.5 m maximum`.
+
+`HYBRID_RETRIEVAL_PASS=false`
+
 ## Return
 
-See repository HEAD / Preview build identity after deployment. Founder acceptance is still required.
+`ENGINEERING_DOCUMENT_QA_ENGINE_CERTIFIED=false` — live founder regressions pass; offline N gates and blind holdout do not. Founder acceptance is still required.
