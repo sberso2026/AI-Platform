@@ -1,0 +1,243 @@
+{
+  "host": "https://eos-pilot.rtbea.com.au",
+  "results": [
+    {
+      "id": "guard",
+      "pass": true,
+      "ms": 10561,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 0 N minimum 9 mm minimum 1.5 mm minimum 1.5 mm minimum 3 mm minimum 1.5 mm minimum 1.5 mm minimum 3 mm minimum BASIS p-p0 p-p0 Nearby text: mesh, or equivalent construction, and shall be designed to prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. For mesh guards, 9 mm mesh shall be not less than 1.5 mm thick; 50 mm mesh shall be of not less than 3 mm wire thickness. prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. For mesh guards, 9 mm mesh shall guards shall be not less than 1.5 mm thick. For mesh guards, 9 mm mesh shall be not less than 1.5 mm thick; 50 mm mesh shall ",
+      "evidence": [
+        {
+          "page": 14,
+          "section": "p-p0",
+          "excerpt": "Nearby text: mesh, or equivalent construction, and shall be designed to prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. F"
+        },
+        {
+          "page": 14,
+          "section": "p-p0",
+          "excerpt": "Nearby text: mesh, or equivalent construction, and shall be designed to prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. F"
+        },
+        {
+          "page": 2,
+          "section": null,
+          "excerpt": "This Australian standard was prepared by Committee SF/25, Guarding of Conveyors. It was approved on behalf of the Council of the Standards Association of Australia on 25 November 1"
+        }
+      ]
+    },
+    {
+      "id": "guard_perturbed",
+      "pass": true,
+      "ms": 6329,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 0 N minimum 9 mm minimum 1.5 mm minimum 1.5 mm minimum 3 mm minimum 1.5 mm minimum 1.5 mm minimum 3 mm minimum BASIS p-p0 p-p0 Nearby text: mesh, or equivalent construction, and shall be designed to prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. For mesh guards, 9 mm mesh shall be not less than 1.5 mm thick; 50 mm mesh shall be of not less than 3 mm wire thickness. prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. For mesh guards, 9 mm mesh shall guards shall be not less than 1.5 mm thick. For mesh guards, 9 mm mesh shall be not less than 1.5 mm thick; 50 mm mesh shall ",
+      "evidence": [
+        {
+          "page": 14,
+          "section": "p-p0",
+          "excerpt": "Nearby text: mesh, or equivalent construction, and shall be designed to prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. F"
+        },
+        {
+          "page": 14,
+          "section": "p-p0",
+          "excerpt": "Nearby text: mesh, or equivalent construction, and shall be designed to prevent persons reaching into the danger area (see Sheet metal guards shall be not less than 1.5 mm thick. F"
+        },
+        {
+          "page": 2,
+          "section": null,
+          "excerpt": "This Australian standard was prepared by Committee SF/25, Guarding of Conveyors. It was approved on behalf of the Council of the Standards Association of Australia on 25 November 1"
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "pass": true,
+      "ms": 5086,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 600 mm minimum 600 mm minimum BASIS 4.2.1 A clear access platform or floor space of at least 600 mm wide shall be provided for maintenance purposes. 4.2.1 4.2.1 A clear access platform or floor space of at least 600 mm wide shall be provided for maintenance SOURCE AS 1755:1986 rev A · Clause 4.2.1 · Page 11 AS 1755:1986 rev A · Page 27 AS 1755:1986 rev A · Clause 4.1 · Page 11 LIMITATION: Advisory only. No autonomous engineering approval.",
+      "evidence": [
+        {
+          "page": 11,
+          "section": "4.2.1",
+          "excerpt": "4.2.1 A clear access platform or floor space of at least 600 mm wide shall be provided for maintenance purposes."
+        },
+        {
+          "page": 27,
+          "section": null,
+          "excerpt": "25 AS 1755—1986 SECTION 7. SPECIFIC REQUIREMENTS FOR BULK-HANDLING CONVEYORS 7.1 GENERAL. Conveyors designed for bulk hand- ling shall comply with the requirements of this Section "
+        },
+        {
+          "page": 11,
+          "section": "4.1 GENERAL. In areas where a conveyor or conveyor",
+          "excerpt": "4.1 GENERAL. In areas where a conveyor or conveyor system is installed, safe access platforms and safe servicing facilities shall be provided for the purpose of loading, unloading,"
+        }
+      ]
+    },
+    {
+      "id": "crossover",
+      "pass": false,
+      "ms": 4426,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 2 m. BASIS 4.3 4.3 4.3 Where a conveyor crosses a walkway, aisle or passageway and the lowest part of the conveyor or material or attachment is less than 2 m from the floor or walkway surface, a crossover or underpass shall be provided. SOURCE AS 1755:1986 rev A · Clause 4.3 · Page 11 LIMITATION: Advisory only. No autonomous engineering approval.",
+      "evidence": [
+        {
+          "page": 11,
+          "section": "4.3",
+          "excerpt": "4.3 Where a conveyor crosses a walkway, aisle or passageway and the lowest part of the conveyor or material or attachment is less than 2 m from the floor or walkway surface, a cros"
+        }
+      ]
+    },
+    {
+      "id": "lanyard_interval",
+      "pass": true,
+      "ms": 4094,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 4.5 m maximum 2.5 m maximum 30 m maximum 4.5 m maximum 4.5 m maximum 30 m maximum 30 m maximum BASIS (e) Supports for lanyards or pull wires shall be provided at intervals not exceeding 4.5 m. (a) Conveyors positioned within 2.5 m from the floor or normally accessible walkways or platforms shall have emergency-stop controls located at intervals not exceeding 30 m. (b) Readily accessible conveyors shall have emergency- stop controls located at intervals not exceeding 30 m. llowing: (e) Supports for lanyards or pull wires shall be provided at intervals not exceeding 4.5 m. llowing: (e) Supports for lanyards or pull wires shall be provided at intervals not exceeding 4.5 m. e walkways or ",
+      "evidence": [
+        {
+          "page": 13,
+          "section": "4.8.7.6(e)",
+          "excerpt": "4.8.7.6(e) 4.8.7.6 Lanyard or pull wire. Automatic lock-out manual reset stop controls which are operated by a lanyard or pull wire shall comply with the following: (e) Supports fo"
+        },
+        {
+          "page": 13,
+          "section": "4.8.7.6(e)",
+          "excerpt": "4.8.7.6(e) 4.8.7.6 Lanyard or pull wire. Automatic lock-out manual reset stop controls which are operated by a lanyard or pull wire shall comply with the following: (e) Supports fo"
+        },
+        {
+          "page": 12,
+          "section": "4.8.7.3(a)",
+          "excerpt": "4.8.7.3(a) 4.8.7.3 Emergency-stop controls. Provisions for emergency stopping of conveyors and conveyor systems by means of emergency-stop controls shall be as follows: (a) Conveyo"
+        }
+      ]
+    },
+    {
+      "id": "lanyard_force_midway",
+      "pass": true,
+      "ms": 4472,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 70 N maximum. BASIS (d) The force required to operate the lanyard or pull wire stop control shall not exceed the following: 70 N. SOURCE AS 1755:1986 rev A · Clause 4.8.7.6(d)(i) · Page 13 AS 1755:1986 rev A · Page 28 LIMITATION: Advisory only. No autonomous engineering approval.",
+      "evidence": [
+        {
+          "page": 13,
+          "section": "4.8.7.6(d)(i)",
+          "excerpt": "4.8.7.6(d)(i) (d) The force required to operate the lanyard or pull wire stop control shall not exceed the following: 70 N."
+        },
+        {
+          "page": 28,
+          "section": null,
+          "excerpt": "less than 50 percent. 8.4 ATTACHMENT POINTS FOR TOWING. Suitably designed points of attachment shall be provided for the towing of mobile conveyors. NOTE: Reference should be made "
+        }
+      ]
+    },
+    {
+      "id": "lanyard_force_axis",
+      "pass": true,
+      "ms": 4506,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 230 N maximum 750 N Applicable when inspec- tion panels are used in the top of the trunking which encloses the drag chain, a wire mesh screen shall be provided under the door or panel; such screen shall be designed. 12 mm 220 N Applicable when a guard is situated so that a person may climb or rest upon it, such guard shall be capable of sustaining a mass of 75 kg placed in any position upon it, together with a simultane. BASIS (d) The force required to operate the lanyard or pull wire stop control shall not exceed the following: 230 N. 7.7 7.7 7.7 Where inspec- tion panels are used in the top of the trunking which encloses the drag chain, a wire mesh screen shall be provided under the",
+      "evidence": [
+        {
+          "page": 13,
+          "section": "4.8.7.6(d)(ii)",
+          "excerpt": "4.8.7.6(d)(ii) (d) The force required to operate the lanyard or pull wire stop control shall not exceed the following: 230 N."
+        },
+        {
+          "page": 14,
+          "section": "p-p0",
+          "excerpt": "Guards shall not deflect more than 12 mm under a force of 450 N applied at any point on the guard over a square area of 50 mm side. Where a guard is situated so that a person may c"
+        },
+        {
+          "page": 27,
+          "section": "7.7",
+          "excerpt": "7.7 Where inspec- tion panels are used in the top of the trunking which encloses the drag chain, a wire mesh screen shall be provided under the door or panel; such screen shall be "
+        }
+      ]
+    },
+    {
+      "id": "lanyard_force_general",
+      "pass": true,
+      "ms": 5036,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER 70 N maximum. BASIS (d) The force required to operate the lanyard or pull wire stop control shall not exceed the following: 70 N. SOURCE AS 1755:1986 rev A · Clause 4.8.7.6(d)(i) · Page 13 AS 1755:1986 rev A · Clause 4.8.7.1 · Page 12 LIMITATION: Advisory only. No autonomous engineering approval.",
+      "evidence": [
+        {
+          "page": 13,
+          "section": "4.8.7.6(d)(i)",
+          "excerpt": "4.8.7.6(d)(i) (d) The force required to operate the lanyard or pull wire stop control shall not exceed the following: 70 N. 230 N."
+        },
+        {
+          "page": 12,
+          "section": "4.8.7.1 General. All conveyors and conveyor systems",
+          "excerpt": "4.8.7.1 General. All conveyors and conveyor systems is not electrically powered, provision shall be made for an appropriate stopping device. In addition, conveyors may be equipped "
+        }
+      ]
+    },
+    {
+      "id": "nut",
+      "pass": true,
+      "ms": 3637,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER DOCUMENT FACT: Section 3.4 Test Methods states that the required method is given in AS/NZS 4291.2.. BASIS Section 3.4 Test Methods The test methods for determining the mechanical properties of high-strength nuts shall be in accordance with AS/NZS 4291.2. SOURCE AS/NZS 1252:1996 rev A · Clause 3.4 · Page 1 AS/NZS 1252:1996 rev A · Page 1 AS/NZS 1252:1996 rev A · Clause 3.4 · Page 1 LIMITATION: Advisory only. No autonomous engineering approval.",
+      "evidence": [
+        {
+          "page": 1,
+          "section": "Section 3.4 Test Methods",
+          "excerpt": "Section 3.4 Test Methods The test methods for determining the mechanical properties of high-strength nuts shall be in accordance with AS/NZS 4291.2."
+        },
+        {
+          "page": 1,
+          "section": null,
+          "excerpt": "AS/NZS 1252:1996 High-strength steel bolts with associated nuts and washers for structural engineering"
+        },
+        {
+          "page": 1,
+          "section": "Section 3.4 Test Methods",
+          "excerpt": "Section 3.4 Test Methods"
+        }
+      ]
+    },
+    {
+      "id": "bolt",
+      "pass": true,
+      "ms": 3761,
+      "degraded": false,
+      "generationFailed": false,
+      "evidenceFallbackUsed": false,
+      "message": "ANSWER DOCUMENT FACT: Section 3.4 Test Methods where t is the tolerance and l' is the length used by the figure. A numerical M20 shank straightness tolerance cannot be derived solely from nominal diameter if the required l' is not established by the available evidence. BASIS Section 3.4 Test Methods where t is the tolerance and l' is the length used by the figure. A numerical M20 shank straightness tolerance cannot be derived solely from nominal diameter if the required l' is not established by the available evidence. SOURCE AS/NZS 1252:1996 rev A · Clause 3.4 · Page 1 AS/NZS 1252:1996 rev A · Figure 2.3 · Clause 2.3 · Page 1 LIMITATION: Advisory only. No autonomous engineering approval.",
+      "evidence": [
+        {
+          "page": 1,
+          "section": "Section 3.4 Test Methods",
+          "excerpt": "Section 3.4 Test Methods where t is the tolerance and l' is the length used by the figure. A numerical M20 shank straightness tolerance cannot be derived solely from nominal diamet"
+        },
+        {
+          "page": 1,
+          "section": "Figure 2.3 Tolerance on Straightness of High-Strength Steel Bolts",
+          "excerpt": "Figure 2.3 Tolerance on Straightness of High-Strength Steel Bolts Nearby text: This clause identifies the applicable standard. It does not reproduce the detailed test procedures co"
+        }
+      ]
+    }
+  ],
+  "FOUNDER_REGRESSION_PASS": false,
+  "QA_P50_MS": 4506,
+  "QA_P95_MS": 10561
+}
