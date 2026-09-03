@@ -71,7 +71,11 @@ export const POST = withEngineeringApi("technical-queries", async ({ ctx, commer
       correlationId,
     );
   }
-  const exists = await documentObjectExists(storage, objectPath);
+  let exists = await documentObjectExists(storage, objectPath);
+  for (let attempt = 0; !exists && attempt < 6; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    exists = await documentObjectExists(storage, objectPath);
+  }
   if (!exists) {
     return lifecycleErrorResponse(
       "document_storage_unavailable",

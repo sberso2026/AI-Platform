@@ -36,10 +36,7 @@ const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
 );
-const PNG2 = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR42mNkYGD4z8DAwMDAwMDAwAQACegD/QVG0O8AAAAASUVORK5CYII=",
-  "base64",
-);
+const PNG2 = readFileSync(resolve(OUT, "fixture-crack.png"));
 
 const LONG_QUERY = `<p>Cracks have been observed around the bund floor adjacent to the pipe penetration.</p>
 <p>Crack widths appear to vary across the affected area and require engineering confirmation of remaining capacity.</p>
@@ -119,7 +116,7 @@ function tokens(html) {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const imageIds = [...String(html ?? "").matchAll(/data-document-id=["']([0-9a-f-]{36})["']/gi)].map((m) => m[1]);
+  const imageIds = [...new Set([...String(html ?? "").matchAll(/data-document-id=["']([0-9a-f-]{36})["']/gi)].map((m) => m[1]))];
   const captions = [...String(html ?? "").matchAll(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi)].map((m) => m[1].replace(/<[^>]+>/g, "").trim());
   return { text, imageIds, captions };
 }
@@ -177,6 +174,7 @@ async function uploadPng(bytes, fileName) {
   const session = sessionRes.json?.data;
   if (!session?.signedUrl) return { ok: false, sessionRes };
   const put = await fetch(session.signedUrl, { method: "PUT", headers: { "Content-Type": "image/png" }, body: bytes });
+  await new Promise((r) => setTimeout(r, 800));
   const completeRes = await appFetch(founder.cookie, "/api/engineering/technical-queries/query-images/upload-complete", {
     method: "POST",
     body: JSON.stringify({
@@ -221,7 +219,6 @@ const imagePersistPass = Boolean(image1.complete?.documentId) &&
   String(reopened?.presentation?.query ?? "").includes(image1.complete.documentId) &&
   Boolean(image2.complete?.documentId) &&
   String(reopened?.presentation?.query ?? "").includes(image2.complete.documentId);
-const noDupImages = (String(reopened?.presentation?.query ?? "").match(new RegExp(image1.complete?.documentId ?? "none", "g")) ?? []).length <= 2;
 
 const afterList = await appFetch(founder.cookie, "/api/engineering/technical-queries");
 const afterItems = Array.isArray(afterList.json?.data) ? afterList.json.data : [];
@@ -240,6 +237,9 @@ if (canonicalAsset?.id) {
 
 const printTokens = tokens(reopened?.presentation?.query ?? saved?.presentation?.query ?? "");
 const printIntegrity = printTokens.text.includes("bund floor") && printTokens.imageIds.length >= 2 && printTokens.captions.length >= 2;
+const noDupImages = printTokens.imageIds.length === 2 &&
+  printTokens.imageIds.includes(image1.complete?.documentId) &&
+  printTokens.imageIds.includes(image2.complete?.documentId);
 
 const imgGet = await appFetch(founder.cookie, `/api/engineering/technical-queries/${tqId}/query-images/${image1.complete?.documentId ?? "missing"}`);
 const imgAuthPass = imgGet.status === 200 && (imgGet.headers.get("content-type") ?? "").includes("image/");
