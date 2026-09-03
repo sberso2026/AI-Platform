@@ -46,16 +46,26 @@ export function isRawUuid(value: unknown): boolean {
   return typeof value === "string" && UUID_RE.test(value.trim());
 }
 
+/** Returns true if the string looks like an email local-part (e.g. "silvestre.berso" or "john_doe"). */
+function isEmailLocalPart(value: string): boolean {
+  // No spaces, contains only word chars / dots / hyphens / underscores, and no capital letters that
+  // indicate a proper name like "Silvestre Berso". Treat as local-part if: no space AND all lowercase.
+  return /^[a-z0-9][a-z0-9._-]+$/.test(value) && !value.includes(" ");
+}
+
 export function displayPersonName(input: {
   fullName?: string | null;
   email?: string | null;
   fallback?: string | null;
 }): string {
   const name = input.fullName?.trim();
-  if (name && !isRawUuid(name)) return name;
+  // Accept full_name only when it is neither a raw UUID nor an email-local-part-style value.
+  if (name && !isRawUuid(name) && !isEmailLocalPart(name)) return name;
   const email = input.email?.trim();
+  // Use full email as fallback — never truncate to local-part.
   if (email && email.includes("@")) return email;
-  if (input.fallback && !isRawUuid(input.fallback)) return input.fallback;
+  const fb = input.fallback?.trim();
+  if (fb && !isRawUuid(fb) && !isEmailLocalPart(fb)) return fb;
   return "Unknown person";
 }
 
