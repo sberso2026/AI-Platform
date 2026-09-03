@@ -77,6 +77,8 @@ describe("EOS-TQ-UX-1R4 draft editing, hybrid asset, rich query", () => {
     expect(getImage).not.toContain("createSignedUrl");
     expect(complete).toContain("detectTqQueryImageMimeFromBytes");
     expect(complete).toContain("technical_query_attachment");
+    expect(complete).toContain("authorizeEngineeringSegment");
+    expect(getImage).toContain("authorizeEngineeringSegment");
     expect(complete).toContain("relationship: \"query_image\"");
     expect(complete).not.toContain("enqueueCanonicalDocumentIngestion");
   });

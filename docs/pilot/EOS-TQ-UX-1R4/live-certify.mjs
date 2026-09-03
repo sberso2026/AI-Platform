@@ -189,7 +189,7 @@ async function uploadPng(bytes, fileName) {
       engineeringProjectId: projectId,
     }),
   });
-  return { ok: put.ok && completeRes.status < 300, session, complete: completeRes.json?.data, completeRes, putStatus: put.status };
+  return { ok: put.ok && completeRes.status < 300, session, complete: completeRes.json?.data, completeRes, putStatus: put.status, sessionRes };
 }
 
 const image1 = await uploadPng(PNG, "bund-crack.png");
@@ -217,7 +217,10 @@ const persistencePass = String(saved?.presentation?.query ?? "").includes("Figur
 const reopenRes = await appFetch(founder.cookie, `/api/engineering/technical-queries/${tqId}`);
 const reopened = reopenRes.json?.data;
 const reopenPass = reopenRes.status === 200 && reopened?.presentation?.status === "draft" && reopened?.capabilities?.canEditDraft === true;
-const imagePersistPass = String(reopened?.presentation?.query ?? "").includes(image1.complete?.documentId ?? "x") && String(reopened?.presentation?.query ?? "").includes(image2.complete?.documentId ?? "y");
+const imagePersistPass = Boolean(image1.complete?.documentId) &&
+  String(reopened?.presentation?.query ?? "").includes(image1.complete.documentId) &&
+  Boolean(image2.complete?.documentId) &&
+  String(reopened?.presentation?.query ?? "").includes(image2.complete.documentId);
 const noDupImages = (String(reopened?.presentation?.query ?? "").match(new RegExp(image1.complete?.documentId ?? "none", "g")) ?? []).length <= 2;
 
 const afterList = await appFetch(founder.cookie, "/api/engineering/technical-queries");
@@ -346,7 +349,7 @@ const report = {
   createStatus: createRes.status,
   saveStatus: saveRes.status,
   submitStatus: submitRes.status,
-  image1: image1.complete ?? image1.completeRes?.json,
+  image1: image1.complete ?? { sessionStatus: image1.sessionRes?.status, complete: image1.completeRes?.json, putStatus: image1.putStatus },
   printTokens,
   auditTypes: auditEvents.map((e) => e.event_type),
   ...gates,

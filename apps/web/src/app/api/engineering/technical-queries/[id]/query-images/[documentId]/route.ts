@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withEngineeringApiParams } from "@/lib/commerce/engineering-api";
+import { authorizeEngineeringSegment, withEngineeringApiParams } from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 import {
   DOCUMENT_BUCKET,
@@ -23,7 +23,11 @@ export const GET = withEngineeringApiParams(
     if (!inHtml && !linked) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const document = await ctx.engineering.documents.get(commerce, ctx.tenantId, documentId);
+    const documentCommerce = await authorizeEngineeringSegment(ctx, "documents", "GET", correlationId);
+    if (!documentCommerce) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const document = await ctx.engineering.documents.get(documentCommerce, ctx.tenantId, documentId);
     if (!document?.file_path) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

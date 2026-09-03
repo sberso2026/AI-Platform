@@ -22,11 +22,7 @@ export const POST = withEngineeringApi("technical-queries", async ({ ctx, commer
   if (!tqId) {
     return lifecycleErrorResponse("invalid_request", "A technical query is required before inserting an image", 422, correlationId);
   }
-  const loaded = await ctx.engineering.technicalQueries.get(commerce, ctx.tenantId, tqId);
-  if (!loaded) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  const query = loaded.query as Record<string, unknown>;
+  const query = await ctx.engineering.technicalQueries.getForUpdate(commerce, ctx.tenantId, tqId);
   const privileged = ctx.roleSlug === "owner" || ctx.roleSlug === "admin" || ctx.roleSlug === "operator";
   const isInitiator = query.requester_id === ctx.userId || query.created_by === ctx.userId;
   if (String(query.status ?? "") !== "draft" || (!privileged && !isInitiator)) {

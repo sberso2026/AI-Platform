@@ -266,6 +266,11 @@ export class EngineeringTechnicalQueryService {
     return this.decoratePresented(commerce, tenantId, loaded.query as Record<string, unknown>, loaded.comments);
   }
 
+  async getForUpdate(commerce: CommerceExecutionContext, tenantId: string, id: string) {
+    assertEngineeringService(commerce, "technical_query.update", tenantId);
+    return this.requireRow(commerce, tenantId, id);
+  }
+
   async listDirectory(commerce: CommerceExecutionContext, tenantId: string) {
     assertEngineeringService(commerce, "technical_query.list", tenantId);
     const workspaceId = workspaceScopeId(commerce);
