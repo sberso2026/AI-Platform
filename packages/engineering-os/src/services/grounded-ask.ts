@@ -37,7 +37,8 @@ import {
   EngineeringIntelligenceService,
 } from "../phase-e9/invocation";
 import { EngineeringRetrievalService } from "./engineering-retrieval-service";
-import { formatGeneratedDocumentAnswer, isDocumentBodyEvidence } from "./document-grounded-answer";
+import { formatGeneratedDocumentAnswer, isDocumentBodyEvidence, buildDocumentQaPresentation } from "./document-grounded-answer";
+import { verifyClaimsAgainstEvidence } from "./claim-verification";
 
 export const ENGINEERING_AI_DEGRADED_USER_MESSAGE =
   "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning.";
@@ -233,8 +234,8 @@ export async function runGroundedEngineeringAsk(input: {
                     message: [
                       "You refine an evidence-grounded engineering finding.",
                       "Answer ONLY using the authorised evidence below. Do not invent standards, revisions, approvals, calculations, or citations.",
-                      "Return a concise answer, then Why?, then Sources with page / clause / section / figure when present.",
-                      "Classify each claim as FACT, INFERENCE, ASSUMPTION, or MISSING EVIDENCE.",
+                      "Return ANSWER, BASIS, and SOURCE only.",
+                      "Answer the asked property only. Do not add unrelated requirements from neighbouring clauses.",
                       "This is advisory only. No autonomous engineering approval.",
                       "Do not expose chain-of-thought or platform internals.",
                       `Mode: ${mode}`,
@@ -297,11 +298,27 @@ export async function runGroundedEngineeringAsk(input: {
       ...new Set([...answer.limitations, ...reasoning.limitations]),
     ];
     if (lastGenerateMeta?.content?.trim() && isDocumentBodyEvidence(reasoning.evidence)) {
-      reasoning.answer = formatGeneratedDocumentAnswer({
-        generated: reasoning.answer,
+      const evidenceText = reasoning.evidence.map((item) => item.excerpt).join("\n");
+      const verified = verifyClaimsAgainstEvidence(lastGenerateMeta.content, evidenceText);
+      const presentation = buildDocumentQaPresentation({
         query: input.query.query,
         evidence: reasoning.evidence,
       });
+      if (verified.unsupportedRequirementRate > 0 && presentation.mode === "structured") {
+        reasoning.answer = [
+          `ANSWER\n${presentation.answer}`,
+          `BASIS\n${presentation.basis}`,
+          presentation.sources.length ? `SOURCE\n${presentation.sources.join("\n")}` : "",
+          "LIMITATION: Advisory only. No autonomous engineering approval.",
+        ].filter(Boolean).join("\n\n");
+        answer.limitations.push("unsupported_claims_removed_structured_fallback");
+      } else {
+        reasoning.answer = formatGeneratedDocumentAnswer({
+          generated: reasoning.answer,
+          query: input.query.query,
+          evidence: reasoning.evidence,
+        });
+      }
     }
     answer.answer = reasoning.answer;
     message = reasoning.answer;
@@ -341,27 +358,44 @@ export async function runGroundedEngineeringAsk(input: {
     }
   }
 
+  let evidenceFallbackUsed = false;
   if (generationFailed) {
-    answer.limitations.push(
-      answer.evidence.length > 0
-        ? "generation_failed_retrieval_shown"
-        : "AI generation unavailable; returned retrieval-grounded answer without fabricated fallback.",
-    );
-    retrievalMode = "retrieval_only";
-    if (answer.evidence.length > 0) {
-      const body = (reasoning?.answer ?? answer.answer ?? "").trim();
-      message = body
-        ? `${ENGINEERING_AI_DEGRADED_USER_MESSAGE}\n\n${body}`
-        : ENGINEERING_AI_DEGRADED_USER_MESSAGE;
-    } else if (!reasoning) {
-      message = answer.answer;
+    const presentation = isDocumentBodyEvidence(answer.evidence)
+      ? buildDocumentQaPresentation({ query: input.query.query, evidence: answer.evidence })
+      : null;
+    if (presentation && presentation.mode !== "abstain" && answer.evidence.length > 0) {
+      evidenceFallbackUsed = true;
+      generationFailed = false;
+      retrievalMode = retrievalMode === "retrieval_only" ? "lexical" : retrievalMode;
+      answer.limitations.push("generation_failed_structured_answer_used");
+      message = [
+        `ANSWER\n${presentation.answer}`,
+        `BASIS\n${presentation.basis}`,
+        presentation.sources.length ? `SOURCE\n${presentation.sources.join("\n")}` : "",
+      ].filter(Boolean).join("\n\n");
+      answer.answer = message;
+    } else {
+      answer.limitations.push(
+        answer.evidence.length > 0
+          ? "generation_failed_retrieval_shown"
+          : "AI generation unavailable; returned retrieval-grounded answer without fabricated fallback.",
+      );
+      retrievalMode = "retrieval_only";
+      if (answer.evidence.length > 0) {
+        const body = (reasoning?.answer ?? answer.answer ?? "").trim();
+        message = body
+          ? `${ENGINEERING_AI_DEGRADED_USER_MESSAGE}\n\n${body}`
+          : ENGINEERING_AI_DEGRADED_USER_MESSAGE;
+      } else if (!reasoning) {
+        message = answer.answer;
+      }
     }
   }
 
   // E7: fold memory provenance into Why? after reasoning
   if (reasoning && memoryHits.length) {
     reasoning = applyMemoryToReasoning(reasoning, memoryHits);
-    message = reasoning.answer;
+    if (!evidenceFallbackUsed) message = reasoning.answer;
     answer.limitations = [
       ...new Set([...answer.limitations, ...reasoning.limitations]),
     ];
@@ -370,7 +404,7 @@ export async function runGroundedEngineeringAsk(input: {
   // E9: fold certified intelligence into Why?
   if (reasoning && intelligenceResults.length) {
     reasoning = applyIntelligenceToReasoning(reasoning, intelligenceResults);
-    message = reasoning.answer;
+    if (!evidenceFallbackUsed) message = reasoning.answer;
     answer.limitations = [
       ...new Set([...answer.limitations, ...reasoning.limitations]),
     ];
@@ -479,7 +513,7 @@ export async function runGroundedEngineeringAsk(input: {
       ...answer,
       answer: message,
       generationAvailable,
-      retrievalMode: generationFailed || reasoning?.degradedToRetrievalOnly
+      retrievalMode: !evidenceFallbackUsed && (generationFailed || reasoning?.degradedToRetrievalOnly)
         ? "retrieval_only"
         : retrievalMode,
       limitations: answer.limitations,
@@ -490,7 +524,7 @@ export async function runGroundedEngineeringAsk(input: {
     scope: answer.scope,
     limitations: answer.limitations,
     retrievalMode:
-      generationFailed || reasoning?.degradedToRetrievalOnly
+      !evidenceFallbackUsed && (generationFailed || reasoning?.degradedToRetrievalOnly)
         ? "retrieval_only"
         : retrievalMode,
     reasoning,
@@ -506,7 +540,7 @@ export async function runGroundedEngineeringAsk(input: {
       evidenceState: reasoning?.evidenceState ?? answer.evidenceState,
       scope: answer.scope,
       retrievalMode:
-        generationFailed || reasoning?.degradedToRetrievalOnly
+        !evidenceFallbackUsed && (generationFailed || reasoning?.degradedToRetrievalOnly)
           ? "retrieval_only"
           : retrievalMode,
       retrievalMs: search.timingMs.retrievalMs,
@@ -516,6 +550,7 @@ export async function runGroundedEngineeringAsk(input: {
       semanticAvailable: search.timingMs.semanticAvailable,
       generationAvailable,
       generationFailed,
+      evidenceFallbackUsed,
       generationFailureLayer,
       generationFailureCause,
       generationProvider,
@@ -533,7 +568,9 @@ export async function runGroundedEngineeringAsk(input: {
       evidenceAssemblyMs: reasoning?.timingMs.evidenceAssemblyMs ?? null,
       reasoningMs: reasoning?.timingMs.reasoningMs ?? null,
       reasoningTotalMs: reasoning?.timingMs.totalMs ?? null,
-      degradedToRetrievalOnly: reasoning?.degradedToRetrievalOnly ?? generationFailed,
+      degradedToRetrievalOnly: evidenceFallbackUsed
+        ? false
+        : reasoning?.degradedToRetrievalOnly ?? generationFailed,
       chainOfThoughtExposed: false,
       toolId: toolResult?.toolId ?? null,
       toolVersion: toolResult?.toolVersion ?? null,

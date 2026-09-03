@@ -21,10 +21,14 @@ const PROPERTY_VARIANTS: Record<string, readonly string[]> = {
   thickness: ["thickness", "thick"],
   length: ["length", "long"],
   diameter: ["diameter"],
-  clearance: ["clearance"],
+  clearance: ["clearance", "headroom"],
   temperature: ["temperature"],
   pressure: ["pressure"],
   speed: ["speed"],
+  interval: ["interval", "intervals", "spacing", "spaced", "space", "apart", "distance"],
+  illuminance: ["illuminance", "lux"],
+  slope: ["slope", "degrees"],
+  duration: ["duration", "minutes"],
 };
 
 export function termSearchVariants(term: string): string[] {
@@ -36,7 +40,8 @@ export function termSearchVariants(term: string): string[] {
 export function contentContainsTerm(content: string, term: string): boolean {
   const hay = content;
   if (term === "minimum" && /not\s+less\s+than|at\s+least/i.test(hay)) return true;
-  if (term === "maximum" && /not\s+more\s+than|not\s+exceed/i.test(hay)) return true;
+  if (term === "maximum" && /not\s+more\s+than|not\s+exceed(?:ing)?/i.test(hay)) return true;
+  if (term === "interval" && /how far|apart|spacing|spaced/i.test(hay)) return true;
   const candidates = PROPERTY_VARIANTS[term] ?? [term];
   return candidates.some((candidate) => {
     const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -98,19 +103,28 @@ export function contentContainsEntity(content: string, entity: string): boolean 
   return parts.every((part) => contentContainsTerm(content, part));
 }
 
-export function excerptAroundQuery(content: string, query: string, maxChars = 420): string {
+export function excerptAroundQuery(
+  content: string,
+  query: string,
+  maxChars = 420,
+  weightedTerms: readonly string[] = [],
+): string {
   const compact = content.replace(/\s+/g, " ").trim();
   if (compact.length <= maxChars) return compact;
   const terms = engineeringQueryTerms(query).filter((term) => !GENERIC_ENGINEERING_TERMS.has(term));
-  if (terms.length === 0) return compact.slice(0, maxChars);
+  if (terms.length === 0 && weightedTerms.length === 0) return compact.slice(0, maxChars);
   const lower = compact.toLowerCase();
   let bestStart = 0;
   let bestScore = -1;
   const step = 24;
   const last = Math.max(0, compact.length - maxChars);
+  const weights = new Set(weightedTerms.map((term) => term.toLowerCase()));
   for (let start = 0; start <= last; start += step) {
     const window = lower.slice(start, start + maxChars);
-    const score = terms.reduce((sum, term) => sum + (contentContainsTerm(window, term) ? (term.length >= 5 ? 2 : 1) : 0), 0);
+    const score = [...new Set([...terms, ...weightedTerms])].reduce((sum, term) => {
+      if (!contentContainsTerm(window, term)) return sum;
+      return sum + (weights.has(term.toLowerCase()) ? 6 : term.length >= 5 ? 2 : 1);
+    }, 0);
     if (score > bestScore) {
       bestScore = score;
       bestStart = start;
@@ -147,12 +161,8 @@ export function isLexicallyRelevantEvidence(
       return !words.some((word) => LIGHT_VERBS.has(word));
     });
   if (entityPhrases.length > 0) {
-    const topicHit = contentContainsEntity(content, entityPhrases[0]!);
-    const supportHit = entityPhrases.slice(1).some((entity) => (
-      entityEvidenceNeedles(entity).length >= 2
-      && contentContainsEntity(content, entity)
-    ));
-    if (!topicHit && !supportHit) return false;
+    const topicHit = entityPhrases.some((entity) => contentContainsEntity(content, entity));
+    if (!topicHit) return false;
   }
   if (specific.some((term) => /\d/.test(term))) return true;
   if (specific.length >= 2) return true;
@@ -172,7 +182,8 @@ export function rerankHitsByQueryOverlap<T extends { chunk: { content: string; s
   return hits
     .map((hit) => {
       const overlap = lexicalOverlap(`${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`, terms);
-      const blended = Math.min(1, hit.score * 0.35 + overlap.score * 0.65);
+      const fusedNorm = hit.score > 1 ? Math.min(1, hit.score / 4) : Math.max(0, hit.score);
+      const blended = fusedNorm * 0.3 + overlap.score * 0.7;
       return { hit: { ...hit, score: blended }, overlap };
     })
     .filter((row) => isLexicallyRelevantEvidence(

@@ -4,6 +4,12 @@ import type { DocumentCitation } from "./types";
 import { DocumentIntelligenceError } from "./errors";
 import { excerptAroundQuery, lexicalOverlap, rerankHitsByQueryOverlap } from "./lexical-overlap";
 import { planEngineeringQuery, queryPlanToDiagnostic, type EngineeringQueryPlan } from "./query-plan";
+import {
+  classifyEvidenceRelevance,
+  relevanceRankBoost,
+  selectGenerationEvidence,
+  type EvidenceRelevanceClass,
+} from "./evidence-relevance";
 
 export interface RetrievalAuthorization {
   tenantId: string;
@@ -39,6 +45,7 @@ export interface RetrievalCandidateTrace {
   threshold: number;
   selected: boolean;
   rejectionReason: string | null;
+  relevance?: EvidenceRelevanceClass | null;
 }
 
 export interface RetrievalResult {
@@ -83,15 +90,16 @@ function diversify(hits: readonly DocumentIndexHit[], limit: number): DocumentIn
   return selected;
 }
 
-function toCitation(hit: DocumentIndexHit, query: string): DocumentCitation {
+function toCitation(hit: DocumentIndexHit, query: string, plan?: EngineeringQueryPlan): DocumentCitation {
   const meta = hit.chunk.metadata ?? {};
+  const weighted = [...(plan?.properties ?? []), ...(plan?.constraints ?? [])];
   return {
     engineeringDocumentId: hit.chunk.engineeringDocumentId,
     revision: hit.chunk.revision,
     pageStart: hit.chunk.pageStart,
     pageEnd: hit.chunk.pageEnd,
     sectionPath: hit.chunk.sectionPath,
-    excerpt: excerptAroundQuery(hit.chunk.content, query),
+    excerpt: excerptAroundQuery(hit.chunk.content, query, 420, weighted),
     evidenceScore: hit.score,
     chunkId: hit.chunk.stableChunkId,
     sourceCoordinates: {
@@ -268,8 +276,21 @@ export class ProjectIntelligenceDocumentRetrievalService {
     const rankedById = new Map(ranked.map((hit) => [hit.chunk.stableChunkId, hit.score]));
     const rankedIds = new Set(ranked.map((hit) => hit.chunk.stableChunkId));
     const uniqueRanked = uniqueChunkWindows(ranked, ranked.length);
-    const evidenceLimit = sameDocument ? Math.min(limit, 6) : limit;
-    const combined = sameDocument ? uniqueRanked.slice(0, evidenceLimit) : diversify(ranked, limit);
+    const classified = uniqueRanked
+      .map((hit) => {
+        const relevance = classifyEvidenceRelevance(`${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`, plan);
+        return {
+          hit: { ...hit, score: hit.score + relevanceRankBoost(relevance) },
+          relevance,
+        };
+      })
+      .sort((a, b) => b.hit.score - a.hit.score);
+    const evidenceLimit = sameDocument ? Math.min(limit, 4) : limit;
+    const generationRows = sameDocument
+      ? selectGenerationEvidence(classified, evidenceLimit)
+      : classified.slice(0, evidenceLimit);
+    const combinedHits = generationRows.map((row) => row.hit);
+    const combined = sameDocument ? combinedHits : diversify(combinedHits, limit);
     const filtered = sameDocument
       ? combined.filter((hit) => hit.score > 0)
       : combined.filter((hit) => hit.score >= threshold);
@@ -283,6 +304,7 @@ export class ProjectIntelligenceDocumentRetrievalService {
         row.chunk.stableChunkId !== hit.chunk.stableChunkId
         && isDuplicateProvenance(row, hit)
       ));
+      const relevance = classifyEvidenceRelevance(`${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`, plan);
       return {
         rank: index + 1,
         chunkId: hit.chunk.stableChunkId,
@@ -300,14 +322,19 @@ export class ProjectIntelligenceDocumentRetrievalService {
         selected: selectedIds.has(hit.chunk.stableChunkId),
         rejectionReason: duplicate && !selectedIds.has(hit.chunk.stableChunkId)
           ? "duplicate_provenance"
-          : rejectionReason({ hit, selectedIds, rankedIds, threshold, sameDocument }),
+          : relevance === "IRRELEVANT"
+            ? "irrelevant_to_asked_property"
+            : relevance === "CONTEXTUAL" && !selectedIds.has(hit.chunk.stableChunkId)
+              ? "contextual_not_selected"
+            : rejectionReason({ hit, selectedIds, rankedIds, threshold, sameDocument }),
+        relevance,
       };
     });
-    const uniqueFusion = uniqueRanked.map((hit) => fused.find((row) => row.chunk.stableChunkId === hit.chunk.stableChunkId)?.score ?? hit.score);
+    const uniqueFusion = classified.map((row) => row.hit.score);
     const rank1Margin = uniqueFusion.length >= 2
       ? (uniqueFusion[0] ?? 0) - (uniqueFusion[1] ?? 0)
       : uniqueFusion.length === 1 ? (uniqueFusion[0] ?? 0) : null;
-    const citations = filtered.map((hit) => toCitation(hit, plan.normalizedQuery));
+    const citations = filtered.map((hit) => toCitation(hit, plan.normalizedQuery, plan));
 
     return {
       hits: filtered,

@@ -169,7 +169,12 @@ async function retrieveDocumentBody(query: EngineeringSearchQuery) {
             section: hit.chunk.sectionPath,
             chunkId: hit.chunk.stableChunkId,
           }),
-          excerpt: excerptAroundQuery(hit.chunk.content, result.queryPlan?.normalizedQuery ?? query.query),
+          excerpt: excerptAroundQuery(
+            hit.chunk.content,
+            result.queryPlan?.normalizedQuery ?? query.query,
+            420,
+            [...(result.queryPlan?.properties ?? []), ...(result.queryPlan?.constraints ?? [])],
+          ),
           retrievalScore: Math.round((hit.score ?? 0) * 1000),
           provenance: "engineering_os_native",
           permissionsApplied: true,

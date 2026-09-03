@@ -249,32 +249,33 @@ export function presentAskAnswer(input: {
   abstained?: boolean;
   query?: string | null;
 }): { answer: string; why: string } {
-  const stripped = input.content.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+  const raw = input.content.replace(/\*\*/g, "").trim();
   if (input.abstained) {
     return {
-      answer: stripped.split(/(?<=\.)\s/)[0] || stripped,
+      answer: raw.replace(/\s+/g, " ").split(/(?<=\.)\s/)[0] || raw,
       why: "No authorised excerpt in the current document supports this question.",
     };
   }
+  const block = (label: string) => {
+    const match = raw.match(new RegExp(`(?:^|\\n)${label}\\s*\\n([\\s\\S]+?)(?=\\n(?:ANSWER|BASIS|SOURCE|WHY|LIMITATION|LIMITATIONS)\\b|$)`, "i"));
+    return match?.[1]?.replace(/\s+/g, " ").trim() ?? "";
+  };
+  const answerBlock = block("ANSWER");
+  const basisBlock = block("BASIS") || block("WHY");
+  if (answerBlock) {
+    return {
+      answer: answerBlock,
+      why: basisBlock || input.whyFinding?.replace(/\s+/g, " ").trim() || "",
+    };
+  }
+  const stripped = raw.replace(/\s+/g, " ");
   const answerMatch = stripped.match(/answer:\s*(.+?)(?=\swhy:|\ssources|\slimitations|$)/i);
   const whyMatch = stripped.match(/why[?:]?\s*(.+?)(?=\ssources|\slimitations|$)/i);
   const generated = (answerMatch?.[1] ?? stripped).trim();
-  const quantity = (input.excerpt ?? "").match(/(\d+(?:\.\d+)?)\s*(mm|m|kPa|MPa|lux|dB(?:\(A\))?|degrees|m\/s)/i);
-  const topic = (input.query ?? "")
-    .replace(/[?]/g, "")
-    .replace(/^(please\s+)?(what is|tell me|find|identify|confirm|how)\s+/i, "")
-    .replace(/^(the|a|an)\s+/i, "")
-    .trim();
-  const groundedQuantity = quantity && generated.includes(quantity[1])
-    ? `${topic.charAt(0).toUpperCase()}${topic.slice(1)}: ${quantity[1]} ${quantity[2]}`.replace(/\s+/g, " ")
-    : null;
-  const answer = (groundedQuantity && topic.length >= 8 && topic.length <= 90
-    ? groundedQuantity
-    : generated.length > 280
-      ? (generated.match(/^(.+?[.!?])(?:\s|$)/)?.[1] ?? generated.slice(0, 240).trim())
-      : generated
-  ).trim();
-  const why = (input.whyFinding || whyMatch?.[1] || "")
+  const answer = generated.length > 280
+    ? (generated.match(/^(.+?[.!?])(?:\s|$)/)?.[1] ?? generated.slice(0, 240).trim())
+    : generated;
+  const why = (basisBlock || input.whyFinding || whyMatch?.[1] || "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 420);

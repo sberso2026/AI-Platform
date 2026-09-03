@@ -663,7 +663,7 @@ export function AskEngineeringShell({
                               </div>
                               {presented.why ? (
                                 <div data-testid="ask-why-panel">
-                                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Why</p>
+                                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Basis</p>
                                   <p className="mt-1 text-sm text-slate-800" data-testid="ask-why-finding">
                                     {presented.why}
                                   </p>
@@ -726,7 +726,7 @@ export function AskEngineeringShell({
                   </p>
 
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Evidence</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Source</p>
                     {(message.evidence?.length ?? 0) > 0 ? (
                       <ul className="mt-1 space-y-2" data-testid="ask-evidence-list">
                         {message.evidence!.map((ev) => (

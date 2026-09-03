@@ -81,6 +81,10 @@ const USER_LIMITATION_ALIASES: Array<{ match: RegExp; user: string }> = [
     user: "Similarity search is temporarily unavailable; keyword search was used.",
   },
   {
+    match: /generation_failed_structured_answer_used/i,
+    user: "",
+  },
+  {
     match: /AI generation unavailable|generation_failed_retrieval_shown|generation failed/i,
     user: "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning.",
   },
@@ -92,7 +96,7 @@ export function presentAskLimitations(limitations: string[]): { user: string[]; 
   for (const limitation of limitations) {
     const alias = USER_LIMITATION_ALIASES.find((entry) => entry.match.test(limitation));
     if (alias) {
-      if (!user.includes(alias.user)) user.push(alias.user);
+      if (alias.user && !user.includes(alias.user)) user.push(alias.user);
       details.push(limitation);
       continue;
     }

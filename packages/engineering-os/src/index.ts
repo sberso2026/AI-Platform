@@ -56,10 +56,13 @@ export {
 } from "./services/engineering-evidence";
 export {
   buildDocumentGroundedAnswer,
+  buildDocumentQaPresentation,
   formatDocumentCitation,
   formatGeneratedDocumentAnswer,
   isDocumentBodyEvidence,
 } from "./services/document-grounded-answer";
+export { extractNormativeFacts, selectDirectFact } from "./services/normative-extraction";
+export { verifyClaimsAgainstEvidence } from "./services/claim-verification";
 export { runGroundedEngineeringAsk } from "./services/grounded-ask";
 export {
   EngineeringObjectFramework,

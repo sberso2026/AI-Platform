@@ -6,6 +6,7 @@ export {
 } from "./documents/retrieval-service";
 export { excerptAroundQuery } from "./documents/lexical-overlap";
 export { planEngineeringQuery, queryPlanToDiagnostic } from "./documents/query-plan";
+export { classifyEvidenceRelevance, selectGenerationEvidence } from "./documents/evidence-relevance";
 export {
   tryCreateGovernedEmbeddingAdapter,
   UnavailableEmbeddingAdapter,
