@@ -49,11 +49,68 @@ export type ConnectorRetrievalProbe = {
   timeoutMs?: number;
 };
 
+export type DocumentBodyRetrievalResult = {
+  evidence: EngineeringEvidence[];
+  limitations: string[];
+  diagnosticLimitations?: string[];
+  retrievalMode?: EngineeringRetrievalMode;
+  semanticConfigured?: boolean;
+  ingestionState?: string;
+  pagesIndexed?: number;
+};
+
+export type DocumentBodyRetrievalProbe = {
+  retrieve?: (query: EngineeringSearchQuery) => Promise<DocumentBodyRetrievalResult | null>;
+};
+
+const USER_LIMITATION_ALIASES: Array<{ match: RegExp; user: string }> = [
+  {
+    match: /semantic embeddings not configured/i,
+    user: "Keyword search is being used for this answer.",
+  },
+  {
+    match: /document content\/body is unavailable|metadata-only search applied/i,
+    user: "This document's source text is not searchable yet. Indexing may still be running, or only the register entry exists.",
+  },
+  {
+    match: /document body text extraction is not part/i,
+    user: "This document's source text is not searchable yet.",
+  },
+  {
+    match: /semantic retrieval unavailable/i,
+    user: "Similarity search is temporarily unavailable; keyword search was used.",
+  },
+  {
+    match: /AI generation unavailable|generation_failed_retrieval_shown|generation failed/i,
+    user: "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning.",
+  },
+];
+
+export function presentAskLimitations(limitations: string[]): { user: string[]; details: string[] } {
+  const user: string[] = [];
+  const details: string[] = [];
+  for (const limitation of limitations) {
+    const alias = USER_LIMITATION_ALIASES.find((entry) => entry.match.test(limitation));
+    if (alias) {
+      if (!user.includes(alias.user)) user.push(alias.user);
+      details.push(limitation);
+      continue;
+    }
+    if (/^document_body|^document_ingestion_|^lexical_hits:|^vector_hits:|^embeddings_configured:|^retrieval_trace:|^vector_attempted:|^rank1_margin:|^query_plan:|^candidate:|^semantic_embeddings|^E3 |^E4 |^E5 |^Connector /i.test(limitation)) {
+      details.push(limitation);
+      continue;
+    }
+    user.push(limitation);
+  }
+  return { user, details };
+}
+
 export class EngineeringRetrievalService {
   constructor(
     private readonly search: EngineeringSearchLike,
     private readonly semantic: SemanticRetrievalProbe = { available: false },
     private readonly connectors: ConnectorRetrievalProbe = { enabled: false },
+    private readonly documentBody: DocumentBodyRetrievalProbe = {},
   ) {}
 
   async retrieve(
@@ -63,12 +120,33 @@ export class EngineeringRetrievalService {
     const started = Date.now();
     const scope = resolveSearchScope(query);
     const limitations: string[] = [];
+    const diagnosticLimitations: string[] = [];
     let retrievalMode: EngineeringRetrievalMode = "lexical";
     let semanticAttempted = false;
+    let semanticAvailable = this.semantic.available;
     let buckets: SearchBuckets | null = null;
+    let bodyEvidence: EngineeringEvidence[] = [];
 
-    // 1. Native Engineering OS retrieval (always)
-    if (this.semantic.available && this.semantic.retrieve) {
+    if (this.documentBody.retrieve && (scope === "document" || scope === "project")) {
+      try {
+        const body = await this.documentBody.retrieve(query);
+        if (body) {
+          bodyEvidence = body.evidence;
+          limitations.push(...body.limitations);
+          diagnosticLimitations.push(...(body.diagnosticLimitations ?? []));
+          if (body.retrievalMode) retrievalMode = body.retrievalMode;
+          if (typeof body.semanticConfigured === "boolean") {
+            semanticAvailable = body.semanticConfigured;
+            semanticAttempted = body.semanticConfigured || retrievalMode === "hybrid";
+          }
+        }
+      } catch {
+        diagnosticLimitations.push("document_body_retrieval_failed");
+        limitations.push("Document source search was unavailable; register details were used instead.");
+      }
+    }
+
+    if (this.semantic.available && this.semantic.retrieve && bodyEvidence.length === 0) {
       semanticAttempted = true;
       try {
         buckets = await this.semantic.retrieve(query);
@@ -78,8 +156,8 @@ export class EngineeringRetrievalService {
         retrievalMode = "lexical_fallback";
         buckets = null;
       }
-    } else {
-      limitations.push("Semantic embeddings not configured; lexical retrieval active.");
+    } else if (!semanticAvailable && bodyEvidence.length === 0) {
+      diagnosticLimitations.push("Semantic embeddings not configured; lexical retrieval active.");
     }
 
     if (!buckets) {
@@ -88,23 +166,29 @@ export class EngineeringRetrievalService {
         projectId,
         type: "all",
       });
-      if (retrievalMode !== "lexical_fallback") retrievalMode = "lexical";
+      if (retrievalMode !== "lexical_fallback" && retrievalMode !== "hybrid") retrievalMode = "lexical";
     }
 
-    if (scope === "document" && query.objectId) {
+    if (scope === "document" && query.objectId && bodyEvidence.length === 0) {
       const docs = (buckets.documents ?? []).filter(
         (d) => String((d as { id?: string }).id ?? "") === query.objectId,
       );
       if (docs.length === 0) {
-        limitations.push("Document content/body is unavailable; metadata-only search applied.");
+        limitations.push(
+          "This document's source text is not searchable yet. Indexing may still be running, or only the register entry exists.",
+        );
+        diagnosticLimitations.push("Document content/body is unavailable; metadata-only search applied.");
       } else {
         const doc = docs[0] as { file_path?: string | null; file_name?: string | null };
         if (!doc.file_path && !doc.file_name) {
           limitations.push(
-            "Document content is unavailable for summarisation; only metadata was retrieved.",
+            "This document's source text is not searchable yet. Indexing may still be running, or only the register entry exists.",
           );
         } else {
           limitations.push(
+            "This document's source text is not searchable yet. Indexing may still be running, or only the register entry exists.",
+          );
+          diagnosticLimitations.push(
             "Document body text extraction is not part of native E2 ESSENTIAL; metadata and titles were used.",
           );
         }
@@ -172,14 +256,21 @@ export class EngineeringRetrievalService {
       );
     });
 
+    if (bodyEvidence.length) {
+      evidence = scope === "document"
+        ? [...bodyEvidence]
+        : [...bodyEvidence, ...evidence.filter((item) => item.sourceType !== "document")];
+    }
+
+    const presented = presentAskLimitations([...limitations, ...diagnosticLimitations]);
     const envelope = buildSearchResultEnvelope({
       query: { ...query, scope },
       evidence,
       retrievalMode,
-      limitations,
+      limitations: [...presented.user, ...presented.details],
       retrievalMs: Date.now() - started,
       semanticAttempted,
-      semanticAvailable: this.semantic.available,
+      semanticAvailable,
     });
     if (connectorTiming) {
       envelope.limitations.push(

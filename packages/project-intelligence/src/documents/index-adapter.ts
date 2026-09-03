@@ -1,4 +1,6 @@
 import type { DocumentChunk } from "./types";
+import { contentContainsTerm } from "./lexical-overlap";
+import { planEngineeringQuery } from "./query-plan";
 
 export interface IndexedDocumentChunk extends DocumentChunk {
   embedding?: readonly number[];
@@ -16,6 +18,8 @@ export interface DocumentIndexHit {
   chunk: IndexedDocumentChunk;
   score: number;
   source: "lexical" | "vector" | "hybrid";
+  ftsScore?: number | null;
+  fallbackScore?: number | null;
 }
 
 export interface ProjectIntelligenceDocumentIndexAdapter {
@@ -73,14 +77,18 @@ export class InMemoryDocumentIndexAdapter implements ProjectIntelligenceDocument
   }
 
   async lexicalSearch(query: string, filter: DocumentIndexFilter, limit = 10): Promise<readonly DocumentIndexHit[]> {
-    const terms = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    const plan = planEngineeringQuery(query);
+    const terms = (plan.distinctiveTerms.length
+      ? plan.distinctiveTerms
+      : query.toLocaleLowerCase().split(/\s+/).filter(Boolean)
+    ).filter((term) => term && term !== "or");
     const hits: DocumentIndexHit[] = [];
     for (const chunk of this.chunks.values()) {
       if (!matchesFilter(chunk, filter)) continue;
-      const hay = chunk.content.toLocaleLowerCase();
-      const matched = terms.filter((term) => hay.includes(term)).length;
+      const hay = `${chunk.sectionPath ?? ""} ${chunk.content}`;
+      const matched = terms.filter((term) => contentContainsTerm(hay, term)).length;
       if (matched === 0) continue;
-      hits.push({ chunk, score: matched / terms.length, source: "lexical" });
+      hits.push({ chunk, score: matched / Math.max(terms.length, 1), source: "lexical" });
     }
     return hits.sort((a, b) => b.score - a.score).slice(0, limit);
   }
