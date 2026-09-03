@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Button, Input } from "@rtb/ui";
 import {
@@ -11,7 +12,13 @@ import {
 } from "@rtb/engineering-os/browser";
 import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
 import { EngineeringBreadcrumb, OperationalError } from "@/components/engineering/operational";
-import { TqMultiline, TqPersonSelect, TqSection } from "@/components/engineering/technical-query-ui";
+import {
+  TQ_SCROLL_MAIN,
+  TqBackLink,
+  TqMultiline,
+  TqPersonSelect,
+  TqSection,
+} from "@/components/engineering/technical-query-ui";
 import { parseApiJsonResponse, asRecordArray } from "@/lib/api/parse-json-response";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { formatTqDate } from "@/lib/engineering/technical-query-ux";
@@ -32,7 +39,10 @@ type Confirmation = {
   assigned: boolean;
 };
 
+const REGISTER_HREF = "/engineering/technical-queries";
+
 export default function NewTechnicalQueryPage() {
+  const router = useRouter();
   const projectId = useResolvedEngineeringProjectId();
   const { canMutate } = useEngineeringWriteAccess();
   const [people, setPeople] = useState<TechnicalQueryPerson[]>([]);
@@ -133,6 +143,31 @@ export default function NewTechnicalQueryPage() {
 
   const actionBy = people.find((person) => person.id === assignedTo);
   const selectedProjectName = projects.find((item) => item.id === selectedProjectId)?.name ?? "Current project";
+  const dirty =
+    Boolean(title || query || suggestedSolution || reason || due || assignedTo || documentId || area || system);
+  const submitBlockers = useMemo(() => {
+    const reasons: string[] = [];
+    if (!query.trim()) reasons.push("Enter Query / Information Required.");
+    if (!due) reasons.push("Enter a Response Due Date.");
+    if (!selectedProjectId) reasons.push("Select a Project.");
+    return reasons;
+  }, [query, due, selectedProjectId]);
+  const canSubmit = submitBlockers.length === 0;
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  function confirmLeave(): boolean {
+    if (!dirty) return true;
+    return window.confirm("This technical query has unsaved changes. Leave without saving?");
+  }
 
   const body = useMemo(
     () => ({
@@ -241,7 +276,8 @@ export default function NewTechnicalQueryPage() {
     return (
       <>
         <Header title="New Technical Query" description="Read-only role cannot create technical queries" />
-        <main className="page-main px-6 py-6">
+        <main className={TQ_SCROLL_MAIN}>
+          <TqBackLink href={REGISTER_HREF}>Back to Technical Queries</TqBackLink>
           <p className="text-sm text-muted-foreground">Read-only — technical queries are visible, not editable.</p>
         </main>
       </>
@@ -252,7 +288,8 @@ export default function NewTechnicalQueryPage() {
     return (
       <>
         <Header title="Technical Query submitted" description="The query is now in the controlled register" />
-        <main className="page-main mx-auto max-w-3xl px-6 py-8" data-testid="tq-submit-confirmation">
+        <main className={`${TQ_SCROLL_MAIN} mx-auto max-w-3xl`} data-testid="tq-submit-confirmation">
+          <TqBackLink href={REGISTER_HREF}>Back to Technical Queries</TqBackLink>
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6">
             <p className="text-lg font-semibold text-emerald-950">✓ {confirmation.tqNumber} submitted</p>
             <dl className="mt-4 grid gap-3 sm:grid-cols-3 text-sm">
@@ -296,7 +333,10 @@ export default function NewTechnicalQueryPage() {
   return (
     <>
       <Header title="New Technical Query" description="Create a controlled technical query / RFI" />
-      <main className="page-main mx-auto max-w-5xl px-6 pb-12 pt-6" data-testid="tq-create">
+      <main className={`${TQ_SCROLL_MAIN} mx-auto max-w-5xl pb-28`} data-testid="tq-create">
+        <TqBackLink href={REGISTER_HREF} onNavigate={confirmLeave}>
+          Back to Technical Queries
+        </TqBackLink>
         <EngineeringBreadcrumb
           items={[
             { href: "/engineering/technical-queries", label: "Technical Queries" },
@@ -309,6 +349,7 @@ export default function NewTechnicalQueryPage() {
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!canSubmit) return;
             void save(true);
           }}
         >
@@ -504,15 +545,44 @@ export default function NewTechnicalQueryPage() {
             </ul>
           </aside>
 
-          <div className="flex flex-wrap gap-2">
+        </form>
+
+        <div
+          className="sticky bottom-0 z-20 -mx-6 mt-6 border-t border-slate-200 bg-white/95 px-6 py-3 backdrop-blur supports-[padding:max(0px)]:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-8 sm:px-8"
+          data-testid="tq-sticky-actions"
+          role="region"
+          aria-label="Technical query actions"
+        >
+          {!canSubmit ? (
+            <p id="tq-submit-reason" className="mb-2 text-sm text-amber-900" data-testid="tq-submit-reason">
+              {submitBlockers[0]}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={saving}
+              onClick={() => {
+                if (!confirmLeave()) return;
+                router.push(REGISTER_HREF);
+              }}
+            >
+              Cancel
+            </Button>
             <Button type="button" variant="outline" disabled={saving} onClick={() => void save(false)}>
               Save Draft
             </Button>
-            <Button type="submit" disabled={saving || !query.trim() || !due}>
+            <Button
+              type="button"
+              disabled={saving || !canSubmit}
+              aria-describedby={!canSubmit ? "tq-submit-reason" : undefined}
+              onClick={() => void save(true)}
+            >
               Submit Technical Query
             </Button>
           </div>
-        </form>
+        </div>
       </main>
     </>
   );

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
-import { Input, StatusChip } from "@rtb/ui";
+import { StatusChip } from "@rtb/ui";
 import {
   useResolvedEngineeringProjectId,
   withProjectQuery,
@@ -17,17 +17,70 @@ import {
 import { parseApiJsonResponse, asRecordArray } from "@/lib/api/parse-json-response";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { formatTqDate, TQ_REGISTER_VIEWS } from "@/lib/engineering/technical-query-ux";
+import { TQ_SCROLL_MAIN } from "@/components/engineering/technical-query-ui";
 import type { TechnicalQueryPerson, TechnicalQueryPresentation } from "@rtb/engineering-os/browser";
 
 type RegisterItem = Record<string, unknown> & {
   presentation?: TechnicalQueryPresentation;
 };
 
+const STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "awaiting_response", label: "Awaiting Response" },
+  { value: "response_submitted", label: "Response Submitted" },
+  { value: "under_review", label: "Under Review" },
+  { value: "clarification_required", label: "Clarification Required" },
+  { value: "accepted", label: "Accepted" },
+  { value: "closed", label: "Closed" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
+];
+
+function ColumnFilter({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div className="min-w-[7rem]">
+      <span className="block text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+      <select
+        id={id}
+        aria-label={label}
+        className="mt-0.5 h-7 w-full rounded border border-slate-200 bg-white px-1.5 text-xs text-slate-800"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">All</option>
+        {options.map((item) => (
+          <option key={item.value} value={item.value}>
+            {item.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function TechnicalQueriesPage() {
   const projectId = useResolvedEngineeringProjectId();
   const { canMutate } = useEngineeringWriteAccess();
   const [items, setItems] = useState<RegisterItem[]>([]);
   const [people, setPeople] = useState<TechnicalQueryPerson[]>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [disciplines, setDisciplines] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,24 +90,25 @@ export default function TechnicalQueriesPage() {
   const [disciplineId, setDisciplineId] = useState("");
   const [initiatorId, setInitiatorId] = useState("");
   const [actionById, setActionById] = useState("");
-  const [classification, setClassification] = useState("");
   const [priority, setPriority] = useState("");
+  const [columnProjectId, setColumnProjectId] = useState("");
   const [sortKey, setSortKey] = useState<"updated" | "due" | "number">("updated");
+
+  const effectiveProjectId = columnProjectId || projectId || "";
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
-    if (projectId) params.set("projectId", projectId);
+    if (effectiveProjectId) params.set("projectId", effectiveProjectId);
     if (view !== "all") params.set("view", view);
     if (search.trim()) params.set("q", search.trim());
     if (status) params.set("status", status);
     if (disciplineId) params.set("disciplineId", disciplineId);
     if (initiatorId) params.set("initiatorId", initiatorId);
     if (actionById) params.set("actionById", actionById);
-    if (classification) params.set("classification", classification);
     if (priority) params.set("priority", priority);
     const qs = params.toString();
     return `/api/engineering/technical-queries${qs ? `?${qs}` : ""}`;
-  }, [projectId, view, search, status, disciplineId, initiatorId, actionById, classification, priority]);
+  }, [effectiveProjectId, view, search, status, disciplineId, initiatorId, actionById, priority]);
 
   useEffect(() => {
     setLoading(true);
@@ -93,6 +147,19 @@ export default function TechnicalQueriesPage() {
         }
       })
       .catch(() => undefined);
+    fetch("/api/engineering/projects")
+      .then((r) => parseApiJsonResponse(r))
+      .then((parsed) => {
+        if (parsed.ok) {
+          setProjects(
+            asRecordArray(parsed.data).map((row) => ({
+              id: String(row.id ?? ""),
+              name: String(row.project_name ?? row.name ?? "Project"),
+            })),
+          );
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
   const sorted = [...items].sort((a, b) => {
@@ -124,13 +191,52 @@ export default function TechnicalQueriesPage() {
     };
   });
 
+  const activeFilters: Array<{ key: string; label: string; onClear: () => void }> = [];
+  if (search.trim()) activeFilters.push({ key: "search", label: `Title: ${search.trim()}`, onClear: () => setSearch("") });
+  if (columnProjectId) {
+    const name = projects.find((p) => p.id === columnProjectId)?.name ?? "Project";
+    activeFilters.push({ key: "project", label: `Project: ${name}`, onClear: () => setColumnProjectId("") });
+  }
+  if (status) {
+    const label = STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status;
+    activeFilters.push({ key: "status", label: `Status: ${label}`, onClear: () => setStatus("") });
+  }
+  if (disciplineId) {
+    const name = disciplines.find((d) => d.id === disciplineId)?.name ?? "Discipline";
+    activeFilters.push({ key: "discipline", label: `Discipline: ${name}`, onClear: () => setDisciplineId("") });
+  }
+  if (initiatorId) {
+    const name = people.find((p) => p.id === initiatorId)?.name ?? "Initiator";
+    activeFilters.push({ key: "initiator", label: `Initiator: ${name}`, onClear: () => setInitiatorId("") });
+  }
+  if (actionById) {
+    const name = people.find((p) => p.id === actionById)?.name ?? "Action By";
+    activeFilters.push({ key: "actionBy", label: `Action By: ${name}`, onClear: () => setActionById("") });
+  }
+  if (priority) {
+    const label = PRIORITY_OPTIONS.find((p) => p.value === priority)?.label ?? priority;
+    activeFilters.push({ key: "priority", label: `Priority: ${label}`, onClear: () => setPriority("") });
+  }
+
+  function clearAllFilters() {
+    setSearch("");
+    setStatus("");
+    setDisciplineId("");
+    setInitiatorId("");
+    setActionById("");
+    setPriority("");
+    setColumnProjectId("");
+  }
+
+  const peopleOptions = people.map((person) => ({ value: person.id, label: person.name }));
+
   return (
     <>
       <Header
         title="Technical Queries"
         description="Controlled technical query / RFI register for engineering response, review, and closeout"
       />
-      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="tq-register">
+      <main className={TQ_SCROLL_MAIN} data-testid="tq-register">
         {projectId ? (
           <EngineeringBreadcrumb
             items={[
@@ -141,14 +247,16 @@ export default function TechnicalQueriesPage() {
           />
         ) : null}
 
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <nav className="flex flex-wrap gap-1" aria-label="Technical query queues">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <nav className="inline-flex flex-wrap rounded-md border border-slate-200 bg-white p-0.5" aria-label="Technical query queues" role="tablist">
             {TQ_REGISTER_VIEWS.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                className={`rounded-md px-3 py-2 text-sm ${
-                  view === item.id ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-800"
+                role="tab"
+                aria-selected={view === item.id}
+                className={`rounded px-2.5 py-1.5 text-xs font-medium sm:text-sm ${
+                  view === item.id ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
                 }`}
                 onClick={() => setView(item.id)}
               >
@@ -159,7 +267,7 @@ export default function TechnicalQueriesPage() {
           {canMutate ? (
             <Link
               href={withProjectQuery("/engineering/technical-queries/new", projectId)}
-              className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground"
+              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground"
             >
               + New Technical Query
             </Link>
@@ -168,69 +276,24 @@ export default function TechnicalQueriesPage() {
           )}
         </div>
 
-        <div className="mb-4 grid gap-2 md:grid-cols-4 xl:grid-cols-8">
-          <Input
-            placeholder="Search TQs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search technical queries"
-          />
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
-            <option value="">Status</option>
-            <option value="draft">Draft</option>
-            <option value="awaiting_response">Awaiting Response</option>
-            <option value="response_submitted">Response Submitted</option>
-            <option value="under_review">Under Review</option>
-            <option value="clarification_required">Clarification Required</option>
-            <option value="accepted">Accepted</option>
-            <option value="closed">Closed</option>
-          </select>
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={disciplineId} onChange={(e) => setDisciplineId(e.target.value)} aria-label="Discipline">
-            <option value="">Discipline</option>
-            {disciplines.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
+        {activeFilters.length > 0 ? (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5" data-testid="tq-active-filters">
+            {activeFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-2 py-0.5 text-xs text-slate-800"
+                onClick={filter.onClear}
+                aria-label={`Clear ${filter.label}`}
+              >
+                {filter.label} <span aria-hidden="true">×</span>
+              </button>
             ))}
-          </select>
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={initiatorId} onChange={(e) => setInitiatorId(e.target.value)} aria-label="Initiator">
-            <option value="">Initiator</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </select>
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={actionById} onChange={(e) => setActionById(e.target.value)} aria-label="Action By">
-            <option value="">Action By</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </select>
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={classification} onChange={(e) => setClassification(e.target.value)} aria-label="Classification">
-            <option value="">Classification</option>
-            <option value="technical_clarification">Technical Clarification</option>
-            <option value="drawing_clarification">Drawing Clarification</option>
-            <option value="specification_clarification">Specification Clarification</option>
-            <option value="information_request">Information Request</option>
-            <option value="site_construction_query">Site / Construction Query</option>
-            <option value="other">Other</option>
-          </select>
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Priority">
-            <option value="">Priority</option>
-            <option value="low">Low</option>
-            <option value="medium">Normal</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
-          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={sortKey} onChange={(e) => setSortKey(e.target.value as typeof sortKey)} aria-label="Sort">
-            <option value="updated">Updated</option>
-            <option value="due">Due</option>
-            <option value="number">TQ No.</option>
-          </select>
-        </div>
+            <button type="button" className="text-xs font-medium text-slate-700 underline" onClick={clearAllFilters}>
+              Clear all filters
+            </button>
+          </div>
+        ) : null}
 
         {error ? <OperationalError message={error} /> : null}
         {loading ? <OperationalSkeleton /> : null}
@@ -252,13 +315,98 @@ export default function TechnicalQueriesPage() {
         ) : !loading ? (
           <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white" data-testid="tq-register-table">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="border-b border-slate-200 bg-slate-50 text-slate-600">
                 <tr>
-                  {["TQ No.", "Title / Query", "Project", "Discipline", "Status", "Initiator", "Action By", "Due", "Age", "Priority", "Last Activity"].map((label) => (
-                    <th key={label} scope="col" className="px-4 py-3 font-semibold">
-                      {label}
-                    </th>
-                  ))}
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <button type="button" className="text-[0.65rem] font-semibold uppercase tracking-wide" onClick={() => setSortKey("number")}>
+                      TQ No.{sortKey === "number" ? " ↕" : ""}
+                    </button>
+                  </th>
+                  <th scope="col" className="min-w-[12rem] px-3 py-2 align-bottom">
+                    <label htmlFor="tq-col-search" className="block text-[0.65rem] font-semibold uppercase tracking-wide">
+                      Title / Query
+                    </label>
+                    <input
+                      id="tq-col-search"
+                      type="search"
+                      placeholder="Search…"
+                      aria-label="Search title or query"
+                      className="mt-0.5 h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <ColumnFilter
+                      id="tq-col-project"
+                      label="Project"
+                      value={columnProjectId}
+                      onChange={setColumnProjectId}
+                      options={projects.map((item) => ({ value: item.id, label: item.name }))}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <ColumnFilter
+                      id="tq-col-discipline"
+                      label="Discipline"
+                      value={disciplineId}
+                      onChange={setDisciplineId}
+                      options={disciplines.map((item) => ({ value: item.id, label: item.name }))}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <ColumnFilter id="tq-col-status" label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <ColumnFilter
+                      id="tq-col-initiator"
+                      label="Initiator"
+                      value={initiatorId}
+                      onChange={setInitiatorId}
+                      options={peopleOptions}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <ColumnFilter
+                      id="tq-col-action-by"
+                      label="Action By"
+                      value={actionById}
+                      onChange={setActionById}
+                      options={peopleOptions}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <button
+                      type="button"
+                      className="text-[0.65rem] font-semibold uppercase tracking-wide"
+                      onClick={() => setSortKey("due")}
+                      aria-label="Sort by due date"
+                    >
+                      Due{sortKey === "due" ? " ↕" : ""}
+                    </button>
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom text-[0.65rem] font-semibold uppercase tracking-wide">
+                    Age
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <ColumnFilter
+                      id="tq-col-priority"
+                      label="Priority"
+                      value={priority}
+                      onChange={setPriority}
+                      options={PRIORITY_OPTIONS}
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-2 align-bottom">
+                    <button
+                      type="button"
+                      className="text-[0.65rem] font-semibold uppercase tracking-wide"
+                      onClick={() => setSortKey("updated")}
+                      aria-label="Sort by last activity"
+                    >
+                      Last Activity{sortKey === "updated" ? " ↕" : ""}
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -267,23 +415,29 @@ export default function TechnicalQueriesPage() {
                     key={String(row.id)}
                     className={`relative hover:bg-slate-50 ${row.overdue ? "bg-rose-50" : ""}`}
                   >
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="whitespace-nowrap px-3 py-1.5 font-medium text-slate-900">
                       <Link href={String(row.href)} className="after:absolute after:inset-0">
                         {String(row.tq)}
                       </Link>
                     </td>
-                    <td className="max-w-sm px-4 py-3 text-slate-800">{String(row.subject)}</td>
-                    <td className="px-4 py-3">{String(row.project)}</td>
-                    <td className="px-4 py-3">{String(row.discipline)}</td>
-                    <td className="px-4 py-3">
+                    <td className="max-w-xs px-3 py-1.5 text-slate-800">
+                      <span className="line-clamp-2" title={String(row.subject)}>
+                        {String(row.subject)}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1.5">{String(row.project)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5">{String(row.discipline)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5">
                       <StatusChip value={String(row.status)}>{String(row.status)}</StatusChip>
                     </td>
-                    <td className="px-4 py-3">{String(row.initiator)}</td>
-                    <td className="px-4 py-3">{String(row.actionBy)}</td>
-                    <td className={`px-4 py-3 ${row.overdue ? "font-semibold text-rose-800" : ""}`}>{String(row.due)}</td>
-                    <td className="px-4 py-3 tabular-nums">{String(row.age)}</td>
-                    <td className="px-4 py-3">{String(row.priority)}</td>
-                    <td className="px-4 py-3">{String(row.updated)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5">{String(row.initiator)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5">{String(row.actionBy)}</td>
+                    <td className={`whitespace-nowrap px-3 py-1.5 ${row.overdue ? "font-semibold text-rose-800" : ""}`}>
+                      {String(row.due)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1.5 tabular-nums">{String(row.age)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5">{String(row.priority)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5">{String(row.updated)}</td>
                   </tr>
                 ))}
               </tbody>

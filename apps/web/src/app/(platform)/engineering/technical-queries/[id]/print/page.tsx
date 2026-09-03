@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { BRANDING } from "@rtb/ui";
+import { BRANDING, Button } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { formatTqDate, formatTqDateTime, type TqDetailPayload } from "@/lib/engineering/technical-query-ux";
 import { personLabel } from "@/lib/engineering/technical-query-ux";
+import { TqBackLink } from "@/components/engineering/technical-query-ui";
 import "./tq-print.css";
 
 export default function TechnicalQueryPrintPage() {
@@ -24,12 +25,21 @@ export default function TechnicalQueryPrintPage() {
   }, [id]);
 
   const p = data?.presentation;
+  const detailHref = `/engineering/technical-queries/${id}`;
 
   return (
-    <div className="tq-print-root bg-white p-8" data-testid="tq-print">
+    <div className="tq-print-root flex min-h-0 flex-1 flex-col overflow-y-auto bg-white" data-testid="tq-print">
       <style>{`@page { size: A4; margin: 16mm; }`}</style>
-      <div className="tq-print-sheet mx-auto max-w-[210mm] text-slate-900">
-        <header className="border-b border-slate-300 pb-3">
+      <div className="tq-print-toolbar no-print sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-3" data-testid="tq-print-toolbar">
+        <TqBackLink href={detailHref} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 underline-offset-2 hover:text-slate-950 hover:underline">
+          Back to {p?.tqNumber ?? "TQ"}
+        </TqBackLink>
+        <Button type="button" onClick={() => window.print()} data-testid="tq-print-button">
+          Print
+        </Button>
+      </div>
+      <div className="tq-print-sheet mx-auto w-full max-w-[210mm] p-8 text-slate-900">
+        <header className="tq-print-branding border-b border-slate-300 pb-3">
           <p className="text-xs uppercase tracking-wide text-slate-500">RTB Engineering & Analytics</p>
           <p className="text-lg font-semibold">{BRANDING.product} · Technical Query / RFI</p>
           <p className="text-sm text-slate-600">Configurable tenant branding · controlled engineering record</p>
@@ -112,9 +122,6 @@ export default function TechnicalQueryPrintPage() {
               </p>
               <p>Uncontrolled when printed</p>
             </footer>
-            <p className="no-print mt-6 text-sm">
-              Use the browser print dialog for A4 output. Navigation is hidden in print.
-            </p>
           </>
         )}
       </div>

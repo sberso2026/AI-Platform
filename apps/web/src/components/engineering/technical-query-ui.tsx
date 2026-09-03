@@ -181,3 +181,38 @@ export function TqHeaderActions({
     </div>
   );
 }
+
+/** Visible return control — do not rely on browser Back alone. */
+export function TqBackLink({
+  href,
+  children,
+  onNavigate,
+  className,
+}: {
+  href: string;
+  children: ReactNode;
+  onNavigate?: () => boolean | void;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={
+        className ??
+        "mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 underline-offset-2 hover:text-slate-950 hover:underline"
+      }
+      data-testid="tq-back-link"
+      onClick={(event) => {
+        if (onNavigate && onNavigate() === false) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <span aria-hidden="true">←</span>
+      {children}
+    </Link>
+  );
+}
+
+export const TQ_SCROLL_MAIN =
+  "page-main flex min-h-0 w-full flex-1 flex-col overflow-y-auto px-6 pb-8 pt-6 sm:px-8";

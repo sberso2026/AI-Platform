@@ -1,15 +1,36 @@
+/* Screen: print preview must scroll inside the overflow-hidden platform shell. */
+.tq-print-root {
+  min-height: 0;
+}
+
+.tq-print-sheet {
+  font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
 @media print {
   @page {
     size: A4;
     margin: 16mm;
   }
 
-  header,
-  nav,
-  aside,
+  [data-testid="app-header"],
+  [data-testid="app-sidebar"],
   [data-sidebar],
+  .tq-print-toolbar,
   .no-print {
     display: none !important;
+  }
+
+  html,
+  body,
+  [data-testid="platform-shell"],
+  [data-testid="platform-shell"] > div,
+  .tq-print-root {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   body {
@@ -19,6 +40,7 @@
   .tq-print-sheet {
     max-width: none !important;
     box-shadow: none !important;
+    padding: 0 !important;
   }
 
   .tq-print-sheet table {
@@ -40,10 +62,4 @@
   .tq-page-count::after {
     content: counter(pages);
   }
-}
-
-.tq-print-sheet {
-  font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  line-height: 1.45;
-  color: #0f172a;
 }

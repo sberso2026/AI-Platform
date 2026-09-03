@@ -80,9 +80,14 @@ describe("EOS-TQ-UX-1 enterprise register", () => {
     expect(page).toContain("Client / Technical Response");
     expect(page).toContain("Uncontrolled when printed");
     expect(page).toContain("RTB Engineering & Analytics");
+    expect(page).toContain("window.print");
+    expect(page).toContain("tq-print-toolbar");
+    expect(page).toContain("tq-print-button");
     expect(css).toContain("@page");
     expect(css).toContain("size: A4");
     expect(css).toContain("display: none !important");
+    expect(css).toContain("tq-print-toolbar");
+    expect(css).not.toMatch(/^\s*header,/m);
   });
 
   it("exposes zero raw UUIDs in TQ UI source text", () => {

@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Button, Input, StatusChip } from "@rtb/ui";
 import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
 import { EngineeringBreadcrumb, OperationalError, OperationalSkeleton } from "@/components/engineering/operational";
-import { TqMultiline, TqNextActionPanel, TqPersonBlock, TqSection } from "@/components/engineering/technical-query-ui";
+import { TqBackLink, TqMultiline, TqNextActionPanel, TqPersonBlock, TqSection, TQ_SCROLL_MAIN } from "@/components/engineering/technical-query-ui";
 import { parseApiJsonResponse, asRecordArray } from "@/lib/api/parse-json-response";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { formatTqDate, formatTqDateTime, type TqDetailPayload } from "@/lib/engineering/technical-query-ux";
@@ -117,7 +117,8 @@ export default function TechnicalQueryDetailPage() {
     return (
       <>
         <Header title="Technical Query" description="Loading controlled TQ / RFI workspace" />
-        <main className="page-main px-6 py-6">
+        <main className={TQ_SCROLL_MAIN}>
+          <TqBackLink href="/engineering/technical-queries">Back to Technical Queries</TqBackLink>
           {error ? <OperationalError message={error} /> : <OperationalSkeleton />}
         </main>
       </>
@@ -143,7 +144,8 @@ export default function TechnicalQueryDetailPage() {
   return (
     <>
       <Header title={p.tqNumber} description={p.title} />
-      <main className="page-main mx-auto max-w-6xl px-6 pb-12 pt-6" data-testid="tq-detail">
+      <main className={`${TQ_SCROLL_MAIN} mx-auto max-w-6xl`} data-testid="tq-detail">
+        <TqBackLink href="/engineering/technical-queries">Back to Technical Queries</TqBackLink>
         <EngineeringBreadcrumb
           items={[
             { href: "/engineering/technical-queries", label: "Technical Queries" },
@@ -266,6 +268,7 @@ export default function TechnicalQueryDetailPage() {
 
             {canRespond && awaitingResponse ? (
               <TqSection title="Response" hint="Required from Action By. Save a draft, request clarification, or submit the technical response.">
+                <TqBackLink href={`/engineering/technical-queries/${id}`}>Back to {p.tqNumber}</TqBackLink>
                 <TqMultiline id="tq-response" label="Client / Technical Response" value={response} onChange={setResponse} required />
                 <TqMultiline id="tq-basis" label="Response Basis" value={responseBasis} onChange={setResponseBasis} rows={3} />
                 <TqMultiline id="tq-qual" label="Conditions / Qualifications" value={qualifications} onChange={setQualifications} rows={3} />
@@ -292,6 +295,7 @@ export default function TechnicalQueryDetailPage() {
 
             {canReview && awaitingReview ? (
               <TqSection title="Review" hint="Accept the response or request clarification. Closeout is a separate governed step.">
+                <TqBackLink href={`/engineering/technical-queries/${id}`}>Back to {p.tqNumber}</TqBackLink>
                 <TqMultiline id="tq-clarification" label="Clarification request" value={clarification} onChange={setClarification} rows={3} />
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" disabled={busy} onClick={() => void mutate({ action: "request_clarification", comment: clarification || "Clarification required" })}>
@@ -306,6 +310,7 @@ export default function TechnicalQueryDetailPage() {
 
             {canClose ? (
               <TqSection title="Close Technical Query" hint="Closing requires a final response, acceptance, retained evidence, and recorded closeout. Digital signatures are not claimed.">
+                <TqBackLink href={`/engineering/technical-queries/${id}`}>Back to {p.tqNumber}</TqBackLink>
                 <TqMultiline id="tq-closeout" label="Closeout comments" value={closeoutComments} onChange={setCloseoutComments} rows={3} />
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={evidenceComplete} onChange={(e) => setEvidenceComplete(e.target.checked)} />
