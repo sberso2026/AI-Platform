@@ -1,7 +1,8 @@
-# EOS-PILOT-PRODUCT-1A screenshots
+# Screenshots
 
-Authenticated populated captures at 1440×900 and 1920×1080 were not produced in the agent session (no browser automation against the founder Preview session).
+Required captures for founder visual QA (not produced in this agent run — no authenticated browser session):
 
-Founder should capture Command Centre, Projects, Documents (register, upload, detail), Engineering AI (control + perturbed answers), Risks, Technical Queries, Actions, Users & Licences.
+- 1440×900 and 1920×1080
+- Command Centre, Projects, Project Detail, Assets, Inspections, Documents (register / upload / detail), Risks, Technical Queries, Decisions, Actions, Engineering AI (answered question), Reports, Models, Digital Twin, Users & Permissions, Installed Products, Licences & Seats, Administration
 
-Until those exist, `VISUAL_CONSISTENCY_PASS=false` and `ENTERPRISE_UX_CERTIFIED=false`.
+Place populated PNG/JPEG files in this folder. No route is enterprise-UX PASS merely because it renders.
