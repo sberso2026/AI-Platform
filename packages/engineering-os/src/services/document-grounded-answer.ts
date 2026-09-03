@@ -1,8 +1,9 @@
 import type { EngineeringEvidence } from "../phase-e2/contracts";
 import {
   formatStructuredFactAnswer,
-  selectDirectFact,
+  selectMatchingFacts,
 } from "./normative-extraction";
+import { formatStructuralFacts } from "./document-structure";
 
 const STANDARD_RE = /\b(?:AS\/NZS|AS|NZS|ISO)\s*\d+(?:\.\d+)*/gi;
 const REFERENCED_RE =
@@ -20,7 +21,7 @@ export function formatDocumentCitation(evidence: EngineeringEvidence): string {
   const name = evidence.documentNumber || evidence.title;
   const revision = evidence.revision ? ` rev ${evidence.revision}` : "";
   const figure = evidence.figureLabel;
-  const clause = evidence.sectionPath?.match(/\b(\d+(?:\.\d+){1,4}(?:\([a-z]\))?)/i)?.[0];
+  const clause = evidence.sectionPath?.match(/\b(\d+(?:\.\d+){1,4}(?:\([a-z0-9]+\))*)/i)?.[0];
   const section = clause ? `Clause ${clause}` : (evidence.sectionPath && !figure ? evidence.sectionPath : null);
   const page = evidence.pageStart ? `Page ${evidence.pageStart}` : null;
   return [name + revision, figure, section, page].filter(Boolean).join("\n");
@@ -44,7 +45,7 @@ export function buildDocumentQaPresentation(input: {
   evidence: EngineeringEvidence[];
 }): DocumentQaPresentation & { abstained: boolean; limitations: string[] } {
   const grounded = buildDocumentGroundedAnswer(input);
-  const fact = selectDirectFact({
+  const facts = selectMatchingFacts({
     query: input.query,
     excerpts: input.evidence.map((item) => ({
       text: `${item.sectionPath ?? ""} ${item.excerpt}`,
@@ -64,8 +65,26 @@ export function buildDocumentQaPresentation(input: {
   }
   const lead = input.evidence[0];
   const sources = input.evidence.slice(0, 3).map((item) => formatDocumentCitation(item).replace(/\n/g, " · "));
-  if (fact) {
-    const formatted = formatStructuredFactAnswer(fact);
+  if (facts.length) {
+    const formatted = facts.length === 1
+      ? formatStructuredFactAnswer(facts[0]!)
+      : formatStructuralFacts(
+        facts.map((row) => ({
+          subject: row.subject,
+          property: row.property,
+          operator: row.operator,
+          value: row.value,
+          unit: row.unit,
+          condition: row.condition,
+          exception: row.exception,
+          qualifier: null,
+          modality: null,
+          sourceClause: row.sourceClause,
+          page: row.page,
+          sourceSpan: row.span,
+        })),
+        facts.length > 1 ? "multi" : "single",
+      );
     return {
       answer: formatted.answer,
       basis: formatted.basis,
@@ -99,7 +118,7 @@ export function buildDocumentGroundedAnswer(input: {
   }
 
   const query = input.query.toLowerCase();
-  const fact = selectDirectFact({
+  const matching = selectMatchingFacts({
     query: input.query,
     excerpts: evidence.map((item) => ({
       text: `${item.sectionPath ?? ""} ${item.excerpt}`,
@@ -107,6 +126,7 @@ export function buildDocumentGroundedAnswer(input: {
       sectionPath: item.sectionPath,
     })),
   });
+  const fact = matching[0] ?? null;
   const hay = evidence.map((item) => item.excerpt).join("\n");
   const limitations: string[] = [];
   const facts: string[] = [];
@@ -123,6 +143,25 @@ export function buildDocumentGroundedAnswer(input: {
     missing.push(
       "MISSING EVIDENCE: The referenced standard is not itself authorised in this search, so its detailed procedures are not stated.",
     );
+  } else if (matching.length > 1) {
+    const formatted = formatStructuralFacts(
+      matching.map((row) => ({
+        subject: row.subject,
+        property: row.property,
+        operator: row.operator,
+        value: row.value,
+        unit: row.unit,
+        condition: row.condition,
+        exception: row.exception,
+        qualifier: null,
+        modality: null,
+        sourceClause: row.sourceClause,
+        page: row.page,
+        sourceSpan: row.span,
+      })),
+      "multi",
+    );
+    facts.push(`DOCUMENT FACT: ${formatted.answer}`);
   } else if (fact) {
     const formatted = formatStructuredFactAnswer(fact);
     facts.push(`DOCUMENT FACT: ${formatted.answer} ${formatted.basis}`);

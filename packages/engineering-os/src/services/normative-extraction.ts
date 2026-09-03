@@ -1,3 +1,9 @@
+import {
+  assembleStructuralEvidence,
+  parseEngineeringStructure,
+  type StructuralRequirement,
+} from "./document-structure";
+
 export type NormativeOperator = "MIN" | "MAX" | "EQ" | "PROHIBITED" | "REQUIRED" | "PERMITTED";
 
 export type NormativeFact = {
@@ -35,7 +41,8 @@ function nearbySubject(hay: string, index: number): string | null {
 
 function inferProperty(span: string): string | null {
   if (/interval|spacing|apart|distance|provided at/i.test(span)) return "interval";
-  if (/thick/i.test(span)) return "thickness";
+  if (/force/i.test(span)) return "force";
+  if (/\bthick|\bcover\b/i.test(span)) return "thickness";
   if (/width|wide/i.test(span)) return "width";
   if (/height|high/i.test(span)) return "height";
   if (/force/i.test(span)) return "force";
@@ -51,7 +58,8 @@ function inferProperty(span: string): string | null {
 
 function queryProperty(query: string): string | null {
   if (/interval|spacing|spaced|apart|distance|how far/i.test(query)) return "interval";
-  if (/thick/i.test(query)) return "thickness";
+  if (/\bforce\b/i.test(query)) return "force";
+  if (/\bthick|\bcover\b/i.test(query)) return "thickness";
   if (/width|wide/i.test(query)) return "width";
   if (/height|high|handrail/i.test(query)) return "height";
   if (/force/i.test(query)) return "force";
@@ -121,26 +129,68 @@ export function factMatchesQuery(fact: NormativeFact, query: string): boolean {
   return true;
 }
 
+function toNormativeFact(fact: StructuralRequirement): NormativeFact | null {
+  if (!fact.value || !fact.unit) return null;
+  const operator = fact.operator === "MIN" || fact.operator === "MAX" || fact.operator === "EQ"
+    || fact.operator === "PROHIBITED" || fact.operator === "REQUIRED" || fact.operator === "PERMITTED"
+    ? fact.operator
+    : "EQ";
+  return {
+    subject: fact.subject,
+    property: fact.property,
+    operator,
+    value: fact.value,
+    unit: fact.unit,
+    condition: fact.condition,
+    exception: fact.exception,
+    sourceClause: fact.sourceClause,
+    page: fact.page,
+    span: fact.sourceSpan,
+  };
+}
+
+export function selectMatchingFacts(input: {
+  query: string;
+  excerpts: Array<{ text: string; page?: number | null; sectionPath?: string | null }>;
+}): NormativeFact[] {
+  const joined = input.excerpts.map((excerpt) => `${excerpt.sectionPath ?? ""} ${excerpt.text}`).join("\n");
+  const assembled = assembleStructuralEvidence(parseEngineeringStructure(joined, input.excerpts[0]?.page ?? null), {
+    query: input.query,
+    properties: queryProperty(input.query) ? [queryProperty(input.query)!] : [],
+    constraints: queryConstraint(input.query) ? [queryConstraint(input.query)!] : [],
+  });
+  const structural = assembled.facts.map(toNormativeFact).filter((fact): fact is NormativeFact => Boolean(fact));
+  const property = queryProperty(input.query);
+  const constraint = queryConstraint(input.query);
+  const lexical = input.excerpts.flatMap((excerpt) => extractNormativeFacts(excerpt));
+  const facts = [...structural, ...lexical];
+  return facts
+    .map((fact) => {
+      let score = 0;
+      if (!factMatchesQuery(fact, input.query)) {
+        if (!property && !constraint && fact.value) score = 1;
+        else return { fact, score: 0 };
+      } else {
+        if (constraint === "maximum" && fact.operator === "MAX") score += 2;
+        if (constraint === "minimum" && fact.operator === "MIN") score += 2;
+        if (property && fact.property === property) score += 4;
+        if (property && !fact.property) score += 1;
+        if (!property) score += 1;
+      }
+      const hay = fact.span.toLowerCase();
+      if (input.query.toLowerCase().split(/\s+/).some((word) => word.length > 4 && hay.includes(word))) score += 1;
+      return { fact, score };
+    })
+    .filter((row) => row.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((row) => row.fact);
+}
+
 export function selectDirectFact(input: {
   query: string;
   excerpts: Array<{ text: string; page?: number | null; sectionPath?: string | null }>;
 }): NormativeFact | null {
-  const property = queryProperty(input.query);
-  const constraint = queryConstraint(input.query);
-  const facts = input.excerpts.flatMap((excerpt) => extractNormativeFacts(excerpt));
-  const scored = facts
-    .map((fact) => {
-      let score = 0;
-      if (!factMatchesQuery(fact, input.query)) return { fact, score: 0 };
-      if (constraint === "maximum" && fact.operator === "MAX") score += 2;
-      if (constraint === "minimum" && fact.operator === "MIN") score += 2;
-      if (property && fact.property === property) score += 4;
-      if (property && !fact.property) score += 1;
-      return { fact, score };
-    })
-    .filter((row) => row.score > 0)
-    .sort((a, b) => b.score - a.score);
-  return scored[0]?.fact ?? null;
+  return selectMatchingFacts(input)[0] ?? null;
 }
 
 export function formatStructuredFactAnswer(fact: NormativeFact): { answer: string; basis: string } {

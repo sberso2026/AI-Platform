@@ -69,6 +69,7 @@ export const PROPERTY_ALIASES: Array<{ pattern: RegExp; property: string }> = [
   { pattern: /\bpressure\b/i, property: "pressure" },
   { pattern: /\bspeed\b/i, property: "speed" },
   { pattern: /\bload\b/i, property: "load" },
+  { pattern: /\bforce\b/i, property: "force" },
   { pattern: /\bcapacity\b/i, property: "capacity" },
   { pattern: /\bdiameter\b/i, property: "diameter" },
   { pattern: /\binterval|spacing|spaced|apart|distance\b/i, property: "interval" },
@@ -215,7 +216,7 @@ function detectRelationship(text: string): string | null {
 
 function detectQualifier(text: string): string | null {
   if (/\bmidway\b/i.test(text)) return "midway";
-  if (/\balong the axis\b/i.test(text)) return "along_axis";
+  if (/\balong (?:the )?axis\b/i.test(text)) return "along_axis";
   if (/\bat right angles\b/i.test(text)) return "right_angles";
   return null;
 }

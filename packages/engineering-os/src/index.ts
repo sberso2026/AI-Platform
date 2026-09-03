@@ -61,7 +61,15 @@ export {
   formatGeneratedDocumentAnswer,
   isDocumentBodyEvidence,
 } from "./services/document-grounded-answer";
-export { extractNormativeFacts, selectDirectFact } from "./services/normative-extraction";
+export { extractNormativeFacts, selectDirectFact, selectMatchingFacts } from "./services/normative-extraction";
+export {
+  parseEngineeringStructure,
+  assembleStructuralEvidence,
+  detectEvidenceCompleteness,
+  checkEvidenceCompleteness,
+  formatStructuralFacts,
+  splitStructuralListUnits,
+} from "./services/document-structure";
 export { verifyClaimsAgainstEvidence } from "./services/claim-verification";
 export { runGroundedEngineeringAsk } from "./services/grounded-ask";
 export {

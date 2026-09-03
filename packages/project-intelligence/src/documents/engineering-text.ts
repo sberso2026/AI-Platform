@@ -1,4 +1,5 @@
 import type { ParsedBlock, ParsedTable } from "./parser";
+import { splitStructuralListUnits } from "@rtb/engineering-os";
 
 const FIGURE_CAPTION =
   /^(?:figure|fig\.?)\s*([0-9]+(?:\.[0-9]+)*)\s*[:.\-–—]?\s*(.*)$/i;
@@ -204,6 +205,28 @@ export function segmentEngineeringPage(pageText: string, pageNumber: number): Pa
 
     const paragraphSection = clauseLabel(raw) ?? currentSection;
     if (clauseLabel(raw)) currentSection = paragraphSection;
+    const units = splitStructuralListUnits(raw);
+    if (units.length > 1) {
+      let letter: string | null = null;
+      for (const unit of units) {
+        const marker = unit.match(/^\(\s*([a-z]|i{1,3}|iv|vi{0,3}|ix|x)\s*\)/i)?.[1]?.toLowerCase() ?? null;
+        const roman = marker && /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)$/i.test(marker) && letter;
+        if (marker && !roman && /^[a-z]$/i.test(marker)) letter = marker;
+        const path = roman && letter
+          ? `${paragraphSection ?? ""}(${letter})(${marker})`
+          : marker
+            ? `${paragraphSection ?? ""}(${marker})`
+            : paragraphSection;
+        classified.push({
+          type: "paragraph",
+          text: unit,
+          page: pageNumber,
+          sectionPath: path || paragraphSection,
+          confidence: 0.86,
+        });
+      }
+      continue;
+    }
     classified.push({
       type: "paragraph",
       text: raw,

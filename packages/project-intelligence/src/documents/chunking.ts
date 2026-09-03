@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { parseEngineeringStructure } from "@rtb/engineering-os";
 import type { ParsedBlock, ParsedDocument } from "./parser";
 import type { DocumentBlockType, DocumentChunk } from "./types";
 import { DocumentIntelligenceError } from "./errors";
@@ -23,6 +24,17 @@ function stableId(documentId: string, revision: string, processingVersion: strin
     .update(`${documentId}|${revision}|${processingVersion}|${index}|${contentHash}`)
     .digest("hex")
     .slice(0, 32);
+}
+
+function structureMetadata(content: string, sectionPath?: string, page?: number): Record<string, unknown> {
+  const nodes = parseEngineeringStructure(`${sectionPath ?? ""}\n${content}`, page ?? null);
+  const first = nodes.find((node) => node.marker || (node.clauseNumber && node.kind !== "paragraph")) ?? nodes[0];
+  return {
+    clauseId: first?.id ?? null,
+    parentClauseId: first?.parentId ?? null,
+    completeness: first?.completeness ?? null,
+    listMarker: first?.marker ?? null,
+  };
 }
 
 function toBlockType(type: string): DocumentBlockType {
@@ -124,6 +136,7 @@ export function chunkParsedDocument(parsed: ParsedDocument, context: ChunkingCon
               figureCaption: figureMeta?.caption,
               figureAuthoritative: false,
               ...figureMeta?.extra,
+              ...structureMetadata(content, block.sectionPath ?? currentSection, block.page ?? page.pageNumber),
             },
           });
           chunkIndex += 1;
@@ -156,6 +169,7 @@ export function chunkParsedDocument(parsed: ParsedDocument, context: ChunkingCon
               workspaceId: context.workspaceId,
               documentId: context.engineeringDocumentId,
               chunkId: `chunk-${chunkIndex}`,
+              ...structureMetadata(part, block.sectionPath ?? currentSection, block.page ?? page.pageNumber),
             },
           });
           chunkIndex += 1;

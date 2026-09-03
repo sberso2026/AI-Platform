@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDocumentGroundedAnswer, isDocumentBodyEvidence } from "./document-grounded-answer";
+import { buildDocumentGroundedAnswer, buildDocumentQaPresentation, isDocumentBodyEvidence } from "./document-grounded-answer";
 import { presentAskLimitations } from "./engineering-retrieval-service";
 import { stripFabricatedAuthorityClaims } from "../phase-e5/reasoning-service";
 import type { EngineeringEvidence } from "../phase-e2/contracts";
@@ -137,5 +137,24 @@ describe("EOS document Q&A contracts", () => {
     expect(result.abstained).toBe(false);
     expect(result.answer).toMatch(/600 mm/);
     expect(result.answer).toMatch(/4\.2\.1/);
+  });
+
+  it("answers both conditional operating-force cases instead of picking one sibling", () => {
+    const result = buildDocumentQaPresentation({
+      query: "What is the operating force?",
+      evidence: [
+        ev({
+          sourceId: "force",
+          documentNumber: "STD-9",
+          title: "Plant safety",
+          pageStart: 9,
+          sectionPath: "6.4.1",
+          excerpt: "6.4.1 Stop cable. (d) The force required to operate the stop control shall not exceed the following: (i) Where applied midway between the supports and at right angles . . . 55 N. (ii) Where applied along the axis of the cable . . . 180 N. (e) Supports shall be provided at intervals not exceeding 2.8 m.",
+        }),
+      ],
+    });
+    expect(result.answer).toMatch(/55\s*N/i);
+    expect(result.answer).toMatch(/180\s*N/i);
+    expect(result.answer).not.toMatch(/2\.8\s*m/i);
   });
 });

@@ -26,6 +26,7 @@ const PROPERTY_VARIANTS: Record<string, readonly string[]> = {
   pressure: ["pressure"],
   speed: ["speed"],
   interval: ["interval", "intervals", "spacing", "spaced", "space", "apart", "distance"],
+  force: ["force", "forces"],
   illuminance: ["illuminance", "lux"],
   slope: ["slope", "degrees"],
   duration: ["duration", "minutes"],

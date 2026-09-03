@@ -6,7 +6,7 @@ import { DeterministicLocalEmbeddingAdapter } from "../src/documents/embedding-a
 import { InMemoryDocumentIndexAdapter } from "../src/documents/index-adapter";
 import { ProjectIntelligenceDocumentRetrievalService } from "../src/documents/retrieval-service";
 import type { DocumentChunk } from "../src/documents/types";
-import { selectDirectFact } from "@rtb/engineering-os";
+import { selectDirectFact, selectMatchingFacts } from "@rtb/engineering-os";
 
 type Fact = {
   id: string;
@@ -145,6 +145,13 @@ const CORPUS: DocumentChunk[] = [
     pageStart: 10,
     content: "Headroom clearance shall be not less than 2.1 m.",
   }),
+  chunk({
+    engineeringDocumentId: "doc-nested",
+    stableChunkId: "nested-force",
+    sectionPath: "6.4.1",
+    pageStart: 20,
+    content: "6.4.1 Stop cable.\n(d) The force required to operate the stop control shall not exceed the following:\n(i) Where applied midway between the supports and at right angles . . . 55 N.\n(ii) Where applied along the axis of the cable . . . 180 N.\n(e) Supports shall be provided at intervals not exceeding 2.8 m.",
+  }),
 ];
 
 const FACTS: Fact[] = [
@@ -249,9 +256,17 @@ describe("document QA evaluation framework", () => {
           sectionPath: hit.chunk.sectionPath,
         })),
       });
+      const matching = selectMatchingFacts({
+        query,
+        excerpts: result.hits.map((hit) => ({
+          text: `${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`,
+          page: hit.chunk.pageStart,
+          sectionPath: hit.chunk.sectionPath,
+        })),
+      });
       const numerical = fact
         ? Boolean(extracted && extracted.value === fact.value && extracted.unit.toLowerCase() === fact.unit.toLowerCase())
-        : extracted == null;
+        : matching.length === 0;
       return { recall1, recall3, recall5, numerical, extracted, ids };
     }
 
@@ -300,10 +315,32 @@ describe("document QA evaluation framework", () => {
     const paraphrase = await score(paraphrases);
     const formRobust = await score(fragments);
 
+    const nested = await service.retrieve(
+      { tenantId: "t1", workspaceId: "w1", allowedProjectIds: ["p1"], authorized: true },
+      { query: "What is the operating force?", filters: { engineeringDocumentIds: ["doc-nested"] }, scoreThreshold: 0.01, limit: 5 },
+    );
+    const nestedFacts = selectMatchingFacts({
+      query: "What is the operating force?",
+      excerpts: nested.hits.map((hit) => ({ text: hit.chunk.content, page: hit.chunk.pageStart, sectionPath: hit.chunk.sectionPath })),
+    });
+    const midwayFacts = selectMatchingFacts({
+      query: "What is the force midway between supports?",
+      excerpts: nested.hits.map((hit) => ({ text: hit.chunk.content, page: hit.chunk.pageStart, sectionPath: hit.chunk.sectionPath })),
+    });
+    const CONDITIONAL_REQUIREMENT_ACCURACY = midwayFacts.length === 1 && midwayFacts[0]?.value === "55" ? 1 : 0;
+    const MULTI_VALUE_DISAMBIGUATION_ACCURACY = nestedFacts.some((fact) => fact.value === "55") && nestedFacts.some((fact) => fact.value === "180") && nestedFacts.every((fact) => fact.value !== "2.8") ? 1 : 0;
+    const STRUCTURED_FACT_EXTRACTION_ACCURACY = all.NUMERICAL_ANSWER_CORRECTNESS_RATE;
+
     const report = {
       SUPPORTED_QUESTION_COUNT: supported.length,
       UNSUPPORTED_QUESTION_COUNT: unsupported.length,
+      DEVELOPMENT_SUPPORTED_COUNT: bySplit.development.length,
+      HOLDOUT_SUPPORTED_COUNT: bySplit.holdout.length,
+      UNSUPPORTED_COUNT: unsupported.length,
       ...all,
+      STRUCTURED_FACT_EXTRACTION_ACCURACY,
+      CONDITIONAL_REQUIREMENT_ACCURACY,
+      MULTI_VALUE_DISAMBIGUATION_ACCURACY,
       CITATION_CORRECTNESS_RATE: all.RETRIEVAL_RECALL_AT_1,
       SOURCE_RESOLUTION_RATE: 1,
       EXTRANEOUS_REQUIREMENT_RATE: 0,
@@ -319,7 +356,7 @@ describe("document QA evaluation framework", () => {
       holdout,
     };
 
-    const outDir = join(dirname(fileURLToPath(import.meta.url)), "../../../docs/pilot/EOS-AI-DOC-QA-1");
+    const outDir = join(dirname(fileURLToPath(import.meta.url)), "../../../docs/pilot/EOS-AI-DOC-STRUCT-1");
     mkdirSync(outDir, { recursive: true });
     writeFileSync(join(outDir, "benchmark-results.json"), JSON.stringify(report, null, 2));
 

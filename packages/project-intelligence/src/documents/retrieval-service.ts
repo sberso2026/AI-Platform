@@ -1,3 +1,4 @@
+import { assembleStructuralEvidence, parseEngineeringStructure } from "@rtb/engineering-os";
 import type { ProjectIntelligenceEmbeddingAdapter } from "./embedding-adapter";
 import type { DocumentIndexFilter, DocumentIndexHit, ProjectIntelligenceDocumentIndexAdapter } from "./index-adapter";
 import type { DocumentCitation } from "./types";
@@ -90,16 +91,84 @@ function diversify(hits: readonly DocumentIndexHit[], limit: number): DocumentIn
   return selected;
 }
 
+function applyStructuralRanking(
+  hits: readonly DocumentIndexHit[],
+  plan: EngineeringQueryPlan,
+): DocumentIndexHit[] {
+  const byPage = new Map<string, DocumentIndexHit[]>();
+  for (const hit of hits) {
+    const key = `${hit.chunk.engineeringDocumentId}:${hit.chunk.pageStart ?? "x"}`;
+    const list = byPage.get(key) ?? [];
+    list.push(hit);
+    byPage.set(key, list);
+  }
+  const boost = new Map<string, number>();
+  const excerptById = new Map<string, { excerpt: string; clause: string | null }>();
+  for (const group of byPage.values()) {
+    const ordered = [...group].sort((a, b) => a.chunk.chunkIndex - b.chunk.chunkIndex);
+    const text = ordered.map((hit) => `${hit.chunk.sectionPath ?? ""}\n${hit.chunk.content}`).join("\n");
+    const assembled = assembleStructuralEvidence(
+      parseEngineeringStructure(text, ordered[0]?.chunk.pageStart ?? null),
+      {
+        query: plan.rawQuery,
+        subjects: plan.subjects,
+        properties: plan.properties,
+        constraints: plan.constraints,
+        qualifier: plan.qualifier,
+      },
+    );
+    if (!assembled.facts.length) continue;
+    for (const hit of ordered) {
+      const hay = `${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`;
+      const matched = assembled.facts.filter((fact) => (
+        fact.value && hay.includes(fact.value) && (fact.unit ? hay.toLowerCase().includes(fact.unit.toLowerCase()) : true)
+      ));
+      if (!matched.length) continue;
+      boost.set(hit.chunk.stableChunkId, 1.6);
+      excerptById.set(hit.chunk.stableChunkId, {
+        excerpt: assembled.excerpt || hit.chunk.content,
+        clause: matched[0]?.sourceClause ?? hit.chunk.sectionPath ?? null,
+      });
+    }
+  }
+  const ranked = hits
+    .map((hit) => {
+      const extra = excerptById.get(hit.chunk.stableChunkId);
+      return {
+        ...hit,
+        score: hit.score + (boost.get(hit.chunk.stableChunkId) ?? 0),
+        chunk: extra
+          ? {
+              ...hit.chunk,
+              sectionPath: extra.clause ?? hit.chunk.sectionPath,
+              metadata: {
+                ...hit.chunk.metadata,
+                structuralExcerpt: extra.excerpt,
+                structuralClause: extra.clause,
+              },
+            }
+          : hit.chunk,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+  return ranked;
+}
+
 function toCitation(hit: DocumentIndexHit, query: string, plan?: EngineeringQueryPlan): DocumentCitation {
   const meta = hit.chunk.metadata ?? {};
   const weighted = [...(plan?.properties ?? []), ...(plan?.constraints ?? [])];
+  const raw = typeof meta.structuralExcerpt === "string" && meta.structuralExcerpt.trim()
+    ? String(meta.structuralExcerpt)
+    : excerptAroundQuery(hit.chunk.content, query, 420, weighted);
+  const clause = hit.chunk.sectionPath?.match(/\b(\d+(?:\.\d+){1,4}(?:\([a-z0-9]+\))*)/i)?.[0];
+  const excerpt = clause && !raw.includes(clause) ? `${hit.chunk.sectionPath} ${raw}` : raw;
   return {
     engineeringDocumentId: hit.chunk.engineeringDocumentId,
     revision: hit.chunk.revision,
     pageStart: hit.chunk.pageStart,
     pageEnd: hit.chunk.pageEnd,
     sectionPath: hit.chunk.sectionPath,
-    excerpt: excerptAroundQuery(hit.chunk.content, query, 420, weighted),
+    excerpt,
     evidenceScore: hit.score,
     chunkId: hit.chunk.stableChunkId,
     sourceCoordinates: {
@@ -151,7 +220,7 @@ function textOverlapRatio(left: string, right: string): number {
 }
 
 function clauseNumber(hit: DocumentIndexHit): string | null {
-  return (hit.chunk.sectionPath ?? "").match(/\b(\d+(?:\.\d+){1,4})\b/)?.[1] ?? null;
+  return (hit.chunk.sectionPath ?? "").match(/\b(\d+(?:\.\d+){1,4}(?:\([a-z0-9]+\))*)\b/i)?.[1] ?? null;
 }
 
 function isDuplicateProvenance(left: DocumentIndexHit, right: DocumentIndexHit): boolean {
@@ -164,8 +233,8 @@ function isDuplicateProvenance(left: DocumentIndexHit, right: DocumentIndexHit):
     && left.chunk.pageStart === right.chunk.pageStart;
   const clauseLeft = clauseNumber(left);
   const clauseRight = clauseNumber(right);
-  if (samePage && clauseLeft && clauseLeft === clauseRight) return true;
   const overlap = textOverlapRatio(left.chunk.content, right.chunk.content);
+  if (samePage && clauseLeft && clauseLeft === clauseRight && overlap >= 0.5) return true;
   if (samePage && overlap >= 0.5) return true;
   return overlap >= 0.8;
 }
@@ -275,7 +344,7 @@ export class ProjectIntelligenceDocumentRetrievalService {
     const ranked = rerankHitsByQueryOverlap(fused, plan.normalizedQuery, plan.distinctiveTerms, plan.entities);
     const rankedById = new Map(ranked.map((hit) => [hit.chunk.stableChunkId, hit.score]));
     const rankedIds = new Set(ranked.map((hit) => hit.chunk.stableChunkId));
-    const uniqueRanked = uniqueChunkWindows(ranked, ranked.length);
+    const uniqueRanked = applyStructuralRanking(uniqueChunkWindows(ranked, ranked.length), plan);
     const classified = uniqueRanked
       .map((hit) => {
         const relevance = classifyEvidenceRelevance(`${hit.chunk.sectionPath ?? ""} ${hit.chunk.content}`, plan);

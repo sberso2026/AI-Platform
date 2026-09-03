@@ -155,6 +155,7 @@ async function retrieveDocumentBody(query: EngineeringSearchQuery) {
         const title = String(core.title ?? "Engineering document");
         const documentNumber = String(core.document_number ?? "");
         const revision = String(core.revision ?? hit.chunk.revision ?? "A");
+        const citation = result.citations.find((row) => row.chunkId === hit.chunk.stableChunkId);
         return {
           sourceId: hit.chunk.stableChunkId,
           sourceType: "document",
@@ -166,10 +167,10 @@ async function retrieveDocumentBody(query: EngineeringSearchQuery) {
           sourceLocation: citationHref({
             documentId: hit.chunk.engineeringDocumentId,
             page: hit.chunk.pageStart,
-            section: hit.chunk.sectionPath,
+            section: citation?.sectionPath ?? hit.chunk.sectionPath,
             chunkId: hit.chunk.stableChunkId,
           }),
-          excerpt: excerptAroundQuery(
+          excerpt: citation?.excerpt ?? excerptAroundQuery(
             hit.chunk.content,
             result.queryPlan?.normalizedQuery ?? query.query,
             420,
@@ -180,7 +181,7 @@ async function retrieveDocumentBody(query: EngineeringSearchQuery) {
           permissionsApplied: true,
           pageStart: hit.chunk.pageStart ?? null,
           pageEnd: hit.chunk.pageEnd ?? null,
-          sectionPath: hit.chunk.sectionPath ?? null,
+          sectionPath: citation?.sectionPath ?? hit.chunk.sectionPath ?? null,
           documentNumber: documentNumber || null,
           figureLabel: figureNumber ? `Figure ${figureNumber}` : null,
           chunkId: hit.chunk.stableChunkId,
