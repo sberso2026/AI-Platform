@@ -188,19 +188,7 @@ export class EngineeringTechnicalQueryService {
   async getPresented(commerce: CommerceExecutionContext, tenantId: string, id: string) {
     const loaded = await this.get(commerce, tenantId, id);
     if (!loaded) return null;
-    const row = loaded.query as Record<string, unknown>;
-    const [presented] = await this.presentRows(commerce, tenantId, [row]);
-    const links = await this.framework.listLinks(tenantId, "technical_query", id).catch(() => []);
-    const references = await this.resolveReferences(tenantId, links as Record<string, unknown>[]);
-    const history = await this.listHistory(tenantId, id);
-    return {
-      query: row,
-      comments: loaded.comments,
-      links,
-      references,
-      history,
-      presentation: presented?.presentation ?? presentTechnicalQuery({ row }),
-    };
+    return this.decoratePresented(commerce, tenantId, loaded.query as Record<string, unknown>, loaded.comments);
   }
 
   async listDirectory(commerce: CommerceExecutionContext, tenantId: string) {
@@ -310,7 +298,7 @@ export class EngineeringTechnicalQueryService {
         await this.notifyAssigned(data as Record<string, unknown>, input.createdBy);
       }
     }
-    return data;
+    return this.presentAfterWrite(commerce, input.tenantId, data as Record<string, unknown>);
   }
 
   async respond(
@@ -604,11 +592,7 @@ export class EngineeringTechnicalQueryService {
     if (notify === "clarification") await this.notifyAssigned(data, actorUserId, "Clarification requested");
     if (notify === "closed") await this.notifyWatchers(data, `${data.tq_number} closed`);
 
-    const comments = await this.framework.listComments(tenantId, "technical_query", id).catch(() => []);
-    if (input.action === "submit_response" || input.action === "save_response_draft" || input.action === "close") {
-      return { query: data, comments };
-    }
-    return this.getPresented(commerce, tenantId, id);
+    return this.presentAfterWrite(commerce, tenantId, data);
   }
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
@@ -626,6 +610,36 @@ export class EngineeringTechnicalQueryService {
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  }
+
+  private async presentAfterWrite(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    row: Record<string, unknown>,
+  ) {
+    const comments = await this.framework.listComments(tenantId, "technical_query", String(row.id)).catch(() => []);
+    return this.decoratePresented(commerce, tenantId, row, comments);
+  }
+
+  private async decoratePresented(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    row: Record<string, unknown>,
+    comments: unknown,
+  ) {
+    const id = String(row.id);
+    const [presented] = await this.presentRows(commerce, tenantId, [row]);
+    const links = await this.framework.listLinks(tenantId, "technical_query", id).catch(() => []);
+    const references = await this.resolveReferences(tenantId, links as Record<string, unknown>[]);
+    const history = await this.listHistory(tenantId, id);
+    return {
+      query: row,
+      comments,
+      links,
+      references,
+      history,
+      presentation: presented?.presentation ?? presentTechnicalQuery({ row }),
+    };
   }
 
   private async requireRow(commerce: CommerceExecutionContext, tenantId: string, id: string) {

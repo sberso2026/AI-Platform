@@ -49,6 +49,17 @@ describe("EOS-TQ-UX-1 enterprise register", () => {
     expect(page).toContain("Print");
   });
 
+  it("does not re-assert read presentation after a write commerce context", () => {
+    const collection = readApp("src/app/api/engineering/technical-queries/route.ts");
+    const service = readFileSync(
+      resolve(WEB_ROOT, "../../packages/engineering-os/src/services/technical-query-service.ts"),
+      "utf8",
+    );
+    expect(collection).not.toContain("getPresented");
+    expect(service).toContain("presentAfterWrite");
+    expect(service).toContain("return this.presentAfterWrite(commerce, input.tenantId, data as Record<string, unknown>)");
+  });
+
   it("creates TQs through a structured form with query, due, and suggested solution", () => {
     const page = readApp("src/app/(platform)/engineering/technical-queries/new/page.tsx");
     expect(page).toContain("Query / Information Required");

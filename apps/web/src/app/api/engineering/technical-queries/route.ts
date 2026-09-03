@@ -55,10 +55,7 @@ export const POST = withEngineeringApi("technical-queries", async ({ ctx, commer
     requireActionBy: body.requireActionBy === true,
     metadata: body.metadata,
   });
-  const presented = created?.id
-    ? await ctx.engineering.technicalQueries.getPresented(commerce, ctx.tenantId, created.id as string)
-    : null;
-  return NextResponse.json({ data: presented ?? created }, { status: 201 });
+  return NextResponse.json({ data: created }, { status: 201 });
 });
 
 export const PATCH = withEngineeringApi("technical-queries", async ({ ctx, commerce }, request) => {
