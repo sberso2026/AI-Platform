@@ -1,4 +1,5 @@
 import type { AuthContext } from "@/lib/kernel";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   ENGINEERING_CERTIFIED_V1_MODULES,
   engineeringSystemsCommerceState,
@@ -40,14 +41,32 @@ export async function loadCanonicalEngineeringAccess(ctx: AuthContext) {
     action: "access" as const,
   };
 
-  const [productAccess, aiAssistant, installations, ...appDecisions] = await Promise.all([
+  const [productAccess, aiAssistant, ...appDecisions] = await Promise.all([
     ctx.commerce.entitlements.check(base),
     ctx.commerce.entitlements.check({ ...base, featureKey: "ai_assistant", action: "ai.execute" }),
-    ctx.commerce.applicationInstallationLifecycle.listByTenant(ctx.tenantId),
     ...PILOT_APPLICATION_KEYS.map((applicationKey) =>
       ctx.commerce.entitlements.check({ ...base, applicationKey }),
     ),
   ]);
+
+  let installations: Array<{ application_key?: string; applicationKey?: string; status?: string }> = [];
+  try {
+    installations = await ctx.commerce.applicationInstallationLifecycle.listByTenant(ctx.tenantId);
+  } catch {
+    installations = [];
+  }
+  if (installations.length === 0) {
+    try {
+      const service = createServiceClient();
+      const { data } = await service
+        .from("commercial_application_installations")
+        .select("application_key, status")
+        .eq("tenant_id", ctx.tenantId);
+      installations = (data ?? []) as Array<{ application_key?: string; status?: string }>;
+    } catch {
+      installations = [];
+    }
+  }
 
   const installedKeys = new Set(
     (installations ?? [])
@@ -55,7 +74,8 @@ export async function loadCanonicalEngineeringAccess(ctx: AuthContext) {
         const status = String(row.status ?? "");
         return status === "active" || status === "healthy" || status === "degraded";
       })
-      .map((row) => row.application_key),
+      .map((row) => String(row.application_key ?? row.applicationKey ?? ""))
+      .filter(Boolean),
   );
 
   const modules: CanonicalModuleAccess[] = PILOT_APPLICATION_KEYS.map((applicationKey, index) => {

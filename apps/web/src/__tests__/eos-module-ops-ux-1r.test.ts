@@ -56,7 +56,12 @@ describe("EOS-MODULE-OPS-UX-1R founder operational closure", () => {
     expect(twinDetail).not.toContain("{twinId}</p>");
     const launcher = readApp("src/app/(platform)/engineering/modules/page.tsx");
     expect(launcher).toContain("systemsState");
-    expect(launcher).toContain("Installed");
+    expect(launcher).toContain("Checking commerce");
+    expect(launcher).toContain("loaded");
+    expect(launcher).toContain("? (access?.systemsState ?? \"Unavailable\")");
+    const header = readApp("src/components/layout/header.tsx");
+    expect(header).toContain("selectValue");
+    expect(header).toContain("isRawUuid");
   });
 
   it("keeps release certification flags off operational landings", () => {

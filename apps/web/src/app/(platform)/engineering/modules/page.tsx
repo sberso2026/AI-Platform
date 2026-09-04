@@ -40,19 +40,28 @@ type ModuleAccess = {
 
 export default function EngineeringModuleLauncherPage() {
   const [modules, setModules] = useState<ModuleAccess[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/engineering/modules/access")
-      .then((r) => r.json())
+      .then(async (r) => {
+        const json = await r.json().catch(() => null);
+        if (!r.ok) throw new Error("access_failed");
+        return json;
+      })
       .then((json) => {
         if (cancelled) return;
         const rows = Array.isArray(json?.data?.modules) ? (json.data.modules as ModuleAccess[]) : [];
         setModules(rows);
+        setLoaded(true);
       })
       .catch(() => {
-        if (!cancelled) setError("Could not load Engineering Systems");
+        if (!cancelled) {
+          setError("Could not load Engineering Systems");
+          setLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -61,7 +70,9 @@ export default function EngineeringModuleLauncherPage() {
 
   const cards = ENGINEERING_CERTIFIED_V1_MODULES.map((mod) => {
     const access = modules.find((row) => row.applicationKey === mod.applicationKey);
-    const state: EngineeringSystemsCommerceState = access?.systemsState ?? "Unavailable";
+    const state: EngineeringSystemsCommerceState | null = loaded
+      ? (access?.systemsState ?? "Unavailable")
+      : null;
     return { ...mod, state, open: Boolean(access?.allowed), href: access?.href ?? mod.href };
   });
 
@@ -94,7 +105,11 @@ export default function EngineeringModuleLauncherPage() {
                     <Icon className="h-5 w-5 text-slate-700" />
                     <CardTitle className="text-base">{mod.name}</CardTitle>
                   </div>
-                  <StatusChip status={engineeringSystemsChipStatus(mod.state)}>{mod.state}</StatusChip>
+                  {mod.state ? (
+                    <StatusChip status={engineeringSystemsChipStatus(mod.state)}>{mod.state}</StatusChip>
+                  ) : (
+                    <span className="text-xs text-slate-500">Checking commerce…</span>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600">{mod.description}</p>

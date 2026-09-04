@@ -6,7 +6,7 @@ import { Button, PageHeader, SearchInput, SPACING, cn } from "@rtb/ui";
 import { Bell, LogOut } from "lucide-react";
 import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 import { createClient } from "@/lib/supabase/client";
-import { formatProjectContextLabel } from "@/lib/engineering/module-ops";
+import { formatProjectContextLabel, isRawUuid } from "@/lib/engineering/module-ops";
 
 interface HeaderProps {
   title: string;
@@ -44,8 +44,10 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
           rows.map((p: Record<string, unknown>) => ({
             id: String(p.id),
             label: formatProjectContextLabel({
-              projectCode: typeof p.project_code === "string" ? p.project_code : "",
-              projectName: typeof p.project_name === "string" ? p.project_name : "",
+              projectCode:
+                typeof p.project_code === "string" && !isRawUuid(p.project_code) ? p.project_code : "",
+              projectName:
+                typeof p.project_name === "string" && !isRawUuid(p.project_name) ? p.project_name : "",
             }),
           }))
         );
@@ -64,6 +66,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
     () => [{ id: "all", label: "All Projects" }, ...projects],
     [projects]
   );
+  const selectValue = projectOptions.some((p) => p.id === projectId) ? projectId : "all";
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -129,7 +132,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
                 CONTROL_H,
                 "max-w-[220px] shrink-0 rounded-md border border-border bg-white px-3 text-[0.9375rem] text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               )}
-              value={projectId}
+              value={selectValue}
               onChange={(e) => onProjectChange(e.target.value)}
               aria-label="Project"
             >

@@ -6,10 +6,14 @@ import { unauthenticatedResponse } from "@/lib/lifecycle-api";
 export async function GET() {
   const ctx = await getAuthContext();
   if (!ctx) return unauthenticatedResponse(crypto.randomUUID());
-  const snapshot = await loadCanonicalEngineeringAccess(ctx);
-  return NextResponse.json({
-    data: {
-      modules: snapshot.modules,
-    },
-  });
+  try {
+    const snapshot = await loadCanonicalEngineeringAccess(ctx);
+    return NextResponse.json({
+      data: {
+        modules: snapshot.modules,
+      },
+    });
+  } catch {
+    return NextResponse.json({ data: { modules: [] } }, { status: 500 });
+  }
 }

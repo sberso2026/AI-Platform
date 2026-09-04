@@ -151,7 +151,7 @@ export default function AssetIntelligenceOverviewPage() {
               {attention.slice(0, 12).map((asset) => (
                 <li key={asset.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div>
-                    <p className="font-medium text-slate-900">{asset.asset_tag ?? asset.id.slice(0, 8)}</p>
+                    <p className="font-medium text-slate-900">{asset.asset_tag ?? asset.asset_name ?? "Untitled asset"}</p>
                     <p className="text-xs text-slate-500">
                       {asset.asset_name ?? "Untitled asset"} · {asset.criticality ?? asset.status}
                     </p>
