@@ -7,6 +7,7 @@ import { Bell, LogOut } from "lucide-react";
 import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 import { createClient } from "@/lib/supabase/client";
 import { formatProjectContextLabel, isRawUuid } from "@/lib/engineering/module-ops";
+import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
 
 interface HeaderProps {
   title: string;
@@ -31,7 +32,10 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(PROJECT_FILTER_KEY);
-      if (stored) setProjectId(stored);
+      if (stored) {
+        setProjectId(stored);
+        persistEngineeringProjectFilter(stored === "all" ? null : stored);
+      }
     } catch {
       // ignore
     }

@@ -62,6 +62,8 @@ describe("EOS-MODULE-OPS-UX-1R founder operational closure", () => {
     const header = readApp("src/components/layout/header.tsx");
     expect(header).toContain("selectValue");
     expect(header).toContain("isRawUuid");
+    const workQueue = readApp("src/components/engineering/operational.tsx");
+    expect(workQueue).toContain("displayOperationalText(pickExistingField");
   });
 
   it("keeps release certification flags off operational landings", () => {

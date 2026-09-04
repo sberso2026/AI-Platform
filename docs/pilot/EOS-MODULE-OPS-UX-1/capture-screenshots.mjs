@@ -36,7 +36,6 @@ const email = "silvestre.berso@rtbea.com.au";
 const PROJECT_REF = "wcydlhqiqdwgoaqrlget";
 const PILOT_PROJECT_ID = "80652532-932e-464d-803b-9876df705bda";
 const COL01_ASSET_ID = "2f98ad61-210c-409a-8122-06c3e6c48389";
-const KERNEL_TWIN_ID = "7b468a8e-4626-41fe-a412-b64f4e8617c0";
 const OUT = resolve(root, "docs/pilot/EOS-MODULE-OPS-UX-1/screenshots");
 mkdirSync(OUT, { recursive: true });
 
@@ -75,6 +74,7 @@ async function sessionFor(userEmail) {
 }
 
 const founder = await sessionFor(email);
+console.log("founder_session_ok");
 const viewports = [
   { name: "1366", width: 1366, height: 768 },
   { name: "1440", width: 1440, height: 900 },
@@ -86,7 +86,7 @@ const routes = [
   { id: "02-asset-intelligence-overview", path: "/engineering/apps/asset-intelligence" },
   { id: "03-asset-detail", path: `/engineering/apps/asset-intelligence/assets/${COL01_ASSET_ID}` },
   { id: "04-digital-twin-overview", path: "/engineering/apps/digital-twin" },
-  { id: "05-twin-detail", path: `/engineering/apps/digital-twin/twins/${KERNEL_TWIN_ID}` },
+  { id: "05-twin-detail", path: "/engineering/apps/digital-twin/twins" },
   { id: "06-engineering-models", path: "/engineering/apps/model-interoperability" },
   { id: "07-model-detail", path: "/engineering/apps/model-interoperability/models" },
   { id: "08-project-controls-overview", path: "/engineering/apps/project-controls" },
@@ -107,61 +107,60 @@ const evidence = {
 
 const uuidRe = /[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
 
-async function waitFirst(page, locators, timeout = 45000) {
+async function waitFirst(page, locators, timeout = 20000) {
   await Promise.race(
     locators.map((locator) => locator.waitFor({ timeout }).catch(() => undefined)),
   ).catch(() => undefined);
 }
 
 async function settle(page, route) {
+  console.log(`goto ${route.id} ${route.path}`);
   await page.goto(`${host}${route.path}`, { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.getByText("Command Centre").first().waitFor({ timeout: 45000 }).catch(() => undefined);
-  await page.getByText("Gold Coast").first().waitFor({ timeout: 20000 }).catch(() => undefined);
+  await page.getByText("Command Centre").first().waitFor({ timeout: 20000 }).catch(() => undefined);
+  await page.getByText("Gold Coast").first().waitFor({ timeout: 8000 }).catch(() => undefined);
   if (route.id === "01-engineering-systems") {
     await page
       .locator("[data-testid=engineering-module-asset_intelligence]")
       .getByText("Installed")
-      .waitFor({ timeout: 45000 })
+      .waitFor({ timeout: 20000 })
       .catch(() => undefined);
   }
   if (route.id === "02-asset-intelligence-overview") {
-    await page.getByTestId("ai-asset-count").waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByTestId("ai-asset-count").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "03-asset-detail") {
-    await page.getByText("COL-01").first().waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByText("COL-01").first().waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "04-digital-twin-overview") {
     await waitFirst(page, [page.getByTestId("dt-empty-twins"), page.getByTestId("dt-identity-card")]);
   }
   if (route.id === "05-twin-detail") {
     await waitFirst(page, [
-      page.getByTestId("digital-twin-detail"),
       page.getByTestId("dt-twins-empty"),
-      page.getByText("No published state yet"),
+      page.getByTestId("digital-twin-twins"),
     ]);
   }
   if (route.id === "06-engineering-models") {
-    await page.getByTestId("emi-model-count").waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByTestId("emi-model-count").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "07-model-detail") {
-    await page.getByTestId("emi-models-empty").waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByTestId("emi-models-empty").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "08-project-controls-overview") {
-    await page.getByTestId("project-controls-ready").waitFor({ timeout: 45000 }).catch(() => undefined);
-    await page.getByText("Attention required").first().waitFor({ timeout: 20000 }).catch(() => undefined);
+    await page.getByTestId("project-controls-ready").waitFor({ timeout: 20000 }).catch(() => undefined);
+    await page.getByText("Attention required").first().waitFor({ timeout: 12000 }).catch(() => undefined);
   }
   if (route.id === "09-project-controls-schedule") {
-    await page.getByTestId("pc-schedule-page").waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByTestId("pc-schedule-page").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "10-project-controls-cost") {
-    await page.getByTestId("pc-cost-page").waitFor({ timeout: 20000 }).catch(() => undefined);
-    await page.getByText("Cost").first().waitFor({ timeout: 20000 }).catch(() => undefined);
+    await page.getByTestId("pc-cost-page-empty").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "11-installed-products") {
-    await page.getByText("Loading…").waitFor({ state: "hidden", timeout: 45000 }).catch(() => undefined);
-    await page.getByText("Engineering OS").first().waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByText("Loading…").waitFor({ state: "hidden", timeout: 20000 }).catch(() => undefined);
+    await page.getByText("Engineering OS").first().waitFor({ timeout: 20000 }).catch(() => undefined);
   }
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(500);
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -187,12 +186,13 @@ for (const vp of viewports) {
   }, PILOT_PROJECT_ID);
 
   if (vp.name === "1920") {
+    console.log("open_exercise_start");
     await page.goto(`${host}/engineering/modules`, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.getByText("Command Centre").first().waitFor({ timeout: 45000 }).catch(() => undefined);
+    await page.getByText("Command Centre").first().waitFor({ timeout: 20000 }).catch(() => undefined);
     await page
       .locator("[data-testid=engineering-module-asset_intelligence]")
       .getByText("Installed")
-      .waitFor({ timeout: 45000 })
+      .waitFor({ timeout: 20000 })
       .catch(() => undefined);
     evidence.access = await page.evaluate(async () => {
       const res = await fetch("/api/engineering/modules/access");
@@ -200,23 +200,23 @@ for (const vp of viewports) {
     });
     for (const key of ["asset_intelligence", "digital_twin", "engineering_model_interoperability"]) {
       const card = page.locator(`[data-testid=engineering-module-${key}]`);
-      const installed = await card.getByText("Installed").count();
+      const installed = await card.getByText("Installed").waitFor({ timeout: 20000 }).then(() => true).catch(() => false);
       const href = await card.getAttribute("href");
       if (href) {
         await card.click();
-        await page.waitForTimeout(1500);
-        const url = page.url();
-        evidence.open[key] = { href, url, installed: installed > 0 };
+        await page.waitForTimeout(1200);
+        evidence.open[key] = { href, url: page.url(), installed: installed > 0 };
         await page.goto(`${host}/engineering/modules`, { waitUntil: "domcontentloaded", timeout: 60000 });
         await page
           .locator("[data-testid=engineering-module-asset_intelligence]")
           .getByText("Installed")
-          .waitFor({ timeout: 45000 })
+          .waitFor({ timeout: 12000 })
           .catch(() => undefined);
       } else {
         evidence.open[key] = { href: null, installed: installed > 0, linked: false };
       }
     }
+    console.log("open_exercise_done", JSON.stringify(evidence.open));
   }
 
   for (const route of routes) {

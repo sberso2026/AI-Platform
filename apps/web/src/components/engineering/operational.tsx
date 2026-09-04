@@ -161,10 +161,10 @@ export function WorkQueue({
             const id = String(row.id ?? recordLabel(row, labelKeys));
             const dest = itemHref?.(row) ?? href;
             const meta = [
-              pickExistingField(row, ["assigned_to", "owner_id", "owner"]),
+              displayOperationalText(pickExistingField(row, ["assigned_to_name", "owner_name", "assigned_to", "owner_id", "owner"]), ""),
               formatOperationalDate(row.due_date ?? row.response_due ?? row.dueDate),
               formatOperationalDate(row.updated_at ?? row.updatedAt),
-            ].filter((part) => part !== "—");
+            ].filter((part) => part && part !== "—");
             return (
               <li key={id}>
                 <Link
