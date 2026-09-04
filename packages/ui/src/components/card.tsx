@@ -1,14 +1,37 @@
 import * as React from "react";
 import { cn } from "../lib/utils";
 
+export type CardVariant =
+  | "default"
+  | "kpi"
+  | "alert"
+  | "intelligence"
+  | "evidence"
+  | "health"
+  | "ai"
+  | "action";
+
+const CARD_VARIANT: Record<CardVariant, string> = {
+  default: "eos-panel-elevated",
+  kpi: "eos-panel-elevated eos-card-kpi",
+  alert: "eos-panel-elevated eos-card-alert",
+  intelligence: "eos-panel-elevated eos-card-intelligence",
+  evidence: "eos-panel-elevated eos-card-evidence",
+  health: "eos-panel-elevated eos-card-health",
+  ai: "eos-panel-elevated eos-card-ai",
+  action: "eos-panel-elevated eos-card-action",
+};
+
 export const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant }
+>(({ className, variant = "default", ...props }, ref) => (
   <div
     ref={ref}
+    data-eos-card={variant}
     className={cn(
-      "rounded-lg border border-slate-200/90 bg-card text-card-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06),0_4px_12px_rgba(15,23,42,0.04)]",
+      "rounded-xl border border-[color:var(--eos-border)] bg-[color:var(--eos-panel-elevated)] text-[color:var(--eos-text-primary)] shadow-[var(--eos-glow)]",
+      CARD_VARIANT[variant],
       className
     )}
     {...props}
@@ -34,7 +57,7 @@ export const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("text-[1.0625rem] font-semibold leading-none tracking-tight text-slate-900", className)}
+    className={cn("text-[1.125rem] font-semibold leading-snug tracking-tight text-[color:var(--eos-text-primary)]", className)}
     {...props}
   />
 ));

@@ -1,5 +1,5 @@
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
-export { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./components/card";
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, type CardVariant } from "./components/card";
 export { Input, type InputProps } from "./components/input";
 export { Badge } from "./components/badge";
 export {

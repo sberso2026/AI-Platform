@@ -202,7 +202,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200",
+        "flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-[color:var(--eos-bg-secondary)] text-sidebar-foreground transition-[width] duration-200",
         collapsed ? SPACING.sidebarWidthCollapsed : SPACING.sidebarWidth
       )}
       data-testid="app-sidebar"
@@ -231,11 +231,11 @@ export function Sidebar() {
                 <button
                   type="button"
                   className={cn(
-                    "mb-2.5 flex w-full items-center justify-between rounded-md px-4 py-2 text-left",
+                    "mb-2.5 flex min-h-11 w-full items-center justify-between rounded-md px-4 py-2 text-left",
                     TYPOGRAPHY.sidebarGroup,
                     "text-sidebar-foreground/55",
                     "hover:bg-sidebar-accent/40 hover:text-sidebar-foreground/80",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
                   )}
                   aria-expanded={expanded}
                   aria-controls={panelId}
@@ -308,7 +308,7 @@ export function Sidebar() {
       <button
         type="button"
         onClick={toggleCollapsed}
-        className="flex h-10 items-center justify-center border-t border-sidebar-border text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+        className="flex h-12 items-center justify-center border-t border-sidebar-border text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--eos-accent)]"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         aria-expanded={!collapsed}
         data-testid="sidebar-compact-toggle"

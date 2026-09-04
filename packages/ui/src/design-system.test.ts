@@ -10,39 +10,39 @@ import {
   sidebarNavItemClassName,
 } from "./index";
 
-describe("Batch 2.11 — Typography enforcement", () => {
-  it("keeps primary text at 15px+ and titles at enterprise scale", () => {
-    expect(TYPOGRAPHY.pageTitle).toContain("text-[2rem]");
+describe("EOS-SHELL-JARVIS-1 — Typography enforcement", () => {
+  it("keeps primary text at 16px+ and titles at enterprise scale", () => {
+    expect(TYPOGRAPHY.pageTitle).toContain("text-[2.125rem]");
     expect(TYPOGRAPHY.pageTitle).toContain("font-bold");
-    expect(TYPOGRAPHY.sectionHeading).toContain("text-[1.125rem]");
-    expect(TYPOGRAPHY.kpiValue).toContain("text-[2.25rem]");
+    expect(TYPOGRAPHY.sectionHeading).toContain("text-[1.25rem]");
+    expect(TYPOGRAPHY.kpiValue).toContain("text-[2.5rem]");
     expect(TYPOGRAPHY.kpiLabel).toContain("text-[0.9375rem]");
-    expect(TYPOGRAPHY.body).toContain("text-[0.9375rem]");
-    expect(TYPOGRAPHY.sidebarItem).toContain("text-[0.9375rem]");
+    expect(TYPOGRAPHY.body).toContain("text-[1rem]");
+    expect(TYPOGRAPHY.sidebarItem).toContain("text-[1rem]");
     expect(TYPOGRAPHY.sidebarItem).toContain("leading-5");
   });
 
   it("keeps metadata secondary only", () => {
-    expect(TYPOGRAPHY.meta).toContain("text-[0.8125rem]");
+    expect(TYPOGRAPHY.meta).toContain("text-[0.875rem]");
     expect(TYPOGRAPHY.sidebarGroup).toContain("text-[0.8125rem]");
-    expect(TYPOGRAPHY.sidebarGroup).toContain("tracking-[0.05em]");
+    expect(TYPOGRAPHY.sidebarGroup).toContain("tracking-[0.08em]");
   });
 });
 
-describe("Batch 2.11 — Sidebar nav spacing", () => {
-  it("uses flex row with min height, padding, and 12px gap", () => {
+describe("EOS-SHELL-JARVIS-1 — Sidebar nav spacing", () => {
+  it("uses flex row with 44–48px min height, padding, and 12px gap", () => {
     const cls = sidebarNavItemClassName({ active: false });
     expect(cls).toContain("flex");
     expect(cls).toContain("items-center");
-    expect(cls).toContain("min-h-10");
+    expect(cls).toContain("min-h-12");
     expect(cls).toContain("px-4");
     expect(cls).toContain("gap-3");
   });
 
-  it("keeps active highlight distinct", () => {
+  it("keeps active highlight distinct and luminous", () => {
     const active = sidebarNavItemClassName({ active: true });
-    expect(active).toContain("bg-sidebar-accent");
-    expect(active).toContain("text-white");
+    expect(active).toContain("bg-[color:var(--eos-accent-soft)]");
+    expect(active).toContain("ring-[color:var(--eos-border-active)]");
   });
 
   it("documents fixed icon rail width", () => {
@@ -74,6 +74,9 @@ describe("Batch 2.11 — Branding", () => {
   it("keeps 40–44px logo and clearer brand type", () => {
     expect(BRANDING.logoSizePx).toBeGreaterThanOrEqual(40);
     expect(BRANDING.logoSizePx).toBeLessThanOrEqual(44);
+    expect(BRANDING.org).toBe("RTB");
+    expect(BRANDING.product).toBe("Engineering OS");
+    expect(BRANDING.edition).toBe("Enterprise Edition");
     expect(TYPOGRAPHY.brandMark).toContain("font-bold");
     expect(TYPOGRAPHY.brandProduct).toContain("font-semibold");
     expect(TYPOGRAPHY.brandEdition).toContain("text-[0.8125rem]");

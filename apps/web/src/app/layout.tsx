@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className="h-full min-h-0 antialiased">
+      <body className="h-full min-h-0 antialiased" data-eos-theme="enterprise-dark">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

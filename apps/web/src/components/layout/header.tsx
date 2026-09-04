@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, PageHeader, SearchInput, SPACING, cn } from "@rtb/ui";
-import { Bell, LogOut } from "lucide-react";
+import { Bell, LogOut, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { EosAiCore } from "@/components/layout/eos-ai-core";
 
 interface HeaderProps {
   title: string;
@@ -13,7 +14,7 @@ interface HeaderProps {
 }
 
 const PROJECT_FILTER_KEY = "rtb.engineering.selectedProjectId";
-const CONTROL_H = "h-11"; // 44px — aligned chrome
+const CONTROL_H = "h-12";
 
 export function Header({ title, description, showEngineeringChrome }: HeaderProps) {
   const router = useRouter();
@@ -22,6 +23,10 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
   const [query, setQuery] = useState("");
 
   const engineeringChrome = showEngineeringChrome ?? true;
+  const selectedLabel =
+    projectId === "all"
+      ? "All Projects"
+      : projects.find((project) => project.id === projectId)?.label || "Project";
 
   useEffect(() => {
     try {
@@ -83,7 +88,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
 
   return (
     <header
-      className="flex min-h-[4.75rem] shrink-0 flex-col gap-4 border-b border-border bg-white px-6 py-4 sm:px-8 lg:flex-row lg:items-center lg:gap-6 lg:justify-between"
+      className="flex min-h-[5rem] shrink-0 flex-col gap-4 border-b border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] px-6 py-4 sm:px-8 lg:flex-row lg:items-center lg:gap-6 lg:justify-between"
       data-testid="app-header"
     >
       <PageHeader title={title} description={description} className="max-w-xl shrink-0" />
@@ -91,17 +96,18 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3 lg:gap-3">
         {engineeringChrome && (
           <>
+            <EosAiCore compact className="hidden xl:flex" projectLabel={selectedLabel} />
             <div
               className={cn(
                 CONTROL_H,
-                "flex shrink-0 items-center gap-2 rounded-md border border-border bg-slate-50 px-3"
+                "flex shrink-0 items-center gap-2 rounded-lg border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-3"
               )}
               data-testid="workspace-selector"
             >
-              <span className="hidden text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400 sm:inline">
+              <span className="hidden text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--eos-text-secondary)] sm:inline">
                 Workspace
               </span>
-              <span className="text-[0.9375rem] font-medium text-slate-700">RTB Engineering</span>
+              <span className="text-[1rem] font-medium text-[color:var(--eos-text-primary)]">RTB Engineering</span>
             </div>
 
             <label className="sr-only" htmlFor="project-selector">
@@ -112,7 +118,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
               data-testid="project-selector"
               className={cn(
                 CONTROL_H,
-                "max-w-[220px] shrink-0 rounded-md border border-border bg-white px-3 text-[0.9375rem] text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                "eos-select max-w-[280px] shrink-0 px-3 text-[1rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
               )}
               value={projectId}
               onChange={(e) => onProjectChange(e.target.value)}
@@ -143,20 +149,28 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
           </>
         )}
 
-        <div className="flex h-11 shrink-0 items-center gap-1 border-l border-border pl-3 sm:pl-4">
+        <div className="flex h-12 shrink-0 items-center gap-1 border-l border-[color:var(--eos-border)] pl-3 sm:pl-4">
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-11"
+            className="h-12 w-12 text-[color:var(--eos-text-secondary)] hover:text-[color:var(--eos-text-primary)]"
             aria-label="Notifications"
             onClick={() => router.push("/platform/notifications")}
           >
             <Bell className="h-5 w-5" />
           </Button>
+          <span
+            className="hidden h-12 items-center gap-2 rounded-lg px-2 text-[0.9375rem] text-[color:var(--eos-text-secondary)] lg:inline-flex"
+            data-testid="header-user"
+            aria-label="User profile"
+          >
+            <UserRound className="h-5 w-5" aria-hidden />
+            <span>User</span>
+          </span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-11"
+            className="h-12 w-12 text-[color:var(--eos-text-secondary)] hover:text-[color:var(--eos-text-primary)]"
             onClick={handleSignOut}
             aria-label="Sign out"
           >

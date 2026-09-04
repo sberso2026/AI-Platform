@@ -1,37 +1,87 @@
 @import "tailwindcss";
 
-/* RTB Engineering OS — enterprise light main + dark sidebar (Batch 2.09) */
+/*
+  RTB Engineering OS — dark premium enterprise shell.
+  Tokens only; no second UI framework.
+  Light tokens remain under html.light for theme extensibility.
+*/
+
+:root {
+  --eos-bg-primary: #060b14;
+  --eos-bg-secondary: #0b1220;
+  --eos-panel: rgba(12, 22, 38, 0.78);
+  --eos-panel-elevated: rgba(16, 28, 48, 0.92);
+  --eos-border: rgba(125, 211, 252, 0.14);
+  --eos-border-active: rgba(56, 189, 248, 0.55);
+  --eos-text-primary: #e8eef7;
+  --eos-text-secondary: #93a4bb;
+  --eos-accent: #38bdf8;
+  --eos-accent-soft: rgba(56, 189, 248, 0.14);
+  --eos-teal: #2dd4bf;
+  --eos-success: #34d399;
+  --eos-warning: #fbbf24;
+  --eos-danger: #f87171;
+  --eos-ai: #c4b5fd;
+  --eos-glow: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 12px 40px rgba(2, 8, 20, 0.45);
+}
+
 @theme {
+  --color-background: var(--eos-bg-primary);
+  --color-foreground: var(--eos-text-primary);
+  --color-card: var(--eos-panel-elevated);
+  --color-card-foreground: var(--eos-text-primary);
+  --color-primary: #38bdf8;
+  --color-primary-foreground: #041018;
+  --color-secondary: #132033;
+  --color-secondary-foreground: var(--eos-text-primary);
+  --color-muted: #101a2b;
+  --color-muted-foreground: var(--eos-text-secondary);
+  --color-accent: var(--eos-accent-soft);
+  --color-accent-foreground: #e0f2fe;
+  --color-destructive: #f87171;
+  --color-destructive-foreground: #fff7f7;
+  --color-border: var(--eos-border);
+  --color-input: var(--eos-border);
+  --color-ring: var(--eos-accent);
+  --color-sidebar: #070d18;
+  --color-sidebar-foreground: #d7e3f4;
+  --color-sidebar-accent: #122036;
+  --color-sidebar-border: rgba(125, 211, 252, 0.12);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --font-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
+}
+
+html.light {
+  --eos-bg-primary: #f4f6f8;
+  --eos-bg-secondary: #eef2f7;
+  --eos-panel: #ffffff;
+  --eos-panel-elevated: #ffffff;
+  --eos-border: #e5e7eb;
+  --eos-border-active: #2563eb;
+  --eos-text-primary: #1f2937;
+  --eos-text-secondary: #64748b;
+  --eos-accent: #2563eb;
+  --eos-accent-soft: #eff6ff;
+  --eos-teal: #0f766e;
+  --eos-success: #059669;
+  --eos-warning: #d97706;
+  --eos-danger: #dc2626;
+  --eos-ai: #6d28d9;
+  --eos-glow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
   --color-background: #f4f6f8;
   --color-foreground: #1f2937;
   --color-card: #ffffff;
   --color-card-foreground: #1f2937;
   --color-primary: #2563eb;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #eef2f7;
-  --color-secondary-foreground: #1f2937;
-  --color-muted: #eef2f7;
-  --color-muted-foreground: #64748b;
-  --color-accent: #eff6ff;
-  --color-accent-foreground: #1e3a8a;
-  --color-destructive: #dc2626;
-  --color-destructive-foreground: #ffffff;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: #2563eb;
   --color-sidebar: #0f172a;
-  --color-sidebar-foreground: #e2e8f0;
-  --color-sidebar-accent: #1e293b;
-  --color-sidebar-border: #334155;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --font-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
+  color-scheme: light;
 }
 
-/* Force enterprise light shell — OS dark preference must not flip main chrome */
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -39,21 +89,196 @@ html {
 }
 
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  background: var(--eos-bg-primary);
+  color: var(--eos-text-primary);
   font-family: var(--font-sans);
-  font-size: 0.9375rem; /* 15px baseline — never go below 14px for body copy */
+  font-size: 1rem;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Focus visibility for accessibility */
 :focus-visible {
-  outline: 2px solid var(--color-ring);
+  outline: 2px solid var(--eos-accent);
   outline-offset: 2px;
 }
 
-/* Enterprise page surface */
 .page-main {
   line-height: 1.5;
+}
+
+.eos-panel {
+  background: var(--eos-panel);
+  border: 1px solid var(--eos-border);
+  box-shadow: var(--eos-glow);
+  backdrop-filter: blur(16px);
+}
+
+.eos-panel-elevated {
+  background: var(--eos-panel-elevated);
+  border: 1px solid var(--eos-border);
+  box-shadow: var(--eos-glow);
+}
+
+.eos-select,
+select.eos-select {
+  background: var(--eos-bg-secondary);
+  color: var(--eos-text-primary);
+  border: 1px solid var(--eos-border);
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  color-scheme: dark;
+}
+
+.eos-ai-pulse {
+  animation: eos-ai-pulse 3.6s ease-in-out infinite;
+}
+
+@keyframes eos-ai-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.28);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
+    opacity: 0.88;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eos-ai-pulse,
+  .eos-shell-fade,
+  .eos-shimmer {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.eos-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.08) 0%,
+    rgba(56, 189, 248, 0.16) 50%,
+    rgba(148, 163, 184, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: eos-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes eos-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+[data-eos-theme="enterprise-dark"] .bg-white {
+  background-color: var(--eos-panel-elevated);
+}
+[data-eos-theme="enterprise-dark"] .bg-slate-50,
+[data-eos-theme="enterprise-dark"] .bg-slate-50\/80,
+[data-eos-theme="enterprise-dark"] .bg-slate-50\/50,
+[data-eos-theme="enterprise-dark"] .bg-slate-100 {
+  background-color: var(--eos-bg-secondary);
+}
+[data-eos-theme="enterprise-dark"] .text-slate-900,
+[data-eos-theme="enterprise-dark"] .text-slate-800,
+[data-eos-theme="enterprise-dark"] .text-slate-950 {
+  color: var(--eos-text-primary);
+}
+[data-eos-theme="enterprise-dark"] .text-slate-700,
+[data-eos-theme="enterprise-dark"] .text-slate-600 {
+  color: #c5d0de;
+}
+[data-eos-theme="enterprise-dark"] .text-slate-500,
+[data-eos-theme="enterprise-dark"] .text-slate-400 {
+  color: var(--eos-text-secondary);
+}
+[data-eos-theme="enterprise-dark"] .border-slate-200,
+[data-eos-theme="enterprise-dark"] .border-slate-200\/90,
+[data-eos-theme="enterprise-dark"] .border-slate-200\/80,
+[data-eos-theme="enterprise-dark"] .border-slate-300 {
+  border-color: var(--eos-border);
+}
+[data-eos-theme="enterprise-dark"] .text-cyan-800,
+[data-eos-theme="enterprise-dark"] .text-cyan-700,
+[data-eos-theme="enterprise-dark"] .text-blue-700 {
+  color: var(--eos-accent);
+}
+[data-eos-theme="enterprise-dark"] a.text-cyan-800:hover,
+[data-eos-theme="enterprise-dark"] a.text-blue-700:hover {
+  color: #7dd3fc;
+}
+
+.eos-card-kpi {
+  min-height: 9.5rem;
+}
+.eos-card-alert {
+  border-color: color-mix(in srgb, var(--eos-warning) 45%, transparent);
+}
+.eos-card-intelligence {
+  border-color: color-mix(in srgb, var(--eos-accent) 35%, transparent);
+}
+.eos-card-evidence {
+  border-color: color-mix(in srgb, var(--eos-teal) 30%, transparent);
+}
+.eos-card-health {
+  border-color: color-mix(in srgb, var(--eos-success) 35%, transparent);
+}
+.eos-card-ai {
+  border-color: color-mix(in srgb, var(--eos-ai) 40%, transparent);
+}
+.eos-card-action {
+  border-color: color-mix(in srgb, var(--eos-accent) 28%, transparent);
+}
+
+.eos-state-success {
+  border-color: color-mix(in srgb, var(--eos-success) 45%, transparent);
+  background: color-mix(in srgb, var(--eos-success) 12%, transparent);
+  color: var(--eos-text-primary);
+}
+.eos-state-warning {
+  border-color: color-mix(in srgb, var(--eos-warning) 45%, transparent);
+  background: color-mix(in srgb, var(--eos-warning) 12%, transparent);
+  color: var(--eos-text-primary);
+}
+.eos-state-danger {
+  border-color: color-mix(in srgb, var(--eos-danger) 45%, transparent);
+  background: color-mix(in srgb, var(--eos-danger) 12%, transparent);
+  color: var(--eos-text-primary);
+}
+.eos-state-unknown {
+  border-color: var(--eos-border);
+  background: var(--eos-bg-secondary);
+  color: var(--eos-text-secondary);
+}
+
+.eos-shell-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border-radius: 0.5rem;
+  border: 1px solid var(--eos-border);
+  background: var(--eos-panel-elevated);
+  padding: 0.5rem 0.85rem;
+  color: var(--eos-text-primary);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.eos-shell-link:hover {
+  border-color: var(--eos-border-active);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.12);
+}
+
+.eos-tab-active {
+  position: relative;
+  color: var(--eos-text-primary);
+  background: var(--eos-accent-soft);
+}
+[data-eos-theme="enterprise-dark"] h2.text-2xl,
+[data-eos-theme="enterprise-dark"] h2.text-3xl {
+  font-size: 2.125rem;
+  line-height: 1.2;
+  color: var(--eos-text-primary);
 }

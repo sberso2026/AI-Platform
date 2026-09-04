@@ -20,21 +20,21 @@ export function ActivityRow({
   return (
     <div
       className={cn(
-        "flex min-h-[4.25rem] items-start gap-4 rounded-lg border border-slate-200/80 bg-white px-4 py-3.5",
+        "flex min-h-[4.25rem] items-start gap-4 rounded-xl border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-4 py-3.5",
         className
       )}
       data-testid="activity-row"
       {...props}
     >
       <div
-        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 [&>svg]:h-5 [&>svg]:w-5"
+        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] text-[color:var(--eos-accent)] [&>svg]:h-5 [&>svg]:w-5"
         aria-hidden
       >
         {icon}
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-start justify-between gap-3">
-          <p className={cn(TYPOGRAPHY.body, "font-semibold text-slate-900")}>{title}</p>
+          <p className={cn(TYPOGRAPHY.body, "font-semibold")}>{title}</p>
           {chip}
         </div>
         {subtitle && <p className={cn(TYPOGRAPHY.meta)}>{subtitle}</p>}

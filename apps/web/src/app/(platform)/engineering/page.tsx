@@ -32,6 +32,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
+import { EosAiCore } from "@/components/layout/eos-ai-core";
 import {
   COMMAND_CENTER_USER_ERROR,
   emptyDatasetLoad,
@@ -140,7 +141,7 @@ export default function EngineeringCommandCenterPage() {
         <div data-testid="engineering-command-center" className="contents">
         {hasFailure && (
           <div
-            className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[0.9375rem] text-red-900"
+            className="eos-state-danger mb-4 rounded-xl border px-4 py-3 text-[1rem]"
             data-testid="command-center-error"
             role="alert"
           >
@@ -148,7 +149,7 @@ export default function EngineeringCommandCenterPage() {
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="inline-flex h-10 items-center rounded-md bg-red-900 px-3 text-sm font-medium text-white hover:bg-red-800"
+                className="inline-flex h-11 items-center rounded-md bg-[color:var(--eos-danger)] px-3 text-sm font-medium text-[color:var(--eos-bg-primary)] hover:opacity-90"
                 data-testid="command-center-retry"
                 onClick={() => setReloadToken((value) => value + 1)}
               >
@@ -156,7 +157,7 @@ export default function EngineeringCommandCenterPage() {
               </button>
               <button
                 type="button"
-                className="inline-flex h-10 items-center rounded-md border border-red-300 bg-white px-3 text-sm font-medium text-red-900 hover:bg-red-100"
+                className="inline-flex h-11 items-center rounded-md border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-3 text-sm font-medium text-[color:var(--eos-text-primary)] hover:border-[color:var(--eos-border-active)]"
                 data-testid="command-center-show-details"
                 onClick={() => setShowDetails((value) => !value)}
               >
@@ -177,73 +178,64 @@ export default function EngineeringCommandCenterPage() {
           </div>
         )}
 
-        <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
+        <section aria-label="Platform and project health" className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.8fr)]" data-testid="command-center-health">
+          <Card variant="health">
+            <CardHeader className="pb-2">
+              <CardTitle>Platform / project health</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-4">
+              <StatusChip
+                status={snapshot.dashboard.status === "failed" ? "critical" : healthOk ? "complete" : "pending"}
+                value={snapshot.dashboard.status === "loading" ? "pending" : healthOk ? "operational" : "check"}
+              />
+              <p className="text-[1rem] text-[color:var(--eos-text-secondary)]">
+                {snapshot.dashboard.status === "loading"
+                  ? "Loading platform health…"
+                  : snapshot.dashboard.status === "failed"
+                    ? "Platform health unavailable"
+                    : healthOk
+                      ? "System Healthy"
+                      : "Platform health requires review"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card variant="ai">
+            <CardContent className="flex h-full items-center p-6">
+              <EosAiCore
+                status={snapshot.dashboard.status === "failed" ? "degraded" : "online"}
+                projectLabel={projectId ? "Active project context" : "Workspace context"}
+              />
+            </CardContent>
+          </Card>
+        </section>
+
+        <section aria-label="Attention required" className="mb-6" data-testid="command-center-attention">
           <SectionHeader
-            title="Certified modules"
-            description="Entitled Engineering OS V1 modules — federation and live solver execution remain distinct"
+            title="Attention required"
+            description="Published exceptions only. Missing data is shown as unavailable, not as zero."
           />
-          <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link
-              href="/engineering/modules"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Open module launcher
-            </Link>
-            <Link
-              href="/engineering/apps/project-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Project Intelligence
-            </Link>
-            <Link
-              href="/engineering/apps/inspection-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Inspection Intelligence
-            </Link>
-            <Link
-              href="/engineering/apps/asset-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Asset Intelligence
-            </Link>
-            <Link
-              href="/engineering/apps/project-controls"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Project Controls
-            </Link>
-            <Link
-              href="/engineering/apps/digital-twin"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Digital Twin
-            </Link>
-            <Link
-              href="/engineering/apps/model-interoperability"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Engineering Models
-            </Link>
-            <Link
-              href="/engineering/ai"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Engineering AI
-            </Link>
-            <Link
-              href="/engineering/search"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Search
-            </Link>
-            <Link
-              href="/engineering/health"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              OS health
-            </Link>
-          </div>
+          {snapshot.dashboard.status === "loading" ? (
+            <div className="eos-shimmer h-16 rounded-xl" data-testid="command-center-attention-loading" />
+          ) : hasFailure ? (
+            <Card variant="alert">
+              <CardContent className="space-y-2 pt-6 text-[1rem]">
+                {failures.map((item) => (
+                  <p key={item.dataset}>
+                    {item.label} unavailable. Some signals could not be loaded.
+                  </p>
+                ))}
+              </CardContent>
+            </Card>
+          ) : !healthOk ? (
+            <Card variant="alert">
+              <CardContent className="pt-6 text-[1rem]">Platform health requires review from published signals.</CardContent>
+            </Card>
+          ) : (
+            <EmptyState
+              title="No attention items"
+              description="No unpublished exceptions were returned for the current workspace or project filter."
+            />
+          )}
         </section>
 
         <section aria-label="Engineering KPIs" className="mb-8">
@@ -313,6 +305,31 @@ export default function EngineeringCommandCenterPage() {
                 secondary
               />
             </KpiLink>
+          </div>
+        </section>
+
+        <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
+          <SectionHeader
+            title="Certified modules"
+            description="Entitled Engineering OS V1 modules — federation and live solver execution remain distinct"
+          />
+          <div className="mt-3 flex flex-wrap gap-3 text-[0.9375rem]">
+            {[
+              ["/engineering/modules", "Open module launcher"],
+              ["/engineering/apps/project-intelligence", "Project Intelligence"],
+              ["/engineering/apps/inspection-intelligence", "Inspection Intelligence"],
+              ["/engineering/apps/asset-intelligence", "Asset Intelligence"],
+              ["/engineering/apps/project-controls", "Project Controls"],
+              ["/engineering/apps/digital-twin", "Digital Twin"],
+              ["/engineering/apps/model-interoperability", "Engineering Models"],
+              ["/engineering/ai", "Engineering AI"],
+              ["/engineering/search", "Search"],
+              ["/engineering/health", "OS health"],
+            ].map(([href, label]) => (
+              <Link key={href} href={href} className="eos-shell-link">
+                {label}
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -464,7 +481,7 @@ function KpiLink({
   return (
     <Link
       href={href}
-      className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
       data-testid={testId}
       data-state={state}
     >
@@ -495,24 +512,24 @@ function Panel({
   render: (item: Record<string, unknown>) => React.ReactNode;
 }) {
   return (
-    <Card className="border-slate-200 bg-white">
+    <Card variant="intelligence">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
-        <CardTitle className="text-[1.0625rem] font-semibold text-slate-900">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <Link
           href={href}
-          className="text-[0.8125rem] font-semibold text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--eos-accent)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
         >
           View all
         </Link>
       </CardHeader>
       <CardContent className="space-y-3.5 p-6 pt-0">
         {dataset.status === "loading" && (
-          <p className="text-sm text-slate-500" data-testid="command-center-panel-loading">
+          <p className="text-sm text-[color:var(--eos-text-secondary)]" data-testid="command-center-panel-loading">
             Loading…
           </p>
         )}
         {dataset.status === "failed" && (
-          <p className="text-sm text-red-800" data-testid="command-center-panel-failed">
+          <p className="text-sm text-[color:var(--eos-danger)]" data-testid="command-center-panel-failed">
             This dataset could not be loaded.
           </p>
         )}

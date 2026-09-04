@@ -160,11 +160,11 @@ export function PiProjectSelector({ className }: { className?: string }) {
   const value = allProjects ? PI_ALL_PROJECTS : projectId;
 
   return (
-    <label className={className ?? "block min-w-[16rem] max-w-xl text-sm text-slate-700"}>
-      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project</span>
+    <label className={className ?? "block min-w-[16rem] max-w-xl text-[1rem] text-[color:var(--eos-text-secondary)]"}>
+      <span className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--eos-text-secondary)]">Project</span>
       <select
         data-testid="pi-project-select"
-        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+        className="eos-select mt-1 w-full px-3 text-[1rem]"
         value={value}
         disabled={loading || Boolean(error)}
         onChange={(event) => setProjectId(event.target.value)}
@@ -190,11 +190,11 @@ export function PiPageProjectSelect({ testId }: { testId: string }) {
   const { projects, projectId, loading, error, setProjectId } = usePiProjectContext();
 
   return (
-    <label className="block max-w-md text-sm text-slate-700">
+    <label className="block max-w-md text-[1rem] text-[color:var(--eos-text-secondary)]">
       Project
       <select
         data-testid={testId}
-        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+        className="eos-select mt-1 w-full px-3 text-[1rem]"
         value={projectId}
         disabled={loading}
         onChange={(event) => setProjectId(event.target.value)}

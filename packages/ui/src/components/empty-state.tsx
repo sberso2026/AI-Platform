@@ -20,14 +20,14 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-6 py-7",
+        "flex flex-col items-start gap-3 rounded-xl border border-dashed border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] px-6 py-7",
         className
       )}
       data-testid="empty-state"
       {...props}
     >
       {icon && (
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] text-[color:var(--eos-text-secondary)]">
           {icon}
         </div>
       )}

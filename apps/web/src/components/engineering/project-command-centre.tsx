@@ -122,17 +122,17 @@ type ListedProject = {
 };
 
 const OVERALL_STYLE: Record<OverallHealth, string> = {
-  GREEN: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  AMBER: "border-amber-300 bg-amber-50 text-amber-950",
-  RED: "border-red-300 bg-red-50 text-red-950",
-  UNKNOWN: "border-dashed border-slate-400 bg-slate-100 text-slate-800",
+  GREEN: "eos-state-success border-2",
+  AMBER: "eos-state-warning border-2",
+  RED: "eos-state-danger border-2",
+  UNKNOWN: "eos-state-unknown border-2 border-dashed",
 };
 
 const STATE_STYLE: Record<HealthState, string> = {
-  green: "border-emerald-300 bg-emerald-50 text-emerald-900",
-  amber: "border-amber-300 bg-amber-50 text-amber-900",
-  red: "border-red-300 bg-red-50 text-red-900",
-  unknown: "border-dashed border-slate-400 bg-slate-100 text-slate-700",
+  green: "eos-state-success",
+  amber: "eos-state-warning",
+  red: "eos-state-danger",
+  unknown: "eos-state-unknown border-dashed",
 };
 
 const OVERALL_TONE: Record<OverallHealth, "green" | "amber" | "red" | "slate"> = {
@@ -480,12 +480,12 @@ export function ProjectCommandCentre() {
                     key={item.id}
                     data-testid={`attention-item-${item.reasonCode}`}
                     className={cn(
-                      "rounded-md border px-4 py-3 text-sm",
+                      "rounded-xl border px-4 py-3 text-[1rem]",
                       item.severity === "red"
-                        ? "border-red-200 bg-red-50"
+                        ? "eos-state-danger"
                         : item.severity === "amber"
-                          ? "border-amber-200 bg-amber-50"
-                          : "border-slate-200 bg-slate-50",
+                          ? "eos-state-warning"
+                          : "eos-state-unknown",
                     )}
                   >
                     <p className="font-medium text-slate-900">
@@ -544,8 +544,8 @@ export function ProjectCommandCentre() {
                     className={cn(
                       "rounded-md border px-3 py-1.5 text-sm",
                       changeWindow === days
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-300 bg-white text-slate-800",
+                        ? "border-[color:var(--eos-border-active)] bg-[color:var(--eos-accent-soft)] text-[color:var(--eos-text-primary)]"
+                        : "eos-shell-link",
                     )}
                     onClick={() => setChangeWindow(days)}
                   >

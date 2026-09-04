@@ -149,11 +149,11 @@ function NavLink({
     <Link
       href={nextHref}
       {...(testId ? { "data-testid": testId } : {})}
-      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
+      className={`flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-[0.9375rem] transition ${
         active
-          ? "bg-cyan-400/15 font-medium text-cyan-200"
+          ? "eos-tab-active font-medium"
           : emphasis
-            ? "border border-cyan-400/30 text-cyan-100 hover:bg-slate-800"
+            ? "border border-[color:var(--eos-border-active)] text-[color:var(--eos-accent)] hover:bg-[color:var(--eos-accent-soft)]"
             : "text-slate-300 hover:bg-slate-800 hover:text-white"
       }`}
     >
@@ -184,13 +184,13 @@ function ProjectIntelligenceShellInner({
 
   return (
     <div
-      className="flex h-full min-h-0 flex-1 overflow-hidden bg-slate-100"
+      className="flex h-full min-h-0 flex-1 overflow-hidden bg-[color:var(--eos-bg-primary)]"
       data-testid="project-intelligence-shell"
     >
-      <aside className="hidden h-full min-h-0 w-60 shrink-0 overflow-y-auto bg-slate-950 px-4 py-6 text-slate-100 lg:block">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">Project Intelligence</p>
-        <h1 className="mt-2 text-xl font-semibold">Management view</h1>
-        <p className="mt-2 text-sm text-slate-400">
+      <aside className="hidden h-full min-h-0 w-64 shrink-0 overflow-y-auto border-r border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] px-4 py-6 text-slate-100 lg:block">
+        <p className="text-[0.8125rem] font-semibold uppercase tracking-[0.18em] text-[color:var(--eos-accent)]">Project Intelligence</p>
+        <h1 className="mt-2 text-[1.75rem] font-semibold leading-tight">Management view</h1>
+        <p className="mt-2 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">
           Reasoning over existing project evidence. Systems of record remain authoritative.
         </p>
         <nav className="mt-8 space-y-1" aria-label="Project Intelligence features">
@@ -198,11 +198,11 @@ function ProjectIntelligenceShellInner({
             <NavLink key={tab.href} {...tab} pathname={pathname} projectId={projectId} />
           ))}
         </nav>
-        <p className="mt-8 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500">Ask</p>
+        <p className="mt-8 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--eos-text-secondary)]">Ask</p>
         <nav className="mt-2 space-y-1" aria-label="Ask Project Intelligence">
           <NavLink {...askTab} pathname={pathname} projectId={projectId} emphasis />
         </nav>
-        <p className="mt-8 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <p className="mt-8 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--eos-text-secondary)]">
           Records
         </p>
         <nav className="mt-2 space-y-1" aria-label="Project Intelligence drill-down">
@@ -210,7 +210,7 @@ function ProjectIntelligenceShellInner({
             <NavLink key={tab.href} {...tab} pathname={pathname} projectId={projectId} />
           ))}
         </nav>
-        <p className="mt-8 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <p className="mt-8 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--eos-text-secondary)]">
           Administration / Diagnostics
         </p>
         <nav className="mt-2 space-y-1" aria-label="Project Intelligence diagnostics">
@@ -233,13 +233,13 @@ function ProjectIntelligenceShellInner({
           </details>
         </nav>
       </aside>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
-        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 lg:px-8">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[color:var(--eos-bg-primary)]">
+        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] px-4 py-3 lg:px-8">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <button
               type="button"
               data-testid="pi-shell-back"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-slate-950"
+              className="inline-flex min-h-11 items-center gap-1.5 text-[1rem] font-medium text-[color:var(--eos-text-primary)] hover:text-[color:var(--eos-accent)]"
               onClick={() => {
                 if (typeof window !== "undefined" && window.history.length > 1) router.back();
                 else router.push(overviewHref);
@@ -248,10 +248,10 @@ function ProjectIntelligenceShellInner({
               <ArrowLeft className="size-4" />
               Back
             </button>
-            <Link href={overviewHref} className="text-sm text-cyan-800 hover:underline" data-testid="pi-shell-return">
+            <Link href={overviewHref} className="text-[1rem] text-[color:var(--eos-accent)] hover:underline" data-testid="pi-shell-return">
               Return
             </Link>
-            <p className="truncate text-sm text-slate-600" data-testid="pi-shell-project-label">
+            <p className="truncate text-[1rem] text-[color:var(--eos-text-secondary)]" data-testid="pi-shell-project-label">
               {allProjects
                 ? "All Projects"
                 : selectedProject
@@ -259,17 +259,17 @@ function ProjectIntelligenceShellInner({
                   : "Project Intelligence"}
             </p>
           </div>
-          <PiProjectSelector className="min-w-[14rem] max-w-md text-sm text-slate-700" />
+          <PiProjectSelector className="eos-select min-w-[14rem] max-w-md text-[1rem]" />
         </header>
         <main
-          className="page-main min-h-0 flex-1 overflow-y-auto bg-white p-6 lg:p-10"
+          className="page-main min-h-0 flex-1 overflow-y-auto bg-[color:var(--eos-bg-primary)] p-6 lg:p-8"
           data-testid="project-intelligence-main"
         >
           {!ready && (
             <div
               data-testid={`project-intelligence-state-${resolvedState}`}
               role={resolvedState === "loading" ? "status" : "alert"}
-              className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-950"
+              className="mb-6 rounded-xl border border-[color:color-mix(in_srgb,var(--eos-warning)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-warning)_12%,transparent)] p-4 text-[1rem] text-[color:var(--eos-text-primary)]"
             >
               {stateMessages[resolvedState]}
             </div>

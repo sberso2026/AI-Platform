@@ -23,7 +23,7 @@ export function PiBackNav({
       <button
         type="button"
         data-testid="pi-back-button"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-slate-950"
+        className="inline-flex min-h-11 items-center gap-1.5 text-[1rem] font-medium text-[color:var(--eos-text-primary)] hover:text-[color:var(--eos-accent)]"
         onClick={() => {
           if (typeof window !== "undefined" && window.history.length > 1) router.back();
           else router.push(href);
@@ -35,7 +35,7 @@ export function PiBackNav({
       <Link
         href={href}
         data-testid="pi-return-overview"
-        className="text-sm text-cyan-800 hover:underline"
+        className="text-[1rem] text-[color:var(--eos-accent)] hover:underline"
       >
         Return to Overview
       </Link>
@@ -60,9 +60,9 @@ export function PiPageHeader({
     <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0 space-y-2">
         <PiBackNav fallbackHref={backFallback} />
-        <p className="text-sm font-medium text-cyan-700">{eyebrow}</p>
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h2>
-        {description ? <p className="max-w-3xl text-slate-600">{description}</p> : null}
+        <p className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--eos-accent)]">{eyebrow}</p>
+        <h2 className="text-[2.125rem] font-semibold tracking-tight text-[color:var(--eos-text-primary)]">{title}</h2>
+        {description ? <p className="max-w-3xl text-[1rem] text-[color:var(--eos-text-secondary)]">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
     </header>
@@ -72,10 +72,10 @@ export function PiPageHeader({
 export function PiLoadingSkeleton({ label = "Loading…" }: { label?: string }) {
   return (
     <div className="space-y-3" data-testid="pi-loading-skeleton" role="status" aria-live="polite">
-      <p className="text-sm text-slate-600">{label}</p>
-      <div className="h-24 animate-pulse rounded-lg bg-slate-100" />
-      <div className="h-40 animate-pulse rounded-lg bg-slate-100" />
-      <div className="h-40 animate-pulse rounded-lg bg-slate-50" />
+      <p className="text-[1rem] text-[color:var(--eos-text-secondary)]">{label}</p>
+      <div className="eos-shimmer h-24 rounded-xl" />
+      <div className="eos-shimmer h-40 rounded-xl" />
+      <div className="eos-shimmer h-40 rounded-xl" />
     </div>
   );
 }
@@ -107,14 +107,14 @@ export function PiUnavailablePanel({
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-4" data-testid={testId ?? "pi-unavailable"} role="alert">
-      <p className="text-sm font-medium text-slate-900">{title}</p>
+    <div className="space-y-3 rounded-xl border border-[color:var(--eos-border)] bg-[color:var(--eos-panel-elevated)] px-5 py-5" data-testid={testId ?? "pi-unavailable"} role="alert">
+      <p className="text-[1rem] font-medium text-[color:var(--eos-text-primary)]">{title}</p>
       <div className="flex flex-wrap gap-2">
         {onRetry ? (
           <button
             type="button"
             data-testid="pi-retry"
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+            className="eos-shell-link"
             onClick={() => void onRetry()}
           >
             Retry
@@ -123,14 +123,14 @@ export function PiUnavailablePanel({
         <button
           type="button"
           data-testid="pi-show-details"
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+          className="eos-shell-link"
           onClick={() => setShowDetails((open) => !open)}
         >
           {showDetails ? "Hide details" : "Show details"}
         </button>
       </div>
       {showDetails ? (
-        <dl className="grid gap-1 text-xs text-slate-600" data-testid="pi-error-details">
+        <dl className="grid gap-1 text-[0.875rem] text-[color:var(--eos-text-secondary)]" data-testid="pi-error-details">
           <div>
             <dt className="inline font-medium">Request ID:</dt>{" "}
             <dd className="inline">{requestId || "unavailable"}</dd>

@@ -42,12 +42,11 @@ type AnalystAnswer = {
 
 const DEFAULT_STARTERS = [
   "What needs my attention today?",
-  "Why is the project at risk?",
   "What changed this week?",
   "Which TQs could affect upcoming work?",
-  "Which decisions are overdue?",
-  "What are the largest emerging exposures?",
-  "Summarise the project for the steering meeting.",
+  "What decisions are overdue?",
+  "What are the largest emerging risks?",
+  "Summarise this project.",
 ];
 
 export function ProjectAiAnalystView() {
@@ -92,7 +91,7 @@ export function ProjectAiAnalystView() {
   return (
     <div data-testid="project-intelligence-analyst" className="space-y-8">
       <p
-        className="rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950"
+        className="rounded-xl border border-[color:color-mix(in_srgb,var(--eos-accent)_35%,transparent)] bg-[color:var(--eos-accent-soft)] px-4 py-3 text-[1rem] text-[color:var(--eos-text-primary)]"
         data-testid="analyst-advisory-banner"
       >
         Advisory only. AI output is not an approved project decision. Canonical truth remains
@@ -118,7 +117,7 @@ export function ProjectAiAnalystView() {
                 key={starter}
                 type="button"
                 data-testid="analyst-starter"
-                className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50"
+                className="eos-shell-link rounded-full"
                 onClick={() => {
                   setQuestion(starter);
                   void ask(starter);
@@ -135,12 +134,13 @@ export function ProjectAiAnalystView() {
               void ask(question);
             }}
           >
-            <label className="block flex-1 text-sm text-slate-700">
+            <label className="block flex-1 text-[1rem] text-[color:var(--eos-text-secondary)]">
               Question
               <textarea
                 data-testid="analyst-question-input"
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                className="eos-select mt-1 min-h-[6.5rem] w-full px-4 py-3 text-[1.125rem] text-[color:var(--eos-text-primary)]"
                 rows={3}
+                placeholder="What needs my attention today?"
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
               />
@@ -148,7 +148,7 @@ export function ProjectAiAnalystView() {
             <button
               type="submit"
               data-testid="analyst-ask"
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+              className="inline-flex h-12 items-center rounded-md bg-[color:var(--eos-accent)] px-5 text-[1rem] font-semibold text-[color:var(--eos-bg-primary)] disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Asking…" : "Ask"}
@@ -169,19 +169,19 @@ export function ProjectAiAnalystView() {
 
       {answer ? (
         <div className="space-y-4" data-testid="analyst-answer">
-          <Card>
+          <Card variant="ai">
             <CardHeader>
-              <CardTitle>Answer / Summary</CardTitle>
+              <CardTitle>Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-slate-800">
+            <CardContent className="space-y-3 text-[1rem] text-[color:var(--eos-text-primary)]">
               <p data-testid="analyst-answer-text">{answer.answer}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="intelligence">
             <CardHeader>
               <CardTitle>Why it matters</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-slate-800">
+            <CardContent className="text-[1rem] text-[color:var(--eos-text-primary)]">
               {answer.claims.filter((claim) => claim.kind === "DETERMINISTIC_INTERPRETATION" || claim.kind === "AI_SUMMARY").length ? (
                 <ul className="space-y-1">
                   {answer.claims
@@ -240,15 +240,15 @@ export function ProjectAiAnalystView() {
                 ))}
             </div>
           ) : null}
-          <Card data-testid="analyst-citations">
+          <Card variant="evidence" data-testid="analyst-citations">
             <CardHeader>
               <CardTitle>Evidence</CardTitle>
             </CardHeader>
             <CardContent>
               {answer.citations.length === 0 ? (
-                <p className="text-sm text-slate-600">Evidence is insufficient to cite additional sources.</p>
+                <p className="text-[1rem] text-[color:var(--eos-text-secondary)]">Evidence is insufficient to cite additional sources.</p>
               ) : (
-                <ul className="space-y-1 text-sm text-slate-700">
+                <ul className="space-y-1 text-[1rem] text-[color:var(--eos-text-secondary)]">
                   {answer.citations.map((cite) => (
                     <li key={`${cite.entityType}:${cite.entityId}`} data-testid={`analyst-citation-${cite.entityId}`}>
                       {cite.label}
@@ -259,25 +259,25 @@ export function ProjectAiAnalystView() {
               )}
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="alert">
             <CardHeader>
-              <CardTitle>Risks / Limitations</CardTitle>
+              <CardTitle>Limitations</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-700" data-testid="analyst-limitations">
+              <p className="text-[1rem] text-[color:var(--eos-text-secondary)]" data-testid="analyst-limitations">
                 {answer.limitations.join("; ") || "No additional limitations were published."}
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="action">
             <CardHeader>
               <CardTitle>Recommended human action</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-slate-700">
+            <CardContent className="space-y-2 text-[1rem] text-[color:var(--eos-text-secondary)]">
               <p>Review the cited evidence and decide in the system of record. AI remains advisory.</p>
               <div className="flex flex-wrap gap-3" data-testid="analyst-navigation">
                 {answer.navigation.map((item) => (
-                  <Link key={item.path} href={item.path} className="text-cyan-800 underline">
+                  <Link key={item.path} href={item.path} className="text-[color:var(--eos-accent)] underline">
                     {item.label}
                   </Link>
                 ))}
@@ -286,14 +286,14 @@ export function ProjectAiAnalystView() {
           </Card>
           <button
             type="button"
-            className="text-sm font-medium text-cyan-800 hover:underline"
+            className="text-[1rem] font-medium text-[color:var(--eos-accent)] hover:underline"
             data-testid="analyst-show-diagnostics"
             onClick={() => setShowDiagnostics((current) => !current)}
           >
             {showDiagnostics ? "Hide diagnostics" : "Show diagnostics"}
           </button>
           {showDiagnostics ? (
-            <div className="space-y-2 rounded-md border border-slate-200 p-4 text-sm" data-testid="analyst-diagnostics">
+            <div className="space-y-2 rounded-xl border border-[color:var(--eos-border)] p-4 text-[1rem]" data-testid="analyst-diagnostics">
               {answer.aiAvailable ? (
                 <p className="text-xs text-slate-500" data-testid="analyst-ai-available">
                   Overlay available: {answer.aiProvider ?? "routed"} / {answer.aiModel ?? "policy model"}
@@ -329,16 +329,16 @@ export function ProjectAiAnalystView() {
 
 export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) {
   return (
-    <Card data-testid="command-centre-analyst-entry">
+    <Card variant="ai" data-testid="command-centre-analyst-entry">
       <CardHeader className="pb-2">
         <CardTitle>Ask Project Intelligence</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm text-slate-700">
+      <CardContent className="space-y-2 text-[1rem] text-[color:var(--eos-text-secondary)]">
         <p>Ask grounded questions about published intelligence for this project. Advisory only.</p>
         <Link
           href={`/engineering/apps/project-intelligence/analyst?projectId=${encodeURIComponent(projectId)}`}
           data-testid="command-centre-analyst-open"
-          className="inline-flex text-cyan-800 underline"
+          className="inline-flex text-[color:var(--eos-accent)] underline"
         >
           Open Ask Project Intelligence
         </Link>

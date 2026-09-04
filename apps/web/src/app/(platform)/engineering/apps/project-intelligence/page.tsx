@@ -57,8 +57,8 @@ export default async function ProjectIntelligenceOverviewPage() {
   if (error) {
     return (
       <section aria-live="polite">
-        <h2 className="text-2xl font-semibold text-slate-900">Project Intelligence unavailable</h2>
-        <p className="mt-2 text-slate-600">
+        <h2 className="text-2xl font-semibold text-[color:var(--eos-text-primary)]">Project Intelligence unavailable</h2>
+        <p className="mt-2 text-[1rem] text-[color:var(--eos-text-secondary)]">
           Configuration could not be loaded. Retry shortly or contact an administrator.
         </p>
       </section>
@@ -69,19 +69,19 @@ export default async function ProjectIntelligenceOverviewPage() {
   if (settings.projectIntelligence?.enabled === false) {
     return (
       <section aria-live="polite">
-        <h2 className="text-2xl font-semibold text-slate-900">Configuration incomplete</h2>
-        <p className="mt-2 text-slate-600">Project Intelligence has not been enabled for this workspace.</p>
+        <h2 className="text-2xl font-semibold text-[color:var(--eos-text-primary)]">Configuration incomplete</h2>
+        <p className="mt-2 text-[1rem] text-[color:var(--eos-text-secondary)]">Project Intelligence has not been enabled for this workspace.</p>
       </section>
     );
   }
 
   return (
     <section data-testid="project-intelligence-ready">
-      <p className="text-sm font-medium text-cyan-700">Project Intelligence Overview</p>
-      <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
+      <p className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--eos-accent)]">Project Intelligence Overview</p>
+      <h2 className="mt-1 text-[2.125rem] font-semibold tracking-tight text-[color:var(--eos-text-primary)]">
         What changed, why it matters, what needs a decision
       </h2>
-      <p className="mt-3 max-w-3xl text-slate-600">
+      <p className="mt-3 max-w-3xl text-[1rem] text-[color:var(--eos-text-secondary)]">
         Project Intelligence is the reasoning layer over existing project evidence. Schedule, cost,
         documents, correspondence, and meetings remain in their systems of record. This overview answers
         health, attention, change, and next decisions from published evidence only.
@@ -98,13 +98,13 @@ export default async function ProjectIntelligenceOverviewPage() {
           <article
             key={panel.id}
             data-testid={`project-intelligence-panel-${panel.id}`}
-            className="rounded-lg border border-slate-200 p-5 shadow-sm"
+            className="eos-panel-elevated rounded-xl p-5"
           >
-            <h3 className="font-medium text-slate-900">{panel.title}</h3>
-            <p className="mt-2 text-sm text-slate-600">{panel.body}</p>
+            <h3 className="text-[1.125rem] font-medium text-[color:var(--eos-text-primary)]">{panel.title}</h3>
+            <p className="mt-2 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">{panel.body}</p>
             <Link
               href={panel.href}
-              className="mt-4 inline-block text-sm font-medium text-cyan-700 hover:underline"
+              className="mt-4 inline-block text-[0.9375rem] font-medium text-[color:var(--eos-accent)] hover:underline"
             >
               Open
             </Link>

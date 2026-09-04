@@ -54,7 +54,7 @@ describe("EOS-PI-UX-1 operational experience", () => {
   it("keeps analyst diagnostics behind Show diagnostics and reuses the existing analyst stack", () => {
     const analyst = read("components/engineering/project-ai-analyst.tsx");
     expect(analyst).toContain("analyst-show-diagnostics");
-    expect(analyst).toContain("Answer / Summary");
+    expect(analyst).toContain("<CardTitle>Summary</CardTitle>");
     expect(analyst).toContain("Why it matters");
     expect(analyst).toContain("Recommended human action");
     expect(analyst).not.toContain("intent_classification");
