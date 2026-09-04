@@ -4,16 +4,18 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   GovernedEmbeddingAdapter,
-  AzureDocumentIntelligenceParser,
-  AzureDocumentIntelligenceOcrProvider,
-  PdfDocumentParser,
-  decideOcrPolicy,
   DOCUMENT_INTELLIGENCE_VECTOR_DIMENSION,
   assertEmbeddingDimensionCompatible,
   assertModelActivationAllowed,
   resolveActiveEmbeddingModel,
   isHashEmbeddingProvider,
 } from "@rtb/project-intelligence/server";
+import {
+  AzureDocumentIntelligenceParser,
+  AzureDocumentIntelligenceOcrProvider,
+  PdfDocumentParser,
+  decideOcrPolicy,
+} from "@rtb/project-intelligence/parsers";
 import { writeProviderFixtures } from "../provider-fixtures.js";
 import {
   computeRetrievalMetrics,

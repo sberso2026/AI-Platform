@@ -7,7 +7,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./access": "./src/access.ts",
     "./server": "./src/server.ts",
+    "./parsers": "./src/parsers.ts",
     "./client": "./src/client.ts",
     "./version": "./src/version.ts"
   },

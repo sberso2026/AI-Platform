@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "@rtb/ui";
 import { ArrowLeft } from "lucide-react";
@@ -87,5 +88,59 @@ export function PiErrorState({ title, description }: { title: string; descriptio
       data-testid="pi-error-state"
       role="alert"
     />
+  );
+}
+
+export function PiUnavailablePanel({
+  title,
+  dataset,
+  requestId,
+  onRetry,
+  testId,
+}: {
+  title: string;
+  dataset: string;
+  requestId?: string | null;
+  onRetry?: () => void;
+  testId?: string;
+}) {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <div className="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-4" data-testid={testId ?? "pi-unavailable"} role="alert">
+      <p className="text-sm font-medium text-slate-900">{title}</p>
+      <div className="flex flex-wrap gap-2">
+        {onRetry ? (
+          <button
+            type="button"
+            data-testid="pi-retry"
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+            onClick={() => void onRetry()}
+          >
+            Retry
+          </button>
+        ) : null}
+        <button
+          type="button"
+          data-testid="pi-show-details"
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+          onClick={() => setShowDetails((open) => !open)}
+        >
+          {showDetails ? "Hide details" : "Show details"}
+        </button>
+      </div>
+      {showDetails ? (
+        <dl className="grid gap-1 text-xs text-slate-600" data-testid="pi-error-details">
+          <div>
+            <dt className="inline font-medium">Request ID:</dt>{" "}
+            <dd className="inline">{requestId || "unavailable"}</dd>
+          </div>
+          <div>
+            <dt className="inline font-medium">Dataset:</dt>{" "}
+            <dd className="inline">{dataset}</dd>
+          </div>
+        </dl>
+      ) : null}
+    </div>
   );
 }

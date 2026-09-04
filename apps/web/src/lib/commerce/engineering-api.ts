@@ -67,17 +67,38 @@ async function projectIntelligenceGuardError(response: NextResponse, requestId: 
   );
 }
 
+function piDatasetFromSegment(segment: string): string | undefined {
+  if (COMMAND_CENTER_SEGMENTS.has(segment)) return segment;
+  if (!segment.startsWith("project-intelligence")) return undefined;
+  const rest = segment.slice("project-intelligence-".length);
+  if (rest === "command-centre") return "overview";
+  if (rest === "cost-progress") return "cost";
+  if (rest === "risk-change") return "risk-change";
+  if (rest === "queries-decisions") return "decisions";
+  return rest || "project-intelligence";
+}
+
 function commandCenterLogContext(
   segment: string,
   started: number,
   extra?: Partial<LifecycleErrorLogContext>,
 ): LifecycleErrorLogContext {
   const commandCenter = COMMAND_CENTER_SEGMENTS.has(segment);
+  const projectIntelligence = segment.startsWith("project-intelligence");
   return {
     route: `/api/engineering/${segment}`,
     durationMs: Date.now() - started,
-    publicCode: commandCenter ? "COMMAND_CENTER_DATA_ERROR" : undefined,
-    publicMessage: commandCenter ? "Unable to load engineering KPI data." : undefined,
+    dataset: piDatasetFromSegment(segment),
+    publicCode: commandCenter
+      ? "COMMAND_CENTER_DATA_ERROR"
+      : projectIntelligence
+        ? "PI_DATA_ERROR"
+        : undefined,
+    publicMessage: commandCenter
+      ? "Unable to load engineering KPI data."
+      : projectIntelligence
+        ? "Project Intelligence data could not be loaded."
+        : undefined,
     ...extra,
   };
 }
@@ -166,9 +187,10 @@ export function withEngineeringApiParams<T extends Record<string, string>>(
     try {
       const guarded = await guardEngineeringApi(segment, request.method, requestId);
       if (guarded instanceof NextResponse) return guarded;
+      let resolvedParams: T | undefined;
       try {
-        const params = await routeContext.params;
-        const response = await handler(guarded, request, params);
+        resolvedParams = await routeContext.params;
+        const response = await handler(guarded, request, resolvedParams);
         response.headers.set("x-request-id", guarded.correlationId);
         return response;
       } catch (err) {
@@ -179,6 +201,7 @@ export function withEngineeringApiParams<T extends Record<string, string>>(
             layer: "service",
             tenantId: guarded.ctx.tenantId,
             workspaceId: guarded.ctx.workspaceId,
+            projectId: resolvedParams && "projectId" in resolvedParams ? resolvedParams.projectId : undefined,
           }),
         );
       }

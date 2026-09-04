@@ -5,7 +5,7 @@ import {
   requireProjectIntelligenceMeetingsAccess,
   requireProjectIntelligenceMeetingsAdmin,
   type AccessContext,
-} from "@rtb/project-intelligence/server";
+} from "@rtb/project-intelligence/access";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
 
 function hasPermission(

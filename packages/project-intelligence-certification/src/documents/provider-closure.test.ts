@@ -3,9 +3,6 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   GovernedEmbeddingAdapter,
-  PlatformStructuredDocumentParser,
-  ProjectIntelligenceParserRouter,
-  PlatformLocalOcrProvider,
   DOCUMENT_INTELLIGENCE_VECTOR_DIMENSION,
   assertEmbeddingDimensionCompatible,
   resolveProjectIntelligenceRuntimeMode,
@@ -13,6 +10,11 @@ import {
   emptyUsageCounters,
   DEFAULT_DOCUMENT_PROCESSING_BUDGET,
 } from "@rtb/project-intelligence/server";
+import {
+  PlatformStructuredDocumentParser,
+  ProjectIntelligenceParserRouter,
+  PlatformLocalOcrProvider,
+} from "@rtb/project-intelligence/parsers";
 import {
   evaluateFixtureLexically,
   metricsMeetThresholds,

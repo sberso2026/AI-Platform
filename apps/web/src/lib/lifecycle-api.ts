@@ -22,6 +22,7 @@ export interface LifecycleErrorBody {
     code: string;
     message: string;
     requestId: string;
+    dataset?: string;
     details: Record<string, unknown>;
   };
 }
@@ -62,6 +63,8 @@ export interface LifecycleErrorLogContext {
   layer?: string;
   tenantId?: string;
   workspaceId?: string;
+  projectId?: string;
+  dataset?: string;
   durationMs?: number;
   publicCode?: string;
   publicMessage?: string;
@@ -77,11 +80,21 @@ export function lifecycleErrorResponse(
   status: number,
   requestId: string,
   details?: Record<string, unknown>,
+  extras?: { dataset?: string },
 ): NextResponse<LifecycleErrorBody> {
+  const dataset =
+    extras?.dataset ??
+    (typeof details?.dataset === "string" ? details.dataset : undefined);
   const response = NextResponse.json(
     {
       ok: false as const,
-      error: { code, message, requestId, details: publicErrorDetails(details) },
+      error: {
+        code,
+        message,
+        requestId,
+        ...(dataset ? { dataset } : {}),
+        details: publicErrorDetails(details),
+      },
     },
     { status },
   );
@@ -108,25 +121,35 @@ export function handleCommerceDomainError(
 ): NextResponse<LifecycleErrorBody> {
   if (err instanceof CommerceDomainError) {
     logLifecycleFailure(err, requestId, err.code, logContext);
-    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId);
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, undefined, {
+      dataset: logContext?.dataset,
+    });
   }
   if (err instanceof MeetingIntelligenceError) {
     logLifecycleFailure(err, requestId, err.code, logContext);
-    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details, {
+      dataset: logContext?.dataset,
+    });
   }
   if (err instanceof ProjectIntelligenceError) {
     logLifecycleFailure(err, requestId, err.code, logContext);
-    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details, {
+      dataset: logContext?.dataset,
+    });
   }
   if (err instanceof DocumentIntelligenceError) {
     logLifecycleFailure(err, requestId, err.code, logContext);
-    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details);
+    return lifecycleErrorResponse(err.code, err.message, err.statusCode, requestId, err.details, {
+      dataset: logContext?.dataset,
+    });
   }
 
   const code = logContext?.publicCode ?? "internal_error";
   const message = logContext?.publicMessage ?? "An unexpected error occurred";
   logLifecycleFailure(err, requestId, code, logContext);
-  return lifecycleErrorResponse(code, message, 500, requestId);
+  return lifecycleErrorResponse(code, message, 500, requestId, undefined, {
+    dataset: logContext?.dataset,
+  });
 }
 
 function logLifecycleFailure(
@@ -140,9 +163,11 @@ function logLifecycleFailure(
   console.error("[lifecycle-api]", {
     requestId,
     route: logContext?.route,
+    dataset: logContext?.dataset,
+    tenant: logContext?.tenantId,
+    workspace: logContext?.workspaceId,
+    project: logContext?.projectId,
     layer: logContext?.layer ?? "handler",
-    tenantId: logContext?.tenantId,
-    workspaceId: logContext?.workspaceId,
     errorCode,
     durationMs: logContext?.durationMs,
     errorName,

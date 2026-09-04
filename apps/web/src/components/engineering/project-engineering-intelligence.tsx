@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, EmptyState, SectionHeader } from "@rtb/ui";
-import { PiErrorState, PiLoadingSkeleton } from "./pi-page-chrome";
+import { PiLoadingSkeleton, PiUnavailablePanel } from "./pi-page-chrome";
 import { PI_BASE_PATH, withPiProjectQuery } from "./pi-project-context";
 import { documentReadinessLabel } from "./pi-ux";
+import { PI_UNAVAILABLE } from "@/lib/project-intelligence/pi-api";
+import { usePiJson } from "@/lib/project-intelligence/use-pi-json";
 
 type CommandCentreLite = {
   project: { projectId: string; projectCode: string; projectName: string };
@@ -60,55 +62,27 @@ type MeetingRow = {
 export function ProjectEngineeringIntelligenceView() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId") ?? "";
-  const [centre, setCentre] = useState<CommandCentreLite | null>(null);
-  const [documents, setDocuments] = useState<DocumentRow[]>([]);
-  const [meetings, setMeetings] = useState<MeetingRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!projectId) {
-      setCentre(null);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      fetch(`/api/engineering/project-intelligence/projects/${encodeURIComponent(projectId)}/command-centre`).then(
-        async (response) => {
-          const body = await response.json();
-          if (!response.ok) throw new Error(body.error?.message ?? "Engineering intelligence unavailable");
-          return body.data as CommandCentreLite;
-        },
-      ),
-      fetch("/api/engineering/project-intelligence/documents").then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error?.message ?? "Documents unavailable");
-        return (body.data ?? []) as DocumentRow[];
-      }),
-      fetch("/api/engineering/project-intelligence/meetings").then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error?.message ?? "Meetings unavailable");
-        return (body.data ?? []) as MeetingRow[];
-      }),
-    ])
-      .then(([nextCentre, nextDocuments, nextMeetings]) => {
-        if (cancelled) return;
-        setCentre(nextCentre);
-        setDocuments(nextDocuments);
-        setMeetings(nextMeetings);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Engineering intelligence unavailable");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId]);
+  const centreResource = usePiJson<CommandCentreLite>(
+    "engineering",
+    projectId
+      ? `/api/engineering/project-intelligence/projects/${encodeURIComponent(projectId)}/command-centre`
+      : null,
+  );
+  const documentsResource = usePiJson<DocumentRow[]>(
+    "engineering",
+    projectId ? "/api/engineering/project-intelligence/documents" : null,
+  );
+  const meetingsResource = usePiJson<MeetingRow[]>(
+    "engineering",
+    projectId ? "/api/engineering/project-intelligence/meetings" : null,
+  );
+  const centre = centreResource.data;
+  const documentsFailed = documentsResource.status === "error";
+  const meetingsFailed = meetingsResource.status === "error";
+  const documents = documentsFailed ? [] : (documentsResource.data ?? []);
+  const meetings = meetingsFailed ? [] : (meetingsResource.data ?? []);
+  const loading = [centreResource, documentsResource, meetingsResource].some((item) => item.status === "loading");
+  const centreFailed = centreResource.status === "error";
 
   const projectDocuments = useMemo(
     () =>
@@ -132,7 +106,17 @@ export function ProjectEngineeringIntelligenceView() {
     );
   }
   if (loading) return <PiLoadingSkeleton label="Loading engineering intelligence…" />;
-  if (error) return <PiErrorState title="Engineering intelligence unavailable" description={error} />;
+  if (centreFailed) {
+    return (
+      <PiUnavailablePanel
+        title={PI_UNAVAILABLE.engineering}
+        dataset="engineering"
+        requestId={centreResource.requestId}
+        onRetry={() => void centreResource.reload()}
+        testId="pi-error-state"
+      />
+    );
+  }
   if (!centre) {
     return (
       <EmptyState
@@ -234,7 +218,14 @@ export function ProjectEngineeringIntelligenceView() {
             Open documents
           </Link>
         </div>
-        {projectDocuments.length === 0 ? (
+        {documentsFailed ? (
+          <PiUnavailablePanel
+            title="Document intelligence is temporarily unavailable."
+            dataset="engineering"
+            requestId={documentsResource.requestId}
+            onRetry={() => void documentsResource.reload()}
+          />
+        ) : projectDocuments.length === 0 ? (
           <EmptyState
             title="No project documents are available in the selected project."
             description="Engineering Core remains the document register. Import or connect documents to enable document intelligence."
@@ -257,7 +248,14 @@ export function ProjectEngineeringIntelligenceView() {
             Open meetings
           </Link>
         </div>
-        {projectMeetings.length === 0 ? (
+        {meetingsFailed ? (
+          <PiUnavailablePanel
+            title="Meeting intelligence is temporarily unavailable."
+            dataset="engineering"
+            requestId={meetingsResource.requestId}
+            onRetry={() => void meetingsResource.reload()}
+          />
+        ) : projectMeetings.length === 0 ? (
           <EmptyState
             title="No meetings have been captured or connected yet."
             description="Manual meeting entry remains available as a fallback."

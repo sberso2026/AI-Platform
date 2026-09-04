@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { fetchPiJson, PiLoadError, PI_UNAVAILABLE } from "@/lib/project-intelligence/pi-api";
 
 export const PI_PROJECT_STORAGE_KEY = "pi.selectedProjectId";
 export const PI_ALL_PROJECTS = "__all__";
@@ -66,14 +67,14 @@ export function PiProjectContextProvider({ children }: { children: React.ReactNo
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/engineering/projects")
-      .then(async (response) => {
-        const body = (await response.json()) as { data?: PiListedProject[]; error?: { message?: string } };
-        if (!response.ok) throw new Error(body.error?.message ?? "Unable to list projects");
-        if (!cancelled) setProjects(Array.isArray(body.data) ? body.data : []);
+    fetchPiJson<PiListedProject[]>("/api/engineering/projects", "projects")
+      .then((data) => {
+        if (!cancelled) setProjects(Array.isArray(data) ? data : []);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unable to list projects");
+        if (!cancelled) {
+          setError(err instanceof PiLoadError ? err.message : PI_UNAVAILABLE.projects);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -175,6 +176,35 @@ export function PiProjectSelector({ className }: { className?: string }) {
           </option>
         ))}
         <option value={PI_ALL_PROJECTS}>All Projects</option>
+      </select>
+      {error ? (
+        <p className="mt-1 text-xs text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </label>
+  );
+}
+
+export function PiPageProjectSelect({ testId }: { testId: string }) {
+  const { projects, projectId, loading, error, setProjectId } = usePiProjectContext();
+
+  return (
+    <label className="block max-w-md text-sm text-slate-700">
+      Project
+      <select
+        data-testid={testId}
+        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+        value={projectId}
+        disabled={loading}
+        onChange={(event) => setProjectId(event.target.value)}
+      >
+        <option value="">Select a project</option>
+        {projects.map((project) => (
+          <option key={project.id} value={project.id}>
+            {project.project_code} — {project.project_name}
+          </option>
+        ))}
       </select>
       {error ? (
         <p className="mt-1 text-xs text-red-700" role="alert">

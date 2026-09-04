@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -11,6 +11,10 @@ import {
   SectionHeader,
 } from "@rtb/ui";
 import { attentionIssueTitle, evidenceDisplayLabel } from "./pi-ux";
+import { PiPageProjectSelect, usePiProjectContext } from "./pi-project-context";
+import { PiLoadingSkeleton, PiUnavailablePanel } from "./pi-page-chrome";
+import { fetchPiJson, PiLoadError, PI_UNAVAILABLE } from "@/lib/project-intelligence/pi-api";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 const REPORT_TYPES = [
   { id: "project_status_report", label: "Project Status Report" },
@@ -102,38 +106,18 @@ export function ProjectReportingIntelligenceView() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const selectedId = searchParams.get("projectId") ?? "";
+  const { projectId: selectedId, selectedProject } = usePiProjectContext();
   const reportType = (searchParams.get("reportType") as ReportTypeId | null) ?? "project_status_report";
-  const [projects, setProjects] = useState<ListedProject[]>([]);
   const [snapshot, setSnapshot] = useState<ReportSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [requestId, setRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/engineering/projects")
-      .then(async (response) => {
-        const body = (await response.json()) as { data?: ListedProject[]; error?: { message?: string } };
-        if (!response.ok) throw new Error(body.error?.message ?? "Unable to list projects");
-        if (!cancelled) setProjects(Array.isArray(body.data) ? body.data : []);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unable to list projects");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const replaceQuery = useCallback(
-    (next: { projectId?: string; reportType?: string }) => {
+  const replaceReportType = useCallback(
+    (nextType: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (next.projectId !== undefined) {
-        if (next.projectId) params.set("projectId", next.projectId);
-        else params.delete("projectId");
-      }
-      if (next.reportType !== undefined) params.set("reportType", next.reportType);
+      params.set("reportType", nextType);
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
@@ -144,23 +128,22 @@ export function ProjectReportingIntelligenceView() {
     async (projectId: string, type: ReportTypeId) => {
       setLoading(true);
       setError(null);
+      setRequestId(null);
       try {
-        const response = await fetch(
+        const data = await fetchPiJson<ReportSnapshot>(
           `/api/engineering/project-intelligence/projects/${encodeURIComponent(projectId)}/reports`,
+          "reports",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ reportType: type, includeAi: true }),
           },
         );
-        const body = (await response.json()) as { data?: ReportSnapshot; error?: { message?: string } };
-        if (!response.ok) {
-          throw new Error(body.error?.message ?? `Report request failed (${response.status})`);
-        }
-        setSnapshot(body.data ?? null);
+        setSnapshot(data);
       } catch (err) {
         setSnapshot(null);
-        setError(err instanceof Error ? err.message : "Project report unavailable");
+        setError(err instanceof PiLoadError ? err.message : PI_UNAVAILABLE.reports);
+        setRequestId(err instanceof PiLoadError ? err.requestId : null);
       } finally {
         setLoading(false);
       }
@@ -180,23 +163,25 @@ export function ProjectReportingIntelligenceView() {
           body: JSON.stringify({ reportType: snapshot.reportType, includeAi: false, export: "markdown" }),
         },
       );
-      if (!response.ok) {
-        const body = (await response.json()) as { error?: { message?: string } };
-        throw new Error(body.error?.message ?? "Export failed");
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!response.ok || contentType.includes("application/json")) {
+        const parsed = await parseApiJsonResponse(response);
+        throw new PiLoadError(PI_UNAVAILABLE.reports, {
+          dataset: "reports",
+          requestId: parsed.requestId,
+          status: parsed.status,
+          code: parsed.errorCode,
+        });
       }
       const text = await response.text();
       downloadMarkdown(`${snapshot.projectCode}-${snapshot.reportType}.md`, text);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Export unavailable");
+      setError(err instanceof PiLoadError ? err.message : PI_UNAVAILABLE.reports);
+      setRequestId(err instanceof PiLoadError ? err.requestId : null);
     } finally {
       setExporting(false);
     }
   }, [selectedId, snapshot]);
-
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === selectedId),
-    [projects, selectedId],
-  );
 
   useEffect(() => {
     if (!selectedId) return;
@@ -211,25 +196,7 @@ export function ProjectReportingIntelligenceView() {
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="block text-sm text-slate-700">
-          Project
-          <select
-            data-testid="reporting-project-select"
-            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-            value={selectedId}
-            onChange={(event) => {
-              setSnapshot(null);
-              replaceQuery({ projectId: event.target.value });
-            }}
-          >
-            <option value="">Select a project</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.project_code} — {project.project_name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PiPageProjectSelect testId="reporting-project-select" />
         <label className="block text-sm text-slate-700">
           Report type
           <select
@@ -238,7 +205,7 @@ export function ProjectReportingIntelligenceView() {
             value={reportType}
             onChange={(event) => {
               setSnapshot(null);
-              replaceQuery({ reportType: event.target.value });
+              replaceReportType(event.target.value);
             }}
           >
             {REPORT_TYPES.map((type) => (
@@ -279,8 +246,16 @@ export function ProjectReportingIntelligenceView() {
         />
       ) : null}
 
-      {loading ? <p className="text-sm text-slate-600">Assembling deterministic report snapshot…</p> : null}
-      {error ? <EmptyState title="Report unavailable" description={error} data-testid="reporting-error" /> : null}
+      {loading ? <PiLoadingSkeleton label="Assembling deterministic report snapshot…" /> : null}
+      {error ? (
+        <PiUnavailablePanel
+          title={PI_UNAVAILABLE.reports}
+          dataset="reports"
+          requestId={requestId}
+          onRetry={() => void generate(selectedId, reportType)}
+          testId="reporting-error"
+        />
+      ) : null}
 
       {snapshot ? (
         <>

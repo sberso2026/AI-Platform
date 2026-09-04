@@ -51,9 +51,10 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "@rtb/ui"],
   },
+  // Invariant: general PI API lambdas must not load pdf-parse. Trace parsers only on document routes.
   serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
   outputFileTracingIncludes: {
-    "/api/**": pdfTraceIncludes,
+    "/api/engineering/project-intelligence/documents/**": pdfTraceIncludes,
     "/api/engineering/documents/**": pdfTraceIncludes,
   },
   webpack: (config, { isServer, webpack }) => {

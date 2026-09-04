@@ -52,7 +52,7 @@ describe("PI-1 Command Centre web surface", () => {
     expect(overview).toContain('id: "findings"');
     expect(overview).toContain("ProjectCommandCentre");
     expect(ui).toContain('data-testid="project-intelligence-command-centre"');
-    expect(ui).toContain('data-testid="command-centre-project-select"');
+    expect(ui).toContain("command-centre-project-select");
     expect(ui).toContain('data-testid="command-centre-overall-health"');
     expect(ui).toContain('data-testid="command-centre-health-dimensions"');
     expect(ui).toContain('data-testid="command-centre-attention"');
@@ -114,10 +114,7 @@ describe("PI-1 Command Centre web surface", () => {
     expect(read("components/engineering/project-intelligence-shell.tsx")).toContain(
       "projectId=${encodeURIComponent(projectId)}",
     );
-    expect(read("components/engineering/project-command-centre.tsx")).toContain(
-      "router.replace(query ? `${pathname}?${query}` : pathname",
-    );
-    expect(read("components/engineering/project-command-centre.tsx")).toContain(
+    expect(read("components/engineering/pi-project-context.tsx")).toContain(
       "router.replace(query ? `${pathname}?${query}` : pathname",
     );
   });

@@ -10,7 +10,6 @@ import {
   PostgresDocumentIndexAdapter,
   ProjectIntelligenceDocumentComparisonService,
   ProjectIntelligenceDocumentRetrievalService,
-  ProjectIntelligenceDocumentWorker,
   applyDocumentReviewAction,
   buildGroundedAnswer,
   detectConflictingCitations,
@@ -22,6 +21,7 @@ import {
   type DocumentReviewAction,
   type GroundedAnswerContract,
 } from "@rtb/project-intelligence/server";
+import { ProjectIntelligenceDocumentWorker } from "@rtb/project-intelligence/parsers";
 import type { CommerceHandlerContext } from "@/lib/commerce/engineering-api";
 import { createServiceClient } from "@/lib/supabase/service";
 

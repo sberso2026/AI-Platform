@@ -1,3 +1,9 @@
+/**
+ * Server-only Project Intelligence services.
+ * Invariant: NO_HEAVY_PARSER_IMPORT_IN_GENERAL_PI_API_PATHS
+ * Do not re-export parser-routing, document-worker, or native-parsers from this barrel.
+ * Parser/runtime entry: `@rtb/project-intelligence/parsers`.
+ */
 export * from "./application/mapping-service";
 export * from "./security/access-guard";
 export * from "./adapters/engineering-core-adapters";
@@ -24,8 +30,6 @@ export * from "./documents/jobs";
 export * from "./documents/durable-enqueue";
 export * from "./documents/governed-embedding-adapter";
 export * from "./documents/postgres-index-adapter";
-export * from "./documents/document-worker";
-export * from "./documents/parser-routing";
 export * from "./documents/runtime-mode";
 export * from "./documents/embedding-registry";
 export * from "./documents/cost-controls";

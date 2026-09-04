@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createClient } from "@supabase/supabase-js";
-import { ProjectIntelligenceDocumentWorker } from "@rtb/project-intelligence/server";
+import { ProjectIntelligenceDocumentWorker } from "@rtb/project-intelligence/parsers";
 import { GovernedEmbeddingAdapter } from "@rtb/project-intelligence/server";
 
 const enabled = process.env.PROJECT_INTELLIGENCE_CERTIFICATION === "1";

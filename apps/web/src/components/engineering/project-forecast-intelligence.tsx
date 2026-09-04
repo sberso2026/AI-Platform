@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -13,6 +11,10 @@ import {
   cn,
 } from "@rtb/ui";
 import { evidenceDisplayLabel } from "./pi-ux";
+import { PiPageProjectSelect, usePiProjectContext } from "./pi-project-context";
+import { PiLoadingSkeleton, PiUnavailablePanel } from "./pi-page-chrome";
+import { PI_UNAVAILABLE } from "@/lib/project-intelligence/pi-api";
+import { usePiJson } from "@/lib/project-intelligence/use-pi-json";
 
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
 type Availability = "ok" | "no_data" | "unavailable" | "forbidden" | "stale" | "error";
@@ -186,89 +188,20 @@ export function ForecastCommandCentreCard({
 }
 
 export function ProjectForecastIntelligenceView() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const selectedId = searchParams.get("projectId") ?? "";
-  const [projects, setProjects] = useState<ListedProject[]>([]);
-  const [view, setView] = useState<ForecastView | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/engineering/projects")
-      .then(async (response) => {
-        const body = (await response.json()) as { data?: ListedProject[]; error?: { message?: string } };
-        if (!response.ok) throw new Error(body.error?.message ?? "Unable to list projects");
-        if (!cancelled) setProjects(Array.isArray(body.data) ? body.data : []);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unable to list projects");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const loadView = useCallback(async (projectId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/engineering/project-intelligence/projects/${encodeURIComponent(projectId)}/forecasting`,
-      );
-      const body = (await response.json()) as { data?: ForecastView; error?: { message?: string } };
-      if (!response.ok) {
-        throw new Error(body.error?.message ?? `Forecasting request failed (${response.status})`);
-      }
-      setView(body.data ?? null);
-    } catch (err) {
-      setView(null);
-      setError(err instanceof Error ? err.message : "Forecast Intelligence unavailable");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!selectedId) {
-      setView(null);
-      return;
-    }
-    void loadView(selectedId);
-  }, [selectedId, loadView]);
-
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === selectedId),
-    [projects, selectedId],
+  const { projectId: selectedId, selectedProject } = usePiProjectContext();
+  const resource = usePiJson<ForecastView>(
+    "forecast",
+    selectedId
+      ? `/api/engineering/project-intelligence/projects/${encodeURIComponent(selectedId)}/forecasting`
+      : null,
   );
+  const view = resource.data;
+  const loading = resource.status === "loading";
+  const error = resource.status === "error";
 
   return (
     <div data-testid="project-intelligence-forecasting" className="space-y-8">
-      <label className="block max-w-md text-sm text-slate-700">
-        Project
-        <select
-          data-testid="forecasting-project-select"
-          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-          value={selectedId}
-          onChange={(event) => {
-            const next = event.target.value;
-            const params = new URLSearchParams(searchParams.toString());
-            if (next) params.set("projectId", next);
-            else params.delete("projectId");
-            const query = params.toString();
-            router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-          }}
-        >
-          <option value="">Select a project</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.project_code} — {project.project_name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <PiPageProjectSelect testId="forecasting-project-select" />
 
       {!selectedId ? (
         <EmptyState
@@ -278,8 +211,16 @@ export function ProjectForecastIntelligenceView() {
         />
       ) : null}
 
-      {loading ? <p className="text-sm text-slate-600">Loading Forecast Intelligence…</p> : null}
-      {error ? <EmptyState title="Forecasting unavailable" description={error} data-testid="forecasting-error" /> : null}
+      {loading ? <PiLoadingSkeleton label="Loading Forecast Intelligence…" /> : null}
+      {error ? (
+        <PiUnavailablePanel
+          title={PI_UNAVAILABLE.forecast}
+          dataset="forecast"
+          requestId={resource.requestId}
+          onRetry={() => void resource.reload()}
+          testId="forecasting-error"
+        />
+      ) : null}
 
       {view ? (
         <>
