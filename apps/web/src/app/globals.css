@@ -395,3 +395,43 @@ select.eos-select {
   line-height: 1.2;
   color: var(--eos-text-primary);
 }
+
+.eos-register-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.eos-register-matrix th {
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eos-text-secondary);
+  border-bottom: 1px solid var(--eos-border);
+  white-space: nowrap;
+}
+
+.eos-register-matrix td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--eos-border) 70%, transparent);
+  vertical-align: top;
+  color: var(--eos-text-primary);
+}
+
+.eos-register-matrix tbody tr {
+  cursor: pointer;
+}
+
+.eos-register-matrix tbody tr:hover td {
+  background: color-mix(in srgb, var(--eos-accent-soft) 55%, transparent);
+}
+
+.eos-line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
