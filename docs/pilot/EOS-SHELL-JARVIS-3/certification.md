@@ -38,10 +38,10 @@ LOW: Command Centre scope copy can still read `Selected project` while the heade
 ## Certification flags
 
 ```
-FINAL_SHA=
-PREVIEW_DEPLOYMENT_ID=
-WORKING_TREE_CLEAN=
-PREVIEW_MATCHES_FINAL_SHA=
+FINAL_SHA=2608fa343cf25cc1d7e49dc82c9090ca0f3555c2
+PREVIEW_DEPLOYMENT_ID=dpl_ha9ujPXN4YuExKpT8pFzCSyv9zJb
+WORKING_TREE_CLEAN=true
+PREVIEW_MATCHES_FINAL_SHA=true
 
 SHELL_VISUAL_REGRESSION_ROOT_CAUSE=HEAD never inherited EOS-SHELL-JARVIS-2; authenticated globals remained Batch 2.09 light tokens and ThemeProvider defaulted to system/light.
 
