@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+import { lifecycleOkResponse } from "@/lib/lifecycle-api";
 
 export const GET = withEngineeringApi("risks", async ({ ctx, commerce }, request) => {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId") ?? undefined;
   if (searchParams.get("view") === "matrix") {
     const data = await ctx.engineering.risks.matrix(commerce, ctx.tenantId);
-    return NextResponse.json({ data });
+    return lifecycleOkResponse(data);
   }
   const data = await ctx.engineering.risks.list(commerce, ctx.tenantId, projectId);
-  return NextResponse.json({ data });
+  return lifecycleOkResponse(data);
 });
 
 export const POST = withEngineeringApi("risks", async ({ ctx, commerce }, request) => {

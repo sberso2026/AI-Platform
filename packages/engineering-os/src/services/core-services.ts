@@ -11,6 +11,7 @@ import type {
   EngineeringProjectStatus,
 } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
+import { isRecordInWorkspace, workspaceScopeId } from "../commerce/workspace-scope";
 
 export class EngineeringProjectService {
   constructor(
@@ -25,10 +26,13 @@ export class EngineeringProjectService {
     options?: { aggregate?: boolean }
   ): Promise<EngineeringProject[]> {
     assertEngineeringService(commerce, "project.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     const { data, error } = await this.supabase
       .from("engineering_projects")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (error) throw new Error(`Failed to list projects: ${error.message}`);
@@ -49,7 +53,9 @@ export class EngineeringProjectService {
       .eq("id", projectId)
       .single();
     if (error) return null;
-    return mapProject(data);
+    const project = mapProject(data);
+    if (!isRecordInWorkspace(project.workspace_id, commerce)) return null;
+    return project;
   }
 
   async create(commerce: CommerceExecutionContext, input: {
@@ -232,10 +238,13 @@ export class EngineeringAssetService {
     options?: { aggregate?: boolean }
   ): Promise<EngineeringAsset[]> {
     assertEngineeringService(commerce, "asset.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let query = this.supabase
       .from("engineering_assets")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) query = query.eq("engineering_project_id", projectId);
@@ -253,7 +262,9 @@ export class EngineeringAssetService {
       .eq("id", assetId)
       .single();
     if (error) return null;
-    return mapAsset(data);
+    const asset = mapAsset(data);
+    if (!isRecordInWorkspace(asset.workspace_id, commerce)) return null;
+    return asset;
   }
 
   async create(commerce: CommerceExecutionContext, input: {
@@ -445,10 +456,13 @@ export class EngineeringDocumentService {
     options?: { aggregate?: boolean }
   ): Promise<EngineeringDocument[]> {
     assertEngineeringService(commerce, "document.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let query = this.supabase
       .from("engineering_documents")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) query = query.eq("engineering_project_id", projectId);
@@ -466,7 +480,9 @@ export class EngineeringDocumentService {
       .eq("id", documentId)
       .single();
     if (error) return null;
-    return mapDocument(data);
+    const document = mapDocument(data);
+    if (!isRecordInWorkspace(document.workspace_id, commerce)) return null;
+    return document;
   }
 
   async create(commerce: CommerceExecutionContext, input: {

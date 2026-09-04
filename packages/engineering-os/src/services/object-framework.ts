@@ -3,6 +3,7 @@ import type { PlatformKernel } from "@rtb/platform-kernel";
 import type { CommerceExecutionContext, EngineeringObjectType } from "@rtb/types";
 import { REGISTER_KG_NODE_TYPES } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
+import { workspaceScopeId } from "../commerce/workspace-scope";
 
 type EngineeringObjectTable =
   | "engineering_decisions"
@@ -287,10 +288,13 @@ export class EngineeringTimelineService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, limit = 50, projectId?: string) {
     assertEngineeringService(commerce, "timeline.list", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let query = this.supabase
       .from("engineering_timeline_events")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("occurred_at", { ascending: false })
       .limit(limit);
     if (projectId) query = query.eq("project_id", projectId);
@@ -305,10 +309,13 @@ export class EngineeringActivityService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, limit = 50, projectId?: string) {
     assertEngineeringService(commerce, "activity.list", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let query = this.supabase
       .from("engineering_activity_events")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (projectId) query = query.eq("project_id", projectId);

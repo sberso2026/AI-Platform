@@ -8,6 +8,8 @@ export type ParsedApiJson<T = unknown> = {
   status: number;
   data: T | null;
   errorMessage: string | null;
+  errorCode: string | null;
+  requestId: string | null;
   raw: unknown;
 };
 
@@ -31,11 +33,42 @@ export function extractApiErrorMessage(body: unknown, fallback: string): string 
   return fallback;
 }
 
+export function extractApiErrorCode(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const payload = body as Record<string, unknown>;
+  const err = payload.error;
+  if (err && typeof err === "object") {
+    const code = (err as Record<string, unknown>).code;
+    if (typeof code === "string" && code.trim()) return code;
+  }
+  if (typeof payload.code === "string" && payload.code.trim()) return payload.code;
+  return null;
+}
+
+export function extractApiErrorRequestId(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const payload = body as Record<string, unknown>;
+  const err = payload.error;
+  if (err && typeof err === "object") {
+    const id = (err as Record<string, unknown>).requestId;
+    if (typeof id === "string" && id.trim()) return id;
+  }
+  if (typeof payload.requestId === "string" && payload.requestId.trim()) {
+    return payload.requestId;
+  }
+  return null;
+}
+
+function headerRequestId(response: Response): string | null {
+  return response.headers.get("x-request-id") ?? response.headers.get("x-correlation-id");
+}
+
 export async function parseApiJsonResponse<T = unknown>(
   response: Response,
 ): Promise<ParsedApiJson<T>> {
   const status = response.status;
   const contentType = response.headers.get("content-type") ?? "";
+  const headerId = headerRequestId(response);
   let text = "";
   try {
     text = await response.text();
@@ -45,6 +78,8 @@ export async function parseApiJsonResponse<T = unknown>(
       status,
       data: null,
       errorMessage: `Failed to read response body (${status})`,
+      errorCode: null,
+      requestId: headerId,
       raw: null,
     };
   }
@@ -52,14 +87,23 @@ export async function parseApiJsonResponse<T = unknown>(
   const trimmed = text.trim();
   if (!trimmed) {
     if (response.ok) {
-      // Valid empty body for tolerant list consumers — callers should treat null data as [].
-      return { ok: true, status, data: null, errorMessage: null, raw: null };
+      return {
+        ok: true,
+        status,
+        data: null,
+        errorMessage: null,
+        errorCode: null,
+        requestId: headerId,
+        raw: null,
+      };
     }
     return {
       ok: false,
       status,
       data: null,
       errorMessage: `Request failed with status ${status} and empty response body`,
+      errorCode: null,
+      requestId: headerId,
       raw: null,
     };
   }
@@ -75,12 +119,16 @@ export async function parseApiJsonResponse<T = unknown>(
       status,
       data: null,
       errorMessage: `Unexpected non-JSON response (${status})`,
+      errorCode: "NON_JSON_RESPONSE",
+      requestId: headerId,
       raw: trimmed.slice(0, 200),
     };
   }
 
   try {
     const raw = JSON.parse(trimmed) as unknown;
+    const requestId = extractApiErrorRequestId(raw) ?? headerId;
+    const errorCode = extractApiErrorCode(raw);
     if (!response.ok) {
       return {
         ok: false,
@@ -90,6 +138,8 @@ export async function parseApiJsonResponse<T = unknown>(
           raw,
           `Request failed with status ${status}`,
         ),
+        errorCode,
+        requestId,
         raw,
       };
     }
@@ -97,7 +147,15 @@ export async function parseApiJsonResponse<T = unknown>(
     if (raw && typeof raw === "object" && "error" in (raw as object)) {
       const msg = extractApiErrorMessage(raw, "");
       if (msg) {
-        return { ok: false, status, data: null, errorMessage: msg, raw };
+        return {
+          ok: false,
+          status,
+          data: null,
+          errorMessage: msg,
+          errorCode,
+          requestId,
+          raw,
+        };
       }
     }
 
@@ -106,13 +164,23 @@ export async function parseApiJsonResponse<T = unknown>(
         ? (((raw as { data: T }).data as T) ?? null)
         : (raw as T);
 
-    return { ok: true, status, data, errorMessage: null, raw };
+    return {
+      ok: true,
+      status,
+      data,
+      errorMessage: null,
+      errorCode: null,
+      requestId,
+      raw,
+    };
   } catch {
     return {
       ok: false,
       status,
       data: null,
       errorMessage: `Malformed JSON response (${status})`,
+      errorCode: "MALFORMED_JSON",
+      requestId: headerId,
       raw: trimmed.slice(0, 200),
     };
   }

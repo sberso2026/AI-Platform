@@ -10,6 +10,10 @@ import type {
 } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import {
+  emptyEngineeringDashboard,
+  resolveDashboardProjectFilter,
+} from "./dashboard-scope";
+import {
   EngineeringAssetService,
   EngineeringDocumentService,
   EngineeringProjectService,
@@ -519,25 +523,36 @@ export class EngineeringDashboardService {
     }
   ) {}
 
-  async getDashboard(commerce: CommerceExecutionContext, tenantId: string) {
+  async getDashboard(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    options?: { projectId?: string },
+  ) {
     assertEngineeringService(commerce, "dashboard.read", tenantId);
+    const { projectId, forceEmpty } = resolveDashboardProjectFilter(options?.projectId);
+    if (forceEmpty) {
+      return emptyEngineeringDashboard();
+    }
     const aggregate = { aggregate: true as const };
     const [projects, assets, documents, apps, runs, actions, decisions, risks, issues, technicalQueries, lessons] =
       await Promise.all([
-      this.projects.list(commerce, tenantId, 10, aggregate),
-      this.assets.list(commerce, tenantId, undefined, 10, aggregate),
-      this.documents.list(commerce, tenantId, undefined, 10, aggregate),
+      this.projects.list(commerce, tenantId, 50, aggregate),
+      this.assets.list(commerce, tenantId, projectId, 50, aggregate),
+      this.documents.list(commerce, tenantId, projectId, 50, aggregate),
       this.applications.listApplications(commerce, aggregate),
       this.kernel?.aiDirector.listRuns(tenantId, 10) ?? Promise.resolve([]),
-      this.registers?.actions.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.decisions.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.risks.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.issues.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.technicalQueries.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.lessons.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.actions.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.decisions.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.risks.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.issues.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.technicalQueries.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.lessons.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
     ]);
 
-    const activeProjects = projects.filter((p) => p.status === "active");
+    const scopedProjects = projectId
+      ? projects.filter((p) => String(p.id) === projectId)
+      : projects;
+    const activeProjects = scopedProjects.filter((p) => p.status === "active");
     const highRiskAssets = assets.filter(
       (a) => a.criticality === "high" || a.criticality === "critical"
     );

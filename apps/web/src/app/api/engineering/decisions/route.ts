@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+import { lifecycleOkResponse } from "@/lib/lifecycle-api";
 
 export const GET = withEngineeringApi("decisions", async ({ ctx, commerce }, request) => {
   const projectId = new URL(request.url).searchParams.get("projectId") ?? undefined;
   const data = await ctx.engineering.decisions.list(commerce, ctx.tenantId, projectId);
-  return NextResponse.json({ data });
+  return lifecycleOkResponse(data);
 });
 
 export const POST = withEngineeringApi("decisions", async ({ ctx, commerce }, request) => {

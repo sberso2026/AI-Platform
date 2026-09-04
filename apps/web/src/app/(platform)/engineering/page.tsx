@@ -31,10 +31,18 @@ import {
   FileText,
   Zap,
 } from "lucide-react";
+import { useEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
 import {
-  asRecordArray,
-  parseApiJsonResponse,
-} from "@/lib/api/parse-json-response";
+  COMMAND_CENTER_USER_ERROR,
+  emptyDatasetLoad,
+  failedDatasets,
+  kpiDisplayValue,
+  kpiState,
+  loadCommandCenter,
+  snapshotHasFailure,
+  type CommandCenterSnapshot,
+  type DatasetLoad,
+} from "@/lib/engineering/load-command-center";
 
 type Trend = "up" | "down" | "flat";
 
@@ -56,43 +64,65 @@ function activityIcon(activityType?: string) {
   return <Zap className="h-5 w-5" />;
 }
 
+const INITIAL_SNAPSHOT: CommandCenterSnapshot = {
+  dashboard: emptyDatasetLoad(),
+  timeline: emptyDatasetLoad(),
+  activity: emptyDatasetLoad(),
+  decisions: emptyDatasetLoad(),
+  risks: emptyDatasetLoad(),
+};
+
 export default function EngineeringCommandCenterPage() {
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
-  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
-  const [activity, setActivity] = useState<Record<string, unknown>[]>([]);
-  const [decisions, setDecisions] = useState<Record<string, unknown>[]>([]);
-  const [risks, setRisks] = useState<Record<string, unknown>[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const projectId = useEngineeringProjectFilter();
+  const [snapshot, setSnapshot] = useState<CommandCenterSnapshot>(INITIAL_SNAPSHOT);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/engineering/dashboard").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/timeline").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/activity").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/decisions").then((r) => parseApiJsonResponse(r)),
-      fetch("/api/engineering/risks").then((r) => parseApiJsonResponse(r)),
-    ])
-      .then(([dash, tl, act, dec, rsk]) => {
-        if (!dash.ok) {
-          setError(
-            dash.errorMessage ?? `Dashboard failed with status ${dash.status}`,
-          );
-        } else if (dash.data && typeof dash.data === "object") {
-          setData(dash.data as Record<string, unknown>);
-        }
-        setTimeline(asRecordArray(tl.data).slice(0, 6));
-        setActivity(asRecordArray(act.data).slice(0, 6));
-        setDecisions(asRecordArray(dec.data).slice(0, 5));
-        setRisks(asRecordArray(rsk.data).slice(0, 5));
+    let cancelled = false;
+    setSnapshot(INITIAL_SNAPSHOT);
+    setShowDetails(false);
+    loadCommandCenter(fetch, projectId)
+      .then((next) => {
+        if (!cancelled) setSnapshot(next);
       })
-      .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : "Failed to load command center"),
-      );
-  }, []);
+      .catch(() => {
+        if (cancelled) return;
+        setSnapshot({
+          dashboard: {
+            status: "failed",
+            data: null,
+            errorCode: "COMMAND_CENTER_DATA_ERROR",
+            errorMessage: COMMAND_CENTER_USER_ERROR,
+            requestId: null,
+          },
+          timeline: emptyDatasetLoad("failed"),
+          activity: emptyDatasetLoad("failed"),
+          decisions: emptyDatasetLoad("failed"),
+          risks: emptyDatasetLoad("failed"),
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, reloadToken]);
 
+  const data = snapshot.dashboard.data;
   const health = (data?.platformHealth as Record<string, string>) ?? {};
   const healthOk = Object.values(health).every((v) => v === "operational" || !v);
-  const aiRuns = ((data?.recentAiRuns as Record<string, unknown>[]) ?? []).slice(0, 5);
+  const aiRuns =
+    snapshot.dashboard.status === "loaded"
+      ? ((data?.recentAiRuns as Record<string, unknown>[]) ?? []).slice(0, 5)
+      : [];
+  const failures = failedDatasets(snapshot);
+  const hasFailure = snapshotHasFailure(snapshot);
+  const projectCount = (data?.activeProjects as unknown[] | undefined)?.length;
+  const reviewCount =
+    (data?.reviewRequiredCount as number | undefined) ??
+    (data?.pendingDecisionsCount as number | undefined);
+  const riskCount = data?.openRisksCount as number | undefined;
+  const tqCount = data?.openTechnicalQueriesCount as number | undefined;
+  const actionCount = data?.openActionsCount as number | undefined;
 
   return (
     <>
@@ -108,7 +138,44 @@ export default function EngineeringCommandCenterPage() {
           Engineering OS product ready
         </span>
         <div data-testid="engineering-command-center" className="contents">
-        {error && <p className="mb-4 text-[0.9375rem] text-destructive">{error}</p>}
+        {hasFailure && (
+          <div
+            className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[0.9375rem] text-red-900"
+            data-testid="command-center-error"
+            role="alert"
+          >
+            <p>{COMMAND_CENTER_USER_ERROR}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="inline-flex h-10 items-center rounded-md bg-red-900 px-3 text-sm font-medium text-white hover:bg-red-800"
+                data-testid="command-center-retry"
+                onClick={() => setReloadToken((value) => value + 1)}
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-10 items-center rounded-md border border-red-300 bg-white px-3 text-sm font-medium text-red-900 hover:bg-red-100"
+                data-testid="command-center-show-details"
+                onClick={() => setShowDetails((value) => !value)}
+              >
+                {showDetails ? "Hide details" : "Show details"}
+              </button>
+            </div>
+            {showDetails && (
+              <ul className="mt-3 space-y-1 text-sm" data-testid="command-center-error-details">
+                {failures.map((item) => (
+                  <li key={item.dataset}>
+                    {item.label}
+                    {item.requestId ? ` · request ${item.requestId}` : ""}
+                    {item.errorCode && item.errorCode !== "NON_JSON_RESPONSE" ? ` · ${item.errorCode}` : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
           <SectionHeader
@@ -185,66 +252,62 @@ export default function EngineeringCommandCenterPage() {
             description="Live signal across projects, engineering reviews, risks, and action registers"
           />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 lg:gap-5">
-            <KpiLink href="/engineering/projects">
+            <KpiLink href="/engineering/projects" testId="command-center-kpi-projects" state={kpiState(snapshot.dashboard, projectCount ?? 0)}>
               <MetricCard
                 label="Engineering Projects"
-                value={(data?.activeProjects as unknown[])?.length ?? 0}
+                value={kpiDisplayValue(snapshot.dashboard, projectCount)}
                 icon={<FolderKanban className="h-6 w-6" />}
                 tone="blue"
                 trendLabel="this week"
                 trendIcon={<TrendGlyph trend="flat" />}
               />
             </KpiLink>
-            <KpiLink href="/engineering/decisions">
+            <KpiLink href="/engineering/decisions" testId="command-center-kpi-reviews" state={kpiState(snapshot.dashboard, reviewCount ?? 0)}>
               <MetricCard
                 label="Engineering Reviews Pending"
-                value={
-                  (data?.reviewRequiredCount as number) ??
-                  (data?.pendingDecisionsCount as number) ??
-                  0
-                }
+                value={kpiDisplayValue(snapshot.dashboard, reviewCount)}
                 icon={<ClipboardCheck className="h-6 w-6" />}
                 tone="amber"
                 trendLabel="today"
                 trendIcon={<TrendGlyph trend="up" />}
               />
             </KpiLink>
-            <KpiLink href="/engineering/risks">
+            <KpiLink href="/engineering/risks" testId="command-center-kpi-risks" state={kpiState(snapshot.dashboard, riskCount ?? 0)}>
               <MetricCard
                 label="Critical Risk Assessments"
-                value={(data?.openRisksCount as number) ?? 0}
+                value={kpiDisplayValue(snapshot.dashboard, riskCount)}
                 icon={<AlertTriangle className="h-6 w-6" />}
                 tone="red"
                 trendLabel="this week"
                 trendIcon={<TrendGlyph trend="down" />}
               />
             </KpiLink>
-            <KpiLink href="/engineering/technical-queries">
+            <KpiLink href="/engineering/technical-queries" testId="command-center-kpi-tqs" state={kpiState(snapshot.dashboard, tqCount ?? 0)}>
               <MetricCard
                 label="Open Technical Queries"
-                value={(data?.openTechnicalQueriesCount as number) ?? 0}
+                value={kpiDisplayValue(snapshot.dashboard, tqCount)}
                 icon={<MessageSquare className="h-6 w-6" />}
                 tone="blue"
                 trendLabel="today"
                 trendIcon={<TrendGlyph trend="flat" />}
               />
             </KpiLink>
-            <KpiLink href="/engineering/actions">
+            <KpiLink href="/engineering/actions" testId="command-center-kpi-actions" state={kpiState(snapshot.dashboard, actionCount ?? 0)}>
               <MetricCard
                 label="Action Register — Critical"
-                value={(data?.openActionsCount as number) ?? 0}
+                value={kpiDisplayValue(snapshot.dashboard, actionCount)}
                 icon={<CheckSquare className="h-6 w-6" />}
                 tone="amber"
                 trendLabel="this week"
                 trendIcon={<TrendGlyph trend="up" />}
               />
             </KpiLink>
-            <KpiLink href="/engineering/health">
+            <KpiLink href="/engineering/health" testId="command-center-kpi-health" state={snapshot.dashboard.status === "failed" ? "failed" : snapshot.dashboard.status === "loading" ? "loading" : "loaded-value"}>
               <MetricCard
                 label="Platform Health"
-                value={healthOk ? "OK" : "Check"}
+                value={kpiDisplayValue(snapshot.dashboard, snapshot.dashboard.status === "loaded" ? (healthOk ? "OK" : "Check") : undefined)}
                 icon={<Activity className="h-6 w-6" />}
-                tone={healthOk ? "green" : "red"}
+                tone={snapshot.dashboard.status === "failed" ? "red" : healthOk ? "green" : "red"}
                 trendLabel="today"
                 trendIcon={<TrendGlyph trend="flat" />}
                 secondary
@@ -259,7 +322,8 @@ export default function EngineeringCommandCenterPage() {
             href="/engineering/decisions"
             emptyTitle="No engineering decisions yet"
             emptyDescription="Engineering decisions requiring review will appear here."
-            items={decisions}
+            dataset={snapshot.decisions}
+            items={snapshot.decisions.data?.slice(0, 5) ?? []}
             render={(d) => (
               <ActivityRow
                 title={`${(d.decision_number as string) ?? ""} — ${(d.title as string) ?? ""}`.replace(/^ — /, "")}
@@ -274,7 +338,8 @@ export default function EngineeringCommandCenterPage() {
             href="/engineering/risks"
             emptyTitle="No open risk assessments"
             emptyDescription="Critical and scored engineering risks will appear here."
-            items={risks}
+            dataset={snapshot.risks}
+            items={snapshot.risks.data?.slice(0, 5) ?? []}
             render={(r) => {
               const score = Number(r.score ?? 0);
               const severity =
@@ -294,7 +359,8 @@ export default function EngineeringCommandCenterPage() {
             href="/engineering/timeline"
             emptyTitle="No timeline events yet"
             emptyDescription="Engineering events across decisions, risks, and technical queries will appear here."
-            items={timeline}
+            dataset={snapshot.timeline}
+            items={snapshot.timeline.data?.slice(0, 6) ?? []}
             render={(e) => (
               <TimelineRow
                 title={(e.title as string) ?? "Timeline event"}
@@ -320,6 +386,7 @@ export default function EngineeringCommandCenterPage() {
               </Link>
             }
             emptyIcon={<Sparkles className="h-5 w-5" />}
+            dataset={snapshot.dashboard}
             items={aiRuns}
             render={(run) => (
               <ActivityRow
@@ -346,7 +413,8 @@ export default function EngineeringCommandCenterPage() {
             href="/engineering/activity"
             emptyTitle="No recent activity"
             emptyDescription="Project and register activity will appear here as engineering work progresses."
-            items={activity}
+            dataset={snapshot.activity}
+            items={snapshot.activity.data?.slice(0, 6) ?? []}
             render={(e) => (
               <ActivityRow
                 title={(e.title as string) ?? "Activity"}
@@ -382,11 +450,23 @@ function TrendGlyph({ trend }: { trend: Trend }) {
   return <Icon className="h-3.5 w-3.5" aria-hidden />;
 }
 
-function KpiLink({ href, children }: { href: string; children: React.ReactNode }) {
+function KpiLink({
+  href,
+  children,
+  testId,
+  state,
+}: {
+  href: string;
+  children: React.ReactNode;
+  testId: string;
+  state: string;
+}) {
   return (
     <Link
       href={href}
       className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      data-testid={testId}
+      data-state={state}
     >
       {children}
     </Link>
@@ -400,6 +480,7 @@ function Panel({
   emptyDescription,
   emptyAction,
   emptyIcon,
+  dataset,
   items,
   render,
 }: {
@@ -409,6 +490,7 @@ function Panel({
   emptyDescription: string;
   emptyAction?: React.ReactNode;
   emptyIcon?: React.ReactNode;
+  dataset: DatasetLoad<unknown>;
   items: Record<string, unknown>[];
   render: (item: Record<string, unknown>) => React.ReactNode;
 }) {
@@ -424,7 +506,17 @@ function Panel({
         </Link>
       </CardHeader>
       <CardContent className="space-y-3.5 p-6 pt-0">
-        {items.length === 0 && (
+        {dataset.status === "loading" && (
+          <p className="text-sm text-slate-500" data-testid="command-center-panel-loading">
+            Loading…
+          </p>
+        )}
+        {dataset.status === "failed" && (
+          <p className="text-sm text-red-800" data-testid="command-center-panel-failed">
+            This dataset could not be loaded.
+          </p>
+        )}
+        {dataset.status === "loaded" && items.length === 0 && (
           <EmptyState
             title={emptyTitle}
             description={emptyDescription}
@@ -432,9 +524,10 @@ function Panel({
             icon={emptyIcon}
           />
         )}
-        {items.map((item, i) => (
-          <div key={(item.id as string) ?? i}>{render(item)}</div>
-        ))}
+        {dataset.status === "loaded" &&
+          items.map((item, i) => (
+            <div key={(item.id as string) ?? i}>{render(item)}</div>
+          ))}
       </CardContent>
     </Card>
   );

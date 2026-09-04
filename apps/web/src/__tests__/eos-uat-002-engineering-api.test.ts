@@ -12,8 +12,10 @@ describe("EOS-UAT-002 engineering API JSON error contract", () => {
     const text = await response.text();
     expect(text.trim().length).toBeGreaterThan(0);
     const body = JSON.parse(text) as {
+      ok?: boolean;
       error: { code: string; message: string; requestId: string };
     };
+    expect(body.ok).toBe(false);
     expect(body.error.code).toBe("internal_error");
     expect(body.error.requestId).toBe("eos-uat-002");
     expect(body.error.message).toBeTruthy();

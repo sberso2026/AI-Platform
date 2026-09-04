@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   ENGINEERING_OS_MANIFEST,
   ENGINEERING_APPLICATIONS,
@@ -303,6 +305,15 @@ describe("Engineering OS RLS tenant isolation principle", () => {
       "engineering_activity_events",
     ];
     registerTables.forEach((t) => expect(t.startsWith("engineering_")).toBe(true));
+  });
+
+  it("scopes list queries by workspace_id as well as tenant_id", () => {
+    const files = ["core-services.ts", "register-services.ts", "object-framework.ts"];
+    for (const file of files) {
+      const text = readFileSync(resolve(__dirname, "services", file), "utf8");
+      expect(text).toContain("workspaceScopeId");
+      expect(text).toContain('.eq("workspace_id", workspaceId)');
+    }
   });
 });
 

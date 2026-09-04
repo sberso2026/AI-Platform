@@ -2,6 +2,7 @@ import type { Json, SupabaseClient } from "@rtb/database";
 import type { PlatformKernel } from "@rtb/platform-kernel";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
+import { workspaceScopeId } from "../commerce/workspace-scope";
 import { EngineeringObjectFramework } from "./object-framework";
 
 type EngineeringRegisterTable =
@@ -133,10 +134,13 @@ export class EngineeringDecisionService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "decision.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_decisions")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -306,10 +310,13 @@ export class EngineeringActionService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "action.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_actions")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -410,10 +417,13 @@ export class EngineeringRiskService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "risk.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_risks")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("score", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -533,10 +543,13 @@ export class EngineeringIssueService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "issue.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_issues")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -663,10 +676,13 @@ export class EngineeringTechnicalQueryService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "technical_query.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_technical_queries")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -784,10 +800,13 @@ export class EngineeringLessonService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "lesson.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_lessons")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);

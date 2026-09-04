@@ -6,7 +6,9 @@ import { enforceCommercePolicy, type CommerceHandlerContext } from "./with-comme
 import {
   handleCommerceDomainError,
   lifecycleErrorResponse,
+  resolveRequestId,
   unauthenticatedResponse,
+  type LifecycleErrorLogContext,
 } from "@/lib/lifecycle-api";
 
 export type { CommerceHandlerContext };
@@ -27,6 +29,14 @@ const PI_WORKSPACE_REASONS = new Set([
   "workspace_required",
   "workspace_not_assigned",
   "workspace_not_entitled",
+]);
+
+const COMMAND_CENTER_SEGMENTS = new Set([
+  "dashboard",
+  "timeline",
+  "activity",
+  "decisions",
+  "risks",
 ]);
 
 function projectIntelligenceEntitlementCode(reasonCode: string): string {
@@ -57,26 +67,41 @@ async function projectIntelligenceGuardError(response: NextResponse, requestId: 
   );
 }
 
+function commandCenterLogContext(
+  segment: string,
+  started: number,
+  extra?: Partial<LifecycleErrorLogContext>,
+): LifecycleErrorLogContext {
+  const commandCenter = COMMAND_CENTER_SEGMENTS.has(segment);
+  return {
+    route: `/api/engineering/${segment}`,
+    durationMs: Date.now() - started,
+    publicCode: commandCenter ? "COMMAND_CENTER_DATA_ERROR" : undefined,
+    publicMessage: commandCenter ? "Unable to load engineering KPI data." : undefined,
+    ...extra,
+  };
+}
+
 export async function guardEngineeringApi(
   segment: string,
-  method: string
+  method: string,
+  requestId = crypto.randomUUID(),
 ): Promise<CommerceHandlerContext | NextResponse> {
   const ctx = await getAuthContext();
-  if (!ctx) return unauthenticatedResponse(crypto.randomUUID());
+  if (!ctx) return unauthenticatedResponse(requestId);
 
   const policy = getEngineeringApiPolicy(segment, method);
   const result = await enforceCommercePolicy(ctx, policy);
-  const correlationId = crypto.randomUUID();
   if (result instanceof NextResponse) {
     return segment.startsWith("project-intelligence")
-      ? projectIntelligenceGuardError(result, correlationId)
+      ? projectIntelligenceGuardError(result, requestId)
       : result;
   }
   const commerce = createCommerceExecutionContext({
     tenantId: ctx.tenantId,
     workspaceId: ctx.workspaceId,
     actorUserId: ctx.userId,
-    correlationId,
+    correlationId: requestId,
     decision: result,
     policy,
   });
@@ -84,7 +109,7 @@ export async function guardEngineeringApi(
   return {
     ctx,
     decision: result,
-    correlationId,
+    correlationId: requestId,
     commerce,
   };
 }
@@ -94,13 +119,32 @@ export function withEngineeringApi(
   handler: (context: CommerceHandlerContext, request: Request) => Promise<NextResponse>
 ) {
   return async (request: Request): Promise<NextResponse> => {
-    const guarded = await guardEngineeringApi(segment, request.method);
-    if (guarded instanceof NextResponse) return guarded;
+    const started = Date.now();
+    const requestId = resolveRequestId(request);
     try {
-      return await handler(guarded, request);
+      const guarded = await guardEngineeringApi(segment, request.method, requestId);
+      if (guarded instanceof NextResponse) return guarded;
+      try {
+        const response = await handler(guarded, request);
+        response.headers.set("x-request-id", guarded.correlationId);
+        return response;
+      } catch (err) {
+        return handleCommerceDomainError(
+          err,
+          guarded.correlationId,
+          commandCenterLogContext(segment, started, {
+            layer: "service",
+            tenantId: guarded.ctx.tenantId,
+            workspaceId: guarded.ctx.workspaceId,
+          }),
+        );
+      }
     } catch (err) {
-      // Always return a JSON lifecycle/commerce error — never an empty non-JSON body.
-      return handleCommerceDomainError(err, guarded.correlationId);
+      return handleCommerceDomainError(
+        err,
+        requestId,
+        commandCenterLogContext(segment, started, { layer: "auth_or_context" }),
+      );
     }
   };
 }
@@ -117,13 +161,33 @@ export function withEngineeringApiParams<T extends Record<string, string>>(
     request: Request,
     routeContext: { params: Promise<T> }
   ): Promise<NextResponse> => {
-    const guarded = await guardEngineeringApi(segment, request.method);
-    if (guarded instanceof NextResponse) return guarded;
+    const started = Date.now();
+    const requestId = resolveRequestId(request);
     try {
-      const params = await routeContext.params;
-      return await handler(guarded, request, params);
+      const guarded = await guardEngineeringApi(segment, request.method, requestId);
+      if (guarded instanceof NextResponse) return guarded;
+      try {
+        const params = await routeContext.params;
+        const response = await handler(guarded, request, params);
+        response.headers.set("x-request-id", guarded.correlationId);
+        return response;
+      } catch (err) {
+        return handleCommerceDomainError(
+          err,
+          guarded.correlationId,
+          commandCenterLogContext(segment, started, {
+            layer: "service",
+            tenantId: guarded.ctx.tenantId,
+            workspaceId: guarded.ctx.workspaceId,
+          }),
+        );
+      }
     } catch (err) {
-      return handleCommerceDomainError(err, guarded.correlationId);
+      return handleCommerceDomainError(
+        err,
+        requestId,
+        commandCenterLogContext(segment, started, { layer: "auth_or_context" }),
+      );
     }
   };
 }
