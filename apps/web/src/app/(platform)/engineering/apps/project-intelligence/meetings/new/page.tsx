@@ -1,12 +1,33 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
+import { PiErrorState } from "@/components/engineering/pi-page-chrome";
+
+type ListedProject = { id: string; project_code: string; project_name: string };
 
 export default function NewMeetingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedProjectId = searchParams.get("projectId") ?? "";
+  const [projects, setProjects] = useState<ListedProject[]>([]);
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
+  const [projectValue, setProjectValue] = useState(selectedProjectId);
+
+  useEffect(() => {
+    setProjectValue(selectedProjectId);
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    fetch("/api/engineering/projects")
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message ?? "Unable to load projects");
+        setProjects(payload.data ?? []);
+      })
+      .catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load projects"));
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,13 +40,10 @@ export default function NewMeetingPage() {
       agenda: String(form.get("agenda") ?? "") || null,
       scheduledStartAt: String(form.get("scheduledStartAt") || "") || null,
       scheduledEndAt: String(form.get("scheduledEndAt") || "") || null,
-      provider: "manual",
       recordingNoticeRequired: String(form.get("recordingNoticeRequired") ?? "unknown"),
       recordingNoticeText: String(form.get("recordingNoticeText") ?? "") || null,
       consentPolicy: String(form.get("consentPolicy") ?? "") || null,
       consentStatus: String(form.get("consentStatus") ?? "not_requested"),
-      jurisdiction: String(form.get("jurisdiction") ?? "") || null,
-      retentionPolicyId: String(form.get("retentionPolicyId") ?? "") || null,
       privacyClassification: String(form.get("privacyClassification") ?? "internal"),
     };
 
@@ -47,22 +65,38 @@ export default function NewMeetingPage() {
   return (
     <section data-testid="project-intelligence-meetings-new">
       <h2 className="text-2xl font-semibold text-slate-900">New meeting</h2>
-      <p className="mt-2 text-slate-600">Manual provider only. External providers unavailable.</p>
+      <p className="mt-2 text-slate-600">
+        Manual capture fallback. Inherit the selected project. Live providers remain under Diagnostics.
+      </p>
       <form className="mt-6 max-w-xl space-y-4" onSubmit={onSubmit}>
         <label className="block text-sm">
           Title
           <input name="title" required className="mt-1 w-full rounded border px-3 py-2" data-testid="meeting-title-input" />
         </label>
         <label className="block text-sm">
-          Project ID
-          <input name="engineeringProjectId" className="mt-1 w-full rounded border px-3 py-2" />
+          Project
+          <select
+            name="engineeringProjectId"
+            required
+            className="mt-1 w-full rounded border px-3 py-2"
+            value={projectValue}
+            onChange={(event) => setProjectValue(event.target.value)}
+            data-testid="meeting-project-select"
+          >
+            <option value="">Select a project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.project_code} — {project.project_name}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="block text-sm">
-          Scheduled start
+          Start
           <input name="scheduledStartAt" type="datetime-local" className="mt-1 w-full rounded border px-3 py-2" />
         </label>
         <label className="block text-sm">
-          Scheduled end
+          End
           <input name="scheduledEndAt" type="datetime-local" className="mt-1 w-full rounded border px-3 py-2" />
         </label>
         <label className="block text-sm">
@@ -70,54 +104,47 @@ export default function NewMeetingPage() {
           <textarea name="agenda" className="mt-1 w-full rounded border px-3 py-2" rows={3} />
         </label>
         <label className="block text-sm">
-          Provider
-          <input name="provider" value="manual" readOnly className="mt-1 w-full rounded border bg-slate-50 px-3 py-2" />
-        </label>
-        <label className="block text-sm">
-          Privacy classification
+          Privacy
           <select name="privacyClassification" className="mt-1 w-full rounded border px-3 py-2" defaultValue="internal">
-            <option value="public">public</option>
-            <option value="internal">internal</option>
-            <option value="confidential">confidential</option>
-            <option value="restricted">restricted</option>
+            <option value="public">Public</option>
+            <option value="internal">Internal</option>
+            <option value="confidential">Confidential</option>
+            <option value="restricted">Restricted</option>
           </select>
         </label>
-        <label className="block text-sm">
-          Recording notice
-          <select name="recordingNoticeRequired" className="mt-1 w-full rounded border px-3 py-2" defaultValue="unknown">
-            <option value="required">required</option>
-            <option value="not_required">not_required</option>
-            <option value="unknown">unknown</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          Recording notice text
-          <input name="recordingNoticeText" className="mt-1 w-full rounded border px-3 py-2" />
-        </label>
-        <label className="block text-sm">
-          Consent policy
-          <input name="consentPolicy" className="mt-1 w-full rounded border px-3 py-2" />
-        </label>
-        <label className="block text-sm">
-          Consent status
-          <select name="consentStatus" className="mt-1 w-full rounded border px-3 py-2" defaultValue="not_requested">
-            <option value="not_requested">not_requested</option>
-            <option value="pending">pending</option>
-            <option value="granted">granted</option>
-            <option value="declined">declined</option>
-            <option value="withdrawn">withdrawn</option>
-            <option value="not_applicable">not_applicable</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          Jurisdiction
-          <input name="jurisdiction" className="mt-1 w-full rounded border px-3 py-2" />
-        </label>
-        <label className="block text-sm">
-          Retention policy ID
-          <input name="retentionPolicyId" className="mt-1 w-full rounded border px-3 py-2" />
-        </label>
-        {error && <p className="text-red-700" role="alert">{error}</p>}
+        <details className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+          <summary className="cursor-pointer font-medium text-slate-800">Recording and consent</summary>
+          <div className="mt-3 space-y-3">
+            <label className="block text-sm">
+              Recording notice
+              <select name="recordingNoticeRequired" className="mt-1 w-full rounded border px-3 py-2" defaultValue="unknown">
+                <option value="required">Required</option>
+                <option value="not_required">Not required</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              Recording notice text
+              <input name="recordingNoticeText" className="mt-1 w-full rounded border px-3 py-2" />
+            </label>
+            <label className="block text-sm">
+              Consent policy
+              <input name="consentPolicy" className="mt-1 w-full rounded border px-3 py-2" />
+            </label>
+            <label className="block text-sm">
+              Consent status
+              <select name="consentStatus" className="mt-1 w-full rounded border px-3 py-2" defaultValue="not_requested">
+                <option value="not_requested">Not requested</option>
+                <option value="pending">Pending</option>
+                <option value="granted">Granted</option>
+                <option value="declined">Declined</option>
+                <option value="withdrawn">Withdrawn</option>
+                <option value="not_applicable">Not applicable</option>
+              </select>
+            </label>
+          </div>
+        </details>
+        {error && <PiErrorState title="Could not create meeting" description={error} />}
         <button
           type="submit"
           disabled={saving}

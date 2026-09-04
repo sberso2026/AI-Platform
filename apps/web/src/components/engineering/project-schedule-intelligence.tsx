@@ -12,6 +12,7 @@ import {
   SectionHeader,
   cn,
 } from "@rtb/ui";
+import { sourceSystemLabel } from "./pi-ux";
 
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
 type Availability = "ok" | "no_data" | "unavailable" | "forbidden" | "stale" | "error";
@@ -151,8 +152,8 @@ export function ScheduleIntelligenceSummary({
 
       {unknown && view.availability === "no_data" ? (
         <EmptyState
-          title="No published schedule data"
-          description="Schedule UNKNOWN — Project Controls has not published a schedule assessment."
+          title="Connect or import schedule data to enable Schedule Intelligence."
+          description="Schedule Intelligence requires connected or imported schedule data from the system of record. Project Intelligence does not replace Primavera or Microsoft Project."
           data-testid={`${testIdPrefix}-empty`}
         />
       ) : null}
@@ -212,7 +213,7 @@ export function ScheduleIntelligenceSummary({
           <div data-testid={`${testIdPrefix}-quality`}>
             <p className="text-sm font-medium text-slate-900">Data quality</p>
             <p className="mt-1 text-sm text-slate-700">
-              Source {view.dataQuality.source}
+              Source {sourceSystemLabel(view.dataQuality.source) ?? "connected schedule system"}
               {view.dataQuality.completeness ? ` · completeness ${view.dataQuality.completeness}` : ""}
             </p>
             {view.dataQuality.missing.length > 0 ? (

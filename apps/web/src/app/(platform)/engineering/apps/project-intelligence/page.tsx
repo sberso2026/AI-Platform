@@ -6,45 +6,45 @@ import { ProjectCommandCentre } from "@/components/engineering/project-command-c
 const DASHBOARD_PANELS = [
   {
     id: "recent-activity",
-    title: "Recent activity",
-    body: "Latest document processing, meeting reviews, and mapping events in this workspace.",
-    href: "/engineering/apps/project-intelligence/health",
+    title: "What changed",
+    body: "Material published deltas across schedule, cost, risk, TQs, and findings.",
+    href: "/engineering/apps/project-intelligence",
   },
   {
     id: "assigned-work",
-    title: "Assigned work",
-    body: "Review queues and approval items requiring your seat in this workspace.",
-    href: "/engineering/apps/project-intelligence/documents/review",
+    title: "Attention required",
+    body: "Exception-first queue of overdue decisions, actions, risks, and evidence gaps.",
+    href: "/engineering/apps/project-intelligence",
   },
   {
     id: "documents",
     title: "Documents",
-    body: "Document Intelligence — ingestion, retrieval, and grounded answers.",
+    body: "What changed in project documents — drill-down from Engineering Intelligence.",
     href: "/engineering/apps/project-intelligence/documents",
   },
   {
     id: "meetings",
     title: "Meetings",
-    body: "Meeting Intelligence — capture, minutes, and provider integrations.",
+    body: "Meeting commitments, decisions, and follow-up — drill-down from Engineering.",
     href: "/engineering/apps/project-intelligence/meetings",
   },
   {
     id: "findings",
     title: "Findings",
-    body: "Findings Intelligence — consolidated evidence across documents and meetings.",
+    body: "Open, critical, and overdue findings — drill-down from Engineering.",
     href: "/engineering/apps/project-intelligence/findings",
   },
   {
     id: "reports",
     title: "Reports",
-    body: "Reporting Intelligence — module reports over shared Engineering services.",
+    body: "Executive intelligence with interpretation, not counts alone.",
     href: "/engineering/apps/project-intelligence/reports",
   },
   {
     id: "ai-insights",
-    title: "AI insights",
-    body: "Evidence-bound insights via Platform AI Runtime and Engineering Intelligence Framework.",
-    href: "/engineering/apps/project-intelligence/documents/query",
+    title: "Ask Project Intelligence",
+    body: "Evidence-grounded answers. Advisory only. Does not replace project controls systems.",
+    href: "/engineering/apps/project-intelligence/analyst",
   },
 ] as const;
 
@@ -77,11 +77,14 @@ export default async function ProjectIntelligenceOverviewPage() {
 
   return (
     <section data-testid="project-intelligence-ready">
-      <p className="text-sm font-medium text-cyan-700">Engineering OS module</p>
-      <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Project Command Centre</h2>
-      <p className="mt-3 max-w-2xl text-slate-600">
-        Live composition of canonical Engineering OS context, published Project Controls outputs, PI v1 knowledge,
-        and deterministic Project Health. Command Centre is read-only and works with AI disabled.
+      <p className="text-sm font-medium text-cyan-700">Project Intelligence Overview</p>
+      <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
+        What changed, why it matters, what needs a decision
+      </h2>
+      <p className="mt-3 max-w-3xl text-slate-600">
+        Project Intelligence is the reasoning layer over existing project evidence. Schedule, cost,
+        documents, correspondence, and meetings remain in their systems of record. This overview answers
+        health, attention, change, and next decisions from published evidence only.
       </p>
 
       <div className="mt-8" data-testid="project-intelligence-dashboard">

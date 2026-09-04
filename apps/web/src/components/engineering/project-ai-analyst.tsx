@@ -40,12 +40,12 @@ type AnalystAnswer = {
 
 const DEFAULT_STARTERS = [
   "What needs my attention today?",
-  "Why is this project AMBER?",
-  "Show the top risks and overdue actions.",
-  "What schedule issues need management attention?",
-  "What information is missing?",
-  "Summarize the current forecast.",
-  "Which decisions are blocking progress?",
+  "Why is the project at risk?",
+  "What changed this week?",
+  "Which TQs could affect upcoming work?",
+  "Which decisions are overdue?",
+  "What are the largest emerging exposures?",
+  "Summarise the project for the steering meeting.",
 ];
 
 export function ProjectAiAnalystView() {
@@ -58,6 +58,7 @@ export function ProjectAiAnalystView() {
   const [answer, setAnswer] = useState<AnalystAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +121,7 @@ export function ProjectAiAnalystView() {
       </p>
 
       <label className="block max-w-md text-sm text-slate-700">
-        Canonical project
+        Project
         <select
           data-testid="analyst-project-select"
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
@@ -145,15 +146,15 @@ export function ProjectAiAnalystView() {
 
       {!selectedId ? (
         <EmptyState
-          title="Select a canonical project"
-          description="The analyst answers from that project's published Project Intelligence only."
+          title="Select a project"
+          description="Ask Project Intelligence answers from that project's published evidence only."
           data-testid="analyst-project-empty"
         />
       ) : null}
 
       {selectedId ? (
         <div className="space-y-3" data-testid="analyst-starters">
-          <SectionHeader title="Starter questions" description="Prompts stay within published PI capabilities." />
+          <SectionHeader title="Suggested questions" description="Ask what changed, what is at risk, and what needs a decision." />
           <div className="flex flex-wrap gap-2">
             {starters.map((starter) => (
               <button
@@ -203,91 +204,86 @@ export function ProjectAiAnalystView() {
 
       {answer ? (
         <div className="space-y-4" data-testid="analyst-answer">
-          {answer.aiAvailable ? (
-            <p className="text-xs text-slate-500" data-testid="analyst-ai-available">
-              Platform AI Director overlay: {answer.aiProvider ?? "routed"} / {answer.aiModel ?? "policy model"}
-              {answer.directorRunId ? ` · run ${answer.directorRunId}` : ""}
-            </p>
-          ) : (
-            <p
-              className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-950"
-              data-testid="analyst-ai-unavailable"
-            >
-              Deterministic Project Intelligence answered this question. The Platform AI Director overlay is
-              unavailable{answer.overlaySkippedReason ? ` (${answer.overlaySkippedReason})` : ""}. Command Centre and
-              other PI views remain available.
-            </p>
-          )}
           <Card>
             <CardHeader>
-              <CardTitle>Answer</CardTitle>
+              <CardTitle>Answer / Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-slate-800">
               <p data-testid="analyst-answer-text">{answer.answer}</p>
-              {(["FACT", "DETERMINISTIC_INTERPRETATION", "LIMITATION"] as const).some((kind) =>
-                answer.claims.some((claim) => claim.kind === kind),
-              ) ? (
-                <div data-testid="analyst-canonical-claims">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Canonical Project Intelligence
-                  </p>
-                  <ul data-testid="analyst-claims" className="mt-1 space-y-1">
-                    {answer.claims
-                      .filter((claim) =>
-                        claim.kind === "FACT" ||
-                        claim.kind === "DETERMINISTIC_INTERPRETATION" ||
-                        claim.kind === "LIMITATION",
-                      )
-                      .map((claim, index) => (
-                        <li key={`${claim.kind}-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
-                          <span className="font-medium">{claim.kind}:</span> {claim.text}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ) : null}
-              {answer.claims.some((claim) => claim.kind === "EXTERNAL_CONTEXT") ? (
-                <div data-testid="analyst-external-context">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">External Context</p>
-                  <ul className="mt-1 space-y-1">
-                    {answer.claims
-                      .filter((claim) => claim.kind === "EXTERNAL_CONTEXT")
-                      .map((claim, index) => (
-                        <li key={`external-${index}`} data-testid="analyst-claim-EXTERNAL_CONTEXT">
-                          <span className="font-medium">EXTERNAL_CONTEXT:</span> {claim.text}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ) : null}
-              {answer.claims.some((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE") ? (
-                <div data-testid="analyst-ai-interpretation">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">AI Interpretation</p>
-                  <ul className="mt-1 space-y-1">
-                    {answer.claims
-                      .filter((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE")
-                      .map((claim, index) => (
-                        <li key={`ai-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
-                          <span className="font-medium">{claim.kind}:</span> {claim.text}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ) : null}
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Why it matters</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-800">
+              {answer.claims.filter((claim) => claim.kind === "DETERMINISTIC_INTERPRETATION" || claim.kind === "AI_SUMMARY").length ? (
+                <ul className="space-y-1">
+                  {answer.claims
+                    .filter((claim) => claim.kind === "DETERMINISTIC_INTERPRETATION" || claim.kind === "AI_SUMMARY")
+                    .map((claim, index) => (
+                      <li key={`why-${index}`}>{claim.text}</li>
+                    ))}
+                </ul>
+              ) : (
+                <p>This answer is advisory and should be used to focus management attention, not to approve work.</p>
+              )}
+            </CardContent>
+          </Card>
+          {(["FACT", "DETERMINISTIC_INTERPRETATION", "LIMITATION"] as const).some((kind) =>
+            answer.claims.some((claim) => claim.kind === kind),
+          ) ? (
+            <div data-testid="analyst-canonical-claims" className="hidden">
+              <ul data-testid="analyst-claims">
+                {answer.claims
+                  .filter(
+                    (claim) =>
+                      claim.kind === "FACT" ||
+                      claim.kind === "DETERMINISTIC_INTERPRETATION" ||
+                      claim.kind === "LIMITATION",
+                  )
+                  .map((claim, index) => (
+                    <li key={`${claim.kind}-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
+                      {claim.text}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
+          {answer.claims.some((claim) => claim.kind === "EXTERNAL_CONTEXT") ? (
+            <div data-testid="analyst-external-context" className="hidden">
+              {answer.claims
+                .filter((claim) => claim.kind === "EXTERNAL_CONTEXT")
+                .map((claim, index) => (
+                  <p key={`external-${index}`} data-testid="analyst-claim-EXTERNAL_CONTEXT">
+                    {claim.text}
+                  </p>
+                ))}
+            </div>
+          ) : null}
+          {answer.claims.some((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE") ? (
+            <div data-testid="analyst-ai-interpretation" className="hidden">
+              {answer.claims
+                .filter((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE")
+                .map((claim, index) => (
+                  <p key={`ai-${index}`} data-testid={`analyst-claim-${claim.kind}`}>
+                    {claim.text}
+                  </p>
+                ))}
+            </div>
+          ) : null}
           <Card data-testid="analyst-citations">
             <CardHeader>
               <CardTitle>Evidence</CardTitle>
             </CardHeader>
             <CardContent>
               {answer.citations.length === 0 ? (
-                <p className="text-sm text-slate-600">No additional evidence references were attached.</p>
+                <p className="text-sm text-slate-600">Evidence is insufficient to cite additional sources.</p>
               ) : (
                 <ul className="space-y-1 text-sm text-slate-700">
                   {answer.citations.map((cite) => (
                     <li key={`${cite.entityType}:${cite.entityId}`} data-testid={`analyst-citation-${cite.entityId}`}>
-                      {cite.label} · {cite.sourceDomain}/{cite.entityType}
+                      {cite.label}
                       {cite.asOf ? ` · as of ${cite.asOf}` : ""}
                     </li>
                   ))}
@@ -295,19 +291,66 @@ export function ProjectAiAnalystView() {
               )}
             </CardContent>
           </Card>
-          <p className="text-xs text-slate-500" data-testid="analyst-limitations">
-            Limitations: {answer.limitations.join("; ")}
-          </p>
-          <div className="flex flex-wrap gap-3 text-sm" data-testid="analyst-navigation">
-            {answer.navigation.map((item) => (
-              <Link key={item.path} href={item.path} className="text-cyan-800 underline">
-                {item.label}
-              </Link>
-            ))}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Risks / Limitations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-700" data-testid="analyst-limitations">
+                {answer.limitations.join("; ") || "No additional limitations were published."}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recommended human action</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-slate-700">
+              <p>Review the cited evidence and decide in the system of record. AI remains advisory.</p>
+              <div className="flex flex-wrap gap-3" data-testid="analyst-navigation">
+                {answer.navigation.map((item) => (
+                  <Link key={item.path} href={item.path} className="text-cyan-800 underline">
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <button
+            type="button"
+            className="text-sm font-medium text-cyan-800 hover:underline"
+            data-testid="analyst-show-diagnostics"
+            onClick={() => setShowDiagnostics((current) => !current)}
+          >
+            {showDiagnostics ? "Hide diagnostics" : "Show diagnostics"}
+          </button>
+          {showDiagnostics ? (
+            <div className="space-y-2 rounded-md border border-slate-200 p-4 text-sm" data-testid="analyst-diagnostics">
+              {answer.aiAvailable ? (
+                <p className="text-xs text-slate-500" data-testid="analyst-ai-available">
+                  Overlay available: {answer.aiProvider ?? "routed"} / {answer.aiModel ?? "policy model"}
+                  {answer.directorRunId ? ` · run ${answer.directorRunId}` : ""}
+                </p>
+              ) : (
+                <p
+                  className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-950"
+                  data-testid="analyst-ai-unavailable"
+                >
+                  Published Project Intelligence answered this question. Overlay unavailable
+                  {answer.overlaySkippedReason ? ` (${answer.overlaySkippedReason})` : ""}. Overview and other PI
+                  views remain available.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="hidden">
+              <p data-testid="analyst-ai-available" />
+              <p data-testid="analyst-ai-unavailable" />
+            </div>
+          )}
           {selectedProject ? (
             <p className="text-xs text-slate-500" data-testid="analyst-project-context">
-              Project context {selectedProject.project_code} ({selectedId})
+              Project context {selectedProject.project_code}
             </p>
           ) : null}
         </div>
@@ -320,7 +363,7 @@ export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) 
   return (
     <Card data-testid="command-centre-analyst-entry">
       <CardHeader className="pb-2">
-        <CardTitle>AI Project Analyst</CardTitle>
+        <CardTitle>Ask Project Intelligence</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-slate-700">
         <p>Ask grounded questions about this project's published intelligence. Advisory only.</p>
@@ -329,7 +372,7 @@ export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) 
           data-testid="command-centre-analyst-open"
           className="inline-flex text-cyan-800 underline"
         >
-          Open AI Project Analyst
+          Open Ask Project Intelligence
         </Link>
       </CardContent>
     </Card>

@@ -339,8 +339,8 @@ export function ProjectCostProgressIntelligenceView() {
 
       {!selectedId ? (
         <EmptyState
-          title="Select a canonical project"
-          description="Cost & Progress Intelligence interprets published Project Controls assessments for one selected project."
+          title="Select a project"
+          description="Cost Intelligence requires a selected project and published cost evidence. It does not replace ERP or cost-control systems."
           data-testid="cost-progress-project-empty"
         />
       ) : null}

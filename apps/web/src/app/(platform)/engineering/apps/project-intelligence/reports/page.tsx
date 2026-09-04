@@ -6,12 +6,12 @@ export default function ReportingIntelligencePage() {
   return (
     <section data-testid="reporting-intelligence-ready">
       <div data-testid="project-intelligence-reports-ready">
-        <p className="text-sm font-medium text-cyan-700">Reporting Intelligence</p>
+        <p className="text-sm font-medium text-cyan-700">Project Intelligence</p>
         <h2 className="mt-1 text-2xl font-semibold text-slate-900">Reports</h2>
         <p className="mt-2 max-w-3xl text-slate-600">
-          Project reports are assembled from canonical Project Intelligence and governed external
-          context. They are advisory snapshots, not a second project truth model. Live workspace
-          aggregation remains available on the executive dashboard.
+          Executive intelligence: project health, schedule and cost signals, risk exposure, TQ and
+          decision backlogs, findings, and recent change. Counts include interpretation. Trends are
+          shown only when published evidence supports them.
         </p>
 
         <div className="mt-8">
@@ -23,8 +23,8 @@ export default function ReportingIntelligencePage() {
         <div className="mt-8 rounded-lg border border-cyan-200 bg-cyan-50/40 p-5">
           <h3 className="font-semibold text-slate-900">Executive Intelligence Dashboard</h3>
           <p className="mt-2 text-sm text-slate-600">
-            Configurable live widgets with drill-down to originating features. AI executive
-            summaries use Platform AI Runtime and require human review before publish.
+            Live widgets with drill-down to originating features. Advisory summaries require human
+            review before publish. This does not replace Primavera, ERP, or document systems.
           </p>
           <Link
             className="mt-4 inline-block rounded-md bg-slate-900 px-3 py-2 text-sm text-white"

@@ -40,6 +40,7 @@ export type DocumentIntelligenceListItem = {
   currentStep?: string | null;
   attemptCount?: number;
   jobStatus?: string | null;
+  engineeringProjectId?: string | null;
 };
 
 function requireWorkspace(context: CommerceHandlerContext): string {
@@ -130,7 +131,7 @@ export async function listDocumentIntelligence(
   const workspaceId = requireWorkspace(context);
   const { data: core } = await context.ctx.supabase
     .from("engineering_documents")
-    .select("id, document_number, title, revision, document_type, discipline, updated_at")
+    .select("id, document_number, title, revision, document_type, discipline, updated_at, engineering_project_id")
     .eq("tenant_id", context.ctx.tenantId)
     .eq("workspace_id", workspaceId)
     .order("updated_at", { ascending: false })
@@ -163,6 +164,7 @@ export async function listDocumentIntelligence(
       findingsCount: 0,
       readiness: status === "unregistered" ? "unregistered" : ready ? "ready" : "not_ready",
       processedAt: (ingestion?.updated_at as string | null) ?? null,
+      engineeringProjectId: (doc.engineering_project_id as string | null) ?? null,
     };
   });
 }

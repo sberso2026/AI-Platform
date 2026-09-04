@@ -13,9 +13,10 @@ function read(rel: string): string {
 describe("PI-10 production hardening freeze", () => {
   it("does not add a new intelligence domain or PI-11", () => {
     const shell = read("components/engineering/project-intelligence-shell.tsx");
-    expect(shell).toContain("Command Centre");
-    expect(shell).toContain("AI Project Analyst");
-    expect(shell).toContain("Reporting Intelligence");
+    expect(shell).toContain("Overview");
+    expect(shell).toContain("Ask Project Intelligence");
+    expect(shell).toContain("Reports");
+    expect(shell).toContain("Administration / Diagnostics");
     expect(shell).not.toContain("PI-11");
     const reporting = readFileSync(resolve(PI_SRC, "project-reporting/ownership.ts"), "utf8");
     expect(reporting).toContain("PI_10_IMPLEMENTED = true");

@@ -197,11 +197,16 @@ export function ProjectReportingIntelligenceView() {
     [projects, selectedId],
   );
 
+  useEffect(() => {
+    if (!selectedId) return;
+    void generate(selectedId, reportType);
+  }, [generate, reportType, selectedId]);
+
   return (
     <div data-testid="project-intelligence-project-reporting" className="space-y-8">
       <p className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-950" data-testid="reporting-advisory-banner">
-        Advisory only. Reports are point-in-time snapshots. They do not approve, mutate, or replace canonical
-        Project Intelligence. External context remains EXTERNAL_CONTEXT.
+        Advisory only. Reports are point-in-time snapshots. They do not approve work or replace
+        Primavera, ERP, or document systems of record.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -314,8 +319,8 @@ export function ProjectReportingIntelligenceView() {
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm text-slate-700">
                   <p className="text-xs text-slate-500">
-                    {section.sourceClassification} · {section.state} · {section.availability}
-                    {section.freshness ? ` · freshness ${section.freshness}` : ""}
+                    {section.state} · {section.availability}
+                    {section.freshness ? ` · ${section.freshness}` : ""}
                   </p>
                   <p data-testid={`reporting-section-${section.id}-body`}>{section.body}</p>
                   {section.limitations.length ? (
