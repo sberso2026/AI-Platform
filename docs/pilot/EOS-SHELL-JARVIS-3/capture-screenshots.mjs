@@ -85,7 +85,7 @@ const allRoutes = [
   { id: "02-engineering-systems", path: "/engineering/modules" },
   { id: "03-projects", path: "/engineering/projects" },
   { id: "04-assets", path: "/engineering/assets" },
-  { id: "05-inspections", path: "/engineering/inspections" },
+  { id: "05-inspections", path: "/engineering/apps/inspection-intelligence" },
   { id: "06-documents", path: "/engineering/documents" },
   { id: "07-technical-queries", path: "/engineering/technical-queries" },
   { id: "08-project-intelligence", path: "/engineering/apps/project-intelligence" },
@@ -150,10 +150,21 @@ async function settle(page, route) {
   if (route.id === "11-engineering-models") {
     await page.getByTestId("emi-model-count").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
+  if (route.id === "05-inspections") {
+    await page.getByTestId("page-main").waitFor({ timeout: 20000 }).catch(() => undefined);
+    await page.getByText("Inspection Intelligence").first().waitFor({ timeout: 20000 }).catch(() => undefined);
+  }
+  if (route.id === "03-projects" || route.id === "04-assets" || route.id === "06-documents") {
+    await page.getByText("Loading").first().waitFor({ timeout: 8000 }).catch(() => undefined);
+    await page.getByText("Loading").first().waitFor({ state: "hidden", timeout: 20000 }).catch(() => undefined);
+  }
+  if (route.id === "07-technical-queries") {
+    await page.getByTestId("tq-register-table").waitFor({ timeout: 20000 }).catch(() => undefined);
+  }
   if (route.id === "12-project-controls") {
     await page.getByTestId("project-controls-ready").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2000);
 }
 
 const browser = await chromium.launch({ headless: true });
