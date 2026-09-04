@@ -10,6 +10,7 @@ import {
   OperationalError,
   OperationalSkeleton,
 } from "@/components/engineering/operational";
+import { displayOperationalText } from "@/lib/engineering/module-ops";
 
 type SurfaceBlock = {
   surface: string;
@@ -98,6 +99,10 @@ export default function AssetIntelligenceAssetDetailPage() {
     };
   }, [assetId]);
 
+  const tag = displayOperationalText(asset?.asset_tag, "");
+  const name = displayOperationalText(asset?.asset_name, "");
+  const title = tag && name ? `${tag} · ${name}` : name || tag || "Asset";
+
   return (
     <section data-testid="asset-intelligence-asset-detail" aria-labelledby="ai-asset-title">
       <p className="text-sm">
@@ -106,11 +111,8 @@ export default function AssetIntelligenceAssetDetailPage() {
         </Link>
       </p>
       <h1 id="ai-asset-title" className="mt-2 text-2xl font-semibold text-slate-900">
-        Asset 360
+        {title}
       </h1>
-      <p className="mt-1 font-mono text-xs text-slate-500" data-testid="ai-asset-id">
-        {assetId}
-      </p>
       <AssetContextHeader
         assetId={assetId}
         tag={asset?.asset_tag as string | undefined}

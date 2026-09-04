@@ -9,6 +9,7 @@ import {
   OperationalError,
   OperationalSkeleton,
 } from "@/components/engineering/operational";
+import { asRecord, twinHumanLabel } from "@/lib/engineering/module-ops";
 
 type SurfaceBlock = {
   surface: string;
@@ -99,9 +100,8 @@ export default function DigitalTwinDetailPage() {
         </Link>
       </p>
       <h1 id="dt-detail-title" className="mt-2 text-2xl font-semibold">
-        Twin
+        {twinHumanLabel(asRecord(identity?.data))}
       </h1>
-      <p className="mt-1 font-mono text-xs text-slate-500">{twinId}</p>
       <div className="mt-3">
         <AskEngineeringAI objectType="other" objectId={twinId} q="Summarize this twin from recorded state." />
       </div>

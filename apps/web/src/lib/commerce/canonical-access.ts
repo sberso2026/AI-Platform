@@ -1,9 +1,11 @@
 import type { AuthContext } from "@/lib/kernel";
 import {
   ENGINEERING_CERTIFIED_V1_MODULES,
+  engineeringSystemsCommerceState,
   mapEntitlementReasonToUiState,
   moduleAccessLabel,
   type EngineeringModuleAccessUiState,
+  type EngineeringSystemsCommerceState,
 } from "@/lib/engineering/certified-modules";
 
 const PILOT_APPLICATION_KEYS = [
@@ -20,9 +22,11 @@ export type CanonicalModuleAccess = {
   key: string;
   applicationKey: string;
   allowed: boolean;
+  installed: boolean;
   reasonCode?: string;
   uiState: EngineeringModuleAccessUiState;
   uiLabel: string;
+  systemsState: EngineeringSystemsCommerceState;
   name?: string;
   href?: string;
 };
@@ -36,26 +40,43 @@ export async function loadCanonicalEngineeringAccess(ctx: AuthContext) {
     action: "access" as const,
   };
 
-  const [productAccess, aiAssistant, ...appDecisions] = await Promise.all([
+  const [productAccess, aiAssistant, installations, ...appDecisions] = await Promise.all([
     ctx.commerce.entitlements.check(base),
     ctx.commerce.entitlements.check({ ...base, featureKey: "ai_assistant", action: "ai.execute" }),
+    ctx.commerce.applicationInstallationLifecycle.listByTenant(ctx.tenantId),
     ...PILOT_APPLICATION_KEYS.map((applicationKey) =>
       ctx.commerce.entitlements.check({ ...base, applicationKey }),
     ),
   ]);
 
+  const installedKeys = new Set(
+    (installations ?? [])
+      .filter((row) => {
+        const status = String(row.status ?? "");
+        return status === "active" || status === "healthy" || status === "degraded";
+      })
+      .map((row) => row.application_key),
+  );
+
   const modules: CanonicalModuleAccess[] = PILOT_APPLICATION_KEYS.map((applicationKey, index) => {
     const decision = appDecisions[index];
     const certified = ENGINEERING_CERTIFIED_V1_MODULES.find((m) => m.applicationKey === applicationKey);
     const allowed = Boolean(decision?.allowed);
+    const installed = installedKeys.has(applicationKey);
     const uiState = mapEntitlementReasonToUiState(allowed, decision?.reasonCode);
     return {
       key: applicationKey,
       applicationKey,
       allowed,
+      installed,
       reasonCode: decision?.reasonCode,
       uiState,
       uiLabel: moduleAccessLabel(uiState),
+      systemsState: engineeringSystemsCommerceState({
+        allowed,
+        installed,
+        reasonCode: decision?.reasonCode,
+      }),
       name: certified?.name,
       href: certified?.href,
     };

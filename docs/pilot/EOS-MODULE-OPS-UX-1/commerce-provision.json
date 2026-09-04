@@ -1,0 +1,27 @@
+{
+  "tenantId": "8195e176-5f9f-449a-a1d3-2aedaf403989",
+  "globalEnterprisePlanUnchanged": true,
+  "applications": [
+    {
+      "applicationKey": "asset_intelligence",
+      "installationId": "67b6b8c7-d3e7-4526-a064-de188b9cf21f",
+      "status": "active",
+      "registered": true,
+      "licensed": true
+    },
+    {
+      "applicationKey": "digital_twin",
+      "installationId": "18705d11-1452-4911-b737-4b24e005dc3c",
+      "status": "active",
+      "registered": true,
+      "licensed": true
+    },
+    {
+      "applicationKey": "engineering_model_interoperability",
+      "installationId": "90c85e0d-b26d-4fa4-911f-4fc6f1da5a53",
+      "status": "active",
+      "registered": true,
+      "licensed": true
+    }
+  ]
+}

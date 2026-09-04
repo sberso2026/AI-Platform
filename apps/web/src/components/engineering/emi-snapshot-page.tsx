@@ -10,7 +10,7 @@ import {
   StatusTable,
   type OperationalRow,
 } from "@/components/engineering/operational";
-import { asList, asRecord, pickString, readOperationalJson, truthfulModelStatus } from "@/lib/engineering/module-ops";
+import { asList, asRecord, pickHumanString, pickString, readOperationalJson, truthfulModelStatus } from "@/lib/engineering/module-ops";
 
 type Surfaces = Record<string, { present?: boolean; data?: unknown }>;
 
@@ -48,9 +48,9 @@ export function modelRows(data: unknown): OperationalRow[] {
     const id = pickString(rec, ["modelRefId", "id", "modelId"], String(index));
     return {
       id,
-      model: pickString(rec, ["displayName", "name", "modelName", "externalModelId"], id),
+      model: pickHumanString(rec, ["displayName", "name", "modelName", "externalModelId"], "Engineering model"),
       type: pickString(rec, ["formatFamily", "providerKey", "schemaHint"], "—"),
-      project: pickString(rec, ["projectId", "assetId"], "—"),
+      project: pickHumanString(rec, ["projectCode", "project_code", "projectName", "project_name"], "—"),
       revision: pickString(rec, ["versionLabel", "revision", "version"], "—"),
       source: humanSource(pickString(rec, ["providerKey", "formatFamily"], "")),
       status: truthfulModelStatus(rec),

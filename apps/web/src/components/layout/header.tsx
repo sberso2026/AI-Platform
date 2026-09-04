@@ -6,6 +6,7 @@ import { Button, PageHeader, SearchInput, SPACING, cn } from "@rtb/ui";
 import { Bell, LogOut } from "lucide-react";
 import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 import { createClient } from "@/lib/supabase/client";
+import { formatProjectContextLabel } from "@/lib/engineering/module-ops";
 
 interface HeaderProps {
   title: string;
@@ -42,7 +43,10 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
         setProjects(
           rows.map((p: Record<string, unknown>) => ({
             id: String(p.id),
-            label: `${p.project_code ?? ""} — ${p.project_name ?? ""}`.trim(),
+            label: formatProjectContextLabel({
+              projectCode: typeof p.project_code === "string" ? p.project_code : "",
+              projectName: typeof p.project_name === "string" ? p.project_name : "",
+            }),
           }))
         );
       })
@@ -131,7 +135,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
             >
               {projectOptions.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.id === "all" ? "All Projects" : p.label || p.id}
+                  {p.id === "all" ? "All Projects" : p.label}
                 </option>
               ))}
             </select>

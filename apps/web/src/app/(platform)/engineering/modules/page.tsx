@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, StatusChip } from "@rtb/ui";
@@ -11,61 +12,59 @@ import {
   Box,
   Network,
   Activity,
+  type LucideIcon,
 } from "lucide-react";
+import {
+  ENGINEERING_CERTIFIED_V1_MODULES,
+  engineeringSystemsChipStatus,
+  type EngineeringSystemsCommerceState,
+} from "@/lib/engineering/certified-modules";
 
-const MODULES = [
-  {
-    key: "project_intelligence",
-    name: "Project Intelligence",
-    description: "Documents, meetings, findings, and project decision support",
-    href: "/engineering/apps/project-intelligence",
-    status: "available" as const,
-    icon: Brain,
-  },
-  {
-    key: "inspection_intelligence",
-    name: "Inspection Intelligence",
-    description: "Inspection planning, field capture, and review workflows",
-    href: "/engineering/apps/inspection-intelligence",
-    status: "available" as const,
-    icon: ClipboardCheck,
-  },
-  {
-    key: "asset_intelligence",
-    name: "Asset Intelligence",
-    description: "Asset condition, criticality, reliability, and advisory signals",
-    href: "/engineering/apps/asset-intelligence",
-    status: "available" as const,
-    icon: Activity,
-  },
-  {
-    key: "project_controls",
-    name: "Project Controls",
-    description: "Governed cost, schedule, progress, and controls intelligence",
-    href: "/engineering/apps/project-controls",
-    status: "available" as const,
-    icon: BarChart3,
-  },
-  {
-    key: "digital_twin",
-    name: "Digital Twin",
-    description: "Twin identity, state, simulation, and digital thread",
-    href: "/engineering/apps/digital-twin",
-    status: "available" as const,
-    icon: Box,
-  },
-  {
-    key: "engineering_model_interoperability",
-    name: "Engineering Model Interoperability",
-    description:
-      "IFC / SPACE GASS / ETABS export federation with governed mapping — V1.0 GA",
-    href: "/engineering/apps/model-interoperability",
-    status: "available" as const,
-    icon: Network,
-  },
-];
+const ICONS: Record<string, LucideIcon> = {
+  project_intelligence: Brain,
+  inspection_intelligence: ClipboardCheck,
+  asset_intelligence: Activity,
+  project_controls: BarChart3,
+  digital_twin: Box,
+  engineering_model_interoperability: Network,
+};
+
+type ModuleAccess = {
+  applicationKey: string;
+  allowed: boolean;
+  installed?: boolean;
+  systemsState?: EngineeringSystemsCommerceState;
+  name?: string;
+  href?: string;
+};
 
 export default function EngineeringModuleLauncherPage() {
+  const [modules, setModules] = useState<ModuleAccess[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/engineering/modules/access")
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const rows = Array.isArray(json?.data?.modules) ? (json.data.modules as ModuleAccess[]) : [];
+        setModules(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not load Engineering Systems");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const cards = ENGINEERING_CERTIFIED_V1_MODULES.map((mod) => {
+    const access = modules.find((row) => row.applicationKey === mod.applicationKey);
+    const state: EngineeringSystemsCommerceState = access?.systemsState ?? "Unavailable";
+    return { ...mod, state, open: Boolean(access?.allowed), href: access?.href ?? mod.href };
+  });
+
   return (
     <>
       <Header
@@ -78,11 +77,16 @@ export default function EngineeringModuleLauncherPage() {
       >
         <div className="mb-6 flex items-center gap-2 text-sm text-slate-600">
           <Boxes className="h-4 w-4" />
-          <span>Module registry · shared domain · shared AI framework</span>
+          <span>Installed, available, and not-included applications from canonical Commerce</span>
         </div>
+        {error ? (
+          <p className="mb-4 text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-          {MODULES.map((mod) => {
-            const Icon = mod.icon;
+          {cards.map((mod) => {
+            const Icon = ICONS[mod.applicationKey] ?? Boxes;
             const content = (
               <Card className="h-full transition hover:border-slate-400">
                 <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
@@ -90,19 +94,25 @@ export default function EngineeringModuleLauncherPage() {
                     <Icon className="h-5 w-5 text-slate-700" />
                     <CardTitle className="text-base">{mod.name}</CardTitle>
                   </div>
-                  <StatusChip status="complete">Available</StatusChip>
+                  <StatusChip status={engineeringSystemsChipStatus(mod.state)}>{mod.state}</StatusChip>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600">{mod.description}</p>
-                  <p className="mt-3 font-mono text-xs text-slate-400">{mod.key}</p>
                 </CardContent>
               </Card>
             );
+            if (!mod.open) {
+              return (
+                <div key={mod.applicationKey} data-testid={`engineering-module-${mod.applicationKey}`}>
+                  {content}
+                </div>
+              );
+            }
             return (
               <Link
-                key={mod.key}
+                key={mod.applicationKey}
                 href={mod.href}
-                data-testid={`engineering-module-${mod.key}`}
+                data-testid={`engineering-module-${mod.applicationKey}`}
               >
                 {content}
               </Link>

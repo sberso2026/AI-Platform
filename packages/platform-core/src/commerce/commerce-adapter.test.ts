@@ -52,6 +52,7 @@ describe("Platform Commerce UI — product catalog adapter", () => {
     const engineering = getProductBySlug(products, "engineering-os");
     expect(engineering).toBeDefined();
     expect(engineering?.catalogTab).toBe("installed");
+    expect(engineering?.name).toBe("Engineering OS");
   });
 
   it("places coming soon OS products in the Coming Soon tab", () => {

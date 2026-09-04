@@ -67,6 +67,54 @@ export function toOperationalRows(
   return items.map((item, index) => map(asRecord(item), index));
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isRawUuid(value: string | null | undefined): boolean {
+  return Boolean(value && UUID_RE.test(value.trim()));
+}
+
+export function formatProjectContextLabel(input: {
+  projectCode?: string | null;
+  projectName?: string | null;
+}): string {
+  const code = (input.projectCode ?? "").trim();
+  const name = (input.projectName ?? "").trim();
+  if (code && name) return `${code} · ${name}`;
+  if (code) return code;
+  if (name) return name;
+  return "Selected project";
+}
+
+export function pickHumanString(
+  rec: Record<string, unknown>,
+  keys: string[],
+  fallback = "—",
+): string {
+  for (const key of keys) {
+    const value = rec[key];
+    if (typeof value === "string" && value.trim() && !isRawUuid(value)) return value.trim();
+  }
+  return fallback;
+}
+
+export function displayOperationalText(value: unknown, fallback = "—"): string {
+  if (value == null || value === "") return fallback;
+  const text = String(value).trim();
+  if (!text || isRawUuid(text)) return fallback;
+  return text;
+}
+
+export function twinHumanLabel(rec: Record<string, unknown>): string {
+  const named = pickHumanString(rec, ["displayName", "name", "label", "title"], "");
+  if (named) return named;
+  const type = pickHumanString(rec, ["canonicalEntityType", "twinType", "type"], "");
+  if (type === "asset") return "Asset twin";
+  if (type === "project") return "Project twin";
+  if (type) return `${type.charAt(0).toUpperCase()}${type.slice(1)} twin`;
+  return "Digital twin";
+}
+
 export function truthfulModelStatus(rec: Record<string, unknown>): string {
   const raw = pickString(rec, ["status", "federationStatus", "federation_status"], "").toLowerCase();
   if (raw.includes("map")) return "Mapping required";

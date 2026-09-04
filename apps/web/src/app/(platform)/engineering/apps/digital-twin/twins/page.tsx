@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { asRecord, twinHumanLabel } from "@/lib/engineering/module-ops";
 
 type TwinIdentity = {
   twinId?: string;
@@ -65,10 +66,9 @@ export default function DigitalTwinTwinsPage() {
                   className="block rounded-lg border border-slate-200 px-4 py-3 hover:bg-slate-50"
                   href={`/engineering/apps/digital-twin/twins/${id}`}
                 >
-                  <span className="font-mono text-sm">{id}</span>
+                  <span className="text-sm font-medium text-slate-900">{twinHumanLabel(asRecord(twin))}</span>
                   <span className="ml-2 text-xs text-slate-500">
-                    Linked record: {String(twin.canonicalEntityType ?? "—")}{" "}
-                    {String(twin.canonicalEntityId ?? "")}
+                    {String(twin.canonicalEntityType ?? "linked record")}
                   </span>
                 </Link>
               </li>

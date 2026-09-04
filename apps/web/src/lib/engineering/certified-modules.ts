@@ -69,9 +69,9 @@ export const ENGINEERING_CERTIFIED_V1_MODULES: readonly EngineeringCertifiedModu
   {
     key: "engineering_model_interoperability",
     applicationKey: "engineering_model_interoperability",
-    name: "Engineering Model Interoperability",
+    name: "Engineering Models",
     description:
-      "IFC / SPACE GASS / ETABS export federation with governed mapping — V1.0 GA",
+      "IFC / SPACE GASS / ETABS export federation with governed mapping",
     href: "/engineering/apps/model-interoperability",
     reportHref: "/engineering/apps/model-interoperability",
     reportLabel: "Engineering model federation",
@@ -117,6 +117,48 @@ export function moduleAccessLabel(state: EngineeringModuleAccessUiState): string
     case "unavailable":
     default:
       return "Unavailable";
+  }
+}
+
+export type EngineeringSystemsCommerceState =
+  | "Installed"
+  | "Available"
+  | "Not included"
+  | "Preview"
+  | "Unavailable";
+
+export function engineeringSystemsCommerceState(input: {
+  allowed: boolean;
+  installed: boolean;
+  reasonCode?: string | null;
+}): EngineeringSystemsCommerceState {
+  if (input.allowed && input.installed) return "Installed";
+  if (input.allowed) return "Available";
+  switch (input.reasonCode) {
+    case "application_not_in_plan":
+    case "feature_not_enabled":
+    case "subscription_not_found":
+    case "subscription_missing":
+      return "Not included";
+    case "product_inactive":
+      return "Preview";
+    default:
+      return "Unavailable";
+  }
+}
+
+export function engineeringSystemsChipStatus(
+  state: EngineeringSystemsCommerceState,
+): "complete" | "pending" | "critical" | "medium" {
+  switch (state) {
+    case "Installed":
+      return "complete";
+    case "Available":
+    case "Not included":
+    case "Preview":
+      return "pending";
+    default:
+      return "critical";
   }
 }
 

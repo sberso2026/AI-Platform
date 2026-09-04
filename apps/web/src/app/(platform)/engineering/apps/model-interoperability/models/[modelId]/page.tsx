@@ -8,7 +8,7 @@ import {
   OperationalError,
   OperationalSkeleton,
 } from "@/components/engineering/operational";
-import { asList, asRecord, pickString, truthfulModelStatus } from "@/lib/engineering/module-ops";
+import { asList, asRecord, pickHumanString, pickString, truthfulModelStatus } from "@/lib/engineering/module-ops";
 import { humanSource, useEmiWorkspaceSnapshot } from "@/components/engineering/emi-snapshot-page";
 
 export default function EngineeringModelDetailPage() {
@@ -40,7 +40,7 @@ export default function EngineeringModelDetailPage() {
         </Link>
       </p>
       <h1 id="emi-model-detail-title" className="mt-2 text-2xl font-semibold text-slate-900">
-        {model ? pickString(model, ["displayName", "name", "externalModelId"], modelId) : "Model"}
+        {model ? pickHumanString(model, ["displayName", "name", "externalModelId"], "Engineering model") : "Model"}
       </h1>
       <AskEngineeringAI q="Summarize this engineering model from recorded federation evidence." />
       {loading ? <div className="mt-6"><OperationalSkeleton /></div> : null}
@@ -62,9 +62,9 @@ export default function EngineeringModelDetailPage() {
           <Detail term="Type" value={pickString(model, ["formatFamily", "schemaHint"])} />
           <Detail term="Source" value={humanSource(pickString(model, ["providerKey", "formatFamily"]))} />
           <Detail term="Status" value={truthfulModelStatus(model)} />
-          <Detail term="Project" value={pickString(model, ["projectId"])} />
-          <Detail term="Asset" value={pickString(model, ["assetId"])} />
-          <Detail term="Related twin" value={pickString(model, ["twinId"])} />
+          <Detail term="Project" value={pickHumanString(model, ["projectCode", "project_code", "projectName", "project_name"])} />
+          <Detail term="Asset" value={pickHumanString(model, ["assetTag", "asset_tag", "assetName", "asset_name"])} />
+          <Detail term="Related twin" value={pickHumanString(model, ["twinName", "twinLabel"])} />
           <Detail term="Last update" value={pickString(model, ["updatedAt"])} />
           <Detail term="Result state" value={results.length > 0 ? "Results available" : "Execution unavailable"} />
         </dl>

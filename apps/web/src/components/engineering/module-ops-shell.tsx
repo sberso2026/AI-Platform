@@ -1,12 +1,19 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { ModuleSectionNav, type ModuleNavLink } from "@/components/engineering/module-section-nav";
 import { useEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
+import {
+  asRecord,
+  displayOperationalText,
+  formatProjectContextLabel,
+  pickHumanString,
+  twinHumanLabel,
+} from "@/lib/engineering/module-ops";
 
 export type ModuleOpsShellProps = {
   title: string;
@@ -116,6 +123,77 @@ function ModuleContextStrip() {
   const projectId = useEngineeringProjectFilter();
   const assetId = searchParams.get("assetId");
   const twinId = searchParams.get("twinId");
+  const [projectLabel, setProjectLabel] = useState(projectId ? "Selected project" : "All projects");
+  const [assetLabel, setAssetLabel] = useState("Selected asset");
+  const [twinLabel, setTwinLabel] = useState("Selected twin");
+
+  useEffect(() => {
+    if (!projectId) {
+      setProjectLabel("All projects");
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/engineering/projects/${encodeURIComponent(projectId)}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const row = asRecord(json?.data ?? json);
+        setProjectLabel(
+          formatProjectContextLabel({
+            projectCode: pickHumanString(row, ["project_code", "projectCode"], ""),
+            projectName: pickHumanString(row, ["project_name", "name", "title"], ""),
+          }),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setProjectLabel("Selected project");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!assetId) return;
+    let cancelled = false;
+    fetch(`/api/engineering/assets/${encodeURIComponent(assetId)}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const row = asRecord(json?.data ?? json);
+        const tag = pickHumanString(row, ["asset_tag", "tag"], "");
+        const name = pickHumanString(row, ["asset_name", "name", "title"], "");
+        setAssetLabel(tag && name ? `${tag} · ${name}` : tag || name || "Selected asset");
+      })
+      .catch(() => {
+        if (!cancelled) setAssetLabel("Selected asset");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [assetId]);
+
+  useEffect(() => {
+    if (!twinId) return;
+    let cancelled = false;
+    fetch("/api/engineering/digital-twin/workspace-snapshot")
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const list = Array.isArray(json?.data?.identities?.data) ? json.data.identities.data : [];
+        const match = list.find((item: unknown) => {
+          const rec = asRecord(item);
+          return rec.twinId === twinId || rec.id === twinId || rec.twin_id === twinId;
+        });
+        setTwinLabel(match ? twinHumanLabel(asRecord(match)) : "Selected twin");
+      })
+      .catch(() => {
+        if (!cancelled) setTwinLabel("Selected twin");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [twinId]);
 
   return (
     <div
@@ -126,17 +204,16 @@ function ModuleContextStrip() {
         Workspace <strong className="font-medium text-slate-900">RTB Engineering</strong>
       </span>
       <span>
-        Project{" "}
-        <strong className="font-medium text-slate-900">{projectId ?? "All projects"}</strong>
+        Project <strong className="font-medium text-slate-900">{displayOperationalText(projectLabel, "All projects")}</strong>
       </span>
       {assetId ? (
         <span>
-          Asset <strong className="font-medium text-slate-900">{assetId}</strong>
+          Asset <strong className="font-medium text-slate-900">{assetLabel}</strong>
         </span>
       ) : null}
       {twinId ? (
         <span>
-          Twin <strong className="font-medium text-slate-900">{twinId}</strong>
+          Twin <strong className="font-medium text-slate-900">{twinLabel}</strong>
         </span>
       ) : null}
     </div>

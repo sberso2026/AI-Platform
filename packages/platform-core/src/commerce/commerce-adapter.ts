@@ -43,6 +43,9 @@ const APPLICATION_DISPLAY_NAMES: Record<string, string> = {
   inspection_intelligence: "Inspection Intelligence",
   project_controls: "Project Controls",
   documents: "Documents",
+  asset_intelligence: "Asset Intelligence",
+  digital_twin: "Digital Twin",
+  engineering_model_interoperability: "Engineering Models",
 };
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
@@ -124,7 +127,7 @@ function buildEngineeringProduct(
   return {
     slug: "engineering-os",
     osId: "engineering",
-    name: os.name,
+    name: displayProductName(os.name, "engineering-os"),
     productType: "Operating System",
     description: os.description,
     edition: context.engineeringEdition ?? "Enterprise",
@@ -221,10 +224,19 @@ const APPLICATION_OPEN_HREFS: Record<string, string> = {
   "engineering-os": "/engineering",
   "project-intelligence": "/engineering/apps/project-intelligence",
   "inspection-intelligence": "/engineering/apps/inspection-intelligence",
+  "asset-intelligence": "/engineering/apps/asset-intelligence",
+  "digital-twin": "/engineering/apps/digital-twin",
+  "engineering-model-interoperability": "/engineering/apps/model-interoperability",
+  "project-controls": "/engineering/apps/project-controls",
 };
 
 function slugToAppKey(slug: string): string {
   return slug.replace(/-/g, "_");
+}
+
+function displayProductName(name: string, slug?: string): string {
+  if (slug === "engineering-os" || name === "Engineering Operating System") return "Engineering OS";
+  return name;
 }
 
 function displayNameForAppKey(appKey: string): string {
@@ -389,7 +401,7 @@ function mapFromPlatformCommerce(
         slug: product.slug,
         productId: product.id,
         osId: mappedOsId as CommercialProductView["osId"],
-        name: product.name,
+        name: displayProductName(product.name, product.slug),
         productType: product.product_type,
         description: product.description,
         edition: plan?.edition,

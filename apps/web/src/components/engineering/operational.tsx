@@ -10,16 +10,18 @@ import {
   humanizeOperationalError,
   pickExistingField,
 } from "@/lib/engineering/enterprise-ux";
+import { displayOperationalText } from "@/lib/engineering/module-ops";
 
 export type OperationalRow = Record<string, unknown>;
 
 export function recordLabel(row: OperationalRow, keys: string[]): string {
   for (const key of keys) {
     const value = row[key];
-    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "string" && value.trim() && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+      return value;
+    }
   }
-  const id = row.id;
-  return typeof id === "string" && id.trim() ? id : "Record";
+  return "Record";
 }
 
 export function recordHref(base: string, row: OperationalRow): string {
@@ -229,7 +231,7 @@ export function StatusTable({
               >
               {columns.map((col) => {
                 const raw = row[col.key];
-                const text = raw == null || raw === "" ? "—" : String(raw);
+                const text = displayOperationalText(raw);
                 const href = typeof row.href === "string" ? row.href : null;
                 return (
                   <td key={col.key} className="px-4 py-3 text-slate-800">

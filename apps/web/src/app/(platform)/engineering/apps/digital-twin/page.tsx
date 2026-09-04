@@ -14,7 +14,7 @@ import {
   StatusTable,
   type OperationalRow,
 } from "@/components/engineering/operational";
-import { asList, asRecord, pickString, readOperationalJson } from "@/lib/engineering/module-ops";
+import { asList, asRecord, pickString, readOperationalJson, twinHumanLabel } from "@/lib/engineering/module-ops";
 
 type TwinIdentity = Record<string, unknown>;
 type SurfaceBlock = { present?: boolean; data?: unknown };
@@ -132,7 +132,7 @@ function DigitalTwinOverviewInner() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dt-identity-card">
                 <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-slate-500">Twin identity</p>
-                <p className="mt-1 font-mono text-sm text-slate-900">{selectedId || "—"}</p>
+                <p className="mt-1 text-sm text-slate-900">{twinHumanLabel(identity ?? { twinId: selectedId })}</p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dt-state-card">
                 <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-slate-500">Current state</p>

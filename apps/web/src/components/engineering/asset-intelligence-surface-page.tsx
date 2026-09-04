@@ -12,7 +12,7 @@ import {
   StatusTable,
   type OperationalRow,
 } from "@/components/engineering/operational";
-import { asRecord, pickString, readOperationalJson } from "@/lib/engineering/module-ops";
+import { asRecord, pickString, readOperationalJson, displayOperationalText } from "@/lib/engineering/module-ops";
 import { useEngineeringProjectFilter, withProjectQuery } from "@/hooks/use-engineering-project-filter";
 
 type AssetRow = {
@@ -120,8 +120,8 @@ function AssetIntelligenceSurfacePageInner({
 
   const rows: OperationalRow[] = assets.map((asset) => ({
     id: asset.id,
-    asset: asset.asset_tag ?? asset.id.slice(0, 8),
-    name: asset.asset_name ?? "Untitled asset",
+    asset: displayOperationalText(asset.asset_tag, "Untitled asset"),
+    name: displayOperationalText(asset.asset_name, "Untitled asset"),
     status: asset.status ?? "recorded",
     criticality: asset.criticality ?? "—",
     href: `/engineering/apps/asset-intelligence/assets/${asset.id}#${hash}`,
@@ -181,12 +181,16 @@ function AssetIntelligenceSurfacePageInner({
         ) : present ? (
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             {Object.entries(record ?? {})
-              .filter(([key]) => !/certified|implemented|flag/i.test(key))
+              .filter(([key, value]) => {
+                if (/certified|implemented|flag|id$/i.test(key)) return false;
+                const text = displayOperationalText(value, "");
+                return Boolean(text);
+              })
               .slice(0, 8)
               .map(([key, value]) => (
                 <div key={key}>
                   <dt className="text-xs uppercase tracking-wide text-slate-500">{key}</dt>
-                  <dd className="text-slate-800">{pickString({ value }, ["value"], String(value))}</dd>
+                  <dd className="text-slate-800">{displayOperationalText(value)}</dd>
                 </div>
               ))}
           </dl>

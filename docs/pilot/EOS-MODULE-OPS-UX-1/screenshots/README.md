@@ -1,20 +1,20 @@
 # EOS-MODULE-OPS-UX-1 screenshots
 
-Capture after Commerce installation and founder authentication.
+Authenticated founder captures after Commerce installation.
 
 Viewports: 1366x768, 1440x900, 1920x1080.
 
 Required frames:
 
-- Asset Intelligence Overview
-- Asset detail
-- Digital Twin Overview
-- Twin detail / state
-- Engineering Models register
-- Engineering Model detail
-- Project Controls Overview
-- Schedule
-- Cost
-- Forecast
+- 01-engineering-systems
+- 02-asset-intelligence-overview
+- 03-asset-detail
+- 04-digital-twin-overview
+- 05-twin-detail
+- 06-engineering-models
+- 07-model-detail
+- 08-project-controls-overview
+- 09-project-controls-schedule
+- 10-project-controls-cost
 
 Preview only. Do not promote Production. Do not invite external users.
