@@ -81,7 +81,7 @@ const viewports = [
   { name: "1920", width: 1920, height: 1080 },
 ];
 
-const routes = [
+const allRoutes = [
   { id: "01-engineering-systems", path: "/engineering/modules" },
   { id: "02-asset-intelligence-overview", path: "/engineering/apps/asset-intelligence" },
   { id: "03-asset-detail", path: `/engineering/apps/asset-intelligence/assets/${COL01_ASSET_ID}` },
@@ -94,6 +94,12 @@ const routes = [
   { id: "10-project-controls-cost", path: "/engineering/apps/project-controls/cost" },
   { id: "11-installed-products", path: "/system/products" },
 ];
+
+const only = (process.env.EOS_SHOT_IDS || "")
+  .split(",")
+  .map((id) => id.trim())
+  .filter(Boolean);
+const routes = only.length ? allRoutes.filter((route) => only.includes(route.id)) : allRoutes;
 
 const evidence = {
   host,
@@ -135,10 +141,7 @@ async function settle(page, route) {
     await waitFirst(page, [page.getByTestId("dt-empty-twins"), page.getByTestId("dt-identity-card")]);
   }
   if (route.id === "05-twin-detail") {
-    await waitFirst(page, [
-      page.getByTestId("dt-twins-empty"),
-      page.getByTestId("digital-twin-twins"),
-    ]);
+    await page.getByTestId("dt-twins-empty").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "06-engineering-models") {
     await page.getByTestId("emi-model-count").waitFor({ timeout: 20000 }).catch(() => undefined);
@@ -151,7 +154,7 @@ async function settle(page, route) {
     await page.getByText("Attention required").first().waitFor({ timeout: 12000 }).catch(() => undefined);
   }
   if (route.id === "09-project-controls-schedule") {
-    await page.getByTestId("pc-schedule-page").waitFor({ timeout: 20000 }).catch(() => undefined);
+    await page.getByTestId("pc-schedule-page-empty").waitFor({ timeout: 20000 }).catch(() => undefined);
   }
   if (route.id === "10-project-controls-cost") {
     await page.getByTestId("pc-cost-page-empty").waitFor({ timeout: 20000 }).catch(() => undefined);
@@ -185,7 +188,7 @@ for (const vp of viewports) {
     }
   }, PILOT_PROJECT_ID);
 
-  if (vp.name === "1920") {
+  if (vp.name === "1920" && only.length === 0) {
     console.log("open_exercise_start");
     await page.goto(`${host}/engineering/modules`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.getByText("Command Centre").first().waitFor({ timeout: 20000 }).catch(() => undefined);
@@ -252,7 +255,23 @@ for (const vp of viewports) {
 }
 
 await browser.close();
-writeFileSync(resolve(root, "docs/pilot/EOS-MODULE-OPS-UX-1/screenshot-evidence.json"), JSON.stringify(evidence, null, 2));
+const evidencePath = resolve(root, "docs/pilot/EOS-MODULE-OPS-UX-1/screenshot-evidence.json");
+if (only.length) {
+  try {
+    const prev = JSON.parse(readFileSync(evidencePath, "utf8"));
+    const shotSet = new Set([...(prev.shots ?? []), ...evidence.shots]);
+    prev.shots = [...shotSet];
+    prev.uuidHits = (prev.uuidHits ?? []).filter((hit) => !only.some((id) => String(hit.shot).startsWith(id)));
+    prev.uuidHits.push(...evidence.uuidHits);
+    prev.notes = (prev.notes ?? []).filter((note) => !only.includes(note.shot));
+    prev.notes.push(...evidence.notes);
+    writeFileSync(evidencePath, JSON.stringify(prev, null, 2));
+  } catch {
+    writeFileSync(evidencePath, JSON.stringify(evidence, null, 2));
+  }
+} else {
+  writeFileSync(evidencePath, JSON.stringify(evidence, null, 2));
+}
 console.log(
   JSON.stringify(
     {

@@ -9,3 +9,7 @@ Empty states are truthful. No fabricated metrics. No new BIM viewer, GIS, solver
 Architecture freeze held: no schema, ownership, AI, graph, commerce, auth, or RBAC change. No additive HTTP endpoints.
 
 `EOS_ENTERPRISE_VISUAL_PASS=false` until founder visual acceptance.
+
+FOUNDER_ACCEPTANCE_REQUIRED=true  
+PRODUCT_EXTERNAL_UAT_READY=false  
+PRODUCTION_GA_READY=false

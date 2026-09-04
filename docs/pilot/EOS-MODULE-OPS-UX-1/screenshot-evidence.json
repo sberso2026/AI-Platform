@@ -1,0 +1,251 @@
+{
+  "host": "https://rtb-ai-platform-9j0tmku9e-rtbea.vercel.app",
+  "shots": [
+    "01-engineering-systems-1366.png",
+    "02-asset-intelligence-overview-1366.png",
+    "03-asset-detail-1366.png",
+    "04-digital-twin-overview-1366.png",
+    "05-twin-detail-1366.png",
+    "06-engineering-models-1366.png",
+    "07-model-detail-1366.png",
+    "08-project-controls-overview-1366.png",
+    "09-project-controls-schedule-1366.png",
+    "10-project-controls-cost-1366.png",
+    "11-installed-products-1366.png",
+    "01-engineering-systems-1440.png",
+    "02-asset-intelligence-overview-1440.png",
+    "03-asset-detail-1440.png",
+    "04-digital-twin-overview-1440.png",
+    "05-twin-detail-1440.png",
+    "06-engineering-models-1440.png",
+    "07-model-detail-1440.png",
+    "08-project-controls-overview-1440.png",
+    "09-project-controls-schedule-1440.png",
+    "10-project-controls-cost-1440.png",
+    "11-installed-products-1440.png",
+    "01-engineering-systems-1920.png",
+    "02-asset-intelligence-overview-1920.png",
+    "03-asset-detail-1920.png",
+    "04-digital-twin-overview-1920.png",
+    "05-twin-detail-1920.png",
+    "06-engineering-models-1920.png",
+    "07-model-detail-1920.png",
+    "08-project-controls-overview-1920.png",
+    "09-project-controls-schedule-1920.png",
+    "10-project-controls-cost-1920.png",
+    "11-installed-products-1920.png"
+  ],
+  "uuidHits": [],
+  "notes": [
+    {
+      "shot": "01-engineering-systems",
+      "excerpt": "Installed, available, and not-included applications from canonical Commerce\nProject Intelligence\nAvailable\n\nDocuments, meetings, findings, and project decision support\n\nInspection Intelligence\nAvailable\n\nInspection planning, field capture, and review workflows\n\nAsset Intelligence\nInstalled\n\nAsset condition, criticality, reliability, and advisory signals\n\nProject Controls\nAvailable\n\nGoverned cost, schedule, progress, and controls intelligence\n\nDigital Twin\nInstalled\n\nTwin identity, state, simulation, and digital thread\n\nEngineering Models\nInstalled\n\nIFC / SPACE GASS / ETABS export federation with governed mapping",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": true,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "02-asset-intelligence-overview",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nAssets\nCondition\nCriticality\nReliability\nDegradation\nFailure Modes\nRecommendations\nEvidence\nAdministration\nAsset overview\n\nWhich assets require attention, what condition changed, what is deteriorating, and what needs engineering review.\n\nOpen asset register\nAsk Engineering AI\n\nASSETS IN SCOPE\n\n2\n\nATTENTION REQUIRED\n\n2\n\nRECENT INSPECTIONS\n\n3\n\nAttention required\n\nV-101-245013\n\nProcess vessel V-101 · high\n\nInspect\n\nCOL-01\n\nPrimary concrete column sample · high\n\nInspect\nCondition\n\nNo condition evidence has been published for this asset unless an assessment exists on the asset record. Open an asset to inspect hosted condition.\n\nOpen condition\nDeteriorating assets\n\nDeterioration is shown only when a degradation assessment has been published for an asset.\n\nOpen degradation\nRecent inspection evidence\n\nNo inspection or condition ",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": true,
+      "hasTrialing": false
+    },
+    {
+      "shot": "03-asset-detail",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nAssets\nCondition\nCriticality\nReliability\nDegradation\nFailure Modes\nRecommendations\nEvidence\nAdministration\n\n← Assets\n\nCOL-01 · Primary concrete column sample\nOpen\nCOL-01 — Primary concrete column sample\nAsk Engineering AI\nOverview\nCondition\nInspections\nDefects\nDocuments\nRisks\nHistory\nTwin\nRecommendations\nAsk Engineering AI\nCondition\n\nRecorded condition assessments\n\nNo condition evidence has been published for this asset.\n\nCriticality\n\nRecorded criticality\n\nNo recorded criticality for this asset yet.\n\nReliability\n\nAdvisory reliability context\n\nNo recorded reliability for this asset yet.\n\nFailure\n\nRecorded failure events\n\nNo recorded failure for this asset yet.\n\nRecent condition changes\n\nTrend and degradation where recorded\n\nNo recorded recent condition changes for this asset yet.\n\nLifecycle\n\nRecorded lifecycle state\n\nNo r",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": true,
+      "hasTrialing": false
+    },
+    {
+      "shot": "04-digital-twin-overview",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nTwins\nState\nHistory\nRepresentation\nTelemetry\nDigital Thread\nEvidence\nAdministration\nTwin workspace\n\nSelected twin identity, current state, latest timestamp, bound evidence, representation, telemetry, and history.\n\nBrowse twins\nAsk Engineering AI\n\nNo digital twin has been linked to this asset.\n\nTwin identity is recorded when a twin is registered against a canonical asset or project.",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "06-engineering-models",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nModels\nVersions\nElements\nMappings\nResults\nInteroperability\nEvidence\nAdministration\nEngineering Models\n\nWhat models are registered, which have results, and what needs mapping or review.\n\nOpen model register\nAsk Engineering AI\n\nLoading operational data…\n\nMODELS\n\n0\n\nMAPPINGS\n\n0\n\nRESULTS\n\n0\n\nModel register\n\nNo engineering model is registered for this project.\n\nImported models appear here after federation.\n\nSupported sources\n\nReview recorded models and results. Live solver execution is not implied.\n\nETABS\n\nModel import and exported-result federation available. Live ETABS execution is not currently certified.\n\nSPACE GASS\n\nModel import and exported-result federation available. Live SPACE GASS execution is not currently certified.\n\nIFC\n\nBounded IFC federation is available. A full BIM viewer is not part of this workspace.",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "07-model-detail",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nModels\nVersions\nElements\nMappings\nResults\nInteroperability\nEvidence\nAdministration\nModels\n\nFederated model references: name, type, project, revision, source, status, and last update.\n\nNo engineering model is registered for this project.\n\nIFC, SPACE GASS, and ETABS imports appear here after federation.",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "08-project-controls-overview",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nProgress\nSchedule\nCost\nChange\nProductivity\nForecast\nScenarios\nAssurance\nAdministration\nProject Controls\n\nPublished progress, schedule, cost, change, productivity, and forecast evidence for the selected project.\n\nAsk Engineering AI\nAttention required\nView all\nConfirm Flamex XT against approved materials register\n2026-09-03\nOpen\nConfirm Flamex XT against approved materials register\n2026-09-03\nOpen\nIssue inspection ITP for V-101\n2026-09-02\nOpen\n1RC action\n2026-09-01\nOpen\nRecord close-up photos of column base\n2026-08-31\nOpen\nChange signals\nView all\n\nNo published change evidence is available.\n\nChange intelligence is descriptive. It is not contractual authority.\n\nProgress\n\nDescriptive progress from published project status. Not earned value.\n\nSchedule\n\nDescriptive schedule signals from available project data. Native CPM is not",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "10-project-controls-cost",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nProgress\nSchedule\nCost\nChange\nProductivity\nForecast\nScenarios\nAssurance\nAdministration\nCost\n\nDescriptive cost signals from published project data. This is not a budget or accounting ledger.\n\nAsk Engineering AI\n\nNo published schedule or cost evidence is available.\n\nCost intelligence does not post to a financial ledger.\n\nReturn to overview",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "11-installed-products",
+      "excerpt": "Diagnose Access\n\nInstalled Operating Systems\n\n1\n\nInstalled Applications\n\n7\n\nAssigned Seats\n\n2 / 5\n\nCurrent Plan\n\ntrial\n\nRenewal Date\n\n—\n\nInstallation Health\n\nHealthy\n\nInstalled(3)\nAvailable(0)\nTrials(0)\nComing Soon(1)\nEngineering OS\n\nEngineering design, analysis, and project management\n\noperating_system\n\ntrial\nSUBSCRIPTION\nTrialing\nLICENCE\nActive\nINSTALLATION\nActive\nHEALTH\nHealthy\nSeats\n2 / 5\nYour seat\nAssigned\nApplications\n7 installed\nOpen\nManage\nInspection Intelligence\n\nInspection planning and findings management\n\napplication\n\ntrial\nSUBSCRIPTION\nTrialing\nLICENCE\nActive\nINSTALLATION\nActive\nHEALTH\nHealthy\nSeats\n2 / 5\nYour seat\nAssigned\nOpen\nManage\nProject Intelligence\n\nEngineering project analytics and decision support\n\napplication\n\ntrial\nSUBSCRIPTION\nTrialing\nLICENCE\nActive\nINSTALLATION\nActive\nHEALTH\nHealthy\nSeats\n2 / 5\nYour seat\nAssigned\nOpen\nManage",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": true,
+      "hasCol01": false,
+      "hasTrialing": true
+    },
+    {
+      "shot": "05-twin-detail",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject Selected project\nOverview\nTwins\nState\nHistory\nRepresentation\nTelemetry\nDigital Thread\nEvidence\nAdministration\nTwins\n\nOpen a twin to inspect identity, state, history, and bindings.\n\nNo digital twin has been linked to this asset.",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    },
+    {
+      "shot": "09-project-controls-schedule",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nProgress\nSchedule\nCost\nChange\nProductivity\nForecast\nScenarios\nAssurance\nAdministration\nSchedule\n\nDescriptive schedule signals from available project data. Native CPM calculation is not available.\n\nAsk Engineering AI\n\nNo published schedule or cost evidence is available.\n\nSchedule intelligence does not execute schedule changes and does not compute a critical path.\n\nReturn to overview",
+      "hasEngineeringOs": true,
+      "hasProductUuid": false,
+      "hasInstalled": false,
+      "hasCol01": false,
+      "hasTrialing": false
+    }
+  ],
+  "access": {
+    "status": 200,
+    "body": {
+      "data": {
+        "modules": [
+          {
+            "key": "project_intelligence",
+            "applicationKey": "project_intelligence",
+            "allowed": true,
+            "installed": false,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Available",
+            "name": "Project Intelligence",
+            "href": "/engineering/apps/project-intelligence"
+          },
+          {
+            "key": "documents",
+            "applicationKey": "documents",
+            "allowed": true,
+            "installed": false,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Available",
+            "name": "Documents",
+            "href": "/engineering/documents"
+          },
+          {
+            "key": "inspection_intelligence",
+            "applicationKey": "inspection_intelligence",
+            "allowed": true,
+            "installed": false,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Available",
+            "name": "Inspection Intelligence",
+            "href": "/engineering/apps/inspection-intelligence"
+          },
+          {
+            "key": "project_controls",
+            "applicationKey": "project_controls",
+            "allowed": true,
+            "installed": false,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Available",
+            "name": "Project Controls",
+            "href": "/engineering/apps/project-controls"
+          },
+          {
+            "key": "asset_intelligence",
+            "applicationKey": "asset_intelligence",
+            "allowed": true,
+            "installed": true,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Installed",
+            "name": "Asset Intelligence",
+            "href": "/engineering/apps/asset-intelligence"
+          },
+          {
+            "key": "digital_twin",
+            "applicationKey": "digital_twin",
+            "allowed": true,
+            "installed": true,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Installed",
+            "name": "Digital Twin",
+            "href": "/engineering/apps/digital-twin"
+          },
+          {
+            "key": "engineering_model_interoperability",
+            "applicationKey": "engineering_model_interoperability",
+            "allowed": true,
+            "installed": true,
+            "reasonCode": "active_application_licence",
+            "uiState": "included",
+            "uiLabel": "Included",
+            "systemsState": "Installed",
+            "name": "Engineering Models",
+            "href": "/engineering/apps/model-interoperability"
+          }
+        ]
+      }
+    }
+  },
+  "open": {
+    "asset_intelligence": {
+      "href": "/engineering/apps/asset-intelligence",
+      "url": "https://rtb-ai-platform-9j0tmku9e-rtbea.vercel.app/engineering/apps/asset-intelligence",
+      "installed": true
+    },
+    "digital_twin": {
+      "href": "/engineering/apps/digital-twin",
+      "url": "https://rtb-ai-platform-9j0tmku9e-rtbea.vercel.app/engineering/apps/digital-twin",
+      "installed": true
+    },
+    "engineering_model_interoperability": {
+      "href": "/engineering/apps/model-interoperability",
+      "url": "https://rtb-ai-platform-9j0tmku9e-rtbea.vercel.app/engineering/apps/model-interoperability",
+      "installed": true
+    }
+  },
+  "commerce": {}
+}
