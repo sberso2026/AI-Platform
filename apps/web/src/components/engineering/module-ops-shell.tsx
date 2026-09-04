@@ -65,7 +65,7 @@ export function ModuleOpsShell({
             <button
               type="button"
               data-testid="module-shell-back"
-              className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 hover:border-slate-400"
+              className="eos-shell-link px-3 text-sm font-medium"
               onClick={() => router.back()}
             >
               Back
@@ -73,7 +73,7 @@ export function ModuleOpsShell({
             <Link
               href={returnHref}
               data-testid="module-shell-return"
-              className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 hover:border-slate-400"
+              className="eos-shell-link px-3 text-sm font-medium"
             >
               Return
             </Link>
@@ -85,8 +85,8 @@ export function ModuleOpsShell({
 
           <ModuleSectionNav links={primaryLinks} ariaLabel={`${title} sections`} />
 
-          <details className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-2" data-testid="module-administration">
-            <summary className="cursor-pointer text-sm font-medium text-slate-700">
+          <details className="mt-3 rounded-md border border-[color:var(--eos-border)] bg-[color:var(--eos-panel-elevated)] px-3 py-2" data-testid="module-administration">
+            <summary className="cursor-pointer text-sm font-medium text-[color:var(--eos-text-primary)]">
               {adminLabel}
             </summary>
             <nav className="mt-2 flex flex-wrap gap-3 text-sm" aria-label={`${title} administration`}>
@@ -100,8 +100,8 @@ export function ModuleOpsShell({
                     data-active={active ? "true" : "false"}
                     className={
                       active
-                        ? "inline-flex min-h-11 items-center font-medium text-slate-900 underline"
-                        : "inline-flex min-h-11 items-center text-slate-700 underline-offset-2 hover:underline"
+                        ? "inline-flex min-h-11 items-center font-medium text-[color:var(--eos-text-primary)] underline"
+                        : "inline-flex min-h-11 items-center text-[color:var(--eos-text-secondary)] underline-offset-2 hover:underline"
                     }
                   >
                     {link.label}
@@ -197,23 +197,23 @@ function ModuleContextStrip() {
 
   return (
     <div
-      className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600"
+      className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[color:var(--eos-text-secondary)]"
       data-testid="module-context-strip"
     >
       <span>
-        Workspace <strong className="font-medium text-slate-900">RTB Engineering</strong>
+        Workspace <strong className="font-medium text-[color:var(--eos-text-primary)]">RTB Engineering</strong>
       </span>
       <span>
-        Project <strong className="font-medium text-slate-900">{displayOperationalText(projectLabel, "All projects")}</strong>
+        Project <strong className="font-medium text-[color:var(--eos-text-primary)]">{displayOperationalText(projectLabel, "All projects")}</strong>
       </span>
       {assetId ? (
         <span>
-          Asset <strong className="font-medium text-slate-900">{assetLabel}</strong>
+          Asset <strong className="font-medium text-[color:var(--eos-text-primary)]">{assetLabel}</strong>
         </span>
       ) : null}
       {twinId ? (
         <span>
-          Twin <strong className="font-medium text-slate-900">{twinLabel}</strong>
+          Twin <strong className="font-medium text-[color:var(--eos-text-primary)]">{twinLabel}</strong>
         </span>
       ) : null}
     </div>

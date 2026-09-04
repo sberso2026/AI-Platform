@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Button, Input, StatusChip } from "@rtb/ui";
+import { Button, Input, StatusChip, CommandPanel, ProjectHealthIndicator, LiveSignal, type HealthLevel } from "@rtb/ui";
+import { EosAiCore } from "@/components/layout/eos-ai-core";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
   persistEngineeringProjectFilter,
@@ -49,6 +50,44 @@ type DashboardPayload = {
   };
   meta?: { scopeLabel?: string; projectId?: string | null };
 };
+
+function displayCount(value: number | undefined | null, loaded: boolean): string {
+  if (!loaded || value == null) return "—";
+  return String(value);
+}
+
+function commandHealth(dashboard: DashboardPayload | null, loaded: boolean): HealthLevel {
+  if (!loaded || !dashboard) return "UNKNOWN";
+  const overdue = dashboard.attention?.overdueActions?.length;
+  const high = dashboard.attention?.highRisks?.length;
+  const risks = dashboard.openRisksCount;
+  const tqs = dashboard.openTechnicalQueriesCount;
+  const actions = dashboard.openActionsCount;
+  const decisions = dashboard.pendingDecisionsCount;
+  if (
+    overdue == null &&
+    high == null &&
+    risks == null &&
+    tqs == null &&
+    actions == null &&
+    decisions == null
+  ) {
+    return "UNKNOWN";
+  }
+  if ((overdue ?? 0) > 0 || (high ?? 0) > 0) return "CRITICAL";
+  if ((risks ?? 0) > 0 || (tqs ?? 0) > 0 || (actions ?? 0) > 0 || (decisions ?? 0) > 0) return "ATTENTION";
+  return "HEALTHY";
+}
+
+function domainFromCount(
+  count: number | undefined,
+  loaded: boolean,
+): "green" | "amber" | "red" | "unknown" {
+  if (!loaded || count == null) return "unknown";
+  if (count === 0) return "green";
+  if (count >= 5) return "red";
+  return "amber";
+}
 
 /**
  * Engineering Command Centre — work-first operational entry.
@@ -107,7 +146,9 @@ export default function EngineeringHomePage() {
   const projects = attention.projects ?? dashboard?.activeProjects ?? [];
   const documents = dashboard?.recentDocuments ?? [];
   const highRiskAssets = dashboard?.highRiskAssets ?? [];
-  const reviews = dashboard?.reviewRequiredCount ?? 0;
+  const reviews = dashboard?.reviewRequiredCount;
+  const loaded = !loading;
+  const health = commandHealth(dashboard, loaded);
 
   function submitAsk(e: React.FormEvent) {
     e.preventDefault();
@@ -121,7 +162,7 @@ export default function EngineeringHomePage() {
   }
 
   const attentionItems = [
-    { id: "reviews", label: "Pending reviews", count: reviews, href: withProjectHref("/engineering/apps/project-intelligence/documents/review", projectId) },
+    { id: "reviews", label: "Pending reviews", count: reviews ?? 0, href: withProjectHref("/engineering/apps/project-intelligence/documents/review", projectId) },
     { id: "risks", label: "Open risks", count: dashboard?.openRisksCount ?? 0, href: withProjectHref("/engineering/risks", projectId) },
     { id: "tqs", label: "Open TQs", count: dashboard?.openTechnicalQueriesCount ?? 0, href: withProjectHref("/engineering/technical-queries", projectId) },
     { id: "actions", label: "Open actions", count: dashboard?.openActionsCount ?? 0, href: withProjectHref("/engineering/actions", projectId) },
@@ -178,26 +219,57 @@ export default function EngineeringHomePage() {
           {!loading ? (
           <>
           <section className="mb-6" data-testid="home-current-context">
-            <p className="text-sm text-slate-700" data-testid="command-center-scope">
+            <p className="text-sm text-[color:var(--eos-text-secondary)]" data-testid="command-center-scope">
               Scope: {scopeLabel}
             </p>
           </section>
 
-          <section className="mb-8" data-testid="home-attention">
-            <AttentionSummary items={attentionItems} />
+          <section className="mb-8 grid gap-5 lg:grid-cols-2" data-testid="command-centre-jarvis">
+            <CommandPanel title="Project Health" accent="success" testId="cc-project-health">
+              <ProjectHealthIndicator
+                level={health}
+                domains={[
+                  { label: "Risks", state: domainFromCount(dashboard?.openRisksCount, loaded) },
+                  { label: "Technical queries", state: domainFromCount(dashboard?.openTechnicalQueriesCount, loaded) },
+                  { label: "Actions", state: domainFromCount(dashboard?.openActionsCount, loaded) },
+                  { label: "Decisions", state: domainFromCount(dashboard?.pendingDecisionsCount, loaded) },
+                ]}
+              />
+            </CommandPanel>
+            <CommandPanel title="Engineering Intelligence Core" accent="ai" testId="cc-intelligence-core">
+              <EosAiCore
+                size="lg"
+                projectLabel={projectId ? scopeLabel : undefined}
+                evidenceAvailable={Boolean(documents.length || openTqs.length)}
+                systemHealthy={health !== "CRITICAL"}
+              />
+            </CommandPanel>
+            <CommandPanel title="Attention Required" accent="warning" testId="cc-attention-required">
+              <div data-testid="home-attention">
+                <AttentionSummary items={attentionItems} />
+              </div>
+            </CommandPanel>
+            <CommandPanel title="Live Engineering Signals" accent="cyan" testId="cc-live-signals">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <LiveSignal label="Open TQs" value={displayCount(dashboard?.openTechnicalQueriesCount, loaded)} testId="cc-signal-tqs" />
+                <LiveSignal label="Open actions" value={displayCount(dashboard?.openActionsCount, loaded)} testId="cc-signal-actions" />
+                <LiveSignal label="Open risks" value={displayCount(dashboard?.openRisksCount, loaded)} testId="cc-signal-risks" />
+                <LiveSignal label="Pending decisions" value={displayCount(dashboard?.pendingDecisionsCount, loaded)} testId="cc-signal-decisions" />
+              </div>
+            </CommandPanel>
           </section>
 
           <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <OperationalMetricCard
               label="Open risks"
-              value={dashboard?.openRisksCount ?? 0}
+              value={displayCount(dashboard?.openRisksCount, loaded)}
               href={withProjectHref("/engineering/risks", projectId)}
               tone={(dashboard?.openRisksCount ?? 0) > 0 ? "attention" : "neutral"}
               testId="cc-metric-risks"
             />
             <OperationalMetricCard
               label="Open TQs"
-              value={dashboard?.openTechnicalQueriesCount ?? 0}
+              value={displayCount(dashboard?.openTechnicalQueriesCount, loaded)}
               href={withProjectHref("/engineering/technical-queries", projectId)}
               tone={(dashboard?.openTechnicalQueriesCount ?? 0) > 0 ? "attention" : "neutral"}
               testId="cc-metric-tqs"
@@ -205,14 +277,14 @@ export default function EngineeringHomePage() {
             {actionsEnabled ? (
             <OperationalMetricCard
               label="Open actions"
-              value={dashboard?.openActionsCount ?? 0}
+              value={displayCount(dashboard?.openActionsCount, loaded)}
               href={withProjectHref("/engineering/actions", projectId)}
               testId="cc-metric-actions"
             />
             ) : null}
             <OperationalMetricCard
               label="Pending decisions"
-              value={dashboard?.pendingDecisionsCount ?? 0}
+              value={displayCount(dashboard?.pendingDecisionsCount, loaded)}
               href={withProjectHref("/engineering/decisions", projectId)}
               testId="cc-metric-decisions"
             />
@@ -305,7 +377,7 @@ export default function EngineeringHomePage() {
 
           {projects.length > 0 ? (
             <section className="mb-8" data-testid="home-project-status">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">Project status</h3>
+              <h3 className="mb-3 text-sm font-semibold text-[color:var(--eos-text-primary)]">Project status</h3>
               <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
                 {projects.slice(0, 6).map((row) => {
                   const id = String(row.id ?? "");
@@ -330,7 +402,7 @@ export default function EngineeringHomePage() {
 
           {askEnabled ? (
           <section data-testid="home-suggestions">
-            <h3 className="mb-3 text-sm font-semibold text-slate-900">Suggested next steps</h3>
+            <h3 className="mb-3 text-sm font-semibold text-[color:var(--eos-text-primary)]">Suggested next steps</h3>
             <div className="flex flex-wrap gap-2">
               {(
                 [

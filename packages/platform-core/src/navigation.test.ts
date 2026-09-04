@@ -70,18 +70,18 @@ describe("Batch 2.07 — Navigation grouping", () => {
 });
 
 describe("Batch 2.07 — UX theme contracts", () => {
-  it("defines enterprise light background token", () => {
-    expect("#F4F6F8".toLowerCase()).toBe("#f4f6f8");
+  it("defines enterprise dark background token", () => {
+    expect("#060B14".toLowerCase()).toBe("#060b14");
   });
 
-  it("requires dark sidebar with light main content", () => {
+  it("requires dark sidebar with dark command canvas", () => {
     const theme = {
       sidebar: "dark",
-      main: "light",
-      cards: "white",
+      main: "dark",
+      cards: "elevated-panel",
     };
     expect(theme.sidebar).toBe("dark");
-    expect(theme.main).toBe("light");
+    expect(theme.main).toBe("dark");
   });
 });
 

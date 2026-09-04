@@ -42,8 +42,8 @@ export function ModuleSectionNav({
             data-active={active ? "true" : "false"}
             className={
               active
-                ? "inline-flex min-h-11 items-center rounded-md bg-slate-900 px-3 py-2 font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700"
-                : "inline-flex min-h-11 items-center rounded-md px-3 py-2 text-slate-800 underline-offset-2 hover:bg-slate-100 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700"
+                ? "eos-tab-active inline-flex min-h-11 items-center rounded-md px-3 py-2 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--eos-accent)]"
+                : "inline-flex min-h-11 items-center rounded-md px-3 py-2 text-[color:var(--eos-text-secondary)] underline-offset-2 hover:bg-[color:var(--eos-accent-soft)] hover:text-[color:var(--eos-text-primary)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--eos-accent)]"
             }
           >
             {link.label}

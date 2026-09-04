@@ -47,8 +47,8 @@ export function OperationalPageIntro({
       data-testid={testId}
     >
       <div className="min-w-0">
-        {title ? <h2 className="text-lg font-semibold text-slate-900">{title}</h2> : null}
-        <p className={cn("max-w-2xl text-sm text-slate-600", title && "mt-1")}>{purpose}</p>
+        {title ? <h2 className="text-lg font-semibold text-[color:var(--eos-text-primary)]">{title}</h2> : null}
+        <p className={cn("max-w-2xl text-sm text-[color:var(--eos-text-secondary)]", title && "mt-1")}>{purpose}</p>
       </div>
       {primaryAction ? <div className="shrink-0">{primaryAction}</div> : null}
     </div>
@@ -70,20 +70,20 @@ export function OperationalMetricCard({
 }) {
   const ring =
     tone === "critical"
-      ? "border-red-200 hover:border-red-300"
+      ? "border-[color:color-mix(in_srgb,var(--eos-danger)_45%,transparent)] hover:border-[color:var(--eos-danger)]"
       : tone === "attention"
-        ? "border-amber-200 hover:border-amber-300"
+        ? "border-[color:color-mix(in_srgb,var(--eos-warning)_45%,transparent)] hover:border-[color:var(--eos-warning)]"
         : tone === "ok"
-          ? "border-emerald-200 hover:border-emerald-300"
-          : "border-slate-200 hover:border-slate-300";
+          ? "border-[color:color-mix(in_srgb,var(--eos-success)_45%,transparent)] hover:border-[color:var(--eos-success)]"
+          : "border-[color:var(--eos-border)] hover:border-[color:var(--eos-border-active)]";
   return (
     <Link href={href} className="block focus-visible:outline-none" data-testid={testId}>
       <Card className={cn("h-full transition-colors", ring)}>
         <CardContent className="p-4">
-          <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-slate-500">
+          <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-[color:var(--eos-text-secondary)]">
             {label}
           </p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{value}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-[color:var(--eos-text-primary)]">{value}</p>
         </CardContent>
       </Card>
     </Link>
@@ -98,19 +98,19 @@ export function AttentionSummary({
   const attention = items.filter((item) => item.count > 0);
   return (
     <div
-      className="rounded-lg border border-slate-200 bg-white p-4"
+      className="rounded-xl border border-[color:var(--eos-border)] bg-[color:var(--eos-panel-elevated)] p-4"
       data-testid="attention-summary"
     >
-      <p className="text-sm font-semibold text-slate-900">Attention required</p>
+      <p className="text-sm font-semibold text-[color:var(--eos-text-primary)]">Attention required</p>
       {attention.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-600">Nothing needs attention in the current scope.</p>
+        <p className="mt-2 text-sm text-[color:var(--eos-text-secondary)]">Nothing needs attention in the current scope.</p>
       ) : (
         <ul className="mt-3 flex flex-wrap gap-2">
           {attention.map((item) => (
             <li key={item.id}>
               <Link
                 href={item.href}
-                className="inline-flex min-h-11 items-center rounded-md border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-950 hover:border-amber-300"
+                className="inline-flex min-h-11 items-center rounded-md border border-[color:color-mix(in_srgb,var(--eos-warning)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-warning)_12%,transparent)] px-3 text-sm font-medium text-[color:var(--eos-warning)] hover:border-[color:var(--eos-warning)]"
               >
                 {item.label}
                 <span className="ml-2 tabular-nums">{item.count}</span>
@@ -146,10 +146,10 @@ export function WorkQueue({
   itemHref?: (row: OperationalRow) => string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4" data-testid={testId}>
+    <section className="eos-command-panel p-4" data-testid={testId}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-        <Link href={href} className="text-xs font-medium text-slate-700 underline-offset-2 hover:underline">
+        <h3 className="text-sm font-semibold text-[color:var(--eos-text-primary)]">{title}</h3>
+        <Link href={href} className="text-xs font-medium text-[color:var(--eos-accent)] underline-offset-2 hover:underline">
           View all
         </Link>
       </div>
@@ -169,7 +169,7 @@ export function WorkQueue({
               <li key={id}>
                 <Link
                   href={dest}
-                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm text-slate-800 hover:text-slate-950"
+                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm text-[color:var(--eos-text-primary)] hover:text-[color:var(--eos-accent)]"
                 >
                   <span className="min-w-0">
                     <span className="block truncate">{recordLabel(row, labelKeys)}</span>

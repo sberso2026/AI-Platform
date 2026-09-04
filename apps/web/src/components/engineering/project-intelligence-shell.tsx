@@ -61,11 +61,11 @@ export function ProjectIntelligenceShell({
   const ready = resolvedState === "ready";
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50" data-testid="project-intelligence-shell">
-      <header className="border-b border-slate-200 bg-white px-4 py-5 sm:px-8">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Engineering OS</p>
-        <h1 className="mt-1 text-xl font-semibold text-slate-900">Project Intelligence</h1>
-        <p className="mt-1 max-w-2xl text-sm text-slate-600">
+    <div className="page-main min-h-[calc(100vh-4rem)] bg-[color:var(--eos-bg-primary)]" data-testid="project-intelligence-shell">
+      <header className="eos-command-rail border-b border-[color:var(--eos-border)] bg-[color:var(--eos-bg-primary)] px-4 py-5 sm:px-8">
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--eos-accent)]">Engineering OS</p>
+        <h1 className="mt-1 text-xl font-semibold text-[color:var(--eos-text-primary)]">Project Intelligence</h1>
+        <p className="mt-1 max-w-2xl text-sm text-[color:var(--eos-text-secondary)]">
           Project status, schedule and cost signals, risks, queries, and recent activity — from
           recorded engineering evidence.
         </p>
@@ -76,7 +76,7 @@ export function ProjectIntelligenceShell({
           />
         </div>
         <ContextTabs links={primaryTabs} ariaLabel="Project Intelligence" />
-        <nav className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" aria-label="Project Intelligence more">
+        <nav className="mt-2 flex flex-wrap gap-3 text-xs text-[color:var(--eos-text-secondary)]" aria-label="Project Intelligence more">
           {moreTabs.map((tab) => {
             const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
             return (
@@ -84,7 +84,7 @@ export function ProjectIntelligenceShell({
                 key={tab.href}
                 href={tab.href}
                 data-testid={tab.testId}
-                className={active ? "font-semibold text-slate-900" : "hover:underline"}
+                className={active ? "font-semibold text-[color:var(--eos-text-primary)]" : "hover:underline"}
               >
                 {tab.label}
               </Link>
@@ -92,12 +92,12 @@ export function ProjectIntelligenceShell({
           })}
         </nav>
       </header>
-      <main className="px-4 py-6 sm:px-8">
+      <main className="page-main px-4 py-6 sm:px-8">
         {!ready && (
           <div
             data-testid={`project-intelligence-state-${resolvedState}`}
             role={resolvedState === "loading" ? "status" : "alert"}
-            className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-950"
+            className="mb-6 rounded-md border border-[color:color-mix(in_srgb,var(--eos-warning)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-warning)_12%,transparent)] p-4 text-[color:var(--eos-warning)]"
           >
             {stateMessages[resolvedState]}
           </div>

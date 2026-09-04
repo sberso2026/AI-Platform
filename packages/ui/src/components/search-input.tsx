@@ -28,8 +28,8 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     return (
       <div
         className={cn(
-          "flex h-11 w-full items-center overflow-hidden rounded-md border border-border bg-white",
-          "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+          "flex h-12 w-full items-center overflow-hidden rounded-lg border border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)]",
+          "focus-within:outline-none focus-within:ring-2 focus-within:ring-[color:var(--eos-accent)]",
           disabled && "cursor-not-allowed opacity-50",
           containerClassName
         )}
@@ -42,8 +42,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           placeholder={placeholder}
           aria-label={ariaLabel}
           className={cn(
-            "h-full min-w-0 flex-1 border-0 bg-transparent pl-4 text-[0.9375rem] text-slate-800 outline-none placeholder:text-slate-400",
-            // Leave clear space before the icon; text cannot run under it
+            "h-full min-w-0 flex-1 border-0 bg-transparent pl-4 text-[1rem] text-[color:var(--eos-text-primary)] outline-none placeholder:text-[color:var(--eos-text-secondary)]",
             "pr-2",
             "[&::-webkit-search-decoration]:appearance-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-results-button]:appearance-none",
             className
@@ -51,7 +50,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           {...props}
         />
         <span
-          className="flex h-full w-11 shrink-0 items-center justify-center text-slate-400"
+          className="flex h-full w-11 shrink-0 items-center justify-center text-[color:var(--eos-text-secondary)]"
           data-testid="search-input-icon"
           aria-hidden
         >

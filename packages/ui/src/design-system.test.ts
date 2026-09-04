@@ -10,22 +10,22 @@ import {
   sidebarNavItemClassName,
 } from "./index";
 
-describe("Batch 2.11 — Typography enforcement", () => {
+describe("EOS-SHELL-JARVIS — Typography enforcement", () => {
   it("keeps primary text at 15px+ and titles at enterprise scale", () => {
-    expect(TYPOGRAPHY.pageTitle).toContain("text-[2rem]");
+    expect(TYPOGRAPHY.pageTitle).toContain("text-[2.125rem]");
     expect(TYPOGRAPHY.pageTitle).toContain("font-bold");
-    expect(TYPOGRAPHY.sectionHeading).toContain("text-[1.125rem]");
-    expect(TYPOGRAPHY.kpiValue).toContain("text-[2.25rem]");
+    expect(TYPOGRAPHY.sectionHeading).toContain("text-[1.25rem]");
+    expect(TYPOGRAPHY.kpiValue).toContain("text-[2.5rem]");
     expect(TYPOGRAPHY.kpiLabel).toContain("text-[0.9375rem]");
-    expect(TYPOGRAPHY.body).toContain("text-[0.9375rem]");
-    expect(TYPOGRAPHY.sidebarItem).toContain("text-[0.9375rem]");
+    expect(TYPOGRAPHY.body).toContain("text-[1rem]");
+    expect(TYPOGRAPHY.sidebarItem).toContain("text-[1rem]");
     expect(TYPOGRAPHY.sidebarItem).toContain("leading-5");
   });
 
   it("keeps metadata secondary only", () => {
-    expect(TYPOGRAPHY.meta).toContain("text-[0.8125rem]");
+    expect(TYPOGRAPHY.meta).toContain("text-[0.875rem]");
     expect(TYPOGRAPHY.sidebarGroup).toContain("text-[0.8125rem]");
-    expect(TYPOGRAPHY.sidebarGroup).toContain("tracking-[0.05em]");
+    expect(TYPOGRAPHY.sidebarGroup).toContain("tracking-[0.08em]");
   });
 });
 
@@ -34,15 +34,15 @@ describe("Batch 2.11 — Sidebar nav spacing", () => {
     const cls = sidebarNavItemClassName({ active: false });
     expect(cls).toContain("flex");
     expect(cls).toContain("items-center");
-    expect(cls).toContain("min-h-10");
+    expect(cls).toContain("min-h-12");
     expect(cls).toContain("px-4");
     expect(cls).toContain("gap-3");
   });
 
   it("keeps active highlight distinct", () => {
     const active = sidebarNavItemClassName({ active: true });
-    expect(active).toContain("bg-sidebar-accent");
-    expect(active).toContain("text-white");
+    expect(active).toContain("font-semibold");
+    expect(active).toContain("--eos-accent-soft");
   });
 
   it("documents fixed icon rail width", () => {
@@ -113,8 +113,8 @@ describe("Batch 2.09/2.10 — StatusChip contracts", () => {
 describe("Batch 2.11 — Component contracts", () => {
   it("exports building blocks", async () => {
     const mod = await import("./index");
-    expect(mod.SearchInput).toBeTypeOf("object");
-    expect(mod.SidebarNavItem).toBeTypeOf("function");
-    expect(mod.sidebarNavItemClassName).toBeTypeOf("function");
+    expect(mod.CommandPanel).toBeTypeOf("function");
+    expect(mod.EngineeringIntelligenceCore).toBeTypeOf("function");
+    expect(mod.BRANDING.intelligenceCore).toBe("Engineering Intelligence Core");
   });
 });
