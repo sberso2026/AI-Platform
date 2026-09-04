@@ -38,8 +38,8 @@ LOW: Command Centre scope copy can still read `Selected project` while the heade
 ## Certification flags
 
 ```
-FINAL_SHA=2608fa343cf25cc1d7e49dc82c9090ca0f3555c2
-PREVIEW_DEPLOYMENT_ID=dpl_ha9ujPXN4YuExKpT8pFzCSyv9zJb
+FINAL_SHA=2d442985333e274f628b179504572aa96b64df30
+PREVIEW_DEPLOYMENT_ID=dpl_FJAwAjymSidBL9rfrJXpD8zrgDks
 WORKING_TREE_CLEAN=true
 PREVIEW_MATCHES_FINAL_SHA=true
 
