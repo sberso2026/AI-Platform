@@ -28,6 +28,7 @@ describe("EOS-UX-1 work-first navigation", () => {
     expect(NAV_GROUP_LABELS.engineering_work).toBe("Work");
     expect(NAV_GROUP_LABELS.engineering_analysis).toBe("Analysis");
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.label).toBe("Command Centre");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-modules")?.label).toBe("Engineering Systems");
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-ask")?.label).toBe("Engineering AI");
   });
 

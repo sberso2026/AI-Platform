@@ -245,6 +245,7 @@ describe("Phase E1 — Experience primary nav", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
     expect(visible.find((i) => i.id === "eng-home")?.href).toBe("/engineering");
     expect(visible.some((i) => i.id === "eng-projects")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-modules")).toBe(true);
     expect(visible.some((i) => i.id === "eng-ask")).toBe(false);
     expect(visible.some((i) => i.id === "eng-explore")).toBe(false);
     expect(visible.some((i) => i.id === "eng-intelligence")).toBe(false);
@@ -291,6 +292,24 @@ describe("Phase E1 — Experience primary nav", () => {
     expect(visible.some((i) => i.href === "/platform/features")).toBe(false);
     expect(visible.some((i) => i.href === "/platform/secrets")).toBe(false);
     expect(visible.some((i) => i.href === "/platform/evaluations")).toBe(false);
+  });
+});
+
+describe("EOS-SHELL-NAV-1 — Engineering Systems primary nav", () => {
+  it("shows Engineering Systems to viewers with Engineering OS active, without application entitlements", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("viewer"));
+    const item = visible.find((i) => i.id === "eng-modules");
+    expect(item?.label).toBe("Engineering Systems");
+    expect(item?.href).toBe("/engineering/modules");
+    expect(item?.applicationKey).toBeUndefined();
+  });
+
+  it("hides Engineering Systems when Engineering OS is not the active operating system", () => {
+    const visible = filterSidebarNavigation(
+      FULL_NAVIGATION,
+      ctx("viewer", { activeOperatingSystemIds: [] }),
+    );
+    expect(visible.some((i) => i.id === "eng-modules")).toBe(false);
   });
 });
 

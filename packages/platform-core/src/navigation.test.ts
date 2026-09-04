@@ -214,6 +214,7 @@ describe("Platform Commerce UI — Engineering OS access", () => {
     expect(primary.map((i) => i.id)).toEqual(
       expect.arrayContaining([
         "eng-home",
+        "eng-modules",
         "eng-projects",
         "eng-assets",
         "eng-inspections",
@@ -322,6 +323,23 @@ describe("EOS-UX-1R — primary nav exact root match", () => {
       false,
     );
     expect(isNavItemActive("/engineering/ask", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/modules", "/engineering", hrefs)).toBe(false);
+  });
+
+  it("activates Engineering Systems only on the launcher root", () => {
+    expect(isNavItemActive("/engineering/modules", "/engineering/modules", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering", "/engineering/modules", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/projects", "/engineering/modules", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/apps/asset-intelligence", "/engineering/modules", hrefs)).toBe(
+      false,
+    );
+    expect(isNavItemActive("/engineering/apps/digital-twin", "/engineering/modules", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/apps/model-interoperability", "/engineering/modules", hrefs)).toBe(
+      false,
+    );
+    expect(isNavItemActive("/engineering/apps/project-controls", "/engineering/modules", hrefs)).toBe(
+      false,
+    );
   });
 
   it("activates the longest matching primary item", () => {

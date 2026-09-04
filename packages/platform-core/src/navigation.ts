@@ -449,6 +449,14 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "eng-modules",
+    label: "Engineering Systems",
+    icon: "AppWindow",
+    href: "/engineering/modules",
+    group: "engineering",
+    audience: "viewer",
+  },
+  {
     id: "eng-projects",
     label: "Projects",
     icon: "FolderKanban",
@@ -585,16 +593,6 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering",
     group: "engineering",
     audience: "viewer",
-    sidebarHidden: true,
-  },
-  {
-    id: "eng-modules",
-    label: "Modules",
-    icon: "AppWindow",
-    href: "/engineering/modules",
-    group: "engineering_admin",
-    audience: "manager",
-    permissions: [{ resource: "engineering", action: "admin" }],
     sidebarHidden: true,
   },
   {
@@ -965,8 +963,8 @@ export function isNavItemActive(
   href: string,
   siblingHrefs: readonly string[],
 ): boolean {
-  if (href === "/engineering") {
-    return pathname === "/engineering" || pathname === "/engineering/";
+  if (href === "/engineering" || href === "/engineering/modules") {
+    return pathname === href || pathname === `${href}/`;
   }
   const matches = (candidate: string) =>
     pathname === candidate || pathname.startsWith(`${candidate}/`);

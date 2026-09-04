@@ -69,8 +69,8 @@ export default function EngineeringModuleLauncherPage() {
   return (
     <>
       <Header
-        title="Engineering Modules"
-        description="Installable modules hosted by Engineering OS — no module bypasses the OS"
+        title="Engineering Systems"
+        description="Governed application launcher for Engineering OS — no application bypasses the OS"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"

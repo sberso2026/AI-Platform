@@ -97,7 +97,7 @@ export const ENGINEERING_EXPLORE_GROUPS = [
     items: [
       { id: "search", label: "Search", href: "/engineering/search" },
       { id: "reports", label: "Reports", href: "/engineering/reports" },
-      { id: "modules", label: "Modules", href: "/engineering/modules" },
+      { id: "modules", label: "Engineering Systems", href: "/engineering/modules" },
       { id: "timeline", label: "Timeline", href: "/engineering/timeline" },
       { id: "activity", label: "Activity", href: "/engineering/activity" },
     ],
