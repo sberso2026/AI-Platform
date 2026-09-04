@@ -69,7 +69,6 @@ export class ApplicationInstallationRepository extends BaseRepository {
     status?: ApplicationInstallationStatus;
     metadata?: Record<string, unknown>;
   }): Promise<CommercialApplicationInstallation> {
-    const now = new Date().toISOString();
     const status = input.status ?? "requested";
     const { data, error } = await this.supabase
       .from("commercial_application_installations")
@@ -85,7 +84,6 @@ export class ApplicationInstallationRepository extends BaseRepository {
         requested_by: input.requestedBy,
         status,
         metadata: input.metadata ?? {},
-        requested_at: now,
       })
       .select("*")
       .single();

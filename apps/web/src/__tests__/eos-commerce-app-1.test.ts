@@ -141,5 +141,10 @@ describe("EOS-COMMERCE-APP-1 entitlement and module matrix", () => {
     expect(migration).not.toMatch(/INSERT INTO commercial_plan_entitlements/);
     expect(issuance).toContain("pilot_reconcile");
     expect(issuance).toContain("asset_intelligence");
+    const appInstallRepo = readFileSync(
+      resolve(REPO, "packages/platform-commerce/src/repositories/application-installation-repository.ts"),
+      "utf8",
+    );
+    expect(appInstallRepo).not.toContain("requested_at");
   });
 });
