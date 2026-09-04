@@ -214,9 +214,23 @@ function ProjectIntelligenceShellInner({
           Administration / Diagnostics
         </p>
         <nav className="mt-2 space-y-1" aria-label="Project Intelligence diagnostics">
-          {diagnosticsTabs.map((tab) => (
-            <NavLink key={tab.href} {...tab} pathname={pathname} projectId={projectId} />
-          ))}
+          <NavLink
+            href={`${PI_BASE_PATH}/diagnostics`}
+            label="Diagnostics"
+            icon={Activity}
+            pathname={pathname}
+            projectId={projectId}
+          />
+          <details className="rounded-md px-1 py-1 text-slate-400">
+            <summary className="cursor-pointer px-2 py-1 text-[0.7rem] uppercase tracking-wide">Advanced</summary>
+            <div className="mt-1 space-y-1">
+              {diagnosticsTabs
+                .filter((tab) => !tab.href.endsWith("/diagnostics"))
+                .map((tab) => (
+                  <NavLink key={tab.href} {...tab} pathname={pathname} projectId={projectId} />
+                ))}
+            </div>
+          </details>
         </nav>
       </aside>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
