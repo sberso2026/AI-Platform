@@ -12,6 +12,7 @@ import {
   SectionHeader,
   cn,
 } from "@rtb/ui";
+import { evidenceDisplayLabel } from "./pi-ux";
 
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
 type Availability = "ok" | "no_data" | "unavailable" | "forbidden" | "stale" | "error";
@@ -342,7 +343,7 @@ export function ProjectQueryDecisionIntelligenceView() {
   return (
     <div data-testid="project-intelligence-queries-decisions" className="space-y-8">
       <label className="block max-w-md text-sm text-slate-700">
-        Canonical project
+        Project
         <select
           data-testid="queries-decisions-project-select"
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
@@ -367,7 +368,7 @@ export function ProjectQueryDecisionIntelligenceView() {
 
       {!selectedId ? (
         <EmptyState
-          title="Select a canonical project"
+          title="Select a project"
           description="Query & Decision Intelligence interprets canonical Engineering OS technical queries, decisions, and actions. RFIs are not a separate register."
           data-testid="queries-decisions-project-empty"
         />
@@ -520,7 +521,7 @@ export function ProjectQueryDecisionIntelligenceView() {
                       key={`${ref.entityType}:${ref.entityId}`}
                       data-testid={`queries-decisions-evidence-${ref.entityId}`}
                     >
-                      {ref.sourceDomain}:{ref.entityType}:{ref.entityId}
+                      {evidenceDisplayLabel(ref)}
                     </li>
                   ),
                 )}

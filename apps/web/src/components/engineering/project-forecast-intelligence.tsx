@@ -12,6 +12,7 @@ import {
   SectionHeader,
   cn,
 } from "@rtb/ui";
+import { evidenceDisplayLabel } from "./pi-ux";
 
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
 type Availability = "ok" | "no_data" | "unavailable" | "forbidden" | "stale" | "error";
@@ -246,7 +247,7 @@ export function ProjectForecastIntelligenceView() {
   return (
     <div data-testid="project-intelligence-forecasting" className="space-y-8">
       <label className="block max-w-md text-sm text-slate-700">
-        Canonical project
+        Project
         <select
           data-testid="forecasting-project-select"
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
@@ -271,7 +272,7 @@ export function ProjectForecastIntelligenceView() {
 
       {!selectedId ? (
         <EmptyState
-          title="Select a canonical project"
+          title="Select a project"
           description="Forecast Intelligence interprets published Project Controls advisory forecast assessments for one selected project."
           data-testid="forecasting-project-empty"
         />
@@ -375,7 +376,7 @@ export function ProjectForecastIntelligenceView() {
               <ul className="space-y-1 text-xs text-slate-600">
                 {view.evidenceReferences.map((ref) => (
                   <li key={`${ref.entityType}:${ref.entityId}`} data-testid={`forecasting-evidence-${ref.entityId}`}>
-                    {ref.sourceDomain}:{ref.entityType}:{ref.entityId}
+                    {evidenceDisplayLabel(ref)}
                   </li>
                 ))}
               </ul>

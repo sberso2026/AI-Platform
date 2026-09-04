@@ -73,4 +73,23 @@ describe("EOS-PI-UX-1 operational experience", () => {
     expect(engineering).toContain("/command-centre");
     expect(engineering).not.toContain("createProjectControlsEngine");
   });
+
+  it("does not render raw evidence IDs or Project ID fields on operational PI surfaces", () => {
+    const files = [
+      "components/engineering/project-schedule-intelligence.tsx",
+      "components/engineering/project-cost-progress-intelligence.tsx",
+      "components/engineering/project-risk-change-intelligence.tsx",
+      "components/engineering/project-query-decision-intelligence.tsx",
+      "components/engineering/project-reporting-intelligence.tsx",
+      "components/engineering/project-forecast-intelligence.tsx",
+      "components/engineering/project-command-centre.tsx",
+      "app/(platform)/engineering/apps/project-intelligence/meetings/new/page.tsx",
+    ];
+    for (const file of files) {
+      const source = read(file);
+      expect(source).not.toContain("{ref.sourceDomain}:{ref.entityType}:{ref.entityId}");
+      expect(source).not.toContain("snapshot ${snapshot.snapshotId}");
+      expect(source).not.toContain("Project ID");
+    }
+  });
 });

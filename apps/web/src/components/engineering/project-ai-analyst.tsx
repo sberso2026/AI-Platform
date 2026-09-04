@@ -147,7 +147,7 @@ export function ProjectAiAnalystView() {
       {!selectedId ? (
         <EmptyState
           title="Select a project"
-          description="Ask Project Intelligence answers from that project's published evidence only."
+          description="Ask Project Intelligence answers from published evidence for that project only."
           data-testid="analyst-project-empty"
         />
       ) : null}
@@ -234,6 +234,7 @@ export function ProjectAiAnalystView() {
             answer.claims.some((claim) => claim.kind === kind),
           ) ? (
             <div data-testid="analyst-canonical-claims" className="hidden">
+              <p>Canonical Project Intelligence</p>
               <ul data-testid="analyst-claims">
                 {answer.claims
                   .filter(
@@ -252,6 +253,7 @@ export function ProjectAiAnalystView() {
           ) : null}
           {answer.claims.some((claim) => claim.kind === "EXTERNAL_CONTEXT") ? (
             <div data-testid="analyst-external-context" className="hidden">
+              <p>External Context</p>
               {answer.claims
                 .filter((claim) => claim.kind === "EXTERNAL_CONTEXT")
                 .map((claim, index) => (
@@ -263,6 +265,7 @@ export function ProjectAiAnalystView() {
           ) : null}
           {answer.claims.some((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE") ? (
             <div data-testid="analyst-ai-interpretation" className="hidden">
+              <p>AI Interpretation</p>
               {answer.claims
                 .filter((claim) => claim.kind === "AI_SUMMARY" || claim.kind === "AI_INFERENCE")
                 .map((claim, index) => (
@@ -366,7 +369,7 @@ export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) 
         <CardTitle>Ask Project Intelligence</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-slate-700">
-        <p>Ask grounded questions about this project's published intelligence. Advisory only.</p>
+        <p>Ask grounded questions about published intelligence for this project. Advisory only.</p>
         <Link
           href={`/engineering/apps/project-intelligence/analyst?projectId=${encodeURIComponent(projectId)}`}
           data-testid="command-centre-analyst-open"

@@ -10,6 +10,7 @@ import {
   EmptyState,
   SectionHeader,
 } from "@rtb/ui";
+import { attentionIssueTitle, evidenceDisplayLabel } from "./pi-ux";
 
 const REPORT_TYPES = [
   { id: "project_status_report", label: "Project Status Report" },
@@ -211,7 +212,7 @@ export function ProjectReportingIntelligenceView() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block text-sm text-slate-700">
-          Canonical project
+          Project
           <select
             data-testid="reporting-project-select"
             className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
@@ -272,8 +273,8 @@ export function ProjectReportingIntelligenceView() {
 
       {!selectedId ? (
         <EmptyState
-          title="Select a canonical project"
-          description="Project Reporting Intelligence assembles a deterministic snapshot for one selected project."
+          title="Select a project"
+          description="Reports assemble a point-in-time intelligence snapshot for the selected project."
           data-testid="reporting-project-empty"
         />
       ) : null}
@@ -285,7 +286,7 @@ export function ProjectReportingIntelligenceView() {
         <>
           <SectionHeader
             title={`${REPORT_TYPES.find((type) => type.id === snapshot.reportType)?.label ?? "Report"}`}
-            description={`Generated ${snapshot.generatedAt}${selectedProject ? ` · ${selectedProject.project_code}` : ""} · snapshot ${snapshot.snapshotId}`}
+            description={`Generated ${snapshot.generatedAt}${selectedProject ? ` · ${selectedProject.project_code}` : ""}`}
           />
           <p className="text-xs text-slate-500" data-testid="reporting-snapshot-meta">
             Point-in-time snapshot. Persisted: no. Read-only: yes. Overall health {snapshot.overallHealth}.
@@ -298,15 +299,13 @@ export function ProjectReportingIntelligenceView() {
               {snapshot.narrative.available ? (
                 <div data-testid="reporting-ai-available">
                   <p className="text-sm text-slate-700">
-                    AI_SUMMARY from {snapshot.narrative.provider ?? "Platform AI Director"} /{" "}
-                    {snapshot.narrative.model ?? "registered model"}. Not canonical project state.
+                    Advisory interpretation from the existing AI stack. Not canonical project state.
                   </p>
                   <p className="mt-2 text-sm text-slate-800">{snapshot.narrative.text}</p>
                 </div>
               ) : (
                 <p className="text-sm text-slate-700" data-testid="reporting-ai-unavailable">
-                  AI narrative unavailable ({snapshot.narrative.skippedReason ?? "not_attached"}). Deterministic
-                  report remains available.
+                  Published report is available. An advisory narrative was not attached.
                 </p>
               )}
             </CardContent>
@@ -330,7 +329,7 @@ export function ProjectReportingIntelligenceView() {
                     <ul className="text-xs text-slate-500">
                       {section.evidence.map((ref) => (
                         <li key={`${ref.entityType}:${ref.entityId}`}>
-                          {ref.sourceDomain}:{ref.entityType}:{ref.entityId}
+                          {evidenceDisplayLabel(ref)}
                         </li>
                       ))}
                     </ul>
@@ -351,7 +350,7 @@ export function ProjectReportingIntelligenceView() {
                   {snapshot.managementAttention.map((item) => (
                     <li key={item.id} className="rounded-md border border-slate-200 px-3 py-2 text-sm" data-testid={`reporting-attention-${item.kind}`}>
                       <p className="font-medium">
-                        {item.kind} · {item.severity.toUpperCase()} · {item.reasonCode}
+                        {item.severity.toUpperCase()} · {attentionIssueTitle(item.reasonCode)}
                       </p>
                       <p className="text-slate-700">{item.explanation}</p>
                     </li>

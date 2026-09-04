@@ -14,7 +14,7 @@ Primary nav is management-oriented. Admin concepts moved under Administration / 
 
 ## D–Q
 
-Overview shows health, Attention required, What changed, and AI project brief. Schedule / Cost empty states do not fabricate data. Engineering, Decisions, Documents, Meetings, Findings, Reports, and Ask Project Intelligence were rewritten toward management questions. Analyst diagnostics are behind Show diagnostics.
+Overview, Schedule, Cost, Risk & Change, Engineering, Decisions, Reports, and Ask Project Intelligence no longer render raw `sourceDomain:entityType:entityId` strings. Evidence is shown as a human source/type label. Snapshot IDs and AI_SUMMARY provider strings were removed from Reports.
 
 ## Remaining founder review
 

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { EmptyState } from "@rtb/ui";
 import { PiErrorState, PiLoadingSkeleton } from "@/components/engineering/pi-page-chrome";
 import { PI_BASE_PATH, withPiProjectQuery } from "@/components/engineering/pi-project-context";
+import { meetingStatusLabel } from "@/components/engineering/pi-ux";
 
 type MeetingRow = {
   id: string;
@@ -172,7 +173,7 @@ export default function MeetingsListPage() {
                     <td className="px-3 py-2">{projectName(meeting.engineering_project_id)}</td>
                     <td className="px-3 py-2">{meeting.scheduled_start_at ?? "—"}</td>
                     <td className="px-3 py-2" data-testid={`meeting-status-${meeting.status}`}>
-                      {meeting.status}
+                      {meetingStatusLabel(meeting.status)}
                     </td>
                     <td className="px-3 py-2">{meeting.privacy_classification}</td>
                   </tr>

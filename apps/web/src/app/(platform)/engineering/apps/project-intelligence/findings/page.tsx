@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { EmptyState } from "@rtb/ui";
 import { PiErrorState, PiLoadingSkeleton } from "@/components/engineering/pi-page-chrome";
 import { PI_BASE_PATH, withPiProjectQuery } from "@/components/engineering/pi-project-context";
+import { findingStatusLabel, humanizeToken } from "@/components/engineering/pi-ux";
 
 type FindingRow = {
   id: string;
@@ -121,7 +122,7 @@ export default function FindingsIntelligencePage() {
               <li key={finding.id} className="rounded-md border border-slate-200 px-4 py-3 text-sm">
                 <p className="font-medium text-slate-900">{finding.title}</p>
                 <p className="mt-1 text-slate-600">
-                  {finding.severity} · {finding.status}
+                  {humanizeToken(finding.severity)} · {findingStatusLabel(finding.status)}
                   {finding.conflict !== "none" ? " · conflicting evidence" : ""}
                 </p>
               </li>

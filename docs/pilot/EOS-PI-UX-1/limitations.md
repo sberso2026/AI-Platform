@@ -7,3 +7,4 @@
 - Page-level project dropdowns remain on some intelligence views for PI-1..PI-9 source tests.
 - Full-repo `tsc --noEmit` still reports pre-existing digital-twin / asset-intelligence errors unrelated to this UX pass. PI UX files were not in that error set.
 - Preview only. Not Production. Not external UAT.
+- Local/Vercel `next build` on this PI branch requires a Next 15.5.20 `@vercel/nft` BigInt evaluator guard (`scripts/patch-next-nft-bigint.cjs`) and a client webpack `node:` fallback. These do not change PI domain ownership.

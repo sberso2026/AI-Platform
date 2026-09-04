@@ -102,3 +102,54 @@ export function documentReadinessLabel(status: string, readiness: string): strin
   if (status === "unregistered") return "Not processed";
   return "Partial";
 }
+
+export function humanizeToken(value: string): string {
+  return value
+    .replace(/[:._-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export function evidenceDisplayLabel(ref: {
+  sourceDomain: string;
+  entityType: string;
+  label?: string;
+  sourceTimestamp?: string;
+}): string {
+  if (ref.label?.trim()) return ref.label.trim();
+  const source = sourceSystemLabel(ref.sourceDomain) ?? humanizeToken(ref.sourceDomain);
+  const type = humanizeToken(ref.entityType);
+  const asOf = ref.sourceTimestamp ? ` · ${relativeAge(ref.sourceTimestamp)}` : "";
+  return `${source} · ${type}${asOf}`;
+}
+
+const MEETING_STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  open: "Open",
+  in_review: "In review",
+  review_required: "Follow-up required",
+  actions_open: "Actions open",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+export function meetingStatusLabel(status: string): string {
+  return MEETING_STATUS_LABELS[status] ?? humanizeToken(status);
+}
+
+const FINDING_STATUS_LABELS: Record<string, string> = {
+  candidate: "Identified",
+  triage_pending: "Needs triage",
+  under_review: "Under review",
+  changes_requested: "Changes requested",
+  accepted: "Accepted",
+  conversion_proposed: "Ready for conversion",
+  reopened: "Reopened",
+  resolved: "Resolved",
+  rejected: "Closed",
+};
+
+export function findingStatusLabel(status: string): string {
+  return FINDING_STATUS_LABELS[status] ?? humanizeToken(status);
+}

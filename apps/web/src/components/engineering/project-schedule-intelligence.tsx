@@ -12,7 +12,7 @@ import {
   SectionHeader,
   cn,
 } from "@rtb/ui";
-import { sourceSystemLabel } from "./pi-ux";
+import { attentionIssueTitle, evidenceDisplayLabel, sourceSystemLabel } from "./pi-ux";
 
 type OverallHealth = "GREEN" | "AMBER" | "RED" | "UNKNOWN";
 type Availability = "ok" | "no_data" | "unavailable" | "forbidden" | "stale" | "error";
@@ -195,7 +195,7 @@ export function ScheduleIntelligenceSummary({
                 className="rounded-md border border-slate-200 px-3 py-2 text-sm"
               >
                 <p className="font-medium">
-                  {item.severity.toUpperCase()} · {item.reasonCode}
+                  {item.severity.toUpperCase()} · {attentionIssueTitle(item.reasonCode)}
                 </p>
                 <p className="text-slate-700">{item.explanation}</p>
               </li>
@@ -225,8 +225,7 @@ export function ScheduleIntelligenceSummary({
             <ul className="mt-1 space-y-1 text-xs text-slate-600">
               {view.evidenceReferences.map((ref) => (
                 <li key={`${ref.entityType}:${ref.entityId}`}>
-                  {ref.sourceDomain}:{ref.entityType}:{ref.entityId}
-                  {ref.sourceTimestamp ? ` @ ${ref.sourceTimestamp}` : ""}
+                  {evidenceDisplayLabel(ref)}
                 </li>
               ))}
             </ul>
@@ -245,7 +244,7 @@ export function ScheduleIntelligenceSummary({
           Evidence:{" "}
           {view.evidenceReferences
             .slice(0, 4)
-            .map((ref) => `${ref.entityType}:${ref.entityId}`)
+            .map((ref) => evidenceDisplayLabel(ref))
             .join(", ")}
         </p>
       ) : null}
@@ -343,7 +342,7 @@ export function ProjectScheduleIntelligenceView() {
   return (
     <div data-testid="project-intelligence-schedule" className="space-y-8">
       <label className="block max-w-md text-sm text-slate-700">
-        Canonical project
+        Project
         <select
           data-testid="schedule-intelligence-project-select"
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
@@ -368,7 +367,7 @@ export function ProjectScheduleIntelligenceView() {
 
       {!selectedId ? (
         <EmptyState
-          title="Select a canonical project"
+          title="Select a project"
           description="Schedule Intelligence interprets published Project Controls schedule assessments for one selected project."
           data-testid="schedule-intelligence-project-empty"
         />
