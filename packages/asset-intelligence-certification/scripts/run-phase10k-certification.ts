@@ -811,8 +811,8 @@ async function main() {
     "BC",
     "GA readiness marker",
     fileOk(UI_PAGE, /data-testid="asset-intelligence-v1-ready"/) &&
-      fileOk(UI_PAGE, /data-testid="asset-intelligence-ga-version"/) &&
-      fileOk(UI_PAGE, /data-testid="asset-intelligence-v1-surfaces"/) &&
+      fileOk(UI_RELEASE, /data-testid="asset-intelligence-ga-version"/) &&
+      fileOk(UI_RELEASE, /data-testid="asset-intelligence-v1-surfaces"/) &&
       fileOk(UI_RELEASE, /data-testid="asset-intelligence-release-ga-version"/) &&
       fileOk(UI_RELEASE, /asset-intelligence-v1\.0\.0/) &&
       [
@@ -827,18 +827,18 @@ async function main() {
         "priority",
         "fusion",
         "predictive-governance",
-      ].every((surfaceId) => fileOk(UI_PAGE, new RegExp(`id: "${surfaceId}"`)))
+      ].every((surfaceId) => fileOk(UI_RELEASE, new RegExp(`asset-intelligence-surface-${surfaceId}`)))
       ? "pass"
       : "fail",
   );
   push(
     "BD",
     "Unavailable labels in UI",
-    fileOk(UI_PAGE, /data-testid="asset-intelligence-unavailable-capabilities"/) &&
-      fileOk(UI_PAGE, /Predictive execution/) &&
-      fileOk(UI_PAGE, /Probability of Failure \(PoF\)/) &&
-      fileOk(UI_PAGE, /Remaining Useful Life \(RUL\)/) &&
-      fileOk(UI_PAGE, /UNAVAILABLE/) &&
+    fileOk(UI_RELEASE, /data-testid="asset-intelligence-unavailable-capabilities"/) &&
+      fileOk(UI_RELEASE, /Predictive execution/) &&
+      fileOk(UI_RELEASE, /Probability of Failure \(PoF\)/) &&
+      fileOk(UI_RELEASE, /Remaining Useful Life \(RUL\)/) &&
+      fileOk(UI_RELEASE, /UNAVAILABLE/) &&
       fileOk(UI_RELEASE, /UNAVAILABLE — not production functions of V1\.0/)
       ? "pass"
       : "fail",
@@ -858,7 +858,7 @@ async function main() {
     "BF",
     "Accessibility",
     fileOk(UI_PAGE, /aria-labelledby="ai-overview-title"/) &&
-      fileOk(UI_PAGE, /aria-label="Capabilities unavailable in V1\.0"/) &&
+      fileOk(UI_RELEASE, /aria-label="Capabilities unavailable in V1\.0"/) &&
       fileOk(UI_RELEASE, /aria-labelledby="ai-release-title"/) &&
       fileOk(UI_SHELL, /aria-label="Asset Intelligence sections"/) &&
       fileOk(PLAYWRIGHT_SPEC, /accessible landmarks and navigation/) &&

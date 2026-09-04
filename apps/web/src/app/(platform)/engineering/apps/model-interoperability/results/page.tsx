@@ -1,60 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { EmiSnapshotTablePage } from "@/components/engineering/emi-snapshot-page";
+import { pickString } from "@/lib/engineering/module-ops";
 
 export default function EngineeringModelResultsPage() {
-  const [results, setResults] = useState<unknown[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/engineering/model-interoperability/workspace-snapshot")
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`snapshot_${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
-        if (!cancelled) {
-          setResults(
-            Array.isArray(json.data?.surfaces?.results?.data) ? json.data.surfaces.results.data : [],
-          );
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "load_failed");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
-    <section data-testid="emi-results-page" aria-labelledby="emi-results-title">
-      <h1 id="emi-results-title" className="text-2xl font-semibold">
-        Results
-      </h1>
-      <p className="mt-2 text-slate-600">
-        Existing external result references only — not RTB-certified live solver output.
-      </p>
-      {loading ? <p className="mt-6 text-sm text-slate-500">Loading…</p> : null}
-      {error ? (
-        <p className="mt-6 text-sm text-red-700" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {results.length === 0 && !loading ? (
-        <p className="mt-6 text-sm text-slate-600" data-testid="emi-results-empty">
-          No result references. Truthful empty state.
-        </p>
-      ) : (
-        <pre className="mt-6 max-h-96 overflow-auto rounded bg-slate-50 p-3 text-xs">
-          {JSON.stringify(results, null, 2)}
-        </pre>
-      )}
-    </section>
+    <EmiSnapshotTablePage
+      title="Results"
+      purpose="Existing external result references. These are not RTB-certified live solver output."
+      testId="emi-results-page"
+      surfaceKey="results"
+      emptyTitle="No result references are recorded for this project."
+      emptyDescription="External results appear when a federated export includes result records. Execution unavailable until a certified host run exists."
+      columns={[
+        { key: "result", label: "Result" },
+        { key: "model", label: "Model" },
+        { key: "status", label: "Status", status: true },
+        { key: "source", label: "Source" },
+      ]}
+      mapRow={(rec, index) => ({
+        id: pickString(rec, ["id", "resultId"], String(index)),
+        result: pickString(rec, ["displayName", "title", "id"]),
+        model: pickString(rec, ["modelRefId"]),
+        status: pickString(rec, ["status"], "External result"),
+        source: pickString(rec, ["providerKey", "source"]),
+      })}
+    />
   );
 }

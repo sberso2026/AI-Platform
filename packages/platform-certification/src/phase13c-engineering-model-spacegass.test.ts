@@ -94,12 +94,12 @@ describe("Phase 13C Engineering Model SPACE GASS", () => {
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase13c/);
     expect(
       read(
-        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/release/page.tsx",
       ),
     ).toMatch(/engineering-model-spacegass-ready/);
     expect(
       read(
-        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/release/page.tsx",
       ),
     ).toMatch(/engineering-model-ifc-federation-ready/);
   });

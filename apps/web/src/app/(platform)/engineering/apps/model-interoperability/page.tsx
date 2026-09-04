@@ -1,113 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   AskEngineeringAI,
+  EmptyOperationalState,
   OperationalError,
   OperationalMetricCard,
   OperationalPageIntro,
   OperationalSkeleton,
   StatusTable,
-  type OperationalRow,
 } from "@/components/engineering/operational";
-
-type SurfaceBlock = {
-  surface: string;
-  present: boolean;
-  data: unknown;
-};
-
-function asRows(data: unknown): OperationalRow[] {
-  if (!Array.isArray(data)) return [];
-  return data.map((item, index) => {
-    const rec = (item && typeof item === "object" ? item : { value: item }) as Record<string, unknown>;
-    const id = String(rec.id ?? rec.modelId ?? rec.model_id ?? index);
-    const software = String(
-      rec.sourceSoftware ?? rec.source_software ?? rec.software ?? rec.provider ?? rec.format ?? "—",
-    );
-    return {
-      id,
-      model: String(rec.name ?? rec.modelName ?? rec.title ?? rec.fileName ?? id),
-      project: String(rec.projectName ?? rec.project_id ?? rec.assetId ?? rec.asset_id ?? "—"),
-      software: humanSoftware(software),
-      revision: String(rec.revision ?? rec.version ?? rec.revisionId ?? "—"),
-      status: String(rec.status ?? rec.federationStatus ?? "recorded"),
-      updated: String(rec.updatedAt ?? rec.updated_at ?? rec.lastUpdated ?? "—"),
-      href: "/engineering/apps/model-interoperability/models",
-    };
-  });
-}
-
-function humanSoftware(raw: string): string {
-  const key = raw.toLowerCase();
-  if (key.includes("etabs")) return "ETABS";
-  if (key.includes("space") && key.includes("gass")) return "SPACE GASS";
-  if (key.includes("spacegass")) return "SPACE GASS";
-  if (key.includes("ifc")) return "IFC";
-  return raw === "—" ? "—" : raw;
-}
+import { asList } from "@/lib/engineering/module-ops";
+import { modelRows, useEmiWorkspaceSnapshot } from "@/components/engineering/emi-snapshot-page";
 
 export default function EngineeringModelInteropOverviewPage() {
-  const [surfaces, setSurfaces] = useState<Record<string, SurfaceBlock> | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    const started = performance.now();
-    fetch("/api/engineering/model-interoperability/workspace-snapshot")
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`snapshot_${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
-        if (!cancelled) {
-          setSurfaces(json.data?.surfaces ?? null);
-          console.info(`[eos-ux-1] model-interoperability wall_ms=${Math.round(performance.now() - started)}`);
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "load_failed");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const models = asRows(surfaces?.models?.data);
-  const mappingCount = Array.isArray(surfaces?.mappings?.data)
-    ? (surfaces?.mappings?.data as unknown[]).length
-    : 0;
-  const resultCount = Array.isArray(surfaces?.results?.data)
-    ? (surfaces?.results?.data as unknown[]).length
-    : 0;
+  const { surfaces, error, loading, load } = useEmiWorkspaceSnapshot();
+  const models = modelRows(surfaces?.models?.data);
+  const mappingCount = asList(surfaces?.mappings?.data).length;
+  const resultCount = asList(surfaces?.results?.data).length;
 
   return (
-    <section aria-labelledby="emi-overview-title">
+    <section aria-labelledby="emi-overview-title" data-testid="engineering-model-interoperability-v1-ready">
       <h1 id="emi-overview-title" className="text-2xl font-semibold text-slate-900">
         Engineering Models
       </h1>
       <OperationalPageIntro
-        purpose="Connected and imported models, revisions, and available review actions."
+        purpose="What models are registered, which have results, and what needs mapping or review."
         primaryAction={
           <Link
             href="/engineering/apps/model-interoperability/models"
             className="inline-flex min-h-11 items-center rounded-md bg-slate-900 px-3 text-sm font-medium text-white"
           >
-            Import / view models
+            Open model register
           </Link>
         }
       />
       <AskEngineeringAI q="Summarize connected engineering models in this workspace." />
 
-      {loading ? <div className="mt-6"><OperationalSkeleton /></div> : null}
+      {loading ? (
+        <div className="mt-6">
+          <OperationalSkeleton />
+        </div>
+      ) : null}
       {error ? (
         <div className="mt-6">
-          <OperationalError message={error} />
+          <OperationalError message={error} onRetry={load} />
         </div>
       ) : null}
 
@@ -130,26 +67,34 @@ export default function EngineeringModelInteropOverviewPage() {
         />
       </div>
 
-      <h2 className="mt-8 text-lg font-semibold text-slate-900">Connected / imported models</h2>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Model register</h2>
       <div className="mt-3">
-        <StatusTable
-          testId="emi-models-table"
-          columns={[
-            { key: "model", label: "Model", hrefKey: true },
-            { key: "project", label: "Project / Asset" },
-            { key: "software", label: "Source software" },
-            { key: "revision", label: "Revision" },
-            { key: "status", label: "Status", status: true },
-            { key: "updated", label: "Last updated" },
-          ]}
-          rows={models}
-          emptyTitle="No models connected"
-          emptyDescription="No imported models are recorded in this workspace yet. That is normal before a model is federated."
-          emptyTestId="emi-empty-models"
-        />
+        {models.length === 0 && !loading ? (
+          <EmptyOperationalState
+            title="No engineering model is registered for this project."
+            description="Imported IFC, SPACE GASS, and ETABS models appear here after federation. Live solver execution is not implied."
+            testId="emi-empty-models"
+          />
+        ) : (
+          <StatusTable
+            testId="emi-models-table"
+            columns={[
+              { key: "model", label: "Model name", hrefKey: true },
+              { key: "type", label: "Type" },
+              { key: "project", label: "Project" },
+              { key: "revision", label: "Revision" },
+              { key: "source", label: "Source" },
+              { key: "status", label: "Status", status: true },
+              { key: "updated", label: "Last update" },
+            ]}
+            rows={models}
+            emptyTitle="No engineering model is registered for this project."
+            emptyDescription="Imported models appear here after federation."
+          />
+        )}
       </div>
 
-      <h2 className="mt-8 text-lg font-semibold text-slate-900">Source systems in this workspace</h2>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Supported sources</h2>
       <p className="mt-1 text-sm text-slate-600">
         Review recorded models and results. Live solver execution is not implied.
       </p>

@@ -158,7 +158,9 @@ export default function AssetIntelligenceAssetDetailPage() {
                 <p className="mt-2 text-sm text-slate-800">{summarize(block.data)}</p>
               ) : (
                 <p className="mt-2 text-sm text-slate-600" data-testid={`ai-surface-${key}-empty`}>
-                  No recorded {label.toLowerCase()} for this asset yet.
+                  {key === "condition"
+                    ? "No condition evidence has been published for this asset."
+                    : `No recorded ${label.toLowerCase()} for this asset yet.`}
                 </p>
               )}
             </li>

@@ -1,61 +1,62 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  EmptyOperationalState,
+  OperationalError,
+  OperationalPageIntro,
+  OperationalSkeleton,
+} from "@/components/engineering/operational";
+import { asList, asRecord, pickString } from "@/lib/engineering/module-ops";
+import { humanSource, useEmiWorkspaceSnapshot } from "@/components/engineering/emi-snapshot-page";
 
 export default function EngineeringModelFederationPage() {
-  const [spacegass, setSpacegass] = useState<unknown>(null);
-  const [etabs, setEtabs] = useState<unknown>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { surfaces, error, loading, load } = useEmiWorkspaceSnapshot();
+  const models = asList(surfaces?.models?.data).map(asRecord);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/engineering/model-interoperability/workspace-snapshot")
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`snapshot_${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
-        if (cancelled) return;
-        setSpacegass(json.data?.surfaces?.spacegass?.data ?? null);
-        setEtabs(json.data?.surfaces?.etabs?.data ?? null);
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "load_failed");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const groups = [
+    { name: "IFC", match: (s: string) => s.toLowerCase().includes("ifc") },
+    { name: "SPACE GASS", match: (s: string) => s.toLowerCase().includes("space") },
+    { name: "ETABS", match: (s: string) => s.toLowerCase().includes("etabs") },
+  ];
 
   return (
     <section data-testid="emi-federation-page" aria-labelledby="emi-federation-title">
-      <h1 id="emi-federation-title" className="text-2xl font-semibold">
-        Federation
+      <h1 id="emi-federation-title" className="text-2xl font-semibold text-slate-900">
+        Interoperability
       </h1>
-      <p className="mt-2 text-slate-600">
-        Provider status and qualification posture. Live SPACE GASS / ETABS execution is NOT
-        CERTIFIED.
-      </p>
-      {loading ? <p className="mt-6 text-sm text-slate-500">Loading…</p> : null}
-      {error ? (
-        <p className="mt-6 text-sm text-red-700" role="alert">
-          {error}
-        </p>
-      ) : null}
-      <h2 className="mt-6 text-lg font-semibold">SPACE GASS</h2>
-      <pre className="mt-2 max-h-64 overflow-auto rounded bg-slate-50 p-3 text-xs" data-testid="emi-spacegass-status">
-        {JSON.stringify(spacegass, null, 2)}
-      </pre>
-      <h2 className="mt-6 text-lg font-semibold">ETABS</h2>
-      <pre className="mt-2 max-h-64 overflow-auto rounded bg-slate-50 p-3 text-xs" data-testid="emi-etabs-status">
-        {JSON.stringify(etabs, null, 2)}
-      </pre>
-      <p className="mt-6 text-sm text-slate-600">
-        No live solver execution is offered from this surface.
+      <OperationalPageIntro purpose="Federated models by source. Live solver execution is not available from this workspace." />
+      {loading ? <OperationalSkeleton /> : null}
+      {error ? <OperationalError message={error} onRetry={load} /> : null}
+      {!loading && models.length === 0 ? (
+        <EmptyOperationalState
+          title="No engineering model is registered for this project."
+          description="IFC, SPACE GASS, and ETABS federation records appear here after import."
+          testId="emi-interop-empty"
+        />
+      ) : (
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {groups.map((group) => {
+            const count = models.filter((rec) =>
+              group.match(humanSource(pickString(rec, ["providerKey", "formatFamily"]))),
+            ).length;
+            return (
+              <div key={group.name} className="rounded-lg border border-slate-200 bg-white p-4">
+                <h2 className="text-sm font-semibold">{group.name}</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  {count > 0 ? `${count} federated model${count === 1 ? "" : "s"}` : "No federated models yet"}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">Execution unavailable — imported and federated records only.</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p className="mt-6 text-sm">
+        <Link href="/engineering/apps/model-interoperability/release" className="font-medium underline">
+          Provider and execution certification
+        </Link>
+        <span className="text-slate-500"> is under Administration.</span>
       </p>
     </section>
   );

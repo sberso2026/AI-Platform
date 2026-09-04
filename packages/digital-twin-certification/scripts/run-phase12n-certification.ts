@@ -810,8 +810,8 @@ async function main() {
     "BJ",
     "GA readiness marker",
     fileOk(UI_PAGE, /data-testid="digital-twin-v1-ready"/) &&
-      fileOk(UI_PAGE, /data-testid="digital-twin-ga-version"/) &&
-      fileOk(UI_PAGE, /data-testid="digital-twin-v1-surfaces"/) &&
+      fileOk(UI_RELEASE, /data-testid="digital-twin-ga-version"/) &&
+      fileOk(UI_RELEASE, /data-testid="digital-twin-v1-surfaces"/) &&
       fileOk(UI_RELEASE, /data-testid="digital-twin-release-ga-version"/) &&
       fileOk(UI_RELEASE, /digital-twin-v1\.0\.0/)
       ? "pass"
@@ -820,9 +820,9 @@ async function main() {
   push(
     "BK",
     "Unavailable labels in UI",
-    fileOk(UI_PAGE, /data-testid="digital-twin-unavailable-capabilities"/) &&
-      fileOk(UI_PAGE, /Physical actuation|actuation/i) &&
-      fileOk(UI_PAGE, /UNAVAILABLE/) &&
+    fileOk(UI_RELEASE, /data-testid="digital-twin-unavailable-capabilities"/) &&
+      fileOk(UI_RELEASE, /Physical actuation|actuation/i) &&
+      fileOk(UI_RELEASE, /UNAVAILABLE/) &&
       fileOk(UI_RELEASE, /UNAVAILABLE — not production functions of V1\.0/)
       ? "pass"
       : "fail",

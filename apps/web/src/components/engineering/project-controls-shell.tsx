@@ -1,29 +1,36 @@
-import { ModuleSectionNav } from "@/components/engineering/module-section-nav";
+"use client";
 
-const LINKS = [
-  { href: "/engineering/apps/project-controls", label: "Workspace", exact: true },
-  { href: "/engineering/apps/project-controls/release", label: "Governance" },
+import { ModuleOpsShell } from "@/components/engineering/module-ops-shell";
+
+const PRIMARY = [
+  { href: "/engineering/apps/project-controls", label: "Overview", exact: true },
+  { href: "/engineering/apps/project-controls/progress", label: "Progress" },
+  { href: "/engineering/apps/project-controls/schedule", label: "Schedule" },
+  { href: "/engineering/apps/project-controls/cost", label: "Cost" },
+  { href: "/engineering/apps/project-controls/change", label: "Change" },
+  { href: "/engineering/apps/project-controls/productivity", label: "Productivity" },
+  { href: "/engineering/apps/project-controls/forecast", label: "Forecast" },
+  { href: "/engineering/apps/project-controls/scenarios", label: "Scenarios" },
+  { href: "/engineering/apps/project-controls/assurance", label: "Assurance" },
+] as const;
+
+const ADMIN = [
+  { href: "/engineering/apps/project-controls/release", label: "Diagnostics / Release" },
 ] as const;
 
 export function ProjectControlsShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="mx-auto max-w-6xl px-4 py-6"
-      data-testid="project-controls-shell"
-      data-module-version="1.0.0"
-      data-module-status="ga"
+    <ModuleOpsShell
+      title="Project Controls"
+      description="Published progress, schedule, cost, change, and forecast evidence."
+      testId="project-controls-shell"
+      primaryLinks={PRIMARY}
+      adminLinks={ADMIN}
+      adminLabel="Administration"
+      moduleVersionAttr="1.0.0"
+      moduleStatusAttr="ga"
     >
-      <header className="mb-6 border-b border-slate-200 pb-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Engineering OS
-        </p>
-        <h2 className="text-lg font-semibold text-slate-900">Project Controls</h2>
-        <p className="mt-1 text-sm text-slate-600" data-testid="project-controls-ownership">
-          Progress, schedule, cost, change, and forecast intelligence from available project data.
-        </p>
-        <ModuleSectionNav links={LINKS} ariaLabel="Project Controls sections" />
-      </header>
       {children}
-    </div>
+    </ModuleOpsShell>
   );
 }

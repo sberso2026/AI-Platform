@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
   useEngineeringProjectFilter,
@@ -9,97 +9,22 @@ import {
 } from "@/hooks/use-engineering-project-filter";
 import {
   AskEngineeringAI,
+  EmptyOperationalState,
   OperationalError,
-  OperationalMetricCard,
   OperationalPageIntro,
   OperationalSkeleton,
-  ProvenanceLink,
   WorkQueue,
   type OperationalRow,
 } from "@/components/engineering/operational";
 
 type DashboardPayload = {
   openActionsCount?: number;
-  pendingDecisionsCount?: number;
-  openRisksCount?: number;
-  openTechnicalQueriesCount?: number;
-  openIssuesCount?: number;
   attention?: {
     openActions?: OperationalRow[];
-    pendingDecisions?: OperationalRow[];
-    highRisks?: OperationalRow[];
-    openRisks?: OperationalRow[];
-    openTqs?: OperationalRow[];
-    projects?: OperationalRow[];
+    openIssues?: OperationalRow[];
   };
   activeProjects?: OperationalRow[];
 };
-
-const SURFACES = [
-  {
-    id: "progress",
-    name: "Progress",
-    href: "/engineering/projects",
-    summary: "Descriptive progress from recorded project status and activity.",
-    limitation: null as string | null,
-  },
-  {
-    id: "schedule",
-    name: "Schedule",
-    href: "/engineering/timeline",
-    summary: "Descriptive schedule intelligence from available project data.",
-    limitation: "Native CPM calculation is not available.",
-  },
-  {
-    id: "cost",
-    name: "Cost / progress",
-    href: "/engineering/reports",
-    summary: "Descriptive cost intelligence from available project data.",
-    limitation: "Authoritative cost control / ledger posting is not available.",
-  },
-  {
-    id: "change",
-    name: "Change",
-    href: "/engineering/issues",
-    summary: "Change signals from recorded issues and findings.",
-    limitation: null,
-  },
-  {
-    id: "forecast",
-    name: "Forecast",
-    href: "/engineering/apps/project-intelligence/reports",
-    summary: "Advisory trajectory from composed contributors where certified.",
-    limitation: null,
-  },
-  {
-    id: "risk-opportunity",
-    name: "Risk / opportunity",
-    href: "/engineering/risks",
-    summary: "Advisory risk signals from the engineering risk register.",
-    limitation: null,
-  },
-  {
-    id: "decision",
-    name: "Decision support",
-    href: "/engineering/decisions",
-    summary: "Options and recommendations. Humans own decisions.",
-    limitation: null,
-  },
-  {
-    id: "scenario",
-    name: "Scenario",
-    href: "/engineering/apps/project-controls/release",
-    summary: "Exploratory comparisons. No auto-execution.",
-    limitation: null,
-  },
-  {
-    id: "assurance",
-    name: "Assurance",
-    href: "/engineering/apps/project-controls/release",
-    summary: "Advisory posture and known limitations.",
-    limitation: null,
-  },
-] as const;
 
 export default function ProjectControlsOverviewPage() {
   const projectId = useEngineeringProjectFilter();
@@ -107,25 +32,29 @@ export default function ProjectControlsOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     fetch(withProjectQuery("/api/engineering/dashboard", projectId))
       .then((r) => parseApiJsonResponse<DashboardPayload>(r))
       .then((parsed) => {
         if (!parsed.ok) {
           setError(parsed.errorMessage ?? "Failed to load project controls");
+          setDashboard(null);
           return;
         }
         setDashboard(parsed.data);
         setError(null);
       })
-      .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : "Failed to load project controls"),
-      )
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load project controls"))
       .finally(() => setLoading(false));
   }, [projectId]);
 
-  const attention = dashboard?.attention ?? {};
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const actions = dashboard?.attention?.openActions ?? [];
+  const issues = dashboard?.attention?.openIssues ?? [];
 
   return (
     <section data-testid="project-controls-ready" aria-labelledby="pc-overview-title">
@@ -133,100 +62,114 @@ export default function ProjectControlsOverviewPage() {
         <h1 id="pc-overview-title" className="text-2xl font-semibold text-slate-900">
           Project Controls
         </h1>
-        <p className="mt-1 text-xs text-slate-500">
-          Version <span data-testid="project-controls-ga-version">1.0.0</span>
-        </p>
         <OperationalPageIntro
-          purpose="Progress, schedule, cost, change, forecast, and decision support from recorded project data."
+          purpose="Published progress, schedule, cost, change, productivity, and forecast evidence for the selected project."
         />
-        <ProvenanceLink
-          href="/engineering/apps/project-controls/release"
-          label="About this insight · Methodology · Governance"
+        <AskEngineeringAI
+          projectId={projectId}
+          q="What published project controls evidence needs attention?"
         />
-        <div className="mt-3">
-          <AskEngineeringAI
-            projectId={projectId}
-            q="Summarize project controls status from recorded evidence."
-          />
-        </div>
 
-        {loading ? <div className="mt-6"><OperationalSkeleton /></div> : null}
+        {loading ? (
+          <div className="mt-6">
+            <OperationalSkeleton />
+          </div>
+        ) : null}
         {error ? (
           <div className="mt-6">
-            <OperationalError message={error} />
+            <OperationalError message={error} onRetry={load} />
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <OperationalMetricCard
-            label="Open risks"
-            value={dashboard?.openRisksCount ?? 0}
-            href="/engineering/risks"
-          />
-          <OperationalMetricCard
-            label="Open TQs"
-            value={dashboard?.openTechnicalQueriesCount ?? 0}
-            href="/engineering/technical-queries"
-          />
-          <OperationalMetricCard
-            label="Outstanding actions"
-            value={dashboard?.openActionsCount ?? 0}
+        <div className="mt-6 grid gap-4 lg:grid-cols-2" data-testid="pc-attention">
+          <WorkQueue
+            title="Attention required"
             href="/engineering/actions"
-          />
-          <OperationalMetricCard
-            label="Pending decisions"
-            value={dashboard?.pendingDecisionsCount ?? 0}
-            href="/engineering/decisions"
-          />
-        </div>
-
-        <div className="mt-8 grid gap-4 lg:grid-cols-2">
-          <WorkQueue
-            title="Risk / opportunity"
-            href="/engineering/risks"
-            rows={attention.highRisks ?? attention.openRisks ?? []}
-            labelKeys={["title", "risk_title"]}
+            rows={actions}
+            labelKeys={["title", "action_title"]}
             statusKey="status"
-            emptyTitle="No recorded risks"
-            emptyDescription="Risk signals appear here from the engineering register."
+            emptyTitle="Nothing currently requires action from published controls."
+            emptyDescription="Outstanding actions owned by Project Controls appear here when published."
           />
           <WorkQueue
-            title="Decision support"
-            href="/engineering/decisions"
-            rows={attention.pendingDecisions ?? []}
-            labelKeys={["title", "decision_title"]}
-            statusKey="approval_status"
-            emptyTitle="No pending decisions"
-            emptyDescription="Decisions awaiting attention appear here."
+            title="Change signals"
+            href="/engineering/apps/project-controls/change"
+            rows={issues}
+            labelKeys={["title", "issue_title"]}
+            statusKey="status"
+            emptyTitle="No published change evidence is available."
+            emptyDescription="Change intelligence is descriptive. It is not contractual authority."
           />
         </div>
 
-        <ul
-          className="mt-8 grid gap-3 sm:grid-cols-2"
-          data-testid="project-controls-v1-surfaces"
-          aria-label="Project Controls workspace"
-        >
-          {SURFACES.map((surface) => (
-            <li
-              key={surface.id}
-              className="rounded-md border border-slate-200 bg-white p-4"
-              data-testid={`project-controls-surface-${surface.id}`}
-            >
-              <p className="text-sm font-medium text-slate-900">{surface.name}</p>
-              <p className="mt-1 text-sm text-slate-600">{surface.summary}</p>
-              {surface.limitation ? (
-                <p className="mt-2 text-xs text-slate-500">{surface.limitation}</p>
-              ) : null}
-              <Link
-                href={surface.href}
-                className="mt-3 inline-block text-sm font-medium underline-offset-2 hover:underline"
-              >
-                Open {surface.name.toLowerCase()}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <ControlsCard
+            title="Progress"
+            href="/engineering/apps/project-controls/progress"
+            body="Descriptive progress from published project status. Not earned value."
+          />
+          <ControlsCard
+            title="Schedule"
+            href="/engineering/apps/project-controls/schedule"
+            body="Descriptive schedule signals from available project data. Native CPM is not available."
+          />
+          <ControlsCard
+            title="Cost"
+            href="/engineering/apps/project-controls/cost"
+            body="Descriptive cost signals. This is not a budget ledger."
+          />
+          <ControlsCard
+            title="Forecast"
+            href="/engineering/apps/project-controls/forecast"
+            body="Advisory trajectory where published. Not predictive scheduling."
+            advisory
+          />
+          <ControlsCard
+            title="Productivity"
+            href="/engineering/apps/project-controls/productivity"
+            body="Descriptive productivity signals. Not workforce management."
+          />
+          <ControlsCard
+            title="Assurance"
+            href="/engineering/apps/project-controls/assurance"
+            body="Advisory assurance posture and known limitations."
+            advisory
+          />
+        </section>
+
+        {!loading && !projectId ? (
+          <div className="mt-8">
+            <EmptyOperationalState
+              title="Select a project to inspect published controls."
+              description="Use the project selector in the command header. All-projects scope shows workspace attention only."
+            />
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function ControlsCard({
+  title,
+  href,
+  body,
+  advisory,
+}: {
+  title: string;
+  href: string;
+  body: string;
+  advisory?: boolean;
+}) {
+  return (
+    <Link href={href} className="rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-400">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+        {advisory ? (
+          <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-amber-800">Advisory</span>
+        ) : null}
+      </div>
+      <p className="mt-2 text-sm text-slate-600">{body}</p>
+    </Link>
   );
 }

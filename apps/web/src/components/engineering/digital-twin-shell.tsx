@@ -1,32 +1,35 @@
 "use client";
 
-import { ModuleSectionNav } from "@/components/engineering/module-section-nav";
+import { ModuleOpsShell } from "@/components/engineering/module-ops-shell";
 
-const LINKS = [
+const PRIMARY = [
   { href: "/engineering/apps/digital-twin", label: "Overview", exact: true },
   { href: "/engineering/apps/digital-twin/twins", label: "Twins" },
-  { href: "/engineering/apps/digital-twin/release", label: "Governance", exact: true },
+  { href: "/engineering/apps/digital-twin/state", label: "State" },
+  { href: "/engineering/apps/digital-twin/history", label: "History" },
+  { href: "/engineering/apps/digital-twin/representation", label: "Representation" },
+  { href: "/engineering/apps/digital-twin/telemetry", label: "Telemetry" },
+  { href: "/engineering/apps/digital-twin/digital-thread", label: "Digital Thread" },
+  { href: "/engineering/apps/digital-twin/evidence", label: "Evidence" },
+] as const;
+
+const ADMIN = [
+  { href: "/engineering/apps/digital-twin/release", label: "Diagnostics / Release" },
 ] as const;
 
 export function DigitalTwinShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="mx-auto max-w-6xl px-4 py-6"
-      data-testid="digital-twin-shell"
-      data-module-version="1.0.0"
-      data-module-status="ga"
+    <ModuleOpsShell
+      title="Digital Twin"
+      description="Recorded twin identity, state, history, and linked evidence."
+      testId="digital-twin-shell"
+      primaryLinks={PRIMARY}
+      adminLinks={ADMIN}
+      adminLabel="Administration"
+      moduleVersionAttr="1.0.0"
+      moduleStatusAttr="ga"
     >
-      <header className="mb-6 border-b border-slate-200 pb-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Engineering OS
-        </p>
-        <h2 className="text-lg font-semibold text-slate-900">Digital Twin</h2>
-        <p className="mt-1 text-sm text-slate-600" data-testid="digital-twin-ownership">
-          Recorded twin state, history, telemetry bindings, and digital thread.
-        </p>
-        <ModuleSectionNav links={LINKS} ariaLabel="Digital Twin sections" />
-      </header>
       {children}
-    </div>
+    </ModuleOpsShell>
   );
 }

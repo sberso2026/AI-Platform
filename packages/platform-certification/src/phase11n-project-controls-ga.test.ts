@@ -107,8 +107,9 @@ describe("Phase 11N Project Controls V1.0 GA closure", () => {
 
   it("exposes Engineering OS module page with GA readiness marker", () => {
     const page = read(`${UI_BASE}/page.tsx`);
+    const release = read(`${UI_BASE}/release/page.tsx`);
     expect(page).toMatch(/data-testid="project-controls-v1-ready"/);
-    expect(page).toMatch(/data-testid="project-controls-ga-version"/);
+    expect(release).toMatch(/data-testid="project-controls-ga-version"/);
     expect(read(`${UI_BASE}/layout.tsx`)).toMatch(
       /ENGINEERING_PAGE_POLICIES\["\/engineering\/apps\/project-controls"\]/,
     );

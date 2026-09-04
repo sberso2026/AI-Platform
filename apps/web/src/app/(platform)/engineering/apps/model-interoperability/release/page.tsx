@@ -5,7 +5,8 @@ import { GovernancePanel } from "@/components/engineering/governance-panel";
  */
 export default function EngineeringModelInteropReleasePage() {
   return (
-    <main className="p-8">
+    <main className="p-8" data-testid="emi-release-page">
+      <h1 className="mb-4 text-2xl font-semibold text-slate-900">Administration / Provider / Execution Certification</h1>
       <GovernancePanel
         moduleName="Engineering Model Interoperability"
         version="1.0.0"

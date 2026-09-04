@@ -109,8 +109,9 @@ describe("Phase 12N Digital Twin V1.0 GA closure", () => {
 
   it("exposes Engineering OS module page with GA readiness marker", () => {
     const page = read(`${UI_BASE}/page.tsx`);
+    const release = read(`${UI_BASE}/release/page.tsx`);
     expect(page).toMatch(/data-testid="digital-twin-v1-ready"/);
-    expect(page).toMatch(/data-testid="digital-twin-ga-version"/);
+    expect(release).toMatch(/data-testid="digital-twin-ga-version"/);
     expect(read(`${UI_BASE}/layout.tsx`)).toMatch(
       /ENGINEERING_PAGE_POLICIES\["\/engineering\/apps\/digital-twin"\]/,
     );

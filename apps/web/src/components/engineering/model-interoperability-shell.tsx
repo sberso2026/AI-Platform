@@ -1,35 +1,35 @@
 "use client";
 
-import { ModuleSectionNav } from "@/components/engineering/module-section-nav";
+import { ModuleOpsShell } from "@/components/engineering/module-ops-shell";
 
-const LINKS = [
+const PRIMARY = [
   { href: "/engineering/apps/model-interoperability", label: "Overview", exact: true },
   { href: "/engineering/apps/model-interoperability/models", label: "Models" },
-  { href: "/engineering/apps/model-interoperability/results", label: "Results" },
-  { href: "/engineering/apps/model-interoperability/federation", label: "Compare" },
+  { href: "/engineering/apps/model-interoperability/versions", label: "Versions" },
+  { href: "/engineering/apps/model-interoperability/elements", label: "Elements" },
   { href: "/engineering/apps/model-interoperability/mappings", label: "Mappings" },
-  { href: "/engineering/apps/model-interoperability/release", label: "Governance", exact: true },
+  { href: "/engineering/apps/model-interoperability/results", label: "Results" },
+  { href: "/engineering/apps/model-interoperability/federation", label: "Interoperability" },
+  { href: "/engineering/apps/model-interoperability/evidence", label: "Evidence" },
+] as const;
+
+const ADMIN = [
+  { href: "/engineering/apps/model-interoperability/release", label: "Provider / Execution Certification" },
 ] as const;
 
 export function ModelInteroperabilityShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="mx-auto max-w-6xl px-4 py-6"
-      data-testid="model-interoperability-shell"
-      data-module-version="1.0.0"
-      data-module-status="ga"
+    <ModuleOpsShell
+      title="Engineering Models"
+      description="Imported and federated models, versions, mappings, and external results."
+      testId="model-interoperability-shell"
+      primaryLinks={PRIMARY}
+      adminLinks={ADMIN}
+      adminLabel="Administration"
+      moduleVersionAttr="1.0.0"
+      moduleStatusAttr="ga"
     >
-      <header className="mb-6 border-b border-slate-200 pb-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Engineering OS
-        </p>
-        <h2 className="text-lg font-semibold text-slate-900">Engineering Models</h2>
-        <p className="mt-1 text-sm text-slate-600" data-testid="model-interoperability-ownership">
-          Imported and federated models from ETABS, SPACE GASS, IFC, and related sources.
-        </p>
-        <ModuleSectionNav links={LINKS} ariaLabel="Engineering Models sections" />
-      </header>
       {children}
-    </div>
+    </ModuleOpsShell>
   );
 }

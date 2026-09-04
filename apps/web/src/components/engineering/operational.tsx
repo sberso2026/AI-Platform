@@ -471,9 +471,11 @@ export function OperationalSkeleton({
 export function OperationalError({
   message,
   retryHref,
+  onRetry,
 }: {
   message: string;
   retryHref?: string;
+  onRetry?: () => void;
 }) {
   const copy = humanizeOperationalError(message);
   return (
@@ -489,9 +491,18 @@ export function OperationalError({
           {copy.diagnostic}
         </p>
       ) : null}
-      {retryHref ? (
+      {onRetry ? (
+        <button
+          type="button"
+          className="mt-2 inline-block font-medium underline"
+          data-testid="operational-retry"
+          onClick={onRetry}
+        >
+          Retry
+        </button>
+      ) : retryHref ? (
         <Link href={retryHref} className="mt-2 inline-block font-medium underline">
-          Try again
+          Retry
         </Link>
       ) : null}
     </div>

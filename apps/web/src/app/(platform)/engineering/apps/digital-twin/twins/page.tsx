@@ -53,7 +53,7 @@ export default function DigitalTwinTwinsPage() {
       ) : null}
       {!loading && twins.length === 0 ? (
         <p className="mt-6 text-sm text-slate-600" data-testid="dt-twins-empty">
-          No twins registered. Truthful empty state.
+          No digital twin has been linked to this asset.
         </p>
       ) : (
         <ul className="mt-6 space-y-2">

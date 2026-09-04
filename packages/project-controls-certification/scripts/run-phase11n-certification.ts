@@ -1002,12 +1002,12 @@ async function main() {
     "BG",
     "GA readiness marker",
     fileOk(UI_PAGE, /data-testid="project-controls-v1-ready"/) &&
-      fileOk(UI_PAGE, /data-testid="project-controls-ga-version"/) &&
-      fileOk(UI_PAGE, /data-testid="project-controls-v1-surfaces"/) &&
+      fileOk(UI_RELEASE, /data-testid="project-controls-ga-version"/) &&
+      fileOk(UI_RELEASE, /data-testid="project-controls-v1-surfaces"/) &&
       fileOk(UI_RELEASE, /data-testid="project-controls-release-ga-version"/) &&
       fileOk(UI_RELEASE, /project-controls-v1\.0\.0/) &&
       V1_SURFACES.every((surfaceId) =>
-        fileOk(UI_PAGE, new RegExp(`id: "${surfaceId}"|data-testid="project-controls-surface-${surfaceId}"`)),
+        fileOk(UI_RELEASE, new RegExp(`data-testid="project-controls-surface-${surfaceId}"`)),
       )
       ? "pass"
       : "fail",

@@ -89,7 +89,6 @@ export default function DigitalTwinDetailPage() {
     { href: `#digital_thread`, label: "Digital thread" },
     { href: `#representations`, label: "Representation" },
     { href: `#simulation_governance`, label: "Simulation" },
-    { href: "/engineering/apps/digital-twin/release", label: "Governance" },
   ];
 
   return (
@@ -133,7 +132,9 @@ export default function DigitalTwinDetailPage() {
                 <p className="mt-2 text-sm text-slate-800">{summarize(block.data)}</p>
               ) : (
                 <p className="mt-2 text-sm text-slate-600" data-testid={`dt-surface-${key}-empty`}>
-                  No {label.toLowerCase()} records yet.
+                  {key === "representations"
+                    ? "No model or spatial representation is currently linked."
+                    : `No ${label.toLowerCase()} records yet.`}
                 </p>
               )}
             </li>

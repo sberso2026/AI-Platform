@@ -179,13 +179,14 @@ describe("Phase 10K Asset Intelligence V1.0 GA closure", () => {
     }
 
     const page = read(`${UI_BASE}/page.tsx`);
+    const release = read(`${UI_BASE}/release/page.tsx`);
     expect(page).toMatch(/data-testid="asset-intelligence-v1-ready"/);
-    expect(page).toMatch(/data-testid="asset-intelligence-ga-version"/);
-    expect(page).toMatch(/data-testid="asset-intelligence-unavailable-capabilities"/);
-    expect(page).toMatch(/Predictive execution/);
-    expect(page).toMatch(/Probability of Failure \(PoF\)/);
-    expect(page).toMatch(/Remaining Useful Life \(RUL\)/);
-    expect(page).toMatch(/UNAVAILABLE/);
+    expect(release).toMatch(/data-testid="asset-intelligence-ga-version"/);
+    expect(release).toMatch(/data-testid="asset-intelligence-unavailable-capabilities"/);
+    expect(release).toMatch(/Predictive execution/);
+    expect(release).toMatch(/Probability of Failure \(PoF\)/);
+    expect(release).toMatch(/Remaining Useful Life \(RUL\)/);
+    expect(release).toMatch(/UNAVAILABLE/);
 
     expect(read(`${UI_BASE}/layout.tsx`)).toMatch(
       /ENGINEERING_PAGE_POLICIES\["\/engineering\/apps\/asset-intelligence"\]/,

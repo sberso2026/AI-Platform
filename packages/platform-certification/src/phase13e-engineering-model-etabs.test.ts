@@ -108,17 +108,17 @@ describe("Phase 13E Engineering Model ETABS", () => {
     expect(read(`${CERT}/package.json`)).toMatch(/certify:phase13e/);
     expect(
       read(
-        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/release/page.tsx",
       ),
     ).toMatch(/engineering-model-etabs-ready/);
     expect(
       read(
-        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/release/page.tsx",
       ),
     ).toMatch(/engineering-model-ifc-federation-ready/);
     expect(
       read(
-        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/page.tsx",
+        "apps/web/src/app/(platform)/engineering/apps/model-interoperability/release/page.tsx",
       ),
     ).toMatch(/engineering-model-spacegass-ready/);
   });
