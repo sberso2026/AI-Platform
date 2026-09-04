@@ -73,4 +73,36 @@ export class ProductApplicationRepository extends BaseRepository {
     if (error) this.fail("get application by key", error);
     return data;
   }
+
+  async ensureApplications(
+    productId: string,
+    applications: Array<{ applicationKey: string; name: string }>,
+  ): Promise<{ ensured: string[]; alreadyPresent: string[]; failed: string[] }> {
+    const ensured: string[] = [];
+    const alreadyPresent: string[] = [];
+    const failed: string[] = [];
+
+    for (const application of applications) {
+      const existing = await this.getApplicationByKey(application.applicationKey);
+      if (existing) {
+        alreadyPresent.push(application.applicationKey);
+        continue;
+      }
+      const { error } = await this.supabase.from("commercial_product_applications").upsert(
+        {
+          product_id: productId,
+          application_key: application.applicationKey,
+          name: application.name,
+        },
+        { onConflict: "product_id,application_key" },
+      );
+      if (error) {
+        failed.push(application.applicationKey);
+        continue;
+      }
+      ensured.push(application.applicationKey);
+    }
+
+    return { ensured, alreadyPresent, failed };
+  }
 }

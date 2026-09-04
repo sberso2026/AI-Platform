@@ -35,6 +35,19 @@ export interface ApplicationInstallationRequestInput {
 
 const ENGINEERING_PRODUCT_ID = "c1000000-0000-4000-8000-000000000001";
 
+export const ENGINEERING_OS_APPLICATION_KEYS = [
+  "project_intelligence",
+  "inspection_intelligence",
+  "asset_intelligence",
+  "project_controls",
+  "digital_twin",
+  "engineering_model_interoperability",
+  "documents",
+  "meetings",
+  "knowledge",
+  "structural_intelligence",
+] as const;
+
 export class ApplicationInstallationLifecycleService {
   constructor(
     private readonly appInstallations: ApplicationInstallationRepository,
@@ -58,7 +71,11 @@ export class ApplicationInstallationLifecycleService {
   ): Promise<CommercialApplicationInstallation> {
     const productId =
       input.productId ||
-      (input.applicationKey === "project_intelligence" ? ENGINEERING_PRODUCT_ID : "");
+      (ENGINEERING_OS_APPLICATION_KEYS.includes(
+        input.applicationKey as (typeof ENGINEERING_OS_APPLICATION_KEYS)[number],
+      )
+        ? ENGINEERING_PRODUCT_ID
+        : "");
     if (!productId) {
       throw new InstallationDependencyError(
         "Parent product is required",

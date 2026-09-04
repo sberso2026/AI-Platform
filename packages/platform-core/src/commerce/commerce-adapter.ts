@@ -31,6 +31,7 @@ const AVAILABLE_ENGINEERING_APP_KEYS = new Set([
   "project_controls",
   "digital_twin",
   "asset_intelligence",
+  "engineering_model_interoperability",
   "meeting_intelligence",
   "document_intelligence",
   "structural_intelligence",
@@ -43,6 +44,8 @@ const PI_ENGINEERING_OS_APP_DESCRIPTION =
 /** Display alias for standards_intelligence per commerce UI spec */
 const APPLICATION_DISPLAY_NAMES: Record<string, string> = {
   standards_intelligence: "Engineering Knowledge",
+  engineering_model_interoperability: "Engineering Models",
+  engineering_os: "Engineering OS",
 };
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {

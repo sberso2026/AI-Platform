@@ -80,6 +80,7 @@ export function createPlatformCommerce(supabase: SupabaseClient) {
   const licenceIssuance = new LicenseIssuanceService(
     licenses,
     planEntitlements,
+    productApplications,
     seats,
     events,
     cache

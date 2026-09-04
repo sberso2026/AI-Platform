@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge, Button } from "@rtb/ui";
-import type { CommercialSubscription } from "@rtb/types";
 import { CommerceAdminShell } from "@/components/commerce/commerce-admin-shell";
 import { CommerceDataTable } from "@/components/commerce/commerce-data-table";
 import { EntitlementDiagnoseButton } from "@/components/commerce/entitlement-diagnose-button";
+import { formatLocalDate, type SubscriptionDisplayRow } from "@/lib/commerce/commerce-display";
 
 export default function SubscriptionsPage() {
-  const [rows, setRows] = useState<CommercialSubscription[]>([]);
+  const [rows, setRows] = useState<SubscriptionDisplayRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +32,8 @@ export default function SubscriptionsPage() {
   const summary = useMemo(() => {
     const counts = { active: 0, trialing: 0, suspended: 0, cancelled: 0 };
     for (const r of rows) {
-      if (r.status in counts) counts[r.status as keyof typeof counts]++;
+      const status = r.status === "trial" ? "trialing" : r.status;
+      if (status in counts) counts[status as keyof typeof counts]++;
     }
     return counts;
   }, [rows]);
@@ -54,7 +55,17 @@ export default function SubscriptionsPage() {
 
   const filtered = rows.filter((r) => {
     if (!search) return true;
-    return r.status.includes(search.toLowerCase()) || r.id.includes(search);
+    const haystack = [
+      r.status,
+      r.statusLabel,
+      r.productName,
+      r.planName,
+      r.licenceState,
+      r.id,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(search.toLowerCase());
   });
 
   return (
@@ -75,14 +86,48 @@ export default function SubscriptionsPage() {
       {loading && <p className="mb-3 text-sm text-muted-foreground">Loading…</p>}
       <CommerceDataTable
         columns={[
-          { key: "product", header: "Product", render: (r) => r.product_id.slice(0, 8) },
+          { key: "product", header: "Product", render: (r) => r.productName },
+          { key: "plan", header: "Plan", render: (r) => r.planName },
           {
             key: "status",
             header: "Status",
-            render: (r) => <Badge variant="secondary">{r.status}</Badge>,
+            render: (r) => <Badge variant="secondary">{r.statusLabel}</Badge>,
           },
-          { key: "trial", header: "Trial End", render: (r) => r.trial_end ?? r.trial_ends_at ?? "—" },
-          { key: "period", header: "Period End", render: (r) => r.current_period_end ?? "—" },
+          {
+            key: "trial",
+            header: "Trial End",
+            render: (r) => formatLocalDate(r.trial_end ?? r.trial_ends_at),
+          },
+          {
+            key: "licence",
+            header: "Licence",
+            render: (r) => r.licenceState,
+          },
+          {
+            key: "seats",
+            header: "Seats",
+            render: (r) => (r.seatTotal > 0 ? `${r.seatAssigned} / ${r.seatTotal}` : "—"),
+          },
+          {
+            key: "apps",
+            header: "Installed applications",
+            render: (r) =>
+              r.installedApplicationNames.length > 0 ? r.installedApplicationNames.join(", ") : "—",
+          },
+          {
+            key: "diagnostics",
+            header: "Diagnostics",
+            render: (r) => (
+              <details>
+                <summary className="cursor-pointer text-xs text-muted-foreground">Details</summary>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">Product ID: {r.product_id}</p>
+                <p className="font-mono text-xs text-muted-foreground">Subscription ID: {r.id}</p>
+                {r.plan_id && (
+                  <p className="font-mono text-xs text-muted-foreground">Plan ID: {r.plan_id}</p>
+                )}
+              </details>
+            ),
+          },
           {
             key: "actions",
             header: "Actions",

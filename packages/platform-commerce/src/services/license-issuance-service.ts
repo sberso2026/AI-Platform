@@ -1,6 +1,6 @@
 import type { CommercialLicense } from "@rtb/types";
 import type { LicenseRepository } from "../repositories/license-repository";
-import type { PlanEntitlementRepository } from "../repositories/entitlement-repository";
+import type { PlanEntitlementRepository, ProductApplicationRepository } from "../repositories/entitlement-repository";
 import type { SeatRepository } from "../repositories/seat-repository";
 import type { CommerceEventService } from "./commerce-event-service";
 import type { EntitlementCache } from "./entitlement-cache";
@@ -9,6 +9,7 @@ export class LicenseIssuanceService {
   constructor(
     private readonly licenses: LicenseRepository,
     private readonly planEntitlements: PlanEntitlementRepository,
+    private readonly productApplications: ProductApplicationRepository,
     private readonly seats: SeatRepository,
     private readonly events: CommerceEventService,
     private readonly cache: EntitlementCache
@@ -96,6 +97,114 @@ export class LicenseIssuanceService {
 
     this.cache.invalidateTenant(input.tenantId);
     return issued;
+  }
+
+  static readonly PILOT_APPLICATION_KEYS = [
+    "project_intelligence",
+    "documents",
+    "inspection_intelligence",
+    "project_controls",
+    "asset_intelligence",
+    "digital_twin",
+    "engineering_model_interoperability",
+  ] as const;
+
+  static readonly PILOT_APPLICATION_CATALOG: Array<{ applicationKey: string; name: string }> = [
+    { applicationKey: "project_intelligence", name: "Project Intelligence" },
+    { applicationKey: "documents", name: "Documents" },
+    { applicationKey: "inspection_intelligence", name: "Inspection Intelligence" },
+    { applicationKey: "project_controls", name: "Project Controls" },
+    { applicationKey: "asset_intelligence", name: "Asset Intelligence" },
+    { applicationKey: "digital_twin", name: "Digital Twin" },
+    {
+      applicationKey: "engineering_model_interoperability",
+      name: "Engineering Models",
+    },
+  ];
+
+  static readonly PILOT_FEATURE_KEYS = ["ai_assistant"] as const;
+
+  async reconcilePilotProfile(input: {
+    tenantId: string;
+    productId: string;
+    subscriptionId: string;
+    issuedBy?: string;
+  }): Promise<{
+    issued: CommercialLicense[];
+    skipped: string[];
+    catalog: { ensured: string[]; alreadyPresent: string[]; failed: string[] };
+  }> {
+    const catalog = await this.productApplications.ensureApplications(
+      input.productId,
+      LicenseIssuanceService.PILOT_APPLICATION_CATALOG,
+    );
+
+    const existing = await this.licenses.listByProduct(input.tenantId, input.productId);
+    const issued: CommercialLicense[] = [];
+    const skipped: string[] = [];
+
+    for (const applicationKey of LicenseIssuanceService.PILOT_APPLICATION_KEYS) {
+      const found = existing.find(
+        (licence) =>
+          licence.license_type === "application" &&
+          licence.application_key === applicationKey &&
+          licence.status === "active",
+      );
+      if (found) {
+        skipped.push(applicationKey);
+        continue;
+      }
+      const licence = await this.licenses.create({
+        tenantId: input.tenantId,
+        productId: input.productId,
+        applicationKey,
+        subscriptionId: input.subscriptionId,
+        licenseType: "application",
+        createdBy: input.issuedBy,
+      });
+      issued.push(licence);
+      await this.events.emit({
+        eventType: "licence.issued",
+        tenantId: input.tenantId,
+        actorUserId: input.issuedBy,
+        aggregateType: "licence",
+        aggregateId: licence.id,
+        payload: { licenceId: licence.id, applicationKey, source: "pilot_reconcile" },
+      });
+    }
+
+    for (const featureKey of LicenseIssuanceService.PILOT_FEATURE_KEYS) {
+      const found = existing.find(
+        (licence) =>
+          licence.license_type === "feature" &&
+          licence.feature_key === featureKey &&
+          licence.status === "active",
+      );
+      if (found) {
+        skipped.push(featureKey);
+        continue;
+      }
+      const licence = await this.licenses.create({
+        tenantId: input.tenantId,
+        productId: input.productId,
+        featureKey,
+        subscriptionId: input.subscriptionId,
+        licenseType: "feature",
+        createdBy: input.issuedBy,
+      });
+      issued.push(licence);
+      await this.events.emit({
+        eventType: "licence.issued",
+        tenantId: input.tenantId,
+        actorUserId: input.issuedBy,
+        aggregateType: "licence",
+        aggregateId: licence.id,
+        payload: { licenceId: licence.id, featureKey, source: "pilot_reconcile" },
+      });
+    }
+
+    this.cache.invalidateTenant(input.tenantId);
+    return { issued, skipped, catalog };
   }
 
   async revoke(tenantId: string, licenceId: string, revokedBy?: string, reason?: string) {

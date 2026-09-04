@@ -7,6 +7,17 @@ export class PlanRepository extends BaseRepository {
     super(supabase);
   }
 
+  async getById(planId: string): Promise<CommercialPlan | null> {
+    const { data, error } = await this.supabase
+      .from("commercial_plans")
+      .select("*")
+      .eq("id", planId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) this.fail("get plan by id", error);
+    return this.mapMaybeRow<CommercialPlan>(data);
+  }
+
   async listByProduct(productId: string): Promise<CommercialPlan[]> {
     const { data, error } = await this.supabase
       .from("commercial_plans")

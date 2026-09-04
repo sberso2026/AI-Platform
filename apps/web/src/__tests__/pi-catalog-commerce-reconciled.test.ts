@@ -29,12 +29,21 @@ describe("PI catalog/commerce reconciliation", () => {
     const installPage = read(
       "app/(platform)/system/applications/[applicationSlug]/install/page.tsx",
     );
+    const lifecycle = readFileSync(
+      resolve(
+        __dirname,
+        "../../../../packages/platform-commerce/src/services/application-installation-lifecycle-service.ts",
+      ),
+      "utf8",
+    );
     const catalogAdapter = readFileSync(
       resolve(__dirname, "../../../../packages/platform-core/src/commerce/commerce-adapter.ts"),
       "utf8",
     );
-    expect(installRoute).toContain('applicationKey === "project_intelligence"');
-    expect(installRoute).toContain("c1000000-0000-4000-8000-000000000001");
+    expect(installRoute).toContain("body.productId");
+    expect(lifecycle).toContain("ENGINEERING_OS_APPLICATION_KEYS");
+    expect(lifecycle).toContain("c1000000-0000-4000-8000-000000000001");
+    expect(lifecycle).toContain("engineering_model_interoperability");
     expect(installPage).toContain("Engineering OS application");
     expect(installPage).toContain("not Business OS");
     expect(catalogAdapter).toContain('product.slug !== "project-intelligence"');
