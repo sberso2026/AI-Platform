@@ -202,7 +202,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-[color:var(--eos-bg-secondary)] text-sidebar-foreground transition-[width] duration-200",
+        "flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-[color:var(--eos-bg-primary)] text-sidebar-foreground transition-[width] duration-200",
         collapsed ? SPACING.sidebarWidthCollapsed : SPACING.sidebarWidth
       )}
       data-testid="app-sidebar"

@@ -17,6 +17,25 @@ export { SearchInput, type SearchInputProps } from "./components/search-input";
 export { TimelineRow, type TimelineRowProps } from "./components/timeline-row";
 export { ActivityRow, type ActivityRowProps } from "./components/activity-row";
 export { PageHeader, type PageHeaderProps } from "./components/page-header";
+export { CommandPanel, CommandPageTitle, type CommandPanelAccent } from "./components/command-panel";
+export {
+  EngineeringIntelligenceCore,
+  ProjectHealthIndicator,
+  RadialStatus,
+  SegmentGauge,
+  SignalBar,
+  MiniTrend,
+  LiveSignal,
+  AttentionQueue,
+  SeverityDistribution,
+  MilestoneTimeline,
+  EvidenceChain,
+  DecisionQueue,
+  ActivityPulse,
+  ProjectSelectCommandSurface,
+  type IntelligenceCoreStatus,
+  type HealthLevel,
+} from "./components/command-visuals";
 export { SidebarNavItem, sidebarNavItemClassName, type SidebarNavItemProps } from "./components/sidebar-nav-item";
 export {
   TYPOGRAPHY,

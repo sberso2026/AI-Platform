@@ -6,7 +6,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CommandPanel,
+  DecisionQueue,
   EmptyState,
+  ProjectSelectCommandSurface,
   SectionHeader,
   cn,
 } from "@rtb/ui";
@@ -115,10 +118,10 @@ type ListedProject = {
 };
 
 const HEALTH_STYLE: Record<OverallHealth, string> = {
-  GREEN: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  AMBER: "border-amber-300 bg-amber-50 text-amber-950",
-  RED: "border-red-300 bg-red-50 text-red-950",
-  UNKNOWN: "border-dashed border-slate-400 bg-slate-100 text-slate-800",
+  GREEN: "eos-state-success border border-[color:var(--eos-success)] px-3 py-2",
+  AMBER: "eos-state-warning border border-[color:var(--eos-warning)] px-3 py-2",
+  RED: "eos-state-danger border border-[color:var(--eos-danger)] px-3 py-2",
+  UNKNOWN: "eos-state-unknown border border-dashed border-[color:var(--eos-border)] px-3 py-2",
 };
 
 function stateTestId(prefix: string, freshness: Freshness, availability: Availability): string {
@@ -300,10 +303,10 @@ export function ProjectQueryDecisionIntelligenceView() {
       <PiPageProjectSelect testId="queries-decisions-project-select" />
 
       {!selectedId ? (
-        <EmptyState
-          title="Select a project"
-          description="Query & Decision Intelligence interprets canonical Engineering OS technical queries, decisions, and actions. RFIs are not a separate register."
-          data-testid="queries-decisions-project-empty"
+        <ProjectSelectCommandSurface
+          title="DECISION INTELLIGENCE"
+          description="Select a project to see which decisions are holding up work."
+          testId="queries-decisions-project-empty"
         />
       ) : null}
 
@@ -336,14 +339,14 @@ export function ProjectQueryDecisionIntelligenceView() {
                   <p className="text-xs font-semibold">{view.query.health.classification}</p>
                   <p className="text-sm">{view.query.health.headline}</p>
                 </div>
-                <p className="mt-2 text-sm text-slate-700">
+                <p className="mt-2 text-sm text-[color:var(--eos-text-secondary)]">
                   Open {view.query.portfolio.openCount} · overdue {view.query.portfolio.overdueCount} · high priority{" "}
                   {view.query.portfolio.highPriorityCount} · unassigned {view.query.portfolio.unassignedCount} · stale{" "}
                   {view.query.portfolio.staleCount}
                 </p>
-                <p className="mt-1 text-xs text-slate-600">
-                  Canonical TQ model: {view.query.canonicalModel}. RFI model: {view.query.rfiModel}. RFIs are not a
-                  first-class Engineering OS register.
+                <p className="mt-1 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">
+                  Technical queries are the Engineering OS correspondence register. RFIs are represented through
+                  technical queries, not a separate register.
                 </p>
               </div>
             </CardContent>
@@ -352,11 +355,7 @@ export function ProjectQueryDecisionIntelligenceView() {
             <SectionHeader title="Query attention" />
             <AttentionList items={view.query.attentionItems} testIdPrefix="queries-decisions-query" />
           </div>
-          <Card data-testid="queries-decisions-decision-summary">
-            <CardHeader>
-              <CardTitle>Decisions</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <CommandPanel title="Decisions" accent="warning" testId="queries-decisions-decision-summary">
               <div
                 data-testid={stateTestId(
                   "queries-decisions-decision",
@@ -368,13 +367,37 @@ export function ProjectQueryDecisionIntelligenceView() {
                   <p className="text-xs font-semibold">{view.decision.health.classification}</p>
                   <p className="text-sm">{view.decision.health.headline}</p>
                 </div>
-                <p className="mt-2 text-sm text-slate-700">
+                <p className="mt-2 text-sm text-[color:var(--eos-text-secondary)]">
                   Open {view.decision.portfolio.openCount} · overdue {view.decision.portfolio.overdueCount} · unassigned{" "}
                   {view.decision.portfolio.unassignedCount} · aging {view.decision.portfolio.agingCount}
                 </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <div>
+                  <p className="text-[0.8125rem] font-semibold tracking-[0.12em] text-[color:var(--eos-text-secondary)]">
+                    Decisions required
+                  </p>
+                  <DecisionQueue
+                    items={view.decision.attentionItems
+                      .filter((item) => item.severity !== "info")
+                      .map((item) => ({
+                        id: item.id,
+                        title: item.explanation,
+                        status: item.severity.toUpperCase(),
+                      }))}
+                  />
+                </div>
+                <div>
+                  <p className="text-[0.8125rem] font-semibold tracking-[0.12em] text-[color:var(--eos-text-secondary)]">
+                    Overdue
+                  </p>
+                  <p className="mt-2 text-[2rem] font-bold leading-none">{view.decision.portfolio.overdueCount}</p>
+                  <p className="mt-1 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">
+                    Recently resolved: {view.decision.portfolio.recentlyDecidedCount}
+                  </p>
+                </div>
+              </div>
+          </CommandPanel>
           <div data-testid="queries-decisions-decision-attention">
             <SectionHeader title="Decision attention" />
             <AttentionList items={view.decision.attentionItems} testIdPrefix="queries-decisions-decision" />

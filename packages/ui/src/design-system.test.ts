@@ -114,5 +114,13 @@ describe("Batch 2.11 — Component contracts", () => {
     expect(mod.SearchInput).toBeTypeOf("object");
     expect(mod.SidebarNavItem).toBeTypeOf("function");
     expect(mod.sidebarNavItemClassName).toBeTypeOf("function");
+    expect(mod.CommandPanel).toBeTypeOf("function");
+    expect(mod.EngineeringIntelligenceCore).toBeTypeOf("function");
+    expect(mod.ProjectHealthIndicator).toBeTypeOf("function");
+    expect(mod.LiveSignal).toBeTypeOf("function");
+    expect(mod.AttentionQueue).toBeTypeOf("function");
+    expect(mod.MilestoneTimeline).toBeTypeOf("function");
+    expect(mod.EvidenceChain).toBeTypeOf("function");
+    expect(mod.DecisionQueue).toBeTypeOf("function");
   });
 });

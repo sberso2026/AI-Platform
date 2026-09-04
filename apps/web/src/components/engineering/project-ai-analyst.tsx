@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, EmptyState, SectionHeader } from "@rtb/ui";
+import { Card, CardContent, CardHeader, CardTitle, CommandPanel, ProjectSelectCommandSurface, SectionHeader } from "@rtb/ui";
 import { PiPageProjectSelect, usePiProjectContext } from "./pi-project-context";
 import { PiUnavailablePanel } from "./pi-page-chrome";
 import { fetchPiJson, PiLoadError, PI_UNAVAILABLE } from "@/lib/project-intelligence/pi-api";
@@ -42,11 +42,12 @@ type AnalystAnswer = {
 
 const DEFAULT_STARTERS = [
   "What needs my attention today?",
-  "What changed this week?",
-  "Which TQs could affect upcoming work?",
+  "What changed?",
+  "What needs my attention?",
   "What decisions are overdue?",
-  "What are the largest emerging risks?",
-  "Summarise this project.",
+  "Which TQs could affect upcoming work?",
+  "Summarise project risk.",
+  "What evidence supports this finding?",
 ];
 
 export function ProjectAiAnalystView() {
@@ -101,16 +102,17 @@ export function ProjectAiAnalystView() {
       <PiPageProjectSelect testId="analyst-project-select" />
 
       {!selectedId ? (
-        <EmptyState
-          title="Select a project"
-          description="Ask Project Intelligence answers from published evidence for that project only."
-          data-testid="analyst-project-empty"
+        <ProjectSelectCommandSurface
+          title="ASK PROJECT INTELLIGENCE"
+          description="Select a project to activate the intelligence console."
+          testId="analyst-project-empty"
         />
       ) : null}
 
       {selectedId ? (
+        <CommandPanel title="Ask Project Intelligence" accent="ai">
         <div className="space-y-3" data-testid="analyst-starters">
-          <SectionHeader title="Suggested questions" description="Ask what changed, what is at risk, and what needs a decision." />
+          <SectionHeader title="Suggested actions" description="Ask what changed, what is at risk, and what needs a decision." />
           <div className="flex flex-wrap gap-2">
             {starters.map((starter) => (
               <button
@@ -135,11 +137,11 @@ export function ProjectAiAnalystView() {
             }}
           >
             <label className="block flex-1 text-[1rem] text-[color:var(--eos-text-secondary)]">
-              Question
+              Prompt
               <textarea
                 data-testid="analyst-question-input"
-                className="eos-select mt-1 min-h-[6.5rem] w-full px-4 py-3 text-[1.125rem] text-[color:var(--eos-text-primary)]"
-                rows={3}
+                className="eos-select mt-1 min-h-[10rem] w-full px-4 py-4 text-[1.125rem] leading-relaxed text-[color:var(--eos-text-primary)]"
+                rows={6}
                 placeholder="What needs my attention today?"
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
@@ -155,6 +157,7 @@ export function ProjectAiAnalystView() {
             </button>
           </form>
         </div>
+        </CommandPanel>
       ) : null}
 
       {error ? (
@@ -174,7 +177,10 @@ export function ProjectAiAnalystView() {
               <CardTitle>Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-[1rem] text-[color:var(--eos-text-primary)]">
-              <p data-testid="analyst-answer-text">{answer.answer}</p>
+              <p className="text-[0.8125rem] font-semibold tracking-[0.12em] text-[color:var(--eos-ai)]">
+                Executive answer
+              </p>
+              <p className="text-[1.25rem] leading-relaxed" data-testid="analyst-answer-text">{answer.answer}</p>
             </CardContent>
           </Card>
           <Card variant="intelligence">
@@ -264,7 +270,10 @@ export function ProjectAiAnalystView() {
               <CardTitle>Limitations</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-[1rem] text-[color:var(--eos-text-secondary)]" data-testid="analyst-limitations">
+              <p className="text-[0.8125rem] font-semibold tracking-[0.12em] text-[color:var(--eos-text-secondary)]">
+                Confidence / limitations
+              </p>
+              <p className="mt-2 text-[1rem] text-[color:var(--eos-text-secondary)]" data-testid="analyst-limitations">
                 {answer.limitations.join("; ") || "No additional limitations were published."}
               </p>
             </CardContent>
@@ -274,6 +283,7 @@ export function ProjectAiAnalystView() {
               <CardTitle>Recommended human action</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-[1rem] text-[color:var(--eos-text-secondary)]">
+              <p className="text-[0.8125rem] font-semibold tracking-[0.12em]">Next human action</p>
               <p>Review the cited evidence and decide in the system of record. AI remains advisory.</p>
               <div className="flex flex-wrap gap-3" data-testid="analyst-navigation">
                 {answer.navigation.map((item) => (
@@ -329,11 +339,11 @@ export function ProjectAiAnalystView() {
 
 export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) {
   return (
-    <Card variant="ai" data-testid="command-centre-analyst-entry">
-      <CardHeader className="pb-2">
-        <CardTitle>Ask Project Intelligence</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 text-[1rem] text-[color:var(--eos-text-secondary)]">
+    <CommandPanel
+      title="Ask Project Intelligence"
+      accent="ai"
+      testId="command-centre-analyst-entry"
+    >
         <p>Ask grounded questions about published intelligence for this project. Advisory only.</p>
         <Link
           href={`/engineering/apps/project-intelligence/analyst?projectId=${encodeURIComponent(projectId)}`}
@@ -342,7 +352,6 @@ export function AnalystCommandCentreEntry({ projectId }: { projectId: string }) 
         >
           Open Ask Project Intelligence
         </Link>
-      </CardContent>
-    </Card>
+    </CommandPanel>
   );
 }

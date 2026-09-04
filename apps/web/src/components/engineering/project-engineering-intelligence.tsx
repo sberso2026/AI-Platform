@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, EmptyState, SectionHeader } from "@rtb/ui";
+import { CommandPanel, EmptyState, EvidenceChain, LiveSignal, ProjectSelectCommandSurface, SectionHeader } from "@rtb/ui";
 import { PiLoadingSkeleton, PiUnavailablePanel } from "./pi-page-chrome";
 import { PI_BASE_PATH, withPiProjectQuery } from "./pi-project-context";
 import { documentReadinessLabel } from "./pi-ux";
@@ -98,10 +98,10 @@ export function ProjectEngineeringIntelligenceView() {
 
   if (!projectId) {
     return (
-      <EmptyState
-        title="Select a project"
-        description="Engineering Intelligence requires a selected project. All Projects is a portfolio choice only."
-        data-testid="engineering-intelligence-project-empty"
+      <ProjectSelectCommandSurface
+        title="ENGINEERING INTELLIGENCE"
+        description="Select a project to activate technical operations."
+        testId="engineering-intelligence-project-empty"
       />
     );
   }
@@ -133,53 +133,23 @@ export function ProjectEngineeringIntelligenceView() {
   const partialDocs = projectDocuments.filter((doc) => documentReadinessLabel(doc.processingStatus, doc.readiness) === "Partial");
 
   return (
-    <div className="space-y-8" data-testid="project-intelligence-engineering">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Overdue TQs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{query.portfolio.overdueCount}</p>
-            <p className="mt-1 text-sm text-slate-600">
-              {query.portfolio.highPriorityCount} high priority · {query.portfolio.openCount} open
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Engineering actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              {centre.queryDecisionIntelligence.action.portfolio.overdueCount}
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              overdue of {centre.queryDecisionIntelligence.action.portfolio.openCount} open
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Findings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-700">{centre.knowledge.summary}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Recent decisions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              {centre.queryDecisionIntelligence.decision.portfolio.recentlyDecidedCount}
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              {centre.queryDecisionIntelligence.decision.portfolio.overdueCount} overdue
-            </p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6" data-testid="project-intelligence-engineering">
+      <CommandPanel title="Evidence chain" accent="cyan" meta="Counts from published records. Links are shown only where canonical relationships exist.">
+        <EvidenceChain
+          nodes={[
+            { label: "Documents", value: String(projectDocuments.length), href: withPiProjectQuery(`${PI_BASE_PATH}/documents`, projectId) },
+            { label: "Findings", value: String(centre.knowledge.counts.open ?? projectDocuments.reduce((sum, doc) => sum + doc.findingsCount, 0)), href: withPiProjectQuery(`${PI_BASE_PATH}/findings`, projectId) },
+            { label: "Technical queries", value: String(query.portfolio.openCount), href: withPiProjectQuery(`${PI_BASE_PATH}/queries-decisions`, projectId) },
+            { label: "Decisions", value: String(centre.queryDecisionIntelligence.decision.portfolio.openCount), href: withPiProjectQuery(`${PI_BASE_PATH}/decisions`, projectId) },
+            { label: "Actions", value: String(centre.queryDecisionIntelligence.action.portfolio.openCount) },
+          ]}
+        />
+      </CommandPanel>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <LiveSignal label="Overdue TQs" value={String(query.portfolio.overdueCount)} />
+        <LiveSignal label="Actions overdue" value={String(centre.queryDecisionIntelligence.action.portfolio.overdueCount)} />
+        <LiveSignal label="Findings" value={String(centre.knowledge.counts.open ?? "—")} />
+        <LiveSignal label="Recent decisions" value={String(centre.queryDecisionIntelligence.decision.portfolio.recentlyDecidedCount)} />
       </div>
 
       {query.availability === "no_data" ? (

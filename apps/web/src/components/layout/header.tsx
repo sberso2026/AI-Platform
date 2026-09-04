@@ -88,7 +88,7 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
 
   return (
     <header
-      className="flex min-h-[5rem] shrink-0 flex-col gap-4 border-b border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] px-6 py-4 sm:px-8 lg:flex-row lg:items-center lg:gap-6 lg:justify-between"
+      className="eos-command-rail flex min-h-[5rem] shrink-0 flex-col gap-4 border-b border-[color:var(--eos-border)] bg-[color:var(--eos-bg-primary)] px-6 py-4 sm:px-8 lg:flex-row lg:items-center lg:gap-6 lg:justify-between"
       data-testid="app-header"
     >
       <PageHeader title={title} description={description} className="max-w-xl shrink-0" />
@@ -96,7 +96,11 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3 lg:gap-3">
         {engineeringChrome && (
           <>
-            <EosAiCore compact className="hidden xl:flex" projectLabel={selectedLabel} />
+            <EosAiCore
+              compact
+              className="hidden xl:flex"
+              projectLabel={projectId === "all" ? undefined : selectedLabel}
+            />
             <div
               className={cn(
                 CONTROL_H,

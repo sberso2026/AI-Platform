@@ -104,6 +104,119 @@ body {
 
 .page-main {
   line-height: 1.5;
+  position: relative;
+  background-color: var(--eos-bg-primary);
+  background-image:
+    radial-gradient(ellipse 70% 42% at 18% -8%, rgba(56, 189, 248, 0.1), transparent 58%),
+    radial-gradient(ellipse 50% 36% at 92% 0%, rgba(45, 212, 191, 0.06), transparent 52%),
+    linear-gradient(rgba(125, 211, 252, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 252, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 52px 52px, 52px 52px;
+}
+
+.eos-command-canvas {
+  position: relative;
+}
+
+.eos-command-panel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, rgba(16, 28, 48, 0.9), rgba(8, 14, 26, 0.86));
+  border: 1px solid var(--eos-border);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.08), 0 18px 40px rgba(2, 8, 20, 0.35);
+  backdrop-filter: blur(14px);
+}
+
+.eos-command-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 18px;
+  height: 18px;
+  border-top: 1px solid var(--eos-border-active);
+  border-left: 1px solid var(--eos-border-active);
+  pointer-events: none;
+}
+
+.eos-command-panel::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-right: 1px solid color-mix(in srgb, var(--eos-teal) 55%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--eos-teal) 55%, transparent);
+  pointer-events: none;
+}
+
+.eos-command-panel[data-accent="cyan"] {
+  box-shadow: inset 3px 0 0 var(--eos-accent), inset 0 1px 0 rgba(186, 230, 253, 0.08), 0 18px 40px rgba(2, 8, 20, 0.35);
+}
+
+.eos-command-panel[data-accent="ai"] {
+  box-shadow: inset 3px 0 0 var(--eos-ai), inset 0 1px 0 rgba(196, 181, 253, 0.12), 0 18px 40px rgba(2, 8, 20, 0.35);
+}
+
+.eos-command-panel[data-accent="warning"] {
+  box-shadow: inset 3px 0 0 var(--eos-warning), inset 0 1px 0 rgba(251, 191, 36, 0.1), 0 18px 40px rgba(2, 8, 20, 0.35);
+}
+
+.eos-command-panel[data-accent="danger"] {
+  box-shadow: inset 3px 0 0 var(--eos-danger), inset 0 1px 0 rgba(248, 113, 113, 0.1), 0 18px 40px rgba(2, 8, 20, 0.35);
+}
+
+.eos-command-panel[data-accent="success"] {
+  box-shadow: inset 3px 0 0 var(--eos-success), inset 0 1px 0 rgba(52, 211, 153, 0.1), 0 18px 40px rgba(2, 8, 20, 0.35);
+}
+
+.eos-command-rail {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--eos-border);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--eos-accent) 12%, transparent), transparent 46%);
+  padding: 0.65rem 1.25rem;
+}
+
+.eos-pi-context-nav {
+  background:
+    linear-gradient(180deg, rgba(14, 28, 48, 0.96), rgba(8, 16, 28, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.08);
+}
+
+.eos-pi-nav-active {
+  position: relative;
+  background: color-mix(in srgb, var(--eos-accent) 14%, transparent);
+  color: var(--eos-text-primary);
+}
+
+.eos-pi-nav-active::before {
+  content: "";
+  position: absolute;
+  inset: 8px auto 8px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--eos-accent);
+  box-shadow: 0 0 12px var(--eos-accent);
+}
+
+.eos-core-spin {
+  transform-origin: 60px 60px;
+  animation: eos-core-spin 18s linear infinite;
+}
+
+@keyframes eos-core-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eos-core-spin {
+    animation: none !important;
+  }
 }
 
 .eos-panel {

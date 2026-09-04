@@ -6,8 +6,11 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CommandPanel,
   EmptyState,
+  ProjectSelectCommandSurface,
   SectionHeader,
+  SeverityDistribution,
   cn,
 } from "@rtb/ui";
 import { evidenceDisplayLabel } from "./pi-ux";
@@ -118,10 +121,10 @@ type ListedProject = {
 };
 
 const HEALTH_STYLE: Record<OverallHealth, string> = {
-  GREEN: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  AMBER: "border-amber-300 bg-amber-50 text-amber-950",
-  RED: "border-red-300 bg-red-50 text-red-950",
-  UNKNOWN: "border-dashed border-slate-400 bg-slate-100 text-slate-800",
+  GREEN: "eos-state-success border border-[color:var(--eos-success)] px-3 py-2",
+  AMBER: "eos-state-warning border border-[color:var(--eos-warning)] px-3 py-2",
+  RED: "eos-state-danger border border-[color:var(--eos-danger)] px-3 py-2",
+  UNKNOWN: "eos-state-unknown border border-dashed border-[color:var(--eos-border)] px-3 py-2",
 };
 
 function stateTestId(prefix: string, freshness: Freshness, availability: Availability): string {
@@ -292,10 +295,10 @@ export function ProjectRiskChangeIntelligenceView() {
       <PiPageProjectSelect testId="risk-change-project-select" />
 
       {!selectedId ? (
-        <EmptyState
-          title="Select a project"
-          description="Risk & Change Intelligence interprets canonical Engineering OS risks and published Project Controls change outputs for one selected project."
-          data-testid="risk-change-project-empty"
+        <ProjectSelectCommandSurface
+          title="RISK INTELLIGENCE"
+          description="Select a project to activate risk and change signals."
+          testId="risk-change-project-empty"
         />
       ) : null}
 
@@ -317,11 +320,7 @@ export function ProjectRiskChangeIntelligenceView() {
             description={`Generated ${view.generatedAt}${selectedProject ? ` · ${selectedProject.project_code}` : ""}`}
           />
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card data-testid="risk-change-risk-summary">
-              <CardHeader>
-                <CardTitle>Risk summary</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <CommandPanel title="Risk summary" accent="danger" testId="risk-change-risk-summary">
                 <div
                   className="space-y-3"
                   data-testid={stateTestId("risk-change-risk", view.risk.dataQuality.freshness, view.risk.availability)}
@@ -330,22 +329,29 @@ export function ProjectRiskChangeIntelligenceView() {
                     <p className="text-xs font-semibold">{view.risk.health.classification}</p>
                     <p className="text-sm">{view.risk.health.headline}</p>
                   </div>
-                  <p className="text-sm text-slate-700">
+                  <p className="text-sm text-[color:var(--eos-text-secondary)]">
                     Open {view.risk.portfolio.openCount} · critical/high {view.risk.portfolio.criticalHighCount} ·
                     overdue {view.risk.portfolio.overdueMitigationCount} · unowned {view.risk.portfolio.unownedCount} ·
                     stale {view.risk.portfolio.staleReviewCount}
                   </p>
-                  <p className="text-xs text-slate-600">
-                    Matrix compatible: {view.risk.matrix.compatible ? "yes" : "no"} · numerical score: not implemented
+                  <SeverityDistribution
+                    items={[
+                      { label: "Critical / high", value: view.risk.portfolio.criticalHighCount, tone: "danger" },
+                      { label: "Open", value: view.risk.portfolio.openCount, tone: "warning" },
+                      { label: "Overdue mitigation", value: view.risk.portfolio.overdueMitigationCount, tone: "warning" },
+                      { label: "Unowned", value: view.risk.portfolio.unownedCount, tone: "cyan" },
+                      { label: "Stale review", value: view.risk.portfolio.staleReviewCount, tone: "cyan" },
+                    ]}
+                  />
+                  <p className="text-xs text-[color:var(--eos-text-secondary)]">
+                    {view.risk.matrix.compatible
+                      ? "Likelihood/consequence matrix is compatible, but item coordinates are not published."
+                      : "Risk matrix coordinates are not published."}{" "}
+                    Trend arrows are not shown because historical comparison is unavailable.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card data-testid="risk-change-change-summary">
-              <CardHeader>
-                <CardTitle>Change summary</CardTitle>
-              </CardHeader>
-              <CardContent>
+            </CommandPanel>
+            <CommandPanel title="Change summary" accent="warning" testId="risk-change-change-summary">
                 <div
                   className="space-y-3"
                   data-testid={stateTestId(
@@ -360,8 +366,7 @@ export function ProjectRiskChangeIntelligenceView() {
                   </div>
                   <p className="text-sm text-slate-700">{view.change.implications.summary}</p>
                 </div>
-              </CardContent>
-            </Card>
+            </CommandPanel>
           </div>
           <div data-testid="risk-change-top-risks">
             <SectionHeader title="Top risks" />

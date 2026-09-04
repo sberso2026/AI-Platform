@@ -6,8 +6,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CommandPanel,
   EmptyState,
-  SectionHeader,
+  MilestoneTimeline,
+  ProjectSelectCommandSurface,
   cn,
 } from "@rtb/ui";
 import { attentionIssueTitle, evidenceDisplayLabel, sourceSystemLabel } from "./pi-ux";
@@ -94,10 +96,10 @@ type ListedProject = {
 };
 
 const HEALTH_STYLE: Record<OverallHealth, string> = {
-  GREEN: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  AMBER: "border-amber-300 bg-amber-50 text-amber-950",
-  RED: "border-red-300 bg-red-50 text-red-950",
-  UNKNOWN: "border-dashed border-slate-400 bg-slate-100 text-slate-800",
+  GREEN: "eos-state-success border border-[color:var(--eos-success)] px-4 py-3",
+  AMBER: "eos-state-warning border border-[color:var(--eos-warning)] px-4 py-3",
+  RED: "eos-state-danger border border-[color:var(--eos-danger)] px-4 py-3",
+  UNKNOWN: "eos-state-unknown border border-dashed border-[color:var(--eos-border)] px-4 py-3",
 };
 
 function freshnessTestId(prefix: string, freshness: Freshness, availability: Availability): string | undefined {
@@ -165,24 +167,52 @@ export function ScheduleIntelligenceSummary({
       </div>
 
       <div data-testid={`${testIdPrefix}-milestones`}>
-        <p className="text-sm font-medium text-slate-900">Key milestones</p>
+        <p className="text-[1.0625rem] font-medium text-[color:var(--eos-text-primary)]">Milestone timeline</p>
         {keyMilestones.length === 0 ? (
-          <p className="mt-1 text-sm text-slate-600">No published milestone evidence.</p>
+          <p className="mt-1 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">No published milestone evidence.</p>
         ) : (
-          <ul className="mt-2 space-y-2 text-sm text-slate-700">
-            {keyMilestones.map((milestone) => (
-              <li key={milestone.milestoneId} data-testid={`${testIdPrefix}-milestone-${milestone.milestoneId}`}>
-                <span className="font-medium">{milestone.title}</span>
-                {milestone.publishedStatus ? ` · ${milestone.publishedStatus}` : ""}
-                {milestone.currentOrForecastDate ? ` · ${milestone.currentOrForecastDate}` : ""}
-                {typeof milestone.publishedVarianceDays === "number"
-                  ? ` · published delta ${milestone.publishedVarianceDays}d`
-                  : ""}
-              </li>
-            ))}
-          </ul>
+          <>
+            <MilestoneTimeline
+              items={keyMilestones.map((milestone) => ({
+                id: milestone.milestoneId,
+                title: milestone.title,
+                date: milestone.currentOrForecastDate,
+                status: milestone.publishedStatus,
+                deltaDays: milestone.publishedVarianceDays,
+              }))}
+            />
+            <ul className="sr-only">
+              {keyMilestones.map((milestone) => (
+                <li key={milestone.milestoneId} data-testid={`${testIdPrefix}-milestone-${milestone.milestoneId}`}>
+                  {milestone.title}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
+
+      {!compact ? (
+        <div>
+          <p className="text-[1.0625rem] font-medium text-[color:var(--eos-text-primary)]">Overdue or slipped milestones</p>
+          {view.milestones.filter((item) => typeof item.publishedVarianceDays === "number" && item.publishedVarianceDays > 0)
+            .length === 0 ? (
+            <p className="mt-1 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">
+              No published positive variance on milestones.
+            </p>
+          ) : (
+            <ul className="mt-2 space-y-2 text-[0.9375rem]">
+              {view.milestones
+                .filter((item) => typeof item.publishedVarianceDays === "number" && item.publishedVarianceDays > 0)
+                .map((milestone) => (
+                  <li key={`overdue-${milestone.milestoneId}`}>
+                    {milestone.title} · published delta {milestone.publishedVarianceDays}d
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
 
       <div data-testid={`${testIdPrefix}-attention`}>
         <p className="text-sm font-medium text-slate-900">Needs attention</p>
@@ -296,10 +326,10 @@ export function ProjectScheduleIntelligenceView() {
       <PiPageProjectSelect testId="schedule-intelligence-project-select" />
 
       {!selectedId ? (
-        <EmptyState
-          title="Select a project"
-          description="Schedule Intelligence interprets published Project Controls schedule assessments for one selected project."
-          data-testid="schedule-intelligence-project-empty"
+        <ProjectSelectCommandSurface
+          title="SCHEDULE INTELLIGENCE"
+          description="Select a project to activate schedule intelligence."
+          testId="schedule-intelligence-project-empty"
         />
       ) : null}
 
@@ -315,13 +345,13 @@ export function ProjectScheduleIntelligenceView() {
       ) : null}
 
       {resource.status === "loaded" && resource.data ? (
-        <>
-          <SectionHeader
-            title="Published schedule interpretation"
-            description={`Generated ${resource.data.generatedAt}${selectedProject ? ` · ${selectedProject.project_code}` : ""}`}
-          />
+        <CommandPanel
+          title="Schedule intelligence"
+          accent="cyan"
+          meta={`Generated ${resource.data.generatedAt}${selectedProject ? ` · ${selectedProject.project_code}` : ""}`}
+        >
           <ScheduleIntelligenceSummary view={resource.data} testIdPrefix="schedule-intelligence" />
-        </>
+        </CommandPanel>
       ) : null}
     </div>
   );

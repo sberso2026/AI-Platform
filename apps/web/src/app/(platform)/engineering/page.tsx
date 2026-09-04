@@ -1,38 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
+import { EosAiCore } from "@/components/layout/eos-ai-core";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  MetricCard,
-  SectionHeader,
+  ActivityRow,
+  AttentionQueue,
+  CommandPageTitle,
+  CommandPanel,
+  EmptyState,
+  LiveSignal,
+  ProjectHealthIndicator,
   StatusChip,
   TimelineRow,
-  ActivityRow,
-  EmptyState,
+  type HealthLevel,
 } from "@rtb/ui";
 import {
-  FolderKanban,
-  ClipboardCheck,
   AlertTriangle,
-  MessageSquare,
   CheckSquare,
-  Activity,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Gavel,
   Clock,
-  Sparkles,
   FileText,
+  Gavel,
+  MessageSquare,
+  Sparkles,
   Zap,
 } from "lucide-react";
 import { useEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
-import { EosAiCore } from "@/components/layout/eos-ai-core";
 import {
   COMMAND_CENTER_USER_ERROR,
   emptyDatasetLoad,
@@ -44,8 +38,6 @@ import {
   type CommandCenterSnapshot,
   type DatasetLoad,
 } from "@/lib/engineering/load-command-center";
-
-type Trend = "up" | "down" | "flat";
 
 function timelineIcon(eventType?: string) {
   const t = (eventType ?? "").toLowerCase();
@@ -125,11 +117,68 @@ export default function EngineeringCommandCenterPage() {
   const tqCount = data?.openTechnicalQueriesCount as number | undefined;
   const actionCount = data?.openActionsCount as number | undefined;
 
+  const healthLevel: HealthLevel =
+    snapshot.dashboard.status === "loading"
+      ? "UNKNOWN"
+      : snapshot.dashboard.status === "failed"
+        ? "CRITICAL"
+        : healthOk
+          ? "HEALTHY"
+          : "ATTENTION";
+
+  const attentionItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      severity: "CRITICAL" | "HIGH" | "MEDIUM" | "INFO";
+      title: string;
+      due?: string;
+      testId?: string;
+    }> = [];
+    if (hasFailure) {
+      for (const item of failures) {
+        items.push({
+          id: `fail-${item.dataset}`,
+          severity: "CRITICAL",
+          title: `${item.label} unavailable`,
+        });
+      }
+    }
+    if (snapshot.dashboard.status === "loaded" && !healthOk) {
+      items.push({
+        id: "health-review",
+        severity: "HIGH",
+        title: "Platform health requires review",
+      });
+    }
+    if (snapshot.risks.status === "loaded") {
+      for (const risk of (snapshot.risks.data ?? []).slice(0, 4)) {
+        const score = Number(risk.score ?? 0);
+        const severity: "CRITICAL" | "HIGH" | "MEDIUM" =
+          score >= 15 ? "CRITICAL" : score >= 10 ? "HIGH" : "MEDIUM";
+        items.push({
+          id: String(risk.id ?? risk.risk_number ?? items.length),
+          severity,
+          title: `${(risk.risk_number as string) ?? ""} ${(risk.title as string) ?? "Risk"}`.trim(),
+        });
+      }
+    }
+    if (snapshot.decisions.status === "loaded") {
+      for (const decision of (snapshot.decisions.data ?? []).slice(0, 3)) {
+        items.push({
+          id: String(decision.id ?? decision.decision_number ?? items.length),
+          severity: "MEDIUM",
+          title: `${(decision.decision_number as string) ?? ""} ${(decision.title as string) ?? "Decision"}`.trim(),
+        });
+      }
+    }
+    return items.slice(0, 7);
+  }, [failures, hasFailure, healthOk, snapshot.dashboard.status, snapshot.decisions, snapshot.risks]);
+
   return (
     <>
       <Header
-        title="Engineering OS"
-        description="Product home for projects, assets, certified modules, health, and Engineering AI"
+        title="Engineering Command Center"
+        description="Workspace, project, and intelligence status"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
@@ -138,10 +187,16 @@ export default function EngineeringCommandCenterPage() {
         <span data-testid="engineering-os-product-ready" className="sr-only">
           Engineering OS product ready
         </span>
-        <div data-testid="engineering-command-center" className="contents">
+        <div data-testid="engineering-command-center" className="eos-command-canvas space-y-5">
+          <CommandPageTitle
+            eyebrow="Engineering OS"
+            title="Engineering Command Center"
+            description="Live operational surface for published engineering health, attention, and change. Missing data is unavailable, not zero."
+          />
+
         {hasFailure && (
           <div
-            className="eos-state-danger mb-4 rounded-xl border px-4 py-3 text-[1rem]"
+            className="eos-state-danger mb-1 rounded-xl border px-4 py-3 text-[1rem]"
             data-testid="command-center-error"
             role="alert"
           >
@@ -178,164 +233,129 @@ export default function EngineeringCommandCenterPage() {
           </div>
         )}
 
-        <section aria-label="Platform and project health" className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.8fr)]" data-testid="command-center-health">
-          <Card variant="health">
-            <CardHeader className="pb-2">
-              <CardTitle>Platform / project health</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-center gap-4">
-              <StatusChip
-                status={snapshot.dashboard.status === "failed" ? "critical" : healthOk ? "complete" : "pending"}
-                value={snapshot.dashboard.status === "loading" ? "pending" : healthOk ? "operational" : "check"}
-              />
-              <p className="text-[1rem] text-[color:var(--eos-text-secondary)]">
-                {snapshot.dashboard.status === "loading"
-                  ? "Loading platform health…"
-                  : snapshot.dashboard.status === "failed"
-                    ? "Platform health unavailable"
-                    : healthOk
-                      ? "System Healthy"
-                      : "Platform health requires review"}
-              </p>
-            </CardContent>
-          </Card>
-          <Card variant="ai">
-            <CardContent className="flex h-full items-center p-6">
-              <EosAiCore
-                status={snapshot.dashboard.status === "failed" ? "degraded" : "online"}
-                projectLabel={projectId ? "Active project context" : "Workspace context"}
-              />
-            </CardContent>
-          </Card>
-        </section>
-
-        <section aria-label="Attention required" className="mb-6" data-testid="command-center-attention">
-          <SectionHeader
-            title="Attention required"
-            description="Published exceptions only. Missing data is shown as unavailable, not as zero."
-          />
-          {snapshot.dashboard.status === "loading" ? (
-            <div className="eos-shimmer h-16 rounded-xl" data-testid="command-center-attention-loading" />
-          ) : hasFailure ? (
-            <Card variant="alert">
-              <CardContent className="space-y-2 pt-6 text-[1rem]">
-                {failures.map((item) => (
-                  <p key={item.dataset}>
-                    {item.label} unavailable. Some signals could not be loaded.
-                  </p>
-                ))}
-              </CardContent>
-            </Card>
-          ) : !healthOk ? (
-            <Card variant="alert">
-              <CardContent className="pt-6 text-[1rem]">Platform health requires review from published signals.</CardContent>
-            </Card>
-          ) : (
-            <EmptyState
-              title="No attention items"
-              description="No unpublished exceptions were returned for the current workspace or project filter."
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.9fr)_minmax(18rem,1fr)]">
+          <CommandPanel title="Project health" accent="success" testId="command-center-health">
+            <ProjectHealthIndicator
+              level={healthLevel}
+              domains={Object.keys(health).slice(0, 5).map((key) => ({
+                label: key.replace(/_/g, " "),
+                state: health[key] === "operational" ? "green" : "unknown",
+              }))}
             />
-          )}
-        </section>
+          </CommandPanel>
+          <CommandPanel title="Engineering Intelligence Core" accent="ai">
+            <EosAiCore
+              size="lg"
+              status={snapshot.dashboard.status === "failed" ? "degraded" : "online"}
+              projectLabel={projectId || undefined}
+              evidenceAvailable={snapshot.dashboard.status === "loaded"}
+              systemHealthy={snapshot.dashboard.status === "loaded" ? healthOk : undefined}
+            />
+          </CommandPanel>
+          <CommandPanel title="Attention required" accent="warning" testId="command-center-attention">
+            {snapshot.dashboard.status === "loading" ? (
+              <div className="eos-shimmer h-16 rounded-xl" data-testid="command-center-attention-loading" />
+            ) : (
+              <AttentionQueue
+                items={attentionItems}
+                emptyTitle="No attention items"
+                emptyDescription="No published exceptions for the current workspace or project filter."
+                viewAllHref="/engineering/risks"
+              />
+            )}
+          </CommandPanel>
+        </div>
 
-        <section aria-label="Engineering KPIs" className="mb-8">
-          <SectionHeader
-            title="Engineering KPIs"
-            description="Live signal across projects, engineering reviews, risks, and action registers"
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 lg:gap-5">
-            <KpiLink href="/engineering/projects" testId="command-center-kpi-projects" state={kpiState(snapshot.dashboard, projectCount ?? 0)}>
-              <MetricCard
-                label="Engineering Projects"
-                value={kpiDisplayValue(snapshot.dashboard, projectCount)}
-                icon={<FolderKanban className="h-6 w-6" />}
-                tone="blue"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="flat" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/decisions" testId="command-center-kpi-reviews" state={kpiState(snapshot.dashboard, reviewCount ?? 0)}>
-              <MetricCard
-                label="Engineering Reviews Pending"
-                value={kpiDisplayValue(snapshot.dashboard, reviewCount)}
-                icon={<ClipboardCheck className="h-6 w-6" />}
-                tone="amber"
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="up" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/risks" testId="command-center-kpi-risks" state={kpiState(snapshot.dashboard, riskCount ?? 0)}>
-              <MetricCard
-                label="Critical Risk Assessments"
-                value={kpiDisplayValue(snapshot.dashboard, riskCount)}
-                icon={<AlertTriangle className="h-6 w-6" />}
-                tone="red"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="down" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/technical-queries" testId="command-center-kpi-tqs" state={kpiState(snapshot.dashboard, tqCount ?? 0)}>
-              <MetricCard
-                label="Open Technical Queries"
+        <CommandPanel title="Live engineering signals" meta="Published register counts only. Trends shown only when historical comparison exists.">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Link href="/engineering/technical-queries" className="block">
+              <LiveSignal
+                label="Open TQs"
                 value={kpiDisplayValue(snapshot.dashboard, tqCount)}
-                icon={<MessageSquare className="h-6 w-6" />}
-                tone="blue"
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="flat" />}
+                testId="command-center-kpi-tqs"
+                state={kpiState(snapshot.dashboard, tqCount ?? 0)}
               />
-            </KpiLink>
-            <KpiLink href="/engineering/actions" testId="command-center-kpi-actions" state={kpiState(snapshot.dashboard, actionCount ?? 0)}>
-              <MetricCard
-                label="Action Register — Critical"
+            </Link>
+            <Link href="/engineering/risks" className="block">
+              <LiveSignal
+                label="Critical risks"
+                value={kpiDisplayValue(snapshot.dashboard, riskCount)}
+                testId="command-center-kpi-risks"
+                state={kpiState(snapshot.dashboard, riskCount ?? 0)}
+              />
+            </Link>
+            <Link href="/engineering/actions" className="block">
+              <LiveSignal
+                label="Actions"
                 value={kpiDisplayValue(snapshot.dashboard, actionCount)}
-                icon={<CheckSquare className="h-6 w-6" />}
-                tone="amber"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="up" />}
+                testId="command-center-kpi-actions"
+                state={kpiState(snapshot.dashboard, actionCount ?? 0)}
               />
-            </KpiLink>
-            <KpiLink href="/engineering/health" testId="command-center-kpi-health" state={snapshot.dashboard.status === "failed" ? "failed" : snapshot.dashboard.status === "loading" ? "loading" : "loaded-value"}>
-              <MetricCard
-                label="Platform Health"
-                value={kpiDisplayValue(snapshot.dashboard, snapshot.dashboard.status === "loaded" ? (healthOk ? "OK" : "Check") : undefined)}
-                icon={<Activity className="h-6 w-6" />}
-                tone={snapshot.dashboard.status === "failed" ? "red" : healthOk ? "green" : "red"}
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="flat" />}
-                secondary
+            </Link>
+            <Link href="/engineering/decisions" className="block">
+              <LiveSignal
+                label="Reviews"
+                value={kpiDisplayValue(snapshot.dashboard, reviewCount)}
+                testId="command-center-kpi-reviews"
+                state={kpiState(snapshot.dashboard, reviewCount ?? 0)}
               />
-            </KpiLink>
+            </Link>
           </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Link href="/engineering/projects" className="block">
+              <LiveSignal
+                label="Projects"
+                value={kpiDisplayValue(snapshot.dashboard, projectCount)}
+                testId="command-center-kpi-projects"
+                state={kpiState(snapshot.dashboard, projectCount ?? 0)}
+              />
+            </Link>
+            <Link href="/engineering/health" className="block">
+              <LiveSignal
+                label="Platform health"
+                value={kpiDisplayValue(
+                  snapshot.dashboard,
+                  snapshot.dashboard.status === "loaded" ? (healthOk ? "OK" : "Check") : undefined,
+                )}
+                testId="command-center-kpi-health"
+                state={
+                  snapshot.dashboard.status === "failed"
+                    ? "failed"
+                    : snapshot.dashboard.status === "loading"
+                      ? "loading"
+                      : "loaded-value"
+                }
+              />
+            </Link>
+          </div>
+        </CommandPanel>
+
+        <section aria-label="Module launcher" data-testid="engineering-module-launcher-summary">
+          <CommandPanel title="Engineering systems" meta="Open certified modules without leaving command context" accent="cyan">
+            <div className="flex flex-wrap gap-2 text-[0.9375rem]">
+              {[
+                ["/engineering/modules", "Systems matrix"],
+                ["/engineering/apps/project-intelligence", "Project Intelligence"],
+                ["/engineering/apps/inspection-intelligence", "Inspection Intelligence"],
+                ["/engineering/apps/asset-intelligence", "Asset Intelligence"],
+                ["/engineering/apps/project-controls", "Project Controls"],
+                ["/engineering/apps/digital-twin", "Digital Twin"],
+                ["/engineering/apps/model-interoperability", "Engineering Models"],
+                ["/engineering/ai", "Engineering AI"],
+                ["/engineering/search", "Search"],
+                ["/engineering/health", "OS health"],
+              ].map(([href, label]) => (
+                <Link key={href} href={href} className="eos-shell-link">
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </CommandPanel>
         </section>
 
-        <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
-          <SectionHeader
-            title="Certified modules"
-            description="Entitled Engineering OS V1 modules — federation and live solver execution remain distinct"
-          />
-          <div className="mt-3 flex flex-wrap gap-3 text-[0.9375rem]">
-            {[
-              ["/engineering/modules", "Open module launcher"],
-              ["/engineering/apps/project-intelligence", "Project Intelligence"],
-              ["/engineering/apps/inspection-intelligence", "Inspection Intelligence"],
-              ["/engineering/apps/asset-intelligence", "Asset Intelligence"],
-              ["/engineering/apps/project-controls", "Project Controls"],
-              ["/engineering/apps/digital-twin", "Digital Twin"],
-              ["/engineering/apps/model-interoperability", "Engineering Models"],
-              ["/engineering/ai", "Engineering AI"],
-              ["/engineering/search", "Search"],
-              ["/engineering/health", "OS health"],
-            ].map(([href, label]) => (
-              <Link key={href} href={href} className="eos-shell-link">
-                {label}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <Panel
-            title="Engineering Decisions"
+            title="Recent decisions"
             href="/engineering/decisions"
             emptyTitle="No engineering decisions yet"
             emptyDescription="Engineering decisions requiring review will appear here."
@@ -351,7 +371,7 @@ export default function EngineeringCommandCenterPage() {
             )}
           />
           <Panel
-            title="Risk Assessments"
+            title="Risk assessments"
             href="/engineering/risks"
             emptyTitle="No open risk assessments"
             emptyDescription="Critical and scored engineering risks will appear here."
@@ -372,7 +392,7 @@ export default function EngineeringCommandCenterPage() {
             }}
           />
           <Panel
-            title="Engineering Timeline"
+            title="Engineering timeline"
             href="/engineering/timeline"
             emptyTitle="No timeline events yet"
             emptyDescription="Engineering events across decisions, risks, and technical queries will appear here."
@@ -389,7 +409,7 @@ export default function EngineeringCommandCenterPage() {
             )}
           />
           <Panel
-            title="AI Recommendations"
+            title="Intelligence activity"
             href="/engineering/ai"
             emptyTitle="No active AI recommendations"
             emptyDescription="Engineering AI Director will surface recommendations from risks, technical queries, documents, and project activity."
@@ -424,9 +444,9 @@ export default function EngineeringCommandCenterPage() {
           />
         </div>
 
-        <section className="mt-8" aria-label="Recent Engineering Activity">
+        <section aria-label="Recent Engineering Activity">
           <Panel
-            title="Recent Engineering Activity"
+            title="Recent engineering activity"
             href="/engineering/activity"
             emptyTitle="No recent activity"
             emptyDescription="Project and register activity will appear here as engineering work progresses."
@@ -462,34 +482,6 @@ export default function EngineeringCommandCenterPage() {
   );
 }
 
-function TrendGlyph({ trend }: { trend: Trend }) {
-  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  return <Icon className="h-3.5 w-3.5" aria-hidden />;
-}
-
-function KpiLink({
-  href,
-  children,
-  testId,
-  state,
-}: {
-  href: string;
-  children: React.ReactNode;
-  testId: string;
-  state: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
-      data-testid={testId}
-      data-state={state}
-    >
-      {children}
-    </Link>
-  );
-}
-
 function Panel({
   title,
   href,
@@ -512,17 +504,19 @@ function Panel({
   render: (item: Record<string, unknown>) => React.ReactNode;
 }) {
   return (
-    <Card variant="intelligence">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
-        <CardTitle>{title}</CardTitle>
+    <CommandPanel
+      title={title}
+      accent="cyan"
+      action={
         <Link
           href={href}
-          className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--eos-accent)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
+          className="text-[0.8125rem] font-semibold text-[color:var(--eos-accent)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
         >
           View all
         </Link>
-      </CardHeader>
-      <CardContent className="space-y-3.5 p-6 pt-0">
+      }
+    >
+      <div className="space-y-3.5">
         {dataset.status === "loading" && (
           <p className="text-sm text-[color:var(--eos-text-secondary)]" data-testid="command-center-panel-loading">
             Loading…
@@ -545,7 +539,7 @@ function Panel({
           items.map((item, i) => (
             <div key={(item.id as string) ?? i}>{render(item)}</div>
           ))}
-      </CardContent>
-    </Card>
+      </div>
+    </CommandPanel>
   );
 }

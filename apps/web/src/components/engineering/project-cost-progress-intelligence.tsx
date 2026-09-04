@@ -6,8 +6,11 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CommandPanel,
   EmptyState,
+  ProjectSelectCommandSurface,
   SectionHeader,
+  SignalBar,
   cn,
 } from "@rtb/ui";
 import { evidenceDisplayLabel } from "./pi-ux";
@@ -101,10 +104,10 @@ type ListedProject = {
 };
 
 const HEALTH_STYLE: Record<OverallHealth, string> = {
-  GREEN: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  AMBER: "border-amber-300 bg-amber-50 text-amber-950",
-  RED: "border-red-300 bg-red-50 text-red-950",
-  UNKNOWN: "border-dashed border-slate-400 bg-slate-100 text-slate-800",
+  GREEN: "eos-state-success border border-[color:var(--eos-success)] px-3 py-2",
+  AMBER: "eos-state-warning border border-[color:var(--eos-warning)] px-3 py-2",
+  RED: "eos-state-danger border border-[color:var(--eos-danger)] px-3 py-2",
+  UNKNOWN: "eos-state-unknown border border-dashed border-[color:var(--eos-border)] px-3 py-2",
 };
 
 function stateTestId(prefix: string, freshness: Freshness, availability: Availability): string {
@@ -272,10 +275,10 @@ export function ProjectCostProgressIntelligenceView() {
       <PiPageProjectSelect testId="cost-progress-project-select" />
 
       {!selectedId ? (
-        <EmptyState
-          title="Select a project"
-          description="Cost Intelligence requires a selected project and published cost evidence. It does not replace ERP or cost-control systems."
-          data-testid="cost-progress-project-empty"
+        <ProjectSelectCommandSurface
+          title="COST INTELLIGENCE"
+          description="Select a project to activate cost and progress signals."
+          testId="cost-progress-project-empty"
         />
       ) : null}
 
@@ -297,11 +300,7 @@ export function ProjectCostProgressIntelligenceView() {
             description={`Generated ${view.generatedAt}${selectedProject ? ` · ${selectedProject.project_code}` : ""}`}
           />
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card data-testid="cost-progress-cost-summary">
-              <CardHeader>
-                <CardTitle>Cost summary</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <CommandPanel title="Cost summary" accent="warning" testId="cost-progress-cost-summary">
                 <div
                   className="space-y-3"
                   data-testid={stateTestId("cost-progress-cost", view.cost.dataQuality.freshness, view.cost.availability)}
@@ -310,19 +309,22 @@ export function ProjectCostProgressIntelligenceView() {
                     <p className="text-xs font-semibold">{view.cost.health.classification}</p>
                     <p className="text-sm">{view.cost.health.headline}</p>
                   </div>
-                  <p className="text-sm text-slate-700">{view.cost.metrics.summary}</p>
-                  <p className="text-xs text-slate-600" data-testid="cost-progress-currency">
+                  <p className="text-sm text-[color:var(--eos-text-secondary)]">{view.cost.metrics.summary}</p>
+                  {!view.cost.money.amountsPublished ? (
+                    <p className="text-[1rem] font-medium text-[color:var(--eos-text-primary)]">
+                      Cost intelligence
+                      <span className="mt-1 block text-[0.9375rem] font-normal text-[color:var(--eos-text-secondary)]">
+                        No published cost evidence available.
+                      </span>
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-[color:var(--eos-text-secondary)]" data-testid="cost-progress-currency">
                     Currency: {view.cost.money.currencyCode ?? "not published"}
                     {view.cost.money.compatible ? "" : " · incompatible currencies not aggregated"}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card data-testid="cost-progress-progress-summary">
-              <CardHeader>
-                <CardTitle>Progress summary</CardTitle>
-              </CardHeader>
-              <CardContent>
+            </CommandPanel>
+            <CommandPanel title="Progress summary" accent="cyan" testId="cost-progress-progress-summary">
                 <div
                   className="space-y-3"
                   data-testid={stateTestId(
@@ -335,10 +337,18 @@ export function ProjectCostProgressIntelligenceView() {
                     <p className="text-xs font-semibold">{view.progress.health.classification}</p>
                     <p className="text-sm">{view.progress.health.headline}</p>
                   </div>
-                  <p className="text-sm text-slate-700">{view.progress.metrics.summary}</p>
+                  <p className="text-sm text-[color:var(--eos-text-secondary)]">{view.progress.metrics.summary}</p>
+                  {typeof view.progress.metrics.indicatedCompletion === "number" ? (
+                    <div>
+                      <p className="text-[0.8125rem] text-[color:var(--eos-text-secondary)]">Indicated completion</p>
+                      <p className="mt-1 text-[2rem] font-bold leading-none">{Math.round(view.progress.metrics.indicatedCompletion)}%</p>
+                      <div className="mt-2">
+                        <SignalBar value={view.progress.metrics.indicatedCompletion} max={100} />
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              </CardContent>
-            </Card>
+            </CommandPanel>
           </div>
           <div data-testid="cost-progress-cost-attention">
             <SectionHeader title="Cost attention" />

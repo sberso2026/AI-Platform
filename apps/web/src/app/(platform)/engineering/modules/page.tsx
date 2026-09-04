@@ -2,65 +2,63 @@
 
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle, StatusChip } from "@rtb/ui";
+import { CommandPageTitle, CommandPanel, StatusChip } from "@rtb/ui";
 import {
-  Boxes,
-  Brain,
-  ClipboardCheck,
+  Activity,
   BarChart3,
   Box,
+  Brain,
+  ClipboardCheck,
   Network,
-  Activity,
 } from "lucide-react";
 
 const MODULES = [
   {
     key: "project_intelligence",
     name: "Project Intelligence",
-    description: "Documents, meetings, findings, and project decision support",
+    purpose: "Project reasoning and decision intelligence",
+    relationship: "Reasons over Engineering OS, Project Controls, and published evidence",
     href: "/engineering/apps/project-intelligence",
-    status: "available" as const,
     icon: Brain,
   },
   {
     key: "inspection_intelligence",
     name: "Inspection Intelligence",
-    description: "Inspection planning, field capture, and review workflows",
+    purpose: "Inspection planning, field capture, and review",
+    relationship: "Feeds findings and condition into Engineering Core",
     href: "/engineering/apps/inspection-intelligence",
-    status: "available" as const,
     icon: ClipboardCheck,
   },
   {
     key: "asset_intelligence",
     name: "Asset Intelligence",
-    description: "Asset condition, criticality, reliability, and advisory signals",
+    purpose: "Asset condition, criticality, and reliability signals",
+    relationship: "Connects asset records to inspection and engineering evidence",
     href: "/engineering/apps/asset-intelligence",
-    status: "available" as const,
     icon: Activity,
   },
   {
     key: "project_controls",
     name: "Project Controls",
-    description: "Governed cost, schedule, progress, and controls intelligence",
+    purpose: "Governed cost, schedule, and progress intelligence",
+    relationship: "System of record for schedule and cost publications",
     href: "/engineering/apps/project-controls",
-    status: "available" as const,
     icon: BarChart3,
   },
   {
     key: "digital_twin",
     name: "Digital Twin",
-    description: "Twin identity, state, simulation, and digital thread",
+    purpose: "Twin identity, state, simulation, and digital thread",
+    relationship: "Federates model and state evidence into Engineering OS",
     href: "/engineering/apps/digital-twin",
-    status: "available" as const,
     icon: Box,
   },
   {
     key: "engineering_model_interoperability",
-    name: "Engineering Model Interoperability",
-    description:
-      "IFC / SPACE GASS / ETABS export federation with governed mapping — V1.0 GA",
+    name: "Engineering Models",
+    purpose: "IFC / SPACE GASS / ETABS federation with governed mapping",
+    relationship: "Interoperability layer — not a second model register",
     href: "/engineering/apps/model-interoperability",
-    status: "available" as const,
     icon: Network,
   },
 ];
@@ -69,43 +67,45 @@ export default function EngineeringModuleLauncherPage() {
   return (
     <>
       <Header
-        title="Engineering Modules"
-        description="Installable modules hosted by Engineering OS — no module bypasses the OS"
+        title="Engineering Systems"
+        description="Certified modules hosted by Engineering OS"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
         data-testid="engineering-module-launcher"
       >
-        <div className="mb-6 flex items-center gap-2 text-sm text-slate-600">
-          <Boxes className="h-4 w-4" />
-          <span>Module registry · shared domain · shared AI framework</span>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+        <CommandPageTitle
+          eyebrow="Engineering OS"
+          title="Engineering systems matrix"
+          description="Each system remains hosted by Engineering OS. No module bypasses the operating system."
+        />
+        <div className="grid gap-4 xl:grid-cols-2">
           {MODULES.map((mod) => {
             const Icon = mod.icon;
-            const content = (
-              <Card className="h-full transition hover:border-slate-400">
-                <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-5 w-5 text-slate-700" />
-                    <CardTitle className="text-base">{mod.name}</CardTitle>
-                  </div>
-                  <StatusChip status="complete">Available</StatusChip>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">{mod.description}</p>
-                  <p className="mt-3 font-mono text-xs text-slate-400">{mod.key}</p>
-                </CardContent>
-              </Card>
-            );
             return (
-              <Link
+              <CommandPanel
                 key={mod.key}
-                href={mod.href}
-                data-testid={`engineering-module-${mod.key}`}
+                title={mod.name}
+                accent="cyan"
+                meta={
+                  <span className="inline-flex items-center gap-2">
+                    <StatusChip status="complete">Available</StatusChip>
+                  </span>
+                }
+                action={
+                  <Link href={mod.href} className="eos-shell-link" data-testid={`engineering-module-${mod.key}`}>
+                    Open system
+                  </Link>
+                }
               >
-                {content}
-              </Link>
+                <div className="flex items-start gap-4">
+                  <Icon className="mt-1 h-6 w-6 text-[color:var(--eos-accent)]" aria-hidden />
+                  <div className="min-w-0 space-y-2">
+                    <p className="text-[1rem]">{mod.purpose}</p>
+                    <p className="text-[0.9375rem] text-[color:var(--eos-text-secondary)]">{mod.relationship}</p>
+                  </div>
+                </div>
+              </CommandPanel>
             );
           })}
         </div>

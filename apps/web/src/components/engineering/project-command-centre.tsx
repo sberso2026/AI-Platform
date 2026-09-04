@@ -7,10 +7,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CommandPanel,
   EmptyState,
-  MetricCard,
-  SectionHeader,
+  ProjectHealthIndicator,
+  ProjectSelectCommandSurface,
   cn,
+  type HealthLevel,
 } from "@rtb/ui";
 import { ScheduleCommandCentreCard, type ScheduleIntelligenceView } from "./project-schedule-intelligence";
 import {
@@ -121,13 +123,6 @@ type ListedProject = {
   workspace_id?: string;
 };
 
-const OVERALL_STYLE: Record<OverallHealth, string> = {
-  GREEN: "eos-state-success border-2",
-  AMBER: "eos-state-warning border-2",
-  RED: "eos-state-danger border-2",
-  UNKNOWN: "eos-state-unknown border-2 border-dashed",
-};
-
 const STATE_STYLE: Record<HealthState, string> = {
   green: "eos-state-success",
   amber: "eos-state-warning",
@@ -135,12 +130,18 @@ const STATE_STYLE: Record<HealthState, string> = {
   unknown: "eos-state-unknown border-dashed",
 };
 
-const OVERALL_TONE: Record<OverallHealth, "green" | "amber" | "red" | "slate"> = {
-  GREEN: "green",
-  AMBER: "amber",
-  RED: "red",
-  UNKNOWN: "slate",
-};
+function overallToHealth(value: OverallHealth): HealthLevel {
+  if (value === "GREEN") return "HEALTHY";
+  if (value === "AMBER") return "ATTENTION";
+  if (value === "RED") return "CRITICAL";
+  return "UNKNOWN";
+}
+
+function attentionSeverity(severity: AttentionItem["severity"]): "CRITICAL" | "HIGH" | "MEDIUM" | "INFO" {
+  if (severity === "red") return "CRITICAL";
+  if (severity === "amber") return "HIGH";
+  return "MEDIUM";
+}
 
 const HEALTH_LABELS: Record<string, string> = {
   schedule: "Schedule",
@@ -372,18 +373,17 @@ export function ProjectCommandCentre() {
     };
   }, [selectedId]);
 
+  const healthLevel = view ? overallToHealth(view.overallHealth) : "UNKNOWN";
+  const changed = view ? composeWhatChanged(view, changeWindow) : [];
+
   return (
-    <div data-testid="project-intelligence-command-centre" className="space-y-8">
+    <div data-testid="project-intelligence-command-centre" className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <PiPageProjectSelect testId="command-centre-project-select" />
       </div>
 
       {!selectedId ? (
-        <EmptyState
-          title="Select a project"
-          description="Project Intelligence Overview assembles health, attention, change, and evidence-grounded brief for one selected project. All Projects is available only as a portfolio choice."
-          data-testid="command-centre-project-empty"
-        />
+        <ProjectSelectCommandSurface testId="command-centre-project-empty" />
       ) : null}
 
       {loading ? <PiLoadingSkeleton label="Loading project intelligence…" /> : null}
@@ -400,225 +400,275 @@ export function ProjectCommandCentre() {
       {view ? (
         <>
           <section data-testid="command-centre-project-header">
-            <SectionHeader
-              title={`${view.project.projectCode} — ${view.project.projectName}`}
-              description={`Phase ${view.project.phase} · ${view.project.status}`}
-            />
+            <p className="text-[0.8125rem] font-semibold tracking-[0.14em] text-[color:var(--eos-accent)]">
+              Project / status / last evidence
+            </p>
+            <h2 className="mt-1 text-[2.125rem] font-semibold tracking-tight text-[color:var(--eos-text-primary)]">
+              {view.project.projectCode} — {view.project.projectName}
+            </h2>
+            <p className="mt-2 text-[1rem] text-[color:var(--eos-text-secondary)]">
+              Phase {view.project.phase} · {view.project.status}
+              {view.generatedAt ? ` · evidence ${view.generatedAt}` : ""}
+            </p>
           </section>
 
-          <section data-testid="command-centre-overall-health">
-            <Card className={cn("border-2", OVERALL_STYLE[view.overallHealth])}>
-              <CardHeader>
-                <CardTitle>Project health</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap items-center gap-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)]">
+            <section data-testid="command-centre-overall-health">
+              <CommandPanel title="Project health" accent={healthLevel === "CRITICAL" ? "danger" : healthLevel === "ATTENTION" ? "warning" : "success"}>
                 <HealthBadge value={view.overallHealth} testId={`overall-health-${view.overallHealth}`} />
-                <MetricCard
-                  label="Overall"
-                  value={view.overallHealth === "UNKNOWN" ? "Unknown" : view.overallHealth}
-                  tone={OVERALL_TONE[view.overallHealth]}
-                />
-                <p className="text-sm text-slate-600">
-                  Green / Amber / Red / Unknown from published evidence only. Unknown is not assumed healthy.
+                <div className="mt-4">
+                  <ProjectHealthIndicator
+                    level={healthLevel}
+                    domains={view.healthDimensions.map((dimension) => ({
+                      label: HEALTH_LABELS[dimension.dimension] ?? dimension.dimension.replace(/_/g, " "),
+                      state: dimension.state,
+                    }))}
+                  />
+                </div>
+                <p className="mt-3 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">
+                  Published evidence only. Unknown is not assumed healthy.
                 </p>
-              </CardContent>
-            </Card>
-          </section>
+              </CommandPanel>
+            </section>
+
+            <section data-testid="pi-what-changed">
+              <CommandPanel
+                title="What changed"
+                accent="cyan"
+                action={
+                  <div className="flex gap-2" data-testid="pi-change-window">
+                    {([1, 7, 30] as const).map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        className={cn(
+                          "rounded-md border px-3 py-1.5 text-sm",
+                          changeWindow === days
+                            ? "border-[color:var(--eos-border-active)] bg-[color:var(--eos-accent-soft)] text-[color:var(--eos-text-primary)]"
+                            : "eos-shell-link",
+                        )}
+                        onClick={() => setChangeWindow(days)}
+                      >
+                        {days === 1 ? "Today" : `${days} days`}
+                      </button>
+                    ))}
+                  </div>
+                }
+              >
+                {changed.length === 0 ? (
+                  <EmptyState
+                    title="No material change in this period"
+                    description="Published schedule, cost, risk, TQ, decision, or finding deltas were not available for the selected window."
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {changed.map((item) => (
+                      <li key={item.id} className="border-b border-[color:var(--eos-border)] py-2 last:border-0">
+                        <p className="font-medium text-[color:var(--eos-text-primary)]">{item.title}</p>
+                        <p className="mt-1 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">{item.detail}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link
+                  href={withPiProjectQuery(`${PI_BASE_PATH}/reports`, view.project.projectId)}
+                  className="mt-3 inline-block text-sm font-medium text-[color:var(--eos-accent)] hover:underline"
+                  data-testid="pi-view-all-activity"
+                >
+                  View all activity
+                </Link>
+              </CommandPanel>
+            </section>
+
+            <section data-testid="command-centre-attention">
+              <CommandPanel title="Attention required" accent="warning">
+                {view.attentionItems.length === 0 ? (
+                  <EmptyState
+                    title="No attention items"
+                    description="No overdue decisions, high risks, or published exceptions for this project."
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {view.attentionItems.map((item) => (
+                      <li
+                        key={item.id}
+                        data-testid={`attention-item-${item.reasonCode}`}
+                        className={cn(
+                          "border-b border-[color:var(--eos-border)] py-2 last:border-0",
+                          item.severity === "red"
+                            ? "eos-state-danger"
+                            : item.severity === "amber"
+                              ? "eos-state-warning"
+                              : "eos-state-unknown",
+                        )}
+                      >
+                        <p className="text-[0.75rem] font-semibold tracking-[0.1em] text-[color:var(--eos-warning)]">
+                          {attentionSeverity(item.severity)}
+                        </p>
+                        <p className="mt-0.5 font-medium text-[color:var(--eos-text-primary)]">
+                          {attentionIssueTitle(item.reasonCode)}
+                        </p>
+                        <p className="mt-1 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">{item.explanation}</p>
+                        <dl className="mt-2 grid gap-1 text-[0.8125rem] text-[color:var(--eos-text-secondary)] sm:grid-cols-2">
+                          <div>
+                            <dt className="font-medium">Why it matters</dt>
+                            <dd>{item.explanation}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium">Owner</dt>
+                            <dd>Not published</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium">Due / age</dt>
+                            <dd>
+                              {item.sourceReference.sourceTimestamp
+                                ? relativeAge(item.sourceReference.sourceTimestamp)
+                                : "Not published"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium">Potential impact</dt>
+                            <dd>Not published — no speculative values.</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium">Evidence</dt>
+                            <dd>1 linked source</dd>
+                          </div>
+                        </dl>
+                        <Link
+                          href={sourceOpenHref(item.sourceReference, view.project.projectId)}
+                          className="mt-2 inline-block text-[0.8125rem] font-medium text-[color:var(--eos-accent)] hover:underline"
+                        >
+                          Open source
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CommandPanel>
+            </section>
+          </div>
 
           <section data-testid="command-centre-health-dimensions">
-            <SectionHeader
-              title="Health by area"
-              description="Schedule, cost, engineering, risk, change, and decisions from existing evidence."
-            />
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {view.healthDimensions.map((dimension) => (
-                <details
-                  key={dimension.dimension}
-                  data-testid={`health-dimension-${dimension.dimension}`}
-                  className={cn("rounded-lg border p-4", STATE_STYLE[dimension.state])}
-                >
-                  <summary className="flex cursor-pointer items-center justify-between gap-2 font-medium">
-                    <span>{HEALTH_LABELS[dimension.dimension] ?? dimension.dimension.replace("_", " ")}</span>
-                    <HealthBadge
-                      value={dimension.state}
-                      testId={`health-state-${dimension.dimension}-${dimension.state}`}
-                    />
-                  </summary>
-                  <div className="mt-3 space-y-1 text-xs text-slate-700">
-                    <p>
-                      {dimension.reasonCodes.length
-                        ? dimension.reasonCodes.map(attentionIssueTitle).join("; ")
-                        : "No additional published reason."}
-                    </p>
-                    <p>Evidence count: {dimension.evidenceReferences.length}</p>
-                    <p>
-                      {freshnessLabel(undefined, dimension.dataFreshness) ??
-                        sourceSystemLabel(dimension.source) ??
-                        "Source freshness not published."}
-                    </p>
-                    <p>Limitations: {dimension.limitations.join(", ") || "none stated"}</p>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </section>
-
-          <section data-testid="command-centre-attention">
-            <SectionHeader
-              title="Attention required"
-              description="Exception-first signals. Impact is shown only when published evidence supports it."
-            />
-            {view.attentionItems.length === 0 ? (
-              <EmptyState
-                title="No attention items"
-                description="No overdue decisions, high risks, or published exceptions for this project."
-              />
-            ) : (
-              <ul className="space-y-2">
-                {view.attentionItems.map((item) => (
-                  <li
-                    key={item.id}
-                    data-testid={`attention-item-${item.reasonCode}`}
-                    className={cn(
-                      "rounded-xl border px-4 py-3 text-[1rem]",
-                      item.severity === "red"
-                        ? "eos-state-danger"
-                        : item.severity === "amber"
-                          ? "eos-state-warning"
-                          : "eos-state-unknown",
-                    )}
+            <CommandPanel title="Health by area" meta="Schedule, cost, engineering, risk, change, and decisions from existing evidence.">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {view.healthDimensions.map((dimension) => (
+                  <details
+                    key={dimension.dimension}
+                    data-testid={`health-dimension-${dimension.dimension}`}
+                    className={cn("rounded-lg border border-[color:var(--eos-border)] p-4", STATE_STYLE[dimension.state])}
                   >
-                    <p className="font-medium text-slate-900">
-                      {item.severity.toUpperCase()} · {attentionIssueTitle(item.reasonCode)}
-                    </p>
-                    <p className="mt-1 text-slate-700">{item.explanation}</p>
-                    <dl className="mt-2 grid gap-1 text-xs text-slate-600 sm:grid-cols-2">
-                      <div>
-                        <dt className="font-medium text-slate-700">Why it matters</dt>
-                        <dd>{item.explanation}</dd>
-                      </div>
-                      <div>
-                        <dt className="font-medium text-slate-700">Owner</dt>
-                        <dd>Not published</dd>
-                      </div>
-                      <div>
-                        <dt className="font-medium text-slate-700">Due / age</dt>
-                        <dd>
-                          {item.sourceReference.sourceTimestamp
-                            ? relativeAge(item.sourceReference.sourceTimestamp)
-                            : "Not published"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="font-medium text-slate-700">Potential impact</dt>
-                        <dd>Not published — no speculative values.</dd>
-                      </div>
-                      <div>
-                        <dt className="font-medium text-slate-700">Evidence</dt>
-                        <dd>1 linked source</dd>
-                      </div>
-                    </dl>
-                    <Link
-                      href={sourceOpenHref(item.sourceReference, view.project.projectId)}
-                      className="mt-2 inline-block text-xs font-medium text-cyan-800 hover:underline"
-                    >
-                      Open source
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section data-testid="pi-what-changed">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <SectionHeader
-                title="What changed"
-                description="Material published deltas, not a raw activity log."
-              />
-              <div className="flex gap-2" data-testid="pi-change-window">
-                {([1, 7, 30] as const).map((days) => (
-                  <button
-                    key={days}
-                    type="button"
-                    className={cn(
-                      "rounded-md border px-3 py-1.5 text-sm",
-                      changeWindow === days
-                        ? "border-[color:var(--eos-border-active)] bg-[color:var(--eos-accent-soft)] text-[color:var(--eos-text-primary)]"
-                        : "eos-shell-link",
-                    )}
-                    onClick={() => setChangeWindow(days)}
-                  >
-                    {days === 1 ? "Today" : `${days} days`}
-                  </button>
+                    <summary className="flex cursor-pointer items-center justify-between gap-2 font-medium">
+                      <span>{HEALTH_LABELS[dimension.dimension] ?? dimension.dimension.replace(/_/g, " ")}</span>
+                      <HealthBadge
+                        value={dimension.state}
+                        testId={`health-state-${dimension.dimension}-${dimension.state}`}
+                      />
+                    </summary>
+                    <div className="mt-3 space-y-1 text-[0.8125rem] text-[color:var(--eos-text-secondary)]">
+                      <p>
+                        {dimension.reasonCodes.length
+                          ? dimension.reasonCodes.map(attentionIssueTitle).join("; ")
+                          : "No additional published reason."}
+                      </p>
+                      <p>Evidence count: {dimension.evidenceReferences.length}</p>
+                      <p>
+                        {freshnessLabel(undefined, dimension.dataFreshness) ??
+                          sourceSystemLabel(dimension.source) ??
+                          "Source freshness not published."}
+                      </p>
+                      <p>Limitations: {dimension.limitations.join(", ") || "none stated"}</p>
+                    </div>
+                  </details>
                 ))}
               </div>
-            </div>
-            {composeWhatChanged(view, changeWindow).length === 0 ? (
-              <EmptyState
-                title="No material change in this period"
-                description="Published schedule, cost, risk, TQ, decision, or finding deltas were not available for the selected window."
-              />
-            ) : (
-              <ul className="mt-3 space-y-2">
-                {composeWhatChanged(view, changeWindow).map((item) => (
-                  <li key={item.id} className="rounded-md border border-slate-200 px-4 py-3 text-sm">
-                    <p className="font-medium text-slate-900">{item.title}</p>
-                    <p className="mt-1 text-slate-700">{item.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Link
-              href={withPiProjectQuery(`${PI_BASE_PATH}/reports`, view.project.projectId)}
-              className="mt-3 inline-block text-sm font-medium text-cyan-800 hover:underline"
-              data-testid="pi-view-all-activity"
-            >
-              View all activity
-            </Link>
+            </CommandPanel>
           </section>
 
           <section data-testid="pi-project-brief">
-            <SectionHeader
+            <CommandPanel
               title="AI project brief"
-              description="Advisory management summary. Every material claim should be evidence-linked. No autonomous approval."
-            />
-            {briefLoading ? <PiLoadingSkeleton label="Preparing management brief…" /> : null}
-            {briefError ? (
-              <PiUnavailablePanel
-                title={PI_UNAVAILABLE.analyst}
-                dataset="analyst"
-                requestId={briefRequestId}
-                testId="pi-project-brief-error"
-              />
-            ) : null}
-            {brief ? (
-              <Card>
-                <CardContent className="space-y-3 pt-6 text-sm text-slate-800">
-                  <p data-testid="pi-project-brief-text">{brief.answer}</p>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Evidence</p>
+              accent="ai"
+              meta="Evidence-grounded summary. Advisory only. No autonomous approval."
+              action={
+                <Link
+                  href={withPiProjectQuery(`${PI_BASE_PATH}/analyst`, view.project.projectId)}
+                  className="text-[0.9375rem] font-medium text-[color:var(--eos-ai)] hover:underline"
+                >
+                  Ask Project Intelligence
+                </Link>
+              }
+            >
+              {briefLoading ? <PiLoadingSkeleton label="Preparing management brief…" /> : null}
+              {briefError ? (
+                <PiUnavailablePanel
+                  title={PI_UNAVAILABLE.analyst}
+                  dataset="analyst"
+                  requestId={briefRequestId}
+                  testId="pi-project-brief-error"
+                />
+              ) : null}
+              {brief ? (
+                <div className="space-y-4">
+                  <p
+                    className="text-[1.25rem] leading-relaxed text-[color:var(--eos-text-primary)]"
+                    data-testid="pi-project-brief-text"
+                  >
+                    {brief.answer}
+                  </p>
+                  {brief.claims.some((claim) => claim.kind === "DETERMINISTIC_INTERPRETATION" || claim.kind === "AI_SUMMARY") ? (
+                    <div>
+                      <p className="text-[0.8125rem] font-semibold tracking-[0.12em] text-[color:var(--eos-text-secondary)]">
+                        Why it matters
+                      </p>
+                      <ul className="mt-2 space-y-1 text-[1rem] text-[color:var(--eos-text-secondary)]">
+                        {brief.claims
+                          .filter((claim) => claim.kind === "DETERMINISTIC_INTERPRETATION" || claim.kind === "AI_SUMMARY")
+                          .map((claim, index) => (
+                            <li key={`brief-why-${index}`}>{claim.text}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  <p className="text-[0.8125rem] font-semibold tracking-[0.12em] text-[color:var(--eos-text-secondary)]">
+                    Evidence · {brief.citations.length} linked records
+                  </p>
                   {brief.citations.length === 0 ? (
-                    <p className="text-slate-600">Evidence is insufficient to cite additional sources.</p>
+                    <p className="text-[color:var(--eos-text-secondary)]">Evidence is insufficient to cite additional sources.</p>
                   ) : (
-                    <ul className="space-y-1 text-slate-700" data-testid="pi-project-brief-citations">
+                    <ul className="space-y-1 text-[color:var(--eos-text-secondary)]" data-testid="pi-project-brief-citations">
                       {brief.citations.map((cite) => (
                         <li key={`${cite.entityType}:${cite.entityId}`}>{cite.label}</li>
                       ))}
                     </ul>
                   )}
                   {brief.limitations.length ? (
-                    <p className="text-xs text-slate-500">Limitations: {brief.limitations.join("; ")}</p>
+                    <p className="text-[0.8125rem] text-[color:var(--eos-text-secondary)]">
+                      Limitations: {brief.limitations.join("; ")}
+                    </p>
                   ) : null}
-                </CardContent>
-              </Card>
-            ) : null}
+                  <Link
+                    href={withPiProjectQuery(`${PI_BASE_PATH}/analyst`, view.project.projectId)}
+                    className="eos-shell-link inline-flex"
+                  >
+                    View evidence
+                  </Link>
+                </div>
+              ) : null}
+            </CommandPanel>
           </section>
 
           <AnalystCommandCentreEntry projectId={view.project.projectId} />
 
           <div className="grid gap-4 lg:grid-cols-2">
+            <RiskCommandCentreCard view={view.riskChangeIntelligence.risk} projectId={view.project.projectId} />
+            <DecisionCommandCentreCard
+              view={view.queryDecisionIntelligence.decision}
+              projectId={view.project.projectId}
+            />
             <ScheduleCommandCentreCard view={view.scheduleIntelligence} projectId={view.project.projectId} />
             <CostCommandCentreCard view={view.costProgressIntelligence.cost} projectId={view.project.projectId} />
+            <ChangeCommandCentreCard view={view.riskChangeIntelligence.change} projectId={view.project.projectId} />
             <ProgressCommandCentreCard
               view={view.costProgressIntelligence.progress}
               projectId={view.project.projectId}
@@ -629,19 +679,15 @@ export function ProjectCommandCentre() {
                   <CardTitle>Cost vs Progress</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-700">{view.costProgressIntelligence.consistency.explanation}</p>
+                  <p className="text-sm text-[color:var(--eos-text-secondary)]">
+                    {view.costProgressIntelligence.consistency.explanation}
+                  </p>
                 </CardContent>
               </Card>
             ) : null}
-            <RiskCommandCentreCard view={view.riskChangeIntelligence.risk} projectId={view.project.projectId} />
             <SectionCard section={view.quality} testId="command-centre-section-quality" />
-            <ChangeCommandCentreCard view={view.riskChangeIntelligence.change} projectId={view.project.projectId} />
             <QueryCommandCentreCard
               view={view.queryDecisionIntelligence.query}
-              projectId={view.project.projectId}
-            />
-            <DecisionCommandCentreCard
-              view={view.queryDecisionIntelligence.decision}
               projectId={view.project.projectId}
             />
             <ActionCommandCentreCard
@@ -654,7 +700,7 @@ export function ProjectCommandCentre() {
           </div>
 
           {view.limitations.length > 0 ? (
-            <p className="text-xs text-slate-500" data-testid="command-centre-limitations">
+            <p className="text-[0.8125rem] text-[color:var(--eos-text-secondary)]" data-testid="command-centre-limitations">
               Limitations: {view.limitations.join(", ")}
             </p>
           ) : null}
@@ -662,7 +708,7 @@ export function ProjectCommandCentre() {
       ) : null}
 
       {selectedProject && !view && !loading && !error ? (
-        <p className="text-sm text-slate-600">No Command Centre payload for this project.</p>
+        <p className="text-sm text-[color:var(--eos-text-secondary)]">No Command Centre payload for this project.</p>
       ) : null}
     </div>
   );

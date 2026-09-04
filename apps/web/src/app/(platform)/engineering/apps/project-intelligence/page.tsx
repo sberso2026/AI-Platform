@@ -76,15 +76,14 @@ export default async function ProjectIntelligenceOverviewPage() {
   }
 
   return (
-    <section data-testid="project-intelligence-ready">
-      <p className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--eos-accent)]">Project Intelligence Overview</p>
+    <section data-testid="project-intelligence-ready" className="eos-command-canvas">
+      <p className="text-[0.8125rem] font-semibold tracking-[0.14em] text-[color:var(--eos-accent)]">Project Intelligence Overview</p>
       <h2 className="mt-1 text-[2.125rem] font-semibold tracking-tight text-[color:var(--eos-text-primary)]">
-        What changed, why it matters, what needs a decision
+        What changed, what matters, what needs a decision
       </h2>
       <p className="mt-3 max-w-3xl text-[1rem] text-[color:var(--eos-text-secondary)]">
         Project Intelligence is the reasoning layer over existing project evidence. Schedule, cost,
-        documents, correspondence, and meetings remain in their systems of record. This overview answers
-        health, attention, change, and next decisions from published evidence only.
+        documents, correspondence, and meetings remain in their systems of record.
       </p>
 
       <div className="mt-8" data-testid="project-intelligence-dashboard">
@@ -93,24 +92,18 @@ export default async function ProjectIntelligenceOverviewPage() {
         </Suspense>
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <nav className="mt-8 flex flex-wrap gap-2" aria-label="Records and reports">
         {DASHBOARD_PANELS.map((panel) => (
-          <article
+          <Link
             key={panel.id}
+            href={panel.href}
             data-testid={`project-intelligence-panel-${panel.id}`}
-            className="eos-panel-elevated rounded-xl p-5"
+            className="eos-shell-link"
           >
-            <h3 className="text-[1.125rem] font-medium text-[color:var(--eos-text-primary)]">{panel.title}</h3>
-            <p className="mt-2 text-[0.9375rem] text-[color:var(--eos-text-secondary)]">{panel.body}</p>
-            <Link
-              href={panel.href}
-              className="mt-4 inline-block text-[0.9375rem] font-medium text-[color:var(--eos-accent)] hover:underline"
-            >
-              Open
-            </Link>
-          </article>
+            {panel.title}
+          </Link>
         ))}
-      </div>
+      </nav>
     </section>
   );
 }
