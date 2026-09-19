@@ -129,10 +129,37 @@ export class MemoryEngineeringReviewStore implements EngineeringReviewStore {
     return packageFromRow(clone(row));
   }
 
+  async listReviewPackages(filter: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+  }): Promise<readonly ReviewPackage[]> {
+    return [...this.memory.packages.values()]
+      .filter(
+        (row) =>
+          row.tenant_id === filter.tenantId &&
+          row.workspace_id === filter.workspaceId &&
+          row.project_id === filter.projectId &&
+          canSelectReviewRow(this.principal, row.tenant_id, row.workspace_id),
+      )
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .map((row) => packageFromRow(clone(row)));
+  }
+
   async deleteReviewPackage(id: string): Promise<void> {
     const row = this.requirePackageRow(id);
     assertDelete(this.principal, row.tenant_id, row.workspace_id);
     this.memory.packages.delete(id);
+  }
+
+  async queueReviewRun(run: ReviewRun): Promise<ReviewRun> {
+    const pkg = this.requireVisiblePackage(run.reviewPackageId);
+    assertSameOwnership(pkg, run);
+    assertInsert(this.principal, run.tenantId, run.workspaceId);
+    this.assertWorkspaceProject(run);
+    this.memory.runs.set(run.id, clone(runToRow(run)));
+    this.emit("review_run.created", "engineering_review_run", run.id, run);
+    return runFromRow(clone(this.memory.runs.get(run.id)!));
   }
 
   async startReviewRun(run: ReviewRun): Promise<ReviewRun> {
@@ -161,6 +188,9 @@ export class MemoryEngineeringReviewStore implements EngineeringReviewStore {
       failClosed("ownership_immutable", "Review run ownership cannot change after creation");
     }
     this.memory.runs.set(run.id, clone(runToRow(run)));
+    if (run.status === "running" && existing.status === "queued") {
+      this.emit("review_run.started", "engineering_review_run", run.id, run);
+    }
     if (run.status === "completed") {
       this.emit("review_run.completed", "engineering_review_run", run.id, run);
     }
@@ -175,6 +205,16 @@ export class MemoryEngineeringReviewStore implements EngineeringReviewStore {
     if (!row) return null;
     if (!canSelectReviewRow(this.principal, row.tenant_id, row.workspace_id)) return null;
     return runFromRow(clone(row));
+  }
+
+  async listReviewRunsForPackage(packageId: string): Promise<readonly ReviewRun[]> {
+    const pkg = await this.loadReviewPackage(packageId);
+    if (!pkg) return [];
+    return [...this.memory.runs.values()]
+      .filter((row) => row.review_package_id === packageId)
+      .filter((row) => canSelectReviewRow(this.principal, row.tenant_id, row.workspace_id))
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .map((row) => runFromRow(clone(row)));
   }
 
   async deleteReviewRun(id: string): Promise<void> {

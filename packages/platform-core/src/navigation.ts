@@ -558,6 +558,14 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     audience: "engineer",
     featureKey: "ai_assistant",
   },
+  {
+    id: "eng-review",
+    label: "Engineering Review",
+    icon: "ClipboardList",
+    href: "/review",
+    group: "engineering_ai",
+    audience: "engineer",
+  },
   /** Reachable routes — not primary nav */
   {
     id: "eng-my",

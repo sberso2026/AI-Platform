@@ -80,6 +80,20 @@ export const ERA1_REVIEW_RULES: readonly ReviewRule[] = [
     outputCategory: "missing_information",
   }),
   defineReviewRule({
+    ruleId: "er.design_basis_consistency",
+    version: "1.0.0",
+    reviewType: "design_basis_consistency",
+    applicableInputTypes: ["basis", "specification", "calculation", "drawing", "other"],
+    description: "Detect design-basis facts that conflict with other documents in the package.",
+    execution: "deterministic",
+    evidenceRequirements: {
+      minRecords: 2,
+      sourceTypes: ["extracted_text"],
+      attributableSpanRequired: true,
+    },
+    outputCategory: "cross_document_inconsistency",
+  }),
+  defineReviewRule({
     ruleId: "er.requirement_traceability",
     version: "1.0.0",
     reviewType: "requirement_traceability",

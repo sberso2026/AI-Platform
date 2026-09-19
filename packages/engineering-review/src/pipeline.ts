@@ -108,7 +108,7 @@ export async function runGroundedReviewPipeline(
     run: input.run,
     findings: verified,
     limitations: [
-      "ERA-4 grounded review uses deterministic extraction and comparison; AI is optional and schema-validated.",
+      "ERA-5 default execution is deterministic/local. A live external model is not required.",
       "Drawing visual interpretation, OCR, FEA, and standards interpretation remain out of scope.",
       "Findings are candidates for a human engineer — not certification or approval.",
     ],

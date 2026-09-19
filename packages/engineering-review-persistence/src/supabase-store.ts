@@ -164,9 +164,39 @@ export class SupabaseEngineeringReviewStore implements EngineeringReviewStore {
     return data ? packageFromRow(data as never) : null;
   }
 
+  async listReviewPackages(filter: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+  }): Promise<readonly ReviewPackage[]> {
+    const { data, error } = await this.client
+      .from("engineering_review_packages")
+      .select("*")
+      .eq("tenant_id", filter.tenantId)
+      .eq("workspace_id", filter.workspaceId)
+      .eq("project_id", filter.projectId)
+      .order("created_at", { ascending: true });
+    reject(error, "listReviewPackages failed");
+    return (data ?? []).map((row) => packageFromRow(row as never));
+  }
+
   async deleteReviewPackage(id: string): Promise<void> {
     const { error } = await this.client.from("engineering_review_packages").delete().eq("id", id);
     reject(error, "deleteReviewPackage failed");
+  }
+
+  async queueReviewRun(run: ReviewRun): Promise<ReviewRun> {
+    const id = asUuid(run.id);
+    const row = runToRow({ ...run, id: id as typeof run.id });
+    const { data, error } = await this.client
+      .from("engineering_review_runs")
+      .insert({ ...row, id })
+      .select("*")
+      .single();
+    reject(error, "queueReviewRun failed");
+    const saved = runFromRow(data as never);
+    await this.emit("review_run.created", "engineering_review_run", saved.id, saved);
+    return saved;
   }
 
   async startReviewRun(run: ReviewRun): Promise<ReviewRun> {
@@ -194,6 +224,9 @@ export class SupabaseEngineeringReviewStore implements EngineeringReviewStore {
       .single();
     reject(error, "saveReviewRun failed");
     const saved = runFromRow(data as never);
+    if (saved.status === "running" && run.status === "running") {
+      await this.emit("review_run.started", "engineering_review_run", saved.id, saved);
+    }
     if (saved.status === "completed") {
       await this.emit("review_run.completed", "engineering_review_run", saved.id, saved);
     }
@@ -211,6 +244,16 @@ export class SupabaseEngineeringReviewStore implements EngineeringReviewStore {
       .maybeSingle();
     reject(error, "loadReviewRun failed");
     return data ? runFromRow(data as never) : null;
+  }
+
+  async listReviewRunsForPackage(packageId: string): Promise<readonly ReviewRun[]> {
+    const { data, error } = await this.client
+      .from("engineering_review_runs")
+      .select("*")
+      .eq("review_package_id", packageId)
+      .order("created_at", { ascending: true });
+    reject(error, "listReviewRunsForPackage failed");
+    return (data ?? []).map((row) => runFromRow(row as never));
   }
 
   async deleteReviewRun(id: string): Promise<void> {

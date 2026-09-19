@@ -35,6 +35,12 @@ importers:
       '@rtb/engineering-os':
         specifier: workspace:*
         version: link:../../packages/engineering-os
+      '@rtb/engineering-review':
+        specifier: workspace:*
+        version: link:../../packages/engineering-review
+      '@rtb/engineering-review-persistence':
+        specifier: workspace:*
+        version: link:../../packages/engineering-review-persistence
       '@rtb/inspection-intelligence':
         specifier: workspace:*
         version: link:../../packages/inspection-intelligence

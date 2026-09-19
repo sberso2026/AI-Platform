@@ -21,13 +21,20 @@ export type KnownReviewDocument = {
 export interface ReviewPackageRepository {
   saveReviewPackage(pkg: ReviewPackage): Promise<ReviewPackage>;
   loadReviewPackage(id: string): Promise<ReviewPackage | null>;
+  listReviewPackages(filter: {
+    tenantId: string;
+    workspaceId: string;
+    projectId: string;
+  }): Promise<readonly ReviewPackage[]>;
   deleteReviewPackage(id: string): Promise<void>;
 }
 
 export interface ReviewRunRepository {
+  queueReviewRun(run: ReviewRun): Promise<ReviewRun>;
   startReviewRun(run: ReviewRun): Promise<ReviewRun>;
   saveReviewRun(run: ReviewRun): Promise<ReviewRun>;
   loadReviewRun(id: string): Promise<ReviewRun | null>;
+  listReviewRunsForPackage(packageId: string): Promise<readonly ReviewRun[]>;
   deleteReviewRun(id: string): Promise<void>;
 }
 

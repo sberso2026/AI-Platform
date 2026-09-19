@@ -126,6 +126,7 @@ export async function persistHumanDisposition(
     actorId: string;
     actorKind?: "human" | "system" | "ai";
     reason?: string;
+    assignedTo?: string;
     now?: string;
   },
 ): Promise<{ finding: ReviewFinding; disposition: FindingDisposition; history: readonly FindingDisposition[] }> {

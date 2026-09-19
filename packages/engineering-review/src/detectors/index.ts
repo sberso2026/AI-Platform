@@ -1,5 +1,6 @@
 import type { MvpReviewType } from "../review-scope";
 import { crossDocumentInconsistencyDetector } from "./cross-document-inconsistency";
+import { designBasisConsistencyDetector } from "./design-basis-consistency";
 import { missingEngineeringEvidenceDetector } from "./missing-engineering-evidence";
 import { missingInformationDetector } from "./missing-information";
 import { requirementTraceabilityDetector } from "./requirement-traceability";
@@ -10,6 +11,7 @@ import type { DetectorContext, DetectorDetection, ReviewDetector } from "./types
 export const ERA1_DETECTORS: readonly ReviewDetector[] = [
   crossDocumentInconsistencyDetector,
   missingInformationDetector,
+  designBasisConsistencyDetector,
   requirementTraceabilityDetector,
   unsupportedAssumptionDetector,
   revisionInconsistencyDetector,

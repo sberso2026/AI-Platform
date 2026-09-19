@@ -81,14 +81,13 @@ describe("dependency graph", () => {
     }
   });
 
-  it("does not create Review UI routes", () => {
-    const webApp = join(REPO_ROOT, "apps/web/src/app");
-    const files = walk(webApp).filter(
-      (path) => path.endsWith(".ts") || path.endsWith(".tsx") || path.endsWith(".js"),
-    );
-    for (const file of files) {
-      const body = readFileSync(file, "utf8");
-      expect(body, file).not.toMatch(/["'`]\/review(?:\/|["'`])/);
+  it("keeps Review UI in the ERA-5 MUP routes only", () => {
+    const domainSrc = join(REPO_ROOT, "packages/engineering-review/src");
+    const domainFiles = walk(domainSrc).filter((path) => path.endsWith(".ts"));
+    for (const file of domainFiles) {
+      expect(readFileSync(file, "utf8"), file).not.toMatch(/from ["']next["']/);
     }
+    const mup = join(REPO_ROOT, "apps/web/src/app/(platform)/review/page.tsx");
+    expect(readFileSync(mup, "utf8")).toContain("/api/review/projects");
   });
 });

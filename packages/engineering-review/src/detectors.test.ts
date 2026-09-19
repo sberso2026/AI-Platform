@@ -56,6 +56,6 @@ describe("deterministic detectors", () => {
     expect(result.findings[0]?.status).toBe("awaiting_engineer");
     expect(result.findings[0]?.severity).toBe("major");
     expect(result.findings[0]?.confidence.band).toBe("high");
-    expect(result.disclaimer).toMatch(/Not professional engineering certification/);
+    expect(result.disclaimer).toMatch(/does not replace professional engineering judgment/);
   });
 });

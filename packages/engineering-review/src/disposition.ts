@@ -68,6 +68,12 @@ export function applyHumanDisposition(input: {
   const actorKind: ReviewActorKind = "human";
   const to = ACTION_STATUS[input.action];
   if (!to) failClosed("disposition_invalid", "Unknown disposition action", { action: input.action });
+  if ((input.action === "reject" || input.action === "modify") && !input.reason?.trim()) {
+    failClosed("disposition_reason_required", "Reject and modify require a reason");
+  }
+  if (input.action === "assign" && !input.assignedTo?.trim()) {
+    failClosed("assignee_required", "Assign requires an assignee");
+  }
 
   const event = createReviewLifecycleEvent({
     from: input.finding.status,

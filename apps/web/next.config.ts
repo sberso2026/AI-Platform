@@ -49,6 +49,8 @@ const nextConfig: NextConfig = {
     "@rtb/project-intelligence",
     "@rtb/project-controls",
     "@rtb/inspection-intelligence",
+    "@rtb/engineering-review",
+    "@rtb/engineering-review-persistence",
   ],
   experimental: {
     optimizePackageImports: ["lucide-react", "@rtb/ui"],

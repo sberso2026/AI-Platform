@@ -9,6 +9,10 @@ on:
       - "supabase/migrations/*engineering_review*"
       - "docs/engineering-review/**"
       - ".github/workflows/engineering-review-unit.yml"
+      - "apps/web/src/app/(platform)/review/**"
+      - "apps/web/src/app/api/review/**"
+      - "apps/web/src/lib/review/**"
+      - "apps/web/src/__tests__/engineering-review-mup.test.ts"
   pull_request:
     paths:
       - "packages/engineering-review/**"
@@ -16,6 +20,10 @@ on:
       - "supabase/migrations/*engineering_review*"
       - "docs/engineering-review/**"
       - ".github/workflows/engineering-review-unit.yml"
+      - "apps/web/src/app/(platform)/review/**"
+      - "apps/web/src/app/api/review/**"
+      - "apps/web/src/lib/review/**"
+      - "apps/web/src/__tests__/engineering-review-mup.test.ts"
 
 concurrency:
   group: engineering-review-unit-${{ github.ref }}
@@ -45,3 +53,9 @@ jobs:
       - run: pnpm --filter @rtb/engineering-review-persistence typecheck
       - name: Persistence unit tests only
         run: pnpm --filter @rtb/engineering-review-persistence test:unit
+      - name: Review MUP UI authorization tests
+        run: pnpm --filter @rtb/web exec vitest run src/__tests__/engineering-review-mup.test.ts
+
+      # Hosted Review RLS is NOT this job. Do not set ENGINEERING_REVIEW_RLS=1 here.
+      # A skipped hosted suite must never be represented as PASS.
+      # Required hosted job needs dedicated staging secrets for rntonzigxwxcjlcsadip only.

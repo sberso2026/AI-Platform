@@ -95,11 +95,17 @@ describe("human authority state machine", () => {
       action: "modify",
       actorId: "engineer-1",
       title: "Pressure conflict (updated)",
+      reason: "Clarify title against source documents",
     }).finding;
     expect(finding.status).toBe("modified");
     expect(finding.title).toContain("updated");
     expect(finding.evidence).toHaveLength(1);
-    finding = applyHumanDisposition({ finding, action: "reject", actorId: "engineer-1" }).finding;
+    finding = applyHumanDisposition({
+      finding,
+      action: "reject",
+      actorId: "engineer-1",
+      reason: "Not a material discrepancy after unit check",
+    }).finding;
     expect(finding.status).toBe("rejected");
     finding = applyHumanDisposition({ finding, action: "close", actorId: "engineer-1" }).finding;
     expect(finding.status).toBe("closed");
@@ -120,6 +126,7 @@ describe("human authority state machine", () => {
       finding: advanceCandidateAfterVerification(verifyFindingEvidence(candidate()), "sys", "system"),
       action: "assign",
       actorId: "lead",
+      assignedTo: "engineer-1",
     }).finding;
     expectCode(
       () =>
@@ -128,6 +135,7 @@ describe("human authority state machine", () => {
           action: "modify",
           actorId: "engineer-1",
           evidence: [],
+          reason: "Attempted to drop evidence",
         }),
       "evidence_provenance_lost",
     );

@@ -21,9 +21,17 @@ Evidence states:
 | EV-UNIT-REVIEW | Change / quality | `@rtb/engineering-review` vitest | Local / CI unit workflow | IMPLEMENTED | Gold-set + domain + security tests. |
 | EV-UNIT-PERSIST | Change / quality | persistence `test:unit` | CI unit workflow | IMPLEMENTED | Does not include hosted RLS. |
 | EV-MIGRATION | Change management | `supabase/migrations/20260919120000_*` and `20260919133000_*` | Staging applied | OPERATING | Additive Review schema; recorded in `schema_migrations`. |
-| EV-GIT | Change history | git commits ERA-0–ERA-4 | Repository | IMPLEMENTED | Not a complete SDLC attestation. |
+| EV-GIT | Change history | git commits ERA-0–ERA-5 | Repository | IMPLEMENTED | Not a complete SDLC attestation. |
 | EV-AUDIT-DISP | Audit logging | append-only dispositions | Staging | OPERATING | JWT cannot rewrite/delete history. |
-| EV-AUDIT-EVENTS | Audit logging | `audit_events` via AuditService | Staging | DESIGNED | User JWT insert failed; trusted service-role path coded (`bindTrustedReviewAudit`), not product-wired. |
+| EV-AUDIT-EVENTS | Audit logging | `audit_events` via AuditService after authorized Review op | Code + unit | IMPLEMENTED | Trusted path wired on `/api/review/*` (`bindTrustedReviewAudit`). Live MUP insert not re-run on staging in ERA-5. User JWT still must not insert. |
+| EV-API-AUTHZ | Logical access | Trusted Review handlers | Unit | IMPLEMENTED | `application.test.ts`: auth required, unauthorized/cross-workspace project rejected, document UUID rejected. |
+| EV-UI-AUTHZ | Logical access | `/review` client uses Review APIs only | Unit | IMPLEMENTED | `engineering-review-mup.test.ts`; no service-role in client bundle. |
+| EV-PROMPT | AI security | Adversarial document fixtures | Unit | IMPLEMENTED | Control-plane unchanged; prompt injection not claimed solved. |
+| EV-SECRETS | Secrets | Review isolated from `encryptPlaceholder` / commerce auth default | Assessment + unit | IMPLEMENTED for Review isolation; platform path still DESIGNED/PARTIAL | SHA-256 placeholder is not encryption. Prefer cloud secret manager. |
+| EV-FILE | File security | PI MIME/size; no malware scanner | Assessment | DESIGNED / PARTIAL | Do not claim malware scanning. |
+| EV-MFA | Privileged access | Privileged MFA middleware | Platform | IMPLEMENTED | Not Review-operator-universal. Supabase capability ≠ enforced. |
+| EV-SSO | Identity | Enterprise SSO 0.2.0 | Platform | DESIGNED for Review | Pilot password path still used. |
+| EV-TELEMETRY | Privacy / monitoring | Product metrics without document content | Unit | IMPLEMENTED | `telemetry.test.ts`; `review_time_saved` not claimed. |
 | EV-VULN-SCAN | Vulnerability management | — | — | DESIGNED | No Review-specific scan artifact. |
 | EV-BACKUP | Availability | Supabase backups | Provider | DESIGNED | No Review restore-test record. |
 | EV-IR | Incident response | Platform IR docs | Platform | DESIGNED | No Review tabletop record. |
@@ -33,6 +41,7 @@ Evidence states:
 | EV-SSO | Identity | Enterprise SSO 0.2.0 | Platform | PARTIAL / DESIGNED for Review | Pilot password path still used. |
 | EV-AI-EVAL | AI quality | ERA-4 gold-set metrics | Local deterministic | IMPLEMENTED | Not engineer-confirmed; not a customer claim. |
 | EV-HUMAN | Human oversight | Disposition actor_kind CHECK + domain fail-closed | Staging + unit | OPERATING | AI cannot human-dispose. |
+| EV-CHANGE-ERA5 | Change management | ERA-5 MUP + trusted server | Repository | IMPLEMENTED | Checkpoint from ERA-4 SHA; `/review` routes; no Core RLS change. |
 
 ---
 
@@ -40,8 +49,10 @@ Evidence states:
 
 1. No independent attestation.
 2. Hosted RLS not a required CI security job against staging secrets.
-3. Trusted audit path not operating on a product API.
+3. Live product `audit_events` from MUP not re-attested on staging in ERA-5 (unit-wired only).
 4. No vulnerability scan / backup restore / IR exercise artifacts for Review.
 5. Core document RLS debt remains.
+6. Platform secret placeholder encryption remains.
 
 Do not promote evidence state to `INDEPENDENTLY_ATTESTED` without an external report.
+Do not represent a skipped hosted security suite as PASS.
