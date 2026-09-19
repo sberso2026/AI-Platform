@@ -19,3 +19,8 @@ export * from "./detectors";
 export * from "./engine";
 export * from "./eval/fixtures";
 export * from "./eval/metrics";
+export * from "./register";
+export * from "./audit";
+export * from "./ports";
+export * from "./adapters";
+export * from "./persistence";

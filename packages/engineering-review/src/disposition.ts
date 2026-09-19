@@ -31,6 +31,8 @@ export type FindingDisposition = {
   id: FindingDispositionId;
   findingId: ReviewFindingId;
   action: ReviewDispositionAction;
+  previousStatus: ReviewFindingStatus;
+  newStatus: ReviewFindingStatus;
   actorId: ActorId;
   actorKind: "human";
   reason?: string;
@@ -102,6 +104,8 @@ export function applyHumanDisposition(input: {
     id: asFindingDispositionId(dispositionId),
     findingId: input.finding.id,
     action: input.action,
+    previousStatus: event.fromStatus,
+    newStatus: event.toStatus,
     actorId: asActorId(input.actorId),
     actorKind: "human",
     reason: input.reason,

@@ -1,9 +1,9 @@
 {
   "name": "@rtb/engineering-review",
-  "version": "0.1.0-era-1",
+  "version": "0.2.0-era-2",
   "private": true,
   "type": "module",
-  "description": "Bounded Engineering Review AI domain engine — contracts, lifecycle, detectors, evaluation. Framework-independent.",
+  "description": "Bounded Engineering Review AI domain engine — contracts, lifecycle, detectors, persistence ports, PI input adapter. Framework-independent.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

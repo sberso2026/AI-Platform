@@ -2,7 +2,7 @@
  * Document extract is untrusted input. It must never be typed as a system instruction.
  *
  * This is a **type-level trust boundary**, not a claim that prompt injection is solved.
- * ERA-1 does not implement a prompt-injection filter or completeness claim.
+ * The PI input adapter (ERA-2) wraps extracted text as UntrustedDocumentText only.
  */
 export type UntrustedDocumentText = {
   readonly trust: "untrusted_document";
