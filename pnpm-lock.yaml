@@ -443,6 +443,34 @@ importers:
         specifier: ^3.2.1
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
 
+  packages/engineering-review-persistence:
+    dependencies:
+      '@rtb/engineering-review':
+        specifier: workspace:*
+        version: link:../engineering-review
+      '@rtb/platform-core':
+        specifier: workspace:*
+        version: link:../platform-core
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.110.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
+      pg:
+        specifier: ^8.16.0
+        version: 8.22.0
+      tsx:
+        specifier: ^4.20.6
+        version: 4.23.0
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)
+
   packages/engineering-shared-project-domain:
     dependencies:
       '@supabase/supabase-js':

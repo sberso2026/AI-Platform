@@ -346,6 +346,35 @@ describe("persistence security (tenant + workspace RLS simulation)", () => {
     );
   });
 
+  it("rejects unauthorized document UUID lookups in the catalog", async () => {
+    const memory = createSharedReviewMemory();
+    const store = new MemoryEngineeringReviewStore(serviceRolePrincipal(), memory);
+    store.registerKnownDocument({
+      documentId: "doc-1",
+      tenantId: TENANT_A,
+      workspaceId: WS_A,
+      projectId: PROJECT_A,
+    });
+    await expectCodeAsync(
+      () =>
+        store.loadAuthorizedDocument("doc-unknown", {
+          tenantId: TENANT_A,
+          workspaceId: WS_A,
+          projectId: PROJECT_A,
+        }),
+      "document_unauthorized",
+    );
+    await expectCodeAsync(
+      () =>
+        store.loadAuthorizedDocument("doc-1", {
+          tenantId: TENANT_A,
+          workspaceId: WS_B,
+          projectId: PROJECT_A,
+        }),
+      "cross_workspace_rejected",
+    );
+  });
+
   it("records audit events for package and run creation", async () => {
     const memory = createSharedReviewMemory();
     const audit = new InMemoryReviewAuditSink();

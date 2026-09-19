@@ -85,6 +85,20 @@ export class MemoryEngineeringReviewStore implements EngineeringReviewStore {
     return this.memory.documents.get(documentId);
   }
 
+  async loadAuthorizedDocument(
+    documentId: string,
+    expected: { tenantId: string; workspaceId: string; projectId: string },
+  ): Promise<KnownReviewDocument> {
+    const known = this.memory.documents.get(documentId);
+    if (!known) {
+      failClosed("document_unauthorized", "Document is not visible in the authorized catalog", {
+        documentId,
+      });
+    }
+    assertSameOwnership(createReviewOwnership(expected), createReviewOwnership(known));
+    return known;
+  }
+
   async saveReviewPackage(pkg: ReviewPackage): Promise<ReviewPackage> {
     const existing = this.memory.packages.get(pkg.id);
     if (existing) {
@@ -220,6 +234,7 @@ export class MemoryEngineeringReviewStore implements EngineeringReviewStore {
     const finding = await this.loadReviewFinding(findingId);
     if (!finding) failClosed("finding_not_found", "Review finding not found", { findingId });
     assertUpdate(this.principal, finding.tenantId, finding.workspaceId);
+    await this.loadAuthorizedDocument(evidence.documentId, finding);
     this.assertEvidenceDocument(finding, evidence);
     const verified = verifyEvidenceRecord(evidence);
     const next: ReviewFinding = {

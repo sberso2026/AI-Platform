@@ -53,6 +53,14 @@ export interface ReviewFindingRepository {
 export interface ReviewDocumentCatalog {
   registerKnownDocument(document: KnownReviewDocument): void;
   getKnownDocument(documentId: string): KnownReviewDocument | undefined;
+  /**
+   * Load a document only if it is visible and matches expected tenant/workspace/project.
+   * Production adapters must query authorized document rows — UUID guessing is not enough.
+   */
+  loadAuthorizedDocument(
+    documentId: string,
+    expected: { tenantId: string; workspaceId: string; projectId: string },
+  ): Promise<KnownReviewDocument>;
 }
 
 export type EngineeringReviewStore = ReviewPackageRepository &
