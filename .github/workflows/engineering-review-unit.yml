@@ -1,0 +1,47 @@
+name: Engineering Review unit tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/engineering-review/**"
+      - "packages/engineering-review-persistence/**"
+      - "supabase/migrations/*engineering_review*"
+      - "docs/engineering-review/**"
+      - ".github/workflows/engineering-review-unit.yml"
+  pull_request:
+    paths:
+      - "packages/engineering-review/**"
+      - "packages/engineering-review-persistence/**"
+      - "supabase/migrations/*engineering_review*"
+      - "docs/engineering-review/**"
+      - ".github/workflows/engineering-review-unit.yml"
+
+concurrency:
+  group: engineering-review-unit-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  ENGINEERING_REVIEW_RLS: "0"
+
+jobs:
+  unit:
+    name: Unit tests (not hosted RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/engineering-review typecheck
+      - run: pnpm --filter @rtb/engineering-review test
+      - run: pnpm --filter @rtb/engineering-review-persistence typecheck
+      - name: Persistence unit tests only
+        run: pnpm --filter @rtb/engineering-review-persistence test:unit

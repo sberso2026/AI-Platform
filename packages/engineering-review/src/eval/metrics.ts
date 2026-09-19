@@ -10,6 +10,7 @@ export type ReviewEvalMetrics = {
   recall: number;
   falsePositiveRate: number;
   evidenceGroundingRate: number;
+  unsupportedClaimRate: number;
   duplicateFindingRate: number;
   counts: BinaryCounts;
 };
@@ -25,6 +26,7 @@ export function evaluateDetections(input: {
   absentKeys?: readonly string[];
   evidenceGroundedCount: number;
   predictedFindingCount: number;
+  unsupportedClaimCount?: number;
 }): ReviewEvalMetrics {
   const predicted = new Set(input.predictedKeys);
   const expected = new Set(input.expectedKeys);
@@ -55,6 +57,8 @@ export function evaluateDetections(input: {
     recall: ratio(truePositives, truePositives + falseNegatives),
     falsePositiveRate: ratio(falsePositives, falsePositives + trueNegatives),
     evidenceGroundingRate: ratio(input.evidenceGroundedCount, input.predictedFindingCount),
+    unsupportedClaimRate:
+      input.predictedFindingCount === 0 ? 0 : ratio(input.unsupportedClaimCount ?? 0, input.predictedFindingCount),
     duplicateFindingRate,
     counts: { truePositives, falsePositives, falseNegatives, trueNegatives },
   };

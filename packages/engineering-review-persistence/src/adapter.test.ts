@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bindPlatformReviewAudit } from "./audit-bind";
+import { bindPlatformReviewAudit, bindTrustedReviewAudit } from "./audit-bind";
 import { parseEnvAssignments } from "./env";
 import { createSupabaseEngineeringReviewStore } from "./supabase-store";
 import { EngineeringReviewError } from "@rtb/engineering-review";
@@ -30,6 +30,7 @@ describe("production adapter unit", () => {
         kind: "anon",
       }),
     ).toThrow(EngineeringReviewError);
+    expect(typeof bindTrustedReviewAudit).toBe("function");
   });
 
   it("maps platform audit through AuditService and does not throw when insert fails", async () => {

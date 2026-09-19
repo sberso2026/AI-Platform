@@ -42,6 +42,53 @@ export const revisionInconsistencyDetector: ReviewDetector = {
         recommendedAction: "Confirm the governing revision and mark superseded issues.",
       });
     }
+
+    for (const ref of context.revisionRefs ?? []) {
+      const current = context.documents.find(
+        (doc) =>
+          (doc.inclusion ?? "current") === "current" &&
+          doc.documentNumber === ref.documentNumber,
+      );
+      if (!current || current.revision === ref.revision) continue;
+      const source = context.documents.find((doc) => doc.documentId === ref.sourceDocumentId);
+      if (!source) continue;
+      detections.push({
+        detectionKey: `revision_inconsistency:${ref.documentNumber}`,
+        ruleId: rule.ruleId,
+        ruleVersion: rule.version,
+        reviewType: rule.reviewType,
+        category: rule.outputCategory,
+        title: `Stale revision reference for ${ref.documentNumber}`,
+        description: `Calculation references ${ref.documentNumber} Rev ${ref.revision} but the current controlled drawing is Rev ${current.revision}.`,
+        severity: "major",
+        confidenceScore: 0.92,
+        evidence: [
+          {
+            evidenceId: `${source.documentId}:ref:${ref.documentNumber}:${ref.revision}`,
+            documentId: source.documentId,
+            tenantId: source.tenantId,
+            workspaceId: source.workspaceId,
+            projectId: source.projectId,
+            revision: source.revision,
+            span: ref.span,
+            sourceType: "extracted_text" as const,
+          },
+          {
+            evidenceId: `${current.documentId}:current:${current.revision}`,
+            documentId: current.documentId,
+            tenantId: current.tenantId,
+            workspaceId: current.workspaceId,
+            projectId: current.projectId,
+            revision: current.revision,
+            span: `${current.documentNumber ?? ref.documentNumber} revision ${current.revision}`,
+            sourceType: "document_revision" as const,
+          },
+        ],
+        requirementReferences: [],
+        reasoningSummary: "Referenced drawing revision does not match the current controlled revision in the package.",
+        recommendedAction: "Update the calculation to the governing revision or justify the superseded reference.",
+      });
+    }
     return detections;
   },
 };

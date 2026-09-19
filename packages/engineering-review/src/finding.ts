@@ -54,6 +54,7 @@ export type ReviewFindingProvenance = {
   ruleId?: string;
   ruleVersion?: string;
   detectorId?: string;
+  detectionKey?: string;
   modelProvider?: string;
   modelId?: string;
   promptVersion?: string;

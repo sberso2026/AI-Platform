@@ -6,6 +6,8 @@ import type { ReviewFindingCategory } from "../finding";
 import type { ReviewSeverity } from "../severity";
 import type { MvpReviewType } from "../review-scope";
 import type { ReviewScope } from "../review-scope";
+import type { EngineeringFact } from "../facts";
+import type { ReferencedRevision } from "../extract";
 
 export type ExtractedRequirement = {
   id: string;
@@ -46,12 +48,15 @@ export type DetectorDetection = {
   requirementReferences: string[];
   reasoningSummary: string;
   recommendedAction: string;
+  origin?: "detector" | "ai_candidate";
 };
 
 export type DetectorContext = {
   ownership: ReviewOwnership;
   documents: readonly ReviewDocumentFixture[];
   scope: ReviewScope;
+  facts?: readonly EngineeringFact[];
+  revisionRefs?: readonly ReferencedRevision[];
 };
 
 export type ReviewDetector = {

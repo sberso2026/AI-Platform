@@ -62,10 +62,11 @@ export function constructFindingFromDetection(
     reasoningSummary: detection.reasoningSummary,
     recommendedAction: detection.recommendedAction,
     provenance: {
-      origin: "detector",
+      origin: detection.origin ?? "detector",
       ruleId: detection.ruleId,
       ruleVersion: detection.ruleVersion,
       detectorId: detection.ruleId,
+      detectionKey: detection.detectionKey,
     },
     now: input.now,
   });

@@ -1,5 +1,49 @@
 import { ERA1_REVIEW_RULES } from "../rule";
+import { factCanonicalKey, factIdentity, type EngineeringFact } from "../facts";
 import { evidenceFromField, type DetectorContext, type DetectorDetection, type ReviewDetector } from "./types";
+
+function detectionsFromFacts(context: DetectorContext, rule: NonNullable<(typeof ERA1_REVIEW_RULES)[number]>): DetectorDetection[] {
+  const groups = new Map<string, EngineeringFact[]>();
+  for (const fact of context.facts ?? []) {
+    const key = factIdentity(fact);
+    const list = groups.get(key) ?? [];
+    list.push(fact);
+    groups.set(key, list);
+  }
+  const detections: DetectorDetection[] = [];
+  for (const [identity, rows] of groups) {
+    const unique = [...new Set(rows.map(factCanonicalKey))];
+    if (unique.length < 2 || rows.length < 2) continue;
+    const property = identity.split("|")[1] ?? identity;
+    detections.push({
+      detectionKey: `cross_document:${property}`,
+      ruleId: rule.ruleId,
+      ruleVersion: rule.version,
+      reviewType: rule.reviewType,
+      category: rule.outputCategory,
+      title: `Conflicting ${property} across documents`,
+      description: `Canonical property "${property}" has conflicting values: ${rows
+        .map((row) => `${row.value}${row.unit ? ` ${row.unit}` : ""}`)
+        .join(" vs ")}.`,
+      severity: "major",
+      confidenceScore: 0.9,
+      evidence: rows.map((row) => ({
+        evidenceId: `${row.sourceDocumentId}:${row.property}:${row.value}`,
+        documentId: row.sourceDocumentId,
+        tenantId: context.ownership.tenantId,
+        workspaceId: context.ownership.workspaceId,
+        projectId: context.ownership.projectId,
+        revision: row.revision,
+        span: row.span,
+        sourceType: "extracted_text" as const,
+      })),
+      requirementReferences: [],
+      reasoningSummary: "Deterministic mismatch of canonical engineering facts. Unit-compatible values are treated as equal.",
+      recommendedAction: "Reconcile the conflicting values with the responsible discipline.",
+    });
+  }
+  return detections;
+}
 
 export const crossDocumentInconsistencyDetector: ReviewDetector = {
   ruleId: "er.cross_document_inconsistency",
@@ -34,6 +78,7 @@ export const crossDocumentInconsistencyDetector: ReviewDetector = {
         recommendedAction: "Reconcile the conflicting values with the responsible discipline.",
       });
     }
+    detections.push(...detectionsFromFacts(context, rule));
     return detections;
   },
 };
