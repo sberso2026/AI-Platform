@@ -289,7 +289,30 @@ export async function reviewTablesReady(url: string, serviceKey: string): Promis
     "engineering_review_dispositions",
   ]) {
     const { error } = await admin.from(table).select("id", { count: "exact", head: true });
-    if (error) missing.push(`${table}:${error.message || error.code || "unknown"}`);
+    if (error) {
+      const detail = [error.code, error.message, (error as { hint?: string }).hint]
+        .filter(Boolean)
+        .join(" ");
+      missing.push(`${table}:${detail || "unknown"}`);
+    }
   }
   return { ready: missing.length === 0, missing };
+}
+
+/**
+ * Removes disposable JWT-test packages created during the suite.
+ * Seeded `cert-er-*` tenants/users remain as labeled fixtures; dispositions stay append-only.
+ */
+export async function cleanupTransientReviewPackages(): Promise<{ deleted: number; error?: string }> {
+  const url = resolveSupabaseUrl();
+  const service = resolveServiceRoleKey();
+  if (!url || !service) return { deleted: 0, error: "credentials" };
+  const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await admin
+    .from("engineering_review_packages")
+    .delete()
+    .or("name.like.ERA-3 insert %,name.like.ERA-3 delete-target %,name.like.ERA-3 update-target %")
+    .select("id");
+  if (error) return { deleted: 0, error: error.message };
+  return { deleted: Array.isArray(data) ? data.length : 0 };
 }

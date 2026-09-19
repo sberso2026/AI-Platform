@@ -13,6 +13,30 @@ export const REVIEW_TABLES = [
   "engineering_review_dispositions",
 ] as const;
 
+const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** Later assignments in the same file win. Invalid keys (hyphens, `$env:`) are ignored. */
+export function parseEnvAssignments(source: string): Record<string, string> {
+  const parsed: Record<string, string> = {};
+  for (const raw of source.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq <= 0) continue;
+    const key = line.slice(0, eq).trim();
+    if (!ENV_KEY_RE.test(key)) continue;
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    parsed[key] = value;
+  }
+  return parsed;
+}
+
 export function loadLocalEnv(): void {
   const roots = [
     process.cwd(),
@@ -23,19 +47,8 @@ export function loadLocalEnv(): void {
     for (const name of [".env.local", ".env"]) {
       const path = resolve(root, name);
       if (!existsSync(path)) continue;
-      for (const raw of readFileSync(path, "utf8").split(/\r?\n/)) {
-        const line = raw.trim();
-        if (!line || line.startsWith("#")) continue;
-        const eq = line.indexOf("=");
-        if (eq <= 0) continue;
-        const key = line.slice(0, eq).trim();
-        let value = line.slice(eq + 1).trim();
-        if (
-          (value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))
-        ) {
-          value = value.slice(1, -1);
-        }
+      const parsed = parseEnvAssignments(readFileSync(path, "utf8"));
+      for (const [key, value] of Object.entries(parsed)) {
         if (process.env[key] === undefined || process.env[key] === "") {
           process.env[key] = value;
         }

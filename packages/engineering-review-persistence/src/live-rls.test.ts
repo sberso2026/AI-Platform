@@ -15,7 +15,11 @@ import {
   resolveSupabaseUrl,
   REVIEW_TABLES,
 } from "./env";
-import { provisionReviewRlsFixtures, type ReviewRlsFixtures } from "./fixtures";
+import {
+  cleanupTransientReviewPackages,
+  provisionReviewRlsFixtures,
+  type ReviewRlsFixtures,
+} from "./fixtures";
 import { createSupabaseEngineeringReviewStore } from "./supabase-store";
 
 const mode = liveRlsMode();
@@ -59,6 +63,12 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
     return Array.isArray(body) ? body.map((row) => String((row as { id: string }).id)) : [];
   }
 
+  function mutationDenied(result: RestResult): boolean {
+    if (result.status === 204) return true;
+    if (result.status === 200) return ids(result.body).length === 0;
+    return result.status >= 400 && result.status < 500;
+  }
+
   function ownerId(table: (typeof REVIEW_TABLES)[number]): string {
     switch (table) {
       case "engineering_review_packages":
@@ -80,6 +90,11 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
     }
     const applied = await applyHostedReviewMigrations();
     if (!applied.hostedTablesReady) {
+      if (mode === "run") {
+        throw new Error(
+          `ENGINEERING_REVIEW_RLS=1 but Review tables are not reachable: ${applied.missing.join("; ")}`,
+        );
+      }
       environment = "unavailable";
       return;
     }
@@ -88,7 +103,9 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
   });
 
   afterAll(async () => {
-    // Fixtures are reusable cert-er-* rows; leave them for re-runs.
+    if (environment === "ready") {
+      await cleanupTransientReviewPackages();
+    }
   });
 
   beforeEach(({ skip }) => {
@@ -153,25 +170,40 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
   });
 
   it("UPDATE: A1 can update A1 package; A2/B1 cannot; ownership mutation fails", async () => {
+    const created = await rest(
+      "engineering_review_packages",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          tenant_id: fixtures.tenantAId,
+          workspace_id: fixtures.workspaceA1Id,
+          project_id: fixtures.projectA1Id,
+          name: `ERA-3 update-target ${randomUUID()}`,
+          documents: [],
+          created_by: fixtures.users.a1.id,
+        }),
+      },
+      fixtures.users.a1.jwt,
+    );
+    const createdId = Array.isArray(created.body) ? (created.body[0] as { id: string }).id : (created.body as { id: string }).id;
+    expect(createdId).toBeTruthy();
+
     const patchName = await rest(
-      `engineering_review_packages?id=eq.${fixtures.packageA1Id}`,
-      { method: "PATCH", body: JSON.stringify({ name: "ERA-3 package A1 updated" }) },
+      `engineering_review_packages?id=eq.${createdId}`,
+      { method: "PATCH", body: JSON.stringify({ name: `ERA-3 update-target ${randomUUID()} patched` }) },
       fixtures.users.a1.jwt,
     );
     expect(patchName.status).toBeLessThan(400);
 
     const a2 = await rest(
-      `engineering_review_packages?id=eq.${fixtures.packageA1Id}`,
+      `engineering_review_packages?id=eq.${createdId}`,
       { method: "PATCH", body: JSON.stringify({ name: "hijack" }) },
       fixtures.users.a2.jwt,
     );
-    expect(a2.status === 200 ? ids(a2.body) : []).toEqual([]);
-    if (a2.status !== 200) {
-      expect(a2.status).toBeGreaterThanOrEqual(400);
-    }
+    expect(mutationDenied(a2), `A2 PATCH status ${a2.status}`).toBe(true);
 
     const ownership = await rest(
-      `engineering_review_packages?id=eq.${fixtures.packageA1Id}`,
+      `engineering_review_packages?id=eq.${createdId}`,
       {
         method: "PATCH",
         body: JSON.stringify({
@@ -227,15 +259,31 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
       { method: "PATCH", body: JSON.stringify({ reason: "rewrite history" }) },
       fixtures.users.aAdmin.jwt,
     );
-    expect(dispUpdate.status).toBeGreaterThanOrEqual(400);
+    expect(mutationDenied(dispUpdate), `disposition PATCH status ${dispUpdate.status}`).toBe(true);
+    const unchanged = await rest(
+      `engineering_review_dispositions?id=eq.${fixtures.dispositionA1Id}&select=id,reason`,
+      {},
+      fixtures.users.a1.jwt,
+    );
+    expect(unchanged.status).toBe(200);
+    const reasons = Array.isArray(unchanged.body)
+      ? unchanged.body.map((row) => String((row as { reason?: string }).reason ?? ""))
+      : [];
+    expect(reasons).toContain("seed assign");
+    expect(reasons).not.toContain("rewrite history");
 
     const dispDelete = await rest(
       `engineering_review_dispositions?id=eq.${fixtures.dispositionA1Id}`,
       { method: "DELETE" },
       fixtures.users.aAdmin.jwt,
     );
-    expect(dispDelete.status === 200 ? ids(dispDelete.body) : []).toEqual([]);
-    if (dispDelete.status !== 200) expect(dispDelete.status).toBeGreaterThanOrEqual(400);
+    expect(mutationDenied(dispDelete), `disposition DELETE status ${dispDelete.status}`).toBe(true);
+    const stillPresent = await rest(
+      `engineering_review_dispositions?id=eq.${fixtures.dispositionA1Id}&select=id`,
+      {},
+      fixtures.users.a1.jwt,
+    );
+    expect(ids(stillPresent.body)).toContain(fixtures.dispositionA1Id);
   });
 
   it("rejects cross-tenant, cross-workspace, and wrong-project evidence laundering at the database", async () => {
@@ -306,9 +354,15 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
     const finding = await store.loadReviewFinding(fixtures.findingA1Id);
     expect(finding).toBeTruthy();
     const historyBefore = await store.loadDispositionHistory(fixtures.findingA1Id);
+    const action =
+      finding!.status === "accepted" || finding!.status === "rejected"
+        ? "close"
+        : finding!.status === "closed"
+          ? "reopen"
+          : "accept";
     const applied = await store.recordHumanDisposition({
       findingId: fixtures.findingA1Id,
-      action: finding!.status === "assigned" || finding!.status === "awaiting_engineer" ? "accept" : "reopen",
+      action,
       actorId: fixtures.users.a1.id,
       actorKind: "human",
       reason: "ERA-3 live human accept/reopen",

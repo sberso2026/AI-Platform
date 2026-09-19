@@ -1,7 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
 import { bindPlatformReviewAudit } from "./audit-bind";
+import { parseEnvAssignments } from "./env";
 import { createSupabaseEngineeringReviewStore } from "./supabase-store";
 import { EngineeringReviewError } from "@rtb/engineering-review";
+
+describe("env assignment parsing", () => {
+  it("lets later duplicate keys win and ignores invalid names", () => {
+    const parsed = parseEnvAssignments(
+      [
+        "SUPABASE_SERVICE_ROLE_KEY=first",
+        "NEXT_PUBLIC_SUPABASE_URL=https://example-one.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY=second",
+        "NEXT_PUBLIC_SUPABASE_URL=https://example-two.supabase.co",
+        "$env:SMOKE_BASE_URL=ignored",
+        "https://teams.microsoft.com/meet/1?p=x=ignored",
+      ].join("\n"),
+    );
+    expect(parsed.SUPABASE_SERVICE_ROLE_KEY).toBe("second");
+    expect(parsed.NEXT_PUBLIC_SUPABASE_URL).toBe("https://example-two.supabase.co");
+    expect(parsed["$env:SMOKE_BASE_URL"]).toBeUndefined();
+  });
+});
 
 describe("production adapter unit", () => {
   it("rejects anonymous client construction", () => {
