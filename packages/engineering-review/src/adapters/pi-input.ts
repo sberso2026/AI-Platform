@@ -76,6 +76,9 @@ export type ProjectIntelligenceDocumentSnapshot = {
   requirements?: ReviewDocumentFixture["requirements"];
   assumptions?: ReviewDocumentFixture["assumptions"];
   evidenceKeys?: readonly string[];
+  fileName?: string;
+  controlledFixture?: boolean;
+  ingestionSource?: "internal_fixture" | "external_customer" | "unknown";
 };
 
 export type CanonicalReviewDocumentInput = {

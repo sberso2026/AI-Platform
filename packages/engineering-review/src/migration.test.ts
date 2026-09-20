@@ -91,3 +91,20 @@ describe("dependency graph", () => {
     expect(readFileSync(mup, "utf8")).toContain("/api/review/projects");
   });
 });
+
+describe("ERA-6 Core RLS migration contract", () => {
+  const sql = readFileSync(
+    join(REPO_ROOT, "supabase/migrations/20260920040000_engineering_core_rls_workspace.sql"),
+    "utf8",
+  );
+
+  it("is additive and hardens projects/documents without destroying rows", () => {
+    expect(sql).toContain("engineering_core_workspace_member");
+    expect(sql).toContain("engineering_core_prevent_ownership_mutation");
+    expect(sql).toContain("DROP POLICY IF EXISTS eng_projects_select");
+    expect(sql).toContain("DROP POLICY IF EXISTS eng_documents_select");
+    expect(sql).not.toMatch(/DROP TABLE/i);
+    expect(sql).not.toMatch(/DELETE FROM engineering_/i);
+    expect(sql).toContain("fail-closed");
+  });
+});

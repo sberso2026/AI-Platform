@@ -1,0 +1,75 @@
+name: Engineering Review hosted RLS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/engineering-review/**"
+      - "packages/engineering-review-persistence/**"
+      - "supabase/migrations/*engineering_review*"
+      - "supabase/migrations/*engineering_core_rls*"
+      - "docs/engineering-review/**"
+      - ".github/workflows/engineering-review-hosted-rls.yml"
+      - ".github/workflows/engineering-review-unit.yml"
+  pull_request:
+    paths:
+      - "packages/engineering-review/**"
+      - "packages/engineering-review-persistence/**"
+      - "supabase/migrations/*engineering_review*"
+      - "supabase/migrations/*engineering_core_rls*"
+      - "docs/engineering-review/**"
+      - ".github/workflows/engineering-review-hosted-rls.yml"
+      - ".github/workflows/engineering-review-unit.yml"
+
+concurrency:
+  group: engineering-review-hosted-rls-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  ENGINEERING_REVIEW_RLS: "1"
+
+jobs:
+  hosted-rls:
+    name: Hosted Review and Core RLS (staging)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Require dedicated staging secrets
+        env:
+          REVIEW_STAGING_SUPABASE_URL: ${{ secrets.REVIEW_STAGING_SUPABASE_URL }}
+          REVIEW_STAGING_SUPABASE_ANON_KEY: ${{ secrets.REVIEW_STAGING_SUPABASE_ANON_KEY }}
+          REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+          REVIEW_STAGING_CERT_USER_PASSWORD: ${{ secrets.REVIEW_STAGING_CERT_USER_PASSWORD }}
+        run: |
+          missing=0
+          if [ -z "$REVIEW_STAGING_SUPABASE_URL" ]; then echo "Missing GitHub secret REVIEW_STAGING_SUPABASE_URL for RTB AI Platform Staging (rntonzigxwxcjlcsadip)."; missing=1; fi
+          if [ -z "$REVIEW_STAGING_SUPABASE_ANON_KEY" ]; then echo "Missing GitHub secret REVIEW_STAGING_SUPABASE_ANON_KEY."; missing=1; fi
+          if [ -z "$REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY" ]; then echo "Missing GitHub secret REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY."; missing=1; fi
+          if [ -z "$REVIEW_STAGING_CERT_USER_PASSWORD" ]; then echo "Missing GitHub secret REVIEW_STAGING_CERT_USER_PASSWORD."; missing=1; fi
+          if [ "$missing" -eq 1 ]; then
+            echo "Hosted RLS security job cannot run. This is NOT a PASS."
+            echo "Configure dedicated staging secrets documented in docs/engineering-review/security/hosted-rls-ci.md"
+            echo "Do not reuse EOS certification or production credentials."
+            exit 1
+          fi
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted Review + Core RLS + trusted audit
+        env:
+          ENGINEERING_REVIEW_RLS: "1"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.REVIEW_STAGING_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.REVIEW_STAGING_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.REVIEW_STAGING_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.REVIEW_STAGING_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.REVIEW_STAGING_CERT_USER_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.REVIEW_STAGING_SUPABASE_DB_URL }}
+        run: pnpm --filter @rtb/engineering-review-persistence test:rls

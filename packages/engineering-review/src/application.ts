@@ -6,6 +6,10 @@ import {
   type ReviewControlPlaneSnapshot,
 } from "./control-plane";
 import { EngineeringReviewError, failClosed } from "./errors";
+import {
+  assertReviewFileIngestionAllowed,
+  type ReviewFileIngestionPolicy,
+} from "./file-ingestion-policy";
 import { persistHumanDisposition } from "./adapters/persisted-flow";
 import {
   adaptProjectIntelligenceDocuments,
@@ -81,6 +85,7 @@ export type TrustedReviewServiceOptions = {
   telemetry?: ReviewProductTelemetry;
   now?: () => string;
   ids?: () => string;
+  fileIngestionPolicy?: ReviewFileIngestionPolicy;
 };
 
 export type ReviewPackageView = {
@@ -162,6 +167,7 @@ export class TrustedReviewService {
   private readonly telemetry: ReviewProductTelemetry;
   private readonly now: () => string;
   private readonly ids: () => string;
+  private readonly fileIngestionPolicy: ReviewFileIngestionPolicy;
 
   constructor(options: TrustedReviewServiceOptions) {
     this.store = options.store;
@@ -171,6 +177,11 @@ export class TrustedReviewService {
     this.telemetry = options.telemetry ?? new InMemoryReviewProductTelemetry();
     this.now = options.now ?? (() => new Date().toISOString());
     this.ids = options.ids ?? (() => randomUUID());
+    this.fileIngestionPolicy = options.fileIngestionPolicy ?? {
+      mode: "internal_test",
+      malwareScanningAvailable: false,
+      allowExternalCustomerUpload: false,
+    };
   }
 
   async listProjects(actor: ReviewActor): Promise<readonly AuthorizedProjectSummary[]> {
@@ -310,6 +321,16 @@ export class TrustedReviewService {
     const selected = selectSnapshots(
       snapshots,
       pkg.documents.map((doc) => doc.documentId),
+    );
+    assertReviewFileIngestionAllowed(
+      this.fileIngestionPolicy,
+      selected.map((doc) => ({
+        documentId: doc.engineeringDocumentId,
+        fileName: doc.fileName,
+        mimeType: doc.mimeType,
+        controlledFixture: doc.controlledFixture,
+        ingestionSource: doc.ingestionSource,
+      })),
     );
     const report = adaptProjectIntelligenceDocuments(selected);
     const ready = report.ready;

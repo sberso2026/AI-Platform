@@ -1,6 +1,6 @@
 {
   "name": "@rtb/engineering-review-persistence",
-  "version": "0.3.0-era-3",
+  "version": "0.6.0-era-6",
   "private": true,
   "type": "module",
   "description": "Production Supabase adapter and live RLS security gate for Engineering Review AI. Not the domain engine.",
@@ -12,9 +12,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:unit": "vitest run src/adapter.test.ts src/boundary.test.ts",
-    "test:rls": "vitest run src/live-rls.test.ts",
-    "apply:hosted-migration": "tsx scripts/apply-hosted-migration.ts"
+    "test:unit": "vitest run src/adapter.test.ts src/boundary.test.ts src/secret-scan.test.ts",
+    "test:rls": "vitest run src/live-rls.test.ts src/live-core-rls.test.ts src/live-audit.test.ts",
+    "apply:hosted-migration": "tsx scripts/apply-hosted-migration.ts",
+    "audit:core-rls": "tsx scripts/audit-core-rls-data.ts",
+    "secret-scan": "tsx scripts/secret-scan.ts"
   },
   "dependencies": {
     "@rtb/engineering-review": "workspace:*",

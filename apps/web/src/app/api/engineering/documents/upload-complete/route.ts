@@ -91,6 +91,11 @@ export const POST = withEngineeringApi("documents", async ({ ctx, commerce, corr
   const documentType = normalizeEngineeringDocumentType(body.documentType) ?? body.documentType;
   const revision = normalizeEngineeringRevision(body.revision || "A").revision;
   const sourceChecksum = await sha256OfStoredObject(storage, objectPath);
+  const downloaded = await storage.storage.from(DOCUMENT_BUCKET).download(objectPath);
+  if (downloaded.data) {
+    const bytes = Buffer.from(await downloaded.data.arrayBuffer());
+    validateDocumentStoragePolicy({ mimeType, fileName, sizeBytes: fileSize, bytes });
+  }
 
   try {
     if (body.attachOnly) {

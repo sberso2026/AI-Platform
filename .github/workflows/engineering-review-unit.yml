@@ -53,9 +53,13 @@ jobs:
       - run: pnpm --filter @rtb/engineering-review-persistence typecheck
       - name: Persistence unit tests only
         run: pnpm --filter @rtb/engineering-review-persistence test:unit
+      - name: Review secret scan
+        run: pnpm --filter @rtb/engineering-review-persistence secret-scan
+      - name: Review-specific TypeScript gate
+        run: pnpm --filter @rtb/web typecheck:review
       - name: Review MUP UI authorization tests
         run: pnpm --filter @rtb/web exec vitest run src/__tests__/engineering-review-mup.test.ts
 
-      # Hosted Review RLS is NOT this job. Do not set ENGINEERING_REVIEW_RLS=1 here.
+      # Hosted Review/Core RLS is a separate required security workflow.
+      # Do not set ENGINEERING_REVIEW_RLS=1 here.
       # A skipped hosted suite must never be represented as PASS.
-      # Required hosted job needs dedicated staging secrets for rntonzigxwxcjlcsadip only.

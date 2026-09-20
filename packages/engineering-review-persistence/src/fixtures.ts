@@ -170,14 +170,17 @@ export async function provisionReviewRlsFixtures(): Promise<ReviewRlsFixtures> {
   const documentA1 = await existingOrInsert(admin, "engineering_documents", { tenant_id: tenantA.id, document_number: "ER-DOC-A1", revision: "A" }, {
     tenant_id: tenantA.id, workspace_id: workspaceA1.id, engineering_project_id: projectA1.id,
     document_number: "ER-DOC-A1", title: "Review Spec A1", revision: "A", status: "issued",
+    source: "internal_fixture",
   });
   const documentA2 = await existingOrInsert(admin, "engineering_documents", { tenant_id: tenantA.id, document_number: "ER-DOC-A2", revision: "A" }, {
     tenant_id: tenantA.id, workspace_id: workspaceA2.id, engineering_project_id: projectA2.id,
     document_number: "ER-DOC-A2", title: "Review Spec A2", revision: "A", status: "issued",
+    source: "internal_fixture",
   });
   const documentB1 = await existingOrInsert(admin, "engineering_documents", { tenant_id: tenantB.id, document_number: "ER-DOC-B1", revision: "A" }, {
     tenant_id: tenantB.id, workspace_id: workspaceB1.id, engineering_project_id: projectB1.id,
     document_number: "ER-DOC-B1", title: "Review Spec B1", revision: "A", status: "issued",
+    source: "internal_fixture",
   });
 
   async function user(key: string, tenantId: string, workspaceIds: string[], role: "engineer" | "admin"): Promise<ReviewRlsUser> {
@@ -311,7 +314,7 @@ export async function cleanupTransientReviewPackages(): Promise<{ deleted: numbe
   const { data, error } = await admin
     .from("engineering_review_packages")
     .delete()
-    .or("name.like.ERA-3 insert %,name.like.ERA-3 delete-target %,name.like.ERA-3 update-target %")
+    .or("name.like.ERA-3 insert %,name.like.ERA-3 delete-target %,name.like.ERA-3 update-target %,name.like.ERA-6 audit %")
     .select("id");
   if (error) return { deleted: 0, error: error.message };
   return { deleted: Array.isArray(data) ? data.length : 0 };

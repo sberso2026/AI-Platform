@@ -2,6 +2,7 @@ import {
   failClosed,
   InMemoryReviewProductTelemetry,
   TrustedReviewService,
+  defaultReviewFileIngestionPolicy,
   type ProjectIntelligenceDocumentSnapshot,
   type ReviewActor,
   type ReviewDocumentRole,
@@ -97,7 +98,7 @@ class AuthedReviewDocumentDirectory {
     const { data, error } = await this.client
       .from("engineering_documents")
       .select(
-        "id, tenant_id, workspace_id, engineering_project_id, title, document_number, document_type, revision, mime_type, file_path, status, metadata",
+        "id, tenant_id, workspace_id, engineering_project_id, title, document_number, document_type, revision, mime_type, file_path, file_name, source, status",
       )
       .eq("tenant_id", actor.tenantId)
       .eq("workspace_id", actor.workspaceId)
@@ -110,7 +111,7 @@ class AuthedReviewDocumentDirectory {
     const ids = rows.map((row) => String(row.id));
     const chunksByDoc = await this.loadChunks(actor, ids);
     return rows.map((row) => {
-      const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+      const metadata: Record<string, unknown> = {};
       const chunks = chunksByDoc.get(String(row.id)) ?? [];
       const extractedText =
         (typeof metadata.extracted_text === "string" && metadata.extracted_text) ||
@@ -128,6 +129,11 @@ class AuthedReviewDocumentDirectory {
             : row.file_path
               ? "ready_with_warnings"
               : "registered";
+      const source = row.source ? String(row.source) : "";
+      const controlledFixture =
+        metadata.cert_fixture === true ||
+        source === "internal_fixture" ||
+        source === "cert_fixture";
       return {
         engineeringDocumentId: String(row.id),
         tenantId: String(row.tenant_id),
@@ -138,11 +144,14 @@ class AuthedReviewDocumentDirectory {
         documentType: row.document_type ? String(row.document_type) : undefined,
         revision: String(row.revision ?? "A"),
         mimeType: row.mime_type ? String(row.mime_type) : undefined,
+        fileName: row.file_name ? String(row.file_name) : undefined,
         processingStatus,
         warnings: warnings ?? (extractedText ? undefined : ["ocr_recommended"]),
         extractedText,
         chunks,
         role: inferRole(row.document_type ? String(row.document_type) : undefined),
+        controlledFixture,
+        ingestionSource: controlledFixture ? "internal_fixture" : "unknown",
         fields:
           metadata.fields && typeof metadata.fields === "object" && !Array.isArray(metadata.fields)
             ? Object.fromEntries(
@@ -199,5 +208,6 @@ export function createTrustedReviewRuntime(ctx: AuthContext, actor: ReviewActor)
     projects: new AuthedReviewProjectDirectory(userClient, actor),
     documents: new AuthedReviewDocumentDirectory(userClient, actor),
     telemetry: processTelemetry,
+    fileIngestionPolicy: defaultReviewFileIngestionPolicy(),
   });
 }

@@ -45,4 +45,32 @@ describe("storage policy", () => {
       }),
     ).toThrow(/25 MB pilot upload limit/i);
   });
+
+  it("rejects archives, path traversal names, and magic-byte mismatches", () => {
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "bundle.zip",
+        sizeBytes: 10,
+      }),
+    ).toThrow(DocumentIntelligenceError);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "../secret.pdf",
+        sizeBytes: 10,
+        bytes: Buffer.from("not-a-pdf"),
+      }),
+    ).toThrow(/PDF signature/i);
+
+    expect(
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "ok.pdf",
+        sizeBytes: 8,
+        bytes: Buffer.from("%PDF-1.7"),
+      }).ok,
+    ).toBe(true);
+  });
 });

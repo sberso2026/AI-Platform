@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "typecheck:pilot": "node ./scripts/pilot-typecheck.mjs",
+    "typecheck:review": "node ./scripts/review-typecheck.mjs",
     "test": "vitest run"
   },
   "dependencies": {

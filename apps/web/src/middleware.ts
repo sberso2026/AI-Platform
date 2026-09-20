@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { evaluatePrivilegedMfa } from "@rtb/engineering-os/security-closure/privileged-mfa";
+import { evaluateReviewIdentityPolicy, resolveReviewIdentityPolicy } from "@rtb/engineering-review/identity";
 import { canAccessPlatformRoute, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
 import type { NavTier } from "@rtb/types";
 
@@ -168,6 +169,39 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
         url.searchParams.set("mfa_required", "privileged");
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
+  if (user && (pathname === "/review" || pathname.startsWith("/review/"))) {
+    const { data: membership } = await supabase
+      .from("tenant_memberships")
+      .select("tenant_id")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (membership?.tenant_id) {
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("settings")
+        .eq("id", membership.tenant_id)
+        .maybeSingle();
+      const policy = resolveReviewIdentityPolicy((tenant?.settings as Record<string, unknown> | null) ?? {});
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const payload = session?.access_token ? decodeJwtPayload(session.access_token) : {};
+      const decision = evaluateReviewIdentityPolicy(policy, {
+        aal: typeof payload.aal === "string" ? payload.aal : null,
+        amr: Array.isArray(payload.amr) ? (payload.amr as Array<string | { method?: string }>) : null,
+        appMetadata: (user.app_metadata as Record<string, unknown> | undefined) ?? null,
+      });
+      if (!decision.allowed) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("mfa_required", decision.reason);
         return NextResponse.redirect(url);
       }
     }

@@ -41,18 +41,33 @@ Evidence states:
 | EV-SSO | Identity | Enterprise SSO 0.2.0 | Platform | PARTIAL / DESIGNED for Review | Pilot password path still used. |
 | EV-AI-EVAL | AI quality | ERA-4 gold-set metrics | Local deterministic | IMPLEMENTED | Not engineer-confirmed; not a customer claim. |
 | EV-HUMAN | Human oversight | Disposition actor_kind CHECK + domain fail-closed | Staging + unit | OPERATING | AI cannot human-dispose. |
-| EV-CHANGE-ERA5 | Change management | ERA-5 MUP + trusted server | Repository | IMPLEMENTED | Checkpoint from ERA-4 SHA; `/review` routes; no Core RLS change. |
+| EV-CHANGE-ERA6 | Change management | ERA-6 security hardening | Repository | IMPLEMENTED | Additive Core RLS; no historical migration edits. |
+| EV-CORE-RLS | Logical access | `live-core-rls.test.ts` | Staging | IMPLEMENTED until hosted run OPERATING | Tenant A vs B; A1 vs A2; UUID guess; CUD + ownership mutation. |
+| EV-RLS-CI | Change / security CI | `engineering-review-hosted-rls.yml` | GitHub | DESIGNED / IMPLEMENTED as fail-closed job | OPERATING only after `REVIEW_STAGING_*` secrets exist and the job is green. Missing secrets = fail, not PASS. |
+| EV-MFA-REVIEW | Identity assurance | Review identity policy | Unit | IMPLEMENTED | Password-only rejected when tenant requires MFA. Tenant enablement is operational. |
+| EV-SSO-REVIEW | Identity assurance | Review SSO policy | Unit | IMPLEMENTED | Enforceable when tenant `requireEnterpriseSso` is set. |
+| EV-SECRETS-PROD | Secrets | Production fail-closed commerce + placeholder hashing | Unit | IMPLEMENTED | Review still isolated from placeholder path. |
+| EV-SECRET-SCAN | Secrets | Review secret-scan | Local / CI | IMPLEMENTED | Regex convention; no committed JWTs/private keys in Review trees. |
+| EV-AUDIT-LIVE | Audit logging | `live-audit.test.ts` | Staging | IMPLEMENTED until hosted run OPERATING | User JWT cannot forge audit_events; trusted path writes context. |
+| EV-FILE | File security | Magic-byte/filename/archive + Review external ingest policy | Unit | IMPLEMENTED for policy; malware MISSING | Do not claim malware scanning. |
+| EV-TS-GATE | Secure development | `apps/web` `typecheck:review` | Local / CI | IMPLEMENTED | Global ignoreBuildErrors remains for unrelated platform debt. |
+| EV-SBOM | Supply chain | `docs/engineering-review/security/evidence/era-6-sbom.json` | Local snapshot | IMPLEMENTED as snapshot | Not an operational SBOM process. |
+| EV-BACKUP | Availability | backup-recovery.md | Assessment | DESIGNED | Restore drill not executed. |
+| EV-RISK | Risk assessment | risk-register.md | Documentation | DESIGNED | AI must not accept residual risk. |
+| EV-PILOT | Readiness | pilot-readiness.md | Documentation | DESIGNED | INTERNAL_TEST vs CONTROLLED_PILOT vs ENTERPRISE_PRODUCTION are not equivalent. |
 
 ---
 
 ## Gaps blocking examination readiness
 
 1. No independent attestation.
-2. Hosted RLS not a required CI security job against staging secrets.
-3. Live product `audit_events` from MUP not re-attested on staging in ERA-5 (unit-wired only).
-4. No vulnerability scan / backup restore / IR exercise artifacts for Review.
-5. Core document RLS debt remains.
-6. Platform secret placeholder encryption remains.
+2. Hosted RLS CI is fail-closed but OPERATING only after dedicated GitHub secrets are configured and the job is repeatedly green.
+3. Malware scanning is absent; external Review ingest is fail-closed rather than scanned.
+4. Backup restore drill not executed.
+5. Review security events are not yet wired to a SIEM/pager.
+6. Prompt injection remains unsolved (no live LLM in this phase).
+7. Platform non-production secret defaults remain DEVELOPMENT_ONLY.
 
 Do not promote evidence state to `INDEPENDENTLY_ATTESTED` without an external report.
 Do not represent a skipped hosted security suite as PASS.
+Do not claim SOC 2 certification or attestation.

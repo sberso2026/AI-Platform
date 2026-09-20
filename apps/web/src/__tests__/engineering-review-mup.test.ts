@@ -41,6 +41,8 @@ describe("ERA-5 Engineering Review MUP", () => {
     const create = readApp("src/app/api/review/projects/[projectId]/packages/route.ts");
     expect(guard).toContain("getAuthContext");
     expect(guard).toContain("unauthenticatedResponse");
+    expect(guard).toContain("identity_assurance_insufficient");
+    expect(guard).toContain("evaluateReviewIdentityPolicy");
     expect(runtime).toContain('kind: "authenticated"');
     expect(runtime).toContain("bindTrustedReviewAudit");
     expect(runtime).toContain("createServiceClient");
@@ -73,5 +75,6 @@ describe("ERA-5 Engineering Review MUP", () => {
     expect(runtime).not.toContain("SecretManagementService");
     expect(runtime).not.toContain("COMMERCE_AUTH_SECRET");
     expect(runtime).toContain("createServiceClient");
+    expect(runtime).toContain("defaultReviewFileIngestionPolicy");
   });
 });

@@ -78,7 +78,11 @@ export function resolveServiceRoleKey(): string | undefined {
 }
 
 export function certUserPassword(): string {
-  return process.env.CERT_USER_PASSWORD ?? "CertInstall!Phase3";
+  const value = process.env.CERT_USER_PASSWORD;
+  if (process.env.CI === "true" && process.env.ENGINEERING_REVIEW_RLS === "1" && !value) {
+    throw new Error("CERT_USER_PASSWORD is required when ENGINEERING_REVIEW_RLS=1 in CI");
+  }
+  return value ?? "CertInstall!Phase3";
 }
 
 export function isUuid(value: string): boolean {
