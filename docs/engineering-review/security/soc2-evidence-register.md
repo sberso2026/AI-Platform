@@ -42,22 +42,22 @@ Evidence states:
 | EV-AI-EVAL | AI quality | ERA-4 gold-set metrics | Local deterministic | IMPLEMENTED | Not engineer-confirmed; not a customer claim. |
 | EV-HUMAN | Human oversight | Disposition actor_kind CHECK + domain fail-closed | Staging + unit | OPERATING | AI cannot human-dispose. |
 | EV-CHANGE-ERA6 | Change management | ERA-6 security hardening | Repository | IMPLEMENTED | Additive Core RLS; no historical migration edits. |
-| EV-CORE-RLS | Logical access | `live-core-rls.test.ts` | Staging | IMPLEMENTED until hosted run OPERATING | Tenant A vs B; A1 vs A2; UUID guess; CUD + ownership mutation. |
-| EV-RLS-CI | Change / security CI | `engineering-review-hosted-rls.yml` | GitHub | DESIGNED / IMPLEMENTED as fail-closed job | OPERATING only after `REVIEW_STAGING_*` secrets exist and the job is green. Missing secrets = fail, not PASS. |
+| EV-CORE-RLS | Logical access | `live-core-rls.test.ts` | Staging | OPERATING | ERA-7A GitHub run 35507801752: 8/8. |
+| EV-AUDIT-LIVE | Audit logging | `live-audit.test.ts` | Staging | OPERATING | ERA-7A GitHub run 35507801752: 3/3. User JWT cannot forge audit_events. |
+| EV-SCHEMA | Security schema | `engineering_review_security_schema_status` | Staging | OPERATING | Applied `20260920120000`; live-schema PASS locally and in CI. |
+| EV-BACKUP | Availability | `live-restore.test.ts` logical Review-row drill | Staging | OPERATING for logical row; PITR DESIGNED | Local elapsed 783ms. PITR not executed. |
+| EV-MONITOR | Monitoring | structured JSON alerts | Staging live run | OPERATING as structured_log | `review.audit_failed` observed; no SIEM. |
+| EV-MFA-PILOT | Identity assurance | Tenant A `requireMfa` + live AAL1 reject | Staging | OPERATING for AAL1 reject | Live AAL2 enrollment is HUMAN_DECISION_REQUIRED. |
+| EV-RLS-CI | Change / security CI | GitHub Actions `35507801752` | Staging via `REVIEW_STAGING_*` | OPERATING | 28 passed: Review 11, Core 8, audit 3, identity 4, restore 1, schema 1. Secrets step fail-closed previously proven. |
 | EV-MFA-REVIEW | Identity assurance | Review identity policy | Unit | IMPLEMENTED | Password-only rejected when tenant requires MFA. Tenant enablement is operational. |
 | EV-SSO-REVIEW | Identity assurance | Review SSO policy | Unit | IMPLEMENTED | Enforceable when tenant `requireEnterpriseSso` is set. |
 | EV-SECRETS-PROD | Secrets | Production fail-closed commerce + placeholder hashing | Unit | IMPLEMENTED | Review still isolated from placeholder path. |
 | EV-SECRET-SCAN | Secrets | Review secret-scan | Local / CI | IMPLEMENTED | Regex convention; no committed JWTs/private keys in Review trees. |
-| EV-AUDIT-LIVE | Audit logging | `live-audit.test.ts` | Staging | IMPLEMENTED until hosted run OPERATING | User JWT cannot forge audit_events; trusted path writes context. |
 | EV-FILE | File security | Magic-byte/filename/archive + EICAR + CLEAN-only Review consume | Unit | IMPLEMENTED for policy; established scanner DESIGNED until ClamAV is deployed | Do not claim malware scanning OPERATING without a scanner instance. |
-| EV-VULN-SCAN | Vulnerability management | `dependency-triage.md` + Next 15.5.24 pin | Local / lockfile | IMPLEMENTED as triage | Recheck `pnpm audit --prod` after install. Residual HIGH remain. |
-| EV-BACKUP | Availability | `live-restore.test.ts` logical Review-row drill | Staging when hosted tests run | IMPLEMENTED for logical row; PITR DESIGNED | Do not mark PITR OPERATING. |
+| EV-VULN-SCAN | Vulnerability management | `dependency-triage.md` + Next 15.5.24 pin | Local / lockfile | IMPLEMENTED as triage | Residual HIGH remain; HUMAN_DECISION_REQUIRED. |
 | EV-IR | Incident response | `incident-response.md` | Documentation | IMPLEMENTED as runbook | No tabletop record. |
-| EV-MONITOR | Monitoring | structured JSON alerts + optional webhook | Code + unit | IMPLEMENTED as minimum sink | No SIEM. |
-| EV-SCHEMA | Security schema | `engineering_review_security_schema_status` | Staging when applied | IMPLEMENTED | OPERATING after hosted live-schema PASS. |
 | EV-THREAT | Risk assessment | `threat-model.md` | Documentation | DESIGNED / IMPLEMENTED as model | Internal; not auditor-issued. |
 | EV-DATA | Data governance | `pilot-data-policy.md` | Documentation | DESIGNED / IMPLEMENTED as policy | Narrow pilot scope only. |
-| EV-MFA-PILOT | Identity assurance | Tenant A `requireMfa` via `ensurePilotIdentityPolicy` | Staging fixtures | IMPLEMENTED | Live AAL2 enrollment is operator action. |
 | EV-TS-GATE | Secure development | `apps/web` `typecheck:review` | Local / CI | IMPLEMENTED | Global ignoreBuildErrors remains for unrelated platform debt. |
 | EV-SBOM | Supply chain | `docs/engineering-review/security/evidence/era-6-sbom.json` | Local snapshot | IMPLEMENTED as snapshot | Not an operational SBOM process. |
 | EV-RISK | Risk assessment | risk-register.md | Documentation | DESIGNED | AI must not accept residual risk. |
@@ -68,13 +68,12 @@ Evidence states:
 ## Gaps blocking examination readiness
 
 1. No independent attestation.
-2. Hosted RLS CI is fail-closed but OPERATING only after dedicated GitHub secrets are configured and the job is repeatedly green.
-3. Established malware scanner is not OPERATING; external Review ingest is fail-closed; EICAR/CLEAN contract is unit-tested.
-4. PITR restore not executed; logical Review-row drill is the strongest safe test.
-5. No SIEM; minimum JSON/webhook sink exists.
+2. Live AAL2 enrollment for a named pilot engineer is HUMAN_DECISION_REQUIRED.
+3. Established malware scanner is not OPERATING; external Review ingest is fail-closed. AI cannot accept admin pre-scan.
+4. PITR restore not executed; logical Review-row drill is OPERATING.
+5. No SIEM; structured JSON alerts are OPERATING as the minimum sink.
 6. Prompt injection remains unsolved (no live LLM in this phase).
-7. Platform non-production secret defaults remain DEVELOPMENT_ONLY.
-8. Residual HIGH dependency advisories after the Next pin.
+7. Residual HIGH dependency advisories (`sharp`/`postcss`/`nanoid` via Next).
 
 Do not promote evidence state to `INDEPENDENTLY_ATTESTED` without an external report.
 Do not represent a skipped hosted security suite as PASS.

@@ -21,7 +21,7 @@ Framework tags are mapping aids only (SOC 2 TSC, ISO 27001, ISO 42001, NIST CSF 
 | SEC-PROMPT | HIGH | Open — prompt injection not solved; deterministic pipeline has no live-model execution |
 | SEC-SECRETS | HIGH | Review path isolated; production commerce/placeholder fail-closed; platform non-prod defaults remain DEVELOPMENT_ONLY |
 | SEC-AUDIT | LOW | Trusted Review API audit wired; audit-failure alerts; live staging attestation |
-| SEC-CI-RLS | MEDIUM | Hosted job exists; fails closed if dedicated staging secrets are absent (not a skip-as-pass) |
+| SEC-CI-RLS | MEDIUM | Hosted job OPERATING on staging (GitHub 35507801752, 28/28) |
 | SEC-FILE | HIGH | MIME/size/extension/magic-byte/filename/archive + EICAR + CLEAN-only Review consume; established ClamAV not OPERATING |
 | SEC-MFA | MEDIUM | Designated pilot tenant MFA policy is provisioned in fixtures; live AAL2 enrollment is operator action |
 | SEC-DEPS | HIGH | Next pin 15.5.24 for prior CRITICAL; residual HIGH remain — see dependency-triage.md |

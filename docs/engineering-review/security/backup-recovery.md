@@ -23,7 +23,7 @@ RTB AI Platform Staging (`rntonzigxwxcjlcsadip`) is hosted on Supabase (AWS). Re
 
 | Environment | Strongest safe test | State |
 | --- | --- | --- |
-| Staging | Logical Review-row export/delete/reinsert | IMPLEMENTED when hosted tests run |
+| Staging | Logical Review-row export/delete/reinsert | OPERATING (local 783ms; CI run 35507801752) |
 | Staging PITR to a new project | Not performed | DESIGNED |
 | Production | Not authorized | DESIGNED |
 
