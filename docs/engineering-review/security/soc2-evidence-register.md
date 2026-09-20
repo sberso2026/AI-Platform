@@ -49,10 +49,17 @@ Evidence states:
 | EV-SECRETS-PROD | Secrets | Production fail-closed commerce + placeholder hashing | Unit | IMPLEMENTED | Review still isolated from placeholder path. |
 | EV-SECRET-SCAN | Secrets | Review secret-scan | Local / CI | IMPLEMENTED | Regex convention; no committed JWTs/private keys in Review trees. |
 | EV-AUDIT-LIVE | Audit logging | `live-audit.test.ts` | Staging | IMPLEMENTED until hosted run OPERATING | User JWT cannot forge audit_events; trusted path writes context. |
-| EV-FILE | File security | Magic-byte/filename/archive + Review external ingest policy | Unit | IMPLEMENTED for policy; malware MISSING | Do not claim malware scanning. |
+| EV-FILE | File security | Magic-byte/filename/archive + EICAR + CLEAN-only Review consume | Unit | IMPLEMENTED for policy; established scanner DESIGNED until ClamAV is deployed | Do not claim malware scanning OPERATING without a scanner instance. |
+| EV-VULN-SCAN | Vulnerability management | `dependency-triage.md` + Next 15.5.24 pin | Local / lockfile | IMPLEMENTED as triage | Recheck `pnpm audit --prod` after install. Residual HIGH remain. |
+| EV-BACKUP | Availability | `live-restore.test.ts` logical Review-row drill | Staging when hosted tests run | IMPLEMENTED for logical row; PITR DESIGNED | Do not mark PITR OPERATING. |
+| EV-IR | Incident response | `incident-response.md` | Documentation | IMPLEMENTED as runbook | No tabletop record. |
+| EV-MONITOR | Monitoring | structured JSON alerts + optional webhook | Code + unit | IMPLEMENTED as minimum sink | No SIEM. |
+| EV-SCHEMA | Security schema | `engineering_review_security_schema_status` | Staging when applied | IMPLEMENTED | OPERATING after hosted live-schema PASS. |
+| EV-THREAT | Risk assessment | `threat-model.md` | Documentation | DESIGNED / IMPLEMENTED as model | Internal; not auditor-issued. |
+| EV-DATA | Data governance | `pilot-data-policy.md` | Documentation | DESIGNED / IMPLEMENTED as policy | Narrow pilot scope only. |
+| EV-MFA-PILOT | Identity assurance | Tenant A `requireMfa` via `ensurePilotIdentityPolicy` | Staging fixtures | IMPLEMENTED | Live AAL2 enrollment is operator action. |
 | EV-TS-GATE | Secure development | `apps/web` `typecheck:review` | Local / CI | IMPLEMENTED | Global ignoreBuildErrors remains for unrelated platform debt. |
 | EV-SBOM | Supply chain | `docs/engineering-review/security/evidence/era-6-sbom.json` | Local snapshot | IMPLEMENTED as snapshot | Not an operational SBOM process. |
-| EV-BACKUP | Availability | backup-recovery.md | Assessment | DESIGNED | Restore drill not executed. |
 | EV-RISK | Risk assessment | risk-register.md | Documentation | DESIGNED | AI must not accept residual risk. |
 | EV-PILOT | Readiness | pilot-readiness.md | Documentation | DESIGNED | INTERNAL_TEST vs CONTROLLED_PILOT vs ENTERPRISE_PRODUCTION are not equivalent. |
 
@@ -62,11 +69,12 @@ Evidence states:
 
 1. No independent attestation.
 2. Hosted RLS CI is fail-closed but OPERATING only after dedicated GitHub secrets are configured and the job is repeatedly green.
-3. Malware scanning is absent; external Review ingest is fail-closed rather than scanned.
-4. Backup restore drill not executed.
-5. Review security events are not yet wired to a SIEM/pager.
+3. Established malware scanner is not OPERATING; external Review ingest is fail-closed; EICAR/CLEAN contract is unit-tested.
+4. PITR restore not executed; logical Review-row drill is the strongest safe test.
+5. No SIEM; minimum JSON/webhook sink exists.
 6. Prompt injection remains unsolved (no live LLM in this phase).
 7. Platform non-production secret defaults remain DEVELOPMENT_ONLY.
+8. Residual HIGH dependency advisories after the Next pin.
 
 Do not promote evidence state to `INDEPENDENTLY_ATTESTED` without an external report.
 Do not represent a skipped hosted security suite as PASS.

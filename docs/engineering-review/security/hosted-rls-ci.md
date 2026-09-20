@@ -26,5 +26,20 @@ Workflow: `.github/workflows/engineering-review-hosted-rls.yml`
 - If required secrets are absent, the job **fails** with a configuration error
 - A missing-secret failure is **not** RLS PASS
 - The job must never print secret values
+- Hosted suite includes Review RLS, Core RLS, trusted audit, pilot identity policy, security schema RPC, and logical restore drill
 
 Unit workflow `.github/workflows/engineering-review-unit.yml` keeps `ENGINEERING_REVIEW_RLS=0` so a skipped live suite cannot look like a security pass.
+
+## ERA-7 configuration evidence (no secret values)
+
+- `gh secret list` does **not** include `REVIEW_STAGING_*`.
+- Local `.env.local` (repo root and `apps/web`) resolves to EOS `wcydlhqiqdwgoaqrlget`, **not** staging.
+- Therefore GitHub hosted RLS is **not OPERATING** in ERA-7. The job is fail-closed, which is not a PASS.
+
+Remaining human steps — do **not** copy EOS credentials:
+
+1. Open the Supabase dashboard for **RTB AI Platform Staging** `rntonzigxwxcjlcsadip`.
+2. Set GitHub secrets `REVIEW_STAGING_SUPABASE_URL`, `REVIEW_STAGING_SUPABASE_ANON_KEY`, `REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY`, `REVIEW_STAGING_CERT_USER_PASSWORD` from that project only.
+3. Optionally set `REVIEW_STAGING_SUPABASE_DB_URL`.
+4. Re-run workflow `Engineering Review hosted RLS`.
+

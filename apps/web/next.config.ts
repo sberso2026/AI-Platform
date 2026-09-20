@@ -56,6 +56,10 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react", "@rtb/ui"],
   },
   serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
+  images: {
+    // GHSA-2xp9-vwfh-vxw4: keep AVIF disabled even after Next patch.
+    formats: ["image/webp"],
+  },
   outputFileTracingIncludes: {
     "/api/**": pdfTraceIncludes,
     "/api/engineering/documents/**": pdfTraceIncludes,

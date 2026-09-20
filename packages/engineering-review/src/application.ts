@@ -10,6 +10,11 @@ import {
   assertReviewFileIngestionAllowed,
   type ReviewFileIngestionPolicy,
 } from "./file-ingestion-policy";
+import {
+  assertReviewScanAllowsExecution,
+  scanReviewDocumentBytes,
+  establishedMalwareScannerAvailable,
+} from "./malware-scan";
 import { persistHumanDisposition } from "./adapters/persisted-flow";
 import {
   adaptProjectIntelligenceDocuments,
@@ -324,13 +329,25 @@ export class TrustedReviewService {
     );
     assertReviewFileIngestionAllowed(
       this.fileIngestionPolicy,
-      selected.map((doc) => ({
-        documentId: doc.engineeringDocumentId,
-        fileName: doc.fileName,
-        mimeType: doc.mimeType,
-        controlledFixture: doc.controlledFixture,
-        ingestionSource: doc.ingestionSource,
-      })),
+      selected.map((doc) => {
+        const scanned = scanReviewDocumentBytes({
+          controlledFixture: doc.controlledFixture,
+          adminPreScanned: doc.scanState === "CLEAN" || doc.ingestionSource === "internal_fixture",
+          establishedScannerAvailable: establishedMalwareScannerAvailable(),
+        });
+        const state = doc.scanState ?? scanned.state;
+        if (this.fileIngestionPolicy.mode === "pilot") {
+          assertReviewScanAllowsExecution(state, doc.engineeringDocumentId);
+        }
+        return {
+          documentId: doc.engineeringDocumentId,
+          fileName: doc.fileName,
+          mimeType: doc.mimeType,
+          controlledFixture: doc.controlledFixture,
+          ingestionSource: doc.ingestionSource,
+          scanState: state,
+        };
+      }),
     );
     const report = adaptProjectIntelligenceDocuments(selected);
     const ready = report.ready;

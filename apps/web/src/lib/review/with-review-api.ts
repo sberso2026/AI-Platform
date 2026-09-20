@@ -12,9 +12,16 @@ import {
   InMemoryReviewSecuritySink,
   resolveReviewIdentityPolicy,
   type ReviewIdentityClaims,
+  type ReviewSecurityEvent,
 } from "@rtb/engineering-review";
+import { emitReviewSecurityAlert } from "@rtb/engineering-review-persistence";
 
 const security = new InMemoryReviewSecuritySink();
+
+function recordSecurity(event: ReviewSecurityEvent) {
+  security.record(event);
+  void emitReviewSecurityAlert(event);
+}
 
 export function reviewSecurityEvents() {
   return security;
@@ -59,7 +66,7 @@ export async function guardReviewApi(method: string): Promise<ReviewHandlerConte
   const requestId = crypto.randomUUID();
   const ctx = await getAuthContext();
   if (!ctx) {
-    security.record({
+    recordSecurity({
       name: "review.authn_failed",
       at: new Date().toISOString(),
       requestId,
@@ -68,7 +75,7 @@ export async function guardReviewApi(method: string): Promise<ReviewHandlerConte
     return unauthenticatedResponse(requestId);
   }
   if (!ctx.workspaceId) {
-    security.record({
+    recordSecurity({
       name: "review.authz_failed",
       at: new Date().toISOString(),
       actorId: ctx.userId,
@@ -89,7 +96,7 @@ export async function guardReviewApi(method: string): Promise<ReviewHandlerConte
   const claims = await reviewIdentityClaims(ctx);
   const identity = evaluateReviewIdentityPolicy(policy, claims);
   if (!identity.allowed) {
-    security.record({
+    recordSecurity({
       name: "review.identity_assurance_failed",
       at: new Date().toISOString(),
       actorId: ctx.userId,
@@ -109,7 +116,7 @@ export async function guardReviewApi(method: string): Promise<ReviewHandlerConte
 
   const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
   if (mutating && isReadOnlyEngineeringRole(ctx.roleSlug)) {
-    security.record({
+    recordSecurity({
       name: "review.authz_failed",
       at: new Date().toISOString(),
       actorId: ctx.userId,
@@ -134,7 +141,7 @@ export async function guardReviewApi(method: string): Promise<ReviewHandlerConte
 export function reviewErrorResponse(err: unknown, requestId: string): NextResponse {
   if (err instanceof EngineeringReviewError) {
     if (err.code === "cross_workspace_rejected") {
-      security.record({
+      recordSecurity({
         name: "review.cross_workspace_attempt",
         at: new Date().toISOString(),
         requestId,
@@ -142,8 +149,24 @@ export function reviewErrorResponse(err: unknown, requestId: string): NextRespon
       });
     }
     if (err.code === "cross_tenant_rejected") {
-      security.record({
+      recordSecurity({
         name: "review.cross_tenant_attempt",
+        at: new Date().toISOString(),
+        requestId,
+        code: err.code,
+      });
+    }
+    if (err.code === "document_infected") {
+      recordSecurity({
+        name: "review.malware_detected",
+        at: new Date().toISOString(),
+        requestId,
+        code: err.code,
+      });
+    }
+    if (err.code === "document_scan_failed" || err.code === "document_scan_pending") {
+      recordSecurity({
+        name: "review.scanner_failed",
         at: new Date().toISOString(),
         requestId,
         code: err.code,
@@ -159,7 +182,8 @@ export function reviewErrorResponse(err: unknown, requestId: string): NextRespon
             err.code === "ai_cannot_dispose" ||
             err.code === "read_only" ||
             err.code === "identity_assurance_insufficient" ||
-            err.code === "external_upload_disabled"
+            err.code === "external_upload_disabled" ||
+            err.code === "document_infected"
           ? 403
           : err.code === "package_not_found" || err.code === "finding_not_found"
             ? 404
@@ -167,7 +191,7 @@ export function reviewErrorResponse(err: unknown, requestId: string): NextRespon
     return lifecycleErrorResponse(err.code, err.message, status, requestId, err.details);
   }
   const message = err instanceof Error ? err.message : "Review request failed";
-  security.record({
+  recordSecurity({
     name: "review.execution_failed",
     at: new Date().toISOString(),
     requestId,

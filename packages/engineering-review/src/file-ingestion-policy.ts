@@ -1,4 +1,5 @@
 import { failClosed } from "./errors";
+import { assertReviewScanAllowsExecution, establishedMalwareScannerAvailable } from "./malware-scan";
 
 /**
  * Review consumes PI-ingested files. There is no established malware scanner
@@ -34,6 +35,7 @@ export type ReviewIngestionDocument = {
   mimeType?: string;
   controlledFixture?: boolean;
   ingestionSource?: "internal_fixture" | "external_customer" | "unknown";
+  scanState?: import("./malware-scan").ReviewMalwareScanState;
 };
 
 export function defaultReviewFileIngestionPolicy(
@@ -46,7 +48,7 @@ export function defaultReviewFileIngestionPolicy(
     env.NODE_ENV === "production";
   return {
     mode: production ? "pilot" : "internal_test",
-    malwareScanningAvailable: REVIEW_MALWARE_SCANNING_AVAILABLE,
+    malwareScanningAvailable: establishedMalwareScannerAvailable(env),
     allowExternalCustomerUpload: allowExternal,
   };
 }
@@ -74,6 +76,10 @@ export function assertReviewFileIngestionAllowed(
   }
 
   if (policy.mode === "internal_test") return;
+
+  for (const doc of documents) {
+    assertReviewScanAllowsExecution(doc.scanState ?? "PENDING_SCAN", doc.documentId);
+  }
 
   if (policy.allowExternalCustomerUpload && policy.malwareScanningAvailable) return;
 

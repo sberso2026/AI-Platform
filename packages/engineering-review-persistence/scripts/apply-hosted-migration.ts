@@ -16,6 +16,7 @@ const REVIEW_MIGRATIONS = [
 ];
 
 const CORE_RLS_MIGRATION = "20260920040000_engineering_core_rls_workspace.sql";
+const SCHEMA_STATUS_MIGRATION = "20260920120000_engineering_review_security_schema_status.sql";
 
 function repoRoot(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -108,10 +109,13 @@ export async function applyHostedCoreRlsMigration(): Promise<{
   if (!url || !key) return { applied: false, reachable: false };
 
   const path = resolve(repoRoot(), "supabase/migrations", CORE_RLS_MIGRATION);
+  const schemaPath = resolve(repoRoot(), "supabase/migrations", SCHEMA_STATUS_MIGRATION);
   if (!existsSync(path)) throw new Error(`Missing ${CORE_RLS_MIGRATION}`);
+  if (!existsSync(schemaPath)) throw new Error(`Missing ${SCHEMA_STATUS_MIGRATION}`);
   let applied = false;
   try {
     applied = await applySqlFile(path, CORE_RLS_MIGRATION);
+    applied = (await applySqlFile(schemaPath, SCHEMA_STATUS_MIGRATION)) || applied;
   } catch (error) {
     console.error("Core RLS migration apply failed:", error instanceof Error ? error.message : "unknown");
   }

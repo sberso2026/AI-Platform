@@ -10,6 +10,8 @@ import {
   isScopedDocumentPath,
 } from "@/lib/engineering/document-storage";
 import { validateDocumentStoragePolicy } from "@rtb/project-intelligence";
+import { EngineeringReviewError, gateEngineeringUploadBytes } from "@rtb/engineering-review";
+import { emitReviewSecurityAlert } from "@rtb/engineering-review-persistence";
 import { normalizeEngineeringDocumentType, normalizeEngineeringRevision } from "@rtb/engineering-os";
 import { enqueueCanonicalDocumentIngestion } from "@/lib/project-intelligence/document-ingestion";
 
@@ -95,6 +97,40 @@ export const POST = withEngineeringApi("documents", async ({ ctx, commerce, corr
   if (downloaded.data) {
     const bytes = Buffer.from(await downloaded.data.arrayBuffer());
     validateDocumentStoragePolicy({ mimeType, fileName, sizeBytes: fileSize, bytes });
+    try {
+      await gateEngineeringUploadBytes(bytes);
+    } catch (err) {
+      if (err instanceof EngineeringReviewError) {
+        if (err.code === "document_infected") {
+          void emitReviewSecurityAlert({
+            name: "review.malware_detected",
+            at: new Date().toISOString(),
+            actorId: ctx.userId,
+            tenantId: ctx.tenantId,
+            workspaceId: ctx.workspaceId,
+            requestId: correlationId,
+            code: err.code,
+            resourceType: "engineering_document",
+            resourceId: documentId,
+          });
+        }
+        if (err.code === "document_scan_failed" || err.code === "document_scan_pending") {
+          void emitReviewSecurityAlert({
+            name: "review.scanner_failed",
+            at: new Date().toISOString(),
+            actorId: ctx.userId,
+            tenantId: ctx.tenantId,
+            workspaceId: ctx.workspaceId,
+            requestId: correlationId,
+            code: err.code,
+            resourceType: "engineering_document",
+            resourceId: documentId,
+          });
+        }
+        return lifecycleErrorResponse(err.code, err.message, 403, correlationId);
+      }
+      throw err;
+    }
   }
 
   try {

@@ -19,6 +19,7 @@ const TARGETS = [
   "supabase/migrations/20260919120000_engineering_review_persistence.sql",
   "supabase/migrations/20260919133000_engineering_review_persist_functions.sql",
   "supabase/migrations/20260920040000_engineering_core_rls_workspace.sql",
+  "supabase/migrations/20260920120000_engineering_review_security_schema_status.sql",
   ".github/workflows/engineering-review-unit.yml",
   ".github/workflows/engineering-review-hosted-rls.yml",
 ];

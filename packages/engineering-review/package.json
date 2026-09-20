@@ -1,6 +1,6 @@
 {
   "name": "@rtb/engineering-review",
-  "version": "0.6.0-era-6",
+  "version": "0.7.0-era-7",
   "private": true,
   "type": "module",
   "description": "Bounded Engineering Review AI domain engine — contracts, lifecycle, grounded pipeline, trusted application service. Framework-independent.",

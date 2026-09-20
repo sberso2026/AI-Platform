@@ -5,7 +5,7 @@ import type { MvpReviewType } from "@rtb/engineering-review";
 
 export const POST = withReviewApiParams<{ packageId: string }>(async ({ ctx, actor }, request, params) => {
   const body = (await request.json()) as { reviewTypes?: MvpReviewType[] };
-  const review = createTrustedReviewRuntime(ctx, actor);
+  const review = await createTrustedReviewRuntime(ctx, actor);
   const data = await review.setScope(actor, params.packageId, body.reviewTypes ?? []);
   return NextResponse.json({ data });
 });

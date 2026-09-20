@@ -132,6 +132,19 @@ async function createTenant(admin: Admin, slug: string, name: string): Promise<R
   return tenant;
 }
 
+export async function ensurePilotIdentityPolicy(admin: Admin, tenantId: string): Promise<void> {
+  const { data, error } = await admin.from("tenants").select("id, settings").eq("id", tenantId).maybeSingle();
+  if (error || !data) throw new Error(`pilot tenant settings: ${error?.message ?? "missing"}`);
+  const current = (data.settings as Record<string, unknown> | null) ?? {};
+  const next = {
+    ...current,
+    cert_fixture: true,
+    engineeringReview: { requireMfa: true, requireEnterpriseSso: false },
+  };
+  const { error: updateError } = await admin.from("tenants").update({ settings: next }).eq("id", tenantId);
+  if (updateError) throw new Error(`pilot identity policy: ${updateError.message}`);
+}
+
 /**
  * Disposable ERA-3 fixtures. Service-role only. Never used as RLS proof.
  */
@@ -146,6 +159,7 @@ export async function provisionReviewRlsFixtures(): Promise<ReviewRlsFixtures> {
   const password = certUserPassword();
 
   const tenantA = await createTenant(admin, `${ER_CERT_SLUG_PREFIX}a`, "ERA-3 Review Tenant A");
+  await ensurePilotIdentityPolicy(admin, tenantA.id);
   const tenantB = await createTenant(admin, `${ER_CERT_SLUG_PREFIX}b`, "ERA-3 Review Tenant B");
   const workspaceA1 = await existingOrInsert(admin, "workspaces", { tenant_id: tenantA.id, slug: `${ER_CERT_SLUG_PREFIX}a1` }, {
     tenant_id: tenantA.id, slug: `${ER_CERT_SLUG_PREFIX}a1`, name: "Review WS A1", status: "active",
@@ -314,7 +328,7 @@ export async function cleanupTransientReviewPackages(): Promise<{ deleted: numbe
   const { data, error } = await admin
     .from("engineering_review_packages")
     .delete()
-    .or("name.like.ERA-3 insert %,name.like.ERA-3 delete-target %,name.like.ERA-3 update-target %,name.like.ERA-6 audit %")
+    .or("name.like.ERA-3 insert %,name.like.ERA-3 delete-target %,name.like.ERA-3 update-target %,name.like.ERA-6 audit %,name.like.ERA-7 restore %")
     .select("id");
   if (error) return { deleted: 0, error: error.message };
   return { deleted: Array.isArray(data) ? data.length : 0 };

@@ -79,6 +79,7 @@ export type ProjectIntelligenceDocumentSnapshot = {
   fileName?: string;
   controlledFixture?: boolean;
   ingestionSource?: "internal_fixture" | "external_customer" | "unknown";
+  scanState?: import("../malware-scan").ReviewMalwareScanState;
 };
 
 export type CanonicalReviewDocumentInput = {

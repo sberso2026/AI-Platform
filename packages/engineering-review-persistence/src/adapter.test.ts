@@ -52,6 +52,7 @@ describe("production adapter unit", () => {
       },
     } as never);
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     await expect(
       sink.record({
         tenantId: "00000000-0000-4000-8000-000000000001" as never,
@@ -64,5 +65,6 @@ describe("production adapter unit", () => {
       }),
     ).resolves.toBeUndefined();
     spy.mockRestore();
+    warn.mockRestore();
   });
 });

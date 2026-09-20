@@ -1,7 +1,7 @@
 # Engineering Review AI — Trust & Security Control Matrix
 
 **Product:** RTB Engineering Review AI  
-**Phase:** ERA-6  
+**Phase:** ERA-7  
 **Status:** Control register for readiness — **not a certification claim**  
 **Not claimed:** SOC 2 certified/compliant/attested; ISO 27001 certified; ISO 42001 certified; NIST CSF assessed by a third party.
 
@@ -17,13 +17,16 @@ Framework tags are mapping aids only (SOC 2 TSC, ISO 27001, ISO 42001, NIST CSF 
 
 | ID | Severity | Status |
 | --- | --- | --- |
-| SEC-CORE-RLS | HIGH | Technical control added — tenant+workspace Core RLS; hosted proof required per environment |
-| SEC-PROMPT | HIGH | Open — prompt injection not solved; adversarial fixtures have no control-plane effect |
+| SEC-CORE-RLS | HIGH | Technical control + schema RPC; hosted proof required per environment |
+| SEC-PROMPT | HIGH | Open — prompt injection not solved; deterministic pipeline has no live-model execution |
 | SEC-SECRETS | HIGH | Review path isolated; production commerce/placeholder fail-closed; platform non-prod defaults remain DEVELOPMENT_ONLY |
-| SEC-AUDIT | LOW | Trusted Review API audit wired; live staging attestation in ERA-6 suite |
+| SEC-AUDIT | LOW | Trusted Review API audit wired; audit-failure alerts; live staging attestation |
 | SEC-CI-RLS | MEDIUM | Hosted job exists; fails closed if dedicated staging secrets are absent (not a skip-as-pass) |
-| SEC-FILE | MEDIUM | MIME/size/extension/magic-byte/filename/archive + Review fail-closed external ingest; no malware scanner |
-| SEC-MFA | MEDIUM | Review tenant MFA/SSO policy is enforceable; not globally forced onto other products |
+| SEC-FILE | HIGH | MIME/size/extension/magic-byte/filename/archive + EICAR + CLEAN-only Review consume; established ClamAV not OPERATING |
+| SEC-MFA | MEDIUM | Designated pilot tenant MFA policy is provisioned in fixtures; live AAL2 enrollment is operator action |
+| SEC-DEPS | HIGH | Next pin 15.5.24 for prior CRITICAL; residual HIGH remain — see dependency-triage.md |
+| SEC-BACKUP | MEDIUM | Logical Review-row drill implemented; PITR not executed |
+| SEC-MONITOR | MEDIUM | Structured JSON alerts + optional webhook; no SIEM |
 
 No **CRITICAL** Review finding is currently evidenced (hosted Review table RLS isolation passed on staging in ERA-3A). Unresolved CRITICAL would block production release.
 
@@ -69,7 +72,7 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 | DS-CLASS | DATA SECURITY | Data classification | Review rows are tenant engineering data | RLS | ERA-3A | Review | PARTIAL | No formal classification labels on tables | Add data classification in ERA-5+ | ISO 27001 A.5.12 |
 | DS-RETENTION | DATA SECURITY | Retention | None Review-specific | — | — | Review | MISSING | No retention schedule | Define with customer admin | SOC2 A1.2 |
 | DS-DELETE | DATA SECURITY | Deletion | Admin DELETE on aggregates; dispositions append-only | RLS + trigger | ERA-3A | Review | PARTIAL | No tenant offboarding job for Review rows | Cascade via tenant delete already ON DELETE CASCADE | SOC2 CC6.5 |
-| DS-BACKUP | DATA SECURITY | Backup protection | Supabase hosted backups | Provider | Not Review-tested restore | Platform | PARTIAL | No Review restore test | Platform DR exercise | SOC2 A1.2; NIST CSF PR.DS |
+| DS-BACKUP | DATA SECURITY | Backup protection | Logical Review-row drill + provider backups | Provider + live-restore.test.ts | Logical drill when hosted tests run | Platform | PARTIAL | PITR not executed | PITR to disposable project | SOC2 A1.2; NIST CSF PR.DS |
 
 ---
 
@@ -93,7 +96,7 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 
 | control_id | control_domain | requirement | implementation | technical_enforcement | evidence/test | owner | status | gap | remediation | framework_reference |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| SEC-FILE | FILE SECURITY | Upload validation / malware / parser isolation | Review consumes PI files; no Review uploader | PI: PDF/TXT/DOCX, 25 MB, extension/MIME, filename sanitization, archive rejection, magic-byte check on complete. Review: fail-closed external ingest without malware scanning; internal fixtures allowed. | storage-policy.test.ts; file-ingestion-policy.test.ts | Review / PI | PARTIAL | Malware scanning is absent. Do not mark IMPLEMENTED. PI authenticated upload remains for internal operators. | Integrate an established scanner before opening customer upload | OWASP; NIST CSF PR.DS |
+| SEC-FILE | FILE SECURITY | Upload validation / malware / parser isolation | Review consumes PI files. PI: PDF/TXT/DOCX, 25 MB, extension/MIME, filename sanitization, archive rejection, magic-byte check. Upload-complete rejects EICAR before parser enqueue. Optional ClamAV HTTP (`RTB_REVIEW_CLAMAV_URL`) fail-closes on timeout. Review execution requires CLEAN in pilot. | storage-policy.test.ts; malware-scan.test.ts; file-ingestion-policy.test.ts | Review / PI | PARTIAL | Established scanner is not OPERATING unless ClamAV URL is deployed. External customer upload remains disabled. | Deploy ClamAV or keep admin pre-scan + human risk acceptance | OWASP; NIST CSF PR.DS |
 | FS-ARCHIVE | FILE SECURITY | Archive/decompression controls | Archives rejected | Extension allowlist + Review archive policy | storage-policy tests | Review / PI | IMPLEMENTED | — | Remain rejected | OWASP |
 
 ---
@@ -134,12 +137,12 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 | control_id | control_domain | requirement | implementation | status | gap | remediation | framework_reference |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | MON-TEL | MONITORING | Product telemetry (not security SIEM) | Counts only; no document content | PARTIAL | No SIEM export | Platform observability later | NIST CSF DE.CM |
-| MON-ALERT | MONITORING | Alerting / escalation | Review security event names defined (`REVIEW_SECURITY_ALERT_EVENTS`) | PARTIAL | No pager/SIEM hook yet | Wire to existing monitoring | NIST CSF DE.AE |
+| MON-ALERT | MONITORING | Alerting / escalation | Structured JSON `console.warn` + optional `RTB_REVIEW_SECURITY_WEBHOOK_URL` | IMPLEMENTED as minimum sink | No SIEM | Ingest JSON into future SIEM | NIST CSF DE.AE |
 | SD-CI | SECURE DEVELOPMENT | CI security gates | Unit job RLS=0; hosted job RLS=1 fail-closed without secrets; Review typecheck + secret-scan | PARTIAL | Hosted secrets must be configured in GitHub | Configure REVIEW_STAGING_* | SOC2 CC8.1 |
 | SD-BRANCH | SECURE DEVELOPMENT | Branch protection / PR review | GitHub repo process (platform) | PARTIAL | Not independently verified here | Confirm org branch rules | SOC2 CC8.1 |
 | SD-ENV | SECURE DEVELOPMENT | Environment separation | Review migrations applied to staging only in ERA-3A | IMPLEMENTED | Production not authorized | Keep staging-first | SOC2 CC8.1 |
-| RES-DR | RESILIENCE | Backup / restore / RTO RPO | Provider backups; no Review restore test | PARTIAL | No RTO/RPO for Review | Platform DR | SOC2 A1.2 |
-| IR-PROC | INCIDENT RESPONSE | Detection through post-incident | Commerce/platform IR docs exist; not Review-specific | PARTIAL | No Review IR runbook | Extend platform IR | NIST CSF RS.* |
+| RES-DR | RESILIENCE | Backup / restore / RTO RPO | Logical Review-row drill; provider backups exist | PARTIAL | PITR not executed | Scheduled PITR to a disposable project | SOC2 A1.2 |
+| IR-PROC | INCIDENT RESPONSE | Detection through post-incident | `docs/engineering-review/security/incident-response.md` | IMPLEMENTED as runbook | No tabletop record | Human tabletop | NIST CSF RS.* |
 | PR-MIN | PRIVACY | Minimization / isolation | Tenant+workspace RLS; synthetic gold set | PARTIAL | No privacy DPIA | Customer-admin retention | SOC2 P; ISO 27001 A.8 |
 | GOV-INV | AI GOVERNANCE | Model/use-case inventory | Review use-case bounded in ERA-0–4 docs; default no live model | PARTIAL | Live model not inventoried | Inventory before first provider | ISO 42001; NIST AI RMF GOVERN |
 | GOV-RISK | AI GOVERNANCE | Risk classification / human oversight / evals | Gold-set eval + human authority | PARTIAL | No engineer-confirmed rate | Human eval in later ERA | ISO 42001 |
@@ -152,13 +155,15 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 
 | ID | Finding | Severity | Status |
 | --- | --- | --- | --- |
-| SEC-CORE-RLS | Core project/document tenant-only RLS | HIGH | Technical control added in ERA-6; hosted proof required on each environment |
+| SEC-CORE-RLS | Core project/document tenant-only RLS | HIGH | Technical control + schema RPC; hosted proof required on each environment |
 | SEC-SECRETS | Platform placeholder hashing and commerce default | HIGH | Production fail-closed; Review isolated; non-prod defaults DEVELOPMENT_ONLY |
-| SEC-AUDIT | User JWT must not insert audit_events | LOW | Live trusted-path attestation in ERA-6 suite |
-| SEC-PROMPT | Prompt injection remains an open risk | HIGH | Open — adversarial control-plane tests pass; not solved |
-| SEC-FILE | No real malware scanning | MEDIUM | Open; Review external ingest fail-closed for pilot |
-| SEC-MFA | Review MFA/SSO policy vs tenant enablement | MEDIUM | Capability implemented; tenant policy must be set |
+| SEC-AUDIT | User JWT must not insert audit_events | LOW | Live trusted-path attestation; audit-failure alert |
+| SEC-PROMPT | Prompt injection remains an open risk | HIGH | Open — current pipeline is deterministic; live LLM would raise likelihood |
+| SEC-FILE | Established malware scanner not OPERATING | HIGH | EICAR + CLEAN-only Review consume; external ingest fail-closed; ClamAV not deployed |
+| SEC-MFA | Review MFA/SSO policy vs live enrollment | MEDIUM | Pilot tenant policy provisioned; AAL2 enrollment is operator action |
 | SEC-CI-RLS | Hosted RLS CI without configured secrets | MEDIUM | Job fails closed if secrets absent — not skip-as-pass |
+| SEC-DEPS | Residual HIGH dependency advisories | HIGH | Next CRITICAL pin 15.5.24; remaining HIGH in dependency-triage.md |
+| SEC-BACKUP | PITR restore unproven | MEDIUM | Logical row drill only |
 
 ---
 

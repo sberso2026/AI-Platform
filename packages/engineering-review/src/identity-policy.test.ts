@@ -62,6 +62,15 @@ describe("Review identity policy", () => {
     if (!decision.allowed) expect(decision.reason).toBe("assurance_unknown_fail_closed");
   });
 
+  it("rejects SSO-only sessions when both MFA and enterprise SSO are required", () => {
+    const decision = evaluateReviewIdentityPolicy(
+      { requireMfa: true, requireEnterpriseSso: true },
+      { aal: "aal1", amr: ["sso"], appMetadata: { provider: "azure" } },
+    );
+    expect(decision.allowed).toBe(false);
+    if (!decision.allowed) expect(decision.reason).toBe("mfa_required");
+  });
+
   it("enables enterprise Review defaults from env without forcing unrelated products", () => {
     expect(
       resolveReviewIdentityPolicy({}, { RTB_REVIEW_ENTERPRISE_IDENTITY: "1" } as NodeJS.ProcessEnv),

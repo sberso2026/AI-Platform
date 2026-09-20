@@ -73,4 +73,42 @@ describe("storage policy", () => {
       }).ok,
     ).toBe(true);
   });
+
+  it("rejects MIME/extension spoofing and malformed PDF/DOCX signatures", () => {
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "notes.txt",
+        sizeBytes: 8,
+        bytes: Buffer.from("%PDF-1.7"),
+      }),
+    ).toThrow(DocumentIntelligenceError);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "text/plain",
+        fileName: "spec.pdf",
+        sizeBytes: 8,
+        bytes: Buffer.from("hello"),
+      }),
+    ).toThrow(DocumentIntelligenceError);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "broken.pdf",
+        sizeBytes: 6,
+        bytes: Buffer.from("notpdf"),
+      }),
+    ).toThrow(/PDF signature/i);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        fileName: "broken.docx",
+        sizeBytes: 4,
+        bytes: Buffer.from("XXXX"),
+      }),
+    ).toThrow(/DOCX signature/i);
+  });
 });

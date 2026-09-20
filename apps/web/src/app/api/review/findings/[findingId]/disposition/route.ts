@@ -9,7 +9,7 @@ export const POST = withReviewApiParams<{ findingId: string }>(async ({ ctx, act
     reason?: string;
     assignedTo?: string;
   };
-  const review = createTrustedReviewRuntime(ctx, actor);
+  const review = await createTrustedReviewRuntime(ctx, actor);
   const data = await review.recordDisposition(actor, {
     findingId: params.findingId,
     action: body.action as ReviewDispositionAction,

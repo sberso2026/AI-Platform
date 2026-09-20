@@ -3,3 +3,5 @@ export * from "./client";
 export * from "./audit-bind";
 export * from "./supabase-store";
 export * from "./fixtures";
+export * from "./security-schema";
+export * from "./security-alert";

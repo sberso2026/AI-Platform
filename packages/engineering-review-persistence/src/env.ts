@@ -59,6 +59,7 @@ export function loadLocalEnv(): void {
 
 export function resolveSupabaseUrl(): string | undefined {
   return (
+    process.env.REVIEW_STAGING_SUPABASE_URL ??
     process.env.SUPABASE_URL ??
     process.env.SUPABASE_TEST_URL ??
     process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -67,6 +68,7 @@ export function resolveSupabaseUrl(): string | undefined {
 
 export function resolveSupabaseAnonKey(): string | undefined {
   return (
+    process.env.REVIEW_STAGING_SUPABASE_ANON_KEY ??
     process.env.SUPABASE_ANON_KEY ??
     process.env.SUPABASE_TEST_ANON_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -74,11 +76,11 @@ export function resolveSupabaseAnonKey(): string | undefined {
 }
 
 export function resolveServiceRoleKey(): string | undefined {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return process.env.REVIEW_STAGING_SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
 
 export function certUserPassword(): string {
-  const value = process.env.CERT_USER_PASSWORD;
+  const value = process.env.REVIEW_STAGING_CERT_USER_PASSWORD ?? process.env.CERT_USER_PASSWORD;
   if (process.env.CI === "true" && process.env.ENGINEERING_REVIEW_RLS === "1" && !value) {
     throw new Error("CERT_USER_PASSWORD is required when ENGINEERING_REVIEW_RLS=1 in CI");
   }

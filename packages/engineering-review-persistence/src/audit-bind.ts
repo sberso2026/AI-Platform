@@ -1,6 +1,7 @@
 import { createPlatformAuditAdapter, type ReviewAuditSink } from "@rtb/engineering-review";
 import { AuditService } from "@rtb/platform-core";
 import type { ReviewSqlClient } from "./client";
+import { emitReviewSecurityAlert } from "./security-alert";
 
 /**
  * Bind ReviewAuditSink to platform AuditService.log.
@@ -13,7 +14,22 @@ import type { ReviewSqlClient } from "./client";
  */
 export function bindPlatformReviewAudit(client: ReviewSqlClient): ReviewAuditSink {
   const service = new AuditService(client as never);
-  return createPlatformAuditAdapter(async (input) => service.log(input));
+  return createPlatformAuditAdapter(async (input) => {
+    const result = await service.log(input);
+    if (result == null) {
+      await emitReviewSecurityAlert({
+        name: "review.audit_failed",
+        at: new Date().toISOString(),
+        actorId: input.userId,
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId,
+        code: "audit_insert_failed",
+        resourceType: input.resourceType,
+        resourceId: input.resourceId,
+      });
+    }
+    return result;
+  });
 }
 
 export function bindTrustedReviewAudit(serviceRoleClient: ReviewSqlClient): ReviewAuditSink {

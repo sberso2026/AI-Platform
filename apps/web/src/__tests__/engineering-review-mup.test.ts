@@ -45,6 +45,7 @@ describe("ERA-5 Engineering Review MUP", () => {
     expect(guard).toContain("evaluateReviewIdentityPolicy");
     expect(runtime).toContain('kind: "authenticated"');
     expect(runtime).toContain("bindTrustedReviewAudit");
+    expect(runtime).toContain("assertReviewSecuritySchemaOrThrow");
     expect(runtime).toContain("createServiceClient");
     expect(runtime).toContain(".eq(\"workspace_id\", actor.workspaceId)");
     expect(create).not.toMatch(/tenantId:\s*body/);

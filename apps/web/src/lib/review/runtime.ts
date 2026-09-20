@@ -10,12 +10,22 @@ import {
 import {
   bindTrustedReviewAudit,
   createSupabaseEngineeringReviewStore,
+  assertReviewSecuritySchemaOrThrow,
   type ReviewSqlClient,
 } from "@rtb/engineering-review-persistence";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { AuthContext } from "@/lib/kernel";
 
 const processTelemetry = new InMemoryReviewProductTelemetry();
+let reviewSecuritySchemaCheck: Promise<void> | undefined;
+
+function ensureReviewSecuritySchema(service: ReviewSqlClient) {
+  reviewSecuritySchemaCheck ??= assertReviewSecuritySchemaOrThrow(service).catch((error) => {
+    reviewSecuritySchemaCheck = undefined;
+    throw error;
+  });
+  return reviewSecuritySchemaCheck;
+}
 
 export function reviewProductTelemetry() {
   return processTelemetry;
@@ -152,6 +162,7 @@ class AuthedReviewDocumentDirectory {
         role: inferRole(row.document_type ? String(row.document_type) : undefined),
         controlledFixture,
         ingestionSource: controlledFixture ? "internal_fixture" : "unknown",
+        scanState: controlledFixture ? "CLEAN" : "SCAN_FAILED",
         fields:
           metadata.fields && typeof metadata.fields === "object" && !Array.isArray(metadata.fields)
             ? Object.fromEntries(
@@ -192,12 +203,13 @@ class AuthedReviewDocumentDirectory {
   }
 }
 
-export function createTrustedReviewRuntime(ctx: AuthContext, actor: ReviewActor) {
+export async function createTrustedReviewRuntime(ctx: AuthContext, actor: ReviewActor) {
   if (!ctx.workspaceId) {
     throw new Error("Workspace is required");
   }
   const userClient = ctx.supabase as unknown as ReviewSqlClient;
   const service = createServiceClient() as unknown as ReviewSqlClient;
+  await ensureReviewSecuritySchema(service);
   const store = createSupabaseEngineeringReviewStore({
     client: userClient,
     kind: "authenticated",

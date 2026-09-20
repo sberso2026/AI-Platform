@@ -9,6 +9,8 @@ export * from "./control-plane";
 export * from "./identity-assurance";
 export * from "./identity-policy";
 export * from "./file-ingestion-policy";
+export * from "./malware-scan";
+export * from "./security-schema";
 export * from "./security-events";
 export * from "./evidence";
 export * from "./lifecycle";
