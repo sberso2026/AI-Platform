@@ -1,7 +1,7 @@
 # Engineering Review AI — Trust & Security Control Matrix
 
 **Product:** RTB Engineering Review AI  
-**Phase:** ERA-7  
+**Phase:** ERA-7A  
 **Status:** Control register for readiness — **not a certification claim**  
 **Not claimed:** SOC 2 certified/compliant/attested; ISO 27001 certified; ISO 42001 certified; NIST CSF assessed by a third party.
 
@@ -22,9 +22,9 @@ Framework tags are mapping aids only (SOC 2 TSC, ISO 27001, ISO 42001, NIST CSF 
 | SEC-SECRETS | HIGH | Review path isolated; production commerce/placeholder fail-closed; platform non-prod defaults remain DEVELOPMENT_ONLY |
 | SEC-AUDIT | LOW | Trusted Review API audit wired; audit-failure alerts; live staging attestation |
 | SEC-CI-RLS | MEDIUM | Hosted job OPERATING on staging (GitHub 35507801752, 28/28) |
-| SEC-FILE | HIGH | MIME/size/extension/magic-byte/filename/archive + EICAR + CLEAN-only Review consume; established ClamAV not OPERATING |
-| SEC-MFA | MEDIUM | Designated pilot tenant MFA policy is provisioned in fixtures; live AAL2 enrollment is operator action |
-| SEC-DEPS | HIGH | Next pin 15.5.24 for prior CRITICAL; residual HIGH remain — see dependency-triage.md |
+| SEC-FILE | HIGH | MIME/size/extension/magic-byte/filename/archive + EICAR + CLEAN-only Review consume; local official ClamAV 1.4 OPERATING and fail-closed; hosted app URL assignment remaining |
+| SEC-MFA | MEDIUM | Tenant A requireMfa=true; live AAL1 rejected; live AAL2 enrollment not performed |
+| SEC-DEPS | HIGH | Next pin 15.5.24 for prior CRITICAL; residual HIGH ACCEPTED_CONTROLLED_PILOT_ONLY by human until 2026-10-20 — not enterprise production |
 | SEC-BACKUP | MEDIUM | Logical Review-row drill implemented; PITR not executed |
 | SEC-MONITOR | MEDIUM | Structured JSON alerts + optional webhook; no SIEM |
 
@@ -39,7 +39,7 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 | control_id | control_domain | requirement | implementation | technical_enforcement | evidence/test | owner | status | gap | remediation | framework_reference |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ID-AUTH | IDENTITY | Authenticate users before Review data access | Supabase Auth JWT on PostgREST | Anon key + user JWT; anonymous SELECT returns zero Review rows | ERA-3A live JWT tests | Platform identity | IMPLEMENTED | — | — | SOC2 CC6.1; NIST CSF PR.AA |
-| ID-MFA | IDENTITY | MFA for privileged roles and Review tenant policy | Privileged MFA (AAL2/AMR) plus Review-only identity policy | `evaluatePrivilegedMfa` for /platform|/system|/audit. `evaluateReviewIdentityPolicy` for `/review` and `/api/review`. Password-only is rejectable when tenant `engineeringReview.requireMfa` is true. | identity-policy.test.ts; middleware.ts; with-review-api.ts | Review / identity | PARTIAL | Capability is implemented; tenant policy must still be set for each enterprise Review tenant. Not globally forced. | Enable tenant policy for pilot tenants | SOC2 CC6.1; ISO 27001 A.8.5 |
+| ID-MFA | IDENTITY | MFA for privileged roles and Review tenant policy | Privileged MFA (AAL2/AMR) plus Review-only identity policy | `evaluatePrivilegedMfa` for /platform|/system|/audit. `evaluateReviewIdentityPolicy` for `/review` and `/api/review`. Password-only is rejectable when tenant `engineeringReview.requireMfa` is true. Tenant A policy is true and was not weakened. | identity-policy.test.ts; live-identity.test.ts; era-7a-live-mfa.md | Review / identity | PARTIAL | Live AAL1 reject OPERATING; named pilot `cert-er-a1` has 0 verified MFA factors; live AAL2 not proven | Human MFA enrollment for the named staging pilot engineer | SOC2 CC6.1; ISO 27001 A.8.5 |
 | ID-SSO | IDENTITY | Enterprise SSO | Platform enterprise SSO 0.2.0 + Review `requireEnterpriseSso` | Password email rejected when Review policy requires SSO (`amr` sso/saml/oidc/oauth or non-email provider) | identity-policy.test.ts | Review / identity | PARTIAL | Enforcement depends on tenant policy and IdP claims | Set `engineeringReview.requireEnterpriseSso` for SSO-only tenants | SOC2 CC6.1 |
 | ID-SESSION | IDENTITY | Session management | Supabase Auth SSR cookies | Review API uses `getAuthContext()` cookie session; persistSession false in Review adapter tests | with-review-api.ts | Review / platform | IMPLEMENTED | Session timeout/idle policy remains platform-default | — | SOC2 CC6.1 |
 | ID-LIFECYCLE | IDENTITY | Account lifecycle | Supabase admin create/update in cert fixtures only | email_confirm, cert_fixture metadata | live-rls fixtures | Review persistence | PARTIAL | No Review-specific joiner/mover/leaver runbook | Use platform identity lifecycle | SOC2 CC6.2 |
@@ -96,7 +96,7 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 
 | control_id | control_domain | requirement | implementation | technical_enforcement | evidence/test | owner | status | gap | remediation | framework_reference |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| SEC-FILE | FILE SECURITY | Upload validation / malware / parser isolation | Review consumes PI files. PI: PDF/TXT/DOCX, 25 MB, extension/MIME, filename sanitization, archive rejection, magic-byte check. Upload-complete rejects EICAR before parser enqueue. Optional ClamAV HTTP (`RTB_REVIEW_CLAMAV_URL`) fail-closes on timeout. Review execution requires CLEAN in pilot. | storage-policy.test.ts; malware-scan.test.ts; file-ingestion-policy.test.ts | Review / PI | PARTIAL | Established scanner is not OPERATING unless ClamAV URL is deployed. External customer upload remains disabled. | Deploy ClamAV or keep admin pre-scan + human risk acceptance | OWASP; NIST CSF PR.DS |
+| SEC-FILE | FILE SECURITY | Upload validation / malware / parser isolation | Review consumes PI files. PI: PDF/TXT/DOCX, 25 MB, extension/MIME, filename sanitization, archive rejection, magic-byte check. Upload-complete rejects EICAR before parser enqueue. Official ClamAV 1.4 HTTP INSTREAM (`RTB_REVIEW_CLAMAV_URL`) fail-closes on timeout/unavailable. Review execution requires CLEAN in pilot. | malware-scan.test.ts; file-ingestion-policy.test.ts; era-7a-malware-scanner.md | Review / PI | PARTIAL | Local scanner OPERATING and fail-closed (CLEAN/EICAR/timeout/unavailable). Hosted web runtime URL not set. External customer upload remains disabled unless operator enables it with scanner URL. | Set `RTB_REVIEW_CLAMAV_URL` on the app host; do not commit the URL | OWASP; NIST CSF PR.DS |
 | FS-ARCHIVE | FILE SECURITY | Archive/decompression controls | Archives rejected | Extension allowlist + Review archive policy | storage-policy tests | Review / PI | IMPLEMENTED | — | Remain rejected | OWASP |
 
 ---
@@ -159,10 +159,10 @@ AI cannot modify RLS, tool permissions, human approval boundaries, or this regis
 | SEC-SECRETS | Platform placeholder hashing and commerce default | HIGH | Production fail-closed; Review isolated; non-prod defaults DEVELOPMENT_ONLY |
 | SEC-AUDIT | User JWT must not insert audit_events | LOW | Live trusted-path attestation; audit-failure alert |
 | SEC-PROMPT | Prompt injection remains an open risk | HIGH | Open — current pipeline is deterministic; live LLM would raise likelihood |
-| SEC-FILE | Established malware scanner not OPERATING | HIGH | EICAR + CLEAN-only Review consume; external ingest fail-closed; ClamAV not deployed |
-| SEC-MFA | Review MFA/SSO policy vs live enrollment | MEDIUM | Pilot tenant policy provisioned; AAL2 enrollment is operator action |
+| SEC-FILE | Hosted app ClamAV URL not assigned | MEDIUM | Local official ClamAV OPERATING and fail-closed; set `RTB_REVIEW_CLAMAV_URL` on the app host |
+| SEC-MFA | Review MFA/SSO policy vs live enrollment | MEDIUM | Tenant A requireMfa=true; live AAL1 rejected; AAL2 enrollment is operator action |
 | SEC-CI-RLS | Hosted RLS CI without configured secrets | MEDIUM | Job fails closed if secrets absent — not skip-as-pass |
-| SEC-DEPS | Residual HIGH dependency advisories | HIGH | Next CRITICAL pin 15.5.24; remaining HIGH in dependency-triage.md |
+| SEC-DEPS | Residual HIGH dependency advisories | HIGH | Human ACCEPTED_CONTROLLED_PILOT_ONLY 2026-09-20; expiry 2026-10-20; monitoring continues; not enterprise production |
 | SEC-BACKUP | PITR restore unproven | MEDIUM | Logical row drill only |
 
 ---

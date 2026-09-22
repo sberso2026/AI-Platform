@@ -1,12 +1,14 @@
+import { cookies, headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import { createEngineeringOS } from "@rtb/engineering-os";
 import { createPlatformCommerce } from "@rtb/platform-commerce";
-import { PermissionService, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
-import type { NavTier } from "@rtb/types";
+import { PermissionService } from "@rtb/platform-core";
 import type { Permission } from "@rtb/types";
 import type { TenantSettings } from "@rtb/types";
+import { resolveRequestActorContext } from "@/lib/identity/canonical-context";
+import type { CanonicalContextDeniedReason } from "@rtb/engineering-review/identity";
 
 export async function getKernel() {
   const supabase = await createClient();
@@ -27,77 +29,26 @@ export interface AuthContext {
   commerce: ReturnType<typeof createPlatformCommerce>;
 }
 
-function resolveMembershipRole(
-  memberships: Array<{ tenant_id: string; role_id: string; roles: { slug: string } | { slug: string }[] | null }>
-): { tenantId: string; roleId: string; roleSlug: string } | null {
-  if (!memberships.length) return null;
+export type AuthContextResolution =
+  | { ok: true; context: AuthContext }
+  | { ok: false; reason: "unauthenticated" | CanonicalContextDeniedReason };
 
-  let bestTier: NavTier = "viewer";
-  let best: (typeof memberships)[number] | null = null;
-  let ownerMembership: (typeof memberships)[number] | null = null;
-
-  for (const row of memberships) {
-    const role = row.roles;
-    const slug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
-    if (slug === "owner") ownerMembership = row;
-    const tier = resolveNavTier(slug);
-    if (!best || NAV_TIER_RANK[tier] >= NAV_TIER_RANK[bestTier]) {
-      bestTier = tier;
-      best = row;
-    }
-  }
-
-  const chosen = ownerMembership ?? best;
-  if (!chosen) return null;
-
-  const role = chosen.roles;
-  const roleSlug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
-
-  return {
-    tenantId: chosen.tenant_id as string,
-    roleId: chosen.role_id as string,
-    roleSlug,
-  };
-}
-
-export async function getAuthContext(): Promise<AuthContext | null> {
+export async function resolveAuthContext(): Promise<AuthContextResolution> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return { ok: false, reason: "unauthenticated" };
 
-  const { data: memberships } = await supabase
-    .from("tenant_memberships")
-    .select("tenant_id, role_id, roles(slug)")
-    .eq("user_id", user.id)
-    .eq("status", "active");
-
-  const membership = resolveMembershipRole(memberships ?? []);
-  if (!membership) return null;
-
-  const [{ data: workspaceMemberships }, { data: tenant }] = await Promise.all([
-    supabase
-      .from("workspace_memberships")
-      .select("workspace_id, workspaces!inner(id, slug, status, tenant_id)")
-      .eq("user_id", user.id)
-      .eq("workspaces.tenant_id", membership.tenantId)
-      .eq("workspaces.status", "active"),
-    supabase.from("tenants").select("settings").eq("id", membership.tenantId).single(),
-  ]);
-
-  // Prefer deterministic slug order so multi-workspace tenants resolve stably
-  // (for example PI cert workspace A before workspace B).
-  const workspace = [...(workspaceMemberships ?? [])]
-    .map((row) => {
-      const joined = row.workspaces as
-        | { id: string; slug: string }
-        | { id: string; slug: string }[]
-        | null;
-      return Array.isArray(joined) ? joined[0] : joined;
-    })
-    .filter((row): row is { id: string; slug: string } => Boolean(row?.id))
-    .sort((a, b) => a.slug.localeCompare(b.slug))[0];
+  const headerStore = await headers();
+  const cookieStore = await cookies();
+  const resolved = await resolveRequestActorContext({
+    supabase,
+    userId: user.id,
+    header: (name) => headerStore.get(name),
+    cookie: (name) => cookieStore.get(name)?.value,
+  });
+  if (!resolved.ok) return resolved;
 
   const serviceClient = createServiceClient();
   const kernel = createPlatformKernel(supabase, serviceClient);
@@ -113,23 +64,27 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   });
   const commerce = createPlatformCommerce(supabase);
   const permissionService = new PermissionService(supabase);
-  const permissions = await permissionService.getUserPermissions(
-    user.id,
-    membership.tenantId
-  );
-
-  const settings = (tenant?.settings ?? {}) as TenantSettings;
+  const permissions = await permissionService.getUserPermissions(user.id, resolved.tenantId);
+  const settings = (resolved.settings ?? {}) as TenantSettings;
 
   return {
-    userId: user.id,
-    tenantId: membership.tenantId,
-    workspaceId: workspace?.id as string | undefined,
-    roleSlug: membership.roleSlug,
-    permissions,
-    showAdvancedPlatformTools: settings.showAdvancedPlatformTools === true,
-    supabase,
-    kernel,
-    engineering,
-    commerce,
+    ok: true,
+    context: {
+      userId: user.id,
+      tenantId: resolved.tenantId,
+      workspaceId: resolved.workspaceId,
+      roleSlug: resolved.roleSlug,
+      permissions,
+      showAdvancedPlatformTools: settings.showAdvancedPlatformTools === true,
+      supabase,
+      kernel,
+      engineering,
+      commerce,
+    },
   };
+}
+
+export async function getAuthContext(): Promise<AuthContext | null> {
+  const resolved = await resolveAuthContext();
+  return resolved.ok ? resolved.context : null;
 }

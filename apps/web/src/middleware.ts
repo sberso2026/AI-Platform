@@ -2,7 +2,19 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { evaluatePrivilegedMfa } from "@rtb/engineering-os/security-closure/privileged-mfa";
-import { evaluateReviewIdentityPolicy, resolveReviewIdentityPolicy } from "@rtb/engineering-review/identity";
+import {
+  evaluateReviewIdentityPolicy,
+  resolveReviewIdentityPolicy,
+  type CanonicalContextDecision,
+} from "@rtb/engineering-review/identity";
+import { MFA_CHALLENGE_ROUTE, safeMfaReturnPath } from "@rtb/engineering-review/mfa-ux";
+import {
+  CANONICAL_CONTEXT_TENANT_COOKIE,
+  CANONICAL_CONTEXT_WORKSPACE_COOKIE,
+  canonicalContextCookieOptions,
+  resolveRequestActorContext,
+} from "@/lib/identity/canonical-context";
+import { resolvePublicSupabaseConfig } from "@/lib/supabase/public-config";
 import { canAccessPlatformRoute, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
 import type { NavTier } from "@rtb/types";
 
@@ -74,11 +86,9 @@ function resolveMembershipAccess(
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const { url, anonKey } = resolvePublicSupabaseConfig();
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const supabase = createServerClient(url, anonKey, {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet: { name: string; value: string; options: CookieOptions }[]) => {
@@ -97,23 +107,51 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
+  const isMfaChallengeRoute = pathname === MFA_CHALLENGE_ROUTE;
   const isAuthRoute =
-    pathname.startsWith("/login") ||
+    pathname === "/login" ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password");
   const isRecoveryRoute = pathname.startsWith("/reset-password");
-  const isPublicRoute = isAuthRoute || isRecoveryRoute || pathname === "/";
+  const isPublicRoute = isAuthRoute || isRecoveryRoute || pathname === "/" || isMfaChallengeRoute;
   const isApiRoute = pathname.startsWith("/api/");
 
   if (!user && !isPublicRoute && !isApiRoute) {
     const url = request.nextUrl.clone();
+    const originalPath = pathname;
     url.pathname = "/login";
+    url.search = "";
+    if (originalPath === "/review" || originalPath.startsWith("/review/") || originalPath === "/settings/security") {
+      url.searchParams.set("next", safeMfaReturnPath(originalPath));
+    }
+    return NextResponse.redirect(url);
+  }
+
+  if (!user && isMfaChallengeRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", safeMfaReturnPath(request.nextUrl.searchParams.get("next")));
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/engineering";
+    const next = safeMfaReturnPath(request.nextUrl.searchParams.get("next"), "/engineering");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const payload = session?.access_token ? decodeJwtPayload(session.access_token) : {};
+    const aal = typeof payload.aal === "string" ? payload.aal : "aal1";
+    if (aal !== "aal2" && (request.nextUrl.searchParams.has("mfa_required") || next.startsWith("/review"))) {
+      url.pathname = MFA_CHALLENGE_ROUTE;
+      url.search = "";
+      url.searchParams.set("next", next);
+      return NextResponse.redirect(url);
+    }
+    url.pathname = next.startsWith("/review") || next === "/settings/security" || next.startsWith("/engineering")
+      ? next
+      : "/engineering";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
@@ -168,27 +206,24 @@ export async function middleware(request: NextRequest) {
       if (!decision.allowed) {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
+        url.search = "";
         url.searchParams.set("mfa_required", "privileged");
+        url.searchParams.set("next", safeMfaReturnPath(pathname, "/engineering"));
         return NextResponse.redirect(url);
       }
     }
   }
 
   if (user && (pathname === "/review" || pathname.startsWith("/review/"))) {
-    const { data: membership } = await supabase
-      .from("tenant_memberships")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle();
-    if (membership?.tenant_id) {
-      const { data: tenant } = await supabase
-        .from("tenants")
-        .select("settings")
-        .eq("id", membership.tenant_id)
-        .maybeSingle();
-      const policy = resolveReviewIdentityPolicy((tenant?.settings as Record<string, unknown> | null) ?? {});
+    const resolved = await resolveRequestActorContext({
+      supabase,
+      userId: user.id,
+      header: (name) => request.headers.get(name),
+      cookie: (name) => request.cookies.get(name)?.value,
+    });
+    persistCanonicalContext(response, resolved);
+    if (resolved.ok) {
+      const policy = resolveReviewIdentityPolicy(resolved.settings ?? {});
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -200,14 +235,24 @@ export async function middleware(request: NextRequest) {
       });
       if (!decision.allowed) {
         const url = request.nextUrl.clone();
-        url.pathname = "/login";
-        url.searchParams.set("mfa_required", decision.reason);
-        return NextResponse.redirect(url);
+        url.pathname = MFA_CHALLENGE_ROUTE;
+        url.search = "";
+        url.searchParams.set("next", safeMfaReturnPath(pathname));
+        const redirect = NextResponse.redirect(url);
+        persistCanonicalContext(redirect, resolved);
+        return redirect;
       }
     }
   }
 
   return response;
+}
+
+function persistCanonicalContext(response: NextResponse, resolved: CanonicalContextDecision) {
+  if (!resolved.ok) return;
+  const options = canonicalContextCookieOptions(process.env.NODE_ENV === "production");
+  response.cookies.set(CANONICAL_CONTEXT_TENANT_COOKIE, resolved.tenantId, options);
+  response.cookies.set(CANONICAL_CONTEXT_WORKSPACE_COOKIE, resolved.workspaceId, options);
 }
 
 export const config = {

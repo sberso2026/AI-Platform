@@ -4,6 +4,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { platform, release } from "node:os";
 import { resolve } from "node:path";
 import { NextResponse } from "next/server";
+import { evaluateReviewRuntime } from "@rtb/engineering-review/runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,6 +111,26 @@ export async function GET() {
     .digest("hex");
   const dirtyFiles = changedFiles();
   const dirty = dirtyFiles.length > 0;
+  const reviewRuntime = process.env.NEXT_PUBLIC_RTB_REVIEW_RUNTIME ?? process.env.RTB_REVIEW_RUNTIME ?? null;
+  const runtimeDecision = evaluateReviewRuntime({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    runtime: reviewRuntime,
+  });
+  const supabaseProjectRef = runtimeDecision.ok
+    ? runtimeDecision.projectRef
+    : process.env.SUPABASE_PROJECT_REF ?? null;
+  if (String(reviewRuntime ?? "").toLowerCase() === "staging" && !runtimeDecision.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        service: "rtb-ai-os",
+        reviewRuntime,
+        supabaseProjectRef,
+        error: runtimeDecision.reason,
+      },
+      { status: 503 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,
@@ -125,10 +146,8 @@ export async function GET() {
     buildTimestamp,
     buildIdentityToken: token,
     migrationChecksums: migrationChecksums(),
-    supabaseProjectRef:
-      process.env.SUPABASE_PROJECT_REF ??
-      process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1] ??
-      null,
+    supabaseProjectRef,
+    reviewRuntime,
     certificationTarget: process.env.CUSTOMER_ADMIN_CERTIFICATION_TARGET ?? null,
     nodeVersion: process.version,
     pnpmVersion: pnpmVersion(),

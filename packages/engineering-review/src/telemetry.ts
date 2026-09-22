@@ -53,6 +53,8 @@ const FORBIDDEN_TELEMETRY_KEYS = [
   "sourcecontent",
   "password",
   "secret",
+  "totp",
+  "otpauth",
   "service_role",
   "apikey",
   "api_key",

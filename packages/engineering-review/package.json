@@ -8,7 +8,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./identity": "./src/identity-policy.ts"
+    "./identity": "./src/identity.ts",
+    "./mfa-ux": "./src/mfa-ux.ts",
+    "./runtime": "./src/runtime-project.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

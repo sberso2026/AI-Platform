@@ -75,6 +75,22 @@ describe("mapAuthError", () => {
     );
   });
 
+  it("maps browser Failed to fetch to a network message without exposing internals", () => {
+    const mapped = mapAuthError({ name: "TypeError", message: "Failed to fetch" }, "signin");
+    expect(mapped).toBe(AUTH_ERROR_MESSAGES.network);
+    expect(mapped.toLowerCase()).not.toContain("fetch");
+  });
+
+  it("maps missing Supabase runtime configuration without exposing env values", () => {
+    const mapped = mapAuthError(
+      { message: "Supabase public configuration is missing or invalid for this runtime" },
+      "signin",
+    );
+    expect(mapped).toBe(AUTH_ERROR_MESSAGES.configuration);
+    expect(mapped).not.toContain("SUPABASE");
+    expect(mapped).not.toContain("anon");
+  });
+
   it("falls back for unknown auth errors without exposing raw text", () => {
     const mapped = mapAuthError({ message: "JWT secret mismatch XYZ-INTERNAL" });
     expect(mapped).toBe(AUTH_ERROR_MESSAGES.fallback);

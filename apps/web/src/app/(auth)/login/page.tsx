@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { postPasswordMfaDestination, safeMfaReturnPath } from "@rtb/engineering-review/mfa-ux";
 import { useRouter } from "next/navigation";
 import { Button, Input, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@rtb/ui";
 import { RtbLogo } from "@/components/brand/rtb-logo";
@@ -102,21 +103,46 @@ export default function LoginPage() {
       return;
     }
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      logAuthError("signin", authError);
-      setError(mapAuthError(authError, "signin"));
+      if (authError) {
+        logAuthError("signin", authError);
+        setError(mapAuthError(authError, "signin"));
+        return;
+      }
+
+      const nextPath = safeMfaReturnPath(new URLSearchParams(window.location.search).get("next"), "/engineering");
+      const [{ data: aalData }, { data: factorData }] = await Promise.all([
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        supabase.auth.mfa.listFactors(),
+      ]);
+      let requireMfa = false;
+      const contextRes = await fetch("/api/platform/active-context", { credentials: "same-origin" });
+      const contextBody = (await contextRes.json().catch(() => null)) as
+        | { data?: { current?: { requireMfa?: boolean } | null; reason?: string } }
+        | null;
+      const current = contextBody?.data?.current ?? null;
+      if (current?.requireMfa === true) requireMfa = true;
+      if (!contextRes.ok || !current) requireMfa = true;
+      const destination = postPasswordMfaDestination({
+        requireMfa,
+        currentAal: aalData.currentLevel,
+        verifiedTotpCount: (factorData.totp ?? []).filter((factor) => factor.status === "verified").length,
+        nextPath,
+      });
+      router.push(destination);
+      router.refresh();
+    } catch (err) {
+      logAuthError("signin", err);
+      setError(mapAuthError(err as { message?: string; name?: string }, "signin"));
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/engineering");
-    router.refresh();
   }
 
   return (

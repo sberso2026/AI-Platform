@@ -19,6 +19,18 @@ describe("product telemetry", () => {
     );
   });
 
+  it("rejects TOTP secret-like telemetry payloads", () => {
+    expectCode(
+      () =>
+        assertTelemetryHasNoDocumentContent({
+          name: "review_completed",
+          at: "2026-09-19T00:00:00.000Z",
+          errorCode: "totp_secret",
+        }),
+      "telemetry_content_forbidden",
+    );
+  });
+
   it("computes confirmation and override rates without inventing time saved", () => {
     const sink = new InMemoryReviewProductTelemetry();
     sink.record({

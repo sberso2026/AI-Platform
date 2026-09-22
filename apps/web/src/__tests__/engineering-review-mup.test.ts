@@ -27,6 +27,10 @@ describe("ERA-5 Engineering Review MUP", () => {
       "src/app/(platform)/review/projects/[projectId]/page.tsx",
       "src/app/(platform)/review/projects/[projectId]/packages/[packageId]/page.tsx",
       "src/lib/review/labels.ts",
+      "src/app/(platform)/settings/security/page.tsx",
+      "src/app/(auth)/login/mfa/page.tsx",
+      "src/app/(auth)/login/page.tsx",
+      "src/lib/supabase/client.ts",
     ];
     for (const file of files) {
       const body = readApp(file);
@@ -39,7 +43,7 @@ describe("ERA-5 Engineering Review MUP", () => {
     const guard = readApp("src/lib/review/with-review-api.ts");
     const runtime = readApp("src/lib/review/runtime.ts");
     const create = readApp("src/app/api/review/projects/[projectId]/packages/route.ts");
-    expect(guard).toContain("getAuthContext");
+    expect(guard).toContain("resolveAuthContext");
     expect(guard).toContain("unauthenticatedResponse");
     expect(guard).toContain("identity_assurance_insufficient");
     expect(guard).toContain("evaluateReviewIdentityPolicy");

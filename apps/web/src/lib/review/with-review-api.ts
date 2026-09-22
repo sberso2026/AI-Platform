@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthContext, type AuthContext } from "@/lib/kernel";
+import { resolveAuthContext, type AuthContext } from "@/lib/kernel";
 import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
 import {
   forbiddenResponse,
@@ -64,16 +64,35 @@ export type ReviewHandlerContext = {
 
 export async function guardReviewApi(method: string): Promise<ReviewHandlerContext | NextResponse> {
   const requestId = crypto.randomUUID();
-  const ctx = await getAuthContext();
-  if (!ctx) {
+  const resolved = await resolveAuthContext();
+  if (!resolved.ok) {
+    if (resolved.reason === "unauthenticated") {
+      recordSecurity({
+        name: "review.authn_failed",
+        at: new Date().toISOString(),
+        requestId,
+        code: "unauthenticated",
+      });
+      return unauthenticatedResponse(requestId);
+    }
     recordSecurity({
-      name: "review.authn_failed",
+      name: "review.authz_failed",
       at: new Date().toISOString(),
       requestId,
-      code: "unauthenticated",
+      code: resolved.reason,
     });
-    return unauthenticatedResponse(requestId);
+    const status = resolved.reason === "invalid_identifier" ? 400 : 403;
+    return lifecycleErrorResponse(
+      resolved.reason,
+      resolved.reason === "context_required"
+        ? "Select an authorized tenant and workspace before using Engineering Review"
+        : "Engineering Review context is not authorized",
+      status,
+      requestId,
+      { reason: resolved.reason },
+    );
   }
+  const ctx = resolved.context;
   if (!ctx.workspaceId) {
     recordSecurity({
       name: "review.authz_failed",
@@ -183,7 +202,11 @@ export function reviewErrorResponse(err: unknown, requestId: string): NextRespon
             err.code === "read_only" ||
             err.code === "identity_assurance_insufficient" ||
             err.code === "external_upload_disabled" ||
-            err.code === "document_infected"
+            err.code === "document_infected" ||
+            err.code === "not_member" ||
+            err.code === "context_required" ||
+            err.code === "workspace_unauthorized" ||
+            err.code === "workspace_not_in_tenant"
           ? 403
           : err.code === "package_not_found" || err.code === "finding_not_found"
             ? 404

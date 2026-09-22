@@ -28,7 +28,7 @@ Evidence states:
 | EV-UI-AUTHZ | Logical access | `/review` client uses Review APIs only | Unit | IMPLEMENTED | `engineering-review-mup.test.ts`; no service-role in client bundle. |
 | EV-PROMPT | AI security | Adversarial document fixtures | Unit | IMPLEMENTED | Control-plane unchanged; prompt injection not claimed solved. |
 | EV-SECRETS | Secrets | Review isolated from `encryptPlaceholder` / commerce auth default | Assessment + unit | IMPLEMENTED for Review isolation; platform path still DESIGNED/PARTIAL | SHA-256 placeholder is not encryption. Prefer cloud secret manager. |
-| EV-FILE | File security | PI MIME/size; no malware scanner | Assessment | DESIGNED / PARTIAL | Do not claim malware scanning. |
+| EV-FILE | File security | PI MIME/size + local ClamAV | Assessment / local ops | OPERATING locally; hosted app URL DESIGNED | See era-7a-malware-scanner.md. Do not claim SOC 2. |
 | EV-MFA | Privileged access | Privileged MFA middleware | Platform | IMPLEMENTED | Not Review-operator-universal. Supabase capability ≠ enforced. |
 | EV-SSO | Identity | Enterprise SSO 0.2.0 | Platform | DESIGNED for Review | Pilot password path still used. |
 | EV-TELEMETRY | Privacy / monitoring | Product metrics without document content | Unit | IMPLEMENTED | `telemetry.test.ts`; `review_time_saved` not claimed. |
@@ -47,14 +47,14 @@ Evidence states:
 | EV-SCHEMA | Security schema | `engineering_review_security_schema_status` | Staging | OPERATING | Applied `20260920120000`; live-schema PASS locally and in CI. |
 | EV-BACKUP | Availability | `live-restore.test.ts` logical Review-row drill | Staging | OPERATING for logical row; PITR DESIGNED | Local elapsed 783ms. PITR not executed. |
 | EV-MONITOR | Monitoring | structured JSON alerts | Staging live run | OPERATING as structured_log | `review.audit_failed` observed; no SIEM. |
-| EV-MFA-PILOT | Identity assurance | Tenant A `requireMfa` + live AAL1 reject | Staging | OPERATING for AAL1 reject | Live AAL2 enrollment is HUMAN_DECISION_REQUIRED. |
+| EV-MFA-PILOT | Identity assurance | Tenant A `requireMfa` + live AAL1 reject | Staging | OPERATING for AAL1 reject | Re-attested 2026-09-20. Named pilot `cert-er-a1` has 0 verified MFA factors. Live AAL2 is HUMAN_DECISION_REQUIRED. Policy not weakened. |
 | EV-RLS-CI | Change / security CI | GitHub Actions `35507801752` | Staging via `REVIEW_STAGING_*` | OPERATING | 28 passed: Review 11, Core 8, audit 3, identity 4, restore 1, schema 1. Secrets step fail-closed previously proven. |
 | EV-MFA-REVIEW | Identity assurance | Review identity policy | Unit | IMPLEMENTED | Password-only rejected when tenant requires MFA. Tenant enablement is operational. |
 | EV-SSO-REVIEW | Identity assurance | Review SSO policy | Unit | IMPLEMENTED | Enforceable when tenant `requireEnterpriseSso` is set. |
 | EV-SECRETS-PROD | Secrets | Production fail-closed commerce + placeholder hashing | Unit | IMPLEMENTED | Review still isolated from placeholder path. |
 | EV-SECRET-SCAN | Secrets | Review secret-scan | Local / CI | IMPLEMENTED | Regex convention; no committed JWTs/private keys in Review trees. |
-| EV-FILE | File security | Magic-byte/filename/archive + EICAR + CLEAN-only Review consume | Unit | IMPLEMENTED for policy; established scanner DESIGNED until ClamAV is deployed | Do not claim malware scanning OPERATING without a scanner instance. |
-| EV-VULN-SCAN | Vulnerability management | `dependency-triage.md` + Next 15.5.24 pin | Local / lockfile | IMPLEMENTED as triage | Residual HIGH remain; HUMAN_DECISION_REQUIRED. |
+| EV-FILE | File security | Magic-byte/filename/archive + EICAR + CLEAN-only Review consume + official ClamAV 1.4 | Local scanner + unit | OPERATING locally (CLEAN/EICAR/timeout/unavailable/PENDING_SCAN fail-closed) | Hosted `RTB_REVIEW_CLAMAV_URL` absent from GitHub secrets and Vercel. No real malware used. Re-attested 2026-09-20. |
+| EV-VULN-SCAN | Vulnerability management | `dependency-disposition-era-7a.md` + Next 15.5.24 pin | Local / lockfile | IMPLEMENTED as triage; residual HIGH accepted by human for controlled pilot only | 0 critical / 6 high / 2 moderate. `accepted_by` Silvestre Berso; `accepted_at` 2026-09-20T20:24+08:00; scope controlled pilot only; expiry 2026-10-20. Not enterprise production. AI did not accept. |
 | EV-IR | Incident response | `incident-response.md` | Documentation | IMPLEMENTED as runbook | No tabletop record. |
 | EV-THREAT | Risk assessment | `threat-model.md` | Documentation | DESIGNED / IMPLEMENTED as model | Internal; not auditor-issued. |
 | EV-DATA | Data governance | `pilot-data-policy.md` | Documentation | DESIGNED / IMPLEMENTED as policy | Narrow pilot scope only. |
@@ -67,13 +67,13 @@ Evidence states:
 
 ## Gaps blocking examination readiness
 
-1. No independent attestation.
-2. Live AAL2 enrollment for a named pilot engineer is HUMAN_DECISION_REQUIRED.
-3. Established malware scanner is not OPERATING; external Review ingest is fail-closed. AI cannot accept admin pre-scan.
+1. No independent attestation. This register does not claim SOC 2 certification, compliance, or attestation.
+2. Live AAL2 enrollment for named staging pilot `cert-er-a1` is HUMAN_DECISION_REQUIRED.
+3. Local official ClamAV is OPERATING and fail-closed. Hosted web runtime URL assignment remains an operator step.
 4. PITR restore not executed; logical Review-row drill is OPERATING.
 5. No SIEM; structured JSON alerts are OPERATING as the minimum sink.
 6. Prompt injection remains unsolved (no live LLM in this phase).
-7. Residual HIGH dependency advisories (`sharp`/`postcss`/`nanoid` via Next).
+7. Residual HIGH dependency advisories (`sharp`/`postcss`/`nanoid` via Next) — ACCEPTED_CONTROLLED_PILOT_ONLY by Silvestre Berso until 2026-10-20; not enterprise production; monitoring continues.
 
 Do not promote evidence state to `INDEPENDENTLY_ATTESTED` without an external report.
 Do not represent a skipped hosted security suite as PASS.

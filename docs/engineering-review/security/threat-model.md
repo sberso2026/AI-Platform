@@ -34,7 +34,7 @@ Pilot is **not** enterprise production. Same-tenant operators outside the design
 3. PostgREST with user JWT (RLS)
 4. Server-only service-role client (audit bind, schema check)
 5. Hosted Postgres (`rntonzigxwxcjlcsadip`)
-6. Optional established scanner (`RTB_REVIEW_CLAMAV_URL`) — not operational unless configured
+6. Established ClamAV HTTP scanner (`RTB_REVIEW_CLAMAV_URL`) — official `clamav/clamav:1.4` OPERATING locally; hosted app URL assignment remaining
 7. Optional alert webhook (`RTB_REVIEW_SECURITY_WEBHOOK_URL`)
 
 ## Entry points
@@ -60,10 +60,10 @@ Pilot is **not** enterprise production. Same-tenant operators outside the design
 | Cross-tenant access | Review + Core RLS; live tests | Hosted CI OPERATING only with dedicated secrets |
 | Cross-workspace access | Workspace membership RLS | Core migration must be present (schema RPC) |
 | Stolen credentials | MFA policy on designated pilot tenant | Live AAL2 enrollment is an operator action; password-only JWT still exists until MFA is enrolled |
-| Malicious documents | MIME/magic/archive; EICAR; Review CLEAN-only; external upload disabled | No established ClamAV instance OPERATING |
+| Malicious documents | MIME/magic/archive; EICAR; Review CLEAN-only; official ClamAV fail-closed | Hosted web `RTB_REVIEW_CLAMAV_URL` not set; external upload remains disabled |
 | Prompt injection | Untrusted typing; control-plane snapshot; no live LLM | **Not solved.** Future live model raises likelihood |
-| Malware | EICAR + fail-closed Review consume; optional ClamAV HTTP | Scanner not deployed |
-| Dependency compromise | Pin Next 15.5.24; xmldom override; audit triage | Residual HIGH advisories remain |
+| Malware | EICAR + official ClamAV 1.4 + fail-closed Review consume | Hosted app URL assignment remaining |
+| Dependency compromise | Pin Next 15.5.24; xmldom override; audit triage | Residual HIGH ACCEPTED_CONTROLLED_PILOT_ONLY until 2026-10-20; not enterprise production |
 | Service-role exposure | Server-only; secret-scan; no client bundle | Misconfiguration would be CRITICAL |
 | Audit tampering | User JWT INSERT denied; trusted bind | Audit failure alerts; business op still proceeds |
 | Data exfiltration | RLS; no live LLM; no tools | Stolen JWT + enrolled MFA bypass still possible |

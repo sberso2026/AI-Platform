@@ -74,7 +74,13 @@ async function tenantRole(admin: Admin, tenantId: string, slug: string): Promise
   return role.id as string;
 }
 
-async function getOrCreateUser(admin: any, email: string, password: string): Promise<string> {
+async function getOrCreateUser(
+  admin: any,
+  email: string,
+  password: string,
+  invitedTenantId?: string,
+  invitedWorkspaceId?: string,
+): Promise<string> {
   const listed = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (listed.error) throw new Error(`listUsers: ${listed.error.message}`);
   const existing = listed.data.users.find((user: { email?: string }) => user.email === email);
@@ -83,11 +89,25 @@ async function getOrCreateUser(admin: any, email: string, password: string): Pro
     if (error) throw new Error(`update ${email}: ${error.message}`);
     return existing.id;
   }
+  // Pass invited_tenant_id so handle_new_user joins the Review tenant instead of
+  // bootstrapping a leftover signup organization. Existing cert users that already
+  // have a signup-org membership are left in place; do not delete them here.
   const created = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { cert_fixture: true, full_name: email.split("@")[0] },
+    user_metadata: {
+      cert_fixture: true,
+      full_name: email.split("@")[0],
+      ...(invitedTenantId
+        ? {
+            invited_tenant_id: invitedTenantId,
+            invited_role_slug: "member",
+            invited_by: "engineering-review-fixture",
+            ...(invitedWorkspaceId ? { invited_workspace_id: invitedWorkspaceId } : {}),
+          }
+        : {}),
+    },
   });
   if (created.error || !created.data.user) throw new Error(`create ${email}: ${created.error?.message}`);
   return created.data.user.id;
@@ -199,7 +219,7 @@ export async function provisionReviewRlsFixtures(): Promise<ReviewRlsFixtures> {
 
   async function user(key: string, tenantId: string, workspaceIds: string[], role: "engineer" | "admin"): Promise<ReviewRlsUser> {
     const email = `${ER_CERT_SLUG_PREFIX}${key}@rtb-cert.test`;
-    const id = await getOrCreateUser(admin as any, email, password);
+    const id = await getOrCreateUser(admin as any, email, password, tenantId, workspaceIds[0]);
     await addMembership(admin, tenantId, workspaceIds, id, role);
     return { key, id, email, jwt: await signInAccessToken(supabaseUrl, anonKey, email, password), role };
   }

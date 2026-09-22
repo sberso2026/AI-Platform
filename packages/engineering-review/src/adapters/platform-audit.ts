@@ -22,6 +22,8 @@ const FORBIDDEN_AUDIT_KEYS = [
   "content",
   "password",
   "secret",
+  "totp",
+  "otpauth",
   "service_role",
   "apikey",
   "api_key",

@@ -31,6 +31,7 @@ export const AUTH_ERROR_MESSAGES = {
     "Please confirm your email address before signing in. Check your inbox for a confirmation link.",
   rateLimited: "Too many attempts. Please wait a moment and try again.",
   network: "Unable to reach the authentication service. Check your connection and try again.",
+  configuration: "Authentication is not configured for this runtime. Contact support.",
   fallback: "Something went wrong. Please try again.",
   recoveryDispatched:
     "If an account exists for that email, a reset link has been sent.",
@@ -175,6 +176,14 @@ export function mapAuthError(error: AuthErrorLike, context: "signin" | "signup" 
     message.includes("fetch error")
   ) {
     return AUTH_ERROR_MESSAGES.network;
+  }
+
+  if (
+    message.includes("supabase public configuration") ||
+    message.includes("not configured for this runtime") ||
+    message.includes("service role configuration is missing")
+  ) {
+    return AUTH_ERROR_MESSAGES.configuration;
   }
 
   // Signup-specific unknown failures still get a generic message

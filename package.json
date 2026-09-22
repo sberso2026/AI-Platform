@@ -27,7 +27,8 @@
     "project-intelligence:certify:meetings": "pnpm --filter @rtb/project-intelligence-certification certify:meetings",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > packages/database/src/types.ts"
+    "db:types": "supabase gen types typescript --local > packages/database/src/types.ts",
+    "review:staging": "node scripts/review-staging.mjs"
   },
   "devDependencies": {
     "turbo": "^2.5.4",
