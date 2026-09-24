@@ -62,10 +62,14 @@ describe("ERA-5 Engineering Review MUP", () => {
     expect(labels).toContain("READY");
     expect(labels).toContain("OCR REQUIRED");
     expect(labels).toContain("UNSUPPORTED");
+    expect(labels).toContain("Configured review completed.");
     expect(labels).toContain("No findings were identified within the selected review scope.");
     expect(labels).not.toMatch(/Design is safe|Design complies|Design approved|No engineering issues exist/);
     expect(pkg).toContain("not a risk rating");
     expect(pkg).toContain("Code compliance");
+    expect(pkg).toContain("review-zero-finding");
+    expect(pkg).toContain("COVERAGE_NOT_MEASURED_COPY");
+    expect(labels).toContain("Evidence coverage is not measured");
     expect(pkg).not.toContain("autonomous signoff");
   });
 

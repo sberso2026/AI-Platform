@@ -1,8 +1,16 @@
 export const REVIEW_DISCLAIMER =
   "Engineering Review AI provides AI-assisted first-pass review. It does not replace professional engineering judgment. Findings require engineer review. Absence of findings is not certification of compliance, safety, adequacy, or completeness.";
 
-export const ZERO_FINDING_COPY =
+export const CONFIGURED_REVIEW_COMPLETED = "Configured review completed.";
+
+export const ZERO_FINDING_SCOPE_COPY =
   "No findings were identified within the selected review scope.";
+
+export const ZERO_FINDING_COPY =
+  "Configured review completed. No findings were identified within the selected review scope.";
+
+export const COVERAGE_NOT_MEASURED_COPY =
+  "Evidence coverage is not measured for this run. No quantitative coverage percentage is available.";
 
 export const REVIEW_SCOPE_OPTIONS = [
   { id: "cross_document_inconsistency", label: "Cross-document consistency" },

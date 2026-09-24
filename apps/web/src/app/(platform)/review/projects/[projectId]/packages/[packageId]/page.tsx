@@ -7,11 +7,13 @@ import { Header } from "@/components/layout/header";
 import { Badge, Button, Card, CardContent, Input } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
+  CONFIGURED_REVIEW_COMPLETED,
+  COVERAGE_NOT_MEASURED_COPY,
   EXECUTION_READY,
   READINESS_LABELS,
   REVIEW_DISCLAIMER,
   REVIEW_SCOPE_OPTIONS,
-  ZERO_FINDING_COPY,
+  ZERO_FINDING_SCOPE_COPY,
 } from "@/lib/review/labels";
 
 type DocumentView = {
@@ -66,6 +68,15 @@ type PackagePayload = {
     zeroFindingMessage?: string;
     disclaimer?: string;
     limitations?: string[];
+    coverage?: {
+      measured: boolean;
+      statement?: string;
+      assessedDocumentIds?: string[];
+      excludedDocumentIds?: string[];
+      extractionFailures?: string[];
+      unsupportedDocumentIds?: string[];
+    };
+    packageEpistemicState?: string;
   } | null;
 };
 
@@ -263,10 +274,32 @@ export default function ReviewPackagePage() {
 
         {zeroFinding ? (
           <Card>
-            <CardContent className="space-y-2 py-4">
-              <p className="font-medium">{payload?.register?.zeroFindingMessage ?? ZERO_FINDING_COPY}</p>
+            <CardContent className="space-y-2 py-4" data-testid="review-zero-finding">
+              <p className="font-medium">{CONFIGURED_REVIEW_COMPLETED}</p>
+              <p className="font-medium">{ZERO_FINDING_SCOPE_COPY}</p>
               <p className="text-sm text-muted-foreground">
                 Scope: {(payload?.register?.run.scope.reviewTypes ?? scope).join(", ")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Documents assessed: {(payload?.register?.coverage?.assessedDocumentIds ?? []).join(", ") || "listed in the document table above"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Documents excluded: {(payload?.register?.coverage?.excludedDocumentIds ?? payload?.excluded ?? []).length
+                  ? (payload?.register?.coverage?.excludedDocumentIds ?? payload?.excluded?.map((doc) => doc.documentId) ?? []).join(", ")
+                  : "none"}
+              </p>
+              {(payload?.register?.coverage?.extractionFailures ?? []).length > 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Extraction failures: {payload?.register?.coverage?.extractionFailures?.join(", ")}
+                </p>
+              ) : null}
+              {(payload?.register?.coverage?.unsupportedDocumentIds ?? []).length > 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Unsupported content: {payload?.register?.coverage?.unsupportedDocumentIds?.join(", ")}
+                </p>
+              ) : null}
+              <p className="text-sm text-muted-foreground">
+                {payload?.register?.coverage?.statement ?? COVERAGE_NOT_MEASURED_COPY}
               </p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {(payload?.register?.limitations ?? []).map((item) => (

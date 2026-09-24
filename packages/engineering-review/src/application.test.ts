@@ -173,6 +173,9 @@ describe("trusted Review application service", () => {
     expect(started.zeroFinding).toBe(true);
     expect(started.zeroFindingMessage).toBe(ZERO_FINDING_MESSAGE);
     expect(started.disclaimer.toLowerCase()).not.toMatch(/design is safe|design complies|design approved|no engineering issues exist/);
+    expect(started.zeroFindingMessage?.toLowerCase()).not.toMatch(/\bpass\b|\bsafe\b|approved|compliant|ready for ifc|engineering complete/);
+    expect(started.coverage.measured).toBe(false);
+    expect(started.packageEpistemicState).toBe("NOT_ASSESSED");
     expect(started.register.findings).toHaveLength(0);
     expect(started.run.status).toBe("completed");
   });

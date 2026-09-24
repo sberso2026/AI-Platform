@@ -42,6 +42,8 @@ import {
 } from "./telemetry";
 import { AI_ASSISTED_FIRST_PASS_DISCLAIMER, ZERO_FINDING_MESSAGE } from "./version";
 import type { ReviewDocumentRole } from "./review-package";
+import { unmeasuredReviewCoverage, type ReviewCoverageDeclaration } from "./coverage";
+import { packageEpistemicStateFromReview, type ReviewEpistemicState } from "./epistemic-state";
 
 export type ReviewActor = {
   userId: string;
@@ -111,6 +113,8 @@ export type StartReviewResult = {
   zeroFindingMessage?: string;
   disclaimer: typeof AI_ASSISTED_FIRST_PASS_DISCLAIMER;
   limitations: readonly string[];
+  coverage: ReviewCoverageDeclaration;
+  packageEpistemicState: ReviewEpistemicState;
 };
 
 function requireActor(actor: ReviewActor): ReviewActor {
@@ -460,6 +464,21 @@ export class TrustedReviewService {
         zeroFindingMessage: register.findings.length === 0 ? ZERO_FINDING_MESSAGE : undefined,
         disclaimer: AI_ASSISTED_FIRST_PASS_DISCLAIMER,
         limitations: pipeline.limitations,
+        coverage: unmeasuredReviewCoverage({
+          assessedDocumentIds: ready.map((doc) => doc.documentId),
+          excludedDocumentIds: excluded.map((doc) => doc.documentId),
+          reviewTypes: completed.scope.reviewTypes,
+          extractionFailures: excluded
+            .filter((doc) => doc.readiness === "FAILED_INGESTION")
+            .map((doc) => doc.documentId),
+          unsupportedDocumentIds: excluded
+            .filter((doc) => doc.readiness === "UNSUPPORTED" || doc.readiness === "OCR_REQUIRED")
+            .map((doc) => doc.documentId),
+        }),
+        packageEpistemicState: packageEpistemicStateFromReview({
+          runStatus: completed.status,
+          findingCount: register.findings.length,
+        }),
       };
     } catch (error) {
       const failed = await this.store.saveReviewRun(transitionReviewRun(run, "failed", this.now()));
@@ -505,6 +524,21 @@ export class TrustedReviewService {
         "Drawing visual interpretation, OCR, FEA, and standards interpretation remain out of scope.",
         "Findings are candidates for a human engineer — not certification or approval.",
       ],
+      coverage: unmeasuredReviewCoverage({
+        assessedDocumentIds: pkg.documents.map((doc) => doc.documentId),
+        excludedDocumentIds: excluded.map((doc) => doc.documentId),
+        reviewTypes: completed.scope.reviewTypes,
+        extractionFailures: excluded
+          .filter((doc) => doc.readiness === "FAILED_INGESTION")
+          .map((doc) => doc.documentId),
+        unsupportedDocumentIds: excluded
+          .filter((doc) => doc.readiness === "UNSUPPORTED" || doc.readiness === "OCR_REQUIRED")
+          .map((doc) => doc.documentId),
+      }),
+      packageEpistemicState: packageEpistemicStateFromReview({
+        runStatus: completed.status,
+        findingCount: register.findings.length,
+      }),
     };
   }
 

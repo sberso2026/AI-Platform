@@ -8,6 +8,7 @@ import { verifyFindingAgainstSources } from "./evidence-resolve";
 import { verifyFindingEvidence, type ReviewFinding } from "./finding";
 import { advanceCandidateAfterVerification } from "./disposition";
 import { createReviewResult, type ReviewResult } from "./result";
+import { unmeasuredReviewCoverage } from "./coverage";
 import type { ReviewEngineInput } from "./engine";
 import { createReviewOwnership } from "./ownership";
 import type { DetectorDetection } from "./detectors/types";
@@ -112,6 +113,10 @@ export async function runGroundedReviewPipeline(
       "Drawing visual interpretation, OCR, FEA, and standards interpretation remain out of scope.",
       "Findings are candidates for a human engineer — not certification or approval.",
     ],
+    coverage: unmeasuredReviewCoverage({
+      assessedDocumentIds: documents.map((doc) => doc.documentId),
+      reviewTypes: input.run.scope.reviewTypes,
+    }),
   });
 
   return {
