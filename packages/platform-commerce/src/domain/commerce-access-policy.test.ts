@@ -22,6 +22,7 @@ const ENGINEERING_API_SEGMENTS = [
   "impacts",
   "configuration",
   "optimization",
+  "analysis",
   "risks",
   "issues",
   "actions",
@@ -77,6 +78,17 @@ describe("ENGINEERING_API_POLICIES", () => {
     const write = getEngineeringApiPolicy("discipline-intelligence", "POST");
     expect(read.action).toBe("settings.read");
     expect(write.action).toBe("settings.write");
+  });
+
+  it("maps Analysis to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("analysis", "GET");
+    const write = getEngineeringApiPolicy("analysis", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
   });
 
   it("maps Optimization to Engineering OS product, not Project Intelligence", () => {

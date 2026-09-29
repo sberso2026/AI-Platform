@@ -56,6 +56,7 @@ Owner vocabulary:
 | **Digital Twin object** | **Operational Digital Twin** | kernel `digital_twins` + module `digital_twin_identities` | **intentional two-layer** (ADR-D6) | Assets FKs | Do not use twin as thread |
 | **Job / Execution Job** | **Platform Kernel JobService** (future convergence) | kernel `background_jobs`, commerce outbox/scheduler, PI claim jobs, `engineering_execution_jobs` | Kernel jobs + typed Engineering execution as a *kind* | Analysis, Review, commerce | **CONFIRMED** multi-queue (ADR-D4) |
 | Analysis Engine / Adapter / Run | Engineering Core + execution host | adapters + execution jobs | same; Optimization consumes | Optimization, Review | Do not put solvers in ERA |
+| Engineering Analysis Request / Plan / Result | Engineering Core (EOS-A7B) | `engineering_analysis_requests`, `_execution_plans`, `_results` | same — **not** Optimization Run | Review, Decision, Change, Optimization | Do not merge with `engineering_optimization_runs` |
 | Optimization Study* and children | Optimization (future) | none | Optimization BC | Decision, Value, Review | Do not persist in A1 |
 | Value objects* | Value (future) | none | Value BC | Decision, Optimization | Do not persist in A1 |
 | **Feature flag / capability** | **Platform Commerce + Kernel flags** | capability `engineering_os`; flag `engineering_os_enabled` | **canonical name `engineering_os`** (commerce capability); flag becomes alias (ADR-D5) | `/engineering` entitlement | **CONFIRMED** dual names |

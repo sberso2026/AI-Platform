@@ -74,7 +74,7 @@ Do not redesign platform identity. Current owners remain Platform Core (`tenants
 
 ### 1.6 Discipline
 
-**Is:** A professional practice classification (Structural, Civil, Mechanical, Piping, Electrical, Instrumentation, Process, Geotechnical, Materials, Safety, Environmental, …). Canonical catalogue: `engineering_disciplines` plus `ENGINEERING_DISCIPLINES` in `@rtb/engineering-os`. EOS-A7A overlay: `EOS_A7A_MULTIDISCIPLINE_FOUNDATION.md`.
+**Is:** A professional practice classification (Structural, Civil, Mechanical, Piping, Electrical, Instrumentation, Process, Geotechnical, Materials, Safety, Environmental, …). Canonical catalogue: `engineering_disciplines` plus `ENGINEERING_DISCIPLINES` in `@rtb/engineering-os`. EOS-A7A overlay: `EOS_A7A_MULTIDISCIPLINE_FOUNDATION.md`. Analysis execution: `EOS_A7B_MULTIDISCIPLINE_ANALYSIS_EXECUTION.md`.
 
 **Is not:** A System, a mini operating system, or an autonomous approval agent. Disciplines classify work and documents; they do not own system identity. See `SYSTEMS_AND_DISCIPLINES_MODEL.md`.
 
@@ -437,9 +437,9 @@ Preserve unless a later ADR proves merge. Engineering Digital Thread must not be
 | Engineering Model | Structured model used as analysis input | `engineering_model_*` + IFC |
 | Analysis Engine | Solver or checker (SPACE GASS, ETABS, future) | Adapter packages / execution host |
 | Analysis Adapter | Anti-corruption mapping to/from an engine | IFC / SPACE GASS / ETABS adapters |
-| Analysis Run | One invocation of an engine against a model/config | Future; jobs exist |
+| Analysis Run | One invocation of an engine against a model/config | EOS-A7B Analysis Request + frozen Execution Plan + JobService `engineering.analysis.execute` |
 | Execution Job | Platform/engineering job executing work | Multiple queues (ADR-D4); `engineering_execution_jobs`, kernel `background_jobs`, PI claim jobs, commerce outbox |
-| Analysis Result | Structured output of a run | Future |
+| Analysis Result | Structured output of a run | EOS-A7B `engineering_analysis_results` envelope |
 | Evidence Package | Results + inputs bound as Evidence for review/decision | Compose ERA Evidence; do not fork |
 
 Do not implement adapters or new queues in EOS-A1.

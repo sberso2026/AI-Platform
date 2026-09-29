@@ -98,7 +98,11 @@ export const DISCIPLINE_CAPABILITY_KEYS = [
   "ENGINEERING_REVIEW",
   "EVIDENCE_GENERATION",
   "FEA",
+  "CERTIFICATION_ANALYSIS",
 ] as const;
+
+/** Hidden from production Analysis Workspace. TEST/DEV architectural proving only. */
+export const PRODUCTION_HIDDEN_CAPABILITIES: readonly DisciplineCapabilityKey[] = ["CERTIFICATION_ANALYSIS"];
 
 export type DisciplineCapabilityKey = (typeof DISCIPLINE_CAPABILITY_KEYS)[number];
 

@@ -271,6 +271,22 @@ export const ENGINEERING_API_ENDPOINTS: EngineeringApiEndpoint[] = [
   },
   {
     method: "GET",
+    path: "/api/engineering/analysis",
+    description: "List or get Engineering Analysis Requests; preflight, result, explainability",
+    query: { projectId: "uuid?", id: "uuid?", action: "preflight?|result?" },
+    response: "{ data: EngineeringAnalysisRequest[] | request detail | AnalysisExplainability }",
+    auth: "session",
+  },
+  {
+    method: "POST",
+    path: "/api/engineering/analysis",
+    description: "Create analysis request, execution plan, queue, cancel, review, accept/reject",
+    body: { discipline: "string", capability: "string", action: "preflight?|plan?|queue?|cancel?|accept?|reject?|review?" },
+    response: "{ data: EngineeringAnalysisRequest | AnalysisExecutionPlan | queue result }",
+    auth: "session",
+  },
+  {
+    method: "GET",
     path: "/api/engineering/health",
     description: "Engineering OS health check",
     response: "{ data: EngineeringHealthReport }",

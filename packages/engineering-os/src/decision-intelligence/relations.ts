@@ -61,6 +61,8 @@ export const GOVERNED_LINK_OBJECT_TYPES = [
   "optimization_run",
   "optimization_alternative",
   "optimization_constraint",
+  "analysis_request",
+  "analysis_result",
 ] as const;
 
 export type GovernedLinkObjectType = (typeof GOVERNED_LINK_OBJECT_TYPES)[number];
@@ -215,6 +217,48 @@ export function assertA5GovernedRelationWrite(input: {
   ) {
     throw new Error(
       `Ungoverned relation type: ${input.relationship}. A5 writes must use SCOPED_TO, CONSTRAINED_BY, SUPPORTED_BY, BASED_ON, USED_BY, or prior governed verbs.`,
+    );
+  }
+  if (!isGovernedLinkObjectType(input.fromType) || !isGovernedLinkObjectType(input.toType)) {
+    throw new Error(`Object type not allowed for governed links: ${input.fromType} -> ${input.toType}`);
+  }
+}
+
+export const A7B_WRITABLE_RELATIONS = [
+  "DEPENDS_ON",
+  "USED_BY",
+  "SUPERSEDES",
+  "VERIFIED_BY",
+  "SUPPORTED_BY",
+  "BASED_ON",
+  "REVIEWS",
+  "AFFECTS",
+] as const;
+
+export type A7BWritableRelation = (typeof A7B_WRITABLE_RELATIONS)[number];
+
+export function isA7BWritableRelation(value: string): value is A7BWritableRelation {
+  return (A7B_WRITABLE_RELATIONS as readonly string[]).includes(value);
+}
+
+export function assertA7BGovernedRelationWrite(input: {
+  relationship: string;
+  fromType: string;
+  toType: string;
+}): asserts input is {
+  relationship: A7BWritableRelation;
+  fromType: GovernedLinkObjectType;
+  toType: GovernedLinkObjectType;
+} {
+  if (
+    !isA7BWritableRelation(input.relationship) &&
+    !isA5WritableRelation(input.relationship) &&
+    !isA4WritableRelation(input.relationship) &&
+    !isA3WritableRelation(input.relationship) &&
+    !isA2WritableRelation(input.relationship)
+  ) {
+    throw new Error(
+      `Ungoverned relation type: ${input.relationship}. A7B writes must use DEPENDS_ON, USED_BY, SUPERSEDES, VERIFIED_BY, SUPPORTED_BY, BASED_ON, REVIEWS, AFFECTS, or prior governed verbs.`,
     );
   }
   if (!isGovernedLinkObjectType(input.fromType) || !isGovernedLinkObjectType(input.toType)) {

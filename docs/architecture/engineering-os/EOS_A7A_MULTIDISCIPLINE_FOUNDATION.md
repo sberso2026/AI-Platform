@@ -70,4 +70,4 @@ Platform overlays: tenant read, engineering admin mutate. Workspace-scoped proje
 
 ## Out of scope
 
-EOS-A7A itself does not execute solvers. EOS-A6 composes a bounded structural optimization **pilot** on the canonical Optimization Study using discovered SPACE GASS trial state; live analysis remains fail-closed until API/automation/expiry gates pass. No FEA, process simulation, piping stress, power flow, new job queue, new graph store, or Value Intelligence.
+EOS-A7A itself does not execute solvers. EOS-A7B adds the discipline-neutral Analysis Request / Execution Plan / Result foundation (`EOS_A7B_MULTIDISCIPLINE_ANALYSIS_EXECUTION.md`). EOS-A6 remains a bounded structural optimization **pilot**. Live SPACE GASS analysis remains fail-closed. No FEA, process simulation, piping stress, power flow, new job queue, new graph store, or Value Intelligence.

@@ -91,6 +91,7 @@ export const ENGINEERING_EXPLORE_GROUPS = [
       { id: "changes", label: "Changes", href: "/engineering/changes" },
       { id: "configuration", label: "Configuration", href: "/engineering/configuration" },
       { id: "optimization", label: "Optimization", href: "/engineering/optimization" },
+      { id: "analysis", label: "Analysis", href: "/engineering/analysis" },
       { id: "actions", label: "Actions", href: "/engineering/actions" },
       { id: "risks", label: "Risks", href: "/engineering/risks" },
       { id: "issues", label: "Issues", href: "/engineering/issues" },

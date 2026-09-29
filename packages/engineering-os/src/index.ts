@@ -134,6 +134,13 @@ export { OptimizationRunService } from "./optimization-intelligence/run-service"
 export { ExternalToolProfileService } from "./external-tools/profile-service";
 export { ExternalToolAssignmentService } from "./external-tools/assignment-service";
 export { DisciplineIntelligenceService } from "./discipline-intelligence/service";
+export { AnalysisRequestService } from "./analysis-intelligence/request-service";
+export {
+  resolveAnalysisCapability,
+  SYNTHETIC_CERTIFICATION_ADAPTER_ID,
+  ANALYSIS_JOB_TYPE,
+  LLM_AS_ANALYSIS_SOLVER,
+} from "./analysis-intelligence";
 export {
   SPACE_GASS_CATALOG_ENTRY,
   buildNotReadySpaceGassProfile,
@@ -147,6 +154,7 @@ export {
   LLM_AS_SOLVER,
 } from "./discipline-intelligence";
 export { registerOptimizationEvaluateHandler, createOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
+export { registerAnalysisExecuteHandler, createAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 export { CERTIFICATION_STUB_ADAPTER_ID, MANIFEST_SCHEMA_VERSION, fingerprintRunInputManifest, buildRunInputManifest } from "./optimization-intelligence/manifest";
 export {
   GOVERNED_RELATION_TYPES,
@@ -154,10 +162,12 @@ export {
   A3_WRITABLE_RELATIONS,
   A4_WRITABLE_RELATIONS,
   A5_WRITABLE_RELATIONS,
+  A7B_WRITABLE_RELATIONS,
   assertGovernedRelationWrite,
   assertA3GovernedRelationWrite,
   assertA4GovernedRelationWrite,
   assertA5GovernedRelationWrite,
+  assertA7BGovernedRelationWrite,
   isGovernedRelationType,
 } from "./decision-intelligence/relations";
 export {

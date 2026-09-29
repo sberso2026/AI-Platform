@@ -83,6 +83,8 @@ Convergence sequence (planning only):
 
 Do not execute that sequence in EOS-A1.
 
+EOS-A7B Analysis Requests and Results participate in the existing thread via Core rows and `engineering_object_links` (`DEPENDS_ON`, `USED_BY`, `REVIEWS`, `SUPPORTED_BY`, `AFFECTS`). No new graph store. See `EOS_A7B_MULTIDISCIPLINE_ANALYSIS_EXECUTION.md`.
+
 ---
 
 ## 5. Provenance

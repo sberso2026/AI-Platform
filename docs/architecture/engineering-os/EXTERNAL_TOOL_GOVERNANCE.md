@@ -15,7 +15,7 @@ This is **not** a second Platform Intelligence tool registry, not a second EMI s
 | SPACE GASS / ETABS method maturity | REUSE | EMI `spacegass-capability-registry` / `etabs-capability-registry` |
 | Secrets | REUSE | Platform Secret Manager — store `credential_secret_id` references only |
 | Execution Host | REUSE | `controlled_engineering_execution_host` via `execution_host_id` |
-| JobService | REUSE | `engineering.optimization.evaluate` |
+| JobService | REUSE | `engineering.optimization.evaluate`, `engineering.analysis.execute` (same `background_jobs` queue) |
 | Connectors (M365, SharePoint, SAP) | EXTEND / COMPOSE | Engineering OS E4 connector ids |
 | IFC / model files | COMPOSE | EMI adapters |
 | Audit | COMPOSE | `engineering_activity_events` |
@@ -118,13 +118,15 @@ Non-stub solver runs require:
 
 The generic certification stub remains tests/dev only and does **not** satisfy real structural solver readiness.
 
+EOS-A7B Analysis Requests resolve tools through this same profile/assignment/readiness model. LINEAR_STRUCTURAL_ANALYSIS against the current SPACE GASS 14.2 Trial profile is BLOCKED (`BLOCKED_AUTOMATION_NOT_PERMITTED` and/or tool-not-ready). See `EOS_A7B_MULTIDISCIPLINE_ANALYSIS_EXECUTION.md`.
+
 ## Execution provenance (manifest 1.1 additive)
 
 `manifest_schema_version` remains `1`. Optional `execution.external_tool` records profile id, tool version, adapter, host, capability, and validation reference. Existing v1 manifests without that block remain valid.
 
 ## SPACE GASS example (current truth)
 
-Windows discovery on the EOS-A6 workstation found SPACE GASS 14.2 Trial (14.25.3785, no API executable) and SPACE GASS 14.5 (14.50.165, `SpaceGassAPI.exe`, documented `http://localhost:34560`). The local API was **not reachable**. Trial expiry is **UNKNOWN**. Automation remains **REQUIRES_CONFIRMATION**. Production use is **not permitted**.
+Windows discovery on the EOS-A6 workstation recorded SPACE GASS 14.2 Trial (14.25.3785, no API executable) as the **canonical currently installed** instance. SPACE GASS 14.5 Viewer (14.50.165, `SpaceGassAPI.exe`) remains a **historical discovery record only**: current status **UNINSTALLED**, execution-ineligible, and not used for adapter compatibility, execution-host selection, solver certification, or readiness. The local API is **not reachable**. Trial expiry is **UNKNOWN**. Automation remains **REQUIRES_CONFIRMATION**. Production use is **not permitted**. Real solver execution is **NOT_CERTIFIED**.
 
 | Field | Value |
 | --- | --- |
@@ -137,13 +139,15 @@ Windows discovery on the EOS-A6 workstation found SPACE GASS 14.2 Trial (14.25.3
 | Licence status | UNAVAILABLE (unknown expiry fail-closes) |
 | API available | NO |
 | Automation | REQUIRES_CONFIRMATION |
-| Adapter compatibility (14.2) | catalog includes 14.2; 14.5 is not certified in the catalog |
+| Adapter compatibility (14.2) | catalog includes 14.2 |
+| Adapter compatibility (14.5 Viewer) | UNINSTALLED / INCOMPATIBLE / not used |
 | Capability certification | none CERTIFIED |
 | Readiness | not READY |
 | Development-evaluation readiness | NOT_READY_FOR_DEVELOPMENT_EVALUATION |
 | Production use permitted | NO |
 
 REAL_SOLVER_EXECUTION: NOT_CERTIFIED.
+API_AVAILABLE: NO.
 PRODUCTION_READY: NO.
 
 Generic licence fields: `licence_type`, `licence_expires_at`, `api_available`, `production_use_permitted`. These are not SPACE-GASS-specific schema.
