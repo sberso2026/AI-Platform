@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { EngineeringObjectFramework } from "../services/object-framework";
-import { getCatalogEntry, isExternalToolCategory, isIntegrationMode, type ExternalToolCategory, type ExternalToolIntegrationMode } from "./catalog";
-import { assertModeRequirements } from "./readiness";
+import { getCatalogEntry, isExternalToolCategory, isIntegrationMode, isLicenceType, type ExternalToolCategory, type ExternalToolIntegrationMode } from "./catalog";
+import { assertModeRequirements, defaultLicenceGovernance } from "./readiness";
 import { withDerivedState } from "./readiness";
 import { assertNoSecretMaterial } from "./secrets";
 import { buildNotReadySpaceGassProfile } from "./spacegass-profile";
@@ -55,6 +55,10 @@ export function mapProfileRow(row: Record<string, unknown>): ExternalToolProfile
       row.licence_status === "NOT_REQUIRED"
         ? row.licence_status
         : "UNKNOWN",
+    licenceType: typeof row.licence_type === "string" && isLicenceType(row.licence_type) ? row.licence_type : "UNKNOWN",
+    licenceExpiresAt: (row.licence_expires_at as string | null) ?? null,
+    apiAvailable: typeof row.api_available === "boolean" ? row.api_available : null,
+    productionUsePermitted: row.production_use_permitted === true,
     automationPermission:
       row.automation_permission === "PERMITTED" ||
       row.automation_permission === "NOT_PERMITTED" ||
@@ -106,6 +110,10 @@ function toRow(tenantId: string, input: ExternalToolProfileInput, actorId?: stri
     executablePath: input.executablePath ?? null,
     installationStatus: input.installationStatus ?? "UNKNOWN",
     licenceStatus: input.licenceStatus ?? "UNKNOWN",
+    licenceType: input.licenceType ?? defaultLicenceGovernance().licenceType,
+    licenceExpiresAt: input.licenceExpiresAt ?? null,
+    apiAvailable: input.apiAvailable ?? null,
+    productionUsePermitted: input.productionUsePermitted === true,
     automationPermission: input.automationPermission ?? "UNKNOWN",
     automationConfirmedBy: input.automationConfirmedBy ?? null,
     automationConfirmedAt: input.automationConfirmedAt ?? null,
@@ -146,6 +154,10 @@ function toRow(tenantId: string, input: ExternalToolProfileInput, actorId?: stri
     executable_path: draft.executablePath,
     installation_status: draft.installationStatus,
     licence_status: draft.licenceStatus,
+    licence_type: draft.licenceType,
+    licence_expires_at: draft.licenceExpiresAt,
+    api_available: draft.apiAvailable,
+    production_use_permitted: draft.productionUsePermitted,
     automation_permission: draft.automationPermission,
     automation_confirmed_by: draft.automationConfirmedBy,
     automation_confirmed_at: draft.automationConfirmedAt,

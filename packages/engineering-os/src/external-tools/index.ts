@@ -4,6 +4,7 @@ export * from "./secrets";
 export * from "./compatibility";
 export * from "./readiness";
 export * from "./validation";
+export * from "./discovery";
 export * from "./spacegass-profile";
 export * from "./optimization-gate";
 export * from "./profile-service";

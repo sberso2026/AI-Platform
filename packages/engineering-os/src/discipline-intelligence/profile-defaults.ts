@@ -27,9 +27,9 @@ const DEFAULT_CAPS: Record<CanonicalDisciplineCode, Omit<DisciplineCapabilityRec
     cap("INTERFACE_ANALYSIS", "AVAILABLE", true, null, "Tool-independent interface analysis."),
     cap("ENGINEERING_REVIEW", "AVAILABLE", true, null, "Composes Engineering Review. Not a separate findings table."),
     cap("CALCULATION", "TOOL_DEPENDENT", false, "spacegass", "Deterministic calculation requires a certified tool."),
-    cap("LINEAR_STRUCTURAL_ANALYSIS", "TOOL_DEPENDENT", false, "spacegass", "SPACE GASS install is deferred. Not CERTIFIED."),
+    cap("LINEAR_STRUCTURAL_ANALYSIS", "TOOL_DEPENDENT", false, "spacegass", "SPACE GASS trial discovered on the host; API/automation/expiry gates remain fail-closed. Not CERTIFIED."),
     cap("STRUCTURAL_DESIGN_CHECK", "NOT_CERTIFIED", false, null, "Design-code check is not certified."),
-    cap("OPTIMIZATION", "NOT_CERTIFIED", false, null, "EOS-A7A does not implement structural optimization."),
+    cap("OPTIMIZATION", "NOT_CERTIFIED", false, null, "EOS-A6 uses the canonical Optimization Study. Discipline OPTIMIZATION remains NOT_CERTIFIED until a real certified solver run."),
   ],
   MECHANICAL: [
     cap("CONTEXT_INTERPRETATION", "AVAILABLE", true, null, "Tool-independent."),

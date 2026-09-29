@@ -1,6 +1,6 @@
 # EOS-A1 Optimization Readiness Contract
 
-Status: **IMPLEMENTED IN EOS-A5** (generic Optimization Core). Structural/discipline solvers remain **EOS-A6+**.
+Status: **IMPLEMENTED IN EOS-A5** (generic Optimization Core). EOS-A6 adds a bounded structural optimization **pilot** on that same engine using SPACE GASS trial discovery. Live real-solver certification remains incomplete (API unavailable, automation requires confirmation). See `EOS_A6_STRUCTURAL_OPTIMIZATION_PILOT.md`.
 
 Evidence HEAD: recorded at A5 closeout on branch `cursor/era-7a-engineering-review-pilot-gate`.
 

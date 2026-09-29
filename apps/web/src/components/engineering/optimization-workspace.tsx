@@ -111,7 +111,7 @@ export function OptimizationWorkspace() {
     <>
       <Header
         title="Optimization"
-        description="Governed engineering trade-offs. Pareto-optimal alternatives are not engineering-approved choices. Decision Intelligence remains the selection authority."
+        description="Governed engineering trade-offs. Pareto-optimal alternatives are not engineering-approved choices. Decision Intelligence remains the selection authority. SPACE GASS trial use is DEVELOPMENT / EVALUATION only."
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
         {projectId ? (
@@ -123,6 +123,9 @@ export function OptimizationWorkspace() {
             ]}
           />
         ) : null}
+        <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          DEVELOPMENT / EVALUATION. Trial licences are not production-ready. Pareto-optimal is not an approved design. Human selection is required. Design-code compliance is not assessed unless a certified design-check capability exists.
+        </div>
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{loading ? "Loading…" : `${items.length} studies`}</p>
           <CreateForm
@@ -353,6 +356,10 @@ function ContextTab({
   return (
     <div className="space-y-3 text-sm">
       <p>
+        Discipline STRUCTURAL when this is the structural optimization pilot. Solver and licence status are read from
+        Settings → External Tools & Integrations → SPACE GASS, not duplicated here.
+      </p>
+      <p>
         Requirements {String(study.requirements_context)} · Assumptions {String(study.assumptions_context)} ·
         Interfaces {String(study.interfaces_context)}
       </p>
@@ -519,8 +526,8 @@ function ResultsTab({
   return (
     <div className="space-y-3 text-sm">
       <p>
-        Trade-off table. Pareto-optimal means non-dominated among complete feasible alternatives. evaluation-incomplete and
-        infeasible alternatives are excluded from dominance. Optimization does not approve or select a Decision alternative.
+        Trade-off table. Pareto-optimal means non-dominated among complete alternatives that satisfy pilot constraints. evaluation-incomplete and
+        infeasible alternatives are excluded from dominance. Status language is Pareto-optimal, Non-dominated, Dominated, Pilot constraints satisfied, Pilot constraints not satisfied, Evaluation incomplete, Human selection required. Optimization does not approve or select a Decision alternative.
       </p>
       <Button type="button" onClick={onPareto}>
         Compute Pareto set

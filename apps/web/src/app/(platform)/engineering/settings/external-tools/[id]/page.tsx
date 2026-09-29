@@ -19,6 +19,11 @@ type Profile = {
   executablePath: string | null;
   installationStatus: string;
   licenceStatus: string;
+  licenceType?: string;
+  licenceExpiresAt?: string | null;
+  apiAvailable?: boolean | null;
+  productionUsePermitted?: boolean;
+  developmentEvaluationReadiness?: string;
   automationPermission: string;
   automationConfirmedBy: string | null;
   automationConfirmedAt: string | null;
@@ -105,6 +110,11 @@ export default function ExternalToolDetailPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Field label="Licence Status" value={profile.licenceStatus} />
+                <Field label="Licence Type" value={profile.licenceType ?? "UNKNOWN"} />
+                <Field label="Trial / licence expiry" value={profile.licenceExpiresAt ?? "UNKNOWN"} />
+                <Field label="API available" value={profile.apiAvailable == null ? "UNKNOWN" : String(profile.apiAvailable)} />
+                <Field label="Production use permitted" value={String(profile.productionUsePermitted === true)} />
+                {profile.licenceType === "TRIAL" ? <Field label="Use class" value="DEVELOPMENT / EVALUATION" /> : null}
                 <Field label="Automation Permission" value={profile.automationPermission} />
                 <Field label="Confirmed By" value={profile.automationConfirmedBy ?? "—"} />
                 <Field label="Confirmed At" value={profile.automationConfirmedAt ?? "—"} />
@@ -129,7 +139,7 @@ export default function ExternalToolDetailPage() {
               <CardContent className="space-y-2">
                 <Badge variant="secondary">{profile.readiness}</Badge>
                 <p className="text-sm text-muted-foreground">
-                  External software installation is deferred. READY is not claimed. Connected or available is not certified. Real solver execution is not certified.
+                  Development-evaluation: {profile.developmentEvaluationReadiness ?? "NOT_READY_FOR_DEVELOPMENT_EVALUATION"}. READY is production-class and is not claimed for a trial. Connected or available is not certified.
                 </p>
               </CardContent>
             </Card>

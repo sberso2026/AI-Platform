@@ -69,7 +69,7 @@ export function runValidation(profile: ExternalToolProfile, now = new Date().toI
       check(
         "CHECK_LICENCE_STATUS",
         profile.licenceStatus === "AVAILABLE" || profile.licenceStatus === "NOT_REQUIRED" ? "PASS" : "FAIL",
-        `licence=${profile.licenceStatus}`,
+        `licence=${profile.licenceStatus} type=${profile.licenceType} expires=${profile.licenceExpiresAt ?? "UNKNOWN"} production_use_permitted=${profile.productionUsePermitted}`,
       ),
       check(
         "VALIDATE_ADAPTER_COMPATIBILITY",

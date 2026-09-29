@@ -58,7 +58,15 @@ Workspaces **must not** set executable path, licence, machine installation, or c
 
 ## Licence and automation
 
-Licence: `UNKNOWN | AVAILABLE | UNAVAILABLE | EXPIRED | NOT_REQUIRED`
+Licence status: `UNKNOWN | AVAILABLE | UNAVAILABLE | EXPIRED | NOT_REQUIRED`
+
+Licence type (generic): `TRIAL | SUBSCRIPTION | PERPETUAL | ENTERPRISE | EDUCATIONAL | OTHER | UNKNOWN`
+
+Optional: `licence_expires_at`, `api_available`, `production_use_permitted` (default FALSE).
+
+Trial expiry is mandatory at the application layer. Unknown trial expiry fail-closes. Expired trials cannot execute. Workspace assignment cannot override expiry, licence type, or production-use permission. `licence_type = TRIAL` implies production use is not permitted.
+
+Automation: `UNKNOWN | PERMITTED | NOT_PERMITTED | REQUIRES_CONFIRMATION`
 
 Automation: `UNKNOWN | PERMITTED | NOT_PERMITTED | REQUIRES_CONFIRMATION`
 
@@ -116,24 +124,30 @@ The generic certification stub remains tests/dev only and does **not** satisfy r
 
 ## SPACE GASS example (current truth)
 
-Licensed SPACE GASS installation is **deferred**. Absence of the executable is not a governance-framework failure.
+Windows discovery on the EOS-A6 workstation found SPACE GASS 14.2 Trial (14.25.3785, no API executable) and SPACE GASS 14.5 (14.50.165, `SpaceGassAPI.exe`, documented `http://localhost:34560`). The local API was **not reachable**. Trial expiry is **UNKNOWN**. Automation remains **REQUIRES_CONFIRMATION**. Production use is **not permitted**.
 
 | Field | Value |
 | --- | --- |
 | Adapter | existing `spacegass_solver_adapter` `0.3.0-spacegass` |
 | Intended host | LOCAL_WINDOWS_EXECUTION_HOST |
-| Installed version | UNKNOWN |
-| Executable | NOT_CONFIGURED |
-| Licence | UNAVAILABLE |
+| Canonical trial executable | `C:\Program Files\SPACE GASS 14.2 (Trial)\SGCore.exe` |
+| Installed version (trial) | 14.25.3785 |
+| Licence type | TRIAL |
+| Trial expiry | UNKNOWN |
+| Licence status | UNAVAILABLE (unknown expiry fail-closes) |
+| API available | NO |
 | Automation | REQUIRES_CONFIRMATION |
-| Adapter compatibility | NOT_CONFIGURED |
+| Adapter compatibility (14.2) | catalog includes 14.2; 14.5 is not certified in the catalog |
 | Capability certification | none CERTIFIED |
-| Readiness | NOT_CONFIGURED |
+| Readiness | not READY |
+| Development-evaluation readiness | NOT_READY_FOR_DEVELOPMENT_EVALUATION |
+| Production use permitted | NO |
 
-EXTERNAL_SOFTWARE_INSTALLATION: DEFERRED.
-SPACE_GASS_INSTALLATION: NOT_AVAILABLE_AT_THIS_STAGE.
 REAL_SOLVER_EXECUTION: NOT_CERTIFIED.
+PRODUCTION_READY: NO.
 
-This amendment does **not** certify SPACE GASS and does **not** fabricate READY.
+Generic licence fields: `licence_type`, `licence_expires_at`, `api_available`, `production_use_permitted`. These are not SPACE-GASS-specific schema.
 
-EOS-A7A Discipline Intelligence binds STRUCTURAL `LINEAR_STRUCTURAL_ANALYSIS` to the SPACE GASS External Tool Profile. While SPACE GASS remains NOT_CONFIGURED, that discipline capability is BLOCKED. Document/interface review remains AVAILABLE. Discipline records must not store executable path, licence, or version.
+EOS-A7A Discipline Intelligence binds STRUCTURAL `LINEAR_STRUCTURAL_ANALYSIS` to the SPACE GASS External Tool Profile. While SPACE GASS is not READY / not development-evaluation ready, that discipline capability remains BLOCKED. Document/interface review remains AVAILABLE. Discipline records must not store executable path, licence, or version.
+
+See `EOS_A6_STRUCTURAL_OPTIMIZATION_PILOT.md`.

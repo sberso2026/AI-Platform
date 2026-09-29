@@ -1,6 +1,6 @@
 import type { ExternalToolReadiness } from "../external-tools/catalog";
 import type { CanonicalDisciplineCode, DisciplineCapabilityStatus, DisciplineReadiness } from "./catalog";
-import type { DisciplineCapabilityRecord, DisciplineToolBinding } from "./types";
+import { FORBIDDEN_DISCIPLINE_TOOL_FIELDS, type DisciplineCapabilityRecord, type DisciplineToolBinding } from "./types";
 
 export type ExternalToolReadinessView = {
   toolCode: string;
@@ -80,8 +80,7 @@ export function deriveDisciplineReadiness(capabilities: DisciplineCapabilityReco
 }
 
 export function rejectDisciplineToolInstallFields(payload: Record<string, unknown>): void {
-  const forbidden = ["executablePath", "executable_path", "licenceStatus", "licence_status", "installedVersion", "installed_version", "licenceKey", "licenseKey"];
-  for (const key of forbidden) {
+  for (const key of FORBIDDEN_DISCIPLINE_TOOL_FIELDS) {
     if (key in payload && payload[key] != null) {
       throw new Error("discipline_must_not_store_external_tool_install_fields");
     }

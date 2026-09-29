@@ -52,7 +52,7 @@ References only (code, edition, source, applicability). No copyrighted standard 
 
 ## Tool bindings
 
-`engineering_discipline_tool_bindings` references External Tool Governance profile id/code. Executable path, licence, and version are forbidden on discipline records. Tool readiness propagates: SPACE GASS NOT_CONFIGURED → STRUCTURAL LINEAR_STRUCTURAL_ANALYSIS BLOCKED.
+`engineering_discipline_tool_bindings` references External Tool Governance profile id/code. Executable path, licence, and version are forbidden on discipline records. Tool readiness propagates: SPACE GASS not READY → STRUCTURAL LINEAR_STRUCTURAL_ANALYSIS BLOCKED. EOS-A6 recorded a Windows SPACE GASS trial install; that does not certify LINEAR_STRUCTURAL_ANALYSIS.
 
 ## Contracts
 
@@ -70,4 +70,4 @@ Platform overlays: tenant read, engineering admin mutate. Workspace-scoped proje
 
 ## Out of scope
 
-No structural optimization, FEA, process simulation, piping stress, power flow, real solver execution, new job queue, new graph store, or Value Intelligence.
+EOS-A7A itself does not execute solvers. EOS-A6 composes a bounded structural optimization **pilot** on the canonical Optimization Study using discovered SPACE GASS trial state; live analysis remains fail-closed until API/automation/expiry gates pass. No FEA, process simulation, piping stress, power flow, new job queue, new graph store, or Value Intelligence.

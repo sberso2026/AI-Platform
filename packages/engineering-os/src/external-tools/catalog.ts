@@ -39,6 +39,23 @@ export const EXTERNAL_TOOL_LICENCE_STATUSES = [
 
 export type ExternalToolLicenceStatus = (typeof EXTERNAL_TOOL_LICENCE_STATUSES)[number];
 
+/** Generic licence class. Not vendor-specific. */
+export const EXTERNAL_TOOL_LICENCE_TYPES = [
+  "TRIAL",
+  "SUBSCRIPTION",
+  "PERPETUAL",
+  "ENTERPRISE",
+  "EDUCATIONAL",
+  "OTHER",
+  "UNKNOWN",
+] as const;
+
+export type ExternalToolLicenceType = (typeof EXTERNAL_TOOL_LICENCE_TYPES)[number];
+
+export function isLicenceType(value: string): value is ExternalToolLicenceType {
+  return (EXTERNAL_TOOL_LICENCE_TYPES as readonly string[]).includes(value);
+}
+
 export const EXTERNAL_TOOL_AUTOMATION_PERMISSIONS = [
   "UNKNOWN",
   "PERMITTED",
@@ -189,7 +206,7 @@ export const SPACE_GASS_CATALOG_ENTRY: ExternalToolCatalogEntry = {
   ],
   licenceRequired: true,
   notes:
-    "First governed execution-adapter profile. Licensed install is deferred. Intended LOCAL_WINDOWS_EXECUTION_HOST. Do not fabricate READY.",
+    "First governed execution-adapter profile. Intended LOCAL_WINDOWS_EXECUTION_HOST. Discovered Windows installs are recorded by discovery, not assumed from documentation. Do not fabricate READY or production authorization.",
 };
 
 export const MICROSOFT_365_CATALOG_ENTRY: ExternalToolCatalogEntry = {

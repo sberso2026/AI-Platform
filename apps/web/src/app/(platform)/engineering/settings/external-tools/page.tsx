@@ -15,6 +15,8 @@ type ToolRow = {
   adapterId: string | null;
   executionHostId: string | null;
   licenceStatus: string;
+  licenceType?: string;
+  productionUsePermitted?: boolean;
   automationPermission: string;
   lastValidation: { overall?: string } | null;
   readiness: string;
@@ -46,19 +48,20 @@ export default function ExternalToolsSettingsPage() {
     <>
       <Header
         title="External Tools & Integrations"
-        description="Governed configuration for external engineering, analysis, and enterprise systems. External software installation is deferred. SPACE GASS remains NOT_CONFIGURED."
+        description="Governed configuration for external engineering, analysis, and enterprise systems. SPACE GASS trial discovery is recorded; production use is not permitted."
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle className="text-base">Deferred external software</CardTitle>
+            <CardTitle className="text-base">SPACE GASS trial governance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm text-muted-foreground">
-            <p>EXTERNAL_SOFTWARE_INSTALLATION: DEFERRED</p>
-            <p>SPACE_GASS_INSTALLATION: NOT_AVAILABLE_AT_THIS_STAGE</p>
-            <p>REAL_SOLVER_EXECUTION: NOT_CERTIFIED</p>
-            <p>SPACE GASS overlay: version UNKNOWN, executable NOT_CONFIGURED, licence UNAVAILABLE, automation REQUIRES_CONFIRMATION, adapter compatibility NOT_CONFIGURED, readiness NOT_CONFIGURED.</p>
+            <p>EXTERNAL_SOFTWARE_INSTALLATION: DISCOVERED_WHERE_PRESENT</p>
+            <p>LICENCE_TYPE: recorded on the profile (TRIAL / UNKNOWN / other generic values)</p>
+            <p>PRODUCTION_USE_PERMITTED: NO for trial</p>
+            <p>READY_FOR_PRODUCTION: NO</p>
+            <p>SPACE GASS overlay: discovered install is recorded when present. API, automation, trial expiry, and production use remain fail-closed. READY is not claimed.</p>
           </CardContent>
         </Card>
         <div className="mb-4 flex flex-wrap gap-2">
@@ -93,7 +96,7 @@ export default function ExternalToolsSettingsPage() {
                 .catch((e) => setError(e.message));
             }}
           >
-            Persist SPACE GASS profile (NOT_CONFIGURED)
+            Persist SPACE GASS profile (discovered, not READY)
           </Button>
         </div>
         <Card>
@@ -112,6 +115,7 @@ export default function ExternalToolsSettingsPage() {
                   <th className="py-2 pr-3">Adapter</th>
                   <th className="py-2 pr-3">Host / Connection</th>
                   <th className="py-2 pr-3">Licence</th>
+                  <th className="py-2 pr-3">Licence type</th>
                   <th className="py-2 pr-3">Automation</th>
                   <th className="py-2 pr-3">Validation</th>
                   <th className="py-2 pr-3">Readiness</th>
@@ -132,6 +136,7 @@ export default function ExternalToolsSettingsPage() {
                     <td className="py-2 pr-3">{row.adapterId ?? "—"}</td>
                     <td className="py-2 pr-3">{row.executionHostId ?? "NOT_CONFIGURED"}</td>
                     <td className="py-2 pr-3">{row.licenceStatus}</td>
+                    <td className="py-2 pr-3">{row.licenceType ?? "UNKNOWN"}{row.productionUsePermitted ? "" : " · eval only"}</td>
                     <td className="py-2 pr-3">{row.automationPermission}</td>
                     <td className="py-2 pr-3">{row.lastValidation?.overall ?? "NOT_RUN"}</td>
                     <td className="py-2 pr-3">

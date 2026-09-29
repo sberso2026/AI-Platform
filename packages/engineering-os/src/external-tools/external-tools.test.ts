@@ -28,6 +28,10 @@ function readySpaceGass(overrides: Partial<ExternalToolProfile> = {}): ExternalT
     automationConfirmedAt: "2026-09-29T00:00:00.000Z",
     automationBasis: "vendor licence terms acknowledged by tool manager",
     lastValidation: { ranAt: "2026-09-29T00:00:00.000Z", overall: "PASS" as const, checks: [] },
+    licenceType: "PERPETUAL" as const,
+    licenceExpiresAt: null,
+    apiAvailable: true,
+    productionUsePermitted: true,
     capabilities: base.capabilities.map((cap) =>
       ["OPTIMIZATION_EXECUTION", "LINEAR_STATIC_ANALYSIS", "RESULT_EXTRACTION"].includes(cap.key)
         ? { ...cap, certification: "CERTIFIED" as const, availability: "CERTIFIED" as const }
@@ -73,19 +77,29 @@ describe("EOS-A5E amendment — external tool governance", () => {
     expect(validationActionsForModes(["API_CONNECTOR"])).not.toContain("VALIDATE_EXECUTABLE");
   });
 
-  it("records SPACE GASS as NOT_CONFIGURED without fabricating install data", () => {
+  it("records discovered SPACE GASS install without fabricating READY, API, or production use", () => {
     const profile = buildNotReadySpaceGassProfile({ tenantId: "tenant-a" });
-    expect(profile.installedVersion).toBeNull();
-    expect(profile.executablePath).toBeNull();
-    expect(profile.executionHostId).toBeNull();
-    expect(profile.licenceStatus).toBe("UNAVAILABLE");
+    expect(profile.productionUsePermitted).toBe(false);
     expect(profile.automationPermission).toBe("REQUIRES_CONFIRMATION");
-    expect(profile.readiness).toBe("NOT_CONFIGURED");
-    expect(profile.adapterCompatibilityStatus).toBe("NOT_CONFIGURED");
+    expect(profile.readiness).not.toBe("READY");
+    expect(profile.developmentEvaluationReadiness).toBe("NOT_READY_FOR_DEVELOPMENT_EVALUATION");
     expect(profile.capabilities.every((cap) => cap.certification !== "CERTIFIED")).toBe(true);
     const linear = profile.capabilities.find((cap) => cap.key === "LINEAR_STATIC_ANALYSIS");
     expect(linear?.availability).toBe("AVAILABLE");
     expect(linear?.certification).toBe("NOT_CERTIFIED");
+    if (profile.installationStatus === "INSTALLED") {
+      expect(profile.installedVersion).toBeTruthy();
+      expect(profile.executablePath).toBeTruthy();
+      expect(profile.licenceType === "TRIAL" || profile.licenceType === "UNKNOWN").toBe(true);
+      expect(profile.licenceExpiresAt).toBeNull();
+      expect(profile.apiAvailable).not.toBe(true);
+      expect(profile.licenceStatus).toBe("UNAVAILABLE");
+    } else {
+      expect(profile.installedVersion).toBeNull();
+      expect(profile.executablePath).toBeNull();
+      expect(profile.readiness).toBe("NOT_CONFIGURED");
+      expect(profile.adapterCompatibilityStatus).toBe("NOT_CONFIGURED");
+    }
   });
 
   it("reuses EMI SPACE GASS adapter identity and keeps the generic stub tests/dev only", () => {
@@ -257,6 +271,9 @@ describe("EOS-A5E amendment — external tool governance", () => {
 
   it("rejects workspace attempts to set executable or licence", () => {
     expect(() => rejectWorkspacePlatformFields({ executablePath: "C:\\sg.exe" })).toThrow(/cannot set platform/i);
+    expect(() => rejectWorkspacePlatformFields({ licenceType: "TRIAL" })).toThrow(/cannot set platform/i);
+    expect(() => rejectWorkspacePlatformFields({ licenceExpiresAt: "2099-01-01" })).toThrow(/cannot set platform/i);
+    expect(() => rejectWorkspacePlatformFields({ productionUsePermitted: true })).toThrow(/cannot set platform/i);
     expect(() => rejectWorkspacePlatformFields({ workspaceId: "ws-a", unitSystem: "SI" })).not.toThrow();
   });
 
@@ -277,5 +294,48 @@ describe("EOS-A5E amendment — external tool governance", () => {
     const listed = service.mergeCatalog("tenant-a", []);
     expect(listed[0]?.toolCode).toBe("spacegass");
     expect(listed[0]?.readiness).toBe("NOT_CONFIGURED");
+  });
+
+  it("fail-closes an expired trial even when other synthetic READY fields are present", () => {
+    const profile = readySpaceGass({
+      licenceType: "TRIAL",
+      licenceExpiresAt: "2020-01-01T00:00:00.000Z",
+      licenceStatus: "AVAILABLE",
+      productionUsePermitted: false,
+    });
+    expect(profile.readiness).toBe("UNAVAILABLE");
+    expect(profile.developmentEvaluationReadiness).toBe("NOT_READY_FOR_DEVELOPMENT_EVALUATION");
+    expect(() =>
+      assertExternalToolReadyForOptimization({ profile, assignment: assignment(), workspaceId: "ws-a" }),
+    ).toThrow(/Licence is not available/);
+  });
+
+  it("fail-closes a trial with unknown expiry", () => {
+    const profile = readySpaceGass({
+      licenceType: "TRIAL",
+      licenceExpiresAt: null,
+      licenceStatus: "AVAILABLE",
+      productionUsePermitted: false,
+    });
+    expect(profile.readiness).toBe("UNAVAILABLE");
+    expect(() =>
+      assertExternalToolReadyForOptimization({ profile, assignment: assignment(), workspaceId: "ws-a" }),
+    ).toThrow(/Licence is not available/);
+  });
+
+  it("blocks production use of a trial even if a workspace assignment exists", () => {
+    const profile = readySpaceGass({
+      licenceType: "TRIAL",
+      licenceExpiresAt: "2099-01-01T00:00:00.000Z",
+      licenceStatus: "AVAILABLE",
+      productionUsePermitted: false,
+    });
+    expect(profile.readiness).toBe("BLOCKED");
+    try {
+      assertExternalToolReadyForOptimization({ profile, assignment: assignment(), workspaceId: "ws-a" });
+      throw new Error("expected_block");
+    } catch (error) {
+      expect((error as ExternalToolGovernanceError).code).toMatch(/production_use_not_permitted|tool_not_ready|licence_not_available/);
+    }
   });
 });

@@ -5,6 +5,7 @@ import type {
   ExternalToolInstallationStatus,
   ExternalToolIntegrationMode,
   ExternalToolLicenceStatus,
+  ExternalToolLicenceType,
   ExternalToolReadiness,
 } from "./catalog";
 
@@ -64,6 +65,11 @@ export type ExternalToolProfile = {
   executablePath: string | null;
   installationStatus: ExternalToolInstallationStatus;
   licenceStatus: ExternalToolLicenceStatus;
+  licenceType: ExternalToolLicenceType;
+  licenceExpiresAt: string | null;
+  apiAvailable: boolean | null;
+  productionUsePermitted: boolean;
+  developmentEvaluationReadiness: "READY_FOR_DEVELOPMENT_EVALUATION" | "NOT_READY_FOR_DEVELOPMENT_EVALUATION";
   automationPermission: ExternalToolAutomationPermission;
   automationConfirmedBy: string | null;
   automationConfirmedAt: string | null;
@@ -85,7 +91,7 @@ export type ExternalToolProfile = {
   adapterCompatibilityStatus: "NOT_CONFIGURED" | "CERTIFIED" | "NOT_CERTIFIED" | "INCOMPATIBLE";
 };
 
-export type ExternalToolProfileInput = Partial<Omit<ExternalToolProfile, "id" | "tenantId" | "readiness" | "adapterCompatibilityStatus" | "createdAt" | "updatedAt">> & {
+export type ExternalToolProfileInput = Partial<Omit<ExternalToolProfile, "id" | "tenantId" | "readiness" | "adapterCompatibilityStatus" | "developmentEvaluationReadiness" | "createdAt" | "updatedAt">> & {
   toolCode: string;
   name: string;
   vendor: string;

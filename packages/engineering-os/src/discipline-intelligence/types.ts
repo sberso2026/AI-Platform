@@ -90,6 +90,10 @@ export const FORBIDDEN_DISCIPLINE_TOOL_FIELDS = [
   "licence_status",
   "installedVersion",
   "installed_version",
-  "licenceKey",
-  "licenseKey",
+  "licenceExpiresAt",
+  "licence_expires_at",
+  "licenceType",
+  "licence_type",
+  "productionUsePermitted",
+  "production_use_permitted",
 ] as const;

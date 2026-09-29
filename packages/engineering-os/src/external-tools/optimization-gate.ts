@@ -1,3 +1,4 @@
+import { effectiveLicenceStatus } from "./readiness";
 import type { ExternalToolProfile, ExternalToolWorkspaceAssignment } from "./types";
 
 export class ExternalToolGovernanceError extends Error {
@@ -59,11 +60,18 @@ export function assertPlatformExecutionPreconditions(
       profile.adapterCompatibilityStatus === "NOT_CONFIGURED" ? "adapter_not_configured" : "adapter_incompatible",
     );
   }
-  if (profile.licenceStatus === "UNAVAILABLE" || profile.licenceStatus === "EXPIRED") {
+  const licence = effectiveLicenceStatus(profile);
+  if (licence === "UNAVAILABLE" || licence === "EXPIRED") {
     throw new ExternalToolGovernanceError("Licence is not available.", "licence_not_available");
   }
-  if (profile.licenceStatus !== "AVAILABLE" && profile.licenceStatus !== "NOT_REQUIRED") {
+  if (licence !== "AVAILABLE" && licence !== "NOT_REQUIRED") {
     throw new ExternalToolGovernanceError("Licence is not available.", "licence_not_available");
+  }
+  if (profile.licenceType === "TRIAL" || profile.productionUsePermitted !== true) {
+    throw new ExternalToolGovernanceError(
+      "Production use is not permitted for this external tool licence.",
+      "production_use_not_permitted",
+    );
   }
   if (profile.automationPermission === "REQUIRES_CONFIRMATION") {
     throw new ExternalToolGovernanceError("Automation requires confirmation.", "automation_requires_confirmation");
@@ -86,6 +94,25 @@ export function assertPlatformExecutionPreconditions(
   }
   if (!profile.executionHostId) {
     throw new ExternalToolGovernanceError("Execution host is not configured.", "execution_host_missing");
+  }
+}
+
+/**
+ * Development/evaluation execution still fail-closes on API, automation, trial expiry, and adapter compatibility.
+ * This is not production READY and does not authorize commercial use.
+ */
+export function assertExternalToolReadyForDevelopmentEvaluation(profile: ExternalToolProfile): void {
+  if (profile.developmentEvaluationReadiness !== "READY_FOR_DEVELOPMENT_EVALUATION") {
+    throw new ExternalToolGovernanceError(
+      `External tool is not READY_FOR_DEVELOPMENT_EVALUATION (state=${profile.developmentEvaluationReadiness}).`,
+      "tool_not_ready_for_development_evaluation",
+    );
+  }
+  if (profile.licenceType === "TRIAL" && profile.productionUsePermitted) {
+    throw new ExternalToolGovernanceError(
+      "Trial licences cannot set production_use_permitted.",
+      "trial_production_forbidden",
+    );
   }
 }
 
