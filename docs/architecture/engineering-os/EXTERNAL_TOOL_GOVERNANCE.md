@@ -116,6 +116,8 @@ The generic certification stub remains tests/dev only and does **not** satisfy r
 
 ## SPACE GASS example (current truth)
 
+Licensed SPACE GASS installation is **deferred**. Absence of the executable is not a governance-framework failure.
+
 | Field | Value |
 | --- | --- |
 | Adapter | existing `spacegass_solver_adapter` `0.3.0-spacegass` |
@@ -124,7 +126,12 @@ The generic certification stub remains tests/dev only and does **not** satisfy r
 | Executable | NOT_CONFIGURED |
 | Licence | UNAVAILABLE |
 | Automation | REQUIRES_CONFIRMATION |
+| Adapter compatibility | NOT_CONFIGURED |
 | Capability certification | none CERTIFIED |
 | Readiness | NOT_CONFIGURED |
 
-This amendment does **not** certify SPACE GASS.
+EXTERNAL_SOFTWARE_INSTALLATION: DEFERRED.
+SPACE_GASS_INSTALLATION: NOT_AVAILABLE_AT_THIS_STAGE.
+REAL_SOLVER_EXECUTION: NOT_CERTIFIED.
+
+This amendment does **not** certify SPACE GASS and does **not** fabricate READY.

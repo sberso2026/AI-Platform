@@ -552,7 +552,7 @@ describe("EOS-A5C generic JobService execution", () => {
       },
       (error: unknown) => {
         expect(String(error instanceof Error ? error.message : error)).toMatch(
-          /external_tool_profile_required|tool_not_ready|not READY|not certified/i,
+          /external_tool_profile_required|tool_not_configured|tool_not_ready|not READY|not certified|not configured/i,
         );
       },
     );

@@ -1,14 +1,15 @@
 # EOS-A5E Amendment — External Tool & Integration Governance
 
-Amendment to EOS-A5E (which remains FAIL for AAL2, browser, and live SPACE GASS execution).
-This change does **not** recertify those missing prerequisites and does **not** implement EOS-A6.
+Amendment to EOS-A5E. Missing licensed SPACE GASS is a **deferred external dependency**, not a failure of this governance framework.
+Does **not** implement EOS-A6 or fabricate solver readiness.
 
 | Field | Value |
 | --- | --- |
 | Parent A5E HEAD | `8977b6a45bc5a98cbc00f55d1d15cd0005907e5a` |
+| Amendment baseline | `a360fa40baf6a1db3901e1a3d04e91edf0ef8569` |
 | Branch | `cursor/era-7a-engineering-review-pilot-gate` |
 | Route | `/engineering/settings/external-tools` |
-| SPACE GASS readiness | `NOT_CONFIGURED` |
+| SPACE GASS readiness | `NOT_CONFIGURED` (deferred install) |
 | False solver certification | NO |
 
 ## What was implemented
@@ -53,3 +54,7 @@ Ordinary execute users may read tenant profiles; they cannot change executable, 
 ## Out of scope (preserved)
 
 No SPACE GASS install, no fabricated licence/version/automation, no structural optimization, no Value Intelligence, no second queue/host/graph, no MFA weaken, no commerce bypass.
+
+EXTERNAL_SOFTWARE_INSTALLATION: DEFERRED.
+SPACE_GASS_INSTALLATION: NOT_AVAILABLE_AT_THIS_STAGE.
+REAL_SOLVER_EXECUTION: NOT_CERTIFIED.

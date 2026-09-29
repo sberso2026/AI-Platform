@@ -46,10 +46,21 @@ export default function ExternalToolsSettingsPage() {
     <>
       <Header
         title="External Tools & Integrations"
-        description="Governed configuration for external engineering, analysis, and enterprise systems. SPACE GASS is not certified READY."
+        description="Governed configuration for external engineering, analysis, and enterprise systems. External software installation is deferred. SPACE GASS remains NOT_CONFIGURED."
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle className="text-base">Deferred external software</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm text-muted-foreground">
+            <p>EXTERNAL_SOFTWARE_INSTALLATION: DEFERRED</p>
+            <p>SPACE_GASS_INSTALLATION: NOT_AVAILABLE_AT_THIS_STAGE</p>
+            <p>REAL_SOLVER_EXECUTION: NOT_CERTIFIED</p>
+            <p>SPACE GASS overlay: version UNKNOWN, executable NOT_CONFIGURED, licence UNAVAILABLE, automation REQUIRES_CONFIRMATION, adapter compatibility NOT_CONFIGURED, readiness NOT_CONFIGURED.</p>
+          </CardContent>
+        </Card>
         <div className="mb-4 flex flex-wrap gap-2">
           <select className="rounded border px-2 py-1 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="ALL">All categories</option>

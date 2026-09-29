@@ -189,7 +189,7 @@ export const SPACE_GASS_CATALOG_ENTRY: ExternalToolCatalogEntry = {
   ],
   licenceRequired: true,
   notes:
-    "First governed execution-adapter profile. Intended LOCAL_WINDOWS_EXECUTION_HOST. Do not mark READY until live install, licence, automation, and validation pass.",
+    "First governed execution-adapter profile. Licensed install is deferred. Intended LOCAL_WINDOWS_EXECUTION_HOST. Do not fabricate READY.",
 };
 
 export const MICROSOFT_365_CATALOG_ENTRY: ExternalToolCatalogEntry = {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { MICROSOFT_365_CATALOG_ENTRY, SPACE_GASS_CATALOG_ENTRY, isIntegrationMode } from "./catalog";
 import { evaluateAdapterCompatibility } from "./compatibility";
+import { isCertificationStubAdapter } from "../optimization-intelligence/certification-adapter";
+import { CERTIFICATION_STUB_ADAPTER_ID } from "../optimization-intelligence/manifest";
 import { assertExternalToolReadyForOptimization, ExternalToolGovernanceError } from "./optimization-gate";
 import { deriveReadiness, requiredFieldsForModes } from "./readiness";
 import { findForbiddenSecretMaterial } from "./secrets";
@@ -10,6 +12,7 @@ import { ExternalToolProfileService } from "./profile-service";
 import { validationActionsForModes, validateProfile } from "./validation";
 import type { ExternalToolProfile, ExternalToolWorkspaceAssignment } from "./types";
 
+/** Synthetic future-state fixture for gate logic only. Not SPACE GASS certification evidence. */
 function readySpaceGass(overrides: Partial<ExternalToolProfile> = {}): ExternalToolProfile {
   const base = buildNotReadySpaceGassProfile({ tenantId: "tenant-a", id: "p1" });
   const merged = {
@@ -74,11 +77,23 @@ describe("EOS-A5E amendment — external tool governance", () => {
     const profile = buildNotReadySpaceGassProfile({ tenantId: "tenant-a" });
     expect(profile.installedVersion).toBeNull();
     expect(profile.executablePath).toBeNull();
+    expect(profile.executionHostId).toBeNull();
     expect(profile.licenceStatus).toBe("UNAVAILABLE");
     expect(profile.automationPermission).toBe("REQUIRES_CONFIRMATION");
     expect(profile.readiness).toBe("NOT_CONFIGURED");
     expect(profile.adapterCompatibilityStatus).toBe("NOT_CONFIGURED");
     expect(profile.capabilities.every((cap) => cap.certification !== "CERTIFIED")).toBe(true);
+    const linear = profile.capabilities.find((cap) => cap.key === "LINEAR_STATIC_ANALYSIS");
+    expect(linear?.availability).toBe("AVAILABLE");
+    expect(linear?.certification).toBe("NOT_CERTIFIED");
+  });
+
+  it("reuses EMI SPACE GASS adapter identity and keeps the generic stub tests/dev only", () => {
+    expect(SPACE_GASS_CATALOG_ENTRY.adapterId).toBe("spacegass_solver_adapter");
+    expect(SPACE_GASS_CATALOG_ENTRY.adapterVersion).toBe("0.3.0-spacegass");
+    expect(isCertificationStubAdapter(SPACE_GASS_CATALOG_ENTRY.adapterId)).toBe(false);
+    expect(isCertificationStubAdapter(CERTIFICATION_STUB_ADAPTER_ID)).toBe(true);
+    expect(SPACE_GASS_CATALOG_ENTRY.platformToolKey).toBeNull();
   });
 
   it("does not infer automation permission from executable presence", () => {
@@ -149,6 +164,95 @@ describe("EOS-A5E amendment — external tool governance", () => {
         workspaceId: "ws-a",
       }),
     ).not.toThrow();
+  });
+
+  it("blocks non-stub solver execution when SPACE GASS overlay is NOT_CONFIGURED", () => {
+    expect(isCertificationStubAdapter("spacegass")).toBe(false);
+    expect(isCertificationStubAdapter(CERTIFICATION_STUB_ADAPTER_ID)).toBe(true);
+    const overlay = buildNotReadySpaceGassProfile({ tenantId: "tenant-a", id: "catalog:spacegass" });
+    try {
+      assertExternalToolReadyForOptimization({
+        profile: overlay,
+        assignment: assignment({ profileId: overlay.id }),
+        workspaceId: "ws-a",
+      });
+      throw new Error("expected_block");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ExternalToolGovernanceError);
+      expect((error as ExternalToolGovernanceError).code).toBe("tool_not_configured");
+    }
+  });
+
+  it("blocks UNAVAILABLE licence even when a workspace assignment exists", () => {
+    const profile = readySpaceGass({ licenceStatus: "UNAVAILABLE" });
+    expect(profile.readiness).not.toBe("READY");
+    try {
+      assertExternalToolReadyForOptimization({ profile, assignment: assignment(), workspaceId: "ws-a" });
+      throw new Error("expected_block");
+    } catch (error) {
+      expect((error as ExternalToolGovernanceError).code).toBe("licence_not_available");
+    }
+  });
+
+  it("blocks REQUIRES_CONFIRMATION automation even when a workspace assignment exists", () => {
+    const profile = readySpaceGass({
+      automationPermission: "REQUIRES_CONFIRMATION",
+      automationConfirmedBy: null,
+      automationConfirmedAt: null,
+    });
+    try {
+      assertExternalToolReadyForOptimization({ profile, assignment: assignment(), workspaceId: "ws-a" });
+      throw new Error("expected_block");
+    } catch (error) {
+      expect((error as ExternalToolGovernanceError).code).toMatch(/automation_requires_confirmation|automation_not_permitted|tool_not_ready/);
+    }
+  });
+
+  it("blocks NOT_CONFIGURED adapter compatibility independently of workspace assignment", () => {
+    const profile = { ...readySpaceGass(), adapterCompatibilityStatus: "NOT_CONFIGURED" as const, readiness: "READY" as const };
+    try {
+      assertExternalToolReadyForOptimization({ profile, assignment: assignment(), workspaceId: "ws-a" });
+      throw new Error("expected_block");
+    } catch (error) {
+      expect((error as ExternalToolGovernanceError).code).toBe("adapter_not_configured");
+    }
+  });
+
+  it("treats available/connected capabilities as not certified", () => {
+    const base = readySpaceGass();
+    const profile = {
+      ...base,
+      capabilities: base.capabilities.map((cap) =>
+        cap.key === "OPTIMIZATION_EXECUTION"
+          ? { ...cap, availability: "AVAILABLE" as const, certification: "NOT_CERTIFIED" as const }
+          : cap,
+      ),
+    };
+    const derived = { ...profile, ...deriveReadiness(profile) };
+    expect(derived.capabilities.find((c) => c.key === "OPTIMIZATION_EXECUTION")?.availability).toBe("AVAILABLE");
+    expect(derived.capabilities.find((c) => c.key === "OPTIMIZATION_EXECUTION")?.certification).toBe("NOT_CERTIFIED");
+    try {
+      assertExternalToolReadyForOptimization({ profile: derived, assignment: assignment(), workspaceId: "ws-a" });
+      throw new Error("expected_block");
+    } catch (error) {
+      expect((error as ExternalToolGovernanceError).code).toMatch(/capability_not_certified|tool_not_ready/);
+    }
+  });
+
+  it("does not let workspace assignment override platform NOT_CONFIGURED readiness", () => {
+    const overlay = buildNotReadySpaceGassProfile({ tenantId: "tenant-a", id: "p1" });
+    expect(() =>
+      assertExternalToolReadyForOptimization({
+        profile: overlay,
+        assignment: assignment({
+          allowed: true,
+          permittedCapabilities: ["OPTIMIZATION_EXECUTION", "LINEAR_STATIC_ANALYSIS", "RESULT_EXTRACTION"],
+          unitSystem: "SI",
+          designStandard: "AS 4100",
+        }),
+        workspaceId: "ws-a",
+      }),
+    ).toThrow(/not configured|not READY|not certified|not available|requires confirmation/i);
   });
 
   it("rejects workspace attempts to set executable or licence", () => {

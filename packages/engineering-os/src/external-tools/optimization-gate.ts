@@ -37,8 +37,62 @@ export function assertCapabilityPermitted(
 }
 
 /**
+ * Platform execution preconditions. Workspace assignment cannot override these.
+ * Connected / available capabilities are not equivalent to certified.
+ */
+export function assertPlatformExecutionPreconditions(
+  profile: ExternalToolProfile,
+  requiredCapability = OPTIMIZATION_EXECUTION_CAPABILITY,
+): void {
+  if (!profile.enabled || profile.status === "disabled") {
+    throw new ExternalToolGovernanceError("External tool profile is disabled.", "tool_profile_disabled");
+  }
+  if (profile.readiness === "NOT_CONFIGURED") {
+    throw new ExternalToolGovernanceError(
+      `External tool is not configured (readiness=${profile.readiness}).`,
+      "tool_not_configured",
+    );
+  }
+  if (profile.adapterCompatibilityStatus !== "CERTIFIED") {
+    throw new ExternalToolGovernanceError(
+      `Adapter/tool version compatibility is ${profile.adapterCompatibilityStatus}.`,
+      profile.adapterCompatibilityStatus === "NOT_CONFIGURED" ? "adapter_not_configured" : "adapter_incompatible",
+    );
+  }
+  if (profile.licenceStatus === "UNAVAILABLE" || profile.licenceStatus === "EXPIRED") {
+    throw new ExternalToolGovernanceError("Licence is not available.", "licence_not_available");
+  }
+  if (profile.licenceStatus !== "AVAILABLE" && profile.licenceStatus !== "NOT_REQUIRED") {
+    throw new ExternalToolGovernanceError("Licence is not available.", "licence_not_available");
+  }
+  if (profile.automationPermission === "REQUIRES_CONFIRMATION") {
+    throw new ExternalToolGovernanceError("Automation requires confirmation.", "automation_requires_confirmation");
+  }
+  if (profile.automationPermission !== "PERMITTED") {
+    throw new ExternalToolGovernanceError("Automation is not permitted.", "automation_not_permitted");
+  }
+  const cap = profile.capabilities.find((row) => row.key === requiredCapability);
+  if (!cap || cap.certification !== "CERTIFIED") {
+    throw new ExternalToolGovernanceError(
+      `Capability ${requiredCapability} is not certified (availability=${cap?.availability ?? "missing"}). Available/connected is not certified.`,
+      "capability_not_certified",
+    );
+  }
+  if (profile.readiness !== "READY") {
+    throw new ExternalToolGovernanceError(
+      `External tool is not READY (readiness=${profile.readiness}).`,
+      "tool_not_ready",
+    );
+  }
+  if (!profile.executionHostId) {
+    throw new ExternalToolGovernanceError("Execution host is not configured.", "execution_host_missing");
+  }
+}
+
+/**
  * Real external solver execution must resolve through an approved READY profile.
  * Certification stub is out of scope for this gate.
+ * Workspace assignment cannot override platform readiness, licence, automation, or certification.
  */
 export function assertExternalToolReadyForOptimization(input: {
   profile: ExternalToolProfile;
@@ -47,34 +101,7 @@ export function assertExternalToolReadyForOptimization(input: {
   requiredCapability?: string;
 }): void {
   const capability = input.requiredCapability ?? OPTIMIZATION_EXECUTION_CAPABILITY;
-  if (!input.profile.enabled || input.profile.status === "disabled") {
-    throw new ExternalToolGovernanceError("External tool profile is disabled.", "tool_profile_disabled");
-  }
+  assertPlatformExecutionPreconditions(input.profile, capability);
   assertWorkspaceMaySelectProfile({ workspaceId: input.workspaceId, assignment: input.assignment });
   assertCapabilityPermitted(input.assignment!, capability);
-  const cap = input.profile.capabilities.find((row) => row.key === capability);
-  if (!cap || cap.certification !== "CERTIFIED") {
-    throw new ExternalToolGovernanceError(
-      `Capability ${capability} is not certified on this tool profile.`,
-      "capability_not_certified",
-    );
-  }
-  if (input.profile.readiness !== "READY") {
-    throw new ExternalToolGovernanceError(
-      `External tool is not READY (readiness=${input.profile.readiness}).`,
-      "tool_not_ready",
-    );
-  }
-  if (!input.profile.executionHostId) {
-    throw new ExternalToolGovernanceError("Execution host is not configured.", "execution_host_missing");
-  }
-  if (input.profile.adapterCompatibilityStatus !== "CERTIFIED") {
-    throw new ExternalToolGovernanceError("Adapter/tool version compatibility is not certified.", "adapter_incompatible");
-  }
-  if (input.profile.licenceStatus !== "AVAILABLE" && input.profile.licenceStatus !== "NOT_REQUIRED") {
-    throw new ExternalToolGovernanceError("Licence is not available.", "licence_not_available");
-  }
-  if (input.profile.automationPermission !== "PERMITTED") {
-    throw new ExternalToolGovernanceError("Automation is not permitted.", "automation_not_permitted");
-  }
 }

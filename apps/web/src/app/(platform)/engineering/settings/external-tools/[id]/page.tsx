@@ -128,7 +128,9 @@ export default function ExternalToolDetailPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Badge variant="secondary">{profile.readiness}</Badge>
-                <p className="text-sm text-muted-foreground">READY is not claimed. Live solver certification remains outstanding.</p>
+                <p className="text-sm text-muted-foreground">
+                  External software installation is deferred. READY is not claimed. Connected or available is not certified. Real solver execution is not certified.
+                </p>
               </CardContent>
             </Card>
             <Card className="md:col-span-2">
