@@ -13,7 +13,8 @@ type EngineeringObjectTable =
   | "engineering_lessons"
   | "engineering_projects"
   | "engineering_assets"
-  | "engineering_documents";
+  | "engineering_documents"
+  | "engineering_assumptions";
 
 export class EngineeringObjectFramework {
   constructor(
@@ -97,6 +98,9 @@ export class EngineeringObjectFramework {
     toId: string;
     relationship: string;
     createdBy?: string;
+    /** EOS-A2: persist governed taxonomy. Legacy callers omit this (false). */
+    governed?: boolean;
+    metadata?: Record<string, unknown>;
   }) {
     const { data, error } = await this.supabase
       .from("engineering_object_links")
@@ -108,6 +112,8 @@ export class EngineeringObjectFramework {
         to_id: input.toId,
         relationship: input.relationship,
         created_by: input.createdBy ?? null,
+        relationship_governed: input.governed === true,
+        metadata: (input.metadata ?? {}) as Json,
       })
       .select()
       .single();
@@ -132,6 +138,26 @@ export class EngineeringObjectFramework {
       }
     }
     return data;
+  }
+
+  async unlinkObjects(input: {
+    tenantId: string;
+    fromType: string;
+    fromId: string;
+    toType: string;
+    toId: string;
+    relationship: string;
+  }) {
+    const { error } = await this.supabase
+      .from("engineering_object_links")
+      .delete()
+      .eq("tenant_id", input.tenantId)
+      .eq("from_type", input.fromType)
+      .eq("from_id", input.fromId)
+      .eq("to_type", input.toType)
+      .eq("to_id", input.toId)
+      .eq("relationship", input.relationship);
+    if (error) throw new Error(`Failed to unlink objects: ${error.message}`);
   }
 
   async addComment(input: {
@@ -277,6 +303,7 @@ export class EngineeringObjectFramework {
       project: "engineering_projects",
       asset: "engineering_assets",
       document: "engineering_documents",
+      assumption: "engineering_assumptions",
     };
     return map[objectType] ?? null;
   }

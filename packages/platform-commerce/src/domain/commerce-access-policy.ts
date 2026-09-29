@@ -15,6 +15,25 @@ export interface CommerceAccessPolicy {
 
 export const ENGINEERING_PRODUCT = "engineering-os";
 
+/**
+ * Engineering OS core registers (A1–A5) are product capabilities of `engineering-os`.
+ * They must not require the Project Intelligence commercial application.
+ */
+export const ENGINEERING_OS_CORE_APPLICATION = undefined;
+export const ENGINEERING_OPTIMIZATION_CAPABILITY = "engineering_optimization";
+
+function engineeringOsCorePolicy(
+  action: string,
+  extra?: Pick<CommerceAccessPolicy, "cachePolicy" | "seatRequired">,
+): CommerceAccessPolicy {
+  return {
+    productKey: ENGINEERING_PRODUCT,
+    action,
+    seatRequired: extra?.seatRequired ?? true,
+    ...(extra?.cachePolicy ? { cachePolicy: extra.cachePolicy } : {}),
+  };
+}
+
 /** Engineering API route key → entitlement policy */
 export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "health.read": { productKey: ENGINEERING_PRODUCT, action: "health.read", seatRequired: false },
@@ -27,8 +46,24 @@ export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "assets.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "asset.write", seatRequired: true, cachePolicy: "fresh" },
   "companies.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "company.read", seatRequired: true },
   "disciplines.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "discipline.read", seatRequired: true },
-  "decisions.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "decision.read", seatRequired: true },
-  "decisions.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "decision.write", seatRequired: true, cachePolicy: "fresh" },
+  "decisions.read": engineeringOsCorePolicy("decision.read"),
+  "decisions.write": engineeringOsCorePolicy("decision.write", { cachePolicy: "fresh" }),
+  "assumptions.read": engineeringOsCorePolicy("decision.read"),
+  "assumptions.write": engineeringOsCorePolicy("decision.write", { cachePolicy: "fresh" }),
+  "systems.read": engineeringOsCorePolicy("asset.read"),
+  "systems.write": engineeringOsCorePolicy("asset.write", { cachePolicy: "fresh" }),
+  "interfaces.read": engineeringOsCorePolicy("asset.read"),
+  "interfaces.write": engineeringOsCorePolicy("asset.write", { cachePolicy: "fresh" }),
+  "requirements.read": engineeringOsCorePolicy("asset.read"),
+  "requirements.write": engineeringOsCorePolicy("asset.write", { cachePolicy: "fresh" }),
+  "changes.read": engineeringOsCorePolicy("asset.read"),
+  "changes.write": engineeringOsCorePolicy("asset.write", { cachePolicy: "fresh" }),
+  "impacts.read": engineeringOsCorePolicy("asset.read"),
+  "impacts.write": engineeringOsCorePolicy("asset.write", { cachePolicy: "fresh" }),
+  "configuration.read": engineeringOsCorePolicy("asset.read"),
+  "configuration.write": engineeringOsCorePolicy("asset.write", { cachePolicy: "fresh" }),
+  "optimization.read": engineeringOsCorePolicy("optimization.read"),
+  "optimization.write": engineeringOsCorePolicy("optimization.write", { cachePolicy: "fresh" }),
   "risks.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.read", seatRequired: true },
   "risks.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.write", seatRequired: true, cachePolicy: "fresh" },
   "issues.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "issue.read", seatRequired: true },
@@ -398,9 +433,15 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
   "/engineering/explore": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/intelligence": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/assets": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
+  "/engineering/systems": engineeringOsCorePolicy("access"),
+  "/engineering/interfaces": engineeringOsCorePolicy("access"),
+  "/engineering/requirements": engineeringOsCorePolicy("access"),
+  "/engineering/changes": engineeringOsCorePolicy("access"),
+  "/engineering/configuration": engineeringOsCorePolicy("access"),
+  "/engineering/optimization": engineeringOsCorePolicy("access"),
   "/engineering/settings": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/actions": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_controls", action: "access", seatRequired: true },
-  "/engineering/decisions": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
+  "/engineering/decisions": engineeringOsCorePolicy("access"),
   "/engineering/risks": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
   "/engineering/issues": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "access", seatRequired: true },
   "/engineering/lessons": { productKey: ENGINEERING_PRODUCT, applicationKey: "knowledge", action: "access", seatRequired: true },

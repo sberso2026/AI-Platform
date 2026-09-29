@@ -126,13 +126,13 @@ export function withEngineeringApi(
   handler: (context: CommerceHandlerContext, request: Request) => Promise<NextResponse>
 ) {
   return async (request: Request): Promise<NextResponse> => {
-    const guarded = await guardEngineeringApi(segment, request.method);
-    if (guarded instanceof NextResponse) return guarded;
     try {
+      const guarded = await guardEngineeringApi(segment, request.method);
+      if (guarded instanceof NextResponse) return guarded;
       return await handler(guarded, request);
     } catch (err) {
-      // Always return a JSON lifecycle/commerce error — never an empty non-JSON body.
-      return handleCommerceDomainError(err, guarded.correlationId);
+      // Guard and handler must both return JSON — never an empty non-JSON 500.
+      return handleCommerceDomainError(err, crypto.randomUUID());
     }
   };
 }
@@ -149,13 +149,13 @@ export function withEngineeringApiParams<T extends Record<string, string>>(
     request: Request,
     routeContext: { params: Promise<T> }
   ): Promise<NextResponse> => {
-    const guarded = await guardEngineeringApi(segment, request.method);
-    if (guarded instanceof NextResponse) return guarded;
     try {
+      const guarded = await guardEngineeringApi(segment, request.method);
+      if (guarded instanceof NextResponse) return guarded;
       const params = await routeContext.params;
       return await handler(guarded, request, params);
     } catch (err) {
-      return handleCommerceDomainError(err, guarded.correlationId);
+      return handleCommerceDomainError(err, crypto.randomUUID());
     }
   };
 }

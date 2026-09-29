@@ -1044,7 +1044,13 @@ export class EngineeringDocumentService {
       }
     }
 
-    const metadata = {
+    const priorRevisionSource =
+      typeof current.metadata?.revision_source === "string" ? current.metadata.revision_source : "manual";
+    const priorFilenameFallback =
+      typeof current.metadata?.filename_fallback_number === "string"
+        ? current.metadata.filename_fallback_number
+        : null;
+    const metadata: Json = {
       ...(current.metadata ?? {}),
       metadata_review_state: "confirmed",
       proposed_document_number: nextNumber,
@@ -1052,12 +1058,12 @@ export class EngineeringDocumentService {
       proposed_revision: nextRevision,
       proposed_document_type: nextType,
       document_number_source: input.numberSource ?? "manual",
-      revision_source: input.revision ? "manual" : current.metadata?.revision_source ?? "manual",
+      revision_source: input.revision ? "manual" : priorRevisionSource,
       metadata_reviewed_at: now,
       metadata_reviewed_by: input.reviewedBy ?? null,
       filename_fallback_number: isFilenameFallbackNumber(current.document_number)
         ? current.document_number
-        : current.metadata?.filename_fallback_number ?? null,
+        : priorFilenameFallback,
     };
     const { data, error } = await this.supabase
       .from("engineering_documents")
@@ -1066,7 +1072,7 @@ export class EngineeringDocumentService {
         title: nextTitle,
         revision: nextRevision,
         document_type: nextType,
-        metadata: metadata as Json,
+        metadata,
       })
       .eq("tenant_id", tenantId)
       .eq("id", documentId)

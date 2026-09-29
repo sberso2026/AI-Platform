@@ -28,6 +28,16 @@ import {
   EngineeringRiskService,
   EngineeringTechnicalQueryService,
 } from "./services/register-services";
+import { EngineeringAssumptionService } from "./decision-intelligence/assumption-service";
+import { EngineeringSystemService } from "./systems-intelligence/system-service";
+import { EngineeringInterfaceService } from "./systems-intelligence/interface-service";
+import { EngineeringRequirementService } from "./control-intelligence/requirement-service";
+import { EngineeringChangeService } from "./control-intelligence/change-service";
+import { EngineeringImpactService } from "./control-intelligence/impact-service";
+import { EngineeringConfigurationService } from "./control-intelligence/configuration-service";
+import { OptimizationStudyService } from "./optimization-intelligence/study-service";
+import { OptimizationRunService } from "./optimization-intelligence/run-service";
+import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
 import { EngineeringHealthService } from "./services/health-service";
 import { workspaceScopeId } from "./commerce/workspace-scope";
@@ -49,6 +59,15 @@ export interface EngineeringOS {
   issues: EngineeringIssueService;
   technicalQueries: EngineeringTechnicalQueryService;
   lessons: EngineeringLessonService;
+  assumptions: EngineeringAssumptionService;
+  systems: EngineeringSystemService;
+  interfaces: EngineeringInterfaceService;
+  requirements: EngineeringRequirementService;
+  changes: EngineeringChangeService;
+  impacts: EngineeringImpactService;
+  configuration: EngineeringConfigurationService;
+  optimizationStudies: OptimizationStudyService;
+  optimizationRuns: OptimizationRunService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -74,6 +93,16 @@ export function createEngineeringOS(
   const issues = new EngineeringIssueService(supabase, kernel);
   const technicalQueries = new EngineeringTechnicalQueryService(supabase, kernel);
   const lessons = new EngineeringLessonService(supabase, kernel);
+  const assumptions = new EngineeringAssumptionService(supabase, kernel);
+  const systems = new EngineeringSystemService(supabase, kernel);
+  const interfaces = new EngineeringInterfaceService(supabase, kernel);
+  const requirements = new EngineeringRequirementService(supabase, kernel);
+  const changes = new EngineeringChangeService(supabase, kernel);
+  const impacts = new EngineeringImpactService(supabase, kernel);
+  const configuration = new EngineeringConfigurationService(supabase, kernel);
+  const optimizationStudies = new OptimizationStudyService(supabase, kernel);
+  const optimizationRuns = new OptimizationRunService(supabase, kernel);
+  registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   const timeline = new EngineeringTimelineService(supabase);
   const activity = new EngineeringActivityService(supabase);
   const objects = new EngineeringObjectFramework(supabase, kernel);
@@ -136,6 +165,15 @@ export function createEngineeringOS(
     issues,
     technicalQueries,
     lessons,
+    assumptions,
+    systems,
+    interfaces,
+    requirements,
+    changes,
+    impacts,
+    configuration,
+    optimizationStudies,
+    optimizationRuns,
     timeline,
     activity,
     objects,

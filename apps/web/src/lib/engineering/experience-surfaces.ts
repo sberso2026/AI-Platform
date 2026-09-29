@@ -75,6 +75,7 @@ export const ENGINEERING_EXPLORE_GROUPS = [
     title: "Core records",
     items: [
       { id: "projects", label: "Projects", href: "/engineering/projects" },
+      { id: "systems", label: "Systems", href: "/engineering/systems" },
       { id: "assets", label: "Assets", href: "/engineering/assets" },
       { id: "documents", label: "Documents", href: "/engineering/documents" },
     ],
@@ -85,6 +86,11 @@ export const ENGINEERING_EXPLORE_GROUPS = [
     items: [
       { id: "tqs", label: "TQs / RFIs", href: "/engineering/technical-queries" },
       { id: "decisions", label: "Decisions", href: "/engineering/decisions" },
+      { id: "interfaces", label: "Interfaces", href: "/engineering/interfaces" },
+      { id: "requirements", label: "Requirements", href: "/engineering/requirements" },
+      { id: "changes", label: "Changes", href: "/engineering/changes" },
+      { id: "configuration", label: "Configuration", href: "/engineering/configuration" },
+      { id: "optimization", label: "Optimization", href: "/engineering/optimization" },
       { id: "actions", label: "Actions", href: "/engineering/actions" },
       { id: "risks", label: "Risks", href: "/engineering/risks" },
       { id: "issues", label: "Issues", href: "/engineering/issues" },

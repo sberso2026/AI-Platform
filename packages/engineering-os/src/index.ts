@@ -122,6 +122,29 @@ export {
   EngineeringTechnicalQueryService,
   EngineeringLessonService,
 } from "./services/register-services";
+export { EngineeringAssumptionService } from "./decision-intelligence/assumption-service";
+export { EngineeringSystemService } from "./systems-intelligence/system-service";
+export { EngineeringInterfaceService } from "./systems-intelligence/interface-service";
+export { EngineeringRequirementService } from "./control-intelligence/requirement-service";
+export { EngineeringChangeService } from "./control-intelligence/change-service";
+export { EngineeringImpactService } from "./control-intelligence/impact-service";
+export { EngineeringConfigurationService } from "./control-intelligence/configuration-service";
+export { OptimizationStudyService } from "./optimization-intelligence/study-service";
+export { OptimizationRunService } from "./optimization-intelligence/run-service";
+export { registerOptimizationEvaluateHandler, createOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
+export { CERTIFICATION_STUB_ADAPTER_ID, MANIFEST_SCHEMA_VERSION, fingerprintRunInputManifest, buildRunInputManifest } from "./optimization-intelligence/manifest";
+export {
+  GOVERNED_RELATION_TYPES,
+  A2_WRITABLE_RELATIONS,
+  A3_WRITABLE_RELATIONS,
+  A4_WRITABLE_RELATIONS,
+  A5_WRITABLE_RELATIONS,
+  assertGovernedRelationWrite,
+  assertA3GovernedRelationWrite,
+  assertA4GovernedRelationWrite,
+  assertA5GovernedRelationWrite,
+  isGovernedRelationType,
+} from "./decision-intelligence/relations";
 export {
   EngineeringDemoDataService,
   type DemoSeedResult,

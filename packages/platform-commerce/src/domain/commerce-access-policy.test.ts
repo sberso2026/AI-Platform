@@ -14,6 +14,14 @@ const ENGINEERING_API_SEGMENTS = [
   "companies",
   "disciplines",
   "decisions",
+  "assumptions",
+  "systems",
+  "interfaces",
+  "requirements",
+  "changes",
+  "impacts",
+  "configuration",
+  "optimization",
   "risks",
   "issues",
   "actions",
@@ -51,5 +59,24 @@ describe("ENGINEERING_API_POLICIES", () => {
   it("requires fresh cache for write operations", () => {
     const write = getEngineeringApiPolicy("projects", "POST");
     expect(write.cachePolicy).toBe("fresh");
+  });
+
+  it("maps Optimization to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("optimization", "GET");
+    const write = getEngineeringApiPolicy("optimization", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("optimization.read");
+    expect(write.action).toBe("optimization.write");
+  });
+
+  it("maps Engineering OS A2-A4 registers to product entitlement, not PI", () => {
+    for (const segment of ["decisions", "assumptions", "systems", "interfaces", "requirements", "changes", "impacts", "configuration"]) {
+      const policy = getEngineeringApiPolicy(segment, "GET");
+      expect(policy.productKey).toBe("engineering-os");
+      expect(policy.applicationKey).toBeUndefined();
+    }
   });
 });

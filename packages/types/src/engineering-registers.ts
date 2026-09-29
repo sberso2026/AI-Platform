@@ -11,7 +11,15 @@ export type EngineeringObjectType =
   | "lesson"
   | "project"
   | "asset"
-  | "document";
+  | "document"
+  | "assumption"
+  | "alternative"
+  | "system"
+  | "interface"
+  | "requirement"
+  | "change"
+  | "impact"
+  | "configuration_baseline";
 
 export type EngineeringObjectPriority = "low" | "medium" | "high" | "critical";
 
@@ -54,6 +62,54 @@ export interface EngineeringDecision extends EngineeringObjectBase {
   approval_status: string;
   approved_by?: string;
   decision_date?: string;
+  decision_question?: string;
+  authority_id?: string;
+  effective_at?: string;
+  selected_alternative_id?: string;
+  supersedes_decision_id?: string;
+}
+
+export interface EngineeringDecisionAlternative {
+  id: string;
+  tenant_id: string;
+  workspace_id?: string;
+  project_id?: string;
+  decision_id: string;
+  alternative_code: string;
+  name: string;
+  description?: string;
+  status: string;
+  is_selected: boolean;
+  rationale?: string;
+  source?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EngineeringDecisionApproval {
+  id: string;
+  tenant_id: string;
+  decision_id: string;
+  action: string;
+  actor_id: string;
+  actor_kind: "human";
+  authority_role?: string;
+  comments?: string;
+  evidence_ref?: string;
+  created_at: string;
+}
+
+export interface EngineeringAssumption extends EngineeringObjectBase {
+  assumption_number: string;
+  statement: string;
+  source?: string;
+  rationale?: string;
+  confidence?: number;
+  validation_status: string;
+  materiality: string;
+  validation_due_at?: string;
+  review_condition?: string;
+  expires_at?: string;
 }
 
 export interface EngineeringAction extends EngineeringObjectBase {
@@ -142,6 +198,7 @@ export const ENGINEERING_REGISTER_OBJECT_TYPES: EngineeringObjectType[] = [
   "issue",
   "technical_query",
   "lesson",
+  "assumption",
 ];
 
 export const REGISTER_KG_NODE_TYPES: Record<string, string> = {
@@ -151,4 +208,5 @@ export const REGISTER_KG_NODE_TYPES: Record<string, string> = {
   issue: "engineering_issue",
   technical_query: "engineering_technical_query",
   lesson: "engineering_lesson",
+  assumption: "engineering_assumption",
 };

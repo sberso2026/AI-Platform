@@ -487,7 +487,7 @@ export class EngineeringTechnicalQueryService {
     let metaPatch: Record<string, unknown | undefined> = {};
     let eventSuffix = input.action;
     let eventTitle = `${existing.tq_number} updated`;
-    let notify: "assigned" | "review" | "clarification" | "closed" | null = null;
+    let notify: "assigned" | "review" | "clarification" | "accept" | "closed" | null = null;
 
     switch (input.action) {
       case "save_draft":

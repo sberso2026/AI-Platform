@@ -4,6 +4,12 @@ import { ApplicationEntitlementLayout } from "@/components/commerce/application-
 const ROUTES = [
   "/engineering/actions",
   "/engineering/decisions",
+  "/engineering/systems",
+  "/engineering/interfaces",
+  "/engineering/requirements",
+  "/engineering/changes",
+  "/engineering/configuration",
+  "/engineering/optimization",
   "/engineering/risks",
   "/engineering/issues",
   "/engineering/lessons",

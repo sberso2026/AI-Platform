@@ -107,18 +107,28 @@ export async function runGroundedEngineeringAsk(input: {
   skipIntelligence?: boolean;
 }): Promise<GroundedAskResult> {
   const generationProbe = Boolean(input.tryGenerate);
-  let lastGenerateMeta: {
+  type GenerateMeta = {
     content?: string;
     failed?: boolean;
     failureLayer?: string;
     failureCause?: string;
     provider?: string;
     model?: string | null;
-  } | null = null;
+  };
+  const generateMeta: { current: GenerateMeta | null } = { current: null };
   const tryGenerate = input.tryGenerate
     ? async (args: { message: string; evidenceSummary: string }) => {
         const generated = await input.tryGenerate!(args);
-        lastGenerateMeta = generated;
+        if (generated) {
+          generateMeta.current = {
+            content: generated.content,
+            failed: generated.failed,
+            failureLayer: generated.failureLayer,
+            failureCause: generated.failureCause,
+            provider: generated.provider,
+            model: generated.model,
+          };
+        }
         return generated;
       }
     : undefined;
@@ -279,14 +289,14 @@ export async function runGroundedEngineeringAsk(input: {
 
   if (reasoning?.degradedToRetrievalOnly) {
     generationFailed = true;
-    generationFailureLayer = lastGenerateMeta?.failureLayer ?? "reasoning_provider";
-    generationFailureCause = lastGenerateMeta?.failureCause ?? "refine_failed";
+    generationFailureLayer = generateMeta.current?.failureLayer ?? "reasoning_provider";
+    generationFailureCause = generateMeta.current?.failureCause ?? "refine_failed";
     retrievalMode = "retrieval_only";
     message = reasoning.answer;
     answer.limitations.push(...reasoning.limitations);
   } else if (reasoning) {
     generationAvailable = Boolean(tryGenerate) && !reasoning.degradedToRetrievalOnly;
-    generationProvider = lastGenerateMeta?.provider ?? null;
+    generationProvider = generateMeta.current?.provider ?? null;
     answer.evidence = reasoning.evidence;
     answer.evidenceState = reasoning.evidenceState;
     answer.abstained = reasoning.abstained;
@@ -297,9 +307,9 @@ export async function runGroundedEngineeringAsk(input: {
     answer.limitations = [
       ...new Set([...answer.limitations, ...reasoning.limitations]),
     ];
-    if (lastGenerateMeta?.content?.trim() && isDocumentBodyEvidence(reasoning.evidence)) {
+    if (generateMeta.current?.content?.trim() && isDocumentBodyEvidence(reasoning.evidence)) {
       const evidenceText = reasoning.evidence.map((item) => item.excerpt).join("\n");
-      const verified = verifyClaimsAgainstEvidence(lastGenerateMeta.content, evidenceText);
+      const verified = verifyClaimsAgainstEvidence(generateMeta.current.content, evidenceText);
       const presentation = buildDocumentQaPresentation({
         query: input.query.query,
         evidence: reasoning.evidence,

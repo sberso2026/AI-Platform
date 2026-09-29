@@ -60,6 +60,7 @@ describe("Engineering OS installation seed", () => {
     expect(keys).toContain("engineering_os");
     expect(keys).toContain("engineering_project_management");
     expect(keys).toContain("engineering_ai_workspace");
+    expect(keys).toContain("engineering_optimization");
   });
 
   it("seeds expected disciplines", () => {
@@ -167,8 +168,8 @@ describe("Knowledge Graph node types", () => {
     expect(types).toHaveLength(3);
   });
 
-  it("defines register KG node types for all six registers", () => {
-    expect(ENGINEERING_REGISTER_OBJECT_TYPES).toHaveLength(6);
+  it("defines register KG node types for Core registers including assumptions", () => {
+    expect(ENGINEERING_REGISTER_OBJECT_TYPES).toHaveLength(7);
     ENGINEERING_REGISTER_OBJECT_TYPES.forEach((objectType) => {
       expect(REGISTER_KG_NODE_TYPES[objectType]).toMatch(/^engineering_/);
     });
@@ -181,7 +182,7 @@ describe("Knowledge Graph node types", () => {
 });
 
 describe("Engineering Intelligence Registers (Batch 2.05)", () => {
-  it("declares six register object types owned by Engineering Core", () => {
+  it("declares Core register object types including EOS-A2 assumptions", () => {
     expect(ENGINEERING_REGISTER_OBJECT_TYPES).toEqual([
       "decision",
       "action",
@@ -189,6 +190,7 @@ describe("Engineering Intelligence Registers (Batch 2.05)", () => {
       "issue",
       "technical_query",
       "lesson",
+      "assumption",
     ]);
   });
 
@@ -199,6 +201,7 @@ describe("Engineering Intelligence Registers (Batch 2.05)", () => {
     expect(REGISTER_KG_NODE_TYPES.issue).toBe("engineering_issue");
     expect(REGISTER_KG_NODE_TYPES.technical_query).toBe("engineering_technical_query");
     expect(REGISTER_KG_NODE_TYPES.lesson).toBe("engineering_lesson");
+    expect(REGISTER_KG_NODE_TYPES.assumption).toBe("engineering_assumption");
   });
 
   it("requires human approval for engineering decisions", () => {
@@ -295,6 +298,18 @@ describe("Engineering OS RLS tenant isolation principle", () => {
       "engineering_technical_queries",
       "engineering_lessons",
       "engineering_object_links",
+      "engineering_assumptions",
+      "engineering_systems",
+      "engineering_interfaces",
+      "engineering_requirements",
+      "engineering_changes",
+      "engineering_impacts",
+      "engineering_configuration_baselines",
+      "engineering_configuration_items",
+      "engineering_optimization_studies",
+      "engineering_optimization_runs",
+      "engineering_decision_alternatives",
+      "engineering_decision_approvals",
       "engineering_timeline_events",
       "engineering_activity_events",
     ];

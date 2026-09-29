@@ -147,7 +147,8 @@ export type JobType =
   | "notification.send"
   | "report.generate"
   | "telemetry.process"
-  | "workflow.advance";
+  | "workflow.advance"
+  | "engineering.optimization.evaluate";
 
 export type JobStatus =
   | "pending"

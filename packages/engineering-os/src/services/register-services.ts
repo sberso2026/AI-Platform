@@ -5,6 +5,14 @@ import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import { sanitizePostgrestIlike } from "./postgrest-ilike";
 import { EngineeringObjectFramework } from "./object-framework";
+import {
+  assertApprovalAction,
+  assertHumanApprovalActor,
+  assertSingleSelectedAlternative,
+  assertSupersessionPair,
+  type DecisionApprovalAction,
+} from "../decision-intelligence/invariants";
+import { assertGovernedRelationWrite, type A2WritableRelation } from "../decision-intelligence/relations";
 export { EngineeringTechnicalQueryService } from "./technical-query-service";
 
 type EngineeringRegisterTable =
@@ -13,7 +21,8 @@ type EngineeringRegisterTable =
   | "engineering_risks"
   | "engineering_issues"
   | "engineering_technical_queries"
-  | "engineering_lessons";
+  | "engineering_lessons"
+  | "engineering_assumptions";
 
 type CreateCommon = {
   tenantId: string;
@@ -160,11 +169,18 @@ export class EngineeringDecisionService {
       .eq("id", id)
       .single();
     if (error) return null;
-    const [links, comments] = await Promise.all([
+    const workspaceId = workspaceScopeId(commerce);
+    if (workspaceId && data.workspace_id && data.workspace_id !== workspaceId) return null;
+    const [links, comments, alternatives, approvals] = await Promise.all([
       this.framework.listLinks(tenantId, "decision", id),
       this.framework.listComments(tenantId, "decision", id),
+      this.listAlternatives(commerce, tenantId, id),
+      this.listApprovals(commerce, tenantId, id),
     ]);
-    return { decision: data, links, comments };
+    const assumptionLinks = (links as { to_type?: string; from_type?: string }[]).filter(
+      (link) => link.to_type === "assumption" || link.from_type === "assumption",
+    );
+    return { decision: data, links, comments, alternatives, approvals, assumptionLinks };
   }
 
   async create(
@@ -177,6 +193,10 @@ export class EngineeringDecisionService {
       alternatives?: unknown[];
       consequences?: string;
       confidence?: number;
+      decisionQuestion?: string;
+      authorityId?: string;
+      effectiveAt?: string;
+      supersedesDecisionId?: string;
     },
     policyKey = "decision.create"
   ) {
@@ -212,6 +232,10 @@ export class EngineeringDecisionService {
         alternatives: (input.alternatives ?? []) as Json,
         consequences: input.consequences ?? null,
         confidence: input.confidence ?? null,
+        decision_question: input.decisionQuestion ?? null,
+        authority_id: input.authorityId ?? input.ownerId ?? null,
+        effective_at: input.effectiveAt ?? null,
+        supersedes_decision_id: input.supersedesDecisionId ?? null,
         review_status: "pending",
         approval_status: "pending",
         due_date: input.dueDate ?? null,
@@ -221,6 +245,10 @@ export class EngineeringDecisionService {
       .select()
       .single();
     if (error || !data) throw new Error(`Failed to create decision: ${error?.message}`);
+
+    if (Array.isArray(input.alternatives) && input.alternatives.length > 0) {
+      await this.materializeLegacyAlternatives(data.id as string, input.tenantId, input.alternatives, input.createdBy);
+    }
 
     // Start decision approval workflow if available
     if (this.kernel) {
@@ -249,43 +277,11 @@ export class EngineeringDecisionService {
 
   async approve(commerce: CommerceExecutionContext, tenantId: string, id: string, approvedBy: string) {
     assertEngineeringService(commerce, "decision.create", tenantId);
-    const { data, error } = await this.supabase
-      .from("engineering_decisions")
-      .update({
-        approval_status: "approved",
-        review_status: "approved",
-        approved_by: approvedBy,
-        status: "approved",
-        decision_date: new Date().toISOString().slice(0, 10),
-      })
-      .eq("id", id)
-      .eq("tenant_id", tenantId)
-      .select()
-      .single();
-    if (error || !data) throw new Error(`Failed to approve decision: ${error?.message}`);
-
-    await this.framework.publishCreated({
-      tenantId,
-      objectType: "decision",
-      objectId: id,
-      title: `Decision approved: ${data.title}`,
-      projectId: data.project_id as string | undefined,
+    assertHumanApprovalActor("human", approvedBy);
+    return this.recordApproval(commerce, tenantId, id, {
+      action: "approved",
       actorId: approvedBy,
-      eventSuffix: "approved",
     });
-
-    if (approvedBy) {
-      await this.kernel?.notifications
-        .create({
-          tenantId,
-          userId: approvedBy,
-          type: "engineering.decision.approved",
-          title: "Decision approved",
-          body: String(data.title),
-        })
-        .catch(() => undefined);
-    }
-    return data;
   }
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
@@ -303,6 +299,414 @@ export class EngineeringDecisionService {
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  }
+
+  async listAlternatives(commerce: CommerceExecutionContext, tenantId: string, decisionId: string) {
+    assertEngineeringService(commerce, "decision.get", tenantId);
+    const { data, error } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("decision_id", decisionId)
+      .order("created_at");
+    if (error) throw new Error(`Failed to list alternatives: ${error.message}`);
+    return data ?? [];
+  }
+
+  async listApprovals(commerce: CommerceExecutionContext, tenantId: string, decisionId: string) {
+    assertEngineeringService(commerce, "decision.get", tenantId);
+    const { data, error } = await this.supabase
+      .from("engineering_decision_approvals")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("decision_id", decisionId)
+      .order("created_at");
+    if (error) throw new Error(`Failed to list approvals: ${error.message}`);
+    return data ?? [];
+  }
+
+  async createAlternative(
+    commerce: CommerceExecutionContext,
+    input: {
+      tenantId: string;
+      decisionId: string;
+      name: string;
+      alternativeCode?: string;
+      description?: string;
+      rationale?: string;
+      source?: string;
+      createdBy?: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "decision.create", input.tenantId);
+    const parent = await this.requireDecision(input.tenantId, input.decisionId, commerce);
+    const { count } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .select("*", { count: "exact", head: true })
+      .eq("decision_id", input.decisionId)
+      .eq("tenant_id", input.tenantId);
+    const code = input.alternativeCode?.trim() || `ALT-${String((count ?? 0) + 1).padStart(2, "0")}`;
+    const { data, error } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .insert({
+        tenant_id: parent.tenant_id,
+        workspace_id: parent.workspace_id ?? null,
+        project_id: parent.project_id ?? null,
+        decision_id: input.decisionId,
+        alternative_code: code,
+        name: input.name,
+        description: input.description ?? null,
+        rationale: input.rationale ?? null,
+        source: input.source ?? null,
+        status: "considered",
+        is_selected: false,
+        created_by: input.createdBy ?? null,
+      })
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to create alternative: ${error?.message}`);
+    return data;
+  }
+
+  async updateAlternative(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    alternativeId: string,
+    patch: { name?: string; description?: string; rationale?: string; status?: string },
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const { data, error } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .update({
+        ...(patch.name !== undefined ? { name: patch.name } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.rationale !== undefined ? { rationale: patch.rationale } : {}),
+        ...(patch.status !== undefined ? { status: patch.status } : {}),
+      })
+      .eq("id", alternativeId)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update alternative: ${error?.message}`);
+    return data;
+  }
+
+  async selectAlternative(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    decisionId: string,
+    alternativeId: string,
+    actorId?: string,
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const { data: alternative, error: altError } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .select("*")
+      .eq("id", alternativeId)
+      .eq("tenant_id", tenantId)
+      .eq("decision_id", decisionId)
+      .single();
+    if (altError || !alternative) throw new Error("Alternative not found for this decision");
+    const { data, error } = await this.supabase
+      .from("engineering_decisions")
+      .update({ selected_alternative_id: alternativeId })
+      .eq("id", decisionId)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to select alternative: ${error?.message}`);
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (data.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: decisionId,
+      title: `Alternative selected: ${alternative.name}`,
+      projectId: data.project_id as string | undefined,
+      actorId,
+      eventSuffix: "updated",
+    });
+    await this.framework
+      .linkObjects({
+        tenantId,
+        fromType: "decision",
+        fromId: decisionId,
+        toType: "alternative",
+        toId: alternativeId,
+        relationship: "SELECTS",
+        createdBy: actorId,
+        governed: true,
+      })
+      .catch(() => undefined);
+    return data;
+  }
+
+  async recordApproval(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    decisionId: string,
+    input: {
+      action: DecisionApprovalAction | string;
+      actorId: string;
+      comments?: string;
+      authorityRole?: string;
+      evidenceRef?: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    assertApprovalAction(input.action);
+    assertHumanApprovalActor("human", input.actorId);
+    const parent = await this.requireDecision(tenantId, decisionId, commerce);
+    const { data: approval, error: approvalError } = await this.supabase
+      .from("engineering_decision_approvals")
+      .insert({
+        tenant_id: parent.tenant_id,
+        workspace_id: parent.workspace_id ?? null,
+        project_id: parent.project_id ?? null,
+        decision_id: decisionId,
+        action: input.action,
+        actor_id: input.actorId,
+        actor_kind: "human",
+        authority_role: input.authorityRole ?? null,
+        comments: input.comments ?? null,
+        evidence_ref: input.evidenceRef ?? null,
+      })
+      .select()
+      .single();
+    if (approvalError || !approval) throw new Error(`Failed to record approval: ${approvalError?.message}`);
+
+    const parentPatch: Record<string, unknown> = {};
+    if (input.action === "approved") {
+      parentPatch.approval_status = "approved";
+      parentPatch.review_status = "approved";
+      parentPatch.approved_by = input.actorId;
+      parentPatch.status = "approved";
+      parentPatch.decision_date = new Date().toISOString().slice(0, 10);
+      parentPatch.effective_at = parent.effective_at ?? new Date().toISOString();
+    } else if (input.action === "rejected") {
+      parentPatch.approval_status = "rejected";
+      parentPatch.status = "rejected";
+    } else if (input.action === "withdrawn") {
+      parentPatch.approval_status = "withdrawn";
+    } else if (input.action === "submitted") {
+      parentPatch.approval_status = "pending";
+      parentPatch.review_status = "in_review";
+    } else if (input.action === "superseded") {
+      parentPatch.status = "superseded";
+      parentPatch.approval_status = "superseded";
+    }
+
+    let updated = parent;
+    if (Object.keys(parentPatch).length > 0) {
+      const { data, error } = await this.supabase
+        .from("engineering_decisions")
+        .update(parentPatch)
+        .eq("id", decisionId)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
+      if (error || !data) throw new Error(`Failed to update decision after approval: ${error?.message}`);
+      updated = data as Record<string, unknown>;
+    }
+
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (parent.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: decisionId,
+      title: `Decision ${input.action}: ${updated.title}`,
+      projectId: updated.project_id as string | undefined,
+      actorId: input.actorId,
+      eventSuffix: input.action === "approved" ? "approved" : "updated",
+    });
+
+    if (input.action === "approved") {
+      await this.kernel?.notifications
+        .create({
+          tenantId,
+          userId: input.actorId,
+          type: "engineering.decision.approved",
+          title: "Decision approved",
+          body: String(updated.title),
+        })
+        .catch(() => undefined);
+    }
+    return { decision: updated, approval };
+  }
+
+  async supersede(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    successorId: string,
+    supersededId: string,
+    actorId: string,
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const successor = await this.requireDecision(tenantId, successorId, commerce);
+    const prior = await this.requireDecision(tenantId, supersededId, commerce);
+    assertSupersessionPair({
+      decisionId: successorId,
+      supersedesDecisionId: supersededId,
+      tenantId,
+      workspaceId: successor.workspace_id as string | null,
+      prior: {
+        id: prior.id as string,
+        tenant_id: prior.tenant_id as string,
+        workspace_id: (prior.workspace_id as string | null) ?? null,
+        supersedes_decision_id: (prior.supersedes_decision_id as string | null) ?? null,
+      },
+    });
+    const { data, error } = await this.supabase
+      .from("engineering_decisions")
+      .update({ supersedes_decision_id: supersededId })
+      .eq("id", successorId)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to supersede decision: ${error?.message}`);
+    await this.recordApproval(commerce, tenantId, supersededId, {
+      action: "superseded",
+      actorId,
+      comments: `Superseded by ${String(successor.decision_number ?? successorId)}`,
+    });
+    await this.framework
+      .linkObjects({
+        tenantId,
+        fromType: "decision",
+        fromId: successorId,
+        toType: "decision",
+        toId: supersededId,
+        relationship: "SUPERSEDES",
+        createdBy: actorId,
+        governed: true,
+      })
+      .catch(() => undefined);
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (data.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: successorId,
+      title: "Decision superseded prior record",
+      projectId: data.project_id as string | undefined,
+      actorId,
+      eventSuffix: "updated",
+    });
+    return data;
+  }
+
+  async updateDecision(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    patch: {
+      title?: string;
+      description?: string;
+      rationale?: string;
+      decisionQuestion?: string;
+      authorityId?: string | null;
+      confidence?: number | null;
+      recommendation?: string;
+      effectiveAt?: string | null;
+    },
+    actorId?: string,
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const row: Record<string, unknown> = {};
+    if (patch.title !== undefined) row.title = patch.title;
+    if (patch.description !== undefined) row.description = patch.description;
+    if (patch.rationale !== undefined) row.rationale = patch.rationale;
+    if (patch.decisionQuestion !== undefined) row.decision_question = patch.decisionQuestion;
+    if (patch.authorityId !== undefined) row.authority_id = patch.authorityId;
+    if (patch.confidence !== undefined) row.confidence = patch.confidence;
+    if (patch.recommendation !== undefined) row.recommendation = patch.recommendation;
+    if (patch.effectiveAt !== undefined) row.effective_at = patch.effectiveAt;
+    const { data, error } = await this.supabase
+      .from("engineering_decisions")
+      .update(row)
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update decision: ${error?.message}`);
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (data.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: id,
+      title: `Decision updated: ${data.title}`,
+      projectId: data.project_id as string | undefined,
+      actorId,
+      eventSuffix: "updated",
+    });
+    return data;
+  }
+
+  async linkGoverned(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      fromType: string;
+      fromId: string;
+      toType: string;
+      toId: string;
+      relationship: A2WritableRelation;
+      createdBy?: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    assertGovernedRelationWrite(input);
+    return this.framework.linkObjects({
+      tenantId,
+      fromType: input.fromType,
+      fromId: input.fromId,
+      toType: input.toType,
+      toId: input.toId,
+      relationship: input.relationship,
+      createdBy: input.createdBy,
+      governed: true,
+    });
+  }
+
+  private async requireDecision(
+    tenantId: string,
+    id: string,
+    commerce: CommerceExecutionContext,
+  ): Promise<Record<string, unknown>> {
+    const workspaceId = workspaceScopeId(commerce);
+    let q = this.supabase.from("engineering_decisions").select("*").eq("tenant_id", tenantId).eq("id", id);
+    if (workspaceId) q = q.eq("workspace_id", workspaceId);
+    const { data, error } = await q.maybeSingle();
+    if (error || !data) throw new Error("Decision not found in tenant/workspace scope");
+    return data as Record<string, unknown>;
+  }
+
+  private async materializeLegacyAlternatives(
+    decisionId: string,
+    tenantId: string,
+    alternatives: unknown[],
+    createdBy?: string,
+  ) {
+    for (const [index, item] of alternatives.entries()) {
+      const name =
+        typeof item === "string"
+          ? item
+          : typeof item === "object" && item && "name" in item
+            ? String((item as { name: unknown }).name)
+            : `Alternative ${index + 1}`;
+      const description =
+        typeof item === "object" && item && "description" in item
+          ? String((item as { description: unknown }).description ?? "")
+          : null;
+      await this.supabase.from("engineering_decision_alternatives").insert({
+        tenant_id: tenantId,
+        decision_id: decisionId,
+        alternative_code: `ALT-${String(index + 1).padStart(2, "0")}`,
+        name,
+        description,
+        status: "considered",
+        is_selected: false,
+        created_by: createdBy ?? null,
+      });
+    }
   }
 }
 

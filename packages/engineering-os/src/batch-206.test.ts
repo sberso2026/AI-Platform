@@ -21,6 +21,13 @@ describe("Batch 2.06 — API contracts", () => {
   it("defines stable register API endpoints", () => {
     const paths = ENGINEERING_API_ENDPOINTS.map((e) => e.path);
     expect(paths).toContain("/api/engineering/decisions");
+    expect(paths).toContain("/api/engineering/assumptions");
+    expect(paths).toContain("/api/engineering/systems");
+    expect(paths).toContain("/api/engineering/interfaces");
+    expect(paths).toContain("/api/engineering/requirements");
+    expect(paths).toContain("/api/engineering/changes");
+    expect(paths).toContain("/api/engineering/impacts");
+    expect(paths).toContain("/api/engineering/optimization");
     expect(paths).toContain("/api/engineering/actions");
     expect(paths).toContain("/api/engineering/risks");
     expect(paths).toContain("/api/engineering/issues");
@@ -77,8 +84,8 @@ describe("Batch 2.06 — Project Intelligence integration", () => {
     expect(PROJECT_INTELLIGENCE_INTEGRATION_RULES.decisionsRequireHumanApproval).toBe(true);
   });
 
-  it("maps all six registers to Engineering APIs", () => {
-    expect(ENGINEERING_CORE_OWNED_REGISTERS).toHaveLength(6);
+  it("maps Core registers including assumptions to Engineering APIs", () => {
+    expect(ENGINEERING_CORE_OWNED_REGISTERS).toHaveLength(7);
     expect(PROJECT_INTELLIGENCE_REGISTER_APIS.decisions).toBe("/api/engineering/decisions");
     expect(PROJECT_INTELLIGENCE_REGISTER_APIS.actions).toBe("/api/engineering/actions");
     expect(PROJECT_INTELLIGENCE_REGISTER_APIS.risks).toBe("/api/engineering/risks");
@@ -87,6 +94,7 @@ describe("Batch 2.06 — Project Intelligence integration", () => {
       "/api/engineering/technical-queries"
     );
     expect(PROJECT_INTELLIGENCE_REGISTER_APIS.lessons_learned).toBe("/api/engineering/lessons");
+    expect(PROJECT_INTELLIGENCE_REGISTER_APIS.assumptions).toBe("/api/engineering/assumptions");
   });
 });
 

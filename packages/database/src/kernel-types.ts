@@ -141,6 +141,28 @@ export type KernelTables = {
   engineering_issues: GenericTable;
   engineering_technical_queries: GenericTable;
   engineering_lessons: GenericTable;
+  engineering_decision_alternatives: GenericTable;
+  engineering_decision_approvals: GenericTable;
+  engineering_assumptions: GenericTable;
+  engineering_systems: GenericTable;
+  engineering_interfaces: GenericTable;
+  engineering_requirements: GenericTable;
+  engineering_changes: GenericTable;
+  engineering_impacts: GenericTable;
+  engineering_configuration_baselines: GenericTable;
+  engineering_configuration_items: GenericTable;
+  engineering_optimization_studies: GenericTable;
+  engineering_optimization_objectives: GenericTable;
+  engineering_optimization_constraints: GenericTable;
+  engineering_optimization_design_variables: GenericTable;
+  engineering_optimization_scenarios: GenericTable;
+  engineering_optimization_alternatives: GenericTable;
+  engineering_optimization_alternative_values: GenericTable;
+  engineering_optimization_runs: GenericTable;
+  engineering_optimization_run_inputs: GenericTable;
+  engineering_optimization_run_manifests: GenericTable;
+  engineering_optimization_result_metrics: GenericTable;
+  engineering_optimization_constraint_evaluations: GenericTable;
 };
 
 export type KernelDatabase = {
