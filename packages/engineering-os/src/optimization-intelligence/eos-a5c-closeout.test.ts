@@ -546,10 +546,17 @@ describe("EOS-A5C generic JobService execution", () => {
       alternativeId: "alt-1",
       adapterId: "spacegass",
       processImmediately: true,
-    });
-    expect(String(tables.engineering_optimization_runs[0].status)).toBe("failed");
-    expect(tables.engineering_optimization_result_metrics).toHaveLength(0);
-    expect(String(tables.engineering_optimization_runs[0].failure_reason ?? "")).toMatch(/license|provider|unavailable|rejected|solver/i);
+    }).then(
+      () => {
+        throw new Error("expected_spacegass_create_to_fail_closed");
+      },
+      (error: unknown) => {
+        expect(String(error instanceof Error ? error.message : error)).toMatch(
+          /external_tool_profile_required|tool_not_ready|not READY|not certified/i,
+        );
+      },
+    );
+    expect(tables.engineering_optimization_runs).toHaveLength(0);
   });
 
   it("links DECLARED context with BASED_ON assumptions and CONSTRAINED_BY requirements/interfaces", async () => {

@@ -98,6 +98,20 @@ export default function EngineeringSettingsPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">External Tools & Integrations</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Canonical configuration for SPACE GASS, ETABS, IFC, Microsoft 365, and other external systems.
+              Installation, licence, and automation are platform/admin settings — not project options.
+              <div className="mt-3">
+                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/external-tools">
+                  Open External Tools & Integrations
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

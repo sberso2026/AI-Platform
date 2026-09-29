@@ -192,6 +192,7 @@ export const POST = withEngineeringApi("optimization", async ({ ctx, commerce },
       algorithmVersion: body.algorithmVersion,
       randomSeed: body.randomSeed,
       createdBy: ctx.userId,
+      externalToolProfileId: body.externalToolProfileId,
     });
     return NextResponse.json({ data }, { status: 201 });
   }

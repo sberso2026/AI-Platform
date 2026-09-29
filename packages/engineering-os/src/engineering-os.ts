@@ -37,6 +37,8 @@ import { EngineeringImpactService } from "./control-intelligence/impact-service"
 import { EngineeringConfigurationService } from "./control-intelligence/configuration-service";
 import { OptimizationStudyService } from "./optimization-intelligence/study-service";
 import { OptimizationRunService } from "./optimization-intelligence/run-service";
+import { ExternalToolProfileService } from "./external-tools/profile-service";
+import { ExternalToolAssignmentService } from "./external-tools/assignment-service";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
 import { EngineeringHealthService } from "./services/health-service";
@@ -68,6 +70,8 @@ export interface EngineeringOS {
   configuration: EngineeringConfigurationService;
   optimizationStudies: OptimizationStudyService;
   optimizationRuns: OptimizationRunService;
+  externalTools: ExternalToolProfileService;
+  externalToolAssignments: ExternalToolAssignmentService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -102,6 +106,8 @@ export function createEngineeringOS(
   const configuration = new EngineeringConfigurationService(supabase, kernel);
   const optimizationStudies = new OptimizationStudyService(supabase, kernel);
   const optimizationRuns = new OptimizationRunService(supabase, kernel);
+  const externalTools = new ExternalToolProfileService(supabase);
+  const externalToolAssignments = new ExternalToolAssignmentService(supabase);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   const timeline = new EngineeringTimelineService(supabase);
   const activity = new EngineeringActivityService(supabase);
@@ -174,6 +180,8 @@ export function createEngineeringOS(
     configuration,
     optimizationStudies,
     optimizationRuns,
+    externalTools,
+    externalToolAssignments,
     timeline,
     activity,
     objects,

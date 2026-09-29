@@ -131,6 +131,14 @@ export { EngineeringImpactService } from "./control-intelligence/impact-service"
 export { EngineeringConfigurationService } from "./control-intelligence/configuration-service";
 export { OptimizationStudyService } from "./optimization-intelligence/study-service";
 export { OptimizationRunService } from "./optimization-intelligence/run-service";
+export { ExternalToolProfileService } from "./external-tools/profile-service";
+export { ExternalToolAssignmentService } from "./external-tools/assignment-service";
+export {
+  SPACE_GASS_CATALOG_ENTRY,
+  buildNotReadySpaceGassProfile,
+  assertExternalToolReadyForOptimization,
+  deriveReadiness,
+} from "./external-tools";
 export { registerOptimizationEvaluateHandler, createOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 export { CERTIFICATION_STUB_ADAPTER_ID, MANIFEST_SCHEMA_VERSION, fingerprintRunInputManifest, buildRunInputManifest } from "./optimization-intelligence/manifest";
 export {

@@ -163,6 +163,8 @@ export type KernelTables = {
   engineering_optimization_run_manifests: GenericTable;
   engineering_optimization_result_metrics: GenericTable;
   engineering_optimization_constraint_evaluations: GenericTable;
+  engineering_external_tool_profiles: GenericTable;
+  engineering_external_tool_assignments: GenericTable;
 };
 
 export type KernelDatabase = {

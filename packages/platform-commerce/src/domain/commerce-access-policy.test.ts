@@ -32,6 +32,7 @@ const ENGINEERING_API_SEGMENTS = [
   "search",
   "ai",
   "settings",
+  "external-tools",
   "applications",
   "demo",
 ];
@@ -59,6 +60,15 @@ describe("ENGINEERING_API_POLICIES", () => {
   it("requires fresh cache for write operations", () => {
     const write = getEngineeringApiPolicy("projects", "POST");
     expect(write.cachePolicy).toBe("fresh");
+  });
+
+  it("maps External Tools settings API to Engineering OS settings entitlement", () => {
+    const read = getEngineeringApiPolicy("external-tools", "GET");
+    const write = getEngineeringApiPolicy("external-tools", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.action).toBe("settings.read");
+    expect(write.action).toBe("settings.write");
   });
 
   it("maps Optimization to Engineering OS product, not Project Intelligence", () => {

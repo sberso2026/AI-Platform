@@ -7,6 +7,8 @@ import {
 } from "./context-hash";
 
 export const MANIFEST_SCHEMA_VERSION = 1;
+/** Additive optional fields on v1. Does not invalidate existing v1 manifests. */
+export const MANIFEST_SCHEMA_REVISION = "1.1";
 
 export const CERTIFICATION_STUB_ADAPTER_ID = "optimization.generic.test";
 export const CERTIFICATION_STUB_ADAPTER_VERSION = "a5c-1.0.0";
@@ -81,6 +83,16 @@ export type RunInputManifestV1 = {
     random_seed: string | null;
     model_artifact_refs: string[];
     artifact_hashes: string[];
+    external_tool?: {
+      external_tool_profile_id: string | null;
+      tool_id: string | null;
+      tool_version: string | null;
+      adapter_id: string | null;
+      adapter_version: string | null;
+      execution_host_id: string | null;
+      capability: string | null;
+      validation_ref: string | null;
+    };
   };
 };
 
@@ -110,6 +122,7 @@ export type ManifestBuildInput = {
   randomSeed: string | null;
   modelArtifactRefs?: string[];
   artifactHashes?: string[];
+  externalTool?: RunInputManifestV1["execution"]["external_tool"];
 };
 
 export function buildRunInputManifest(input: ManifestBuildInput): RunInputManifestV1 {
@@ -195,6 +208,20 @@ export function buildRunInputManifest(input: ManifestBuildInput): RunInputManife
       random_seed: input.randomSeed,
       model_artifact_refs: [...(input.modelArtifactRefs ?? [])].sort(),
       artifact_hashes: [...(input.artifactHashes ?? [])].sort(),
+      ...(input.externalTool
+        ? {
+            external_tool: {
+              external_tool_profile_id: input.externalTool.external_tool_profile_id,
+              tool_id: input.externalTool.tool_id,
+              tool_version: input.externalTool.tool_version,
+              adapter_id: input.externalTool.adapter_id,
+              adapter_version: input.externalTool.adapter_version,
+              execution_host_id: input.externalTool.execution_host_id,
+              capability: input.externalTool.capability,
+              validation_ref: input.externalTool.validation_ref,
+            },
+          }
+        : {}),
     },
   };
 }
@@ -223,9 +250,9 @@ export function fingerprintRunInputManifest(manifest: RunInputManifestV1): strin
 }
 
 /**
- * Forward compatibility: readers accept only schema v1 in EOS-A5C.
- * Later versions must bump manifest_schema_version; unknown v1 fields are hashed if present.
- * Runtime timestamps must never be written into the manifest body.
+ * v1 remains the canonical schema. Revision 1.1 adds optional execution.external_tool.
+ * Existing v1 documents without that block remain valid and keep their fingerprints.
+ * A future incompatible change requires manifest_schema_version 2.
  */
 export const MANIFEST_FORWARD_COMPATIBILITY =
-  "v1 is the A5C canonical schema. Additive optional fields inside v1 change the fingerprint. A future v2 requires an explicit version bump and a new validator.";
+  "v1 is canonical. Additive 1.1 optional execution.external_tool is hashed only when present.";

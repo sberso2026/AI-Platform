@@ -15,6 +15,9 @@ import {
   type RunInputManifestV1,
 } from "./manifest";
 import { OptimizationStudyService } from "./study-service";
+import { ExternalToolAssignmentService } from "../external-tools/assignment-service";
+import { assertExternalToolReadyForOptimization, OPTIMIZATION_EXECUTION_CAPABILITY } from "../external-tools/optimization-gate";
+import { ExternalToolProfileService } from "../external-tools/profile-service";
 
 type StudyRow = Record<string, unknown> & {
   id: string;
@@ -101,6 +104,7 @@ export class OptimizationRunService {
       randomSeed?: string | null;
       createdBy?: string;
       processImmediately?: boolean;
+      externalToolProfileId?: string | null;
     },
   ) {
     assertEngineeringService(commerce, "optimization.create", tenantId);
@@ -126,6 +130,34 @@ export class OptimizationRunService {
     const adapterId = input.adapterId?.trim() || CERTIFICATION_STUB_ADAPTER_ID;
     const adapterVersion =
       input.adapterVersion ?? (isCertificationStubAdapter(adapterId) ? CERTIFICATION_STUB_ADAPTER_VERSION : null);
+    let externalTool:
+      | NonNullable<import("./manifest").RunInputManifestV1["execution"]["external_tool"]>
+      | undefined;
+    if (!isCertificationStubAdapter(adapterId)) {
+      if (!input.externalToolProfileId) {
+        throw new Error("external_tool_profile_required");
+      }
+      const profiles = new ExternalToolProfileService(this.supabase);
+      const assignments = new ExternalToolAssignmentService(this.supabase);
+      const profile = await profiles.get(commerce, tenantId, input.externalToolProfileId);
+      const assignment = await assignments.getForWorkspace(tenantId, profile.id, String(study.workspace_id));
+      assertExternalToolReadyForOptimization({
+        profile,
+        assignment,
+        workspaceId: String(study.workspace_id),
+        requiredCapability: OPTIMIZATION_EXECUTION_CAPABILITY,
+      });
+      externalTool = {
+        external_tool_profile_id: profile.id,
+        tool_id: profile.toolCode,
+        tool_version: profile.installedVersion,
+        adapter_id: profile.adapterId,
+        adapter_version: profile.adapterVersion,
+        execution_host_id: profile.executionHostId,
+        capability: OPTIMIZATION_EXECUTION_CAPABILITY,
+        validation_ref: profile.lastValidation.ranAt,
+      };
+    }
     const { data: run, error } = await this.supabase
       .from("engineering_optimization_runs")
       .insert({
@@ -168,7 +200,14 @@ export class OptimizationRunService {
       if (pinned.error) throw new Error(`Failed to pin configuration items: ${pinned.error.message}`);
     }
 
-    const manifest = await this.buildManifestForRun(study, run as Record<string, unknown>, captured.items, captured.fingerprint, alternative as Record<string, unknown>);
+    const manifest = await this.buildManifestForRun(
+      study,
+      run as Record<string, unknown>,
+      captured.items,
+      captured.fingerprint,
+      alternative as Record<string, unknown>,
+      externalTool,
+    );
     const runInputFingerprint = fingerprintRunInputManifest(manifest);
     const frozen = await this.supabase
       .from("engineering_optimization_run_manifests")
@@ -204,6 +243,7 @@ export class OptimizationRunService {
           baselineId: captured.baselineId,
           baselineFingerprint: captured.fingerprint,
           runInputFingerprint,
+          externalToolProfileId: externalTool?.external_tool_profile_id ?? null,
         },
         createdBy: input.createdBy,
         maxRetries: 1,
@@ -442,6 +482,7 @@ export class OptimizationRunService {
     pinnedItems: import("./fingerprint").FingerprintItem[],
     baselineFingerprint: string,
     alternative: Record<string, unknown>,
+    externalTool?: NonNullable<RunInputManifestV1["execution"]["external_tool"]>,
   ): Promise<RunInputManifestV1> {
     const children = await this.studies.loadChildren(String(study.id));
     const snapshot = await this.studies.loadContextSnapshot(String(study.tenant_id), study);
@@ -481,6 +522,9 @@ export class OptimizationRunService {
       algorithmId: (run.algorithm_id as string | null) ?? null,
       algorithmVersion: (run.algorithm_version as string | null) ?? null,
       randomSeed: (run.random_seed as string | null) ?? null,
+      toolId: externalTool?.tool_id ?? null,
+      toolVersion: externalTool?.tool_version ?? null,
+      externalTool,
     });
   }
 
