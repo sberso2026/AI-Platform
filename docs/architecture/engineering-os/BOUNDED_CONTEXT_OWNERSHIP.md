@@ -28,6 +28,7 @@ Owner vocabulary:
 | Tenant, Workspace, User, Membership, Role | Platform Core | `tenants`, `workspaces`, `profiles`, memberships | same | all | Do not create engineering-specific identity |
 | Project | Engineering Core | `engineering_projects` | same | ERA, PI, Controls, Review | PI must not own a second project root |
 | Company, Discipline, Asset type | Engineering Core | `engineering_companies`, `engineering_disciplines`, `engineering_asset_types` | same | all engineering | Discipline catalogue vs `ENGINEERING_DISCIPLINES` const — keep aligned, one DB catalogue |
+| Discipline Intelligence overlay | Engineering Core | `engineering_discipline_profiles` + participation/tool-binding tables (EOS-A7A) | same | Systems, Review, Optimization | Do not mint per-discipline OS tables or finding tables |
 | System, Subsystem | Engineering Core | `engineering_systems.parent_system_id` (no subsystems table); TEXT labels remain on assets | Engineering Core table | Systems Intelligence, Discipline Intelligence, Optimization | **HIGH** if PI or twin invents system ids |
 | Asset, Component (when tagged) | Engineering Core | `engineering_assets` | same | Review, Twin, Models, Value | Do not equate with System |
 | Area, Location | Engineering Core (future) | `location` TEXT; mapping `spatial` | Engineering Core | Models, Construction | LOW until spatial object exists |

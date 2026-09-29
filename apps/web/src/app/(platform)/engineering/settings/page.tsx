@@ -112,6 +112,19 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Disciplines</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Canonical Multidiscipline Intelligence Foundation. Capability status, standards references, and tool bindings.
+              <div className="mt-3">
+                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/disciplines">
+                  Open Disciplines
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

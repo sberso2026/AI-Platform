@@ -74,9 +74,9 @@ Do not redesign platform identity. Current owners remain Platform Core (`tenants
 
 ### 1.6 Discipline
 
-**Is:** A professional practice classification (Structural, Civil, Mechanical, Piping, Electrical, Instrumentation, Process, Geotechnical, …). Canonical catalogue: `engineering_disciplines` plus `ENGINEERING_DISCIPLINES` in `@rtb/engineering-os`.
+**Is:** A professional practice classification (Structural, Civil, Mechanical, Piping, Electrical, Instrumentation, Process, Geotechnical, Materials, Safety, Environmental, …). Canonical catalogue: `engineering_disciplines` plus `ENGINEERING_DISCIPLINES` in `@rtb/engineering-os`. EOS-A7A overlay: `EOS_A7A_MULTIDISCIPLINE_FOUNDATION.md`.
 
-**Is not:** A System. Disciplines classify work and documents; they do not own system identity. See `SYSTEMS_AND_DISCIPLINES_MODEL.md`.
+**Is not:** A System, a mini operating system, or an autonomous approval agent. Disciplines classify work and documents; they do not own system identity. See `SYSTEMS_AND_DISCIPLINES_MODEL.md`.
 
 ---
 

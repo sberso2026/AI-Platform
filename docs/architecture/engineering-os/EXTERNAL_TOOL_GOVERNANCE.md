@@ -135,3 +135,5 @@ SPACE_GASS_INSTALLATION: NOT_AVAILABLE_AT_THIS_STAGE.
 REAL_SOLVER_EXECUTION: NOT_CERTIFIED.
 
 This amendment does **not** certify SPACE GASS and does **not** fabricate READY.
+
+EOS-A7A Discipline Intelligence binds STRUCTURAL `LINEAR_STRUCTURAL_ANALYSIS` to the SPACE GASS External Tool Profile. While SPACE GASS remains NOT_CONFIGURED, that discipline capability is BLOCKED. Document/interface review remains AVAILABLE. Discipline records must not store executable path, licence, or version.

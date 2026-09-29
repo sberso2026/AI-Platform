@@ -33,6 +33,7 @@ const ENGINEERING_API_SEGMENTS = [
   "ai",
   "settings",
   "external-tools",
+  "discipline-intelligence",
   "applications",
   "demo",
 ];
@@ -67,6 +68,13 @@ describe("ENGINEERING_API_POLICIES", () => {
     const write = getEngineeringApiPolicy("external-tools", "POST");
     expect(read.productKey).toBe("engineering-os");
     expect(write.productKey).toBe("engineering-os");
+    expect(read.action).toBe("settings.read");
+    expect(write.action).toBe("settings.write");
+  });
+
+  it("maps Discipline Intelligence settings API to Engineering OS settings entitlement", () => {
+    const read = getEngineeringApiPolicy("discipline-intelligence", "GET");
+    const write = getEngineeringApiPolicy("discipline-intelligence", "POST");
     expect(read.action).toBe("settings.read");
     expect(write.action).toBe("settings.write");
   });
