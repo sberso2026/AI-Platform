@@ -11,6 +11,7 @@ const ROUTES = [
   "/engineering/configuration",
   "/engineering/optimization",
   "/engineering/analysis",
+  "/engineering/thread",
   "/engineering/risks",
   "/engineering/issues",
   "/engineering/lessons",

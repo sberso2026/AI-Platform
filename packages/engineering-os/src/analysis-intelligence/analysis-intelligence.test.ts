@@ -379,6 +379,15 @@ describe("EOS-A7B analysis foundation", () => {
       requiredAcceptance: "ACCEPTED",
     });
     expect(link.relationship).toBe("DEPENDS_ON");
+    const uses = toGovernedAnalysisLink({
+      fromRequestId: "down",
+      toRequestId: "up",
+      semantic: "USES_RESULT_FROM",
+      requiredAcceptance: "ACCEPTED",
+    });
+    expect(uses.relationship).toBe("USES");
+    expect(uses.fromId).toBe("down");
+    expect(uses.toId).toBe("up");
   });
 
   it("keeps execution success distinct from validity and human acceptance", () => {

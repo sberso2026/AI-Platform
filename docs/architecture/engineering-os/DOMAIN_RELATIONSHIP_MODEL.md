@@ -29,7 +29,7 @@ Direction is **from → to**. Inverse names are documentation-only unless a quer
 | Code | Verb (from → to) | Inverse (informal) | Cardinality (typical) | Temporal? | Provenance? |
 | --- | --- | --- | --- | --- | --- |
 | `CONTAINS` | parent contains child | `CONTAINED_IN` | 1–n | optional | optional |
-| `USES` | system uses asset (participation without exclusive ownership) | `USED_IN` | n–n | optional | optional |
+| `USES` | system uses asset; **EOS-A8A:** downstream analysis_request USES upstream result (`USES_RESULT_FROM`) | `USED_IN` | n–n | optional | optional |
 | `DEPENDS_ON` | object requires another to function | `DEPENDED_ON_BY` | n–n | optional | recommended |
 | `ALLOCATED_TO` | requirement allocated to system/asset/interface | `HAS_ALLOCATION` | n–n | yes | recommended |
 | `VERIFIED_BY` | requirement/change verified by evidence/review/analysis | `VERIFIES` | n–n | yes | **required** |
@@ -50,6 +50,8 @@ Direction is **from → to**. Inverse names are documentation-only unless a quer
 | `RELATED_TO` | **discouraged residual** | — | n–n | no | required if used |
 
 `RELATED_TO` is permitted only as a temporary import shim. New Engineering OS writes must not use it.
+
+EOS-A8A relation semantics, inverses, lifecycle direction, and type-safety judgements live in `packages/engineering-os/src/digital-thread/relation-semantics.ts` and `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`. A7B `USES_RESULT_FROM` writes `USES` (historical `USED_BY` dual-read).
 
 ---
 

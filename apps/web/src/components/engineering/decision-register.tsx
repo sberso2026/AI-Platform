@@ -15,6 +15,7 @@ import {
 } from "@/components/engineering/operational";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { ObjectThreadPanel } from "@/components/engineering/object-thread-panel";
 
 type DecisionDetail = {
   decision: Record<string, unknown>;
@@ -275,6 +276,7 @@ export function DecisionRegister() {
                               </form>
                             ) : null}
                           </div>
+                          {selectedId ? <ObjectThreadPanel objectType="decision" objectId={selectedId} /> : null}
                         </>
                       ) : null}
                     </div>

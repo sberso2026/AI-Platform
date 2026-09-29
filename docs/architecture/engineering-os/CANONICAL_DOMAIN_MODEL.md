@@ -411,7 +411,7 @@ See `ENGINEERING_REVIEW_BOUNDARY.md` for full boundary. Summary:
 
 Thread **node identity** is the canonical object id (UUID) plus type. Thread **relation** is a typed, directed, tenant-scoped edge with provenance and optional temporal validity. See `DIGITAL_THREAD_ARCHITECTURE.md` and ADR-D3.
 
-Do **not** create a third graph store. Platform Knowledge Graph (`knowledge_nodes` / `knowledge_edges`) is the future host. PI KG remains a projection pending convergence. Existing `digital_twin_thread_*` tables are twin-scoped **reference composition** (batch_84), not the Engineering Digital Thread of record and not a graph database.
+Do **not** create a third graph store. EOS-A8A Digital Thread is composition over Core objects and `engineering_object_links`. Platform Knowledge Graph (`knowledge_nodes` / `knowledge_edges`) remains a **projection / future host**, not the A8A source of truth. PI KG remains a product projection. Existing `digital_twin_thread_*` tables are twin-scoped **reference composition** (batch_84), not the Engineering Digital Thread of record.
 
 ---
 

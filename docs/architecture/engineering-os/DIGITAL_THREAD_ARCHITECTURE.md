@@ -1,8 +1,17 @@
 # EOS-A1 Digital Thread Architecture
 
-Status: **FROZEN** for planning. No new graph store, no KG migration, no twin runtime change in EOS-A1.
+Status: **IMPLEMENTED** for EOS-A8A composition. No new graph store. No KG SOT migration.
 
-Evidence HEAD: `0dd05bf124c19e1fbb8099f396a904ec86a2d020`
+See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`.
+
+**Canonical rule (EOS-A8A):**
+
+- Relational Core + governed `engineering_object_links` = **source of truth**
+- Platform Knowledge Graph = projection / query acceleration / future intelligence
+- PI Knowledge Graph = product-specific projection
+- Twin Thread `digital_twin_thread_*` = twin-scoped references, not Engineering Digital Thread
+
+Evidence HEAD: `e58f81b84f475ac57849f7201e97359e5024b311` (A7B) plus EOS-A8A composition.
 
 ADR-D3 and ADR-D6 apply.
 
@@ -72,7 +81,9 @@ Optional:
 
 **Naming (resolved):** `@rtb/digital-twin` Phase 12K uses the label “Digital Thread Intelligence.” That concern is **Twin Thread composition** (references hanging off `twin_id`). **Engineering Digital Thread** in EOS-A1 is the cross-object provenance graph for Engineering OS. They must not be merged by renaming. Twin Thread may `REPRESENTED_BY` / reference KG nodes; it must not write a parallel edge taxonomy as system of record.
 
-**Goal:** Platform Knowledge Graph eventually hosts or represents the Engineering Digital Thread. Engineering Core remains system of record for object payloads. KG stores **typed relations and projections**, not a forked document/decision body. Twin Thread tables remain twin-owned **reference indexes**.
+**Goal:** Platform Knowledge Graph may later **project** the Engineering Digital Thread for query acceleration. Engineering Core remains system of record for object payloads **and** governed links. KG stores **typed projections**, not a forked document/decision body. Twin Thread tables remain twin-owned **reference indexes**.
+
+EOS-A8A implements bounded authorized traversal over Core links. It does **not** migrate source of truth into Platform KG.
 
 Convergence sequence (planning only):
 
@@ -83,7 +94,7 @@ Convergence sequence (planning only):
 
 Do not execute that sequence in EOS-A1.
 
-EOS-A7B Analysis Requests and Results participate in the existing thread via Core rows and `engineering_object_links` (`DEPENDS_ON`, `USED_BY`, `REVIEWS`, `SUPPORTED_BY`, `AFFECTS`). No new graph store. See `EOS_A7B_MULTIDISCIPLINE_ANALYSIS_EXECUTION.md`.
+EOS-A7B Analysis Requests and Results participate in the existing thread via Core rows and `engineering_object_links` (`DEPENDS_ON`, `USES`, `USED_BY` historical dual-read, `REVIEWS`, `SUPPORTED_BY`, `AFFECTS`). EOS-A8A is the composition/traversal layer. No new graph store. See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`.
 
 ---
 

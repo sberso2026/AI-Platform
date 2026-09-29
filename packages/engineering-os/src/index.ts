@@ -135,6 +135,14 @@ export { ExternalToolProfileService } from "./external-tools/profile-service";
 export { ExternalToolAssignmentService } from "./external-tools/assignment-service";
 export { DisciplineIntelligenceService } from "./discipline-intelligence/service";
 export { AnalysisRequestService } from "./analysis-intelligence/request-service";
+export { EngineeringDigitalThreadService } from "./digital-thread/service";
+export {
+  THREAD_DEFAULT_MAX_DEPTH,
+  THREAD_HARD_MAX_DEPTH,
+  GOVERNED_RELATION_SEMANTICS,
+  traverseThread,
+  crusherExpansionFeedFixture,
+} from "./digital-thread";
 export {
   resolveAnalysisCapability,
   SYNTHETIC_CERTIFICATION_ADAPTER_ID,

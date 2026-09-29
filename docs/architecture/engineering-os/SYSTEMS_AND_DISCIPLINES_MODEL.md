@@ -120,3 +120,5 @@ Model mapping (`MAPPED_TO`) connects IFC/analytical elements to assets/spatial/t
 3. Do not use PI Knowledge Graph types as the System register.
 4. Do not treat `engineering_assets.system` TEXT as a stable id after a System table exists (migration later; not A1).
 5. ERA `discipline` on findings is a **classification**, not ownership of the reviewed system.
+
+EOS-A8A Digital Thread may traverse System and Interface governed links (`CONTAINS`, `USES`, `CONNECTS`, `ALLOCATED_TO`, `SCOPED_TO`). It does not change System or Interface ownership. See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`.

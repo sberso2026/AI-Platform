@@ -69,10 +69,11 @@ export type AnalysisDependencySemantic = (typeof ANALYSIS_DEPENDENCY_SEMANTICS)[
 
 export const ANALYSIS_DEPENDENCY_GOVERNED_MAP: Record<
   AnalysisDependencySemantic,
-  "DEPENDS_ON" | "USED_BY" | "SUPERSEDES" | "VERIFIED_BY"
+  "DEPENDS_ON" | "USES" | "USED_BY" | "SUPERSEDES" | "VERIFIED_BY"
 > = {
   REQUIRES_RESULT_FROM: "DEPENDS_ON",
-  USES_RESULT_FROM: "USED_BY",
+  /** EOS-A8A: USES_RESULT_FROM is downstream USES upstream. Historical A7B USED_BY rows remain readable. */
+  USES_RESULT_FROM: "USES",
   SUPERSEDES: "SUPERSEDES",
   VALIDATES: "VERIFIED_BY",
 };

@@ -519,7 +519,7 @@ export class AnalysisRequestService {
       fromRequestId: request.id,
       toRequestId: String(link.to_id),
       semantic:
-        link.relationship === "USED_BY"
+        link.relationship === "USES" || link.relationship === "USED_BY"
           ? "USES_RESULT_FROM"
           : link.relationship === "SUPERSEDES"
             ? "SUPERSEDES"

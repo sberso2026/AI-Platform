@@ -226,6 +226,7 @@ export function assertA5GovernedRelationWrite(input: {
 
 export const A7B_WRITABLE_RELATIONS = [
   "DEPENDS_ON",
+  "USES",
   "USED_BY",
   "SUPERSEDES",
   "VERIFIED_BY",
@@ -258,7 +259,7 @@ export function assertA7BGovernedRelationWrite(input: {
     !isA2WritableRelation(input.relationship)
   ) {
     throw new Error(
-      `Ungoverned relation type: ${input.relationship}. A7B writes must use DEPENDS_ON, USED_BY, SUPERSEDES, VERIFIED_BY, SUPPORTED_BY, BASED_ON, REVIEWS, AFFECTS, or prior governed verbs.`,
+      `Ungoverned relation type: ${input.relationship}. A7B writes must use DEPENDS_ON, USES, USED_BY, SUPERSEDES, VERIFIED_BY, SUPPORTED_BY, BASED_ON, REVIEWS, AFFECTS, or prior governed verbs.`,
     );
   }
   if (!isGovernedLinkObjectType(input.fromType) || !isGovernedLinkObjectType(input.toType)) {

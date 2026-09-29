@@ -92,8 +92,8 @@ No new graph engine. Analysis-to-analysis edges use `engineering_object_links` w
 
 | Semantic | Governed verb |
 | --- | --- |
-| REQUIRES_RESULT_FROM | DEPENDS_ON |
-| USES_RESULT_FROM | USED_BY |
+| REQUIRES_RESULT_FROM | DEPENDS_ON (from = downstream request, to = upstream; **verified correct in EOS-A8A**) |
+| USES_RESULT_FROM | **USES** (EOS-A8A). A7B originally wrote USED_BY with the same endpoints; dual-read still treats historical USED_BY from `analysis_request` as USES_RESULT_FROM. |
 | SUPERSEDES | SUPERSEDES |
 | VALIDATES | VERIFIED_BY |
 
@@ -159,7 +159,7 @@ Optimization may request analyses through this foundation (`USED_BY` from optimi
 
 ## Digital Thread
 
-Analysis objects are Core rows plus `engineering_object_links`. Future relations: System HAS_ANALYSIS, request USES_REQUIREMENT / USES_ASSUMPTION / USES_STANDARD / USES_TOOL, result EVIDENCE_FOR Review, result SUPPORTS Decision. No new graph store.
+Analysis objects are Core rows plus `engineering_object_links`. EOS-A8A provides bounded authorized traversal, requirement/analysis/decision traces, and blocked-tool visibility without fabricating results. See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`. No new graph store.
 
 ## Security / RLS
 
