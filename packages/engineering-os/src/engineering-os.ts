@@ -51,6 +51,7 @@ import { EngineeringAssuranceService, registerAssuranceEvaluateHandler } from ".
 import { EngineeringLifecycleService } from "./lifecycle-intelligence/service";
 import { EngineeringDeliverableService } from "./deliverable-intelligence/service";
 import { EngineeringInformationService } from "./information-intelligence/service";
+import { EngineeringWorkContextService } from "./work-context/service";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
@@ -93,6 +94,7 @@ export interface EngineeringOS {
   lifecycle: EngineeringLifecycleService;
   deliverables: EngineeringDeliverableService;
   information: EngineeringInformationService;
+  work: EngineeringWorkContextService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -141,6 +143,15 @@ export function createEngineeringOS(
   const assurance = new EngineeringAssuranceService(supabase, digitalThread);
   const deliverables = new EngineeringDeliverableService(supabase);
   const information = new EngineeringInformationService(supabase);
+  const work = new EngineeringWorkContextService(supabase, undefined, {
+    async publish(input) {
+      try {
+        await kernel.eventBus.publish(input);
+      } catch {
+        // Non-UUID fixture tenants still persist work events.
+      }
+    },
+  });
   const lifecycle = new EngineeringLifecycleService(supabase, undefined, undefined, deliverables);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
@@ -230,6 +241,7 @@ export function createEngineeringOS(
     lifecycle,
     deliverables,
     information,
+    work,
     timeline,
     activity,
     objects,

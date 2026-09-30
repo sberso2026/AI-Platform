@@ -28,6 +28,12 @@ const TARGETS = [
   "apps/web/src/app/api/engineering/information",
   "apps/web/src/app/(platform)/engineering/information",
   "apps/web/src/app/(platform)/engineering/settings/information",
+  "docs/architecture/engineering-os/EOS_A10B_ENGINEERING_WORK_CONTEXT_INFORMATION_FLOW.md",
+  "supabase/migrations/20260930140000_eos_a10b_engineering_work_context.sql",
+  "packages/engineering-os/src/work-context",
+  "apps/web/src/app/api/engineering/work",
+  "apps/web/src/app/(platform)/engineering/work",
+  "apps/web/src/app/(platform)/engineering/settings/work-context",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

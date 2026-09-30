@@ -47,6 +47,7 @@ const ANY_ENGINEERING = [
   "optimization_constraint",
   "risk",
   "engineering_information",
+  "engineering_work_event",
   "deliverable_expectation",
 ] as const;
 
@@ -70,7 +71,7 @@ export const GOVERNED_RELATION_SEMANTICS: Record<GovernedRelationType, GovernedR
     inverseLabel: "USED_IN",
     direction: "from→to",
     lifecycleDirection: "to_is_upstream",
-    allowedSourceTypes: ["system", "asset", "analysis_request", "optimization_run", "decision", "document", "engineering_information", "deliverable_expectation"],
+    allowedSourceTypes: ["system", "asset", "analysis_request", "optimization_run", "decision", "document", "engineering_information", "engineering_work_event", "deliverable_expectation"],
     allowedTargetTypes: ["asset", "system", "analysis_request", "analysis_result", "document", "interface", "engineering_information"],
     transitivity: "traversal_only",
     traversalRelevant: true,
@@ -148,7 +149,7 @@ export const GOVERNED_RELATION_SEMANTICS: Record<GovernedRelationType, GovernedR
     inverseLabel: "AFFECTED_BY",
     direction: "from→to",
     lifecycleDirection: "from_is_upstream",
-    allowedSourceTypes: ["change", "decision"],
+    allowedSourceTypes: ["change", "decision", "engineering_work_event"],
     allowedTargetTypes: ANY_ENGINEERING,
     transitivity: "prohibited",
     traversalRelevant: true,

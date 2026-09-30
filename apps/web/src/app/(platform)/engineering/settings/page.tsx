@@ -183,6 +183,20 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Work Context</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Managed engineering repositories and capture policy. Default capture is DENY. Ordinary
+              engineers cannot silently broaden repository scope or enable desktop surveillance.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/work-context">
+                  Open Managed Repositories
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

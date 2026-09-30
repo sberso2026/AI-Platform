@@ -97,6 +97,7 @@ export const ENGINEERING_EXPLORE_GROUPS = [
       { id: "lifecycle", label: "Lifecycle", href: "/engineering/lifecycle" },
       { id: "deliverables", label: "Deliverables", href: "/engineering/deliverables" },
       { id: "information", label: "Information", href: "/engineering/information" },
+      { id: "work", label: "Work", href: "/engineering/work" },
       { id: "actions", label: "Actions", href: "/engineering/actions" },
       { id: "risks", label: "Risks", href: "/engineering/risks" },
       { id: "issues", label: "Issues", href: "/engineering/issues" },

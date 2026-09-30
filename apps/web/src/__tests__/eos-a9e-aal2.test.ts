@@ -25,6 +25,8 @@ describe("EOS-A9E Deliverables/Lifecycle AAL2 server enforcement", () => {
     expect(engineeringApiRequiresIdentityAssurance("lifecycle", "POST")).toBe(true);
     expect(engineeringApiRequiresIdentityAssurance("information", "GET")).toBe(true);
     expect(engineeringApiRequiresIdentityAssurance("information", "POST")).toBe(true);
+    expect(engineeringApiRequiresIdentityAssurance("work", "GET")).toBe(true);
+    expect(engineeringApiRequiresIdentityAssurance("work", "POST")).toBe(true);
     expect(engineeringApiRequiresIdentityAssurance("settings", "GET")).toBe(false);
     expect(engineeringApiRequiresIdentityAssurance("settings", "POST")).toBe(true);
     expect(engineeringApiRequiresIdentityAssurance("documents", "POST")).toBe(false);
@@ -75,6 +77,8 @@ describe("EOS-A9E Deliverables/Lifecycle AAL2 server enforcement", () => {
     expect(middleware).toContain("/engineering/settings/deliverables");
     expect(middleware).toContain("/engineering/information");
     expect(middleware).toContain("/engineering/settings/information");
+    expect(middleware).toContain("/engineering/work");
+    expect(middleware).toContain("/engineering/settings/work-context");
     expect(middleware).toContain("evaluateReviewIdentityPolicy");
     expect(middleware).toContain("MFA_CHALLENGE_ROUTE");
   });

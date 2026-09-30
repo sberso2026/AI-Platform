@@ -207,6 +207,12 @@ export {
   INFORMATION_PURPOSES,
   INFORMATION_AUTHORITY_STATES,
 } from "./information-intelligence/types";
+export { EngineeringWorkContextService } from "./work-context/service";
+export {
+  WORK_CONTEXT_AI_BOUNDARY,
+  DEFAULT_CAPTURE_POLICY,
+  WORK_EVENT_TYPES,
+} from "./work-context/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,
