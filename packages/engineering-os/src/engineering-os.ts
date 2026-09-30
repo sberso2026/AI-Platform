@@ -48,6 +48,7 @@ import {
   registerThreadProjectionJobHandler,
 } from "./digital-thread/projection";
 import { EngineeringAssuranceService, registerAssuranceEvaluateHandler } from "./assurance";
+import { EngineeringLifecycleService } from "./lifecycle-intelligence/service";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
@@ -87,6 +88,7 @@ export interface EngineeringOS {
   digitalThread: EngineeringDigitalThreadService;
   threadProjection: EngineeringDigitalThreadProjectionService;
   assurance: EngineeringAssuranceService;
+  lifecycle: EngineeringLifecycleService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -133,6 +135,7 @@ export function createEngineeringOS(
   );
   const digitalThread = new EngineeringDigitalThreadService(supabase, threadProjection);
   const assurance = new EngineeringAssuranceService(supabase, digitalThread);
+  const lifecycle = new EngineeringLifecycleService(supabase);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
   registerThreadProjectionJobHandler(kernel.jobs, threadProjection, {
@@ -218,6 +221,7 @@ export function createEngineeringOS(
     digitalThread,
     threadProjection,
     assurance,
+    lifecycle,
     timeline,
     activity,
     objects,

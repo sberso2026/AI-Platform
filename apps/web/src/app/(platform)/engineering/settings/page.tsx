@@ -139,6 +139,20 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Lifecycle</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed Engineering lifecycle profile, stage applicability, allowed transitions, and gate criteria.
+              Profile logic stays in code. Ordinary engineers cannot authorize stage transitions from settings.
+              <div className="mt-3">
+                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/lifecycle">
+                  Open Lifecycle profile settings
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

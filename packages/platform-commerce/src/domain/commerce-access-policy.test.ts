@@ -25,6 +25,7 @@ const ENGINEERING_API_SEGMENTS = [
   "analysis",
   "thread",
   "assurance",
+  "lifecycle",
   "risks",
   "issues",
   "actions",
@@ -100,6 +101,17 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(write.productKey).toBe("engineering-os");
     expect(read.applicationKey).toBeUndefined();
     expect(write.applicationKey).toBeUndefined();
+  });
+
+  it("maps Engineering Lifecycle to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("lifecycle", "GET");
+    const write = getEngineeringApiPolicy("lifecycle", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
   });
 
   it("maps Optimization to Engineering OS product, not Project Intelligence", () => {

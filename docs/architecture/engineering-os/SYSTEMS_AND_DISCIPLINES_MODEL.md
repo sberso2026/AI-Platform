@@ -57,6 +57,7 @@ Discipline does NOT parent System
 - An Asset has at most one **parent asset** today (`parent_asset_id`). That is physical/logical breakdown, not system membership.
 - System membership is n–n (`USES` / `CONTAINS`). Do not overload `parent_asset_id` to fake a system tree.
 - A System spans zero or more Areas. Area is spatial, not functional.
+- EOS-A9A may assign lifecycle independently at PROJECT, SYSTEM, and ASSET scope. Mixed stage across a crushing system and a structural package is valid; it is not an inconsistency. See `EOS_A9A_LIFECYCLE_INTELLIGENCE_FOUNDATION.md`.
 
 ---
 

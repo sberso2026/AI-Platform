@@ -88,6 +88,7 @@ Owner vocabulary:
 | Document Intelligence finding rows | PI / Document Intel | `project_intelligence_document_findings` (source rows per batch_41 comment) | Feed PI Findings |
 | Vendor / module review notes | Named module | module tables / Workflow SDK record | Evidence for ERA, not a fourth findings product |
 | Assurance Condition | Engineering OS (EOS-A8C / A8D) | `engineering_assurance_conditions` plus governed citations in `engineering_assurance_review_citations` | May be cited by a canonical Review Package; Findings stay Review-owned; never auto-promoted |
+| Lifecycle Profile / Assignment / Gate Evaluation / Transition | Engineering OS (EOS-A9A) | `engineering_lifecycle_*` | Composes Review, Assurance, Configuration, Analysis, Decisions; must not mint findings or auto-approve stages |
 
 ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings.
 

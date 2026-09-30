@@ -210,4 +210,4 @@ Crusher Expansion FEED fixture certifies:
 - No tenant-wide rule override table; workspace override is the smallest model consistent with workspace-scoped evaluation and RLS.
 - Create Review still requires canonical Review documents; Assurance does not bypass that Review invariant.
 - Browser/AAL2 certification is independent of service/database PASS.
-- EOS-A9 Lifecycle Intelligence is not implemented.
+- EOS-A9A Lifecycle Intelligence is implemented as a distinct Engineering OS domain. It composes Assurance and Review; it does not replace this A8D model.
