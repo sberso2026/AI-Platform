@@ -1,51 +1,84 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@rtb/ui";
 import { RtbLogo } from "@/components/brand/rtb-logo";
 import { createClient } from "@/lib/supabase/client";
+import { persistVerifiedMfaSession, mfaUpgradeConfirmed } from "@/lib/supabase/persist-mfa-session";
 import {
   challengeAfterVerifyDestination,
   mapMfaVerifyError,
   MFA_SECURITY_ROUTE,
+  MFA_SESSION_UPGRADE_FAILED_MESSAGE,
   safeMfaReturnPath,
   verifiedTotpFactors,
 } from "@rtb/engineering-review/mfa-ux";
+
+type SafeAalReadout = {
+  currentLevel: string | null;
+  nextLevel: string | null;
+  verifiedFactors: number;
+  sessionPresent: boolean;
+};
 
 function MfaChallengeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = safeMfaReturnPath(searchParams.get("next"), "/review");
+  const supabase = useMemo(() => createClient(), []);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [preMfa, setPreMfa] = useState<SafeAalReadout | null>(null);
+  const [postVerify, setPostVerify] = useState<{
+    verifySucceeded: boolean;
+    currentLevel: string | null;
+    nextLevel: string | null;
+    sessionPresent: boolean;
+    userPresent: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    void supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) {
+    let cancelled = false;
+    void (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
         router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
         return;
       }
-      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (aalData.currentLevel === "aal2") {
+      const [{ data: sessionData }, { data: aalData }, { data: factorData }] = await Promise.all([
+        supabase.auth.getSession(),
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        supabase.auth.mfa.listFactors(),
+      ]);
+      if (cancelled) return;
+      const verified = verifiedTotpFactors(factorData?.totp ?? []);
+      setPreMfa({
+        currentLevel: aalData?.currentLevel ?? null,
+        nextLevel: aalData?.nextLevel ?? null,
+        verifiedFactors: verified.length,
+        sessionPresent: Boolean(sessionData.session),
+      });
+      if (aalData?.currentLevel === "aal2") {
         router.replace(nextPath);
         return;
       }
-      const { data: factorData } = await supabase.auth.mfa.listFactors();
-      if (verifiedTotpFactors(factorData.totp ?? []).length === 0) {
+      if (verified.length === 0) {
         router.replace(`${MFA_SECURITY_ROUTE}?next=${encodeURIComponent(nextPath)}`);
       }
-    });
-  }, [nextPath, router]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [nextPath, router, supabase]);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit(event: FormEvent) {
+    event.preventDefault();
     setBusy(true);
     setError(null);
+    setPostVerify(null);
     try {
-      const supabase = createClient();
       const { data: factorData, error: factorError } = await supabase.auth.mfa.listFactors();
       if (factorError) {
         setError("Unable to load authenticator factors.");
@@ -56,24 +89,43 @@ function MfaChallengeForm() {
         router.replace(`${MFA_SECURITY_ROUTE}?next=${encodeURIComponent(nextPath)}`);
         return;
       }
-      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: totp.id });
-      if (challengeError || !challenge) {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: totp.id,
+      });
+      if (challengeError || !challenge?.id) {
         setError("Unable to start additional verification.");
         return;
       }
-      const { error: verifyError } = await supabase.auth.mfa.verify({
+      const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
         factorId: totp.id,
         challengeId: challenge.id,
         code: code.trim(),
       });
-      if (verifyError) {
-        setError(mapMfaVerifyError(verifyError.message));
+      const observation = await persistVerifiedMfaSession(supabase, {
+        data: verifyData,
+        error: verifyError,
+      });
+      setPostVerify({
+        verifySucceeded: observation.verifySucceeded,
+        currentLevel: observation.currentLevel,
+        nextLevel: observation.nextLevel,
+        sessionPresent: observation.sessionPresent,
+        userPresent: observation.userPresent,
+      });
+      if (!observation.verifySucceeded) {
+        setError(mapMfaVerifyError(verifyError?.message));
         return;
       }
-      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      const result = challengeAfterVerifyDestination({ currentAal: aalData.currentLevel, nextPath });
+      if (!mfaUpgradeConfirmed(observation)) {
+        setError(MFA_SESSION_UPGRADE_FAILED_MESSAGE);
+        return;
+      }
+      const result = challengeAfterVerifyDestination({
+        currentAal: observation.currentLevel,
+        nextPath,
+      });
       if (!result.ok) {
-        setError("Session is not AAL2 yet. Try the authenticator code again.");
+        setError(MFA_SESSION_UPGRADE_FAILED_MESSAGE);
         return;
       }
       router.replace(result.path);
@@ -86,7 +138,18 @@ function MfaChallengeForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F4F6F8] p-4" data-testid="mfa-challenge-page">
+    <div
+      className="flex min-h-screen items-center justify-center bg-[#F4F6F8] p-4"
+      data-testid="mfa-challenge-page"
+      data-pre-mfa-current-level={preMfa?.currentLevel ?? ""}
+      data-pre-mfa-next-level={preMfa?.nextLevel ?? ""}
+      data-pre-mfa-verified-factors={preMfa ? String(preMfa.verifiedFactors) : ""}
+      data-verify-succeeded={postVerify ? String(postVerify.verifySucceeded) : ""}
+      data-post-verify-current-level={postVerify?.currentLevel ?? ""}
+      data-post-verify-next-level={postVerify?.nextLevel ?? ""}
+      data-post-verify-session-present={postVerify ? String(postVerify.sessionPresent) : ""}
+      data-post-verify-user-present={postVerify ? String(postVerify.userPresent) : ""}
+    >
       <Card className="w-full max-w-md border-border bg-white shadow-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex justify-center">
@@ -94,6 +157,11 @@ function MfaChallengeForm() {
           </div>
           <CardTitle>Additional verification is required.</CardTitle>
           <CardDescription>Enter the code from your authenticator app.</CardDescription>
+          {preMfa?.currentLevel ? (
+            <p className="pt-2 text-xs text-muted-foreground" data-testid="mfa-pre-assurance">
+              Identity assurance: {preMfa.currentLevel.toUpperCase()}
+            </p>
+          ) : null}
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={(event) => void submit(event)}>

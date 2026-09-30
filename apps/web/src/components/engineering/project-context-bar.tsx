@@ -6,6 +6,7 @@ import {
   useResolvedEngineeringProjectId,
 } from "@/hooks/use-engineering-project-filter";
 import { formatProjectContextLabel, isRawUuid } from "@/lib/engineering/module-ops";
+import { IdentityAssuranceReadout } from "@/components/engineering/identity-assurance-readout";
 
 type ProjectOption = { id: string; label: string };
 
@@ -71,6 +72,7 @@ export function EngineeringProjectContextBar() {
           {selected?.label || "Select a project"}
         </span>
       </p>
+      <IdentityAssuranceReadout />
       <label className="mt-2 block">
         Authorized project
         <select

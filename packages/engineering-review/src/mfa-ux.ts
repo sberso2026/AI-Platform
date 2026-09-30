@@ -133,6 +133,9 @@ export function payloadContainsMfaSecret(value: unknown): boolean {
   ) || serialized.includes("otpauth://") || /\"secret\"\s*:\s*\"[a-z2-7]{16,}/i.test(serialized);
 }
 
+export const MFA_SESSION_UPGRADE_FAILED_MESSAGE =
+  "Authentication could not be upgraded. Try again.";
+
 export function mapMfaVerifyError(message: string | null | undefined): string {
   const text = (message ?? "").toLowerCase();
   if (text.includes("invalid") || text.includes("expired") || text.includes("code")) {

@@ -13,7 +13,10 @@ describe("EOS-A9F-C live AAL2 browser UX closeout", () => {
     const route = readApp("src/app/api/platform/identity-assurance/route.ts");
     expect(route).toContain("getAuthenticatorAssuranceLevel");
     expect(route).toContain("verifiedFactors");
-    expect(route).toContain("authenticated: true");
+    expect(route).toContain("toSafeIdentityAssurance");
+    expect(route).toContain("userPresent: true");
+    expect(route).toContain("currentLevel");
+    expect(route).toContain("nextLevel");
     expect(route).not.toMatch(/access_token|refresh_token|totp\.secret|cookie contents/i);
     expect(route).not.toMatch(/console\.(log|info|debug|warn)\(/);
   });

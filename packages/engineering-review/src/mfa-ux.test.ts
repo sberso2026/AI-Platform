@@ -5,6 +5,7 @@ import {
   mapMfaVerifyError,
   MFA_CHALLENGE_ROUTE,
   MFA_SECURITY_ROUTE,
+  MFA_SESSION_UPGRADE_FAILED_MESSAGE,
   payloadContainsMfaSecret,
   postPasswordMfaDestination,
   redactMfaEnrollmentForLog,
@@ -103,6 +104,8 @@ describe("Review MFA UX helpers", () => {
       "Verification failed. Check the authenticator code and try again.",
     );
     expect(mapMfaVerifyError("Invalid TOTP code 123456")).not.toContain("123456");
+    expect(MFA_SESSION_UPGRADE_FAILED_MESSAGE).toBe("Authentication could not be upgraded. Try again.");
+    expect(MFA_SESSION_UPGRADE_FAILED_MESSAGE.toLowerCase()).not.toMatch(/token|secret|totp seed/);
   });
 
   it("does not log TOTP enrollment secrets", () => {

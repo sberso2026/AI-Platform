@@ -27,6 +27,7 @@ describe("ERA-7A MFA enrollment and challenge UI", () => {
     expect(challenge).toContain("Additional verification is required.");
     expect(challenge).toContain("auth.mfa.challenge");
     expect(challenge).toContain("auth.mfa.verify");
+    expect(challenge).toContain("persistVerifiedMfaSession");
     expect(challenge).not.toContain("speakeasy");
     expect(security).not.toContain("otplib");
   });
