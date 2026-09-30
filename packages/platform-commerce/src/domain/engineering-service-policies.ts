@@ -3,11 +3,11 @@ import { ENGINEERING_PRODUCT } from "./commerce-access-policy";
 
 /** Service-layer entitlement matrix for Engineering OS entry points. */
 export const ENGINEERING_SERVICE_POLICIES: Record<string, CommerceAccessPolicy> = {
-  "project.list": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.read", seatRequired: true },
-  "project.get": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.read", seatRequired: true },
-  "project.create": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.create", seatRequired: true, cachePolicy: "fresh" },
-  "project.update": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.update", seatRequired: true, cachePolicy: "fresh" },
-  "project.search": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.read", seatRequired: true },
+  "project.list": { productKey: ENGINEERING_PRODUCT, action: "project.read", seatRequired: true },
+  "project.get": { productKey: ENGINEERING_PRODUCT, action: "project.read", seatRequired: true },
+  "project.create": { productKey: ENGINEERING_PRODUCT, action: "project.create", seatRequired: true, cachePolicy: "fresh" },
+  "project.update": { productKey: ENGINEERING_PRODUCT, action: "project.update", seatRequired: true, cachePolicy: "fresh" },
+  "project.search": { productKey: ENGINEERING_PRODUCT, action: "project.read", seatRequired: true },
   "asset.list": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "asset.read", seatRequired: true },
   "asset.get": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "asset.read", seatRequired: true },
   "asset.create": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "asset.write", seatRequired: true, cachePolicy: "fresh" },

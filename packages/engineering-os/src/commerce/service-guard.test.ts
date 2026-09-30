@@ -29,7 +29,6 @@ describe("assertEngineeringService", () => {
       tenantId: "tenant-a",
       policy: {
         productKey: "engineering-os",
-        applicationKey: "project_intelligence",
         action: "project.read",
         seatRequired: true,
       },
@@ -52,7 +51,6 @@ describe("assertEngineeringService", () => {
       tenantId: "tenant-a",
       policy: {
         productKey: "engineering-os",
-        applicationKey: "project_intelligence",
         action: "asset.read",
         seatRequired: true,
       },
@@ -75,7 +73,6 @@ describe("assertEngineeringService", () => {
       tenantId: "tenant-a",
       policy: {
         productKey: "engineering-os",
-        applicationKey: "project_intelligence",
         action: "project.read",
         seatRequired: true,
       },

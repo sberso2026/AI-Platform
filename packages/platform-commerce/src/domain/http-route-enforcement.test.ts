@@ -6,7 +6,9 @@ import { assertVerifiedCommerceContext } from "./service-assertions";
 describe("HTTP route policy enforcement", () => {
   it("maps engineering API segments to typed policies", () => {
     expect(getEngineeringApiPolicy("projects", "GET").action).toBe("project.read");
+    expect(getEngineeringApiPolicy("projects", "GET").applicationKey).toBeUndefined();
     expect(getEngineeringApiPolicy("projects", "POST").action).toBe("project.create");
+    expect(getEngineeringApiPolicy("projects", "POST").applicationKey).toBeUndefined();
     expect(getEngineeringApiPolicy("projects", "PATCH").action).toBe("project.create");
     expect(getEngineeringApiPolicy("documents", "GET").applicationKey).toBe("documents");
     expect(getEngineeringApiPolicy("ai", "POST").featureKey).toBe("ai_assistant");

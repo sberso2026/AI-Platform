@@ -4,6 +4,7 @@ import {
   getEngineeringApiPolicy,
   resolveApiPolicyKey,
 } from "./commerce-access-policy";
+import { ENGINEERING_SERVICE_POLICIES } from "./engineering-service-policies";
 
 const ENGINEERING_API_SEGMENTS = [
   "health",
@@ -84,6 +85,18 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(write.action).toBe("settings.write");
   });
 
+  it("maps Engineering projects API to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("projects", "GET");
+    const write = getEngineeringApiPolicy("projects", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("project.read");
+    expect(write.action).toBe("project.create");
+    expect(write.cachePolicy).toBe("fresh");
+  });
+
   it("maps Analysis to Engineering OS product, not Project Intelligence", () => {
     const read = getEngineeringApiPolicy("analysis", "GET");
     const write = getEngineeringApiPolicy("analysis", "POST");
@@ -124,6 +137,14 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(write.applicationKey).toBeUndefined();
     expect(read.action).toBe("optimization.read");
     expect(write.action).toBe("optimization.write");
+  });
+
+  it("maps canonical Engineering project service policies to OS core, not Project Intelligence", () => {
+    for (const key of ["project.list", "project.get", "project.create", "project.update", "project.search"] as const) {
+      expect(ENGINEERING_SERVICE_POLICIES[key].productKey).toBe("engineering-os");
+      expect(ENGINEERING_SERVICE_POLICIES[key].applicationKey).toBeUndefined();
+    }
+    expect(ENGINEERING_SERVICE_POLICIES["project.list"].action).toBe("project.read");
   });
 
   it("maps Engineering OS A2-A4 registers to product entitlement, not PI", () => {

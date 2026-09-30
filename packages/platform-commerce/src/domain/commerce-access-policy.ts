@@ -16,7 +16,8 @@ export interface CommerceAccessPolicy {
 export const ENGINEERING_PRODUCT = "engineering-os";
 
 /**
- * Engineering OS core registers (A1–A5) are product capabilities of `engineering-os`.
+ * Engineering OS core registers (A1–A5) plus the canonical `engineering_projects`
+ * aggregate are product capabilities of `engineering-os`.
  * They must not require the Project Intelligence commercial application.
  */
 export const ENGINEERING_OS_CORE_APPLICATION = undefined;
@@ -38,8 +39,8 @@ function engineeringOsCorePolicy(
 export const ENGINEERING_API_POLICIES: Record<string, CommerceAccessPolicy> = {
   "health.read": { productKey: ENGINEERING_PRODUCT, action: "health.read", seatRequired: false },
   "dashboard.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "dashboard.read", seatRequired: true },
-  "projects.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.read", seatRequired: true },
-  "projects.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "project.create", seatRequired: true, cachePolicy: "fresh" },
+  "projects.read": engineeringOsCorePolicy("project.read"),
+  "projects.write": engineeringOsCorePolicy("project.create", { cachePolicy: "fresh" }),
   "documents.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "documents", action: "document.read", seatRequired: true },
   "documents.write": { productKey: ENGINEERING_PRODUCT, applicationKey: "documents", action: "document.write", seatRequired: true, cachePolicy: "fresh" },
   "assets.read": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "asset.read", seatRequired: true },

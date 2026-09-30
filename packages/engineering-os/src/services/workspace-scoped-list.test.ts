@@ -97,7 +97,6 @@ const rows: Row[] = [
 function projectPolicy() {
   return {
     productKey: "engineering-os",
-    applicationKey: "project_intelligence",
     action: "project.read",
     seatRequired: true,
   };
@@ -141,7 +140,6 @@ describe("project list workspace scope", () => {
       workspaceId: "workspace-a",
       policy: {
         productKey: "engineering-os",
-        applicationKey: "project_intelligence",
         action: "project.create",
         seatRequired: true,
       },
