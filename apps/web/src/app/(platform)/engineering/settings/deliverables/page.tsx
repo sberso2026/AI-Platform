@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
+import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
+import { useIdentityAssurance } from "@/hooks/use-identity-assurance";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 type Catalog = {
   definitions?: Array<{ definitionId: string; code: string; name: string; origin: string; responsibleDiscipline: string }>;
@@ -25,7 +29,11 @@ type Catalog = {
 export default function DeliverableSettingsPage() {
   const [data, setData] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [projectId, setProjectId] = useState("");
+  const selectedProjectId = useResolvedEngineeringProjectId();
+  const [mappingScope, setMappingScope] = useState<"workspace" | "project">("workspace");
+  const assurance = useIdentityAssurance();
+  const { canMutate } = useEngineeringWriteAccess();
+  const canWrite = canMutate && assurance.aal === "aal2";
   const [rawStatusCode, setRawStatusCode] = useState("");
   const [semantic, setSemantic] = useState("FOR_REVIEW");
   const [mappingVersion, setMappingVersion] = useState("v1");
@@ -46,7 +54,7 @@ export default function DeliverableSettingsPage() {
 
   async function save() {
     const profile = data?.maturityProfile;
-    if (!profile) return;
+    if (!profile || !canWrite) return;
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/settings/deliverables", {
         method: "POST",
@@ -66,13 +74,14 @@ export default function DeliverableSettingsPage() {
   }
 
   async function saveMapping() {
+    if (!canWrite) return;
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/settings/deliverables", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "configureMapping",
-          projectId: projectId || null,
+          projectId: mappingScope === "project" ? selectedProjectId : null,
           sourceSystem,
           rawStatusCode,
           semantic,
@@ -92,7 +101,8 @@ export default function DeliverableSettingsPage() {
     <>
       <Header
         title="Deliverable profile governance"
-        description="Templates stay examples until a project adopts them. Document status mappings are project/workspace governed and are not IFC/approval shortcuts."
+        description="Templates stay examples until a project adopts them. Status mappings are governed and are not IFC or approval shortcuts."
+        wrapDescription
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <p className="mb-4 text-sm">
@@ -100,7 +110,13 @@ export default function DeliverableSettingsPage() {
             Engineering Settings
           </Link>
         </p>
+        <EngineeringProjectContextBar />
         {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+        {!canWrite ? (
+          <p className="mb-4 text-sm text-muted-foreground">
+            Catalog and mapping writes require an authorized AAL2 session. Templates remain non-authoritative until adopted.
+          </p>
+        ) : null}
         <Card className="mb-4">
           <CardHeader>
             <CardTitle className="text-base">
@@ -108,13 +124,16 @@ export default function DeliverableSettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Catalog origin is TEMPLATE / EXAMPLE unless adopted into a project. These definitions are not mandatory for every FEED project.</p>
+            <p>
+              Governance path: Template → Adopt into selected project → Active Deliverable Expectation. Catalog origin is
+              TEMPLATE / EXAMPLE unless adopted. These definitions are not mandatory for every FEED project.
+            </p>
             {(data?.definitions ?? []).map((row) => (
               <div key={row.definitionId} className="rounded border p-2">
                 <Badge variant="secondary">{row.origin}</Badge> {row.code} — {row.name} ({row.responsibleDiscipline})
               </div>
             ))}
-            <Button size="sm" onClick={() => void save()}>
+            <Button size="sm" disabled={!canWrite} onClick={() => void save()}>
               Save governed catalog selection
             </Button>
           </CardContent>
@@ -132,8 +151,18 @@ export default function DeliverableSettingsPage() {
               </div>
             ))}
             <label className="block">
-              Project id (optional workspace-wide if empty)
-              <input className="mt-1 w-full rounded border px-2 py-1" value={projectId} onChange={(event) => setProjectId(event.target.value)} />
+              Mapping scope
+              <select
+                className="mt-1 w-full rounded border px-2 py-1"
+                data-testid="deliverable-mapping-scope"
+                value={mappingScope}
+                onChange={(event) => setMappingScope(event.target.value as "workspace" | "project")}
+              >
+                <option value="workspace">Workspace-wide</option>
+                <option value="project" disabled={!selectedProjectId}>
+                  Selected project
+                </option>
+              </select>
             </label>
             <label className="block">
               Source system
@@ -157,7 +186,7 @@ export default function DeliverableSettingsPage() {
               Mapping version
               <input className="mt-1 w-full rounded border px-2 py-1" value={mappingVersion} onChange={(event) => setMappingVersion(event.target.value)} />
             </label>
-            <Button size="sm" onClick={() => void saveMapping()}>
+            <Button size="sm" disabled={!canWrite} onClick={() => void saveMapping()}>
               Save status mapping
             </Button>
           </CardContent>

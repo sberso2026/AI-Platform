@@ -2,6 +2,8 @@
 
 Status: **PASS_WITH_LIMITATIONS** for staging / non-production (`rntonzigxwxcjlcsadip`). Additive after EOS-A9E. Does not start Engineering Information Intelligence.
 
+A9F-C follow-up is recorded in `EOS_A9F_C_LIVE_AAL2_BROWSER_UX_CLOSEOUT.md`. This A9F document is not rewritten. The historical A9F result remains **PASS_WITH_LIMITATIONS**.
+
 Authentication was not weakened. MFA was not disabled. `requireMfa` was not changed. Tokens were not fabricated. TOTP was not stored, logged, or committed. Service-role was not substituted for browser-user AAL2 evidence.
 
 ## Starting state

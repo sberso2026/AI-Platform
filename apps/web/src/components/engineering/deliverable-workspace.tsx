@@ -8,7 +8,11 @@ import {
   EngineeringBreadcrumb,
   OperationalError,
 } from "@/components/engineering/operational";
+import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
+import { useIdentityAssurance } from "@/hooks/use-identity-assurance";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 type Listed = {
   id: string;
@@ -69,7 +73,9 @@ const VIEWS = [
 export function DeliverableWorkspace() {
   const params = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
   const [view, setView] = useState<(typeof VIEWS)[number]["id"]>((params?.get("view") as (typeof VIEWS)[number]["id"]) ?? "active");
-  const [projectId, setProjectId] = useState(params?.get("projectId") ?? "proj-crusher-feed");
+  const projectId = useResolvedEngineeringProjectId();
+  const assurance = useIdentityAssurance();
+  const { canMutate } = useEngineeringWriteAccess();
   const [note, setNote] = useState("");
   const [rows, setRows] = useState<Listed[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -82,6 +88,9 @@ export function DeliverableWorkspace() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const aal2 = assurance.aal === "aal2";
+  const canAdopt = Boolean(projectId) && aal2 && canMutate;
+
   const visible = useMemo(() => {
     if (view === "missing") return rows.filter((row) => row.requirementState === "REQUIRED" && row.status === "MISSING");
     if (view === "maturity") return rows.filter((row) => row.latest);
@@ -90,6 +99,12 @@ export function DeliverableWorkspace() {
   }, [rows, view]);
 
   async function load() {
+    if (!projectId) {
+      setRows([]);
+      setTemplates([]);
+      setNote("");
+      return;
+    }
     setError(null);
     const parsed = await parseApiJsonResponse(
       await fetch(`/api/engineering/deliverables?action=list&projectId=${encodeURIComponent(projectId)}`),
@@ -124,6 +139,10 @@ export function DeliverableWorkspace() {
   }
 
   async function adopt(code: string) {
+    if (!canAdopt || !projectId) {
+      setError("Template adoption requires an authorized AAL2 session and a selected project.");
+      return;
+    }
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/deliverables", {
         method: "POST",
@@ -136,6 +155,7 @@ export function DeliverableWorkspace() {
       return;
     }
     await load();
+    setView("active");
   }
 
   async function openDetail(row: Listed) {
@@ -154,10 +174,12 @@ export function DeliverableWorkspace() {
     <>
       <Header
         title="Deliverable Intelligence"
-        description="Active project expectations are separate from example templates. Document status is not engineering approval."
+        description="Active expectations are separate from templates. Document status is not engineering approval."
+        wrapDescription
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Deliverables" }]} />
+        <EngineeringProjectContextBar />
         {error ? <OperationalError message={error} /> : null}
         <div className="mb-4 flex flex-wrap gap-2">
           {VIEWS.map((item) => (
@@ -166,11 +188,16 @@ export function DeliverableWorkspace() {
             </Button>
           ))}
         </div>
-        <label className="mb-4 block text-sm">
-          Project id
-          <input className="mt-1 w-full rounded border px-2 py-1" value={projectId} onChange={(event) => setProjectId(event.target.value)} />
-        </label>
-        <p className="mb-4 text-sm">{note || "Active Deliverables do not include unadopted templates. Counts are not engineering percent complete."}</p>
+        <p className="mb-4 text-sm">
+          {note ||
+            "Template → adopt into the selected project → active Deliverable Expectation. Catalog examples are not mandatory until adopted."}
+        </p>
+        {!projectId ? (
+          <EmptyOperationalState
+            title="Select a project"
+            description="Deliverables use the authorized project selector. Arbitrary project IDs are not mutation authority."
+          />
+        ) : null}
         {view === "templates" ? (
           <ul className="space-y-2 text-sm">
             {templates.map((row) => (
@@ -179,7 +206,7 @@ export function DeliverableWorkspace() {
                 {row.adopted ? ", adopted" : ", not adopted"}
                 {row.notApplicable ? ", not applicable" : ""})
                 {!row.adopted && !row.notApplicable ? (
-                  <Button className="ml-2" size="sm" onClick={() => void adopt(row.code)}>
+                  <Button className="ml-2" size="sm" disabled={!canAdopt} onClick={() => void adopt(row.code)}>
                     Adopt template
                   </Button>
                 ) : null}
@@ -187,10 +214,15 @@ export function DeliverableWorkspace() {
             ))}
           </ul>
         ) : null}
-        {view !== "templates" && !visible.length ? (
+        {projectId && view !== "templates" && !visible.length ? (
           <EmptyOperationalState
             title="No active deliverable expectations"
             description="Adopt a template into this project. Catalog examples are not project requirements until adopted."
+            action={
+              <Button size="sm" data-testid="browse-templates" onClick={() => setView("templates")}>
+                Browse Templates
+              </Button>
+            }
           />
         ) : null}
         {view === "discipline" ? (
@@ -219,7 +251,7 @@ export function DeliverableWorkspace() {
                   {row.definitionCode}
                 </button>{" "}
                 {row.status} · {row.responsibleDiscipline} · {row.intendedPurpose}
-                <Button className="ml-2" size="sm" onClick={() => void evaluate(row.id)}>
+                <Button className="ml-2" size="sm" disabled={!aal2} onClick={() => void evaluate(row.id)}>
                   Evaluate from canonical evidence
                 </Button>
               </li>
@@ -227,7 +259,7 @@ export function DeliverableWorkspace() {
           </ul>
         ) : null}
         {selected ? (
-          <section className="mt-6 space-y-2 rounded border p-3 text-sm">
+          <section className="mt-6 space-y-2 rounded border p-3 text-sm" data-testid="deliverable-digital-thread">
             <p className="font-medium">{selected.definitionCode}</p>
             <p>Definition / version: {detail?.definition?.name ?? selected.definitionCode} {detail?.definition?.definitionVersion ?? ""}</p>
             <p>Template or project-specific: {detail?.definition?.origin ?? (selected.adoptedFromTemplate ? "TEMPLATE adopted" : "project")}</p>

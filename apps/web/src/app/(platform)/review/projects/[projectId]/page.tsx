@@ -83,7 +83,7 @@ export default function ReviewProjectPage() {
     <>
       <Header
         title={payload?.project ? payload.project.name : "Project review"}
-        description="Select authorized documents and create a review package"
+        description="Authorized documents in this project can be selected into a review package. An empty package cannot be created."
         showEngineeringChrome={false}
       />
       <div className="mx-auto max-w-5xl space-y-6 p-6">

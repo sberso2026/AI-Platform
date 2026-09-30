@@ -14,12 +14,13 @@ interface HeaderProps {
   title: string;
   description?: string;
   showEngineeringChrome?: boolean;
+  wrapDescription?: boolean;
 }
 
 const PROJECT_FILTER_KEY = "rtb.engineering.selectedProjectId";
 const CONTROL_H = "h-12"; // 48px — command rail chrome
 
-export function Header({ title, description, showEngineeringChrome }: HeaderProps) {
+export function Header({ title, description, showEngineeringChrome, wrapDescription }: HeaderProps) {
   const router = useRouter();
   const [projects, setProjects] = useState<{ id: string; label: string }[]>([]);
   const [projectId, setProjectId] = useState("all");
@@ -110,7 +111,12 @@ export function Header({ title, description, showEngineeringChrome }: HeaderProp
       className="eos-command-rail flex min-h-[5rem] shrink-0 flex-col gap-4 border-b border-[color:var(--eos-border)] bg-[color:var(--eos-bg-primary)] px-6 py-4 sm:px-8 lg:flex-row lg:items-center lg:gap-6 lg:justify-between"
       data-testid="app-header"
     >
-      <PageHeader title={title} description={description} className="max-w-xl shrink-0" />
+      <PageHeader
+        title={title}
+        description={description}
+        wrapDescription={wrapDescription}
+        className={wrapDescription ? "max-w-2xl shrink-0" : "max-w-xl shrink-0"}
+      />
 
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3 lg:gap-3">
         {engineeringChrome && (

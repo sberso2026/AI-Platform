@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Button } from "@rtb/ui";
 import { Header } from "@/components/layout/header";
 import {
@@ -8,7 +9,16 @@ import {
   EngineeringBreadcrumb,
   OperationalError,
 } from "@/components/engineering/operational";
+import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
+import { useIdentityAssurance } from "@/hooks/use-identity-assurance";
+import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
+import {
+  allowedTransitionTargets,
+  gateIdForCurrentStage,
+  lifecycleControlState,
+} from "@/lib/engineering/lifecycle-control-state";
 
 type Assignment = {
   id: string;
@@ -65,6 +75,13 @@ type Transition = {
   profileVersion: string;
 };
 
+type Catalog = {
+  profile?: {
+    allowedTransitions?: Array<{ from: string; to: string }>;
+    gates?: Array<{ gateId: string; fromStage: string; toStage?: string }>;
+  };
+};
+
 const VIEWS = [
   { id: "current", label: "Current Lifecycle" },
   { id: "scoped", label: "Scoped Lifecycle States" },
@@ -80,35 +97,61 @@ const VIEWS = [
 export function LifecycleWorkspace() {
   const params = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
   const [view, setView] = useState<(typeof VIEWS)[number]["id"]>((params?.get("view") as (typeof VIEWS)[number]["id"]) ?? "current");
-  const [projectId, setProjectId] = useState(params?.get("projectId") ?? "proj-crusher-feed");
+  const projectId = useResolvedEngineeringProjectId();
+  const assurance = useIdentityAssurance();
+  const { canMutate } = useEngineeringWriteAccess();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [alignment, setAlignment] = useState<Alignment | null>(null);
   const [history, setHistory] = useState<Transition[]>([]);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [deliverableSummary, setDeliverableSummary] = useState<{
     required: Array<{ definitionCode: string; bound: boolean; readiness: string; stale: boolean }>;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState("");
-  const [toStage, setToStage] = useState("DETAILED_DESIGN");
+  const [toStage, setToStage] = useState("");
+  const [lastDecision, setLastDecision] = useState<string | null>(null);
 
   const project = assignments.find((row) => row.scopeType === "PROJECT");
   const unmet = useMemo(
     () => (evaluation?.criteria ?? []).filter((row) => row.applicability === "APPLICABLE" && row.status !== "SATISFIED" && !row.waived),
     [evaluation],
   );
+  const allowedTo = useMemo(
+    () => allowedTransitionTargets(project?.stage, catalog?.profile?.allowedTransitions ?? []),
+    [catalog, project?.stage],
+  );
+  const controls = lifecycleControlState({
+    hasAssignment: Boolean(project),
+    aal: assurance.aal,
+    canMutate,
+    evaluationReadiness: evaluation?.readiness,
+    evaluationStale: Boolean(evaluation?.stale),
+    lastDecision,
+  });
+
+  useEffect(() => {
+    if (allowedTo.length && !allowedTo.includes(toStage)) setToStage(allowedTo[0] ?? "");
+  }, [allowedTo, toStage]);
 
   async function load() {
     setError(null);
-    const catalog = await parseApiJsonResponse(await fetch("/api/engineering/lifecycle?action=catalog"));
-    if (!catalog.ok) {
-      setError(catalog.errorMessage ?? "Unable to load lifecycle catalog");
+    const catalogParsed = await parseApiJsonResponse(await fetch("/api/engineering/lifecycle?action=catalog"));
+    if (!catalogParsed.ok) {
+      setError(catalogParsed.errorMessage ?? "Unable to load lifecycle catalog");
+      return;
+    }
+    setCatalog((catalogParsed.data as Catalog) ?? null);
+    if (!projectId) {
+      setAssignments([]);
       return;
     }
     const listed = await parseApiJsonResponse(
       await fetch(`/api/engineering/lifecycle?action=assignments&projectId=${encodeURIComponent(projectId)}`),
     );
     if (listed.ok && Array.isArray(listed.data)) setAssignments(listed.data as Assignment[]);
+    else setAssignments([]);
   }
 
   useEffect(() => {
@@ -123,12 +166,13 @@ export function LifecycleWorkspace() {
   }
 
   async function evaluateGate() {
-    if (!project?.id) return;
+    if (!project?.id || !controls.evaluateEnabled) return;
+    const gateId = gateIdForCurrentStage(project.stage, catalog?.profile?.gates ?? []) ?? "FEED_EXIT";
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/lifecycle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "evaluate", assignmentId: project.id, gateId: "FEED_EXIT" }),
+        body: JSON.stringify({ action: "evaluate", assignmentId: project.id, gateId }),
       }),
     );
     if (!parsed.ok) {
@@ -136,6 +180,7 @@ export function LifecycleWorkspace() {
       return;
     }
     setEvaluation(parsed.data as Evaluation);
+    setLastDecision(null);
   }
 
   async function refreshGate() {
@@ -143,6 +188,7 @@ export function LifecycleWorkspace() {
       await evaluateGate();
       return;
     }
+    if (!controls.evaluateEnabled) return;
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/lifecycle", {
         method: "POST",
@@ -155,9 +201,11 @@ export function LifecycleWorkspace() {
       return;
     }
     setEvaluation(parsed.data as Evaluation);
+    setLastDecision(null);
   }
 
   async function loadAlignment() {
+    if (!projectId) return;
     const parsed = await parseApiJsonResponse(
       await fetch(`/api/engineering/lifecycle?action=alignment&projectId=${encodeURIComponent(projectId)}`),
     );
@@ -165,7 +213,7 @@ export function LifecycleWorkspace() {
   }
 
   async function decide(decision: string) {
-    if (!evaluation?.id) return;
+    if (!evaluation?.id || !controls.decisionEnabled) return;
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/lifecycle", {
         method: "POST",
@@ -173,11 +221,15 @@ export function LifecycleWorkspace() {
         body: JSON.stringify({ action: "decide", evaluationId: evaluation.id, decision, rationale }),
       }),
     );
-    if (!parsed.ok) setError(parsed.errorMessage ?? "Gate decision denied");
+    if (!parsed.ok) {
+      setError(parsed.errorMessage ?? "Gate decision denied");
+      return;
+    }
+    setLastDecision(decision);
   }
 
   async function transition() {
-    if (!project?.id) return;
+    if (!project?.id || !controls.transitionEnabled) return;
     const parsed = await parseApiJsonResponse(
       await fetch("/api/engineering/lifecycle", {
         method: "POST",
@@ -199,37 +251,77 @@ export function LifecycleWorkspace() {
     if (project.id) await loadHistory(project.id);
   }
 
+  async function assignProfile() {
+    if (!projectId || !canMutate || assurance.aal !== "aal2") {
+      setError("Assigning a Lifecycle Profile requires an authorized AAL2 session and a selected project.");
+      return;
+    }
+    const parsed = await parseApiJsonResponse(
+      await fetch("/api/engineering/lifecycle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "assign",
+          projectId,
+          scopeType: "PROJECT",
+          scopeId: projectId,
+          stage: "FEED",
+        }),
+      }),
+    );
+    if (!parsed.ok) {
+      setError(parsed.errorMessage ?? "Lifecycle assignment denied");
+      return;
+    }
+    await load();
+  }
+
   return (
     <>
       <Header
         title="Lifecycle Intelligence"
-        description="Governed engineering lifecycle context, gate readiness, and human-authorized transitions. The system does not approve stage changes."
+        description="Gate readiness is evaluated from canonical evidence. Humans authorize transitions. The system does not approve stage changes."
+        wrapDescription
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Lifecycle" }]} />
+        <EngineeringProjectContextBar />
         {error ? <OperationalError message={error} /> : null}
         <div className="mb-4 flex flex-wrap gap-2">
           {VIEWS.map((item) => (
-            <Button key={item.id} size="sm" variant={view === item.id ? "secondary" : "secondary"} onClick={() => setView(item.id)}>
+            <Button key={item.id} size="sm" variant="secondary" onClick={() => setView(item.id)}>
               {item.label}
             </Button>
           ))}
         </div>
-        <label className="mb-4 block text-sm">
-          Project id
-          <input className="mt-1 w-full rounded border px-2 py-1" value={projectId} onChange={(event) => setProjectId(event.target.value)} />
-        </label>
-        {!assignments.length ? (
+        {!projectId ? (
+          <EmptyOperationalState
+            title="Select a project"
+            description="Lifecycle uses the authorized project selector. Arbitrary project IDs are not mutation authority."
+          />
+        ) : null}
+        {projectId && !assignments.length ? (
           <EmptyOperationalState
             title="No lifecycle assignment"
-            description="Assign a governed Lifecycle Profile and current stage before evaluating a gate. Mixed scopes are allowed."
+            description={controls.reason}
+            action={
+              controls.assignmentCta === "assign" ? (
+                <Button size="sm" data-testid="assign-lifecycle-profile" onClick={() => void assignProfile()}>
+                  Assign Lifecycle Profile
+                </Button>
+              ) : (
+                <Link className="underline" href="/engineering/settings/lifecycle">
+                  Open Lifecycle Settings
+                </Link>
+              )
+            }
           />
         ) : null}
         {view === "current" ? (
           <section className="space-y-2 text-sm">
             <p>Project stage: {project?.stage ?? "UNKNOWN"}</p>
             <p>
-              Profile: {project?.profileId ?? "EOS-DEFAULT-ENGINEERING"} {project?.profileVersion ?? "v1"}
+              Profile: {project?.profileId ?? "unassigned"} {project?.profileVersion ?? ""}
             </p>
             <p>Gate readiness is machine-evaluated from canonical harvested evidence. Gate decision remains human-governed.</p>
             <p>Automatic stage transition is not available. Project Controls does not define lifecycle authority.</p>
@@ -253,10 +345,10 @@ export function LifecycleWorkspace() {
             <p>Readiness: {evaluation?.readiness ?? "NOT_EVALUATED"}</p>
             <p>Stale: {evaluation?.stale ? "yes" : "no"}</p>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => void evaluateGate()}>
+              <Button size="sm" disabled={!controls.evaluateEnabled} onClick={() => void evaluateGate()}>
                 Evaluate gate from canonical evidence
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => void refreshGate()}>
+              <Button size="sm" variant="secondary" disabled={!controls.evaluateEnabled} onClick={() => void refreshGate()}>
                 Refresh / re-evaluate gate
               </Button>
             </div>
@@ -304,7 +396,9 @@ export function LifecycleWorkspace() {
             <Button
               size="sm"
               variant="secondary"
+              disabled={!projectId}
               onClick={async () => {
+                if (!projectId) return;
                 const parsed = await parseApiJsonResponse(
                   await fetch(`/api/engineering/deliverables?action=lifecycle&projectId=${encodeURIComponent(projectId)}`),
                 );
@@ -347,18 +441,41 @@ export function LifecycleWorkspace() {
             ))}
           </section>
         ) : null}
-        <section className="mt-6 space-y-2 rounded border p-3 text-sm">
+        <section className="mt-6 space-y-2 rounded border p-3 text-sm" data-testid="lifecycle-human-controls">
           <p className="font-medium">Human gate decision</p>
-          <textarea className="w-full rounded border px-2 py-1" value={rationale} onChange={(event) => setRationale(event.target.value)} placeholder="Rationale" />
-          <input className="w-full rounded border px-2 py-1" value={toStage} onChange={(event) => setToStage(event.target.value)} />
+          <p data-testid="lifecycle-control-reason">{controls.reason}</p>
+          <textarea
+            className="w-full rounded border px-2 py-1"
+            value={rationale}
+            onChange={(event) => setRationale(event.target.value)}
+            placeholder="Rationale"
+            disabled={!controls.decisionEnabled && !controls.transitionEnabled}
+          />
+          <label className="block">
+            Target stage
+            <select
+              className="mt-1 w-full rounded border px-2 py-1"
+              data-testid="lifecycle-target-stage"
+              value={toStage}
+              disabled={!controls.targetEditable || allowedTo.length === 0}
+              onChange={(event) => setToStage(event.target.value)}
+            >
+              {allowedTo.length === 0 ? <option value="">No governed transition</option> : null}
+              {allowedTo.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => void decide("APPROVED_TO_TRANSITION")}>
+            <Button size="sm" disabled={!controls.decisionEnabled} onClick={() => void decide("APPROVED_TO_TRANSITION")}>
               Approve to transition
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => void decide("NOT_APPROVED")}>
+            <Button size="sm" variant="secondary" disabled={!controls.decisionEnabled} onClick={() => void decide("NOT_APPROVED")}>
               Not approved
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => void transition()}>
+            <Button size="sm" variant="secondary" disabled={!controls.transitionEnabled} onClick={() => void transition()}>
               Execute authorized transition
             </Button>
           </div>
