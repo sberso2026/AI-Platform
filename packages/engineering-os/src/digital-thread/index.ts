@@ -7,3 +7,4 @@ export * from "./explain";
 export * from "./fixture";
 export * from "./a7b-direction";
 export * from "./service";
+export * from "./projection";

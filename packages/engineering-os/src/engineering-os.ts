@@ -42,6 +42,11 @@ import { ExternalToolAssignmentService } from "./external-tools/assignment-servi
 import { DisciplineIntelligenceService } from "./discipline-intelligence/service";
 import { AnalysisRequestService } from "./analysis-intelligence/request-service";
 import { EngineeringDigitalThreadService } from "./digital-thread/service";
+import {
+  EngineeringDigitalThreadProjectionService,
+  PlatformKgThreadProjectionStore,
+  registerThreadProjectionJobHandler,
+} from "./digital-thread/projection";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
@@ -79,6 +84,7 @@ export interface EngineeringOS {
   disciplineIntelligence: DisciplineIntelligenceService;
   analysisRequests: AnalysisRequestService;
   digitalThread: EngineeringDigitalThreadService;
+  threadProjection: EngineeringDigitalThreadProjectionService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -117,12 +123,19 @@ export function createEngineeringOS(
   const externalToolAssignments = new ExternalToolAssignmentService(supabase);
   const disciplineIntelligence = new DisciplineIntelligenceService(supabase);
   const analysisRequests = new AnalysisRequestService(supabase, kernel);
-  const digitalThread = new EngineeringDigitalThreadService(supabase);
+  const threadProjection = new EngineeringDigitalThreadProjectionService(
+    new PlatformKgThreadProjectionStore(supabase),
+  );
+  const digitalThread = new EngineeringDigitalThreadService(supabase, threadProjection);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
+  registerThreadProjectionJobHandler(kernel.jobs, threadProjection, {
+    loadWorkspaceLinks: (tenantId, workspaceId) => digitalThread.loadCanonicalLinks(tenantId, workspaceId),
+  });
   const timeline = new EngineeringTimelineService(supabase);
   const activity = new EngineeringActivityService(supabase);
   const objects = new EngineeringObjectFramework(supabase, kernel);
+  objects.setThreadProjection(threadProjection);
   const demo = new EngineeringDemoDataService(supabase, kernel);
   const health = new EngineeringHealthService(supabase, kernel, demo);
   const inspections = {
@@ -196,6 +209,7 @@ export function createEngineeringOS(
     disciplineIntelligence,
     analysisRequests,
     digitalThread,
+    threadProjection,
     timeline,
     activity,
     objects,

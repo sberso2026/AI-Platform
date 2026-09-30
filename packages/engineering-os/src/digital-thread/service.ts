@@ -21,6 +21,8 @@ import type {
   ThreadRelation,
   ThreadRootType,
 } from "./types";
+import type { CanonicalGovernedLink } from "./projection/types";
+import type { EngineeringDigitalThreadProjectionService } from "./projection/service";
 
 const OBJECT_TABLES: Record<string, string> = {
   requirement: "engineering_requirements",
@@ -47,6 +49,7 @@ function db(client: SupabaseClient): any {
 
 function mapLink(row: Record<string, unknown>): ThreadRelation {
   return {
+    id: row.id != null ? String(row.id) : undefined,
     relationship: String(row.relationship),
     fromType: String(row.from_type),
     fromId: String(row.from_id),
@@ -60,7 +63,10 @@ function mapLink(row: Record<string, unknown>): ThreadRelation {
 }
 
 export class EngineeringDigitalThreadService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(
+    private readonly supabase: SupabaseClient,
+    private readonly projection?: EngineeringDigitalThreadProjectionService,
+  ) {}
 
   async trace(
     commerce: CommerceExecutionContext,
@@ -107,6 +113,103 @@ export class EngineeringDigitalThreadService {
     if (input.kind === "configuration") return configurationTrace(graph, query, auth);
     if (input.kind === "change") return changeTrace(graph, query, auth);
     return traverseThread(graph, query, auth);
+  }
+
+  /**
+   * Optional Platform KG projection query. Canonical relational trace remains the default.
+   * KG failure returns projection unavailable — never "engineering thread unavailable".
+   */
+  async projectedTrace(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      objectType: ThreadRootType | string;
+      objectId: string;
+      direction?: ThreadDirection;
+      relationTypes?: string[];
+      objectTypes?: string[];
+      maxDepth?: number;
+    },
+  ) {
+    const canonical = await this.trace(commerce, tenantId, { ...input, kind: "graph" });
+    if (!this.projection) {
+      return { ...canonical, projectionStatus: "FAILED" as const, source: "canonical" as const, projectionUnavailable: true };
+    }
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) {
+      return { ...canonical, projectionStatus: "FAILED" as const, source: "canonical" as const, projectionUnavailable: true };
+    }
+    const graph = await this.loadGraph(tenantId, workspaceId, input.objectType, input.objectId);
+    const queried = await this.projection.query(
+      tenantId,
+      workspaceId,
+      {
+        tenantId,
+        workspaceId,
+        root: { objectType: input.objectType, objectId: input.objectId },
+        direction: input.direction ?? "both",
+        relationTypes: input.relationTypes,
+        objectTypes: input.objectTypes,
+        maxDepth: input.maxDepth,
+      },
+      this.authFromGraph(tenantId, workspaceId, graph),
+      graph.nodes,
+    );
+    if (!queried.ok) {
+      return {
+        ...canonical,
+        projectionStatus: queried.reason === "reads_disabled" ? ("DEGRADED" as const) : ("FAILED" as const),
+        source: "canonical" as const,
+        projectionUnavailable: true,
+        projectionReason: queried.reason,
+      };
+    }
+    return { ...queried.traversal, projectionStatus: "HEALTHY" as const, source: "platform_kg_projection" as const };
+  }
+
+  async projectionHealth(commerce: CommerceExecutionContext, tenantId: string) {
+    assertEngineeringService(commerce, "thread.get", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId || !this.projection) {
+      return {
+        status: "FAILED" as const,
+        projectionVersion: this.projection?.projectionVersion() ?? "engineering-thread-projection/v1",
+        lastProjectedAt: null,
+        lastReconciledAt: null,
+        lagMs: null,
+        edgeCount: 0,
+        canonicalEdgeCount: 0,
+        missingCount: 0,
+        duplicateCount: 0,
+        orphanCount: 0,
+        semanticVersionMismatch: 0,
+        pendingFailures: 1,
+        source: "canonical" as const,
+      };
+    }
+    const links = await this.loadCanonicalLinks(tenantId, workspaceId);
+    return this.projection.projectionHealth(tenantId, workspaceId, links);
+  }
+
+  async loadCanonicalLinks(tenantId: string, workspaceId: string): Promise<CanonicalGovernedLink[]> {
+    const graph = await this.loadGraph(tenantId, workspaceId);
+    const workspaceOf = new Map(graph.nodes.map((n) => [`${n.objectType}:${n.objectId}`, n.workspaceId]));
+    return graph.links
+      .filter((link) => link.id)
+      .map((link) => ({
+        id: String(link.id),
+        tenantId,
+        workspaceId: workspaceOf.get(`${link.fromType}:${link.fromId}`) ?? workspaceId,
+        fromType: link.fromType,
+        fromId: link.fromId,
+        toType: link.toType,
+        toId: link.toId,
+        relationship: link.relationship,
+        governed: link.governed,
+        createdBy: link.createdBy,
+        createdAt: link.createdAt,
+      }))
+      .filter((link) => link.workspaceId === workspaceId);
   }
 
   async coverage(commerce: CommerceExecutionContext, tenantId: string) {

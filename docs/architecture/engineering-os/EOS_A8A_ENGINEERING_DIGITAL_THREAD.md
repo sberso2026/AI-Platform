@@ -52,7 +52,7 @@ They complement one another. They are not the same thing.
 | Canonical engineering objects | Existing bounded contexts (Core, Review, Optimization, …) | source of truth for payloads |
 | Governed relationships | Engineering Core `engineering_object_links` + finite taxonomy | source of truth for edges |
 | Digital Thread | Engineering OS composition (`packages/engineering-os/src/digital-thread`) | read / traversal / explainability |
-| Platform Knowledge Graph | Platform Kernel `knowledge_nodes` / `knowledge_edges` | **projection / query acceleration / future intelligence** — not SOT in A8A |
+| Platform Knowledge Graph | Platform Kernel `knowledge_nodes` / `knowledge_edges` | **projection / query acceleration / future intelligence** — EOS-A8B derived projection; not SOT |
 | PI Knowledge Graph | Project Intelligence | product-specific projection only |
 | Twin Thread `digital_twin_thread_*` | Operational Digital Twin | twin reference index; not Engineering Digital Thread |
 | Audit events | Kernel / Review audit | who did what when — composed on request, not copied as thread edges |
@@ -257,4 +257,6 @@ No new Digital Thread object table. EOS-A8A adds only an additive replace of `en
 
 ## Out of scope (honoured)
 
-New graph database, KG platform, full Platform KG migration, Digital Twin redesign, real solver certification, structural/multidiscipline solver execution, universal scores, automatic confirmed Impact creation, unbounded traversal, autonomous AI relationship creation.
+New graph database, KG as source of truth, Digital Twin redesign, real solver certification, structural/multidiscipline solver execution, universal scores, automatic confirmed Impact creation, unbounded traversal, autonomous AI relationship creation.
+
+See `EOS_A8B_PLATFORM_KG_PROJECTION.md` for the disposable Platform KG projection (not a second SOT).

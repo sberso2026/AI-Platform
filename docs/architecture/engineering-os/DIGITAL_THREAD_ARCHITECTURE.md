@@ -1,17 +1,17 @@
 # EOS-A1 Digital Thread Architecture
 
-Status: **IMPLEMENTED** for EOS-A8A composition. No new graph store. No KG SOT migration.
+Status: **IMPLEMENTED** for EOS-A8A composition and EOS-A8B Platform KG projection. No new graph store. No KG SOT migration.
 
-See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`.
+See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md` and `EOS_A8B_PLATFORM_KG_PROJECTION.md`.
 
-**Canonical rule (EOS-A8A):**
+**Canonical rule (EOS-A8A / A8B):**
 
 - Relational Core + governed `engineering_object_links` = **source of truth**
-- Platform Knowledge Graph = projection / query acceleration / future intelligence
+- Platform Knowledge Graph = projection / query acceleration / future intelligence (A8B derived, disposable)
 - PI Knowledge Graph = product-specific projection
 - Twin Thread `digital_twin_thread_*` = twin-scoped references, not Engineering Digital Thread
 
-Evidence HEAD: `e58f81b84f475ac57849f7201e97359e5024b311` (A7B) plus EOS-A8A composition.
+Evidence HEAD: EOS-A8A `a91c478aec97d9dad39e75ffca6f72fced5f3610` plus EOS-A8B projection onto `knowledge_nodes` / `knowledge_edges`.
 
 ADR-D3 and ADR-D6 apply.
 

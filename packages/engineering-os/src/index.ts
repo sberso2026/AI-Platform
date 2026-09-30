@@ -163,6 +163,14 @@ export {
 } from "./discipline-intelligence";
 export { registerOptimizationEvaluateHandler, createOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 export { registerAnalysisExecuteHandler, createAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
+export {
+  THREAD_PROJECTION_VERSION,
+  THREAD_KG_PROJECTION_FLAG,
+  THREAD_KG_READS_FLAG,
+  THREAD_PROJECTION_JOB_TYPE,
+  EngineeringDigitalThreadProjectionService,
+  MemoryThreadProjectionStore,
+} from "./digital-thread/projection";
 export { CERTIFICATION_STUB_ADAPTER_ID, MANIFEST_SCHEMA_VERSION, fingerprintRunInputManifest, buildRunInputManifest } from "./optimization-intelligence/manifest";
 export {
   GOVERNED_RELATION_TYPES,

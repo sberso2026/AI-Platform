@@ -63,6 +63,7 @@ export type ThreadObjectRef = {
 };
 
 export type ThreadRelation = {
+  id?: string;
   relationship: string;
   fromType: string;
   fromId: string;

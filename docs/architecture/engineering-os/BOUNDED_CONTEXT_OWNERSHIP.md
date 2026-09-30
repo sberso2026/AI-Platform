@@ -51,7 +51,7 @@ Owner vocabulary:
 | Workflow instance | Platform Kernel + Engineering Workflow SDK | `workflow_instances` + `@rtb/engineering-os` SDK | same | Inspection, Review (routing only) | SDK `EngineeringReviewRecord` is **not** ERA |
 | **Knowledge Graph node/edge** | **Platform Kernel (infra)** | `knowledge_nodes`, `knowledge_edges` | Platform KG hosts Engineering Digital Thread | PI, Core (`knowledge_node_id`) | **CONFIRMED** PI KG duplication (ADR-D3) |
 | PI Knowledge Graph | Project Intelligence (projection) | `project_intelligence_knowledge_*`, `EngineeringKnowledgeGraph` | **converge to Platform KG**; PI remains projection | PI product UI | Do not add a third store |
-| Engineering Digital Thread | Engineering OS composition over Core objects + `engineering_object_links` | Core payloads + governed links (EOS-A8A) | Platform KG may project later | all intelligence domains | Third graph **forbidden**; PI KG must not become SOT |
+| Engineering Digital Thread | Engineering OS composition over Core objects + `engineering_object_links` | Core payloads + governed links (EOS-A8A); Platform KG projection (EOS-A8B) | Platform KG hosts derived thread edges only | all intelligence domains | Third graph **forbidden**; PI KG must not become SOT; KG is not SOT |
 | Twin Thread composition | Operational Digital Twin | `digital_twin_thread_profiles/snapshots/references` (batch_84) | same — **references only** | Twin UI, simulation | **MEDIUM** naming collision with Engineering Digital Thread — do not expand into a KG |
 | **Digital Twin object** | **Operational Digital Twin** | kernel `digital_twins` + module `digital_twin_identities` | **intentional two-layer** (ADR-D6) | Assets FKs | Do not use twin as thread |
 | **Job / Execution Job** | **Platform Kernel JobService** (future convergence) | kernel `background_jobs`, commerce outbox/scheduler, PI claim jobs, `engineering_execution_jobs` | Kernel jobs + typed Engineering execution as a *kind* | Analysis, Review, commerce | **CONFIRMED** multi-queue (ADR-D4) |
@@ -96,7 +96,7 @@ ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings
 
 | Layer | Owner | Role |
 | --- | --- | --- |
-| Platform KG | Platform Kernel | Canonical graph infrastructure; future Engineering Digital Thread host |
+| Platform KG | Platform Kernel | Canonical graph infrastructure; EOS-A8B hosts the **derived** Engineering Digital Thread projection (`engineering_thread_object` nodes + governed edges). Not SOT. |
 | PI KG | Project Intelligence | Product projection; CONFIRMED duplication |
 | Engineering object_links | Engineering Core | Operational register links until projected |
 

@@ -16,25 +16,35 @@ export const GET = withEngineeringApi("thread", async ({ ctx, commerce }, reques
     const data = await ctx.engineering.digitalThread.coverage(commerce, ctx.tenantId);
     return NextResponse.json({ data });
   }
+  if (action === "health") {
+    const data = await ctx.engineering.digitalThread.projectionHealth(commerce, ctx.tenantId);
+    return NextResponse.json({ data });
+  }
   const objectType = url.searchParams.get("objectType");
   const objectId = url.searchParams.get("objectId");
   if (!objectType || !objectId) {
     return NextResponse.json({ error: "objectType and objectId are required" }, { status: 400 });
   }
   const depth = url.searchParams.get("depth");
-  const data = await ctx.engineering.digitalThread.trace(commerce, ctx.tenantId, {
+  const source = url.searchParams.get("source");
+  const kind =
+    action === "requirement" || action === "decision" || action === "analysis" || action === "configuration" || action === "change"
+      ? action
+      : "graph";
+  const input = {
     objectType,
     objectId,
     direction: (url.searchParams.get("direction") as "upstream" | "downstream" | "both" | null) ?? "both",
     relationTypes: csv(url.searchParams.get("relations")),
     objectTypes: csv(url.searchParams.get("objectTypes")),
     maxDepth: depth ? Number(depth) : undefined,
-    kind:
-      action === "requirement" || action === "decision" || action === "analysis" || action === "configuration" || action === "change"
-        ? action
-        : action === "upstream" || action === "downstream"
-          ? "graph"
-          : "graph",
-  });
+    kind,
+  };
+  if (source === "kg") {
+    const { kind: _kind, ...projectedInput } = input;
+    const data = await ctx.engineering.digitalThread.projectedTrace(commerce, ctx.tenantId, projectedInput);
+    return NextResponse.json({ data });
+  }
+  const data = await ctx.engineering.digitalThread.trace(commerce, ctx.tenantId, input);
   return NextResponse.json({ data });
 });

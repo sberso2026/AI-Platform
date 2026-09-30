@@ -60,6 +60,7 @@ export const ENGINEERING_SERVICE_POLICIES: Record<string, CommerceAccessPolicy> 
   "analysis.update": { productKey: ENGINEERING_PRODUCT, action: "analysis.write", seatRequired: true, cachePolicy: "fresh" },
   "thread.get": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
   "thread.trace": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
+  "thread.project": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
   "risk.list": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.read", seatRequired: true },
   "risk.get": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.read", seatRequired: true },
   "risk.create": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.write", seatRequired: true, cachePolicy: "fresh" },

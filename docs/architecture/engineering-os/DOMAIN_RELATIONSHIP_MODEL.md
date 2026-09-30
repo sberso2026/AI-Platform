@@ -92,7 +92,7 @@ Digital Thread Relation --LINKS--> Canonical Engineering Objects
 | ERA package/run/finding/evidence/disposition | Engineering Review | composite FKs + JSONB | remain ERA tables |
 | PI finding source/core_record | Project Intelligence | `source_*`, `core_record_*` | remain PI; optional `RELATED` projection to ERA |
 | Model mapping | Engineering Core (interop) | `engineering_model_mappings` | remain; expose as `MAPPED_TO` |
-| Digital Thread projection | Platform Knowledge Graph | `knowledge_node_id` FKs on Core rows | `knowledge_edges` with typed `relation` |
+| Digital Thread projection | Platform Knowledge Graph | EOS-A8B writes derived `knowledge_nodes` / `knowledge_edges`; SOT remains `engineering_object_links` | `knowledge_edges` with normalized `edge_type` + projection metadata |
 | Twin representation | Operational Digital Twin | `digital_twin_id` / `kernel_twin_id` | `REPRESENTED_BY` only |
 
 No relation type has two canonical owners. Consumers may read; they may not mint a parallel edge type for the same fact.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@rtb/ui";
 import { Header } from "@/components/layout/header";
 import {
@@ -38,6 +38,15 @@ export function ThreadWorkspace() {
   const [view, setView] = useState<ViewId>("trace");
   const [payload, setPayload] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const response = await fetch("/api/engineering/thread?action=health");
+      const parsed = await parseApiJsonResponse(response);
+      if (parsed.ok) setHealth((parsed.data as Record<string, unknown>) ?? null);
+    })();
+  }, []);
 
   const action = useMemo(() => {
     if (view === "upstream") return "upstream";
@@ -102,6 +111,12 @@ export function ThreadWorkspace() {
           Traceability over canonical engineering objects and governed relations. Not a Digital Twin. Not a universal
           correctness score. Missing relations are reported as gaps — they are not inferred.
         </p>
+        {health ? (
+          <p className="text-sm text-muted-foreground">
+            Source: Canonical. Projection: {String(health.status ?? "UNKNOWN")}. Last synchronized:{" "}
+            {health.lastProjectedAt ? String(health.lastProjectedAt) : "n/a"}.
+          </p>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {VIEWS.map((id) => (
             <Button key={id} variant={view === id ? "primary" : "secondary"} onClick={() => setView(id)}>
