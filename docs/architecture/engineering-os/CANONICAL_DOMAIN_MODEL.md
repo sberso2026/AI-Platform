@@ -536,7 +536,7 @@ Do not impose a single universal status enum on all objects. Use:
 
 - **Object-local status** as implemented today (project, document, review package, finding, decision).
 - **Traceability maturity** as a cross-cutting overlay (`TRACEABILITY_MATURITY_MODEL.md`), not a replacement status column in A1.
-- **Engineering Lifecycle Stage** (EOS-A9A) as governed lifecycle context, distinct from object-local status, schedule phase, maturity, and Configuration Baseline. See `EOS_A9A_LIFECYCLE_INTELLIGENCE_FOUNDATION.md`. Legacy `engineering_projects.project_phase` is not Lifecycle Intelligence authority. EOS-A9B harvests canonical evidence for gate readiness and maps schedule context descriptively; see `EOS_A9B_LIFECYCLE_EVIDENCE_AND_PROJECT_CONTROLS.md`.
+- **Engineering Lifecycle Stage** (EOS-A9A) as governed lifecycle context, distinct from object-local status, schedule phase, maturity, and Configuration Baseline. See `EOS_A9A_LIFECYCLE_INTELLIGENCE_FOUNDATION.md`. Legacy `engineering_projects.project_phase` is not Lifecycle Intelligence authority. EOS-A9B harvests canonical evidence for gate readiness and maps schedule context descriptively; see `EOS_A9B_LIFECYCLE_EVIDENCE_AND_PROJECT_CONTROLS.md`. EOS-A9C adds Deliverable Expectation and purpose-specific maturity evidence, distinct from Document status; see `EOS_A9C_DELIVERABLE_MATURITY_INTELLIGENCE.md`.
 
 Document example (current): `draft → for_review → issued/approved → superseded/obsolete`.  
 Review package (current): `draft → ready → in_review → completed | archived`.  

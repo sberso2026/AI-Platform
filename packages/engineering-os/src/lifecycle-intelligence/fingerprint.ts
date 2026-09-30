@@ -15,6 +15,9 @@ export function fingerprintLifecycleEvidence(evidence: LifecycleEvidence): strin
       .map((row) => `${row.id}:${row.status}:${row.materiality}`)
       .sort()
       .join(",")}`,
+    deliverables: evidence.deliverables?.required
+      .map((row) => `${row.definitionCode}:${row.bound}:${row.readiness}:${row.stale}`)
+      .sort(),
   });
   return createHash("sha256").update(payload).digest("hex");
 }

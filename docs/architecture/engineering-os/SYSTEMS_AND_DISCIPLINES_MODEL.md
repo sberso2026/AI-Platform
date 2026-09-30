@@ -18,7 +18,7 @@ Process, Mechanical, Piping, Structural, Electrical, Civil, Geotechnical, I&C (I
 
 Discipline Intelligence **classifies work** (documents, calculations, models, reviews, resources). It **must not own System identity**.
 
-EOS-A7A adds the Multidiscipline Intelligence Foundation (`EOS_A7A_MULTIDISCIPLINE_FOUNDATION.md`): overlay profiles, capability status, tool-binding to External Tool Governance, interface information requirements, and deterministic context resolution. It does **not** create Structural OS / Mechanical OS silos. EOS-A6 composes STRUCTURAL with the canonical Optimization Study; it does not create `structural_optimization_studies`.
+EOS-A7A adds the Multidiscipline Intelligence Foundation (`EOS_A7A_MULTIDISCIPLINE_FOUNDATION.md`): overlay profiles, capability status, tool-binding to External Tool Governance, interface information requirements, and deterministic context resolution. It does **not** create Structural OS / Mechanical OS silos. EOS-A6 composes STRUCTURAL with the canonical Optimization Study; it does not create `structural_optimization_studies`. EOS-A9C deliverable expectations reuse those discipline codes for responsible/contributing ownership; they do not create discipline-specific deliverable tables. See `EOS_A9C_DELIVERABLE_MATURITY_INTELLIGENCE.md`.
 
 ### System view
 

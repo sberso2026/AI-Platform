@@ -14,6 +14,7 @@ const ROUTES = [
   "/engineering/thread",
   "/engineering/assurance",
   "/engineering/lifecycle",
+  "/engineering/deliverables",
   "/engineering/risks",
   "/engineering/issues",
   "/engineering/lessons",

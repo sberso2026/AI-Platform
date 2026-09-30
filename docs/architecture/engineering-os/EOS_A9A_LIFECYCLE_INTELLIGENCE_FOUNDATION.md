@@ -189,7 +189,7 @@ Unit and integration coverage includes profile validation, allowed transitions, 
 ## Limitations
 
 - AAL2 browser certification is independent and may be NOT_TESTED.
-- Gate evaluation in A9A consumed a caller-supplied evidence snapshot. EOS-A9B harvests canonical evidence server-side; see `EOS_A9B_LIFECYCLE_EVIDENCE_AND_PROJECT_CONTROLS.md`.
+- Gate evaluation in A9A consumed a caller-supplied evidence snapshot. EOS-A9B harvests canonical evidence server-side; see `EOS_A9B_LIFECYCLE_EVIDENCE_AND_PROJECT_CONTROLS.md`. EOS-A9C may compose optional Deliverable maturity evidence into the same gate; see `EOS_A9C_DELIVERABLE_MATURITY_INTELLIGENCE.md`.
 - No Project Controls scheduling engine or P6 sync.
 - No automatic transition, AI approval, automatic waiver, or compliance determination.
 - No real solver execution.

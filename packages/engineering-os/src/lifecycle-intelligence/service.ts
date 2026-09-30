@@ -36,17 +36,27 @@ import type {
   ScheduleMappingType,
 } from "./types";
 import { LIFECYCLE_AI_BOUNDARY, LIFECYCLE_STAGES } from "./types";
+import type { EngineeringDeliverableService } from "../deliverable-intelligence/service";
 
 function db(client: SupabaseClient): { from(name: string): any } {
   return client as unknown as { from(name: string): any };
 }
 
 export class EngineeringLifecycleService {
+  private readonly store: LifecycleStore;
+  private readonly evidenceSource: CanonicalEvidenceSource;
+  private readonly deliverables?: EngineeringDeliverableService;
+
   constructor(
     private readonly supabase: SupabaseClient,
-    private readonly store: LifecycleStore = new SupabaseLifecycleStore(supabase),
-    private readonly evidenceSource: CanonicalEvidenceSource = createSupabaseCanonicalSource(supabase),
-  ) {}
+    store?: LifecycleStore,
+    evidenceSource?: CanonicalEvidenceSource,
+    deliverables?: EngineeringDeliverableService,
+  ) {
+    this.store = store ?? new SupabaseLifecycleStore(supabase);
+    this.evidenceSource = evidenceSource ?? createSupabaseCanonicalSource(supabase);
+    this.deliverables = deliverables;
+  }
 
   catalog() {
     const profile = DEFAULT_ENGINEERING_LIFECYCLE_PROFILE;
@@ -230,6 +240,12 @@ export class EngineeringLifecycleService {
       evidence = harvested.evidence;
       items = harvested.items;
       evidenceSource = "CANONICAL";
+    }
+    if (this.deliverables && !evidence.deliverables) {
+      evidence = {
+        ...evidence,
+        deliverables: await this.deliverables.composedSummary(workspaceId, assignment.projectId),
+      };
     }
     const previous = await this.store.latestEvaluation(assignment.id, input.gateId);
     const evaluation = evaluateLifecycleGate({
@@ -514,11 +530,13 @@ export class EngineeringLifecycleService {
   static memoryForTests(
     client: SupabaseClient = { from() { return {}; } } as never,
     source?: CanonicalEvidenceSource,
+    deliverables?: EngineeringDeliverableService,
   ) {
     return new EngineeringLifecycleService(
       client,
       createMemoryLifecycleStore(),
       source ?? createMemoryCanonicalSource({ records: [] }),
+      deliverables,
     );
   }
 

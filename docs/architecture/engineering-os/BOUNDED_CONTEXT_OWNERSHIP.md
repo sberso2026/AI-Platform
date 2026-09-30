@@ -90,6 +90,7 @@ Owner vocabulary:
 | Assurance Condition | Engineering OS (EOS-A8C / A8D) | `engineering_assurance_conditions` plus governed citations in `engineering_assurance_review_citations` | May be cited by a canonical Review Package; Findings stay Review-owned; never auto-promoted |
 | Lifecycle Profile / Assignment / Gate Evaluation / Transition | Engineering OS (EOS-A9A) | `engineering_lifecycle_*` | Composes Review, Assurance, Configuration, Analysis, Decisions; must not mint findings or auto-approve stages |
 | Lifecycle evidence snapshot / schedule mapping | Engineering OS (EOS-A9B) | `engineering_lifecycle_evaluations.evidence_snapshot`, `engineering_lifecycle_schedule_mappings` | Harvests canonical evidence; schedule mapping is not lifecycle SOT |
+| Deliverable Expectation / Binding / Maturity Assessment | Engineering OS (EOS-A9C) | `engineering_deliverable_*` | Expectation + artifact links + purpose-specific maturity; not a DMS; not percent complete; does not mint Findings |
 
 ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings.
 

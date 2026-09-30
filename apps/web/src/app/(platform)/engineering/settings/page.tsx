@@ -153,6 +153,21 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Deliverables</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed deliverable definitions, lifecycle/discipline applicability, and maturity profile version.
+              Example catalog items are not mandatory for every FEED project. Ordinary engineers cannot change
+              catalog governance from the Deliverables workspace.
+              <div className="mt-3">
+                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/deliverables">
+                  Open Deliverable settings
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

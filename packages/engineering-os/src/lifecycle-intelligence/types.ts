@@ -51,6 +51,8 @@ export const CRITERION_TYPES = [
   "NO_OPEN_BLOCKING_ASSURANCE_CONDITIONS",
   "CHANGE_SURFACED",
   "OPTIMIZATION_CONTEXT",
+  "REQUIRED_DELIVERABLES_PRESENT",
+  "DELIVERABLE_MATURITY_REQUIRED",
 ] as const;
 export type LifecycleCriterionType = (typeof CRITERION_TYPES)[number];
 
@@ -85,6 +87,7 @@ export type LifecycleCriterionDefinition = {
   blockingConditionTypes?: readonly string[];
   minMateriality?: "HIGH" | "CRITICAL";
   optimizationPolicy?: OptimizationStagePolicy;
+  deliverableCodes?: readonly string[];
 };
 
 export type LifecycleGateDefinition = {
@@ -312,6 +315,20 @@ export type LifecycleEvidence = {
   truncated?: boolean;
   failed?: boolean;
   failureReason?: string | null;
+  deliverables?: {
+    composed: true;
+    truncated?: boolean;
+    failed?: boolean;
+    required: Array<{
+      expectationId: string;
+      definitionCode: string;
+      bound: boolean;
+      readiness: string;
+      completeness: string;
+      stale: boolean;
+      waived: boolean;
+    }>;
+  };
 };
 
 export type EffectiveLifecycle = {

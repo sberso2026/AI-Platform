@@ -72,6 +72,7 @@ const VIEWS = [
   { id: "criteria", label: "Gate Criteria" },
   { id: "evidence", label: "Evidence" },
   { id: "schedule", label: "Schedule Alignment" },
+  { id: "deliverables", label: "Required Deliverables" },
   { id: "history", label: "Stage History" },
   { id: "transitions", label: "Transitions" },
 ] as const;
@@ -84,6 +85,9 @@ export function LifecycleWorkspace() {
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [alignment, setAlignment] = useState<Alignment | null>(null);
   const [history, setHistory] = useState<Transition[]>([]);
+  const [deliverableSummary, setDeliverableSummary] = useState<{
+    required: Array<{ definitionCode: string; bound: boolean; readiness: string; stale: boolean }>;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState("");
   const [toStage, setToStage] = useState("DETAILED_DESIGN");
@@ -293,6 +297,36 @@ export function LifecycleWorkspace() {
             <p>Alignment: {alignment?.state ?? "UNMAPPED"}</p>
             <p>{alignment?.explanation ?? "Project Controls activity does not change Engineering Lifecycle authority."}</p>
             <p>Schedule authority: {alignment?.scheduleAuthority ? "yes" : "no"}</p>
+          </section>
+        ) : null}
+        {view === "deliverables" ? (
+          <section className="space-y-2 text-sm">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={async () => {
+                const parsed = await parseApiJsonResponse(
+                  await fetch(`/api/engineering/deliverables?action=lifecycle&projectId=${encodeURIComponent(projectId)}`),
+                );
+                if (parsed.ok) setDeliverableSummary(parsed.data as typeof deliverableSummary);
+              }}
+            >
+              Load required deliverables
+            </Button>
+            <p>This is not a document register. Counts are not engineering percent complete.</p>
+            {(deliverableSummary?.required ?? []).map((row) => (
+              <p key={row.definitionCode}>
+                {row.definitionCode}: {row.bound ? "bound" : "missing"} · {row.readiness}
+                {row.stale ? " · stale" : ""}
+              </p>
+            ))}
+            {(evaluation?.criteria ?? [])
+              .filter((row) => row.type.startsWith("DELIVERABLE") || row.type === "REQUIRED_DELIVERABLES_PRESENT")
+              .map((row) => (
+                <p key={row.criterionId}>
+                  Gate {row.criterionId}: {row.status}
+                </p>
+              ))}
           </section>
         ) : null}
         {view === "history" || view === "transitions" ? (

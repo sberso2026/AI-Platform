@@ -306,6 +306,69 @@ function evaluateCriterion(
     return result(criterion, now, "SATISFIED", "Required Optimization context is present. No alternative is selected.");
   }
 
+  if (criterion.type === "REQUIRED_DELIVERABLES_PRESENT") {
+    if (!evidence.deliverables?.composed) {
+      return result(criterion, now, "NOT_APPLICABLE", "Deliverable Intelligence is not composed into this evaluation.", [], "NOT_APPLICABLE");
+    }
+    const codes = new Set(criterion.deliverableCodes ?? []);
+    const rows = evidence.deliverables.required.filter((row) => !codes.size || codes.has(row.definitionCode));
+    if (!rows.length) {
+      return result(
+        criterion,
+        now,
+        "NOT_APPLICABLE",
+        "No matching required deliverable expectations are configured for this criterion. Example FEED catalog items are not mandatory.",
+        [],
+        "NOT_APPLICABLE",
+      );
+    }
+    const missing = rows.filter((row) => !row.bound);
+    if (missing.length) {
+      return result(
+        criterion,
+        now,
+        "NOT_SATISFIED",
+        `${missing.length} required deliverable expectation(s) have no bound artifacts.`,
+        missing.map((row) => ({ objectType: "deliverable_expectation", objectId: row.expectationId, note: row.definitionCode })),
+      );
+    }
+    return result(criterion, now, "SATISFIED", "Required deliverable expectations have bound canonical artifacts.");
+  }
+
+  if (criterion.type === "DELIVERABLE_MATURITY_REQUIRED") {
+    if (!evidence.deliverables?.composed) {
+      return result(criterion, now, "NOT_APPLICABLE", "Deliverable Intelligence is not composed into this evaluation.", [], "NOT_APPLICABLE");
+    }
+    const codes = new Set(criterion.deliverableCodes ?? []);
+    const rows = evidence.deliverables.required.filter((row) => !codes.size || codes.has(row.definitionCode));
+    if (!rows.length) {
+      return result(
+        criterion,
+        now,
+        "NOT_APPLICABLE",
+        "No matching required deliverable expectations are configured. Deliverable maturity does not block this gate.",
+        [],
+        "NOT_APPLICABLE",
+      );
+    }
+    const blocked = rows.filter(
+      (row) =>
+        row.stale ||
+        row.completeness !== "COMPLETE" ||
+        !["READY_FOR_REVIEW", "READY_FOR_CONFIGURED_PURPOSE"].includes(row.readiness),
+    );
+    if (blocked.length) {
+      return result(
+        criterion,
+        now,
+        "NOT_SATISFIED",
+        "Configured deliverable maturity is incomplete, stale, or PARTIAL. Other gate criteria still apply. No automatic approval.",
+        blocked.map((row) => ({ objectType: "deliverable_expectation", objectId: row.expectationId, note: `${row.definitionCode}:${row.readiness}` })),
+      );
+    }
+    return result(criterion, now, "SATISFIED", "Configured deliverable maturity is ready for the intended purpose. This is not gate approval.");
+  }
+
   if (criterion.type === "TRACEABILITY_MATURITY_REQUIRED") {
     return result(criterion, now, "NOT_APPLICABLE", "Traceability maturity remains an overlay, not a lifecycle stage.", [], "NOT_APPLICABLE");
   }

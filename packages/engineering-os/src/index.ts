@@ -199,6 +199,16 @@ export {
   type HealthCheckItem,
 } from "./services/health-service";
 export { workspaceScopeId, isRecordInWorkspace } from "./commerce/workspace-scope";
+export { EngineeringDeliverableService } from "./deliverable-intelligence/service";
+export {
+  EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
+  DEFAULT_DELIVERABLE_MATURITY_PROFILE,
+} from "./deliverable-intelligence/catalog";
+export {
+  DELIVERABLE_AI_BOUNDARY,
+  MATURITY_DIMENSIONS,
+  MATURITY_PURPOSES,
+} from "./deliverable-intelligence/types";
 export {
   DOCUMENT_METADATA_LOW_CONFIDENCE,
   ENGINEERING_DOCUMENT_TYPES,

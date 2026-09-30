@@ -26,6 +26,7 @@ const ENGINEERING_API_SEGMENTS = [
   "thread",
   "assurance",
   "lifecycle",
+  "deliverables",
   "risks",
   "issues",
   "actions",
