@@ -82,6 +82,7 @@ export default function LifecycleSettingsPage() {
             <CardContent className="space-y-3 text-sm">
               <p>Canonical stages: {profile.stages.join(", ")}</p>
               <p>Allowed transitions are explicit and may be non-linear, including Operations → Modification.</p>
+              <p>Schedule mappings are administered separately. Completing a mapped milestone does not approve a gate or transition a stage.</p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">Code-governed profile</Badge>
                 <Badge variant="secondary">No executable DSL</Badge>

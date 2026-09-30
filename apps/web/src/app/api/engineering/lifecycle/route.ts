@@ -3,6 +3,7 @@ import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/
 
 function statusFor(message: string): number {
   if (message.includes("denied") || message.includes("mismatch") || message === "unknown_lifecycle_profile") return 403;
+  if (message === "caller_supplied_evidence_rejected") return 400;
   if (message === "workspace_required" || message === "rationale_required" || message === "human_actor_required") return 400;
   return 400;
 }
@@ -43,10 +44,30 @@ export const GET = withEngineeringApi("lifecycle", async ({ ctx, commerce }, req
     if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
     return NextResponse.json({ data });
   }
+  if (action === "snapshot") {
+    const id = url.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const evaluation = await ctx.engineering.lifecycle.getEvaluation(commerce, ctx.tenantId, id);
+    if (!evaluation) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ data: evaluation.evidenceSnapshot ?? null });
+  }
   if (action === "history") {
     const assignmentId = url.searchParams.get("assignmentId");
     if (!assignmentId) return NextResponse.json({ error: "assignment_id_required" }, { status: 400 });
     const data = await ctx.engineering.lifecycle.history(commerce, ctx.tenantId, assignmentId);
+    return NextResponse.json({ data });
+  }
+  if (action === "mappings" && projectId) {
+    const data = await ctx.engineering.lifecycle.scheduleMappings(commerce, ctx.tenantId, projectId);
+    return NextResponse.json({ data });
+  }
+  if (action === "alignment" && projectId) {
+    const data = await ctx.engineering.lifecycle.scheduleAlignment(commerce, ctx.tenantId, {
+      projectId,
+      scopeType: (url.searchParams.get("scopeType") as "PROJECT" | "SYSTEM" | "ASSET") ?? "PROJECT",
+      scopeId: url.searchParams.get("scopeId") ?? projectId,
+      legacyProjectPhase: url.searchParams.get("legacyProjectPhase"),
+    });
     return NextResponse.json({ data });
   }
   const data = await ctx.engineering.lifecycle.profile(commerce, ctx.tenantId);
@@ -80,14 +101,51 @@ export const POST = withEngineeringApi("lifecycle", async ({ ctx, commerce, corr
       });
       return NextResponse.json({ data });
     }
-    if (action === "evaluate") {
-      if (!body.evidence || typeof body.evidence !== "object") {
-        return NextResponse.json({ error: "evidence_required" }, { status: 400 });
+    if (action === "evaluate" || action === "refresh") {
+      if (body.evidence) {
+        return NextResponse.json({ error: "caller_supplied_evidence_rejected" }, { status: 400 });
+      }
+      if (action === "refresh" && typeof body.evaluationId === "string") {
+        const data = await ctx.engineering.lifecycle.refreshStale(commerce, ctx.tenantId, body.evaluationId);
+        return NextResponse.json({ data });
       }
       const data = await ctx.engineering.lifecycle.evaluateGate(commerce, ctx.tenantId, {
         assignmentId: String(body.assignmentId ?? ""),
         gateId: String(body.gateId ?? ""),
-        evidence: body.evidence as never,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "mapping") {
+      const settingsCommerce = await authorizeEngineeringSegment(ctx, "settings", "POST", correlationId);
+      if (!settingsCommerce) {
+        return NextResponse.json({ error: "lifecycle_authority_required" }, { status: 403 });
+      }
+      const data = await ctx.engineering.lifecycle.saveScheduleMapping(settingsCommerce, ctx.tenantId, {
+        projectId: String(body.projectId ?? ""),
+        sourceSystem: body.sourceSystem === "LEGACY_PROJECT_PHASE" ? "LEGACY_PROJECT_PHASE" : "PROJECT_CONTROLS",
+        scheduleObjectId: String(body.scheduleObjectId ?? ""),
+        schedulePhaseCode: String(body.schedulePhaseCode ?? ""),
+        expectedLifecycleStage: String(body.expectedLifecycleStage ?? "FEED") as
+          | "CONCEPT"
+          | "PREFEASIBILITY"
+          | "FEASIBILITY"
+          | "FEED"
+          | "DETAILED_DESIGN"
+          | "CONSTRUCTION"
+          | "COMMISSIONING"
+          | "OPERATIONS"
+          | "MODIFICATION",
+        mappingType: (typeof body.mappingType === "string" ? body.mappingType : "ALIGNS_WITH") as
+          | "ALIGNS_WITH"
+          | "EXPECTED_DURING"
+          | "GATE_MILESTONE"
+          | "TRANSITION_MILESTONE"
+          | "REFERENCE_ONLY",
+        scheduleStatus: (typeof body.scheduleStatus === "string" ? body.scheduleStatus : "planned") as
+          | "planned"
+          | "active"
+          | "complete",
+        actorId: ctx.userId,
       });
       return NextResponse.json({ data });
     }

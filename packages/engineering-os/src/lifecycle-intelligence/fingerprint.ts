@@ -25,6 +25,7 @@ export function composeLifecycleThread(input: {
   profileVersion: string;
   gateId: string;
   evaluationId: string;
+  evidenceSnapshotFingerprint?: string | null;
   decisionId?: string | null;
   transitionId?: string | null;
   toStage?: string | null;
@@ -34,6 +35,7 @@ export function composeLifecycleThread(input: {
     `lifecycle_profile:${input.profileId}:${input.profileVersion}`,
     `lifecycle_gate:${input.gateId}`,
     `lifecycle_evaluation:${input.evaluationId}`,
+    input.evidenceSnapshotFingerprint ? `lifecycle_evidence_snapshot:${input.evidenceSnapshotFingerprint.slice(0, 12)}` : null,
     input.decisionId ? `lifecycle_decision:${input.decisionId}` : null,
     input.transitionId ? `lifecycle_transition:${input.transitionId}` : null,
     input.toStage ? `lifecycle_stage:${input.toStage}` : null,

@@ -5,6 +5,7 @@ import type {
   LifecycleEvaluation,
   LifecycleGateDecision,
   LifecycleProfileSetting,
+  LifecycleScheduleMapping,
   LifecycleStage,
   LifecycleTransition,
 } from "./types";
@@ -69,6 +70,9 @@ function fromEvaluation(row: Record<string, unknown>): LifecycleEvaluation {
     evidenceFingerprint: String(row.evidence_fingerprint ?? ""),
     createdAt: String(row.created_at),
     stale: Boolean(row.stale),
+    evidenceSource: (row.evidence_source as LifecycleEvaluation["evidenceSource"]) ?? undefined,
+    harvestedAt: (row.harvested_at as string | undefined) ?? undefined,
+    evidenceSnapshot: (row.evidence_snapshot as LifecycleEvaluation["evidenceSnapshot"]) ?? null,
   };
 }
 
@@ -90,6 +94,9 @@ function toEvaluation(row: LifecycleEvaluation): Record<string, unknown> {
     evidence_fingerprint: row.evidenceFingerprint,
     stale: row.stale,
     created_at: row.createdAt,
+    evidence_source: row.evidenceSource ?? "CANONICAL",
+    harvested_at: row.harvestedAt ?? null,
+    evidence_snapshot: row.evidenceSnapshot ?? null,
   };
 }
 
@@ -339,5 +346,55 @@ export class SupabaseLifecycleStore implements LifecycleStore {
       .order("authorized_at", { ascending: true });
     if (error) throw new Error(error.message);
     return ((data ?? []) as Record<string, unknown>[]).map(fromTransition);
+  }
+
+  async listScheduleMappings(workspaceId: string, projectId: string): Promise<LifecycleScheduleMapping[]> {
+    const { data, error } = await db(this.supabase)
+      .from("engineering_lifecycle_schedule_mappings")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("configured_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      id: String(row.id),
+      tenantId: String(row.tenant_id),
+      workspaceId: String(row.workspace_id),
+      projectId: String(row.project_id),
+      sourceSystem: row.source_system as LifecycleScheduleMapping["sourceSystem"],
+      scheduleObjectId: String(row.schedule_object_id),
+      schedulePhaseCode: String(row.schedule_phase_code),
+      expectedLifecycleStage: row.expected_lifecycle_stage as LifecycleStage,
+      mappingType: row.mapping_type as LifecycleScheduleMapping["mappingType"],
+      scheduleStatus: row.schedule_status as LifecycleScheduleMapping["scheduleStatus"],
+      active: Boolean(row.active),
+      configuredBy: String(row.configured_by ?? ""),
+      configuredAt: String(row.configured_at),
+    }));
+  }
+
+  async saveScheduleMapping(mapping: LifecycleScheduleMapping): Promise<LifecycleScheduleMapping> {
+    const { data, error } = await db(this.supabase)
+      .from("engineering_lifecycle_schedule_mappings")
+      .upsert({
+        id: mapping.id,
+        tenant_id: mapping.tenantId,
+        workspace_id: mapping.workspaceId,
+        project_id: mapping.projectId,
+        source_system: mapping.sourceSystem,
+        schedule_object_id: mapping.scheduleObjectId,
+        schedule_phase_code: mapping.schedulePhaseCode,
+        expected_lifecycle_stage: mapping.expectedLifecycleStage,
+        mapping_type: mapping.mappingType,
+        schedule_status: mapping.scheduleStatus,
+        active: mapping.active,
+        configured_by: mapping.configuredBy,
+        configured_at: mapping.configuredAt,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    const rows = await this.listScheduleMappings(mapping.workspaceId, mapping.projectId);
+    return rows.find((row) => row.id === String((data as { id: string }).id)) ?? mapping;
   }
 }

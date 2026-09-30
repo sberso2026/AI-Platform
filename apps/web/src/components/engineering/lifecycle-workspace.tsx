@@ -27,6 +27,11 @@ type Criterion = {
   status: string;
   explanation: string;
   waived?: boolean;
+  expectedCondition?: string;
+  actualState?: string;
+  sourceCompleteness?: string;
+  stale?: boolean;
+  evidenceRefs?: Array<{ objectType: string; objectId: string; note?: string }>;
 };
 
 type Evaluation = {
@@ -37,6 +42,17 @@ type Evaluation = {
   profileVersion: string;
   stale: boolean;
   criteria: Criterion[];
+  evidenceSource?: string;
+  harvestedAt?: string;
+  evidenceSnapshot?: { fingerprint?: string } | null;
+};
+
+type Alignment = {
+  lifecycleStage?: string;
+  state?: string;
+  explanation?: string;
+  note?: string;
+  scheduleAuthority?: boolean;
 };
 
 type Transition = {
@@ -55,6 +71,7 @@ const VIEWS = [
   { id: "gate", label: "Gate Readiness" },
   { id: "criteria", label: "Gate Criteria" },
   { id: "evidence", label: "Evidence" },
+  { id: "schedule", label: "Schedule Alignment" },
   { id: "history", label: "Stage History" },
   { id: "transitions", label: "Transitions" },
 ] as const;
@@ -65,6 +82,7 @@ export function LifecycleWorkspace() {
   const [projectId, setProjectId] = useState(params?.get("projectId") ?? "proj-crusher-feed");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [alignment, setAlignment] = useState<Alignment | null>(null);
   const [history, setHistory] = useState<Transition[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState("");
@@ -98,6 +116,48 @@ export function LifecycleWorkspace() {
       await fetch(`/api/engineering/lifecycle?action=history&assignmentId=${encodeURIComponent(assignmentId)}`),
     );
     if (parsed.ok && Array.isArray(parsed.data)) setHistory(parsed.data as Transition[]);
+  }
+
+  async function evaluateGate() {
+    if (!project?.id) return;
+    const parsed = await parseApiJsonResponse(
+      await fetch("/api/engineering/lifecycle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "evaluate", assignmentId: project.id, gateId: "FEED_EXIT" }),
+      }),
+    );
+    if (!parsed.ok) {
+      setError(parsed.errorMessage ?? "Gate evaluation denied");
+      return;
+    }
+    setEvaluation(parsed.data as Evaluation);
+  }
+
+  async function refreshGate() {
+    if (!evaluation?.id) {
+      await evaluateGate();
+      return;
+    }
+    const parsed = await parseApiJsonResponse(
+      await fetch("/api/engineering/lifecycle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "refresh", evaluationId: evaluation.id, assignmentId: project?.id, gateId: evaluation.gateId }),
+      }),
+    );
+    if (!parsed.ok) {
+      setError(parsed.errorMessage ?? "Refresh denied");
+      return;
+    }
+    setEvaluation(parsed.data as Evaluation);
+  }
+
+  async function loadAlignment() {
+    const parsed = await parseApiJsonResponse(
+      await fetch(`/api/engineering/lifecycle?action=alignment&projectId=${encodeURIComponent(projectId)}`),
+    );
+    if (parsed.ok) setAlignment(parsed.data as Alignment);
   }
 
   async function decide(decision: string) {
@@ -167,8 +227,8 @@ export function LifecycleWorkspace() {
             <p>
               Profile: {project?.profileId ?? "EOS-DEFAULT-ENGINEERING"} {project?.profileVersion ?? "v1"}
             </p>
-            <p>Gate readiness is machine-evaluated. Gate decision remains human-governed.</p>
-            <p>Automatic stage transition is not available.</p>
+            <p>Gate readiness is machine-evaluated from canonical harvested evidence. Gate decision remains human-governed.</p>
+            <p>Automatic stage transition is not available. Project Controls does not define lifecycle authority.</p>
           </section>
         ) : null}
         {view === "scoped" ? (
@@ -182,16 +242,34 @@ export function LifecycleWorkspace() {
         ) : null}
         {view === "gate" || view === "criteria" || view === "evidence" ? (
           <section className="space-y-3 text-sm">
+            <p>Evidence source: {evaluation?.evidenceSource ?? "CANONICAL"}</p>
+            <p>Harvested at: {evaluation?.harvestedAt ?? "not harvested"}</p>
+            <p>Snapshot fingerprint: {evaluation?.evidenceSnapshot?.fingerprint ?? "none"}</p>
             <p>Completeness: {evaluation?.completeness ?? "NOT_EVALUATED"}</p>
             <p>Readiness: {evaluation?.readiness ?? "NOT_EVALUATED"}</p>
             <p>Stale: {evaluation?.stale ? "yes" : "no"}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => void evaluateGate()}>
+                Evaluate gate from canonical evidence
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => void refreshGate()}>
+                Refresh / re-evaluate gate
+              </Button>
+            </div>
             {(view === "criteria" || view === "evidence") &&
               (evaluation?.criteria ?? []).map((row) => (
                 <div key={row.criterionId} className="rounded border p-2">
                   <p>
-                    {row.criterionId} — {row.status}
+                    {row.criterionId} — {row.status} ({row.sourceCompleteness ?? "COMPLETE"})
                   </p>
+                  <p>Expected: {row.expectedCondition ?? "see criterion"}</p>
+                  <p>Actual: {row.actualState ?? row.explanation}</p>
                   <p>{row.explanation}</p>
+                  {(row.evidenceRefs ?? []).map((ref) => (
+                    <p key={`${ref.objectType}:${ref.objectId}`}>
+                      {ref.objectType} {ref.objectId}
+                    </p>
+                  ))}
                 </div>
               ))}
             {view === "gate" ? (
@@ -204,6 +282,17 @@ export function LifecycleWorkspace() {
                 ))}
               </div>
             ) : null}
+          </section>
+        ) : null}
+        {view === "schedule" ? (
+          <section className="space-y-2 text-sm">
+            <Button size="sm" variant="secondary" onClick={() => void loadAlignment()}>
+              Load schedule alignment
+            </Button>
+            <p>Engineering Lifecycle: {alignment?.lifecycleStage ?? project?.stage ?? "UNKNOWN"}</p>
+            <p>Alignment: {alignment?.state ?? "UNMAPPED"}</p>
+            <p>{alignment?.explanation ?? "Project Controls activity does not change Engineering Lifecycle authority."}</p>
+            <p>Schedule authority: {alignment?.scheduleAuthority ? "yes" : "no"}</p>
           </section>
         ) : null}
         {view === "history" || view === "transitions" ? (

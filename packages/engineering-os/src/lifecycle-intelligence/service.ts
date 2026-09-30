@@ -2,8 +2,16 @@ import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
-import { canAuthorizeTransition, evaluateLifecycleGate, markEvaluationStale } from "./evaluate";
-import { composeLifecycleThread, fingerprintLifecycleEvidence } from "./fingerprint";
+import { createSupabaseCanonicalSource } from "./canonical-source";
+import { canAuthorizeTransition, evaluateLifecycleGate } from "./evaluate";
+import { composeLifecycleThread } from "./fingerprint";
+import {
+  buildEvidenceSnapshot,
+  createMemoryCanonicalSource,
+  fixtureEvidenceToItems,
+  harvestCanonicalLifecycleEvidence,
+  type CanonicalEvidenceSource,
+} from "./harvest";
 import { createMemoryLifecycleStore, type LifecycleStore } from "./memory-store";
 import {
   DEFAULT_ENGINEERING_LIFECYCLE_PROFILE,
@@ -14,14 +22,18 @@ import {
   transitionAllowed,
 } from "./profile";
 import { mixedScopeView, resolveEffectiveStage } from "./resolve";
+import { alignScheduleToLifecycle, expectedStageFromLegacyProjectPhase } from "./schedule";
 import { effectiveLifecycleProfile, enabledCriterionIds, unknownLifecycleProfileRejected } from "./settings";
 import { SupabaseLifecycleStore } from "./supabase-store";
 import type {
   GateDecisionStatus,
   LifecycleAssignment,
   LifecycleEvidence,
+  LifecycleEvidenceMode,
+  LifecycleScheduleMapping,
   LifecycleScopeType,
   LifecycleStage,
+  ScheduleMappingType,
 } from "./types";
 import { LIFECYCLE_AI_BOUNDARY, LIFECYCLE_STAGES } from "./types";
 
@@ -33,6 +45,7 @@ export class EngineeringLifecycleService {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly store: LifecycleStore = new SupabaseLifecycleStore(supabase),
+    private readonly evidenceSource: CanonicalEvidenceSource = createSupabaseCanonicalSource(supabase),
   ) {}
 
   catalog() {
@@ -45,6 +58,10 @@ export class EngineeringLifecycleService {
       automaticTransition: false,
       aiBoundary: LIFECYCLE_AI_BOUNDARY,
       projectControlsAuthority: false,
+      evidenceAuthority: "CANONICAL",
+      callerSuppliedEvidence: "REJECTED",
+      scheduleAutoGateApproval: false,
+      scheduleAutoStageTransition: false,
     };
   }
 
@@ -173,7 +190,12 @@ export class EngineeringLifecycleService {
   async evaluateGate(
     commerce: CommerceExecutionContext,
     tenantId: string,
-    input: { assignmentId: string; gateId: string; evidence: LifecycleEvidence },
+    input: {
+      assignmentId: string;
+      gateId: string;
+      evidence?: LifecycleEvidence;
+      evidenceMode?: LifecycleEvidenceMode;
+    },
   ) {
     assertEngineeringService(commerce, "lifecycle.evaluate", tenantId);
     const workspaceId = workspaceScopeId(commerce);
@@ -182,9 +204,33 @@ export class EngineeringLifecycleService {
     if (!assignment || assignment.workspaceId !== workspaceId || assignment.tenantId !== tenantId) {
       throw new Error("assignment_not_found");
     }
+    if (input.evidence && input.evidenceMode !== "TEST_FIXTURE") {
+      throw new Error("caller_supplied_evidence_rejected");
+    }
     const setting = await this.store.getProfileSetting(workspaceId);
     const profile =
       lifecycleProfileById(assignment.profileId, assignment.profileVersion) ?? effectiveLifecycleProfile(setting);
+    const query = {
+      tenantId,
+      workspaceId,
+      projectId: assignment.projectId,
+      scopeType: assignment.scopeType,
+      scopeId: assignment.scopeId,
+    };
+    let evidence: LifecycleEvidence;
+    let items;
+    let evidenceSource: LifecycleEvidenceMode;
+    if (input.evidenceMode === "TEST_FIXTURE") {
+      if (!input.evidence) throw new Error("test_fixture_evidence_required");
+      evidence = input.evidence;
+      items = fixtureEvidenceToItems(evidence, query);
+      evidenceSource = "TEST_FIXTURE";
+    } else {
+      const harvested = await harvestCanonicalLifecycleEvidence(this.evidenceSource, query);
+      evidence = harvested.evidence;
+      items = harvested.items;
+      evidenceSource = "CANONICAL";
+    }
     const previous = await this.store.latestEvaluation(assignment.id, input.gateId);
     const evaluation = evaluateLifecycleGate({
       tenantId,
@@ -192,9 +238,20 @@ export class EngineeringLifecycleService {
       assignmentId: assignment.id,
       profile,
       gateId: input.gateId,
-      evidence: input.evidence,
+      evidence,
       enabledCriterionIds: enabledCriterionIds(setting, profile),
     });
+    const snapshot = buildEvidenceSnapshot({
+      assignment,
+      profile,
+      gateId: input.gateId,
+      evidence,
+      items,
+      evidenceSource,
+    });
+    evaluation.evidenceSource = evidenceSource;
+    evaluation.harvestedAt = snapshot.harvestedAt;
+    evaluation.evidenceSnapshot = snapshot;
     if (previous && previous.evidenceFingerprint !== evaluation.evidenceFingerprint && !previous.stale) {
       await this.store.markEvaluationStale(previous.id);
     }
@@ -216,14 +273,21 @@ export class EngineeringLifecycleService {
     commerce: CommerceExecutionContext,
     tenantId: string,
     evaluationId: string,
-    evidence: LifecycleEvidence,
+    evidence?: LifecycleEvidence,
+    evidenceMode?: LifecycleEvidenceMode,
   ) {
     assertEngineeringService(commerce, "lifecycle.evaluate", tenantId);
     const evaluation = await this.getEvaluation(commerce, tenantId, evaluationId);
     if (!evaluation) return null;
-    const next = markEvaluationStale(evaluation, fingerprintLifecycleEvidence(evidence));
-    if (next.stale) await this.store.markEvaluationStale(evaluation.id);
-    return next;
+    if (evidence && evidenceMode !== "TEST_FIXTURE") throw new Error("caller_supplied_evidence_rejected");
+    const assignment = await this.store.getAssignment(evaluation.assignmentId);
+    if (!assignment) return evaluation;
+    return this.evaluateGate(commerce, tenantId, {
+      assignmentId: assignment.id,
+      gateId: evaluation.gateId,
+      evidence,
+      evidenceMode,
+    });
   }
 
   async recordGateDecision(
@@ -245,7 +309,8 @@ export class EngineeringLifecycleService {
     const evaluation = await this.store.getEvaluation(input.evaluationId);
     if (!evaluation || evaluation.workspaceId !== workspaceId) throw new Error("evaluation_not_found");
     if (evaluation.stale || evaluation.readiness === "STALE") throw new Error("stale_gate_evaluation");
-    if (evaluation.completeness !== "COMPLETE" || evaluation.readiness !== "READY_FOR_REVIEW") {
+    if (evaluation.completeness !== "COMPLETE") throw new Error("gate_not_ready");
+    if (evaluation.readiness !== "READY_FOR_REVIEW") {
       if (input.decision === "APPROVED_TO_TRANSITION" || input.decision === "APPROVED_WITH_CONDITIONS") {
         throw new Error("gate_not_ready");
       }
@@ -322,6 +387,7 @@ export class EngineeringLifecycleService {
         profileVersion: assignment.profileVersion,
         gateId: gate?.gateId ?? "none",
         evaluationId: evaluation?.id ?? "none",
+        evidenceSnapshotFingerprint: evaluation?.evidenceFingerprint ?? null,
         decisionId: decision?.id,
         transitionId: "pending",
         toStage: input.toStage,
@@ -356,6 +422,7 @@ export class EngineeringLifecycleService {
         profileVersion: assignment.profileVersion,
         gateId: gate?.gateId ?? "none",
         evaluationId: evaluation?.id ?? "none",
+        evidenceSnapshotFingerprint: evaluation?.evidenceFingerprint ?? null,
         decisionId: transition.decisionId,
         transitionId: transition.id,
         toStage: input.toStage,
@@ -374,8 +441,85 @@ export class EngineeringLifecycleService {
     return this.store.listTransitions(assignmentId);
   }
 
-  static memoryForTests(client: SupabaseClient = { from() { return {}; } } as never) {
-    return new EngineeringLifecycleService(client, createMemoryLifecycleStore());
+  async scheduleMappings(commerce: CommerceExecutionContext, tenantId: string, projectId: string) {
+    assertEngineeringService(commerce, "lifecycle.get", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
+    return this.store.listScheduleMappings(workspaceId, projectId);
+  }
+
+  async saveScheduleMapping(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      projectId: string;
+      sourceSystem?: LifecycleScheduleMapping["sourceSystem"];
+      scheduleObjectId: string;
+      schedulePhaseCode: string;
+      expectedLifecycleStage: LifecycleStage;
+      mappingType?: ScheduleMappingType;
+      scheduleStatus?: LifecycleScheduleMapping["scheduleStatus"];
+      active?: boolean;
+      actorId: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "settings.update", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const saved = await this.store.saveScheduleMapping({
+      id: crypto.randomUUID(),
+      tenantId,
+      workspaceId,
+      projectId: input.projectId,
+      sourceSystem: input.sourceSystem ?? "PROJECT_CONTROLS",
+      scheduleObjectId: input.scheduleObjectId,
+      schedulePhaseCode: input.schedulePhaseCode,
+      expectedLifecycleStage: input.expectedLifecycleStage,
+      mappingType: input.mappingType ?? "ALIGNS_WITH",
+      scheduleStatus: input.scheduleStatus ?? "planned",
+      active: input.active ?? true,
+      configuredBy: input.actorId,
+      configuredAt: new Date().toISOString(),
+    });
+    await this.audit(tenantId, saved.id, "lifecycle_schedule_mapping_configured");
+    return saved;
+  }
+
+  async scheduleAlignment(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: { projectId: string; scopeType?: LifecycleScopeType; scopeId?: string; legacyProjectPhase?: string | null },
+  ) {
+    assertEngineeringService(commerce, "lifecycle.get", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) {
+      return alignScheduleToLifecycle({ lifecycleStage: "UNKNOWN", mappings: [] });
+    }
+    const effective = await this.effective(commerce, tenantId, {
+      projectId: input.projectId,
+      scopeType: input.scopeType ?? "PROJECT",
+      scopeId: input.scopeId ?? input.projectId,
+    });
+    const mappings = await this.store.listScheduleMappings(workspaceId, input.projectId);
+    const alignment = alignScheduleToLifecycle({ lifecycleStage: effective.stage, mappings });
+    const legacy = expectedStageFromLegacyProjectPhase(input.legacyProjectPhase);
+    return {
+      ...alignment,
+      legacyProjectPhaseAuthority: false as const,
+      legacyExpectedStage: legacy,
+      note: "Project Controls activity does not change Engineering Lifecycle authority.",
+    };
+  }
+
+  static memoryForTests(
+    client: SupabaseClient = { from() { return {}; } } as never,
+    source?: CanonicalEvidenceSource,
+  ) {
+    return new EngineeringLifecycleService(
+      client,
+      createMemoryLifecycleStore(),
+      source ?? createMemoryCanonicalSource({ records: [] }),
+    );
   }
 
   private async audit(tenantId: string, objectId: string, action: string) {

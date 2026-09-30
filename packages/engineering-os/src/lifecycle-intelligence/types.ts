@@ -135,6 +135,64 @@ export type LifecycleCriterionResult = {
   evaluatedAt: string;
   waived?: boolean;
   waiverRationale?: string | null;
+  sourceCompleteness?: LifecycleCompleteness;
+  expectedCondition?: string;
+  actualState?: string;
+  stale?: boolean;
+};
+
+export const LIFECYCLE_EVIDENCE_MODES = ["CANONICAL", "TEST_FIXTURE"] as const;
+export type LifecycleEvidenceMode = (typeof LIFECYCLE_EVIDENCE_MODES)[number];
+
+export const SCHEDULE_MAPPING_TYPES = [
+  "ALIGNS_WITH",
+  "EXPECTED_DURING",
+  "GATE_MILESTONE",
+  "TRANSITION_MILESTONE",
+  "REFERENCE_ONLY",
+] as const;
+export type ScheduleMappingType = (typeof SCHEDULE_MAPPING_TYPES)[number];
+
+export const SCHEDULE_ALIGNMENT_STATES = [
+  "ALIGNED",
+  "AHEAD_OF_LIFECYCLE",
+  "BEHIND_LIFECYCLE",
+  "OVERLAPPING",
+  "UNMAPPED",
+  "UNKNOWN",
+] as const;
+export type ScheduleAlignmentState = (typeof SCHEDULE_ALIGNMENT_STATES)[number];
+
+export type LifecycleEvidenceItem = {
+  evidenceType: string;
+  canonicalObjectType: string;
+  canonicalObjectId: string;
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  scopeId?: string | null;
+  sourceState: string;
+  sourceVersion?: string | null;
+  stale?: boolean;
+  superseded?: boolean;
+  harvestedAt: string;
+  provenance: "CANONICAL" | "TEST_FIXTURE";
+};
+
+export type LifecycleEvidenceSnapshot = {
+  profileId: string;
+  profileVersion: string;
+  gateId: string;
+  projectId: string;
+  scopeType: LifecycleScopeType;
+  scopeId: string;
+  effectiveStage: LifecycleStage | "UNKNOWN";
+  evidenceSource: LifecycleEvidenceMode;
+  harvestedAt: string;
+  items: LifecycleEvidenceItem[];
+  fingerprint: string;
+  assuranceEvaluationCompleteness?: LifecycleCompleteness;
+  configurationBaselineId?: string | null;
 };
 
 export type LifecycleEvaluation = {
@@ -154,6 +212,9 @@ export type LifecycleEvaluation = {
   evidenceFingerprint: string;
   createdAt: string;
   stale: boolean;
+  evidenceSource?: LifecycleEvidenceMode;
+  harvestedAt?: string;
+  evidenceSnapshot?: LifecycleEvidenceSnapshot | null;
 };
 
 export type LifecycleGateDecision = {
@@ -257,4 +318,31 @@ export type EffectiveLifecycle = {
   stage: LifecycleStage | "UNKNOWN";
   source: "explicit" | "parent" | "project" | "UNKNOWN";
   assignment?: LifecycleAssignment;
+};
+
+export type LifecycleScheduleMapping = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  sourceSystem: "PROJECT_CONTROLS" | "LEGACY_PROJECT_PHASE";
+  scheduleObjectId: string;
+  schedulePhaseCode: string;
+  expectedLifecycleStage: LifecycleStage;
+  mappingType: ScheduleMappingType;
+  scheduleStatus: "planned" | "active" | "complete";
+  active: boolean;
+  configuredBy: string;
+  configuredAt: string;
+};
+
+export type ScheduleAlignment = {
+  lifecycleStage: LifecycleStage | "UNKNOWN";
+  state: ScheduleAlignmentState;
+  explanation: string;
+  mappings: LifecycleScheduleMapping[];
+  scheduleAuthority: false;
+  legacyProjectPhaseAuthority?: false;
+  legacyExpectedStage?: LifecycleStage | null;
+  note?: string;
 };

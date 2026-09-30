@@ -50,7 +50,7 @@ It determines context, expected evidence, existing evidence, missing evidence, c
 | Gate Decision | Authorized human governance decision |
 | Stage Transition | Governed change of lifecycle state after a human decision |
 
-`engineering_projects.project_phase` and Project Controls schedule remain **legacy / schedule** context. They are not Lifecycle Intelligence authority.
+`engineering_projects.project_phase` and Project Controls schedule remain **legacy / schedule** context. They are not Lifecycle Intelligence authority. EOS-A9B adds governed schedule mappings and descriptive alignment only; see `EOS_A9B_LIFECYCLE_EVIDENCE_AND_PROJECT_CONTROLS.md`.
 
 ---
 
@@ -189,6 +189,7 @@ Unit and integration coverage includes profile validation, allowed transitions, 
 ## Limitations
 
 - AAL2 browser certification is independent and may be NOT_TESTED.
+- Gate evaluation in A9A consumed a caller-supplied evidence snapshot. EOS-A9B harvests canonical evidence server-side; see `EOS_A9B_LIFECYCLE_EVIDENCE_AND_PROJECT_CONTROLS.md`.
 - No Project Controls scheduling engine or P6 sync.
 - No automatic transition, AI approval, automatic waiver, or compliance determination.
 - No real solver execution.

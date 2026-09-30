@@ -138,6 +138,7 @@ describe("EOS-A9A Lifecycle Intelligence", () => {
       assignmentId: assignment.id,
       gateId: "FEED_EXIT",
       evidence: readyFeedEvidence(),
+      evidenceMode: "TEST_FIXTURE",
     });
     expect(evaluation.completeness).toBe("COMPLETE");
     expect(evaluation.readiness).toBe("READY_FOR_REVIEW");
@@ -183,6 +184,7 @@ describe("EOS-A9A Lifecycle Intelligence", () => {
       assignmentId: assignment.id,
       gateId: "FEED_EXIT",
       evidence: readyFeedEvidence(),
+      evidenceMode: "TEST_FIXTURE",
     });
     const decided = await service.recordGateDecision(admin, CRUSHER_FEED_TENANT, {
       evaluationId: evaluation.id,
@@ -241,6 +243,7 @@ describe("EOS-A9A Lifecycle Intelligence", () => {
       assignmentId: assignment.id,
       gateId: "DD_RETURN_FEED",
       evidence: readyFeedEvidence(),
+      evidenceMode: "TEST_FIXTURE",
     });
     await service.recordGateDecision(admin, CRUSHER_FEED_TENANT, {
       evaluationId: evaluation.id,
@@ -272,6 +275,7 @@ describe("EOS-A9A Lifecycle Intelligence", () => {
       assignmentId: assignment.id,
       gateId: "OPS_TO_MOD",
       evidence: readyFeedEvidence(),
+      evidenceMode: "TEST_FIXTURE",
     });
     await service.recordGateDecision(admin, CRUSHER_FEED_TENANT, {
       evaluationId: evaluation.id,
@@ -315,6 +319,7 @@ describe("EOS-A9A Lifecycle Intelligence", () => {
       assignmentId: assignment.id,
       gateId: "FEED_EXIT",
       evidence: readyFeedEvidence(),
+      evidenceMode: "TEST_FIXTURE",
     });
     const decided = await service.recordGateDecision(admin, CRUSHER_FEED_TENANT, {
       evaluationId: evaluation.id,

@@ -89,6 +89,7 @@ Owner vocabulary:
 | Vendor / module review notes | Named module | module tables / Workflow SDK record | Evidence for ERA, not a fourth findings product |
 | Assurance Condition | Engineering OS (EOS-A8C / A8D) | `engineering_assurance_conditions` plus governed citations in `engineering_assurance_review_citations` | May be cited by a canonical Review Package; Findings stay Review-owned; never auto-promoted |
 | Lifecycle Profile / Assignment / Gate Evaluation / Transition | Engineering OS (EOS-A9A) | `engineering_lifecycle_*` | Composes Review, Assurance, Configuration, Analysis, Decisions; must not mint findings or auto-approve stages |
+| Lifecycle evidence snapshot / schedule mapping | Engineering OS (EOS-A9B) | `engineering_lifecycle_evaluations.evidence_snapshot`, `engineering_lifecycle_schedule_mappings` | Harvests canonical evidence; schedule mapping is not lifecycle SOT |
 
 ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings.
 

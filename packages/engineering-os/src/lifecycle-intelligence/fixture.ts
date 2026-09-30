@@ -1,3 +1,4 @@
+import type { CanonicalHarvestBundle, CanonicalHarvestRecord } from "./harvest";
 import type { LifecycleEvidence, LifecycleScope } from "./types";
 
 export const CRUSHER_EXPANSION_FEED_PROJECT_ID = "proj-crusher-feed";
@@ -100,6 +101,68 @@ export function processOnlyAnalysisEvidence(): LifecycleEvidence {
   return {
     ...readyFeedEvidence(),
     analyses: [{ id: "anl-spacegass", applicable: false, valid: false, reviewed: false, stale: false }],
+  };
+}
+
+export function crusherCanonicalHarvestRecords(
+  tenantId: string,
+  workspaceId: string,
+  options?: { interfaceStatus?: string; truncated?: boolean; failed?: boolean; assuranceCompleteness?: "COMPLETE" | "PARTIAL" | "FAILED" },
+): CanonicalHarvestBundle {
+  const projectId = CRUSHER_EXPANSION_FEED_PROJECT_ID;
+  const interfaceStatus = options?.interfaceStatus ?? "ACCEPTED";
+  const records: CanonicalHarvestRecord[] = [
+    {
+      tenantId, workspaceId, projectId, objectType: "configuration_baseline", objectId: "feed-frozen",
+      state: "frozen", fields: { baselineType: "FEED", status: "frozen" },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "requirement", objectId: "req-feed-1",
+      state: "active", fields: { allocated: true, status: "active" },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "assumption", objectId: "asm-1",
+      state: "active", fields: { materiality: "HIGH", reviewed: true, expired: false, validationStatus: "validated" },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "interface", objectId: "iir-load",
+      state: interfaceStatus, fields: {
+        informationKey: "OPERATING_LOAD", status: interfaceStatus,
+        sourceDiscipline: "MECHANICAL", receivingDiscipline: "STRUCTURAL",
+      },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "analysis_result", objectId: "anl-struct",
+      state: "valid", fields: { applicable: true, valid: true, reviewed: true, accepted: true, stale: false },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "review_package", objectId: "rev-feed-exit",
+      state: "complete", fields: { status: "complete" },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "decision", objectId: "dec-concept-select",
+      state: "approved", fields: { status: "approved", decisionClass: "CONCEPT_SELECT" },
+    },
+    {
+      tenantId, workspaceId, projectId, objectType: "change", objectId: "chg-1",
+      state: "open", fields: { status: "open", material: true },
+    },
+    {
+      tenantId, workspaceId, projectId, scopeId: A9A_STRUCTURAL_PACKAGE_ID, objectType: "analysis_result", objectId: "anl-structural-dd",
+      state: "valid", fields: { applicable: true, valid: true, reviewed: true, stale: false },
+    },
+    {
+      tenantId, workspaceId, projectId, scopeId: A9A_EARLY_WORKS_ID, objectType: "review_package", objectId: "rev-early-works",
+      state: "complete", fields: { status: "complete" },
+    },
+  ];
+  return {
+    records,
+    truncated: Boolean(options?.truncated),
+    failed: Boolean(options?.failed),
+    assuranceCompleteness: options?.assuranceCompleteness ?? "COMPLETE",
+    optimizationPolicy: "OPTIONAL",
+    optimizationPresent: false,
   };
 }
 

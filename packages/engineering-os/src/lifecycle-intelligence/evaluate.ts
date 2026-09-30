@@ -26,6 +26,7 @@ function result(
   explanation: string,
   evidenceRefs: LifecycleCriterionResult["evidenceRefs"] = [],
   applicability: LifecycleCriterionResult["applicability"] = "APPLICABLE",
+  extra: Partial<Pick<LifecycleCriterionResult, "sourceCompleteness" | "expectedCondition" | "actualState" | "stale">> = {},
 ): LifecycleCriterionResult {
   return {
     criterionId: criterion.criterionId,
@@ -36,6 +37,10 @@ function result(
     explanation,
     evidenceRefs,
     evaluatedAt: now,
+    sourceCompleteness: extra.sourceCompleteness,
+    expectedCondition: extra.expectedCondition,
+    actualState: extra.actualState,
+    stale: extra.stale,
   };
 }
 
@@ -56,11 +61,20 @@ function evaluateCriterion(
         now,
         "NOT_SATISFIED",
         `No ${criterion.requiredBaselineStatus ?? "frozen"} ${criterion.baselineType} configuration baseline exists. Stage is unchanged.`,
+        [],
+        "APPLICABLE",
+        {
+          expectedCondition: `${criterion.requiredBaselineStatus ?? "frozen"} ${criterion.baselineType} baseline`,
+          actualState: evidence.baselines.map((row) => `${row.baselineType}:${row.status}`).join(",") || "none",
+        },
       );
     }
     return result(criterion, now, "SATISFIED", `Frozen ${criterion.baselineType} baseline ${match.id} is present.`, [
       { objectType: "configuration_baseline", objectId: match.id },
-    ]);
+    ], "APPLICABLE", {
+      expectedCondition: `${criterion.requiredBaselineStatus ?? "frozen"} ${criterion.baselineType} baseline`,
+      actualState: `${match.baselineType}:${match.status}`,
+    });
   }
 
   if (criterion.type === "REQUIREMENTS_CONTEXT_REQUIRED") {
@@ -158,13 +172,19 @@ function evaluateCriterion(
   }
 
   if (criterion.type === "ENGINEERING_REVIEW_REQUIRED") {
-    const pkg = evidence.reviews[0];
+    const pkg = evidence.reviews.find((row) => ["complete", "completed", "ready"].includes(row.status)) ?? evidence.reviews[0];
     if (!pkg) {
-      return result(criterion, now, "NOT_SATISFIED", "No canonical Engineering Review Package is referenced.");
+      return result(criterion, now, "NOT_SATISFIED", "No canonical Engineering Review Package is referenced.", [], "APPLICABLE", {
+        expectedCondition: "canonical Review Package exists",
+        actualState: "none",
+      });
     }
     return result(criterion, now, "SATISFIED", `Review Package ${pkg.id} is referenced. Findings remain Review-owned.`, [
       { objectType: "review_package", objectId: pkg.id },
-    ]);
+    ], "APPLICABLE", {
+      expectedCondition: "canonical Review Package exists",
+      actualState: pkg.status,
+    });
   }
 
   if (criterion.type === "DECISION_EVIDENCE_REQUIRED") {
@@ -184,12 +204,38 @@ function evaluateCriterion(
         now,
         "NOT_SATISFIED",
         `Assurance evaluation is ${evidence.assurance.completeness}. PARTIAL/FAILED cannot ready a gate.`,
+        [],
+        "APPLICABLE",
+        {
+          sourceCompleteness: evidence.assurance.completeness === "FAILED" ? "FAILED" : "PARTIAL",
+          expectedCondition: "COMPLETE Assurance Evaluation Run",
+          actualState: evidence.assurance.completeness,
+        },
       );
     }
-    return result(criterion, now, "SATISFIED", "Assurance evaluation completeness is COMPLETE.");
+    return result(criterion, now, "SATISFIED", "Assurance evaluation completeness is COMPLETE.", [], "APPLICABLE", {
+      sourceCompleteness: "COMPLETE",
+      expectedCondition: "COMPLETE Assurance Evaluation Run",
+      actualState: "COMPLETE",
+    });
   }
 
   if (criterion.type === "NO_OPEN_BLOCKING_ASSURANCE_CONDITIONS") {
+    if (evidence.assurance.completeness !== "COMPLETE") {
+      return result(
+        criterion,
+        now,
+        "NOT_SATISFIED",
+        `Assurance evaluation is ${evidence.assurance.completeness}. Absence of blocking conditions cannot be proven from PARTIAL or FAILED Assurance evidence.`,
+        [],
+        "APPLICABLE",
+        {
+          sourceCompleteness: evidence.assurance.completeness === "FAILED" ? "FAILED" : "PARTIAL",
+          expectedCondition: "COMPLETE Assurance Evaluation Run with no configured blocking OPEN conditions",
+          actualState: `assurance completeness ${evidence.assurance.completeness}`,
+        },
+      );
+    }
     const types = new Set(criterion.blockingConditionTypes ?? []);
     const threshold = materialityRank(criterion.minMateriality ?? "HIGH");
     const blocking = evidence.assurance.conditions.filter(
@@ -205,6 +251,12 @@ function evaluateCriterion(
         "NOT_SATISFIED",
         `${blocking.length} configured blocking Assurance Condition(s) remain open. Other open conditions do not block this gate.`,
         blocking.map((row) => ({ objectType: "assurance_condition", objectId: row.id })),
+        "APPLICABLE",
+        {
+          sourceCompleteness: "COMPLETE",
+          expectedCondition: "no configured blocking OPEN conditions",
+          actualState: `${blocking.length} blocking open`,
+        },
       );
     }
     return result(
@@ -212,6 +264,13 @@ function evaluateCriterion(
       now,
       "SATISFIED",
       "No configured blocking Assurance Conditions are open. Unconfigured open conditions are not treated as gate blockers.",
+      [],
+      "APPLICABLE",
+      {
+        sourceCompleteness: "COMPLETE",
+        expectedCondition: "no configured blocking OPEN conditions",
+        actualState: "none open",
+      },
     );
   }
 
@@ -288,10 +347,16 @@ export function evaluateLifecycleGate(input: {
   evaluationId?: string;
 }): LifecycleEvaluation {
   const now = input.now ?? new Date().toISOString();
-  const completeness = completenessFromEvidence(input.evidence);
+  const fromEvidence = completenessFromEvidence(input.evidence);
   const definitions = criteriaForGate(input.profile, input.gateId, input.enabledCriterionIds);
   const unknownRequired = input.enabledCriterionIds?.some((id) => !input.profile.criteria.some((row) => row.criterionId === id));
-  const criteria = definitions.map((criterion) => evaluateCriterion(criterion, input.evidence, now));
+  const criteria = definitions.map((criterion) => {
+    const row = evaluateCriterion(criterion, input.evidence, now);
+    if (!row.sourceCompleteness) {
+      row.sourceCompleteness = input.evidence.failed ? "FAILED" : input.evidence.truncated ? "PARTIAL" : "COMPLETE";
+    }
+    return row;
+  });
   if (unknownRequired) {
     criteria.push({
       criterionId: "UNKNOWN",
@@ -302,9 +367,14 @@ export function evaluateLifecycleGate(input: {
       explanation: "Unknown criterion id failed closed.",
       evidenceRefs: [],
       evaluatedAt: now,
+      sourceCompleteness: "FAILED",
     });
   }
-  const readiness = readinessFromResults(completeness.completeness, criteria);
+  const applicable = criteria.filter((row) => row.applicability === "APPLICABLE" && !row.waived);
+  const sourceFailed = applicable.some((row) => row.sourceCompleteness === "FAILED") || fromEvidence.completeness === "FAILED";
+  const sourcePartial = applicable.some((row) => row.sourceCompleteness === "PARTIAL") || fromEvidence.completeness === "PARTIAL";
+  const completeness: LifecycleCompleteness = sourceFailed ? "FAILED" : sourcePartial ? "PARTIAL" : "COMPLETE";
+  const readiness = readinessFromResults(completeness, criteria);
   return {
     id: input.evaluationId ?? crypto.randomUUID(),
     tenantId: input.tenantId,
@@ -313,11 +383,11 @@ export function evaluateLifecycleGate(input: {
     gateId: input.gateId,
     profileId: input.profile.profileId,
     profileVersion: input.profile.profileVersion,
-    completeness: completeness.completeness,
+    completeness,
     readiness,
     truncated: Boolean(input.evidence.truncated),
-    remainingScopeUnknown: completeness.completeness !== "COMPLETE",
-    reason: completeness.reason,
+    remainingScopeUnknown: completeness !== "COMPLETE",
+    reason: fromEvidence.reason ?? (sourcePartial ? "source_completeness_incomplete" : null),
     criteria,
     evidenceFingerprint: fingerprintLifecycleEvidence(input.evidence),
     createdAt: now,

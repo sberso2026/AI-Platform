@@ -3,6 +3,7 @@ import type {
   LifecycleEvaluation,
   LifecycleGateDecision,
   LifecycleProfileSetting,
+  LifecycleScheduleMapping,
   LifecycleTransition,
 } from "./types";
 
@@ -20,6 +21,8 @@ export interface LifecycleStore {
   latestDecision(evaluationId: string): Promise<LifecycleGateDecision | null>;
   appendTransition(transition: LifecycleTransition): Promise<LifecycleTransition>;
   listTransitions(assignmentId: string): Promise<LifecycleTransition[]>;
+  listScheduleMappings(workspaceId: string, projectId: string): Promise<LifecycleScheduleMapping[]>;
+  saveScheduleMapping(mapping: LifecycleScheduleMapping): Promise<LifecycleScheduleMapping>;
   updateAssignmentStage(
     id: string,
     fromStage: LifecycleAssignment["stage"],
@@ -34,6 +37,7 @@ export function createMemoryLifecycleStore(): LifecycleStore {
   const evaluations = new Map<string, LifecycleEvaluation>();
   const decisions = new Map<string, LifecycleGateDecision>();
   const transitions: LifecycleTransition[] = [];
+  const mappings = new Map<string, LifecycleScheduleMapping>();
 
   return {
     async getProfileSetting(workspaceId) {
@@ -95,6 +99,13 @@ export function createMemoryLifecycleStore(): LifecycleStore {
     },
     async listTransitions(assignmentId) {
       return transitions.filter((row) => row.assignmentId === assignmentId);
+    },
+    async listScheduleMappings(workspaceId, projectId) {
+      return [...mappings.values()].filter((row) => row.workspaceId === workspaceId && row.projectId === projectId);
+    },
+    async saveScheduleMapping(mapping) {
+      mappings.set(mapping.id, mapping);
+      return mapping;
     },
   };
 }
