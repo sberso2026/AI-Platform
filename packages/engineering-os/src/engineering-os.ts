@@ -47,6 +47,7 @@ import {
   PlatformKgThreadProjectionStore,
   registerThreadProjectionJobHandler,
 } from "./digital-thread/projection";
+import { EngineeringAssuranceService, registerAssuranceEvaluateHandler } from "./assurance";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
@@ -85,6 +86,7 @@ export interface EngineeringOS {
   analysisRequests: AnalysisRequestService;
   digitalThread: EngineeringDigitalThreadService;
   threadProjection: EngineeringDigitalThreadProjectionService;
+  assurance: EngineeringAssuranceService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -130,11 +132,13 @@ export function createEngineeringOS(
     new PlatformKgThreadProjectionStore(options?.projectionWriteClient ?? supabase, supabase),
   );
   const digitalThread = new EngineeringDigitalThreadService(supabase, threadProjection);
+  const assurance = new EngineeringAssuranceService(supabase, digitalThread);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
   registerThreadProjectionJobHandler(kernel.jobs, threadProjection, {
     loadWorkspaceLinks: (tenantId, workspaceId) => digitalThread.loadCanonicalLinks(tenantId, workspaceId),
   });
+  registerAssuranceEvaluateHandler(kernel.jobs, assurance);
   const timeline = new EngineeringTimelineService(supabase);
   const activity = new EngineeringActivityService(supabase);
   const objects = new EngineeringObjectFramework(supabase, kernel);
@@ -213,6 +217,7 @@ export function createEngineeringOS(
     analysisRequests,
     digitalThread,
     threadProjection,
+    assurance,
     timeline,
     activity,
     objects,

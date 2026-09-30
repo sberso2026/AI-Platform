@@ -136,6 +136,7 @@ export { ExternalToolAssignmentService } from "./external-tools/assignment-servi
 export { DisciplineIntelligenceService } from "./discipline-intelligence/service";
 export { AnalysisRequestService } from "./analysis-intelligence/request-service";
 export { EngineeringDigitalThreadService } from "./digital-thread/service";
+export { EngineeringAssuranceService } from "./assurance/service";
 export {
   THREAD_DEFAULT_MAX_DEPTH,
   THREAD_HARD_MAX_DEPTH,

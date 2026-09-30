@@ -12,6 +12,7 @@ import {
 } from "@/components/engineering/operational";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { ObjectAssurancePanel } from "@/components/engineering/object-assurance-panel";
 
 type InterfaceDetail = {
   interface: Record<string, unknown>;
@@ -146,6 +147,7 @@ export function InterfaceRegister() {
                           </Button>
                         </div>
                       ) : null}
+                      {selectedId ? <ObjectAssurancePanel objectType="interface" objectId={selectedId} /> : null}
                     </div>
                   ) : null}
                 </div>

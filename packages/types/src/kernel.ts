@@ -150,7 +150,8 @@ export type JobType =
   | "workflow.advance"
   | "engineering.optimization.evaluate"
   | "engineering.analysis.execute"
-  | "engineering.thread.project";
+  | "engineering.thread.project"
+  | "engineering.assurance.evaluate";
 
 export type JobStatus =
   | "pending"

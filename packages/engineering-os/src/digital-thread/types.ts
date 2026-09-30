@@ -220,6 +220,10 @@ export type ThreadCatalogNode = ThreadObjectRef & {
   executionHost?: string | null;
   inputFingerprint?: string | null;
   reviewRequired?: boolean;
+  acceptanceState?: string | null;
+  materiality?: string | null;
+  validationStatus?: string | null;
+  expiresAt?: string | null;
   question?: string | null;
   alternatives?: string[];
   snapshotItems?: Array<{ id: string; objectType: string; objectId: string; objectCode?: string }>;

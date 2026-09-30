@@ -260,3 +260,4 @@ No new Digital Thread object table. EOS-A8A adds only an additive replace of `en
 New graph database, KG as source of truth, Digital Twin redesign, real solver certification, structural/multidiscipline solver execution, universal scores, automatic confirmed Impact creation, unbounded traversal, autonomous AI relationship creation.
 
 See `EOS_A8B_PLATFORM_KG_PROJECTION.md` for the disposable Platform KG projection (not a second SOT).
+See `EOS_A8C_ENGINEERING_ASSURANCE_INTELLIGENCE.md` for persistent Assurance Conditions over this canonical thread.

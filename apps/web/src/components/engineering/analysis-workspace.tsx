@@ -13,6 +13,7 @@ import {
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { ObjectThreadPanel } from "@/components/engineering/object-thread-panel";
+import { ObjectAssurancePanel } from "@/components/engineering/object-assurance-panel";
 
 type FilterId = "all" | "blocked" | "ready" | "executing" | "results" | "stale";
 
@@ -184,6 +185,7 @@ export function AnalysisWorkspace() {
             ) : null}
             {result ? <pre className="overflow-auto rounded bg-muted p-3 text-xs">{JSON.stringify(result, null, 2)}</pre> : null}
             {selectedId ? <ObjectThreadPanel objectType="analysis_request" objectId={selectedId} /> : null}
+            {selectedId ? <ObjectAssurancePanel objectType="analysis_request" objectId={selectedId} /> : null}
             {canMutate ? (
               <div className="flex flex-wrap gap-2">
                 <Button onClick={() => post({ action: "preflight", id: selectedId })}>Validate</Button>

@@ -24,6 +24,7 @@ const ENGINEERING_API_SEGMENTS = [
   "optimization",
   "analysis",
   "thread",
+  "assurance",
   "risks",
   "issues",
   "actions",
@@ -92,11 +93,13 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(write.action).toBe("analysis.write");
   });
 
-  it("maps Digital Thread to Engineering OS product, not Project Intelligence", () => {
-    const read = getEngineeringApiPolicy("thread", "GET");
+  it("maps Engineering Assurance to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("assurance", "GET");
+    const write = getEngineeringApiPolicy("assurance", "POST");
     expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
     expect(read.applicationKey).toBeUndefined();
-    expect(read.action).toBe("analysis.read");
+    expect(write.applicationKey).toBeUndefined();
   });
 
   it("maps Optimization to Engineering OS product, not Project Intelligence", () => {

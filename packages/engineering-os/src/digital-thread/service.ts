@@ -41,6 +41,7 @@ const OBJECT_TABLES: Record<string, string> = {
   optimization_study: "engineering_optimization_studies",
   optimization_run: "engineering_optimization_runs",
   review_package: "engineering_review_packages",
+  configuration_item: "engineering_configuration_items",
 };
 
 function db(client: SupabaseClient): any {
@@ -224,6 +225,10 @@ export class EngineeringDigitalThreadService {
     return Object.values(GOVERNED_RELATION_SEMANTICS);
   }
 
+  async loadAuthorizedWorkspaceGraph(tenantId: string, workspaceId: string): Promise<ThreadGraphInput> {
+    return this.loadGraph(tenantId, workspaceId);
+  }
+
   private authFromGraph(tenantId: string, workspaceId: string, graph: ThreadGraphInput): ThreadAuthorization {
     return {
       tenantId,
@@ -278,18 +283,24 @@ export class EngineeringDigitalThreadService {
           objectType,
           objectId: String(row.id),
           projectId: (row.project_id as string | null) ?? null,
-          objectCode: String(row.requirement_code ?? row.system_code ?? row.interface_code ?? row.change_code ?? row.baseline_code ?? row.decision_number ?? row.assumption_number ?? row.id),
+          objectCode: String(row.requirement_code ?? row.system_code ?? row.interface_code ?? row.change_code ?? row.baseline_code ?? row.decision_number ?? row.assumption_number ?? row.object_code_snapshot ?? row.id),
           title: (row.title as string | null) ?? (row.name as string | null) ?? (row.question as string | null),
           status: (row.status as string | null) ?? (row.acceptance_state as string | null),
           stale: row.stale === true,
+          staleReasons: Array.isArray(row.stale_reasons) ? (row.stale_reasons as string[]) : undefined,
           superseded: String(row.status ?? "") === "superseded",
           discipline: (row.discipline as string | null) ?? null,
           capability: (row.capability as string | null) ?? null,
           blockingReasons: Array.isArray(row.blocking_reasons) ? (row.blocking_reasons as string[]) : undefined,
           toolCode: (row.tool_code as string | null) ?? null,
+          reviewRequired: objectType === "analysis_result" && String(row.acceptance_state ?? "") === "UNREVIEWED",
+          acceptanceState: (row.acceptance_state as string | null) ?? null,
+          materiality: (row.materiality as string | null) ?? null,
+          validationStatus: (row.validation_status as string | null) ?? null,
+          expiresAt: (row.expires_at as string | null) ?? null,
           provenance: {
-            createdBy: (row.created_by as string | null) ?? null,
-            createdAt: (row.created_at as string | null) ?? null,
+            createdBy: (row.created_by as string | null) ?? (row.captured_by as string | null) ?? null,
+            createdAt: (row.created_at as string | null) ?? (row.captured_at as string | null) ?? null,
             sourceAnalysisId: objectType === "analysis_result" ? String(row.analysis_request_id ?? "") : null,
             inputFingerprint: (row.analysis_input_fingerprint as string | null) ?? null,
             sourceExternalTool: (row.tool_code as string | null) ?? null,

@@ -131,4 +131,4 @@ Safety, regulatory, and integrity requirements (when they exist as Requirement o
 
 EOS-A1: **documentation only**. Later phases may add warnings, then gates, by object type and criticality. Never a global “all five links required to insert a row” constraint.
 
-EOS-A8A Digital Thread coverage queries report **assurance conditions** (review required, not automatic defects) and **do not** introduce a universal traceability, compliance, or truth score. Maturity remains proportional to object type, criticality, and safety class. See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md`.
+EOS-A8A Digital Thread coverage queries report **assurance conditions** (review required, not automatic defects) and **do not** introduce a universal traceability, compliance, or truth score. EOS-A8C persists those conditions with versioned rules, fingerprints, human disposition, and Digital Thread evidence paths. Maturity remains proportional to object type, criticality, and safety class. See `EOS_A8A_ENGINEERING_DIGITAL_THREAD.md` and `EOS_A8C_ENGINEERING_ASSURANCE_INTELLIGENCE.md`.
