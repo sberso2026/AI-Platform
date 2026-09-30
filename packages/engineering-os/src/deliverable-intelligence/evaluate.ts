@@ -36,9 +36,38 @@ export function evaluateDeliverableDimensions(input: {
   const facts = input.facts;
   const source: LifecycleCompleteness = facts.failed ? "FAILED" : facts.truncated ? "PARTIAL" : "COMPLETE";
 
+  const purposeNeedsMappedStatus =
+    input.purpose === "FOR_CONSTRUCTION_USE" ||
+    input.purpose === "FOR_BASELINE" ||
+    input.purpose === "FOR_COMMISSIONING" ||
+    input.purpose === "FOR_OPERATIONS";
   const content = !facts.primaryPresent
     ? dim("CONTENT", "NOT_SATISFIED", "required primary canonical artifact", "missing", "Required primary artifact is not bound. This is not a technical defect Finding.", [], source)
-    : dim("CONTENT", "SATISFIED", "required primary canonical artifact", `${facts.boundCount} bound`, "Required canonical artifact(s) are bound. Content maturity is not engineering correctness.", [], source);
+    : facts.documentBound && facts.revisionResolved === false
+      ? dim("CONTENT", "NOT_SATISFIED", "required revision resolves under the binding policy", "unresolved", "The governing document revision did not resolve using Document domain rules. Lexical revision ordering is not used.", [], source)
+      : facts.documentBound && facts.revisionVoid
+        ? dim("CONTENT", "NOT_SATISFIED", "artifact not void", "void/obsolete", "The governing document revision is void or obsolete.", [], source)
+        : facts.documentBound && facts.revisionSuperseded && purposeNeedsMappedStatus
+          ? dim("CONTENT", "NOT_SATISFIED", "artifact not superseded for this purpose", "superseded", "The governing document revision is superseded for the configured purpose.", [], source)
+          : facts.documentBound && facts.mappedSemantic === "UNMAPPED" && purposeNeedsMappedStatus
+            ? dim(
+                "CONTENT",
+                "UNKNOWN",
+                "governed document status mapping",
+                `raw=${facts.rawStatusCode ?? "none"} UNMAPPED`,
+                "Required document status is unmapped. Acronyms are not inferred. Mapped status is contributing evidence only, not approval.",
+                [],
+                source,
+              )
+            : dim(
+                "CONTENT",
+                "SATISFIED",
+                "required primary canonical artifact",
+                `${facts.boundCount} bound; status=${facts.mappedSemantic ?? "n/a"}`,
+                "Required canonical artifact(s) are bound. Content maturity is not engineering correctness. Document status is not approval.",
+                [],
+                source,
+              );
 
   const trace = !input.definition.traceabilityRequired
     ? dim("TRACEABILITY", "NOT_APPLICABLE", "configured requirement links", "not required", "Traceability is not required for this definition.", [], source)
@@ -65,9 +94,19 @@ export function evaluateDeliverableDimensions(input: {
   const needsConfig = input.definition.configurationRequired || input.purpose === "FOR_BASELINE" || input.purpose === "FOR_CONSTRUCTION_USE";
   const config = !needsConfig
     ? dim("CONFIGURATION", "NOT_APPLICABLE", "applicable frozen baseline", "not required for this purpose", "Configuration is not required for this purpose. Filenames are not IFC/As-Built authority.", [], source)
-    : facts.baselineFrozen
-      ? dim("CONFIGURATION", "SATISFIED", "applicable frozen baseline", "frozen", "An applicable frozen Configuration Baseline is present.", [], source)
-      : dim("CONFIGURATION", "NOT_SATISFIED", "applicable frozen baseline", "absent or not frozen", "Required frozen Configuration Baseline is not present.", [], source);
+    : !facts.baselineFrozen
+      ? dim("CONFIGURATION", "NOT_SATISFIED", "applicable frozen baseline", "absent or not frozen", "Required frozen Configuration Baseline is not present.", [], source)
+      : facts.documentBound && facts.baselineRevisionMatch === false
+        ? dim(
+            "CONFIGURATION",
+            "NOT_SATISFIED",
+            "resolved revision in frozen baseline",
+            `revision=${facts.resolvedRevision ?? "none"} not in baseline`,
+            "The resolved document revision is not the revision frozen into the applicable Configuration Baseline. Current document revision is not baseline membership.",
+            [],
+            source,
+          )
+        : dim("CONFIGURATION", "SATISFIED", "applicable frozen baseline", "frozen", "An applicable frozen Configuration Baseline is present.", [], source);
 
   const support = !input.definition.analysisRequired
     ? dim("SUPPORTING_EVIDENCE", "NOT_APPLICABLE", "configured analysis/decision evidence", "not required", "Supporting analysis is not required for this definition.", [], source)
@@ -149,6 +188,24 @@ export function assuranceSignalsFrom(input: {
   const coord = input.dimensions.find((row) => row.dimension === "COORDINATION");
   if (coord?.state === "NOT_SATISFIED") {
     signals.push({ conditionType: "DELIVERABLE_INTERFACE_COORDINATION_GAP", explanation: `${input.definition.code} has incomplete configured interface coordination.` });
+  }
+  if (input.facts.documentBound && input.facts.mappedSemantic === "UNMAPPED" && input.dimensions.find((row) => row.dimension === "CONTENT")?.state === "UNKNOWN") {
+    signals.push({
+      conditionType: "UNMAPPED_REQUIRED_DOCUMENT_STATUS",
+      explanation: `${input.definition.code} has raw document status ${input.facts.rawStatusCode ?? "none"} with no governed mapping.`,
+    });
+  }
+  if (input.facts.revisionSuperseded) {
+    signals.push({
+      conditionType: "BOUND_ARTIFACT_REVISION_SUPERSEDED",
+      explanation: `${input.definition.code} governing revision ${input.facts.resolvedRevision ?? "unknown"} is superseded.`,
+    });
+  }
+  if (input.facts.documentBound && input.facts.baselineRevisionMatch === false) {
+    signals.push({
+      conditionType: "REQUIRED_BASELINE_REVISION_MISMATCH",
+      explanation: `${input.definition.code} resolved revision is not the revision frozen into the applicable baseline.`,
+    });
   }
   return signals;
 }

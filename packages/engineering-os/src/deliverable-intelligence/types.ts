@@ -87,6 +87,27 @@ export type DeliverableEvidenceMode = (typeof DELIVERABLE_EVIDENCE_MODES)[number
 export const DELIVERABLE_CATALOG_ORIGINS = ["TEMPLATE", "EXAMPLE", "PROJECT_CONFIGURED"] as const;
 export type DeliverableCatalogOrigin = (typeof DELIVERABLE_CATALOG_ORIGINS)[number];
 
+export const DOCUMENT_STATUS_SEMANTICS = [
+  "WORK_IN_PROGRESS",
+  "FOR_COORDINATION",
+  "FOR_REVIEW",
+  "FOR_APPROVAL",
+  "AUTHORIZED_FOR_CONFIGURED_USE",
+  "FOR_CONSTRUCTION_USE",
+  "RECORD",
+  "SUPERSEDED",
+  "VOID",
+  "UNMAPPED",
+] as const;
+export type DocumentStatusSemantic = (typeof DOCUMENT_STATUS_SEMANTICS)[number];
+
+export const ARTIFACT_REVISION_POLICIES = [
+  "EXACT_REVISION",
+  "CURRENT_EFFECTIVE_REVISION",
+  "BASELINE_PINNED_REVISION",
+] as const;
+export type ArtifactRevisionPolicy = (typeof ARTIFACT_REVISION_POLICIES)[number];
+
 export const DELIVERABLE_AI_BOUNDARY = {
   mayEvaluateMaturity: true,
   mayExplainDimensions: true,
@@ -147,6 +168,7 @@ export type DeliverableExpectation = {
   scheduleObjectId?: string | null;
   scheduleStatus?: "planned" | "active" | "complete" | null;
   origin: "LIFECYCLE_PROFILE" | "PROJECT_CONFIGURATION" | "DISCIPLINE_CONFIGURATION" | "HUMAN_GOVERNED";
+  adoptedFromTemplate?: boolean;
   createdBy: string;
   createdAt: string;
 };
@@ -160,6 +182,12 @@ export type DeliverableArtifactBinding = {
   artifactId: string;
   artifactRole: DeliverableArtifactRole;
   revisionRef?: string | null;
+  revisionPolicy?: ArtifactRevisionPolicy;
+  resolvedRevision?: string | null;
+  rawStatusCode?: string | null;
+  mappedSemantic?: DocumentStatusSemantic | null;
+  mappingVersion?: string | null;
+  baselineId?: string | null;
   boundBy: string;
   boundAt: string;
 };
@@ -182,7 +210,10 @@ export type DeliverableAssuranceSignal = {
     | "DELIVERABLE_REQUIRED_REVIEW_MISSING"
     | "DELIVERABLE_REFERENCES_STALE_EVIDENCE"
     | "DELIVERABLE_CONFIGURATION_GAP"
-    | "DELIVERABLE_INTERFACE_COORDINATION_GAP";
+    | "DELIVERABLE_INTERFACE_COORDINATION_GAP"
+    | "UNMAPPED_REQUIRED_DOCUMENT_STATUS"
+    | "BOUND_ARTIFACT_REVISION_SUPERSEDED"
+    | "REQUIRED_BASELINE_REVISION_MISMATCH";
   explanation: string;
 };
 
@@ -252,7 +283,41 @@ export type DeliverableCanonicalFacts = {
   interfacesComplete: boolean;
   contributingIdentified: boolean;
   assumptionInvalidated: boolean;
+  documentBound: boolean;
+  resolvedRevision?: string | null;
+  revisionPolicy?: ArtifactRevisionPolicy | null;
+  rawStatusCode?: string | null;
+  mappedSemantic?: DocumentStatusSemantic | null;
+  mappingVersion?: string | null;
+  revisionSuperseded?: boolean;
+  revisionVoid?: boolean;
+  revisionResolved?: boolean;
+  baselineRevisionMatch?: boolean | null;
   artifactStates: Array<{ artifactClass: string; artifactId: string; state: string; revision?: string | null }>;
+};
+
+export type DocumentStatusMapping = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  projectId?: string | null;
+  sourceSystem: string;
+  rawStatusCode: string;
+  semantic: Exclude<DocumentStatusSemantic, "UNMAPPED">;
+  mappingVersion: string;
+  enabled: boolean;
+  description?: string | null;
+  configuredBy: string;
+  configuredAt: string;
+};
+
+export type ProjectDeliverableDefinition = DeliverableDefinition & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  rationale?: string | null;
+  createdBy: string;
+  createdAt: string;
 };
 
 export type DeliverableLifecycleSummary = {

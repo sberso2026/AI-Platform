@@ -26,6 +26,11 @@ export function fingerprintDeliverableEvidence(input: {
       interfacesComplete: input.facts.interfacesComplete,
       assumptionInvalidated: input.facts.assumptionInvalidated,
       artifacts: input.facts.artifactStates.map((row) => `${row.artifactClass}:${row.artifactId}:${row.state}:${row.revision ?? ""}`).sort(),
+      resolvedRevision: input.facts.resolvedRevision ?? null,
+      revisionPolicy: input.facts.revisionPolicy ?? null,
+      rawStatusCode: input.facts.rawStatusCode ?? null,
+      mappedSemantic: input.facts.mappedSemantic ?? null,
+      mappingVersion: input.facts.mappingVersion ?? null,
     },
   });
   return createHash("sha256").update(payload).digest("hex");
@@ -38,6 +43,12 @@ export function composeDeliverableThread(input: {
   definitionCode: string;
   assessmentId?: string | null;
   artifactIds?: string[];
+  documentId?: string | null;
+  revision?: string | null;
+  statusMapping?: string | null;
+  reviewId?: string | null;
+  baselineId?: string | null;
+  gateId?: string | null;
 }): string {
   return [
     `project:${input.projectId}`,
@@ -45,7 +56,13 @@ export function composeDeliverableThread(input: {
     `deliverable_expectation:${input.expectationId}`,
     `deliverable_definition:${input.definitionCode}`,
     ...(input.artifactIds ?? []).map((id) => `deliverable_artifact:${id}`),
+    input.documentId ? `document:${input.documentId}` : null,
+    input.revision ? `document_revision:${input.revision}` : null,
+    input.statusMapping ? `document_status_mapping:${input.statusMapping}` : null,
+    input.reviewId ? `review_package:${input.reviewId}` : null,
+    input.baselineId ? `configuration_baseline:${input.baselineId}` : null,
     input.assessmentId ? `deliverable_assessment:${input.assessmentId}` : null,
+    input.gateId ? `lifecycle_gate:${input.gateId}` : null,
   ]
     .filter(Boolean)
     .join(" → ");

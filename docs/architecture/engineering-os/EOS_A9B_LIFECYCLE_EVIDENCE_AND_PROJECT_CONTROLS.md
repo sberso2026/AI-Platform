@@ -143,4 +143,4 @@ Representative in-process Crusher FEED EXIT harvest + evaluation is measured in 
 - No event-bus auto-reevaluation; stale marking on next harvest is sufficient for A9B.
 - No Primavera connector, scheduling engine, automatic transition, AI approval, Value Intelligence, real solver execution, or production deployment.
 - AAL2/browser certification may be NOT_TESTED.
-- EOS-A9C adds optional Deliverable Expectation / maturity evidence to gate harvest when composed; see `EOS_A9C_DELIVERABLE_MATURITY_INTELLIGENCE.md`. Schedule completion still cannot set engineering maturity.
+- EOS-A9C adds optional Deliverable Expectation / maturity evidence to gate harvest when composed; see `EOS_A9C_DELIVERABLE_MATURITY_INTELLIGENCE.md`. EOS-A9D restricts that composition to adopted project expectations and mapped document semantics; see `EOS_A9D_DELIVERABLE_GOVERNANCE_DOCUMENT_STATUS.md`. Schedule completion still cannot set engineering maturity.

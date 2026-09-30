@@ -7,3 +7,5 @@ export * from "./fixture";
 export * from "./memory-store";
 export * from "./supabase-store";
 export * from "./service";
+export * from "./status-mapping";
+export * from "./revision";

@@ -179,6 +179,47 @@ export function createSupabaseCanonicalSource(client: SupabaseClient): Canonical
         records.push(record(query, "optimization_study", String(row.id), String(row.status ?? "open"), { status: row.status }));
       }
 
+      const documents = await selectRows(client, "engineering_documents", query, { projectColumn: false });
+      if (documents.failed) failures.push(documents.reason ?? "documents");
+      for (const row of documents.rows) {
+        const status = String(row.status ?? "draft");
+        records.push(
+          record(
+            query,
+            "document",
+            String(row.id),
+            status,
+            {
+              documentNumber: String(row.document_number ?? ""),
+              revision: String(row.revision ?? ""),
+              status,
+              titleHidden: true,
+            },
+            {
+              version: String(row.revision ?? ""),
+              superseded: status === "superseded" || status === "obsolete",
+            },
+          ),
+        );
+      }
+
+      const items = await selectRows(client, "engineering_configuration_items", query, { projectColumn: false });
+      if (items.failed) failures.push(items.reason ?? "configuration_items");
+      const baselineById = new Map(records.filter((row) => row.objectType === "configuration_baseline").map((row) => [row.objectId, row]));
+      for (const row of items.rows) {
+        const baseline = baselineById.get(String(row.baseline_id ?? ""));
+        records.push(
+          record(query, "configuration_item", String(row.id), String(baseline?.state ?? "unknown"), {
+            baselineId: String(row.baseline_id ?? ""),
+            baselineStatus: baseline?.state ?? null,
+            objectType: String(row.object_type ?? ""),
+            objectId: String(row.object_id ?? ""),
+            objectCode: row.object_code_snapshot,
+            revisionRef: row.revision_ref,
+          }, { version: row.revision_ref ? String(row.revision_ref) : null }),
+        );
+      }
+
       return {
         records,
         truncated,

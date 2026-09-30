@@ -123,7 +123,7 @@ Crusher Expansion FEED synthetic path: missing → bind analysis → review/supp
 ## Limitations
 
 - Default catalog is a small EXAMPLE FEED set, not a complete engineering deliverable library.
-- Document status codes (IFR/IFA/IFC/AS_BUILT) are not interpreted as maturity unless later governed per project.
+- Document status codes (IFR/IFA/IFC/AS_BUILT) are not interpreted as maturity in A9C. EOS-A9D adds governed project/workspace status mapping and template adoption; see `EOS_A9D_DELIVERABLE_GOVERNANCE_DOCUMENT_STATUS.md`.
 - No automatic reassessment bus; explicit evaluate is sufficient.
 - AAL2 / browser certification may be NOT_TESTED. MFA is not weakened.
 - No DMS replacement, Primavera connector, automatic schedule maturity, universal percent complete, AI quality scoring, automatic approval, IFC authorization, lifecycle transition, real solver, Value Intelligence, new job queue, or production deployment.

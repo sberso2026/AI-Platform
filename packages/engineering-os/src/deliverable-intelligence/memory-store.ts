@@ -4,6 +4,8 @@ import type {
   DeliverableExpectation,
   DeliverableProfileSetting,
   DeliverableWaiver,
+  DocumentStatusMapping,
+  ProjectDeliverableDefinition,
 } from "./types";
 
 export interface DeliverableStore {
@@ -21,6 +23,12 @@ export interface DeliverableStore {
   saveWaiver(row: DeliverableWaiver): Promise<DeliverableWaiver>;
   listWaivers(expectationId: string): Promise<DeliverableWaiver[]>;
   overlayWaiver(assessmentId: string, dimensions: DeliverableAssessment["dimensions"], waiverIds: string[]): Promise<void>;
+  listStatusMappings(workspaceId: string, projectId?: string | null): Promise<DocumentStatusMapping[]>;
+  saveStatusMapping(row: DocumentStatusMapping): Promise<DocumentStatusMapping>;
+  getProjectDefinition(workspaceId: string, definitionId: string, version: string): Promise<ProjectDeliverableDefinition | null>;
+  listProjectDefinitions(workspaceId: string, projectId: string): Promise<ProjectDeliverableDefinition[]>;
+  saveProjectDefinition(row: ProjectDeliverableDefinition): Promise<ProjectDeliverableDefinition>;
+  listAssessments(workspaceId: string, projectId?: string): Promise<DeliverableAssessment[]>;
 }
 
 export function createMemoryDeliverableStore(): DeliverableStore {
@@ -29,6 +37,8 @@ export function createMemoryDeliverableStore(): DeliverableStore {
   const bindings = new Map<string, DeliverableArtifactBinding>();
   const assessments = new Map<string, DeliverableAssessment>();
   const waivers = new Map<string, DeliverableWaiver>();
+  const mappings = new Map<string, DocumentStatusMapping>();
+  const projectDefinitions = new Map<string, ProjectDeliverableDefinition>();
 
   return {
     async getProfileSetting(workspaceId) {
@@ -66,7 +76,12 @@ export function createMemoryDeliverableStore(): DeliverableStore {
       return (
         [...assessments.values()]
           .filter((row) => row.expectationId === expectationId)
-          .sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0] ?? null
+          .sort((a, b) => {
+            const time = b.assessedAt.localeCompare(a.assessedAt);
+            if (time !== 0) return time;
+            if (a.stale !== b.stale) return a.stale ? 1 : -1;
+            return 0;
+          })[0] ?? null
       );
     },
     async markAssessmentStale(id) {
@@ -83,6 +98,37 @@ export function createMemoryDeliverableStore(): DeliverableStore {
     async overlayWaiver(assessmentId, dimensions, waiverIds) {
       const row = assessments.get(assessmentId);
       if (row) assessments.set(assessmentId, { ...row, dimensions, waiverIds });
+    },
+    async listStatusMappings(workspaceId, projectId) {
+      return [...mappings.values()].filter(
+        (row) => row.workspaceId === workspaceId && (!projectId || !row.projectId || row.projectId === projectId),
+      );
+    },
+    async saveStatusMapping(row) {
+      mappings.set(row.id, row);
+      return row;
+    },
+    async getProjectDefinition(workspaceId, definitionId, version) {
+      return (
+        [...projectDefinitions.values()].find(
+          (row) => row.workspaceId === workspaceId && row.definitionId === definitionId && row.definitionVersion === version,
+        ) ?? null
+      );
+    },
+    async listProjectDefinitions(workspaceId, projectId) {
+      return [...projectDefinitions.values()].filter((row) => row.workspaceId === workspaceId && row.projectId === projectId);
+    },
+    async saveProjectDefinition(row) {
+      projectDefinitions.set(row.definitionId, row);
+      return row;
+    },
+    async listAssessments(workspaceId, projectId) {
+      const expectationIds = new Set(
+        [...expectations.values()]
+          .filter((row) => row.workspaceId === workspaceId && (!projectId || row.projectId === projectId))
+          .map((row) => row.id),
+      );
+      return [...assessments.values()].filter((row) => row.workspaceId === workspaceId && expectationIds.has(row.expectationId));
     },
   };
 }
