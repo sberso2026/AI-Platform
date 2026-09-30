@@ -27,7 +27,7 @@ Cursor IDE browser cannot open `/engineering/deliverables` (AAL1/unauthenticated
 | A9F-G claim | G1 clarification |
 | --- | --- |
 | AAL2 | Genuinely PASS in the operator browser (`authenticated`, `currentLevel=aal2`, `nextLevel=aal2`, `verifiedFactors=1`; refresh/navigation AAL2) |
-| AAL2 authorized mutation | PASS through settings `configureMapping` POST 200; identity assurance passed. Deliverables template adoption was **not** fully certified at that time |
+| AAL2 authorized mutation | PASS through settings `configureMapping` POST 200; identity assurance passed. Deliverables template adoption was **not** fully certified at that time. **G1 closeout:** STR-DC-FEED adoption is now certified |
 | Deliverables page load | PASS |
 | Deliverables project selection / adoption | **Not fully certified** in A9F-G (empty Authorized Project dropdown) |
 | Browser Case 6 | **NOT_TESTED** in A9F-G |
@@ -107,11 +107,52 @@ Live JWT RLS re-run: `live-core-rls`, `live-a9c-deliverable-rls`, `live-a9d-deli
 | Check | Operator report |
 | --- | --- |
 | Authorized Project dropdown after reload | Visible (not empty) |
-| ER-A1 label independently confirmed | Not confirmed; list is long (`ER-A1 · Review Project A1` plus RLS leftover rows). Hygiene DEFERRED |
+| ER-A1 label independently confirmed | **YES** — operator selected `Review Project A1 · ER-A1` and adopted STR-DC-FEED |
 | Selected authorized A1 Engineering project + AAL2 context | PASS |
 | Shared context on `/engineering/lifecycle` | PASS |
-| Templates Available + Adopt Template | PASS (not `mfa_required` / `identity_assurance_insufficient`) |
-| Browser Case 6 (no other-workspace/tenant selectable) | PASS |
+| Templates Available + Adopt Template | **PASS** — operator adopted **STR-DC-FEED**; it is an active Structural deliverable with Evaluate from canonical evidence. Not `mfa_required` / `identity_assurance_insufficient` |
+| Browser Case 6 (no other-workspace/tenant selectable) | **PASS** (revalidated) |
+
+## A9 security closeout (fixtures + Case 6)
+
+MFA and project-context source were not modified in this closeout.
+
+**AAL2 authorized Deliverables mutation:** operator AAL2, project `Review Project A1 · ER-A1`, Adopt Template **STR-DC-FEED** succeeded; row is active with Evaluate from canonical evidence.
+
+**Same-workspace unauthorized write deny** (existing fixtures, membership not weakened):
+
+| Actor | Action | Result |
+| --- | --- | --- |
+| `cert-er-a1` engineer | POST `engineering_document_status_mappings` | **403 `42501`**, not MFA |
+| `cert-er-a1` engineer | POST `engineering_project_deliverable_definitions` | **403 `42501`**, not MFA |
+| `cert-er-a-admin` | POST mapping (control) | **201**, then deleted |
+
+RLS role deny is independent of AAL. The same cert engineer is AAL2 in the operator browser; this write is denied for **authority**, not `mfa_required`.
+
+**Cross-workspace / cross-tenant deny** (no unauthorized names leaked):
+
+| Probe | Result |
+| --- | --- |
+| a1 JWT other-workspace / other-tenant project codes | invisible |
+| a2 JWT read of ER-A1 id | invisible |
+| b1 JWT read of ER-A1 id | invisible |
+| anonymous ER-A1 | invisible |
+| a1 selector API | 200, 31 rows, ER-A1 present, ER-A2/ER-B1 codes absent |
+| A9D live bind of hidden other-workspace document | denied, title not in body |
+
+**AAL1 API revalidation** (`a9e-aal1-mutation-probe`): GET/POST deliverables, POST lifecycle, POST settings → **403 `identity_assurance_insufficient` / `mfa_required`**. GET settings still 200.
+
+**Browser cases 2–8 revalidation** (operator AAL2, same profile):
+
+| Case | Result |
+| --- | --- |
+| 2 Deliverables + ER-A1 + STR-DC-FEED | PASS |
+| 3 Settings, no raw project-id | PASS |
+| 4 Revision fail-closed | PASS (unit, retained) |
+| 5 Lifecycle, no auto-transition | PASS |
+| 6 Cross-workspace/tenant not selectable | PASS |
+| 7 Refresh retains AAL2 + ER-A1 | PASS |
+| 8 Digital Thread STR-DC-FEED, no KG | PASS |
 
 ## Fixture list
 
@@ -125,7 +166,7 @@ JWT-visible A1 count **29** includes Core RLS leftover insert/update rows. Exist
 | Engineering project service / workspace-scope tests | PASS |
 | Web A9F-G1 / A9F-C / A9F / A9E / MFA UI tests | PASS |
 | Engineering OS A9C/A9D/A9E deliverable tests | PASS |
-| Live JWT RLS core + A9C + A9D | PASS |
+| Live JWT RLS core + A9C + A9D | PASS (re-run this closeout, 10 passed) |
 | Secret scan (`engineering-review-persistence`) | PASS, 0 findings |
 | Pilot-scoped typecheck | PASS; full web tsc still 328 pre-existing isolated debt; **0 introduced** |
 | `apps/web` `next build` | PASS |
