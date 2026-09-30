@@ -108,6 +108,16 @@ export const ARTIFACT_REVISION_POLICIES = [
 ] as const;
 export type ArtifactRevisionPolicy = (typeof ARTIFACT_REVISION_POLICIES)[number];
 
+export const ARTIFACT_REVISION_RESOLUTION_FAILURES = [
+  "missing_document",
+  "exact_revision_not_found",
+  "ambiguous_effective_revision",
+  "no_effective_revision",
+  "baseline_pin_missing",
+  "baseline_revision_not_in_family",
+] as const;
+export type ArtifactRevisionResolutionFailure = (typeof ARTIFACT_REVISION_RESOLUTION_FAILURES)[number];
+
 export const DELIVERABLE_AI_BOUNDARY = {
   mayEvaluateMaturity: true,
   mayExplainDimensions: true,
@@ -292,6 +302,7 @@ export type DeliverableCanonicalFacts = {
   revisionSuperseded?: boolean;
   revisionVoid?: boolean;
   revisionResolved?: boolean;
+  revisionResolutionFailure?: ArtifactRevisionResolutionFailure | null;
   baselineRevisionMatch?: boolean | null;
   artifactStates: Array<{ artifactClass: string; artifactId: string; state: string; revision?: string | null }>;
 };

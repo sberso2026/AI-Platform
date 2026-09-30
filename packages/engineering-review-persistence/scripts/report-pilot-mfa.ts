@@ -9,6 +9,9 @@ import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { evaluateReviewIdentityPolicy, resolveReviewIdentityPolicy } from "@rtb/engineering-review";
 import { ER_CERT_SLUG_PREFIX } from "../src/fixtures";
+import { certUserPassword, loadLocalEnv } from "../src/env";
+
+loadLocalEnv();
 
 const STAGING_REF = "rntonzigxwxcjlcsadip";
 const EOS_REF = "wcydlhqiqdwgoaqrlget";
@@ -60,7 +63,7 @@ try {
   if (named?.id) {
     const listedFactors = await admin.auth.admin.mfa.listFactors({ userId: named.id });
     factors = (listedFactors.data?.factors ?? []).filter((factor) => factor.status === "verified").length;
-    const password = process.env.CERT_USER_PASSWORD || "CertInstall!Phase3";
+    const password = certUserPassword();
     const auth = createClient(STAGING_URL, anon, { auth: { persistSession: false, autoRefreshToken: false } });
     const signed = await auth.auth.signInWithPassword({ email: String(named.email), password });
     if (signed.data.session?.access_token) {
@@ -84,7 +87,8 @@ try {
       live_password_aal: aal1,
       live_password_decision: aal1Decision,
       live_aal2_proven: false,
-      human_enrollment_required: factors === 0 || aal1 !== "aal2",
+      human_enrollment_required: factors === 0,
+      human_challenge_required: aal1 !== "aal2",
     }),
   );
 } finally {

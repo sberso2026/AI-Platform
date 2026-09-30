@@ -1,4 +1,5 @@
 import { requiredDimensionsFor } from "./catalog";
+import { revisionResolutionExplanation } from "./revision";
 import type {
   DeliverableAssessment,
   DeliverableAssuranceSignal,
@@ -44,7 +45,7 @@ export function evaluateDeliverableDimensions(input: {
   const content = !facts.primaryPresent
     ? dim("CONTENT", "NOT_SATISFIED", "required primary canonical artifact", "missing", "Required primary artifact is not bound. This is not a technical defect Finding.", [], source)
     : facts.documentBound && facts.revisionResolved === false
-      ? dim("CONTENT", "NOT_SATISFIED", "required revision resolves under the binding policy", "unresolved", "The governing document revision did not resolve using Document domain rules. Lexical revision ordering is not used.", [], source)
+      ? dim("CONTENT", "NOT_SATISFIED", "required revision resolves under the binding policy", facts.revisionResolutionFailure ?? "unresolved", revisionResolutionExplanation(facts.revisionResolutionFailure), [], source)
       : facts.documentBound && facts.revisionVoid
         ? dim("CONTENT", "NOT_SATISFIED", "artifact not void", "void/obsolete", "The governing document revision is void or obsolete.", [], source)
         : facts.documentBound && facts.revisionSuperseded && purposeNeedsMappedStatus

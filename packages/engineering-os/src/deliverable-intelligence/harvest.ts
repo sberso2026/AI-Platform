@@ -87,6 +87,7 @@ export function factsFromCanonical(input: {
     revisionSuperseded: Boolean(resolved?.superseded),
     revisionVoid: Boolean(resolved?.voided),
     revisionResolved: governing ? Boolean(resolved?.resolved) : true,
+    revisionResolutionFailure: resolved?.resolutionFailure ?? null,
     baselineRevisionMatch: resolved?.baselineRevisionMatch ?? null,
     artifactStates,
   };

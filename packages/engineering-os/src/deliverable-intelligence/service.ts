@@ -580,6 +580,8 @@ export class EngineeringDeliverableService {
         statusMapping: facts.mappingVersion ? `${facts.rawStatusCode}:${facts.mappedSemantic}:${facts.mappingVersion}` : null,
         reviewId: bindings.find((row) => row.artifactClass === "review_package")?.artifactId ?? null,
         baselineId: bindings.find((row) => row.artifactClass === "configuration_baseline")?.artifactId ?? facts.artifactStates.find((row) => row.artifactClass === "configuration_baseline")?.artifactId ?? null,
+        baselineMembership:
+          facts.baselineRevisionMatch === true ? "match" : facts.baselineRevisionMatch === false ? "mismatch" : "not_applicable",
       }),
       evidenceSource,
     });

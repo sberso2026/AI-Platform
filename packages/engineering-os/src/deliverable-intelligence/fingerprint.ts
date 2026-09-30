@@ -31,6 +31,8 @@ export function fingerprintDeliverableEvidence(input: {
       rawStatusCode: input.facts.rawStatusCode ?? null,
       mappedSemantic: input.facts.mappedSemantic ?? null,
       mappingVersion: input.facts.mappingVersion ?? null,
+      baselineRevisionMatch: input.facts.baselineRevisionMatch ?? null,
+      revisionResolutionFailure: input.facts.revisionResolutionFailure ?? null,
     },
   });
   return createHash("sha256").update(payload).digest("hex");
@@ -48,6 +50,7 @@ export function composeDeliverableThread(input: {
   statusMapping?: string | null;
   reviewId?: string | null;
   baselineId?: string | null;
+  baselineMembership?: "match" | "mismatch" | "not_applicable" | null;
   gateId?: string | null;
 }): string {
   return [
@@ -61,6 +64,7 @@ export function composeDeliverableThread(input: {
     input.statusMapping ? `document_status_mapping:${input.statusMapping}` : null,
     input.reviewId ? `review_package:${input.reviewId}` : null,
     input.baselineId ? `configuration_baseline:${input.baselineId}` : null,
+    `baseline_membership:${input.baselineMembership ?? "not_applicable"}`,
     input.assessmentId ? `deliverable_assessment:${input.assessmentId}` : null,
     input.gateId ? `lifecycle_gate:${input.gateId}` : null,
   ]

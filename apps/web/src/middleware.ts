@@ -60,6 +60,17 @@ function needsPlatformAccessCheck(pathname: string): boolean {
   );
 }
 
+function isDeliverableLifecycleAal2Path(pathname: string): boolean {
+  return (
+    pathname === "/engineering/deliverables" ||
+    pathname.startsWith("/engineering/deliverables/") ||
+    pathname === "/engineering/lifecycle" ||
+    pathname.startsWith("/engineering/lifecycle/") ||
+    pathname === "/engineering/settings/deliverables" ||
+    pathname.startsWith("/engineering/settings/deliverables/")
+  );
+}
+
 function resolveMembershipAccess(
   memberships: Array<{ roles: { slug: string } | { slug: string }[] | null }>
 ): { roleSlug: string; tier: NavTier } | null {
@@ -121,7 +132,12 @@ export async function middleware(request: NextRequest) {
     const originalPath = pathname;
     url.pathname = "/login";
     url.search = "";
-    if (originalPath === "/review" || originalPath.startsWith("/review/") || originalPath === "/settings/security") {
+    if (
+      originalPath === "/review" ||
+      originalPath.startsWith("/review/") ||
+      originalPath === "/settings/security" ||
+      isDeliverableLifecycleAal2Path(originalPath)
+    ) {
       url.searchParams.set("next", safeMfaReturnPath(originalPath));
     }
     return NextResponse.redirect(url);
@@ -142,7 +158,12 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getSession();
     const payload = session?.access_token ? decodeJwtPayload(session.access_token) : {};
     const aal = typeof payload.aal === "string" ? payload.aal : "aal1";
-    if (aal !== "aal2" && (request.nextUrl.searchParams.has("mfa_required") || next.startsWith("/review"))) {
+    if (
+      aal !== "aal2" &&
+      (request.nextUrl.searchParams.has("mfa_required") ||
+        next.startsWith("/review") ||
+        isDeliverableLifecycleAal2Path(next))
+    ) {
       url.pathname = MFA_CHALLENGE_ROUTE;
       url.search = "";
       url.searchParams.set("next", next);
@@ -214,7 +235,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (user && (pathname === "/review" || pathname.startsWith("/review/"))) {
+  if (user && (pathname === "/review" || pathname.startsWith("/review/") || isDeliverableLifecycleAal2Path(pathname))) {
     const resolved = await resolveRequestActorContext({
       supabase,
       userId: user.id,

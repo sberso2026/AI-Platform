@@ -3,7 +3,15 @@ import { getAuthContext, type AuthContext } from "@/lib/kernel";
 import { getEngineeringApiPolicy } from "@rtb/platform-commerce";
 import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import type { CommerceExecutionContext } from "@rtb/types";
+import {
+  resolveReviewIdentityPolicy,
+  type ReviewIdentityClaims,
+} from "@rtb/engineering-review";
 import { enforceCommercePolicy, type CommerceHandlerContext } from "./with-commerce-entitlement";
+import {
+  decideEngineeringIdentityAssurance,
+  engineeringApiRequiresIdentityAssurance,
+} from "./engineering-identity-assurance";
 import {
   forbiddenResponse,
   handleCommerceDomainError,
@@ -13,6 +21,50 @@ import {
 import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
 
 export type { CommerceHandlerContext };
+
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return {};
+    const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const json = Buffer.from(padded, "base64").toString("utf8");
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+async function engineeringIdentityClaims(ctx: AuthContext): Promise<ReviewIdentityClaims> {
+  const { data } = await ctx.supabase.auth.getSession();
+  const payload = data.session?.access_token ? decodeJwtPayload(data.session.access_token) : {};
+  const { data: userData } = await ctx.supabase.auth.getUser();
+  return {
+    aal: typeof payload.aal === "string" ? payload.aal : null,
+    amr: Array.isArray(payload.amr) ? (payload.amr as Array<string | { method?: string }>) : null,
+    appMetadata: (userData.user?.app_metadata as Record<string, unknown> | undefined) ?? null,
+  };
+}
+
+async function denyIfEngineeringIdentityInsufficient(
+  ctx: AuthContext,
+  segment: string,
+  method: string,
+): Promise<NextResponse | null> {
+  if (!engineeringApiRequiresIdentityAssurance(segment, method)) return null;
+  const { data: tenant } = await ctx.supabase.from("tenants").select("settings").eq("id", ctx.tenantId).maybeSingle();
+  const policy = resolveReviewIdentityPolicy((tenant?.settings as Record<string, unknown> | null) ?? {});
+  const claims = await engineeringIdentityClaims(ctx);
+  const decision = decideEngineeringIdentityAssurance({ segment, method, policy, claims });
+  if (decision.allowed) return null;
+  return lifecycleErrorResponse(
+    "identity_assurance_insufficient",
+    "Authentication succeeded but Deliverables/Lifecycle identity policy was not met",
+    403,
+    crypto.randomUUID(),
+    { reason: decision.reason, segment },
+  );
+}
 
 const PI_NOT_INSTALLED_REASONS = new Set([
   "application_not_in_plan",
@@ -75,6 +127,9 @@ export async function guardEngineeringApi(
       "read_only",
     );
   }
+
+  const identityDenied = await denyIfEngineeringIdentityInsufficient(ctx, segment, method);
+  if (identityDenied) return identityDenied;
 
   const policy = getEngineeringApiPolicy(segment, method);
   const result = await enforceCommercePolicy(ctx, policy);

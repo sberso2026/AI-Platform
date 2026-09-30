@@ -1,6 +1,10 @@
 import type { CanonicalHarvestRecord } from "../lifecycle-intelligence/harvest";
 import { canonicalInactiveDocumentStatus } from "./status-mapping";
-import type { ArtifactRevisionPolicy, DeliverableArtifactBinding } from "./types";
+import type {
+  ArtifactRevisionPolicy,
+  ArtifactRevisionResolutionFailure,
+  DeliverableArtifactBinding,
+} from "./types";
 
 export type ResolvedArtifactRevision = {
   policy: ArtifactRevisionPolicy;
@@ -12,7 +16,29 @@ export type ResolvedArtifactRevision = {
   resolved: boolean;
   baselineId: string | null;
   baselineRevisionMatch: boolean | null;
+  resolutionFailure: ArtifactRevisionResolutionFailure | null;
 };
+
+export function revisionResolutionExplanation(
+  failure: ArtifactRevisionResolutionFailure | null | undefined,
+): string {
+  switch (failure) {
+    case "missing_document":
+      return "No matching document family was found. Resolution fails closed. Lexical revision ordering is not used.";
+    case "exact_revision_not_found":
+      return "The pinned exact revision was not found. Resolution fails closed. Lexical revision ordering is not used.";
+    case "ambiguous_effective_revision":
+      return "Multiple current-effective document revisions exist, so resolution is ambiguous and fails closed. Lexical revision ordering is not used.";
+    case "no_effective_revision":
+      return "No current-effective document revision exists. Resolution fails closed. Lexical revision ordering is not used.";
+    case "baseline_pin_missing":
+      return "No frozen configuration baseline pin was found. Resolution fails closed.";
+    case "baseline_revision_not_in_family":
+      return "The baseline-pinned revision is not present in the document family. Resolution fails closed. Lexical revision ordering is not used.";
+    default:
+      return "The governing document revision did not resolve using Document domain rules. Lexical revision ordering is not used.";
+  }
+}
 
 function field(row: CanonicalHarvestRecord | undefined, key: string): string | null {
   const value = row?.fields?.[key];
@@ -75,20 +101,38 @@ export function resolveArtifactRevision(input: {
       resolved: Boolean(row) || Boolean(input.binding.artifactId),
       baselineId: input.binding.baselineId ?? null,
       baselineRevisionMatch: null,
+      resolutionFailure: null,
     };
   }
 
   const family = documentFamily(input.records, input.binding);
   let selected: CanonicalHarvestRecord | undefined;
+  let resolutionFailure: ArtifactRevisionResolutionFailure | null = family.length === 0 ? "missing_document" : null;
   if (policy === "EXACT_REVISION") {
-    if (input.binding.revisionRef) {
+    if (family.length === 0) {
+      selected = undefined;
+    } else if (input.binding.revisionRef) {
       selected = family.find((row) => revisionOf(row) === input.binding.revisionRef);
+      if (!selected) resolutionFailure = "exact_revision_not_found";
     } else {
       selected = family.find((row) => row.objectId === input.binding.artifactId) ?? family[0];
     }
   } else if (policy === "CURRENT_EFFECTIVE_REVISION") {
-    const effective = family.filter((row) => !canonicalInactiveDocumentStatus(statusOf(row)) && !row.superseded);
-    selected = effective.length === 1 ? effective[0] : undefined;
+    if (family.length === 0) {
+      selected = undefined;
+    } else {
+      const effective = family.filter((row) => !canonicalInactiveDocumentStatus(statusOf(row)) && !row.superseded);
+      if (effective.length === 1) {
+        selected = effective[0];
+        resolutionFailure = null;
+      } else if (effective.length === 0) {
+        selected = undefined;
+        resolutionFailure = "no_effective_revision";
+      } else {
+        selected = undefined;
+        resolutionFailure = "ambiguous_effective_revision";
+      }
+    }
   } else {
     const items = input.records.filter(
       (row) =>
@@ -116,6 +160,7 @@ export function resolveArtifactRevision(input: {
         resolved: match,
         baselineId: field(pinned, "baselineId"),
         baselineRevisionMatch: match,
+        resolutionFailure: match ? null : "baseline_revision_not_in_family",
       };
     }
     return {
@@ -128,6 +173,7 @@ export function resolveArtifactRevision(input: {
       resolved: false,
       baselineId: input.binding.baselineId ?? null,
       baselineRevisionMatch: false,
+      resolutionFailure: family.length === 0 ? "missing_document" : "baseline_pin_missing",
     };
   }
 
@@ -153,5 +199,6 @@ export function resolveArtifactRevision(input: {
     resolved: Boolean(selected),
     baselineId: field(baselineHit, "baselineId") ?? input.binding.baselineId ?? null,
     baselineRevisionMatch: selected ? Boolean(baselineHit) : baselines.length ? false : null,
+    resolutionFailure: selected ? null : resolutionFailure,
   };
 }
