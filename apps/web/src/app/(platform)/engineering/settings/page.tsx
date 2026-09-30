@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@rtb/ui";
@@ -104,9 +105,9 @@ export default function EngineeringSettingsPage() {
               Canonical configuration for SPACE GASS, ETABS, IFC, Microsoft 365, and other external systems.
               Installation, licence, and automation are platform/admin settings — not project options.
               <div className="mt-3">
-                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/external-tools">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/external-tools">
                   Open External Tools & Integrations
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -117,9 +118,9 @@ export default function EngineeringSettingsPage() {
             <CardContent className="text-sm text-muted-foreground">
               Canonical Multidiscipline Intelligence Foundation. Capability status, standards references, and tool bindings.
               <div className="mt-3">
-                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/disciplines">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/disciplines">
                   Open Disciplines
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -131,9 +132,9 @@ export default function EngineeringSettingsPage() {
               Governed enable/disable of approved Assurance catalog rules. Rule logic stays in code. Ordinary
               engineers cannot change rule governance from the Assurance workspace.
               <div className="mt-3">
-                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/assurance">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/assurance">
                   Open Assurance rule settings
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -145,9 +146,9 @@ export default function EngineeringSettingsPage() {
               Governed Engineering lifecycle profile, stage applicability, allowed transitions, and gate criteria.
               Profile logic stays in code. Ordinary engineers cannot authorize stage transitions from settings.
               <div className="mt-3">
-                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/lifecycle">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/lifecycle">
                   Open Lifecycle profile settings
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -160,9 +161,9 @@ export default function EngineeringSettingsPage() {
               Example catalog items are not mandatory for every FEED project. Ordinary engineers cannot change
               catalog governance from the Deliverables workspace.
               <div className="mt-3">
-                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/deliverables">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/deliverables">
                   Open Deliverable settings
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>

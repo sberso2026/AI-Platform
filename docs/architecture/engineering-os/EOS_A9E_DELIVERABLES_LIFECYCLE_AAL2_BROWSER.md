@@ -2,6 +2,8 @@
 
 Status: **PASS_WITH_LIMITATIONS** for staging / non-production (`rntonzigxwxcjlcsadip`). Additive after EOS-A9D. Does not start Engineering Information Intelligence.
 
+Live AAL2 / browser closeout is recorded in `EOS_A9F_AAL2_BROWSER_RELEASE_GATE_CLOSEOUT.md`. This A9E document is not rewritten. The historical A9E result remains **PASS_WITH_LIMITATIONS**.
+
 Authentication was not weakened. MFA was not disabled. `requireMfa` was not changed. Tokens were not fabricated. Service-role was not substituted for browser-user evidence.
 
 ## Purpose
