@@ -169,6 +169,20 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Information</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed information type catalog and purpose-specific source authority policy. Ordinary
+              engineers can inspect effective authority but cannot silently redefine it.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/information">
+                  Open Information settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

@@ -5,7 +5,7 @@ import {
 } from "@rtb/engineering-review";
 
 /** Deliverables, Lifecycle, and their settings mutations require tenant MFA when requireMfa is set. */
-const ENGINEERING_A9E_ALL_METHOD_SEGMENTS = new Set(["deliverables", "lifecycle"]);
+const ENGINEERING_A9E_ALL_METHOD_SEGMENTS = new Set(["deliverables", "lifecycle", "information"]);
 const ENGINEERING_A9E_MUTATING_SEGMENTS = new Set(["settings"]);
 
 export function engineeringApiRequiresIdentityAssurance(segment: string, method: string): boolean {

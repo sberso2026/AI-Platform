@@ -53,6 +53,7 @@ export const CRITERION_TYPES = [
   "OPTIMIZATION_CONTEXT",
   "REQUIRED_DELIVERABLES_PRESENT",
   "DELIVERABLE_MATURITY_REQUIRED",
+  "AUTHORITATIVE_INFORMATION_REQUIRED",
 ] as const;
 export type LifecycleCriterionType = (typeof CRITERION_TYPES)[number];
 
@@ -88,6 +89,8 @@ export type LifecycleCriterionDefinition = {
   minMateriality?: "HIGH" | "CRITICAL";
   optimizationPolicy?: OptimizationStagePolicy;
   deliverableCodes?: readonly string[];
+  informationType?: string;
+  informationPurpose?: string;
 };
 
 export type LifecycleGateDefinition = {
@@ -329,6 +332,14 @@ export type LifecycleEvidence = {
       waived: boolean;
     }>;
   };
+  information?: Array<{
+    informationType: string;
+    purpose: string;
+    outcome: string;
+    authoritative: boolean;
+    freshness: string;
+    policyConfigured: boolean;
+  }>;
 };
 
 export type EffectiveLifecycle = {

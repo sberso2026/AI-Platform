@@ -200,6 +200,13 @@ export {
 } from "./services/health-service";
 export { workspaceScopeId, isRecordInWorkspace } from "./commerce/workspace-scope";
 export { EngineeringDeliverableService } from "./deliverable-intelligence/service";
+export { EngineeringInformationService } from "./information-intelligence/service";
+export {
+  INFORMATION_AI_BOUNDARY,
+  INFORMATION_TYPES,
+  INFORMATION_PURPOSES,
+  INFORMATION_AUTHORITY_STATES,
+} from "./information-intelligence/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,

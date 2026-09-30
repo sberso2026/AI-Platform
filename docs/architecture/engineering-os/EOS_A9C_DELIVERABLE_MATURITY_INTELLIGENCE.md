@@ -127,3 +127,5 @@ Crusher Expansion FEED synthetic path: missing → bind analysis → review/supp
 - No automatic reassessment bus; explicit evaluate is sufficient.
 - AAL2 / browser certification may be NOT_TESTED. MFA is not weakened.
 - No DMS replacement, Primavera connector, automatic schedule maturity, universal percent complete, AI quality scoring, automatic approval, IFC authorization, lifecycle transition, real solver, Value Intelligence, new job queue, or production deployment.
+
+EOS-A10A may consume deliverable bindings as canonical sources. Authority and freshness are visible; they do not by themselves complete Deliverable maturity. See `EOS_A10A_ENGINEERING_INFORMATION_INTELLIGENCE_FOUNDATION.md`.

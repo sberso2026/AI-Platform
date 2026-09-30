@@ -28,6 +28,7 @@ const ENGINEERING_API_SEGMENTS = [
   "assurance",
   "lifecycle",
   "deliverables",
+  "information",
   "risks",
   "issues",
   "actions",
@@ -115,6 +116,18 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(write.productKey).toBe("engineering-os");
     expect(read.applicationKey).toBeUndefined();
     expect(write.applicationKey).toBeUndefined();
+  });
+
+  it("maps Engineering Information Intelligence to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("information", "GET");
+    const write = getEngineeringApiPolicy("information", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+    expect(ENGINEERING_SERVICE_POLICIES["information.policy.write"].action).toBe("settings.write");
   });
 
   it("maps Engineering Lifecycle to Engineering OS product, not Project Intelligence", () => {

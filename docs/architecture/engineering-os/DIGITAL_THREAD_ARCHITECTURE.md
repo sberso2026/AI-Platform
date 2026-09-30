@@ -137,3 +137,5 @@ An asset MAY be `REPRESENTED_BY` a twin (`engineering_assets.digital_twin_id`). 
 - `@rtb/digital-twin` / `digital_twin_identities.kernel_twin_id` — module product.
 
 Neither layer is the Engineering Digital Thread.
+
+EOS-A10A Engineering Information Intelligence composes over these thread nodes. Information refs are context, not a second graph store. KG reads remain OFF. See `EOS_A10A_ENGINEERING_INFORMATION_INTELLIGENCE_FOUNDATION.md`.

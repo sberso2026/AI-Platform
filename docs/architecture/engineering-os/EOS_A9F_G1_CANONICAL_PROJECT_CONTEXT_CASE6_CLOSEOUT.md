@@ -177,7 +177,7 @@ JWT-visible A1 count **29** includes Core RLS leftover insert/update rows. Exist
 ## Readiness
 
 - **A9_SEQUENCE_STATUS:** CLOSED
-- **READY_FOR_NEXT_MAJOR_DOMAIN:** YES — EOS-A10A Engineering Information Intelligence Foundation
+- **READY_FOR_NEXT_MAJOR_DOMAIN:** YES — EOS-A10A Engineering Information Intelligence Foundation (implemented separately; this closeout is not rewritten)
 - **READY_FOR_CONTROLLED_PILOT:** NO
 - **READY_FOR_PRODUCTION:** NO
 - **A7C_REAL_TOOL_EXECUTION_STATUS:** DEFERRED_EXTERNAL_DEPENDENCY

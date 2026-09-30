@@ -91,6 +91,7 @@ Owner vocabulary:
 | Lifecycle Profile / Assignment / Gate Evaluation / Transition | Engineering OS (EOS-A9A) | `engineering_lifecycle_*` | Composes Review, Assurance, Configuration, Analysis, Decisions; must not mint findings or auto-approve stages |
 | Lifecycle evidence snapshot / schedule mapping | Engineering OS (EOS-A9B) | `engineering_lifecycle_evaluations.evidence_snapshot`, `engineering_lifecycle_schedule_mappings` | Harvests canonical evidence; schedule mapping is not lifecycle SOT |
 | Deliverable Expectation / Binding / Maturity Assessment | Engineering OS (EOS-A9C / A9D) | `engineering_deliverable_*`, `engineering_document_status_mappings`, `engineering_project_deliverable_definitions` | Expectation + artifact links + purpose-specific maturity; templates are non-authoritative until adoption; mapped document status is not approval; not a DMS; not percent complete; does not mint Findings |
+| Engineering Information Ref / Authority Policy / Resolution | Engineering OS (EOS-A10A) | `engineering_information_refs`, `engineering_information_authority_policies`, `engineering_information_authority_resolutions` | References canonical sources; purpose-specific authority; not a second document/analysis store; AUTHORITATIVE_FOR_PURPOSE is not engineering approval |
 
 ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings.
 

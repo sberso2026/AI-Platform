@@ -43,6 +43,7 @@ export const THREAD_ROOT_TYPES = [
   "optimization_study",
   "optimization_run",
   "document",
+  "engineering_information",
 ] as const;
 export type ThreadRootType = (typeof THREAD_ROOT_TYPES)[number];
 

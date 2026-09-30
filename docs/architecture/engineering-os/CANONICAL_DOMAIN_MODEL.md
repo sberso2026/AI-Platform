@@ -582,6 +582,8 @@ Decision (current): `status` plus separate `review_status` and `approval_status`
 | Optimization Study = Decision | Produces alternatives; Decision selects |
 | Evidence = Document | Citation vs file |
 
+EOS-A10A adds **Engineering Information** as a horizontal governed *reference* to canonical sources. It is not a Document, Deliverable, Evidence record, Digital Thread graph, Digital Twin, or search engine. See `EOS_A10A_ENGINEERING_INFORMATION_INTELLIGENCE_FOUNDATION.md`.
+
 ---
 
 ## 20. Canonical object count (A1 freeze)

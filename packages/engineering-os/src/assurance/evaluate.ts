@@ -549,6 +549,65 @@ function matchesFilter(detectionRow: AssuranceDetection, input: AssuranceEvaluat
   return detectionRow.relatedObjects.some((rel) => rel.objectType === objectType && rel.objectId === objectId);
 }
 
+function evaluateInformation(
+  input: AssuranceEvaluationInput,
+  rule: AssuranceRule,
+  node: ThreadCatalogNode,
+  out: AssuranceDetection[],
+) {
+  const status = String(node.status ?? "").toUpperCase();
+  const map: Record<string, { ruleId: string; conditionType: AssuranceDetection["conditionType"]; explanation: string }> = {
+    CONFLICT: {
+      ruleId: "A10A-INF-001",
+      conditionType: "AMBIGUOUS_INFORMATION_AUTHORITY",
+      explanation: `Engineering information ${label(input.graph, "engineering_information", node.objectId)} has competing governed sources for the same purpose. This is not a technical contradiction and is not a Finding.`,
+    },
+    AMBIGUOUS: {
+      ruleId: "A10A-INF-001",
+      conditionType: "AMBIGUOUS_INFORMATION_AUTHORITY",
+      explanation: `Engineering information ${label(input.graph, "engineering_information", node.objectId)} has ambiguous authority. No automatic winner.`,
+    },
+    NO_AUTHORITATIVE_SOURCE: {
+      ruleId: "A10A-INF-002",
+      conditionType: "NO_AUTHORITATIVE_INFORMATION_SOURCE",
+      explanation: `No authoritative information source resolved for ${label(input.graph, "engineering_information", node.objectId)}. Governance condition only.`,
+    },
+    NO_SOURCE: {
+      ruleId: "A10A-INF-002",
+      conditionType: "NO_AUTHORITATIVE_INFORMATION_SOURCE",
+      explanation: `No information source is present for ${label(input.graph, "engineering_information", node.objectId)}.`,
+    },
+    SOURCE_STALE: {
+      ruleId: "A10A-INF-003",
+      conditionType: "STALE_AUTHORITATIVE_INFORMATION",
+      explanation: `Authoritative information ${label(input.graph, "engineering_information", node.objectId)} is stale. Canonical stale reasons remain source-owned.`,
+    },
+    POLICY_NOT_CONFIGURED: {
+      ruleId: "A10A-INF-004",
+      conditionType: "INFORMATION_AUTHORITY_POLICY_MISSING",
+      explanation: `No Information Authority Policy is configured for ${label(input.graph, "engineering_information", node.objectId)}.`,
+    },
+    SOURCE_SUPERSEDED: {
+      ruleId: "A10A-INF-005",
+      conditionType: "SUPERSEDED_INFORMATION_STILL_REFERENCED",
+      explanation: `Superseded information ${label(input.graph, "engineering_information", node.objectId)} is still referenced. Decision reversal is not automatic.`,
+    },
+  };
+  const match = map[status];
+  if (!match || rule.ruleId !== match.ruleId) return;
+  out.push(
+    detection(input, rule, {
+      root: node,
+      conditionType: match.conditionType,
+      explanation: match.explanation,
+      wouldResolveIf: "Configure or disambiguate governed source authority. Do not treat this as engineering approval.",
+      evidencePath: [{ objectType: "engineering_information", objectId: node.objectId, objectCode: node.objectCode, note: status }],
+      digitalThreadPath: `engineering_information:${node.objectCode ?? node.objectId} (${status})`,
+      relatedObjects: [],
+    }),
+  );
+}
+
 /** Deterministic Assurance evaluation over canonical Digital Thread data. Platform KG is not used. */
 export function evaluateAssurance(input: AssuranceEvaluationInput): AssuranceDetection[] {
   const now = input.now ?? new Date().toISOString();
@@ -575,6 +634,7 @@ export function evaluateAssurance(input: AssuranceEvaluationInput): AssuranceDet
       if (node.objectType === "configuration_item") evaluateConfiguration(input, rule, node, detections);
       if (node.objectType === "assumption") evaluateAssumption(input, rule, node, now, detections);
       if (node.objectType === "decision") evaluateOptimizationEvidence(input, rule, node, detections);
+      if (node.objectType === "engineering_information") evaluateInformation(input, rule, node, detections);
     }
   }
 

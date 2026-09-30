@@ -369,6 +369,28 @@ function evaluateCriterion(
     return result(criterion, now, "SATISFIED", "Configured deliverable maturity is ready for the intended purpose. This is not gate approval.");
   }
 
+  if (criterion.type === "AUTHORITATIVE_INFORMATION_REQUIRED") {
+    const rows = evidence.information ?? [];
+    const match = rows.find(
+      (row) =>
+        (!criterion.informationType || row.informationType === criterion.informationType) &&
+        (!criterion.informationPurpose || row.purpose === criterion.informationPurpose),
+    );
+    if (!rows.length) {
+      return result(criterion, now, "NOT_APPLICABLE", "Information Intelligence criterion is not in the harvested evidence. Profile controls applicability.", [], "NOT_APPLICABLE");
+    }
+    if (!match?.policyConfigured) {
+      return result(criterion, now, "NOT_SATISFIED", "Information authority policy is not configured for the required purpose.", []);
+    }
+    if (match.outcome === "CONFLICT" || match.outcome === "AMBIGUOUS") {
+      return result(criterion, now, "NOT_SATISFIED", "Information authority is ambiguous. No automatic winner and no engineering approval.", []);
+    }
+    if (match.outcome !== "RESOLVED" || !match.authoritative || match.freshness === "STALE" || match.freshness === "SUPERSEDED") {
+      return result(criterion, now, "NOT_SATISFIED", `Required information source is not authoritative and current (${match.outcome}/${match.freshness}).`, []);
+    }
+    return result(criterion, now, "SATISFIED", "Required information source is authoritative and current for the configured purpose. This is not engineering approval.");
+  }
+
   if (criterion.type === "TRACEABILITY_MATURITY_REQUIRED") {
     return result(criterion, now, "NOT_APPLICABLE", "Traceability maturity remains an overlay, not a lifecycle stage.", [], "NOT_APPLICABLE");
   }

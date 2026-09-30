@@ -22,8 +22,13 @@ const TARGETS = [
   "supabase/migrations/20260920120000_engineering_review_security_schema_status.sql",
   ".github/workflows/engineering-review-unit.yml",
   ".github/workflows/engineering-review-hosted-rls.yml",
+  "docs/architecture/engineering-os/EOS_A10A_ENGINEERING_INFORMATION_INTELLIGENCE_FOUNDATION.md",
+  "supabase/migrations/20260930130000_eos_a10a_engineering_information_intelligence.sql",
+  "packages/engineering-os/src/information-intelligence",
+  "apps/web/src/app/api/engineering/information",
+  "apps/web/src/app/(platform)/engineering/information",
+  "apps/web/src/app/(platform)/engineering/settings/information",
 ];
-
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 
 const PATTERNS: Array<{ name: string; re: RegExp }> = [

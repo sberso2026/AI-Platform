@@ -150,4 +150,4 @@ If real MFA enrollment/challenge is unavailable, `AAL2 = NOT_TESTED` and `BROWSE
 - Document storage, transmittals, and DMS replacement remain out of scope
 - No automatic IFC, As-Built, gate, or engineering approval
 - No universal maturity score or percent complete
-- Engineering Information Intelligence full domain is not this phase
+- Engineering Information Intelligence full domain is not this phase. EOS-A10A implements that domain as a reference layer over A9D document revision/status semantics; see `EOS_A10A_ENGINEERING_INFORMATION_INTELLIGENCE_FOUNDATION.md`.

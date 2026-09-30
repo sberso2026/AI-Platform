@@ -63,6 +63,8 @@ export const GOVERNED_LINK_OBJECT_TYPES = [
   "optimization_constraint",
   "analysis_request",
   "analysis_result",
+  "engineering_information",
+  "deliverable_expectation",
 ] as const;
 
 export type GovernedLinkObjectType = (typeof GOVERNED_LINK_OBJECT_TYPES)[number];

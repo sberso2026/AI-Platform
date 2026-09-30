@@ -120,6 +120,66 @@ export const ASSURANCE_RULE_CATALOG: readonly AssuranceRule[] = [
     applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
     enabled: true,
   },
+  {
+    ruleId: "A10A-INF-001",
+    ruleVersion: "v1",
+    name: "Ambiguous Information Authority",
+    description:
+      "Multiple eligible sources claim authority for the same information type, scope, and purpose. Does not determine which source is technically correct and does not create a Finding.",
+    conditionType: "AMBIGUOUS_INFORMATION_AUTHORITY",
+    assuranceDomain: "INFORMATION",
+    applicableObjectTypes: ["engineering_information"],
+    applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
+    enabled: true,
+  },
+  {
+    ruleId: "A10A-INF-002",
+    ruleVersion: "v1",
+    name: "No Authoritative Information Source",
+    description:
+      "A configured information purpose requires an authoritative source but none can be resolved. This is a governance condition, not a technical defect.",
+    conditionType: "NO_AUTHORITATIVE_INFORMATION_SOURCE",
+    assuranceDomain: "INFORMATION",
+    applicableObjectTypes: ["engineering_information"],
+    applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
+    enabled: true,
+  },
+  {
+    ruleId: "A10A-INF-003",
+    ruleVersion: "v1",
+    name: "Stale Authoritative Information",
+    description:
+      "The selected authoritative information source is canonically stale. Does not reverse Decisions or approve replacements.",
+    conditionType: "STALE_AUTHORITATIVE_INFORMATION",
+    assuranceDomain: "INFORMATION",
+    applicableObjectTypes: ["engineering_information"],
+    applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
+    enabled: true,
+  },
+  {
+    ruleId: "A10A-INF-004",
+    ruleVersion: "v1",
+    name: "Information Authority Policy Missing",
+    description:
+      "No governed Information Authority Policy is configured for a required information purpose.",
+    conditionType: "INFORMATION_AUTHORITY_POLICY_MISSING",
+    assuranceDomain: "INFORMATION",
+    applicableObjectTypes: ["engineering_information"],
+    applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
+    enabled: true,
+  },
+  {
+    ruleId: "A10A-INF-005",
+    ruleVersion: "v1",
+    name: "Superseded Information Still Referenced",
+    description:
+      "A superseded information source remains referenced. Does not infer technical contradiction or reverse a Decision.",
+    conditionType: "SUPERSEDED_INFORMATION_STILL_REFERENCED",
+    assuranceDomain: "INFORMATION",
+    applicableObjectTypes: ["engineering_information"],
+    applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
+    enabled: true,
+  },
 ] as const;
 
 export function assuranceRuleById(ruleId: string): AssuranceRule | undefined {
