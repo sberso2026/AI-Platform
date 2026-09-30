@@ -78,11 +78,13 @@ export function formatProjectContextLabel(input: {
   projectCode?: string | null;
   projectName?: string | null;
 }): string {
-  const code = (input.projectCode ?? "").trim();
-  const name = (input.projectName ?? "").trim();
-  if (code && name) return `${code} · ${name}`;
-  if (code) return code;
+  const rawCode = (input.projectCode ?? "").trim();
+  const rawName = (input.projectName ?? "").trim();
+  const code = rawCode && !isRawUuid(rawCode) ? rawCode : "";
+  const name = rawName && !isRawUuid(rawName) ? rawName : "";
+  if (name && code) return `${name} · ${code}`;
   if (name) return name;
+  if (code) return code;
   return "Selected project";
 }
 

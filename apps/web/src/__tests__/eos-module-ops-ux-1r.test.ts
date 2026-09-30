@@ -22,7 +22,7 @@ describe("EOS-MODULE-OPS-UX-1R founder operational closure", () => {
         projectCode: "RTB-PILOT-001",
         projectName: "Gold Coast Structural Inspection",
       }),
-    ).toBe("RTB-PILOT-001 · Gold Coast Structural Inspection");
+    ).toBe("Gold Coast Structural Inspection · RTB-PILOT-001");
     expect(displayOperationalText("80652532-932e-464d-803b-9876df705bda")).toBe("—");
   });
 

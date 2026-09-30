@@ -4,6 +4,24 @@ Status: **PASS_WITH_LIMITATIONS** for staging / non-production (`rntonzigxwxcjlc
 
 No MFA, identity-assurance, or authentication client source was changed. ERA leftovers were not staged. Schema was not changed. RLS fixture projects were not deleted.
 
+## Amendment: selector contrast (data present, options unreadable)
+
+Human observation after G1: Authorized Project appeared empty because native `<select>` / `<option>` text could match the dark-theme background. This is **not** an empty result set.
+
+| Layer | Count |
+| --- | --- |
+| `GET /api/engineering/projects` (cert JWT, workspace A1) | **31** including ER-A1 |
+| React `projects` options | same as API (`data-authorized-count`) |
+| DOM `<option>` nodes | API count + 1 placeholder |
+
+**PROJECT_SELECTOR_ROOT_CAUSE (current):** `SELECTOR_VISUAL_CONTRAST_BUG`
+
+The control is a native `<select>`. It had `className="mt-1 w-full rounded border px-2 py-1"` with no `eos-select`, no option colors, and no local `color-scheme`. Windows/Chrome native option popups do not inherit parent text color reliably.
+
+Fix: apply existing `.eos-select` tokens to the selector; style `select` and `option` (placeholder, hover/checked, disabled, focus); placeholder uses `--eos-text-secondary` (≥4.5:1 on `--eos-bg-secondary`); labels are `Project Name · Code`, never a raw UUID. No RLS/membership/schema change.
+
+Cursor IDE browser cannot open `/engineering/deliverables` (AAL1/unauthenticated → login). Live opened-dropdown certification remains operator AAL2 HITL.
+
 ## Clarification of EOS-A9F-G (not a rewrite)
 
 | A9F-G claim | G1 clarification |

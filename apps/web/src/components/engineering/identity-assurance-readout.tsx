@@ -8,7 +8,7 @@ export function IdentityAssuranceReadout() {
   if (!assurance.authenticated || !assurance.currentLevel) return null;
   return (
     <p
-      className="mt-1 text-xs text-[color:var(--eos-muted)]"
+      className="mt-1 text-xs text-[color:var(--eos-text-secondary)]"
       data-testid="identity-assurance-level"
       data-current-level={assurance.currentLevel}
       data-next-level={assurance.nextLevel ?? ""}

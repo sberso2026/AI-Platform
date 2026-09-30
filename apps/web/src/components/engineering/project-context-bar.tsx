@@ -60,24 +60,34 @@ export function EngineeringProjectContextBar() {
 
   return (
     <div
-      className="mb-4 rounded border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-3 py-3 text-sm"
+      className="mb-4 rounded border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-3 py-3 text-sm text-[color:var(--eos-text-primary)]"
       data-testid="engineering-project-context"
     >
       <p>
-        Workspace: <span className="font-medium">{workspaceLabel}</span>
+        Workspace: <span className="font-medium text-[color:var(--eos-text-primary)]">{workspaceLabel}</span>
       </p>
       <p>
         Project:{" "}
-        <span className="font-medium" data-testid="engineering-project-context-name">
+        <span
+          className={
+            selected?.label
+              ? "font-medium text-[color:var(--eos-text-primary)]"
+              : "font-medium text-[color:var(--eos-text-secondary)]"
+          }
+          data-testid="engineering-project-context-name"
+        >
           {selected?.label || "Select a project"}
         </span>
       </p>
       <IdentityAssuranceReadout />
-      <label className="mt-2 block">
+      <label className="mt-2 block text-[color:var(--eos-text-primary)]" htmlFor="engineering-authorized-project">
         Authorized project
         <select
-          className="mt-1 w-full rounded border px-2 py-1"
+          id="engineering-authorized-project"
+          className="eos-select mt-1 w-full px-3 py-1 text-[color:var(--eos-text-primary)]"
           data-testid="engineering-project-selector"
+          data-authorized-count={projects.length}
+          aria-label="Authorized project"
           value={projectId ?? ""}
           onChange={(event) => {
             const next = event.target.value || null;
