@@ -51,7 +51,7 @@ Owner vocabulary:
 | Workflow instance | Platform Kernel + Engineering Workflow SDK | `workflow_instances` + `@rtb/engineering-os` SDK | same | Inspection, Review (routing only) | SDK `EngineeringReviewRecord` is **not** ERA |
 | **Knowledge Graph node/edge** | **Platform Kernel (infra)** | `knowledge_nodes`, `knowledge_edges` | Platform KG hosts Engineering Digital Thread | PI, Core (`knowledge_node_id`) | **CONFIRMED** PI KG duplication (ADR-D3) |
 | PI Knowledge Graph | Project Intelligence (projection) | `project_intelligence_knowledge_*`, `EngineeringKnowledgeGraph` | **converge to Platform KG**; PI remains projection | PI product UI | Do not add a third store |
-| Engineering Digital Thread | Engineering OS composition over Core objects + `engineering_object_links` | Core payloads + governed links (EOS-A8A); Platform KG projection (EOS-A8B); Assurance Conditions (EOS-A8C) consume canonical thread | Platform KG hosts derived thread edges only; Assurance Conditions persist detections, not a second object model | all intelligence domains | Third graph **forbidden**; PI KG must not become SOT; KG is not SOT; KG is not assurance authority |
+| Engineering Digital Thread | Engineering OS composition over Core objects + `engineering_object_links` | Core payloads + governed links (EOS-A8A); Platform KG projection (EOS-A8B); Assurance Conditions (EOS-A8C) consume canonical thread; EOS-A8D cites Conditions from Review without merging bounded contexts | Platform KG hosts derived thread edges only; Assurance Conditions persist detections, not a second object model | all intelligence domains | Third graph **forbidden**; PI KG must not become SOT; KG is not SOT; KG is not assurance authority |
 | Twin Thread composition | Operational Digital Twin | `digital_twin_thread_profiles/snapshots/references` (batch_84) | same — **references only** | Twin UI, simulation | **MEDIUM** naming collision with Engineering Digital Thread — do not expand into a KG |
 | **Digital Twin object** | **Operational Digital Twin** | kernel `digital_twins` + module `digital_twin_identities` | **intentional two-layer** (ADR-D6) | Assets FKs | Do not use twin as thread |
 | **Job / Execution Job** | **Platform Kernel JobService** (future convergence) | kernel `background_jobs`, commerce outbox/scheduler, PI claim jobs, `engineering_execution_jobs` | Kernel jobs + typed Engineering execution as a *kind* | Analysis, Review, commerce | **CONFIRMED** multi-queue (ADR-D4) |
@@ -87,7 +87,7 @@ Owner vocabulary:
 | PI Finding | Project Intelligence | `project_intelligence_findings` | Optional link `core_record_type/id` or future `era_finding_id` |
 | Document Intelligence finding rows | PI / Document Intel | `project_intelligence_document_findings` (source rows per batch_41 comment) | Feed PI Findings |
 | Vendor / module review notes | Named module | module tables / Workflow SDK record | Evidence for ERA, not a fourth findings product |
-| Assurance Condition | Engineering OS (EOS-A8C) | `engineering_assurance_conditions` | May be cited by Review or linked to an Issue by a human; never auto-promoted |
+| Assurance Condition | Engineering OS (EOS-A8C / A8D) | `engineering_assurance_conditions` plus governed citations in `engineering_assurance_review_citations` | May be cited by a canonical Review Package; Findings stay Review-owned; never auto-promoted |
 
 ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings.
 

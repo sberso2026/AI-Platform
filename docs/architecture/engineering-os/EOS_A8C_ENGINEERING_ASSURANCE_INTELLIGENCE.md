@@ -68,7 +68,7 @@ Absence of evidence is not automatically evidence of engineering failure.
 | Created by | Deterministic versioned rules | Human reviewer (or governed review process) |
 | Auto-created from the other? | No | No |
 
-A human may **cite or link** a Condition from a Review Package. EOS-A8C does not automatically create Findings.
+A human may **cite or link** a Condition from a Review Package. EOS-A8C does not automatically create Findings. EOS-A8D certifies that composition: see `EOS_A8D_ASSURANCE_GOVERNANCE_REVIEW.md`.
 
 ## Condition vs Issue
 
@@ -173,3 +173,4 @@ Synthetic Crusher Expansion FEED fixtures cover allocation, decision evidence, s
 - Incremental evaluation is available via JobService `engineering.assurance.evaluate`; unrestricted platform-wide scans are not implemented.
 - Future KG-assisted discovery may accelerate candidate search; canonical relational evaluation remains authoritative.
 - AAL2 browser certification is independent; core A8C may pass without browser MFA if service/database/security tests pass.
+- EOS-A8D adds governed Review citations, catalog rule enable/disable, evaluation completeness, and `A8D-OPT-001`. It does not redesign this A8C condition model.

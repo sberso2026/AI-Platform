@@ -89,12 +89,22 @@ export function crusherAssuranceFixture(): AssuranceEvaluationInput {
       validationStatus: "partially_validated",
       expiresAt: "2026-09-01T00:00:00.000Z",
     }),
+    node({
+      objectType: "optimization_run",
+      objectId: "opt-run-stale",
+      objectCode: "OPT-RUN-STALE-01",
+      title: "FEED support-frame optimization run",
+      status: "failed",
+      stale: true,
+      staleReasons: ["OPTIMIZATION_CONTEXT_CHANGED"],
+    }),
   ];
   const extraLinks: ThreadRelation[] = [
     link("analysis_request", "ar-structural-blocked", "DEPENDS_ON", "interface", "ifc-mech-struct"),
     link("assumption", "asm-expired", "USED_BY", "decision", "dec-support-frame"),
     link("decision", "dec-support-frame", "BASED_ON", "assumption", "asm-expired"),
     link("analysis_request", "ar-mechanical", "PRODUCES", "analysis_result", "res-unreviewed"),
+    link("decision", "dec-support-frame", "SUPPORTED_BY", "optimization_run", "opt-run-stale"),
   ];
   const interfaceInformation: InterfaceInformationFact[] = [
     {
@@ -150,5 +160,15 @@ export function withDecisionEvidence(input: AssuranceEvaluationInput): Assurance
         link("decision", "dec-no-evidence", "SUPPORTED_BY", "analysis_result", "res-mechanical"),
       ],
     },
+  };
+}
+
+export function withTruncatedScan(input: AssuranceEvaluationInput, linkLimit = 1): AssuranceEvaluationInput {
+  return {
+    ...input,
+    graph: { ...input.graph, links: input.graph.links.slice(0, Math.max(1, linkLimit)) },
+    graphTruncated: true,
+    linkCount: Math.max(1, linkLimit),
+    linkLimit,
   };
 }

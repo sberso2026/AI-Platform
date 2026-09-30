@@ -92,6 +92,19 @@ export default function ReviewPackagePage() {
   const [reason, setReason] = useState("");
   const [assignee, setAssignee] = useState("");
   const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
+  const [citedConditions, setCitedConditions] = useState<
+    Array<{
+      id: string;
+      conditionCode: string;
+      conditionType: string;
+      status: string;
+      ruleId: string;
+      ruleVersion: string;
+      explanation: string;
+      digitalThreadPath: string;
+      materiality: string;
+    }>
+  >([]);
 
   const load = useCallback(async () => {
     const response = await fetch(`/api/review/packages/${params.packageId}`);
@@ -101,6 +114,26 @@ export default function ReviewPackagePage() {
       return;
     }
     setPayload(parsed.data);
+    const cited = await parseApiJsonResponse(
+      await fetch(`/api/engineering/assurance?action=cited-conditions&reviewPackageId=${encodeURIComponent(params.packageId)}`),
+    );
+    if (cited.ok && Array.isArray(cited.data)) {
+      setCitedConditions(
+        cited.data as Array<{
+          id: string;
+          conditionCode: string;
+          conditionType: string;
+          status: string;
+          ruleId: string;
+          ruleVersion: string;
+          explanation: string;
+          digitalThreadPath: string;
+          materiality: string;
+        }>,
+      );
+    } else {
+      setCitedConditions([]);
+    }
     if (parsed.data.pendingScope?.reviewTypes?.length) {
       setScope([...parsed.data.pendingScope.reviewTypes]);
     }
@@ -259,6 +292,35 @@ export default function ReviewPackagePage() {
                 Unsupported or not-ready documents are listed above and excluded from execution.
               </p>
             ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="space-y-3 py-4">
+            <h2 className="text-base font-semibold">Cited Assurance Conditions</h2>
+            <p className="text-sm text-muted-foreground">
+              Assurance Conditions are not Review Findings. Findings stay owned by Engineering Review and are created
+              only by a human reviewer.
+            </p>
+            {citedConditions.length ? (
+              citedConditions.map((condition) => (
+                <div key={condition.id} className="space-y-1 rounded border p-3 text-sm">
+                  <p className="font-medium">
+                    {condition.conditionCode} · {condition.conditionType} · {condition.status}
+                  </p>
+                  <p>
+                    {condition.ruleId} {condition.ruleVersion} · {condition.materiality}
+                  </p>
+                  <p>{condition.explanation}</p>
+                  <p className="text-muted-foreground">{condition.digitalThreadPath}</p>
+                  <Link className="underline" href={`/engineering/assurance?id=${condition.id}`}>
+                    Open condition
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No Assurance Conditions are cited by this Review Package.</p>
+            )}
           </CardContent>
         </Card>
 

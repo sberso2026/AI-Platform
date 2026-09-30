@@ -73,6 +73,7 @@ export const ASSURANCE_RESOLUTION_SOURCES = [
   "CANONICAL_STATE_CHANGED",
   "HUMAN_DISPOSITION",
   "SUPERSEDED_BY_RULE",
+  "RULE_DISABLED",
 ] as const;
 export type AssuranceResolutionSource = (typeof ASSURANCE_RESOLUTION_SOURCES)[number];
 
@@ -206,6 +207,77 @@ export type AssuranceEvaluationInput = {
   enabledRuleIds?: readonly string[];
   objectFilter?: { objectType: string; objectId: string };
   ruleFilter?: string;
+  graphTruncated?: boolean;
+  linkCount?: number;
+  linkLimit?: number;
+};
+
+export const ASSURANCE_COMPLETENESS = ["COMPLETE", "PARTIAL", "FAILED"] as const;
+export type AssuranceCompleteness = (typeof ASSURANCE_COMPLETENESS)[number];
+
+export type AssuranceEvaluationRun = {
+  id?: string;
+  tenantId: string;
+  workspaceId: string;
+  startedAt: string;
+  completedAt: string;
+  triggeredBy?: string | null;
+  completeness: AssuranceCompleteness;
+  truncated: boolean;
+  linkCount: number;
+  linkLimit: number;
+  objectsEvaluated: number;
+  rulesEvaluated: number;
+  conditionsDetected: number;
+  conditionsResolved: number;
+  conditionsCreated: number;
+  remainingScopeUnknown: boolean;
+  rulesetFingerprint: string;
+  failureReason?: string | null;
+  reason?: string | null;
+};
+
+export type AssuranceReviewCitation = {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  conditionId: string;
+  reviewPackageId: string;
+  createdBy?: string | null;
+  createdAt: string;
+};
+
+export type AssuranceReviewFindingRef = {
+  id: string;
+  reviewPackageId: string;
+  title: string;
+  status: string;
+  ownedBy: "engineering-review";
+};
+
+export type AssuranceRuleSetting = {
+  id?: string;
+  tenantId: string;
+  workspaceId: string;
+  ruleId: string;
+  ruleVersion: string;
+  enabled: boolean;
+  configuredBy?: string | null;
+  configuredAt: string;
+};
+
+export type EffectiveAssuranceRule = {
+  ruleId: string;
+  ruleVersion: string;
+  name: string;
+  description: string;
+  assuranceDomain: AssuranceDomain;
+  conditionType: AssuranceConditionType;
+  applicableObjectTypes: readonly string[];
+  applicableMaturity: readonly string[];
+  catalogDefaultEnabled: true;
+  overrideEnabled: boolean | null;
+  effectiveEnabled: boolean;
 };
 
 export type AssuranceSummary = {

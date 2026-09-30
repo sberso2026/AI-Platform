@@ -499,6 +499,47 @@ function evaluateAssumption(input: AssuranceEvaluationInput, rule: AssuranceRule
   );
 }
 
+function evaluateOptimizationEvidence(
+  input: AssuranceEvaluationInput,
+  rule: AssuranceRule,
+  node: ThreadCatalogNode,
+  out: AssuranceDetection[],
+) {
+  if (rule.ruleId !== "A8D-OPT-001" || !maturityApplies(node, rule.applicableMaturity)) return;
+  const supports = input.graph.links.filter(
+    (link) =>
+      link.fromType === "decision" &&
+      link.fromId === node.objectId &&
+      (link.relationship === "SUPPORTED_BY" || link.relationship === "BASED_ON") &&
+      link.toType === "optimization_run",
+  );
+  const incomplete = new Set(["queued", "running", "failed", "cancelled"]);
+  for (const link of supports) {
+    const run = catalogNodeByKey(input.graph.nodes, "optimization_run", link.toId);
+    if (!run || !inWorkspace(input, run)) continue;
+    const status = String(run.status ?? "").toLowerCase();
+    if (run.stale !== true && !incomplete.has(status)) continue;
+    const reason = run.stale ? (run.staleReasons ?? []).join(", ") || "optimization context stale" : `run status ${status}`;
+    out.push(
+      detection(input, rule, {
+        root: node,
+        related: run,
+        contextKey: run.objectId,
+        explanation: `Decision ${label(input.graph, "decision", node.objectId)} references Optimization Run ${label(input.graph, "optimization_run", run.objectId)} that is ${reason}. This does not select a winner or declare the Decision incorrect.`,
+        wouldResolveIf: "Replace the Optimization Run with a current succeeded evaluation, or disposition this condition with engineering rationale.",
+        evidencePath: [
+          { objectType: "decision", objectId: node.objectId, objectCode: node.objectCode, relationship: link.relationship },
+          { objectType: "optimization_run", objectId: run.objectId, objectCode: run.objectCode, note: reason },
+        ],
+        digitalThreadPath: `decision:${node.objectCode ?? node.objectId} —${link.relationship}→ optimization_run:${run.objectCode ?? run.objectId} (${reason})`,
+        relatedObjects: [
+          { objectType: "optimization_run", objectId: run.objectId, objectCode: run.objectCode, role: "stale_or_incomplete_optimization_evidence" },
+        ],
+      }),
+    );
+  }
+}
+
 function matchesFilter(detectionRow: AssuranceDetection, input: AssuranceEvaluationInput): boolean {
   if (input.ruleFilter && detectionRow.ruleId !== input.ruleFilter) return false;
   if (!input.objectFilter) return true;
@@ -533,6 +574,7 @@ export function evaluateAssurance(input: AssuranceEvaluationInput): AssuranceDet
       if (node.objectType === "change") evaluateChange(input, rule, node, detections);
       if (node.objectType === "configuration_item") evaluateConfiguration(input, rule, node, detections);
       if (node.objectType === "assumption") evaluateAssumption(input, rule, node, now, detections);
+      if (node.objectType === "decision") evaluateOptimizationEvidence(input, rule, node, detections);
     }
   }
 

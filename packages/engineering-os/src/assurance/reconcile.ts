@@ -69,6 +69,8 @@ export function reconcileAssuranceConditions(input: {
   detections: AssuranceDetection[];
   now: string;
   newId?: () => string;
+  autoResolve?: boolean;
+  skipResolveRuleIds?: readonly string[];
 }): AssuranceReconcileResult {
   const newId = input.newId ?? (() => crypto.randomUUID());
   const existingByFingerprint = new Map(input.existing.map((row) => [row.fingerprint, row]));
@@ -108,7 +110,10 @@ export function reconcileAssuranceConditions(input: {
 
   for (const current of input.existing) {
     if (detected.has(current.fingerprint)) continue;
-    if (OPEN_ASSURANCE_STATUSES.includes(current.status)) {
+    const skipResolve =
+      input.autoResolve === false ||
+      (input.skipResolveRuleIds ?? []).includes(current.ruleId);
+    if (!skipResolve && OPEN_ASSURANCE_STATUSES.includes(current.status)) {
       next.push({
         ...current,
         status: "RESOLVED",

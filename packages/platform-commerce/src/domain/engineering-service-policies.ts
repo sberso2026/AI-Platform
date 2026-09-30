@@ -65,6 +65,8 @@ export const ENGINEERING_SERVICE_POLICIES: Record<string, CommerceAccessPolicy> 
   "assurance.get": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
   "assurance.evaluate": { productKey: ENGINEERING_PRODUCT, action: "analysis.write", seatRequired: true, cachePolicy: "fresh" },
   "assurance.disposition": { productKey: ENGINEERING_PRODUCT, action: "analysis.write", seatRequired: true, cachePolicy: "fresh" },
+  "assurance.settings": { productKey: ENGINEERING_PRODUCT, action: "settings.read", seatRequired: true },
+  "assurance.settings.write": { productKey: ENGINEERING_PRODUCT, action: "settings.write", seatRequired: true, cachePolicy: "fresh" },
   "risk.list": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.read", seatRequired: true },
   "risk.get": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.read", seatRequired: true },
   "risk.create": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_intelligence", action: "risk.write", seatRequired: true, cachePolicy: "fresh" },

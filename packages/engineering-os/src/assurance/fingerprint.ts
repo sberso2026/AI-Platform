@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { ASSURANCE_RULE_CATALOG } from "./catalog";
 
 export function fingerprintAssuranceCondition(input: {
   ruleId: string;
@@ -19,4 +20,12 @@ export function fingerprintAssuranceCondition(input: {
     input.contextKey ?? "",
   ];
   return createHash("sha256").update(parts.join("|")).digest("hex");
+}
+
+export function fingerprintAssuranceRuleset(enabledRuleIds: readonly string[]): string {
+  const rows = ASSURANCE_RULE_CATALOG.map((rule) => {
+    const enabled = enabledRuleIds.includes(rule.ruleId);
+    return `${rule.ruleId}:${rule.ruleVersion}:${enabled ? "1" : "0"}`;
+  }).sort();
+  return createHash("sha256").update(rows.join("|")).digest("hex");
 }

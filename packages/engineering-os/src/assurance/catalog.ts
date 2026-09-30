@@ -108,14 +108,43 @@ export const ASSURANCE_RULE_CATALOG: readonly AssuranceRule[] = [
     applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
     enabled: true,
   },
+  {
+    ruleId: "A8D-OPT-001",
+    ruleVersion: "v1",
+    name: "Decision References Stale or Incomplete Optimization Evidence",
+    description:
+      "A Decision is SUPPORTED_BY or BASED_ON an Optimization Run that is stale, failed, cancelled, or incomplete. Does not select a winner or declare the Decision wrong.",
+    conditionType: "STALE_EVIDENCE_REFERENCE",
+    assuranceDomain: "OPTIMIZATION",
+    applicableObjectTypes: ["decision", "optimization_run"],
+    applicableMaturity: ["WORKING", "REVIEWED", "VERIFIED", "APPROVED", "ISSUED"],
+    enabled: true,
+  },
 ] as const;
 
 export function assuranceRuleById(ruleId: string): AssuranceRule | undefined {
   return ASSURANCE_RULE_CATALOG.find((rule) => rule.ruleId === ruleId);
 }
 
-export function enabledAssuranceRules(enabledRuleIds?: readonly string[]): AssuranceRule[] {
-  if (!enabledRuleIds?.length) return [...ASSURANCE_RULE_CATALOG];
+export function enabledAssuranceRules(enabledRuleIds?: readonly string[] | null): AssuranceRule[] {
+  if (enabledRuleIds == null) return [...ASSURANCE_RULE_CATALOG];
   const allowed = new Set(enabledRuleIds);
   return ASSURANCE_RULE_CATALOG.filter((rule) => allowed.has(rule.ruleId));
+}
+
+export function resolveEffectiveRules(settings: readonly { ruleId: string; ruleVersion: string; enabled: boolean }[]): {
+  rules: AssuranceRule[];
+  enabledRuleIds: string[];
+  disabledRuleIds: string[];
+} {
+  const override = new Map(settings.map((row) => [`${row.ruleId}:${row.ruleVersion}`, row.enabled]));
+  const enabled: AssuranceRule[] = [];
+  const disabledRuleIds: string[] = [];
+  for (const rule of ASSURANCE_RULE_CATALOG) {
+    const key = `${rule.ruleId}:${rule.ruleVersion}`;
+    const effective = override.has(key) ? override.get(key) === true : true;
+    if (effective) enabled.push(rule);
+    else disabledRuleIds.push(rule.ruleId);
+  }
+  return { rules: enabled, enabledRuleIds: enabled.map((rule) => rule.ruleId), disabledRuleIds };
 }

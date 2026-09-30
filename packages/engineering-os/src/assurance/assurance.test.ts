@@ -173,7 +173,7 @@ describe("EOS-A8C Engineering Assurance Intelligence", () => {
       rootObjectId: "req-unallocated",
     });
     expect(a).toBe(b);
-    expect(ASSURANCE_RULE_CATALOG).toHaveLength(9);
+    expect(ASSURANCE_RULE_CATALOG).toHaveLength(10);
   });
 
   it("memory store upserts by fingerprint without deleting history", async () => {

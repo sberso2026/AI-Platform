@@ -44,6 +44,8 @@ const OBJECT_TABLES: Record<string, string> = {
   configuration_item: "engineering_configuration_items",
 };
 
+export const THREAD_LINK_SCAN_LIMIT = 2000;
+
 function db(client: SupabaseClient): any {
   return client;
 }
@@ -226,7 +228,18 @@ export class EngineeringDigitalThreadService {
   }
 
   async loadAuthorizedWorkspaceGraph(tenantId: string, workspaceId: string): Promise<ThreadGraphInput> {
-    return this.loadGraph(tenantId, workspaceId);
+    const loaded = await this.loadGraphWithMeta(tenantId, workspaceId);
+    return loaded.graph;
+  }
+
+  async loadAuthorizedWorkspaceGraphMeta(tenantId: string, workspaceId: string): Promise<{
+    graph: ThreadGraphInput;
+    truncated: boolean;
+    linkCount: number;
+    linkLimit: number;
+    remainingScopeUnknown: boolean;
+  }> {
+    return this.loadGraphWithMeta(tenantId, workspaceId);
   }
 
   private authFromGraph(tenantId: string, workspaceId: string, graph: ThreadGraphInput): ThreadAuthorization {
@@ -246,6 +259,22 @@ export class EngineeringDigitalThreadService {
     rootType?: string,
     rootId?: string,
   ): Promise<ThreadGraphInput> {
+    const loaded = await this.loadGraphWithMeta(tenantId, workspaceId, rootType, rootId);
+    return loaded.graph;
+  }
+
+  private async loadGraphWithMeta(
+    tenantId: string,
+    workspaceId: string,
+    rootType?: string,
+    rootId?: string,
+  ): Promise<{
+    graph: ThreadGraphInput;
+    truncated: boolean;
+    linkCount: number;
+    linkLimit: number;
+    remainingScopeUnknown: boolean;
+  }> {
     const { data: linkRows, error } = await db(this.supabase)
       .from("engineering_object_links")
       .select("*")
@@ -253,6 +282,7 @@ export class EngineeringDigitalThreadService {
       .limit(THREAD_LINK_SCAN_LIMIT);
     if (error) throw new Error(`Failed to load engineering object links: ${error.message}`);
     const links = ((linkRows ?? []) as Record<string, unknown>[]).map(mapLink);
+    const truncated = links.length >= THREAD_LINK_SCAN_LIMIT;
 
     const idsByType = new Map<string, Set<string>>();
     const add = (type: string, id: string) => {
@@ -311,8 +341,12 @@ export class EngineeringDigitalThreadService {
     if (rootType && rootId && !nodes.some((n) => n.objectType === rootType && n.objectId === rootId)) {
       nodes.push({ tenantId, workspaceId, objectType: rootType, objectId: rootId });
     }
-    return { nodes, links };
+    return {
+      graph: { nodes, links },
+      truncated,
+      linkCount: links.length,
+      linkLimit: THREAD_LINK_SCAN_LIMIT,
+      remainingScopeUnknown: truncated,
+    };
   }
 }
-
-const THREAD_LINK_SCAN_LIMIT = 2000;

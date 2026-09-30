@@ -125,6 +125,20 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Assurance</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed enable/disable of approved Assurance catalog rules. Rule logic stays in code. Ordinary
+              engineers cannot change rule governance from the Assurance workspace.
+              <div className="mt-3">
+                <a className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/assurance">
+                  Open Assurance rule settings
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

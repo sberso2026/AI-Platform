@@ -10,3 +10,7 @@ export * from "./memory-store";
 export * from "./supabase-store";
 export * from "./service";
 export * from "./job-handler";
+export * from "./completeness";
+export * from "./settings";
+export * from "./review-gateway";
+export * from "./review-composition";
