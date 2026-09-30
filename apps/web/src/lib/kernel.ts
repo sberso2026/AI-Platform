@@ -61,6 +61,7 @@ export async function resolveAuthContext(): Promise<AuthContextResolution> {
         return createDocumentBodyRetrievalProbe().retrieve!(query);
       },
     },
+    projectionWriteClient: serviceClient,
   });
   const commerce = createPlatformCommerce(supabase);
   const permissionService = new PermissionService(supabase);

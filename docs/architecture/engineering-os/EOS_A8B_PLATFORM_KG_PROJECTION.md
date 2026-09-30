@@ -103,11 +103,9 @@ A stale `projection_version` (for example v1 rows observed by a v2 mapper) yield
 
 Every projected node/edge retains `tenant_id` and `workspace_id`. Graph adjacency is not authorization.
 
-Platform KG SQL RLS remains **tenant-only** (phase_15). Same-tenant other-workspace rows can be visible at the SQL table. Therefore:
+Platform KG SQL RLS (EOS-A8B-C): native `workspace_id` is WORKSPACE scope; NULL `workspace_id` is TENANT scope. Edges are visible only when both endpoint nodes are visible. Engineering Digital Thread projection nodes always carry native `workspace_id`.
 
-- **Product KG reads are not certified** as a default Digital Thread path
-- Adapter-layer workspace filter is fail-closed for the optional `source=kg` query
-- Default UI/API traversal stays relational A8A
+KG product reads remain **flag default OFF**. Direct SQL workspace isolation is certified in `EOS_A8B_C_KG_WORKSPACE_SECURITY.md`. Default Digital Thread source remains canonical relational.
 
 Hidden objects must not leak via edge counts, degree, placeholders, or error messages on the adapter path.
 
@@ -148,7 +146,7 @@ Fixture traces are measured in unit tests for both relational and projected trav
 
 ## Limitations
 
-- Platform KG RLS is tenant-scoped; product KG reads remain uncertified until workspace SQL isolation exists.
+- Platform KG workspace SQL isolation is certified in EOS-A8B-C; product KG reads remain flag-default **off** until an explicit activation decision.
 - Incremental projection is a best-effort hook on governed link write, plus JobService rebuild; not a second outbox.
 - UI projection status is not browser-verified in this phase unless a live session is available.
 - Real SPACE GASS / solver execution remains deferred (A7C).

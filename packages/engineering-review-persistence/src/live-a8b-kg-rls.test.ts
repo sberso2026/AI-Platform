@@ -86,9 +86,6 @@ describe.skipIf(!LIVE)("EOS-A8B live JWT RLS — Platform KG thread projection",
 
     const a2SameTenant = await rest(`knowledge_nodes?id=eq.${nodeId}&select=id,workspace_id`, {}, fixtures.users.a2.jwt);
     expect(a2SameTenant.status).toBeLessThan(300);
-    expect(
-      ids(a2SameTenant.body).includes(nodeId),
-      "Platform KG SQL RLS is tenant-scoped; same-tenant other-workspace rows may be visible. Product KG reads remain uncertified.",
-    ).toBe(true);
+    expect(ids(a2SameTenant.body)).not.toContain(nodeId);
   });
 });

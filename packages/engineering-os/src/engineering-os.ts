@@ -95,7 +95,10 @@ export interface EngineeringOS {
 export function createEngineeringOS(
   supabase: SupabaseClient,
   kernel: PlatformKernel,
-  options?: { documentBodyRetriever?: DocumentBodyRetrievalProbe },
+  options?: {
+    documentBodyRetriever?: DocumentBodyRetrievalProbe;
+    projectionWriteClient?: SupabaseClient;
+  },
 ): EngineeringOS {
   const projects = new EngineeringProjectService(supabase, kernel);
   const assets = new EngineeringAssetService(supabase, kernel);
@@ -124,7 +127,7 @@ export function createEngineeringOS(
   const disciplineIntelligence = new DisciplineIntelligenceService(supabase);
   const analysisRequests = new AnalysisRequestService(supabase, kernel);
   const threadProjection = new EngineeringDigitalThreadProjectionService(
-    new PlatformKgThreadProjectionStore(supabase),
+    new PlatformKgThreadProjectionStore(options?.projectionWriteClient ?? supabase, supabase),
   );
   const digitalThread = new EngineeringDigitalThreadService(supabase, threadProjection);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);

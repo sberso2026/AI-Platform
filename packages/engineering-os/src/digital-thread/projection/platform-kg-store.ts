@@ -20,7 +20,10 @@ function isUuid(value: string): boolean {
  * Never writes engineering_object_links or PI KG tables.
  */
 export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(
+    private readonly write: SupabaseClient,
+    private readonly read: SupabaseClient = write,
+  ) {}
 
   async upsertNode(node: EngineeringThreadProjectionNode): Promise<void> {
     const sourceRef = threadNodeSourceRef(node.objectType, node.objectId);
@@ -34,7 +37,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
       status: node.status ?? null,
     };
     const title = node.title ?? node.objectCode ?? `${node.objectType}:${node.objectId}`;
-    const existing = await db(this.supabase)
+    const existing = await db(this.write)
       .from("knowledge_nodes")
       .select("id")
       .eq("tenant_id", node.tenantId)
@@ -51,11 +54,11 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
       metadata: metadata as Json,
     };
     if (existing.data?.id) {
-      const { error } = await db(this.supabase).from("knowledge_nodes").update(row).eq("id", existing.data.id);
+      const { error } = await db(this.write).from("knowledge_nodes").update(row).eq("id", existing.data.id);
       if (error) throw new Error(`Failed to update thread projection node: ${error.message}`);
       return;
     }
-    const { error } = await db(this.supabase).from("knowledge_nodes").insert(row);
+    const { error } = await db(this.write).from("knowledge_nodes").insert(row);
     if (error) throw new Error(`Failed to insert thread projection node: ${error.message}`);
   }
 
@@ -73,7 +76,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
       projected_at: edge.projectedAt,
       projection_key: edge.projectionKey,
     };
-    const existing = await db(this.supabase)
+    const existing = await db(this.write)
       .from("knowledge_edges")
       .select("id, metadata")
       .eq("tenant_id", edge.tenantId)
@@ -85,7 +88,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
       const prior = (existing.data.metadata as Record<string, unknown> | null) ?? {};
       const priorIds = Array.isArray(prior.source_link_ids) ? (prior.source_link_ids as string[]) : [];
       const sourceLinkIds = [...new Set([...priorIds, ...edge.sourceLinkIds, edge.sourceLinkId])];
-      const { error } = await db(this.supabase)
+      const { error } = await db(this.write)
         .from("knowledge_edges")
         .update({
           metadata: {
@@ -101,7 +104,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
       if (error) throw new Error(`Failed to update thread projection edge: ${error.message}`);
       return;
     }
-    const { error } = await db(this.supabase).from("knowledge_edges").insert({
+    const { error } = await db(this.write).from("knowledge_edges").insert({
       tenant_id: edge.tenantId,
       from_node_id: fromId,
       to_node_id: toId,
@@ -119,7 +122,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
       const remaining = edge.sourceLinkIds.filter((id) => id !== linkId);
       const fromId = await this.requireNodeId(tenantId, edge.sourceObjectType, edge.sourceObjectId);
       const toId = await this.requireNodeId(tenantId, edge.targetObjectType, edge.targetObjectId);
-      const found = await db(this.supabase)
+      const found = await db(this.write)
         .from("knowledge_edges")
         .select("id")
         .eq("tenant_id", tenantId)
@@ -129,10 +132,10 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
         .maybeSingle();
       if (!found.data?.id) continue;
       if (remaining.length === 0) {
-        const { error } = await db(this.supabase).from("knowledge_edges").delete().eq("id", found.data.id);
+        const { error } = await db(this.write).from("knowledge_edges").delete().eq("id", found.data.id);
         if (error) throw new Error(`Failed to delete thread projection edge: ${error.message}`);
       } else {
-        const { error } = await db(this.supabase)
+        const { error } = await db(this.write)
           .from("knowledge_edges")
           .update({
             metadata: {
@@ -154,7 +157,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
   }
 
   async listEdges(tenantId: string, workspaceId: string): Promise<EngineeringThreadProjectionEdge[]> {
-    const { data, error } = await db(this.supabase)
+    const { data, error } = await db(this.read)
       .from("knowledge_edges")
       .select("edge_type, metadata, from_node_id, to_node_id")
       .eq("tenant_id", tenantId)
@@ -197,7 +200,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
   }
 
   async listNodes(tenantId: string, workspaceId: string): Promise<EngineeringThreadProjectionNode[]> {
-    const { data, error } = await db(this.supabase)
+    const { data, error } = await db(this.read)
       .from("knowledge_nodes")
       .select("tenant_id, workspace_id, source_ref, metadata, title")
       .eq("tenant_id", tenantId)
@@ -230,7 +233,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
     for (const edge of edges) {
       const fromId = await this.requireNodeId(tenantId, edge.sourceObjectType, edge.sourceObjectId);
       const toId = await this.requireNodeId(tenantId, edge.targetObjectType, edge.targetObjectId);
-      await db(this.supabase)
+      await db(this.write)
         .from("knowledge_edges")
         .delete()
         .eq("tenant_id", tenantId)
@@ -238,7 +241,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
         .eq("to_node_id", toId)
         .eq("edge_type", edge.normalizedRelationType);
     }
-    const { data: nodes } = await db(this.supabase)
+    const { data: nodes } = await db(this.write)
       .from("knowledge_nodes")
       .select("id, source_ref, metadata")
       .eq("tenant_id", tenantId)
@@ -247,13 +250,13 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
     for (const row of nodes ?? []) {
       const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
       if (String(metadata.workspace_id ?? "") !== workspaceId) continue;
-      await db(this.supabase).from("knowledge_nodes").delete().eq("id", row.id);
+      await db(this.write).from("knowledge_nodes").delete().eq("id", row.id);
     }
   }
 
   private async requireNodeId(tenantId: string, objectType: string, objectId: string): Promise<string> {
     const sourceRef = threadNodeSourceRef(objectType, objectId);
-    const { data, error } = await db(this.supabase)
+    const { data, error } = await db(this.write)
       .from("knowledge_nodes")
       .select("id")
       .eq("tenant_id", tenantId)
@@ -267,7 +270,7 @@ export class PlatformKgThreadProjectionStore implements ThreadProjectionStore {
   private async loadNodesByIds(tenantId: string, ids: string[]): Promise<Map<string, EngineeringThreadProjectionNode>> {
     const map = new Map<string, EngineeringThreadProjectionNode>();
     if (ids.length === 0) return map;
-    const { data } = await db(this.supabase)
+    const { data } = await db(this.read)
       .from("knowledge_nodes")
       .select("id, tenant_id, source_ref, metadata")
       .eq("tenant_id", tenantId)

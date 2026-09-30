@@ -96,7 +96,7 @@ ADR-D2. Do not delete PI Findings. Do not silently redefine them as ERA Findings
 
 | Layer | Owner | Role |
 | --- | --- | --- |
-| Platform KG | Platform Kernel | Canonical graph infrastructure; EOS-A8B hosts the **derived** Engineering Digital Thread projection (`engineering_thread_object` nodes + governed edges). Not SOT. |
+| Platform KG | Platform Kernel | Graph infrastructure. EOS-A8B derived Engineering Digital Thread projection. EOS-A8B-C: `workspace_id` NULL = TENANT, non-null = WORKSPACE; edges require both endpoints visible. Not SOT. |
 | PI KG | Project Intelligence | Product projection; CONFIRMED duplication |
 | Engineering object_links | Engineering Core | Operational register links until projected |
 

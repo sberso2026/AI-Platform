@@ -1,4 +1,4 @@
-export type RestResult = { status: number; body: unknown };
+export type RestResult = { status: number; body: unknown; contentRange: string | null };
 
 export function restHeaders(
   anonKey: string,
@@ -36,7 +36,7 @@ export async function restFetch(
   } catch {
     body = text;
   }
-  return { status: response.status, body };
+  return { status: response.status, body, contentRange: response.headers.get("content-range") };
 }
 
 export function ids(body: unknown): string[] {
