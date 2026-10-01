@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { EngineeringArtifactTemplate, ArtifactProvenanceManifest, WorkPlanLike } from "./types";
 import { escapeSpreadsheetText, normalizeGovernedFormula } from "./formulas";
 import { BEARING_PRESSURE_FORMULA } from "./catalog";
+import { documentCreator, type ArtifactBranding } from "./template-policy";
 
 function text(sheet: ExcelJS.Worksheet, cell: string, value: string) {
   const target = sheet.getCell(cell);
@@ -30,21 +31,26 @@ export async function buildXlsx(input: {
   plan: WorkPlanLike;
   provenance: ArtifactProvenanceManifest;
   projectCode: string;
+  branding?: ArtifactBranding | null;
 }): Promise<{ buffer: Buffer; sheetCount: number }> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "RTB Engineering OS";
+  const creator = documentCreator(input.branding);
+  wb.creator = creator;
   wb.calcProperties.fullCalcOnLoad = true;
 
   if (input.template.artifactType === "CALCULATION_WORKBOOK") {
     const cover = wb.addWorksheet("Cover");
+    const company = input.branding?.companyName?.trim();
     titles(cover, [
       ["A1", "DRAFT — ENGINEER REVIEW REQUIRED"],
       ["A2", "SYNTHETIC EXAMPLE_ONLY — NOT A CERTIFIED DESIGN TEMPLATE"],
       ["A3", input.template.name],
-      ["A4", `Project: ${input.projectCode}`],
-      ["A5", `Work plan: ${input.plan.templateCode}@${input.plan.templateVersion}`],
-      ["A6", `Artifact template: ${input.template.code}@${input.template.version}`],
-      ["A7", "Generation does not imply engineering approval, IFC issue, or Deliverable completion."],
+      ["A4", `Prepared for: ${company || creator}`],
+      ["A5", `Project: ${input.projectCode}`],
+      ["A6", `Work plan: ${input.plan.templateCode}@${input.plan.templateVersion}`],
+      ["A7", `Artifact template: ${input.template.code}@${input.template.version}`],
+      ["A8", input.provenance.templateSourceClass ? `Template class: ${input.provenance.templateSourceClass}` : "Template class: EOS_DEFAULT"],
+      ["A9", "Generation does not imply engineering approval, IFC issue, or Deliverable completion. Company presentation shell is not calculation-certification authority."],
     ]);
 
     const inputs = wb.addWorksheet("Inputs");
@@ -109,8 +115,10 @@ export async function buildXlsx(input: {
     titles(context, [
       ["A1", "DRAFT — ENGINEER REVIEW REQUIRED"],
       ["A2", "Option study workbook — no automatic winner"],
-      ["A3", `Project: ${input.projectCode}`],
-      ["A4", `Work plan: ${input.plan.templateCode}`],
+      ["A3", `Prepared for: ${documentCreator(input.branding)}`],
+      ["A4", `Project: ${input.projectCode}`],
+      ["A5", `Work plan: ${input.plan.templateCode}`],
+      ["A6", `Template: ${input.template.code}@${input.template.version}`],
     ]);
     const options = wb.addWorksheet("Options");
     titles(options, [["A1", "Options remain separate"]]);

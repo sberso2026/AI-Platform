@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
-import { assembleSnapshotFromRecords, type EngineeringOS } from "@rtb/engineering-os";
+import { assembleSnapshotFromRecords, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
 import type { CommerceExecutionContext } from "@rtb/types";
 
 function statusFor(message: string): number {
@@ -115,7 +115,7 @@ async function assemblePlanContext(
   return { snapshot, readiness };
 }
 
-export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request) => {
+export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "catalog";
   if (action === "catalog") {
@@ -123,6 +123,65 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
   }
   if (action === "generatorCatalog") {
     return NextResponse.json({ data: ctx.engineering.workGenerator.catalog() });
+  }
+  if (action === "workbench") {
+    const started = Date.now();
+    const projectIdForView = url.searchParams.get("projectId") ?? "";
+    if (!projectIdForView) return NextResponse.json({ error: "project_required" }, { status: 400 });
+    const plansStarted = Date.now();
+    const plans = await ctx.engineering.workGenerator.listPlans(commerce, ctx.tenantId, projectIdForView);
+    const plansMs = Date.now() - plansStarted;
+    let lifecycleStage: string = "UNKNOWN";
+    try {
+      const lifecycleCommerce = await authorizeEngineeringSegment(ctx, "lifecycle", "GET", correlationId);
+      if (lifecycleCommerce) {
+        const effective = await ctx.engineering.lifecycle.effective(lifecycleCommerce, ctx.tenantId, {
+          projectId: projectIdForView,
+          scopeType: "PROJECT",
+          scopeId: projectIdForView,
+        });
+        lifecycleStage = effective?.stage ?? "UNKNOWN";
+      }
+    } catch {
+      lifecycleStage = "UNKNOWN";
+    }
+    if (lifecycleStage === "UNKNOWN") {
+      const fromPlan = plans.find((row) => row.status !== "SUPERSEDED" && row.status !== "CANCELLED");
+      if (fromPlan?.lifecycleStage) lifecycleStage = fromPlan.lifecycleStage;
+    }
+    const actionsStarted = Date.now();
+    const actions = workbenchActionsForLifecycle(lifecycleStage as never);
+    const actionsMs = Date.now() - actionsStarted;
+    const governingStarted = Date.now();
+    const open = plans.find((row) => row.status !== "SUPERSEDED" && row.status !== "CANCELLED");
+    const governingInformation = (open?.context.information ?? []).slice(0, 8).map((row) => ({
+      title: row.title,
+      revision: row.revision ?? null,
+      purpose: row.purpose ?? row.whyIncluded ?? null,
+    }));
+    const governingMs = Date.now() - governingStarted;
+    return NextResponse.json({
+      data: {
+        lifecycleStage,
+        actions,
+        governingInformation,
+        deepModules: WORKBENCH_DEEP_MODULES,
+        metrics: { initialMs: Date.now() - started, plansMs, actionsMs, governingMs },
+      },
+    });
+  }
+  if (action === "templatePolicies") {
+    const data = await ctx.engineering.artifactAutomation.listTemplatePolicies(commerce, ctx.tenantId);
+    return NextResponse.json({ data });
+  }
+  if (action === "resolveTemplate") {
+    const workPlanId = url.searchParams.get("workPlanId") ?? url.searchParams.get("id") ?? "";
+    if (!workPlanId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.artifactAutomation.resolveTemplate(commerce, ctx.tenantId, {
+      workPlanId,
+      artifactType: (url.searchParams.get("artifactType") as never) ?? undefined,
+    });
+    return NextResponse.json({ data });
   }
   const projectId = url.searchParams.get("projectId") ?? "";
   if (action === "list" && projectId) {
@@ -177,6 +236,22 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
     } catch {
       impact = null;
     }
+    let templatePreview: unknown = null;
+    try {
+      const expected = data.context.expectedOutputs[0]?.outputType;
+      const artifactType =
+        expected === "HANDOVER_PACKAGE" || expected === "CHANGE_ASSESSMENT" || expected === "CONCEPT_STUDY" || expected === "REVIEW_PACKAGE"
+          ? "TECHNICAL_MEMORANDUM"
+          : expected === "OPTION_STUDY"
+            ? "OPTION_STUDY"
+            : expected;
+      templatePreview = await ctx.engineering.artifactAutomation.resolveTemplate(commerce, ctx.tenantId, {
+        workPlanId: data.id,
+        artifactType: artifactType as never,
+      });
+    } catch {
+      templatePreview = null;
+    }
     return NextResponse.json({
       data,
       continueWork: ctx.engineering.workGenerator.continueWorkSummary(data),
@@ -186,6 +261,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
       tools: ctx.engineering.toolOrchestration.catalog(),
       preIssue,
       impact,
+      templatePreview,
     });
   }
   if (action === "artifactCatalog") {
@@ -291,6 +367,26 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
         } as never,
         { actorProjectId: typeof incoming.actorProjectId === "string" ? incoming.actorProjectId : null },
       );
+      return NextResponse.json({ data });
+    }
+    if (action === "saveTemplatePolicy" || action === "saveTemplateFallback") {
+      const settingsCommerce = await authorizeEngineeringSegment(ctx, "settings", "POST", correlationId);
+      if (!settingsCommerce) {
+        return NextResponse.json({ error: "identity_assurance_required" }, { status: 403 });
+      }
+      if (action === "saveTemplateFallback") {
+        const data = await ctx.engineering.artifactAutomation.saveFallbackPolicy(settingsCommerce, ctx.tenantId, {
+          ...(body.policy as object),
+          tenantId: ctx.tenantId,
+          workspaceId: settingsCommerce.workspaceId,
+        } as never);
+        return NextResponse.json({ data });
+      }
+      const data = await ctx.engineering.artifactAutomation.saveTemplatePolicy(settingsCommerce, ctx.tenantId, {
+        ...(body.policy as object),
+        tenantId: ctx.tenantId,
+        workspaceId: settingsCommerce.workspaceId,
+      } as never);
       return NextResponse.json({ data });
     }
     const authorize = async (segment: string) => authorizeEngineeringSegment(ctx, segment, "GET", correlationId);

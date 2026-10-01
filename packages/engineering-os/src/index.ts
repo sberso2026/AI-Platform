@@ -236,6 +236,9 @@ export {
   ARTIFACT_TYPES,
   ARTIFACT_GENERATION_STATUSES,
 } from "./artifact-automation/types";
+export { resolveEngineeringArtifactTemplate } from "./artifact-automation/resolve-template";
+export { TEMPLATE_SOURCE_CLASSES, TEMPLATE_FALLBACK_POLICIES } from "./artifact-automation/template-policy";
+export { workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, WORKBENCH_AI_BOUNDARY } from "./workbench/lifecycle-actions";
 export { EngineeringToolOrchestrationService } from "./tool-orchestration/service";
 export {
   TOOL_ORCHESTRATION_PRIVACY,

@@ -5,6 +5,8 @@ import { defaultArtifactFileName } from "./filename";
 import { isGovernedFormula } from "./formulas";
 import { buildPptx } from "./pptx";
 import { artifactThreadGraph, buildProvenanceManifest, composeDeliverableFromArtifact, hashBytes } from "./provenance";
+import { resolveEngineeringArtifactTemplate, type TemplateResolution } from "./resolve-template";
+import type { ArtifactBranding } from "./template-policy";
 import type {
   ArtifactGenerationResult,
   ArtifactType,
@@ -24,6 +26,13 @@ const BLOCKED_STATES = new Set([
 ]);
 
 export function selectTemplate(plan: WorkPlanLike, artifactType?: ArtifactType, templateCode?: string, templateVersion?: string) {
+  const resolved = resolveEngineeringArtifactTemplate({
+    plan,
+    artifactType,
+    requestedCode: templateCode,
+    requestedVersion: templateVersion,
+  });
+  if (resolved.template) return resolved.template;
   if (templateCode) return findArtifactTemplate(templateCode, templateVersion);
   if (artifactType) {
     return (
@@ -68,6 +77,8 @@ export async function generateEngineeringArtifact(input: {
   template: EngineeringArtifactTemplate;
   requestedBy?: string | null;
   projectCode?: string | null;
+  resolution?: TemplateResolution | null;
+  branding?: ArtifactBranding | null;
 }): Promise<ArtifactGenerationResult> {
   const started = Date.now();
   const runId = randomUUID();
@@ -109,20 +120,22 @@ export async function generateEngineeringArtifact(input: {
     template: input.template,
     generationRunId: runId,
     generatedAt,
+    resolution: input.resolution,
   });
   const projectCode = input.projectCode ?? input.plan.projectId.slice(0, 8);
+  const branding = input.branding ?? input.resolution?.branding ?? {};
   let buffer: Buffer;
   let sheetOrSlideCount = 0;
   if (input.template.outputFormat === "XLSX") {
-    const built = await buildXlsx({ template: input.template, plan: input.plan, provenance, projectCode });
+    const built = await buildXlsx({ template: input.template, plan: input.plan, provenance, projectCode, branding });
     buffer = built.buffer;
     sheetOrSlideCount = built.sheetCount;
   } else if (input.template.outputFormat === "DOCX") {
-    const built = await buildDocx({ template: input.template, plan: input.plan, provenance, projectCode });
+    const built = await buildDocx({ template: input.template, plan: input.plan, provenance, projectCode, branding });
     buffer = built.buffer;
     sheetOrSlideCount = built.sectionCount;
   } else {
-    const built = await buildPptx({ template: input.template, plan: input.plan, provenance, projectCode });
+    const built = await buildPptx({ template: input.template, plan: input.plan, provenance, projectCode, branding });
     buffer = built.buffer;
     sheetOrSlideCount = built.slideCount;
   }

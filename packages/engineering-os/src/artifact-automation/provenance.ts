@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
 import type { ArtifactProvenanceManifest, EngineeringArtifactTemplate, WorkPlanLike } from "./types";
+import type { TemplateResolution } from "./resolve-template";
 
 export function buildProvenanceManifest(input: {
   plan: WorkPlanLike;
   template: EngineeringArtifactTemplate;
   generationRunId: string;
   generatedAt: string;
+  resolution?: TemplateResolution | null;
 }): ArtifactProvenanceManifest {
   return {
     projectId: input.plan.projectId,
@@ -15,6 +17,14 @@ export function buildProvenanceManifest(input: {
     workTemplateVersion: input.plan.templateVersion,
     artifactTemplateCode: input.template.code,
     artifactTemplateVersion: input.template.version,
+    templateSourceClass: input.resolution?.sourceClass ?? input.template.sourceClass ?? "EOS_DEFAULT",
+    templateResolutionReason: input.resolution?.reason ?? null,
+    templateFallbackUsed: input.resolution?.fallbackUsed ?? false,
+    templatePolicyId: input.resolution?.policyId ?? null,
+    packagedAssetKey: input.resolution?.packagedAssetKey ?? input.template.code,
+    calculationDefinitionCode: input.resolution?.calculationDefinition?.code ?? null,
+    calculationDefinitionVersion: input.resolution?.calculationDefinition?.version ?? null,
+    calculationDefinitionCertification: input.resolution?.calculationDefinition?.certification ?? (input.template.certification === "EXAMPLE_ONLY" ? "EXAMPLE_ONLY" : input.template.certification),
     lifecycleStage: input.plan.lifecycleStage,
     discipline: input.plan.discipline,
     systemId: input.plan.systemId,

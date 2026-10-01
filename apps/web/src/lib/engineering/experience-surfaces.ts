@@ -71,6 +71,13 @@ export const ENGINEERING_EXPERIENCE_SURFACES = [
 /** Structured Explore destinations supported in current baseline. */
 export const ENGINEERING_EXPLORE_GROUPS = [
   {
+    id: "work",
+    title: "Engineering Work",
+    items: [
+      { id: "workbench", label: "Unified Workbench", href: "/engineering/work" },
+    ],
+  },
+  {
     id: "core",
     title: "Core records",
     items: [

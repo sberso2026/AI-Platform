@@ -53,7 +53,7 @@ type GeneratedArtifact = {
   createdAt: string;
   lineageKind?: string;
   originArtifactId?: string | null;
-  provenance: { inputFingerprint: string; engineeringApproved: false };
+  provenance: { inputFingerprint: string; engineeringApproved: false; templateSourceClass?: string | null; templateFallbackUsed?: boolean };
   warnings: string[];
 };
 
@@ -159,6 +159,8 @@ const OUTPUT_ACTIONS: Record<string, Array<{ artifactType: string; label: string
   TQ_RESPONSE: [{ artifactType: "TQ_RESPONSE", label: "Generate TQ Response" }],
   CONCEPT_STUDY: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Technical Memorandum" }],
   CHANGE_ASSESSMENT: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Impact Report" }],
+  HANDOVER_PACKAGE: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Handover Report" }],
+  REVIEW_PACKAGE: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Review Report" }],
 };
 
 function officeLabel(format?: string) {
@@ -182,6 +184,7 @@ export default function WorkPlanPage() {
   const [publishFor, setPublishFor] = useState<string | null>(null);
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
+  const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
 
   async function load() {
     const response = await fetch(`/api/engineering/work?action=plan&id=${encodeURIComponent(params.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
@@ -189,11 +192,12 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
       if (raw?.impact) setImpact(raw.impact);
+      if (raw?.templatePreview) setTemplatePreview(raw.templatePreview);
     }
     const listed = await fetch(`/api/engineering/work?action=artifacts&planId=${encodeURIComponent(params.id)}`);
     const listedJson = await parseApiJsonResponse<GeneratedArtifact[]>(listed);
@@ -385,6 +389,12 @@ export default function WorkPlanPage() {
               {plan.workType.replaceAll("_", " ")} · Status: {plan.readiness.replaceAll("_", " ")} · {plan.status} · {plan.explanations.templateProvenance}
               {plan.systemId ? ` · ${plan.systemId}` : ""}
             </p>
+            {templatePreview?.template && (
+              <p className="mt-2 text-sm">
+                Template: {templatePreview.template.name} {templatePreview.template.code}@{templatePreview.template.version}
+                {templatePreview.sourceClass === "EOS_DEFAULT" || templatePreview.fallbackUsed ? " · Using EOS Default Template" : ` · ${templatePreview.sourceClass?.replaceAll("_", " ")}`}
+              </p>
+            )}
             {plan.explanations.whyBlocked && <p className="mt-2 text-sm">{plan.explanations.whyBlocked}</p>}
             {plan.explanations.whyConditional && <p className="mt-2 text-sm">{plan.explanations.whyConditional}</p>}
             {plan.context.conditions.length > 0 && (
@@ -444,7 +454,7 @@ export default function WorkPlanPage() {
                   </div>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "TECHNICAL_MEMORANDUM", templateCode: "EAT-IMPACT-REPORT" })}>Generate Impact Report</button>
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "TECHNICAL_MEMORANDUM" })}>Generate Impact Report</button>
                   <button type="button" className="rounded border px-3 py-1" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "OPTION_STUDY" })}>Generate Option Study</button>
                   <button type="button" className="rounded border px-3 py-1" onClick={() => void act("runPreIssueReview", { workPlanId: plan.id })}>Run Pre-Issue Review</button>
                 </div>

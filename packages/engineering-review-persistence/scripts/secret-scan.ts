@@ -55,6 +55,11 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_A11E_CHANGE_IMPACT_OPTION_CONSTRUCTION_WORKBENCH.md",
   "supabase/migrations/20260930200000_eos_a11e_change_impact_option_construction.sql",
   "packages/engineering-os/src/change-workbench",
+  "docs/architecture/engineering-os/EOS_A12A_UNIFIED_ENGINEERING_WORKBENCH.md",
+  "supabase/migrations/20261001000000_eos_a12a_artifact_template_governance.sql",
+  "packages/engineering-os/src/workbench",
+  "apps/web/src/app/(platform)/engineering/settings/templates",
+  "apps/web/src/__tests__/eos-a12a-workbench.test.ts",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

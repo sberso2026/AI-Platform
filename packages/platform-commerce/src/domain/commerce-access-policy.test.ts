@@ -154,6 +154,8 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(read.action).toBe("analysis.read");
     expect(write.action).toBe("analysis.write");
     expect(ENGINEERING_SERVICE_POLICIES["work.repository.write"].action).toBe("settings.write");
+    expect(ENGINEERING_SERVICE_POLICIES["artifact.template.write"].action).toBe("settings.write");
+    expect(ENGINEERING_SERVICE_POLICIES["artifact.template.list"].action).toBe("analysis.read");
   });
 
   it("maps Engineering Lifecycle to Engineering OS product, not Project Intelligence", () => {

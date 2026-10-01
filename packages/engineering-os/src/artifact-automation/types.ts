@@ -1,6 +1,7 @@
 import type { ExpectedOutputType, GeneratorWorkType } from "../work-generator/types";
 import type { LifecycleStage } from "../lifecycle-intelligence/types";
 import type { EngineeringWorkPlan } from "../work-generator/types";
+import type { TemplatePresentationKind, TemplateSourceClass } from "./template-policy";
 
 export const ARTIFACT_AI_BOUNDARY = {
   mayDraftNarrativePlaceholders: true,
@@ -84,6 +85,8 @@ export type EngineeringArtifactTemplate = {
   formulas: GovernedFormula[];
   reviewRequired: true;
   productionEngineeringUse: false;
+  sourceClass?: TemplateSourceClass;
+  presentationKind?: TemplatePresentationKind;
 };
 
 export type ArtifactProvenanceManifest = {
@@ -94,6 +97,14 @@ export type ArtifactProvenanceManifest = {
   workTemplateVersion: string;
   artifactTemplateCode: string;
   artifactTemplateVersion: string;
+  templateSourceClass?: string | null;
+  templateResolutionReason?: string | null;
+  templateFallbackUsed?: boolean;
+  templatePolicyId?: string | null;
+  packagedAssetKey?: string | null;
+  calculationDefinitionCode?: string | null;
+  calculationDefinitionVersion?: string | null;
+  calculationDefinitionCertification?: string | null;
   lifecycleStage: string;
   discipline: string | null;
   systemId: string | null;

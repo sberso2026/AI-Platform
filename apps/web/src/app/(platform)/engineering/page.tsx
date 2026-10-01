@@ -190,9 +190,17 @@ export default function EngineeringHomePage() {
           <OperationalPageIntro
             purpose="Exceptions, my work, and recent change — cards open authorized records."
             primaryAction={
-              askEnabled ? (
-                <AskEngineeringAI projectId={projectId} q="What needs my attention?" />
-              ) : null
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/engineering/work"
+                  className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                >
+                  Open Engineering Workbench
+                </Link>
+                {askEnabled ? (
+                  <AskEngineeringAI projectId={projectId} q="What needs my attention?" />
+                ) : null}
+              </div>
             }
           />
 

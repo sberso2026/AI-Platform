@@ -4,10 +4,14 @@ import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import type { EngineeringWorkPlan } from "../work-generator/types";
 import { ARTIFACT_TEMPLATES, listArtifactTemplates } from "./catalog";
-import { generateEngineeringArtifact, selectTemplate } from "./generator";
+import { generateEngineeringArtifact } from "./generator";
 import { createMemoryArtifactStore, type ArtifactStore } from "./memory-store";
+import { createMemoryTemplatePolicyStore, type TemplatePolicyStore } from "./memory-template-store";
 import { ARTIFACT_DOCUMENT_BOUNDARY, artifactThreadGraph, composeDeliverableFromArtifact } from "./provenance";
+import { resolveEngineeringArtifactTemplate } from "./resolve-template";
 import { SupabaseArtifactStore } from "./supabase-store";
+import { SupabaseTemplatePolicyStore } from "./supabase-template-store";
+import { DEFAULT_TEMPLATE_FALLBACK_POLICY, type ArtifactTemplatePolicyRecord, type TenantTemplateFallbackPolicy } from "./template-policy";
 import { ARTIFACT_AI_BOUNDARY, ARTIFACT_PRIVACY, type ArtifactType } from "./types";
 
 export const CALLER_SUPPLIED_ARTIFACT_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current"] as const;
@@ -30,6 +34,7 @@ export class EngineeringArtifactAutomationService {
     private readonly store: ArtifactStore = new SupabaseArtifactStore(supabase),
     private readonly loadPlan: (id: string) => Promise<EngineeringWorkPlan | null> = async () => null,
     private readonly recordEvent?: ArtifactEventRecorder,
+    private readonly policies: TemplatePolicyStore = new SupabaseTemplatePolicyStore(supabase),
   ) {}
 
   catalog() {
@@ -42,6 +47,8 @@ export class EngineeringArtifactAutomationService {
       macrosCreated: false,
       notADms: true,
       notABlobPlatform: true,
+      templateBinaryStorage: "PACKAGED_EOS_DEFAULT_PLUS_METADATA_POLICY",
+      newTemplateDomainCreated: false,
     };
   }
 
@@ -68,6 +75,61 @@ export class EngineeringArtifactAutomationService {
     return row;
   }
 
+  async listTemplatePolicies(commerce: CommerceExecutionContext, tenantId: string) {
+    assertEngineeringService(commerce, "artifact.template.list", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const [rows, fallback] = await Promise.all([this.policies.listPolicies(workspaceId), this.policies.getFallback(workspaceId)]);
+    return {
+      policies: rows.filter((row) => row.tenantId === tenantId),
+      fallbackPolicy: fallback?.fallbackPolicy ?? DEFAULT_TEMPLATE_FALLBACK_POLICY,
+      packagedDefaults: listArtifactTemplates().map((row) => ({
+        code: row.code,
+        version: row.version,
+        name: row.name,
+        artifactType: row.artifactType,
+        sourceClass: row.sourceClass,
+      })),
+    };
+  }
+
+  async saveTemplatePolicy(commerce: CommerceExecutionContext, tenantId: string, row: ArtifactTemplatePolicyRecord) {
+    assertEngineeringService(commerce, "artifact.template.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    if (row.tenantId !== tenantId || row.workspaceId !== workspaceId) throw new Error("scope_denied");
+    return this.policies.savePolicy(row);
+  }
+
+  async saveFallbackPolicy(commerce: CommerceExecutionContext, tenantId: string, row: TenantTemplateFallbackPolicy) {
+    assertEngineeringService(commerce, "artifact.template.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    if (row.tenantId !== tenantId || row.workspaceId !== workspaceId) throw new Error("scope_denied");
+    return this.policies.saveFallback(row);
+  }
+
+  async resolveTemplate(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: { workPlanId: string; artifactType?: ArtifactType; templateCode?: string; templateVersion?: string },
+  ) {
+    assertEngineeringService(commerce, "work.list", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const plan = await this.loadPlan(input.workPlanId);
+    if (!plan || plan.tenantId !== tenantId || plan.workspaceId !== workspaceId) throw new Error("not_found");
+    const [policies, fallback] = await Promise.all([this.policies.listPolicies(workspaceId), this.policies.getFallback(workspaceId)]);
+    return resolveEngineeringArtifactTemplate({
+      plan,
+      artifactType: input.artifactType,
+      requestedCode: input.templateCode,
+      requestedVersion: input.templateVersion,
+      policies: policies.filter((row) => row.tenantId === tenantId),
+      fallbackPolicy: fallback?.fallbackPolicy ?? DEFAULT_TEMPLATE_FALLBACK_POLICY,
+    });
+  }
+
   async generate(
     commerce: CommerceExecutionContext,
     tenantId: string,
@@ -84,8 +146,38 @@ export class EngineeringArtifactAutomationService {
     if (!workspaceId) throw new Error("workspace_required");
     const plan = await this.loadPlan(input.workPlanId);
     if (!plan || plan.tenantId !== tenantId || plan.workspaceId !== workspaceId) throw new Error("not_found");
-    const template = selectTemplate(plan, input.artifactType, input.templateCode, input.templateVersion);
-    if (!template) throw new Error("artifact_template_not_found");
+    const [policies, fallback] = await Promise.all([this.policies.listPolicies(workspaceId), this.policies.getFallback(workspaceId)]);
+    const resolution = resolveEngineeringArtifactTemplate({
+      plan,
+      artifactType: input.artifactType,
+      requestedCode: input.templateCode,
+      requestedVersion: input.templateVersion,
+      policies: policies.filter((row) => row.tenantId === tenantId),
+      fallbackPolicy: fallback?.fallbackPolicy ?? DEFAULT_TEMPLATE_FALLBACK_POLICY,
+    });
+    if (!resolution.ok || !resolution.template) {
+      const run = {
+        id: "blocked-template",
+        tenantId: plan.tenantId,
+        workspaceId: plan.workspaceId,
+        projectId: plan.projectId,
+        workPlanId: plan.id,
+        templateCode: input.templateCode ?? input.artifactType ?? "UNRESOLVED",
+        templateVersion: input.templateVersion ?? "",
+        artifactType: input.artifactType ?? resolution.template?.artifactType ?? "TECHNICAL_MEMORANDUM",
+        outputFormat: "DOCX" as const,
+        requestedBy: commerce.actorUserId ?? null,
+        generatedAt: new Date().toISOString(),
+        workPlanInputFingerprint: plan.inputFingerprint,
+        artifactId: null,
+        status: "GENERATION_BLOCKED" as const,
+        warnings: [] as string[],
+        explanation: resolution.reason,
+        metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
+      };
+      return { ok: false as const, run, artifact: null, resolution };
+    }
+    const template = resolution.template;
     await this.recordEvent?.(commerce, tenantId, {
       eventType: "ARTIFACT_GENERATION_STARTED",
       projectId: plan.projectId,
@@ -100,6 +192,8 @@ export class EngineeringArtifactAutomationService {
       template,
       requestedBy: commerce.actorUserId ?? null,
       projectCode: input.projectCode,
+      resolution,
+      branding: resolution.branding,
     });
     await this.store.saveRun(result.run);
     if (!result.ok) {
@@ -109,7 +203,7 @@ export class EngineeringArtifactAutomationService {
         planId: plan.id,
         actorId: commerce.actorUserId ?? null,
       });
-      return result;
+      return { ...result, resolution };
     }
     for (const older of previous) {
       await this.store.saveArtifact({ ...older, status: "SUPERSEDED", supersededById: result.artifact.id });
@@ -122,14 +216,21 @@ export class EngineeringArtifactAutomationService {
       artifactId: saved.id,
       actorId: commerce.actorUserId ?? null,
     });
-    return { ok: true as const, run: result.run, artifact: { ...saved, contentBase64: "" }, deliverable: composeDeliverableFromArtifact(), thread: artifactThreadGraph({
-      tenantId: saved.tenantId,
-      workspaceId: saved.workspaceId,
-      projectId: saved.projectId,
-      artifactId: saved.id,
-      workPlanId: plan.id,
-      plan,
-    }) };
+    return {
+      ok: true as const,
+      run: result.run,
+      artifact: { ...saved, contentBase64: "" },
+      deliverable: composeDeliverableFromArtifact(),
+      thread: artifactThreadGraph({
+        tenantId: saved.tenantId,
+        workspaceId: saved.workspaceId,
+        projectId: saved.projectId,
+        artifactId: saved.id,
+        workPlanId: plan.id,
+        plan,
+      }),
+      resolution,
+    };
   }
 
   compareContext(artifactFingerprint: string, planFingerprint: string) {
@@ -142,8 +243,13 @@ export class EngineeringArtifactAutomationService {
   }
 }
 
-export function createTestArtifactService(store = createMemoryArtifactStore(), loadPlan: (id: string) => Promise<EngineeringWorkPlan | null> = async () => null, recorder?: ArtifactEventRecorder) {
-  return new EngineeringArtifactAutomationService({ from() { return this; } } as never, store, loadPlan, recorder);
+export function createTestArtifactService(
+  store = createMemoryArtifactStore(),
+  loadPlan: (id: string) => Promise<EngineeringWorkPlan | null> = async () => null,
+  recorder?: ArtifactEventRecorder,
+  policyStore: TemplatePolicyStore = createMemoryTemplatePolicyStore(),
+) {
+  return new EngineeringArtifactAutomationService({ from() { return this; } } as never, store, loadPlan, recorder, policyStore);
 }
 
 export { ARTIFACT_TEMPLATES };

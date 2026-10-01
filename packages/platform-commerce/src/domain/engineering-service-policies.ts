@@ -89,6 +89,8 @@ export const ENGINEERING_SERVICE_POLICIES: Record<string, CommerceAccessPolicy> 
   "work.get": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
   "work.write": { productKey: ENGINEERING_PRODUCT, action: "analysis.write", seatRequired: true, cachePolicy: "fresh" },
   "work.repository.write": { productKey: ENGINEERING_PRODUCT, action: "settings.write", seatRequired: true, cachePolicy: "fresh" },
+  "artifact.template.list": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
+  "artifact.template.write": { productKey: ENGINEERING_PRODUCT, action: "settings.write", seatRequired: true, cachePolicy: "fresh" },
   "information-requirements.list": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
   "information-requirements.get": { productKey: ENGINEERING_PRODUCT, action: "analysis.read", seatRequired: true },
   "information-requirements.write": { productKey: ENGINEERING_PRODUCT, action: "analysis.write", seatRequired: true, cachePolicy: "fresh" },

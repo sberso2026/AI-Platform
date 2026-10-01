@@ -7,6 +7,7 @@ import {
   TextRun,
 } from "docx";
 import type { ArtifactProvenanceManifest, EngineeringArtifactTemplate, WorkPlanLike } from "./types";
+import { documentCreator, type ArtifactBranding } from "./template-policy";
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1) {
   return new Paragraph({ text, heading: level });
@@ -29,6 +30,7 @@ export async function buildDocx(input: {
   plan: WorkPlanLike;
   provenance: ArtifactProvenanceManifest;
   projectCode: string;
+  branding?: ArtifactBranding | null;
 }): Promise<{ buffer: Buffer; sectionCount: number }> {
   const draftBanner = [
     para("DRAFT FOR ENGINEER REVIEW", { bold: true }),
@@ -43,6 +45,8 @@ export async function buildDocx(input: {
     para(`Project: ${input.projectCode}`),
     para(`Work plan: ${input.plan.templateCode}@${input.plan.templateVersion}`),
     para(`Artifact template: ${input.template.code}@${input.template.version}`),
+    para(`Template class: ${input.provenance.templateSourceClass ?? "EOS_DEFAULT"}`),
+    para(`Prepared for: ${documentCreator(input.branding)}`),
     para(`Lifecycle: ${input.provenance.lifecycleStage}`),
     para(`Discipline: ${input.provenance.discipline ?? "unspecified"}`),
     para(`Fingerprint: ${input.provenance.inputFingerprint}`),
@@ -130,8 +134,9 @@ export async function buildDocx(input: {
     para(`Generation run ${input.provenance.generationRunId} — GENERATED_DRAFT. No issued revision.`),
   );
 
+  const creator = documentCreator(input.branding);
   const doc = new Document({
-    creator: "RTB Engineering OS",
+    creator,
     title: input.template.name,
     sections: [
       {
@@ -139,7 +144,7 @@ export async function buildDocx(input: {
         children: [
           new Paragraph({
             alignment: AlignmentType.LEFT,
-            children: [new TextRun({ text: "RTB Engineering OS generated draft", italics: true })],
+            children: [new TextRun({ text: `${creator} generated draft`, italics: true })],
           }),
           ...children,
         ],

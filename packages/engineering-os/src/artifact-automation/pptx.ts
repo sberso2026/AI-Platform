@@ -1,14 +1,17 @@
 import PptxGenJS from "pptxgenjs";
 import type { ArtifactProvenanceManifest, EngineeringArtifactTemplate, WorkPlanLike } from "./types";
+import { documentCreator, type ArtifactBranding } from "./template-policy";
 
 export async function buildPptx(input: {
   template: EngineeringArtifactTemplate;
   plan: WorkPlanLike;
   provenance: ArtifactProvenanceManifest;
   projectCode: string;
+  branding?: ArtifactBranding | null;
 }): Promise<{ buffer: Buffer; slideCount: number }> {
   const pptx = new PptxGenJS();
-  pptx.author = "RTB Engineering OS";
+  const creator = documentCreator(input.branding);
+  pptx.author = creator;
   pptx.title = input.template.name;
   const add = (title: string, lines: string[]) => {
     const slide = pptx.addSlide();
@@ -18,8 +21,10 @@ export async function buildPptx(input: {
   };
   add("Title", [
     input.template.name,
+    `Prepared for: ${documentCreator(input.branding)}`,
     `Project: ${input.projectCode}`,
     `Work plan: ${input.plan.templateCode}@${input.plan.templateVersion}`,
+    `Template: ${input.template.code}@${input.template.version} (${input.provenance.templateSourceClass ?? "EOS_DEFAULT"})`,
     "Not issued. Not engineering approval.",
   ]);
   add("Problem / Objective", ["Assemble option-study context for engineer comparison.", "EOS does not select a recommended option."]);

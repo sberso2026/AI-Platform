@@ -8,6 +8,7 @@ import { EngineeringBreadcrumb } from "@/components/engineering/operational";
 import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
+import { buildAskHref } from "@/hooks/use-engineering-context";
 
 type WorkEvent = {
   id: string;
@@ -50,22 +51,65 @@ type WorkPlan = {
   readiness: string;
   startAllowed: boolean;
   staleness: string;
+  discipline?: string | null;
+  lifecycleStage?: string | null;
   systemId?: string | null;
   generatedAt: string;
+  context?: {
+    information?: Array<{ title: string; revision?: string | null; purpose?: string | null }>;
+    gaps?: Array<{ kind: string; title: string; explanation: string }>;
+  };
 };
 
-const VIEWS = ["Changed", "My Work", "Waiting", "Completed", "By Discipline", "By System", "By Lifecycle Stage"] as const;
+type WorkbenchAction = {
+  code: string;
+  label: string;
+  workType: string | null;
+  href: string | null;
+  availability: "AVAILABLE" | "REQUIRES_WORK_PLAN" | "UNAVAILABLE";
+  reason: string;
+  reuses: string;
+};
+
+type WorkbenchPayload = {
+  lifecycleStage: string;
+  actions: WorkbenchAction[];
+  governingInformation: Array<{ title: string; revision?: string | null; purpose?: string | null }>;
+  deepModules: Array<{ id: string; label: string; href: string }>;
+  metrics: { initialMs: number; plansMs: number; actionsMs: number; governingMs: number };
+};
+
+const MATERIAL_EVENTS = new Set([
+  "WORK_STARTED",
+  "ARTIFACT_GENERATED",
+  "ARTIFACT_RETURNED",
+  "PRE_ISSUE_REVIEW_COMPLETED",
+  "IMPACT_ASSESSMENT_COMPLETED",
+  "RFI_RESPONSE_PREPARED",
+  "SOURCE_REVISED",
+  "SOURCE_PUBLISHED",
+  "DECISION_RECORDED",
+  "CALCULATION_PUBLISHED",
+]);
+
+function readinessLabel(value: string) {
+  if (value === "READY") return "Ready";
+  if (value.includes("CONDITION")) return "Ready with conditions";
+  if (value.includes("BLOCKED") || value === "BLOCKED") return "Blocked";
+  return value.replaceAll("_", " ");
+}
 
 export function WorkWorkspace() {
   const projectId = useResolvedEngineeringProjectId();
   const router = useRouter();
-  const [view, setView] = useState<(typeof VIEWS)[number]>("Changed");
   const [rows, setRows] = useState<WorkEvent[]>([]);
   const [day, setDay] = useState<DayView | null>(null);
   const [templates, setTemplates] = useState<WorkTemplate[]>([]);
   const [plans, setPlans] = useState<WorkPlan[]>([]);
+  const [workbench, setWorkbench] = useState<WorkbenchPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [showSpecialist, setShowSpecialist] = useState(false);
 
   useEffect(() => {
     fetch("/api/engineering/work?action=generatorCatalog")
@@ -78,6 +122,7 @@ export function WorkWorkspace() {
 
   useEffect(() => {
     if (!projectId) return;
+    const started = performance.now();
     fetch(`/api/engineering/work?action=list&projectId=${encodeURIComponent(projectId)}`)
       .then((response) => parseApiJsonResponse<WorkEvent[]>(response))
       .then((json) => {
@@ -98,24 +143,32 @@ export function WorkWorkspace() {
         setPlans(Array.isArray(json.data) ? json.data : []);
       })
       .catch((err: Error) => setError(err.message));
+    fetch(`/api/engineering/work?action=workbench&projectId=${encodeURIComponent(projectId)}`)
+      .then((response) => parseApiJsonResponse<WorkbenchPayload>(response))
+      .then((json) => {
+        if (json.data) setWorkbench(json.data);
+        window.setTimeout(() => {
+          console.info(`[eos-a12a] workbench wall_ms=${Math.round(performance.now() - started)}`);
+        }, 0);
+      })
+      .catch((err: Error) => setError(err.message));
   }, [projectId]);
 
-  const filtered = useMemo(() => {
-    if (view === "Changed") return rows.filter((row) => ["SOURCE_REVISED", "SOURCE_PUBLISHED", "INTERFACE_INFORMATION_CHANGED", "CONFIGURATION_CHANGED"].includes(row.eventType));
-    if (view === "Waiting") return rows.filter((row) => ["DOCUMENT_REVIEW_REQUESTED", "RFI_CREATED", "ACTION_CREATED"].includes(row.eventType));
-    if (view === "Completed") return rows.filter((row) => ["DOCUMENT_REVIEW_COMPLETED", "ACTION_COMPLETED", "RFI_CLOSED", "DECISION_RECORDED", "DRAWING_ISSUED", "DELIVERABLE_ISSUED", "CALCULATION_PUBLISHED"].includes(row.eventType));
-    if (view === "By Discipline") return [...rows].sort((a, b) => String(a.disciplineId ?? "").localeCompare(String(b.disciplineId ?? "")));
-    if (view === "By System") return [...rows].sort((a, b) => String(a.systemId ?? "").localeCompare(String(b.systemId ?? "")));
-    if (view === "By Lifecycle Stage") return [...rows].sort((a, b) => String(a.lifecycleStage ?? "").localeCompare(String(b.lifecycleStage ?? "")));
-    return rows;
-  }, [rows, view]);
+  const openPlans = plans.filter((row) => row.status !== "SUPERSEDED" && row.status !== "CANCELLED");
+  const recent = useMemo(
+    () => rows.filter((row) => MATERIAL_EVENTS.has(row.eventType)).slice(0, 8),
+    [rows],
+  );
+  const lifecycleActions = workbench?.actions ?? [];
+  const startActions = lifecycleActions.filter((row) => row.workType);
+  const governing = workbench?.governingInformation ?? openPlans[0]?.context?.information ?? [];
 
-  async function startWork(template: WorkTemplate) {
+  async function startWork(input: { code: string; workType: string; lifecycleStage?: string; name?: string }) {
     if (!projectId) {
       setError("Select an authorized project first. Project context is reused, not typed as a raw ID.");
       return;
     }
-    setBusy(template.code);
+    setBusy(input.code);
     setError(null);
     const response = await fetch("/api/engineering/work", {
       method: "POST",
@@ -123,57 +176,75 @@ export function WorkWorkspace() {
       body: JSON.stringify({
         action: "generatePlan",
         projectId,
-        workType: template.workType,
-        lifecycleStage: template.lifecycleStage,
+        workType: input.workType,
+        lifecycleStage: input.lifecycleStage ?? workbench?.lifecycleStage,
       }),
     });
     const json = await parseApiJsonResponse<WorkPlan>(response);
     setBusy(null);
     if (json.errorMessage || !json.data?.id) {
-      setError(json.errorMessage ?? "Could not prepare engineering work.");
+      setError(json.errorMessage ?? "Cannot start this work. Check governing information, then Request Information or create an Assumption.");
       return;
     }
     router.push(`/engineering/work/plans/${json.data.id}`);
   }
 
-  const openPlans = plans.filter((row) => row.status !== "SUPERSEDED" && row.status !== "CANCELLED");
+  function runAction(action: WorkbenchAction) {
+    if (action.availability === "UNAVAILABLE") {
+      setError(action.reason);
+      return;
+    }
+    if (action.href) {
+      router.push(action.href);
+      return;
+    }
+    if (action.workType) {
+      void startWork({
+        code: action.code,
+        workType: action.workType,
+        lifecycleStage: workbench?.lifecycleStage !== "UNKNOWN" ? workbench?.lifecycleStage : undefined,
+      });
+    }
+  }
+
+  const askHref = buildAskHref({
+    projectId,
+    q: openPlans[0]
+      ? "What is blocking this work? What information applies, and what changed that affects this system?"
+      : "What information applies to this project, and what engineering work can EOS prepare?",
+  });
 
   return (
     <>
-      <Header title="Engineering Work" description="Prepare the engineering desk. Material workflow events remain visible; this is not employee activity or productivity scoring." />
-      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
+      <Header
+        title="Unified Engineering Workbench"
+        description="Prepare the engineering desk. Material workflow events remain visible; this is not employee activity or productivity scoring."
+      />
+      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="unified-engineering-workbench">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Work" }]} />
         <EngineeringProjectContextBar />
         {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
-        <section className="mt-6" aria-label="Start Engineering Work">
-          <h2 className="text-lg font-semibold">Start Engineering Work</h2>
-          <p className="mt-1 text-sm text-muted-foreground">What can EOS prepare for me? Project and lifecycle context are reused. Artifact generation is A11B.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CHANGE", name: "Change assessment", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION", version: "v1" })}>Assess Change</button>
-            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-OPTION-STUDY", name: "Option study", workType: "OPTION_STUDY", lifecycleStage: "PREFEASIBILITY", version: "v1" })}>Compare Options</button>
-            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CON-RFI", name: "RFI/TQ engineering response", workType: "RFI_TQ_RESPONSE", lifecycleStage: "CONSTRUCTION", version: "v1" })}>Prepare RFI/TQ Response</button>
-            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CHANGE", name: "Field change assessment", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION", version: "v1" })}>Assess Field Change</button>
-          </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {templates.map((template) => (
-              <button
-                key={`${template.code}-${template.lifecycleStage}`}
-                type="button"
-                className="rounded border p-4 text-left text-sm hover:bg-muted/40"
-                onClick={() => void startWork(template)}
-                disabled={Boolean(busy)}
-              >
-                <p className="font-medium">{template.name}</p>
-                <p className="mt-1 text-muted-foreground">{template.workType.replaceAll("_", " ")} · {template.lifecycleStage.replaceAll("_", " ")}</p>
-                <p className="mt-2">{busy === template.code ? "Preparing context…" : "Start Engineering Work"}</p>
-              </button>
-            ))}
-          </div>
+
+        <section className="mt-6 rounded border p-4" aria-label="Project and lifecycle context">
+          <p className="text-sm text-muted-foreground">Project context is selected once and reused. Switching project changes the view, not ownership of existing work.</p>
+          <p className="mt-2 text-base font-medium">
+            Lifecycle: {(workbench?.lifecycleStage ?? "UNKNOWN").replaceAll("_", " ")}
+          </p>
         </section>
+
         <section className="mt-8" aria-label="Continue Work">
           <h2 className="text-lg font-semibold">Continue Work</h2>
           {openPlans.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">No prepared work plans in this project yet.</p>
+            <div className="mt-3 rounded border p-4">
+              <p className="text-sm">No active engineering work for this project.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "START_CALCULATION", workType: "DESIGN_CALCULATION", lifecycleStage: "DETAILED_DESIGN" })}>Start Calculation</button>
+                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "PREPARE_ANALYSIS", workType: "ENGINEERING_ANALYSIS" })}>Start Analysis</button>
+                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "PREPARE_DESIGN_REPORT", workType: "DESIGN_REPORT" })}>Prepare Design Report</button>
+                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "ASSESS_CHANGE", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION" })}>Assess Change</button>
+                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "RESPOND_RFI_TQ", workType: "RFI_TQ_RESPONSE", lifecycleStage: "CONSTRUCTION" })}>Respond to RFI/TQ</button>
+              </div>
+            </div>
           ) : (
             <ul className="mt-3 space-y-2">
               {openPlans.map((plan) => (
@@ -182,14 +253,80 @@ export function WorkWorkspace() {
                     Continue {plan.workType.replaceAll("_", " ")}
                   </Link>
                   <p className="mt-1 text-muted-foreground">
-                    {plan.readiness.replaceAll("_", " ")} · {plan.status} · {plan.templateCode}@{plan.templateVersion}
+                    {readinessLabel(plan.readiness)} · {plan.status.replaceAll("_", " ")} · {plan.templateCode}@{plan.templateVersion}
                     {plan.systemId ? ` · ${plan.systemId}` : ""}
+                    {plan.staleness !== "CURRENT" ? ` · ${plan.staleness.replaceAll("_", " ")}` : ""}
                   </p>
                 </li>
               ))}
             </ul>
           )}
         </section>
+
+        <section className="mt-8" aria-label="Start Engineering Work">
+          <h2 className="text-lg font-semibold">Start Engineering Work</h2>
+          <p className="mt-1 text-sm text-muted-foreground">What can EOS prepare for me? Project and lifecycle context are reused. Artifact generation is A11B.</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {startActions.map((action) => (
+              <button
+                key={action.code}
+                type="button"
+                className="rounded border p-4 text-left text-sm hover:bg-muted/40 disabled:opacity-60"
+                onClick={() => runAction(action)}
+                disabled={Boolean(busy) || action.availability === "UNAVAILABLE" || !projectId}
+                title={action.reason}
+              >
+                <p className="font-medium">{action.label}</p>
+                <p className="mt-1 text-muted-foreground">{action.availability === "UNAVAILABLE" ? action.reason : busy === action.code ? "Preparing context…" : "Start Engineering Work"}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8" aria-label="Governing Information">
+          <h2 className="text-lg font-semibold">Governing Information</h2>
+          {governing.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">No governing information is attached to current work. Start work to assemble applicable sources, or open Information.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {governing.slice(0, 8).map((row) => (
+                <li key={row.title} className="rounded border p-3 text-sm">
+                  <p className="font-medium">{row.title}{row.revision ? ` Rev ${row.revision}` : ""}</p>
+                  {row.purpose ? <p className="mt-1 text-muted-foreground">{row.purpose}</p> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="mt-8" aria-label="Engineering Actions">
+          <h2 className="text-lg font-semibold">Engineering Actions</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {lifecycleActions.filter((row) => !row.workType || row.availability !== "AVAILABLE").map((action) => (
+              <button
+                key={action.code}
+                type="button"
+                className="rounded border px-3 py-2 text-sm disabled:opacity-60"
+                disabled={action.availability === "UNAVAILABLE" || (!action.href && !action.workType)}
+                onClick={() => runAction(action)}
+                title={action.reason}
+              >
+                {action.label}
+              </button>
+            ))}
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CHANGE", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION" })}>Assess Change</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-OPTION-STUDY", workType: "OPTION_STUDY", lifecycleStage: "PREFEASIBILITY" })}>Compare Options</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CON-RFI", workType: "RFI_TQ_RESPONSE", lifecycleStage: "CONSTRUCTION" })}>Prepare RFI/TQ Response</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CHANGE", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION" })}>Assess Field Change</button>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded border p-4" aria-label="Ask EOS">
+          <h2 className="text-lg font-semibold">Ask EOS</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Uses the selected project and current work. AI cannot approve design, issue a response, or override readiness.</p>
+          <Link className="mt-3 inline-block rounded border px-3 py-2 text-sm" href={askHref}>Ask EOS</Link>
+        </section>
+
         {day && (
           <section className="mt-8 rounded border p-4 text-sm" aria-label="Engineering day summary">
             <p>
@@ -198,32 +335,44 @@ export function WorkWorkspace() {
             <p className="mt-1 text-muted-foreground">This is an engineering-state summary, not an employee productivity score.</p>
           </section>
         )}
-        <div className="mt-4">
-          <label className="text-sm">
-            View
-            <select className="eos-select mt-1 block" value={view} onChange={(event) => setView(event.target.value as (typeof VIEWS)[number])} aria-label="Work view">
-              {VIEWS.map((item) => (
-                <option key={item} value={item}>{item}</option>
+
+        <section className="mt-8" aria-label="Recent work">
+          <h2 className="text-lg font-semibold">Recent work</h2>
+          {recent.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">No recent material engineering events for this project view.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {recent.map((row) => (
+                <li key={row.id} className="rounded border p-3 text-sm">
+                  <Link className="font-medium underline-offset-2 hover:underline" href={`/engineering/work/${row.id}`}>
+                    {row.eventType.replaceAll("_", " ")} · {row.sourceObjectType}
+                  </Link>
+                  <p className="mt-1 text-muted-foreground">{row.captureReason} · {row.occurredAt}</p>
+                </li>
               ))}
-            </select>
-          </label>
-        </div>
-        <ul className="mt-4 space-y-2">
-          {filtered.map((row) => (
-            <li key={row.id} className="rounded border p-3 text-sm">
-              <Link className="font-medium underline-offset-2 hover:underline" href={`/engineering/work/${row.id}`}>
-                {row.eventType} · {row.sourceObjectType}:{row.sourceObjectId}
-              </Link>
-              <p className="mt-1">
-                {row.materiality}
-                {row.disciplineId ? ` · ${row.disciplineId}` : ""}
-                {row.confirmationState === "CANDIDATE" ? " · candidate pending confirmation" : ""}
-                {` · ${row.occurredAt}`}
-              </p>
-              <p className="mt-1 text-muted-foreground">{row.captureReason}</p>
-            </li>
-          ))}
-        </ul>
+            </ul>
+          )}
+        </section>
+
+        <section className="mt-8" aria-label="Specialist modules">
+          <button type="button" className="text-sm underline-offset-2 hover:underline" onClick={() => setShowSpecialist((value) => !value)}>
+            {showSpecialist ? "Hide specialist modules" : "Specialist and governance modules"}
+          </button>
+          {showSpecialist ? (
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {(workbench?.deepModules ?? []).map((row) => (
+                <li key={row.id}>
+                  <Link className="rounded border px-3 py-2 text-sm inline-block w-full" href={row.href}>{row.label}</Link>
+                </li>
+              ))}
+              {templates.map((template) => (
+                <li key={`${template.code}-catalog`} className="text-sm text-muted-foreground px-3 py-2">
+                  Catalog: {template.name}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
       </main>
     </>
   );

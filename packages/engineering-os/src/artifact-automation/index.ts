@@ -10,3 +10,7 @@ export * from "./memory-store";
 export * from "./supabase-store";
 export * from "./service";
 export * from "./compose";
+export * from "./template-policy";
+export * from "./resolve-template";
+export * from "./memory-template-store";
+export * from "./supabase-template-store";

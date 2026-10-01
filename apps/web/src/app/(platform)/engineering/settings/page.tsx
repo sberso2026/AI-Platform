@@ -211,6 +211,20 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Artifact Templates</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Company official and project/client presentation templates. EOS Professional Default remains the SME fallback.
+              Ordinary engineers cannot change template policy. Company shells do not certify calculation formulas.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/templates">
+                  Open Artifact Template settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
