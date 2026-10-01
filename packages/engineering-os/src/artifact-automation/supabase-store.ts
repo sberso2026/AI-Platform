@@ -29,6 +29,13 @@ function mapArtifact(row: Record<string, unknown>): GeneratedEngineeringArtifact
     contentBase64: String(row.content_base64 ?? ""),
     createdAt: String(row.created_at),
     supersededById: (row.superseded_by_id as string | null) ?? null,
+    lineageKind: row.lineage_kind === "RETURNED_FROM_ENGINEER" ? "RETURNED_FROM_ENGINEER" : "GENERATED_DRAFT",
+    originArtifactId: (row.origin_artifact_id as string | null) ?? null,
+    originGenerationRunId: (row.origin_generation_run_id as string | null) ?? null,
+    originSha256: (row.origin_sha256 as string | null) ?? null,
+    returnedBy: (row.returned_by as string | null) ?? null,
+    returnedAt: (row.returned_at as string | null) ?? null,
+    malwareScanStatus: String(row.malware_scan_status ?? "NOT_APPLICABLE"),
   };
 }
 
@@ -66,7 +73,7 @@ export class SupabaseArtifactStore implements ArtifactStore {
   async listArtifacts(workspaceId: string, workPlanId: string) {
     const { data, error } = await db(this.supabase)
       .from("engineering_generated_artifacts")
-      .select("id,tenant_id,workspace_id,project_id,generation_run_id,work_plan_id,template_code,template_version,artifact_type,output_format,file_name,mime_type,sha256,byte_size,status,sheet_or_slide_count,provenance,warnings,created_at,superseded_by_id")
+      .select("id,tenant_id,workspace_id,project_id,generation_run_id,work_plan_id,template_code,template_version,artifact_type,output_format,file_name,mime_type,sha256,byte_size,status,sheet_or_slide_count,provenance,warnings,created_at,superseded_by_id,lineage_kind,origin_artifact_id,origin_generation_run_id,origin_sha256,returned_by,returned_at,malware_scan_status")
       .eq("workspace_id", workspaceId)
       .eq("work_plan_id", workPlanId)
       .order("created_at", { ascending: false });
@@ -105,6 +112,13 @@ export class SupabaseArtifactStore implements ArtifactStore {
         content_base64: row.contentBase64,
         created_at: row.createdAt,
         superseded_by_id: row.supersededById,
+        lineage_kind: row.lineageKind,
+        origin_artifact_id: row.originArtifactId,
+        origin_generation_run_id: row.originGenerationRunId,
+        origin_sha256: row.originSha256,
+        returned_by: row.returnedBy,
+        returned_at: row.returnedAt,
+        malware_scan_status: row.malwareScanStatus,
       })
       .select("*")
       .single();

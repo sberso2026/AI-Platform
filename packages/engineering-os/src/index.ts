@@ -236,6 +236,13 @@ export {
   ARTIFACT_TYPES,
   ARTIFACT_GENERATION_STATUSES,
 } from "./artifact-automation/types";
+export { EngineeringToolOrchestrationService } from "./tool-orchestration/service";
+export {
+  TOOL_ORCHESTRATION_PRIVACY,
+  DESKTOP_BRIDGE_STATUS,
+  HANDOFF_MODES,
+  A11D_HANDOFF,
+} from "./tool-orchestration/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,

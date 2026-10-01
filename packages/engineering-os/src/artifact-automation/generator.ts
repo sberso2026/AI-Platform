@@ -162,6 +162,13 @@ export async function generateEngineeringArtifact(input: {
     contentBase64: buffer.toString("base64"),
     createdAt: generatedAt,
     supersededById: null,
+    lineageKind: "GENERATED_DRAFT",
+    originArtifactId: null,
+    originGenerationRunId: null,
+    originSha256: null,
+    returnedBy: null,
+    returnedAt: null,
+    malwareScanStatus: "NOT_APPLICABLE",
   };
   const run: EngineeringArtifactGenerationRun = {
     ...runBase,

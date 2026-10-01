@@ -55,6 +55,7 @@ import { EngineeringWorkContextService } from "./work-context/service";
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
 import { EngineeringWorkGeneratorService } from "./work-generator/service";
 import { EngineeringArtifactAutomationService } from "./artifact-automation/service";
+import { EngineeringToolOrchestrationService } from "./tool-orchestration/service";
 import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
@@ -101,6 +102,7 @@ export interface EngineeringOS {
   work: EngineeringWorkContextService;
   workGenerator: EngineeringWorkGeneratorService;
   artifactAutomation: EngineeringArtifactAutomationService;
+  toolOrchestration: EngineeringToolOrchestrationService;
   informationRequirements: EngineeringInformationRequirementService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
@@ -174,6 +176,22 @@ export function createEngineeringOS(
   });
   const artifactAutomation = new EngineeringArtifactAutomationService(
     supabase,
+    undefined,
+    (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
+    async (commerce, tenantId, input) => {
+      await work.recordMaterialEvent(commerce, tenantId, {
+        eventType: input.eventType,
+        projectId: input.projectId,
+        sourceObjectType: input.artifactId ? "engineering_generated_artifact" : "engineering_work_plan",
+        sourceObjectId: input.artifactId ?? input.planId,
+        sourceEventId: `${input.eventType}:${input.artifactId ?? input.planId}`,
+        actorId: input.actorId,
+      });
+    },
+  );
+  const toolOrchestration = new EngineeringToolOrchestrationService(
+    supabase,
+    undefined,
     undefined,
     (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
     async (commerce, tenantId, input) => {
@@ -279,6 +297,7 @@ export function createEngineeringOS(
     work,
     workGenerator,
     artifactAutomation,
+    toolOrchestration,
     informationRequirements,
     timeline,
     activity,

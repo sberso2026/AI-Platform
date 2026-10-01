@@ -4,9 +4,18 @@ import { assembleSnapshotFromRecords, type EngineeringOS } from "@rtb/engineerin
 import type { CommerceExecutionContext } from "@rtb/types";
 
 function statusFor(message: string): number {
-  if (message.includes("denied") || message.includes("mismatch") || message.includes("broadening")) return 403;
+  if (
+    message.includes("denied") ||
+    message.includes("DENIED") ||
+    message.includes("mismatch") ||
+    message.includes("MISMATCH") ||
+    message.includes("UNAUTHORIZED") ||
+    message.includes("OUTSIDE_EOS") ||
+    message.includes("broadening")
+  ) return 403;
   if (message === "workspace_required" || message === "caller_supplied_authority_rejected" || message === "project_required") return 400;
   if (message === "work_plan_stale" || message === "unmanaged_file_outside_eos") return 409;
+  if (message === "HANDOFF_EXPIRED" || message === "BRIDGE_UNAVAILABLE" || message === "CAPABILITY_NOT_CERTIFIED") return 409;
   return 400;
 }
 
@@ -146,10 +155,37 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
     const data = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, id);
     if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
     const artifacts = await ctx.engineering.artifactAutomation.list(commerce, ctx.tenantId, data.id);
-    return NextResponse.json({ data, continueWork: ctx.engineering.workGenerator.continueWorkSummary(data), artifacts });
+    let handoffs: unknown[] = [];
+    try {
+      handoffs = await ctx.engineering.toolOrchestration.listHandoffs(commerce, ctx.tenantId, data.id);
+    } catch {
+      handoffs = [];
+    }
+    const selectedProjectId = url.searchParams.get("selectedProjectId");
+    const launcher = ctx.engineering.toolOrchestration.launcher(data, artifacts, selectedProjectId);
+    return NextResponse.json({
+      data,
+      continueWork: ctx.engineering.workGenerator.continueWorkSummary(data),
+      artifacts,
+      handoffs,
+      launcher,
+      tools: ctx.engineering.toolOrchestration.catalog(),
+    });
   }
   if (action === "artifactCatalog") {
     return NextResponse.json({ data: ctx.engineering.artifactAutomation.catalog() });
+  }
+  if (action === "toolCatalog") {
+    return NextResponse.json({ data: ctx.engineering.toolOrchestration.catalog() });
+  }
+  if (action === "openGoverningSource") {
+    const workPlanId = url.searchParams.get("workPlanId") ?? url.searchParams.get("id") ?? "";
+    if (!workPlanId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.toolOrchestration.openGoverningSource(commerce, ctx.tenantId, {
+      workPlanId,
+      sourceTitle: url.searchParams.get("sourceTitle"),
+    });
+    return NextResponse.json({ data });
   }
   if (action === "artifacts") {
     const planId = url.searchParams.get("planId") ?? "";
@@ -176,7 +212,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -282,6 +318,56 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       const plan = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, String(body.workPlanId ?? body.id ?? artifact?.workPlanId ?? ""));
       if (!artifact || !plan) return NextResponse.json({ error: "not_found" }, { status: 404 });
       return NextResponse.json({ data: ctx.engineering.artifactAutomation.compareContext(artifact.provenance.inputFingerprint, plan.inputFingerprint) });
+    }
+    if (action === "prepareHandoff") {
+      const data = await ctx.engineering.toolOrchestration.prepareHandoff(commerce, ctx.tenantId, {
+        workPlanId: String(body.workPlanId ?? body.id ?? ""),
+        artifactId: typeof body.artifactId === "string" ? body.artifactId : null,
+        mode: typeof body.mode === "string" ? (body.mode as never) : undefined,
+        toolCode: typeof body.toolCode === "string" ? body.toolCode : undefined,
+        capability: typeof body.capability === "string" ? (body.capability as never) : undefined,
+        selectedProjectId: typeof body.selectedProjectId === "string" ? body.selectedProjectId : null,
+        sourceTitle: typeof body.sourceTitle === "string" ? body.sourceTitle : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "redeemHandoff") {
+      const data = await ctx.engineering.toolOrchestration.redeemHandoff(
+        commerce,
+        ctx.tenantId,
+        String(body.handoffId ?? body.id ?? ""),
+        String(body.token ?? ""),
+      );
+      return NextResponse.json({ data });
+    }
+    if (action === "publishUpdatedArtifact") {
+      if ("controlledFixture" in body) {
+        return NextResponse.json({ error: "caller_supplied_authority_rejected" }, { status: 400 });
+      }
+      const data = await ctx.engineering.toolOrchestration.publishUpdatedArtifact(commerce, ctx.tenantId, {
+        originArtifactId: String(body.originArtifactId ?? body.artifactId ?? ""),
+        fileName: String(body.fileName ?? ""),
+        contentBase64: String(body.contentBase64 ?? ""),
+        unmanagedPath: typeof body.unmanagedPath === "string" ? body.unmanagedPath : null,
+        selectedProjectId: typeof body.selectedProjectId === "string" ? body.selectedProjectId : null,
+        explicitProjectId: typeof body.explicitProjectId === "string" ? body.explicitProjectId : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "prepareAnalysisRequest") {
+      const data = await ctx.engineering.toolOrchestration.prepareAnalysisRequest(
+        commerce,
+        ctx.tenantId,
+        String(body.workPlanId ?? body.id ?? ""),
+      );
+      return NextResponse.json({ data });
+    }
+    if (action === "openGoverningSource") {
+      const data = await ctx.engineering.toolOrchestration.openGoverningSource(commerce, ctx.tenantId, {
+        workPlanId: String(body.workPlanId ?? body.id ?? ""),
+        sourceTitle: typeof body.sourceTitle === "string" ? body.sourceTitle : null,
+      });
+      return NextResponse.json({ data });
     }
     return NextResponse.json({ error: "unknown_action" }, { status: 400 });
   } catch (error) {

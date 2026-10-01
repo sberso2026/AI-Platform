@@ -135,6 +135,13 @@ export type GeneratedEngineeringArtifact = {
   contentBase64: string;
   createdAt: string;
   supersededById: string | null;
+  lineageKind: "GENERATED_DRAFT" | "RETURNED_FROM_ENGINEER";
+  originArtifactId: string | null;
+  originGenerationRunId: string | null;
+  originSha256: string | null;
+  returnedBy: string | null;
+  returnedAt: string | null;
+  malwareScanStatus: string;
 };
 
 export type EngineeringArtifactGenerationRun = {
