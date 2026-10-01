@@ -79,6 +79,9 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_CONTROLLED_PILOT_RUNBOOK.md",
   "supabase/migrations/20261001210000_eos_a14a_artifact_object_storage.sql",
   "packages/engineering-os/src/pilot/a14a-profile.ts",
+  "packages/engineering-os/src/pilot/a14b-reliability.ts",
+  "docs/architecture/engineering-os/EOS_A14B_RELIABILITY_PERFORMANCE_RECOVERY_PILOT_OPERATIONS.md",
+  "docs/architecture/engineering-os/EOS_DISASTER_RECOVERY_RUNBOOK.md",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

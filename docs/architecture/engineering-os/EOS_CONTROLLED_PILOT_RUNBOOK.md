@@ -24,7 +24,36 @@ Reuse the existing certification tenant/workspace fixtures. Do not broaden to pr
 3. Complete the authenticator TOTP challenge in the browser.
 4. Do not share TOTP, print authenticator secrets, inject cookies, or disable MFA.
 
-Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open.
+Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. A14B recheck: still BLOCKED (authenticator TOTP must be entered by the operator in the browser).
+
+## Malware / returned uploads (A14B recheck)
+
+HOSTED_MALWARE_SCANNER remains BLOCKED unless `RTB_REVIEW_CLAMAV_URL` points at a reachable hosted scanner. Unit CLEAN/EICAR/fail-closed tests are architecture evidence only. Returned binary uploads stay prohibited.
+
+## Dependency state (A14B recheck)
+
+Raw production audit must be rerun each phase. Expired SCA exceptions (`review_by: 2026-09-30`) were not auto-renewed. DEPENDENCY_POLICY_GATE remains BLOCKED while unaccepted runtime-relevant highs exist.
+
+## Backup / restore (A14B)
+
+Provider backups: Supabase staging. PITR not claimed. Logical metadata restore rehearsal exists for disposable generated-artifact rows. Object-storage recovery is consistency/orphan/legacy-recreate, not a full region failover. See `EOS_DISASTER_RECOVERY_RUNBOOK.md`.
+
+## Monitoring
+
+System health only: application, database, object storage, malware scanner, jobs. Optional PROFILE A connectors are NOT_APPLICABLE and must not be treated as unhealthy blockers. Do not alert on engineer activity.
+
+## Support / incident
+
+1. Capture correlation/request/job id (not file bodies).
+2. Stop the affected workflow.
+3. If stop conditions hit (cross-tenant exposure, malware ingestion, integrity failure, AAL2 bypass, unapproved automation), disable the kill switch.
+4. Restore per the DR runbook.
+5. Verify RLS and authorized download.
+6. Named engineering admin approves resume.
+
+## Pilot restrictions
+
+Non-production; named cert users only; Profile A workflows only; no solver; no EXAMPLE_ONLY calculation for design acceptance; no unapproved connectors; no returned uploads until hosted malware PASS; human approval mandatory.
 
 ## Allowed workflows
 

@@ -238,6 +238,13 @@ export class EngineeringWorkContextService {
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
     if (!input.projectId) throw new Error("project_required");
+    const duplicate = await this.store.findEventBySource({
+      tenantId,
+      workspaceId,
+      sourceSystem: "engineering-os",
+      sourceEventId: input.sourceEventId,
+    });
+    if (duplicate) return duplicate;
     const now = new Date().toISOString();
     const persisted: EngineeringWorkEvent = {
       id: newId(),

@@ -1,5 +1,6 @@
 export * from "./pilot/eos-ai-doc-2-flags";
 export * from "./pilot/a14a-profile";
+export * from "./pilot/a14b-reliability";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";
@@ -252,6 +253,7 @@ export {
 export { LegacyRelationalArtifactBinaryStore, MemoryObjectArtifactBinaryStore, RoutingArtifactBinaryStore } from "./artifact-automation/binary-adapters";
 export { SupabaseArtifactBinaryStore } from "./artifact-automation/supabase-binary-store";
 export { sanitizeArtifactFileName } from "./artifact-automation/filename";
+export { assessObjectConsistency, reconcileArtifactStorage } from "./artifact-automation/storage-reconciliation";
 export { EngineeringInformationRequirementService } from "./information-requirements/service";
 export {
   INFORMATION_REQUIREMENT_AI_BOUNDARY,
