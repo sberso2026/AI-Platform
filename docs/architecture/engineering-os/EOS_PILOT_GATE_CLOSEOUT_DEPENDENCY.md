@@ -1,61 +1,66 @@
 # EOS Pilot Gate Closeout — Dependency record
 
-Scanned: 2026-10-01 with `pnpm audit --prod --json`.  
-Expired SCA exceptions were **not** auto-renewed. `run-dependency-sca.ts` now applies only exceptions with `review_by >= today`.
+Scanned: 2026-10-01 continuation with `pnpm audit --prod --json`.  
+Expired SCA exceptions were **not** auto-renewed. `run-dependency-sca.ts` applies only exceptions with `review_by >= today`.
 
 ## Raw audit
 
 | When | critical | high | moderate | low |
 |---|---|---|---|---|
-| Start of closeout | 0 | 12 | 4 | 0 |
-| After bounded overrides | 0 | 4 | 2 | 0 |
+| Start of original closeout | 0 | 12 | 4 | 0 |
+| After original closeout overrides | 0 | 4 | 2 | 0 |
+| After continuation overrides | 0 | 0 | 1 | 0 |
 
-RAW_DEPENDENCY_AUDIT = FAIL (highs remain).
+RAW_DEPENDENCY_AUDIT = FAIL (pnpm `audit --prod` still exits non-zero because one moderate remains).  
+SCA script `pass` = true (`unresolvedCritical` empty, `unresolvedHigh` empty).
 
-## Fixed in this closeout (overrides)
+## Continuation bounded overrides
 
 | Advisory | Package | Before | Action |
 |---|---|---|---|
-| GHSA-28wg-ghj8-5hjv | nanoid | 3.3.15 via next→postcss | override `>=3.3.18` |
-| GHSA-2v37-7h3g-55p8 | nanoid | 3.3.15 | same |
-| GHSA-mh99-v99m-4gvg | brace-expansion | 1.1.16 via exceljs→glob | pin `1.1.20` |
-| GHSA-rgw5-rvv9-x895 | brace-expansion | 1.1.16 | pin `1.1.20` |
-| GHSA-qhr7-859c-m2p7 | brace-expansion | 1.1.16 | pin `1.1.20` |
-| GHSA-6j4f-fj2g-mc7p | brace-expansion | 1.1.16 | pin `1.1.20` |
-| GHSA-6g55-p6wh-862q | postcss | 8.4.31 via next | override `>=8.5.18` |
-| GHSA-r28c-9q8g-f849 | postcss | 8.4.31 | override `>=8.5.18` |
+| GHSA-f88m-g3jw-g9cj | sharp | 0.34.5 via next@15.5.24 | override `>=0.35.4` → 0.35.5 |
+| GHSA-rgj7-g3m4-5g8c | sharp | 0.34.5 via next | same |
+| GHSA-5p2g-fcmc-qvqq | image-size | 1.2.1 via pptxgenjs@4.0.1 | override `>=2.0.3` → 2.0.4 |
+| GHSA-w3rx-r6r6-pgpr | image-size | 1.2.1 via pptxgenjs | same |
+| GHSA-q2hr-2g5m-vwhr | brace-expansion | 1.1.20 (moderate after original pin) | pin `1.1.21` |
 
-`brace-expansion: ">=1.1.20"` was **not** kept: it resolved to 5.0.7 and the same GHSAs remained.
+Original closeout overrides retained: `next@15.5.24`, `@xmldom/xmldom ^0.8.15`, `nanoid >=3.3.18`, `postcss >=8.5.18`.
 
-nanoid is not imported by `@rtb/engineering-os`. Path was Next CSS toolchain (build). Still patched because it appeared in `--prod` audit via Next.
+`brace-expansion: ">=1.1.20"` remains rejected: it resolved to 5.0.7 and reintroduced highs. The pin is exact `1.1.21`.
 
-## Remaining highs (4) — reachability
+## Sharp reachability
 
-| Advisory | Package | Installed | Path | Profile A classification | Fix | Action taken |
-|---|---|---|---|---|---|---|
-| GHSA-f88m-g3jw-g9cj | sharp | 0.34.5 | next@15.5.24 → sharp | UNKNOWN — no `next/image` in apps/web src; `/_next/image` still exists in Next. Cannot treat as safe. | >=0.35.0 (breaking vs Next 15.5.24 pin) | not upgraded |
-| GHSA-rgj7-g3m4-5g8c | sharp | 0.34.5 | next → sharp | UNKNOWN (same) | >=0.35.4 | not upgraded |
-| GHSA-5p2g-fcmc-qvqq | image-size | 1.2.1 | pptxgenjs@4.0.1 | UNKNOWN — EOS PPTX builder uses text slides only (`addText`); parser still present in pptxgenjs. Returned uploads remain disabled. | >=2.0.3 major | not upgraded |
-| GHSA-w3rx-r6r6-pgpr | image-size | 1.2.1 | pptxgenjs | UNKNOWN (same) | >=2.0.3 major | not upgraded |
+Path: `apps/web` → `next@15.5.24` → optional `sharp@0.35.5`.  
+Route: Next image optimizer `GET /_next/image` (middleware-excluded). No `next/image` imports in `apps/web/src`.  
+Input: `url`, `w`, `q` query parameters can be caller-controlled if the optimizer is invoked.  
+Continuation classification: previously UNKNOWN / potentially runtime. Advisory floor `>=0.35.4` is now installed. **FIXED.**  
+Profile A Workbench/artifact/review routes do not import sharp directly.
 
-RUNTIME_REACHABLE_HIGH (proven on Workbench/artifact/review path): NONE.  
-UNACCEPTED_RUNTIME_HIGH / UNKNOWN: the four rows above.  
-NON_RUNTIME_HIGH after fix: postcss/nanoid/brace-expansion no longer in high set.
+## image-size / pptxgenjs reachability
+
+Path: `@rtb/engineering-os` → `pptxgenjs@4.0.1` → `image-size@2.0.4`.  
+EOS PPTX builder (`artifact-automation/pptx.ts`) uses `addText` only (no `addImage`). Parser is still present in pptxgenjs.  
+`eos-a11b-foundation` PPTX generation passed after the 2.0.4 override.  
+Returned uploads remain disabled until hosted malware PASS, so user-controlled images do not reach this parser on the returned-artifact path.  
+Continuation classification: previously UNKNOWN. Advisory floor `>=2.0.3` is now installed. **FIXED.**
+
+## Remaining finding (moderate, not a high)
+
+| Advisory | Package | Installed | Path | Classification | Action |
+|---|---|---|---|---|---|
+| GHSA-w5hq-g745-h8pq | uuid | 8.3.2 | exceljs@4.4.0 (EOS XLSX generation) | RUNTIME_LOADED_MODERATE. Advisory is v3/v5/v6 when `buf` is provided. Patch is uuid >=11.1.1 (major). Not applied: would be a major bump through exceljs, not a smallest-safe high fix. | none; not a policy-gate high |
+
+RUNTIME_REACHABLE_HIGH: NONE.  
+UNKNOWN_HIGH: NONE.  
+UNACCEPTED_RUNTIME_HIGH: NONE.
 
 ## Exceptions
 
 ACTIVE_ACCEPTED_HIGH_EXCEPTIONS: NONE.  
-EXPIRED_EXCEPTIONS (review_by 2026-09-30, not applied):
-
-- GHSA-f88m-g3jw-g9cj (sharp) — still present
-- GHSA-m99w-x7hq-7vfj, GHSA-89xv-2m56-2m9x, GHSA-p9j2-gv94-2wf4 (next) — not in current audit
-- GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849 (postcss) — fixed by override
-- GHSA-28wg-ghj8-5hjv, GHSA-2v37-7h3g-55p8 (nanoid) — fixed by override
-
-No new human-governed exception was recorded.
+EXPIRED_EXCEPTIONS (`review_by` 2026-09-30, not applied): eight rows in `sca-exceptions.json` (sharp/next/postcss/nanoid IDs). None renewed. None fabricated.
 
 ## Policy gate
 
 critical = 0.  
-Unaccepted highs remain (4), classification UNKNOWN for Profile A runtime.  
-DEPENDENCY_POLICY_GATE = BLOCKED.
+unaccepted runtime-reachable high = 0.  
+DEPENDENCY_POLICY_GATE = PASS.

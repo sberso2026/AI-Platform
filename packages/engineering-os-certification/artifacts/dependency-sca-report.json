@@ -1,57 +1,27 @@
 {
   "schemaVersion": "rtb-dependency-sca-report/1",
-  "scannedAt": "2026-10-01T13:38:18.047Z",
+  "scannedAt": "2026-10-01T15:03:54.115Z",
   "tool": "pnpm audit --prod --json",
   "metadata": {
     "vulnerabilities": {
       "info": 0,
       "low": 0,
-      "moderate": 2,
-      "high": 4,
+      "moderate": 1,
+      "high": 0,
       "critical": 0
     },
-    "dependencies": 230,
+    "dependencies": 231,
     "devDependencies": 0,
     "optionalDependencies": 0,
-    "totalDependencies": 230
+    "totalDependencies": 231
   },
-  "findingCount": 6,
+  "findingCount": 1,
   "findings": [
     {
       "severity": "moderate",
       "package": "uuid",
       "advisory": "GHSA-w5hq-g745-h8pq",
       "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided"
-    },
-    {
-      "severity": "high",
-      "package": "sharp",
-      "advisory": "GHSA-f88m-g3jw-g9cj",
-      "title": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591"
-    },
-    {
-      "severity": "high",
-      "package": "sharp",
-      "advisory": "GHSA-rgj7-g3m4-5g8c",
-      "title": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545"
-    },
-    {
-      "severity": "high",
-      "package": "image-size",
-      "advisory": "GHSA-5p2g-fcmc-qvqq",
-      "title": "image-size: JXL and HEIF parsers allow denial of service through infinite loops"
-    },
-    {
-      "severity": "high",
-      "package": "image-size",
-      "advisory": "GHSA-w3rx-r6r6-pgpr",
-      "title": "image-size: ICNS parser allows denial of service through an infinite loop"
-    },
-    {
-      "severity": "moderate",
-      "package": "brace-expansion",
-      "advisory": "GHSA-q2hr-2g5m-vwhr",
-      "title": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service"
     }
   ],
   "exceptionsApplied": [],
@@ -99,13 +69,8 @@
   ],
   "CriticalDependencyVulnerabilityUnresolved": false,
   "unresolvedCritical": [],
-  "unresolvedHigh": [
-    "GHSA-f88m-g3jw-g9cj",
-    "GHSA-rgj7-g3m4-5g8c",
-    "GHSA-5p2g-fcmc-qvqq",
-    "GHSA-w3rx-r6r6-pgpr"
-  ],
+  "unresolvedHigh": [],
   "DependencyScaReady": true,
   "DependencyScaCiEnforced": true,
-  "pass": false
+  "pass": true
 }

@@ -1,16 +1,17 @@
 # EOS Pilot Gate Closeout
 
 Target: STAGING / NON-PRODUCTION (`rntonzigxwxcjlcsadip`).  
-Baseline: `60ed9dbb96ea7e9f179bdfb47b8ce39eb3ef7d29` (A15A).  
+Continuation baseline: `f7ee63304392062c3b612c0ff94ea5d5826f9a8d` (A15A-V1).  
+Prior closeout baseline: `60ed9dbb96ea7e9f179bdfb47b8ce39eb3ef7d29` (A15A).  
 Feature freeze: preserved. No new engineering domain, connector, solver, Review/Change/Lifecycle engine, DMS, graph store, or Event Bus.
 
 READY_FOR_PRODUCTION = NO.  
 CONTROLLED_PILOT_READY = NO.  
 A15B_ELIGIBLE = NO.
 
-This phase closed what could be closed without weakening MFA, inventing hosted malware, or auto-renewing expired SCA exceptions.
+This continuation closed the dependency-policy blocker with bounded production overrides. It did not weaken MFA, invent hosted malware, or auto-renew expired SCA exceptions.
 
-## Initial blockers
+## Initial blockers (still the only Profile A remainder except dependency)
 
 1. HUMAN_AAL2_GATE = BLOCKED  
 2. AUTHENTICATED_BROWSER_HITL = NOT_TESTED  
@@ -18,25 +19,26 @@ This phase closed what could be closed without weakening MFA, inventing hosted m
 4. LIFECYCLE_BROWSER_HITL = NOT_TESTED  
 5. HOSTED_MALWARE_SCANNER = BLOCKED  
 6. RETURNED_ARTIFACT_PILOT = BLOCKED  
-7. DEPENDENCY_POLICY_GATE = BLOCKED  
+7. DEPENDENCY_POLICY_GATE = **PASS** (this continuation)
 
-## Current build
+## Current build (continuation)
 
-localhost:3002 was serving `commitSha=60ed9dbb…`, branch `cursor/era-7a-engineering-review-pilot-gate`, `RTB_REVIEW_RUNTIME=staging`, `/login` 200, `/api/platform/build-identity` 200. `RTB_REVIEW_CLAMAV_URL` unset (process and env files).
+localhost:3002 process started 2026-10-01T15:00:29Z via `scripts/review-staging.mjs`.  
+`/api/platform/build-identity` 200 with `commitSha=f7ee63304392062c3b612c0ff94ea5d5826f9a8d`, branch `cursor/era-7a-engineering-review-pilot-gate`, `reviewRuntime=staging`, `supabaseProjectRef=rntonzigxwxcjlcsadip`, `dirty=true` (unrelated ERA leftovers not discarded, not staged). `/login` 200. `RTB_REVIEW_CLAMAV_URL` unset (process and `.env.local`).
 
 ## AAL2 evidence
 
-Password sign-in as `cert-er-a1@rtb-cert.test` reached:
+Password sign-in as `cert-er-a1@rtb-cert.test` on the current HEAD server reached:
 
 `http://localhost:3002/login/mfa?next=%2Fengineering%2Fwork`
 
-Authenticator code field was shown. Automation **stopped**. TOTP was not requested in chat, not generated, not injected. Browser was unlocked for the operator.
+Authenticator code field was shown. Page status: `Identity assurance: AAL1`. Automation **stopped**. TOTP was not requested in chat, not generated, not injected. Browser was unlocked for the operator.
 
-HUMAN_AAL2_GATE = BLOCKED (operator TOTP not completed in this closeout).  
+HUMAN_AAL2_GATE = BLOCKED (operator TOTP not completed in this continuation).  
 SERVER_AAL2_PROOF = NOT_TESTED (`/api/platform/identity-assurance` requires the same AAL2 session).  
-All authenticated Workbench / Work Plan / artifact / review / impact / My Engineering Day / multi-project / lifecycle browser HITL remain NOT_TESTED.
+Authenticated Workbench / Work Plan / value-criteria / Option Study / Pre-Issue Review / Change Impact / My Engineering Day / multi-project / lifecycle browser HITL remain NOT_TESTED.
 
-CROSS_PROJECT_CONTAMINATION = NO (no authenticated session in which to contaminate; A15A in-process isolation still PASS).
+CROSS_PROJECT_CONTAMINATION = NO (no authenticated AAL2 session in which to contaminate; A15A in-process isolation still PASS).
 
 ## Hosted malware
 
@@ -55,21 +57,24 @@ A valid hosted scanner was **not** present: URL unset; localhost-only ClamAV is 
 | Returned-artifact round trip | BLOCKED |
 | Infected return | NOT_TESTED on hosted path |
 
-Unit CLEAN/EICAR/fail-closed remain architecture evidence only.
+Unit CLEAN/EICAR/fail-closed remain architecture evidence only (`malware-scan.test.ts`, `file-ingestion-policy.test.ts`, `eos-a14a-security.test.ts`).
 
-## Dependency closeout
+## Dependency closeout (continuation)
 
 Fresh `pnpm audit --prod`: see `EOS_PILOT_GATE_CLOSEOUT_DEPENDENCY.md`.
 
-Bounded overrides (patch/minor only; no exception renewal):
+Bounded overrides added in this continuation (patch/minor or required advisory floor only; no exception renewal):
 
-- `nanoid` >= 3.3.18 (fixed GHSA-28wg-ghj8-5hjv, GHSA-2v37-7h3g-55p8)
-- `brace-expansion` pinned 1.1.20 (fixed four brace-expansion highs; `>=1.1.20` was rejected after it resolved to 5.0.7 which remained vulnerable)
-- `postcss` >= 8.5.18 (fixed GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849)
+- `image-size` >= 2.0.3 (resolved 2.0.4; fixed GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr)
+- `sharp` >= 0.35.4 (resolved 0.35.5; fixed GHSA-f88m-g3jw-g9cj, GHSA-rgj7-g3m4-5g8c)
+- `brace-expansion` pin moved 1.1.20 → 1.1.21 (fixed remaining moderate GHSA-q2hr-2g5m-vwhr without resolving to 5.x)
 
-SCA script now ignores **expired** exceptions (`review_by < today`). Expired rows were not extended.
+PPTX generation tests passed against `pptxgenjs@4.0.1` + `image-size@2.0.4`.
 
-Remaining unaccepted highs (4): sharp ×2, image-size ×2. Not proven non-runtime. DEPENDENCY_POLICY_GATE = BLOCKED.
+critical = 0. high = 0. Remaining raw finding: 1 moderate (`uuid@8.3.2` via exceljs, GHSA-w5hq-g745-h8pq). No new human-governed exception. Expired exceptions were not applied.
+
+DEPENDENCY_POLICY_GATE = PASS.  
+RAW_DEPENDENCY_AUDIT = FAIL (moderate remains; pnpm audit --prod exits non-zero).
 
 ## Reliability carry-forward (not new blockers)
 
@@ -81,24 +86,49 @@ A14B DATABASE_RESTORE PASS_WITH_LIMITATIONS, SOAK PASS_WITH_LIMITATIONS, MEMORY_
 |---|---|
 | Human AAL2 | BLOCKED |
 | Server AAL2 | NOT_TESTED |
-| Authenticated / multi-project / lifecycle browser HITL | NOT_TESTED |
+| Authenticated Workbench HITL | NOT_TESTED |
+| Work Plan HITL | NOT_TESTED |
+| Value-criteria HITL | NOT_TESTED |
+| Multi-project browser HITL | NOT_TESTED |
+| Lifecycle browser HITL | NOT_TESTED |
 | RLS / IDOR / service-role / Secrets / object storage / templates | PASS (regression) |
-| Hosted malware / returned-artifact malware gate | BLOCKED |
-| Dependency policy | BLOCKED |
+| Hosted malware | BLOCKED |
+| Returned-artifact malware gate | BLOCKED |
+| OpenXML | PASS (regression) |
+| Dependency policy | PASS |
+| Pre-Issue Review / Change Impact / RFI/TQ / Digital Thread | PASS (regression; browser HITL NOT_TESTED) |
 | Named users / kill switch / runbook | PASS |
+| Privacy / no surveillance | PASS |
 | Live SharePoint / EDMS / BIM / P6 / solver / EXAMPLE_ONLY calc / PDF | NOT_APPLICABLE |
 
-CONTROLLED_PILOT_READY = NO because mandatory gates remain BLOCKED or NOT_TESTED.
+CONTROLLED_PILOT_READY = NO because mandatory AAL2, authenticated browser HITL, hosted malware, and returned-artifact gates remain BLOCKED or NOT_TESTED.
 
-## Closeout regressions (2026-10-01)
+## Closeout continuation regressions (2026-10-01)
 
-- `@rtb/engineering-os` tests: 120 files / 779 tests PASS (includes A9–A15A, A14A security, A14B soak, A15A demonstrator)
+- `@rtb/engineering-os` typecheck: PASS
+- `@rtb/engineering-os` tests: 121 files / 787 tests PASS (A9–A15A, A14A security, A14B soak, A15A demonstrator, A15A-V1)
 - Live RLS / identity / audit / schema / restore: 21 files / 54 tests PASS against `rntonzigxwxcjlcsadip`
-- Web TypeScript errors: 339 pre-existing; closeout introduced 0
+- Web TypeScript errors: 338 pre-existing; continuation introduced 0
 - Web production build: PASS
-- Secret scan: PASS (0 findings)
-- Feature freeze: preserved (no new product domain, connector, solver, Review/Change/Lifecycle engine, DMS, graph store, or Event Bus)
+- Secret scan (persistence TARGETS including closeout docs + runbook): PASS (0 findings)
+- Feature freeze: preserved (overrides + documentation + SCA report only)
+
+## A15B metrics preparation (not measured)
+
+The following workflow times are the approved pilot metrics. They must be collected from named pilot users after HUMAN_AAL2_GATE = PASS. They are not employee-monitoring signals. This continuation did not measure them because authenticated browser HITL was not completed.
+
+- time to find governing information
+- time to create Work Plan
+- time to prepare option comparison
+- time to prepare Cost evidence
+- time to assemble Constructability evidence
+- time to assemble Carbon evidence where applicable
+- time to draft Design Report
+- time to prepare RFI/TQ response
+- time to perform initial Change Impact
+- time to prepare Review Package
+- time to prepare Handover
 
 ## A15B
 
-Not eligible. Next: EOS Pilot Gate Closeout continuation — complete operator TOTP in the unlocked MFA browser, deploy a non-localhost hosted ClamAV URL, and finish remaining high-advisory reachability or human-governed exceptions. Do not add EOS product features.
+Not eligible. Next: EOS Pilot Gate Closeout continuation — complete operator TOTP in the unlocked MFA browser, then authenticated Workbench / Work Plan / value-criteria / multi-project / lifecycle HITL; deploy a non-localhost hosted ClamAV URL and complete returned-artifact round trip. Do not add EOS product features.

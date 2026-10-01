@@ -24,7 +24,7 @@ Reuse the existing certification tenant/workspace fixtures. Do not broaden to pr
 3. Complete the authenticator TOTP challenge in the browser.
 4. Do not share TOTP, print authenticator secrets, inject cookies, or disable MFA.
 
-Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. Closeout 2026-10-01: password sign-in reached `/login/mfa?next=/engineering/work`. Operator TOTP was not completed in the browser. Do not paste TOTP into chat.
+Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. Continuation 2026-10-01: current HEAD `f7ee6330` on localhost:3002; password sign-in as `cert-er-a1@rtb-cert.test` reached `/login/mfa?next=/engineering/work` with AAL1 shown. Operator TOTP was not completed in the browser. Do not paste TOTP into chat.
 
 ## A15A demonstration vs pilot
 
@@ -40,11 +40,10 @@ See `EOS_PILOT_GATE_CLOSEOUT.md`. Remaining Profile A blockers:
 4. LIFECYCLE_BROWSER_HITL NOT_TESTED
 5. HOSTED_MALWARE_SCANNER BLOCKED (`RTB_REVIEW_CLAMAV_URL` unset; localhost is not hosted)
 6. RETURNED_ARTIFACT_PILOT BLOCKED
-7. DEPENDENCY_POLICY_GATE BLOCKED (4 remaining unaccepted highs: sharp ×2, image-size ×2; expired exceptions not renewed)
 
-Bounded production overrides applied: nanoid, brace-expansion 1.1.20, postcss. SCA gate ignores expired exceptions.
+DEPENDENCY_POLICY_GATE = PASS (continuation). Bounded production overrides: nanoid, brace-expansion 1.1.21, postcss, image-size >=2.0.3, sharp >=0.35.4. SCA gate ignores expired exceptions. RAW audit may still FAIL on the remaining uuid moderate.
 
-Recommended next: EOS Pilot Gate Closeout continuation — not A15B.
+Recommended next: EOS Pilot Gate Closeout continuation — not A15B. Complete operator TOTP in the unlocked MFA browser, then hosted ClamAV.
 
 See `EOS_A15A_END_TO_END_ENGINEERING_DEMONSTRATOR.md` and `EOS_A15A_DEMONSTRATION_RUNBOOK.md`.
 
@@ -54,7 +53,7 @@ HOSTED_MALWARE_SCANNER remains BLOCKED unless `RTB_REVIEW_CLAMAV_URL` points at 
 
 ## Dependency state (A14B recheck)
 
-Raw production audit must be rerun each phase. Expired SCA exceptions (`review_by: 2026-09-30`) were not auto-renewed. DEPENDENCY_POLICY_GATE remains BLOCKED while unaccepted runtime-relevant highs exist.
+Raw production audit must be rerun each phase. Expired SCA exceptions (`review_by: 2026-09-30`) were not auto-renewed. DEPENDENCY_POLICY_GATE = PASS after continuation overrides (critical 0, high 0). RAW_DEPENDENCY_AUDIT remains FAIL while uuid@8.3.2 moderate (GHSA-w5hq-g745-h8pq via exceljs) is present.
 
 ## Backup / restore (A14B)
 

@@ -90,6 +90,7 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_A15A_ENGINEERING_VALUE_EVIDENCE.md",
   "docs/architecture/engineering-os/EOS_PILOT_GATE_CLOSEOUT.md",
   "docs/architecture/engineering-os/EOS_PILOT_GATE_CLOSEOUT_DEPENDENCY.md",
+  "docs/architecture/engineering-os/EOS_CONTROLLED_PILOT_RUNBOOK.md",
   "packages/engineering-os-certification/scripts/run-dependency-sca.ts",
   "packages/engineering-os/src/lifecycle-intelligence/cross-lifecycle-value.ts",
   "packages/engineering-os/src/lifecycle-intelligence/cross-lifecycle-value.test.ts",
