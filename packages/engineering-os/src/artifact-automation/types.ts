@@ -153,6 +153,13 @@ export type GeneratedEngineeringArtifact = {
   returnedBy: string | null;
   returnedAt: string | null;
   malwareScanStatus: string;
+  storageKind?: "LEGACY_RELATIONAL" | "OBJECT_STORAGE" | "EXTERNAL_MANAGED";
+  objectKey?: string | null;
+  contentSizeBytes?: number | null;
+  contentSha256?: string | null;
+  contentType?: string | null;
+  storageVersion?: number | null;
+  migrationState?: "NOT_STARTED" | "IN_PROGRESS" | "VERIFIED" | "FAILED" | "ROLLED_BACK";
 };
 
 export type EngineeringArtifactGenerationRun = {

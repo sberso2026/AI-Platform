@@ -226,6 +226,27 @@ export {
   CONNECTOR_CERTIFICATION_MATRIX,
   EXTERNAL_JOB_TYPE,
 } from "./connectors/engineering";
+export {
+  CONNECTOR_CORE_RECON,
+  CONNECTOR_RECONCILIATION,
+  CANONICAL_CONNECTOR_CERTIFICATION_MATRIX,
+  CONNECTION_OWNERSHIP,
+  DEFAULT_CONNECTOR_WRITE_POLICY,
+  MALWARE_FLOW_CLASSIFICATION,
+  CONNECTOR_OPERATIONAL_STATES,
+  CONNECTOR_CAPABILITIES,
+} from "./connectors/core";
+export {
+  STORAGE_KINDS,
+  OBJECT_STORAGE_BACKEND,
+  OBJECT_STORAGE_PROVIDER,
+  ARTIFACT_SIZE_POLICY,
+  PUBLIC_BUCKET_REQUIRED,
+  hashBytes,
+  pointerFromArtifact,
+  serverObjectKey,
+} from "./artifact-automation/binary-store";
+export { LegacyRelationalArtifactBinaryStore, MemoryObjectArtifactBinaryStore } from "./artifact-automation/binary-adapters";
 export { EngineeringInformationRequirementService } from "./information-requirements/service";
 export {
   INFORMATION_REQUIREMENT_AI_BOUNDARY,

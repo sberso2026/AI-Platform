@@ -11,10 +11,13 @@ import type { EngineeringDeliverableService } from "../../deliverable-intelligen
 import { SPACE_GASS_CATALOG_ENTRY } from "../../external-tools/catalog";
 import { classifyExternalChange, engineerFacingLabel, refToInformationRef, refToWorkSignal, scheduleDoesNotCompleteDeliverable, vendorObjectToRef } from "./compose";
 import { isOlderThanKnown } from "./identity";
+import { finalizeBatch, recordPoisonObject } from "../core/sync";
+import { assertConnectorCapability } from "../core/capability";
 import { createMemoryEngineeringConnectorStore, emptyTelemetry, type EngineeringConnectorStore } from "./memory-store";
 import { MockVendorPort, VendorPortFailure, type VendorPort } from "./ports";
 import { assertNoSecretMaterialOnRecord, backoff, isGovernedExternalWebUrl, rejectArbitraryUrlFetch, rejectCallerEngineeringConnectorClaims, rejectPersonalIngestion } from "./security";
 import { SupabaseEngineeringConnectorStore } from "./supabase-store";
+import { CANONICAL_CONNECTOR_CERTIFICATION_MATRIX, DEFAULT_CONNECTOR_WRITE_POLICY } from "../core/types";
 import {
   CONNECTOR_CERTIFICATION_MATRIX,
   ENGINEERING_CONNECTOR_AI_BOUNDARY,
@@ -65,8 +68,9 @@ export class EngineeringExternalConnectorService {
       aiBoundary: ENGINEERING_CONNECTOR_AI_BOUNDARY,
       jobType: EXTERNAL_JOB_TYPE,
       defaultCapturePolicy: "DENY",
-      defaultWritePolicy: "READ_ONLY",
+      defaultWritePolicy: DEFAULT_CONNECTOR_WRITE_POLICY,
       matrix: CONNECTOR_CERTIFICATION_MATRIX,
+      canonicalMatrix: CANONICAL_CONNECTOR_CERTIFICATION_MATRIX,
       liveEdms: "NOT_TESTED",
       liveBim: "NOT_TESTED",
       livePlanning: "NOT_TESTED",
@@ -134,6 +138,7 @@ export class EngineeringExternalConnectorService {
       externalAccountId: string;
       externalProjectId: string;
       externalScope?: string | null;
+      confirmRebind?: boolean;
       repository: {
         id: string;
         displayName: string;
@@ -145,6 +150,23 @@ export class EngineeringExternalConnectorService {
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
     const connection = await this.requireConnection(tenantId, workspaceId, input.connectionId);
+    const existingBindings = (await this.store.listBindings(workspaceId)).filter(
+      (row) => row.connectionId === connection.id && row.eosProjectId === input.eosProjectId && row.tenantId === tenantId,
+    );
+    const conflict = existingBindings.find((row) => row.externalProjectId !== input.externalProjectId);
+    if (conflict && !input.confirmRebind) {
+      throw new Error("PROJECT_REBIND_CONFIRMATION_REQUIRED");
+    }
+    if (conflict && input.confirmRebind) {
+      for (const previous of existingBindings.filter((row) => row.enabled)) {
+        await this.store.saveBinding({ ...previous, enabled: false });
+      }
+      await this.audit(tenantId, workspaceId, "project_rebind", "external_project_binding", conflict.id, commerce.actorUserId, {
+        previousExternalProjectId: conflict.externalProjectId,
+        nextExternalProjectId: input.externalProjectId,
+        historicalObjectsReassigned: false,
+      });
+    }
     const repository = await this.deps.work.saveRepository(commerce, tenantId, {
       id: input.repository.id,
       tenantId,
@@ -240,6 +262,7 @@ export class EngineeringExternalConnectorService {
     const bindings = (await this.store.listBindings(workspaceId)).filter((row) => row.connectionId === connectionId && row.enabled && row.tenantId === tenantId);
     let itemsScanned = 0;
     let itemsChanged = 0;
+    const poison: import("../core/sync").PoisonObjectFailure[] = [];
     const previous = await this.store.getSyncState(connectionId);
     try {
       for (const binding of bindings) {
@@ -247,20 +270,27 @@ export class EngineeringExternalConnectorService {
         itemsScanned += page.items.length;
         for (const object of page.items) {
           if (object.externalProjectId !== binding.externalProjectId) continue;
-          const applied = await this.applyObject(commerce, tenantId, connection, binding, object);
-          if (applied.changed) itemsChanged += 1;
+          try {
+            if (!object.objectId) throw new Error("malformed_external_object");
+            const applied = await this.applyObject(commerce, tenantId, connection, binding, object);
+            if (applied.changed) itemsChanged += 1;
+          } catch (error) {
+            if (error instanceof VendorPortFailure) throw error;
+            recordPoisonObject(poison, object.objectId || "unknown", error instanceof Error ? error.message : "object_failed", object.objectType);
+          }
         }
       }
+      const batch = finalizeBatch({ processed: itemsScanned, changed: itemsChanged, poison });
       const state = await this.store.saveSyncState({
         id: previous?.id ?? newId(),
         connectionId,
         tenantId,
         workspaceId,
-        status: "READY",
-        cursor: `cursor:${itemsScanned}`,
-        lastSuccessfulSyncAt: now(),
+        status: batch.status,
+        cursor: batch.checkpointAllowed ? `cursor:${itemsScanned}` : previous?.cursor ?? null,
+        lastSuccessfulSyncAt: batch.status === "READY" ? now() : previous?.lastSuccessfulSyncAt ?? null,
         lastAttemptedSyncAt: now(),
-        lastError: null,
+        lastError: poison.length ? `poison:${poison.map((row) => row.objectId).join(",")}` : null,
         itemsScanned,
         itemsChanged,
         throttleCount: previous?.throttleCount ?? 0,
@@ -270,8 +300,8 @@ export class EngineeringExternalConnectorService {
       });
       this.telemetry.syncDurationMs.push(state.durationMs);
       this.telemetry.itemsProcessed += itemsChanged;
-      await this.store.saveConnection({ ...connection, status: "READY", updatedAt: now() });
-      return { skipped: false as const, itemsScanned, itemsChanged, durationMs: state.durationMs };
+      await this.store.saveConnection({ ...connection, status: batch.status, updatedAt: now() });
+      return { skipped: false as const, itemsScanned, itemsChanged, durationMs: state.durationMs, poison, checkpointAllowed: batch.checkpointAllowed };
     } catch (error) {
       this.telemetry.errors += 1;
       const status = error instanceof VendorPortFailure && error.failure.kind === "THROTTLE" ? "RATE_LIMITED" : "DEGRADED";
@@ -350,6 +380,11 @@ export class EngineeringExternalConnectorService {
     const connection = await this.requireConnection(tenantId, workspaceId, row.connectionId);
     if (connection.writePolicy === "READ_ONLY") throw new Error("ARBITRARY_EXTERNAL_WRITE_PROHIBITED");
     if (connection.writePolicy !== input.writeAction) throw new Error("ARBITRARY_EXTERNAL_WRITE_PROHIBITED");
+    assertConnectorCapability({
+      vendor: connection.vendor,
+      capability: input.writeAction === "PUBLISH_DOCUMENT" ? "PUBLISH_DOCUMENT" : "UPDATE_RFI_RESPONSE",
+      writePolicy: connection.writePolicy,
+    });
     const port = this.ports.get(connection.id);
     if (!port) throw new Error("LIVE_CONNECTION_NOT_TESTED");
     const current = await port.get({ externalProjectId: row.externalProjectId, objectType: row.objectType, objectId: row.objectId });
@@ -379,7 +414,13 @@ export class EngineeringExternalConnectorService {
     for (const connection of connections) {
       sync.push({ connection, state: await this.store.getSyncState(connection.id) });
     }
-    return { connections: sync, matrix: CONNECTOR_CERTIFICATION_MATRIX, secretsOnRows: false };
+    return {
+      connections: sync,
+      matrix: CONNECTOR_CERTIFICATION_MATRIX,
+      canonicalMatrix: CANONICAL_CONNECTOR_CERTIFICATION_MATRIX,
+      secretsOnRows: false,
+      certificationIsNotHealth: true,
+    };
   }
 
   scheduleContext(percentComplete: number | null, deliverableReviewIncomplete: boolean) {

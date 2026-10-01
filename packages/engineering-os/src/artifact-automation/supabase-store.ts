@@ -36,6 +36,13 @@ function mapArtifact(row: Record<string, unknown>): GeneratedEngineeringArtifact
     returnedBy: (row.returned_by as string | null) ?? null,
     returnedAt: (row.returned_at as string | null) ?? null,
     malwareScanStatus: String(row.malware_scan_status ?? "NOT_APPLICABLE"),
+    storageKind: (row.storage_kind as GeneratedEngineeringArtifact["storageKind"]) ?? "LEGACY_RELATIONAL",
+    objectKey: row.object_key == null ? null : String(row.object_key),
+    contentSizeBytes: row.content_size_bytes == null ? Number(row.byte_size ?? 0) : Number(row.content_size_bytes),
+    contentSha256: row.content_sha256 == null ? String(row.sha256 ?? "") : String(row.content_sha256),
+    contentType: row.content_type == null ? String(row.mime_type ?? "") : String(row.content_type),
+    storageVersion: row.storage_version == null ? 1 : Number(row.storage_version),
+    migrationState: (row.migration_state as GeneratedEngineeringArtifact["migrationState"]) ?? "NOT_STARTED",
   };
 }
 
@@ -73,7 +80,7 @@ export class SupabaseArtifactStore implements ArtifactStore {
   async listArtifacts(workspaceId: string, workPlanId: string) {
     const { data, error } = await db(this.supabase)
       .from("engineering_generated_artifacts")
-      .select("id,tenant_id,workspace_id,project_id,generation_run_id,work_plan_id,template_code,template_version,artifact_type,output_format,file_name,mime_type,sha256,byte_size,status,sheet_or_slide_count,provenance,warnings,created_at,superseded_by_id,lineage_kind,origin_artifact_id,origin_generation_run_id,origin_sha256,returned_by,returned_at,malware_scan_status")
+      .select("id,tenant_id,workspace_id,project_id,generation_run_id,work_plan_id,template_code,template_version,artifact_type,output_format,file_name,mime_type,sha256,byte_size,status,sheet_or_slide_count,provenance,warnings,created_at,superseded_by_id,lineage_kind,origin_artifact_id,origin_generation_run_id,origin_sha256,returned_by,returned_at,malware_scan_status,storage_kind,object_key,content_size_bytes,content_sha256,content_type,storage_version,migration_state")
       .eq("workspace_id", workspaceId)
       .eq("work_plan_id", workPlanId)
       .order("created_at", { ascending: false });
@@ -119,6 +126,13 @@ export class SupabaseArtifactStore implements ArtifactStore {
         returned_by: row.returnedBy,
         returned_at: row.returnedAt,
         malware_scan_status: row.malwareScanStatus,
+        storage_kind: row.storageKind ?? "LEGACY_RELATIONAL",
+        object_key: row.objectKey ?? null,
+        content_size_bytes: row.contentSizeBytes ?? row.byteSize,
+        content_sha256: row.contentSha256 ?? row.sha256,
+        content_type: row.contentType ?? row.mimeType,
+        storage_version: row.storageVersion ?? 1,
+        migration_state: row.migrationState ?? "NOT_STARTED",
       })
       .select("*")
       .single();

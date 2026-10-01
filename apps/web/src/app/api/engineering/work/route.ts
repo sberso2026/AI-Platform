@@ -243,6 +243,25 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
   if (action === "engineeringConnectorCatalog") {
     return NextResponse.json({ data: ctx.engineering.engineeringConnector.catalog() });
   }
+  if (action === "connectorCoreCatalog") {
+    const {
+      CANONICAL_CONNECTOR_CERTIFICATION_MATRIX,
+      CONNECTOR_RECONCILIATION,
+      CONNECTION_OWNERSHIP,
+      DEFAULT_CONNECTOR_WRITE_POLICY,
+      OBJECT_STORAGE_BACKEND,
+    } = await import("@rtb/engineering-os");
+    return NextResponse.json({
+      data: {
+        matrix: CANONICAL_CONNECTOR_CERTIFICATION_MATRIX,
+        reconciliation: CONNECTOR_RECONCILIATION,
+        connectionOwnership: CONNECTION_OWNERSHIP,
+        defaultWritePolicy: DEFAULT_CONNECTOR_WRITE_POLICY,
+        objectStorageBackend: OBJECT_STORAGE_BACKEND,
+        certificationIsNotHealth: true,
+      },
+    });
+  }
   if (action === "engineeringConnectorConnections") {
     const data = await ctx.engineering.engineeringConnector.listConnections(commerce, ctx.tenantId);
     return NextResponse.json({ data });
@@ -389,13 +408,12 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
   if (action === "downloadArtifact") {
     const id = url.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
-    const row = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, id);
-    if (!row) return NextResponse.json({ error: "not_found" }, { status: 404 });
-    const buffer = Buffer.from(row.contentBase64, "base64");
-    return new NextResponse(buffer, {
+    const opened = await ctx.engineering.artifactAutomation.openBinary(commerce, ctx.tenantId, id);
+    if (!opened) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return new NextResponse(Buffer.from(opened.bytes), {
       headers: {
-        "Content-Type": row.mimeType,
-        "Content-Disposition": `attachment; filename="${row.fileName.replace(/"/g, "")}"`,
+        "Content-Type": opened.row.mimeType,
+        "Content-Disposition": `attachment; filename="${opened.row.fileName.replace(/"/g, "")}"`,
         "Cache-Control": "private, no-store",
       },
     });
@@ -780,18 +798,27 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       return NextResponse.json({ data });
     }
     if (action === "publishToManagedRepository") {
-      const artifact = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, String(body.artifactId ?? ""));
-      if (!artifact) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      const opened = await ctx.engineering.artifactAutomation.openBinary(commerce, ctx.tenantId, String(body.artifactId ?? ""));
+      if (!opened) return NextResponse.json({ error: "not_found" }, { status: 404 });
       const data = await ctx.engineering.m365Connector.publishArtifact(commerce, ctx.tenantId, {
         repositoryId: String(body.repositoryId ?? ""),
-        fileName: artifact.fileName,
-        content: Buffer.from(artifact.contentBase64, "base64"),
-        contentType: artifact.mimeType,
-        artifactId: artifact.id,
+        fileName: opened.row.fileName,
+        content: Buffer.from(opened.bytes),
+        contentType: opened.row.mimeType,
+        artifactId: opened.row.id,
       });
       return NextResponse.json({ data, engineeringApproved: false });
     }
-    if (action === "openManagedSharePointSource") {
+    if (action === "openManagedSource" || action === "openManagedSharePointSource") {
+      if (typeof body.objectRefId === "string" && body.objectRefId) {
+        const data = await ctx.engineering.engineeringConnector.openExternalSource(
+          commerce,
+          ctx.tenantId,
+          body.objectRefId,
+          body.url ?? body.href,
+        );
+        return NextResponse.json({ data });
+      }
       const data = await ctx.engineering.m365Connector.openManagedSource(commerce, ctx.tenantId, {
         sourceId: typeof body.sourceId === "string" ? body.sourceId : null,
         informationRefId: typeof body.informationRefId === "string" ? body.informationRefId : null,

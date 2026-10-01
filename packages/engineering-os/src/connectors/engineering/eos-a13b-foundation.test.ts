@@ -274,4 +274,24 @@ describe("EOS-A13B engineering EDMS construction connectors", () => {
     const throttled = await connector.runSync(admin(), CRUSHER_FEED_TENANT, connection.id);
     expect(throttled.rateLimited).toBe(true);
   });
+
+  it("requires confirmation before rebinding and does not reassign historical objects", async () => {
+    const { connector, connection } = await harness([rfi142()]);
+    await bind(connector, connection.id, A13B_PROJECT_A, "ext-project-a", "repo-edms-a");
+    await connector.runSync(admin(), CRUSHER_FEED_TENANT, connection.id);
+    const before = await connector.listObjects(engineer(), CRUSHER_FEED_TENANT, A13B_PROJECT_A);
+    await expect(bind(connector, connection.id, A13B_PROJECT_A, "ext-project-b", "repo-edms-b")).rejects.toThrow("PROJECT_REBIND_CONFIRMATION_REQUIRED");
+    const rebound = await connector.bindProject(admin(), CRUSHER_FEED_TENANT, {
+      connectionId: connection.id,
+      eosProjectId: A13B_PROJECT_A,
+      externalAccountId: A13B_ACCOUNT,
+      externalProjectId: "ext-project-b",
+      confirmRebind: true,
+      repository: { id: "repo-edms-b", displayName: "rebind", repositoryType: "ENGINEERING_EDMS" },
+    });
+    expect(rebound.binding.externalProjectId).toBe("ext-project-b");
+    const after = await connector.listObjects(engineer(), CRUSHER_FEED_TENANT, A13B_PROJECT_A);
+    expect(after.find((row) => row.objectId === "ext-rfi-142")?.externalProjectId).toBe("ext-project-a");
+    expect(before[0]?.id).toBe(after.find((row) => row.objectId === "ext-rfi-142")?.id);
+  });
 });

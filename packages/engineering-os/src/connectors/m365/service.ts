@@ -11,6 +11,7 @@ import type { ManagedEngineeringRepository } from "../../work-context/types";
 import { classifyGraphChange, graphItemToSource, sourceToInformationRef, sourceToWorkSignal, toSearchHit } from "./compose";
 import { GraphPortFailure, MockGraphPort, type GraphPort } from "./graph";
 import { isOlderThanKnown, microsoftSourceIdentity } from "./identity";
+import { connectorBackoff, classifyConnectorFailure } from "../core/security";
 import { createMemoryM365Store, emptyTelemetry, type M365Store } from "./memory-store";
 import { SupabaseM365Store } from "./supabase-store";
 import {
@@ -323,7 +324,7 @@ export class EngineeringM365ConnectorService {
       const status = this.statusFromError(error);
       if (status === "RATE_LIMITED") this.telemetry.throttles += 1;
       this.telemetry.errors += 1;
-      const retryAfter = error instanceof GraphPortFailure ? error.failure.retryAfterMs ?? backoff(existing.retryCount) : backoff(existing.retryCount);
+      const retryAfter = error instanceof GraphPortFailure ? error.failure.retryAfterMs ?? connectorBackoff(existing.retryCount) : connectorBackoff(existing.retryCount);
       await this.store.saveSyncState({
         ...existing,
         status,
@@ -599,17 +600,10 @@ export class EngineeringM365ConnectorService {
 
   private statusFromError(error: unknown): ConnectorStatus {
     if (error instanceof GraphPortFailure) {
-      if (error.failure.kind === "AUTH") return "AUTHENTICATION_REQUIRED";
-      if (error.failure.kind === "THROTTLE") return "RATE_LIMITED";
-      if (error.failure.kind === "RESYNC") return "RESYNC_REQUIRED";
-      if (error.failure.kind === "NETWORK") return "DEGRADED";
+      return classifyConnectorFailure(error.failure.kind);
     }
     return "DEGRADED";
   }
-}
-
-function backoff(retryCount: number) {
-  return Math.min(60_000, 400 * 2 ** Math.min(retryCount, 6));
 }
 
 export function createTestM365ConnectorService(input: {

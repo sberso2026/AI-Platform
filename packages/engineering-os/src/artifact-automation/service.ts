@@ -6,6 +6,8 @@ import type { EngineeringWorkPlan } from "../work-generator/types";
 import { ARTIFACT_TEMPLATES, listArtifactTemplates } from "./catalog";
 import { generateEngineeringArtifact } from "./generator";
 import { createMemoryArtifactStore, type ArtifactStore } from "./memory-store";
+import { pointerFromArtifact, type ArtifactBinaryStore } from "./binary-store";
+import { LegacyRelationalArtifactBinaryStore } from "./binary-adapters";
 import { createMemoryTemplatePolicyStore, type TemplatePolicyStore } from "./memory-template-store";
 import { ARTIFACT_DOCUMENT_BOUNDARY, artifactThreadGraph, composeDeliverableFromArtifact } from "./provenance";
 import { resolveEngineeringArtifactTemplate } from "./resolve-template";
@@ -42,6 +44,7 @@ export class EngineeringArtifactAutomationService {
         input: { sourceId: string; expectedFormat: "XLSX" | "DOCX" | "PPTX" },
       ): Promise<{ ok: boolean; reason?: string; storedInPostgres?: boolean }>;
     },
+    private readonly binaryStore: ArtifactBinaryStore = new LegacyRelationalArtifactBinaryStore(),
   ) {}
 
   catalog() {
@@ -55,6 +58,8 @@ export class EngineeringArtifactAutomationService {
       notADms: true,
       notABlobPlatform: true,
       templateBinaryStorage: "PACKAGED_EOS_DEFAULT_PLUS_METADATA_POLICY",
+      artifactBinaryStore: "ArtifactBinaryStore",
+      objectStorageBackend: "CONTRACT_ONLY",
       newTemplateDomainCreated: false,
     };
   }
@@ -80,6 +85,21 @@ export class EngineeringArtifactAutomationService {
     const row = await this.store.getArtifact(id);
     if (!row || row.tenantId !== tenantId || row.workspaceId !== workspaceId) return null;
     return row;
+  }
+
+  async openBinary(commerce: CommerceExecutionContext, tenantId: string, id: string) {
+    const row = await this.get(commerce, tenantId, id);
+    if (!row) return null;
+    const pointer = pointerFromArtifact(row);
+    if (this.binaryStore instanceof LegacyRelationalArtifactBinaryStore && row.contentBase64) {
+      this.binaryStore.loadFromBase64(pointer, row.contentBase64);
+    }
+    const bytes = await this.binaryStore.openRead(pointer, {
+      tenantId: row.tenantId,
+      workspaceId: row.workspaceId,
+      projectId: row.projectId,
+    });
+    return { row, bytes, pointer };
   }
 
   async listTemplatePolicies(commerce: CommerceExecutionContext, tenantId: string) {
@@ -257,7 +277,23 @@ export class EngineeringArtifactAutomationService {
     for (const older of previous) {
       await this.store.saveArtifact({ ...older, status: "SUPERSEDED", supersededById: result.artifact.id });
     }
-    const saved = await this.store.saveArtifact(result.artifact);
+    let toSave = result.artifact;
+    if (!(this.binaryStore instanceof LegacyRelationalArtifactBinaryStore)) {
+      const bytes = Uint8Array.from(Buffer.from(result.artifact.contentBase64, "base64"));
+      const stored = await this.binaryStore.put(pointerFromArtifact(result.artifact), bytes);
+      toSave = {
+        ...result.artifact,
+        contentBase64: "",
+        storageKind: stored.storageKind,
+        objectKey: stored.objectKey,
+        contentSizeBytes: stored.contentSizeBytes,
+        contentSha256: stored.contentSha256,
+        contentType: stored.contentType,
+        storageVersion: stored.storageVersion,
+        migrationState: stored.migrationState,
+      };
+    }
+    const saved = await this.store.saveArtifact(toSave);
     await this.recordEvent?.(commerce, tenantId, {
       eventType: previous.length ? "ARTIFACT_REGENERATED" : "ARTIFACT_GENERATED",
       projectId: plan.projectId,
@@ -268,7 +304,7 @@ export class EngineeringArtifactAutomationService {
     return {
       ok: true as const,
       run: result.run,
-      artifact: { ...saved, contentBase64: "" },
+      artifact: saved.storageKind === "OBJECT_STORAGE" ? { ...saved, contentBase64: "" } : saved,
       deliverable: composeDeliverableFromArtifact(),
       thread: artifactThreadGraph({
         tenantId: saved.tenantId,

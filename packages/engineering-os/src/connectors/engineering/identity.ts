@@ -1,4 +1,5 @@
 import type { EngineeringExternalObjectRef, VendorExternalObject } from "./types";
+export { isOlderThanKnown } from "../core/identity";
 
 export function externalObjectIdentity(input: {
   vendor: string;
@@ -12,10 +13,6 @@ export function externalObjectIdentity(input: {
 
 export function objectFingerprint(object: Pick<VendorExternalObject, "objectId" | "etag" | "version" | "occurredAt" | "vendorStatus">): string {
   return `${object.objectId}:${object.etag ?? object.version ?? object.occurredAt}:${object.vendorStatus ?? ""}`;
-}
-
-export function isOlderThanKnown(incomingOccurredAt: string, knownOccurredAt: string): boolean {
-  return Date.parse(incomingOccurredAt) < Date.parse(knownOccurredAt);
 }
 
 export function sameExternalIdentity(previous: EngineeringExternalObjectRef, next: VendorExternalObject, vendor: string): boolean {

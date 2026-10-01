@@ -62,7 +62,7 @@ export default function Microsoft365IntegrationsPage() {
     enabled: boolean;
   }>>([]);
   const [engineeringHealth, setEngineeringHealth] = useState<{
-    connections: Array<{ connection: { id: string; displayName: string; vendor: string; writePolicy: string; status: string; enabled: boolean }; state: { lastSuccessfulSyncAt: string | null; lastAttemptedSyncAt: string | null; itemsChanged: number; cursor: string | null; status: string } | null }>;
+    connections: Array<{ connection: { id: string; displayName: string; vendor: string; category?: string; writePolicy: string; status: string; enabled: boolean }; state: { lastSuccessfulSyncAt: string | null; lastAttemptedSyncAt: string | null; itemsChanged: number; cursor: string | null; status: string } | null }>;
     matrix: Array<{ connector: string; vendor: string; contract: string; fixture: string; liveRead: string; liveWrite: string; status: string }>;
   } | null>(null);
   const [connectorVendor, setConnectorVendor] = useState("ACONEX");
@@ -88,7 +88,7 @@ export default function Microsoft365IntegrationsPage() {
     if (!engConnJson.errorMessage) setEngineeringConnections(Array.isArray(engConnJson.data) ? engConnJson.data : []);
     const engHealth = await fetch("/api/engineering/work?action=engineeringConnectorHealth");
     const engHealthJson = await parseApiJsonResponse<{
-      connections: Array<{ connection: { id: string; displayName: string; vendor: string; writePolicy: string; status: string; enabled: boolean }; state: { lastSuccessfulSyncAt: string | null; lastAttemptedSyncAt: string | null; itemsChanged: number; cursor: string | null; status: string } | null }>;
+      connections: Array<{ connection: { id: string; displayName: string; vendor: string; category?: string; writePolicy: string; status: string; enabled: boolean }; state: { lastSuccessfulSyncAt: string | null; lastAttemptedSyncAt: string | null; itemsChanged: number; cursor: string | null; status: string } | null }>;
       matrix: Array<{ connector: string; vendor: string; contract: string; fixture: string; liveRead: string; liveWrite: string; status: string }>;
     }>(engHealth);
     if (!engHealthJson.errorMessage) setEngineeringHealth(engHealthJson.data);
@@ -256,8 +256,54 @@ export default function Microsoft365IntegrationsPage() {
                 Changed {row.state?.itemsChanged ?? 0}. Cursor {row.state?.cursor ?? "none"}. Auth/health {row.state?.status ?? row.connection.status}. Secrets are not shown.
               </p>
             ))}
+            <p className="text-muted-foreground">Certification is not operational health. A connector may be FIXTURE_CERTIFIED and READY, or LIVE_CERTIFIED_READ and AUTHENTICATION_REQUIRED. Default write policy is READ_ONLY.</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr>
+                    <th>Connector</th>
+                    <th>Vendor</th>
+                    <th>Project / scope</th>
+                    <th>Operational state</th>
+                    <th>Read certification</th>
+                    <th>Write certification</th>
+                    <th>Last sync</th>
+                    <th>Policy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {connections.map((row) => (
+                    <tr key={row.id}>
+                      <td>SHAREPOINT_LIBRARY</td>
+                      <td>SHAREPOINT</td>
+                      <td>{repositories.find((item) => item.repositoryType === "SHAREPOINT_LIBRARY")?.approvedRoot ?? "managed library"}</td>
+                      <td>{health?.sync?.status ?? row.status}</td>
+                      <td>FIXTURE_CERTIFIED / live NOT_TESTED</td>
+                      <td>FIXTURE_CERTIFIED / live NOT_TESTED</td>
+                      <td>{health?.sync?.lastSuccessfulSyncAt ?? "never"}</td>
+                      <td>READ_ONLY unless publication enabled</td>
+                    </tr>
+                  ))}
+                  {engineeringHealth?.connections.map((row) => {
+                    const cert = engineeringHealth.matrix.find((item) => item.vendor === row.connection.vendor);
+                    return (
+                      <tr key={row.connection.id}>
+                        <td>{cert?.connector ?? row.connection.category}</td>
+                        <td>{row.connection.vendor}</td>
+                        <td>{projectId ?? "unbound"}</td>
+                        <td>{row.state?.status ?? row.connection.status}{row.connection.enabled ? "" : " / disabled"}</td>
+                        <td>{cert?.liveRead === "NOT_TESTED" ? `${cert.fixture} / live NOT_TESTED` : cert?.liveRead ?? "NOT_TESTED"}</td>
+                        <td>{cert?.liveWrite ?? "NOT_TESTED"}</td>
+                        <td>{row.state?.lastSuccessfulSyncAt ?? "never"}</td>
+                        <td>{row.connection.writePolicy}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             {engineeringHealth?.matrix.map((row) => (
-              <p key={`${row.connector}-${row.vendor}`}>{row.connector} / {row.vendor}: contract {row.contract} · fixture {row.fixture} · live read {row.liveRead} · live write {row.liveWrite}</p>
+              <p key={`${row.connector}-${row.vendor}`}>{row.connector} / {row.vendor}: contract {row.contract} · fixture {row.fixture} · live read {row.liveRead} · live write {row.liveWrite} · operational health is separate</p>
             ))}
             {!canWrite && <p>Connector administration requires an authorized Engineering administrator at AAL2.</p>}
           </CardContent>

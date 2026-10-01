@@ -71,6 +71,10 @@ const TARGETS = [
   "supabase/migrations/20261001190000_eos_a13b_engineering_edms_construction_connectors.sql",
   "packages/engineering-os/src/connectors/engineering",
   "apps/web/src/app/(platform)/engineering/settings/integrations",
+  "docs/architecture/engineering-os/EOS_A13C_PLATFORM_CONSOLIDATION_BINARY_STORAGE_PREPARATION.md",
+  "docs/architecture/engineering-os/EOS_ARTIFACT_BINARY_STORAGE_MIGRATION_RUNBOOK.md",
+  "supabase/migrations/20261001200000_eos_a13c_platform_consolidation_binary_storage.sql",
+  "packages/engineering-os/src/connectors/core",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 
