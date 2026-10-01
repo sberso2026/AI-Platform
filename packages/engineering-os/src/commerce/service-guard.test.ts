@@ -68,6 +68,29 @@ describe("assertEngineeringService", () => {
     }
   });
 
+  it("rejects authorization.action project.list when the canonical permission is project.read", () => {
+    const commerce = createTestCommerceExecutionContext({
+      tenantId: "tenant-a",
+      policy: {
+        productKey: "engineering-os",
+        action: "project.list",
+        seatRequired: true,
+      },
+    });
+
+    expect(() => assertEngineeringService(commerce, "project.list", "tenant-a")).toThrow(
+      CommerceDomainError,
+    );
+
+    try {
+      assertEngineeringService(commerce, "project.list", "tenant-a");
+    } catch (error) {
+      expect(error).toBeInstanceOf(CommerceDomainError);
+      expect((error as CommerceDomainError).code).toBe("action_mismatch");
+      expect((error as CommerceDomainError).message).toBe("Action mismatch: expected project.read");
+    }
+  });
+
   it("allows a verified matching commerce context", () => {
     const commerce = createTestCommerceExecutionContext({
       tenantId: "tenant-a",

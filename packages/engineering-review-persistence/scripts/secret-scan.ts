@@ -95,6 +95,10 @@ const TARGETS = [
   "packages/engineering-os/src/lifecycle-intelligence/cross-lifecycle-value.ts",
   "packages/engineering-os/src/lifecycle-intelligence/cross-lifecycle-value.test.ts",
   "docs/architecture/engineering-os/EOS_A15A_V1_COST_CONSTRUCTABILITY_CARBON.md",
+  "packages/engineering-os/src/attention/service.ts",
+  "packages/engineering-os/src/attention/authorized-project-action.test.ts",
+  "packages/engineering-os/src/commerce/service-guard.test.ts",
+  "apps/web/src/app/api/engineering/work/route.ts",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

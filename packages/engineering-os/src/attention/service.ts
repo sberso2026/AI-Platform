@@ -88,7 +88,8 @@ export class EngineeringAttentionService {
   async resolve(
     commerce: CommerceExecutionContext,
     tenantId: string,
-    options?: {
+    options: {
+      projectCommerce: CommerceExecutionContext;
       viewProjectId?: string | null;
       category?: AttentionCategory | "ALL";
       discipline?: string | null;
@@ -97,10 +98,11 @@ export class EngineeringAttentionService {
     },
   ): Promise<EngineeringDay> {
     assertEngineeringService(commerce, "work.list", tenantId);
+    assertEngineeringService(options.projectCommerce, "project.list", tenantId);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
     const userId = commerce.actorUserId ?? "unknown";
-    const projects = (await this.ports.projects.list(commerce, tenantId, ATTENTION_SCALE.maxProjects))
+    const projects = (await this.ports.projects.list(options.projectCommerce, tenantId, ATTENTION_SCALE.maxProjects))
       .filter((row) => row.tenant_id === tenantId);
     const authorizedProjectIds = projects.map((row) => row.id);
     const snapshots: AttentionProjectSnapshot[] = [];

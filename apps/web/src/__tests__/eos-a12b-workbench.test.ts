@@ -23,6 +23,7 @@ describe("EOS-A12B My Engineering Day UX", () => {
     expect(page).not.toContain("hours worked");
     expect(page).not.toContain("burndown");
     expect(api).toContain("engineeringDay");
+    expect(api).toContain('authorizeEngineeringSegment(ctx, "projects", "GET"');
     expect(api).toContain("acknowledgeAttention");
     expect(api).toContain("attention.rejectCallerClaims");
   });

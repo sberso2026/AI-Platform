@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { assembleSnapshotFromRecords, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, sanitizeArtifactFileName, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
 import type { CommerceExecutionContext } from "@rtb/types";
+import { forbiddenResponse } from "@/lib/lifecycle-api";
 
 function statusFor(message: string): number {
   if (
@@ -126,7 +127,16 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
   }
   if (action === "engineeringDay") {
     const started = Date.now();
+    const projectCommerce = await authorizeEngineeringSegment(ctx, "projects", "GET", correlationId);
+    if (!projectCommerce) {
+      return forbiddenResponse(
+        correlationId,
+        "Authorized project discovery requires project.read",
+        "forbidden",
+      );
+    }
     const data = await ctx.engineering.attention.resolve(commerce, ctx.tenantId, {
+      projectCommerce,
       viewProjectId: url.searchParams.get("filterProjectId") || (url.searchParams.get("scope") === "current" ? url.searchParams.get("projectId") : null),
       category: (url.searchParams.get("category") as never) || "ALL",
       discipline: url.searchParams.get("discipline") || null,
