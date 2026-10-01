@@ -40,6 +40,9 @@ const TARGETS = [
   "apps/web/src/app/api/engineering/information-requirements",
   "apps/web/src/app/(platform)/engineering/information-requirements",
   "apps/web/src/app/(platform)/engineering/settings/information-requirements",
+  "docs/architecture/engineering-os/EOS_A11A_ENGINEERING_WORK_GENERATOR.md",
+  "supabase/migrations/20260930160000_eos_a11a_engineering_work_generator.sql",
+  "packages/engineering-os/src/work-generator",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

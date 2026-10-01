@@ -68,6 +68,7 @@ export const GOVERNED_LINK_OBJECT_TYPES = [
   "engineering_information_requirement",
   "engineering_handover_package",
   "deliverable_expectation",
+  "engineering_work_plan",
 ] as const;
 
 export type GovernedLinkObjectType = (typeof GOVERNED_LINK_OBJECT_TYPES)[number];

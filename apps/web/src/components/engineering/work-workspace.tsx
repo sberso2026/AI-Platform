@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { EngineeringBreadcrumb } from "@/components/engineering/operational";
 import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
@@ -32,14 +33,48 @@ type DayView = {
   productivityScore: null;
 };
 
+type WorkTemplate = {
+  code: string;
+  name: string;
+  workType: string;
+  lifecycleStage: string;
+  version: string;
+};
+
+type WorkPlan = {
+  id: string;
+  workType: string;
+  templateCode: string;
+  templateVersion: string;
+  status: string;
+  readiness: string;
+  startAllowed: boolean;
+  staleness: string;
+  systemId?: string | null;
+  generatedAt: string;
+};
+
 const VIEWS = ["Changed", "My Work", "Waiting", "Completed", "By Discipline", "By System", "By Lifecycle Stage"] as const;
 
 export function WorkWorkspace() {
   const projectId = useResolvedEngineeringProjectId();
+  const router = useRouter();
   const [view, setView] = useState<(typeof VIEWS)[number]>("Changed");
   const [rows, setRows] = useState<WorkEvent[]>([]);
   const [day, setDay] = useState<DayView | null>(null);
+  const [templates, setTemplates] = useState<WorkTemplate[]>([]);
+  const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/engineering/work?action=generatorCatalog")
+      .then((response) => parseApiJsonResponse<{ templates: WorkTemplate[] }>(response))
+      .then((json) => {
+        if (json.data?.templates) setTemplates(json.data.templates);
+      })
+      .catch((err: Error) => setError(err.message));
+  }, []);
 
   useEffect(() => {
     if (!projectId) return;
@@ -57,6 +92,12 @@ export function WorkWorkspace() {
         setDay(json.data);
       })
       .catch((err: Error) => setError(err.message));
+    fetch(`/api/engineering/work?action=plans&projectId=${encodeURIComponent(projectId)}`)
+      .then((response) => parseApiJsonResponse<WorkPlan[]>(response))
+      .then((json) => {
+        setPlans(Array.isArray(json.data) ? json.data : []);
+      })
+      .catch((err: Error) => setError(err.message));
   }, [projectId]);
 
   const filtered = useMemo(() => {
@@ -69,15 +110,82 @@ export function WorkWorkspace() {
     return rows;
   }, [rows, view]);
 
+  async function startWork(template: WorkTemplate) {
+    if (!projectId) {
+      setError("Select an authorized project first. Project context is reused, not typed as a raw ID.");
+      return;
+    }
+    setBusy(template.code);
+    setError(null);
+    const response = await fetch("/api/engineering/work", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "generatePlan",
+        projectId,
+        workType: template.workType,
+        lifecycleStage: template.lifecycleStage,
+      }),
+    });
+    const json = await parseApiJsonResponse<WorkPlan>(response);
+    setBusy(null);
+    if (json.errorMessage || !json.data?.id) {
+      setError(json.errorMessage ?? "Could not prepare engineering work.");
+      return;
+    }
+    router.push(`/engineering/work/plans/${json.data.id}`);
+  }
+
+  const openPlans = plans.filter((row) => row.status !== "SUPERSEDED" && row.status !== "CANCELLED");
+
   return (
     <>
-      <Header title="Engineering Work" description="Material engineering workflow events from managed repositories. Not employee activity or productivity scoring." />
+      <Header title="Engineering Work" description="Prepare the engineering desk. Material workflow events remain visible; this is not employee activity or productivity scoring." />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Work" }]} />
         <EngineeringProjectContextBar />
         {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
+        <section className="mt-6" aria-label="Start Engineering Work">
+          <h2 className="text-lg font-semibold">Start Engineering Work</h2>
+          <p className="mt-1 text-sm text-muted-foreground">What can EOS prepare for me? Project and lifecycle context are reused. Artifact generation is A11B.</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {templates.map((template) => (
+              <button
+                key={`${template.code}-${template.lifecycleStage}`}
+                type="button"
+                className="rounded border p-4 text-left text-sm hover:bg-muted/40"
+                onClick={() => void startWork(template)}
+                disabled={Boolean(busy)}
+              >
+                <p className="font-medium">{template.name}</p>
+                <p className="mt-1 text-muted-foreground">{template.workType.replaceAll("_", " ")} · {template.lifecycleStage.replaceAll("_", " ")}</p>
+                <p className="mt-2">{busy === template.code ? "Preparing context…" : "Start Engineering Work"}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+        <section className="mt-8" aria-label="Continue Work">
+          <h2 className="text-lg font-semibold">Continue Work</h2>
+          {openPlans.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">No prepared work plans in this project yet.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {openPlans.map((plan) => (
+                <li key={plan.id} className="rounded border p-3 text-sm">
+                  <Link className="font-medium underline-offset-2 hover:underline" href={`/engineering/work/plans/${plan.id}`}>
+                    Continue {plan.workType.replaceAll("_", " ")}
+                  </Link>
+                  <p className="mt-1 text-muted-foreground">
+                    {plan.readiness.replaceAll("_", " ")} · {plan.status} · {plan.templateCode}@{plan.templateVersion}
+                    {plan.systemId ? ` · ${plan.systemId}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
         {day && (
-          <section className="mt-4 rounded border p-4 text-sm" aria-label="Engineering day summary">
+          <section className="mt-8 rounded border p-4 text-sm" aria-label="Engineering day summary">
             <p>
               Since yesterday: {day.sourcesRevised} sources revised · {day.analysesExecuted} analysis executed · {day.reviewsCompleted} reviews completed · {day.decisionsRecorded} decisions recorded.
             </p>

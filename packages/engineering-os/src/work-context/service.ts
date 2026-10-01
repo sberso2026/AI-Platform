@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
-import { WORKFLOW_CONTRACTS } from "./catalog";
+import { classifyWorkMateriality, WORKFLOW_CONTRACTS } from "./catalog";
 import { aggregateEngineeringDay, explainCapture, futureAssuranceConditions, kernelWorkEventEnvelope, WORK_CONTEXT_PRIVACY, WORK_CONTEXT_RECON } from "./compose";
 import { evaluateCaptureEligibility } from "./eligibility";
 import type { WorkContextStore } from "./memory-store";
@@ -200,6 +200,63 @@ export class EngineeringWorkContextService {
   async dayView(commerce: CommerceExecutionContext, tenantId: string, projectId: string, sinceIso: string, actorId?: string | null) {
     const events = await this.list(commerce, tenantId, projectId);
     return aggregateEngineeringDay(events, sinceIso, actorId);
+  }
+
+  async recordMaterialEvent(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      eventType: EngineeringWorkEvent["eventType"];
+      projectId: string;
+      sourceObjectType: string;
+      sourceObjectId: string;
+      sourceEventId: string;
+      actorId?: string | null;
+      systemId?: string | null;
+      lifecycleStage?: string | null;
+    },
+  ) {
+    assertEngineeringService(commerce, "work.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    if (!input.projectId) throw new Error("project_required");
+    const now = new Date().toISOString();
+    const persisted: EngineeringWorkEvent = {
+      id: newId(),
+      tenantId,
+      workspaceId,
+      projectId: input.projectId,
+      eventType: input.eventType,
+      sourceSystem: "engineering-os",
+      sourceObjectType: input.sourceObjectType,
+      sourceObjectId: input.sourceObjectId,
+      sourceEventId: input.sourceEventId,
+      informationRefId: null,
+      disciplineId: null,
+      systemId: input.systemId ?? null,
+      assetId: null,
+      deliverableId: null,
+      lifecycleStage: input.lifecycleStage ?? null,
+      actorId: input.actorId ?? null,
+      occurredAt: now,
+      recordedAt: now,
+      managedRepositoryId: null,
+      materiality: classifyWorkMateriality(input.eventType),
+      confirmationState: "NOT_REQUIRED",
+      captureReason: "EOS-generated material engineering work event. Not employee activity telemetry.",
+      provenance: { sourceSystem: "engineering-os", sourceEventType: input.eventType, auditKind: "work_generator" },
+      publishedToEventBus: false,
+    };
+    let publishedToEventBus = false;
+    if (this.eventBus) {
+      try {
+        await this.eventBus.publish(kernelWorkEventEnvelope(persisted));
+        publishedToEventBus = true;
+      } catch {
+        publishedToEventBus = false;
+      }
+    }
+    return this.store.saveEvent({ ...persisted, publishedToEventBus });
   }
 
   explain(event: EngineeringWorkEvent) {

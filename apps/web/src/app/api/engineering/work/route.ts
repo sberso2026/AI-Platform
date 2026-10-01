@@ -1,10 +1,109 @@
 import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
+import { assembleSnapshotFromRecords, type EngineeringOS } from "@rtb/engineering-os";
+import type { CommerceExecutionContext } from "@rtb/types";
 
 function statusFor(message: string): number {
   if (message.includes("denied") || message.includes("mismatch") || message.includes("broadening")) return 403;
   if (message === "workspace_required" || message === "caller_supplied_authority_rejected" || message === "project_required") return 400;
+  if (message === "work_plan_stale" || message === "unmanaged_file_outside_eos") return 409;
   return 400;
+}
+
+async function safeList<T>(load: () => Promise<T[]>, fallback: T[] = []): Promise<T[]> {
+  try {
+    return await load();
+  } catch {
+    return fallback;
+  }
+}
+
+async function assemblePlanContext(
+  ctx: { engineering: EngineeringOS; tenantId: string },
+  requestCtx: { authorize: (segment: string) => Promise<CommerceExecutionContext | null> },
+  projectId: string,
+  workType: string,
+) {
+  const infoCommerce = await requestCtx.authorize("information");
+  const irCommerce = await requestCtx.authorize("information-requirements");
+  const reqCommerce = await requestCtx.authorize("requirements");
+  const asmCommerce = await requestCtx.authorize("assumptions");
+  const ifcCommerce = await requestCtx.authorize("interfaces");
+  const decCommerce = await requestCtx.authorize("decisions");
+  const anlCommerce = await requestCtx.authorize("analysis");
+  const delCommerce = await requestCtx.authorize("deliverables");
+  const requirements = reqCommerce
+    ? await safeList(() => ctx.engineering.requirements.list(reqCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    : [];
+  const assumptions = asmCommerce
+    ? await safeList(() => ctx.engineering.assumptions.list(asmCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    : [];
+  const interfaces = ifcCommerce
+    ? await safeList(() => ctx.engineering.interfaces.list(ifcCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    : [];
+  const decisions = decCommerce
+    ? await safeList(() => ctx.engineering.decisions.list(decCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    : [];
+  const analyses = anlCommerce
+    ? await safeList(() => ctx.engineering.analysisRequests.list(anlCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    : [];
+  const deliverables = delCommerce
+    ? await safeList(() => ctx.engineering.deliverables.list(delCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    : [];
+  let information: Array<Record<string, unknown>> = [];
+  let gaps: Array<{ kind: "missing" | "stale" | "unaccepted"; title: string; explanation: string }> = [];
+  let readiness = null;
+  if (irCommerce && infoCommerce) {
+    const refs = await safeList(() => ctx.engineering.information.list(infoCommerce, ctx.tenantId, projectId));
+    const policies = await safeList(() => ctx.engineering.information.listPolicies(infoCommerce, ctx.tenantId, projectId));
+    const template = ctx.engineering.workGenerator.catalog().templates.find((row: { workType: string }) => row.workType === workType);
+    const informationWorkType = template?.informationWorkType;
+    if (informationWorkType) {
+      try {
+        readiness = await ctx.engineering.informationRequirements.resolveWorkReadiness(irCommerce, ctx.tenantId, {
+          projectId,
+          workType: informationWorkType,
+          refs,
+          policies,
+        });
+        information = [
+          ...(readiness.available ?? []).map((row: { requirementId: string; explanation: string; freshness: string | null; authorityOutcome: string | null }) => ({
+            requirementId: row.requirementId,
+            informationType: "DESIGN_INPUT",
+            title: row.explanation,
+            freshness: row.freshness,
+            authorityOutcome: row.authorityOutcome,
+            whyIncluded: "A10C required information accepted for purpose. Not engineering approval.",
+          })),
+        ];
+        gaps = [
+          ...(readiness.missing ?? []).map((row: { explanation: string }) => ({ kind: "missing" as const, title: row.explanation, explanation: row.explanation })),
+          ...(readiness.stale ?? []).map((row: { explanation: string }) => ({ kind: "stale" as const, title: row.explanation, explanation: row.explanation })),
+          ...(readiness.unaccepted ?? []).map((row: { explanation: string }) => ({ kind: "unaccepted" as const, title: row.explanation, explanation: row.explanation })),
+        ];
+      } catch {
+        readiness = null;
+      }
+    }
+  }
+  const snapshot = assembleSnapshotFromRecords({
+    requirements,
+    assumptions,
+    interfaces,
+    decisions,
+    analyses: analyses as Record<string, unknown>[],
+    information: information as never,
+    gaps,
+    deliverable: deliverables[0]
+      ? {
+          objectType: "deliverable_expectation",
+          objectId: String((deliverables[0] as Record<string, unknown>).id ?? "deliverable"),
+          title: String((deliverables[0] as Record<string, unknown>).title ?? (deliverables[0] as Record<string, unknown>).name ?? "Deliverable"),
+          whyIncluded: "Related Deliverable Expectation. Generating a Work Plan does not change maturity.",
+        }
+      : null,
+  });
+  return { snapshot, readiness };
 }
 
 export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request) => {
@@ -13,9 +112,16 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
   if (action === "catalog") {
     return NextResponse.json({ data: ctx.engineering.work.catalog() });
   }
+  if (action === "generatorCatalog") {
+    return NextResponse.json({ data: ctx.engineering.workGenerator.catalog() });
+  }
   const projectId = url.searchParams.get("projectId") ?? "";
   if (action === "list" && projectId) {
     const data = await ctx.engineering.work.list(commerce, ctx.tenantId, projectId);
+    return NextResponse.json({ data });
+  }
+  if (action === "plans" && projectId) {
+    const data = await ctx.engineering.workGenerator.listPlans(commerce, ctx.tenantId, projectId);
     return NextResponse.json({ data });
   }
   if (action === "day" && projectId) {
@@ -34,12 +140,19 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
     if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
     return NextResponse.json({ data, explanation: ctx.engineering.work.explain(data) });
   }
+  if (action === "plan") {
+    const id = url.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, id);
+    if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ data, continueWork: ctx.engineering.workGenerator.continueWorkSummary(data) });
+  }
   return NextResponse.json({ data: ctx.engineering.work.catalog() });
 });
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -78,6 +191,54 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
         } as never,
         { actorProjectId: typeof incoming.actorProjectId === "string" ? incoming.actorProjectId : null },
       );
+      return NextResponse.json({ data });
+    }
+    const authorize = async (segment: string) => authorizeEngineeringSegment(ctx, segment, "GET", correlationId);
+    if (action === "generatePlan") {
+      const projectId = String(body.projectId ?? "");
+      const workType = String(body.workType ?? "");
+      const assembled = await assemblePlanContext(ctx, { authorize }, projectId, workType);
+      const data = await ctx.engineering.workGenerator.generatePlan(commerce, ctx.tenantId, {
+        projectId,
+        workType: workType as never,
+        lifecycleStage: typeof body.lifecycleStage === "string" ? (body.lifecycleStage as never) : undefined,
+        discipline: typeof body.discipline === "string" ? body.discipline : null,
+        systemId: typeof body.systemId === "string" ? body.systemId : null,
+        assetId: typeof body.assetId === "string" ? body.assetId : null,
+        relatedObjectType: typeof body.relatedObjectType === "string" ? body.relatedObjectType : null,
+        relatedObjectId: typeof body.relatedObjectId === "string" ? body.relatedObjectId : null,
+        snapshot: assembled.snapshot,
+        readiness: assembled.readiness,
+        acknowledged: Boolean(body.acknowledged),
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "startPlan") {
+      const data = await ctx.engineering.workGenerator.startWork(
+        commerce,
+        ctx.tenantId,
+        String(body.id ?? ""),
+        Boolean(body.acknowledged),
+      );
+      return NextResponse.json({ data });
+    }
+    if (action === "refreshPlan") {
+      const readCommerce = await authorizeEngineeringSegment(ctx, "work", "GET", correlationId);
+      if (!readCommerce) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      const existing = await ctx.engineering.workGenerator.getPlan(readCommerce, ctx.tenantId, String(body.id ?? ""));
+      if (!existing) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      const assembled = await assemblePlanContext(ctx, { authorize }, existing.projectId, existing.workType);
+      const data = await ctx.engineering.workGenerator.refreshPlan(
+        commerce,
+        ctx.tenantId,
+        existing.id,
+        assembled.snapshot,
+        assembled.readiness,
+      );
+      return NextResponse.json({ data });
+    }
+    if (action === "completePlan") {
+      const data = await ctx.engineering.workGenerator.completeWork(commerce, ctx.tenantId, String(body.id ?? ""));
       return NextResponse.json({ data });
     }
     return NextResponse.json({ error: "unknown_action" }, { status: 400 });

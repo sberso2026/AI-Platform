@@ -53,6 +53,7 @@ import { EngineeringDeliverableService } from "./deliverable-intelligence/servic
 import { EngineeringInformationService } from "./information-intelligence/service";
 import { EngineeringWorkContextService } from "./work-context/service";
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
+import { EngineeringWorkGeneratorService } from "./work-generator/service";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
@@ -96,6 +97,7 @@ export interface EngineeringOS {
   deliverables: EngineeringDeliverableService;
   information: EngineeringInformationService;
   work: EngineeringWorkContextService;
+  workGenerator: EngineeringWorkGeneratorService;
   informationRequirements: EngineeringInformationRequirementService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
@@ -154,6 +156,18 @@ export function createEngineeringOS(
         // Non-UUID fixture tenants still persist work events.
       }
     },
+  });
+  const workGenerator = new EngineeringWorkGeneratorService(supabase, undefined, async (commerce, tenantId, input) => {
+    await work.recordMaterialEvent(commerce, tenantId, {
+      eventType: input.eventType,
+      projectId: input.projectId,
+      sourceObjectType: "engineering_work_plan",
+      sourceObjectId: input.planId,
+      sourceEventId: `${input.eventType}:${input.planId}`,
+      actorId: input.actorId,
+      systemId: input.systemId,
+      lifecycleStage: input.lifecycleStage,
+    });
   });
   const lifecycle = new EngineeringLifecycleService(supabase, undefined, undefined, deliverables);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
@@ -245,6 +259,7 @@ export function createEngineeringOS(
     deliverables,
     information,
     work,
+    workGenerator,
     informationRequirements,
     timeline,
     activity,

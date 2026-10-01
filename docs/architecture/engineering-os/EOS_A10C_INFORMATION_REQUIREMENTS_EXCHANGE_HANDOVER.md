@@ -98,7 +98,7 @@ A10B is preserved. DEFAULT_CAPTURE_POLICY = DENY. Only managed sources may autom
 
 ## A11A compatibility
 
-A10C exposes `getRequiredInformationForWork(...)` and `resolveWorkReadiness(...)`. Example: workType FOUNDATION_CALCULATION / system CRUSHER returns design criteria, equipment reactions, geotechnical parameters, survey level, and related inputs. Calculation generation is not implemented in A10C.
+A10C exposes `getRequiredInformationForWork(...)` and `resolveWorkReadiness(...)`. EOS-A11A consumes those APIs as the work-preparation readiness engine. Calculation/report generation is not implemented in A10C or A11A.
 
 ## Security
 

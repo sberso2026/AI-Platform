@@ -222,6 +222,13 @@ export {
   HANDOVER_PACKAGE_STATES,
   HANDOVER_COMPLETENESS_STATES,
 } from "./information-requirements/types";
+export { EngineeringWorkGeneratorService } from "./work-generator/service";
+export {
+  WORK_GENERATOR_AI_BOUNDARY,
+  GENERATOR_WORK_TYPES,
+  WORK_PLAN_STATUSES,
+} from "./work-generator/types";
+export { assembleSnapshotFromRecords } from "./work-generator/compose";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,
