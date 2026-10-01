@@ -53,6 +53,8 @@ export function policyRecord(input: Partial<ArtifactTemplatePolicyRecord> & Pick
     workTypes: input.workTypes ?? [],
     lifecycleStages: input.lifecycleStages ?? [],
     packagedAssetKey: input.packagedAssetKey,
+    binarySourceKind: input.binarySourceKind ?? "PACKAGED",
+    externalSourceRefId: input.externalSourceRefId ?? null,
     presentationKind: input.presentationKind ?? "COMBINED",
     branding: input.branding ?? {},
     fallbackPolicy: input.fallbackPolicy ?? DEFAULT_TEMPLATE_FALLBACK_POLICY,

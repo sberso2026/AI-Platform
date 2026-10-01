@@ -35,6 +35,13 @@ export class EngineeringArtifactAutomationService {
     private readonly loadPlan: (id: string) => Promise<EngineeringWorkPlan | null> = async () => null,
     private readonly recordEvent?: ArtifactEventRecorder,
     private readonly policies: TemplatePolicyStore = new SupabaseTemplatePolicyStore(supabase),
+    private readonly templateBinary?: {
+      retrieve(
+        commerce: CommerceExecutionContext,
+        tenantId: string,
+        input: { sourceId: string; expectedFormat: "XLSX" | "DOCX" | "PPTX" },
+      ): Promise<{ ok: boolean; reason?: string; storedInPostgres?: boolean }>;
+    },
   ) {}
 
   catalog() {
@@ -176,6 +183,48 @@ export class EngineeringArtifactAutomationService {
         metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
       };
       return { ok: false as const, run, artifact: null, resolution };
+    }
+    const matchedPolicy = policies.find((row) => row.id === resolution.policyId);
+    if (matchedPolicy?.binarySourceKind === "SHAREPOINT_MANAGED") {
+      const sourceId = matchedPolicy.externalSourceRefId;
+      const format = resolution.template.outputFormat === "PPTX" || resolution.template.outputFormat === "XLSX" || resolution.template.outputFormat === "DOCX"
+        ? resolution.template.outputFormat
+        : "XLSX";
+      const fetched = sourceId
+        ? await this.templateBinary?.retrieve(commerce, tenantId, { sourceId, expectedFormat: format })
+        : { ok: false as const, reason: "TEMPLATE_UNAVAILABLE" };
+      if (!fetched?.ok) {
+        const unavailable = {
+          ...resolution,
+          ok: false,
+          state: "TEMPLATE_UNAVAILABLE" as const,
+          reason: "TEMPLATE_UNAVAILABLE: SharePoint-backed official template could not be retrieved. Tenant policy fails closed. No silent EOS default.",
+        };
+        return {
+          ok: false as const,
+          run: {
+            id: "blocked-template",
+            tenantId: plan.tenantId,
+            workspaceId: plan.workspaceId,
+            projectId: plan.projectId,
+            workPlanId: plan.id,
+            templateCode: matchedPolicy.templateCode,
+            templateVersion: matchedPolicy.templateVersion,
+            artifactType: matchedPolicy.artifactType,
+            outputFormat: format,
+            requestedBy: commerce.actorUserId ?? null,
+            generatedAt: new Date().toISOString(),
+            workPlanInputFingerprint: plan.inputFingerprint,
+            artifactId: null,
+            status: "GENERATION_BLOCKED" as const,
+            warnings: [] as string[],
+            explanation: unavailable.reason,
+            metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
+          },
+          artifact: null,
+          resolution: unavailable,
+        };
+      }
     }
     const template = resolution.template;
     await this.recordEvent?.(commerce, tenantId, {

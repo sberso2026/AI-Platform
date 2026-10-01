@@ -224,6 +224,22 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     const data = await ctx.engineering.work.listRepositories(commerce, ctx.tenantId, projectId || null);
     return NextResponse.json({ data });
   }
+  if (action === "m365Catalog") {
+    return NextResponse.json({ data: ctx.engineering.m365Connector.catalog() });
+  }
+  if (action === "m365Connections") {
+    const data = await ctx.engineering.m365Connector.listConnections(commerce, ctx.tenantId);
+    return NextResponse.json({ data });
+  }
+  if (action === "m365Health") {
+    const data = await ctx.engineering.m365Connector.health(commerce, ctx.tenantId, url.searchParams.get("repositoryId"));
+    return NextResponse.json({ data });
+  }
+  if (action === "m365Sources") {
+    if (!projectId) return NextResponse.json({ error: "project_required" }, { status: 400 });
+    const data = await ctx.engineering.m365Connector.listSources(commerce, ctx.tenantId, projectId);
+    return NextResponse.json({ data });
+  }
   if (action === "detail") {
     const id = url.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
@@ -366,7 +382,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.m365Connector.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -660,6 +676,59 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
         action: String(body.disposition ?? body.dispositionAction ?? "accept") as never,
         reason: typeof body.reason === "string" ? body.reason : undefined,
         assignedTo: typeof body.assignedTo === "string" ? body.assignedTo : undefined,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "saveM365Connection" || action === "registerSharePointRepository" || action === "testM365Connection" || action === "syncSharePointRepository" || action === "disableSharePointRepository" || action === "registerTemplateSource") {
+      const settingsCommerce = await authorizeEngineeringSegment(ctx, "settings", "POST", correlationId);
+      if (!settingsCommerce) {
+        return NextResponse.json({ error: "identity_assurance_required" }, { status: 403 });
+      }
+      if (action === "saveM365Connection") {
+        const data = await ctx.engineering.m365Connector.saveConnection(settingsCommerce, ctx.tenantId, body.connection as never);
+        return NextResponse.json({ data });
+      }
+      if (action === "registerSharePointRepository") {
+        const data = await ctx.engineering.m365Connector.registerSharePointRepository(settingsCommerce, ctx.tenantId, body as never);
+        return NextResponse.json({ data });
+      }
+      if (action === "testM365Connection") {
+        const data = await ctx.engineering.m365Connector.testConnection(settingsCommerce, ctx.tenantId, String(body.connectionId ?? ""));
+        return NextResponse.json({ data });
+      }
+      if (action === "syncSharePointRepository") {
+        const data = await ctx.engineering.m365Connector.enqueueSync(
+          settingsCommerce,
+          ctx.tenantId,
+          String(body.repositoryId ?? ""),
+          body.mode === "initial" || body.mode === "resync" ? body.mode : "delta",
+        );
+        return NextResponse.json({ data });
+      }
+      if (action === "disableSharePointRepository") {
+        const data = await ctx.engineering.m365Connector.disableRepository(settingsCommerce, ctx.tenantId, String(body.repositoryId ?? ""));
+        return NextResponse.json({ data });
+      }
+      const data = await ctx.engineering.m365Connector.registerTemplateSource(settingsCommerce, ctx.tenantId, { sourceId: String(body.sourceId ?? "") });
+      return NextResponse.json({ data });
+    }
+    if (action === "publishToManagedRepository") {
+      const artifact = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, String(body.artifactId ?? ""));
+      if (!artifact) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      const data = await ctx.engineering.m365Connector.publishArtifact(commerce, ctx.tenantId, {
+        repositoryId: String(body.repositoryId ?? ""),
+        fileName: artifact.fileName,
+        content: Buffer.from(artifact.contentBase64, "base64"),
+        contentType: artifact.mimeType,
+        artifactId: artifact.id,
+      });
+      return NextResponse.json({ data, engineeringApproved: false });
+    }
+    if (action === "openManagedSharePointSource") {
+      const data = await ctx.engineering.m365Connector.openManagedSource(commerce, ctx.tenantId, {
+        sourceId: typeof body.sourceId === "string" ? body.sourceId : null,
+        informationRefId: typeof body.informationRefId === "string" ? body.informationRefId : null,
+        projectId: typeof body.projectId === "string" ? body.projectId : null,
       });
       return NextResponse.json({ data });
     }

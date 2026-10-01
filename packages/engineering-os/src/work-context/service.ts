@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
-import { assertEngineeringService } from "../commerce/service-guard";
+import { assertEngineeringService, assertEngineeringTenantScope } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import { classifyWorkMateriality, WORKFLOW_CONTRACTS } from "./catalog";
 import { aggregateEngineeringDay, explainCapture, futureAssuranceConditions, kernelWorkEventEnvelope, WORK_CONTEXT_PRIVACY, WORK_CONTEXT_RECON } from "./compose";
@@ -72,6 +72,15 @@ export class EngineeringWorkContextService {
 
   async listRepositories(commerce: CommerceExecutionContext, tenantId: string, projectId?: string | null) {
     assertEngineeringService(commerce, "work.list", tenantId);
+    return this.listRepositoriesAuthorized(commerce, tenantId, projectId);
+  }
+
+  async listRepositoriesForConnector(commerce: CommerceExecutionContext, tenantId: string, projectId?: string | null) {
+    assertEngineeringTenantScope(commerce, tenantId);
+    return this.listRepositoriesAuthorized(commerce, tenantId, projectId);
+  }
+
+  private async listRepositoriesAuthorized(commerce: CommerceExecutionContext, tenantId: string, projectId?: string | null) {
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
     return (await this.store.listRepositories(workspaceId, projectId)).filter((row) => row.tenantId === tenantId);
@@ -122,6 +131,15 @@ export class EngineeringWorkContextService {
 
   async ingest(commerce: CommerceExecutionContext, tenantId: string, signal: SourceWorkflowSignal) {
     assertEngineeringService(commerce, "work.write", tenantId);
+    return this.ingestAuthorized(commerce, tenantId, signal);
+  }
+
+  async ingestFromConnector(commerce: CommerceExecutionContext, tenantId: string, signal: SourceWorkflowSignal) {
+    assertEngineeringTenantScope(commerce, tenantId);
+    return this.ingestAuthorized(commerce, tenantId, signal);
+  }
+
+  private async ingestAuthorized(commerce: CommerceExecutionContext, tenantId: string, signal: SourceWorkflowSignal) {
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
     if (!signal.projectId) throw new Error("project_required");

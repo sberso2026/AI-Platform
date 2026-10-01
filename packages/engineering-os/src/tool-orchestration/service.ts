@@ -54,6 +54,11 @@ export class EngineeringToolOrchestrationService {
       assumptionIds: string[];
       requestedBy: string;
     }) => Promise<{ id: string; status: string }>,
+    private readonly openManaged?: (
+      commerce: CommerceExecutionContext,
+      tenantId: string,
+      input: { workPlanId: string; sourceTitle?: string | null; projectId: string },
+    ) => Promise<{ ok: boolean; href?: string; title?: string; connectorImplemented?: boolean } | null>,
   ) {}
 
   catalog() {
@@ -220,8 +225,12 @@ export class EngineeringToolOrchestrationService {
     }
     if (mode === "MANAGED_REPOSITORY_OPEN") {
       const row = this.baseHandoff({ tenantId, workspaceId, projectId, plan, artifact, toolCode, capability, mode, commerce });
+      const opened = await this.openManaged?.(commerce, tenantId, { workPlanId: plan.id, projectId });
+      const connected = Boolean(opened?.connectorImplemented);
       row.status = "PREPARED";
-      row.explanation = "Managed repository open is a governed contract. Native SharePoint/EDMS connectors are not implemented in A11C.";
+      row.explanation = connected
+        ? "Open the governed SharePoint location for this managed source. Publication is a separate explicit action."
+        : "Managed repository open is a governed contract. Native SharePoint/EDMS connectors are not implemented in A11C.";
       await this.handoffs.save(row);
       await this.recordEvent?.(commerce, tenantId, {
         eventType: "TOOL_HANDOFF_PREPARED",
@@ -235,7 +244,8 @@ export class EngineeringToolOrchestrationService {
         handoff: { ...row, tokenHash: "[redacted]" },
         token: null,
         actions: ["Open Managed Source", "View Current Revision", "Download Controlled Copy"],
-        connectorImplemented: false,
+        connectorImplemented: connected,
+        href: opened?.href ?? "/engineering/information",
         durationMs: Date.now() - started,
         view: this.projectView(projectId, input.selectedProjectId),
       };
@@ -404,16 +414,18 @@ export class EngineeringToolOrchestrationService {
       ? plan.context.information.find((item) => item.title === input.sourceTitle) ?? null
       : plan.context.information[0] ?? null;
     if (!row) return { ok: false as const, reason: "SOURCE_NOT_FOUND" as const, privateUrlExposed: false };
+    const opened = await this.openManaged?.(commerce, tenantId, { workPlanId: input.workPlanId, sourceTitle: input.sourceTitle, projectId: plan.projectId });
     return {
       ok: true as const,
-      title: row.title,
+      title: opened?.title ?? row.title,
       revision: row.revision ?? null,
       freshness: row.freshness ?? null,
       authorityOutcome: row.authorityOutcome ?? null,
-      href: "/engineering/information",
+      href: opened?.href ?? "/engineering/information",
       actions: ["Open EOS source detail", "Download Controlled Copy", "Open Managed Source"],
       privateUrlExposed: false,
-      connectorImplemented: false,
+      connectorImplemented: Boolean(opened?.connectorImplemented),
+      provider: opened?.connectorImplemented ? "SharePoint" : undefined,
     };
   }
 

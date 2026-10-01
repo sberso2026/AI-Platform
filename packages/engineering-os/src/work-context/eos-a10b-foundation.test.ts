@@ -187,7 +187,7 @@ describe("EOS-A10B Engineering Work Context & Information Flow", () => {
     expect(WORK_CONTEXT_PRIVACY.keystrokeCapture).toBe("PROHIBITED");
     expect(WORK_CONTEXT_PRIVACY.newEventBusCreated).toBe(false);
     expect(WORKFLOW_CONTRACTS.excel.mustNotCapture).toContain("cell edits");
-    expect(WORKFLOW_CONTRACTS.sharepoint.connectorImplemented).toBe(false);
+    expect(WORKFLOW_CONTRACTS.sharepoint.connectorImplemented).toBe(true);
     expect(WORKFLOW_CONTRACTS.teams.mustNotIngestAllConversations).toBe(true);
     expect(WORKFLOW_CONTRACTS.outlook.personalEmailOutsideScope).toBe(true);
     expect(WORKFLOW_CONTRACTS.cad.pluginImplemented).toBe(false);

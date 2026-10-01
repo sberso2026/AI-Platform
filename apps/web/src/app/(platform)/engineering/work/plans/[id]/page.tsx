@@ -188,6 +188,7 @@ export default function WorkPlanPage() {
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
   const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
   const [handoff, setHandoff] = useState<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string } | null>(null);
+  const [managedRepoId, setManagedRepoId] = useState<string | null>(null);
 
   async function load() {
     const response = await fetch(`/api/engineering/work?action=plan&id=${encodeURIComponent(params.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
@@ -208,6 +209,12 @@ export default function WorkPlanPage() {
     const handoffRes = await fetch(`/api/engineering/work?action=lifecycleHandoff&id=${encodeURIComponent(params.id)}`);
     const handoffJson = await parseApiJsonResponse<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string }>(handoffRes);
     if (!handoffJson.errorMessage && handoffJson.data) setHandoff(handoffJson.data);
+    if (json.data?.projectId) {
+      const repos = await fetch(`/api/engineering/work?action=repositories&projectId=${encodeURIComponent(json.data.projectId)}`);
+      const reposJson = await parseApiJsonResponse<Array<{ id: string; repositoryType: string; enabled?: boolean }>>(repos);
+      const sharePoint = (reposJson.data ?? []).find((row) => row.repositoryType === "SHAREPOINT_LIBRARY" && row.enabled !== false);
+      setManagedRepoId(sharePoint?.id ?? null);
+    }
   }
 
   useEffect(() => {
@@ -237,6 +244,7 @@ export default function WorkPlanPage() {
       view?: { mismatch?: boolean; message?: string };
       originalPreserved?: boolean;
       returned?: GeneratedArtifact;
+      connectorImplemented?: boolean;
     }>(response);
     if (json.errorMessage) {
       setError(json.errorMessage);
@@ -293,7 +301,19 @@ export default function WorkPlanPage() {
       return;
     }
     if (action === "openGoverningSource") {
-      setMessage("Governing source opened in EOS. Direct private repository URLs are not exposed.");
+      setMessage(
+        json.data?.connectorImplemented
+          ? "Governing SharePoint source is available to open. This is not engineering approval."
+          : "Governing source opened in EOS. Direct private repository URLs are not exposed.",
+      );
+      return;
+    }
+    if (action === "publishToManagedRepository") {
+      setMessage(
+        json.data?.ok
+          ? "Generated report published to the approved SharePoint library. This is not engineering approval."
+          : "Publish to managed repository is unavailable until an approved SharePoint library is registered.",
+      );
       return;
     }
     if (action === "runPreIssueReview") {
@@ -638,6 +658,15 @@ export default function WorkPlanPage() {
                           <button type="button" className="rounded border px-2 py-1" onClick={() => setProvenance(JSON.stringify(item.provenance, null, 2))}>View Provenance</button>
                           <button type="button" className="rounded border px-2 py-1" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: item.artifactType, projectCode: "ER-A1" })}>Regenerate</button>
                           <button type="button" className="rounded border px-2 py-1" onClick={() => void compare(item)}>Compare Context</button>
+                          {managedRepoId && (
+                            <button
+                              type="button"
+                              className="rounded border px-2 py-1"
+                              onClick={() => void act("publishToManagedRepository", { artifactId: item.id, repositoryId: managedRepoId })}
+                            >
+                              Publish to Managed Repository
+                            </button>
+                          )}
                           {item.lineageKind !== "RETURNED_FROM_ENGINEER" && (
                             <>
                               <button type="button" className="rounded border px-2 py-1" onClick={() => setPublishFor(item.id)}>Publish Updated Artifact</button>

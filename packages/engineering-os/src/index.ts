@@ -213,6 +213,12 @@ export {
   DEFAULT_CAPTURE_POLICY,
   WORK_EVENT_TYPES,
 } from "./work-context/types";
+export {
+  EngineeringM365ConnectorService,
+  M365_CONNECTOR_RECON,
+  M365_CONNECTOR_PRIVACY,
+  M365_JOB_TYPE,
+} from "./connectors/m365";
 export { EngineeringInformationRequirementService } from "./information-requirements/service";
 export {
   INFORMATION_REQUIREMENT_AI_BOUNDARY,

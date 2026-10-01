@@ -57,6 +57,8 @@ export type ArtifactTemplatePolicyRecord = {
   workTypes: GeneratorWorkType[];
   lifecycleStages: LifecycleStage[];
   packagedAssetKey: string;
+  binarySourceKind?: "PACKAGED" | "SHAREPOINT_MANAGED";
+  externalSourceRefId?: string | null;
   presentationKind: Exclude<TemplatePresentationKind, "DEFINITION">;
   branding: ArtifactBranding;
   fallbackPolicy: TemplateFallbackPolicy;

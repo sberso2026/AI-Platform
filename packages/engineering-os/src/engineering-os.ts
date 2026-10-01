@@ -52,6 +52,8 @@ import { EngineeringLifecycleService } from "./lifecycle-intelligence/service";
 import { EngineeringDeliverableService } from "./deliverable-intelligence/service";
 import { EngineeringInformationService } from "./information-intelligence/service";
 import { EngineeringWorkContextService } from "./work-context/service";
+import { EngineeringM365ConnectorService, registerSharePointSyncHandler } from "./connectors/m365";
+import { LiveGraphPort } from "./connectors/m365/graph";
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
 import { EngineeringWorkGeneratorService } from "./work-generator/service";
 import { EngineeringArtifactAutomationService } from "./artifact-automation/service";
@@ -111,6 +113,7 @@ export interface EngineeringOS {
   preIssueReview: EngineeringPreIssueReviewService;
   changeWorkbench: EngineeringChangeWorkbenchService;
   informationRequirements: EngineeringInformationRequirementService;
+  m365Connector: EngineeringM365ConnectorService;
   attention: EngineeringAttentionService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
@@ -170,6 +173,17 @@ export function createEngineeringOS(
       }
     },
   });
+  const m365Connector = new EngineeringM365ConnectorService(supabase, {
+    work,
+    information,
+    jobs: kernel.jobs,
+    graph: new LiveGraphPort({
+      async getSecretValue() {
+        return null;
+      },
+    }),
+  });
+  registerSharePointSyncHandler(kernel.jobs, m365Connector);
   const workGenerator = new EngineeringWorkGeneratorService(supabase, undefined, async (commerce, tenantId, input) => {
     await work.recordMaterialEvent(commerce, tenantId, {
       eventType: input.eventType,
@@ -196,6 +210,10 @@ export function createEngineeringOS(
         actorId: input.actorId,
       });
     },
+    undefined,
+    {
+      retrieve: (commerce, tenantId, input) => m365Connector.retrieveTemplateBinary(commerce, tenantId, input),
+    },
   );
   const toolOrchestration = new EngineeringToolOrchestrationService(
     supabase,
@@ -211,6 +229,14 @@ export function createEngineeringOS(
         sourceEventId: `${input.eventType}:${input.artifactId ?? input.planId}`,
         actorId: input.actorId,
       });
+    },
+    undefined,
+    async (commerce, tenantId, input) => {
+      const opened = await m365Connector.openManagedSource(commerce, tenantId, {
+        projectId: input.projectId,
+      });
+      if (!opened.ok) return { ok: false, connectorImplemented: false };
+      return { ok: true, href: opened.href ?? undefined, title: opened.title, connectorImplemented: opened.connectorImplemented };
     },
   );
   const hostedReviewMemory = createSharedReviewMemory();
@@ -363,6 +389,7 @@ export function createEngineeringOS(
     changeWorkbench,
     attention,
     informationRequirements,
+    m365Connector,
     timeline,
     activity,
     objects,

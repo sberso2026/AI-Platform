@@ -67,6 +67,7 @@ export const SOURCE_EVENT_NORMALIZATION: Record<string, WorkEventType> = {
   FILE_PUBLISHED: "SOURCE_PUBLISHED",
   CONTROLLED_METADATA_CHANGED: "SOURCE_REVISED",
   FILE_MOVED: "SOURCE_REVISED",
+  FILE_DELETED: "SOURCE_REVISED",
   EXCEL_REVISION_SAVED: "SOURCE_REVISED",
   EXCEL_CALCULATION_PUBLISHED: "CALCULATION_PUBLISHED",
   WORD_REVISION_SAVED: "SOURCE_REVISED",
@@ -154,7 +155,7 @@ export const WORKFLOW_CONTRACTS = {
     realSolverImplemented: false,
   },
   sharepoint: {
-    connectorImplemented: false,
+    connectorImplemented: true,
     sourceEvents: ["FILE_CREATED", "FILE_REVISED", "FILE_MOVED", "CONTROLLED_METADATA_CHANGED", "FILE_PUBLISHED"],
   },
   teams: {

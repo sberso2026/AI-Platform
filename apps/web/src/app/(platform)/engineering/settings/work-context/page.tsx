@@ -75,6 +75,7 @@ export default function WorkContextSettingsPage() {
         <EngineeringProjectContextBar />
         {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
         <p className="mt-3 text-sm"><Link className="underline-offset-2 hover:underline" href="/engineering/work">Open Work workspace</Link></p>
+        <p className="mt-1 text-sm"><Link className="underline-offset-2 hover:underline" href="/engineering/settings/integrations">Microsoft 365 / SharePoint</Link></p>
         <Card className="mt-4">
           <CardHeader><CardTitle className="text-base">Registered repositories</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">

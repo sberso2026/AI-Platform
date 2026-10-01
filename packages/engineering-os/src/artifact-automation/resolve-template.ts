@@ -140,8 +140,8 @@ function resolveClass(
       packagedAssetKey: null,
     };
   }
-  const policy = scoped[0]!;
-  const packaged = findArtifactTemplate(policy.packagedAssetKey);
+    const policy = scoped[0]!;
+    const packaged = findArtifactTemplate(policy.packagedAssetKey) ?? (policy.binarySourceKind === "SHAREPOINT_MANAGED" ? eosDefaults(artifactType, input.plan) : null);
   if (!packaged) {
     if (fallbackPolicy === "ALLOW_EOS_DEFAULT_IF_OFFICIAL_UNAVAILABLE") {
       const fallback = eosDefaults(artifactType, input.plan, input.requestedCode, input.requestedVersion);

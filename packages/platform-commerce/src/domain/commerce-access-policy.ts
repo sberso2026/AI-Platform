@@ -476,6 +476,7 @@ export const ENGINEERING_PAGE_POLICIES: Record<string, CommerceAccessPolicy> = {
   "/engineering/settings/deliverables": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/settings/information": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/settings/work-context": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
+  "/engineering/settings/integrations": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/settings/information-requirements": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/settings/templates": { productKey: ENGINEERING_PRODUCT, action: "access", seatRequired: true },
   "/engineering/actions": { productKey: ENGINEERING_PRODUCT, applicationKey: "project_controls", action: "access", seatRequired: true },

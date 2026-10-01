@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
-import { assertEngineeringService } from "../commerce/service-guard";
+import { assertEngineeringService, assertEngineeringTenantScope } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import { INFORMATION_TYPE_CATALOG } from "./catalog";
 import type { InformationStore } from "./memory-store";
@@ -45,6 +45,15 @@ export class EngineeringInformationService {
 
   async register(commerce: CommerceExecutionContext, tenantId: string, row: EngineeringInformationRef) {
     assertEngineeringService(commerce, "information.write", tenantId);
+    return this.registerAuthorized(commerce, tenantId, row);
+  }
+
+  async registerFromConnector(commerce: CommerceExecutionContext, tenantId: string, row: EngineeringInformationRef) {
+    assertEngineeringTenantScope(commerce, tenantId);
+    return this.registerAuthorized(commerce, tenantId, row);
+  }
+
+  private async registerAuthorized(commerce: CommerceExecutionContext, tenantId: string, row: EngineeringInformationRef) {
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
     if (row.tenantId !== tenantId || row.workspaceId !== workspaceId) throw new Error("workspace_mismatch");

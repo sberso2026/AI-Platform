@@ -193,6 +193,11 @@ export default function EngineeringSettingsPage() {
                   Open Managed Repositories
                 </Link>
               </div>
+              <div className="mt-2">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/integrations">
+                  Open Microsoft 365 / SharePoint
+                </Link>
+              </div>
             </CardContent>
           </Card>
           <Card>
