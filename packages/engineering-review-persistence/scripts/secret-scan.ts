@@ -82,6 +82,12 @@ const TARGETS = [
   "packages/engineering-os/src/pilot/a14b-reliability.ts",
   "docs/architecture/engineering-os/EOS_A14B_RELIABILITY_PERFORMANCE_RECOVERY_PILOT_OPERATIONS.md",
   "docs/architecture/engineering-os/EOS_DISASTER_RECOVERY_RUNBOOK.md",
+  "packages/engineering-os/src/pilot/a15a-demonstrator.ts",
+  "packages/engineering-os/src/pilot/eos-a15a-demonstrator.test.ts",
+  "docs/architecture/engineering-os/EOS_A15A_END_TO_END_ENGINEERING_DEMONSTRATOR.md",
+  "docs/architecture/engineering-os/EOS_A15A_DEMONSTRATOR_EVIDENCE.md",
+  "docs/architecture/engineering-os/EOS_A15A_DEMONSTRATION_RUNBOOK.md",
+  "docs/architecture/engineering-os/EOS_A15A_ENGINEERING_VALUE_EVIDENCE.md",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

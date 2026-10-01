@@ -24,7 +24,25 @@ Reuse the existing certification tenant/workspace fixtures. Do not broaden to pr
 3. Complete the authenticator TOTP challenge in the browser.
 4. Do not share TOTP, print authenticator secrets, inject cookies, or disable MFA.
 
-Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. A14B recheck: still BLOCKED (authenticator TOTP must be entered by the operator in the browser).
+Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. A14B recheck: still BLOCKED (authenticator TOTP must be entered by the operator in the browser). A15A did not waive this. A15A is DEMONSTRATION_ONLY.
+
+## A15A demonstration vs pilot
+
+A15A certified a synthetic Crusher Support end-to-end demonstrator. DEMONSTRATOR_READY does not make CONTROLLED_PILOT_READY = YES. Do not present the demonstrator as a live engineering pilot.
+
+Remaining Profile A blockers (shortest list):
+
+1. HUMAN_AAL2_GATE BLOCKED
+2. AUTHENTICATED_BROWSER_HITL NOT_TESTED
+3. MULTI_PROJECT_BROWSER_HITL NOT_TESTED
+4. LIFECYCLE_BROWSER_HITL NOT_TESTED
+5. HOSTED_MALWARE_SCANNER BLOCKED
+6. RETURNED_ARTIFACT_PILOT BLOCKED
+7. DEPENDENCY_POLICY_GATE BLOCKED
+
+Recommended next phase: EOS Pilot Gate Closeout — not A15B execution.
+
+See `EOS_A15A_END_TO_END_ENGINEERING_DEMONSTRATOR.md` and `EOS_A15A_DEMONSTRATION_RUNBOOK.md`.
 
 ## Malware / returned uploads (A14B recheck)
 
