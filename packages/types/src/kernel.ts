@@ -152,7 +152,8 @@ export type JobType =
   | "engineering.analysis.execute"
   | "engineering.thread.project"
   | "engineering.assurance.evaluate"
-  | "engineering.m365.sharepoint.sync";
+  | "engineering.m365.sharepoint.sync"
+  | "engineering.external.connector.sync";
 
 export type JobStatus =
   | "pending"

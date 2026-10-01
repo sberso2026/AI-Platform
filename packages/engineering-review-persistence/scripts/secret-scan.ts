@@ -64,6 +64,13 @@ const TARGETS = [
   "supabase/migrations/20261001120000_eos_a12b_engineering_attention.sql",
   "packages/engineering-os/src/attention",
   "apps/web/src/__tests__/eos-a12b-workbench.test.ts",
+  "docs/architecture/engineering-os/EOS_A13A_ENTERPRISE_CONNECTOR_MICROSOFT_365_SHAREPOINT.md",
+  "supabase/migrations/20261001180000_eos_a13a_m365_sharepoint_connector.sql",
+  "packages/engineering-os/src/connectors/m365",
+  "docs/architecture/engineering-os/EOS_A13B_ENGINEERING_EDMS_CONSTRUCTION_CONNECTORS.md",
+  "supabase/migrations/20261001190000_eos_a13b_engineering_edms_construction_connectors.sql",
+  "packages/engineering-os/src/connectors/engineering",
+  "apps/web/src/app/(platform)/engineering/settings/integrations",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

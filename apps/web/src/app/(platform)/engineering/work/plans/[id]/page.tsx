@@ -187,6 +187,7 @@ export default function WorkPlanPage() {
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
   const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
+  const [externalContext, setExternalContext] = useState<Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }>>([]);
   const [handoff, setHandoff] = useState<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string } | null>(null);
   const [managedRepoId, setManagedRepoId] = useState<string | null>(null);
 
@@ -196,12 +197,13 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
       if (raw?.impact) setImpact(raw.impact);
       if (raw?.templatePreview) setTemplatePreview(raw.templatePreview);
+      if (raw?.externalContext) setExternalContext(raw.externalContext);
     }
     const listed = await fetch(`/api/engineering/work?action=artifacts&planId=${encodeURIComponent(params.id)}`);
     const listedJson = await parseApiJsonResponse<GeneratedArtifact[]>(listed);
@@ -306,6 +308,18 @@ export default function WorkPlanPage() {
           ? "Governing SharePoint source is available to open. This is not engineering approval."
           : "Governing source opened in EOS. Direct private repository URLs are not exposed.",
       );
+      return;
+    }
+    if (action === "openExternalEngineeringSource") {
+      setMessage(
+        json.data?.ok
+          ? "External engineering source is available through the governed link. This is not engineering approval."
+          : "External source is not available for this object.",
+      );
+      return;
+    }
+    if (action === "publishEngineeringResponse") {
+      setMessage("Publication contract accepted. EOS did not automatically issue, close, or approve the external record.");
       return;
     }
     if (action === "publishToManagedRepository") {
@@ -439,6 +453,37 @@ export default function WorkPlanPage() {
                 Template: {templatePreview.template.name} {templatePreview.template.code}@{templatePreview.template.version}
                 {templatePreview.sourceClass === "EOS_DEFAULT" || templatePreview.fallbackUsed ? " · Using EOS Default Template" : ` · ${templatePreview.sourceClass?.replaceAll("_", " ")}`}
               </p>
+            )}
+            {externalContext.length > 0 && (
+              <section className="mt-4 text-sm" aria-label="External engineering context">
+                <h2 className="font-semibold">EXTERNAL ENGINEERING CONTEXT</h2>
+                <ul className="mt-2 space-y-2">
+                  {externalContext.map((row) => (
+                    <li key={row.id} className="rounded border p-2">
+                      <p className="font-medium">{row.presentation?.title ?? row.displayName}</p>
+                      <p className="text-muted-foreground">External system: {row.presentation?.externalSystem ?? row.objectType}</p>
+                      {(row.objectType === "DRAWING" || row.objectType === "MODEL") && (
+                        <button
+                          type="button"
+                          className="mt-1 mr-2 rounded border px-2 py-0.5"
+                          onClick={() => void act("openExternalEngineeringSource", { objectRefId: row.id })}
+                        >
+                          {row.objectType === "MODEL" ? "Open Model" : "Open Current Drawing"}
+                        </button>
+                      )}
+                      {(row.objectType === "RFI" || row.objectType === "TQ" || row.objectType === "FIELD_CHANGE") && (
+                        <button
+                          type="button"
+                          className="mt-1 rounded border px-2 py-0.5"
+                          onClick={() => void act("publishEngineeringResponse", { objectRefId: row.id, preparedEtag: row.etag, humanConfirmed: true, writeAction: "SUBMIT_DRAFT_RESPONSE" })}
+                        >
+                          Publish Engineering Response
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
             {plan.explanations.whyBlocked && <p className="mt-2 text-sm">{plan.explanations.whyBlocked}</p>}
             {plan.explanations.whyConditional && <p className="mt-2 text-sm">{plan.explanations.whyConditional}</p>}

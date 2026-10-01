@@ -24,9 +24,9 @@ export const WORK_CONTEXT_RECON = {
   sharepoint: "EXTEND",
   teams: "CONTRACT",
   outlook: "CONTRACT",
-  aconex: "MISSING",
-  p6: "MISSING",
-  bim: "MISSING",
+  aconex: "CONTRACT",
+  p6: "CONTRACT",
+  bim: "CONTRACT",
   externalTools: "COMPOSE",
 } as const;
 

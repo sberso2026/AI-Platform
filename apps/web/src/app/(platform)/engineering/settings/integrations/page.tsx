@@ -52,6 +52,23 @@ export default function Microsoft365IntegrationsPage() {
   const [rootItemId, setRootItemId] = useState("");
   const [contentPolicy, setContentPolicy] = useState("METADATA_ONLY");
   const [repositories, setRepositories] = useState<Array<{ id: string; displayName: string; repositoryType: string; enabled: boolean; projectId?: string | null; approvedRoot?: string | null }>>([]);
+  const [engineeringConnections, setEngineeringConnections] = useState<Array<{
+    id: string;
+    displayName: string;
+    category: string;
+    vendor: string;
+    writePolicy: string;
+    status: string;
+    enabled: boolean;
+  }>>([]);
+  const [engineeringHealth, setEngineeringHealth] = useState<{
+    connections: Array<{ connection: { id: string; displayName: string; vendor: string; writePolicy: string; status: string; enabled: boolean }; state: { lastSuccessfulSyncAt: string | null; lastAttemptedSyncAt: string | null; itemsChanged: number; cursor: string | null; status: string } | null }>;
+    matrix: Array<{ connector: string; vendor: string; contract: string; fixture: string; liveRead: string; liveWrite: string; status: string }>;
+  } | null>(null);
+  const [connectorVendor, setConnectorVendor] = useState("ACONEX");
+  const [connectorCategory, setConnectorCategory] = useState("EDMS");
+  const [externalProjectId, setExternalProjectId] = useState("ext-project-a");
+  const [writePolicy, setWritePolicy] = useState("READ_ONLY");
 
   async function load() {
     const conn = await fetch("/api/engineering/work?action=m365Connections");
@@ -66,6 +83,15 @@ export default function Microsoft365IntegrationsPage() {
       const reposJson = await parseApiJsonResponse<Array<{ id: string; displayName: string; repositoryType: string; enabled: boolean; projectId?: string | null; approvedRoot?: string | null }>>(repos);
       if (!reposJson.errorMessage) setRepositories(Array.isArray(reposJson.data) ? reposJson.data : []);
     }
+    const engConn = await fetch("/api/engineering/work?action=engineeringConnectorConnections");
+    const engConnJson = await parseApiJsonResponse<Array<{ id: string; displayName: string; category: string; vendor: string; writePolicy: string; status: string; enabled: boolean }>>(engConn);
+    if (!engConnJson.errorMessage) setEngineeringConnections(Array.isArray(engConnJson.data) ? engConnJson.data : []);
+    const engHealth = await fetch("/api/engineering/work?action=engineeringConnectorHealth");
+    const engHealthJson = await parseApiJsonResponse<{
+      connections: Array<{ connection: { id: string; displayName: string; vendor: string; writePolicy: string; status: string; enabled: boolean }; state: { lastSuccessfulSyncAt: string | null; lastAttemptedSyncAt: string | null; itemsChanged: number; cursor: string | null; status: string } | null }>;
+      matrix: Array<{ connector: string; vendor: string; contract: string; fixture: string; liveRead: string; liveWrite: string; status: string }>;
+    }>(engHealth);
+    if (!engHealthJson.errorMessage) setEngineeringHealth(engHealthJson.data);
   }
 
   useEffect(() => {
@@ -90,8 +116,8 @@ export default function Microsoft365IntegrationsPage() {
   return (
     <>
       <Header
-        title="Microsoft 365 / SharePoint"
-        description="Register an approved SharePoint library as a Managed Engineering Repository. Default capture is DENY. Secrets stay in the platform Secrets service."
+        title="Integrations"
+        description="Register approved SharePoint libraries and engineering/construction connectors. Default capture is DENY. Secrets stay in the platform Secrets service."
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <EngineeringProjectContextBar />
@@ -177,6 +203,63 @@ export default function Microsoft365IntegrationsPage() {
               </p>
             )}
             <p className="text-muted-foreground">Personal OneDrive, personal email, and tenant-wide SharePoint crawl remain prohibited. Teams and Outlook stay contract-only.</p>
+          </CardContent>
+        </Card>
+        <Card className="mt-4">
+          <CardHeader><CardTitle className="text-base">Engineering / construction connectors</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p className="text-muted-foreground">EDMS, BIM/CAD metadata, and planning connectors reuse the A13A foundation. Live Aconex, ACC, and P6 remain NOT_TESTED until approved credentials exist. Default write policy is READ_ONLY. Certification is shown as contract / fixture / live-read / live-write, not a single connected flag.</p>
+            <div className="flex flex-wrap gap-3">
+              <label>Category
+                <select className="eos-select mt-1 block" value={connectorCategory} onChange={(event) => setConnectorCategory(event.target.value)} aria-label="Connector category">
+                  <option value="EDMS">EDMS</option>
+                  <option value="CONSTRUCTION_MANAGEMENT">CONSTRUCTION_MANAGEMENT</option>
+                  <option value="BIM_DOCUMENT_SYSTEM">BIM_DOCUMENT_SYSTEM</option>
+                  <option value="PLANNING_SCHEDULE">PLANNING_SCHEDULE</option>
+                  <option value="ENGINEERING_APPLICATION">ENGINEERING_APPLICATION</option>
+                  <option value="OTHER_APPROVED_ENTERPRISE_SOURCE">OTHER_APPROVED_ENTERPRISE_SOURCE</option>
+                </select>
+              </label>
+              <label>Vendor
+                <select className="eos-select mt-1 block" value={connectorVendor} onChange={(event) => setConnectorVendor(event.target.value)} aria-label="Connector vendor">
+                  <option value="ACONEX">ACONEX</option>
+                  <option value="ACC">ACC</option>
+                  <option value="P6">P6</option>
+                  <option value="MSPROJECT">MSPROJECT</option>
+                  <option value="SPACE_GASS">SPACE_GASS</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </label>
+              <label>External project id<input className="eos-select mt-1 block" value={externalProjectId} onChange={(event) => setExternalProjectId(event.target.value)} aria-label="External project id" /></label>
+              <label>Write policy
+                <select className="eos-select mt-1 block" value={writePolicy} onChange={(event) => setWritePolicy(event.target.value)} aria-label="Connector write policy">
+                  <option value="READ_ONLY">READ_ONLY</option>
+                  <option value="SUBMIT_DRAFT_RESPONSE">SUBMIT_DRAFT_RESPONSE</option>
+                  <option value="PUBLISH_DOCUMENT">PUBLISH_DOCUMENT</option>
+                  <option value="UPDATE_REFERENCE_METADATA">UPDATE_REFERENCE_METADATA</option>
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" disabled={!canWrite} onClick={() => void post("saveEngineeringConnection", { connection: { displayName: `${connectorVendor} ${connectorCategory}`, category: connectorCategory, vendor: connectorVendor, credentialSecretId: credentialSecretId || "secret:edms-oauth", authMode: "OAUTH", writePolicy: "READ_ONLY", enabled: true } })}>Register connector</Button>
+              <Button type="button" disabled={!canWrite || !projectId || !engineeringConnections[0]} onClick={() => void post("bindEngineeringProject", { connectionId: engineeringConnections[0]?.id, eosProjectId: projectId, externalAccountId: "acct-epcm-01", externalProjectId, externalScope: "Engineering", repository: { id: crypto.randomUUID(), displayName: `${connectorVendor} ${projectId}`, repositoryType: connectorCategory === "ENGINEERING_APPLICATION" ? "ENGINEERING_APPLICATION" : connectorCategory === "EDMS" || connectorCategory === "CONSTRUCTION_MANAGEMENT" ? "ENGINEERING_EDMS" : "OTHER_APPROVED_ENTERPRISE_SOURCE" } })}>Bind external project</Button>
+              <Button type="button" disabled={!canWrite || !engineeringConnections[0]} onClick={() => void post("setEngineeringConnectorWritePolicy", { connectionId: engineeringConnections[0]?.id, writePolicy })}>Set write policy</Button>
+              <Button type="button" disabled={!canWrite || !engineeringConnections[0]} onClick={() => void post("syncEngineeringConnector", { connectionId: engineeringConnections[0]?.id })}>Sync</Button>
+              <Button type="button" disabled={!canWrite || !engineeringConnections[0]} onClick={() => void post("disableEngineeringConnector", { connectionId: engineeringConnections[0]?.id })}>Disable</Button>
+            </div>
+            {engineeringConnections.map((row) => (
+              <p key={row.id}>{row.displayName} · {row.vendor} · {row.category} · {row.writePolicy} · {row.status} · {row.enabled ? "enabled" : "disabled"} · live NOT_TESTED</p>
+            ))}
+            {engineeringHealth?.connections.map((row) => (
+              <p key={row.connection.id} className="text-muted-foreground">
+                Last successful sync: {row.state?.lastSuccessfulSyncAt ?? "never"}. Last attempt: {row.state?.lastAttemptedSyncAt ?? "never"}.
+                Changed {row.state?.itemsChanged ?? 0}. Cursor {row.state?.cursor ?? "none"}. Auth/health {row.state?.status ?? row.connection.status}. Secrets are not shown.
+              </p>
+            ))}
+            {engineeringHealth?.matrix.map((row) => (
+              <p key={`${row.connector}-${row.vendor}`}>{row.connector} / {row.vendor}: contract {row.contract} · fixture {row.fixture} · live read {row.liveRead} · live write {row.liveWrite}</p>
+            ))}
+            {!canWrite && <p>Connector administration requires an authorized Engineering administrator at AAL2.</p>}
           </CardContent>
         </Card>
       </main>

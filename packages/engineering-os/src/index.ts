@@ -219,6 +219,13 @@ export {
   M365_CONNECTOR_PRIVACY,
   M365_JOB_TYPE,
 } from "./connectors/m365";
+export {
+  EngineeringExternalConnectorService,
+  ENGINEERING_CONNECTOR_RECON,
+  ENGINEERING_CONNECTOR_PRIVACY,
+  CONNECTOR_CERTIFICATION_MATRIX,
+  EXTERNAL_JOB_TYPE,
+} from "./connectors/engineering";
 export { EngineeringInformationRequirementService } from "./information-requirements/service";
 export {
   INFORMATION_REQUIREMENT_AI_BOUNDARY,

@@ -172,6 +172,7 @@ export const WORKFLOW_CONTRACTS = {
   },
   edmsRfi: {
     connectorImplemented: false,
+    fixtureCertified: true,
     vendors: ["Aconex", "OmTrak", "other EDMS/RFI"],
     sourceEvents: ["RFI_CREATED", "RFI_RESPONDED", "RFI_CLOSED", "CORRESPONDENCE_ISSUED"],
   },

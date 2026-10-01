@@ -54,6 +54,7 @@ import { EngineeringInformationService } from "./information-intelligence/servic
 import { EngineeringWorkContextService } from "./work-context/service";
 import { EngineeringM365ConnectorService, registerSharePointSyncHandler } from "./connectors/m365";
 import { LiveGraphPort } from "./connectors/m365/graph";
+import { EngineeringExternalConnectorService, registerExternalConnectorSyncHandler } from "./connectors/engineering";
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
 import { EngineeringWorkGeneratorService } from "./work-generator/service";
 import { EngineeringArtifactAutomationService } from "./artifact-automation/service";
@@ -114,6 +115,7 @@ export interface EngineeringOS {
   changeWorkbench: EngineeringChangeWorkbenchService;
   informationRequirements: EngineeringInformationRequirementService;
   m365Connector: EngineeringM365ConnectorService;
+  engineeringConnector: EngineeringExternalConnectorService;
   attention: EngineeringAttentionService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
@@ -184,6 +186,7 @@ export function createEngineeringOS(
     }),
   });
   registerSharePointSyncHandler(kernel.jobs, m365Connector);
+  const connectorHolder: { current: EngineeringExternalConnectorService | null } = { current: null };
   const workGenerator = new EngineeringWorkGeneratorService(supabase, undefined, async (commerce, tenantId, input) => {
     await work.recordMaterialEvent(commerce, tenantId, {
       eventType: input.eventType,
@@ -235,8 +238,20 @@ export function createEngineeringOS(
       const opened = await m365Connector.openManagedSource(commerce, tenantId, {
         projectId: input.projectId,
       });
-      if (!opened.ok) return { ok: false, connectorImplemented: false };
-      return { ok: true, href: opened.href ?? undefined, title: opened.title, connectorImplemented: opened.connectorImplemented };
+      if (opened.ok) {
+        return { ok: true, href: opened.href ?? undefined, title: opened.title, connectorImplemented: opened.connectorImplemented };
+      }
+      const ext = connectorHolder.current;
+      if (!ext) return { ok: false, connectorImplemented: false };
+      try {
+        const objects = await ext.listObjects(commerce, tenantId, input.projectId);
+        const drawing = objects.find((row) => row.objectType === "DRAWING" || row.objectType === "MODEL");
+        if (!drawing) return { ok: false, connectorImplemented: false };
+        const external = await ext.openExternalSource(commerce, tenantId, drawing.id);
+        return { ok: true, href: external.href ?? undefined, title: external.title, connectorImplemented: true };
+      } catch {
+        return { ok: false, connectorImplemented: false };
+      }
     },
   );
   const hostedReviewMemory = createSharedReviewMemory();
@@ -292,6 +307,15 @@ export function createEngineeringOS(
     interfaces,
     notifications: kernel.notifications,
   });
+  const engineeringConnector = new EngineeringExternalConnectorService(supabase, {
+    work,
+    information,
+    workGenerator,
+    changeWorkbench,
+    jobs: kernel.jobs,
+  });
+  connectorHolder.current = engineeringConnector;
+  registerExternalConnectorSyncHandler(kernel.jobs, engineeringConnector);
   const lifecycle = new EngineeringLifecycleService(supabase, undefined, undefined, deliverables);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
@@ -390,6 +414,7 @@ export function createEngineeringOS(
     attention,
     informationRequirements,
     m365Connector,
+    engineeringConnector,
     timeline,
     activity,
     objects,
