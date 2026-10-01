@@ -21,15 +21,24 @@ export async function inspectXlsx(buffer: Buffer) {
   await wb.xlsx.load(Uint8Array.from(buffer) as unknown as ExcelJS.Buffer);
   const sheets = wb.worksheets.map((sheet) => sheet.name);
   const formulas: string[] = [];
+  const formulaCells: Array<{ sheet: string; cell: string; formula: string }> = [];
+  const sheetTexts: Record<string, string> = {};
   wb.worksheets.forEach((sheet) => {
+    const parts: string[] = [];
     sheet.eachRow((row) => {
       row.eachCell((cell) => {
-        const value = cell.value as { formula?: string } | string | number | null;
-        if (value && typeof value === "object" && "formula" in value && value.formula) formulas.push(String(value.formula));
+        const value = cell.value as { formula?: string; result?: unknown } | string | number | null;
+        if (value && typeof value === "object" && "formula" in value && value.formula) {
+          formulas.push(String(value.formula));
+          formulaCells.push({ sheet: sheet.name, cell: String(cell.address), formula: String(value.formula) });
+        } else if (value != null) {
+          parts.push(String(value));
+        }
       });
     });
+    sheetTexts[sheet.name] = parts.join("\n").slice(0, 20_000);
   });
-  return { sheets, formulas, sheetCount: sheets.length };
+  return { sheets, formulas, formulaCells, sheetTexts, sheetCount: sheets.length };
 }
 
 export function inspectXmlText(buffer: Buffer, path: string) {

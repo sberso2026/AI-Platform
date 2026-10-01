@@ -163,6 +163,12 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
     }
     const selectedProjectId = url.searchParams.get("selectedProjectId");
     const launcher = ctx.engineering.toolOrchestration.launcher(data, artifacts, selectedProjectId);
+    let preIssue: unknown = null;
+    try {
+      preIssue = await ctx.engineering.preIssueReview.latest(commerce, ctx.tenantId, data.id, selectedProjectId);
+    } catch {
+      preIssue = null;
+    }
     return NextResponse.json({
       data,
       continueWork: ctx.engineering.workGenerator.continueWorkSummary(data),
@@ -170,6 +176,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
       handoffs,
       launcher,
       tools: ctx.engineering.toolOrchestration.catalog(),
+      preIssue,
     });
   }
   if (action === "artifactCatalog") {
@@ -177,6 +184,20 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
   }
   if (action === "toolCatalog") {
     return NextResponse.json({ data: ctx.engineering.toolOrchestration.catalog() });
+  }
+  if (action === "preIssueCatalog") {
+    return NextResponse.json({ data: ctx.engineering.preIssueReview.catalog() });
+  }
+  if (action === "preIssueReview") {
+    const workPlanId = url.searchParams.get("workPlanId") ?? url.searchParams.get("id") ?? "";
+    if (!workPlanId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.preIssueReview.latest(
+      commerce,
+      ctx.tenantId,
+      workPlanId,
+      url.searchParams.get("selectedProjectId"),
+    );
+    return NextResponse.json({ data });
   }
   if (action === "openGoverningSource") {
     const workPlanId = url.searchParams.get("workPlanId") ?? url.searchParams.get("id") ?? "";
@@ -212,7 +233,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -366,6 +387,24 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       const data = await ctx.engineering.toolOrchestration.openGoverningSource(commerce, ctx.tenantId, {
         workPlanId: String(body.workPlanId ?? body.id ?? ""),
         sourceTitle: typeof body.sourceTitle === "string" ? body.sourceTitle : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "runPreIssueReview") {
+      const data = await ctx.engineering.preIssueReview.run(commerce, ctx.tenantId, {
+        workPlanId: String(body.workPlanId ?? body.id ?? ""),
+        artifactId: typeof body.artifactId === "string" ? body.artifactId : null,
+        selectedProjectId: typeof body.selectedProjectId === "string" ? body.selectedProjectId : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "disposePreIssueCondition") {
+      const data = await ctx.engineering.preIssueReview.dispose(commerce, ctx.tenantId, {
+        workPlanId: String(body.workPlanId ?? body.id ?? ""),
+        findingId: String(body.findingId ?? ""),
+        action: String(body.disposition ?? body.dispositionAction ?? "accept") as never,
+        reason: typeof body.reason === "string" ? body.reason : undefined,
+        assignedTo: typeof body.assignedTo === "string" ? body.assignedTo : undefined,
       });
       return NextResponse.json({ data });
     }

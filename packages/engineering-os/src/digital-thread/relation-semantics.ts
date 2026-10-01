@@ -54,6 +54,7 @@ const ANY_ENGINEERING = [
   "engineering_work_plan",
   "engineering_generated_artifact",
   "engineering_tool_handoff",
+  "engineering_pre_issue_review",
 ] as const;
 
 export const GOVERNED_RELATION_SEMANTICS: Record<GovernedRelationType, GovernedRelationSemantics> = {

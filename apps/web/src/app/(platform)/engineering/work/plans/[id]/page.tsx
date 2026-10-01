@@ -71,6 +71,47 @@ type ToolCatalog = {
   desktopBridge: { status: string };
 };
 
+type PreIssueCondition = {
+  code: string;
+  title: string;
+  explanation: string;
+  materiality: string;
+  origin: string;
+  status: string;
+  checkType: string;
+  actions: Array<{ code: string; label: string; href?: string | null }>;
+};
+
+type PreIssueSummary = {
+  headline: string;
+  resultState: string | null;
+  attentionRequired: number;
+  passed: number;
+  notEvaluated: number;
+  items: string[];
+  reviewingGeneratedDraft?: boolean;
+  deterministicReview?: string;
+  semanticAiReview?: string;
+  conditions?: PreIssueCondition[];
+};
+
+type PreIssuePayload = {
+  review?: {
+    id: string;
+    resultState: string;
+    staleness: string;
+    targetLineageKind: string;
+    reviewingGeneratedDraft: boolean;
+    reviewPackageId: string;
+    reviewRunId: string;
+    policyVersion: string;
+    conditions: PreIssueCondition[];
+    passedChecks: Array<{ checkType: string; title: string }>;
+    notEvaluated: Array<{ checkType: string; reason: string }>;
+  } | null;
+  summary?: PreIssueSummary;
+};
+
 const OUTPUT_ACTIONS: Record<string, Array<{ artifactType: string; label: string }>> = {
   CALCULATION_WORKBOOK: [{ artifactType: "CALCULATION_WORKBOOK", label: "Generate Calculation Workbook" }],
   DESIGN_REPORT: [{ artifactType: "DESIGN_REPORT", label: "Generate Design Report" }],
@@ -103,6 +144,7 @@ export default function WorkPlanPage() {
   const [provenance, setProvenance] = useState<string | null>(null);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
   const [publishFor, setPublishFor] = useState<string | null>(null);
+  const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
 
   async function load() {
     const response = await fetch(`/api/engineering/work?action=plan&id=${encodeURIComponent(params.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
@@ -110,9 +152,10 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
+      if (raw?.preIssue) setPreIssue(raw.preIssue);
     }
     const listed = await fetch(`/api/engineering/work?action=artifacts&planId=${encodeURIComponent(params.id)}`);
     const listedJson = await parseApiJsonResponse<GeneratedArtifact[]>(listed);
@@ -205,6 +248,17 @@ export default function WorkPlanPage() {
       setMessage("Governing source opened in EOS. Direct private repository URLs are not exposed.");
       return;
     }
+    if (action === "runPreIssueReview") {
+      const payload = json.data as { summary?: PreIssueSummary; review?: PreIssuePayload["review"] } | undefined;
+      setPreIssue({ review: payload?.review ?? null, summary: payload?.summary });
+      setMessage(
+        payload?.summary?.reviewingGeneratedDraft
+          ? "Pre-issue review completed against the generated draft. Returned artifact is preferred when published."
+          : "Pre-issue review completed. Conditions are candidates for human review. This is not engineering approval.",
+      );
+      await load();
+      return;
+    }
     await load();
   }
 
@@ -291,7 +345,65 @@ export default function WorkPlanPage() {
                 </button>
               )}
               <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("refreshPlan")}>Refresh Engineering Context</button>
+              <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("runPreIssueReview", { workPlanId: plan.id })}>Run Pre-Issue Review</button>
             </div>
+            {preIssue?.summary && (
+              <section className="mt-6 text-sm">
+                <h2 className="font-semibold">PRE-ISSUE REVIEW</h2>
+                <p className="mt-1">
+                  {preIssue.review ? preIssue.review.resultState.replaceAll("_", " ") : "Not run"}
+                  {preIssue.review?.reviewingGeneratedDraft ? " · reviewing generated draft" : preIssue.review ? " · latest governed returned artifact" : ""}
+                  {preIssue.review ? ` · ${preIssue.review.staleness.replaceAll("_", " ")}` : ""}
+                </p>
+                <p className="mt-1">Attention Required: {preIssue.summary.attentionRequired} · Current / Passed Checks: {preIssue.summary.passed} · Not Evaluated: {preIssue.summary.notEvaluated}</p>
+                <p>Deterministic review: {preIssue.summary.deterministicReview ?? "available"} · Semantic AI: {preIssue.summary.semanticAiReview ?? "unavailable"}</p>
+                <ol className="mt-2 list-decimal pl-5 space-y-1">
+                  {(preIssue.summary.items.length ? preIssue.summary.items : ["No blocking conditions identified"]).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ol>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {preIssue.review && (
+                    <Link className="rounded border px-3 py-1" href={`/review/${preIssue.review.reviewPackageId}`}>Open Review</Link>
+                  )}
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("refreshPlan")}>Fix Context</button>
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("runPreIssueReview", { workPlanId: plan.id })}>Rerun</button>
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("runPreIssueReview", { workPlanId: plan.id, composePackage: true })}>Create Review Package</button>
+                </div>
+                {preIssue.review?.conditions?.length ? (
+                  <ul className="mt-3 space-y-2">
+                    {preIssue.review.conditions.map((row) => (
+                      <li key={row.code + row.title} className="rounded border p-2">
+                        <p className="font-medium">{row.title}</p>
+                        <p>{row.explanation}</p>
+                        <p className="text-muted-foreground">{row.checkType.replaceAll("_", " ")} · {row.origin} · {row.materiality.replaceAll("_", " ")} · {row.status} · policy {preIssue.review?.policyVersion}</p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {row.actions.map((action) => (
+                            action.href ? (
+                              <Link key={action.code} className="rounded border px-2 py-0.5" href={action.href}>{action.label}</Link>
+                            ) : (
+                              <button
+                                key={action.code}
+                                type="button"
+                                className="rounded border px-2 py-0.5"
+                                onClick={() => {
+                                  if (action.code === "REFRESH_WORK_CONTEXT") void act("refreshPlan");
+                                  else if (action.code === "RERUN_REVIEW") void act("runPreIssueReview", { workPlanId: plan.id });
+                                  else if (action.code === "REQUEST_INFORMATION") void act("openGoverningSource", { workPlanId: plan.id });
+                                }}
+                              >
+                                {action.label}
+                              </button>
+                            )
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="mt-2 text-muted-foreground">Conditions are not approval, safety, or code-compliance verdicts.</p>
+              </section>
+            )}
             {launcher && (
               <section className="mt-6 text-sm">
                 <h2 className="font-semibold">Work launcher</h2>

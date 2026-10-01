@@ -49,6 +49,9 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_A11C_ENGINEERING_TOOL_ORCHESTRATION.md",
   "supabase/migrations/20260930180000_eos_a11c_engineering_tool_orchestration.sql",
   "packages/engineering-os/src/tool-orchestration",
+  "docs/architecture/engineering-os/EOS_A11D_AUTOMATED_ENGINEERING_REVIEW_PRE_ISSUE.md",
+  "supabase/migrations/20260930190000_eos_a11d_pre_issue_engineering_review.sql",
+  "packages/engineering-os/src/pre-issue-review",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

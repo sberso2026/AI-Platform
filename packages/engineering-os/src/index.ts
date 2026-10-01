@@ -243,6 +243,12 @@ export {
   HANDOFF_MODES,
   A11D_HANDOFF,
 } from "./tool-orchestration/types";
+export { EngineeringPreIssueReviewService } from "./pre-issue-review/service";
+export {
+  PRE_ISSUE_REVIEW_RECON,
+  PRE_ISSUE_AI_BOUNDARY,
+  PRE_ISSUE_PRIVACY,
+} from "./pre-issue-review/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,

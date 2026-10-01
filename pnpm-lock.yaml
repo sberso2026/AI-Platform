@@ -396,6 +396,9 @@ importers:
       '@rtb/database':
         specifier: workspace:*
         version: link:../database
+      '@rtb/engineering-review':
+        specifier: workspace:*
+        version: link:../engineering-review
       '@rtb/platform-commerce':
         specifier: workspace:*
         version: link:../platform-commerce

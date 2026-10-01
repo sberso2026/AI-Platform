@@ -50,6 +50,7 @@ export const THREAD_ROOT_TYPES = [
   "engineering_work_plan",
   "engineering_generated_artifact",
   "engineering_tool_handoff",
+  "engineering_pre_issue_review",
 ] as const;
 export type ThreadRootType = (typeof THREAD_ROOT_TYPES)[number];
 

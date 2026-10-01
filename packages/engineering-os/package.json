@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@rtb/database": "workspace:*",
+    "@rtb/engineering-review": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
     "@rtb/platform-intelligence": "workspace:*",
     "@rtb/platform-kernel": "workspace:*",
