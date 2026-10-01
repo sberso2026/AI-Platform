@@ -99,6 +99,9 @@ const TARGETS = [
   "packages/engineering-os/src/attention/authorized-project-action.test.ts",
   "packages/engineering-os/src/commerce/service-guard.test.ts",
   "apps/web/src/app/api/engineering/work/route.ts",
+  "apps/web/src/__tests__/eos-assess-change-auth.test.ts",
+  "packages/engineering-os/src/change-workbench/work-plan-scope.ts",
+  "packages/engineering-os/src/change-workbench/assess-change-authorization.test.ts",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
-import { assembleSnapshotFromRecords, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, sanitizeArtifactFileName, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
+import { assembleSnapshotFromRecords, assertCanonicalWorkPlanOwnership, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, sanitizeArtifactFileName, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { forbiddenResponse } from "@/lib/lifecycle-api";
 
@@ -662,9 +662,15 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       let sourceObjectType = typeof body.sourceObjectType === "string" ? body.sourceObjectType : "";
       let sourceObjectId = typeof body.sourceObjectId === "string" ? body.sourceObjectId : "";
       const workPlanId = typeof body.workPlanId === "string" ? body.workPlanId : typeof body.id === "string" ? body.id : "";
+      const selectedProjectId = typeof body.selectedProjectId === "string" ? body.selectedProjectId : null;
       if (workPlanId) {
-        const plan = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, workPlanId);
+        const readCommerce = await authorizeEngineeringSegment(ctx, "work", "GET", correlationId);
+        if (!readCommerce) {
+          return NextResponse.json({ error: "authorization_denied" }, { status: 403 });
+        }
+        const plan = await ctx.engineering.workGenerator.getPlan(readCommerce, ctx.tenantId, workPlanId);
         if (!plan) return NextResponse.json({ error: "not_found" }, { status: 404 });
+        assertCanonicalWorkPlanOwnership(plan.projectId, selectedProjectId);
         projectId = plan.projectId;
         sourceObjectType = sourceObjectType || (plan.relatedChangeId ? "change" : plan.relatedObjectType ?? "engineering_work_plan");
         sourceObjectId = sourceObjectId || (plan.relatedChangeId ?? plan.relatedObjectId ?? plan.id);

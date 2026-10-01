@@ -318,6 +318,7 @@ export {
   PRE_ISSUE_PRIVACY,
 } from "./pre-issue-review/types";
 export { EngineeringChangeWorkbenchService } from "./change-workbench/service";
+export { assertCanonicalWorkPlanOwnership } from "./change-workbench/work-plan-scope";
 export {
   CHANGE_WORKBENCH_RECON,
   CHANGE_WORKBENCH_AI_BOUNDARY,

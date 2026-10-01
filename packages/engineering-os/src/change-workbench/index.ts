@@ -5,3 +5,4 @@ export { composeOptionStudy, DEFAULT_OPTION_CRITERIA } from "./option-study";
 export { assembleConstructionContext } from "./construction";
 export { EngineeringChangeWorkbenchService, createTestChangeWorkbenchService } from "./service";
 export { createMemoryImpactAssessmentStore } from "./memory-store";
+export { assertCanonicalWorkPlanOwnership } from "./work-plan-scope";

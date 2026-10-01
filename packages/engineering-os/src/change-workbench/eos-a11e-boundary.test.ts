@@ -21,6 +21,9 @@ describe("EOS-A11E boundary", () => {
     const api = readFileSync(join(ROOT, "apps/web/src/app/api/engineering/work/route.ts"), "utf8");
     expect(api).toContain("assessChange");
     expect(api).toContain("changeWorkbench");
+    expect(api).toContain('authorizeEngineeringSegment(ctx, "work", "GET"');
+    expect(api).toContain("getPlan(readCommerce");
+    expect(api).toContain("assertCanonicalWorkPlanOwnership");
     const sql = readFileSync(join(ROOT, "supabase/migrations/20260930200000_eos_a11e_change_impact_option_construction.sql"), "utf8");
     expect(sql).toContain("engineering_impact_assessments");
     expect(sql).not.toContain("content_base64");

@@ -103,4 +103,32 @@ describe("assertEngineeringService", () => {
 
     expect(() => assertEngineeringService(commerce, "project.list", "tenant-a")).not.toThrow();
   });
+
+  it("does not let analysis.write satisfy work.get", () => {
+    const commerce = createTestCommerceExecutionContext({
+      tenantId: "tenant-a",
+      policy: { productKey: "engineering-os", action: "analysis.write", seatRequired: true },
+    });
+    expect(() => assertEngineeringService(commerce, "work.get", "tenant-a")).toThrow(CommerceDomainError);
+    try {
+      assertEngineeringService(commerce, "work.get", "tenant-a");
+    } catch (error) {
+      expect((error as CommerceDomainError).code).toBe("action_mismatch");
+      expect((error as CommerceDomainError).message).toBe("Action mismatch: expected analysis.read");
+    }
+  });
+
+  it("does not let analysis.read satisfy work.write", () => {
+    const commerce = createTestCommerceExecutionContext({
+      tenantId: "tenant-a",
+      policy: { productKey: "engineering-os", action: "analysis.read", seatRequired: true },
+    });
+    expect(() => assertEngineeringService(commerce, "work.write", "tenant-a")).toThrow(CommerceDomainError);
+    try {
+      assertEngineeringService(commerce, "work.write", "tenant-a");
+    } catch (error) {
+      expect((error as CommerceDomainError).code).toBe("action_mismatch");
+      expect((error as CommerceDomainError).message).toBe("Action mismatch: expected analysis.write");
+    }
+  });
 });
