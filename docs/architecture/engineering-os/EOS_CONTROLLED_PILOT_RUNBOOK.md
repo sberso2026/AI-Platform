@@ -24,23 +24,27 @@ Reuse the existing certification tenant/workspace fixtures. Do not broaden to pr
 3. Complete the authenticator TOTP challenge in the browser.
 4. Do not share TOTP, print authenticator secrets, inject cookies, or disable MFA.
 
-Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. A14B recheck: still BLOCKED (authenticator TOTP must be entered by the operator in the browser). A15A did not waive this. A15A is DEMONSTRATION_ONLY.
+Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. Closeout 2026-10-01: password sign-in reached `/login/mfa?next=/engineering/work`. Operator TOTP was not completed in the browser. Do not paste TOTP into chat.
 
 ## A15A demonstration vs pilot
 
 A15A certified a synthetic Crusher Support end-to-end demonstrator. DEMONSTRATOR_READY does not make CONTROLLED_PILOT_READY = YES. Do not present the demonstrator as a live engineering pilot.
 
-Remaining Profile A blockers (shortest list):
+## Pilot Gate Closeout (2026-10-01)
+
+See `EOS_PILOT_GATE_CLOSEOUT.md`. Remaining Profile A blockers:
 
 1. HUMAN_AAL2_GATE BLOCKED
 2. AUTHENTICATED_BROWSER_HITL NOT_TESTED
 3. MULTI_PROJECT_BROWSER_HITL NOT_TESTED
 4. LIFECYCLE_BROWSER_HITL NOT_TESTED
-5. HOSTED_MALWARE_SCANNER BLOCKED
+5. HOSTED_MALWARE_SCANNER BLOCKED (`RTB_REVIEW_CLAMAV_URL` unset; localhost is not hosted)
 6. RETURNED_ARTIFACT_PILOT BLOCKED
-7. DEPENDENCY_POLICY_GATE BLOCKED
+7. DEPENDENCY_POLICY_GATE BLOCKED (4 remaining unaccepted highs: sharp ×2, image-size ×2; expired exceptions not renewed)
 
-Recommended next phase: EOS Pilot Gate Closeout — not A15B execution.
+Bounded production overrides applied: nanoid, brace-expansion 1.1.20, postcss. SCA gate ignores expired exceptions.
+
+Recommended next: EOS Pilot Gate Closeout continuation — not A15B.
 
 See `EOS_A15A_END_TO_END_ENGINEERING_DEMONSTRATOR.md` and `EOS_A15A_DEMONSTRATION_RUNBOOK.md`.
 

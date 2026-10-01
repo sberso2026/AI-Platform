@@ -41,7 +41,10 @@ function main() {
   const exceptions = JSON.parse(
     readFileSync(resolve(packageDir, "security/sca-exceptions.json"), "utf8"),
   ) as { exceptions: Exception[] };
-  const excepted = new Set(exceptions.exceptions.map((x) => x.advisory));
+  const today = new Date().toISOString().slice(0, 10);
+  const activeExceptions = exceptions.exceptions.filter((x) => x.review_by >= today);
+  const expiredExceptions = exceptions.exceptions.filter((x) => x.review_by < today);
+  const excepted = new Set(activeExceptions.map((x) => x.advisory));
 
   const findings: Array<{
     severity: string;
@@ -99,7 +102,12 @@ function main() {
     metadata: audit.metadata ?? null,
     findingCount: findings.length,
     findings,
-    exceptionsApplied: exceptions.exceptions.map((e) => e.advisory),
+    exceptionsApplied: activeExceptions.map((e) => e.advisory),
+    expiredExceptions: expiredExceptions.map((e) => ({
+      advisory: e.advisory,
+      review_by: e.review_by,
+      applied: false,
+    })),
     CriticalDependencyVulnerabilityUnresolved: unresolvedCritical.length > 0,
     unresolvedCritical: unresolvedCritical.map((f) => f.advisory),
     unresolvedHigh: unresolvedHigh.map((f) => f.advisory),
