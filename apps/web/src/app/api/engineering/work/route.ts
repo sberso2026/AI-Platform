@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
-import { assembleSnapshotFromRecords, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
+import { assembleSnapshotFromRecords, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
 import type { CommerceExecutionContext } from "@rtb/types";
 
 function statusFor(message: string): number {
@@ -150,6 +150,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     const plans = await ctx.engineering.workGenerator.listPlans(commerce, ctx.tenantId, projectIdForView);
     const plansMs = Date.now() - plansStarted;
     let lifecycleStage: string = "UNKNOWN";
+    let mixedScopes: Array<{ scopeType: string; scopeId: string; stage: string }> = [];
     try {
       const lifecycleCommerce = await authorizeEngineeringSegment(ctx, "lifecycle", "GET", correlationId);
       if (lifecycleCommerce) {
@@ -159,6 +160,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
           scopeId: projectIdForView,
         });
         lifecycleStage = effective?.stage ?? "UNKNOWN";
+        mixedScopes = await ctx.engineering.lifecycle.scopedStates(lifecycleCommerce, ctx.tenantId, projectIdForView);
       }
     } catch {
       lifecycleStage = "UNKNOWN";
@@ -181,6 +183,9 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     return NextResponse.json({
       data: {
         lifecycleStage,
+        mixedScopes: mixedScopes.slice(0, 12),
+        emptyState: lifecycleEmptyState(lifecycleStage as never),
+        askQuestions: lifecycleAskPrompts(lifecycleStage as never),
         actions,
         governingInformation,
         deepModules: WORKBENCH_DEEP_MODULES,
@@ -281,6 +286,21 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       impact,
       templatePreview,
     });
+  }
+  if (action === "lifecycleHandoff") {
+    const id = url.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, id);
+    if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    const next = resolveNextLifecycleWork(data.lifecycleStage);
+    const inherited = inheritWorkPlanContext({
+      from: ctx.engineering.workGenerator.snapshotFrom(data),
+      fromStage: data.lifecycleStage,
+      toStage: next.toStage,
+      fromPlanId: data.id,
+      systemId: data.systemId,
+    });
+    return NextResponse.json({ data: inherited.handoff, nextWork: next, advancesLifecycleGate: false });
   }
   if (action === "artifactCatalog") {
     return NextResponse.json({ data: ctx.engineering.artifactAutomation.catalog() });
@@ -470,6 +490,28 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
     }
     if (action === "completePlan") {
       const data = await ctx.engineering.workGenerator.completeWork(commerce, ctx.tenantId, String(body.id ?? ""));
+      return NextResponse.json({ data });
+    }
+    if (action === "continueNextStage") {
+      const readCommerce = await authorizeEngineeringSegment(ctx, "work", "GET", correlationId);
+      if (!readCommerce) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      const fromPlanId = String(body.fromPlanId ?? body.id ?? "");
+      const existing = await ctx.engineering.workGenerator.getPlan(readCommerce, ctx.tenantId, fromPlanId);
+      if (!existing) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      const nextWork = resolveNextLifecycleWork(
+        existing.lifecycleStage,
+        typeof body.lifecycleStage === "string" ? (body.lifecycleStage as never) : undefined,
+        typeof body.workType === "string" ? (body.workType as never) : undefined,
+      );
+      const assembled = await assemblePlanContext(ctx, { authorize }, existing.projectId, nextWork.workType);
+      const data = await ctx.engineering.workGenerator.continueIntoNextLifecycle(commerce, ctx.tenantId, {
+        fromPlanId,
+        toStage: nextWork.toStage,
+        workType: nextWork.workType,
+        snapshot: assembled.snapshot,
+        readiness: assembled.readiness,
+        acknowledged: Boolean(body.acknowledged),
+      });
       return NextResponse.json({ data });
     }
     if (action === "generateArtifact") {

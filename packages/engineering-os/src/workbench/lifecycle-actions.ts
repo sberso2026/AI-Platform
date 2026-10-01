@@ -1,5 +1,6 @@
 import type { LifecycleStage } from "../lifecycle-intelligence/types";
 import type { GeneratorWorkType } from "../work-generator/types";
+import { FORWARD_LIFECYCLE_WORK } from "./journeys";
 
 export type WorkbenchActionAvailability = "AVAILABLE" | "REQUIRES_WORK_PLAN" | "UNAVAILABLE";
 
@@ -77,6 +78,19 @@ function reviewAction(): WorkbenchAction {
   };
 }
 
+function continueNext(stage: LifecycleStage): WorkbenchAction {
+  const next = FORWARD_LIFECYCLE_WORK[stage];
+  return {
+    code: "CONTINUE_NEXT_LIFECYCLE",
+    label: next.label,
+    workType: next.workType,
+    href: null,
+    availability: "REQUIRES_WORK_PLAN",
+    reason: "Creates a next-stage Work Plan from inherited context. Does not approve the A9 lifecycle gate.",
+    reuses: "A11A+A9",
+  };
+}
+
 export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"): WorkbenchAction[] {
   if (stage === "CONCEPT") {
     return [
@@ -87,6 +101,7 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       start("GENERATE_CONCEPT_REPORT", "Generate Concept Report", "CONCEPT_STUDY", "A11A+A11B"),
       link("REVIEW_INFORMATION_GAPS", "Review Information Gaps", DEEP.requirements, "A10C", "Open information requirements for this project."),
       link("CREATE_INITIAL_ASSUMPTIONS", "Create Initial Assumptions", DEEP.assumptions, "A2", "Record a governed assumption. Not a silent default."),
+      continueNext("CONCEPT"),
     ];
   }
   if (stage === "PREFEASIBILITY") {
@@ -98,6 +113,7 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       start("PREPARE_TECHNICAL_MEMORANDUM", "Prepare Technical Memorandum", "DESIGN_REPORT", "A11A+A11B"),
       start("ASSESS_REQUIREMENT_CHANGE", "Assess Requirement Change", "CHANGE_ASSESSMENT", "A11E"),
       link("PREPARE_COST_QUANTITY_INPUTS", "Prepare Cost / Quantity Inputs", DEEP.deliverables, "A9", "Quantity/cost remain deliverable-governed. Not invented here."),
+      continueNext("PREFEASIBILITY"),
     ];
   }
   if (stage === "FEASIBILITY") {
@@ -109,6 +125,7 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       start("PREPARE_DESIGN_REPORT", "Prepare Design Report", "DESIGN_REPORT", "A11A+A11B"),
       link("REVIEW_INFORMATION_REQUIREMENTS", "Review Information Requirements", DEEP.requirements, "A10C", "Open required information for this work type."),
       start("ASSESS_OPTION_CHANGE", "Assess Option / Change", "CHANGE_ASSESSMENT", "A11E"),
+      continueNext("FEASIBILITY"),
     ];
   }
   if (stage === "FEED") {
@@ -121,6 +138,7 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       link("REVIEW_INTERFACES", "Review Interfaces", DEEP.interfaces, "A3", "Open current interface context."),
       start("ASSESS_VENDOR_CHANGE", "Assess Vendor Change", "CHANGE_ASSESSMENT", "A11E"),
       reviewAction(),
+      continueNext("FEED"),
     ];
   }
   if (stage === "DETAILED_DESIGN") {
@@ -133,6 +151,7 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       reviewAction(),
       start("ASSESS_DESIGN_CHANGE", "Assess Design Change", "CHANGE_ASSESSMENT", "A11E"),
       start("CREATE_REVIEW_PACKAGE", "Create Review Package", "DESIGN_REVIEW", "A11D"),
+      continueNext("DETAILED_DESIGN"),
     ];
   }
   if (stage === "CONSTRUCTION") {
@@ -145,6 +164,7 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       start("REVIEW_POTENTIAL_IMPACT", "Review Potential Impact", "CHANGE_ASSESSMENT", "A11E"),
       reviewAction(),
       start("CREATE_CHANGE_DECISION", "Create Change / Decision", "CHANGE_ASSESSMENT", "A11E+A2"),
+      continueNext("CONSTRUCTION"),
     ];
   }
   if (stage === "COMMISSIONING") {
@@ -155,6 +175,8 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
       start("PREPARE_ENGINEERING_RESPONSE", "Prepare Engineering Response", "COMMISSIONING_ENGINEERING", "A11A+A11B"),
       link("REVIEW_TEST_EVIDENCE", "Review Test Evidence", DEEP.information, "A10A", "Open current test/commissioning information."),
       start("ASSESS_HANDOVER_IMPACT", "Assess Handover Impact", "HANDOVER_PREPARATION", "A11E"),
+      start("PREPARE_HANDOVER_PACKAGE", "Prepare Handover Package", "HANDOVER_PREPARATION", "A11A+A10C"),
+      continueNext("COMMISSIONING"),
     ];
   }
   if (stage === "OPERATIONS" || stage === "MODIFICATION") {
@@ -170,8 +192,9 @@ export function workbenchActionsForLifecycle(stage: LifecycleStage | "UNKNOWN"):
             start("ASSESS_DESIGN_CHANGE", "Assess Design Change", "CHANGE_ASSESSMENT", "A11E"),
             start("START_CALCULATION", "Start Calculation", "DESIGN_CALCULATION", "A11A+A11B"),
             reviewAction(),
+            continueNext("MODIFICATION"),
           ]
-        : []),
+        : [continueNext("OPERATIONS")]),
     ];
   }
   return [
@@ -209,4 +232,6 @@ export const WORKBENCH_AI_BOUNDARY = {
   mayMarkIfc: false,
   mayOverrideReadiness: false,
   mayChooseAuthoritativeInformation: false,
+  mayAdvanceLifecycle: false,
+  mayAcceptHandover: false,
 } as const;

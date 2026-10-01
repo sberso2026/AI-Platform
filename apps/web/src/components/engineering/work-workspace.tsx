@@ -99,6 +99,9 @@ type EngineeringDayPayload = {
 
 type WorkbenchPayload = {
   lifecycleStage: string;
+  mixedScopes?: Array<{ scopeType: string; scopeId: string; stage: string }>;
+  emptyState?: { title: string; explanation: string; actionLabel: string; workType: string; lifecycleStage: string };
+  askQuestions?: string[];
   actions: WorkbenchAction[];
   governingInformation: Array<{ title: string; revision?: string | null; purpose?: string | null }>;
   deepModules: Array<{ id: string; label: string; href: string }>;
@@ -242,6 +245,15 @@ export function WorkWorkspace() {
       setError(action.reason);
       return;
     }
+    if (action.code === "CONTINUE_NEXT_LIFECYCLE") {
+      const from = openPlans[0];
+      if (!from) {
+        setError(action.reason);
+        return;
+      }
+      void continueNext(from.id, action.workType);
+      return;
+    }
     if (action.href) {
       router.push(action.href);
       return;
@@ -253,6 +265,23 @@ export function WorkWorkspace() {
         lifecycleStage: workbench?.lifecycleStage !== "UNKNOWN" ? workbench?.lifecycleStage : undefined,
       });
     }
+  }
+
+  async function continueNext(fromPlanId: string, workType: string | null) {
+    setBusy("CONTINUE_NEXT_LIFECYCLE");
+    setError(null);
+    const response = await fetch("/api/engineering/work", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "continueNextStage", fromPlanId, workType, selectedProjectId: projectId, acknowledged: true }),
+    });
+    const json = await parseApiJsonResponse<{ next?: { id: string } }>(response);
+    setBusy(null);
+    if (json.errorMessage || !json.data?.next?.id) {
+      setError(json.errorMessage ?? "Cannot continue into the next lifecycle work. Inherited context was not created.");
+      return;
+    }
+    router.push(`/engineering/work/plans/${json.data.next.id}`);
   }
 
   function openAttention(item: AttentionItem) {
@@ -298,7 +327,7 @@ export function WorkWorkspace() {
         title="Unified Engineering Workbench"
         description="Prepare the engineering desk. Material workflow events remain visible; this is not employee activity or productivity scoring."
       />
-      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="unified-engineering-workbench" data-eos-a12b="my-engineering-day">
+      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="unified-engineering-workbench" data-eos-a12b="my-engineering-day" data-eos-a12c="lifecycle-workbench">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Work" }]} />
         <EngineeringProjectContextBar />
         {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
@@ -307,7 +336,14 @@ export function WorkWorkspace() {
           <p className="text-sm text-muted-foreground">Project context is selected once and reused. Switching project changes the view, not ownership of existing work.</p>
           <p className="mt-2 text-base font-medium">
             Lifecycle: {(workbench?.lifecycleStage ?? "UNKNOWN").replaceAll("_", " ")}
+            {openPlans[0]?.systemId ? ` · System: ${openPlans[0].systemId}` : ""}
+            {openPlans[0]?.discipline ? ` · ${openPlans[0].discipline}` : ""}
           </p>
+          {workbench?.mixedScopes && workbench.mixedScopes.length > 1 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Mixed lifecycle: {workbench.mixedScopes.map((row) => `${row.scopeType.toLowerCase()} ${row.stage.replaceAll("_", " ")}`).join(" · ")}
+            </p>
+          ) : null}
         </section>
         {contextNotice ? <p className="mt-3 rounded border p-3 text-sm" role="status">{contextNotice}</p> : null}
 
@@ -371,13 +407,12 @@ export function WorkWorkspace() {
           <h2 className="text-lg font-semibold">Continue Work</h2>
           {openPlans.length === 0 ? (
             <div className="mt-3 rounded border p-4">
-              <p className="text-sm">No active engineering work for this project.</p>
+              <p className="text-sm">{workbench?.emptyState?.title ?? "No active engineering work for this project."}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{workbench?.emptyState?.explanation ?? "Start engineering work using the current project context."}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "START_CALCULATION", workType: "DESIGN_CALCULATION", lifecycleStage: "DETAILED_DESIGN" })}>Start Calculation</button>
-                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "PREPARE_ANALYSIS", workType: "ENGINEERING_ANALYSIS" })}>Start Analysis</button>
-                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "PREPARE_DESIGN_REPORT", workType: "DESIGN_REPORT" })}>Prepare Design Report</button>
-                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "ASSESS_CHANGE", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION" })}>Assess Change</button>
-                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "RESPOND_RFI_TQ", workType: "RFI_TQ_RESPONSE", lifecycleStage: "CONSTRUCTION" })}>Respond to RFI/TQ</button>
+                <button type="button" className="rounded border px-3 py-2 text-sm" disabled={!projectId || Boolean(busy)} onClick={() => void startWork({ code: "START_LIFECYCLE_WORK", workType: workbench?.emptyState?.workType ?? "DESIGN_CALCULATION", lifecycleStage: workbench?.emptyState?.lifecycleStage ?? workbench?.lifecycleStage })}>
+                  {workbench?.emptyState?.actionLabel ?? "Start Engineering Work"}
+                </button>
               </div>
             </div>
           ) : (
@@ -458,8 +493,15 @@ export function WorkWorkspace() {
 
         <section className="mt-8 rounded border p-4" aria-label="Ask EOS">
           <h2 className="text-lg font-semibold">Ask EOS</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Uses the selected project and current work. AI cannot approve design, issue a response, or override readiness.</p>
-          <Link className="mt-3 inline-block rounded border px-3 py-2 text-sm" href={askHref}>Ask EOS</Link>
+          <p className="mt-1 text-sm text-muted-foreground">Uses the selected project and current work. AI cannot approve design, issue a response, advance lifecycle, or accept handover.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(workbench?.askQuestions ?? []).map((question) => (
+              <Link key={question} className="rounded border px-3 py-2 text-sm" href={buildAskHref({ projectId, q: question })}>
+                {question}
+              </Link>
+            ))}
+            <Link className="rounded border px-3 py-2 text-sm" href={askHref}>Ask EOS</Link>
+          </div>
         </section>
 
         {day && (

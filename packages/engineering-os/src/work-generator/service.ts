@@ -4,6 +4,8 @@ import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import type { WorkReadinessResolution } from "../information-requirements/readiness";
 import type { LifecycleStage } from "../lifecycle-intelligence/types";
+import { inheritWorkPlanContext, mergeInheritedWithLive } from "../workbench/inherit";
+import { resolveNextLifecycleWork } from "../workbench/journeys";
 import { A11B_HANDOFF, ENGINEERING_WORK_TEMPLATES, templateFor } from "./catalog";
 import { candidateWorkPlanAssurance, emptySnapshot, snapshotFromPlan, WORK_GENERATOR_RECON } from "./compose";
 import { compareFingerprints } from "./fingerprint";
@@ -112,16 +114,20 @@ export class EngineeringWorkGeneratorService {
     if (input.unmanagedPath) throw new Error("unmanaged_file_outside_eos");
     const template = templateFor(input.workType, input.lifecycleStage ?? "FEED");
     if (!template) throw new Error("template_not_found");
+    const inheritMode = input.relatedObjectType === "engineering_work_plan";
     const existing = await this.store.listPlans(workspaceId, input.projectId);
-    const current = existing.find(
-      (row) =>
-        row.tenantId === tenantId &&
-        row.workType === input.workType &&
-        (row.systemId ?? null) === (input.systemId ?? null) &&
-        row.status !== "SUPERSEDED" &&
-        row.status !== "CANCELLED" &&
-        row.status !== "COMPLETED",
-    );
+    const current = inheritMode
+      ? undefined
+      : existing.find(
+          (row) =>
+            row.tenantId === tenantId &&
+            row.workType === input.workType &&
+            (row.systemId ?? null) === (input.systemId ?? null) &&
+            row.lifecycleStage === template.lifecycleStage &&
+            row.status !== "SUPERSEDED" &&
+            row.status !== "CANCELLED" &&
+            row.status !== "COMPLETED",
+        );
     const snapshot = input.snapshot ?? emptySnapshot();
     const plan = generateEngineeringWorkPlan({
       tenantId,
@@ -141,7 +147,7 @@ export class EngineeringWorkGeneratorService {
       relatedChangeId: input.relatedChangeId,
       generatedBy: commerce.actorUserId ?? null,
       acknowledged: input.acknowledged,
-      supersedesPlanId: input.supersedesPlanId ?? current?.id ?? null,
+      supersedesPlanId: inheritMode ? null : input.supersedesPlanId ?? current?.id ?? null,
     });
     if (current && current.id !== plan.supersedesPlanId && current.inputFingerprint !== plan.inputFingerprint) {
       await this.store.savePlan({ ...current, status: "SUPERSEDED", staleness: "REGENERATE_REQUIRED", updatedAt: plan.updatedAt });
@@ -324,6 +330,54 @@ export class EngineeringWorkGeneratorService {
       expectedOutputs: plan.context.expectedOutputs,
       actions: plan.context.actions,
       templateProvenance: plan.explanations.templateProvenance,
+    };
+  }
+
+  async continueIntoNextLifecycle(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      fromPlanId: string;
+      toStage?: LifecycleStage;
+      workType?: GeneratorWorkType;
+      acknowledged?: boolean;
+      snapshot?: WorkPlanContextSnapshot;
+      readiness?: WorkReadinessResolution | null;
+    },
+  ) {
+    assertEngineeringService(commerce, "work.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const previous = await this.loadScopedPlan(tenantId, workspaceId, input.fromPlanId);
+    if (!previous) throw new Error("not_found");
+    const next = resolveNextLifecycleWork(previous.lifecycleStage, input.toStage, input.workType);
+    const inherited = inheritWorkPlanContext({
+      from: snapshotFromPlan(previous),
+      fromStage: previous.lifecycleStage,
+      toStage: next.toStage,
+      fromPlanId: previous.id,
+      systemId: previous.systemId,
+    });
+    const snapshot = input.snapshot ? mergeInheritedWithLive(inherited.snapshot, input.snapshot) : inherited.snapshot;
+    const plan = await this.generatePlan(commerce, tenantId, {
+      projectId: previous.projectId,
+      workType: next.workType,
+      lifecycleStage: next.toStage,
+      discipline: previous.discipline,
+      systemId: previous.systemId,
+      assetId: previous.assetId,
+      relatedObjectType: "engineering_work_plan",
+      relatedObjectId: previous.id,
+      snapshot,
+      readiness: input.readiness ?? null,
+      acknowledged: input.acknowledged,
+    });
+    return {
+      previous,
+      next: plan,
+      handoff: inherited.handoff,
+      historicalPreserved: previous.status !== "SUPERSEDED" && previous.id !== plan.id,
+      advancesLifecycleGate: false as const,
     };
   }
 

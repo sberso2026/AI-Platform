@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { EngineeringBreadcrumb } from "@/components/engineering/operational";
 import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
@@ -24,6 +24,7 @@ type WorkPlan = {
   discipline?: string | null;
   systemId?: string | null;
   assetId?: string | null;
+  lifecycleStage?: string | null;
   relatedObjectType?: string | null;
   relatedObjectId?: string | null;
   relatedChangeId?: string | null;
@@ -171,6 +172,7 @@ function officeLabel(format?: string) {
 
 export default function WorkPlanPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const selectedProjectId = useResolvedEngineeringProjectId();
   const [plan, setPlan] = useState<WorkPlan | null>(null);
   const [artifacts, setArtifacts] = useState<GeneratedArtifact[]>([]);
@@ -185,6 +187,7 @@ export default function WorkPlanPage() {
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
   const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
+  const [handoff, setHandoff] = useState<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string } | null>(null);
 
   async function load() {
     const response = await fetch(`/api/engineering/work?action=plan&id=${encodeURIComponent(params.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
@@ -202,6 +205,9 @@ export default function WorkPlanPage() {
     const listed = await fetch(`/api/engineering/work?action=artifacts&planId=${encodeURIComponent(params.id)}`);
     const listedJson = await parseApiJsonResponse<GeneratedArtifact[]>(listed);
     if (!listedJson.errorMessage && listedJson.data) setArtifacts(listedJson.data);
+    const handoffRes = await fetch(`/api/engineering/work?action=lifecycleHandoff&id=${encodeURIComponent(params.id)}`);
+    const handoffJson = await parseApiJsonResponse<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string }>(handoffRes);
+    if (!handoffJson.errorMessage && handoffJson.data) setHandoff(handoffJson.data);
   }
 
   useEffect(() => {
@@ -372,6 +378,10 @@ export default function WorkPlanPage() {
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <EngineeringBreadcrumb items={[{ label: "Work", href: "/engineering/work" }, { label: "Work plan" }]} />
         <EngineeringProjectContextBar />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link className="rounded border px-3 py-2 text-sm" href="/engineering/work">Back to Work</Link>
+          <Link className="rounded border px-3 py-2 text-sm" href="/engineering/work">Continue Engineering Work</Link>
+        </div>
         {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
         {message && <p className="mt-3 text-sm">{message}</p>}
         {projectNotice && plan && (
@@ -386,9 +396,24 @@ export default function WorkPlanPage() {
         {plan && (
           <>
             <p className="mt-4 text-sm">
-              {plan.workType.replaceAll("_", " ")} · Status: {plan.readiness.replaceAll("_", " ")} · {plan.status} · {plan.explanations.templateProvenance}
+              {(plan.lifecycleStage ?? "").replaceAll("_", " ")} · {plan.workType.replaceAll("_", " ")} · Status: {plan.readiness.replaceAll("_", " ")} · {plan.status} · {plan.explanations.templateProvenance}
               {plan.systemId ? ` · ${plan.systemId}` : ""}
+              {plan.discipline ? ` · ${plan.discipline}` : ""}
             </p>
+            {plan.relatedObjectType === "engineering_work_plan" && plan.relatedObjectId ? (
+              <p className="mt-2 text-sm text-muted-foreground">Inherited from previous Work Plan {plan.relatedObjectId}. Historical provenance is retained.</p>
+            ) : null}
+            {handoff && (
+              <section className="mt-4 rounded border p-3 text-sm" aria-label="Lifecycle handoff summary">
+                <h2 className="font-semibold">Inherited Context</h2>
+                <p className="mt-1 text-muted-foreground">{(handoff.fromStage ?? "").replaceAll("_", " ")} → {(handoff.toStage ?? "").replaceAll("_", " ")}. This does not approve the lifecycle gate.</p>
+                {handoff.inheritedContext?.length ? <p className="mt-1">Inherited: {handoff.inheritedContext.join("; ")}</p> : null}
+                {handoff.openAssumptions?.length ? <p className="mt-1">Open assumptions: {handoff.openAssumptions.map((row) => `${row.title} (${row.disposition.toLowerCase()})`).join("; ")}</p> : null}
+                {handoff.outstandingInformation?.length ? <p className="mt-1">Outstanding information: {handoff.outstandingInformation.join("; ")}</p> : null}
+                {handoff.decisions?.length ? <p className="mt-1">Decisions: {handoff.decisions.join("; ")}</p> : null}
+                {handoff.requiredEngineeringWork ? <p className="mt-1">Required work: {handoff.requiredEngineeringWork}</p> : null}
+              </section>
+            )}
             {templatePreview?.template && (
               <p className="mt-2 text-sm">
                 Template: {templatePreview.template.name} {templatePreview.template.code}@{templatePreview.template.version}
@@ -415,6 +440,27 @@ export default function WorkPlanPage() {
               <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("prepareOptionStudy", { workPlanId: plan.id, selectedProjectId })}>Compare Options</button>
               <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("prepareRfiResponse", { workPlanId: plan.id, selectedProjectId })}>Prepare RFI/TQ Response</button>
               <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("assessFieldChange", { workPlanId: plan.id, selectedProjectId })}>Assess Field Change</button>
+              <button
+                type="button"
+                className="rounded border px-3 py-2 text-sm"
+                onClick={() => {
+                  void (async () => {
+                    const response = await fetch("/api/engineering/work", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "continueNextStage", id: plan.id, selectedProjectId, acknowledged: true }),
+                    });
+                    const json = await parseApiJsonResponse<{ next?: { id: string } }>(response);
+                    if (json.errorMessage || !json.data?.next?.id) {
+                      setError(json.errorMessage ?? "Cannot create next-stage Work Plan.");
+                      return;
+                    }
+                    router.push(`/engineering/work/plans/${json.data.next.id}`);
+                  })();
+                }}
+              >
+                Continue into next lifecycle work
+              </button>
             </div>
             {impact && (
               <section className="mt-6 text-sm" aria-label="Change impact">
