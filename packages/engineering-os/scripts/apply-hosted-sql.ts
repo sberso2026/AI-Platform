@@ -75,7 +75,7 @@ export async function applyHostedSqlFiles(files: string[]): Promise<{
       const staged = join(work, `apply-${applied.length}.sql`);
       writeFileSync(staged, sql, "utf8");
       console.log(JSON.stringify({ file: relative, checksum: checksum(sql), bytes: sql.length }));
-      const cmd = `npx --no-install supabase db query --workdir "${work}" --linked -f "${staged}"`;
+      const cmd = `npx --yes supabase@2.119.0 db query --workdir "${work}" --linked -f "${staged}"`;
       const result = spawnSync(cmd, { cwd: work, encoding: "utf8", shell: true });
       if (result.status !== 0) {
         if (result.stderr) console.error(filterCliText(result.stderr));

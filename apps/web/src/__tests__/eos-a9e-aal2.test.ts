@@ -79,6 +79,8 @@ describe("EOS-A9E Deliverables/Lifecycle AAL2 server enforcement", () => {
     expect(middleware).toContain("/engineering/settings/information");
     expect(middleware).toContain("/engineering/work");
     expect(middleware).toContain("/engineering/settings/work-context");
+    expect(middleware).toContain("/engineering/information-requirements");
+    expect(middleware).toContain("/engineering/settings/information-requirements");
     expect(middleware).toContain("evaluateReviewIdentityPolicy");
     expect(middleware).toContain("MFA_CHALLENGE_ROUTE");
   });

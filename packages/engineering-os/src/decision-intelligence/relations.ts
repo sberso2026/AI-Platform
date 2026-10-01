@@ -65,6 +65,8 @@ export const GOVERNED_LINK_OBJECT_TYPES = [
   "analysis_result",
   "engineering_information",
   "engineering_work_event",
+  "engineering_information_requirement",
+  "engineering_handover_package",
   "deliverable_expectation",
 ] as const;
 

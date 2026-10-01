@@ -213,6 +213,15 @@ export {
   DEFAULT_CAPTURE_POLICY,
   WORK_EVENT_TYPES,
 } from "./work-context/types";
+export { EngineeringInformationRequirementService } from "./information-requirements/service";
+export {
+  INFORMATION_REQUIREMENT_AI_BOUNDARY,
+  INFORMATION_REQUIREMENT_TYPES,
+  INFORMATION_REQUIREMENT_STATUSES,
+  WORK_READINESS_STATES,
+  HANDOVER_PACKAGE_STATES,
+  HANDOVER_COMPLETENESS_STATES,
+} from "./information-requirements/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,

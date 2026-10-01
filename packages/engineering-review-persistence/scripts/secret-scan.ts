@@ -34,6 +34,12 @@ const TARGETS = [
   "apps/web/src/app/api/engineering/work",
   "apps/web/src/app/(platform)/engineering/work",
   "apps/web/src/app/(platform)/engineering/settings/work-context",
+  "docs/architecture/engineering-os/EOS_A10C_INFORMATION_REQUIREMENTS_EXCHANGE_HANDOVER.md",
+  "supabase/migrations/20260930150000_eos_a10c_information_requirements_handover.sql",
+  "packages/engineering-os/src/information-requirements",
+  "apps/web/src/app/api/engineering/information-requirements",
+  "apps/web/src/app/(platform)/engineering/information-requirements",
+  "apps/web/src/app/(platform)/engineering/settings/information-requirements",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

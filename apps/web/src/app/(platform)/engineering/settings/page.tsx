@@ -197,6 +197,20 @@ export default function EngineeringSettingsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Information Requirements</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed information-requirement templates and lifecycle profiles. Templates stay
+              in the catalog. Ordinary engineers cannot silently redefine required information.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/information-requirements">
+                  Open Information Requirement settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

@@ -75,7 +75,11 @@ function isDeliverableLifecycleAal2Path(pathname: string): boolean {
     pathname === "/engineering/work" ||
     pathname.startsWith("/engineering/work/") ||
     pathname === "/engineering/settings/work-context" ||
-    pathname.startsWith("/engineering/settings/work-context/")
+    pathname.startsWith("/engineering/settings/work-context/") ||
+    pathname === "/engineering/information-requirements" ||
+    pathname.startsWith("/engineering/information-requirements/") ||
+    pathname === "/engineering/settings/information-requirements" ||
+    pathname.startsWith("/engineering/settings/information-requirements/")
   );
 }
 

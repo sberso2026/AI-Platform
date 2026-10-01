@@ -30,6 +30,7 @@ const ENGINEERING_API_SEGMENTS = [
   "deliverables",
   "information",
   "work",
+  "information-requirements",
   "risks",
   "issues",
   "actions",
@@ -129,6 +130,18 @@ describe("ENGINEERING_API_POLICIES", () => {
     expect(read.action).toBe("analysis.read");
     expect(write.action).toBe("analysis.write");
     expect(ENGINEERING_SERVICE_POLICIES["information.policy.write"].action).toBe("settings.write");
+  });
+
+  it("maps Engineering Information Requirements to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("information-requirements", "GET");
+    const write = getEngineeringApiPolicy("information-requirements", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+    expect(ENGINEERING_SERVICE_POLICIES["information-requirements.write"].action).toBe("analysis.write");
   });
 
   it("maps Engineering Work Context to Engineering OS product, not Project Intelligence", () => {

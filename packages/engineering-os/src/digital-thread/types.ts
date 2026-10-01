@@ -45,6 +45,8 @@ export const THREAD_ROOT_TYPES = [
   "document",
   "engineering_information",
   "engineering_work_event",
+  "engineering_information_requirement",
+  "engineering_handover_package",
 ] as const;
 export type ThreadRootType = (typeof THREAD_ROOT_TYPES)[number];
 
