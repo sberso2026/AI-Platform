@@ -20,9 +20,12 @@
   "dependencies": {
     "@rtb/database": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
-    "@rtb/platform-kernel": "workspace:*",
     "@rtb/platform-intelligence": "workspace:*",
+    "@rtb/platform-kernel": "workspace:*",
     "@rtb/types": "workspace:*",
+    "docx": "^9.8.1",
+    "exceljs": "^4.4.0",
+    "pptxgenjs": "^4.0.1",
     "zod": "^3.25.36"
   },
   "devDependencies": {

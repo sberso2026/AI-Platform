@@ -52,6 +52,7 @@ const ANY_ENGINEERING = [
   "engineering_handover_package",
   "deliverable_expectation",
   "engineering_work_plan",
+  "engineering_generated_artifact",
 ] as const;
 
 export const GOVERNED_RELATION_SEMANTICS: Record<GovernedRelationType, GovernedRelationSemantics> = {
@@ -74,8 +75,8 @@ export const GOVERNED_RELATION_SEMANTICS: Record<GovernedRelationType, GovernedR
     inverseLabel: "USED_IN",
     direction: "from→to",
     lifecycleDirection: "to_is_upstream",
-    allowedSourceTypes: ["system", "asset", "analysis_request", "optimization_run", "decision", "document", "engineering_information", "engineering_work_event", "engineering_information_requirement", "engineering_handover_package", "deliverable_expectation", "engineering_work_plan"],
-    allowedTargetTypes: ["asset", "system", "analysis_request", "analysis_result", "document", "interface", "engineering_information", "engineering_information_requirement", "requirement", "assumption", "decision", "deliverable_expectation", "engineering_handover_package"],
+    allowedSourceTypes: ["system", "asset", "analysis_request", "optimization_run", "decision", "document", "engineering_information", "engineering_work_event", "engineering_information_requirement", "engineering_handover_package", "deliverable_expectation", "engineering_work_plan", "engineering_generated_artifact"],
+    allowedTargetTypes: ["asset", "system", "analysis_request", "analysis_result", "document", "interface", "engineering_information", "engineering_information_requirement", "requirement", "assumption", "decision", "deliverable_expectation", "engineering_handover_package", "engineering_generated_artifact"],
     transitivity: "traversal_only",
     traversalRelevant: true,
     impactRelevant: true,
@@ -87,7 +88,7 @@ export const GOVERNED_RELATION_SEMANTICS: Record<GovernedRelationType, GovernedR
     inverseLabel: "DEPENDED_ON_BY",
     direction: "from→to",
     lifecycleDirection: "to_is_upstream",
-    allowedSourceTypes: ["system", "asset", "requirement", "analysis_request", "change", "optimization_run", "engineering_information", "engineering_work_event", "engineering_information_requirement", "interface", "engineering_work_plan"],
+    allowedSourceTypes: ["system", "asset", "requirement", "analysis_request", "change", "optimization_run", "engineering_information", "engineering_work_event", "engineering_information_requirement", "interface", "engineering_work_plan", "engineering_generated_artifact"],
     allowedTargetTypes: ["system", "asset", "requirement", "analysis_request", "analysis_result", "interface", "document", "engineering_information", "engineering_information_requirement"],
     transitivity: "traversal_only",
     traversalRelevant: true,

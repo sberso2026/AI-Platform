@@ -145,14 +145,38 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
     if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
     const data = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, id);
     if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
-    return NextResponse.json({ data, continueWork: ctx.engineering.workGenerator.continueWorkSummary(data) });
+    const artifacts = await ctx.engineering.artifactAutomation.list(commerce, ctx.tenantId, data.id);
+    return NextResponse.json({ data, continueWork: ctx.engineering.workGenerator.continueWorkSummary(data), artifacts });
+  }
+  if (action === "artifactCatalog") {
+    return NextResponse.json({ data: ctx.engineering.artifactAutomation.catalog() });
+  }
+  if (action === "artifacts") {
+    const planId = url.searchParams.get("planId") ?? "";
+    if (!planId) return NextResponse.json({ error: "planId_required" }, { status: 400 });
+    const data = await ctx.engineering.artifactAutomation.list(commerce, ctx.tenantId, planId);
+    return NextResponse.json({ data });
+  }
+  if (action === "downloadArtifact") {
+    const id = url.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const row = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, id);
+    if (!row) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    const buffer = Buffer.from(row.contentBase64, "base64");
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": row.mimeType,
+        "Content-Disposition": `attachment; filename="${row.fileName.replace(/"/g, "")}"`,
+        "Cache-Control": "private, no-store",
+      },
+    });
   }
   return NextResponse.json({ data: ctx.engineering.work.catalog() });
 });
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -240,6 +264,24 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
     if (action === "completePlan") {
       const data = await ctx.engineering.workGenerator.completeWork(commerce, ctx.tenantId, String(body.id ?? ""));
       return NextResponse.json({ data });
+    }
+    if (action === "generateArtifact") {
+      const rejectedArtifact = ctx.engineering.artifactAutomation.rejectCallerClaims(body);
+      if (rejectedArtifact) return NextResponse.json({ error: rejectedArtifact }, { status: 400 });
+      const data = await ctx.engineering.artifactAutomation.generate(commerce, ctx.tenantId, {
+        workPlanId: String(body.workPlanId ?? body.id ?? ""),
+        artifactType: typeof body.artifactType === "string" ? (body.artifactType as never) : undefined,
+        templateCode: typeof body.templateCode === "string" ? body.templateCode : undefined,
+        templateVersion: typeof body.templateVersion === "string" ? body.templateVersion : undefined,
+        projectCode: typeof body.projectCode === "string" ? body.projectCode : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "compareArtifact") {
+      const artifact = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, String(body.artifactId ?? ""));
+      const plan = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, String(body.workPlanId ?? body.id ?? artifact?.workPlanId ?? ""));
+      if (!artifact || !plan) return NextResponse.json({ error: "not_found" }, { status: 404 });
+      return NextResponse.json({ data: ctx.engineering.artifactAutomation.compareContext(artifact.provenance.inputFingerprint, plan.inputFingerprint) });
     }
     return NextResponse.json({ error: "unknown_action" }, { status: 400 });
   } catch (error) {

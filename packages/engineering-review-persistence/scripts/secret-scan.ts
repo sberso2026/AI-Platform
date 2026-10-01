@@ -43,6 +43,9 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_A11A_ENGINEERING_WORK_GENERATOR.md",
   "supabase/migrations/20260930160000_eos_a11a_engineering_work_generator.sql",
   "packages/engineering-os/src/work-generator",
+  "docs/architecture/engineering-os/EOS_A11B_ENGINEERING_ARTIFACT_AUTOMATION.md",
+  "supabase/migrations/20260930170000_eos_a11b_engineering_artifact_automation.sql",
+  "packages/engineering-os/src/artifact-automation",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

@@ -22,6 +22,9 @@ describe("EOS-A11A work generator UI", () => {
     expect(plan).toContain("Start Engineering Work");
     expect(plan).toContain("Refresh Engineering Context");
     expect(plan).toContain("Governing Information");
+    expect(plan).toContain("Generate Calculation Workbook");
+    expect(plan).toContain("Download");
+    expect(plan).toContain("View Provenance");
     expect(plan).toContain("not engineering approval");
   });
 });

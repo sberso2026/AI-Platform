@@ -229,6 +229,13 @@ export {
   WORK_PLAN_STATUSES,
 } from "./work-generator/types";
 export { assembleSnapshotFromRecords } from "./work-generator/compose";
+export { EngineeringArtifactAutomationService } from "./artifact-automation/service";
+export {
+  ARTIFACT_AI_BOUNDARY,
+  ARTIFACT_PRIVACY,
+  ARTIFACT_TYPES,
+  ARTIFACT_GENERATION_STATUSES,
+} from "./artifact-automation/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,

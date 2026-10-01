@@ -54,6 +54,8 @@ import { EngineeringInformationService } from "./information-intelligence/servic
 import { EngineeringWorkContextService } from "./work-context/service";
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
 import { EngineeringWorkGeneratorService } from "./work-generator/service";
+import { EngineeringArtifactAutomationService } from "./artifact-automation/service";
+import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
 import { EngineeringDemoDataService } from "./services/demo-data-service";
@@ -98,6 +100,7 @@ export interface EngineeringOS {
   information: EngineeringInformationService;
   work: EngineeringWorkContextService;
   workGenerator: EngineeringWorkGeneratorService;
+  artifactAutomation: EngineeringArtifactAutomationService;
   informationRequirements: EngineeringInformationRequirementService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
@@ -169,6 +172,21 @@ export function createEngineeringOS(
       lifecycleStage: input.lifecycleStage,
     });
   });
+  const artifactAutomation = new EngineeringArtifactAutomationService(
+    supabase,
+    undefined,
+    (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
+    async (commerce, tenantId, input) => {
+      await work.recordMaterialEvent(commerce, tenantId, {
+        eventType: input.eventType,
+        projectId: input.projectId,
+        sourceObjectType: input.artifactId ? "engineering_generated_artifact" : "engineering_work_plan",
+        sourceObjectId: input.artifactId ?? input.planId,
+        sourceEventId: `${input.eventType}:${input.artifactId ?? input.planId}`,
+        actorId: input.actorId,
+      });
+    },
+  );
   const lifecycle = new EngineeringLifecycleService(supabase, undefined, undefined, deliverables);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
@@ -260,6 +278,7 @@ export function createEngineeringOS(
     information,
     work,
     workGenerator,
+    artifactAutomation,
     informationRequirements,
     timeline,
     activity,
