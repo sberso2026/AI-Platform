@@ -41,7 +41,7 @@ function pointer(overrides: Partial<ArtifactBinaryPointer> = {}): ArtifactBinary
 
 describe("EOS-A13C ArtifactBinaryStore", () => {
   it("reports object storage honestly and keeps explicit storage kinds", () => {
-    expect(OBJECT_STORAGE_BACKEND).toBe("CONTRACT_ONLY");
+    expect(OBJECT_STORAGE_BACKEND).toBe("EXISTING_IMPLEMENTED");
     expect(PUBLIC_BUCKET_REQUIRED).toBe(false);
     expect([...STORAGE_KINDS]).toEqual(["LEGACY_RELATIONAL", "OBJECT_STORAGE", "EXTERNAL_MANAGED"]);
     expect(ARTIFACT_SIZE_POLICY.stagingDefaultsOnly).toBe(true);

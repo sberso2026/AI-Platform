@@ -3,8 +3,11 @@ import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
-import type { GeneratedEngineeringArtifact } from "../artifact-automation/types";
+import type { ArtifactBinaryStore } from "../artifact-automation/binary-store";
+import { LegacyRelationalArtifactBinaryStore } from "../artifact-automation/binary-adapters";
+import { pointerFromArtifact } from "../artifact-automation/binary-store";
 import type { ArtifactStore } from "../artifact-automation/memory-store";
+import type { GeneratedEngineeringArtifact } from "../artifact-automation/types";
 import { SupabaseArtifactStore } from "../artifact-automation/supabase-store";
 import type { EngineeringWorkPlan } from "../work-generator/types";
 import { SPACE_GASS_CATALOG_ENTRY } from "../external-tools/catalog";
@@ -26,7 +29,7 @@ import {
   type HandoffMode,
 } from "./types";
 
-export const CALLER_SUPPLIED_HANDOFF_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current"] as const;
+export const CALLER_SUPPLIED_HANDOFF_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current", "objectKey"] as const;
 
 export type HandoffEventRecorder = (
   commerce: CommerceExecutionContext,
@@ -59,6 +62,7 @@ export class EngineeringToolOrchestrationService {
       tenantId: string,
       input: { workPlanId: string; sourceTitle?: string | null; projectId: string },
     ) => Promise<{ ok: boolean; href?: string; title?: string; connectorImplemented?: boolean } | null>,
+    private readonly binaryStore: ArtifactBinaryStore = new LegacyRelationalArtifactBinaryStore(),
   ) {}
 
   catalog() {
@@ -317,7 +321,7 @@ export class EngineeringToolOrchestrationService {
     const bytes = Buffer.from(input.contentBase64, "base64");
     const hash = createHash("sha256").update(bytes).digest("hex");
     const started = Date.now();
-    const validated = validateReturnedPackage({
+    const validated = await validateReturnedPackage({
       fileName: input.fileName,
       bytes,
       expectedFormat: format,
@@ -333,7 +337,7 @@ export class EngineeringToolOrchestrationService {
       sha256: hash,
       byteSize: bytes.length,
       fileName: validated.fileName.replace(/_DRAFT\./i, "_RETURNED."),
-      contentBase64: bytes.toString("base64"),
+      contentBase64: this.binaryStore instanceof LegacyRelationalArtifactBinaryStore ? bytes.toString("base64") : "",
       status: "READY_FOR_ENGINEER_REVIEW",
       createdAt: new Date().toISOString(),
       supersededById: null,
@@ -353,6 +357,17 @@ export class EngineeringToolOrchestrationService {
         exampleOnly: origin.provenance.exampleOnly,
       },
     };
+    if (!(this.binaryStore instanceof LegacyRelationalArtifactBinaryStore)) {
+      const stored = await this.binaryStore.put(pointerFromArtifact(returned), Uint8Array.from(bytes));
+      returned.storageKind = stored.storageKind;
+      returned.objectKey = stored.objectKey;
+      returned.contentSizeBytes = stored.contentSizeBytes;
+      returned.contentSha256 = stored.contentSha256;
+      returned.contentType = stored.contentType;
+      returned.storageVersion = stored.storageVersion;
+      returned.migrationState = stored.migrationState === "IN_PROGRESS" ? "VERIFIED" : stored.migrationState;
+      returned.contentBase64 = "";
+    }
     const saved = await this.artifacts.saveArtifact(returned);
     await this.recordEvent?.(commerce, tenantId, {
       eventType: "ARTIFACT_RETURNED",
@@ -526,6 +541,7 @@ export function createTestOrchestrationService(input: {
   loadPlan: (id: string) => Promise<EngineeringWorkPlan | null>;
   recorder?: HandoffEventRecorder;
   prepareAnalysis?: ConstructorParameters<typeof EngineeringToolOrchestrationService>[5];
+  binaryStore?: ArtifactBinaryStore;
 }) {
   return new EngineeringToolOrchestrationService(
     { from() { return this; } } as never,
@@ -534,5 +550,7 @@ export function createTestOrchestrationService(input: {
     input.loadPlan,
     input.recorder,
     input.prepareAnalysis,
+    undefined,
+    input.binaryStore ?? new LegacyRelationalArtifactBinaryStore(),
   );
 }

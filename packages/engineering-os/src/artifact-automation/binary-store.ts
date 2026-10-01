@@ -6,6 +6,12 @@ export type StorageKind = (typeof STORAGE_KINDS)[number];
 export const MIGRATION_STATES = ["NOT_STARTED", "IN_PROGRESS", "VERIFIED", "FAILED", "ROLLED_BACK"] as const;
 export type MigrationState = (typeof MIGRATION_STATES)[number];
 
+export const ENGINEERING_ARTIFACT_BUCKET = "engineering-artifacts";
+export const OBJECT_STORAGE_BACKEND = "EXISTING_IMPLEMENTED" as const;
+export const OBJECT_STORAGE_PROVIDER = "SUPABASE_STORAGE";
+export const PUBLIC_BUCKET_REQUIRED = false;
+export const PUBLIC_BUCKET_FORBIDDEN = true;
+
 export const ARTIFACT_SIZE_POLICY = {
   generatedArtifactMaxBytes: 25 * 1024 * 1024,
   templateMaxBytes: 10 * 1024 * 1024,
@@ -13,11 +19,22 @@ export const ARTIFACT_SIZE_POLICY = {
   returnedUploadMaxBytes: 25 * 1024 * 1024,
   productionConfigurationRequired: true,
   stagingDefaultsOnly: true,
+  configurationScope: "CONTROLLED_PILOT",
 } as const;
 
-export const OBJECT_STORAGE_BACKEND = "CONTRACT_ONLY" as const;
-export const OBJECT_STORAGE_PROVIDER = "NONE_FOR_GENERATED_ARTIFACTS; PI document bucket engineering-documents is a different domain";
-export const PUBLIC_BUCKET_REQUIRED = false;
+export const PILOT_LIMITS = {
+  artifactSizeBytes: ARTIFACT_SIZE_POLICY.generatedArtifactMaxBytes,
+  returnedUploadBytes: 15 * 1024 * 1024,
+  templateSizeBytes: ARTIFACT_SIZE_POLICY.templateMaxBytes,
+  malwareScanTimeoutMs: 8_000,
+  signedUrlTtlSeconds: 300,
+  configurationScope: "CONTROLLED_PILOT",
+  notUniversalEosLimit: true,
+} as const;
+
+export function objectStorageWritesEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.EOS_ARTIFACT_OBJECT_STORAGE !== "0";
+}
 
 export type ArtifactBinaryPointer = {
   tenantId: string;
@@ -48,8 +65,7 @@ export interface ArtifactBinaryStore {
   ): Promise<AuthorizedDownload>;
 }
 
-export const MAX_SIGNED_URL_TTL_MS = 5 * 60 * 1000;
-export const PUBLIC_BUCKET_FORBIDDEN = true;
+export const MAX_SIGNED_URL_TTL_MS = PILOT_LIMITS.signedUrlTtlSeconds * 1000;
 
 export function hashBytes(bytes: Uint8Array | Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");

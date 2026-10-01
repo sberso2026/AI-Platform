@@ -1,4 +1,5 @@
 export * from "./pilot/eos-ai-doc-2-flags";
+export * from "./pilot/a14a-profile";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";
@@ -242,11 +243,15 @@ export {
   OBJECT_STORAGE_PROVIDER,
   ARTIFACT_SIZE_POLICY,
   PUBLIC_BUCKET_REQUIRED,
+  ENGINEERING_ARTIFACT_BUCKET,
+  PILOT_LIMITS,
   hashBytes,
   pointerFromArtifact,
   serverObjectKey,
 } from "./artifact-automation/binary-store";
-export { LegacyRelationalArtifactBinaryStore, MemoryObjectArtifactBinaryStore } from "./artifact-automation/binary-adapters";
+export { LegacyRelationalArtifactBinaryStore, MemoryObjectArtifactBinaryStore, RoutingArtifactBinaryStore } from "./artifact-automation/binary-adapters";
+export { SupabaseArtifactBinaryStore } from "./artifact-automation/supabase-binary-store";
+export { sanitizeArtifactFileName } from "./artifact-automation/filename";
 export { EngineeringInformationRequirementService } from "./information-requirements/service";
 export {
   INFORMATION_REQUIREMENT_AI_BOUNDARY,

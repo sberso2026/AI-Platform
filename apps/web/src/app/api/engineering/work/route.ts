@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
-import { assembleSnapshotFromRecords, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
+import { assembleSnapshotFromRecords, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, sanitizeArtifactFileName, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
 import type { CommerceExecutionContext } from "@rtb/types";
 
 function statusFor(message: string): number {
@@ -413,7 +413,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     return new NextResponse(Buffer.from(opened.bytes), {
       headers: {
         "Content-Type": opened.row.mimeType,
-        "Content-Disposition": `attachment; filename="${opened.row.fileName.replace(/"/g, "")}"`,
+        "Content-Disposition": `attachment; filename="${sanitizeArtifactFileName(opened.row.fileName).replace(/"/g, "")}"`,
         "Cache-Control": "private, no-store",
       },
     });

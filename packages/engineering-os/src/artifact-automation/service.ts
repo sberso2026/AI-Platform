@@ -6,8 +6,8 @@ import type { EngineeringWorkPlan } from "../work-generator/types";
 import { ARTIFACT_TEMPLATES, listArtifactTemplates } from "./catalog";
 import { generateEngineeringArtifact } from "./generator";
 import { createMemoryArtifactStore, type ArtifactStore } from "./memory-store";
-import { pointerFromArtifact, type ArtifactBinaryStore } from "./binary-store";
-import { LegacyRelationalArtifactBinaryStore } from "./binary-adapters";
+import { pointerFromArtifact, objectStorageWritesEnabled, type ArtifactBinaryStore } from "./binary-store";
+import { LegacyRelationalArtifactBinaryStore, RoutingArtifactBinaryStore } from "./binary-adapters";
 import { createMemoryTemplatePolicyStore, type TemplatePolicyStore } from "./memory-template-store";
 import { ARTIFACT_DOCUMENT_BOUNDARY, artifactThreadGraph, composeDeliverableFromArtifact } from "./provenance";
 import { resolveEngineeringArtifactTemplate } from "./resolve-template";
@@ -16,7 +16,7 @@ import { SupabaseTemplatePolicyStore } from "./supabase-template-store";
 import { DEFAULT_TEMPLATE_FALLBACK_POLICY, type ArtifactTemplatePolicyRecord, type TenantTemplateFallbackPolicy } from "./template-policy";
 import { ARTIFACT_AI_BOUNDARY, ARTIFACT_PRIVACY, type ArtifactType } from "./types";
 
-export const CALLER_SUPPLIED_ARTIFACT_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current"] as const;
+export const CALLER_SUPPLIED_ARTIFACT_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current", "objectKey", "storageKind"] as const;
 
 export type ArtifactEventRecorder = (
   commerce: CommerceExecutionContext,
@@ -59,7 +59,10 @@ export class EngineeringArtifactAutomationService {
       notABlobPlatform: true,
       templateBinaryStorage: "PACKAGED_EOS_DEFAULT_PLUS_METADATA_POLICY",
       artifactBinaryStore: "ArtifactBinaryStore",
-      objectStorageBackend: "CONTRACT_ONLY",
+      objectStorageBackend: "EXISTING_IMPLEMENTED",
+      objectStorageProvider: "SUPABASE_STORAGE",
+      newWriteStorage: objectStorageWritesEnabled() ? "OBJECT_STORAGE" : "LEGACY_RELATIONAL",
+      publicBucketRequired: false,
       newTemplateDomainCreated: false,
     };
   }
@@ -91,8 +94,13 @@ export class EngineeringArtifactAutomationService {
     const row = await this.get(commerce, tenantId, id);
     if (!row) return null;
     const pointer = pointerFromArtifact(row);
-    if (this.binaryStore instanceof LegacyRelationalArtifactBinaryStore && row.contentBase64) {
-      this.binaryStore.loadFromBase64(pointer, row.contentBase64);
+    if (pointer.storageKind === "LEGACY_RELATIONAL" && row.contentBase64) {
+      if (this.binaryStore instanceof LegacyRelationalArtifactBinaryStore) {
+        this.binaryStore.loadFromBase64(pointer, row.contentBase64);
+      }
+      if (this.binaryStore instanceof RoutingArtifactBinaryStore) {
+        this.binaryStore.loadFromBase64(pointer, row.contentBase64);
+      }
     }
     const bytes = await this.binaryStore.openRead(pointer, {
       tenantId: row.tenantId,
@@ -278,7 +286,8 @@ export class EngineeringArtifactAutomationService {
       await this.store.saveArtifact({ ...older, status: "SUPERSEDED", supersededById: result.artifact.id });
     }
     let toSave = result.artifact;
-    if (!(this.binaryStore instanceof LegacyRelationalArtifactBinaryStore)) {
+    const writeObject = !(this.binaryStore instanceof LegacyRelationalArtifactBinaryStore);
+    if (writeObject) {
       const bytes = Uint8Array.from(Buffer.from(result.artifact.contentBase64, "base64"));
       const stored = await this.binaryStore.put(pointerFromArtifact(result.artifact), bytes);
       toSave = {
@@ -290,7 +299,7 @@ export class EngineeringArtifactAutomationService {
         contentSha256: stored.contentSha256,
         contentType: stored.contentType,
         storageVersion: stored.storageVersion,
-        migrationState: stored.migrationState,
+        migrationState: stored.migrationState === "IN_PROGRESS" ? "VERIFIED" : stored.migrationState,
       };
     }
     const saved = await this.store.saveArtifact(toSave);
@@ -333,8 +342,17 @@ export function createTestArtifactService(
   loadPlan: (id: string) => Promise<EngineeringWorkPlan | null> = async () => null,
   recorder?: ArtifactEventRecorder,
   policyStore: TemplatePolicyStore = createMemoryTemplatePolicyStore(),
+  binaryStore?: ArtifactBinaryStore,
 ) {
-  return new EngineeringArtifactAutomationService({ from() { return this; } } as never, store, loadPlan, recorder, policyStore);
+  return new EngineeringArtifactAutomationService(
+    { from() { return this; } } as never,
+    store,
+    loadPlan,
+    recorder,
+    policyStore,
+    undefined,
+    binaryStore ?? new LegacyRelationalArtifactBinaryStore(),
+  );
 }
 
 export { ARTIFACT_TEMPLATES };

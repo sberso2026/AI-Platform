@@ -75,6 +75,10 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_ARTIFACT_BINARY_STORAGE_MIGRATION_RUNBOOK.md",
   "supabase/migrations/20261001200000_eos_a13c_platform_consolidation_binary_storage.sql",
   "packages/engineering-os/src/connectors/core",
+  "docs/architecture/engineering-os/EOS_A14A_SECURITY_PRIVACY_STORAGE_PILOT_READINESS.md",
+  "docs/architecture/engineering-os/EOS_CONTROLLED_PILOT_RUNBOOK.md",
+  "supabase/migrations/20261001210000_eos_a14a_artifact_object_storage.sql",
+  "packages/engineering-os/src/pilot/a14a-profile.ts",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

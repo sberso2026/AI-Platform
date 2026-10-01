@@ -58,6 +58,9 @@ import { EngineeringExternalConnectorService, registerExternalConnectorSyncHandl
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
 import { EngineeringWorkGeneratorService } from "./work-generator/service";
 import { EngineeringArtifactAutomationService } from "./artifact-automation/service";
+import { LegacyRelationalArtifactBinaryStore, RoutingArtifactBinaryStore } from "./artifact-automation/binary-adapters";
+import { SupabaseArtifactBinaryStore } from "./artifact-automation/supabase-binary-store";
+import { objectStorageWritesEnabled } from "./artifact-automation/binary-store";
 import { EngineeringToolOrchestrationService } from "./tool-orchestration/service";
 import { EngineeringPreIssueReviewService } from "./pre-issue-review/service";
 import { SupabasePreIssueStore } from "./pre-issue-review/supabase-store";
@@ -199,6 +202,11 @@ export function createEngineeringOS(
       lifecycleStage: input.lifecycleStage,
     });
   });
+  const artifactBinaryStore = new RoutingArtifactBinaryStore(
+    new LegacyRelationalArtifactBinaryStore(),
+    SupabaseArtifactBinaryStore.fromSupabase(supabase),
+    objectStorageWritesEnabled() ? "OBJECT_STORAGE" : "LEGACY_RELATIONAL",
+  );
   const artifactAutomation = new EngineeringArtifactAutomationService(
     supabase,
     undefined,
@@ -217,6 +225,7 @@ export function createEngineeringOS(
     {
       retrieve: (commerce, tenantId, input) => m365Connector.retrieveTemplateBinary(commerce, tenantId, input),
     },
+    artifactBinaryStore,
   );
   const toolOrchestration = new EngineeringToolOrchestrationService(
     supabase,
@@ -253,6 +262,7 @@ export function createEngineeringOS(
         return { ok: false, connectorImplemented: false };
       }
     },
+    artifactBinaryStore,
   );
   const hostedReviewMemory = createSharedReviewMemory();
   const preIssueReview = new EngineeringPreIssueReviewService(

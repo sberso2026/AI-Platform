@@ -2,10 +2,14 @@
 
 Staging migration checksum (applied in A13C live RLS): `f2320fc2936d0f392d8a01a7554013f2d512a0ea78bff51d55eea62efe3e4193` for `supabase/migrations/20261001200000_eos_a13c_platform_consolidation_binary_storage.sql`.
 
+A14A additive migration: `supabase/migrations/20261001210000_eos_a14a_artifact_object_storage.sql` checksum `feff75b3e283335259cefd34d51adf1439e364f36aba9a5d698ec7d4bd63a001` — private bucket `engineering-artifacts` plus `engineering_artifact_storage_migrations` ledger. `content_base64` is not dropped. Applied to staging `rntonzigxwxcjlcsadip`.
 
 Target environment: STAGING / NON-PRODUCTION  
 Supabase project: `rntonzigxwxcjlcsadip`  
-Object-storage backend: `CONTRACT_ONLY` (in-memory fixture in A13C; no approved generated-artifact object store)
+Object-storage backend: `EXISTING_IMPLEMENTED`  
+Object-storage provider: `SUPABASE_STORAGE`  
+Bucket: private `engineering-artifacts` (not PI `engineering-documents`)  
+New writes: `OBJECT_STORAGE` through `RoutingArtifactBinaryStore` / `SupabaseArtifactBinaryStore` when `EOS_ARTIFACT_OBJECT_STORAGE !== "0"`
 
 ## Preconditions
 
@@ -47,7 +51,18 @@ For each inventoried artifact:
 5. Set `migration_state = IN_PROGRESS` conceptually (do not switch `storage_kind` yet).
 6. `put` bytes to the object-store adapter.
 
-A13C rehearsal uses `MemoryObjectArtifactBinaryStore` only.
+A13C rehearsal used `MemoryObjectArtifactBinaryStore` only.
+
+A14A rehearsal (unit, generated XLSX/DOCX/PPTX fixtures):
+
+1. Legacy put of generated Office bytes.
+2. `migrateLegacyArtifact` uploads to the object adapter, verifies size/hash, switches `storage_kind` only after verification.
+3. Repeat migration: already-verified source does not create a second uncontrolled object key family (`v{n+1}` is server-generated; source pointer remains the legacy identity for idempotent retry).
+4. Injected object-write failure: `storage_kind` stays `LEGACY_RELATIONAL`, `migration_state=FAILED`.
+5. Hash mismatch (A13C corrupt hook): fail closed, no pointer switch.
+6. Rollback restores the legacy pointer; legacy bytes are not purged.
+
+Live staging pointer switch of arbitrary existing rows is still operator-gated. A14A applies the bucket/ledger migration and inventories metadata without selecting `content_base64`.
 
 ## Hash verification
 
@@ -113,4 +128,4 @@ Track counts by `storage_kind` and `migration_state`, failure reasons (`CONTENT_
 
 ## Signed access (future)
 
-If signed URLs are introduced later they must be short-lived (≤ 5 minutes), scoped to one object key, generated server-side, never stored permanently, and denied when expired, for the wrong object, or for a different project. Permanent links are prohibited. A13C does not require a public bucket.
+Signed URLs are generated only after `assertObjectKeyAuthorization`, TTL ≤ 300 seconds, one object key, never stored as the canonical artifact reference, and denied when expired, for the wrong object, or for a different project. Permanent links are prohibited. Public buckets remain forbidden.

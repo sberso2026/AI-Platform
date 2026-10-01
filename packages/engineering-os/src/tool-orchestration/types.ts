@@ -72,10 +72,11 @@ export const HANDOFF_TOKEN_TTL_MS = 10 * 60 * 1000;
 export const MAX_RETURN_BYTES = 15 * 1024 * 1024;
 export const ARTIFACT_BINARY_STORE = {
   metadata: "engineering_generated_artifacts + engineering_artifact_generation_runs",
-  binary: "engineering_generated_artifacts.content_base64",
-  type: "relational_text_base64",
-  risk: "HIGH" as const,
-  recommendedMigration: "A13/A14: move published bytes into existing engineering-documents bucket; keep generation metadata relational.",
+  binary: "ArtifactBinaryStore",
+  type: "object_storage_with_legacy_compatibility",
+  bucket: "engineering-artifacts",
+  risk: "MITIGATED_FOR_PILOT" as const,
+  recommendedMigration: "A14A: generated and returned artifacts write to private engineering-artifacts bucket; content_base64 retained for rollback only.",
 };
 
 export const TOOL_ORCHESTRATION_PRIVACY = {
