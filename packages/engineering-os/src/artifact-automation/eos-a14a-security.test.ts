@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { generateEngineeringWorkPlan } from "../work-generator/generator";
@@ -378,6 +379,24 @@ describe("EOS-A14A object storage, malware, and security hardening", () => {
       RTB_REVIEW_CLAMAV_TIMEOUT_MS: "1",
     }, hangingFetch);
     expect(timeout.state).toBe("TIMEOUT");
+  });
+
+  it("routes private bucket writes through the server-mediated storage client, not the caller JWT", () => {
+    const os = readFileSync(new URL("../engineering-os.ts", import.meta.url), "utf8");
+    const kernel = readFileSync(
+      new URL("../../../../apps/web/src/lib/kernel.ts", import.meta.url),
+      "utf8",
+    );
+    const sql = readFileSync(
+      new URL("../../../../supabase/migrations/20261001210000_eos_a14a_artifact_object_storage.sql", import.meta.url),
+      "utf8",
+    );
+    expect(os).toContain("artifactStorageClient");
+    expect(os).toContain("options?.artifactStorageClient ?? supabase");
+    expect(kernel).toContain("artifactStorageClient: serviceClient");
+    expect(sql).toContain("AS RESTRICTIVE");
+    expect(sql).toContain("FOR ALL TO anon, authenticated");
+    expect(sql).toContain("bucket_id <> 'engineering-artifacts'");
   });
 
   it("rejects path traversal, macros, formula-injection names, and unsafe Content-Disposition", () => {

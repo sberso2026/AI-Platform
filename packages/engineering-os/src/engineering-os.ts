@@ -133,6 +133,7 @@ export function createEngineeringOS(
   options?: {
     documentBodyRetriever?: DocumentBodyRetrievalProbe;
     projectionWriteClient?: SupabaseClient;
+    artifactStorageClient?: SupabaseClient;
   },
 ): EngineeringOS {
   const projects = new EngineeringProjectService(supabase, kernel);
@@ -204,7 +205,7 @@ export function createEngineeringOS(
   });
   const artifactBinaryStore = new RoutingArtifactBinaryStore(
     new LegacyRelationalArtifactBinaryStore(),
-    SupabaseArtifactBinaryStore.fromSupabase(supabase),
+    SupabaseArtifactBinaryStore.fromSupabase(options?.artifactStorageClient ?? supabase),
     objectStorageWritesEnabled() ? "OBJECT_STORAGE" : "LEGACY_RELATIONAL",
   );
   const artifactAutomation = new EngineeringArtifactAutomationService(

@@ -62,6 +62,7 @@ export async function resolveAuthContext(): Promise<AuthContextResolution> {
       },
     },
     projectionWriteClient: serviceClient,
+    artifactStorageClient: serviceClient,
   });
   const commerce = createPlatformCommerce(supabase);
   const permissionService = new PermissionService(supabase);
