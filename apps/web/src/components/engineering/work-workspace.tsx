@@ -148,6 +148,12 @@ export function WorkWorkspace() {
         <section className="mt-6" aria-label="Start Engineering Work">
           <h2 className="text-lg font-semibold">Start Engineering Work</h2>
           <p className="mt-1 text-sm text-muted-foreground">What can EOS prepare for me? Project and lifecycle context are reused. Artifact generation is A11B.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CHANGE", name: "Change assessment", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION", version: "v1" })}>Assess Change</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-OPTION-STUDY", name: "Option study", workType: "OPTION_STUDY", lifecycleStage: "PREFEASIBILITY", version: "v1" })}>Compare Options</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CON-RFI", name: "RFI/TQ engineering response", workType: "RFI_TQ_RESPONSE", lifecycleStage: "CONSTRUCTION", version: "v1" })}>Prepare RFI/TQ Response</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" disabled={Boolean(busy) || !projectId} onClick={() => void startWork({ code: "EWT-CHANGE", name: "Field change assessment", workType: "CHANGE_ASSESSMENT", lifecycleStage: "CONSTRUCTION", version: "v1" })}>Assess Field Change</button>
+          </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((template) => (
               <button

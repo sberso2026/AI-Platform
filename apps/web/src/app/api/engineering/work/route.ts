@@ -169,6 +169,14 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
     } catch {
       preIssue = null;
     }
+    let impact: unknown = null;
+    try {
+      const sourceType = data.relatedChangeId ? "change" : data.relatedObjectType ?? "engineering_work_plan";
+      const sourceId = data.relatedChangeId ?? data.relatedObjectId ?? data.id;
+      impact = await ctx.engineering.changeWorkbench.latest(commerce, ctx.tenantId, sourceType, sourceId);
+    } catch {
+      impact = null;
+    }
     return NextResponse.json({
       data,
       continueWork: ctx.engineering.workGenerator.continueWorkSummary(data),
@@ -177,6 +185,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
       launcher,
       tools: ctx.engineering.toolOrchestration.catalog(),
       preIssue,
+      impact,
     });
   }
   if (action === "artifactCatalog") {
@@ -187,6 +196,16 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
   }
   if (action === "preIssueCatalog") {
     return NextResponse.json({ data: ctx.engineering.preIssueReview.catalog() });
+  }
+  if (action === "changeWorkbenchCatalog") {
+    return NextResponse.json({ data: ctx.engineering.changeWorkbench.catalog() });
+  }
+  if (action === "impactAssessment") {
+    const sourceObjectType = url.searchParams.get("sourceObjectType") ?? "";
+    const sourceObjectId = url.searchParams.get("sourceObjectId") ?? "";
+    if (!sourceObjectType || !sourceObjectId) return NextResponse.json({ error: "source_required" }, { status: 400 });
+    const data = await ctx.engineering.changeWorkbench.latest(commerce, ctx.tenantId, sourceObjectType, sourceObjectId);
+    return NextResponse.json({ data });
   }
   if (action === "preIssueReview") {
     const workPlanId = url.searchParams.get("workPlanId") ?? url.searchParams.get("id") ?? "";
@@ -233,7 +252,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce }, request)
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -396,6 +415,69 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
         artifactId: typeof body.artifactId === "string" ? body.artifactId : null,
         selectedProjectId: typeof body.selectedProjectId === "string" ? body.selectedProjectId : null,
       });
+      return NextResponse.json({ data });
+    }
+    if (action === "assessChange" || action === "prepareOptionStudy" || action === "assessFieldChange" || action === "prepareRfiResponse") {
+      let projectId = typeof body.projectId === "string" ? body.projectId : "";
+      let sourceObjectType = typeof body.sourceObjectType === "string" ? body.sourceObjectType : "";
+      let sourceObjectId = typeof body.sourceObjectId === "string" ? body.sourceObjectId : "";
+      const workPlanId = typeof body.workPlanId === "string" ? body.workPlanId : typeof body.id === "string" ? body.id : "";
+      if (workPlanId) {
+        const plan = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, workPlanId);
+        if (!plan) return NextResponse.json({ error: "not_found" }, { status: 404 });
+        projectId = plan.projectId;
+        sourceObjectType = sourceObjectType || (plan.relatedChangeId ? "change" : plan.relatedObjectType ?? "engineering_work_plan");
+        sourceObjectId = sourceObjectId || (plan.relatedChangeId ?? plan.relatedObjectId ?? plan.id);
+      }
+      const workflow =
+        action === "prepareOptionStudy"
+          ? "OPTION_STUDY"
+          : action === "assessFieldChange"
+            ? "FIELD_CHANGE"
+            : action === "prepareRfiResponse"
+              ? "CONSTRUCTION_RFI"
+              : typeof body.workflow === "string"
+                ? body.workflow
+                : "CHANGE_IMPACT";
+      const data = await ctx.engineering.changeWorkbench.assess(commerce, ctx.tenantId, {
+        sourceObjectType,
+        sourceObjectId,
+        sourceChangeId: typeof body.sourceChangeId === "string" ? body.sourceChangeId : null,
+        projectId,
+        selectedProjectId: typeof body.selectedProjectId === "string" ? body.selectedProjectId : null,
+        workflow: workflow as never,
+        constructionQuery:
+          action === "prepareRfiResponse" || action === "assessFieldChange"
+            ? {
+                id: sourceObjectId,
+                type: action === "assessFieldChange" ? "FIELD_CHANGE" : "RFI",
+                summary: typeof body.summary === "string" ? body.summary : "Construction engineering query",
+              }
+            : undefined,
+        optionStudy:
+          action === "prepareOptionStudy" && Array.isArray(body.options)
+            ? { title: typeof body.title === "string" ? body.title : "Option study", options: body.options as never }
+            : undefined,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "disposeImpact") {
+      const data = await ctx.engineering.changeWorkbench.dispose(commerce, ctx.tenantId, {
+        assessmentId: String(body.assessmentId ?? body.id ?? ""),
+        candidateIds: Array.isArray(body.candidateIds) ? body.candidateIds.map(String) : [String(body.candidateId ?? "")],
+        disposition: String(body.disposition ?? "NEEDS_INVESTIGATION") as never,
+        rationale: typeof body.rationale === "string" ? body.rationale : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "recordImpactDecision") {
+      const data = await ctx.engineering.changeWorkbench.recordHumanDecision(
+        commerce,
+        ctx.tenantId,
+        String(body.assessmentId ?? body.id ?? ""),
+        String(body.optionId ?? ""),
+        typeof body.decisionId === "string" ? body.decisionId : null,
+      );
       return NextResponse.json({ data });
     }
     if (action === "disposePreIssueCondition") {

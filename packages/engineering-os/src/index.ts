@@ -249,6 +249,12 @@ export {
   PRE_ISSUE_AI_BOUNDARY,
   PRE_ISSUE_PRIVACY,
 } from "./pre-issue-review/types";
+export { EngineeringChangeWorkbenchService } from "./change-workbench/service";
+export {
+  CHANGE_WORKBENCH_RECON,
+  CHANGE_WORKBENCH_AI_BOUNDARY,
+  CHANGE_WORKBENCH_PRIVACY,
+} from "./change-workbench/types";
 export {
   EXAMPLE_FEED_DELIVERABLE_DEFINITIONS,
   DEFAULT_DELIVERABLE_MATURITY_PROFILE,

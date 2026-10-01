@@ -58,6 +58,7 @@ import { EngineeringArtifactAutomationService } from "./artifact-automation/serv
 import { EngineeringToolOrchestrationService } from "./tool-orchestration/service";
 import { EngineeringPreIssueReviewService } from "./pre-issue-review/service";
 import { SupabasePreIssueStore } from "./pre-issue-review/supabase-store";
+import { EngineeringChangeWorkbenchService } from "./change-workbench/service";
 import { MemoryEngineeringReviewStore, createSharedReviewMemory } from "@rtb/engineering-review";
 import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
@@ -107,6 +108,7 @@ export interface EngineeringOS {
   artifactAutomation: EngineeringArtifactAutomationService;
   toolOrchestration: EngineeringToolOrchestrationService;
   preIssueReview: EngineeringPreIssueReviewService;
+  changeWorkbench: EngineeringChangeWorkbenchService;
   informationRequirements: EngineeringInformationRequirementService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
@@ -236,6 +238,21 @@ export function createEngineeringOS(
       });
     },
   );
+  const changeWorkbench = new EngineeringChangeWorkbenchService(
+    supabase,
+    undefined,
+    (tenantId, workspaceId) => digitalThread.loadAuthorizedWorkspaceGraph(tenantId, workspaceId),
+    async (commerce, tenantId, input) => {
+      await work.recordMaterialEvent(commerce, tenantId, {
+        eventType: input.eventType,
+        projectId: input.projectId,
+        sourceObjectType: "engineering_impact_assessment",
+        sourceObjectId: input.assessmentId,
+        sourceEventId: `${input.eventType}:${input.assessmentId}`,
+        actorId: input.actorId,
+      });
+    },
+  );
   const lifecycle = new EngineeringLifecycleService(supabase, undefined, undefined, deliverables);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
@@ -330,6 +347,7 @@ export function createEngineeringOS(
     artifactAutomation,
     toolOrchestration,
     preIssueReview,
+    changeWorkbench,
     informationRequirements,
     timeline,
     activity,

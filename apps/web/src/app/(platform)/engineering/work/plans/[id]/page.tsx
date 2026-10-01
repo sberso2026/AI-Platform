@@ -24,6 +24,9 @@ type WorkPlan = {
   discipline?: string | null;
   systemId?: string | null;
   assetId?: string | null;
+  relatedObjectType?: string | null;
+  relatedObjectId?: string | null;
+  relatedChangeId?: string | null;
   explanations: { whyBlocked: string | null; whyConditional: string | null; templateProvenance: string; engineeringApproved: false };
   context: {
     information: Array<{ title: string; whyIncluded: string; freshness?: string | null; authorityOutcome?: string | null }>;
@@ -95,6 +98,38 @@ type PreIssueSummary = {
   conditions?: PreIssueCondition[];
 };
 
+type ImpactCandidate = {
+  id: string;
+  objectType: string;
+  objectId: string;
+  objectCode: string | null;
+  title: string | null;
+  category: string;
+  discipline: string | null;
+  reason: string;
+  traversalDepth: number;
+  disposition: string;
+  relationPath: Array<{ objectType: string; objectId: string; relationship?: string; depth: number }>;
+};
+
+type ImpactPayload = {
+  id: string;
+  status: string;
+  completeness: string;
+  traversalStatus: string;
+  staleness: string;
+  projectId: string;
+  viewProjectMismatch: boolean;
+  snapshot: {
+    candidates: ImpactCandidate[];
+    actions: Array<{ code: string; label: string; completed: boolean }>;
+    optionStudy: { automaticWinner: false; humanDecisionRequired: true; selectedOptionId: string | null; criteria: Array<{ label: string; weight: number }>; options: Array<{ id: string; name: string }> } | null;
+    construction: { summary: string; missingInformation: string[]; workPlanType: string; technicalSolutionChosen: false } | null;
+    humanReviewRequired: true;
+    automaticOptionWinner: false;
+  };
+};
+
 type PreIssuePayload = {
   review?: {
     id: string;
@@ -123,6 +158,7 @@ const OUTPUT_ACTIONS: Record<string, Array<{ artifactType: string; label: string
   RFI_RESPONSE: [{ artifactType: "RFI_RESPONSE", label: "Generate RFI Response" }],
   TQ_RESPONSE: [{ artifactType: "TQ_RESPONSE", label: "Generate TQ Response" }],
   CONCEPT_STUDY: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Technical Memorandum" }],
+  CHANGE_ASSESSMENT: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Impact Report" }],
 };
 
 function officeLabel(format?: string) {
@@ -145,6 +181,7 @@ export default function WorkPlanPage() {
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
   const [publishFor, setPublishFor] = useState<string | null>(null);
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
+  const [impact, setImpact] = useState<ImpactPayload | null>(null);
 
   async function load() {
     const response = await fetch(`/api/engineering/work?action=plan&id=${encodeURIComponent(params.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
@@ -152,10 +189,11 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
+      if (raw?.impact) setImpact(raw.impact);
     }
     const listed = await fetch(`/api/engineering/work?action=artifacts&planId=${encodeURIComponent(params.id)}`);
     const listedJson = await parseApiJsonResponse<GeneratedArtifact[]>(listed);
@@ -259,6 +297,23 @@ export default function WorkPlanPage() {
       await load();
       return;
     }
+    if (action === "assessChange" || action === "prepareOptionStudy" || action === "assessFieldChange" || action === "prepareRfiResponse") {
+      const payload = json.data as { assessment?: ImpactPayload } | undefined;
+      if (payload?.assessment) setImpact(payload.assessment);
+      setMessage("Potential impacts prepared for human review. Related is not affected. This is not engineering approval.");
+      await load();
+      return;
+    }
+    if (action === "disposeImpact") {
+      setImpact(json.data as ImpactPayload);
+      setMessage("Impact disposition recorded. EOS did not auto-confirm remaining candidates.");
+      return;
+    }
+    if (action === "recordImpactDecision") {
+      setImpact(json.data as ImpactPayload);
+      setMessage("Human decision recorded. EOS did not select a winner.");
+      return;
+    }
     await load();
   }
 
@@ -346,7 +401,55 @@ export default function WorkPlanPage() {
               )}
               <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("refreshPlan")}>Refresh Engineering Context</button>
               <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("runPreIssueReview", { workPlanId: plan.id })}>Run Pre-Issue Review</button>
+              <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("assessChange", { workPlanId: plan.id, selectedProjectId })}>Assess Change</button>
+              <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("prepareOptionStudy", { workPlanId: plan.id, selectedProjectId })}>Compare Options</button>
+              <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("prepareRfiResponse", { workPlanId: plan.id, selectedProjectId })}>Prepare RFI/TQ Response</button>
+              <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void act("assessFieldChange", { workPlanId: plan.id, selectedProjectId })}>Assess Field Change</button>
             </div>
+            {impact && (
+              <section className="mt-6 text-sm" aria-label="Change impact">
+                <h2 className="font-semibold">CHANGE / POTENTIAL IMPACT</h2>
+                <p className="mt-1">
+                  {impact.status.replaceAll("_", " ")} · traversal {impact.traversalStatus.replaceAll("_", " ")} · completeness {impact.completeness} · {impact.staleness.replaceAll("_", " ")}
+                </p>
+                <p className="mt-1 text-muted-foreground">Related is not affected. Potential impact is not confirmed impact. Human engineering review required.</p>
+                {impact.viewProjectMismatch && <p className="mt-1">Project view differs from the source object project. Assessment remains on the source project only.</p>}
+                {impact.snapshot.construction && (
+                  <p className="mt-2">CONSTRUCTION ENGINEERING · {impact.snapshot.construction.summary} · Work Plan {impact.snapshot.construction.workPlanType.replaceAll("_", " ")}</p>
+                )}
+                <ul className="mt-3 space-y-2">
+                  {impact.snapshot.candidates.map((row) => (
+                    <li key={row.id} className="rounded border p-3">
+                      <p className="font-medium">{row.category} · {row.title ?? row.objectId} · {row.disposition.replaceAll("_", " ")}</p>
+                      <p>Reason: {row.reason}</p>
+                      <p className="text-muted-foreground">Path: {row.relationPath.map((step) => `${step.objectType}:${step.objectId}${step.relationship ? ` via ${step.relationship}` : ""}`).join(" → ")} · depth {row.traversalDepth}{row.discipline ? ` · ${row.discipline}` : ""}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        <button type="button" className="rounded border px-2 py-0.5" onClick={() => void act("disposeImpact", { assessmentId: impact.id, candidateId: row.id, disposition: "CONFIRMED_IMPACT" })}>Confirm Impact</button>
+                        <button type="button" className="rounded border px-2 py-0.5" onClick={() => void act("disposeImpact", { assessmentId: impact.id, candidateId: row.id, disposition: "NOT_IMPACTED" })}>Not Impacted</button>
+                        <button type="button" className="rounded border px-2 py-0.5" onClick={() => void act("disposeImpact", { assessmentId: impact.id, candidateId: row.id, disposition: "NEEDS_INVESTIGATION" })}>Investigate</button>
+                        <button type="button" className="rounded border px-2 py-0.5" onClick={() => void act("disposeImpact", { assessmentId: impact.id, candidateId: row.id, disposition: "DEFERRED" })}>Defer</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {impact.snapshot.optionStudy && (
+                  <div className="mt-3 rounded border p-3">
+                    <p className="font-medium">OPTIONS</p>
+                    <p>Criteria: {impact.snapshot.optionStudy.criteria.map((row) => `${row.label} (weight ${row.weight})`).join(", ")}</p>
+                    <p>{impact.snapshot.optionStudy.options.map((row) => row.name).join(" · ")}</p>
+                    <p className="text-muted-foreground">No automatic winner. Human Decision required.</p>
+                    {impact.snapshot.optionStudy.options.map((row) => (
+                      <button key={row.id} type="button" className="mr-2 mt-2 rounded border px-2 py-0.5" onClick={() => void act("recordImpactDecision", { assessmentId: impact.id, optionId: row.id })}>Record Decision: {row.name}</button>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "TECHNICAL_MEMORANDUM", templateCode: "EAT-IMPACT-REPORT" })}>Generate Impact Report</button>
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "OPTION_STUDY" })}>Generate Option Study</button>
+                  <button type="button" className="rounded border px-3 py-1" onClick={() => void act("runPreIssueReview", { workPlanId: plan.id })}>Run Pre-Issue Review</button>
+                </div>
+              </section>
+            )}
             {preIssue?.summary && (
               <section className="mt-6 text-sm">
                 <h2 className="font-semibold">PRE-ISSUE REVIEW</h2>

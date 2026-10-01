@@ -52,6 +52,9 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_A11D_AUTOMATED_ENGINEERING_REVIEW_PRE_ISSUE.md",
   "supabase/migrations/20260930190000_eos_a11d_pre_issue_engineering_review.sql",
   "packages/engineering-os/src/pre-issue-review",
+  "docs/architecture/engineering-os/EOS_A11E_CHANGE_IMPACT_OPTION_CONSTRUCTION_WORKBENCH.md",
+  "supabase/migrations/20260930200000_eos_a11e_change_impact_option_construction.sql",
+  "packages/engineering-os/src/change-workbench",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 
