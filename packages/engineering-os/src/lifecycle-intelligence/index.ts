@@ -11,3 +11,4 @@ export * from "./memory-store";
 export * from "./supabase-store";
 export * from "./settings";
 export * from "./service";
+export * from "./cross-lifecycle-value";

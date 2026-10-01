@@ -528,6 +528,41 @@ export function runDeterministicPreIssueChecks(input: {
     }
   }
 
+  const valueTargets = new Set(["DESIGN_REPORT", "OPTION_STUDY", "OPTION_STUDY_PRESENTATION", "TECHNICAL_MEMORANDUM", "CHANGE_ASSESSMENT", "RFI_RESPONSE", "TQ_RESPONSE"]);
+  if (valueTargets.has(target.artifactType)) {
+    const requirements = plan.context.evaluationRequirements ?? [];
+    const checkKind = (kind: "COST" | "CONSTRUCTABILITY" | "CARBON", checkType: PreIssueCheckType, code: PreIssueConditionCode, title: string) => {
+      const row = requirements.find((item) => item.kind === kind);
+      if (!row || row.applicability === "NOT_APPLICABLE" || row.applicability === "OPTIONAL") {
+        notEvaluated.push({ checkType, reason: row ? `applicability_${row.applicability}` : "no_evaluation_requirement" });
+        return;
+      }
+      const present = row.evidenceState === "EVIDENCE_PRESENT" || row.evidenceState === "QUANTIFIED_GOVERNED" || row.evidenceState === "SYNTHETIC_DEMONSTRATION_DATA";
+      if (present) {
+        pass(checkType, `${title} present`);
+        return;
+      }
+      conditions.push(condition({
+        id: nextId(),
+        checkType,
+        code,
+        title: `${title} missing`,
+        explanation: `Required ${kind.toLowerCase()} evidence is not present for this lifecycle/work. Review does not conclude cost acceptable, constructable, or carbon compliant.`,
+        materiality: "INFORMATION_GAP",
+        category: "missing_engineering_evidence",
+        evidence: [{ artifactId: target.id, statement: `applicability=${row.applicability}; state=${row.evidenceState}` }],
+        actions: [{ code: "REQUEST_INFORMATION", label: "Request Evaluation Evidence", objectId: plan.id, href: `/engineering/work/plans/${plan.id}` }],
+      }));
+    };
+    checkKind("COST", "COST_EVIDENCE_CHECK", "REQUIRED_COST_EVIDENCE_MISSING", "Required Cost evidence");
+    checkKind("CONSTRUCTABILITY", "CONSTRUCTABILITY_EVIDENCE_CHECK", "REQUIRED_CONSTRUCTABILITY_EVIDENCE_MISSING", "Required Constructability evidence");
+    checkKind("CARBON", "CARBON_EVIDENCE_CHECK", "REQUIRED_CARBON_EVIDENCE_MISSING", "Required Carbon evidence");
+  } else {
+    notEvaluated.push({ checkType: "COST_EVIDENCE_CHECK", reason: "not_value_report_artifact" });
+    notEvaluated.push({ checkType: "CONSTRUCTABILITY_EVIDENCE_CHECK", reason: "not_value_report_artifact" });
+    notEvaluated.push({ checkType: "CARBON_EVIDENCE_CHECK", reason: "not_value_report_artifact" });
+  }
+
   return { conditions, passedChecks, notEvaluated };
 }
 

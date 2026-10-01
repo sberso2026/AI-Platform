@@ -91,6 +91,9 @@ const TARGETS = [
   "docs/architecture/engineering-os/EOS_PILOT_GATE_CLOSEOUT.md",
   "docs/architecture/engineering-os/EOS_PILOT_GATE_CLOSEOUT_DEPENDENCY.md",
   "packages/engineering-os-certification/scripts/run-dependency-sca.ts",
+  "packages/engineering-os/src/lifecycle-intelligence/cross-lifecycle-value.ts",
+  "packages/engineering-os/src/lifecycle-intelligence/cross-lifecycle-value.test.ts",
+  "docs/architecture/engineering-os/EOS_A15A_V1_COST_CONSTRUCTABILITY_CARBON.md",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

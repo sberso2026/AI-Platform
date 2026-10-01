@@ -122,6 +122,15 @@ export async function buildDocx(input: {
     );
   }
 
+  const valueSections = (input.plan.context.evaluationRequirements ?? []).filter((row) => row.includeArtifactSection);
+  for (const section of valueSections) {
+    children.push(
+      heading(section.kind === "COST" ? "Cost" : section.kind === "CONSTRUCTABILITY" ? "Constructability" : "Carbon / Sustainability"),
+      para(`${section.maturity}. Evidence state: ${section.evidenceState}. ${section.expectedEvidence}`),
+      para("Not automatically accepted as cost-acceptable, constructable, or carbon-compliant."),
+    );
+  }
+
   children.push(
     heading("Limitations"),
     para("Findings and conclusions are not fabricated. Human engineering review is required before use."),

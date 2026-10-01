@@ -116,6 +116,9 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     expect(A15A_DATA_CLASSIFICATIONS).toContain("HUMAN_CONFIRMED_DEMONSTRATION_DECISION");
     expect(A15A_DATA_CLASSIFICATIONS).toContain("CONTROLLED_FIXTURE_NOT_USER_UPLOAD");
     expect(A15A_FEATURE_FREEZE_BOUNDARIES.newEngineeringDomain).toBe(false);
+    expect(A15A_FEATURE_FREEZE_BOUNDARIES.newCostIntelligenceDomain).toBe(false);
+    expect(A15A_FEATURE_FREEZE_BOUNDARIES.newConstructabilityIntelligenceDomain).toBe(false);
+    expect(A15A_FEATURE_FREEZE_BOUNDARIES.newCarbonIntelligenceDomain).toBe(false);
     expect(A15A_FEATURE_FREEZE_BOUNDARIES.newVendorConnector).toBe(false);
     expect(A15A_FEATURE_FREEZE_BOUNDARIES.newEventBus).toBe(false);
     expect(A15A_FEATURE_FREEZE_BOUNDARIES.realSolver).toBe(false);
@@ -180,6 +183,9 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     timings.findGoverningInformationMs = conceptTimed.ms;
     const concept = conceptTimed.value;
     expect(concept.templateCode).toBe("EWT-CONCEPT-STUDY");
+    expect(concept.context.evaluationRequirements?.find((row) => row.kind === "COST")?.maturity).toMatch(/ROM|comparative/i);
+    expect(concept.context.evaluationRequirements?.find((row) => row.kind === "CARBON")?.applicability).toBe("REQUIRED");
+    expect(concept.context.evaluationRequirements?.every((row) => row.automaticAcceptance === false)).toBe(true);
     expect(concept.explanations.engineeringApproved).toBe(false);
     expect(concept.context.gaps.some((row) => /Geotechnical/i.test(row.title))).toBe(true);
     const conceptArt = await artifactSvc.generate(commerce(), CRUSHER_FEED_TENANT, { workPlanId: concept.id, artifactType: "TECHNICAL_MEMORANDUM" });
@@ -214,6 +220,7 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     });
     expect(pfs.historicalPreserved).toBe(true);
     expect(pfs.next.lifecycleStage).toBe("PREFEASIBILITY");
+    expect(pfs.next.context.evaluationRequirements?.find((row) => row.kind === "COST")?.maturity).toMatch(/option-level|CAPEX/i);
     expect(pfs.next.context.requirements.some((row) => row.objectId === "req-client-12mtpa")).toBe(true);
     const inherited = inheritWorkPlanContext({
       from: concept.context,
@@ -235,6 +242,7 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
       acknowledged: true,
     });
     expect(feas.next.lifecycleStage).toBe("FEASIBILITY");
+    expect(feas.next.context.evaluationRequirements?.find((row) => row.kind === "CONSTRUCTABILITY")?.maturity).toMatch(/buildability|lifting|sequencing/i);
     expect(feas.next.context.interfaces.some((row) => row.objectId === "if-cr-cv-01")).toBe(true);
 
     const infoSvc = new EngineeringInformationRequirementService({ from() { return this; } } as never, createMemoryInformationRequirementStore());
@@ -289,6 +297,8 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     );
     expect(feedReady.historicalProvenancePreserved).toBe(true);
     expect(feedReady.next.readiness).toBe("READY");
+    expect(feedReady.next.context.evaluationRequirements?.find((row) => row.kind === "CONSTRUCTABILITY")?.maturity).toMatch(/formal constructability/i);
+    expect(feedReady.next.context.evaluationRequirements?.find((row) => row.kind === "CARBON")?.evidenceState).toBe("SYNTHETIC_DEMONSTRATION_DATA");
 
     const genXlsx = await timed(() => artifactSvc.generate(commerce(), CRUSHER_FEED_TENANT, { workPlanId: feedReady.next.id, artifactType: "CALCULATION_WORKBOOK" }));
     const genDocx = await timed(() => artifactSvc.generate(commerce(), CRUSHER_FEED_TENANT, { workPlanId: feedReady.next.id, artifactType: "DESIGN_REPORT" }));
@@ -367,6 +377,10 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     }));
     timings.impactAssessmentMs = impactTimed.ms;
     expect(impactTimed.value.assessment.snapshot.candidates.length).toBeGreaterThan(0);
+    expect(impactTimed.value.assessment.snapshot.automaticCostAcceptance).toBe(false);
+    expect(impactTimed.value.assessment.snapshot.automaticConstructabilityAcceptance).toBe(false);
+    expect(impactTimed.value.assessment.snapshot.automaticCarbonAcceptance).toBe(false);
+    expect(impactTimed.value.assessment.snapshot.valueImpacts.every((row) => row.status === "POTENTIAL" && row.quantified === false)).toBe(true);
     expect(JSON.stringify(impactTimed.value.assessment)).toMatch(/1380|1250|POTENTIAL|potential/i);
     await impact.dispose(commerce(), CRUSHER_FEED_TENANT, {
       assessmentId: impactTimed.value.assessment.id,
@@ -389,6 +403,7 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
       readiness: WORKFLOW_READINESS.detailedReady,
     });
     expect(dd.next.lifecycleStage).toBe("DETAILED_DESIGN");
+    expect(dd.next.context.evaluationRequirements?.find((row) => row.kind === "COST")?.maturity).toMatch(/quantity\/change|value engineering/i);
     expect(dd.next.context.decisions.length).toBeGreaterThan(0);
     expect(SPACE_GASS_CATALOG_ENTRY.capabilities.some((row) => row.certification === "NOT_CERTIFIED")).toBe(true);
     expect(officeToolReadiness().length).toBeGreaterThan(0);
@@ -400,6 +415,7 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
       readiness: WORKFLOW_READINESS.constructionReady,
     });
     expect(construction.next.lifecycleStage).toBe("CONSTRUCTION");
+    expect(construction.next.context.evaluationRequirements?.find((row) => row.kind === "CONSTRUCTABILITY")?.maturity).toMatch(/field execution|temporary works/i);
     expect(construction.next.workType).toBe("RFI_TQ_RESPONSE");
     const assembled = assembleConstructionContext({
       graph: fieldChangeFixture(),
@@ -438,6 +454,7 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
       acknowledged: true,
     });
     expect(commissioning.next.lifecycleStage).toBe("COMMISSIONING");
+    expect(commissioning.next.context.evaluationRequirements?.find((row) => row.kind === "COST")?.maturity).toMatch(/deficiency|modification/i);
     expect(commissioning.next.context.gaps.some((row) => /punchlist|condition/i.test(row.title + row.explanation))).toBe(true);
 
     const handoverTimed = await timed(() => wired.continueIntoNextLifecycle(commerce(), CRUSHER_FEED_TENANT, {
@@ -449,6 +466,8 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     }));
     timings.handoverSummaryMs = handoverTimed.ms;
     expect(handoverTimed.value.next.workType).toBe("HANDOVER_PREPARATION");
+    expect(handoverTimed.value.next.context.evaluationRequirements?.find((row) => row.kind === "COST")?.maturity).toMatch(/final cost|lessons/i);
+    expect(handoverTimed.value.next.context.evaluationRequirements?.find((row) => row.kind === "CARBON")?.includeArtifactSection).toBe(true);
     const hoArt = await artifactSvc.generate(commerce(), CRUSHER_FEED_TENANT, { workPlanId: handoverTimed.value.next.id, artifactType: "TECHNICAL_MEMORANDUM" });
     expect(hoArt.ok).toBe(true);
     if (!hoArt.ok) return;
@@ -669,6 +688,49 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     expect(multi.items.some((row) => row.projectId === A11E_PROJECT_B)).toBe(true);
     expect(multi.items.some((row) => row.projectId === "proj-unauthorized")).toBe(false);
     expect(JSON.stringify(multi)).not.toContain("Unauthorized");
+
+    const valueDay = emptyAttention(CRUSHER_EXPANSION_FEED_PROJECT_ID, "Crusher Expansion Demonstrator", "FEED");
+    valueDay.workPlans = [{
+      id: "plan-value",
+      workType: "DESIGN_REPORT",
+      status: "IN_PROGRESS",
+      readiness: "READY",
+      startAllowed: true,
+      discipline: "STRUCTURAL",
+      systemId: A11A_SYSTEM_ID,
+      relatedObjectType: null,
+      relatedObjectId: null,
+      valueGaps: [
+        { kind: "COST", title: "Cost basis missing" },
+        { kind: "CONSTRUCTABILITY", title: "Constructability Review required" },
+        { kind: "CARBON", title: "Carbon evidence missing" },
+      ],
+    }];
+    valueDay.impacts = [{
+      id: "imp-opt-value",
+      status: "REVIEW_REQUIRED",
+      workflow: "OPTION_STUDY",
+      workPlanId: "plan-value",
+      optionStudyNeedsDecision: true,
+      constructionQuery: null,
+      sourceObjectId: "opt-a",
+    }];
+    const valueAttention = resolveEngineeringAttention({
+      viewer: {
+        userId: "cert-er-a1",
+        tenantId: CRUSHER_FEED_TENANT,
+        workspaceId: CRUSHER_FEED_WORKSPACE,
+        authorizedProjectIds: [CRUSHER_EXPANSION_FEED_PROJECT_ID],
+        role: null,
+        discipline: "STRUCTURAL",
+      },
+      projects: [valueDay],
+      nowIso: "2026-10-01T12:00:00.000Z",
+    });
+    expect(valueAttention.items.some((row) => row.title === "Cost basis missing")).toBe(true);
+    expect(valueAttention.items.some((row) => row.title === "Constructability Review required")).toBe(true);
+    expect(valueAttention.items.some((row) => row.title === "Carbon evidence missing")).toBe(true);
+    expect(valueAttention.sections.DECISION_REQUIRED.length).toBeGreaterThan(0);
   });
 
   it("does not treat controlled internal artifacts as hosted returned-file uploads", () => {

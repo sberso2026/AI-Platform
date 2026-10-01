@@ -72,6 +72,9 @@ export const A15A_FUTURE_PILOT_METRICS = [
   "performing initial change impact review",
   "preparing draft Design Report",
   "handover compilation",
+  "assemble Cost/Constructability/Carbon evidence",
+  "compare options including applicable value criteria",
+  "identify affected cost/constructability/carbon context after change",
 ] as const;
 
 export const A15A_SURVEILLANCE_PROHIBITED = {
@@ -91,6 +94,9 @@ export const A15A_FEATURE_FREEZE_BOUNDARIES = {
   newEventBus: false,
   newJobSystem: false,
   newDms: false,
+  newCostIntelligenceDomain: false,
+  newConstructabilityIntelligenceDomain: false,
+  newCarbonIntelligenceDomain: false,
   realSolver: false,
   pdfProductFeature: false,
   semanticAiReview: false,

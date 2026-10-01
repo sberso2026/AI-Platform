@@ -32,7 +32,7 @@ Numerical values (loads, options scores, 75 mm field move) are synthetic demonst
 3. Human Decision — Option A recorded as HUMAN_CONFIRMED_DEMONSTRATION_DECISION.
 4. Concept → PFS / Feasibility — inherited requirements, decisions, interfaces; open assumptions remain VALIDATE, not facts.
 5. FEED — Mechanical reactions, geotechnical bearing, structural criteria, survey. Structural work waits on Mechanical/Geotechnical (`WAITING_ON_OTHERS` → `RECENTLY_READY` / `DO_NOW`).
-6. FEED Work Plan + artifacts — Design Report (COMPANY_OFFICIAL), Specification, EXAMPLE_ONLY workbook (not for design acceptance), Option Study PPTX. New binaries go to OBJECT_STORAGE.
+6. FEED Work Plan + artifacts — Design Report (COMPANY_OFFICIAL), Specification, EXAMPLE_ONLY workbook (not for design acceptance), Option Study PPTX. New binaries go to OBJECT_STORAGE. A15A-V1 adds applicable Cost / Constructability / Carbon sections (Crusher carbon is REQUIRED by client requirement; synthetic demonstration data only).
 7. Pre-Issue Review — deterministic conditions, human disposition, historical rerun preserved, no automatic approval.
 8. Vendor load revision (synthetic Rev C → Rev D) — Work Plan fingerprint stale; previous Review remains historical; Impact Assessment finds interface / analysis / workbook / drawing / deliverable / review candidates. Human confirms selected impacts and marks an unrelated drawing NOT_IMPACTED.
 9. Detailed Design — inherited context. SPACE GASS / real solver remains NOT_APPLICABLE.

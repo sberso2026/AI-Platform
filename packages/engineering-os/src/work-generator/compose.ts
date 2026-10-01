@@ -74,6 +74,11 @@ export function workPlanThreadGraph(plan: EngineeringWorkPlan): ThreadGraphInput
   add("USES", plan.context.analyses, "analysis_request");
   if (plan.context.deliverable) add("USES", [plan.context.deliverable], "deliverable_expectation");
   if (plan.context.handoverPackage) add("USES", [plan.context.handoverPackage], "engineering_handover_package");
+  for (const requirement of plan.context.evaluationRequirements ?? []) {
+    if (!requirement.evidenceRef) continue;
+    nodes.push(node(requirement.evidenceRef.objectType, requirement.evidenceRef.objectId, { title: requirement.evidenceRef.title }));
+    links.push(link("EVIDENCED_BY", "engineering_work_plan", plan.id, requirement.evidenceRef.objectType, requirement.evidenceRef.objectId));
+  }
   return { nodes, links };
 }
 

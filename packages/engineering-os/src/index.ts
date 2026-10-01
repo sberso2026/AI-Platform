@@ -2,6 +2,20 @@ export * from "./pilot/eos-ai-doc-2-flags";
 export * from "./pilot/a14a-profile";
 export * from "./pilot/a14b-reliability";
 export * from "./pilot/a15a-demonstrator";
+export {
+  A15A_V1_FEATURE_FREEZE,
+  SAFETY_HIERARCHY,
+  resolveProjectValuePolicy,
+  valuePolicyForProject,
+  composeWorkPlanValueRequirements,
+  composeOptionValueCriteria,
+  composeDecisionValueRecord,
+  composePotentialValueImpacts,
+  composeSystemValueConsequences,
+  quantifyCost,
+  quantifyCarbon,
+  reviewValueEvidence,
+} from "./lifecycle-intelligence/cross-lifecycle-value";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";

@@ -244,6 +244,8 @@ export type OptionCriterion = {
   unit: string | null;
   weight: number;
   weightSource: "HUMAN_ENTERED";
+  role?: "OBJECTIVE" | "MANDATORY_CONSTRAINT";
+  applicability?: "REQUIRED" | "REPORT_ONLY" | "OPTIONAL" | "NOT_APPLICABLE";
 };
 
 export type OptionAlternative = {
@@ -259,6 +261,8 @@ export type OptionAlternative = {
   operability: string | null;
   costInputAvailable: boolean;
   scheduleInputAvailable: boolean;
+  safetyFeasible?: boolean;
+  carbonInputAvailable?: boolean;
 };
 
 export type OptionStudyComposition = {
@@ -337,6 +341,18 @@ export type EngineeringImpactAssessment = {
     potentialIsNotConfirmed: true;
     automaticImpactConfirmation: false;
     automaticOptionWinner: false;
+    automaticCostAcceptance: false;
+    automaticConstructabilityAcceptance: false;
+    automaticCarbonAcceptance: false;
+    valueImpacts: Array<{
+      dimension: "TECHNICAL" | "COST" | "CONSTRUCTABILITY" | "SCHEDULE" | "CARBON";
+      status: "POTENTIAL";
+      quantified: false;
+      autoConfirmed: false;
+      objectType: string;
+      objectId: string;
+      reason: string;
+    }>;
     semanticCandidatesDistinguished: true;
     binaryDuplication: "NO";
   };

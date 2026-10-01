@@ -125,6 +125,17 @@ export type WorkPlanContext = {
   expectedOutputs: Array<{ outputType: ExpectedOutputType; title: string; generated: false }>;
   actions: WorkActionContract[];
   conditions: string[];
+  evaluationRequirements?: Array<{
+    kind: "COST" | "CONSTRUCTABILITY" | "CARBON";
+    applicability: "REQUIRED" | "REPORT_ONLY" | "OPTIONAL" | "NOT_APPLICABLE";
+    maturity: string;
+    expectedEvidence: string;
+    evidenceState: string;
+    evidenceRef: { objectType: string; objectId: string; title: string } | null;
+    quantified: boolean;
+    automaticAcceptance: false;
+    includeArtifactSection: boolean;
+  }>;
 };
 
 export type WorkPlanContextSnapshot = {

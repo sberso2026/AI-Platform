@@ -1,4 +1,5 @@
 import type { WorkReadinessResolution } from "../information-requirements/readiness";
+import { composeWorkPlanValueRequirements, syntheticDemonstrationEvidence, valueLifecycleKeyFor, valuePolicyForProject } from "../lifecycle-intelligence/cross-lifecycle-value";
 import type { EngineeringWorkTemplate, EngineeringWorkPlan, GeneratorWorkType, WorkActionContract, WorkPlanContext, WorkPlanContextSnapshot, WorkPlanStatus, WorkReference } from "./types";
 import { fingerprintWorkPlanInput } from "./fingerprint";
 
@@ -175,6 +176,14 @@ export function generateEngineeringWorkPlan(input: {
     })),
     actions: actionsFor(input.template, input.snapshot, mapped.startAllowed),
     conditions: mapped.conditions,
+    evaluationRequirements: composeWorkPlanValueRequirements({
+      stage: input.template.lifecycleStage,
+      workType: input.workType,
+      discipline: input.discipline ?? input.template.disciplines[0] ?? null,
+      assignedDisciplines: input.template.disciplines,
+      policy: valuePolicyForProject(input.projectId),
+      evidence: syntheticDemonstrationEvidence(input.projectId, valueLifecycleKeyFor(input.template.lifecycleStage, input.workType)),
+    }),
   };
   const fingerprint = fingerprintWorkPlanInput({
     projectId: input.projectId,

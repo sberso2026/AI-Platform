@@ -1,4 +1,5 @@
 import { computeParetoSet, type ObjectiveSpec, type ParetoCandidate } from "../optimization-intelligence/analysis";
+import { infeasibleAgainstSafetyHierarchy, optionObjectivesForPareto } from "../lifecycle-intelligence/cross-lifecycle-value";
 import type { OptionAlternative, OptionCriterion, OptionStudyComposition } from "./types";
 
 export const DEFAULT_OPTION_CRITERIA: OptionCriterion[] = [
@@ -18,7 +19,11 @@ export function composeOptionStudy(input: {
   criteria?: OptionCriterion[];
 }): OptionStudyComposition {
   const criteria = input.criteria ?? DEFAULT_OPTION_CRITERIA;
-  const objectives: ObjectiveSpec[] = criteria.map((row) => ({
+  const paretoCriteria = optionObjectivesForPareto(criteria);
+  const objectives: ObjectiveSpec[] = (paretoCriteria.length
+    ? paretoCriteria
+    : criteria.filter((row) => row.role !== "MANDATORY_CONSTRAINT" && row.applicability !== "NOT_APPLICABLE")
+  ).map((row) => ({
     id: row.key,
     metric_key: row.key,
     direction: row.direction === "MAXIMIZE" ? "MAXIMIZE" : "MINIMIZE",
@@ -28,7 +33,7 @@ export function composeOptionStudy(input: {
     alternativeId: option.id,
     runId: option.id,
     metrics: option.metrics,
-    feasible: option.metrics.length > 0,
+    feasible: option.metrics.length > 0 && !infeasibleAgainstSafetyHierarchy(option),
   }));
   const pareto = computeParetoSet(objectives, candidates).map((row) => ({
     alternativeId: row.alternativeId,

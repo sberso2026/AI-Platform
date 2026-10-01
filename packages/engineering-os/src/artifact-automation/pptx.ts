@@ -35,7 +35,14 @@ export async function buildPptx(input: {
   ]);
   add("Options", ["Option A — Rail haulage (synthetic)", "Option B — Conveyor (synthetic)", "Options remain separate."]);
   add("Key Inputs", input.provenance.information.map((row) => `${row.title}${row.revision ? ` Rev ${row.revision}` : ""}`).concat(input.provenance.information.length ? [] : ["No inputs referenced."]));
-  add("Comparison", ["Capacity, constructability, and information completeness are visible.", "No hidden weighted score.", "No automatic winner."]);
+  add("Comparison", [
+    "Capacity, constructability, and information completeness are visible.",
+    "No hidden weighted score.",
+    "No automatic winner.",
+    ...(input.plan.context.evaluationRequirements ?? [])
+      .filter((row) => row.includeArtifactSection)
+      .map((row) => `${row.kind}: ${row.maturity} (${row.evidenceState}). Not automatically accepted.`),
+  ]);
   add("Trade-offs", ["Trade-offs remain for engineer judgement. This slide does not recommend an option."]);
   add("Risks / Constraints", input.plan.context.gaps.map((row) => `${row.kind}: ${row.title}`).concat(input.plan.context.gaps.length ? [] : ["No recorded constraints."]));
   add("Information Gaps", input.plan.context.gaps.map((row) => row.explanation).concat(input.plan.context.gaps.length ? [] : ["No recorded gaps."]));

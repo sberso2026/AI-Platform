@@ -13,6 +13,7 @@ import { assessmentSourceFingerprint, graphFingerprint } from "./fingerprint";
 import { createMemoryImpactAssessmentStore, type ImpactAssessmentStore } from "./memory-store";
 import { composeOptionStudy } from "./option-study";
 import { IMPACT_ASSESSMENT_POLICY, resolveImpactPolicy } from "./policy";
+import { composePotentialValueImpacts, valuePolicyForProject } from "../lifecycle-intelligence/cross-lifecycle-value";
 import { SupabaseImpactAssessmentStore } from "./supabase-store";
 import {
   CHANGE_WORKBENCH_AI_BOUNDARY,
@@ -216,6 +217,13 @@ export class EngineeringChangeWorkbenchService {
         potentialIsNotConfirmed: true,
         automaticImpactConfirmation: false,
         automaticOptionWinner: false,
+        automaticCostAcceptance: false,
+        automaticConstructabilityAcceptance: false,
+        automaticCarbonAcceptance: false,
+        valueImpacts: composePotentialValueImpacts({
+          candidates,
+          policy: valuePolicyForProject(projectId),
+        }),
         semanticCandidatesDistinguished: true,
         binaryDuplication: "NO",
       },

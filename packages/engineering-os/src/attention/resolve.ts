@@ -250,6 +250,28 @@ export function resolveEngineeringAttention(input: ResolveAttentionInput): Engin
           now,
         }));
       }
+      for (const gap of plan.valueGaps ?? []) {
+        const category = gap.kind === "CONSTRUCTABILITY" ? "REVIEW_REQUIRED" : gap.kind === "CARBON" || gap.kind === "COST" ? "DO_NOW" : "DO_NOW";
+        collected.push(item({
+          project,
+          category,
+          sourceDomain: "work_plan",
+          sourceObjectType: "engineering_work_plan",
+          sourceObjectId: plan.id,
+          workPlanId: plan.id,
+          discipline: plan.discipline,
+          systemId: plan.systemId,
+          title: gap.title,
+          whatHappened: gap.title,
+          whyItMatters: "Applicable evaluation evidence is missing. EOS does not accept cost, constructability, or carbon automatically.",
+          action: gap.kind === "CONSTRUCTABILITY"
+            ? action("RUN_PRE_ISSUE_REVIEW", "Open Constructability Review", project.projectId, plan.id, plan.id)
+            : action("REQUEST_INFORMATION", gap.kind === "COST" ? "Request Cost Basis" : "Request Carbon Evidence", project.projectId, plan.id, plan.id),
+          explanation: `Project ${project.projectName}. Attention is a projection of missing ${gap.kind} evidence on Work Plan ${plan.id}.`,
+          stateKey: `VALUE_GAP:${gap.kind}`,
+          now,
+        }));
+      }
     }
 
     const changeEvents = new Map<string, AttentionProjectSnapshot["events"][number]>();
