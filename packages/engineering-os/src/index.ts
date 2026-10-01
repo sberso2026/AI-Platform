@@ -239,6 +239,9 @@ export {
 export { resolveEngineeringArtifactTemplate } from "./artifact-automation/resolve-template";
 export { TEMPLATE_SOURCE_CLASSES, TEMPLATE_FALLBACK_POLICIES } from "./artifact-automation/template-policy";
 export { workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, WORKBENCH_AI_BOUNDARY } from "./workbench/lifecycle-actions";
+export { resolveEngineeringAttention } from "./attention/resolve";
+export { EngineeringAttentionService } from "./attention/service";
+export { ATTENTION_CATEGORIES, ATTENTION_AI_BOUNDARY, ATTENTION_PRIVACY } from "./attention/types";
 export { EngineeringToolOrchestrationService } from "./tool-orchestration/service";
 export {
   TOOL_ORCHESTRATION_PRIVACY,

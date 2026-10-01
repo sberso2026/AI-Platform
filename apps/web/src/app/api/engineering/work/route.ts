@@ -124,6 +124,24 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
   if (action === "generatorCatalog") {
     return NextResponse.json({ data: ctx.engineering.workGenerator.catalog() });
   }
+  if (action === "engineeringDay") {
+    const started = Date.now();
+    const data = await ctx.engineering.attention.resolve(commerce, ctx.tenantId, {
+      viewProjectId: url.searchParams.get("filterProjectId") || (url.searchParams.get("scope") === "current" ? url.searchParams.get("projectId") : null),
+      category: (url.searchParams.get("category") as never) || "ALL",
+      discipline: url.searchParams.get("discipline") || null,
+      lifecycle: url.searchParams.get("lifecycle") || null,
+    });
+    return NextResponse.json({
+      data: {
+        ...data,
+        metrics: { initialMs: Date.now() - started, attentionMs: data.durationMs },
+      },
+    });
+  }
+  if (action === "attentionCatalog") {
+    return NextResponse.json({ data: ctx.engineering.attention.catalog() });
+  }
   if (action === "workbench") {
     const started = Date.now();
     const projectIdForView = url.searchParams.get("projectId") ?? "";
@@ -328,12 +346,29 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
   const action = String(body.action ?? "");
   try {
+    if (action === "acknowledgeAttention") {
+      const data = await ctx.engineering.attention.acknowledge(
+        commerce,
+        ctx.tenantId,
+        String(body.fingerprint ?? ""),
+        typeof body.snoozedUntil === "string" ? body.snoozedUntil : null,
+      );
+      return NextResponse.json({ data, engineeringStateMutated: false });
+    }
+    if (action === "saveAttentionPreferences") {
+      const data = await ctx.engineering.attention.savePreferences(commerce, ctx.tenantId, {
+        fyiDisplay: typeof body.fyiDisplay === "boolean" ? body.fyiDisplay : undefined,
+        digestMode: body.digestMode === "DIGEST" || body.digestMode === "IMMEDIATE" ? body.digestMode : undefined,
+        mutedFyi: typeof body.mutedFyi === "boolean" ? body.mutedFyi : undefined,
+      });
+      return NextResponse.json({ data });
+    }
     if (action === "ingest") {
       const data = await ctx.engineering.work.ingest(commerce, ctx.tenantId, body.signal as never);
       return NextResponse.json({ data });

@@ -60,6 +60,10 @@ const TARGETS = [
   "packages/engineering-os/src/workbench",
   "apps/web/src/app/(platform)/engineering/settings/templates",
   "apps/web/src/__tests__/eos-a12a-workbench.test.ts",
+  "docs/architecture/engineering-os/EOS_A12B_MY_ENGINEERING_DAY_TEAM_COORDINATION_NOTIFICATIONS.md",
+  "supabase/migrations/20261001120000_eos_a12b_engineering_attention.sql",
+  "packages/engineering-os/src/attention",
+  "apps/web/src/__tests__/eos-a12b-workbench.test.ts",
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", ".next", "coverage"]);
 

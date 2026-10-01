@@ -346,6 +346,14 @@ export class EngineeringChangeWorkbenchService {
     return rows[0] ?? null;
   }
 
+  async listByProject(commerce: CommerceExecutionContext, tenantId: string, projectId: string) {
+    assertEngineeringService(commerce, "work.list", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    if (!projectId) throw new Error("project_required");
+    return (await this.store.listByProject(workspaceId, projectId)).filter((row) => row.tenantId === tenantId);
+  }
+
   async get(commerce: CommerceExecutionContext, tenantId: string, id: string) {
     assertEngineeringService(commerce, "work.list", tenantId);
     const workspaceId = workspaceScopeId(commerce);

@@ -59,6 +59,7 @@ import { EngineeringToolOrchestrationService } from "./tool-orchestration/servic
 import { EngineeringPreIssueReviewService } from "./pre-issue-review/service";
 import { SupabasePreIssueStore } from "./pre-issue-review/supabase-store";
 import { EngineeringChangeWorkbenchService } from "./change-workbench/service";
+import { EngineeringAttentionService } from "./attention/service";
 import { MemoryEngineeringReviewStore, createSharedReviewMemory } from "@rtb/engineering-review";
 import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
@@ -110,6 +111,7 @@ export interface EngineeringOS {
   preIssueReview: EngineeringPreIssueReviewService;
   changeWorkbench: EngineeringChangeWorkbenchService;
   informationRequirements: EngineeringInformationRequirementService;
+  attention: EngineeringAttentionService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -253,6 +255,17 @@ export function createEngineeringOS(
       });
     },
   );
+  const attention = new EngineeringAttentionService(supabase, {
+    projects,
+    workGenerator,
+    informationRequirements,
+    work,
+    preIssueReview,
+    changeWorkbench,
+    decisions,
+    interfaces,
+    notifications: kernel.notifications,
+  });
   const lifecycle = new EngineeringLifecycleService(supabase, undefined, undefined, deliverables);
   registerOptimizationEvaluateHandler(kernel.jobs, supabase);
   registerAnalysisExecuteHandler(kernel.jobs, supabase);
@@ -348,6 +361,7 @@ export function createEngineeringOS(
     toolOrchestration,
     preIssueReview,
     changeWorkbench,
+    attention,
     informationRequirements,
     timeline,
     activity,

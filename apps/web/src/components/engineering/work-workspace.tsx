@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { EngineeringBreadcrumb } from "@/components/engineering/operational";
 import { EngineeringProjectContextBar } from "@/components/engineering/project-context-bar";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
-import { useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
+import { persistEngineeringProjectFilter, useResolvedEngineeringProjectId } from "@/hooks/use-engineering-project-filter";
 import { buildAskHref } from "@/hooks/use-engineering-context";
 
 type WorkEvent = {
@@ -71,6 +71,32 @@ type WorkbenchAction = {
   reuses: string;
 };
 
+type AttentionItem = {
+  fingerprint: string;
+  category: "DO_NOW" | "REVIEW_REQUIRED" | "DECISION_REQUIRED" | "WAITING_ON_OTHERS" | "RECENTLY_READY" | "FYI";
+  projectId: string;
+  projectName: string;
+  title: string;
+  whatHappened: string;
+  whyItMatters: string;
+  waitingFor?: string | null;
+  provider?: string | null;
+  blocks?: string | null;
+  neededBy?: string | null;
+  overdue?: boolean;
+  acknowledged?: boolean;
+  explanation: string;
+  action: { code: string; label: string; href: string } | null;
+};
+
+type EngineeringDayPayload = {
+  counts: { actionRequired: number; DO_NOW: number; REVIEW_REQUIRED: number; DECISION_REQUIRED: number; WAITING_ON_OTHERS: number; RECENTLY_READY: number; FYI: number };
+  sections: Record<AttentionItem["category"], AttentionItem[]>;
+  askEosSummary: string;
+  productivityScore: null;
+  employeeRanking: null;
+};
+
 type WorkbenchPayload = {
   lifecycleStage: string;
   actions: WorkbenchAction[];
@@ -107,6 +133,10 @@ export function WorkWorkspace() {
   const [templates, setTemplates] = useState<WorkTemplate[]>([]);
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [workbench, setWorkbench] = useState<WorkbenchPayload | null>(null);
+  const [engineeringDay, setEngineeringDay] = useState<EngineeringDayPayload | null>(null);
+  const [dayScope, setDayScope] = useState<"all" | "current">("all");
+  const [dayCategory, setDayCategory] = useState<"ALL" | AttentionItem["category"]>("ALL");
+  const [contextNotice, setContextNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [showSpecialist, setShowSpecialist] = useState(false);
@@ -153,6 +183,24 @@ export function WorkWorkspace() {
       })
       .catch((err: Error) => setError(err.message));
   }, [projectId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ action: "engineeringDay" });
+    if (dayScope === "current" && projectId) params.set("scope", "current");
+    if (dayScope === "current" && projectId) params.set("projectId", projectId);
+    if (dayCategory !== "ALL") params.set("category", dayCategory);
+    const started = performance.now();
+    fetch(`/api/engineering/work?${params.toString()}`)
+      .then((response) => parseApiJsonResponse<EngineeringDayPayload>(response))
+      .then((json) => {
+        if (json.errorMessage) setError(json.errorMessage);
+        if (json.data) setEngineeringDay(json.data);
+        window.setTimeout(() => {
+          console.info(`[eos-a12b] engineering_day wall_ms=${Math.round(performance.now() - started)}`);
+        }, 0);
+      })
+      .catch((err: Error) => setError(err.message));
+  }, [projectId, dayScope, dayCategory]);
 
   const openPlans = plans.filter((row) => row.status !== "SUPERSEDED" && row.status !== "CANCELLED");
   const recent = useMemo(
@@ -207,11 +255,41 @@ export function WorkWorkspace() {
     }
   }
 
+  function openAttention(item: AttentionItem) {
+    if (item.projectId && item.projectId !== projectId) {
+      persistEngineeringProjectFilter(item.projectId);
+      setContextNotice(`Opening ${item.projectName}: ${item.title}. Workbench project view switches explicitly. Canonical ownership is unchanged.`);
+    }
+    if (item.action?.href) {
+      router.push(item.action.href);
+    }
+  }
+
+  async function acknowledge(item: AttentionItem) {
+    const response = await fetch("/api/engineering/work", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "acknowledgeAttention", fingerprint: item.fingerprint }),
+    });
+    const json = await parseApiJsonResponse<{ engineeringStateMutated?: boolean }>(response);
+    if (json.errorMessage) setError(json.errorMessage);
+    setEngineeringDay((current) => {
+      if (!current) return current;
+      const next = { ...current, sections: { ...current.sections } };
+      for (const key of Object.keys(next.sections) as Array<AttentionItem["category"]>) {
+        next.sections[key] = next.sections[key].map((row) => row.fingerprint === item.fingerprint ? { ...row, acknowledged: true } : row);
+      }
+      return next;
+    });
+  }
+
   const askHref = buildAskHref({
     projectId,
-    q: openPlans[0]
-      ? "What is blocking this work? What information applies, and what changed that affects this system?"
-      : "What information applies to this project, and what engineering work can EOS prepare?",
+    q: engineeringDay?.askEosSummary
+      ? `What needs my attention today? ${engineeringDay.askEosSummary}`
+      : openPlans[0]
+        ? "What is blocking this work? What information applies, and what changed that affects this system?"
+        : "What information applies to this project, and what engineering work can EOS prepare?",
   });
 
   return (
@@ -220,7 +298,7 @@ export function WorkWorkspace() {
         title="Unified Engineering Workbench"
         description="Prepare the engineering desk. Material workflow events remain visible; this is not employee activity or productivity scoring."
       />
-      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="unified-engineering-workbench">
+      <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="unified-engineering-workbench" data-eos-a12b="my-engineering-day">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Work" }]} />
         <EngineeringProjectContextBar />
         {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
@@ -230,6 +308,63 @@ export function WorkWorkspace() {
           <p className="mt-2 text-base font-medium">
             Lifecycle: {(workbench?.lifecycleStage ?? "UNKNOWN").replaceAll("_", " ")}
           </p>
+        </section>
+        {contextNotice ? <p className="mt-3 rounded border p-3 text-sm" role="status">{contextNotice}</p> : null}
+
+        <section className="mt-8" aria-label="My Engineering Day">
+          <h2 className="text-lg font-semibold">My Engineering Day</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {engineeringDay ? `${engineeringDay.counts.actionRequired} items need action across authorized projects.` : "Across the engineering projects you can access, what requires attention?"}
+            {" "}This is actionable work, not an inbox, dashboard, or employee score.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => setDayScope("all")} aria-pressed={dayScope === "all"}>All Projects</button>
+            <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => setDayScope("current")} disabled={!projectId} aria-pressed={dayScope === "current"}>Current project</button>
+            {(["ALL", "DO_NOW", "REVIEW_REQUIRED", "DECISION_REQUIRED", "WAITING_ON_OTHERS", "RECENTLY_READY", "FYI"] as const).map((value) => (
+              <button key={value} type="button" className="rounded border px-3 py-2 text-sm" onClick={() => setDayCategory(value)} aria-pressed={dayCategory === value}>
+                {value.replaceAll("_", " ")}
+              </button>
+            ))}
+          </div>
+          {([
+            ["DO_NOW", "Do Now"],
+            ["REVIEW_REQUIRED", "Reviews"],
+            ["DECISION_REQUIRED", "Decisions"],
+            ["RECENTLY_READY", "Recently Ready"],
+            ["WAITING_ON_OTHERS", "Waiting on Others"],
+            ["FYI", "FYI"],
+          ] as const).map(([key, label]) => {
+            const items = engineeringDay?.sections[key] ?? [];
+            return (
+              <div key={key} className="mt-5">
+                <h3 className="text-base font-medium">{label}</h3>
+                {items.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted-foreground">No {label.toLowerCase()} items.</p>
+                ) : (
+                  <ul className="mt-2 space-y-2">
+                    {items.map((item) => (
+                      <li key={item.fingerprint} className="rounded border p-3 text-sm">
+                        <p className="font-medium">{item.projectName} · {item.title}</p>
+                        <p className="mt-1">{item.whatHappened}</p>
+                        <p className="mt-1 text-muted-foreground">{item.whyItMatters}</p>
+                        {item.waitingFor ? <p className="mt-1">Waiting for: {item.waitingFor}{item.provider ? ` · Provider: ${item.provider}` : ""}{item.blocks ? ` · Blocks: ${item.blocks}` : ""}</p> : null}
+                        {item.neededBy ? <p className="mt-1">Needed by: {item.neededBy}{item.overdue ? " · Overdue" : ""}</p> : null}
+                        <p className="mt-1 text-muted-foreground">{item.explanation}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {item.action ? (
+                            <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => openAttention(item)}>{item.action.label}</button>
+                          ) : null}
+                          <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => void acknowledge(item)} disabled={item.acknowledged}>
+                            {item.acknowledged ? "Acknowledged" : "Acknowledge"}
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
         </section>
 
         <section className="mt-8" aria-label="Continue Work">
