@@ -13,7 +13,7 @@ import { A11E_PROJECT_B } from "../change-workbench/fixture";
 import { createMemoryWorkPlanStore } from "../work-generator/memory-store";
 import { EngineeringWorkGeneratorService } from "../work-generator/service";
 import { acceptGovernedQuantity, A15A_V3_FEATURE_FREEZE, workPlanExpectsMto } from "./quantity-mto";
-import { createMemoryQuantityMtoStore } from "./quantity-mto-store";
+import { createMemoryQuantityMtoStore, objectLinkInsertRows } from "./quantity-mto-store";
 import { createTestQuantityMtoService } from "./quantity-mto-service";
 import { CALLER_SUPPLIED_MTO_KEYS } from "./quantity-mto-persist";
 
@@ -242,6 +242,53 @@ describe("EOS-A15A-V3 governed MTO workbench persistence", () => {
     expect(timings.n100).toBeGreaterThan(0);
     expect(timings.n1000).toBeGreaterThan(0);
     expect(timings.n5000).toBeGreaterThan(0);
+  });
+
+  it("does not write workspace_id or non-UUID endpoints onto engineering_object_links", () => {
+    const snapshotId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const priorId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const itemId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const basisId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const planId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const rows = objectLinkInsertRows({
+      id: snapshotId,
+      tenantId: CRUSHER_FEED_TENANT,
+      workspaceId: CRUSHER_FEED_WORKSPACE,
+      projectId: CRUSHER_EXPANSION_FEED_PROJECT_ID,
+      workPlanId: planId,
+      systemId: A11A_SYSTEM_ID,
+      discipline: "STRUCTURAL",
+      disciplineScope: "MULTIDISCIPLINARY",
+      lifecycleStage: "FEED",
+      revision: "B",
+      status: "DRAFT",
+      verificationState: "UNVERIFIED",
+      sourceRevisionSet: ["A"],
+      itemCount: 1,
+      snapshotFingerprint: "fp",
+      staleness: "CURRENT",
+      createdAt: "2026-10-02T00:00:00.000Z",
+      createdBy: "cert-er-a1@rtb-cert.test",
+      verifiedAt: null,
+      verifiedBy: null,
+      supersedesSnapshotId: priorId,
+      exportDisclaimer: "x",
+      items: [],
+      thread: [
+        { fromType: "quantity_basis", fromId: basisId, relationship: "BASED_ON", toType: "engineering_information", toId: "S-CRU-ST-001" },
+        { fromType: "quantity_basis", fromId: basisId, relationship: "USED_BY", toType: "mto_item", toId: itemId },
+        { fromType: "mto_snapshot", fromId: snapshotId, relationship: "BASED_ON", toType: "mto_item", toId: itemId },
+        { fromType: "mto_snapshot", fromId: snapshotId, relationship: "SUPERSEDES", toType: "mto_snapshot", toId: priorId },
+        { fromType: "engineering_work_plan", fromId: planId, relationship: "SUPPORTED_BY", toType: "mto_snapshot", toId: snapshotId },
+        { fromType: "engineering_work_plan", fromId: planId, relationship: "SUPPORTED_BY", toType: "mto_snapshot", toId: snapshotId },
+      ],
+    });
+    expect(rows.every((row) => !("workspace_id" in row) && !("project_id" in row))).toBe(true);
+    expect(rows.every((row) => row.relationship_governed === false)).toBe(true);
+    expect(rows.every((row) => row.created_by === null)).toBe(true);
+    expect(rows.some((row) => row.to_id === "S-CRU-ST-001")).toBe(false);
+    expect(rows.filter((row) => row.relationship === "SUPPORTED_BY")).toHaveLength(1);
+    expect(rows.some((row) => row.relationship === "SUPERSEDES" && row.to_id === priorId)).toBe(true);
   });
 
   it("keeps hosted malware deferred and returned files fail-closed", async () => {

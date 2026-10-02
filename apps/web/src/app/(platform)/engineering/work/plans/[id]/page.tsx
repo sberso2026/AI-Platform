@@ -418,7 +418,7 @@ export default function WorkPlanPage() {
     const response = await fetch("/api/engineering/work", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "compareArtifact", id: params.id, artifactId: artifact.id }),
+      body: JSON.stringify({ action: "compareArtifact", id: params.id, artifactId: artifact.id, selectedProjectId }),
     });
     const json = await parseApiJsonResponse<{ stale?: boolean; message?: string; reason?: string; regenerationRequired?: boolean }>(response);
     setDiff(JSON.stringify(json.data ?? {}, null, 2));

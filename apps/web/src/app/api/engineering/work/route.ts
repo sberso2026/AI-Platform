@@ -681,8 +681,12 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       return NextResponse.json({ data });
     }
     if (action === "compareArtifact") {
-      const artifact = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, String(body.artifactId ?? ""));
-      const plan = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, String(body.workPlanId ?? body.id ?? artifact?.workPlanId ?? ""));
+      const readCommerce = await authorizeEngineeringSegment(ctx, "work", "GET", correlationId);
+      if (!readCommerce) {
+        return NextResponse.json({ error: "authorization_denied" }, { status: 403 });
+      }
+      const artifact = await ctx.engineering.artifactAutomation.get(readCommerce, ctx.tenantId, String(body.artifactId ?? ""));
+      const plan = await ctx.engineering.workGenerator.getPlan(readCommerce, ctx.tenantId, String(body.workPlanId ?? body.id ?? artifact?.workPlanId ?? ""));
       if (!artifact || !plan) return NextResponse.json({ error: "not_found" }, { status: 404 });
       let currentMtoFingerprint: string | null = null;
       try {

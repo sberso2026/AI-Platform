@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@rtb/database";
-import type { ThreadRelation } from "../digital-thread/types";
 import {
   itemFromRow,
   itemInsertRow,
@@ -59,6 +58,37 @@ export function createMemoryQuantityMtoStore(): QuantityMtoStore {
       rows.set(snapshotId, existing);
     },
   };
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Canonical engineering_object_links ownership is tenant_id plus endpoint resolve.
+ * Workspace is not a column on that table; it is derived from linked objects / project.
+ * MTO quantity_basis / drawing refs are not UUID object-link endpoints.
+ * relationship_governed stays false: mto_snapshot / mto_item / quantity_basis are not
+ * registered in engineering_object_link_resolve, so governed writes would fail the scope guard.
+ */
+export function objectLinkInsertRows(row: PersistedMtoSnapshot): Array<Record<string, unknown>> {
+  const seen = new Set<string>();
+  const payload: Array<Record<string, unknown>> = [];
+  for (const link of row.thread) {
+    if (!UUID_RE.test(link.fromId) || !UUID_RE.test(link.toId)) continue;
+    const key = `${link.fromType}|${link.fromId}|${link.toType}|${link.toId}|${link.relationship}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    payload.push({
+      tenant_id: row.tenantId,
+      from_type: link.fromType,
+      from_id: link.fromId,
+      to_type: link.toType,
+      to_id: link.toId,
+      relationship: link.relationship,
+      relationship_governed: false,
+      created_by: row.createdBy && UUID_RE.test(row.createdBy) ? row.createdBy : null,
+    });
+  }
+  return payload;
 }
 
 function db(client: SupabaseClient): { from(name: string): any } {
@@ -145,18 +175,8 @@ export class SupabaseQuantityMtoStore implements QuantityMtoStore {
   }
 
   private async insertThread(row: PersistedMtoSnapshot) {
-    if (!row.thread.length) return;
-    const payload = row.thread.map((link: ThreadRelation) => ({
-      tenant_id: row.tenantId,
-      workspace_id: row.workspaceId,
-      from_type: link.fromType,
-      from_id: link.fromId,
-      to_type: link.toType,
-      to_id: link.toId,
-      relationship: link.relationship,
-      relationship_governed: true,
-      created_by: row.createdBy,
-    }));
+    const payload = objectLinkInsertRows(row);
+    if (!payload.length) return;
     const { error } = await db(this.supabase).from("engineering_object_links").insert(payload);
     if (error) throw new Error(error.message);
   }

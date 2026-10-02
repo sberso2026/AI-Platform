@@ -30,6 +30,12 @@ AI draft narrative cannot become a governed engineering fact because it appears 
 
 Artifacts bind to the selected persisted MTO snapshot (revision, verification state, fingerprint, source revisions). Unverified items remain visible. Regeneration after MTO Rev A → Rev B inserts the new artifact first, then marks the prior artifact `SUPERSEDED` (`MTO_SOURCE_CHANGED` / `REGENERATION_REQUIRED`) without mutating bytes. Change Impact remains POTENTIAL except where quantity evidence is deterministic.
 
+MTO Digital Thread writes to existing `engineering_object_links` use `tenant_id` only. That table has no `workspace_id`; workspace ownership is derived from the MTO snapshot / project. Non-UUID drawing refs are not inserted as link endpoints.
+
+## EOS-A15A-V4C live binding closeout
+
+Hosted staging `engineering_object_links` has `tenant_id` and does not have `workspace_id` or `project_id`. The V3 persist path that inserted `workspace_id` produced PostgREST `PGRST204` / PostgreSQL `42703`. Root cause: `APPLICATION_QUERY_EXPECTS_NONEXISTENT_COLUMN`, not a stale schema cache and not a missing migration. The persist path now writes only canonical link columns, UUID endpoints, and `relationship_governed=false`. Compare Artifact on the Work Plan POST uses `work.get` commerce (analysis.read), matching `getPlan` / `artifact.get`. No column was added to silence the error.
+
 ## Cost / carbon / constructability
 
 - No approved rate → `COST_NOT_CALCULATED`
