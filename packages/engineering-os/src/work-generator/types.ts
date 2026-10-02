@@ -77,6 +77,11 @@ export const EXPECTED_OUTPUT_TYPES = [
   "TQ_RESPONSE",
   "HANDOVER_PACKAGE",
   "CHANGE_ASSESSMENT",
+  "STRUCTURAL_MTO",
+  "PIPING_MTO",
+  "CIVIL_MTO",
+  "ELECTRICAL_MTO",
+  "MULTIDISCIPLINARY_MTO",
 ] as const;
 export type ExpectedOutputType = (typeof EXPECTED_OUTPUT_TYPES)[number];
 

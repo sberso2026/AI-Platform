@@ -345,7 +345,7 @@ export type EngineeringImpactAssessment = {
     automaticConstructabilityAcceptance: false;
     automaticCarbonAcceptance: false;
     valueImpacts: Array<{
-      dimension: "TECHNICAL" | "COST" | "CONSTRUCTABILITY" | "SCHEDULE" | "CARBON";
+      dimension: "TECHNICAL" | "QUANTITY" | "COST" | "CONSTRUCTABILITY" | "SCHEDULE" | "CARBON";
       status: "POTENTIAL";
       quantified: false;
       autoConfirmed: false;

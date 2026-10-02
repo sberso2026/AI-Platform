@@ -554,7 +554,7 @@ export function composeDecisionValueRecord(input: {
   };
 }
 
-export const IMPACT_VALUE_DIMENSIONS = ["TECHNICAL", "COST", "CONSTRUCTABILITY", "SCHEDULE", "CARBON"] as const;
+export const IMPACT_VALUE_DIMENSIONS = ["TECHNICAL", "QUANTITY", "COST", "CONSTRUCTABILITY", "SCHEDULE", "CARBON"] as const;
 export type ImpactValueDimension = (typeof IMPACT_VALUE_DIMENSIONS)[number];
 
 export type PotentialValueImpact = {
@@ -584,6 +584,15 @@ export function composePotentialValueImpacts(input: {
       objectType: candidate.objectType,
       objectId: candidate.objectId,
       reason: candidate.reason,
+    });
+    rows.push({
+      dimension: "QUANTITY",
+      status: "POTENTIAL",
+      quantified: false,
+      autoConfirmed: false,
+      objectType: candidate.objectType,
+      objectId: candidate.objectId,
+      reason: "Potential quantity implication. Quantity delta is evidence, not a cost or carbon result.",
     });
     if (policy.cost !== "NOT_APPLICABLE") {
       rows.push({

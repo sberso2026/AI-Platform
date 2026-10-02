@@ -251,7 +251,14 @@ export function resolveEngineeringAttention(input: ResolveAttentionInput): Engin
         }));
       }
       for (const gap of plan.valueGaps ?? []) {
-        const category = gap.kind === "CONSTRUCTABILITY" ? "REVIEW_REQUIRED" : gap.kind === "CARBON" || gap.kind === "COST" ? "DO_NOW" : "DO_NOW";
+        if (gap.kind === "CARBON" && /not_applicable/i.test(gap.title)) continue;
+        const category = gap.kind === "CONSTRUCTABILITY" || gap.kind === "MTO" ? "REVIEW_REQUIRED" : "DO_NOW";
+        const actionLabel =
+          gap.kind === "CONSTRUCTABILITY" ? "Open Constructability Review"
+          : gap.kind === "COST" ? "Request Cost Basis"
+          : gap.kind === "CARBON" ? "Request Carbon Evidence"
+          : gap.kind === "MTO" ? "Verify MTO"
+          : "Request Quantity Basis";
         collected.push(item({
           project,
           category,
@@ -263,10 +270,12 @@ export function resolveEngineeringAttention(input: ResolveAttentionInput): Engin
           systemId: plan.systemId,
           title: gap.title,
           whatHappened: gap.title,
-          whyItMatters: "Applicable evaluation evidence is missing. EOS does not accept cost, constructability, or carbon automatically.",
+          whyItMatters: gap.kind === "QUANTITY" || gap.kind === "MTO"
+            ? "Governed quantities require a quantity basis. EOS does not invent missing take-off values."
+            : "Applicable evaluation evidence is missing. EOS does not accept cost, constructability, or carbon automatically.",
           action: gap.kind === "CONSTRUCTABILITY"
-            ? action("RUN_PRE_ISSUE_REVIEW", "Open Constructability Review", project.projectId, plan.id, plan.id)
-            : action("REQUEST_INFORMATION", gap.kind === "COST" ? "Request Cost Basis" : "Request Carbon Evidence", project.projectId, plan.id, plan.id),
+            ? action("RUN_PRE_ISSUE_REVIEW", actionLabel, project.projectId, plan.id, plan.id)
+            : action("REQUEST_INFORMATION", actionLabel, project.projectId, plan.id, plan.id),
           explanation: `Project ${project.projectName}. Attention is a projection of missing ${gap.kind} evidence on Work Plan ${plan.id}.`,
           stateKey: `VALUE_GAP:${gap.kind}`,
           now,

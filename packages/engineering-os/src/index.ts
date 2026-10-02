@@ -16,6 +16,16 @@ export {
   quantifyCarbon,
   reviewValueEvidence,
 } from "./lifecycle-intelligence/cross-lifecycle-value";
+export {
+  A15A_V2_FEATURE_FREEZE,
+  AI_QUANTITY_POLICY,
+  acceptGovernedQuantity,
+  compareMtoSnapshots,
+  deriveCarbon,
+  deriveCost,
+  issueMtoSnapshot,
+  reviewMtoProvenance,
+} from "./lifecycle-intelligence/quantity-mto";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";

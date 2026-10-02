@@ -563,6 +563,12 @@ export function runDeterministicPreIssueChecks(input: {
     notEvaluated.push({ checkType: "CARBON_EVIDENCE_CHECK", reason: "not_value_report_artifact" });
   }
 
+  const expectsMto = plan.context.expectedOutputs.some((row) => row.outputType.endsWith("_MTO"));
+  notEvaluated.push({
+    checkType: "QUANTITY_PROVENANCE_CHECK",
+    reason: expectsMto ? "mto_snapshot_reviewed_via_quantity_compose" : "mto_not_an_expected_output",
+  });
+
   return { conditions, passedChecks, notEvaluated };
 }
 
