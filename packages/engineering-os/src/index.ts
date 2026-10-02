@@ -31,6 +31,14 @@ export {
 } from "./lifecycle-intelligence/quantity-mto";
 export { EngineeringQuantityMtoService, createTestQuantityMtoService } from "./lifecycle-intelligence/quantity-mto-service";
 export { exportMtoWorkbook } from "./lifecycle-intelligence/quantity-mto-export";
+export {
+  A15A_V4_FEATURE_FREEZE,
+  A15A_V4_GENERATOR_VERSION,
+  composeDeliverableSource,
+  compareDeliverableStaleness,
+  DELIVERABLE_HUMAN_AUTHORITY,
+  EVIDENCE_CLASSES,
+} from "./lifecycle-intelligence/deliverable-composition";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";

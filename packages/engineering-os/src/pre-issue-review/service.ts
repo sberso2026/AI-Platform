@@ -227,6 +227,9 @@ export class EngineeringPreIssueReviewService {
       extractionSkipped,
       mtoItems: mto?.items,
       mtoStaleness: mto?.staleness,
+      currentMtoFingerprint: mto && "fingerprint" in mto ? String(mto.fingerprint ?? "") : null,
+      currentMtoRevision: mto && "revision" in mto ? String(mto.revision ?? "") : null,
+      currentMtoSnapshotId: mto && "snapshotId" in mto ? String(mto.snapshotId ?? "") : null,
     });
     const deterministicDurationMs = Date.now() - detStarted;
 

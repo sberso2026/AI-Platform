@@ -4,10 +4,15 @@ import {
   HeadingLevel,
   Packer,
   Paragraph,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  WidthType,
 } from "docx";
 import type { ArtifactProvenanceManifest, EngineeringArtifactTemplate, WorkPlanLike } from "./types";
 import { documentCreator, type ArtifactBranding } from "./template-policy";
+import type { DeliverableComposition } from "../lifecycle-intelligence/deliverable-composition";
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1) {
   return new Paragraph({ text, heading: level });
@@ -25,12 +30,43 @@ function bullets(items: string[], empty: string) {
   return items.map((item) => new Paragraph({ text: item, bullet: { level: 0 } }));
 }
 
+function cell(text: string, header = false) {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, bold: header })] })],
+  });
+}
+
+function table(rows: string[][]) {
+  if (!rows.length) return [];
+  return [
+    new Table({
+      width: { size: 9360, type: WidthType.DXA },
+      rows: rows.map((row, index) => new TableRow({
+        children: row.map((value) => cell(value, index === 0)),
+      })),
+    }),
+  ];
+}
+
+function compositionChildren(composition: DeliverableComposition) {
+  const children: Array<Paragraph | Table> = [];
+  for (const section of composition.sections) {
+    if (!section.applicable && section.evidenceClass === "NOT_APPLICABLE") continue;
+    children.push(heading(section.title));
+    children.push(para(`Evidence class: ${section.evidenceClass}${section.missingState ? ` · ${section.missingState}` : ""}`));
+    for (const paragraph of section.paragraphs) children.push(para(paragraph));
+    if (section.rows.length) children.push(...table(section.rows));
+  }
+  return children;
+}
+
 export async function buildDocx(input: {
   template: EngineeringArtifactTemplate;
   plan: WorkPlanLike;
   provenance: ArtifactProvenanceManifest;
   projectCode: string;
   branding?: ArtifactBranding | null;
+  composition?: DeliverableComposition | null;
 }): Promise<{ buffer: Buffer; sectionCount: number }> {
   const draftBanner = [
     para("DRAFT FOR ENGINEER REVIEW", { bold: true }),
@@ -38,7 +74,17 @@ export async function buildDocx(input: {
   ];
   const type = input.template.artifactType;
   const query = input.plan.relatedObjectId ?? input.plan.relatedObjectType ?? "Query not supplied — placeholder remains unresolved.";
-  const children: Paragraph[] = [
+  const composed = Boolean(input.composition && (type === "DESIGN_REPORT" || type === "TECHNICAL_MEMORANDUM"));
+  const children: Array<Paragraph | Table> = composed
+    ? [
+        heading(input.template.name),
+        ...draftBanner,
+        para(`Project: ${input.projectCode}`),
+        para(`Fingerprint: ${input.composition!.compositionFingerprint}`),
+        para(`MTO: ${input.composition!.manifest.mtoRevision ? `Rev ${input.composition!.manifest.mtoRevision} (${input.composition!.manifest.mtoStatus})` : "not bound"}`),
+        ...compositionChildren(input.composition!),
+      ]
+    : [
     heading(input.template.name),
     ...draftBanner,
     heading("Document Control"),
@@ -84,7 +130,7 @@ export async function buildDocx(input: {
     ...bullets(input.provenance.decisions, "No decisions referenced."),
   ];
 
-  if (type === "SPECIFICATION") {
+  if (!composed && type === "SPECIFICATION") {
     children.push(
       heading("Materials / technical clauses"),
       para("PLACEHOLDER / UNRESOLVED: material grades, inspection frequencies, code editions, and acceptance criteria are not invented. Engineer to author from governed sources."),
@@ -93,7 +139,7 @@ export async function buildDocx(input: {
     );
   }
 
-  if (type === "RFI_RESPONSE" || type === "TQ_RESPONSE" || type === "TECHNICAL_MEMORANDUM") {
+  if (!composed && (type === "RFI_RESPONSE" || type === "TQ_RESPONSE" || type === "TECHNICAL_MEMORANDUM")) {
     children.push(
       heading(type === "TECHNICAL_MEMORANDUM" ? "Concept / query context" : "Query / question"),
       para(String(query)),
@@ -111,7 +157,7 @@ export async function buildDocx(input: {
     );
   }
 
-  if (type === "TECHNICAL_MEMORANDUM" || input.template.readinessPolicy === "ALLOW_INCOMPLETE_DRAFT") {
+  if (!composed && (type === "TECHNICAL_MEMORANDUM" || input.template.readinessPolicy === "ALLOW_INCOMPLETE_DRAFT")) {
     children.push(
       heading("Missing information / conditions"),
       ...bullets(
@@ -122,7 +168,7 @@ export async function buildDocx(input: {
     );
   }
 
-  const valueSections = (input.plan.context.evaluationRequirements ?? []).filter((row) => row.includeArtifactSection);
+  const valueSections = composed ? [] : (input.plan.context.evaluationRequirements ?? []).filter((row) => row.includeArtifactSection);
   for (const section of valueSections) {
     children.push(
       heading(section.kind === "COST" ? "Cost" : section.kind === "CONSTRUCTABILITY" ? "Constructability" : "Carbon / Sustainability"),
@@ -131,6 +177,7 @@ export async function buildDocx(input: {
     );
   }
 
+  if (!composed) {
   children.push(
     heading("Limitations"),
     para("Findings and conclusions are not fabricated. Human engineering review is required before use."),
@@ -142,6 +189,7 @@ export async function buildDocx(input: {
     heading("Revision History"),
     para(`Generation run ${input.provenance.generationRunId} — GENERATED_DRAFT. No issued revision.`),
   );
+  }
 
   const creator = documentCreator(input.branding);
   const doc = new Document({

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
-import { assembleSnapshotFromRecords, assertCanonicalWorkPlanOwnership, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, sanitizeArtifactFileName, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, type EngineeringOS } from "@rtb/engineering-os";
+import { assembleSnapshotFromRecords, assertCanonicalWorkPlanOwnership, inheritWorkPlanContext, lifecycleAskPrompts, lifecycleEmptyState, resolveNextLifecycleWork, sanitizeArtifactFileName, workbenchActionsForLifecycle, WORKBENCH_DEEP_MODULES, composeDeliverableSource, type EngineeringOS } from "@rtb/engineering-os";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { forbiddenResponse } from "@/lib/lifecycle-api";
 
@@ -326,6 +326,20 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     } catch {
       mto = null;
     }
+    let deliverableReadiness: unknown = null;
+    try {
+      const bound = await ctx.engineering.quantityMto.loadCompositionContext(data.id);
+      deliverableReadiness = composeDeliverableSource({
+        plan: data,
+        templateCode: "EAT-REPORT-DESIGN",
+        templateVersion: "1.0.0",
+        artifactType: "DESIGN_REPORT",
+        snapshot: bound.current,
+        previousSnapshot: bound.previous,
+      }).readiness;
+    } catch {
+      deliverableReadiness = null;
+    }
     let impact: unknown = null;
     try {
       const sourceType = data.relatedChangeId ? "change" : data.relatedObjectType ?? "engineering_work_plan";
@@ -366,6 +380,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       preIssue,
       impact,
       mto,
+      deliverableReadiness,
       templatePreview,
       externalContext,
     });
@@ -669,7 +684,16 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       const artifact = await ctx.engineering.artifactAutomation.get(commerce, ctx.tenantId, String(body.artifactId ?? ""));
       const plan = await ctx.engineering.workGenerator.getPlan(commerce, ctx.tenantId, String(body.workPlanId ?? body.id ?? artifact?.workPlanId ?? ""));
       if (!artifact || !plan) return NextResponse.json({ error: "not_found" }, { status: 404 });
-      return NextResponse.json({ data: ctx.engineering.artifactAutomation.compareContext(artifact.provenance.inputFingerprint, plan.inputFingerprint) });
+      let currentMtoFingerprint: string | null = null;
+      try {
+        const bound = await ctx.engineering.quantityMto.loadCompositionContext(plan.id);
+        currentMtoFingerprint = bound.current?.snapshotFingerprint ?? null;
+      } catch {
+        currentMtoFingerprint = null;
+      }
+      return NextResponse.json({
+        data: ctx.engineering.artifactAutomation.compareArtifact(artifact, plan.inputFingerprint, currentMtoFingerprint),
+      });
     }
     if (action === "prepareHandoff") {
       const data = await ctx.engineering.toolOrchestration.prepareHandoff(commerce, ctx.tenantId, {

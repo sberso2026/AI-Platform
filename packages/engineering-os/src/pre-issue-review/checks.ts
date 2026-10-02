@@ -56,6 +56,9 @@ export function runDeterministicPreIssueChecks(input: {
   extractionSkipped: string | null;
   mtoItems?: QuantityItem[];
   mtoStaleness?: string;
+  currentMtoFingerprint?: string | null;
+  currentMtoRevision?: string | null;
+  currentMtoSnapshotId?: string | null;
 }): DeterministicCheckOutput {
   const conditions: PreIssueCondition[] = [];
   const passedChecks: Array<{ checkType: PreIssueCheckType; title: string }> = [];
@@ -605,6 +608,68 @@ export function runDeterministicPreIssueChecks(input: {
       checkType: "QUANTITY_PROVENANCE_CHECK",
       reason: expectsMto ? "mto_snapshot_not_persisted" : "mto_not_an_expected_output",
     });
+  }
+
+  if (target.provenance.generatorVersion === "EOS-A15A-V4") {
+    if (!target.provenance.sourceManifest) {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "ARTIFACT_PROVENANCE_CHECK",
+        code: "ARTIFACT_PROVENANCE_MISSING",
+        title: "Composed deliverable is missing a source manifest",
+        explanation: "V4 engineering deliverables require a machine-readable source manifest. This is not an engineering-approval verdict.",
+        materiality: "TRACEABILITY_GAP",
+        category: "missing_engineering_evidence",
+        evidence: [{ artifactId: target.id, statement: "sourceManifest missing" }],
+        actions: [{ code: "OPEN_ARTIFACT", label: "Open Affected Artifact", objectId: target.id }],
+      }));
+    }
+    if (target.provenance.mtoStatus === "SUPERSEDED") {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "SOURCE_SUPERSESSION_CHECK",
+        code: "ARTIFACT_GENERATED_FROM_SUPERSEDED_MTO",
+        title: `Artifact generated from superseded MTO ${target.provenance.mtoRevision ?? ""}`.trim(),
+        explanation: `MTO ${target.provenance.mtoRevision ?? "Rev unknown"} is SUPERSEDED. REGENERATION_REQUIRED. Prior artifact is immutable.`,
+        materiality: "STALE_CONTEXT",
+        category: "revision_inconsistency",
+        evidence: [{ artifactId: target.id, statement: `mtoSnapshotId=${target.provenance.mtoSnapshotId}; status=SUPERSEDED` }],
+        actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Regenerate deliverable", href: `/engineering/work/plans/${plan.id}` }],
+      }));
+    } else if (
+      target.provenance.mtoFingerprint
+      && input.currentMtoFingerprint
+      && target.provenance.mtoFingerprint !== input.currentMtoFingerprint
+    ) {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "QUANTITY_PROVENANCE_CHECK",
+        code: "ARTIFACT_MTO_SOURCE_CHANGED",
+        title: `MTO Rev ${target.provenance.mtoRevision ?? "A"} superseded by Rev ${input.currentMtoRevision ?? "B"}`,
+        explanation: "MTO_SOURCE_CHANGED. REGENERATION_REQUIRED. The generated deliverable is stale. Old artifact is not mutated.",
+        materiality: "STALE_CONTEXT",
+        category: "revision_inconsistency",
+        evidence: [
+          { artifactId: target.id, statement: `bound fingerprint ${target.provenance.mtoFingerprint}` },
+          { sourceId: input.currentMtoSnapshotId ?? plan.id, statement: `current fingerprint ${input.currentMtoFingerprint}` },
+        ],
+        actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Regenerate deliverable", href: `/engineering/work/plans/${plan.id}` }],
+      }));
+    }
+    if (input.mtoItems?.some((row) => row.verificationStatus === "UNVERIFIED" || String(row.verificationStatus) === "UNVERIFIED")) {
+      const unverified = input.mtoItems.filter((row) => row.verificationStatus === "UNVERIFIED" || String(row.verificationStatus) === "UNVERIFIED");
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "QUANTITY_PROVENANCE_CHECK",
+        code: "QUANTITY_AI_EXTRACTION_UNVERIFIED",
+        title: "Unverified MTO items are present in the bound snapshot",
+        explanation: "Unverified quantities remain visible. Generation does not verify MTO items.",
+        materiality: "INFORMATION_GAP",
+        category: "missing_engineering_evidence",
+        evidence: unverified.slice(0, 8).map((row) => ({ sourceId: row.itemCode, statement: `${row.itemCode} ${row.verificationStatus}` })),
+        actions: [{ code: "OPEN_ARTIFACT", label: "Open MTO", href: `/engineering/work/plans/${plan.id}/mto` }],
+      }));
+    }
   }
 
   return { conditions, passedChecks, notEvaluated };

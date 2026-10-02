@@ -431,7 +431,19 @@ export class EngineeringQuantityMtoService {
     const rows = await this.store.listSnapshots(plan.workspaceId, plan.projectId, plan.id);
     const current = rows.find((row) => row.status !== "SUPERSEDED") ?? rows[0] ?? null;
     if (!current) return null;
-    return { items: current.items, staleness: current.staleness, snapshotId: current.id, projectId: current.projectId };
+    return { items: current.items, staleness: current.staleness, snapshotId: current.id, projectId: current.projectId, fingerprint: current.snapshotFingerprint, revision: current.revision, status: current.status };
+  }
+
+  async loadCompositionContext(planId: string) {
+    const plan = await this.loadPlan(planId);
+    if (!plan) return { current: null, previous: null };
+    const rows = await this.store.listSnapshots(plan.workspaceId, plan.projectId, plan.id);
+    const current = rows.find((row) => row.status !== "SUPERSEDED") ?? rows[0] ?? null;
+    if (!current) return { current: null, previous: null };
+    const previous = current.supersedesSnapshotId
+      ? rows.find((row) => row.id === current.supersedesSnapshotId) ?? await this.store.getSnapshot(current.supersedesSnapshotId)
+      : null;
+    return { current, previous: previous ?? null };
   }
 
   async reviewPlan(

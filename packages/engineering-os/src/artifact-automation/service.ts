@@ -14,7 +14,9 @@ import { resolveEngineeringArtifactTemplate } from "./resolve-template";
 import { SupabaseArtifactStore } from "./supabase-store";
 import { SupabaseTemplatePolicyStore } from "./supabase-template-store";
 import { DEFAULT_TEMPLATE_FALLBACK_POLICY, type ArtifactTemplatePolicyRecord, type TenantTemplateFallbackPolicy } from "./template-policy";
-import { ARTIFACT_AI_BOUNDARY, ARTIFACT_PRIVACY, type ArtifactType } from "./types";
+import { ARTIFACT_AI_BOUNDARY, ARTIFACT_PRIVACY, type ArtifactType, type GeneratedEngineeringArtifact } from "./types";
+import { composeDeliverableSource, compareDeliverableStaleness, A15A_V4_FEATURE_FREEZE } from "../lifecycle-intelligence/deliverable-composition";
+import type { PersistedMtoSnapshot } from "../lifecycle-intelligence/quantity-mto-persist";
 
 export const CALLER_SUPPLIED_ARTIFACT_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current", "objectKey", "storageKind"] as const;
 
@@ -47,6 +49,12 @@ export class EngineeringArtifactAutomationService {
     private readonly binaryStore: ArtifactBinaryStore = new LegacyRelationalArtifactBinaryStore(),
   ) {}
 
+  private mtoLoader: ((workPlanId: string) => Promise<{ current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null } | null>) | null = null;
+
+  bindQuantityMto(loader: (workPlanId: string) => Promise<{ current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null } | null>) {
+    this.mtoLoader = loader;
+  }
+
   catalog() {
     return {
       templates: listArtifactTemplates(),
@@ -57,6 +65,8 @@ export class EngineeringArtifactAutomationService {
       macrosCreated: false,
       notADms: true,
       notABlobPlatform: true,
+      newDeliverableIntelligenceDomain: A15A_V4_FEATURE_FREEZE.newDeliverableIntelligenceDomain,
+      governedDeliverableComposition: true,
       templateBinaryStorage: "PACKAGED_EOS_DEFAULT_PLUS_METADATA_POLICY",
       artifactBinaryStore: "ArtifactBinaryStore",
       objectStorageBackend: "EXISTING_IMPLEMENTED",
@@ -264,6 +274,22 @@ export class EngineeringArtifactAutomationService {
     const previous = (await this.store.listArtifacts(workspaceId, plan.id)).filter(
       (row) => row.tenantId === tenantId && row.templateCode === template.code && row.status !== "SUPERSEDED",
     );
+    const composedTypes = new Set<ArtifactType>(["DESIGN_REPORT", "QUANTITY_SCHEDULE"]);
+    const composeMemo = template.artifactType === "TECHNICAL_MEMORANDUM" && template.code === "EAT-TECH-MEMO";
+    const shouldCompose = composedTypes.has(template.artifactType) || composeMemo;
+    const mtoContext = shouldCompose && this.mtoLoader
+      ? await this.mtoLoader(plan.id).catch(() => null)
+      : null;
+    const composition = shouldCompose
+      ? composeDeliverableSource({
+          plan,
+          templateCode: template.code,
+          templateVersion: template.version,
+          artifactType: template.artifactType,
+          snapshot: mtoContext?.current ?? null,
+          previousSnapshot: mtoContext?.previous ?? null,
+        })
+      : null;
     const result = await generateEngineeringArtifact({
       plan,
       template,
@@ -271,6 +297,8 @@ export class EngineeringArtifactAutomationService {
       projectCode: input.projectCode,
       resolution,
       branding: resolution.branding,
+      composition,
+      previousArtifactId: previous[0]?.id ?? null,
     });
     await this.store.saveRun(result.run);
     if (!result.ok) {
@@ -281,9 +309,6 @@ export class EngineeringArtifactAutomationService {
         actorId: commerce.actorUserId ?? null,
       });
       return { ...result, resolution };
-    }
-    for (const older of previous) {
-      await this.store.saveArtifact({ ...older, status: "SUPERSEDED", supersededById: result.artifact.id });
     }
     let toSave = result.artifact;
     const writeObject = !(this.binaryStore instanceof LegacyRelationalArtifactBinaryStore);
@@ -303,6 +328,9 @@ export class EngineeringArtifactAutomationService {
       };
     }
     const saved = await this.store.saveArtifact(toSave);
+    for (const older of previous) {
+      await this.store.saveArtifact({ ...older, status: "SUPERSEDED", supersededById: saved.id });
+    }
     await this.recordEvent?.(commerce, tenantId, {
       eventType: previous.length ? "ARTIFACT_REGENERATED" : "ARTIFACT_GENERATED",
       projectId: plan.projectId,
@@ -322,14 +350,39 @@ export class EngineeringArtifactAutomationService {
         artifactId: saved.id,
         workPlanId: plan.id,
         plan,
+        previousArtifactId: previous[0]?.id ?? null,
+        mtoSnapshotId: composition?.manifest.mtoSnapshotId ?? null,
       }),
       resolution,
     };
   }
 
-  compareContext(artifactFingerprint: string, planFingerprint: string) {
-    if (artifactFingerprint === planFingerprint) return { stale: false, reason: "CURRENT" as const };
-    return { stale: true, reason: "STALE" as const, message: "Artifact generated from older context" };
+  compareContext(
+    artifactFingerprint: string,
+    planFingerprint: string,
+    extras?: {
+      artifactMtoFingerprint?: string | null;
+      currentMtoFingerprint?: string | null;
+      artifactCompositionFingerprint?: string | null;
+      currentCompositionFingerprint?: string | null;
+    },
+  ) {
+    return compareDeliverableStaleness({
+      artifactPlanFingerprint: artifactFingerprint,
+      currentPlanFingerprint: planFingerprint,
+      artifactMtoFingerprint: extras?.artifactMtoFingerprint,
+      currentMtoFingerprint: extras?.currentMtoFingerprint,
+      artifactCompositionFingerprint: extras?.artifactCompositionFingerprint,
+      currentCompositionFingerprint: extras?.currentCompositionFingerprint,
+    });
+  }
+
+  compareArtifact(artifact: GeneratedEngineeringArtifact, planFingerprint: string, currentMtoFingerprint?: string | null) {
+    return this.compareContext(artifact.provenance.inputFingerprint, planFingerprint, {
+      artifactMtoFingerprint: artifact.provenance.mtoFingerprint,
+      currentMtoFingerprint,
+      artifactCompositionFingerprint: artifact.provenance.compositionFingerprint,
+    });
   }
 
   downloadMeta() {

@@ -4,6 +4,9 @@ import type { EngineeringArtifactTemplate, ArtifactProvenanceManifest, WorkPlanL
 import { escapeSpreadsheetText, normalizeGovernedFormula } from "./formulas";
 import { BEARING_PRESSURE_FORMULA } from "./catalog";
 import { documentCreator, type ArtifactBranding } from "./template-policy";
+import type { DeliverableComposition } from "../lifecycle-intelligence/deliverable-composition";
+import { exportMtoWorkbook } from "../lifecycle-intelligence/quantity-mto-export";
+import { valuePolicyForProject } from "../lifecycle-intelligence/cross-lifecycle-value";
 
 function text(sheet: ExcelJS.Worksheet, cell: string, value: string) {
   const target = sheet.getCell(cell);
@@ -32,7 +35,35 @@ export async function buildXlsx(input: {
   provenance: ArtifactProvenanceManifest;
   projectCode: string;
   branding?: ArtifactBranding | null;
+  composition?: DeliverableComposition | null;
 }): Promise<{ buffer: Buffer; sheetCount: number }> {
+  if (input.template.artifactType === "QUANTITY_SCHEDULE") {
+    if (input.composition?.v2Snapshot) {
+      const exported = await exportMtoWorkbook({
+        snapshot: input.composition.v2Snapshot,
+        policy: valuePolicyForProject(input.plan.projectId),
+        deltas: input.composition.deltas,
+        provenance: {
+          projectId: input.plan.projectId,
+          revision: input.composition.manifest.mtoRevision ?? input.composition.v2Snapshot.revision,
+          fingerprint: input.composition.manifest.mtoFingerprint ?? input.composition.v2Snapshot.fingerprint,
+          lifecycle: input.plan.lifecycleStage,
+          generatedAt: input.provenance.generatedAt,
+          verificationState: input.composition.manifest.mtoVerificationState ?? input.composition.v2Snapshot.status,
+          disclaimer: `Bound to Work Plan ${input.plan.id}. Generator ${input.composition.generatorVersion}. Draft only.`,
+        },
+      });
+      return { buffer: exported.buffer, sheetCount: exported.sheets.length };
+    }
+    const wb = new ExcelJS.Workbook();
+    wb.creator = documentCreator(input.branding);
+    const sheet = wb.addWorksheet("01_Summary");
+    sheet.getCell("A1").value = "QUANTITY_NOT_AVAILABLE";
+    sheet.getCell("A2").value = "No persisted MTO snapshot is bound. EOS does not invent quantities.";
+    sheet.getCell("A3").value = "COST_NOT_CALCULATED";
+    sheet.getCell("A4").value = input.composition?.carbonStatus === "NOT_APPLICABLE" ? "Carbon NOT_APPLICABLE" : "CARBON_NOT_CALCULATED";
+    return { buffer: Buffer.from(await wb.xlsx.writeBuffer()), sheetCount: 1 };
+  }
   const wb = new ExcelJS.Workbook();
   const creator = documentCreator(input.branding);
   wb.creator = creator;

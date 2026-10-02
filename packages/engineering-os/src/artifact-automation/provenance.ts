@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import type { ArtifactProvenanceManifest, EngineeringArtifactTemplate, WorkPlanLike } from "./types";
 import type { TemplateResolution } from "./resolve-template";
+import type { DeliverableComposition } from "../lifecycle-intelligence/deliverable-composition";
+import { deliverableThreadLinks } from "../lifecycle-intelligence/deliverable-composition";
 
 export function buildProvenanceManifest(input: {
   plan: WorkPlanLike;
@@ -8,6 +10,7 @@ export function buildProvenanceManifest(input: {
   generationRunId: string;
   generatedAt: string;
   resolution?: TemplateResolution | null;
+  composition?: DeliverableComposition | null;
 }): ArtifactProvenanceManifest {
   return {
     projectId: input.plan.projectId,
@@ -46,6 +49,18 @@ export function buildProvenanceManifest(input: {
     draft: true,
     engineeringApproved: false,
     exampleOnly: input.template.certification === "EXAMPLE_ONLY",
+    generatorVersion: input.composition?.generatorVersion ?? null,
+    compositionFingerprint: input.composition?.compositionFingerprint ?? null,
+    sourceManifest: input.composition?.manifest ? { ...input.composition.manifest } : null,
+    mtoSnapshotId: input.composition?.manifest.mtoSnapshotId ?? null,
+    mtoRevision: input.composition?.manifest.mtoRevision ?? null,
+    mtoStatus: input.composition?.manifest.mtoStatus ?? null,
+    mtoFingerprint: input.composition?.manifest.mtoFingerprint ?? null,
+    mtoVerificationState: input.composition?.manifest.mtoVerificationState ?? null,
+    costStatus: input.composition?.costStatus ?? null,
+    carbonStatus: input.composition?.carbonStatus ?? null,
+    evidenceClasses: input.composition?.evidence.map((row) => row.evidenceClass) ?? undefined,
+    generationAuthority: input.composition?.authority ?? "READY_FOR_ENGINEER_REVIEW",
   };
 }
 
@@ -60,6 +75,8 @@ export function artifactThreadGraph(input: {
   artifactId: string;
   workPlanId: string;
   plan: WorkPlanLike;
+  previousArtifactId?: string | null;
+  mtoSnapshotId?: string | null;
 }) {
   const node = (objectType: string, objectId: string) => ({
     tenantId: input.tenantId,
@@ -82,6 +99,14 @@ export function artifactThreadGraph(input: {
   ];
   const links = [
     link("USES", "engineering_work_plan", input.workPlanId, "engineering_generated_artifact", input.artifactId),
+    ...deliverableThreadLinks({
+      workPlanId: input.workPlanId,
+      artifactId: input.artifactId,
+      previousArtifactId: input.previousArtifactId,
+      mtoSnapshotId: input.mtoSnapshotId,
+      informationIds: input.plan.context.information.map((row) => row.sourceObjectId ?? row.title),
+      requirementIds: input.plan.context.requirements.map((row) => row.objectId),
+    }).map((row) => link(row.relationship, row.fromType, row.fromId, row.toType, row.toId)),
   ];
   for (const row of input.plan.context.information) {
     const id = row.sourceObjectId ?? row.title;

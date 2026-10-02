@@ -326,6 +326,7 @@ export function createEngineeringOS(
     },
   );
   preIssueReview.bindQuantityMto((planId) => quantityMto.loadForPlan(planId));
+  artifactAutomation.bindQuantityMto((planId) => quantityMto.loadCompositionContext(planId));
   const attention = new EngineeringAttentionService(supabase, {
     projects,
     workGenerator,

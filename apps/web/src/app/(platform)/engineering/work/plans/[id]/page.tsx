@@ -54,7 +54,21 @@ type GeneratedArtifact = {
   createdAt: string;
   lineageKind?: string;
   originArtifactId?: string | null;
-  provenance: { inputFingerprint: string; engineeringApproved: false; templateSourceClass?: string | null; templateFallbackUsed?: boolean };
+  supersededById?: string | null;
+  provenance: {
+    inputFingerprint: string;
+    engineeringApproved: false;
+    templateSourceClass?: string | null;
+    templateFallbackUsed?: boolean;
+    compositionFingerprint?: string | null;
+    mtoRevision?: string | null;
+    mtoStatus?: string | null;
+    mtoFingerprint?: string | null;
+    generatorVersion?: string | null;
+    sourceManifest?: Record<string, unknown> | null;
+    costStatus?: string | null;
+    carbonStatus?: string | null;
+  };
   warnings: string[];
 };
 
@@ -173,6 +187,11 @@ const OUTPUT_ACTIONS: Record<string, Array<{ artifactType: string; label: string
   CHANGE_ASSESSMENT: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Impact Report" }],
   HANDOVER_PACKAGE: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Handover Report" }],
   REVIEW_PACKAGE: [{ artifactType: "TECHNICAL_MEMORANDUM", label: "Generate Review Report" }],
+  STRUCTURAL_MTO: [{ artifactType: "QUANTITY_SCHEDULE", label: "Export governed MTO (XLSX)" }],
+  CIVIL_MTO: [{ artifactType: "QUANTITY_SCHEDULE", label: "Export governed MTO (XLSX)" }],
+  PIPING_MTO: [{ artifactType: "QUANTITY_SCHEDULE", label: "Export governed MTO (XLSX)" }],
+  ELECTRICAL_MTO: [{ artifactType: "QUANTITY_SCHEDULE", label: "Export governed MTO (XLSX)" }],
+  MULTIDISCIPLINARY_MTO: [{ artifactType: "QUANTITY_SCHEDULE", label: "Export governed MTO (XLSX)" }],
 };
 
 function officeLabel(format?: string) {
@@ -198,6 +217,7 @@ export default function WorkPlanPage() {
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
   const [mto, setMto] = useState<MtoSummary | null>(null);
+  const [deliverableReadiness, setDeliverableReadiness] = useState<Record<string, string> | null>(null);
   const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
   const [externalContext, setExternalContext] = useState<Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }>>([]);
   const [handoff, setHandoff] = useState<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string } | null>(null);
@@ -209,12 +229,13 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; deliverableReadiness?: Record<string, string>; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
       if (raw?.impact) setImpact(raw.impact);
       if (raw?.mto) setMto(raw.mto);
+      if (raw?.deliverableReadiness) setDeliverableReadiness(raw.deliverableReadiness);
       if (raw?.templatePreview) setTemplatePreview(raw.templatePreview);
       if (raw?.externalContext) setExternalContext(raw.externalContext);
     }
@@ -399,9 +420,9 @@ export default function WorkPlanPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "compareArtifact", id: params.id, artifactId: artifact.id }),
     });
-    const json = await parseApiJsonResponse<{ stale?: boolean; message?: string }>(response);
+    const json = await parseApiJsonResponse<{ stale?: boolean; message?: string; reason?: string; regenerationRequired?: boolean }>(response);
     setDiff(JSON.stringify(json.data ?? {}, null, 2));
-    if (json.data?.stale) setMessage("Artifact generated from older context");
+    if (json.data?.stale) setMessage(json.data.message ?? "Artifact generated from older context");
   }
 
   async function publishFile(originArtifactId: string, file: File) {
@@ -712,9 +733,45 @@ export default function WorkPlanPage() {
                   </button>
                 </section>
               )}
+              <section className="mt-3 rounded border p-3" aria-label="Governed deliverable composition">
+                <h3 className="font-semibold">Generate Deliverable</h3>
+                <p className="mt-1 text-sm">Evidence-backed draft assembly. Generation cannot verify MTO, accept assumptions, make decisions, or approve the deliverable.</p>
+                {deliverableReadiness ? (
+                  <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2" aria-label="Source readiness">
+                    {Object.entries(deliverableReadiness).map(([key, state]) => (
+                      <li key={key}>{key.replace(/([A-Z])/g, " $1").replace(/^./, (ch) => ch.toUpperCase())}: {state}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">Source readiness is computed from governing information, requirements, assumptions, decisions, interfaces, MTO, cost, and carbon. This is not an engineering approval score.</p>
+                )}
+                {mto ? (
+                  <p className="mt-2 text-sm">Bound MTO Rev {mto.revision} · {mto.status}{mto.status !== "VERIFIED" ? " · CONDITIONAL — unverified items remain visible" : ""}</p>
+                ) : (
+                  <p className="mt-2 text-sm">MTO: MISSING — Design Report quantity section will be QUANTITY_NOT_AVAILABLE.</p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "DESIGN_REPORT", projectCode: "ER-A1" })}>Generate Design Report</button>
+                  <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "TECHNICAL_MEMORANDUM", projectCode: "ER-A1" })}>Generate Technical Note</button>
+                  <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "QUANTITY_SCHEDULE", projectCode: "ER-A1" })}>Export MTO XLSX</button>
+                </div>
+                <h4 className="mt-3 font-semibold">Artifact history</h4>
+                <ul className="mt-1 space-y-2 text-sm">
+                  {artifacts.filter((item) => item.artifactType === "DESIGN_REPORT" || item.artifactType === "TECHNICAL_MEMORANDUM" || item.artifactType === "QUANTITY_SCHEDULE").map((item) => (
+                    <li key={`history-${item.id}`} className="rounded border p-2">
+                      <p>{item.artifactType.replaceAll("_", " ")} · {item.status.replaceAll("_", " ")} · {item.templateCode}@{item.templateVersion}</p>
+                      <p>Generated {item.createdAt} · MTO {item.provenance.mtoRevision ? `Rev ${item.provenance.mtoRevision} (${item.provenance.mtoStatus})` : "not bound"} · fingerprint {(item.provenance.compositionFingerprint ?? item.provenance.inputFingerprint).slice(0, 16)}</p>
+                      <p>{item.supersededById ? "SUPERSEDED — prior artifact preserved" : item.status === "SUPERSEDED" ? "SUPERSEDED — prior artifact preserved" : "Current generated draft"} · {item.provenance.costStatus ?? "COST_NOT_CALCULATED"} · {item.provenance.carbonStatus ?? "carbon policy-bound"}</p>
+                      <button type="button" className="mr-2 mt-1 rounded border px-2 py-1" onClick={() => setProvenance(JSON.stringify(item.provenance, null, 2))}>What evidence produced this document?</button>
+                      <button type="button" className="mr-2 mt-1 rounded border px-2 py-1" onClick={() => void compare(item)}>Compare Context</button>
+                      <button type="button" className="mt-1 rounded border px-2 py-1" onClick={() => void download(item.id, officeLabel(item.outputFormat))}>{officeLabel(item.outputFormat)}</button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
               <ul className="mt-2 space-y-3">
                 {plan.context.expectedOutputs.map((row) => {
-                  const generated = artifacts.filter((item) => item.artifactType === row.outputType || (row.outputType === "OPTION_STUDY" && item.artifactType === "OPTION_STUDY_PRESENTATION") || (row.outputType === "CONCEPT_STUDY" && item.artifactType === "TECHNICAL_MEMORANDUM"));
+                  const generated = artifacts.filter((item) => item.artifactType === row.outputType || (row.outputType === "OPTION_STUDY" && item.artifactType === "OPTION_STUDY_PRESENTATION") || (row.outputType === "CONCEPT_STUDY" && item.artifactType === "TECHNICAL_MEMORANDUM") || (MTO_OUTPUTS.includes(row.outputType) && item.artifactType === "QUANTITY_SCHEDULE") || (row.outputType === "DESIGN_REPORT" && item.artifactType === "DESIGN_REPORT"));
                   return (
                     <li key={row.outputType}>
                       <p>{generated.length ? "✓" : "○"} {row.outputType.replaceAll("_", " ")}</p>
@@ -730,7 +787,7 @@ export default function WorkPlanPage() {
                       ))}
                       {generated.map((item) => (
                         <div key={item.id} className="mt-1 flex flex-wrap items-center gap-2">
-                          <span>{item.fileName} · {item.status.replaceAll("_", " ")} · {item.lineageKind === "RETURNED_FROM_ENGINEER" ? "returned from engineer" : "generated draft"}</span>
+                          <span>{item.fileName} · {item.status.replaceAll("_", " ")} · {item.provenance.mtoRevision ? `MTO Rev ${item.provenance.mtoRevision}` : "no MTO"} · {item.lineageKind === "RETURNED_FROM_ENGINEER" ? "returned from engineer" : "generated draft"}</span>
                           <button type="button" className="rounded border px-2 py-1" onClick={() => void download(item.id, officeLabel(item.outputFormat))}>{officeLabel(item.outputFormat)}</button>
                           <button type="button" className="rounded border px-2 py-1" onClick={() => void act("prepareHandoff", { workPlanId: plan.id, artifactId: item.id, mode: "MANAGED_REPOSITORY_OPEN" })}>Prepare Tool Handoff</button>
                           <button type="button" className="rounded border px-2 py-1" onClick={() => setProvenance(JSON.stringify(item.provenance, null, 2))}>View Provenance</button>

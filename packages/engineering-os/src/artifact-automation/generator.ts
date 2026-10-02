@@ -17,6 +17,7 @@ import type {
 } from "./types";
 import { assertOfficePackage } from "./validate";
 import { buildXlsx } from "./xlsx";
+import type { DeliverableComposition } from "../lifecycle-intelligence/deliverable-composition";
 
 const BLOCKED_STATES = new Set([
   "BLOCKED_INFORMATION_MISSING",
@@ -79,6 +80,8 @@ export async function generateEngineeringArtifact(input: {
   projectCode?: string | null;
   resolution?: TemplateResolution | null;
   branding?: ArtifactBranding | null;
+  composition?: DeliverableComposition | null;
+  previousArtifactId?: string | null;
 }): Promise<ArtifactGenerationResult> {
   const started = Date.now();
   const runId = randomUUID();
@@ -121,17 +124,18 @@ export async function generateEngineeringArtifact(input: {
     generationRunId: runId,
     generatedAt,
     resolution: input.resolution,
+    composition: input.composition,
   });
   const projectCode = input.projectCode ?? input.plan.projectId.slice(0, 8);
   const branding = input.branding ?? input.resolution?.branding ?? {};
   let buffer: Buffer;
   let sheetOrSlideCount = 0;
   if (input.template.outputFormat === "XLSX") {
-    const built = await buildXlsx({ template: input.template, plan: input.plan, provenance, projectCode, branding });
+    const built = await buildXlsx({ template: input.template, plan: input.plan, provenance, projectCode, branding, composition: input.composition });
     buffer = built.buffer;
     sheetOrSlideCount = built.sheetCount;
   } else if (input.template.outputFormat === "DOCX") {
-    const built = await buildDocx({ template: input.template, plan: input.plan, provenance, projectCode, branding });
+    const built = await buildDocx({ template: input.template, plan: input.plan, provenance, projectCode, branding, composition: input.composition });
     buffer = built.buffer;
     sheetOrSlideCount = built.sectionCount;
   } else {
@@ -201,6 +205,8 @@ export async function generateEngineeringArtifact(input: {
     artifactId: artifact.id,
     workPlanId: input.plan.id,
     plan: input.plan,
+    previousArtifactId: input.previousArtifactId,
+    mtoSnapshotId: input.composition?.manifest.mtoSnapshotId ?? null,
   });
   void composeDeliverableFromArtifact();
   return { ok: true, run, artifact };

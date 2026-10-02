@@ -42,6 +42,7 @@ export const ARTIFACT_TYPES = [
   "TQ_RESPONSE",
   "CONCEPT_STUDY",
   "TECHNICAL_MEMORANDUM",
+  "QUANTITY_SCHEDULE",
 ] as const;
 export type ArtifactType = (typeof ARTIFACT_TYPES)[number];
 
@@ -122,6 +123,18 @@ export type ArtifactProvenanceManifest = {
   draft: true;
   engineeringApproved: false;
   exampleOnly: boolean;
+  generatorVersion?: string | null;
+  compositionFingerprint?: string | null;
+  sourceManifest?: Record<string, unknown> | null;
+  mtoSnapshotId?: string | null;
+  mtoRevision?: string | null;
+  mtoStatus?: string | null;
+  mtoFingerprint?: string | null;
+  mtoVerificationState?: string | null;
+  costStatus?: string | null;
+  carbonStatus?: string | null;
+  evidenceClasses?: string[];
+  generationAuthority?: "GENERATED_DRAFT" | "READY_FOR_ENGINEER_REVIEW";
 };
 
 export type GeneratedEngineeringArtifact = {
