@@ -66,6 +66,8 @@ import { EngineeringPreIssueReviewService } from "./pre-issue-review/service";
 import { SupabasePreIssueStore } from "./pre-issue-review/supabase-store";
 import { EngineeringChangeWorkbenchService } from "./change-workbench/service";
 import { EngineeringAttentionService } from "./attention/service";
+import { EngineeringQuantityMtoService } from "./lifecycle-intelligence/quantity-mto-service";
+import { SupabaseQuantityMtoStore } from "./lifecycle-intelligence/quantity-mto-store";
 import { MemoryEngineeringReviewStore, createSharedReviewMemory } from "@rtb/engineering-review";
 import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
@@ -120,6 +122,7 @@ export interface EngineeringOS {
   m365Connector: EngineeringM365ConnectorService;
   engineeringConnector: EngineeringExternalConnectorService;
   attention: EngineeringAttentionService;
+  quantityMto: EngineeringQuantityMtoService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -203,6 +206,21 @@ export function createEngineeringOS(
       lifecycleStage: input.lifecycleStage,
     });
   });
+  const quantityMto = new EngineeringQuantityMtoService(
+    supabase,
+    new SupabaseQuantityMtoStore(supabase),
+    (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
+    async (commerce, tenantId, input) => {
+      await work.recordMaterialEvent(commerce, tenantId, {
+        eventType: input.eventType,
+        projectId: input.projectId,
+        sourceObjectType: "engineering_mto_snapshot",
+        sourceObjectId: input.sourceObjectId,
+        sourceEventId: `${input.eventType}:${input.sourceObjectId}`,
+        actorId: input.actorId,
+      });
+    },
+  );
   const artifactBinaryStore = new RoutingArtifactBinaryStore(
     new LegacyRelationalArtifactBinaryStore(),
     SupabaseArtifactBinaryStore.fromSupabase(options?.artifactStorageClient ?? supabase),
@@ -307,6 +325,7 @@ export function createEngineeringOS(
       });
     },
   );
+  preIssueReview.bindQuantityMto((planId) => quantityMto.loadForPlan(planId));
   const attention = new EngineeringAttentionService(supabase, {
     projects,
     workGenerator,
@@ -314,6 +333,7 @@ export function createEngineeringOS(
     work,
     preIssueReview,
     changeWorkbench,
+    quantityMto,
     decisions,
     interfaces,
     notifications: kernel.notifications,
@@ -423,6 +443,7 @@ export function createEngineeringOS(
     preIssueReview,
     changeWorkbench,
     attention,
+    quantityMto,
     informationRequirements,
     m365Connector,
     engineeringConnector,

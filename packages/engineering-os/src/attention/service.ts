@@ -8,6 +8,7 @@ import type { EngineeringInformationRequirementService } from "../information-re
 import type { EngineeringWorkContextService } from "../work-context/service";
 import type { EngineeringPreIssueReviewService } from "../pre-issue-review/service";
 import type { EngineeringChangeWorkbenchService } from "../change-workbench/service";
+import type { EngineeringQuantityMtoService } from "../lifecycle-intelligence/quantity-mto-service";
 import type { EngineeringDecisionService } from "../services/register-services";
 import type { EngineeringInterfaceService } from "../systems-intelligence/interface-service";
 import { createMemoryAttentionStore, type AttentionStore } from "./memory-store";
@@ -46,6 +47,7 @@ export type AttentionDomainPorts = {
   work: EngineeringWorkContextService;
   preIssueReview: EngineeringPreIssueReviewService;
   changeWorkbench: EngineeringChangeWorkbenchService;
+  quantityMto?: EngineeringQuantityMtoService;
   decisions?: EngineeringDecisionService;
   interfaces?: EngineeringInterfaceService;
   notifications?: AttentionKernelNotifications;
@@ -219,16 +221,22 @@ export class EngineeringAttentionService {
       projectId: project.projectId,
       projectName: project.projectName,
       lifecycleStage,
-      workPlans: workPlans.slice(0, ATTENTION_SCALE.maxPlansPerProject).map((plan) => ({
-        id: plan.id,
-        workType: plan.workType,
-        status: plan.status,
-        readiness: plan.readiness,
-        startAllowed: plan.startAllowed,
-        discipline: plan.discipline,
-        systemId: plan.systemId,
-        relatedObjectType: plan.relatedObjectType,
-        relatedObjectId: plan.relatedObjectId,
+      workPlans: await Promise.all(workPlans.slice(0, ATTENTION_SCALE.maxPlansPerProject).map(async (plan) => {
+        const valueGaps = this.ports.quantityMto
+          ? await safeList(() => this.ports.quantityMto!.attentionGapsForPlan(commerce, tenantId, plan))
+          : [];
+        return {
+          id: plan.id,
+          workType: plan.workType,
+          status: plan.status,
+          readiness: plan.readiness,
+          startAllowed: plan.startAllowed,
+          discipline: plan.discipline,
+          systemId: plan.systemId,
+          relatedObjectType: plan.relatedObjectType,
+          relatedObjectId: plan.relatedObjectId,
+          valueGaps,
+        };
       })),
       requirements: requirements.map((row) => ({
         id: row.id,

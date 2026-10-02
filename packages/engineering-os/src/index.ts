@@ -18,6 +18,7 @@ export {
 } from "./lifecycle-intelligence/cross-lifecycle-value";
 export {
   A15A_V2_FEATURE_FREEZE,
+  A15A_V3_FEATURE_FREEZE,
   AI_QUANTITY_POLICY,
   acceptGovernedQuantity,
   compareMtoSnapshots,
@@ -25,7 +26,11 @@ export {
   deriveCost,
   issueMtoSnapshot,
   reviewMtoProvenance,
+  workPlanExpectsMto,
+  WORK_PLAN_MTO_OUTPUTS,
 } from "./lifecycle-intelligence/quantity-mto";
+export { EngineeringQuantityMtoService, createTestQuantityMtoService } from "./lifecycle-intelligence/quantity-mto-service";
+export { exportMtoWorkbook } from "./lifecycle-intelligence/quantity-mto-export";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";

@@ -148,6 +148,17 @@ type PreIssuePayload = {
   summary?: PreIssueSummary;
 };
 
+const MTO_OUTPUTS = ["STRUCTURAL_MTO", "CIVIL_MTO", "PIPING_MTO", "ELECTRICAL_MTO", "MULTIDISCIPLINARY_MTO"];
+
+type MtoSummary = {
+  id: string;
+  revision: string;
+  status: string;
+  staleness: string;
+  itemCount: number;
+  progress?: { total: number; verified: number; unverified: number };
+};
+
 const OUTPUT_ACTIONS: Record<string, Array<{ artifactType: string; label: string }>> = {
   CALCULATION_WORKBOOK: [{ artifactType: "CALCULATION_WORKBOOK", label: "Generate Calculation Workbook" }],
   DESIGN_REPORT: [{ artifactType: "DESIGN_REPORT", label: "Generate Design Report" }],
@@ -186,6 +197,7 @@ export default function WorkPlanPage() {
   const [publishFor, setPublishFor] = useState<string | null>(null);
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
+  const [mto, setMto] = useState<MtoSummary | null>(null);
   const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
   const [externalContext, setExternalContext] = useState<Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }>>([]);
   const [handoff, setHandoff] = useState<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string } | null>(null);
@@ -197,11 +209,12 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
       if (raw?.impact) setImpact(raw.impact);
+      if (raw?.mto) setMto(raw.mto);
       if (raw?.templatePreview) setTemplatePreview(raw.templatePreview);
       if (raw?.externalContext) setExternalContext(raw.externalContext);
     }
@@ -679,6 +692,26 @@ export default function WorkPlanPage() {
               <h2 className="mt-4 font-semibold">Decisions</h2>
               <ul className="mt-2 space-y-1">{plan.context.decisions.map((row) => <li key={row.objectId}>{row.title} — {row.whyIncluded}</li>)}</ul>
               <h2 className="mt-4 font-semibold">Expected outputs</h2>
+              {plan.context.expectedOutputs.some((row) => MTO_OUTPUTS.includes(row.outputType)) && (
+                <section className="mt-3 rounded border p-3" aria-label="Quantities and MTO">
+                  <h3 className="font-semibold">Quantities &amp; MTO</h3>
+                  {mto ? (
+                    <p className="mt-1 text-sm">Rev {mto.revision} · {mto.status} · {mto.progress ? `${mto.progress.verified}/${mto.progress.total} verified` : `${mto.itemCount} items`} · source {mto.staleness.replaceAll("_", " ")}</p>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">No persisted MTO snapshot yet.</p>
+                  )}
+                  <Link className="mr-2 mt-2 inline-block rounded border px-3 py-1 text-sm" href={`/engineering/work/plans/${plan.id}/mto`}>
+                    {mto ? "Open MTO" : "Create/Open MTO"}
+                  </Link>
+                  <button
+                    type="button"
+                    className="mt-2 rounded border px-3 py-1 text-sm"
+                    onClick={() => void act("seedMtoDemonstrator", { workPlanId: plan.id })}
+                  >
+                    Persist Crusher Demonstrator
+                  </button>
+                </section>
+              )}
               <ul className="mt-2 space-y-3">
                 {plan.context.expectedOutputs.map((row) => {
                   const generated = artifacts.filter((item) => item.artifactType === row.outputType || (row.outputType === "OPTION_STUDY" && item.artifactType === "OPTION_STUDY_PRESENTATION") || (row.outputType === "CONCEPT_STUDY" && item.artifactType === "TECHNICAL_MEMORANDUM"));

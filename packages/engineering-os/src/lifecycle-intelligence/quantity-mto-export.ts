@@ -76,6 +76,15 @@ export async function exportMtoWorkbook(input: {
   deltas?: MtoItemDelta[];
   ratesByItemCode?: Record<string, ApprovedRate | null>;
   factorsByItemCode?: Record<string, ApprovedEmissionFactor | null>;
+  provenance?: {
+    projectId: string;
+    revision: string;
+    fingerprint: string;
+    lifecycle: string;
+    generatedAt: string;
+    verificationState: string;
+    disclaimer: string;
+  };
 }): Promise<{ buffer: Buffer; sheets: string[]; costSheet: boolean; carbonSheet: boolean }> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "RTB Engineering OS";
@@ -88,6 +97,10 @@ export async function exportMtoWorkbook(input: {
   summary.getCell("A3").value = `Items ${input.snapshot.itemCount} · fingerprint ${input.snapshot.fingerprint.slice(0, 16)}`;
   summary.getCell("A4").value = "MTO is the primary quantitative output. Cost and carbon are optional and fail closed without approved basis.";
   summary.getCell("A5").value = "SYNTHETIC DEMONSTRATION DATA unless otherwise classified. Not a certified commercial BOQ.";
+  if (input.provenance) {
+    summary.getCell("A6").value = `Project ${input.provenance.projectId} · snapshot revision ${input.provenance.revision} · fingerprint ${input.provenance.fingerprint} · lifecycle ${input.provenance.lifecycle} · generated ${input.provenance.generatedAt} · verification ${input.provenance.verificationState}`;
+    summary.getCell("A7").value = input.provenance.disclaimer;
+  }
 
   writeItems(wb.addWorksheet("02_Process"), byDiscipline("PROCESS"));
   writeItems(wb.addWorksheet("03_Mechanical"), byDiscipline("MECHANICAL"));

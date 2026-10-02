@@ -30,6 +30,31 @@ export const A15A_V2_FEATURE_FREEZE = {
   scannerV2: false,
 } as const;
 
+export const A15A_V3_FEATURE_FREEZE = {
+  ...A15A_V2_FEATURE_FREEZE,
+  newTopLevelDomain: false,
+  quantityBasisIndependentTable: false,
+  engineeringApprovedSnapshotStatus: false,
+  autoVerifyAllAiQuantities: false,
+} as const;
+
+export const WORK_PLAN_MTO_OUTPUTS = [
+  "STRUCTURAL_MTO",
+  "CIVIL_MTO",
+  "PIPING_MTO",
+  "ELECTRICAL_MTO",
+  "MULTIDISCIPLINARY_MTO",
+] as const;
+
+export const MTO_SNAPSHOT_WORKFLOW_STATES = ["DRAFT", "UNDER_REVIEW", "VERIFIED", "SUPERSEDED"] as const;
+export type MtoSnapshotWorkflowStatus = (typeof MTO_SNAPSHOT_WORKFLOW_STATES)[number];
+
+export const MTO_ITEM_WORKFLOW_STATES = ["UNVERIFIED", "VERIFIED", "REJECTED", "NEEDS_INFORMATION"] as const;
+export type MtoItemWorkflowStatus = (typeof MTO_ITEM_WORKFLOW_STATES)[number];
+
+export const MTO_STALENESS_STATES = ["CURRENT", "SOURCE_CHANGED", "MTO_REVIEW_REQUIRED"] as const;
+export type MtoStaleness = (typeof MTO_STALENESS_STATES)[number];
+
 export const QUANTITY_SEMANTICS = {
   QUANTITY_BASIS: "Evidence explaining where a quantity came from and how it was derived.",
   MTO_ITEM: "Governed quantity of an engineering material, component, or work item.",
@@ -62,7 +87,7 @@ export const QUANTITY_MATURITY_STATES = [
 ] as const;
 export type QuantityMaturity = (typeof QUANTITY_MATURITY_STATES)[number];
 
-export const QUANTITY_VERIFICATION_STATES = ["UNVERIFIED", "DETERMINISTICALLY_VERIFIED", "ENGINEER_ACCEPTED", "REJECTED"] as const;
+export const QUANTITY_VERIFICATION_STATES = ["UNVERIFIED", "DETERMINISTICALLY_VERIFIED", "ENGINEER_ACCEPTED", "REJECTED", "NEEDS_INFORMATION"] as const;
 export type QuantityVerificationStatus = (typeof QUANTITY_VERIFICATION_STATES)[number];
 
 export const COST_SOURCE_STATES = [
@@ -228,7 +253,7 @@ export type MtoSnapshot = QuantityScope & {
   sourceRevisions: string[];
   generatedAt: string;
   generatedBy: string;
-  status: "DRAFT" | "ISSUED_FOR_ENGINEERING" | "VERIFIED" | "SUPERSEDED";
+  status: "DRAFT" | "ISSUED_FOR_ENGINEERING" | "UNDER_REVIEW" | "VERIFIED" | "SUPERSEDED";
   verificationState: QuantityVerificationStatus;
   items: QuantityItem[];
   itemCount: number;
@@ -665,7 +690,14 @@ export type MtoReviewFinding = {
   carbonCompliant: false;
 };
 
-export function reviewMtoProvenance(items: QuantityItem[], opts?: { claimedMaturity?: QuantityMaturity; costPresented?: boolean; carbonPresented?: boolean; costApproved?: boolean; carbonApproved?: boolean }): MtoReviewFinding[] {
+export function reviewMtoProvenance(items: QuantityItem[], opts?: {
+  claimedMaturity?: QuantityMaturity;
+  costPresented?: boolean;
+  carbonPresented?: boolean;
+  costApproved?: boolean;
+  carbonApproved?: boolean;
+  governingRevisions?: Array<{ title?: string | null; sourceRef?: string | null; revision?: string | null }>;
+}): MtoReviewFinding[] {
   const findings: MtoReviewFinding[] = [];
   const push = (code: PreIssueConditionCode, title: string) => {
     findings.push({
@@ -688,6 +720,20 @@ export function reviewMtoProvenance(items: QuantityItem[], opts?: { claimedMatur
     }
     if (item.quantityOrigin === "ENGINEER_ENTERED_ASSUMPTION" && !item.basis.assumptions.length) {
       push("QUANTITY_ASSUMPTION_UNIDENTIFIED", `${item.itemCode}: assumption not identified`);
+    }
+    if (item.quantityOrigin === "SOURCE_EXTRACTED" && (item.verificationStatus === "UNVERIFIED" || !item.verifiedBy)) {
+      push("QUANTITY_AI_EXTRACTION_UNVERIFIED", `${item.itemCode}: AI/source-extracted quantity remains UNVERIFIED until governed verification`);
+    }
+    if (item.verificationStatus === "NEEDS_INFORMATION" || (item.quantityOrigin === "ENGINEER_ENTERED_ASSUMPTION" && item.verificationStatus === "UNVERIFIED" && item.basis.assumptions.length)) {
+      if (item.verificationStatus === "NEEDS_INFORMATION") {
+        push("QUANTITY_ASSUMPTION_UNIDENTIFIED", `${item.itemCode}: unresolved assumption / needs information`);
+      }
+    }
+    if (opts?.governingRevisions?.length) {
+      const current = opts.governingRevisions.find((row) => row.sourceRef === item.basis.sourceRef || row.title === item.basis.sourceRef);
+      if (current?.revision && item.basis.sourceRevision && current.revision !== item.basis.sourceRevision) {
+        push("QUANTITY_GOVERNING_SOURCE_STALE", `${item.itemCode}: MTO source ${item.basis.sourceRevision} vs governing ${current.revision}`);
+      }
     }
     if (opts?.claimedMaturity === "DETAILED_MTO" && item.quantityMaturity === "CONCEPT_ALLOWANCE") {
       push("QUANTITY_MATURITY_INCOMPATIBLE", `${item.itemCode}: allowance cannot be claimed as detailed MTO`);
@@ -715,18 +761,52 @@ export function composeMtoAttentionGaps(input: {
   requiresVerification?: boolean;
   quantityBasisMissing?: boolean;
   staleAgainstSource?: boolean;
+  itemRejected?: boolean;
+  revisionComparisonAvailable?: boolean;
   costRequestedWithoutBasis?: boolean;
   carbonRequiredWithoutFactor?: boolean;
   carbonApplicable?: boolean;
 }): Array<{ kind: "QUANTITY" | "MTO" | "COST" | "CARBON"; title: string }> {
   const gaps: Array<{ kind: "QUANTITY" | "MTO" | "COST" | "CARBON"; title: string }> = [];
-  if (input.sourceRevisionChanged) gaps.push({ kind: "MTO", title: "MTO source revision changed" });
+  if (input.sourceRevisionChanged) gaps.push({ kind: "MTO", title: "MTO source changed" });
   if (input.requiresVerification) gaps.push({ kind: "MTO", title: "MTO requires verification" });
   if (input.quantityBasisMissing) gaps.push({ kind: "QUANTITY", title: "Quantity basis missing" });
-  if (input.staleAgainstSource) gaps.push({ kind: "MTO", title: "MTO stale against governing source" });
+  if (input.staleAgainstSource) gaps.push({ kind: "MTO", title: "MTO source changed" });
+  if (input.itemRejected) gaps.push({ kind: "MTO", title: "MTO item rejected" });
+  if (input.revisionComparisonAvailable) gaps.push({ kind: "MTO", title: "New revision comparison available" });
   if (input.costRequestedWithoutBasis) gaps.push({ kind: "COST", title: "Cost basis missing where cost requested" });
   if (input.carbonApplicable && input.carbonRequiredWithoutFactor) gaps.push({ kind: "CARBON", title: "Carbon factor missing where required" });
   return gaps;
+}
+
+export function evaluateMtoSourceFreshness(
+  snapshot: Pick<MtoSnapshot, "items" | "status">,
+  governing: Array<{ title?: string | null; sourceRef?: string | null; revision?: string | null }>,
+): { staleness: MtoStaleness; changed: string[] } {
+  const changed: string[] = [];
+  for (const item of snapshot.items) {
+    if (!item.basis.sourceRef || !item.basis.sourceRevision) continue;
+    const current = governing.find((row) => row.sourceRef === item.basis.sourceRef || row.title === item.basis.sourceRef);
+    if (current?.revision && current.revision !== item.basis.sourceRevision) {
+      changed.push(`${item.itemCode}:${item.basis.sourceRevision}->${current.revision}`);
+    }
+  }
+  if (!changed.length) return { staleness: "CURRENT", changed };
+  if (snapshot.status === "VERIFIED" || snapshot.status === "SUPERSEDED") {
+    return { staleness: "MTO_REVIEW_REQUIRED", changed };
+  }
+  return { staleness: "SOURCE_CHANGED", changed };
+}
+
+export function workPlanExpectsMto(expectedOutputs: Array<{ outputType: string } | string>): boolean {
+  return expectedOutputs.some((row) => WORK_PLAN_MTO_OUTPUTS.includes((typeof row === "string" ? row : row.outputType) as (typeof WORK_PLAN_MTO_OUTPUTS)[number]));
+}
+
+export function exportDoesNotImplyApproval(status: string): string {
+  if (status === "VERIFIED") {
+    return "VERIFIED MTO. Export does not imply engineering approval, IFC, or DESIGN ACCEPTED.";
+  }
+  return "DRAFT MTO. Export does not imply engineering approval, IFC, or DESIGN ACCEPTED.";
 }
 
 /**

@@ -12,10 +12,13 @@ function statusFor(message: string): number {
     message.includes("MISMATCH") ||
     message.includes("UNAUTHORIZED") ||
     message.includes("OUTSIDE_EOS") ||
-    message.includes("broadening")
+    message.includes("broadening") ||
+    message.includes("CROSS_PROJECT") ||
+    message.includes("CROSS_TENANT") ||
+    message.includes("CROSS_WORKSPACE")
   ) return 403;
   if (message === "workspace_required" || message === "caller_supplied_authority_rejected" || message === "project_required") return 400;
-  if (message === "work_plan_stale" || message === "unmanaged_file_outside_eos") return 409;
+  if (message === "work_plan_stale" || message === "unmanaged_file_outside_eos" || message === "verified_mto_immutable" || message === "snapshot_verification_blocked") return 409;
   if (message === "HANDOFF_EXPIRED" || message === "BRIDGE_UNAVAILABLE" || message === "CAPABILITY_NOT_CERTIFIED") return 409;
   return 400;
 }
@@ -312,6 +315,17 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     } catch {
       preIssue = null;
     }
+    let mto: unknown = null;
+    try {
+      const snapshots = await ctx.engineering.quantityMto.listSnapshots(commerce, ctx.tenantId, {
+        projectId: data.projectId,
+        workPlanId: data.id,
+        selectedProjectId,
+      });
+      mto = snapshots.find((row) => row.status !== "SUPERSEDED") ?? snapshots[0] ?? null;
+    } catch {
+      mto = null;
+    }
     let impact: unknown = null;
     try {
       const sourceType = data.relatedChangeId ? "change" : data.relatedObjectType ?? "engineering_work_plan";
@@ -351,6 +365,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       tools: ctx.engineering.toolOrchestration.catalog(),
       preIssue,
       impact,
+      mto,
       templatePreview,
       externalContext,
     });
@@ -428,12 +443,69 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       },
     });
   }
+  if (action === "mtoCatalog") {
+    return NextResponse.json({ data: ctx.engineering.quantityMto.catalog() });
+  }
+  if (action === "mtoSnapshots") {
+    const projectId = url.searchParams.get("projectId") ?? "";
+    const workPlanId = url.searchParams.get("workPlanId") ?? url.searchParams.get("planId");
+    const data = await ctx.engineering.quantityMto.listSnapshots(commerce, ctx.tenantId, {
+      projectId,
+      workPlanId,
+      selectedProjectId: url.searchParams.get("selectedProjectId"),
+    });
+    return NextResponse.json({ data });
+  }
+  if (action === "mtoSnapshot") {
+    const snapshotId = url.searchParams.get("id") ?? url.searchParams.get("snapshotId") ?? "";
+    if (!snapshotId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.quantityMto.getSnapshot(commerce, ctx.tenantId, {
+      snapshotId,
+      selectedProjectId: url.searchParams.get("selectedProjectId"),
+      query: {
+        offset: Number(url.searchParams.get("offset") ?? 0),
+        limit: Number(url.searchParams.get("limit") ?? 50),
+        discipline: url.searchParams.get("discipline"),
+        verification: url.searchParams.get("verification"),
+      },
+    });
+    return NextResponse.json({ data });
+  }
+  if (action === "mtoCompare") {
+    const fromSnapshotId = url.searchParams.get("from") ?? "";
+    const toSnapshotId = url.searchParams.get("to") ?? "";
+    if (!fromSnapshotId || !toSnapshotId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const data = await ctx.engineering.quantityMto.compare(commerce, ctx.tenantId, {
+      fromSnapshotId,
+      toSnapshotId,
+      selectedProjectId: url.searchParams.get("selectedProjectId"),
+      discipline: url.searchParams.get("discipline"),
+      category: url.searchParams.get("category"),
+    });
+    return NextResponse.json({ data });
+  }
+  if (action === "exportMto") {
+    const snapshotId = url.searchParams.get("id") ?? url.searchParams.get("snapshotId") ?? "";
+    if (!snapshotId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const exported = await ctx.engineering.quantityMto.exportWorkbook(commerce, ctx.tenantId, {
+      snapshotId,
+      selectedProjectId: url.searchParams.get("selectedProjectId"),
+    });
+    return new NextResponse(new Uint8Array(exported.buffer), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.fileName.replace(/"/g, "")}"`,
+        "Cache-Control": "private, no-store",
+        "X-MTO-Disclaimer": exported.disclaimer,
+      },
+    });
+  }
   return NextResponse.json({ data: ctx.engineering.work.catalog() });
 });
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.m365Connector.rejectCallerClaims(body) ?? ctx.engineering.engineeringConnector.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.m365Connector.rejectCallerClaims(body) ?? ctx.engineering.engineeringConnector.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body) ?? ctx.engineering.quantityMto.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -839,6 +911,63 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
         sourceId: typeof body.sourceId === "string" ? body.sourceId : null,
         informationRefId: typeof body.informationRefId === "string" ? body.informationRefId : null,
         projectId: typeof body.projectId === "string" ? body.projectId : null,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "createMto" || action === "seedMtoDemonstrator" || action === "verifyMtoItem" || action === "verifyMtoSnapshot" || action === "createMtoRevision" || action === "refreshMtoFreshness" || action === "mtoChangeImpacts") {
+      const selectedProjectId = typeof body.selectedProjectId === "string" ? body.selectedProjectId : null;
+      if (action === "createMto") {
+        const data = await ctx.engineering.quantityMto.createSnapshot(commerce, ctx.tenantId, {
+          workPlanId: String(body.workPlanId ?? ""),
+          selectedProjectId,
+          revision: typeof body.revision === "string" ? body.revision : undefined,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "seedMtoDemonstrator") {
+        const data = await ctx.engineering.quantityMto.seedDemonstrator(commerce, ctx.tenantId, {
+          workPlanId: String(body.workPlanId ?? ""),
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "verifyMtoItem") {
+        const data = await ctx.engineering.quantityMto.verifyItem(commerce, ctx.tenantId, {
+          snapshotId: String(body.snapshotId ?? ""),
+          itemId: String(body.itemId ?? ""),
+          status: String(body.status ?? "VERIFIED") as "UNVERIFIED" | "VERIFIED" | "REJECTED" | "NEEDS_INFORMATION",
+          selectedProjectId,
+          confirmBulk: body.confirmBulk === true,
+          itemIds: Array.isArray(body.itemIds) ? body.itemIds.map(String) : undefined,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "verifyMtoSnapshot") {
+        const data = await ctx.engineering.quantityMto.verifySnapshot(commerce, ctx.tenantId, {
+          snapshotId: String(body.snapshotId ?? ""),
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "createMtoRevision") {
+        const data = await ctx.engineering.quantityMto.createRevision(commerce, ctx.tenantId, {
+          snapshotId: String(body.snapshotId ?? ""),
+          revision: typeof body.revision === "string" ? body.revision : undefined,
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "refreshMtoFreshness") {
+        const data = await ctx.engineering.quantityMto.refreshFreshness(commerce, ctx.tenantId, {
+          snapshotId: String(body.snapshotId ?? ""),
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      const data = await ctx.engineering.quantityMto.changeImpacts(commerce, ctx.tenantId, {
+        fromSnapshotId: String(body.fromSnapshotId ?? ""),
+        toSnapshotId: String(body.toSnapshotId ?? ""),
+        selectedProjectId,
       });
       return NextResponse.json({ data });
     }

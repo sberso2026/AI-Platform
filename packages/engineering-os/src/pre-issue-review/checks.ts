@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { GeneratedEngineeringArtifact } from "../artifact-automation/types";
 import type { EngineeringWorkPlan } from "../work-generator/types";
 import { xmlHasHeading, type TransientOfficeInspection } from "./inspect";
+import { reviewMtoProvenance, type QuantityItem } from "../lifecycle-intelligence/quantity-mto";
 import {
   type PreIssueAction,
   type PreIssueCheckType,
@@ -53,6 +54,8 @@ export function runDeterministicPreIssueChecks(input: {
   artifacts: GeneratedEngineeringArtifact[];
   inspection: TransientOfficeInspection | null;
   extractionSkipped: string | null;
+  mtoItems?: QuantityItem[];
+  mtoStaleness?: string;
 }): DeterministicCheckOutput {
   const conditions: PreIssueCondition[] = [];
   const passedChecks: Array<{ checkType: PreIssueCheckType; title: string }> = [];
@@ -564,10 +567,45 @@ export function runDeterministicPreIssueChecks(input: {
   }
 
   const expectsMto = plan.context.expectedOutputs.some((row) => row.outputType.endsWith("_MTO"));
-  notEvaluated.push({
-    checkType: "QUANTITY_PROVENANCE_CHECK",
-    reason: expectsMto ? "mto_snapshot_reviewed_via_quantity_compose" : "mto_not_an_expected_output",
-  });
+  if (expectsMto && input.mtoItems) {
+    const findings = reviewMtoProvenance(input.mtoItems, {
+      governingRevisions: plan.context.information,
+    });
+    if (input.mtoStaleness === "SOURCE_CHANGED" || input.mtoStaleness === "MTO_REVIEW_REQUIRED") {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "QUANTITY_PROVENANCE_CHECK",
+        code: "QUANTITY_GOVERNING_SOURCE_STALE",
+        title: "MTO governing source changed",
+        explanation: "Verified MTO snapshot is not mutated. Review required because governing information revision changed. Review does not decide quantity technical correctness.",
+        materiality: "STALE_CONTEXT",
+        category: "revision_inconsistency",
+        evidence: [{ sourceId: plan.id, statement: `mto_staleness=${input.mtoStaleness}` }],
+        actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Open MTO", href: `/engineering/work/plans/${plan.id}/mto` }],
+      }));
+    }
+    for (const finding of findings) {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "QUANTITY_PROVENANCE_CHECK",
+        code: finding.code,
+        title: finding.title,
+        explanation: "Pre-Issue checks quantity/basis evidence only. It does not decide whether the quantity itself is technically correct.",
+        materiality: finding.code.includes("STALE") ? "STALE_CONTEXT" : "INFORMATION_GAP",
+        category: "missing_engineering_evidence",
+        evidence: [{ sourceId: plan.id, statement: finding.title }],
+        actions: [{ code: "OPEN_ARTIFACT", label: "Open MTO", href: `/engineering/work/plans/${plan.id}/mto` }],
+      }));
+    }
+    if (!findings.length && input.mtoStaleness !== "SOURCE_CHANGED" && input.mtoStaleness !== "MTO_REVIEW_REQUIRED") {
+      pass("QUANTITY_PROVENANCE_CHECK", "MTO quantity-basis evidence present");
+    }
+  } else {
+    notEvaluated.push({
+      checkType: "QUANTITY_PROVENANCE_CHECK",
+      reason: expectsMto ? "mto_snapshot_not_persisted" : "mto_not_an_expected_output",
+    });
+  }
 
   return { conditions, passedChecks, notEvaluated };
 }

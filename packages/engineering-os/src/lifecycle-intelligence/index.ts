@@ -15,3 +15,5 @@ export * from "./cross-lifecycle-value";
 export * from "./quantity-mto";
 export { exportMtoWorkbook } from "./quantity-mto-export";
 export { crusherMtoDemonstrator } from "./quantity-mto-demonstrator";
+export { EngineeringQuantityMtoService, createTestQuantityMtoService } from "./quantity-mto-service";
+export { createMemoryQuantityMtoStore, SupabaseQuantityMtoStore } from "./quantity-mto-store";

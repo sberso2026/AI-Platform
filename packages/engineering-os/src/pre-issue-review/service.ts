@@ -88,6 +88,12 @@ export class EngineeringPreIssueReviewService {
     private readonly inference: ReviewInferenceProvider = new RejectingInferenceProvider(),
   ) {}
 
+  private mtoLoader: ((planId: string) => Promise<{ items: import("../lifecycle-intelligence/quantity-mto").QuantityItem[]; staleness: string } | null>) | null = null;
+
+  bindQuantityMto(loader: (planId: string) => Promise<{ items: import("../lifecycle-intelligence/quantity-mto").QuantityItem[]; staleness: string } | null>) {
+    this.mtoLoader = loader;
+  }
+
   catalog() {
     return {
       recon: PRE_ISSUE_REVIEW_RECON,
@@ -211,6 +217,7 @@ export class EngineeringPreIssueReviewService {
       extractionDurationMs = Date.now() - extractStarted;
     }
 
+    const mto = this.mtoLoader ? await this.mtoLoader(plan.id).catch(() => null) : null;
     const detStarted = Date.now();
     const deterministic = runDeterministicPreIssueChecks({
       plan,
@@ -218,6 +225,8 @@ export class EngineeringPreIssueReviewService {
       artifacts,
       inspection,
       extractionSkipped,
+      mtoItems: mto?.items,
+      mtoStaleness: mto?.staleness,
     });
     const deterministicDurationMs = Date.now() - detStarted;
 
