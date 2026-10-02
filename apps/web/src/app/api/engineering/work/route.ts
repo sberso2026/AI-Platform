@@ -348,6 +348,15 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     } catch {
       impact = null;
     }
+    let structural: unknown = null;
+    try {
+      structural = await ctx.engineering.structuralWork.workbench(commerce, ctx.tenantId, {
+        workPlanId: data.id,
+        selectedProjectId,
+      });
+    } catch {
+      structural = null;
+    }
     let templatePreview: unknown = null;
     try {
       const expected = data.context.expectedOutputs[0]?.outputType;
@@ -380,6 +389,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       preIssue,
       impact,
       mto,
+      structural,
       deliverableReadiness,
       templatePreview,
       externalContext,
@@ -517,12 +527,28 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       },
     });
   }
+  if (action === "exportStructuralCalculation") {
+    const calculationId = url.searchParams.get("id") ?? url.searchParams.get("calculationId") ?? "";
+    if (!calculationId) return NextResponse.json({ error: "id_required" }, { status: 400 });
+    const exported = await ctx.engineering.structuralWork.exportWorkbook(commerce, ctx.tenantId, {
+      calculationId,
+      selectedProjectId: url.searchParams.get("selectedProjectId"),
+    });
+    return new NextResponse(new Uint8Array(exported.buffer), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.fileName.replace(/"/g, "")}"`,
+        "Cache-Control": "private, no-store",
+        "X-Structural-Disclaimer": exported.disclaimer,
+      },
+    });
+  }
   return NextResponse.json({ data: ctx.engineering.work.catalog() });
 });
 
 export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlationId }, request) => {
   const body = (await request.json()) as Record<string, unknown>;
-  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.m365Connector.rejectCallerClaims(body) ?? ctx.engineering.engineeringConnector.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body) ?? ctx.engineering.quantityMto.rejectCallerClaims(body);
+  const rejected = ctx.engineering.work.rejectCallerClaims(body) ?? ctx.engineering.m365Connector.rejectCallerClaims(body) ?? ctx.engineering.engineeringConnector.rejectCallerClaims(body) ?? ctx.engineering.workGenerator.rejectCallerClaims(body) ?? ctx.engineering.artifactAutomation.rejectCallerClaims(body) ?? ctx.engineering.toolOrchestration.rejectCallerClaims(body) ?? ctx.engineering.preIssueReview.rejectCallerClaims(body) ?? ctx.engineering.changeWorkbench.rejectCallerClaims(body) ?? ctx.engineering.attention.rejectCallerClaims(body) ?? ctx.engineering.quantityMto.rejectCallerClaims(body) ?? ctx.engineering.structuralWork.rejectCallerClaims(body);
   if (rejected) {
     return NextResponse.json({ error: rejected }, { status: 400 });
   }
@@ -997,6 +1023,55 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       const data = await ctx.engineering.quantityMto.changeImpacts(commerce, ctx.tenantId, {
         fromSnapshotId: String(body.fromSnapshotId ?? ""),
         toSnapshotId: String(body.toSnapshotId ?? ""),
+        selectedProjectId,
+      });
+      return NextResponse.json({ data });
+    }
+    if (action === "seedStructuralFixture" || action === "runStructuralCheck" || action === "reviewStructuralCalculation" || action === "changeStructuralInput" || action === "rerunStructuralCheck" || action === "applyStructuralMto") {
+      const selectedProjectId = typeof body.selectedProjectId === "string" ? body.selectedProjectId : null;
+      if (action === "seedStructuralFixture") {
+        const data = await ctx.engineering.structuralWork.seedFixture(commerce, ctx.tenantId, {
+          workPlanId: String(body.workPlanId ?? body.id ?? ""),
+          selectedProjectId,
+          omitMaterialGrade: body.omitMaterialGrade === true,
+          workKind: typeof body.workKind === "string" ? (body.workKind as never) : undefined,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "runStructuralCheck") {
+        const data = await ctx.engineering.structuralWork.runCheck(commerce, ctx.tenantId, {
+          calculationId: typeof body.calculationId === "string" ? body.calculationId : undefined,
+          workPlanId: typeof body.workPlanId === "string" ? body.workPlanId : String(body.id ?? ""),
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "reviewStructuralCalculation") {
+        const data = await ctx.engineering.structuralWork.review(commerce, ctx.tenantId, {
+          calculationId: String(body.calculationId ?? ""),
+          action: String(body.reviewAction ?? "ACCEPT_FOR_USE") as never,
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "changeStructuralInput") {
+        const data = await ctx.engineering.structuralWork.changeGovernedInput(commerce, ctx.tenantId, {
+          calculationId: String(body.calculationId ?? ""),
+          key: String(body.key ?? "geometry.section"),
+          value: typeof body.value === "number" || typeof body.value === "string" ? body.value : null,
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "rerunStructuralCheck") {
+        const data = await ctx.engineering.structuralWork.rerun(commerce, ctx.tenantId, {
+          calculationId: String(body.calculationId ?? ""),
+          selectedProjectId,
+        });
+        return NextResponse.json({ data });
+      }
+      const data = await ctx.engineering.structuralWork.applyToMto(commerce, ctx.tenantId, {
+        calculationId: String(body.calculationId ?? ""),
         selectedProjectId,
       });
       return NextResponse.json({ data });

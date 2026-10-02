@@ -89,9 +89,26 @@ export class EngineeringPreIssueReviewService {
   ) {}
 
   private mtoLoader: ((planId: string) => Promise<{ items: import("../lifecycle-intelligence/quantity-mto").QuantityItem[]; staleness: string } | null>) | null = null;
+  private structuralLoader: ((planId: string) => Promise<{
+    status: string;
+    reviewStatus: string;
+    inputFingerprint: string;
+    currentFingerprint: string;
+    missingCodes: string[];
+  } | null>) | null = null;
 
   bindQuantityMto(loader: (planId: string) => Promise<{ items: import("../lifecycle-intelligence/quantity-mto").QuantityItem[]; staleness: string } | null>) {
     this.mtoLoader = loader;
+  }
+
+  bindStructuralCalculation(loader: (planId: string) => Promise<{
+    status: string;
+    reviewStatus: string;
+    inputFingerprint: string;
+    currentFingerprint: string;
+    missingCodes: string[];
+  } | null>) {
+    this.structuralLoader = loader;
   }
 
   catalog() {
@@ -218,6 +235,7 @@ export class EngineeringPreIssueReviewService {
     }
 
     const mto = this.mtoLoader ? await this.mtoLoader(plan.id).catch(() => null) : null;
+    const structural = this.structuralLoader ? await this.structuralLoader(plan.id).catch(() => null) : null;
     const detStarted = Date.now();
     const deterministic = runDeterministicPreIssueChecks({
       plan,
@@ -230,6 +248,7 @@ export class EngineeringPreIssueReviewService {
       currentMtoFingerprint: mto && "fingerprint" in mto ? String(mto.fingerprint ?? "") : null,
       currentMtoRevision: mto && "revision" in mto ? String(mto.revision ?? "") : null,
       currentMtoSnapshotId: mto && "snapshotId" in mto ? String(mto.snapshotId ?? "") : null,
+      structuralCalculation: structural,
     });
     const deterministicDurationMs = Date.now() - detStarted;
 

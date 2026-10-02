@@ -59,6 +59,14 @@ export function runDeterministicPreIssueChecks(input: {
   currentMtoFingerprint?: string | null;
   currentMtoRevision?: string | null;
   currentMtoSnapshotId?: string | null;
+  structuralCalculation?: {
+    status: string;
+    reviewStatus: string;
+    inputFingerprint: string;
+    currentFingerprint: string;
+    missingCodes: string[];
+    mtoFingerprint?: string | null;
+  } | null;
 }): DeterministicCheckOutput {
   const conditions: PreIssueCondition[] = [];
   const passedChecks: Array<{ checkType: PreIssueCheckType; title: string }> = [];
@@ -670,6 +678,99 @@ export function runDeterministicPreIssueChecks(input: {
         actions: [{ code: "OPEN_ARTIFACT", label: "Open MTO", href: `/engineering/work/plans/${plan.id}/mto` }],
       }));
     }
+  }
+
+  const structural = input.structuralCalculation;
+  if (structural) {
+    if (structural.missingCodes.includes("DESIGN_BASIS_INCOMPLETE") || structural.status === "INPUT_REQUIRED") {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "STRUCTURAL_DESIGN_BASIS_CHECK",
+        code: "DESIGN_BASIS_INCOMPLETE",
+        title: "Structural design basis is incomplete",
+        explanation: "Missing governed structural inputs block calculation. EOS does not infer loads, geometry, or material properties.",
+        materiality: "INFORMATION_GAP",
+        category: "missing_information",
+        evidence: [{ sourceId: plan.id, statement: structural.missingCodes.join(", ") || "design basis incomplete" }],
+        actions: [{ code: "REQUEST_INFORMATION", label: "Open Structural Design Basis", href: `/engineering/work/plans/${plan.id}#structural` }],
+      }));
+    } else {
+      pass("STRUCTURAL_DESIGN_BASIS_CHECK", "Structural design basis recorded");
+    }
+    if (structural.missingCodes.includes("GOVERNING_STANDARD_REQUIRED")) {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "STRUCTURAL_DESIGN_BASIS_CHECK",
+        code: "MISSING_GOVERNING_STANDARD",
+        title: "Governing structural standard is not configured",
+        explanation: "EOS does not imply AS 4100 or any other code unless the project design basis configures it.",
+        materiality: "INFORMATION_GAP",
+        category: "missing_information",
+        evidence: [{ sourceId: plan.id, statement: "No configured governing standard" }],
+        actions: [{ code: "REQUEST_INFORMATION", label: "Configure governing standard", href: `/engineering/work/plans/${plan.id}#structural` }],
+      }));
+    }
+    if (structural.status === "STALE") {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "CALCULATION_STALENESS_CHECK",
+        code: "STALE_CALCULATION_REFERENCE",
+        title: "Structural calculation is stale",
+        explanation: "A governed input changed after the last calculation. Recalculation is required. Previous results are not mutated.",
+        materiality: "STALE_CONTEXT",
+        category: "revision_inconsistency",
+        evidence: [{ sourceId: plan.id, statement: `status ${structural.status}` }],
+        actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Recalculate", href: `/engineering/work/plans/${plan.id}#structural` }],
+      }));
+    } else {
+      pass("CALCULATION_STALENESS_CHECK", "Current structural calculation is not stale");
+    }
+    if (structural.inputFingerprint !== structural.currentFingerprint) {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "CALCULATION_FINGERPRINT_CHECK",
+        code: "CALCULATION_INPUT_FINGERPRINT_MISMATCH",
+        title: "Calculation input fingerprint does not match current governed inputs",
+        explanation: "RECALCULATION_REQUIRED. EOS does not silently update a previous result.",
+        materiality: "STALE_CONTEXT",
+        category: "revision_inconsistency",
+        evidence: [
+          { sourceId: plan.id, statement: `result fingerprint ${structural.inputFingerprint}` },
+          { sourceId: plan.id, statement: `current fingerprint ${structural.currentFingerprint}` },
+        ],
+        actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Recalculate", href: `/engineering/work/plans/${plan.id}#structural` }],
+      }));
+    } else {
+      pass("CALCULATION_FINGERPRINT_CHECK", "Calculation input fingerprint matches current inputs");
+    }
+    if (structural.reviewStatus !== "VERIFIED_BY_ENGINEER") {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "CALCULATION_STALENESS_CHECK",
+        code: "UNVERIFIED_CALCULATION",
+        title: "Structural calculation has not been verified by an engineer",
+        explanation: "AI cannot verify its own engineering calculation. Human review authority is required.",
+        materiality: "REVIEW_CANDIDATE",
+        category: "missing_engineering_evidence",
+        evidence: [{ sourceId: plan.id, statement: `review ${structural.reviewStatus}` }],
+        actions: [{ code: "DISPOSITION", label: "Review calculation", href: `/engineering/work/plans/${plan.id}#structural` }],
+      }));
+    }
+    if (target.artifactType === "DESIGN_REPORT" && structural.status === "STALE") {
+      conditions.push(condition({
+        id: nextId(),
+        checkType: "CALCULATION_STALENESS_CHECK",
+        code: "REPORT_BOUND_TO_STALE_CALCULATION",
+        title: "Design Report is bound to a stale structural calculation",
+        explanation: "Regenerate the deliverable after recalculation. Old artifact is preserved.",
+        materiality: "STALE_CONTEXT",
+        category: "revision_inconsistency",
+        evidence: [{ artifactId: target.id, statement: `calculation status ${structural.status}` }],
+        actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Regenerate Design Report", href: `/engineering/work/plans/${plan.id}` }],
+      }));
+    }
+  } else if (plan.discipline === "STRUCTURAL") {
+    pass("CALCULATION_STALENESS_CHECK", "No structural calculation overlay on this Work Plan");
   }
 
   return { conditions, passedChecks, notEvaluated };

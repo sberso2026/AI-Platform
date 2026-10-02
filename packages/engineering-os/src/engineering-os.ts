@@ -68,6 +68,8 @@ import { EngineeringChangeWorkbenchService } from "./change-workbench/service";
 import { EngineeringAttentionService } from "./attention/service";
 import { EngineeringQuantityMtoService } from "./lifecycle-intelligence/quantity-mto-service";
 import { SupabaseQuantityMtoStore } from "./lifecycle-intelligence/quantity-mto-store";
+import { EngineeringStructuralWorkService } from "./work-generator/structural/service";
+import { SupabaseStructuralCalculationStore } from "./work-generator/structural/store";
 import { MemoryEngineeringReviewStore, createSharedReviewMemory } from "@rtb/engineering-review";
 import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
@@ -123,6 +125,7 @@ export interface EngineeringOS {
   engineeringConnector: EngineeringExternalConnectorService;
   attention: EngineeringAttentionService;
   quantityMto: EngineeringQuantityMtoService;
+  structuralWork: EngineeringStructuralWorkService;
   timeline: EngineeringTimelineService;
   activity: EngineeringActivityService;
   objects: EngineeringObjectFramework;
@@ -220,6 +223,12 @@ export function createEngineeringOS(
         actorId: input.actorId,
       });
     },
+  );
+  const structuralWork = new EngineeringStructuralWorkService(
+    supabase,
+    new SupabaseStructuralCalculationStore(supabase),
+    (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
+    quantityMto,
   );
   const artifactBinaryStore = new RoutingArtifactBinaryStore(
     new LegacyRelationalArtifactBinaryStore(),
@@ -326,6 +335,20 @@ export function createEngineeringOS(
     },
   );
   preIssueReview.bindQuantityMto((planId) => quantityMto.loadForPlan(planId));
+  preIssueReview.bindStructuralCalculation(async (planId) => {
+    const plan = await new SupabaseWorkPlanStore(supabase).getPlan(planId);
+    if (!plan) return null;
+    const rows = await new SupabaseStructuralCalculationStore(supabase).list(plan.workspaceId, plan.projectId, plan.id);
+    const current = rows[0];
+    if (!current) return null;
+    return {
+      status: current.status,
+      reviewStatus: current.reviewStatus,
+      inputFingerprint: current.result?.inputFingerprint ?? current.inputFingerprint,
+      currentFingerprint: current.inputFingerprint,
+      missingCodes: current.missingCodes,
+    };
+  });
   artifactAutomation.bindQuantityMto((planId) => quantityMto.loadCompositionContext(planId));
   const attention = new EngineeringAttentionService(supabase, {
     projects,
@@ -335,6 +358,7 @@ export function createEngineeringOS(
     preIssueReview,
     changeWorkbench,
     quantityMto,
+    structuralWork,
     decisions,
     interfaces,
     notifications: kernel.notifications,
@@ -445,6 +469,7 @@ export function createEngineeringOS(
     changeWorkbench,
     attention,
     quantityMto,
+    structuralWork,
     informationRequirements,
     m365Connector,
     engineeringConnector,

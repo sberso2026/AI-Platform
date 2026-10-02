@@ -9,6 +9,7 @@ import type { EngineeringWorkContextService } from "../work-context/service";
 import type { EngineeringPreIssueReviewService } from "../pre-issue-review/service";
 import type { EngineeringChangeWorkbenchService } from "../change-workbench/service";
 import type { EngineeringQuantityMtoService } from "../lifecycle-intelligence/quantity-mto-service";
+import type { EngineeringStructuralWorkService } from "../work-generator/structural/service";
 import type { EngineeringDecisionService } from "../services/register-services";
 import type { EngineeringInterfaceService } from "../systems-intelligence/interface-service";
 import { createMemoryAttentionStore, type AttentionStore } from "./memory-store";
@@ -48,6 +49,7 @@ export type AttentionDomainPorts = {
   preIssueReview: EngineeringPreIssueReviewService;
   changeWorkbench: EngineeringChangeWorkbenchService;
   quantityMto?: EngineeringQuantityMtoService;
+  structuralWork?: EngineeringStructuralWorkService;
   decisions?: EngineeringDecisionService;
   interfaces?: EngineeringInterfaceService;
   notifications?: AttentionKernelNotifications;
@@ -225,6 +227,9 @@ export class EngineeringAttentionService {
         const valueGaps = this.ports.quantityMto
           ? await safeList(() => this.ports.quantityMto!.attentionGapsForPlan(commerce, tenantId, plan))
           : [];
+        const structuralGaps = this.ports.structuralWork
+          ? await safeList(() => this.ports.structuralWork!.attentionGapsForPlan(commerce, tenantId, plan))
+          : [];
         return {
           id: plan.id,
           workType: plan.workType,
@@ -236,6 +241,7 @@ export class EngineeringAttentionService {
           relatedObjectType: plan.relatedObjectType,
           relatedObjectId: plan.relatedObjectId,
           valueGaps,
+          structuralGaps,
         };
       })),
       requirements: requirements.map((row) => ({

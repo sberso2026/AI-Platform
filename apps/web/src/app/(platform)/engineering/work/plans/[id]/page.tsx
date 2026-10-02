@@ -173,6 +173,34 @@ type MtoSummary = {
   progress?: { total: number; verified: number; unverified: number };
 };
 
+type StructuralWorkbench = {
+  designBasis?: {
+    complete: boolean;
+    incompleteReason: string | null;
+    dataClassification: string;
+    standards: Array<{ identifier: string; editionYear: string; projectApplicability: string; status: string }>;
+    inputs: Array<{ key: string; label: string; value: string | number | null; unit: string | null; status: string; required: boolean; missingCode?: string | null; provenance: { sourceId: string; revision: string | null; status: string } }>;
+    missing: string[];
+  };
+  current?: {
+    id: string;
+    revision: string;
+    status: string;
+    reviewStatus: string;
+    inputFingerprint: string;
+    result?: {
+      results: { demandMomentKNm: number | null; demandShearKN: number | null; utilization: number | null; capacityStatus: string; connection: string; foundation: string };
+      engineeringApproved: false;
+      warnings: string[];
+      limitations: string[];
+    } | null;
+  } | null;
+  missingInputs?: Array<{ key: string; code: string | null; label: string; required: boolean }>;
+  attention?: Array<{ title: string; code: string }>;
+  solverBoundary?: { engineId: string; method: string; notSpaceGassExecution: boolean };
+  spaceGass?: { apiAvailable: boolean; realSolverExecution: string; productionUsePermitted: boolean };
+};
+
 const OUTPUT_ACTIONS: Record<string, Array<{ artifactType: string; label: string }>> = {
   CALCULATION_WORKBOOK: [{ artifactType: "CALCULATION_WORKBOOK", label: "Generate Calculation Workbook" }],
   DESIGN_REPORT: [{ artifactType: "DESIGN_REPORT", label: "Generate Design Report" }],
@@ -217,6 +245,7 @@ export default function WorkPlanPage() {
   const [preIssue, setPreIssue] = useState<PreIssuePayload | null>(null);
   const [impact, setImpact] = useState<ImpactPayload | null>(null);
   const [mto, setMto] = useState<MtoSummary | null>(null);
+  const [structural, setStructural] = useState<StructuralWorkbench | null>(null);
   const [deliverableReadiness, setDeliverableReadiness] = useState<Record<string, string> | null>(null);
   const [templatePreview, setTemplatePreview] = useState<{ template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string } | null>(null);
   const [externalContext, setExternalContext] = useState<Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }>>([]);
@@ -229,12 +258,13 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; deliverableReadiness?: Record<string, string>; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; structural?: StructuralWorkbench; deliverableReadiness?: Record<string, string>; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
       if (raw?.impact) setImpact(raw.impact);
       if (raw?.mto) setMto(raw.mto);
+      if (raw?.structural) setStructural(raw.structural);
       if (raw?.deliverableReadiness) setDeliverableReadiness(raw.deliverableReadiness);
       if (raw?.templatePreview) setTemplatePreview(raw.templatePreview);
       if (raw?.externalContext) setExternalContext(raw.externalContext);
@@ -364,6 +394,31 @@ export default function WorkPlanPage() {
       );
       return;
     }
+    if (action === "seedStructuralFixture") {
+      setMessage("SYNTHETIC_DEMONSTRATION_DATA loaded. This is not a real project design. Missing required inputs are not guessed.");
+      await load();
+      return;
+    }
+    if (action === "runStructuralCheck" || action === "rerunStructuralCheck") {
+      setMessage("Deterministic structural check executed. SPACE GASS was not invoked. This is not DESIGN_APPROVED.");
+      await load();
+      return;
+    }
+    if (action === "reviewStructuralCalculation") {
+      setMessage("Engineer review recorded. AI did not verify this calculation.");
+      await load();
+      return;
+    }
+    if (action === "changeStructuralInput") {
+      setMessage("Governed input changed. Previous verified calculation was not mutated. Recalculation required if the result is stale.");
+      await load();
+      return;
+    }
+    if (action === "applyStructuralMto") {
+      setMessage("Structural MTO revision created from calculation outputs. Verified snapshots are not overwritten.");
+      await load();
+      return;
+    }
     if (action === "runPreIssueReview") {
       const payload = json.data as { summary?: PreIssueSummary; review?: PreIssuePayload["review"] } | undefined;
       setPreIssue({ review: payload?.review ?? null, summary: payload?.summary });
@@ -412,6 +467,24 @@ export default function WorkPlanPage() {
     link.click();
     URL.revokeObjectURL(url);
     setMessage(`${label ?? "Download"}. EOS does not launch the desktop application and does not monitor the local copy.`);
+  }
+
+  async function downloadStructural(id: string) {
+    const response = await fetch(`/api/engineering/work?action=exportStructuralCalculation&id=${encodeURIComponent(id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
+    if (!response.ok) {
+      setError("Download denied.");
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const disposition = response.headers.get("Content-Disposition") ?? "";
+    const match = disposition.match(/filename="([^"]+)"/);
+    link.download = match?.[1] ?? "STRUCT-CALC.xlsx";
+    link.click();
+    URL.revokeObjectURL(url);
+    setMessage("Calculation appendix downloaded. Provenance is in structured sheets. This is not engineering approval.");
   }
 
   async function compare(artifact: GeneratedArtifact) {
@@ -713,6 +786,68 @@ export default function WorkPlanPage() {
               <h2 className="mt-4 font-semibold">Decisions</h2>
               <ul className="mt-2 space-y-1">{plan.context.decisions.map((row) => <li key={row.objectId}>{row.title} — {row.whyIncluded}</li>)}</ul>
               <h2 className="mt-4 font-semibold">Expected outputs</h2>
+              {plan.discipline === "STRUCTURAL" && (
+                <section id="structural" className="mt-3 rounded border p-3" aria-label="Structural workbench">
+                  <h3 className="font-semibold">Structural Workbench</h3>
+                  <p className="mt-1 text-sm">Design Basis · Inputs · Calculation Manifest · Results · MTO · Deliverables · Review · Change Impact</p>
+                  <p className="mt-1 text-muted-foreground">SYNTHETIC_DEMONSTRATION_DATA when using the Crusher fixture. EOS does not use generative AI as the numerical solver. SPACE GASS remains unexecuted.</p>
+                  <p className="mt-1 text-sm">SPACE GASS: API available NO · real solver NOT_CERTIFIED · production use NO</p>
+                  {structural?.designBasis && (
+                    <>
+                      <p className="mt-2 font-medium">Design Basis {structural.designBasis.complete ? "complete" : "incomplete"}{structural.designBasis.incompleteReason ? ` · ${structural.designBasis.incompleteReason}` : ""}</p>
+                      <ul className="mt-1 text-sm">
+                        {structural.designBasis.standards.map((row) => (
+                          <li key={row.identifier}>{row.identifier} {row.editionYear} · {row.projectApplicability} · {row.status}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {structural?.missingInputs?.length ? (
+                    <ul className="mt-2 list-disc pl-5 text-sm" aria-label="Missing structural inputs">
+                      {structural.missingInputs.map((row) => (
+                        <li key={row.key}>{row.code ?? "INPUT_REQUIRED"} — {row.label}{row.required ? " (required)" : ""}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-sm">No missing required structural inputs on the current overlay.</p>
+                  )}
+                  {structural?.current && (
+                    <div className="mt-2 text-sm">
+                      <p>Manifest {structural.current.revision} · {structural.current.status} · review {structural.current.reviewStatus} · fingerprint {structural.current.inputFingerprint.slice(0, 16)}</p>
+                      {structural.current.result && (
+                        <>
+                          <p>Demand M {structural.current.result.results.demandMomentKNm ?? "—"} kN.m · V {structural.current.result.results.demandShearKN ?? "—"} kN · util {structural.current.result.results.utilization ?? "—"} · capacity {structural.current.result.results.capacityStatus}</p>
+                          <p>Connection {structural.current.result.results.connection} · Foundation {structural.current.result.results.foundation} · approved {String(structural.current.result.engineeringApproved)}</p>
+                          <ul className="mt-1 list-disc pl-5">
+                            {structural.current.result.warnings.map((row) => <li key={row}>{row}</li>)}
+                          </ul>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("seedStructuralFixture", { workPlanId: plan.id, omitMaterialGrade: true })}>Load incomplete fixture</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("seedStructuralFixture", { workPlanId: plan.id })}>Load governed fixture</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("runStructuralCheck", { workPlanId: plan.id, calculationId: structural?.current?.id })}>Run deterministic check</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("reviewStructuralCalculation", { calculationId: structural?.current?.id, reviewAction: "ACCEPT_FOR_USE" })}>Accept for use</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("reviewStructuralCalculation", { calculationId: structural?.current?.id, reviewAction: "REJECT" })}>Reject</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("reviewStructuralCalculation", { calculationId: structural?.current?.id, reviewAction: "NEEDS_INFORMATION" })}>Needs information</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("changeStructuralInput", { calculationId: structural?.current?.id, key: "geometry.section", value: "360UB44.7" })}>Change member section</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("rerunStructuralCheck", { calculationId: structural?.current?.id })}>Recalculate</button>
+                    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("applyStructuralMto", { calculationId: structural?.current?.id })}>Update Structural MTO</button>
+                    <button
+                      type="button"
+                      className="rounded border px-3 py-1 text-sm"
+                      onClick={() => {
+                        if (!structural?.current?.id) return;
+                        void downloadStructural(structural.current.id);
+                      }}
+                    >
+                      Download calculation XLSX
+                    </button>
+                  </div>
+                </section>
+              )}
               {plan.context.expectedOutputs.some((row) => MTO_OUTPUTS.includes(row.outputType)) && (
                 <section className="mt-3 rounded border p-3" aria-label="Quantities and MTO">
                   <h3 className="font-semibold">Quantities &amp; MTO</h3>

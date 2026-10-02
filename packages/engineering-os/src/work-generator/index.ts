@@ -7,3 +7,4 @@ export * from "./supabase-store";
 export * from "./service";
 export * from "./fixture";
 export * from "./compose";
+export * from "./structural";

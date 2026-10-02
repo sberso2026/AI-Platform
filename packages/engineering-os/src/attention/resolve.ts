@@ -277,7 +277,26 @@ export function resolveEngineeringAttention(input: ResolveAttentionInput): Engin
             ? action("RUN_PRE_ISSUE_REVIEW", actionLabel, project.projectId, plan.id, plan.id)
             : action("REQUEST_INFORMATION", actionLabel, project.projectId, plan.id, plan.id),
           explanation: `Project ${project.projectName}. Attention is a projection of missing ${gap.kind} evidence on Work Plan ${plan.id}.`,
-          stateKey: `VALUE_GAP:${gap.kind}`,
+          stateKey: `${gap.kind}:${gap.title}`,
+          now,
+        }));
+      }
+      for (const gap of plan.structuralGaps ?? []) {
+        collected.push(item({
+          project,
+          category: /review/i.test(gap.code) ? "REVIEW_REQUIRED" : "DO_NOW",
+          sourceDomain: "work_plan",
+          sourceObjectType: "engineering_work_plan",
+          sourceObjectId: plan.id,
+          workPlanId: plan.id,
+          discipline: plan.discipline,
+          systemId: plan.systemId,
+          title: gap.title,
+          whatHappened: gap.title,
+          whyItMatters: "Structural engineering work is blocked or stale until governed inputs and engineer review are complete. EOS does not invent missing structural values.",
+          action: action("CONTINUE_WORK", "Open Structural Work Plan", project.projectId, plan.id, plan.id),
+          explanation: `Project ${project.projectName}. ${gap.code}.`,
+          stateKey: `${gap.code}:${plan.id}`,
           now,
         }));
       }

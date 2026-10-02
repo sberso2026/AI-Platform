@@ -40,6 +40,16 @@ export {
   DELIVERABLE_HUMAN_AUTHORITY,
   EVIDENCE_CLASSES,
 } from "./lifecycle-intelligence/deliverable-composition";
+export {
+  A15A_V5_FEATURE_FREEZE,
+  A15A_V5_GENERATOR_VERSION,
+  EngineeringStructuralWorkService,
+  STRUCTURAL_WORK_KINDS,
+  STRUCTURAL_SOLVER_BOUNDARY,
+  HOSTED_MALWARE_SCANNER,
+  RETURNED_ARTIFACT_ROUND_TRIP,
+  createTestStructuralWorkService,
+} from "./work-generator/structural";
 export * from "./phase-e0";
 export * from "./phase-e1";
 export * from "./phase-e2";

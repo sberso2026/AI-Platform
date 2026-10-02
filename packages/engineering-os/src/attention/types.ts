@@ -202,6 +202,7 @@ export type AttentionPlanSnap = {
   relatedObjectType: string | null;
   relatedObjectId: string | null;
   valueGaps?: Array<{ kind: "COST" | "CONSTRUCTABILITY" | "CARBON" | "QUANTITY" | "MTO"; title: string }>;
+  structuralGaps?: Array<{ kind: string; title: string; code: string }>;
 };
 
 export type AttentionReviewSnap = {
