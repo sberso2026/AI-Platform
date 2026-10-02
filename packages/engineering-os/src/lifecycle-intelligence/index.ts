@@ -17,3 +17,4 @@ export { exportMtoWorkbook } from "./quantity-mto-export";
 export { crusherMtoDemonstrator } from "./quantity-mto-demonstrator";
 export { EngineeringQuantityMtoService, createTestQuantityMtoService } from "./quantity-mto-service";
 export { createMemoryQuantityMtoStore, SupabaseQuantityMtoStore } from "./quantity-mto-store";
+export { classifyMtoSnapshotHygiene } from "./quantity-mto-hygiene";

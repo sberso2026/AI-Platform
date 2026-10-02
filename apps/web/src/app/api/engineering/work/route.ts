@@ -500,6 +500,8 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     return NextResponse.json({ data });
   }
   if (action === "exportMto") {
+    // GET commerce is work.get / analysis.read. Native export is a snapshot read + XLSX stream.
+    // Do not authorize work.write here; that nested write caused Action mismatch: expected analysis.write.
     const snapshotId = url.searchParams.get("id") ?? url.searchParams.get("snapshotId") ?? "";
     if (!snapshotId) return NextResponse.json({ error: "id_required" }, { status: 400 });
     const exported = await ctx.engineering.quantityMto.exportWorkbook(commerce, ctx.tenantId, {

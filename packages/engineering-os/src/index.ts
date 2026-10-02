@@ -30,6 +30,7 @@ export {
   WORK_PLAN_MTO_OUTPUTS,
 } from "./lifecycle-intelligence/quantity-mto";
 export { EngineeringQuantityMtoService, createTestQuantityMtoService } from "./lifecycle-intelligence/quantity-mto-service";
+export { classifyMtoSnapshotHygiene } from "./lifecycle-intelligence/quantity-mto-hygiene";
 export { exportMtoWorkbook } from "./lifecycle-intelligence/quantity-mto-export";
 export {
   A15A_V4_FEATURE_FREEZE,

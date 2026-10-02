@@ -16,6 +16,9 @@ import { acceptGovernedQuantity, A15A_V3_FEATURE_FREEZE, workPlanExpectsMto } fr
 import { createMemoryQuantityMtoStore, objectLinkInsertRows } from "./quantity-mto-store";
 import { createTestQuantityMtoService } from "./quantity-mto-service";
 import { CALLER_SUPPLIED_MTO_KEYS } from "./quantity-mto-persist";
+import { classifyMtoSnapshotHygiene } from "./quantity-mto-hygiene";
+import { assertEngineeringService } from "../commerce/service-guard";
+import { CommerceDomainError } from "@rtb/platform-commerce";
 
 function commerce(action: "analysis.read" | "analysis.write" = "analysis.write", extras: { tenantId?: string; workspaceId?: string; actorUserId?: string } = {}) {
   return createTestCommerceExecutionContext({
@@ -46,6 +49,8 @@ describe("EOS-A15A-V3 governed MTO workbench persistence", () => {
     expect(svc.rejectCallerClaims({ snapshotFingerprint: "abc" })).toBe("caller_supplied_authority_rejected");
     expect(svc.rejectCallerClaims({ verifyAllAi: true })).toBe("caller_supplied_authority_rejected");
     expect(CALLER_SUPPLIED_MTO_KEYS).toContain("verifiedBy");
+    expect(svc.catalog().nativeExportSemantics).toBe("READ_EXISTING_SNAPSHOT");
+    expect(svc.catalog().nativeExportPersistsGovernedArtifact).toBe(false);
   });
 
   it("persists Crusher snapshots with embedded quantity basis, supersession, HITL, cost/carbon fail-closed, and revision compare", async () => {
@@ -289,6 +294,100 @@ describe("EOS-A15A-V3 governed MTO workbench persistence", () => {
     expect(rows.some((row) => row.to_id === "S-CRU-ST-001")).toBe(false);
     expect(rows.filter((row) => row.relationship === "SUPPORTED_BY")).toHaveLength(1);
     expect(rows.some((row) => row.relationship === "SUPERSEDES" && row.to_id === priorId)).toBe(true);
+  });
+
+  it("native export is a read of the persisted snapshot and does not invoke work.write event recording", async () => {
+    const plans = createMemoryWorkPlanStore();
+    const work = new EngineeringWorkGeneratorService({ from() { return this; } } as never, plans);
+    let writeRecorderCalls = 0;
+    const mto = createTestQuantityMtoService(createMemoryQuantityMtoStore(), (id) => plans.getPlan(id), async (commerce, tenantId) => {
+      writeRecorderCalls += 1;
+      assertEngineeringService(commerce, "work.write", tenantId);
+    });
+    const plan = await work.generatePlan(commerce(), CRUSHER_FEED_TENANT, {
+      projectId: CRUSHER_EXPANSION_FEED_PROJECT_ID,
+      workType: "DESIGN_CALCULATION",
+      lifecycleStage: "FEED",
+      discipline: "STRUCTURAL",
+      systemId: A11A_SYSTEM_ID,
+      snapshot: feedStructuralSnapshot(),
+      readiness: WORKFLOW_READINESS.feedBlocked,
+      acknowledged: true,
+    });
+    const seeded = await mto.seedDemonstrator(commerce(), CRUSHER_FEED_TENANT, { workPlanId: plan.id });
+    writeRecorderCalls = 0;
+    const exported = await mto.exportWorkbook(commerce("analysis.read"), CRUSHER_FEED_TENANT, { snapshotId: seeded.revB.id });
+    expect(writeRecorderCalls).toBe(0);
+    expect(exported.fileName).toContain(`MTO-${seeded.revB.revision}-`);
+    expect(exported.fileName).toContain(seeded.revB.snapshotFingerprint.slice(0, 8));
+    expect(exported.disclaimer).toMatch(/DRAFT MTO|VERIFIED MTO/);
+    expect(exported.buffer.length).toBeGreaterThan(0);
+    await expect(mto.exportWorkbook(commerce("analysis.write"), CRUSHER_FEED_TENANT, { snapshotId: seeded.revB.id })).rejects.toMatchObject({
+      message: "Action mismatch: expected analysis.read",
+    });
+    await expect(mto.exportWorkbook(commerce("analysis.read"), CRUSHER_FEED_TENANT, {
+      snapshotId: seeded.revB.id,
+      selectedProjectId: A11E_PROJECT_B,
+    })).rejects.toThrow(/CROSS_PROJECT/);
+    await expect(mto.exportWorkbook(commerce("analysis.read", { workspaceId: "ws-other" }), CRUSHER_FEED_TENANT, {
+      snapshotId: seeded.revB.id,
+    })).rejects.toThrow(/not_found/);
+    await expect(mto.exportWorkbook(commerce("analysis.read", { tenantId: "tenant-other" }), "tenant-other", {
+      snapshotId: seeded.revB.id,
+    })).rejects.toThrow(/not_found/);
+    await expect(mto.verifyItem(commerce("analysis.read"), CRUSHER_FEED_TENANT, {
+      snapshotId: seeded.revB.id,
+      itemId: seeded.revB.items[0].id,
+      status: "VERIFIED",
+    })).rejects.toBeInstanceOf(CommerceDomainError);
+  });
+
+  it("classifies leftover snapshots without deleting governed lineage", () => {
+    const current = classifyMtoSnapshotHygiene({
+      id: "snap-b",
+      status: "DRAFT",
+      revision: "B",
+      workPlanId: "plan-1",
+      snapshotFingerprint: "086ea183",
+      currentSnapshotId: "snap-b",
+      referencedByArtifactIds: ["art-2"],
+      referencedByObjectLinkCount: 2,
+      referencedByChangeImpact: true,
+      referencedByReview: true,
+      knownFailedSeed: false,
+    });
+    expect(current.classification).toBe("GOVERNED_REFERENCED");
+    expect(current.mayCleanup).toBe(false);
+    const superseded = classifyMtoSnapshotHygiene({
+      id: "snap-a",
+      status: "SUPERSEDED",
+      revision: "A",
+      workPlanId: "plan-1",
+      snapshotFingerprint: "691e8d8d",
+      currentSnapshotId: "snap-b",
+      referencedByArtifactIds: ["art-1"],
+      referencedByObjectLinkCount: 1,
+      referencedByChangeImpact: false,
+      referencedByReview: false,
+      knownFailedSeed: true,
+    });
+    expect(superseded.classification).toBe("SUPERSEDED");
+    expect(superseded.mayCleanup).toBe(false);
+    const leftover = classifyMtoSnapshotHygiene({
+      id: "snap-failed",
+      status: "DRAFT",
+      revision: "A",
+      workPlanId: "plan-1",
+      snapshotFingerprint: "deadbeef",
+      currentSnapshotId: "snap-b",
+      referencedByArtifactIds: [],
+      referencedByObjectLinkCount: 0,
+      referencedByChangeImpact: false,
+      referencedByReview: false,
+      knownFailedSeed: true,
+    });
+    expect(leftover.classification).toBe("FAILED_SEED_LEFTOVER");
+    expect(leftover.mayCleanup).toBe(false);
   });
 
   it("keeps hosted malware deferred and returned files fail-closed", async () => {

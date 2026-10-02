@@ -139,6 +139,8 @@ export class EngineeringQuantityMtoService {
       aiCannotVerifyOwnExtraction: true,
       autoVerifyAllProhibited: true,
       exportImpliesApproval: false,
+      nativeExportSemantics: "READ_EXISTING_SNAPSHOT",
+      nativeExportPersistsGovernedArtifact: false,
     };
   }
 
@@ -467,6 +469,9 @@ export class EngineeringQuantityMtoService {
     tenantId: string,
     input: { snapshotId: string; selectedProjectId?: string | null },
   ) {
+    // Native Workbench export is a read of an existing persisted snapshot.
+    // It streams XLSX; it does not persist a governed artifact.
+    // Do not pass work.get commerce into recordMaterialEvent (work.write).
     assertEngineeringService(commerce, "work.get", tenantId);
     const row = await this.requireOwned(commerce, tenantId, input.snapshotId, input.selectedProjectId);
     const policy = valuePolicyForProject(row.projectId);
@@ -495,12 +500,6 @@ export class EngineeringQuantityMtoService {
         verificationState: row.verificationState,
         disclaimer: exportDoesNotImplyApproval(row.status),
       },
-    });
-    await this.recordEvent?.(commerce, tenantId, {
-      eventType: "MTO_EXPORT_PRODUCED",
-      projectId: row.projectId,
-      sourceObjectId: row.id,
-      actorId: this.actor(commerce),
     });
     return {
       ...exported,

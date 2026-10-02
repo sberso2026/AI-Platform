@@ -36,6 +36,16 @@ MTO Digital Thread writes to existing `engineering_object_links` use `tenant_id`
 
 Hosted staging `engineering_object_links` has `tenant_id` and does not have `workspace_id` or `project_id`. The V3 persist path that inserted `workspace_id` produced PostgREST `PGRST204` / PostgreSQL `42703`. Root cause: `APPLICATION_QUERY_EXPECTS_NONEXISTENT_COLUMN`, not a stale schema cache and not a missing migration. The persist path now writes only canonical link columns, UUID endpoints, and `relationship_governed=false`. Compare Artifact on the Work Plan POST uses `work.get` commerce (analysis.read), matching `getPlan` / `artifact.get`. No column was added to silence the error.
 
+## EOS-A15A-V4D native export authorization
+
+Native MTO Workbench GET `exportMto` is a read of an existing persisted snapshot. It streams XLSX via the same `exportMtoWorkbook` engine as Work Plan QUANTITY_SCHEDULE. It does not persist a governed artifact.
+
+Root cause of the V4C 403: GET commerce is `work.get` / `analysis.read`, but `exportWorkbook` forwarded that context into `work.recordMaterialEvent`, which asserts `work.write` / `analysis.write`. Nested action mismatch, not an HTTP-verb mistake.
+
+Fix: native export stays on `work.get`. It does not pass read commerce into a write-only nested service. `analysis.write` still cannot satisfy `work.get`. Snapshot hygiene classifies leftover certification seeds; there is no canonical delete path, so governed references stay preserved.
+
+Database RLS on MTO tables is tenant + workspace membership. Cross-project isolation is an application authorization check (`selectedProjectId` / `requireOwned`), not a project-level RLS column on every table.
+
 ## Cost / carbon / constructability
 
 - No approved rate → `COST_NOT_CALCULATED`

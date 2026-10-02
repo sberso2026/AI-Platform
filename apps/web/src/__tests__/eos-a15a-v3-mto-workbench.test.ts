@@ -27,5 +27,9 @@ describe("EOS-A15A-V3 MTO workbench UI", () => {
     expect(api).toContain("quantityMto");
     expect(api).toContain("seedMtoDemonstrator");
     expect(api).toContain("exportMto");
+    const exportBlock = api.slice(api.indexOf('action === "exportMto"'), api.indexOf("return new NextResponse", api.indexOf('action === "exportMto"')));
+    expect(exportBlock).toContain("exportWorkbook(commerce");
+    expect(exportBlock).not.toContain('authorizeEngineeringSegment(ctx, "work", "POST"');
+    expect(exportBlock).toContain("work.get / analysis.read");
   });
 });
