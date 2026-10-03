@@ -47,6 +47,7 @@ type Presented = {
   staleness: string;
   snapshotFingerprint: string;
   lifecycleStage: string;
+  disciplineScope?: string;
   verificationState: string;
   itemCount: number;
   supersedesSnapshotId: string | null;
@@ -136,9 +137,10 @@ export default function MtoWorkbenchPage() {
   }
 
   async function loadCompare() {
-    const prior = snapshots.find((row) => row.id === current?.supersedesSnapshotId) ?? snapshots.find((row) => row.revision !== current?.revision);
+    const prior = snapshots.find((row) => row.id === current?.supersedesSnapshotId)
+      ?? snapshots.find((row) => row.disciplineScope === current?.disciplineScope && row.id !== current?.id);
     if (!current || !prior) {
-      setError("No prior revision to compare.");
+      setError("No prior like-scope revision to compare.");
       return;
     }
     const response = await fetch(`/api/engineering/work?action=mtoCompare&from=${encodeURIComponent(prior.id)}&to=${encodeURIComponent(current.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}&discipline=${encodeURIComponent(discipline)}`);

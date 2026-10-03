@@ -39,6 +39,7 @@ import {
   PILOT_BEAM_CANDIDATES,
   PILOT_COLUMN_CANDIDATES,
   readInstalledAust300Names,
+  resolveVerifiedSection,
   verifyPilotSectionsAgainstLibrary,
 } from "./spacegass-aust300-sections";
 import {
@@ -68,6 +69,15 @@ describe("EOS-A6 structural optimization pilot", () => {
     expect(PILOT_BASELINE_BEAM).toBe("360 UB 44.7");
     expect(PILOT_COLUMN_CANDIDATES).toHaveLength(3);
     expect(PILOT_BEAM_CANDIDATES).toHaveLength(3);
+  });
+
+  it("resolves compact designations to catalog massKgPerM rather than parsing the name", () => {
+    expect(resolveVerifiedSection("310UB40.4")?.libraryName).toBe("310 UB 40.4");
+    expect(resolveVerifiedSection("310UB40.4")?.massKgPerM).toBe(40.4);
+    expect(resolveVerifiedSection("360UB44.7")?.libraryName).toBe("360 UB 44.7");
+    expect(resolveVerifiedSection("360UB44.7")?.massKgPerM).toBe(44.7);
+    expect(resolveVerifiedSection("360 UB 44.7")?.massKgPerM).toBe(resolveVerifiedSection("360UB44.7")?.massKgPerM);
+    expect(resolveVerifiedSection("not-a-section")).toBeUndefined();
   });
 
   it("re-verifies engineer-authorized sections against the installed library when present", () => {

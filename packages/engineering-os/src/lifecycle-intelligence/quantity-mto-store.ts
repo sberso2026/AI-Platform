@@ -23,7 +23,7 @@ export function createMemoryQuantityMtoStore(): QuantityMtoStore {
         row.workspaceId === workspaceId
         && row.projectId === projectId
         && (workPlanId == null || row.workPlanId === workPlanId),
-      );
+      ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     },
     async getSnapshot(id) {
       return rows.get(id) ?? null;

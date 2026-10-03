@@ -16,7 +16,7 @@ export function createMemoryStructuralStore(): StructuralCalculationStore {
         row.workspaceId === workspaceId
         && row.projectId === projectId
         && (workPlanId == null || row.workPlanId === workPlanId),
-      );
+      ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     },
     async get(id) {
       return rows.get(id) ?? null;

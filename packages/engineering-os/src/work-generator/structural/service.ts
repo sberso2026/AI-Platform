@@ -7,6 +7,10 @@ import type { EngineeringWorkPlan } from "../types";
 import { deriveSteelMassTonnes, type QuantityItem } from "../../lifecycle-intelligence/quantity-mto";
 import type { EngineeringQuantityMtoService } from "../../lifecycle-intelligence/quantity-mto-service";
 import {
+  AUST300_SECTION_PROPERTY_REVISION,
+  resolveVerifiedSection,
+} from "../../optimization-intelligence/spacegass-aust300-sections";
+import {
   A15A_V5_FEATURE_FREEZE,
   A15A_V5_GENERATOR_VERSION,
   HOSTED_MALWARE_SCANNER,
@@ -88,8 +92,9 @@ export class EngineeringStructuralWorkService {
   ) {
     assertEngineeringService(commerce, "work.get", tenantId);
     const plan = await this.requirePlan(tenantId, this.workspace(commerce), input.workPlanId, input.selectedProjectId);
-    const rows = await this.store.list(plan.workspaceId, plan.projectId, plan.id);
-    const current = rows.find((row) => row.status !== "STALE") ?? rows[0] ?? null;
+    const rows = [...await this.store.list(plan.workspaceId, plan.projectId, plan.id)]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const current = rows[0] ?? null;
     const basis = current?.designBasis ?? crusherStructuralDesignBasis({ workKind: "STRUCTURAL_MEMBER_CHECK", projectId: plan.projectId, omitMaterialGrade: true });
     return {
       catalog: this.catalog(),
@@ -275,8 +280,8 @@ export class EngineeringStructuralWorkService {
     const row = await this.requireOwned(commerce, tenantId, input.calculationId, input.selectedProjectId);
     if (!row.result || row.status === "INPUT_REQUIRED") throw new Error("calculation_incomplete");
     const items = this.mtoItemsFrom(row);
-    const loaded = await this.quantityMto.loadForPlan(row.workPlanId);
-    if (!loaded) {
+    const loaded = await this.quantityMto.loadForPlan(row.workPlanId, { disciplineScope: "STRUCTURAL" });
+    if (!loaded || loaded.disciplineScope !== "STRUCTURAL" || loaded.status === "SUPERSEDED") {
       return this.quantityMto.createSnapshot(commerce, tenantId, {
         workPlanId: row.workPlanId,
         selectedProjectId: input.selectedProjectId,
@@ -356,10 +361,47 @@ export class EngineeringStructuralWorkService {
         provenance: { ...item.provenance, status: missing ? "MISSING" : "GOVERNED", revision: "B" },
       };
     });
+    if (key === "geometry.section") this.syncCatalogSectionProperties(row);
     const fingerprint = fingerprintGovernedInputs(row.designBasis.inputs);
     row.inputFingerprint = fingerprint;
     row.manifest = { ...row.manifest, inputFingerprint: fingerprint };
     if (row.result) row.result.inputFingerprint = fingerprint;
+  }
+
+  private syncCatalogSectionProperties(row: PersistedStructuralCalculation) {
+    const section = row.designBasis.inputs.find((item) => item.key === "geometry.section");
+    const catalog = resolveVerifiedSection(section?.value != null ? String(section.value) : null);
+    row.designBasis.inputs = row.designBasis.inputs.map((item) => {
+      if (item.key !== "geometry.unitMass") return item;
+      if (!catalog) {
+        return {
+          ...item,
+          value: null,
+          status: "MISSING",
+          provenance: {
+            ...item.provenance,
+            sourceId: "section-catalog-unresolved",
+            title: "Governed section catalog has no unit mass for this designation",
+            revision: null,
+            status: "MISSING",
+          },
+        };
+      }
+      return {
+        ...item,
+        value: catalog.massKgPerM,
+        unit: "kg/m",
+        status: "GOVERNED",
+        provenance: {
+          ...item.provenance,
+          sourceType: "GOVERNED_SECTION_CATALOG",
+          sourceId: catalog.libraryName,
+          title: catalog.source,
+          revision: AUST300_SECTION_PROPERTY_REVISION,
+          status: "GOVERNED",
+        },
+      };
+    });
   }
 
   private cloneAsRevision(prior: PersistedStructuralCalculation, actor: string | null): PersistedStructuralCalculation {
@@ -385,12 +427,16 @@ export class EngineeringStructuralWorkService {
   private mtoItemsFrom(row: PersistedStructuralCalculation): QuantityItem[] {
     const span = row.designBasis.inputs.find((item) => item.key === "geometry.span");
     const section = row.designBasis.inputs.find((item) => item.key === "geometry.section");
-    const mass = row.designBasis.inputs.find((item) => item.key === "geometry.unitMass");
+    const catalog = resolveVerifiedSection(section?.value != null ? String(section.value) : null);
     const grade = row.designBasis.inputs.find((item) => item.key === "material.grade");
     const length = typeof span?.value === "number" ? span.value : null;
-    const unitMass = typeof mass?.value === "number" ? mass.value : null;
-    const derived = length != null && unitMass != null
-      ? deriveSteelMassTonnes({ lengthM: length, unitMassKgPerM: unitMass, unitMassSourceRef: mass?.provenance.sourceId ?? "fixture" })
+    const unitMass = catalog?.massKgPerM ?? null;
+    const derived = length != null && catalog
+      ? deriveSteelMassTonnes({
+        lengthM: length,
+        unitMassKgPerM: catalog.massKgPerM,
+        unitMassSourceRef: catalog.libraryName,
+      })
       : { ok: false as const, quantity: null as number | null };
     return [
       {

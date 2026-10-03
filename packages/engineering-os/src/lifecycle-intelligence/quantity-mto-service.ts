@@ -194,7 +194,8 @@ export class EngineeringQuantityMtoService {
     const plan = await this.requirePlan(tenantId, workspaceId, input.workPlanId, input.selectedProjectId);
     if (!workPlanExpectsMto(plan.context.expectedOutputs)) throw new Error("mto_not_expected_on_work_plan");
     const existing = await this.store.listSnapshots(workspaceId, plan.projectId, plan.id);
-    if (existing.some((row) => row.status !== "SUPERSEDED")) {
+    const scope = input.disciplineScope ?? "MULTIDISCIPLINARY";
+    if (existing.some((row) => row.status !== "SUPERSEDED" && row.disciplineScope === scope)) {
       throw new Error("snapshot_exists_use_revision");
     }
     const actor = this.actor(commerce);
@@ -208,7 +209,7 @@ export class EngineeringQuantityMtoService {
       plan,
       revision: input.revision ?? "A",
       items,
-      disciplineScope: input.disciplineScope ?? "MULTIDISCIPLINARY",
+      disciplineScope: scope,
       actor,
       supersedes: null,
       eventType: "MTO_SNAPSHOT_CREATED",
@@ -372,12 +373,27 @@ export class EngineeringQuantityMtoService {
     const prior = await this.requireOwned(commerce, tenantId, input.fromSnapshotId, input.selectedProjectId);
     const current = await this.requireOwned(commerce, tenantId, input.toSnapshotId, input.selectedProjectId);
     if (prior.projectId !== current.projectId) throw new Error("CROSS_PROJECT_MISMATCH");
+    if (prior.disciplineScope !== current.disciplineScope) {
+      return {
+        fromRevision: prior.revision,
+        toRevision: current.revision,
+        fromScope: prior.disciplineScope,
+        toScope: current.disciplineScope,
+        likeScope: false,
+        deltas: [],
+        dollarImpact: null,
+        carbonImpact: null,
+      };
+    }
     let deltas = compareMtoSnapshots(snapshotFromPersisted(prior), snapshotFromPersisted(current));
     if (input.discipline && input.discipline !== "ALL") deltas = deltas.filter((row) => row.discipline === input.discipline);
     if (input.category && input.category !== "ALL") deltas = deltas.filter((row) => row.category === input.category);
     return {
       fromRevision: prior.revision,
       toRevision: current.revision,
+      fromScope: prior.disciplineScope,
+      toScope: current.disciplineScope,
+      likeScope: true,
       deltas,
       dollarImpact: null,
       carbonImpact: null,
@@ -427,13 +443,26 @@ export class EngineeringQuantityMtoService {
     });
   }
 
-  async loadForPlan(planId: string) {
+  async loadForPlan(planId: string, query?: { disciplineScope?: PersistedMtoSnapshot["disciplineScope"] }) {
     const plan = await this.loadPlan(planId);
     if (!plan) return null;
-    const rows = await this.store.listSnapshots(plan.workspaceId, plan.projectId, plan.id);
-    const current = rows.find((row) => row.status !== "SUPERSEDED") ?? rows[0] ?? null;
+    const rows = [...await this.store.listSnapshots(plan.workspaceId, plan.projectId, plan.id)]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const scoped = query?.disciplineScope
+      ? rows.filter((row) => row.disciplineScope === query.disciplineScope)
+      : rows;
+    const current = scoped.find((row) => row.status !== "SUPERSEDED") ?? scoped[0] ?? null;
     if (!current) return null;
-    return { items: current.items, staleness: current.staleness, snapshotId: current.id, projectId: current.projectId, fingerprint: current.snapshotFingerprint, revision: current.revision, status: current.status };
+    return {
+      items: current.items,
+      staleness: current.staleness,
+      snapshotId: current.id,
+      projectId: current.projectId,
+      fingerprint: current.snapshotFingerprint,
+      revision: current.revision,
+      status: current.status,
+      disciplineScope: current.disciplineScope,
+    };
   }
 
   async loadCompositionContext(planId: string) {

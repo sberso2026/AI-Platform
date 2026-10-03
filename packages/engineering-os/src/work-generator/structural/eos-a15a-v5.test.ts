@@ -13,6 +13,9 @@ import { createMemoryWorkPlanStore } from "../memory-store";
 import { EngineeringWorkGeneratorService } from "../service";
 import { createMemoryQuantityMtoStore } from "../../lifecycle-intelligence/quantity-mto-store";
 import { createTestQuantityMtoService } from "../../lifecycle-intelligence/quantity-mto-service";
+import { acceptGovernedQuantity, deriveCost } from "../../lifecycle-intelligence/quantity-mto";
+import { CRUSHER_APPROVED_STEEL_RATE } from "../../lifecycle-intelligence/quantity-mto-demonstrator";
+import { valuePolicyForProject } from "../../lifecycle-intelligence/cross-lifecycle-value";
 import { hostedMalwareScannerAvailable, MALWARE_SCAN_STATUS } from "../../tool-orchestration/return-validation";
 import { spaceGassExecutionBoundary } from "../../tool-orchestration/tools";
 import {
@@ -146,6 +149,8 @@ describe("EOS-A15A-V5 structural engineering work generator", () => {
     expect(ran.status).toBe("INPUT_REQUIRED");
     expect(ran.result?.results.demandMomentKNm).toBeNull();
     expect(ran.result?.warnings).toContain("MATERIAL_GRADE_REQUIRED");
+    expect(ran.result?.warnings).toContain("DESIGN_BASIS_INCOMPLETE");
+    expect(new Set(ran.result?.warnings).size).toBe(ran.result?.warnings.length);
   });
 
   it("marks results stale on input change, keeps verified results immutable, and requires engineer review", async () => {
@@ -165,9 +170,12 @@ describe("EOS-A15A-V5 structural engineering work generator", () => {
     expect(changed.id).not.toBe(verified.id);
     expect(changed.status).toBe("STALE");
     expect(changed.supersedesId).toBe(verified.id);
+    expect(changed.designBasis.inputs.find((row) => row.key === "geometry.section")?.value).toBe("360UB44.7");
+    expect(changed.designBasis.inputs.find((row) => row.key === "geometry.unitMass")?.value).toBe(44.7);
     const original = await structural.get(commerce("analysis.read"), CRUSHER_FEED_TENANT, { id: verified.id });
     expect(original.status).toBe("VERIFIED_BY_ENGINEER");
     expect(original.designBasis.inputs.find((row) => row.key === "geometry.section")?.value).toBe("310UB40.4");
+    expect(original.designBasis.inputs.find((row) => row.key === "geometry.unitMass")?.value).toBe(40.4);
     const rerun = await structural.rerun(commerce(), CRUSHER_FEED_TENANT, { calculationId: changed.id });
     expect(rerun.status).toBe("REVIEW_REQUIRED");
     expect(rerun.inputFingerprint).not.toBe(original.inputFingerprint);
@@ -234,4 +242,101 @@ describe("EOS-A15A-V5 structural engineering work generator", () => {
     }
     expect(Date.now() - started).toBeLessThan(20000);
   }, 30000);
+
+  it("syncs catalog unit mass on section change and derives steel mass from the catalog row", async () => {
+    const { work, structural, mto } = harness();
+    const plan = await crusherPlan(work);
+    const seeded = await structural.seedFixture(commerce(), CRUSHER_FEED_TENANT, { workPlanId: plan.id });
+    const ran = await structural.runCheck(commerce(), CRUSHER_FEED_TENANT, { calculationId: seeded.id });
+    const first = await structural.applyToMto(commerce(), CRUSHER_FEED_TENANT, { calculationId: ran.id });
+    expect(first.disciplineScope).toBe("STRUCTURAL");
+    expect(first.items).toHaveLength(1);
+    expect(first.items[0]?.section).toBe("310UB40.4");
+    expect(first.items[0]?.unitMass).toBe(40.4);
+    expect(first.items[0]?.quantity).toBeCloseTo(0.3232, 6);
+    const changed = await structural.changeGovernedInput(commerce(), CRUSHER_FEED_TENANT, {
+      calculationId: ran.id,
+      key: "geometry.section",
+      value: "360UB44.7",
+    });
+    expect(changed.designBasis.inputs.find((row) => row.key === "geometry.unitMass")?.value).toBe(44.7);
+    expect(changed.designBasis.inputs.find((row) => row.key === "geometry.unitMass")?.provenance.sourceId).toBe("360 UB 44.7");
+    const unknown = await structural.changeGovernedInput(commerce(), CRUSHER_FEED_TENANT, {
+      calculationId: changed.id,
+      key: "geometry.section",
+      value: "NOT-A-CATALOG-SECTION",
+    });
+    expect(unknown.designBasis.inputs.find((row) => row.key === "geometry.unitMass")?.value).toBeNull();
+    expect(unknown.designBasis.inputs.find((row) => row.key === "geometry.unitMass")?.status).toBe("MISSING");
+    const restored = await structural.changeGovernedInput(commerce(), CRUSHER_FEED_TENANT, {
+      calculationId: unknown.id,
+      key: "geometry.section",
+      value: "360UB44.7",
+    });
+    const rerun = await structural.rerun(commerce(), CRUSHER_FEED_TENANT, { calculationId: restored.id });
+    const second = await structural.applyToMto(commerce(), CRUSHER_FEED_TENANT, { calculationId: rerun.id });
+    expect(second.id).not.toBe(first.id);
+    expect(second.supersedesSnapshotId).toBe(first.id);
+    expect(second.items[0]?.section).toBe("360UB44.7");
+    expect(second.items[0]?.unitMass).toBe(44.7);
+    expect(second.items[0]?.quantity).toBeCloseTo(0.3576, 6);
+    expect(second.items[0]?.basis.sourceRef).toBe(rerun.id);
+    expect(second.items[0]?.basis.inputRefs).toContain(rerun.inputFingerprint);
+    const preserved = await mto.getSnapshot(commerce("analysis.read"), CRUSHER_FEED_TENANT, { snapshotId: first.id });
+    expect(preserved.snapshotFingerprint).toBe(first.snapshotFingerprint);
+    expect(preserved.items[0]?.quantity).toBeCloseTo(0.3232, 6);
+    const compared = await mto.compare(commerce("analysis.read"), CRUSHER_FEED_TENANT, {
+      fromSnapshotId: first.id,
+      toSnapshotId: second.id,
+    });
+    const steelDelta = compared.deltas.find((row) => row.itemCode === "ST-STEEL-UB");
+    expect(compared.likeScope).toBe(true);
+    expect(steelDelta?.kind).toBe("INCREASED");
+    expect(steelDelta?.priorQuantity).toBeCloseTo(0.3232, 6);
+    expect(steelDelta?.currentQuantity).toBeCloseTo(0.3576, 6);
+    expect(steelDelta?.unit).toBe("t");
+    const cost = deriveCost(acceptGovernedQuantity(second.items[0]!), CRUSHER_APPROVED_STEEL_RATE);
+    expect(cost.state).toBe("DERIVED");
+    if (cost.state === "DERIVED") {
+      expect(cost.amount).toBeCloseTo(0.3576 * 4200, 6);
+      expect(cost.currency).toBe("AUD");
+      expect(cost.quantity).toBeCloseTo(0.3576, 6);
+      expect(cost.rate.sourceRevision).toBe("R4");
+    }
+    expect(second.policy.carbon).toBe(valuePolicyForProject(plan.projectId).carbon);
+    expect(second.carbonRequiredWithoutFactorExample.state).toBe("CARBON_NOT_CALCULATED");
+  });
+
+  it("keeps structural calculation MTO on a STRUCTURAL lineage and does not remove multidisciplinary missing-basis items", async () => {
+    const { work, structural, mto } = harness();
+    const plan = await crusherPlan(work);
+    const seededMto = await mto.seedDemonstrator(commerce(), CRUSHER_FEED_TENANT, { workPlanId: plan.id });
+    const multiFingerprint = seededMto.revB.snapshotFingerprint;
+    const plate = seededMto.revB.items.find((row) => row.itemCode === "ST-UNKNOWN-PLATE");
+    expect(plate?.quantity).toBeNull();
+    expect(plate?.quantityOrigin).toBe("MISSING");
+    const plateQty = acceptGovernedQuantity(plate!);
+    expect(plateQty.ok).toBe(false);
+    if (!plateQty.ok) expect(plateQty.code).toBe("QUANTITY_NOT_AVAILABLE");
+    const seeded = await structural.seedFixture(commerce(), CRUSHER_FEED_TENANT, { workPlanId: plan.id });
+    const ran = await structural.runCheck(commerce(), CRUSHER_FEED_TENANT, { calculationId: seeded.id });
+    const structuralSnap = await structural.applyToMto(commerce(), CRUSHER_FEED_TENANT, { calculationId: ran.id });
+    expect(structuralSnap.disciplineScope).toBe("STRUCTURAL");
+    expect(structuralSnap.supersedesSnapshotId).toBeNull();
+    expect(structuralSnap.items.map((row) => row.itemCode)).toEqual(["ST-STEEL-UB"]);
+    const multiStill = await mto.getSnapshot(commerce("analysis.read"), CRUSHER_FEED_TENANT, { snapshotId: seededMto.revB.id });
+    expect(multiStill.status).not.toBe("SUPERSEDED");
+    expect(multiStill.snapshotFingerprint).toBe(multiFingerprint);
+    expect(multiStill.items.find((row) => row.itemCode === "ST-UNKNOWN-PLATE")?.quantity).toBeNull();
+    const unlike = await mto.compare(commerce("analysis.read"), CRUSHER_FEED_TENANT, {
+      fromSnapshotId: seededMto.revB.id,
+      toSnapshotId: structuralSnap.id,
+    });
+    expect(unlike.likeScope).toBe(false);
+    expect(unlike.deltas).toEqual([]);
+    expect(unlike.deltas.some((row) => row.kind === "REMOVED")).toBe(false);
+    const listed = await mto.listSnapshots(commerce("analysis.read"), CRUSHER_FEED_TENANT, { projectId: plan.projectId, workPlanId: plan.id });
+    expect(listed.filter((row) => row.disciplineScope === "MULTIDISCIPLINARY" && row.status !== "SUPERSEDED")).toHaveLength(1);
+    expect(listed.filter((row) => row.disciplineScope === "STRUCTURAL")).toHaveLength(1);
+  });
 });

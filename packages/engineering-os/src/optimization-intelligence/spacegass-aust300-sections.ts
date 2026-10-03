@@ -65,6 +65,11 @@ export const PILOT_COLUMN_CANDIDATES = ["200 UC 59.5", "250 UC 72.9", "310 UC 96
 export const PILOT_BEAM_CANDIDATES = ["310 UB 40.4", "360 UB 44.7", "360 UB 50.7"] as const;
 export const PILOT_BASELINE_COLUMN = "310 UC 96.8";
 export const PILOT_BASELINE_BEAM = "360 UB 44.7";
+export const AUST300_SECTION_PROPERTY_REVISION = AUST300_LIBRARY_FILE;
+
+function compactSectionDesignation(value: string): string {
+  return value.replace(/\s+/g, "").toUpperCase();
+}
 
 export function parseNominalMassKgPerM(libraryName: string): number | null {
   const match = libraryName.trim().match(/(\d+(?:\.\d+)?)\s*$/);
@@ -75,6 +80,22 @@ export function parseNominalMassKgPerM(libraryName: string): number | null {
 
 export function findVerifiedSection(libraryName: string): VerifiedSteelSection | undefined {
   return VERIFIED_AUST300_SECTIONS.find((row) => row.libraryName === libraryName);
+}
+
+/**
+ * Resolve a governed catalog row by library name or compact designation (310UB40.4).
+ * Unit mass is the catalog `massKgPerM` field — not a parse of the designation string.
+ */
+export function resolveVerifiedSection(designation: string | null | undefined): VerifiedSteelSection | undefined {
+  if (designation == null) return undefined;
+  const raw = String(designation).trim();
+  if (!raw) return undefined;
+  const compact = compactSectionDesignation(raw);
+  return VERIFIED_AUST300_SECTIONS.find((row) =>
+    row.libraryName === raw
+    || compactSectionDesignation(row.libraryName) === compact
+    || (row.colloquial != null && compactSectionDesignation(row.colloquial) === compact),
+  );
 }
 
 export function extractLibrarySectionNames(xmlOrBinary: string): string[] {

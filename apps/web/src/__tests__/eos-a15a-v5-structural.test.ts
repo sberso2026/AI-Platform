@@ -11,7 +11,9 @@ function readApp(rel: string) {
 describe("EOS-A15A-V5 structural work generator UI", () => {
   it("exposes Structural Workbench, missing-input states, and calculation actions on the Work Plan", () => {
     const plan = readApp("src/app/(platform)/engineering/work/plans/[id]/page.tsx");
+    const mto = readApp("src/app/(platform)/engineering/work/plans/[id]/mto/page.tsx");
     const api = readApp("src/app/api/engineering/work/route.ts");
+    expect(mto).toContain("No prior like-scope revision to compare.");
     expect(plan).toContain("Structural Workbench");
     expect(plan).toContain("Load incomplete fixture");
     expect(plan).toContain("Load governed fixture");
