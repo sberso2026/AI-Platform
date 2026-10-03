@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@rtb/database";
 import {
+  COMPOSITION_EVIDENCE_FROM_TYPE,
+  COMPOSITION_EVIDENCE_RELATIONSHIP,
+  COMPOSITION_EVIDENCE_TO_TYPE,
+  type CompositionEvidenceLink,
+} from "./composition-evidence";
+import {
   itemFromRow,
   itemInsertRow,
   snapshotHeaderFromRow,
@@ -13,10 +19,14 @@ export interface QuantityMtoStore {
   saveSnapshot(row: PersistedMtoSnapshot): Promise<PersistedMtoSnapshot>;
   updateSnapshotHeader(row: PersistedMtoSnapshot): Promise<PersistedMtoSnapshot>;
   updateItem(snapshotId: string, item: PersistedMtoSnapshot["items"][number]): Promise<void>;
+  listEvidenceLinks(fromId: string, tenantId: string): Promise<CompositionEvidenceLink[]>;
+  replaceEvidenceLink(link: CompositionEvidenceLink): Promise<void>;
 }
 
 export function createMemoryQuantityMtoStore(): QuantityMtoStore {
   const rows = new Map<string, PersistedMtoSnapshot>();
+  const evidence = new Map<string, CompositionEvidenceLink>();
+  const evidenceKey = (fromId: string, tenantId: string) => `${tenantId}|${fromId}|${COMPOSITION_EVIDENCE_RELATIONSHIP}|${COMPOSITION_EVIDENCE_TO_TYPE}`;
   return {
     async listSnapshots(workspaceId, projectId, workPlanId) {
       return [...rows.values()].filter((row) =>
@@ -56,6 +66,13 @@ export function createMemoryQuantityMtoStore(): QuantityMtoStore {
       if (existing.status === "VERIFIED" || existing.status === "SUPERSEDED") throw new Error("verified_mto_immutable");
       existing.items = existing.items.map((row) => (row.id === item.id || row.itemCode === item.itemCode ? item : row));
       rows.set(snapshotId, existing);
+    },
+    async listEvidenceLinks(fromId, tenantId) {
+      const row = evidence.get(evidenceKey(fromId, tenantId));
+      return row ? [structuredClone(row)] : [];
+    },
+    async replaceEvidenceLink(link) {
+      evidence.set(evidenceKey(link.fromId, link.tenantId), structuredClone(link));
     },
   };
 }
@@ -178,6 +195,56 @@ export class SupabaseQuantityMtoStore implements QuantityMtoStore {
     const payload = objectLinkInsertRows(row);
     if (!payload.length) return;
     const { error } = await db(this.supabase).from("engineering_object_links").insert(payload);
+    if (error) throw new Error(error.message);
+  }
+
+  async listEvidenceLinks(fromId: string, tenantId: string) {
+    const { data, error } = await db(this.supabase)
+      .from("engineering_object_links")
+      .select("tenant_id,from_type,from_id,to_type,to_id,relationship,created_at,created_by")
+      .eq("tenant_id", tenantId)
+      .eq("from_type", COMPOSITION_EVIDENCE_FROM_TYPE)
+      .eq("from_id", fromId)
+      .eq("to_type", COMPOSITION_EVIDENCE_TO_TYPE)
+      .eq("relationship", COMPOSITION_EVIDENCE_RELATIONSHIP)
+      .order("created_at", { ascending: false })
+      .limit(8);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      tenantId: String(row.tenant_id),
+      fromType: COMPOSITION_EVIDENCE_FROM_TYPE,
+      fromId: String(row.from_id),
+      toType: COMPOSITION_EVIDENCE_TO_TYPE,
+      toId: String(row.to_id),
+      relationship: COMPOSITION_EVIDENCE_RELATIONSHIP,
+      createdAt: String(row.created_at ?? ""),
+      createdBy: row.created_by ? String(row.created_by) : null,
+    }));
+  }
+
+  async replaceEvidenceLink(link: CompositionEvidenceLink) {
+    const existing = await this.listEvidenceLinks(link.fromId, link.tenantId);
+    if (existing.length) {
+      const { error: delError } = await db(this.supabase)
+        .from("engineering_object_links")
+        .delete()
+        .eq("tenant_id", link.tenantId)
+        .eq("from_type", COMPOSITION_EVIDENCE_FROM_TYPE)
+        .eq("from_id", link.fromId)
+        .eq("to_type", COMPOSITION_EVIDENCE_TO_TYPE)
+        .eq("relationship", COMPOSITION_EVIDENCE_RELATIONSHIP);
+      if (delError) throw new Error(delError.message);
+    }
+    const { error } = await db(this.supabase).from("engineering_object_links").insert({
+      tenant_id: link.tenantId,
+      from_type: link.fromType,
+      from_id: link.fromId,
+      to_type: link.toType,
+      to_id: link.toId,
+      relationship: link.relationship,
+      relationship_governed: false,
+      created_by: link.createdBy && UUID_RE.test(link.createdBy) ? link.createdBy : null,
+    });
     if (error) throw new Error(error.message);
   }
 }

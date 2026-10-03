@@ -17,6 +17,29 @@ import { DEFAULT_TEMPLATE_FALLBACK_POLICY, type ArtifactTemplatePolicyRecord, ty
 import { ARTIFACT_AI_BOUNDARY, ARTIFACT_PRIVACY, type ArtifactType, type GeneratedEngineeringArtifact } from "./types";
 import { composeDeliverableSource, compareDeliverableStaleness, A15A_V4_FEATURE_FREEZE } from "../lifecycle-intelligence/deliverable-composition";
 import type { PersistedMtoSnapshot } from "../lifecycle-intelligence/quantity-mto-persist";
+import {
+  emptyCompositionContext,
+  evaluateEngineeringStateCompatibility,
+  mtoInputRefs,
+  type CompositionBindingKind,
+  type CompositionCalculationRef,
+  type CompositionContext,
+} from "../lifecycle-intelligence/composition-evidence";
+
+type LegacyMtoContext = { current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null };
+
+function asCompositionContext(value: CompositionContext | LegacyMtoContext | null | undefined): CompositionContext {
+  if (!value) return emptyCompositionContext();
+  if ("bindingKind" in value) return value;
+  return {
+    ...emptyCompositionContext(),
+    current: value.current,
+    previous: value.previous,
+    bindingKind: value.current ? "PLAN_LOCAL" : "NONE",
+    selectedFingerprint: value.current?.snapshotFingerprint ?? null,
+    producingWorkPlanId: value.current?.workPlanId ?? null,
+  };
+}
 
 export const CALLER_SUPPLIED_ARTIFACT_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current", "objectKey", "storageKind"] as const;
 
@@ -49,10 +72,15 @@ export class EngineeringArtifactAutomationService {
     private readonly binaryStore: ArtifactBinaryStore = new LegacyRelationalArtifactBinaryStore(),
   ) {}
 
-  private mtoLoader: ((workPlanId: string) => Promise<{ current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null } | null>) | null = null;
+  private mtoLoader: ((workPlanId: string) => Promise<CompositionContext | { current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null } | null>) | null = null;
+  private calcLoader: ((workPlanId: string) => Promise<CompositionCalculationRef | null>) | null = null;
 
-  bindQuantityMto(loader: (workPlanId: string) => Promise<{ current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null } | null>) {
+  bindQuantityMto(loader: (workPlanId: string) => Promise<CompositionContext | { current: PersistedMtoSnapshot | null; previous: PersistedMtoSnapshot | null } | null>) {
     this.mtoLoader = loader;
+  }
+
+  bindStructuralCalculation(loader: (workPlanId: string) => Promise<CompositionCalculationRef | null>) {
+    this.calcLoader = loader;
   }
 
   catalog() {
@@ -278,16 +306,73 @@ export class EngineeringArtifactAutomationService {
     const composeMemo = template.artifactType === "TECHNICAL_MEMORANDUM" && template.code === "EAT-TECH-MEMO";
     const shouldCompose = composedTypes.has(template.artifactType) || composeMemo;
     const mtoContext = shouldCompose && this.mtoLoader
-      ? await this.mtoLoader(plan.id).catch(() => null)
-      : null;
+      ? asCompositionContext(await this.mtoLoader(plan.id))
+      : emptyCompositionContext();
+    const blocked = mtoContext.generationBlocked;
+    if (blocked) {
+      const run = {
+        id: "blocked-composition-source",
+        tenantId: plan.tenantId,
+        workspaceId: plan.workspaceId,
+        projectId: plan.projectId,
+        workPlanId: plan.id,
+        templateCode: template.code,
+        templateVersion: template.version,
+        artifactType: template.artifactType,
+        outputFormat: template.outputFormat,
+        requestedBy: commerce.actorUserId ?? null,
+        generatedAt: new Date().toISOString(),
+        workPlanInputFingerprint: plan.inputFingerprint,
+        artifactId: null,
+        status: "GENERATION_BLOCKED" as const,
+        warnings: [] as string[],
+        explanation: blocked.explanation,
+        metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
+      };
+      await this.store.saveRun(run);
+      return { ok: false as const, run, artifact: null, resolution };
+    }
+    const calculation = shouldCompose && this.calcLoader ? await this.calcLoader(plan.id) : null;
+    const snapshot = mtoContext.current;
+    const bindingKind: CompositionBindingKind = mtoContext.bindingKind;
+    const compatible = evaluateEngineeringStateCompatibility({
+      bindingKind,
+      reportCalculationFingerprint: calculation?.inputFingerprint ?? null,
+      mtoInputRefs: mtoInputRefs(snapshot),
+    });
+    if (!compatible.ok) {
+      const run = {
+        id: "blocked-engineering-state",
+        tenantId: plan.tenantId,
+        workspaceId: plan.workspaceId,
+        projectId: plan.projectId,
+        workPlanId: plan.id,
+        templateCode: template.code,
+        templateVersion: template.version,
+        artifactType: template.artifactType,
+        outputFormat: template.outputFormat,
+        requestedBy: commerce.actorUserId ?? null,
+        generatedAt: new Date().toISOString(),
+        workPlanInputFingerprint: plan.inputFingerprint,
+        artifactId: null,
+        status: "GENERATION_BLOCKED" as const,
+        warnings: [] as string[],
+        explanation: "ENGINEERING_STATE_MISMATCH. Bound MTO input refs do not include the Design Report calculation fingerprint. Generation blocked.",
+        metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
+      };
+      await this.store.saveRun(run);
+      return { ok: false as const, run, artifact: null, resolution };
+    }
     const composition = shouldCompose
       ? composeDeliverableSource({
           plan,
           templateCode: template.code,
           templateVersion: template.version,
           artifactType: template.artifactType,
-          snapshot: mtoContext?.current ?? null,
-          previousSnapshot: mtoContext?.previous ?? null,
+          snapshot,
+          previousSnapshot: mtoContext.previous,
+          bindingKind,
+          calculation,
         })
       : null;
     const result = await generateEngineeringArtifact({

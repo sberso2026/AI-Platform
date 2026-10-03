@@ -251,6 +251,13 @@ export default function WorkPlanPage() {
   const [externalContext, setExternalContext] = useState<Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }>>([]);
   const [handoff, setHandoff] = useState<{ fromStage?: string; toStage?: string; inheritedContext?: string[]; openAssumptions?: Array<{ title: string; disposition: string }>; outstandingInformation?: string[]; decisions?: string[]; requiredEngineeringWork?: string } | null>(null);
   const [managedRepoId, setManagedRepoId] = useState<string | null>(null);
+  const [bindMtoSnapshotId, setBindMtoSnapshotId] = useState("");
+  const [compositionEvidence, setCompositionEvidence] = useState<{
+    bindingKind?: string;
+    producingWorkPlanId?: string | null;
+    mtoSnapshotId?: string | null;
+    generationBlocked?: { code: string; explanation: string } | null;
+  } | null>(null);
 
   async function load() {
     const response = await fetch(`/api/engineering/work?action=plan&id=${encodeURIComponent(params.id)}&selectedProjectId=${encodeURIComponent(selectedProjectId ?? "")}`);
@@ -258,7 +265,7 @@ export default function WorkPlanPage() {
     if (json.errorMessage) setError(json.errorMessage);
     else {
       setPlan(json.data);
-      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; structural?: StructuralWorkbench; deliverableReadiness?: Record<string, string>; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
+      const raw = json.raw as { artifacts?: GeneratedArtifact[]; launcher?: Launcher; tools?: ToolCatalog; preIssue?: PreIssuePayload; impact?: ImpactPayload; mto?: MtoSummary; structural?: StructuralWorkbench; deliverableReadiness?: Record<string, string>; compositionEvidence?: { bindingKind?: string; producingWorkPlanId?: string | null; mtoSnapshotId?: string | null; generationBlocked?: { code: string; explanation: string } | null }; templatePreview?: { template?: { code: string; version: string; name: string }; sourceClass?: string | null; fallbackUsed?: boolean; reason?: string }; externalContext?: Array<{ id: string; objectType: string; objectNumber: string | null; displayName: string; etag: string | null; presentation?: { title: string; externalSystem: string } }> } | null;
       if (raw?.launcher) setLauncher(raw.launcher);
       if (raw?.tools) setTools(raw.tools);
       if (raw?.preIssue) setPreIssue(raw.preIssue);
@@ -266,6 +273,7 @@ export default function WorkPlanPage() {
       if (raw?.mto) setMto(raw.mto);
       if (raw?.structural) setStructural(raw.structural);
       if (raw?.deliverableReadiness) setDeliverableReadiness(raw.deliverableReadiness);
+      if (raw?.compositionEvidence) setCompositionEvidence(raw.compositionEvidence);
       if (raw?.templatePreview) setTemplatePreview(raw.templatePreview);
       if (raw?.externalContext) setExternalContext(raw.externalContext);
     }
@@ -445,6 +453,11 @@ export default function WorkPlanPage() {
     if (action === "recordImpactDecision") {
       setImpact(json.data as ImpactPayload);
       setMessage("Human decision recorded. EOS did not select a winner.");
+      return;
+    }
+    if (action === "bindCompositionEvidence") {
+      setMessage("Explicit governed MTO evidence bound. This plan does not own the MTO. Cross-Work-Plan calculation execution remains prohibited.");
+      await load();
       return;
     }
     await load();
@@ -819,7 +832,7 @@ export default function WorkPlanPage() {
                           <p>Demand M {structural.current.result.results.demandMomentKNm ?? "—"} kN.m · V {structural.current.result.results.demandShearKN ?? "—"} kN · util {structural.current.result.results.utilization ?? "—"} · capacity {structural.current.result.results.capacityStatus}</p>
                           <p>Connection {structural.current.result.results.connection} · Foundation {structural.current.result.results.foundation} · approved {String(structural.current.result.engineeringApproved)}</p>
                           <ul className="mt-1 list-disc pl-5">
-                            {structural.current.result.warnings.map((row) => <li key={row}>{row}</li>)}
+                            {structural.current.result.warnings.map((row, index) => <li key={`${index}-${row}`}>{row}</li>)}
                           </ul>
                         </>
                       )}
@@ -881,10 +894,35 @@ export default function WorkPlanPage() {
                   <p className="mt-1 text-sm text-muted-foreground">Source readiness is computed from governing information, requirements, assumptions, decisions, interfaces, MTO, cost, and carbon. This is not an engineering approval score.</p>
                 )}
                 {mto ? (
-                  <p className="mt-2 text-sm">Bound MTO Rev {mto.revision} · {mto.status}{mto.status !== "VERIFIED" ? " · CONDITIONAL — unverified items remain visible" : ""}</p>
+                  <p className="mt-2 text-sm">
+                    {compositionEvidence?.bindingKind === "EXPLICIT" ? "Explicit governed MTO evidence" : "Bound MTO"} Rev {mto.revision} · {mto.status}
+                    {compositionEvidence?.producingWorkPlanId && compositionEvidence.producingWorkPlanId !== plan.id ? " · referenced from producing Work Plan (not owned by this plan)" : ""}
+                    {mto.status !== "VERIFIED" ? " · CONDITIONAL — unverified items remain visible" : ""}
+                  </p>
                 ) : (
                   <p className="mt-2 text-sm">MTO: MISSING — Design Report quantity section will be QUANTITY_NOT_AVAILABLE.</p>
                 )}
+                {compositionEvidence?.generationBlocked && (
+                  <p className="mt-2 text-sm text-destructive" role="alert">{compositionEvidence.generationBlocked.code}: {compositionEvidence.generationBlocked.explanation}</p>
+                )}
+                <div className="mt-2 flex flex-wrap items-end gap-2">
+                  <label className="text-sm">
+                    Governed MTO snapshot id
+                    <input
+                      className="eos-select mt-1 block"
+                      value={bindMtoSnapshotId}
+                      onChange={(event) => setBindMtoSnapshotId(event.target.value)}
+                      aria-label="Governed MTO snapshot id"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="rounded border px-3 py-1 text-sm"
+                    onClick={() => void act("bindCompositionEvidence", { workPlanId: plan.id, mtoSnapshotId: bindMtoSnapshotId })}
+                  >
+                    Bind governed MTO evidence
+                  </button>
+                </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "DESIGN_REPORT", projectCode: "ER-A1" })}>Generate Design Report</button>
                   <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void act("generateArtifact", { workPlanId: plan.id, artifactType: "TECHNICAL_MEMORANDUM", projectCode: "ER-A1" })}>Generate Technical Note</button>

@@ -43,6 +43,19 @@ import {
   type PersistedMtoSnapshot,
 } from "./quantity-mto-persist";
 import { createMemoryQuantityMtoStore, SupabaseQuantityMtoStore, type QuantityMtoStore } from "./quantity-mto-store";
+import {
+  A15A_V5B_REPORTBIND,
+  COMPOSITION_EVIDENCE_FROM_TYPE,
+  COMPOSITION_EVIDENCE_RELATIONSHIP,
+  COMPOSITION_EVIDENCE_TO_TYPE,
+  assertCompositionEvidenceScope,
+  compositionBlock,
+  emptyCompositionContext,
+  evaluateEngineeringStateCompatibility,
+  mtoInputRefs,
+  type CompositionCalculationRef,
+  type CompositionContext,
+} from "./composition-evidence";
 
 export const MTO_WORKBENCH_RECON = {
   quantityBasis: "REUSE_V2_EMBEDDED",
@@ -57,6 +70,7 @@ export const MTO_WORKBENCH_RECON = {
 } as const;
 
 type PlanLoader = (id: string) => Promise<EngineeringWorkPlan | null>;
+type CalculationLoader = (planId: string) => Promise<CompositionCalculationRef | null>;
 
 type EventRecorder = (
   commerce: CommerceExecutionContext,
@@ -129,11 +143,18 @@ export class EngineeringQuantityMtoService {
     private readonly recordEvent?: EventRecorder,
   ) {}
 
+  private loadCalculation: CalculationLoader | null = null;
+
+  bindStructuralCalculation(loader: CalculationLoader) {
+    this.loadCalculation = loader;
+  }
+
   catalog() {
     return {
       recon: MTO_WORKBENCH_RECON,
       freeze: A15A_V3_FEATURE_FREEZE,
       newTopLevelDomain: false,
+      reportbind: A15A_V5B_REPORTBIND,
       quantityBasisIndependentTable: false,
       verificationMeans: "quantity/basis verification, not design approval",
       aiCannotVerifyOwnExtraction: true,
@@ -443,6 +464,60 @@ export class EngineeringQuantityMtoService {
     });
   }
 
+  async bindCompositionEvidence(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      workPlanId: string;
+      mtoSnapshotId: string;
+      selectedProjectId?: string | null;
+      reportCalculationFingerprint?: string | null;
+    },
+  ) {
+    assertEngineeringService(commerce, "work.write", tenantId);
+    const workspaceId = this.workspace(commerce);
+    const plan = await this.requirePlan(tenantId, workspaceId, input.workPlanId, input.selectedProjectId);
+    if (!input.mtoSnapshotId) throw new Error("COMPOSITION_SOURCE_NOT_AVAILABLE");
+    const snapshot = await this.store.getSnapshot(input.mtoSnapshotId);
+    if (!snapshot) throw new Error("COMPOSITION_SOURCE_NOT_AVAILABLE");
+    const scope = assertCompositionEvidenceScope(snapshot, {
+      tenantId,
+      workspaceId,
+      projectId: plan.projectId,
+      systemId: plan.systemId,
+    });
+    if (scope !== "ok") throw new Error(scope);
+    if (input.selectedProjectId && input.selectedProjectId !== snapshot.projectId) throw new Error("COMPOSITION_SOURCE_UNAUTHORIZED");
+    const calculation = this.loadCalculation ? await this.loadCalculation(plan.id) : null;
+    const fingerprint = input.reportCalculationFingerprint ?? calculation?.inputFingerprint ?? null;
+    const compatible = evaluateEngineeringStateCompatibility({
+      bindingKind: "EXPLICIT",
+      reportCalculationFingerprint: fingerprint,
+      mtoInputRefs: mtoInputRefs(snapshot),
+    });
+    if (!compatible.ok) throw new Error(compatible.code);
+    await this.store.replaceEvidenceLink({
+      tenantId,
+      fromType: COMPOSITION_EVIDENCE_FROM_TYPE,
+      fromId: plan.id,
+      toType: COMPOSITION_EVIDENCE_TO_TYPE,
+      toId: snapshot.id,
+      relationship: COMPOSITION_EVIDENCE_RELATIONSHIP,
+      createdAt: new Date().toISOString(),
+      createdBy: this.actor(commerce),
+    });
+    return {
+      workPlanId: plan.id,
+      mtoSnapshotId: snapshot.id,
+      mtoFingerprint: snapshot.snapshotFingerprint,
+      producingWorkPlanId: snapshot.workPlanId,
+      bindingKind: "EXPLICIT" as const,
+      ownershipTransferred: false,
+      snapshotCopied: false,
+      calculationExecuted: false,
+    };
+  }
+
   async loadForPlan(planId: string, query?: { disciplineScope?: PersistedMtoSnapshot["disciplineScope"] }) {
     const plan = await this.loadPlan(planId);
     if (!plan) return null;
@@ -465,16 +540,85 @@ export class EngineeringQuantityMtoService {
     };
   }
 
-  async loadCompositionContext(planId: string) {
+  async loadCompositionContext(planId: string): Promise<CompositionContext> {
     const plan = await this.loadPlan(planId);
-    if (!plan) return { current: null, previous: null };
-    const rows = await this.store.listSnapshots(plan.workspaceId, plan.projectId, plan.id);
-    const current = rows.find((row) => row.status !== "SUPERSEDED") ?? rows[0] ?? null;
-    if (!current) return { current: null, previous: null };
-    const previous = current.supersedesSnapshotId
-      ? rows.find((row) => row.id === current.supersedesSnapshotId) ?? await this.store.getSnapshot(current.supersedesSnapshotId)
+    if (!plan) return emptyCompositionContext();
+    const localRows = await this.store.listSnapshots(plan.workspaceId, plan.projectId, plan.id);
+    const planLocal = localRows.find((row) => row.status !== "SUPERSEDED") ?? localRows[0] ?? null;
+    const links = await this.store.listEvidenceLinks(plan.id, plan.tenantId);
+    const explicitId = links[0]?.toId ?? null;
+    if (explicitId) {
+      const bound = await this.store.getSnapshot(explicitId);
+      if (!bound) {
+        return {
+          ...emptyCompositionContext(),
+          bindingKind: "EXPLICIT",
+          generationBlocked: compositionBlock(
+            "COMPOSITION_SOURCE_NOT_AVAILABLE",
+            "Explicit governed MTO binding cannot be loaded. Fail closed. No silent plan-local substitute.",
+          ),
+        };
+      }
+      const scope = assertCompositionEvidenceScope(bound, {
+        tenantId: plan.tenantId,
+        workspaceId: plan.workspaceId,
+        projectId: plan.projectId,
+        systemId: plan.systemId,
+      });
+      if (scope !== "ok") {
+        return {
+          ...emptyCompositionContext(),
+          bindingKind: "EXPLICIT",
+          generationBlocked: compositionBlock(scope, `Explicit MTO evidence denied: ${scope}.`),
+        };
+      }
+      const producingRows = bound.workPlanId
+        ? await this.store.listSnapshots(bound.workspaceId, bound.projectId, bound.workPlanId)
+        : [];
+      const successor = producingRows.find((row) =>
+        row.status !== "SUPERSEDED"
+        && row.disciplineScope === bound.disciplineScope
+        && row.id !== bound.id,
+      ) ?? null;
+      if (bound.status === "SUPERSEDED") {
+        return {
+          current: null,
+          previous: bound,
+          bindingKind: "EXPLICIT",
+          selectedFingerprint: successor?.snapshotFingerprint ?? bound.snapshotFingerprint,
+          producingWorkPlanId: bound.workPlanId,
+          generationBlocked: compositionBlock(
+            "SOURCE_SUPERSEDED",
+            "Explicit MTO snapshot is SUPERSEDED. Rebind to the current governed source before generating. Composer will not silently substitute another snapshot.",
+          ),
+        };
+      }
+      const previous = bound.supersedesSnapshotId
+        ? localRows.find((row) => row.id === bound.supersedesSnapshotId)
+          ?? producingRows.find((row) => row.id === bound.supersedesSnapshotId)
+          ?? await this.store.getSnapshot(bound.supersedesSnapshotId)
+        : null;
+      return {
+        current: bound,
+        previous: previous ?? null,
+        bindingKind: "EXPLICIT",
+        selectedFingerprint: bound.snapshotFingerprint,
+        producingWorkPlanId: bound.workPlanId,
+        generationBlocked: null,
+      };
+    }
+    if (!planLocal) return emptyCompositionContext();
+    const previous = planLocal.supersedesSnapshotId
+      ? localRows.find((row) => row.id === planLocal.supersedesSnapshotId) ?? await this.store.getSnapshot(planLocal.supersedesSnapshotId)
       : null;
-    return { current, previous: previous ?? null };
+    return {
+      current: planLocal,
+      previous: previous ?? null,
+      bindingKind: "PLAN_LOCAL",
+      selectedFingerprint: planLocal.snapshotFingerprint,
+      producingWorkPlanId: planLocal.workPlanId,
+      generationBlocked: null,
+    };
   }
 
   async reviewPlan(

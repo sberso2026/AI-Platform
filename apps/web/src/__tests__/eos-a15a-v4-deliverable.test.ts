@@ -23,5 +23,7 @@ describe("EOS-A15A-V4 governed deliverable composition UI", () => {
     expect(api).toContain("composeDeliverableSource");
     expect(api).toContain("deliverableReadiness");
     expect(api).toContain("compareArtifact");
+    expect(api).toContain("bindCompositionEvidence");
+    expect(plan).toContain("Bind governed MTO evidence");
   });
 });

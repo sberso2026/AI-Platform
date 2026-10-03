@@ -179,6 +179,9 @@ export class EngineeringStructuralWorkService {
       ? await this.requireOwned(commerce, tenantId, input.calculationId, input.selectedProjectId)
       : (await this.latestForPlan(commerce, tenantId, input.workPlanId ?? "", input.selectedProjectId));
     if (!current) throw new Error("structural_calculation_required");
+    if (input.workPlanId && current.workPlanId !== input.workPlanId) {
+      throw new Error("CROSS_WORK_PLAN_CALCULATION_EXECUTION_PROHIBITED");
+    }
     if (isVerifiedImmutable(current)) throw new Error("verified_calculation_immutable");
     const manifest = buildManifest({
       id: current.manifest.id,
@@ -235,10 +238,11 @@ export class EngineeringStructuralWorkService {
   async changeGovernedInput(
     commerce: CommerceExecutionContext,
     tenantId: string,
-    input: { calculationId: string; key: string; value: number | string | null; selectedProjectId?: string | null },
+    input: { calculationId: string; key: string; value: number | string | null; selectedProjectId?: string | null; workPlanId?: string },
   ) {
     assertEngineeringService(commerce, "work.write", tenantId);
     const prior = await this.requireOwned(commerce, tenantId, input.calculationId, input.selectedProjectId);
+    this.assertCalculationPlan(prior, input.workPlanId);
     if (isVerifiedImmutable(prior)) {
       const next = this.cloneAsRevision(prior, this.actor(commerce));
       this.applyInput(next, input.key, input.value);
@@ -258,10 +262,11 @@ export class EngineeringStructuralWorkService {
   async rerun(
     commerce: CommerceExecutionContext,
     tenantId: string,
-    input: { calculationId: string; selectedProjectId?: string | null },
+    input: { calculationId: string; selectedProjectId?: string | null; workPlanId?: string },
   ) {
     assertEngineeringService(commerce, "work.write", tenantId);
     const prior = await this.requireOwned(commerce, tenantId, input.calculationId, input.selectedProjectId);
+    this.assertCalculationPlan(prior, input.workPlanId);
     if (isVerifiedImmutable(prior) || prior.status === "STALE") {
       const next = this.cloneAsRevision(prior, this.actor(commerce));
       const saved = await this.store.save(next);
@@ -273,11 +278,12 @@ export class EngineeringStructuralWorkService {
   async applyToMto(
     commerce: CommerceExecutionContext,
     tenantId: string,
-    input: { calculationId: string; selectedProjectId?: string | null },
+    input: { calculationId: string; selectedProjectId?: string | null; workPlanId?: string },
   ) {
     assertEngineeringService(commerce, "work.write", tenantId);
     if (!this.quantityMto) throw new Error("mto_service_required");
     const row = await this.requireOwned(commerce, tenantId, input.calculationId, input.selectedProjectId);
+    this.assertCalculationPlan(row, input.workPlanId);
     if (!row.result || row.status === "INPUT_REQUIRED") throw new Error("calculation_incomplete");
     const items = this.mtoItemsFrom(row);
     const loaded = await this.quantityMto.loadForPlan(row.workPlanId, { disciplineScope: "STRUCTURAL" });
@@ -480,6 +486,12 @@ export class EngineeringStructuralWorkService {
         },
       },
     ];
+  }
+
+  private assertCalculationPlan(row: PersistedStructuralCalculation, workPlanId?: string | null) {
+    if (workPlanId && row.workPlanId !== workPlanId) {
+      throw new Error("CROSS_WORK_PLAN_CALCULATION_EXECUTION_PROHIBITED");
+    }
   }
 
   private async latestForPlan(

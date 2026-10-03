@@ -41,6 +41,10 @@ export {
   EVIDENCE_CLASSES,
 } from "./lifecycle-intelligence/deliverable-composition";
 export {
+  A15A_V5B_REPORTBIND,
+  evaluateEngineeringStateCompatibility,
+} from "./lifecycle-intelligence/composition-evidence";
+export {
   A15A_V5_FEATURE_FREEZE,
   A15A_V5_GENERATOR_VERSION,
   EngineeringStructuralWorkService,

@@ -230,6 +230,23 @@ export function createEngineeringOS(
     (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
     quantityMto,
   );
+  const loadCompositionCalculation = async (planId: string) => {
+    const plan = await new SupabaseWorkPlanStore(supabase).getPlan(planId);
+    if (!plan) return null;
+    const rows = await new SupabaseStructuralCalculationStore(supabase).list(plan.workspaceId, plan.projectId, plan.id);
+    const current = rows[0];
+    if (!current) return null;
+    return {
+      id: current.id,
+      workPlanId: current.workPlanId,
+      inputFingerprint: current.result?.inputFingerprint ?? current.inputFingerprint,
+      engineId: current.engineId,
+      engineVersion: current.engineVersion,
+      method: current.engineId,
+      reviewStatus: current.reviewStatus,
+    };
+  };
+  quantityMto.bindStructuralCalculation(loadCompositionCalculation);
   const artifactBinaryStore = new RoutingArtifactBinaryStore(
     new LegacyRelationalArtifactBinaryStore(),
     SupabaseArtifactBinaryStore.fromSupabase(options?.artifactStorageClient ?? supabase),
@@ -350,6 +367,7 @@ export function createEngineeringOS(
     };
   });
   artifactAutomation.bindQuantityMto((planId) => quantityMto.loadCompositionContext(planId));
+  artifactAutomation.bindStructuralCalculation(loadCompositionCalculation);
   const attention = new EngineeringAttentionService(supabase, {
     projects,
     workGenerator,

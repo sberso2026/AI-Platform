@@ -15,7 +15,8 @@ function statusFor(message: string): number {
     message.includes("broadening") ||
     message.includes("CROSS_PROJECT") ||
     message.includes("CROSS_TENANT") ||
-    message.includes("CROSS_WORKSPACE")
+    message.includes("CROSS_WORKSPACE") ||
+    message.includes("CROSS_WORK_PLAN")
   ) return 403;
   if (message === "workspace_required" || message === "caller_supplied_authority_rejected" || message === "project_required") return 400;
   if (message === "work_plan_stale" || message === "unmanaged_file_outside_eos" || message === "verified_mto_immutable" || message === "snapshot_verification_blocked") return 409;
@@ -316,13 +317,28 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       preIssue = null;
     }
     let mto: unknown = null;
+    let compositionEvidence: unknown = null;
     try {
-      const snapshots = await ctx.engineering.quantityMto.listSnapshots(commerce, ctx.tenantId, {
-        projectId: data.projectId,
-        workPlanId: data.id,
-        selectedProjectId,
-      });
-      mto = snapshots.find((row) => row.status !== "SUPERSEDED") ?? snapshots[0] ?? null;
+      const bound = await ctx.engineering.quantityMto.loadCompositionContext(data.id);
+      compositionEvidence = {
+        bindingKind: bound.bindingKind,
+        producingWorkPlanId: bound.producingWorkPlanId,
+        selectedFingerprint: bound.selectedFingerprint,
+        generationBlocked: bound.generationBlocked,
+        mtoSnapshotId: bound.current?.id ?? null,
+      };
+      if (bound.current) {
+        mto = ctx.engineering.quantityMto.present(bound.current);
+      } else if (bound.bindingKind === "EXPLICIT") {
+        mto = null;
+      } else {
+        const snapshots = await ctx.engineering.quantityMto.listSnapshots(commerce, ctx.tenantId, {
+          projectId: data.projectId,
+          workPlanId: data.id,
+          selectedProjectId,
+        });
+        mto = snapshots.find((row) => row.status !== "SUPERSEDED") ?? snapshots[0] ?? null;
+      }
     } catch {
       mto = null;
     }
@@ -391,6 +407,7 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
       mto,
       structural,
       deliverableReadiness,
+      compositionEvidence,
       templatePreview,
       externalContext,
     });
@@ -719,7 +736,7 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       let currentMtoFingerprint: string | null = null;
       try {
         const bound = await ctx.engineering.quantityMto.loadCompositionContext(plan.id);
-        currentMtoFingerprint = bound.current?.snapshotFingerprint ?? null;
+        currentMtoFingerprint = bound.selectedFingerprint ?? bound.current?.snapshotFingerprint ?? null;
       } catch {
         currentMtoFingerprint = null;
       }
@@ -970,6 +987,15 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       });
       return NextResponse.json({ data });
     }
+    if (action === "bindCompositionEvidence") {
+      const data = await ctx.engineering.quantityMto.bindCompositionEvidence(commerce, ctx.tenantId, {
+        workPlanId: String(body.workPlanId ?? body.id ?? ""),
+        mtoSnapshotId: String(body.mtoSnapshotId ?? ""),
+        selectedProjectId: typeof body.selectedProjectId === "string" ? body.selectedProjectId : null,
+        reportCalculationFingerprint: typeof body.reportCalculationFingerprint === "string" ? body.reportCalculationFingerprint : null,
+      });
+      return NextResponse.json({ data });
+    }
     if (action === "createMto" || action === "seedMtoDemonstrator" || action === "verifyMtoItem" || action === "verifyMtoSnapshot" || action === "createMtoRevision" || action === "refreshMtoFreshness" || action === "mtoChangeImpacts") {
       const selectedProjectId = typeof body.selectedProjectId === "string" ? body.selectedProjectId : null;
       if (action === "createMto") {
@@ -1060,6 +1086,7 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
           key: String(body.key ?? "geometry.section"),
           value: typeof body.value === "number" || typeof body.value === "string" ? body.value : null,
           selectedProjectId,
+          workPlanId: typeof body.workPlanId === "string" ? body.workPlanId : String(body.id ?? ""),
         });
         return NextResponse.json({ data });
       }
@@ -1067,12 +1094,14 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
         const data = await ctx.engineering.structuralWork.rerun(commerce, ctx.tenantId, {
           calculationId: String(body.calculationId ?? ""),
           selectedProjectId,
+          workPlanId: typeof body.workPlanId === "string" ? body.workPlanId : String(body.id ?? ""),
         });
         return NextResponse.json({ data });
       }
       const data = await ctx.engineering.structuralWork.applyToMto(commerce, ctx.tenantId, {
         calculationId: String(body.calculationId ?? ""),
         selectedProjectId,
+        workPlanId: typeof body.workPlanId === "string" ? body.workPlanId : String(body.id ?? ""),
       });
       return NextResponse.json({ data });
     }

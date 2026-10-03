@@ -21,6 +21,7 @@ import {
   type QuantityItem,
 } from "./quantity-mto";
 import { valuePolicyForProject, type ProjectValuePolicy, type ValueApplicability } from "./cross-lifecycle-value";
+import { mtoInputRefs, mtoSourceCalculationId, type CompositionBindingKind, type CompositionCalculationRef } from "./composition-evidence";
 
 export const A15A_V4_GENERATOR_VERSION = "EOS-A15A-V4";
 
@@ -142,6 +143,17 @@ export type DeliverableSourceManifest = {
   mtoFingerprint: string | null;
   mtoSourceRevisions: string[];
   mtoVerificationState: string | null;
+  mtoSourceType?: "MTO_SNAPSHOT" | null;
+  mtoScope?: string | null;
+  mtoProducingWorkPlanId?: string | null;
+  mtoBindingKind?: "EXPLICIT" | "PLAN_LOCAL" | "NONE" | null;
+  mtoSourceCalculationId?: string | null;
+  mtoSourceInputRefs?: string[];
+  calculationId?: string | null;
+  calculationInputFingerprint?: string | null;
+  calculationEngine?: string | null;
+  calculationMethod?: string | null;
+  calculationReviewState?: string | null;
   templateCode: string;
   templateVersion: string;
   generatedAt: string;
@@ -316,6 +328,8 @@ export function composeDeliverableSource(input: {
   generatedAt?: string;
   snapshot?: PersistedMtoSnapshot | null;
   previousSnapshot?: PersistedMtoSnapshot | null;
+  bindingKind?: CompositionBindingKind;
+  calculation?: CompositionCalculationRef | null;
 }): DeliverableComposition {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
   const policy = valuePolicyForProject(input.plan.projectId);
@@ -388,6 +402,17 @@ export function composeDeliverableSource(input: {
     mtoFingerprint: snapshot?.snapshotFingerprint ?? null,
     mtoSourceRevisions: snapshot?.sourceRevisionSet ?? [],
     mtoVerificationState: snapshot?.verificationState ?? snapshot?.status ?? null,
+    mtoSourceType: snapshot ? "MTO_SNAPSHOT" : null,
+    mtoScope: snapshot?.disciplineScope ?? null,
+    mtoProducingWorkPlanId: snapshot?.workPlanId ?? null,
+    mtoBindingKind: input.bindingKind ?? (snapshot ? "PLAN_LOCAL" : "NONE"),
+    mtoSourceCalculationId: mtoSourceCalculationId(snapshot),
+    mtoSourceInputRefs: mtoInputRefs(snapshot),
+    calculationId: input.calculation?.id ?? null,
+    calculationInputFingerprint: input.calculation?.inputFingerprint ?? null,
+    calculationEngine: input.calculation?.engineId ?? null,
+    calculationMethod: input.calculation?.method ?? null,
+    calculationReviewState: input.calculation?.reviewStatus ?? null,
     templateCode: input.templateCode,
     templateVersion: input.templateVersion,
     generatedAt,
@@ -407,6 +432,16 @@ export function composeDeliverableSource(input: {
     decisions: manifest.decisions.map((row) => row.id),
     interfaces: manifest.interfaces.map((row) => row.id),
     information: manifest.engineeringInformation,
+    ...(input.bindingKind === "EXPLICIT"
+      ? {
+          mtoSnapshotId: snapshot?.id ?? null,
+          mtoProducingWorkPlanId: snapshot?.workPlanId ?? null,
+          bindingKind: "EXPLICIT",
+        }
+      : {}),
+    ...(input.calculation?.inputFingerprint
+      ? { calculationInputFingerprint: input.calculation.inputFingerprint }
+      : {}),
   });
 
   const quantityRows = summarizePresentQuantities(items);
@@ -685,6 +720,7 @@ export function deliverableThreadLinks(input: {
   if (input.mtoSnapshotId) {
     links.push({ relationship: "USED_BY", fromType: "engineering_mto_snapshot", fromId: input.mtoSnapshotId, toType: "engineering_generated_artifact", toId: input.artifactId });
     links.push({ relationship: "SOURCE_FOR", fromType: "engineering_mto_snapshot", fromId: input.mtoSnapshotId, toType: "engineering_generated_artifact", toId: input.artifactId });
+    links.push({ relationship: "USES", fromType: "engineering_work_plan", fromId: input.workPlanId, toType: "engineering_mto_snapshot", toId: input.mtoSnapshotId });
   }
   if (input.previousArtifactId) {
     links.push({ relationship: "SUPERSEDED_BY", fromType: "engineering_generated_artifact", fromId: input.previousArtifactId, toType: "engineering_generated_artifact", toId: input.artifactId });
