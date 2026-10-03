@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { applyRtbM365ServerEnv } from "./review-staging-m365-env.mjs";
 
 const STAGING_REF = "rntonzigxwxcjlcsadip";
 const EOS_REF = "wcydlhqiqdwgoaqrlget";
@@ -102,6 +103,7 @@ const childEnv = {
   RTB_REVIEW_RUNTIME: "staging",
   NEXT_PUBLIC_RTB_REVIEW_RUNTIME: "staging",
 };
+applyRtbM365ServerEnv(childEnv, process.env, fileEnv);
 
 const child = spawn("pnpm", ["exec", "next", "dev", "--turbopack", "-p", port], {
   cwd: webRoot,

@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { evaluateReviewRuntime, REVIEW_EOS_PROJECT_REF, REVIEW_STAGING_PROJECT_REF } from "@rtb/engineering-review/runtime";
 import { evaluateCanonicalReviewAccess, resolveCanonicalActorContext } from "@rtb/engineering-review/identity";
 import { sanitizeAuditMetadata } from "@rtb/engineering-review";
+import {
+  applyRtbM365ServerEnv,
+  RTB_M365_SERVER_ENV_KEYS,
+} from "../../../../scripts/review-staging-m365-env.mjs";
 
 const WEB_ROOT = resolve(__dirname, "../../");
 const REPO_ROOT = resolve(WEB_ROOT, "../..");
@@ -101,3 +105,109 @@ describe("ERA-7C staging login and MFA path", () => {
     expect(sanitizeAuditMetadata({ totpSecret: "secret", tenantId: TENANT_A })).toEqual({ tenantId: TENANT_A });
   });
 });
+
+describe("EOS-A16C Review staging M365 env propagation", () => {
+  const fakeSecret = "fake-entra-client-secret-value";
+  const fileEnv = {
+    RTB_M365_APPLICATION_ID: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    RTB_M365_CREDENTIAL_SECRET_ID: "secret:rtb-m365-multitenant",
+    RTB_M365_CLIENT_SECRET: fakeSecret,
+    UNRELATED_FILE_KEY: "must-not-copy",
+    NEXT_PUBLIC_RTB_M365_CLIENT_SECRET: fakeSecret,
+  };
+
+  function stagingChildEnv(processEnv: NodeJS.ProcessEnv = {}, parsedFileEnv: Record<string, string> = fileEnv) {
+    const childEnv: NodeJS.ProcessEnv = {
+      ...processEnv,
+      NEXT_PUBLIC_SUPABASE_URL: "https://rntonzigxwxcjlcsadip.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "fake-anon",
+      SUPABASE_URL: "https://rntonzigxwxcjlcsadip.supabase.co",
+      SUPABASE_ANON_KEY: "fake-anon",
+      SUPABASE_SERVICE_ROLE_KEY: "fake-service",
+      SUPABASE_PROJECT_REF: "rntonzigxwxcjlcsadip",
+      RTB_REVIEW_RUNTIME: "staging",
+      NEXT_PUBLIC_RTB_REVIEW_RUNTIME: "staging",
+    };
+    return applyRtbM365ServerEnv(childEnv, processEnv, parsedFileEnv);
+  }
+
+  it("propagates the three server-only M365 keys from fileEnv", () => {
+    const childEnv = stagingChildEnv({});
+    expect(childEnv.RTB_M365_APPLICATION_ID).toBe(fileEnv.RTB_M365_APPLICATION_ID);
+    expect(childEnv.RTB_M365_CREDENTIAL_SECRET_ID).toBe(fileEnv.RTB_M365_CREDENTIAL_SECRET_ID);
+    expect(childEnv.RTB_M365_CLIENT_SECRET).toBe(fakeSecret);
+    expect(RTB_M365_SERVER_ENV_KEYS).toEqual([
+      "RTB_M365_APPLICATION_ID",
+      "RTB_M365_CREDENTIAL_SECRET_ID",
+      "RTB_M365_CLIENT_SECRET",
+    ]);
+  });
+
+  it("leaves missing M365 keys unset and does not fabricate or broadly copy fileEnv", () => {
+    const childEnv = stagingChildEnv({}, {});
+    expect(childEnv.RTB_M365_APPLICATION_ID).toBeUndefined();
+    expect(childEnv.RTB_M365_CREDENTIAL_SECRET_ID).toBeUndefined();
+    expect(childEnv.RTB_M365_CLIENT_SECRET).toBeUndefined();
+    const partial = stagingChildEnv({}, { RTB_M365_APPLICATION_ID: "app-only", UNRELATED_FILE_KEY: "x" });
+    expect(partial.RTB_M365_APPLICATION_ID).toBe("app-only");
+    expect(partial.RTB_M365_CREDENTIAL_SECRET_ID).toBeUndefined();
+    expect(partial.RTB_M365_CLIENT_SECRET).toBeUndefined();
+    expect(partial.UNRELATED_FILE_KEY).toBeUndefined();
+  });
+
+  it("prefers process.env over fileEnv and does not log the fake client secret", () => {
+    const logs: string[] = [];
+    const spyLog = vi.spyOn(console, "log").mockImplementation((...args) => {
+      logs.push(args.map(String).join(" "));
+    });
+    const spyInfo = vi.spyOn(console, "info").mockImplementation((...args) => {
+      logs.push(args.map(String).join(" "));
+    });
+    const spyWarn = vi.spyOn(console, "warn").mockImplementation((...args) => {
+      logs.push(args.map(String).join(" "));
+    });
+    const spyError = vi.spyOn(console, "error").mockImplementation((...args) => {
+      logs.push(args.map(String).join(" "));
+    });
+    try {
+      const childEnv = stagingChildEnv({
+        RTB_M365_APPLICATION_ID: "process-app-id",
+        RTB_M365_CLIENT_SECRET: "process-fake-secret",
+      });
+      expect(childEnv.RTB_M365_APPLICATION_ID).toBe("process-app-id");
+      expect(childEnv.RTB_M365_CLIENT_SECRET).toBe("process-fake-secret");
+      expect(childEnv.RTB_M365_CREDENTIAL_SECRET_ID).toBe(fileEnv.RTB_M365_CREDENTIAL_SECRET_ID);
+      expect(logs.join("\n")).not.toContain(fakeSecret);
+      expect(logs.join("\n")).not.toContain("process-fake-secret");
+    } finally {
+      spyLog.mockRestore();
+      spyInfo.mockRestore();
+      spyWarn.mockRestore();
+      spyError.mockRestore();
+    }
+  });
+
+  it("does not expose M365 secrets as NEXT_PUBLIC and keeps Supabase/runtime child env", () => {
+    const childEnv = stagingChildEnv({});
+    expect(childEnv.NEXT_PUBLIC_RTB_M365_CLIENT_SECRET).toBeUndefined();
+    expect(childEnv.NEXT_PUBLIC_RTB_M365_APPLICATION_ID).toBeUndefined();
+    expect(childEnv.NEXT_PUBLIC_RTB_M365_CREDENTIAL_SECRET_ID).toBeUndefined();
+    expect(childEnv.RTB_REVIEW_RUNTIME).toBe("staging");
+    expect(childEnv.NEXT_PUBLIC_RTB_REVIEW_RUNTIME).toBe("staging");
+    expect(childEnv.SUPABASE_PROJECT_REF).toBe("rntonzigxwxcjlcsadip");
+    expect(childEnv.NEXT_PUBLIC_SUPABASE_URL).toBe("https://rntonzigxwxcjlcsadip.supabase.co");
+    const script = readFileSync(resolve(REPO_ROOT, "scripts/review-staging.mjs"), "utf8");
+    const helper = readFileSync(resolve(REPO_ROOT, "scripts/review-staging-m365-env.mjs"), "utf8");
+    const nextConfig = readApp("next.config.ts");
+    expect(script).toContain("applyRtbM365ServerEnv(childEnv, process.env, fileEnv)");
+    expect(script).toContain("NEXT_PUBLIC_SUPABASE_URL: url");
+    expect(script).toContain('RTB_REVIEW_RUNTIME: "staging"');
+    expect(script).not.toContain("NEXT_PUBLIC_RTB_M365");
+    expect(script).not.toMatch(/Object\.assign\(\s*childEnv\s*,\s*fileEnv/);
+    expect(helper).not.toContain("console.log");
+    expect(helper).not.toContain("NEXT_PUBLIC_");
+    expect(nextConfig).not.toContain("RTB_M365_CLIENT_SECRET");
+    expect(nextConfig).not.toMatch(/NEXT_PUBLIC_RTB_M365/);
+  });
+});
+
