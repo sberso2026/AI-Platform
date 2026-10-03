@@ -25,13 +25,21 @@ export {
 } from "./onboarding";
 export { SETUP_AGENT_FORBIDDEN_ACTIONS, SETUP_AGENT_ID, assertSetupAgentCommand } from "./setup-agent";
 export {
+  EOS_M365_TOKEN_EXCHANGE_FAILURE_EVENT,
+  EOS_M365_TOKEN_EXCHANGE_FAILURE_FILENAME,
+  MicrosoftTokenExchangeFailure,
   buildMicrosoftAdminConsentUrl,
   buildMicrosoftAuthorizeUrl,
   classifyMicrosoftOAuthError,
   decodeMicrosoftIdToken,
   defaultM365RedirectUri,
+  emitMicrosoftTokenExchangeFailure,
   identityFromAdminConsentCallback,
   exchangeMicrosoftAuthorizationCode,
+  microsoftTokenExchangeFailureDiagnosticPath,
+  parseMicrosoftTokenEndpointFailure,
+  sanitizeMicrosoftTokenErrorDescription,
   signOAuthState,
   verifyOAuthState,
 } from "./oauth";
+export type { MicrosoftTokenExchangeFailureDiagnostic } from "./oauth";

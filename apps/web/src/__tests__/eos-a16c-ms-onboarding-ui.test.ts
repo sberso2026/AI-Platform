@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const page = readFileSync(resolve(__dirname, "../app/(platform)/engineering/settings/integrations/page.tsx"), "utf8");
 const start = readFileSync(resolve(__dirname, "../app/api/engineering/m365/oauth/start/route.ts"), "utf8");
+const callback = readFileSync(resolve(__dirname, "../app/api/engineering/m365/oauth/callback/route.ts"), "utf8");
 const route = readFileSync(resolve(__dirname, "../app/api/engineering/work/route.ts"), "utf8");
 
 describe("EOS-A16C Microsoft onboarding UX", () => {
@@ -29,5 +30,25 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
     expect(route).toContain("m365Onboarding");
     expect(route).toContain("resolveSharePointSite");
     expect(route).toContain("use_microsoft_sign_in");
+  });
+
+  it("keeps the Microsoft callback fail closed without putting diagnostics in the URL", () => {
+    expect(callback).toContain('return redirect("m365=error")');
+    expect(callback).toContain("exchangeMicrosoftAuthorizationCode");
+    expect(callback).not.toContain("NEXT_PUBLIC_");
+    expect(callback).not.toMatch(/redirect\(`[^`]*error_description/);
+    expect(callback).not.toMatch(/redirect\([^)]*correlationId/);
+    expect(callback).not.toMatch(/redirect\([^)]*aadsts/i);
+    expect([...callback.matchAll(/redirect\("m365=[^"]+"\)/g)].map((row) => row[0])).toEqual([
+      'redirect("m365=sign_in_required")',
+      'redirect("m365=sign_in_required")',
+      'redirect("m365=tenant_mismatch")',
+      'redirect("m365=sign_in_required")',
+      'redirect("m365=admin_required")',
+      'redirect("m365=connected")',
+      'redirect("m365=admin_consent")',
+      'redirect("m365=not_configured")',
+      'redirect("m365=error")',
+    ]);
   });
 });

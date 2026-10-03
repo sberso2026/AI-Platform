@@ -285,8 +285,13 @@ export {
   exchangeMicrosoftAuthorizationCode,
   classifyMicrosoftOAuthError,
   decodeMicrosoftIdToken,
+  emitMicrosoftTokenExchangeFailure,
+  microsoftTokenExchangeFailureDiagnosticPath,
+  parseMicrosoftTokenEndpointFailure,
+  sanitizeMicrosoftTokenErrorDescription,
   signOAuthState,
   verifyOAuthState,
+  MicrosoftTokenExchangeFailure,
 } from "./connectors/m365";
 export {
   EngineeringExternalConnectorService,
