@@ -24,6 +24,13 @@ import {
 } from "@rtb/engineering-review";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
+import {
+  preIssueQuantityEvidenceFromComposition,
+  selectCurrentGovernedReviewArtifacts,
+  type CompositionContext,
+  type PreIssueQuantityEvidence,
+} from "../lifecycle-intelligence/composition-evidence";
+import type { QuantityItem } from "../lifecycle-intelligence/quantity-mto";
 import type { ArtifactStore } from "../artifact-automation/memory-store";
 import { SupabaseArtifactStore } from "../artifact-automation/supabase-store";
 import type { EngineeringWorkPlan } from "../work-generator/types";
@@ -47,6 +54,35 @@ import {
 } from "./types";
 
 export const CALLER_SUPPLIED_REVIEW_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current"] as const;
+
+function isCompositionContext(value: object): value is CompositionContext {
+  return "bindingKind" in value && "generationBlocked" in value && "current" in value;
+}
+
+function isPreIssueQuantityEvidence(value: object): value is PreIssueQuantityEvidence {
+  return "bindingKind" in value && "fingerprint" in value && !("current" in value);
+}
+
+function asPreIssueMtoEvidence(
+  value: CompositionContext | PreIssueQuantityEvidence | { items: QuantityItem[]; staleness: string; fingerprint?: string | null; revision?: string | null; snapshotId?: string | null } | null,
+): PreIssueQuantityEvidence | null {
+  if (!value) return null;
+  if (isCompositionContext(value)) return preIssueQuantityEvidenceFromComposition(value);
+  if (isPreIssueQuantityEvidence(value)) return value;
+  return {
+    items: value.items,
+    staleness: value.staleness,
+    fingerprint: value.fingerprint ?? null,
+    revision: value.revision ?? null,
+    snapshotId: value.snapshotId ?? null,
+    status: null,
+    verificationState: null,
+    bindingKind: "PLAN_LOCAL",
+    generationBlocked: null,
+    producingWorkPlanId: null,
+    inputRefs: [],
+  };
+}
 
 export type PreIssueEventRecorder = (
   commerce: CommerceExecutionContext,
@@ -88,7 +124,7 @@ export class EngineeringPreIssueReviewService {
     private readonly inference: ReviewInferenceProvider = new RejectingInferenceProvider(),
   ) {}
 
-  private mtoLoader: ((planId: string) => Promise<{ items: import("../lifecycle-intelligence/quantity-mto").QuantityItem[]; staleness: string } | null>) | null = null;
+  private mtoLoader: ((planId: string) => Promise<CompositionContext | PreIssueQuantityEvidence | { items: QuantityItem[]; staleness: string; fingerprint?: string | null; revision?: string | null; snapshotId?: string | null } | null>) | null = null;
   private structuralLoader: ((planId: string) => Promise<{
     status: string;
     reviewStatus: string;
@@ -97,7 +133,7 @@ export class EngineeringPreIssueReviewService {
     missingCodes: string[];
   } | null>) | null = null;
 
-  bindQuantityMto(loader: (planId: string) => Promise<{ items: import("../lifecycle-intelligence/quantity-mto").QuantityItem[]; staleness: string } | null>) {
+  bindQuantityMto(loader: (planId: string) => Promise<CompositionContext | PreIssueQuantityEvidence | { items: QuantityItem[]; staleness: string; fingerprint?: string | null; revision?: string | null; snapshotId?: string | null } | null>) {
     this.mtoLoader = loader;
   }
 
@@ -234,20 +270,30 @@ export class EngineeringPreIssueReviewService {
       extractionDurationMs = Date.now() - extractStarted;
     }
 
-    const mto = this.mtoLoader ? await this.mtoLoader(plan.id).catch(() => null) : null;
+    const loaded = this.mtoLoader ? await this.mtoLoader(plan.id).catch(() => null) : null;
+    const mto = asPreIssueMtoEvidence(loaded);
     const structural = this.structuralLoader ? await this.structuralLoader(plan.id).catch(() => null) : null;
+    const governedArtifacts = selectCurrentGovernedReviewArtifacts({
+      artifacts,
+      bindingKind: mto?.bindingKind ?? "NONE",
+      explicitMtoSnapshotId: mto?.bindingKind === "EXPLICIT" ? mto.snapshotId : null,
+    });
     const detStarted = Date.now();
     const deterministic = runDeterministicPreIssueChecks({
       plan,
       target: chosen,
-      artifacts,
+      artifacts: governedArtifacts,
       inspection,
       extractionSkipped,
-      mtoItems: mto?.items,
-      mtoStaleness: mto?.staleness,
-      currentMtoFingerprint: mto && "fingerprint" in mto ? String(mto.fingerprint ?? "") : null,
-      currentMtoRevision: mto && "revision" in mto ? String(mto.revision ?? "") : null,
-      currentMtoSnapshotId: mto && "snapshotId" in mto ? String(mto.snapshotId ?? "") : null,
+      mtoItems: mto?.generationBlocked ? undefined : mto?.items,
+      mtoStaleness: mto?.generationBlocked ? undefined : mto?.staleness,
+      currentMtoFingerprint: mto?.generationBlocked ? null : mto?.fingerprint ?? null,
+      currentMtoRevision: mto?.generationBlocked ? null : mto?.revision ?? null,
+      currentMtoSnapshotId: mto?.generationBlocked ? null : mto?.snapshotId ?? null,
+      bindingKind: mto?.bindingKind ?? "NONE",
+      generationBlocked: mto?.generationBlocked ?? null,
+      mtoInputRefs: mto?.generationBlocked ? [] : mto?.inputRefs ?? [],
+      mtoVerificationState: mto?.generationBlocked ? null : mto?.verificationState ?? null,
       structuralCalculation: structural,
     });
     const deterministicDurationMs = Date.now() - detStarted;
@@ -317,7 +363,7 @@ export class EngineeringPreIssueReviewService {
       findings.push(verifyFindingEvidence(finding));
     }
 
-    const documents = artifacts.map((artifact) => ({
+    const documents = governedArtifacts.map((artifact) => ({
       ...createReviewOwnership({ tenantId, workspaceId, projectId }),
       documentId: artifact.id,
       revision: artifact.templateVersion,

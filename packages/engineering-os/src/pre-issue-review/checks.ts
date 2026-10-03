@@ -3,7 +3,15 @@ import type { GeneratedEngineeringArtifact } from "../artifact-automation/types"
 import type { EngineeringWorkPlan } from "../work-generator/types";
 import { xmlHasHeading, type TransientOfficeInspection } from "./inspect";
 import { reviewMtoProvenance, type QuantityItem } from "../lifecycle-intelligence/quantity-mto";
+import { toPersistItemVerification } from "../lifecycle-intelligence/quantity-mto-persist";
 import {
+  evaluateEngineeringStateCompatibility,
+  selectCurrentGovernedReviewArtifacts,
+  type CompositionBindingKind,
+  type CompositionGenerationBlock,
+} from "../lifecycle-intelligence/composition-evidence";
+import {
+  PRE_ISSUE_CONDITION_CODES,
   type PreIssueAction,
   type PreIssueCheckType,
   type PreIssueCondition,
@@ -59,6 +67,10 @@ export function runDeterministicPreIssueChecks(input: {
   currentMtoFingerprint?: string | null;
   currentMtoRevision?: string | null;
   currentMtoSnapshotId?: string | null;
+  bindingKind?: CompositionBindingKind;
+  generationBlocked?: CompositionGenerationBlock | null;
+  mtoInputRefs?: string[];
+  mtoVerificationState?: string | null;
   structuralCalculation?: {
     status: string;
     reviewStatus: string;
@@ -71,9 +83,16 @@ export function runDeterministicPreIssueChecks(input: {
   const conditions: PreIssueCondition[] = [];
   const passedChecks: Array<{ checkType: PreIssueCheckType; title: string }> = [];
   const notEvaluated: Array<{ checkType: PreIssueCheckType; reason: string }> = [];
-  const { plan, target, artifacts, inspection } = input;
+  const { plan, target, inspection } = input;
+  const artifacts = selectCurrentGovernedReviewArtifacts({
+    artifacts: input.artifacts,
+    bindingKind: input.bindingKind ?? "NONE",
+    explicitMtoSnapshotId: input.bindingKind === "EXPLICIT" ? input.currentMtoSnapshotId ?? null : null,
+  });
   const extracted = registerText(inspection);
   const nextId = () => randomUUID();
+  const asConditionCode = (code: string): PreIssueConditionCode =>
+    (PRE_ISSUE_CONDITION_CODES as readonly string[]).includes(code) ? code as PreIssueConditionCode : "COMPOSITION_SOURCE_UNAUTHORIZED";
 
   const pass = (checkType: PreIssueCheckType, title: string) => {
     passedChecks.push({ checkType, title });
@@ -488,6 +507,24 @@ export function runDeterministicPreIssueChecks(input: {
     }
   }
 
+  if (input.generationBlocked) {
+    const code = asConditionCode(input.generationBlocked.code);
+    conditions.push(condition({
+      id: nextId(),
+      checkType: code === "SOURCE_SUPERSEDED" ? "SOURCE_SUPERSESSION_CHECK" : "QUANTITY_PROVENANCE_CHECK",
+      code,
+      title: `Governed MTO source is blocked (${input.generationBlocked.code})`,
+      explanation: `${input.generationBlocked.explanation} Pre-Issue does not silently substitute a plan-local MTO.`,
+      materiality: code === "SOURCE_SUPERSEDED" || code === "ENGINEERING_STATE_MISMATCH" ? "STALE_CONTEXT" : "TRACEABILITY_GAP",
+      category: code === "SOURCE_SUPERSEDED" ? "revision_inconsistency" : "missing_engineering_evidence",
+      evidence: [
+        { sourceId: plan.id, statement: `bindingKind=${input.bindingKind ?? "NONE"}; code=${input.generationBlocked.code}` },
+        { sourceId: input.currentMtoSnapshotId ?? plan.id, statement: input.generationBlocked.explanation },
+      ],
+      actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Rebind governed MTO", href: `/engineering/work/plans/${plan.id}` }],
+    }));
+  }
+
   const drawingRefs = artifacts.flatMap((artifact) =>
     artifact.provenance.information
       .filter((row) => /drawing/i.test(row.title))
@@ -645,7 +682,8 @@ export function runDeterministicPreIssueChecks(input: {
         actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Regenerate deliverable", href: `/engineering/work/plans/${plan.id}` }],
       }));
     } else if (
-      target.provenance.mtoFingerprint
+      !input.generationBlocked
+      && target.provenance.mtoFingerprint
       && input.currentMtoFingerprint
       && target.provenance.mtoFingerprint !== input.currentMtoFingerprint
     ) {
@@ -664,8 +702,11 @@ export function runDeterministicPreIssueChecks(input: {
         actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Regenerate deliverable", href: `/engineering/work/plans/${plan.id}` }],
       }));
     }
-    if (input.mtoItems?.some((row) => row.verificationStatus === "UNVERIFIED" || String(row.verificationStatus) === "UNVERIFIED")) {
-      const unverified = input.mtoItems.filter((row) => row.verificationStatus === "UNVERIFIED" || String(row.verificationStatus) === "UNVERIFIED");
+    if (
+      !input.generationBlocked
+      && input.mtoItems?.some((row) => toPersistItemVerification(row.verificationStatus) === "UNVERIFIED")
+    ) {
+      const unverified = input.mtoItems.filter((row) => toPersistItemVerification(row.verificationStatus) === "UNVERIFIED");
       conditions.push(condition({
         id: nextId(),
         checkType: "QUANTITY_PROVENANCE_CHECK",
@@ -677,6 +718,33 @@ export function runDeterministicPreIssueChecks(input: {
         evidence: unverified.slice(0, 8).map((row) => ({ sourceId: row.itemCode, statement: `${row.itemCode} ${row.verificationStatus}` })),
         actions: [{ code: "OPEN_ARTIFACT", label: "Open MTO", href: `/engineering/work/plans/${plan.id}/mto` }],
       }));
+    }
+    if (
+      !input.generationBlocked
+      && input.bindingKind === "EXPLICIT"
+      && input.structuralCalculation
+    ) {
+      const compat = evaluateEngineeringStateCompatibility({
+        bindingKind: "EXPLICIT",
+        reportCalculationFingerprint: input.structuralCalculation.inputFingerprint,
+        mtoInputRefs: input.mtoInputRefs ?? [],
+      });
+      if (!compat.ok) {
+        conditions.push(condition({
+          id: nextId(),
+          checkType: "QUANTITY_PROVENANCE_CHECK",
+          code: "ENGINEERING_STATE_MISMATCH",
+          title: "Explicit MTO is incompatible with the current calculation state",
+          explanation: "The bound MTO does not evidence the current calculation input fingerprint. Pre-Issue does not silently substitute a plan-local MTO.",
+          materiality: "STALE_CONTEXT",
+          category: "revision_inconsistency",
+          evidence: [
+            { sourceId: input.currentMtoSnapshotId ?? plan.id, statement: `mtoInputRefs=${(input.mtoInputRefs ?? []).join(",") || "none"}` },
+            { sourceId: plan.id, statement: `calculationFingerprint=${input.structuralCalculation.inputFingerprint}` },
+          ],
+          actions: [{ code: "REFRESH_WORK_CONTEXT", label: "Rebind governed MTO", href: `/engineering/work/plans/${plan.id}` }],
+        }));
+      }
     }
   }
 

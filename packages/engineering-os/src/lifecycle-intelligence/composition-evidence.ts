@@ -26,6 +26,16 @@ export const A15A_V5B_REPORTBIND_HARDEN = {
   sectionAndUnitMassDisplay: "NOT_REQUIRED_BY_CURRENT_TEMPLATE",
 } as const;
 
+export const A15A_V5B_PREISSUE_BIND = {
+  canonicalSelector: "loadCompositionContext",
+  sourceSelectionPrecedence: "EXPLICIT_BOUND_SOURCE_OVER_PLAN_LOCAL",
+  silentPlanLocalFallbackWhenExplicitBindingExists: false,
+  newSourceSelectorArchitecture: false,
+  schemaChange: false,
+  rlsChange: false,
+  kgNodesAdded: false,
+} as const;
+
 export const COMPOSITION_EVIDENCE_RELATIONSHIP = "USES" as const;
 export const COMPOSITION_EVIDENCE_FROM_TYPE = "engineering_work_plan" as const;
 export const COMPOSITION_EVIDENCE_TO_TYPE = "engineering_mto_snapshot" as const;
@@ -132,4 +142,54 @@ export function selectExplicitOverPlanLocal(input: {
   if (input.explicit) return { snapshot: input.explicit, bindingKind: "EXPLICIT" };
   if (input.planLocal) return { snapshot: input.planLocal, bindingKind: "PLAN_LOCAL" };
   return { snapshot: null, bindingKind: "NONE" };
+}
+
+export type PreIssueQuantityEvidence = {
+  items: PersistedMtoSnapshot["items"] | undefined;
+  staleness: string | undefined;
+  fingerprint: string | null;
+  revision: string | null;
+  snapshotId: string | null;
+  status: string | null;
+  verificationState: string | null;
+  bindingKind: CompositionBindingKind;
+  generationBlocked: CompositionGenerationBlock | null;
+  producingWorkPlanId: string | null;
+  inputRefs: string[];
+};
+
+export function preIssueQuantityEvidenceFromComposition(ctx: CompositionContext): PreIssueQuantityEvidence {
+  const current = ctx.generationBlocked ? null : ctx.current;
+  return {
+    items: current?.items,
+    staleness: current?.staleness,
+    fingerprint: current?.snapshotFingerprint ?? null,
+    revision: current?.revision ?? null,
+    snapshotId: current?.id ?? null,
+    status: current?.status ?? null,
+    verificationState: current?.verificationState ?? null,
+    bindingKind: ctx.bindingKind,
+    generationBlocked: ctx.generationBlocked,
+    producingWorkPlanId: ctx.producingWorkPlanId,
+    inputRefs: current ? mtoInputRefs(current) : [],
+  };
+}
+
+export function selectCurrentGovernedReviewArtifacts<T extends {
+  status?: string;
+  provenance?: { mtoSnapshotId?: string | null };
+}>(input: {
+  artifacts: T[];
+  bindingKind: CompositionBindingKind;
+  explicitMtoSnapshotId?: string | null;
+}): T[] {
+  const active = input.artifacts.filter((row) => row.status !== "SUPERSEDED");
+  if (input.bindingKind === "EXPLICIT" && input.explicitMtoSnapshotId) {
+    return active.filter((row) => {
+      const bound = row.provenance?.mtoSnapshotId ?? null;
+      if (!bound) return true;
+      return bound === input.explicitMtoSnapshotId;
+    });
+  }
+  return active;
 }

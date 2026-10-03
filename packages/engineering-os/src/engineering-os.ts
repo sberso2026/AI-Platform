@@ -351,7 +351,7 @@ export function createEngineeringOS(
       });
     },
   );
-  preIssueReview.bindQuantityMto((planId) => quantityMto.loadForPlan(planId));
+  preIssueReview.bindQuantityMto((planId) => quantityMto.loadCompositionContext(planId));
   preIssueReview.bindStructuralCalculation(async (planId) => {
     const plan = await new SupabaseWorkPlanStore(supabase).getPlan(planId);
     if (!plan) return null;

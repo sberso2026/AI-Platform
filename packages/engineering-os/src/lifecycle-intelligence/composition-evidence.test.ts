@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { A11E_PROJECT_B } from "../change-workbench/fixture";
 import { CRUSHER_EXPANSION_FEED_PROJECT_ID, CRUSHER_FEED_TENANT, CRUSHER_FEED_WORKSPACE } from "../work-generator/fixture";
 import {
+  A15A_V5B_PREISSUE_BIND,
   A15A_V5B_REPORTBIND,
   A15A_V5B_REPORTBIND_HARDEN,
   assertCompositionEvidenceScope,
   evaluateEngineeringStateCompatibility,
+  selectCurrentGovernedReviewArtifacts,
   selectExplicitOverPlanLocal,
 } from "./composition-evidence";
 import type { PersistedMtoSnapshot } from "./quantity-mto-persist";
@@ -53,6 +55,10 @@ describe("EOS-A15A-V5B-REPORTBIND composition evidence", () => {
     expect(A15A_V5B_REPORTBIND_HARDEN.sectionAndUnitMassDisplay).toBe("NOT_REQUIRED_BY_CURRENT_TEMPLATE");
     expect(A15A_V5B_REPORTBIND_HARDEN.unverifiedCalculationMutable).toBe(true);
     expect(A15A_V5B_REPORTBIND_HARDEN.verifiedCalculationImmutable).toBe(true);
+    expect(A15A_V5B_PREISSUE_BIND.canonicalSelector).toBe("loadCompositionContext");
+    expect(A15A_V5B_PREISSUE_BIND.sourceSelectionPrecedence).toBe("EXPLICIT_BOUND_SOURCE_OVER_PLAN_LOCAL");
+    expect(A15A_V5B_PREISSUE_BIND.silentPlanLocalFallbackWhenExplicitBindingExists).toBe(false);
+    expect(A15A_V5B_PREISSUE_BIND.newSourceSelectorArchitecture).toBe(false);
   });
 
   it("requires explicit MTO inputRefs to include the report calculation fingerprint", () => {
@@ -91,5 +97,21 @@ describe("EOS-A15A-V5B-REPORTBIND composition evidence", () => {
     expect(assertCompositionEvidenceScope(snapshot({ id: "t", tenantId: "other-tenant" }), scope)).toBe("CROSS_TENANT");
     expect(assertCompositionEvidenceScope(snapshot({ id: "w", workspaceId: "other-workspace" }), scope)).toBe("CROSS_WORKSPACE");
     expect(assertCompositionEvidenceScope(snapshot({ id: "p", projectId: A11E_PROJECT_B }), scope)).toBe("CROSS_PROJECT_MISMATCH");
+  });
+
+  it("excludes superseded and historical-MTO artifacts from the current governed review set", () => {
+    const current = { status: "READY_FOR_ENGINEER_REVIEW", provenance: { mtoSnapshotId: "explicit-mto" } };
+    const superseded = { status: "SUPERSEDED", provenance: { mtoSnapshotId: "explicit-mto" } };
+    const historical = { status: "READY_FOR_ENGINEER_REVIEW", provenance: { mtoSnapshotId: "plan-local-mto" } };
+    const uncited = { status: "READY_FOR_ENGINEER_REVIEW", provenance: {} };
+    expect(selectCurrentGovernedReviewArtifacts({
+      artifacts: [current, superseded, historical, uncited],
+      bindingKind: "EXPLICIT",
+      explicitMtoSnapshotId: "explicit-mto",
+    })).toEqual([current, uncited]);
+    expect(selectCurrentGovernedReviewArtifacts({
+      artifacts: [current, superseded, historical],
+      bindingKind: "PLAN_LOCAL",
+    })).toEqual([current, historical]);
   });
 });
