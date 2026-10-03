@@ -293,6 +293,12 @@ export {
   CONNECTOR_CAPABILITIES,
 } from "./connectors/core";
 export {
+  A16A_PHASE,
+  A16A_CONNECTIVITY_INVENTORY,
+  A16A_PROFILE_A_MINIMUM_CONNECTION_SET,
+  liveSharePointTestState,
+} from "./connectors/a16a-connect";
+export {
   STORAGE_KINDS,
   OBJECT_STORAGE_BACKEND,
   OBJECT_STORAGE_PROVIDER,
