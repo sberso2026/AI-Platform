@@ -1,3 +1,5 @@
+import { hostedAuthenticatedMalwareScannerAvailable } from "@rtb/engineering-review";
+
 export const A14A_PILOT_PROFILE = "PROFILE_A_CORE_EOS" as const;
 
 export const A14A_PILOT_SCOPE = {
@@ -47,7 +49,7 @@ export function controlledPilotEnabled(env: NodeJS.ProcessEnv = process.env): bo
 }
 
 export function returnedBinaryUploadsInPilot(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(env.RTB_REVIEW_CLAMAV_URL?.trim());
+  return hostedAuthenticatedMalwareScannerAvailable(env);
 }
 
 export const A14A_GATE_STATES = ["PASS", "BLOCKED", "NOT_APPLICABLE", "NOT_TESTED"] as const;

@@ -375,7 +375,8 @@ describe("EOS-A14A object storage, malware, and security hardening", () => {
         init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
       })) as typeof fetch;
     const timeout = await scanReturnedBytes(cleanBytes, false, {
-      RTB_REVIEW_CLAMAV_URL: "http://127.0.0.1:9/scan",
+      RTB_REVIEW_CLAMAV_URL: "https://scanner.rtb.example/scan",
+      RTB_REVIEW_CLAMAV_AUTH_TOKEN: "scanner-secret-token",
       RTB_REVIEW_CLAMAV_TIMEOUT_MS: "1",
     }, hangingFetch);
     expect(timeout.state).toBe("TIMEOUT");

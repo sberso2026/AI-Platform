@@ -44,6 +44,12 @@ import {
   type M365Connection,
   type SharePointScope,
 } from "./types";
+import {
+  evaluateSharePointLiveReadiness,
+  SHAREPOINT_PILOT_MODE,
+  sharePointPilotWriteEnabled,
+  type SharePointLiveReadinessResult,
+} from "./live-readiness";
 
 export type M365ConnectorDeps = {
   store?: M365Store;
@@ -52,6 +58,8 @@ export type M365ConnectorDeps = {
   graph?: GraphPort;
   secrets?: ConnectorSecretsPort;
   jobs?: JobService;
+  /** Fixture-only governed publication. Profile A pilot write remains disabled. */
+  pilotWriteEnabled?: boolean;
 };
 
 function newId() {
@@ -97,6 +105,8 @@ export class EngineeringM365ConnectorService {
       connectorBinaryDuplication: false,
       liveSharePointConnection: "NOT_TESTED",
       smeIndependent: true,
+      pilotMode: SHAREPOINT_PILOT_MODE,
+      writeEnabled: false,
     };
   }
 
@@ -131,6 +141,9 @@ export class EngineeringM365ConnectorService {
       updatedAt: now(),
     };
     assertNoSecretMaterialOnRecord(row as unknown as Record<string, unknown>);
+    assertNoSecretMaterialOnRecord(input as unknown as Record<string, unknown>);
+    const rejectedUrl = rejectArbitraryUrlFetch((input as unknown as Record<string, unknown>).url ?? (input as unknown as Record<string, unknown>).graphUrl ?? (input as unknown as Record<string, unknown>).href);
+    if (rejectedUrl) throw new Error(rejectedUrl);
     const saved = await this.store.saveConnection(row);
     await this.audit(tenantId, workspaceId, "connection_registration", "m365_connection", saved.id, commerce.actorUserId);
     return saved;
@@ -172,7 +185,7 @@ export class EngineeringM365ConnectorService {
       externalDriveId: input.externalDriveId,
       approvedRootItemId: input.approvedRootItemId ?? null,
       contentAccessPolicy: input.contentAccessPolicy ?? "METADATA_ONLY",
-      publicationEnabled: Boolean(input.publicationEnabled),
+      publicationEnabled: Boolean(this.pilotWriteEnabled() && input.publicationEnabled),
     });
     await this.audit(tenantId, workspaceId, "repository_registration", "managed_repository", savedRepo.id, commerce.actorUserId, {
       projectId: savedRepo.projectId,
@@ -324,14 +337,15 @@ export class EngineeringM365ConnectorService {
       const status = this.statusFromError(error);
       if (status === "RATE_LIMITED") this.telemetry.throttles += 1;
       this.telemetry.errors += 1;
+      const authDenied = status === "AUTHENTICATION_REQUIRED";
       const retryAfter = error instanceof GraphPortFailure ? error.failure.retryAfterMs ?? connectorBackoff(existing.retryCount) : connectorBackoff(existing.retryCount);
       await this.store.saveSyncState({
         ...existing,
         status,
         lastAttemptedSyncAt: now(),
         lastError: error instanceof Error ? error.message : "sync_failed",
-        retryCount: existing.retryCount + 1,
-        nextRetryAt: new Date(Date.now() + retryAfter).toISOString(),
+        retryCount: authDenied ? existing.retryCount : existing.retryCount + 1,
+        nextRetryAt: authDenied ? null : new Date(Date.now() + retryAfter).toISOString(),
         resyncRequired: status === "RESYNC_REQUIRED",
         durationMs: Date.now() - started,
       });
@@ -389,6 +403,7 @@ export class EngineeringM365ConnectorService {
     assertEngineeringService(commerce, "work.write", tenantId);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
+    if (!this.pilotWriteEnabled()) throw new Error("sharepoint_pilot_write_disabled");
     if (input.callerPath) throw new Error("caller_supplied_sharepoint_path_rejected");
     assertContentSize(input.content);
     const repos = await this.deps.work.listRepositoriesForConnector(commerce, tenantId);
@@ -489,7 +504,45 @@ export class EngineeringM365ConnectorService {
       sync,
       telemetry: this.telemetry,
       maxContentBytes: MAX_CONTENT_BYTES,
+      writeEnabled: false,
+      pilotMode: SHAREPOINT_PILOT_MODE,
     };
+  }
+
+  async liveReadReadiness(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    repositoryId?: string | null,
+    callerBody?: Record<string, unknown> | null,
+  ): Promise<SharePointLiveReadinessResult> {
+    assertEngineeringService(commerce, "work.repository.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const connections = (await this.store.listConnections(workspaceId)).filter((row) => row.tenantId === tenantId);
+    const connection = connections[0] ?? null;
+    const repos = await this.deps.work.listRepositoriesForConnector(commerce, tenantId);
+    const repository = repositoryId ? repos.find((row) => row.id === repositoryId) : repos[0];
+    const scope = repository ? await this.store.getScopeByRepository(repository.id) : null;
+    let graphTest: { ok: boolean; status: string; message: string } | null = null;
+    if (connection?.credentialSecretId) {
+      try {
+        graphTest = await this.graph.testConnection(connection);
+      } catch (error) {
+        graphTest = { ok: false, status: this.statusFromError(error), message: error instanceof Error ? error.message : "test_failed" };
+      }
+    }
+    const secretValuePresent = connection
+      ? Boolean(connection.credentialSecretId) && (this.deps.secrets ? Boolean(await this.deps.secrets.getSecretValue(connection.credentialSecretId)) : null)
+      : null;
+    return evaluateSharePointLiveReadiness({
+      connection,
+      scope,
+      repositoryEnabled: repository?.enabled,
+      repositoryAllowlisted: Boolean(repository?.enabled && repository.capturePolicy === "MANAGED"),
+      secretValuePresent,
+      graphTest,
+      callerBody,
+    });
   }
 
   async listSources(commerce: CommerceExecutionContext, tenantId: string, projectId: string) {
@@ -598,6 +651,10 @@ export class EngineeringM365ConnectorService {
     });
   }
 
+  private pilotWriteEnabled() {
+    return this.deps.pilotWriteEnabled === true || sharePointPilotWriteEnabled();
+  }
+
   private statusFromError(error: unknown): ConnectorStatus {
     if (error instanceof GraphPortFailure) {
       return classifyConnectorFailure(error.failure.kind);
@@ -611,11 +668,15 @@ export function createTestM365ConnectorService(input: {
   information: EngineeringInformationService;
   store?: M365Store;
   graph?: GraphPort;
+  secrets?: ConnectorSecretsPort;
+  pilotWriteEnabled?: boolean;
 }) {
   return new EngineeringM365ConnectorService({ from() { return this; } } as never, {
     work: input.work,
     information: input.information,
     store: input.store ?? createMemoryM365Store(),
     graph: input.graph ?? new MockGraphPort(),
+    secrets: input.secrets,
+    pilotWriteEnabled: input.pilotWriteEnabled,
   });
 }

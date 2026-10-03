@@ -9,3 +9,9 @@ export {
   MICROSOFT_PERMISSION_MODEL,
 } from "./types";
 export { rejectCallerConnectorClaims, rejectArbitraryUrlFetch } from "./security";
+export {
+  SHAREPOINT_PILOT_MODE,
+  SHAREPOINT_REQUIRED_LIVE_PERMISSIONS,
+  evaluateSharePointLiveReadiness,
+  liveSharePointExternalTestState,
+} from "./live-readiness";

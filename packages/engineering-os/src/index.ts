@@ -299,6 +299,11 @@ export {
   liveSharePointTestState,
 } from "./connectors/a16a-connect";
 export {
+  A16B_PHASE,
+  A16B_RETURNED_ARTIFACT_FLOW,
+  A16B_SCANNER_SECURITY_MODEL,
+} from "./connectors/a16b-harden";
+export {
   STORAGE_KINDS,
   OBJECT_STORAGE_BACKEND,
   OBJECT_STORAGE_PROVIDER,

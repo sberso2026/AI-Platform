@@ -132,8 +132,7 @@ describe("EOS-A16A CONNECT inventory", () => {
     const scan = readRepo("../../../engineering-review/src/malware-scan.ts");
     expect(scan).toContain("RTB_REVIEW_CLAMAV_URL");
     expect(scan).toContain("application/octet-stream");
-    expect(scan).toContain('headers: { "content-type": "application/octet-stream" }');
-    expect(scan).not.toContain("Authorization");
+    expect(scan).toContain("RTB_REVIEW_CLAMAV_AUTH_TOKEN");
     expect(A16A_MALWARE_AUTH_MODEL).toBe("UNAUTHENTICATED_HTTP_POST_PRIVATE_NETWORK_REQUIRED");
     expect(A16A_MALWARE_PUBLIC_ENDPOINT).toBe("PROHIBITED");
     expect(hostedMalwareScannerProcessState({} as NodeJS.ProcessEnv)).toBe("DEFERRED_EXTERNAL_DEPENDENCY");

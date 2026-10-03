@@ -102,7 +102,7 @@ describe("Review file ingestion policy", () => {
   it("treats ClamAV URL as established-scanner availability", () => {
     const policy = defaultReviewFileIngestionPolicy({
       NODE_ENV: "production",
-      RTB_REVIEW_CLAMAV_URL: "http://clamav.internal/scan",
+      RTB_REVIEW_CLAMAV_URL: "http://127.0.0.1:3311/scan",
     } as NodeJS.ProcessEnv);
     expect(policy.malwareScanningAvailable).toBe(true);
   });

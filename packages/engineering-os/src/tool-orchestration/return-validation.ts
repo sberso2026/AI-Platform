@@ -1,6 +1,6 @@
 import {
   scanWithEstablishedScanner,
-  establishedMalwareScannerAvailable,
+  hostedAuthenticatedMalwareScannerAvailable,
   reviewMalwareScanTimeoutMs,
   EICAR_TEST_SIGNATURE as REVIEW_EICAR,
 } from "@rtb/engineering-review";
@@ -23,7 +23,7 @@ export const EOS_MALWARE_STATES = [
 export type EosMalwareState = (typeof EOS_MALWARE_STATES)[number];
 
 export function hostedMalwareScannerAvailable(env: NodeJS.ProcessEnv = process.env) {
-  return establishedMalwareScannerAvailable(env);
+  return hostedAuthenticatedMalwareScannerAvailable(env);
 }
 
 export const MALWARE_SCAN_STATUS = hostedMalwareScannerAvailable()

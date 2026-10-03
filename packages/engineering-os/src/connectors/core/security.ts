@@ -34,6 +34,8 @@ const SECRET_KEYS = [
   "private_key",
   "certificatePem",
   "password",
+  "authorization",
+  "Authorization",
 ];
 
 export function rejectCallerConnectorCoreClaims(body: Record<string, unknown>): string | null {

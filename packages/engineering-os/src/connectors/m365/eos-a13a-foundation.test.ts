@@ -60,7 +60,7 @@ function officeXlsx() {
   ]);
 }
 
-async function harness() {
+async function harness(options?: { pilotWriteEnabled?: boolean }) {
   const workStore = createMemoryWorkContextStore();
   const infoStore = createMemoryInformationStore();
   const m365Store = createMemoryM365Store();
@@ -68,7 +68,7 @@ async function harness() {
   graph.seed(mechLoadItem(), officeXlsx());
   const work = new EngineeringWorkContextService(stubClient(), workStore);
   const information = new EngineeringInformationService(stubClient(), infoStore);
-  const connector = createTestM365ConnectorService({ work, information, store: m365Store, graph });
+  const connector = createTestM365ConnectorService({ work, information, store: m365Store, graph, pilotWriteEnabled: options?.pilotWriteEnabled });
   return { workStore, infoStore, m365Store, graph, work, information, connector };
 }
 
@@ -246,7 +246,7 @@ describe("EOS-A13A Microsoft 365 / SharePoint connector", () => {
   });
 
   it("publishes generated artifacts explicitly and retrieves SharePoint templates on demand", async () => {
-    const { connector, graph } = await harness();
+    const { connector, graph } = await harness({ pilotWriteEnabled: true });
     const registered = await registerProjectA(connector, { content: "ON_DEMAND_CONTENT", publication: true });
     await connector.runSync(admin(), CRUSHER_FEED_TENANT, registered.repository.id, "initial");
     const published = await connector.publishArtifact(engineer("analysis.write"), CRUSHER_FEED_TENANT, {
