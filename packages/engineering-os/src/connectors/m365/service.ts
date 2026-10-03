@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import type { JobService } from "@rtb/platform-kernel";
-import { assertEngineeringService } from "../../commerce/service-guard";
+import { assertEngineeringService, assertEngineeringTenantScope } from "../../commerce/service-guard";
 import { workspaceScopeId } from "../../commerce/workspace-scope";
 import { assertOfficePackage } from "../../artifact-automation/validate";
 import { sanitizeArtifactFileName } from "../../artifact-automation/filename";
@@ -50,6 +50,23 @@ import {
   sharePointPilotWriteEnabled,
   type SharePointLiveReadinessResult,
 } from "./live-readiness";
+import {
+  assertTrustedMicrosoftIdentity,
+  DEFAULT_M365_CONNECTION_MODE,
+  ENTERPRISE_MANAGED_MODE_STATUS,
+  mapGraphFailureToSetupState,
+  parseSharePointSiteUrl,
+  rtbMicrosoftAppConfig,
+  safeOnboardingTelemetry,
+  userFacingSetupMessage,
+  userHealthForSetup,
+  type DiscoveredLibrary,
+  type M365SetupState,
+  type RtbMicrosoftAppConfig,
+  type TrustedMicrosoftIdentity,
+  type UserHealthState,
+} from "./onboarding";
+import { SETUP_AGENT_ID, setupAgentNextAction } from "./setup-agent";
 
 export type M365ConnectorDeps = {
   store?: M365Store;
@@ -60,6 +77,7 @@ export type M365ConnectorDeps = {
   jobs?: JobService;
   /** Fixture-only governed publication. Profile A pilot write remains disabled. */
   pilotWriteEnabled?: boolean;
+  onboardingApp?: RtbMicrosoftAppConfig;
 };
 
 function newId() {
@@ -107,6 +125,11 @@ export class EngineeringM365ConnectorService {
       smeIndependent: true,
       pilotMode: SHAREPOINT_PILOT_MODE,
       writeEnabled: false,
+      microsoftOptional: true,
+      defaultConnectionMode: DEFAULT_M365_CONNECTION_MODE,
+      enterpriseManagedMode: ENTERPRISE_MANAGED_MODE_STATUS,
+      sitesReadAllRequired: false,
+      filesReadAllRequired: false,
     };
   }
 
@@ -211,6 +234,242 @@ export class EngineeringM365ConnectorService {
     }
     await this.audit(tenantId, workspaceId, "repository_disable", "managed_repository", repositoryId, commerce.actorUserId);
     return saved;
+  }
+
+  private onboardingApp(): RtbMicrosoftAppConfig {
+    return this.deps.onboardingApp ?? rtbMicrosoftAppConfig();
+  }
+
+  async onboardingDashboard(commerce: CommerceExecutionContext, tenantId: string, projectId?: string | null) {
+    assertEngineeringTenantScope(commerce, tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const connections = (await this.store.listConnections(workspaceId)).filter((row) => row.tenantId === tenantId);
+    const connection = connections.find((row) => row.enabled) ?? connections[0] ?? null;
+    const repos = (await this.deps.work.listRepositoriesForConnector(commerce, tenantId, projectId ?? null))
+      .filter((row) => row.repositoryType === "SHAREPOINT_LIBRARY" && (!connection || row.connectionId === connection.id));
+    const scopes = connection ? await this.store.listScopes(workspaceId) : [];
+    const setupState = this.deriveSetupState(connection, repos, scopes);
+    const sync = repos[0] ? await this.store.getSyncState(repos[0].id) : null;
+    const sites = [];
+    for (const repo of repos) {
+      const scope = scopes.find((row) => row.repositoryId === repo.id);
+      sites.push({
+        repositoryId: repo.id,
+        displayName: repo.displayName,
+        webUrl: null as string | null,
+        libraryName: repo.displayName,
+        projectId: repo.projectId,
+        enabled: repo.enabled,
+        capturePolicy: repo.capturePolicy,
+      });
+      void scope;
+    }
+    const agent = setupAgentNextAction(setupState);
+    return {
+      microsoftOptional: true as const,
+      connectionMode: DEFAULT_M365_CONNECTION_MODE,
+      rtbMultitenantAppConfigured: this.onboardingApp().configured,
+      setupState,
+      userHealth: userHealthForSetup(setupState),
+      message: userFacingSetupMessage(setupState),
+      organisationName: connection?.displayName ?? null,
+      permissionMode: "Sites.Selected",
+      readOnly: true as const,
+      writeEnabled: false as const,
+      connectionId: connection?.id ?? null,
+      connectionEnabled: connection?.enabled ?? false,
+      sites,
+      lastSuccessfulSyncAt: sync?.lastSuccessfulSyncAt ?? null,
+      lastAttemptedSyncAt: sync?.lastAttemptedSyncAt ?? null,
+      lastError: sync?.lastError ?? null,
+      agent: { id: SETUP_AGENT_ID, command: agent.command, message: agent.message },
+      liveMicrosoftProof: "DEFERRED_EXTERNAL_CONFIGURATION",
+    };
+  }
+
+  async completeMicrosoftSignIn(commerce: CommerceExecutionContext, tenantId: string, identity: TrustedMicrosoftIdentity) {
+    assertEngineeringService(commerce, "work.repository.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    assertTrustedMicrosoftIdentity(identity);
+    if (identity.consentRequired && !identity.adminConsentGranted) {
+      return { setupState: "ADMIN_CONSENT_REQUIRED" as const, connection: null, message: userFacingSetupMessage("ADMIN_CONSENT_REQUIRED") };
+    }
+    const app = this.onboardingApp();
+    if (!app.configured) throw new Error("RTB_APP_NOT_CONFIGURED");
+    const existing = (await this.store.listConnections(workspaceId)).filter((row) => row.tenantId === tenantId);
+    const prior = existing.find((row) => row.microsoftTenantId === identity.microsoftTenantId) ?? existing[0];
+    const saved = await this.saveConnection(commerce, tenantId, {
+      id: prior?.id,
+      displayName: identity.organisationName?.trim() || "Microsoft 365",
+      microsoftTenantId: identity.microsoftTenantId,
+      applicationId: app.applicationId,
+      credentialSecretId: app.credentialSecretId,
+      authMode: "CLIENT_SECRET",
+      status: "CONFIGURED",
+      enabled: true,
+      createdAt: prior?.createdAt,
+    });
+    await this.audit(tenantId, workspaceId, "microsoft_onboarding_connected", "m365_connection", saved.id, commerce.actorUserId, safeOnboardingTelemetry({
+      provider: "microsoft",
+      authorizationStage: "tenant_connected",
+      connectionMode: DEFAULT_M365_CONNECTION_MODE,
+    }));
+    return {
+      setupState: "CONNECTED_NO_SITE" as const,
+      connectionId: saved.id,
+      organisationName: saved.displayName,
+      message: userFacingSetupMessage("CONNECTED_NO_SITE"),
+    };
+  }
+
+  async resolveApprovedSite(commerce: CommerceExecutionContext, tenantId: string, siteUrl: string) {
+    assertEngineeringService(commerce, "work.repository.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const parsed = parseSharePointSiteUrl(siteUrl);
+    const connections = (await this.store.listConnections(workspaceId)).filter((row) => row.tenantId === tenantId && row.enabled);
+    const connection = connections[0];
+    if (!connection) throw new Error("connection_missing");
+    try {
+      const site = await this.graph.resolveSite({ connection, hostname: parsed.hostname, path: parsed.path });
+      const libraries = (await this.graph.listLibraries({ connection, siteId: site.siteId })).filter((row) => row.driveType !== "personal");
+      await this.audit(tenantId, workspaceId, "microsoft_site_resolved", "sharepoint_site", site.siteId, commerce.actorUserId, safeOnboardingTelemetry({
+        hostname: parsed.hostname,
+        authorizationStage: "site_validated",
+      }));
+      return {
+        setupState: libraries.length ? "LIBRARY_SELECTION_REQUIRED" as const : "SITE_CONNECTED" as const,
+        site: { displayName: site.displayName, webUrl: site.webUrl, hostname: site.hostname, path: site.path, siteId: site.siteId },
+        libraries: libraries.map((row) => ({ name: row.name, driveId: row.driveId, driveType: row.driveType })),
+        message: userFacingSetupMessage("LIBRARY_SELECTION_REQUIRED"),
+      };
+    } catch (error) {
+      const state = mapGraphFailureToSetupState(error instanceof Error ? error.message : "site_failed", error instanceof GraphPortFailure ? error.failure.kind : undefined);
+      if (state === "SITE_PERMISSION_REQUIRED") {
+        return { setupState: state, site: null, libraries: [] as DiscoveredLibrary[], message: userFacingSetupMessage(state) };
+      }
+      if (error instanceof GraphPortFailure && error.failure.kind === "NOT_FOUND") throw new Error("UNAPPROVED_SITE");
+      throw error instanceof Error ? error : new Error("CONNECTION_ERROR");
+    }
+  }
+
+  async selectApprovedLibrary(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: { siteUrl: string; libraryName?: string; driveId?: string; projectId?: string | null; displayName?: string },
+  ) {
+    assertEngineeringService(commerce, "work.repository.write", tenantId);
+    const resolved = await this.resolveApprovedSite(commerce, tenantId, input.siteUrl);
+    if (resolved.setupState === "SITE_PERMISSION_REQUIRED" || !resolved.site) {
+      return { setupState: "SITE_PERMISSION_REQUIRED" as const, message: userFacingSetupMessage("SITE_PERMISSION_REQUIRED") };
+    }
+    const library = resolved.libraries.find((row) => row.driveId === input.driveId || row.name === input.libraryName);
+    if (!library) throw new Error("library_unavailable");
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const connections = (await this.store.listConnections(workspaceId)).filter((row) => row.tenantId === tenantId);
+    const connection = connections.find((row) => row.enabled) ?? connections[0];
+    if (!connection) throw new Error("connection_missing");
+    const projectId = input.projectId?.trim() || null;
+    const registered = await this.registerSharePointRepository(commerce, tenantId, {
+      connectionId: connection.id,
+      externalSiteId: resolved.site.siteId,
+      externalDriveId: library.driveId,
+      contentAccessPolicy: "METADATA_ONLY",
+      publicationEnabled: false,
+      repository: {
+        id: newId(),
+        projectId,
+        scope: projectId ? "PROJECT" : "WORKSPACE",
+        repositoryType: "SHAREPOINT_LIBRARY",
+        externalRepositoryId: library.driveId,
+        displayName: input.displayName?.trim() || library.name,
+        approvedRoot: "/",
+        connectionId: connection.id,
+        enabled: true,
+        capturePolicy: "MANAGED",
+        createdBy: commerce.actorUserId ?? null,
+        createdAt: now(),
+        updatedAt: now(),
+      },
+    });
+    await this.store.saveConnection({ ...connection, status: "READY", updatedAt: now() });
+    return {
+      setupState: "READY" as const,
+      repositoryId: registered.repository.id,
+      libraryName: library.name,
+      projectId: registered.repository.projectId,
+      message: userFacingSetupMessage("READY"),
+    };
+  }
+
+  async userHealthCheck(commerce: CommerceExecutionContext, tenantId: string, repositoryId?: string | null) {
+    assertEngineeringTenantScope(commerce, tenantId);
+    const dashboard = await this.onboardingDashboard(commerce, tenantId);
+    if (!dashboard.connectionId) {
+      return { userHealth: "DISCONNECTED" as UserHealthState, setupState: dashboard.setupState, message: dashboard.message, diagnostics: { writeEnabled: false } };
+    }
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const connection = await this.requireConnection(tenantId, workspaceId, dashboard.connectionId);
+    let auth: { ok: boolean; status: string; message: string };
+    try {
+      auth = await this.graph.testConnection(connection);
+    } catch (error) {
+      auth = { ok: false, status: "AUTHENTICATION_REQUIRED", message: error instanceof Error ? error.message : "auth_failed" };
+    }
+    const repos = (await this.deps.work.listRepositoriesForConnector(commerce, tenantId)).filter((row) => row.connectionId === connection.id && row.enabled);
+    const repo = repositoryId ? repos.find((row) => row.id === repositoryId) : repos[0];
+    const scope = repo ? await this.store.getScopeByRepository(repo.id) : null;
+    let metadataRead = false;
+    let setupState: M365SetupState = dashboard.setupState;
+    if (!auth.ok) {
+      setupState = mapGraphFailureToSetupState(auth.message, "AUTH");
+    } else if (scope && repo) {
+      try {
+        await this.graph.listChildren({ connection, siteId: scope.externalSiteId, driveId: scope.externalDriveId, pageSize: 1 });
+        metadataRead = true;
+        setupState = "READY";
+      } catch (error) {
+        setupState = mapGraphFailureToSetupState(error instanceof Error ? error.message : "health_failed", error instanceof GraphPortFailure ? error.failure.kind : undefined);
+      }
+    }
+    const userHealth = userHealthForSetup(setupState);
+    return {
+      userHealth,
+      setupState,
+      message: userFacingSetupMessage(setupState),
+      diagnostics: {
+        microsoftAuthentication: auth.ok,
+        approvedTenant: Boolean(connection.microsoftTenantId),
+        approvedSite: Boolean(scope?.externalSiteId),
+        approvedLibrary: Boolean(scope?.externalDriveId),
+        readOnlyPolicy: true,
+        writeEnabled: false,
+        repositoryAllowlist: Boolean(repo?.enabled && repo.capturePolicy === "MANAGED"),
+        metadataRead,
+        permissionMode: "Sites.Selected",
+      },
+    };
+  }
+
+  async disconnectConnection(commerce: CommerceExecutionContext, tenantId: string, connectionId: string) {
+    assertEngineeringService(commerce, "work.repository.write", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    const connection = await this.requireConnection(tenantId, workspaceId, connectionId);
+    const saved = await this.store.saveConnection({ ...connection, enabled: false, status: "BLOCKED", updatedAt: now() });
+    const repos = (await this.deps.work.listRepositoriesForConnector(commerce, tenantId)).filter((row) => row.connectionId === connectionId);
+    for (const repo of repos) {
+      await this.disableRepository(commerce, tenantId, repo.id);
+    }
+    await this.audit(tenantId, workspaceId, "microsoft_disconnected", "m365_connection", connectionId, commerce.actorUserId, safeOnboardingTelemetry({
+      authorizationStage: "connection_removed",
+      historicalProvenancePreserved: true,
+    }));
+    return { setupState: "NOT_CONNECTED" as const, connectionId: saved.id, historicalProvenancePreserved: true, message: userFacingSetupMessage("NOT_CONNECTED") };
   }
 
   async testConnection(commerce: CommerceExecutionContext, tenantId: string, connectionId: string) {
@@ -629,6 +888,22 @@ export class EngineeringM365ConnectorService {
     return saved;
   }
 
+  private deriveSetupState(
+    connection: M365Connection | null,
+    repos: Array<{ enabled: boolean; capturePolicy: string; connectionId: string | null }>,
+    scopes: SharePointScope[],
+  ): M365SetupState {
+    if (!connection) return "NOT_CONNECTED";
+    if (!connection.enabled) return "NOT_CONNECTED";
+    if (connection.status === "AUTHENTICATION_REQUIRED") return "AUTH_EXPIRED";
+    if (connection.status === "BLOCKED") return "PERMISSION_REVOKED";
+    const managed = repos.filter((row) => row.enabled && row.capturePolicy === "MANAGED");
+    if (managed.length && scopes.some((row) => managed.some((repo) => repo.connectionId === connection.id))) {
+      return "READY";
+    }
+    return "CONNECTED_NO_SITE";
+  }
+
   private async requireConnection(tenantId: string, workspaceId: string, connectionId: string) {
     const connection = await this.store.getConnection(connectionId);
     if (!connection || connection.tenantId !== tenantId || connection.workspaceId !== workspaceId) {
@@ -670,6 +945,7 @@ export function createTestM365ConnectorService(input: {
   graph?: GraphPort;
   secrets?: ConnectorSecretsPort;
   pilotWriteEnabled?: boolean;
+  onboardingApp?: RtbMicrosoftAppConfig;
 }) {
   return new EngineeringM365ConnectorService({ from() { return this; } } as never, {
     work: input.work,
@@ -678,5 +954,6 @@ export function createTestM365ConnectorService(input: {
     graph: input.graph ?? new MockGraphPort(),
     secrets: input.secrets,
     pilotWriteEnabled: input.pilotWriteEnabled,
+    onboardingApp: input.onboardingApp,
   });
 }

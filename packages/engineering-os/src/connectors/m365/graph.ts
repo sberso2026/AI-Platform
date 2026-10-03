@@ -20,8 +20,25 @@ export class GraphPortFailure extends Error {
   }
 }
 
+export type GraphSiteIdentity = {
+  siteId: string;
+  hostname: string;
+  path: string;
+  displayName: string;
+  webUrl: string;
+};
+
+export type GraphLibraryIdentity = {
+  driveId: string;
+  name: string;
+  driveType: string;
+  webUrl?: string | null;
+};
+
 export type GraphPort = {
   testConnection(connection: M365Connection): Promise<{ ok: boolean; status: string; message: string }>;
+  resolveSite(input: { connection: M365Connection; hostname: string; path: string }): Promise<GraphSiteIdentity>;
+  listLibraries(input: { connection: M365Connection; siteId: string }): Promise<GraphLibraryIdentity[]>;
   listChildren(input: {
     connection: M365Connection;
     siteId: string;
@@ -60,6 +77,21 @@ export class MockGraphPort implements GraphPort {
   pageSize = DEFAULT_PAGE_SIZE;
   listedPersonalDrive = false;
   listedMail = false;
+  sites = new Map<string, GraphSiteIdentity>();
+  libraries = new Map<string, GraphLibraryIdentity[]>();
+  deniedSites = new Set<string>();
+  missingSites = new Set<string>();
+  consentDenied = false;
+
+  seedSite(site: GraphSiteIdentity) {
+    this.sites.set(`${site.hostname}${site.path}`.toLowerCase(), site);
+  }
+
+  seedLibrary(siteId: string, library: GraphLibraryIdentity) {
+    const current = this.libraries.get(siteId) ?? [];
+    current.push(library);
+    this.libraries.set(siteId, current);
+  }
 
   key(driveId: string, itemId: string) {
     return `${driveId}:${itemId}`;
@@ -81,10 +113,26 @@ export class MockGraphPort implements GraphPort {
 
   async testConnection(connection: M365Connection) {
     this.guard();
+    if (this.consentDenied) throw new GraphPortFailure({ kind: "AUTH", message: "consent_required" });
     if (!connection.microsoftTenantId || !connection.applicationId || !connection.credentialSecretId) {
       return { ok: false, status: "NOT_CONFIGURED", message: "connection incomplete" };
     }
     return { ok: true, status: "READY", message: "mock graph reachable" };
+  }
+
+  async resolveSite(input: { connection: M365Connection; hostname: string; path: string }) {
+    this.guard();
+    const key = `${input.hostname}${input.path}`.toLowerCase();
+    if (this.deniedSites.has(key)) throw new GraphPortFailure({ kind: "FORBIDDEN", message: "graph_forbidden" });
+    if (this.missingSites.has(key)) throw new GraphPortFailure({ kind: "NOT_FOUND", message: "site_not_found" });
+    const site = this.sites.get(key);
+    if (!site) throw new GraphPortFailure({ kind: "NOT_FOUND", message: "site_not_found" });
+    return site;
+  }
+
+  async listLibraries(input: { connection: M365Connection; siteId: string }) {
+    this.guard();
+    return (this.libraries.get(input.siteId) ?? []).filter((row) => row.driveType !== "personal");
   }
 
   async listChildren(input: {
@@ -210,7 +258,8 @@ export class LiveGraphPort implements GraphPort {
       ...init,
       headers: { ...(init?.headers ?? {}), Authorization: `Bearer ${access}` },
     });
-    if (response.status === 401 || response.status === 403) throw new GraphPortFailure({ kind: "AUTH", message: "graph_forbidden" });
+    if (response.status === 401) throw new GraphPortFailure({ kind: "AUTH", message: "graph_unauthorized" });
+    if (response.status === 403) throw new GraphPortFailure({ kind: "FORBIDDEN", message: "graph_forbidden" });
     if (response.status === 429) throw new GraphPortFailure({ kind: "THROTTLE", message: "throttled", retryAfterMs: retryAfter(response) });
     if (response.status === 410) throw new GraphPortFailure({ kind: "RESYNC", message: "resyncRequired" });
     return response;
@@ -226,6 +275,38 @@ export class LiveGraphPort implements GraphPort {
       }
       return { ok: false, status: "UNAVAILABLE", message: error instanceof Error ? error.message : "unavailable" };
     }
+  }
+
+  async resolveSite(input: { connection: M365Connection; hostname: string; path: string }) {
+    const relative = input.path.replace(/^\//, "");
+    const path = relative ? `/sites/${input.hostname}:/${relative}` : `/sites/${input.hostname}`;
+    const response = await this.graph(input.connection, path);
+    if (response.status === 404) throw new GraphPortFailure({ kind: "NOT_FOUND", message: "site_not_found" });
+    if (!response.ok) throw new GraphPortFailure({ kind: "NETWORK", message: `site_http_${response.status}` });
+    const json = (await response.json()) as { id?: string; displayName?: string; webUrl?: string };
+    if (!json.id) throw new GraphPortFailure({ kind: "NOT_FOUND", message: "site_not_found" });
+    return {
+      siteId: json.id,
+      hostname: input.hostname,
+      path: input.path,
+      displayName: json.displayName ?? (input.path || input.hostname),
+      webUrl: json.webUrl ?? `https://${input.hostname}${input.path}`,
+    };
+  }
+
+  async listLibraries(input: { connection: M365Connection; siteId: string }) {
+    const response = await this.graph(input.connection, `/sites/${input.siteId}/drives?$select=id,name,driveType,webUrl`);
+    if (response.status === 404) throw new GraphPortFailure({ kind: "NOT_FOUND", message: "library_unavailable" });
+    if (!response.ok) throw new GraphPortFailure({ kind: "NETWORK", message: `drives_http_${response.status}` });
+    const json = (await response.json()) as { value?: Array<{ id: string; name: string; driveType?: string; webUrl?: string }> };
+    return (json.value ?? [])
+      .filter((row) => row.driveType !== "personal")
+      .map((row) => ({
+        driveId: row.id,
+        name: row.name,
+        driveType: row.driveType ?? "documentLibrary",
+        webUrl: row.webUrl ?? null,
+      }));
   }
 
   async listChildren(input: {

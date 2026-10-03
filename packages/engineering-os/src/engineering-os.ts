@@ -54,6 +54,7 @@ import { EngineeringInformationService } from "./information-intelligence/servic
 import { EngineeringWorkContextService } from "./work-context/service";
 import { EngineeringM365ConnectorService, registerSharePointSyncHandler } from "./connectors/m365";
 import { LiveGraphPort } from "./connectors/m365/graph";
+import { resolveRtbAppSecret } from "./connectors/m365/onboarding";
 import { EngineeringExternalConnectorService, registerExternalConnectorSyncHandler } from "./connectors/engineering";
 import { EngineeringInformationRequirementService } from "./information-requirements/service";
 import { EngineeringWorkGeneratorService } from "./work-generator/service";
@@ -190,10 +191,15 @@ export function createEngineeringOS(
     information,
     jobs: kernel.jobs,
     graph: new LiveGraphPort({
-      async getSecretValue() {
-        return null;
+      async getSecretValue(secretId: string) {
+        return resolveRtbAppSecret(secretId);
       },
     }),
+    secrets: {
+      async getSecretValue(secretId: string) {
+        return resolveRtbAppSecret(secretId);
+      },
+    },
   });
   registerSharePointSyncHandler(kernel.jobs, m365Connector);
   const connectorHolder: { current: EngineeringExternalConnectorService | null } = { current: null };

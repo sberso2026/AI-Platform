@@ -249,6 +249,10 @@ export const GET = withEngineeringApi("work", async ({ ctx, commerce, correlatio
     const data = await ctx.engineering.m365Connector.health(commerce, ctx.tenantId, url.searchParams.get("repositoryId"));
     return NextResponse.json({ data });
   }
+  if (action === "m365Onboarding") {
+    const data = await ctx.engineering.m365Connector.onboardingDashboard(commerce, ctx.tenantId, projectId || null);
+    return NextResponse.json({ data });
+  }
   if (action === "m365Sources") {
     if (!projectId) return NextResponse.json({ error: "project_required" }, { status: 400 });
     const data = await ctx.engineering.m365Connector.listSources(commerce, ctx.tenantId, projectId);
@@ -881,7 +885,7 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       });
       return NextResponse.json({ data });
     }
-    if (action === "saveM365Connection" || action === "registerSharePointRepository" || action === "testM365Connection" || action === "syncSharePointRepository" || action === "disableSharePointRepository" || action === "registerTemplateSource" || action === "saveEngineeringConnection" || action === "bindEngineeringProject" || action === "setEngineeringConnectorWritePolicy" || action === "syncEngineeringConnector" || action === "disableEngineeringConnector") {
+    if (action === "saveM365Connection" || action === "registerSharePointRepository" || action === "testM365Connection" || action === "syncSharePointRepository" || action === "disableSharePointRepository" || action === "registerTemplateSource" || action === "saveEngineeringConnection" || action === "bindEngineeringProject" || action === "setEngineeringConnectorWritePolicy" || action === "syncEngineeringConnector" || action === "disableEngineeringConnector" || action === "completeM365SignIn" || action === "resolveSharePointSite" || action === "selectSharePointLibrary" || action === "testM365Health" || action === "disconnectM365" || action === "indexSharePointRepository") {
       const settingsCommerce = await authorizeEngineeringSegment(ctx, "settings", "POST", correlationId);
       if (!settingsCommerce) {
         return NextResponse.json({ error: "identity_assurance_required" }, { status: 403 });
@@ -896,6 +900,47 @@ export const POST = withEngineeringApi("work", async ({ ctx, commerce, correlati
       }
       if (action === "testM365Connection") {
         const data = await ctx.engineering.m365Connector.testConnection(settingsCommerce, ctx.tenantId, String(body.connectionId ?? ""));
+        return NextResponse.json({ data });
+      }
+      if (action === "completeM365SignIn") {
+        return NextResponse.json({ error: "use_microsoft_sign_in" }, { status: 400 });
+      }
+      if (action === "resolveSharePointSite") {
+        const data = await ctx.engineering.m365Connector.resolveApprovedSite(settingsCommerce, ctx.tenantId, String(body.siteUrl ?? ""));
+        const libraries = (data.libraries ?? []).map((row) => ({ name: row.name, driveType: row.driveType, driveId: row.driveId }));
+        return NextResponse.json({
+          data: {
+            setupState: data.setupState,
+            message: data.message,
+            site: data.site ? { displayName: data.site.displayName, webUrl: data.site.webUrl } : null,
+            libraries,
+          },
+        });
+      }
+      if (action === "selectSharePointLibrary") {
+        const data = await ctx.engineering.m365Connector.selectApprovedLibrary(settingsCommerce, ctx.tenantId, {
+          siteUrl: String(body.siteUrl ?? ""),
+          libraryName: typeof body.libraryName === "string" ? body.libraryName : undefined,
+          driveId: typeof body.driveId === "string" ? body.driveId : undefined,
+          projectId: typeof body.projectId === "string" ? body.projectId : null,
+        });
+        return NextResponse.json({ data });
+      }
+      if (action === "testM365Health") {
+        const data = await ctx.engineering.m365Connector.userHealthCheck(settingsCommerce, ctx.tenantId, typeof body.repositoryId === "string" ? body.repositoryId : null);
+        return NextResponse.json({ data });
+      }
+      if (action === "disconnectM365") {
+        const data = await ctx.engineering.m365Connector.disconnectConnection(settingsCommerce, ctx.tenantId, String(body.connectionId ?? ""));
+        return NextResponse.json({ data });
+      }
+      if (action === "indexSharePointRepository") {
+        const data = await ctx.engineering.m365Connector.enqueueSync(
+          settingsCommerce,
+          ctx.tenantId,
+          String(body.repositoryId ?? ""),
+          "initial",
+        );
         return NextResponse.json({ data });
       }
       if (action === "syncSharePointRepository") {

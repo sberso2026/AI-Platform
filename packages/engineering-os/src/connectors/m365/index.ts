@@ -15,3 +15,23 @@ export {
   evaluateSharePointLiveReadiness,
   liveSharePointExternalTestState,
 } from "./live-readiness";
+export {
+  DEFAULT_M365_CONNECTION_MODE,
+  M365_SETUP_STATES,
+  parseSharePointSiteUrl,
+  proposeSharePointDocumentHints,
+  resolveRtbAppSecret,
+  rtbMicrosoftAppConfig,
+} from "./onboarding";
+export { SETUP_AGENT_FORBIDDEN_ACTIONS, SETUP_AGENT_ID, assertSetupAgentCommand } from "./setup-agent";
+export {
+  buildMicrosoftAdminConsentUrl,
+  buildMicrosoftAuthorizeUrl,
+  classifyMicrosoftOAuthError,
+  decodeMicrosoftIdToken,
+  defaultM365RedirectUri,
+  identityFromAdminConsentCallback,
+  exchangeMicrosoftAuthorizationCode,
+  signOAuthState,
+  verifyOAuthState,
+} from "./oauth";
