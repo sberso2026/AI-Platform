@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
@@ -14,7 +15,14 @@ import { resolveEngineeringArtifactTemplate } from "./resolve-template";
 import { SupabaseArtifactStore } from "./supabase-store";
 import { SupabaseTemplatePolicyStore } from "./supabase-template-store";
 import { DEFAULT_TEMPLATE_FALLBACK_POLICY, type ArtifactTemplatePolicyRecord, type TenantTemplateFallbackPolicy } from "./template-policy";
-import { ARTIFACT_AI_BOUNDARY, ARTIFACT_PRIVACY, type ArtifactType, type GeneratedEngineeringArtifact } from "./types";
+import {
+  ARTIFACT_AI_BOUNDARY,
+  ARTIFACT_PRIVACY,
+  type ArtifactOutputFormat,
+  type ArtifactType,
+  type EngineeringArtifactGenerationRun,
+  type GeneratedEngineeringArtifact,
+} from "./types";
 import { composeDeliverableSource, compareDeliverableStaleness, A15A_V4_FEATURE_FREEZE } from "../lifecycle-intelligence/deliverable-composition";
 import type { PersistedMtoSnapshot } from "../lifecycle-intelligence/quantity-mto-persist";
 import {
@@ -38,6 +46,43 @@ function asCompositionContext(value: CompositionContext | LegacyMtoContext | nul
     bindingKind: value.current ? "PLAN_LOCAL" : "NONE",
     selectedFingerprint: value.current?.snapshotFingerprint ?? null,
     producingWorkPlanId: value.current?.workPlanId ?? null,
+  };
+}
+
+const CANONICAL_GENERATION_RUN_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isCanonicalGenerationRunId(id: string): boolean {
+  return CANONICAL_GENERATION_RUN_ID.test(id);
+}
+
+function blockedGenerationRun(input: {
+  plan: EngineeringWorkPlan;
+  templateCode: string;
+  templateVersion: string;
+  artifactType: ArtifactType;
+  outputFormat: ArtifactOutputFormat;
+  requestedBy: string | null;
+  explanation: string;
+  warnings?: string[];
+}): EngineeringArtifactGenerationRun {
+  return {
+    id: randomUUID(),
+    tenantId: input.plan.tenantId,
+    workspaceId: input.plan.workspaceId,
+    projectId: input.plan.projectId,
+    workPlanId: input.plan.id,
+    templateCode: input.templateCode,
+    templateVersion: input.templateVersion,
+    artifactType: input.artifactType,
+    outputFormat: input.outputFormat,
+    requestedBy: input.requestedBy,
+    generatedAt: new Date().toISOString(),
+    workPlanInputFingerprint: input.plan.inputFingerprint,
+    artifactId: null,
+    status: "GENERATION_BLOCKED",
+    warnings: input.warnings ?? [],
+    explanation: input.explanation,
+    metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
   };
 }
 
@@ -229,25 +274,15 @@ export class EngineeringArtifactAutomationService {
       fallbackPolicy: fallback?.fallbackPolicy ?? DEFAULT_TEMPLATE_FALLBACK_POLICY,
     });
     if (!resolution.ok || !resolution.template) {
-      const run = {
-        id: "blocked-template",
-        tenantId: plan.tenantId,
-        workspaceId: plan.workspaceId,
-        projectId: plan.projectId,
-        workPlanId: plan.id,
+      const run = blockedGenerationRun({
+        plan,
         templateCode: input.templateCode ?? input.artifactType ?? "UNRESOLVED",
         templateVersion: input.templateVersion ?? "",
-        artifactType: input.artifactType ?? resolution.template?.artifactType ?? "TECHNICAL_MEMORANDUM",
-        outputFormat: "DOCX" as const,
+        artifactType: input.artifactType ?? "TECHNICAL_MEMORANDUM",
+        outputFormat: "DOCX",
         requestedBy: commerce.actorUserId ?? null,
-        generatedAt: new Date().toISOString(),
-        workPlanInputFingerprint: plan.inputFingerprint,
-        artifactId: null,
-        status: "GENERATION_BLOCKED" as const,
-        warnings: [] as string[],
-        explanation: resolution.reason,
-        metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
-      };
+        explanation: resolution.reason ?? "TEMPLATE_UNAVAILABLE",
+      });
       return { ok: false as const, run, artifact: null, resolution };
     }
     const matchedPolicy = policies.find((row) => row.id === resolution.policyId);
@@ -268,25 +303,15 @@ export class EngineeringArtifactAutomationService {
         };
         return {
           ok: false as const,
-          run: {
-            id: "blocked-template",
-            tenantId: plan.tenantId,
-            workspaceId: plan.workspaceId,
-            projectId: plan.projectId,
-            workPlanId: plan.id,
+          run: blockedGenerationRun({
+            plan,
             templateCode: matchedPolicy.templateCode,
             templateVersion: matchedPolicy.templateVersion,
             artifactType: matchedPolicy.artifactType,
             outputFormat: format,
             requestedBy: commerce.actorUserId ?? null,
-            generatedAt: new Date().toISOString(),
-            workPlanInputFingerprint: plan.inputFingerprint,
-            artifactId: null,
-            status: "GENERATION_BLOCKED" as const,
-            warnings: [] as string[],
             explanation: unavailable.reason,
-            metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
-          },
+          }),
           artifact: null,
           resolution: unavailable,
         };
@@ -310,26 +335,20 @@ export class EngineeringArtifactAutomationService {
       : emptyCompositionContext();
     const blocked = mtoContext.generationBlocked;
     if (blocked) {
-      const run = {
-        id: "blocked-composition-source",
-        tenantId: plan.tenantId,
-        workspaceId: plan.workspaceId,
-        projectId: plan.projectId,
-        workPlanId: plan.id,
+      const bound = mtoContext.previous ?? mtoContext.current;
+      const run = blockedGenerationRun({
+        plan,
         templateCode: template.code,
         templateVersion: template.version,
         artifactType: template.artifactType,
         outputFormat: template.outputFormat,
         requestedBy: commerce.actorUserId ?? null,
-        generatedAt: new Date().toISOString(),
-        workPlanInputFingerprint: plan.inputFingerprint,
-        artifactId: null,
-        status: "GENERATION_BLOCKED" as const,
-        warnings: [] as string[],
-        explanation: blocked.explanation,
-        metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
-      };
-      await this.store.saveRun(run);
+        explanation: `${blocked.code}. ${blocked.explanation}`,
+        warnings: [
+          `${blocked.code} boundSourceId=${bound?.id ?? "none"} boundSourceStatus=${bound?.status ?? "unknown"}`,
+        ],
+      });
+      await this.persistBlockedGeneration(commerce, tenantId, plan, run);
       return { ok: false as const, run, artifact: null, resolution };
     }
     const calculation = shouldCompose && this.calcLoader ? await this.calcLoader(plan.id) : null;
@@ -341,26 +360,19 @@ export class EngineeringArtifactAutomationService {
       mtoInputRefs: mtoInputRefs(snapshot),
     });
     if (!compatible.ok) {
-      const run = {
-        id: "blocked-engineering-state",
-        tenantId: plan.tenantId,
-        workspaceId: plan.workspaceId,
-        projectId: plan.projectId,
-        workPlanId: plan.id,
+      const run = blockedGenerationRun({
+        plan,
         templateCode: template.code,
         templateVersion: template.version,
         artifactType: template.artifactType,
         outputFormat: template.outputFormat,
         requestedBy: commerce.actorUserId ?? null,
-        generatedAt: new Date().toISOString(),
-        workPlanInputFingerprint: plan.inputFingerprint,
-        artifactId: null,
-        status: "GENERATION_BLOCKED" as const,
-        warnings: [] as string[],
-        explanation: "ENGINEERING_STATE_MISMATCH. Bound MTO input refs do not include the Design Report calculation fingerprint. Generation blocked.",
-        metrics: { sourceRefsConsumed: 0, requirementsConsumed: 0, durationMs: 0, byteSize: 0, sheetOrSlideCount: 0 },
-      };
-      await this.store.saveRun(run);
+        explanation: `${compatible.code}. Bound MTO input refs do not include the Design Report calculation fingerprint. Generation blocked.`,
+        warnings: [
+          `${compatible.code} boundSourceId=${snapshot?.id ?? "none"} boundSourceStatus=${snapshot?.status ?? "unknown"}`,
+        ],
+      });
+      await this.persistBlockedGeneration(commerce, tenantId, plan, run);
       return { ok: false as const, run, artifact: null, resolution };
     }
     const composition = shouldCompose
@@ -440,6 +452,22 @@ export class EngineeringArtifactAutomationService {
       }),
       resolution,
     };
+  }
+
+  private async persistBlockedGeneration(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    plan: EngineeringWorkPlan,
+    run: EngineeringArtifactGenerationRun,
+  ) {
+    if (!isCanonicalGenerationRunId(run.id)) throw new Error("generation_run_id_invalid");
+    await this.store.saveRun(run);
+    await this.recordEvent?.(commerce, tenantId, {
+      eventType: "ARTIFACT_GENERATION_FAILED",
+      projectId: plan.projectId,
+      planId: plan.id,
+      actorId: commerce.actorUserId ?? null,
+    });
   }
 
   compareContext(

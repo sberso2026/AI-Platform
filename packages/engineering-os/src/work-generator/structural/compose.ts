@@ -286,7 +286,7 @@ export function buildResult(input: {
       foundation: foundation.status,
       units: { force: "kN", moment: "kN.m", length: "m", mass: "kg" },
     },
-    warnings: [...member.warnings, ...connection.missing, ...foundation.missing],
+    warnings: [...new Set([...member.warnings, ...connection.missing, ...foundation.missing])],
     limitations: member.limitations,
     executedAt: new Date().toISOString(),
     executedBy: STRUCTURAL_SOLVER_BOUNDARY.engineId,
@@ -298,6 +298,7 @@ export function buildResult(input: {
   };
 }
 
+/** Immutable only when status or reviewStatus is VERIFIED_BY_ENGINEER. UNVERIFIED / REVIEW_REQUIRED / STALE / INPUT_REQUIRED rows may be updated in place. */
 export function isVerifiedImmutable(row: PersistedStructuralCalculation): boolean {
   return row.status === "VERIFIED_BY_ENGINEER" || row.reviewStatus === "VERIFIED_BY_ENGINEER";
 }

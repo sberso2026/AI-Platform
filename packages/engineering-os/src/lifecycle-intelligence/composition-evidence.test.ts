@@ -3,6 +3,7 @@ import { A11E_PROJECT_B } from "../change-workbench/fixture";
 import { CRUSHER_EXPANSION_FEED_PROJECT_ID, CRUSHER_FEED_TENANT, CRUSHER_FEED_WORKSPACE } from "../work-generator/fixture";
 import {
   A15A_V5B_REPORTBIND,
+  A15A_V5B_REPORTBIND_HARDEN,
   assertCompositionEvidenceScope,
   evaluateEngineeringStateCompatibility,
   selectExplicitOverPlanLocal,
@@ -47,6 +48,11 @@ describe("EOS-A15A-V5B-REPORTBIND composition evidence", () => {
     expect(A15A_V5B_REPORTBIND.newProvenanceSubsystem).toBe(false);
     expect(A15A_V5B_REPORTBIND.newGraphStore).toBe(false);
     expect(A15A_V5B_REPORTBIND.newSchema).toBe(false);
+    expect(A15A_V5B_REPORTBIND_HARDEN.kgNodeRequiredForV5b).toBe(false);
+    expect(A15A_V5B_REPORTBIND_HARDEN.blockedRunId).toBe("CANONICAL_RANDOM_UUID");
+    expect(A15A_V5B_REPORTBIND_HARDEN.sectionAndUnitMassDisplay).toBe("NOT_REQUIRED_BY_CURRENT_TEMPLATE");
+    expect(A15A_V5B_REPORTBIND_HARDEN.unverifiedCalculationMutable).toBe(true);
+    expect(A15A_V5B_REPORTBIND_HARDEN.verifiedCalculationImmutable).toBe(true);
   });
 
   it("requires explicit MTO inputRefs to include the report calculation fingerprint", () => {

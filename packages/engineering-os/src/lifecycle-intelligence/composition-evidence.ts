@@ -18,6 +18,14 @@ export const A15A_V5B_REPORTBIND = {
   newSchema: false,
 } as const;
 
+export const A15A_V5B_REPORTBIND_HARDEN = {
+  blockedRunId: "CANONICAL_RANDOM_UUID",
+  kgNodeRequiredForV5b: false,
+  unverifiedCalculationMutable: true,
+  verifiedCalculationImmutable: true,
+  sectionAndUnitMassDisplay: "NOT_REQUIRED_BY_CURRENT_TEMPLATE",
+} as const;
+
 export const COMPOSITION_EVIDENCE_RELATIONSHIP = "USES" as const;
 export const COMPOSITION_EVIDENCE_FROM_TYPE = "engineering_work_plan" as const;
 export const COMPOSITION_EVIDENCE_TO_TYPE = "engineering_mto_snapshot" as const;

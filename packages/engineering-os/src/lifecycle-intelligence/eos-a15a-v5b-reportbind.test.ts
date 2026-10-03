@@ -408,6 +408,11 @@ describe("EOS-A15A-V5B-REPORTBIND explicit cross-Work-Plan MTO evidence", () => 
     expect(stale.reason).toBe("MTO_SOURCE_CHANGED");
     const blocked = await h.artifactSvc.generate(commerce(), CRUSHER_FEED_TENANT, { workPlanId: designPlan.id, artifactType: "DESIGN_REPORT" });
     expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.run.status).toBe("GENERATION_BLOCKED");
+      expect(blocked.run.explanation).toContain("SOURCE_SUPERSEDED");
+      expect(blocked.run.id).not.toBe("blocked-composition-source");
+    }
     await h.mto.bindCompositionEvidence(commerce(), CRUSHER_FEED_TENANT, {
       workPlanId: designPlan.id,
       mtoSnapshotId: successor.id,
