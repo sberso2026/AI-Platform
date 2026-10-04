@@ -186,7 +186,7 @@ export default function Microsoft365IntegrationsPage() {
                 <Button type="button" disabled={!canWrite} onClick={() => void testConnection()}>Test connection</Button>
               )}
               {onboarding?.sites[0]?.repositoryId && (
-                <Button type="button" disabled={!canWrite} onClick={() => void post("indexSharePointRepository", { repositoryId: onboarding.sites[0].repositoryId })}>Index repository</Button>
+                <Button type="button" disabled={!canConnectMicrosoft} onClick={() => void post("indexSharePointRepository", { repositoryId: onboarding.sites[0].repositoryId })}>Index repository</Button>
               )}
               {onboarding?.connectionId && (
                 <Button type="button" disabled={!canWrite} onClick={() => void post("disconnectM365", { connectionId: onboarding.connectionId })}>Disconnect</Button>

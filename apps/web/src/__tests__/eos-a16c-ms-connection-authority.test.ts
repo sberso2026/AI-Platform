@@ -19,6 +19,7 @@ describe("EOS-A16C Microsoft connection authority alignment", () => {
     expect(hasEngineeringAdminAuthority({ roleSlug: "admin", permissions: [] })).toBe(true);
     expect(page).toContain("canConnectMicrosoft = canAdministerEngineering && assurance.aal === \"aal2\"");
     expect(page).toContain("disabled={!canConnectMicrosoft}");
+    expect(page).toContain('disabled={!canConnectMicrosoft} onClick={() => void post("indexSharePointRepository"');
     expect(start).toContain("microsoftConnectionOAuthDenial");
     expect(callback).toContain("microsoftConnectionOAuthDenial");
     expect(api).toContain('denyIfEngineeringIdentityInsufficient(ctx, "settings", "POST")');

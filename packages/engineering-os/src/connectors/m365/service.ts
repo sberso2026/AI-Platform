@@ -953,6 +953,7 @@ export function createTestM365ConnectorService(input: {
   store?: M365Store;
   graph?: GraphPort;
   secrets?: ConnectorSecretsPort;
+  jobs?: JobService;
   pilotWriteEnabled?: boolean;
   onboardingApp?: RtbMicrosoftAppConfig;
 }) {
@@ -960,6 +961,7 @@ export function createTestM365ConnectorService(input: {
     work: input.work,
     information: input.information,
     store: input.store ?? createMemoryM365Store(),
+    jobs: input.jobs,
     graph: input.graph ?? new MockGraphPort(),
     secrets: input.secrets,
     pilotWriteEnabled: input.pilotWriteEnabled,

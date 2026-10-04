@@ -46,19 +46,39 @@ export function hasEngineeringAdminAuthority(principal: EngineeringAdminPrincipa
   );
 }
 
+export const SHAREPOINT_INDEX_JOB_TYPE = "engineering.m365.sharepoint.sync";
+
+type ScopedEngineeringAdminPrincipal = EngineeringAdminPrincipal & {
+  userId?: string | null;
+  tenantIds?: readonly string[] | null;
+  workspaceIds?: readonly string[] | null;
+};
+
 /** Authenticated JWT insert predicate for engineering_m365_connections. Service-role bypass is not modeled. */
 export function canInsertEngineeringM365Connection(
-  principal: EngineeringAdminPrincipal & {
-    userId?: string | null;
-    tenantIds?: readonly string[] | null;
-    workspaceIds?: readonly string[] | null;
-  },
+  principal: ScopedEngineeringAdminPrincipal,
   row: { tenantId: string; workspaceId: string },
 ): boolean {
   if (!principal.userId?.trim()) return false;
   if (!(principal.tenantIds ?? []).includes(row.tenantId)) return false;
   if (!(principal.workspaceIds ?? []).includes(row.workspaceId)) return false;
   return hasEngineeringAdminAuthority(principal);
+}
+
+/**
+ * Authenticated JWT insert predicate for SharePoint index jobs on background_jobs.
+ * Matches background_jobs_engineering_m365_sync_insert. Service-role bypass is not modeled.
+ */
+export function canInsertSharePointIndexJob(
+  principal: ScopedEngineeringAdminPrincipal,
+  row: { tenantId: string; workspaceId?: string | null; jobType: string },
+): boolean {
+  if (row.jobType !== SHAREPOINT_INDEX_JOB_TYPE) return false;
+  if (!row.workspaceId?.trim()) return false;
+  return canInsertEngineeringM365Connection(principal, {
+    tenantId: row.tenantId,
+    workspaceId: row.workspaceId,
+  });
 }
 
 export { ENGINEERING_PERMISSIONS };
