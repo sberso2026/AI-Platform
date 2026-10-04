@@ -2,7 +2,7 @@
  * Project Intelligence ↔ Engineering OS Core integration contract (Batch 2.06)
  *
  * Project Intelligence is a separate existing app. It MUST use Engineering Core
- * registers — never duplicate decisions, actions, risks, issues, TQs, or lessons.
+ * registers — never duplicate decisions, actions, risks, issues, TQs, lessons, or assumptions.
  */
 
 import type { EngineeringApiEndpoint } from "./engineering-api-contracts";
@@ -37,6 +37,7 @@ export const ENGINEERING_CORE_OWNED_REGISTERS = [
   "issues",
   "technical_queries",
   "lessons_learned",
+  "assumptions",
 ] as const;
 
 export type EngineeringCoreOwnedRegister = (typeof ENGINEERING_CORE_OWNED_REGISTERS)[number];
@@ -49,6 +50,7 @@ export const PROJECT_INTELLIGENCE_REGISTER_APIS: Record<EngineeringCoreOwnedRegi
   issues: "/api/engineering/issues",
   technical_queries: "/api/engineering/technical-queries",
   lessons_learned: "/api/engineering/lessons",
+  assumptions: "/api/engineering/assumptions",
 };
 
 /** Shared context APIs */
