@@ -1,6 +1,12 @@
+import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
 import type { JobService } from "@rtb/platform-kernel";
+import {
+  assertReviewScanAllowsExecution,
+  scanReviewDocumentBytes,
+  type ReviewMalwareScanState,
+} from "@rtb/engineering-review";
 import { assertEngineeringService, assertEngineeringTenantScope } from "../../commerce/service-guard";
 import { workspaceScopeId } from "../../commerce/workspace-scope";
 import { assertOfficePackage } from "../../artifact-automation/validate";
@@ -11,7 +17,7 @@ import type { ManagedEngineeringRepository } from "../../work-context/types";
 import { classifyGraphChange, graphItemToSource, sourceToInformationRef, sourceToWorkSignal, toSearchHit } from "./compose";
 import { GraphPortFailure, MockGraphPort, type GraphPort } from "./graph";
 import { isOlderThanKnown, microsoftSourceIdentity } from "./identity";
-import { connectorBackoff, classifyConnectorFailure } from "../core/security";
+import { connectorBackoff, classifyConnectorFailure, observabilitySafe } from "../core/security";
 import { createMemoryM365Store, emptyTelemetry, type M365Store } from "./memory-store";
 import { SupabaseM365Store } from "./supabase-store";
 import {
@@ -87,6 +93,78 @@ function newId() {
 
 function now() {
   return new Date().toISOString();
+}
+
+export const MANAGED_SOURCE_BINARY_REASONS = [
+  "SOURCE_UNAVAILABLE",
+  "REPOSITORY_UNAVAILABLE",
+  "SCOPE_DENIED",
+  "CALLER_SUPPLIED_GRAPH_IDENTITY_REJECTED",
+  "CONTENT_TYPE_NOT_RETRIEVABLE",
+  "CONTENT_TOO_LARGE",
+  "CONTENT_EMPTY",
+  "CONTENT_LENGTH_MISMATCH",
+  "CONTENT_INFECTED",
+  "CONTENT_UNAVAILABLE",
+] as const;
+export type ManagedSourceBinaryReason = (typeof MANAGED_SOURCE_BINARY_REASONS)[number];
+
+export type ManagedSourceBinaryQuarantine = {
+  state: "QUARANTINED";
+  malware: ReviewMalwareScanState;
+  parseAllowed: false;
+  aiIngestionAllowed: false;
+  engineeringProcessingAllowed: false;
+  officeInspectionAllowed: false;
+  cleanDownloadAllowed: false;
+};
+
+function quarantined(malware: ReviewMalwareScanState): ManagedSourceBinaryQuarantine {
+  return {
+    state: "QUARANTINED",
+    malware,
+    parseAllowed: false,
+    aiIngestionAllowed: false,
+    engineeringProcessingAllowed: false,
+    officeInspectionAllowed: false,
+    cleanDownloadAllowed: false,
+  };
+}
+
+export function assertManagedSourceProcessingAllowed(input: {
+  quarantine: ManagedSourceBinaryQuarantine;
+}): void {
+  assertReviewScanAllowsExecution(input.quarantine.malware);
+}
+
+function hashManagedSourceBytes(bytes: Buffer): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function isCadBimMetadataOnly(source: ExternalSourceRef): boolean {
+  const name = source.displayName.toLowerCase();
+  return CAD_BIM_METADATA_ONLY.some((ext) => name.endsWith(`.${ext.toLowerCase()}`));
+}
+
+function isIndexableManagedSource(source: ExternalSourceRef): boolean {
+  if (isCadBimMetadataOnly(source)) return false;
+  if (source.mimeType && (INDEXABLE_ENGINEERING_TYPES as readonly string[]).includes(source.mimeType)) return true;
+  const name = source.displayName.toLowerCase();
+  return [".txt", ".csv", ".pdf", ".docx", ".xlsx", ".pptx"].some((ext) => name.endsWith(ext));
+}
+
+function rejectCallerGraphIdentity(input: Record<string, unknown>): boolean {
+  return Boolean(
+    input.url ||
+      input.href ||
+      input.graphUrl ||
+      input.siteId ||
+      input.driveId ||
+      input.itemId ||
+      input.accessToken ||
+      input.refreshToken ||
+      input.clientSecret,
+  );
 }
 
 export class EngineeringM365ConnectorService {
@@ -722,13 +800,118 @@ export class EngineeringM365ConnectorService {
       return { ok: false as const, reason: "TEMPLATE_UNAVAILABLE" as const, bytes: null };
     }
     try {
-      const bytes = await this.graph.download({ connection, driveId: source.driveId, itemId: source.itemId });
-      assertContentSize(bytes);
+      const bytes = await this.downloadGovernedItemBytes(connection, source.driveId, source.itemId);
       assertOfficePackage(bytes, input.expectedFormat);
       return { ok: true as const, bytes, source, storedInPostgres: false };
     } catch {
       return { ok: false as const, reason: "TEMPLATE_UNAVAILABLE" as const, bytes: null };
     }
+  }
+
+  async retrieveManagedSourceBinary(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: { sourceId: string } & Record<string, unknown>,
+  ) {
+    assertEngineeringService(commerce, "work.get", tenantId);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) throw new Error("workspace_required");
+    if (rejectCallerGraphIdentity(input)) {
+      return { ok: false as const, reason: "CALLER_SUPPLIED_GRAPH_IDENTITY_REJECTED" as const, bytes: null };
+    }
+    const source = await this.store.getSource(String(input.sourceId ?? ""));
+    if (!source || source.tenantId !== tenantId || source.workspaceId !== workspaceId) {
+      return { ok: false as const, reason: "SOURCE_UNAVAILABLE" as const, bytes: null };
+    }
+    if (source.availability !== "ACTIVE") {
+      return { ok: false as const, reason: "SOURCE_UNAVAILABLE" as const, bytes: null };
+    }
+    const repos = await this.deps.work.listRepositories(commerce, tenantId, source.projectId || null);
+    const repository = repos.find((row) => row.id === source.repositoryId);
+    if (!repository || !repository.enabled || repository.capturePolicy !== "MANAGED") {
+      return { ok: false as const, reason: "REPOSITORY_UNAVAILABLE" as const, bytes: null };
+    }
+    if (repository.tenantId !== tenantId || repository.workspaceId !== workspaceId) {
+      return { ok: false as const, reason: "SCOPE_DENIED" as const, bytes: null };
+    }
+    const scope = await this.store.getScopeByRepository(source.repositoryId);
+    if (!scope || scope.tenantId !== tenantId || scope.workspaceId !== workspaceId) {
+      return { ok: false as const, reason: "SCOPE_DENIED" as const, bytes: null };
+    }
+    if (scope.externalSiteId !== source.siteId || scope.externalDriveId !== source.driveId) {
+      return { ok: false as const, reason: "SCOPE_DENIED" as const, bytes: null };
+    }
+    if (!itemWithinApprovedRoot(source.pathWithinRoot, repository.approvedRoot)) {
+      return { ok: false as const, reason: "SCOPE_DENIED" as const, bytes: null };
+    }
+    const connection = await this.requireConnection(tenantId, workspaceId, scope.connectionId);
+    if (!connection.enabled) {
+      return { ok: false as const, reason: "SCOPE_DENIED" as const, bytes: null };
+    }
+    if (
+      isPersonalOneDriveItem({
+        driveType: "documentLibrary",
+        webUrl: source.webUrl ?? "",
+        pathWithinRoot: source.pathWithinRoot,
+      })
+    ) {
+      return { ok: false as const, reason: "SCOPE_DENIED" as const, bytes: null };
+    }
+    if (!isIndexableManagedSource(source)) {
+      return { ok: false as const, reason: "CONTENT_TYPE_NOT_RETRIEVABLE" as const, bytes: null };
+    }
+    let bytes: Buffer;
+    try {
+      bytes = await this.downloadGovernedItemBytes(connection, source.driveId, source.itemId);
+    } catch (error) {
+      if (error instanceof Error && error.message === "content_too_large") {
+        return { ok: false as const, reason: "CONTENT_TOO_LARGE" as const, bytes: null };
+      }
+      return { ok: false as const, reason: "CONTENT_UNAVAILABLE" as const, bytes: null };
+    }
+    if (bytes.byteLength <= 0) {
+      return { ok: false as const, reason: "CONTENT_EMPTY" as const, bytes: null };
+    }
+    if (source.sizeBytes != null && source.sizeBytes !== bytes.byteLength) {
+      return { ok: false as const, reason: "CONTENT_LENGTH_MISMATCH" as const, bytes: null };
+    }
+    const localScan = scanReviewDocumentBytes({ bytes });
+    if (localScan.state === "INFECTED") {
+      await this.audit(tenantId, workspaceId, "managed_source_binary_retrieve_denied", "external_source", source.id, commerce.actorUserId, observabilitySafe({
+        reason: "CONTENT_INFECTED",
+        receivedSize: bytes.byteLength,
+      }));
+      return { ok: false as const, reason: "CONTENT_INFECTED" as const, bytes: null };
+    }
+    const quarantine = quarantined("PENDING_SCAN");
+    await this.audit(tenantId, workspaceId, "managed_source_binary_retrieve", "external_source", source.id, commerce.actorUserId, observabilitySafe({
+      receivedSize: bytes.byteLength,
+      contentType: source.mimeType,
+      quarantine: quarantine.state,
+      malware: quarantine.malware,
+    }));
+    return {
+      ok: true as const,
+      bytes,
+      source,
+      repository,
+      scope: {
+        siteId: scope.externalSiteId,
+        driveId: scope.externalDriveId,
+        repositoryId: scope.repositoryId,
+      },
+      metadata: {
+        fileName: source.displayName,
+        contentType: source.mimeType || "application/octet-stream",
+        expectedSize: source.sizeBytes,
+        receivedSize: bytes.byteLength,
+        itemId: source.itemId,
+        repositoryId: source.repositoryId,
+        sha256: hashManagedSourceBytes(bytes),
+      },
+      quarantine,
+      storedInPostgres: false,
+    };
   }
 
   async registerTemplateSource(
@@ -919,6 +1102,12 @@ export class EngineeringM365ConnectorService {
       throw new Error("connection_scope_denied");
     }
     return connection;
+  }
+
+  private async downloadGovernedItemBytes(connection: M365Connection, driveId: string, itemId: string) {
+    const bytes = await this.graph.download({ connection, driveId, itemId });
+    assertContentSize(bytes);
+    return bytes;
   }
 
   private async audit(tenantId: string, workspaceId: string, action: string, targetType: string, targetId: string, actorId: string | null | undefined, metadata: Record<string, unknown> = {}) {
