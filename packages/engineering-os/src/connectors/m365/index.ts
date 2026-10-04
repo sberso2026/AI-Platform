@@ -42,4 +42,4 @@ export {
   signOAuthState,
   verifyOAuthState,
 } from "./oauth";
-export type { MicrosoftTokenExchangeFailureDiagnostic } from "./oauth";
+export type { MicrosoftTokenExchangeFailureDiagnostic, MicrosoftTokenExchangeFailureLayer } from "./oauth";

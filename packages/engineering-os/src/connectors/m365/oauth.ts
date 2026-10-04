@@ -17,15 +17,23 @@ const LOGIN_TOKEN = "https://login.microsoftonline.com/organizations/oauth2/v2.0
 
 export const EOS_M365_TOKEN_EXCHANGE_FAILURE_EVENT = "EOS_M365_TOKEN_EXCHANGE_FAILURE" as const;
 export const EOS_M365_TOKEN_EXCHANGE_FAILURE_FILENAME = "eos-m365-token-exchange-failure.json" as const;
+export const MICROSOFT_TOKEN_ENDPOINT_CLASSIFICATION = "microsoft_organizations_oauth_token" as const;
+
+export type MicrosoftTokenExchangeFailureLayer =
+  | "NETWORK_EXCEPTION"
+  | "MICROSOFT_HTTP_ERROR"
+  | "TOKEN_RESPONSE_PARSE_ERROR"
+  | "POST_TOKEN_VALIDATION_ERROR";
 
 const SECRET_TEXT_MARKERS = /\b(client_secret|client secret|access_token|refresh_token|id_token|authorization_code|authorization code)\b/gi;
-const ASSIGNED_SECRET = /\b(code|client_secret|access_token|refresh_token|id_token|assertion)\s*[:=]\s*[^\s,;]+/gi;
+const ASSIGNED_SECRET = /\b(code|client_secret|access_token|refresh_token|id_token|assertion|state)\s*[:=]\s*[^\s,;]+/gi;
 const JWT_LIKE = /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*\b/g;
 const BEARER_LIKE = /\bBearer\s+\S+/gi;
-const QUERY_SECRET = /[?&](code|client_secret|access_token|refresh_token|id_token|assertion)=[^&\s]*/gi;
+const QUERY_SECRET = /[?&](code|client_secret|access_token|refresh_token|id_token|assertion|state)=[^&\s]*/gi;
 
 export type MicrosoftTokenExchangeFailureDiagnostic = {
-  httpStatus: number;
+  layer: MicrosoftTokenExchangeFailureLayer;
+  httpStatus: number | null;
   oauthError: string | null;
   aadstsCodes: string[];
   errorDescriptionSanitized: string | null;
@@ -33,6 +41,8 @@ export type MicrosoftTokenExchangeFailureDiagnostic = {
   traceId: string | null;
   timestamp: string | null;
   msRequestId: string | null;
+  endpoint: typeof MICROSOFT_TOKEN_ENDPOINT_CLASSIFICATION;
+  errorName: string | null;
 };
 
 export class MicrosoftTokenExchangeFailure extends Error {
@@ -88,6 +98,33 @@ function headerValue(headers: Headers, name: string): string | null {
   return safeShortToken(headers.get(name));
 }
 
+function safeErrorName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!/^[A-Za-z][A-Za-z0-9._]{0,80}$/.test(trimmed)) return null;
+  if (looksLikeSecretMaterial(trimmed)) return null;
+  return trimmed;
+}
+
+function tokenExchangeDiagnostic(
+  layer: MicrosoftTokenExchangeFailureLayer,
+  extras: Partial<Omit<MicrosoftTokenExchangeFailureDiagnostic, "layer" | "endpoint">> = {},
+): MicrosoftTokenExchangeFailureDiagnostic {
+  return {
+    layer,
+    httpStatus: extras.httpStatus ?? null,
+    oauthError: extras.oauthError ?? null,
+    aadstsCodes: extras.aadstsCodes ?? [],
+    errorDescriptionSanitized: extras.errorDescriptionSanitized ?? null,
+    correlationId: extras.correlationId ?? null,
+    traceId: extras.traceId ?? null,
+    timestamp: extras.timestamp ?? new Date().toISOString(),
+    msRequestId: extras.msRequestId ?? null,
+    endpoint: MICROSOFT_TOKEN_ENDPOINT_CLASSIFICATION,
+    errorName: extras.errorName ?? null,
+  };
+}
+
 export function sanitizeMicrosoftTokenErrorDescription(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
   let sanitized = value.replace(QUERY_SECRET, "[REDACTED]");
@@ -120,7 +157,7 @@ export function parseMicrosoftTokenEndpointFailure(
     headerValue(response.headers, "x-ms-correlation-request-id") ??
     headerValue(response.headers, "x-ms-ests-correlation-id");
   const traceId = safeShortToken(body.trace_id);
-  return {
+  return tokenExchangeDiagnostic("MICROSOFT_HTTP_ERROR", {
     httpStatus: response.status,
     oauthError: safeOauthError(body.error),
     aadstsCodes: aadstsCodesFrom(body, description),
@@ -129,7 +166,8 @@ export function parseMicrosoftTokenEndpointFailure(
     traceId,
     timestamp: safeShortToken(body.timestamp, 64),
     msRequestId: headerValue(response.headers, "x-ms-request-id") ?? headerValue(response.headers, "client-request-id"),
-  };
+    errorName: "HttpError",
+  });
 }
 
 export function microsoftTokenExchangeFailureDiagnosticPath(env: NodeJS.ProcessEnv = process.env): string {
@@ -144,6 +182,9 @@ export function emitMicrosoftTokenExchangeFailure(
 ): MicrosoftTokenExchangeFailureDiagnostic {
   const payload = {
     event: EOS_M365_TOKEN_EXCHANGE_FAILURE_EVENT,
+    layer: diagnostic.layer,
+    endpoint: diagnostic.endpoint,
+    errorName: diagnostic.errorName,
     httpStatus: diagnostic.httpStatus,
     oauthError: diagnostic.oauthError,
     aadstsCodes: diagnostic.aadstsCodes,
@@ -263,29 +304,86 @@ export async function exchangeMicrosoftAuthorizationCode(input: {
   if (!app.configured || !secret) throw new Error("RTB_APP_NOT_CONFIGURED");
   if (!isAllowedGraphUrl(LOGIN_TOKEN)) throw new Error("SSRF_BLOCKED");
   const fetchImpl = input.fetchImpl ?? fetch;
-  const response = await fetchImpl(LOGIN_TOKEN, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: app.applicationId,
-      client_secret: secret,
-      grant_type: "authorization_code",
-      code: input.code,
-      redirect_uri: input.redirectUri,
-    }),
-    redirect: "manual",
-  });
-  if (!response.ok) {
-    const bodyText = await response.text();
-    const diagnostic = parseMicrosoftTokenEndpointFailure(response, bodyText);
-    if (input.onFailureDiagnostic) input.onFailureDiagnostic(diagnostic);
-    else emitMicrosoftTokenExchangeFailure(diagnostic, env);
-    const reason = response.status === 401 || response.status === 403 ? "token_rejected" : `token_http_${response.status}`;
+  const fail = (reason: string, diagnostic: MicrosoftTokenExchangeFailureDiagnostic): never => {
+    emitMicrosoftTokenExchangeFailure(diagnostic, env);
+    input.onFailureDiagnostic?.(diagnostic);
     throw new MicrosoftTokenExchangeFailure(reason, diagnostic);
+  };
+  let response: Response;
+  try {
+    response = await fetchImpl(LOGIN_TOKEN, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: app.applicationId,
+        client_secret: secret,
+        grant_type: "authorization_code",
+        code: input.code,
+        redirect_uri: input.redirectUri,
+      }),
+      redirect: "manual",
+    });
+  } catch (error) {
+    return fail("token_network_exception", tokenExchangeDiagnostic("NETWORK_EXCEPTION", {
+      errorName: error instanceof Error ? safeErrorName(error.name) : "Error",
+      errorDescriptionSanitized: sanitizeMicrosoftTokenErrorDescription(
+        error instanceof Error ? error.message : "network_exception",
+      ) ?? "network_exception",
+    }));
   }
-  const json = (await response.json()) as { id_token?: string };
-  if (!json.id_token) throw new Error("microsoft_identity_missing");
-  return { identity: decodeMicrosoftIdToken(json.id_token), tokenPresent: true };
+  if (!response.ok) {
+    let bodyText = "";
+    try {
+      bodyText = await response.text();
+    } catch {
+      bodyText = "";
+    }
+    const diagnostic = parseMicrosoftTokenEndpointFailure(response, bodyText);
+    const reason = response.status === 401 || response.status === 403 ? "token_rejected" : `token_http_${response.status}`;
+    return fail(reason, diagnostic);
+  }
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch (error) {
+    return fail("token_response_invalid_json", tokenExchangeDiagnostic("TOKEN_RESPONSE_PARSE_ERROR", {
+      httpStatus: response.status,
+      errorName: error instanceof Error ? safeErrorName(error.name) : "SyntaxError",
+      errorDescriptionSanitized: "invalid_json",
+    }));
+  }
+  if (!json || typeof json !== "object" || Array.isArray(json)) {
+    return fail("token_response_invalid_json", tokenExchangeDiagnostic("TOKEN_RESPONSE_PARSE_ERROR", {
+      httpStatus: response.status,
+      errorName: "TokenResponseParseError",
+      errorDescriptionSanitized: "invalid_json",
+    }));
+  }
+  const idToken = (json as { id_token?: unknown }).id_token;
+  if (typeof idToken !== "string" || !idToken.trim()) {
+    return fail("microsoft_identity_missing", tokenExchangeDiagnostic("TOKEN_RESPONSE_PARSE_ERROR", {
+      httpStatus: response.status,
+      errorName: "TokenResponseParseError",
+      errorDescriptionSanitized: "id_token_missing",
+    }));
+  }
+  try {
+    return { identity: decodeMicrosoftIdToken(idToken), tokenPresent: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === "microsoft_tenant_missing" || message === "microsoft_user_missing") {
+      return fail("microsoft_tenant_missing", tokenExchangeDiagnostic("POST_TOKEN_VALIDATION_ERROR", {
+        httpStatus: response.status,
+        errorName: "MicrosoftIdTokenClaimsError",
+        errorDescriptionSanitized: "required_claim_missing",
+      }));
+    }
+    return fail("microsoft_identity_missing", tokenExchangeDiagnostic("TOKEN_RESPONSE_PARSE_ERROR", {
+      httpStatus: response.status,
+      errorName: error instanceof Error ? safeErrorName(error.name) : "TokenResponseParseError",
+      errorDescriptionSanitized: "id_token_malformed",
+    }));
+  }
 }
 
 export function identityFromAdminConsentCallback(tenant: string, adminConsent: string): TrustedMicrosoftIdentity {

@@ -47,10 +47,14 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
   it("keeps the Microsoft callback fail closed without putting diagnostics in the URL", () => {
     expect(callback).toContain('return redirect("m365=error")');
     expect(callback).toContain("exchangeMicrosoftAuthorizationCode");
+    expect(callback).toContain("MicrosoftTokenExchangeFailure");
+    expect(callback).toContain("error instanceof MicrosoftTokenExchangeFailure");
     expect(callback).not.toContain("NEXT_PUBLIC_");
     expect(callback).not.toMatch(/redirect\(`[^`]*error_description/);
     expect(callback).not.toMatch(/redirect\([^)]*correlationId/);
     expect(callback).not.toMatch(/redirect\([^)]*aadsts/i);
+    expect(callback).not.toMatch(/redirect\([^)]*diagnostic/);
+    expect(callback).not.toMatch(/m365=error&/);
     expect([...callback.matchAll(/redirect\("m365=[^"]+"\)/g)].map((row) => row[0])).toEqual([
       'redirect("m365=sign_in_required")',
       'redirect("m365=sign_in_required")',
@@ -58,6 +62,7 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
       'redirect("m365=sign_in_required")',
       'redirect("m365=admin_required")',
       'redirect("m365=connected")',
+      'redirect("m365=error")',
       'redirect("m365=admin_consent")',
       'redirect("m365=not_configured")',
       'redirect("m365=error")',

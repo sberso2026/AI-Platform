@@ -5,6 +5,7 @@ import {
   defaultM365RedirectUri,
   exchangeMicrosoftAuthorizationCode,
   identityFromAdminConsentCallback,
+  MicrosoftTokenExchangeFailure,
   verifyOAuthState,
 } from "@rtb/engineering-os";
 
@@ -51,6 +52,10 @@ export const GET = withEngineeringApi("settings", async ({ ctx, correlationId },
     await ctx.engineering.m365Connector.completeMicrosoftSignIn(settingsCommerce, ctx.tenantId, identity);
     return redirect("m365=connected");
   } catch (error) {
+    const tokenExchangeFailure = error instanceof MicrosoftTokenExchangeFailure ? error : null;
+    if (tokenExchangeFailure) {
+      return redirect("m365=error");
+    }
     const message = error instanceof Error ? error.message : "";
     if (message.includes("ADMIN_CONSENT") || message.includes("consent")) return redirect("m365=admin_consent");
     if (message.includes("RTB_APP_NOT_CONFIGURED")) return redirect("m365=not_configured");

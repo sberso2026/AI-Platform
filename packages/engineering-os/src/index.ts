@@ -293,6 +293,7 @@ export {
   verifyOAuthState,
   MicrosoftTokenExchangeFailure,
 } from "./connectors/m365";
+export type { MicrosoftTokenExchangeFailureDiagnostic, MicrosoftTokenExchangeFailureLayer } from "./connectors/m365";
 export {
   EngineeringExternalConnectorService,
   ENGINEERING_CONNECTOR_RECON,
