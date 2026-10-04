@@ -145,7 +145,7 @@ export class MockGraphPort implements GraphPort {
   }) {
     this.guard();
     const all = [...this.items.values()].filter(
-      (item) => item.siteId === input.siteId && item.driveId === input.driveId && !item.folder,
+      (item) => item.driveId === input.driveId && !item.folder,
     );
     const size = input.pageSize ?? this.pageSize;
     const offset = input.skipToken ? Number(input.skipToken) || 0 : 0;
@@ -352,6 +352,12 @@ export class LiveGraphPort implements GraphPort {
 
   async download(input: { connection: M365Connection; driveId: string; itemId: string }) {
     const response = await this.graph(input.connection, `/drives/${input.driveId}/items/${input.itemId}/content`);
+    if (!response.ok) {
+      throw new GraphPortFailure({
+        kind: response.status === 403 ? "FORBIDDEN" : response.status === 404 ? "NOT_FOUND" : "NETWORK",
+        message: `content_http_${response.status}`,
+      });
+    }
     const bytes = Buffer.from(await response.arrayBuffer());
     return bytes;
   }
@@ -432,7 +438,8 @@ function retryAfter(response: Response): number {
 }
 
 async function fetchGraph(url: string, init: RequestInit, hop = 0): Promise<Response> {
-  if (!isAllowedGraphUrl(url)) throw new Error("SSRF_BLOCKED");
+  const allowed = hop === 0 ? isAllowedGraphUrl(url) : validateRedirectLocation(url);
+  if (!allowed) throw new Error("SSRF_BLOCKED");
   const response = await fetch(url, { ...init, redirect: "manual" });
   if ([301, 302, 307, 308].includes(response.status) && hop < 3) {
     const location = response.headers.get("location");

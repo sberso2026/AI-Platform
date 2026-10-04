@@ -138,6 +138,28 @@ async function syncedTxt(options?: { content?: Buffer; item?: ReturnType<typeof 
 }
 
 describe("EOS-A16D SharePoint generic binary retrieval", () => {
+  it("ingests a live Graph file whose parentReference.siteId encoding differs from the onboarded site id", async () => {
+    const env = await harness();
+    env.graph.seed(
+      testTxtItem({
+        siteId: "11111111-2222-3333-4444-555555555555",
+        size: TEST_FILE_BYTES.byteLength,
+      }),
+      TEST_FILE_BYTES,
+    );
+    const registered = await registerDocumentsLibrary(env.connector);
+    await env.connector.runSync(admin(), CRUSHER_FEED_TENANT, registered.repository.id, "initial");
+    const sources = await env.connector.listSources(engineer(), CRUSHER_FEED_TENANT, "");
+    const source = sources.find((row) => row.displayName === TEST_FILE_NAME);
+    expect(source).toBeTruthy();
+    expect(source?.siteId).toBe(A13A_SITE_ID);
+    expect(source?.driveId).toBe(A13A_DRIVE_A);
+    const retrieved = await env.connector.retrieveManagedSourceBinary(engineer(), CRUSHER_FEED_TENANT, {
+      sourceId: source!.id,
+    });
+    expect(retrieved.ok).toBe(true);
+  });
+
   it("retrieves TXT bytes from a METADATA_ONLY managed repository into quarantine", async () => {
     const { connector, source, registered } = await syncedTxt();
     expect(source).toBeTruthy();

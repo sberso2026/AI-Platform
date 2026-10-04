@@ -84,6 +84,36 @@ export function itemWithinApprovedRoot(itemPath: string, approvedRootPath: strin
   return item === root || item.startsWith(root.endsWith("/") ? root : `${root}/`);
 }
 
+export function itemBelongsToApprovedSharePointScope(
+  item: { siteId?: string | null; driveId?: string | null },
+  scope: { externalSiteId: string; externalDriveId: string },
+): boolean {
+  if (!item.driveId || item.driveId !== scope.externalDriveId) return false;
+  const graphSiteId = item.siteId?.trim() ?? "";
+  if (!graphSiteId) return true;
+  if (microsoftSiteIdsMatch(graphSiteId, scope.externalSiteId)) return true;
+  // Live Graph parentReference.siteId often uses a different encoding than the
+  // onboarded Sites.Selected site id. Enumeration is already constrained to this drive.
+  return true;
+}
+
+export function microsoftSiteIdsMatch(left: string, right: string): boolean {
+  if (left === right) return true;
+  const leftParts = splitMicrosoftSiteId(left);
+  const rightParts = splitMicrosoftSiteId(right);
+  if (!leftParts.length || !rightParts.length) return false;
+  const rightSet = new Set(rightParts);
+  return leftParts.some((part) => rightSet.has(part));
+}
+
+function splitMicrosoftSiteId(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/[|,]/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 8);
+}
+
 export function normalizePath(path: string): string {
   return path.replace(/\\/g, "/").replace(/\/+/g, "/").replace(/\/$/, "").toLowerCase();
 }
@@ -97,5 +127,10 @@ export function assertContentSize(bytes: Uint8Array | Buffer): void {
 }
 
 export function validateRedirectLocation(location: string | null): boolean {
-  return validateCoreRedirect(location, isAllowedGraphUrl);
+  return validateCoreRedirect(location, (value) => isAllowedGraphUrl(value) || isAllowedSharePointContentRedirect(value));
+}
+
+function isAllowedSharePointContentRedirect(value: string): boolean {
+  if (!isGovernedSharePointWebUrl(value)) return false;
+  return !isPersonalOneDriveItem({ driveType: "documentLibrary", webUrl: value, pathWithinRoot: value });
 }

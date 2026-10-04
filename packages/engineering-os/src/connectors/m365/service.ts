@@ -26,6 +26,7 @@ import {
   hasPathTraversal,
   isGovernedSharePointWebUrl,
   isPersonalOneDriveItem,
+  itemBelongsToApprovedSharePointScope,
   itemWithinApprovedRoot,
   rejectArbitraryUrlFetch,
   rejectCallerConnectorClaims,
@@ -641,7 +642,7 @@ export class EngineeringM365ConnectorService {
         if (item.folder) continue;
         if (isPersonalOneDriveItem(item)) continue;
         if (hasPathTraversal(item.pathWithinRoot ?? item.name)) continue;
-        if (item.siteId !== scope.externalSiteId || item.driveId !== scope.externalDriveId) continue;
+        if (!itemBelongsToApprovedSharePointScope(item, scope)) continue;
         const approvedRoot = repository.approvedRoot;
         if (approvedRoot && !itemWithinApprovedRoot(item.pathWithinRoot ?? `/${item.name}`, approvedRoot) && item.deleted !== true) {
           const previousOut = await this.store.findSourceByItem({ workspaceId, driveId: item.driveId, itemId: item.id });

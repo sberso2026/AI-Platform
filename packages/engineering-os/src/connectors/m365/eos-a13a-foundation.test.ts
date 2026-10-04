@@ -30,7 +30,7 @@ import {
   unmanagedSiteItem,
 } from "./fixture";
 import { M365_CONNECTOR_PRIVACY, M365_CONNECTOR_RECON, MICROSOFT_PERMISSION_MODEL } from "./types";
-import { isAllowedGraphUrl, rejectArbitraryUrlFetch } from "./security";
+import { isAllowedGraphUrl, rejectArbitraryUrlFetch, validateRedirectLocation } from "./security";
 import { microsoftSourceIdentity } from "./identity";
 
 function admin() {
@@ -287,6 +287,10 @@ describe("EOS-A13A Microsoft 365 / SharePoint connector", () => {
     expect(isAllowedGraphUrl("https://graph.microsoft.com/v1.0/sites")).toBe(true);
     expect(isAllowedGraphUrl("https://169.254.169.254/latest/meta-data")).toBe(false);
     expect(isAllowedGraphUrl("http://graph.microsoft.com/v1.0/sites")).toBe(false);
+    expect(validateRedirectLocation("https://graph.microsoft.com/v1.0/drives/x/items/y/content")).toBe(true);
+    expect(validateRedirectLocation("https://rtbea.sharepoint.com/sites/RTBEOSPilot/_layouts/15/download.aspx")).toBe(true);
+    expect(validateRedirectLocation("https://contoso-my.sharepoint.com/personal/user/Mortgage.xlsx")).toBe(false);
+    expect(validateRedirectLocation("https://evil.example/steal")).toBe(false);
     expect(rejectArbitraryUrlFetch("https://evil.example/steal")).toBe("ARBITRARY_URL_FETCH_PROHIBITED");
     expect(connector.rejectCallerClaims({ url: "https://evil.example" })).toBe("ARBITRARY_URL_FETCH_PROHIBITED");
     expect(connector.rejectCallerClaims({ tenantId: "other" })).toBe("caller_supplied_authority_rejected");
