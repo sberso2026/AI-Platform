@@ -104,6 +104,14 @@ describe("EOS-A16C Microsoft 365 self-service onboarding", () => {
     expect(JSON.stringify(row)).not.toMatch(/client_secret|access_token|Bearer /);
   });
 
+  it("reuses the governed connection on a second authorized Microsoft identity", async () => {
+    const { connector, m365Store } = await harness();
+    const first = await connector.completeMicrosoftSignIn(admin(), CRUSHER_FEED_TENANT, identity());
+    const second = await connector.completeMicrosoftSignIn(admin(), CRUSHER_FEED_TENANT, identity());
+    expect(second.connectionId).toBe(first.connectionId);
+    expect((await m365Store.listConnections(CRUSHER_FEED_WORKSPACE)).filter((row) => row.tenantId === CRUSHER_FEED_TENANT)).toHaveLength(1);
+  });
+
   it("fails closed when admin consent is missing", async () => {
     const { connector } = await harness();
     const result = await connector.completeMicrosoftSignIn(admin(), CRUSHER_FEED_TENANT, identity({ adminConsentGranted: false, consentRequired: true }));
@@ -173,7 +181,8 @@ describe("EOS-A16C Microsoft 365 self-service onboarding", () => {
       libraryName: "Engineering",
       projectId: CRUSHER_EXPANSION_FEED_PROJECT_ID,
     });
-    await connector.runSync(admin(), CRUSHER_FEED_TENANT, selected.repositoryId, "initial");
+    expect(selected.repositoryId).toBeTruthy();
+    await connector.runSync(admin(), CRUSHER_FEED_TENANT, selected.repositoryId!, "initial");
     const before = await m365Store.listSources(CRUSHER_FEED_WORKSPACE, CRUSHER_EXPANSION_FEED_PROJECT_ID);
     expect(before.length).toBeGreaterThan(0);
     const disconnected = await connector.disconnectConnection(admin(), CRUSHER_FEED_TENANT, connected.connectionId!);

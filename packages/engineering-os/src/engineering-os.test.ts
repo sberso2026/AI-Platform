@@ -7,6 +7,8 @@ import {
   ENGINEERING_PERMISSIONS,
   ENGINEERING_PERMISSION_MAP,
   hasEngineeringPermission,
+  hasEngineeringAdminAuthority,
+  canInsertEngineeringM365Connection,
 } from "./index";
 import {
   ENGINEERING_REGISTER_OBJECT_TYPES,
@@ -125,6 +127,39 @@ describe("Engineering permission checks", () => {
     ENGINEERING_PERMISSIONS.forEach((p) => {
       expect(hasEngineeringPermission(has, p)).toBe(true);
     });
+  });
+
+  it("matches SQL engineering admin for owner, admin, permission, and engineer", () => {
+    expect(hasEngineeringAdminAuthority({ roleSlug: "owner", permissions: [] })).toBe(true);
+    expect(hasEngineeringAdminAuthority({ roleSlug: "admin", permissions: [] })).toBe(true);
+    expect(hasEngineeringAdminAuthority({
+      roleSlug: "engineering-owner",
+      permissions: [{ resource: "engineering", action: "admin" }],
+    })).toBe(true);
+    expect(hasEngineeringAdminAuthority({
+      roleSlug: "engineer",
+      permissions: [{ resource: "engineering", action: "execute" }, { resource: "engineering", action: "read" }],
+    })).toBe(false);
+    const admin = {
+      userId: "user-admin",
+      roleSlug: "admin",
+      tenantIds: ["tenant-a"],
+      workspaceIds: ["ws-a"],
+      permissions: [{ resource: "engineering", action: "admin" }],
+    };
+    const engineer = {
+      userId: "user-eng",
+      roleSlug: "engineer",
+      tenantIds: ["tenant-a"],
+      workspaceIds: ["ws-a"],
+      permissions: [{ resource: "engineering", action: "execute" }],
+    };
+    const row = { tenantId: "tenant-a", workspaceId: "ws-a" };
+    expect(canInsertEngineeringM365Connection(admin, row)).toBe(true);
+    expect(canInsertEngineeringM365Connection(engineer, row)).toBe(false);
+    expect(canInsertEngineeringM365Connection(admin, { tenantId: "tenant-b", workspaceId: "ws-a" })).toBe(false);
+    expect(canInsertEngineeringM365Connection(admin, { tenantId: "tenant-a", workspaceId: "ws-b" })).toBe(false);
+    expect(canInsertEngineeringM365Connection({ ...admin, userId: "" }, row)).toBe(false);
   });
 });
 

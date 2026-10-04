@@ -50,8 +50,9 @@ function statusLabel(state: string, health: string) {
 export default function Microsoft365IntegrationsPage() {
   const projectId = useResolvedEngineeringProjectId();
   const assurance = useIdentityAssurance();
-  const { canMutate } = useEngineeringWriteAccess();
+  const { canMutate, canAdministerEngineering } = useEngineeringWriteAccess();
   const canWrite = canMutate && assurance.aal === "aal2";
+  const canConnectMicrosoft = canAdministerEngineering && assurance.aal === "aal2";
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [onboarding, setOnboarding] = useState<OnboardingDashboard | null>(null);
@@ -167,7 +168,7 @@ export default function Microsoft365IntegrationsPage() {
             <CardTitle className="text-base">Microsoft 365 / SharePoint</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <p>Connect your organisation's approved SharePoint engineering repositories. RTB will use read-only access for the initial Engineering OS pilot and will not modify SharePoint documents.</p>
+            <p>Connect your organisation&apos;s approved SharePoint engineering repositories. RTB will use read-only access for the initial Engineering OS pilot and will not modify SharePoint documents.</p>
             <div className="flex flex-wrap items-center gap-2">
               Status: <Badge>{statusLabel(setupState, onboarding?.userHealth ?? "DISCONNECTED")}</Badge>
               <Badge>Read only</Badge>
@@ -176,10 +177,10 @@ export default function Microsoft365IntegrationsPage() {
             {onboarding?.message && <p className="text-muted-foreground">{onboarding.message}</p>}
             <div className="flex flex-wrap gap-2">
               {(setupState === "NOT_CONNECTED" || setupState === "MICROSOFT_SIGN_IN_REQUIRED" || setupState === "AUTH_EXPIRED") && (
-                <Button type="button" disabled={!canWrite} onClick={() => { window.location.href = "/api/engineering/m365/oauth/start"; }}>Connect Microsoft 365</Button>
+                <Button type="button" disabled={!canConnectMicrosoft} onClick={() => { window.location.href = "/api/engineering/m365/oauth/start"; }}>Connect Microsoft 365</Button>
               )}
               {setupState === "ADMIN_CONSENT_REQUIRED" && (
-                <Button type="button" disabled={!canWrite} onClick={() => { window.location.href = "/api/engineering/m365/oauth/start?adminConsent=1"; }}>Request administrator approval</Button>
+                <Button type="button" disabled={!canConnectMicrosoft} onClick={() => { window.location.href = "/api/engineering/m365/oauth/start?adminConsent=1"; }}>Request administrator approval</Button>
               )}
               {onboarding?.connectionId && (
                 <Button type="button" disabled={!canWrite} onClick={() => void testConnection()}>Test connection</Button>
@@ -236,7 +237,7 @@ export default function Microsoft365IntegrationsPage() {
                 </div>
               )}
             </details>
-            {!canWrite && <p>Connecting Microsoft 365 requires an authorized Engineering administrator.</p>}
+            {!canConnectMicrosoft && <p>Connecting Microsoft 365 requires an authorized Engineering administrator.</p>}
           </CardContent>
         </Card>
         <Card className="mt-4" id="other-edms">

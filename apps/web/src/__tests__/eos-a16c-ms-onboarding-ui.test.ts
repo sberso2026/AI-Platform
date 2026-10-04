@@ -27,6 +27,7 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
     expect(page).toContain("/api/engineering/m365/oauth/start");
     expect(start).toContain("buildMicrosoftAuthorizeUrl");
     expect(start).toContain("buildMicrosoftAdminConsentUrl");
+    expect(start).toContain("microsoftConnectionOAuthDenial");
     expect(route).toContain("m365Onboarding");
     expect(route).toContain("resolveSharePointSite");
     expect(route).toContain("use_microsoft_sign_in");
@@ -39,6 +40,10 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
     expect(page).not.toMatch(/<p className="flex flex-wrap items-center gap-2">[\s\S]*?<Badge>/);
     expect(page).toContain('queryHint === "admin_consent"');
     expect(page).toContain('queryHint === "not_configured"');
+    expect(page).toContain("canConnectMicrosoft");
+    expect(page).toContain("canAdministerEngineering");
+    expect(page).toContain('disabled={!canConnectMicrosoft}');
+    expect(page).toContain("Connecting Microsoft 365 requires an authorized Engineering administrator.");
     expect(page).toContain('window.location.href = "/api/engineering/m365/oauth/start"');
     expect(start).toContain("buildMicrosoftAuthorizeUrl");
     expect(callback).toContain("runAuthorizedMicrosoftOAuthCallback");
@@ -49,6 +54,7 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
     expect(callback).toContain("runAuthorizedMicrosoftOAuthCallback");
     expect(callback).toContain("MicrosoftTokenExchangeFailure");
     expect(callback).toContain("error instanceof MicrosoftTokenExchangeFailure");
+    expect(callback).toContain("microsoftConnectionOAuthDenial");
     expect(callback).not.toContain("NEXT_PUBLIC_");
     expect(callback).not.toMatch(/redirect\(`[^`]*error_description/);
     expect(callback).not.toMatch(/redirect\([^)]*correlationId/);

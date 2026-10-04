@@ -19,6 +19,7 @@ import {
   unauthenticatedResponse,
 } from "@/lib/lifecycle-api";
 import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
+import { hasEngineeringAdminAuthority } from "@/lib/commerce/engineering-admin-authority";
 
 export type { CommerceHandlerContext };
 
@@ -44,6 +45,20 @@ async function engineeringIdentityClaims(ctx: AuthContext): Promise<ReviewIdenti
     amr: Array.isArray(payload.amr) ? (payload.amr as Array<string | { method?: string }>) : null,
     appMetadata: (userData.user?.app_metadata as Record<string, unknown> | undefined) ?? null,
   };
+}
+
+export function hasMicrosoftConnectionAdmin(ctx: Pick<AuthContext, "roleSlug" | "permissions">): boolean {
+  return hasEngineeringAdminAuthority({ roleSlug: ctx.roleSlug, permissions: ctx.permissions });
+}
+
+/** OAuth start/callback must match engineering_m365_connections INSERT (engineering admin + AAL2). */
+export async function microsoftConnectionOAuthDenial(
+  ctx: AuthContext,
+): Promise<"admin_required" | "sign_in_required" | null> {
+  if (!hasMicrosoftConnectionAdmin(ctx)) return "admin_required";
+  const identityDenied = await denyIfEngineeringIdentityInsufficient(ctx, "settings", "POST");
+  if (identityDenied) return "sign_in_required";
+  return null;
 }
 
 async function denyIfEngineeringIdentityInsufficient(

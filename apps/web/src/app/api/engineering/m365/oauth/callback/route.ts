@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/engineering-api";
+import { authorizeEngineeringSegment, microsoftConnectionOAuthDenial, withEngineeringApi } from "@/lib/commerce/engineering-api";
 import {
   classifyMicrosoftOAuthError,
   defaultM365RedirectUri,
@@ -33,6 +33,8 @@ export const GET = withEngineeringApi("settings", async ({ ctx, correlationId },
   }
   const returnedState = url.searchParams.get("state") ?? "";
   if (returnedState !== stateCookie) return redirect("m365=sign_in_required");
+  const denial = await microsoftConnectionOAuthDenial(ctx);
+  if (denial) return redirect(`m365=${denial}`);
   const oauthError = url.searchParams.get("error");
   if (oauthError) {
     const classified = classifyMicrosoftOAuthError(oauthError, url.searchParams.get("error_description"));

@@ -111,6 +111,47 @@ describe.skipIf(!LIVE)("EOS-A13A live JWT RLS", () => {
     );
     expect(mutationDenied(engineerWrite), JSON.stringify(engineerWrite.body)).toBe(true);
 
+    const otherWorkspaceWrite = await rest(
+      "engineering_m365_connections",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          id: randomUUID(),
+          tenant_id: fixtures.tenantAId,
+          workspace_id: fixtures.workspaceA2Id,
+          display_name: "cross workspace forged",
+          microsoft_tenant_id: "11111111-2222-3333-4444-555555555555",
+          application_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          credential_secret_id: "secret:forged-ws",
+          auth_mode: "CLIENT_SECRET",
+          enabled: true,
+        }),
+      },
+      fixtures.users.aAdmin.jwt,
+    );
+    expect(mutationDenied(otherWorkspaceWrite), JSON.stringify(otherWorkspaceWrite.body)).toBe(true);
+
+    const otherTenantWrite = await rest(
+      "engineering_m365_connections",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          id: randomUUID(),
+          tenant_id: fixtures.tenantBId,
+          workspace_id: fixtures.workspaceB1Id,
+          display_name: "cross tenant forged",
+          microsoft_tenant_id: "11111111-2222-3333-4444-555555555555",
+          application_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          credential_secret_id: "secret:forged-tenant",
+          auth_mode: "CLIENT_SECRET",
+          enabled: true,
+        }),
+      },
+      fixtures.users.aAdmin.jwt,
+    );
+    expect(mutationDenied(otherTenantWrite), JSON.stringify(otherTenantWrite.body)).toBe(true);
+
+
     const repo = await rest(
       "engineering_managed_repositories",
       {

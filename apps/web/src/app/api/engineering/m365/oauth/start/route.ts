@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+import { microsoftConnectionOAuthDenial, withEngineeringApi } from "@/lib/commerce/engineering-api";
 import {
   buildMicrosoftAdminConsentUrl,
   buildMicrosoftAuthorizeUrl,
@@ -16,6 +16,10 @@ export const GET = withEngineeringApi("settings", async ({ ctx, commerce }, requ
   const integrations = `${origin}/engineering/settings/integrations`;
   if (!app.configured || !commerce.workspaceId) {
     return NextResponse.redirect(`${integrations}?m365=not_configured`);
+  }
+  const denial = await microsoftConnectionOAuthDenial(ctx);
+  if (denial) {
+    return NextResponse.redirect(`${integrations}?m365=${denial}`);
   }
   const secret = process.env.RTB_M365_OAUTH_STATE_SECRET?.trim() || process.env.RTB_M365_CLIENT_SECRET?.trim();
   if (!secret) {
