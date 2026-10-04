@@ -67,6 +67,7 @@ import {
   type UserHealthState,
 } from "./onboarding";
 import { SETUP_AGENT_ID, setupAgentNextAction } from "./setup-agent";
+import type { MicrosoftOAuthCallbackStage } from "./oauth";
 
 export type M365ConnectorDeps = {
   store?: M365Store;
@@ -288,10 +289,16 @@ export class EngineeringM365ConnectorService {
     };
   }
 
-  async completeMicrosoftSignIn(commerce: CommerceExecutionContext, tenantId: string, identity: TrustedMicrosoftIdentity) {
+  async completeMicrosoftSignIn(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    identity: TrustedMicrosoftIdentity,
+    onStage?: (stage: MicrosoftOAuthCallbackStage) => void,
+  ) {
     assertEngineeringService(commerce, "work.repository.write", tenantId);
     const workspaceId = workspaceScopeId(commerce);
     if (!workspaceId) throw new Error("workspace_required");
+    onStage?.("MICROSOFT_IDENTITY_VALIDATION");
     assertTrustedMicrosoftIdentity(identity);
     if (identity.consentRequired && !identity.adminConsentGranted) {
       return { setupState: "ADMIN_CONSENT_REQUIRED" as const, connection: null, message: userFacingSetupMessage("ADMIN_CONSENT_REQUIRED") };
@@ -300,6 +307,7 @@ export class EngineeringM365ConnectorService {
     if (!app.configured) throw new Error("RTB_APP_NOT_CONFIGURED");
     const existing = (await this.store.listConnections(workspaceId)).filter((row) => row.tenantId === tenantId);
     const prior = existing.find((row) => row.microsoftTenantId === identity.microsoftTenantId) ?? existing[0];
+    onStage?.("CONNECTION_PERSISTENCE");
     const saved = await this.saveConnection(commerce, tenantId, {
       id: prior?.id,
       displayName: identity.organisationName?.trim() || "Microsoft 365",
@@ -311,6 +319,7 @@ export class EngineeringM365ConnectorService {
       enabled: true,
       createdAt: prior?.createdAt,
     });
+    onStage?.("POST_CONNECTION_SETUP");
     await this.audit(tenantId, workspaceId, "microsoft_onboarding_connected", "m365_connection", saved.id, commerce.actorUserId, safeOnboardingTelemetry({
       provider: "microsoft",
       authorizationStage: "tenant_connected",

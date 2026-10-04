@@ -41,12 +41,12 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
     expect(page).toContain('queryHint === "not_configured"');
     expect(page).toContain('window.location.href = "/api/engineering/m365/oauth/start"');
     expect(start).toContain("buildMicrosoftAuthorizeUrl");
-    expect(callback).toContain("exchangeMicrosoftAuthorizationCode");
+    expect(callback).toContain("runAuthorizedMicrosoftOAuthCallback");
   });
 
   it("keeps the Microsoft callback fail closed without putting diagnostics in the URL", () => {
     expect(callback).toContain('return redirect("m365=error")');
-    expect(callback).toContain("exchangeMicrosoftAuthorizationCode");
+    expect(callback).toContain("runAuthorizedMicrosoftOAuthCallback");
     expect(callback).toContain("MicrosoftTokenExchangeFailure");
     expect(callback).toContain("error instanceof MicrosoftTokenExchangeFailure");
     expect(callback).not.toContain("NEXT_PUBLIC_");

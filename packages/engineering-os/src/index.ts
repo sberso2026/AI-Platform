@@ -286,14 +286,17 @@ export {
   classifyMicrosoftOAuthError,
   decodeMicrosoftIdToken,
   emitMicrosoftTokenExchangeFailure,
+  emitMicrosoftOAuthCallbackFailure,
+  microsoftOAuthCallbackFailureDiagnosticPath,
   microsoftTokenExchangeFailureDiagnosticPath,
   parseMicrosoftTokenEndpointFailure,
+  runAuthorizedMicrosoftOAuthCallback,
   sanitizeMicrosoftTokenErrorDescription,
   signOAuthState,
   verifyOAuthState,
   MicrosoftTokenExchangeFailure,
 } from "./connectors/m365";
-export type { MicrosoftTokenExchangeFailureDiagnostic, MicrosoftTokenExchangeFailureLayer } from "./connectors/m365";
+export type { MicrosoftTokenExchangeFailureDiagnostic, MicrosoftTokenExchangeFailureLayer, MicrosoftOAuthCallbackStage, MicrosoftOAuthCallbackFailureDiagnostic } from "./connectors/m365";
 export {
   EngineeringExternalConnectorService,
   ENGINEERING_CONNECTOR_RECON,

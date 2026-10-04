@@ -27,6 +27,9 @@ export { SETUP_AGENT_FORBIDDEN_ACTIONS, SETUP_AGENT_ID, assertSetupAgentCommand 
 export {
   EOS_M365_TOKEN_EXCHANGE_FAILURE_EVENT,
   EOS_M365_TOKEN_EXCHANGE_FAILURE_FILENAME,
+  EOS_M365_OAUTH_CALLBACK_FAILURE_EVENT,
+  EOS_M365_OAUTH_CALLBACK_FAILURE_FILENAME,
+  EOS_M365_OAUTH_DIAGNOSTIC_WRITE_FAILURE_EVENT,
   MicrosoftTokenExchangeFailure,
   buildMicrosoftAdminConsentUrl,
   buildMicrosoftAuthorizeUrl,
@@ -34,12 +37,15 @@ export {
   decodeMicrosoftIdToken,
   defaultM365RedirectUri,
   emitMicrosoftTokenExchangeFailure,
+  emitMicrosoftOAuthCallbackFailure,
   identityFromAdminConsentCallback,
   exchangeMicrosoftAuthorizationCode,
+  microsoftOAuthCallbackFailureDiagnosticPath,
   microsoftTokenExchangeFailureDiagnosticPath,
   parseMicrosoftTokenEndpointFailure,
+  runAuthorizedMicrosoftOAuthCallback,
   sanitizeMicrosoftTokenErrorDescription,
   signOAuthState,
   verifyOAuthState,
 } from "./oauth";
-export type { MicrosoftTokenExchangeFailureDiagnostic, MicrosoftTokenExchangeFailureLayer } from "./oauth";
+export type { MicrosoftTokenExchangeFailureDiagnostic, MicrosoftTokenExchangeFailureLayer, MicrosoftOAuthCallbackStage, MicrosoftOAuthCallbackFailureDiagnostic } from "./oauth";

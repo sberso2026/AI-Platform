@@ -3,9 +3,8 @@ import { authorizeEngineeringSegment, withEngineeringApi } from "@/lib/commerce/
 import {
   classifyMicrosoftOAuthError,
   defaultM365RedirectUri,
-  exchangeMicrosoftAuthorizationCode,
-  identityFromAdminConsentCallback,
   MicrosoftTokenExchangeFailure,
+  runAuthorizedMicrosoftOAuthCallback,
   verifyOAuthState,
 } from "@rtb/engineering-os";
 
@@ -46,10 +45,14 @@ export const GET = withEngineeringApi("settings", async ({ ctx, correlationId },
     const code = url.searchParams.get("code");
     const adminConsent = url.searchParams.get("admin_consent");
     const tenant = url.searchParams.get("tenant");
-    const identity = code
-      ? (await exchangeMicrosoftAuthorizationCode({ code, redirectUri })).identity
-      : identityFromAdminConsentCallback(tenant ?? "", adminConsent ?? "");
-    await ctx.engineering.m365Connector.completeMicrosoftSignIn(settingsCommerce, ctx.tenantId, identity);
+    await runAuthorizedMicrosoftOAuthCallback({
+      code,
+      adminConsent: adminConsent ?? "",
+      tenant: tenant ?? "",
+      redirectUri,
+      completeMicrosoftSignIn: (identity, onStage) =>
+        ctx.engineering.m365Connector.completeMicrosoftSignIn(settingsCommerce, ctx.tenantId, identity, onStage),
+    });
     return redirect("m365=connected");
   } catch (error) {
     const tokenExchangeFailure = error instanceof MicrosoftTokenExchangeFailure ? error : null;

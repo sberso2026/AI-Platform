@@ -17,7 +17,19 @@ const LOGIN_TOKEN = "https://login.microsoftonline.com/organizations/oauth2/v2.0
 
 export const EOS_M365_TOKEN_EXCHANGE_FAILURE_EVENT = "EOS_M365_TOKEN_EXCHANGE_FAILURE" as const;
 export const EOS_M365_TOKEN_EXCHANGE_FAILURE_FILENAME = "eos-m365-token-exchange-failure.json" as const;
+export const EOS_M365_OAUTH_CALLBACK_FAILURE_EVENT = "EOS_M365_OAUTH_CALLBACK_FAILURE" as const;
+export const EOS_M365_OAUTH_CALLBACK_FAILURE_FILENAME = "eos-m365-oauth-callback-failure.json" as const;
+export const EOS_M365_OAUTH_DIAGNOSTIC_WRITE_FAILURE_EVENT = "EOS_M365_OAUTH_DIAGNOSTIC_WRITE_FAILURE" as const;
 export const MICROSOFT_TOKEN_ENDPOINT_CLASSIFICATION = "microsoft_organizations_oauth_token" as const;
+export const MICROSOFT_OAUTH_CALLBACK_DIAGNOSTIC_TARGET = "staging_tmp_oauth_callback_failure" as const;
+
+export type MicrosoftOAuthCallbackStage =
+  | "TOKEN_EXCHANGE"
+  | "MICROSOFT_IDENTITY_VALIDATION"
+  | "TENANT_RESOLUTION"
+  | "CONNECTION_COMPLETION"
+  | "CONNECTION_PERSISTENCE"
+  | "POST_CONNECTION_SETUP";
 
 export type MicrosoftTokenExchangeFailureLayer =
   | "NETWORK_EXCEPTION"
@@ -204,6 +216,111 @@ export function emitMicrosoftTokenExchangeFailure(
     }
   }
   return diagnostic;
+}
+
+export type MicrosoftOAuthCallbackFailureDiagnostic = {
+  event: typeof EOS_M365_OAUTH_CALLBACK_FAILURE_EVENT;
+  stage: MicrosoftOAuthCallbackStage;
+  errorClass: string;
+  errorName: string | null;
+  errorDescriptionSanitized: string | null;
+  timestamp: string;
+  nestedTokenExchangeFailure: boolean;
+  nestedLayer: MicrosoftTokenExchangeFailureLayer | null;
+};
+
+export function microsoftOAuthCallbackFailureDiagnosticPath(env: NodeJS.ProcessEnv = process.env): string {
+  const configured = env.EOS_M365_CALLBACK_DIAGNOSTIC_PATH?.trim();
+  if (configured) return configured;
+  return join(tmpdir(), EOS_M365_OAUTH_CALLBACK_FAILURE_FILENAME);
+}
+
+function writeMicrosoftOAuthDiagnosticFile(
+  path: string,
+  payload: object,
+  writeFile: (path: string, data: string, encoding?: BufferEncoding) => void = writeFileSync,
+  consoleError: (message?: unknown, ...optional: unknown[]) => void = console.error,
+): void {
+  try {
+    writeFile(path, JSON.stringify(payload), "utf8");
+  } catch (error) {
+    consoleError(JSON.stringify({
+      event: EOS_M365_OAUTH_DIAGNOSTIC_WRITE_FAILURE_EVENT,
+      target: MICROSOFT_OAUTH_CALLBACK_DIAGNOSTIC_TARGET,
+      errorName: error instanceof Error ? safeErrorName(error.name) : "Error",
+      errorDescriptionSanitized: sanitizeMicrosoftTokenErrorDescription(
+        error instanceof Error ? error.message : "diagnostic_write_failed",
+      ) ?? "diagnostic_write_failed",
+      timestamp: new Date().toISOString(),
+    }));
+  }
+}
+
+export function emitMicrosoftOAuthCallbackFailure(
+  input: { stage: MicrosoftOAuthCallbackStage; error: unknown },
+  env: NodeJS.ProcessEnv = process.env,
+  io: {
+    writeFile?: (path: string, data: string, encoding?: BufferEncoding) => void;
+    consoleError?: (message?: unknown, ...optional: unknown[]) => void;
+  } = {},
+): MicrosoftOAuthCallbackFailureDiagnostic {
+  const nested = input.error instanceof MicrosoftTokenExchangeFailure ? input.error : null;
+  const payload: MicrosoftOAuthCallbackFailureDiagnostic = {
+    event: EOS_M365_OAUTH_CALLBACK_FAILURE_EVENT,
+    stage: input.stage,
+    errorClass: nested ? "MicrosoftTokenExchangeFailure" : input.error instanceof Error ? (safeErrorName(input.error.name) ?? "Error") : "UnknownError",
+    errorName: input.error instanceof Error ? safeErrorName(input.error.name) : null,
+    errorDescriptionSanitized: sanitizeMicrosoftTokenErrorDescription(
+      input.error instanceof Error ? input.error.message : "callback_failure",
+    ),
+    timestamp: new Date().toISOString(),
+    nestedTokenExchangeFailure: Boolean(nested),
+    nestedLayer: nested?.diagnostic.layer ?? null,
+  };
+  const consoleError = io.consoleError ?? console.error;
+  consoleError(JSON.stringify(payload));
+  const explicitPath = env.EOS_M365_CALLBACK_DIAGNOSTIC_PATH?.trim();
+  if (explicitPath || env.RTB_REVIEW_RUNTIME?.trim() === "staging") {
+    writeMicrosoftOAuthDiagnosticFile(
+      microsoftOAuthCallbackFailureDiagnosticPath(env),
+      payload,
+      io.writeFile ?? writeFileSync,
+      consoleError,
+    );
+  }
+  return payload;
+}
+
+export async function runAuthorizedMicrosoftOAuthCallback(input: {
+  code: string | null;
+  adminConsent: string;
+  tenant: string;
+  redirectUri: string;
+  env?: NodeJS.ProcessEnv;
+  exchangeImpl?: typeof exchangeMicrosoftAuthorizationCode;
+  completeMicrosoftSignIn: (
+    identity: TrustedMicrosoftIdentity,
+    onStage: (stage: MicrosoftOAuthCallbackStage) => void,
+  ) => Promise<unknown>;
+}): Promise<void> {
+  const env = input.env ?? process.env;
+  let stage: MicrosoftOAuthCallbackStage = input.code ? "TOKEN_EXCHANGE" : "TENANT_RESOLUTION";
+  try {
+    const identity = input.code
+      ? (await (input.exchangeImpl ?? exchangeMicrosoftAuthorizationCode)({
+        code: input.code,
+        redirectUri: input.redirectUri,
+        env,
+      })).identity
+      : identityFromAdminConsentCallback(input.tenant, input.adminConsent);
+    stage = "CONNECTION_COMPLETION";
+    await input.completeMicrosoftSignIn(identity, (next) => {
+      stage = next;
+    });
+  } catch (error) {
+    emitMicrosoftOAuthCallbackFailure({ stage, error }, env);
+    throw error;
+  }
 }
 
 export type MicrosoftOAuthState = {
