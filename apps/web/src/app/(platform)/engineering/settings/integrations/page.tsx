@@ -168,10 +168,10 @@ export default function Microsoft365IntegrationsPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p>Connect your organisation's approved SharePoint engineering repositories. RTB will use read-only access for the initial Engineering OS pilot and will not modify SharePoint documents.</p>
-            <p className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               Status: <Badge>{statusLabel(setupState, onboarding?.userHealth ?? "DISCONNECTED")}</Badge>
               <Badge>Read only</Badge>
-            </p>
+            </div>
             {onboarding?.organisationName && <p>Organisation: {onboarding.organisationName}</p>}
             {onboarding?.message && <p className="text-muted-foreground">{onboarding.message}</p>}
             <div className="flex flex-wrap gap-2">

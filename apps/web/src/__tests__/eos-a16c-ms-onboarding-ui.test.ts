@@ -32,6 +32,18 @@ describe("EOS-A16C Microsoft onboarding UX", () => {
     expect(route).toContain("use_microsoft_sign_in");
   });
 
+  it("does not wrap Microsoft status Badge divs in a paragraph", () => {
+    expect(page).toContain('<div className="flex flex-wrap items-center gap-2">');
+    expect(page).toContain("Status: <Badge>");
+    expect(page).toContain("<Badge>Read only</Badge>");
+    expect(page).not.toMatch(/<p className="flex flex-wrap items-center gap-2">[\s\S]*?<Badge>/);
+    expect(page).toContain('queryHint === "admin_consent"');
+    expect(page).toContain('queryHint === "not_configured"');
+    expect(page).toContain('window.location.href = "/api/engineering/m365/oauth/start"');
+    expect(start).toContain("buildMicrosoftAuthorizeUrl");
+    expect(callback).toContain("exchangeMicrosoftAuthorizationCode");
+  });
+
   it("keeps the Microsoft callback fail closed without putting diagnostics in the URL", () => {
     expect(callback).toContain('return redirect("m365=error")');
     expect(callback).toContain("exchangeMicrosoftAuthorizationCode");
