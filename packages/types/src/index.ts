@@ -399,3 +399,4 @@ export * from "./global-governance";
 export * from "./discipline-capability";
 export * from "./structural-domain";
 export * from "./structural-standard-binding";
+export * from "./structural-demand";

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { computeSimplySupportedUdlDemandFromEngine } from "../../structural-demand/engine";
 import { STRUCTURAL_SOLVER_BOUNDARY } from "./freeze";
 import type {
   CalculationManifest,
@@ -93,10 +94,7 @@ function numeric(inputs: GovernedStructuralInput[], key: string): number | null 
  * SYNTHETIC_DEMONSTRATION_DATA — not AS 4100 / AS 3600 capacity.
  */
 export function computeSimplySupportedUdlDemand(input: { udlKNpm: number; spanM: number }): { shearKN: number; momentKNm: number } {
-  return {
-    shearKN: input.udlKNpm * input.spanM / 2,
-    momentKNm: input.udlKNpm * input.spanM * input.spanM / 8,
-  };
+  return computeSimplySupportedUdlDemandFromEngine(input);
 }
 
 export function combinedUdlKNpm(inputs: GovernedStructuralInput[]): { value: number | null; caseName: string | null; missing: StructuralMissingCode[] } {
