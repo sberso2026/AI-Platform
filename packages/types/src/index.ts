@@ -396,3 +396,4 @@ export * from "./project-intelligence-integration";
 export * from "./commerce";
 export * from "./os-runtime";
 export * from "./global-governance";
+export * from "./discipline-capability";
