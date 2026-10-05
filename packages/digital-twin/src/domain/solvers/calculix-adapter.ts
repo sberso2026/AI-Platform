@@ -5,7 +5,6 @@
  * path confinement. Version probe via `ccx -v` (or `ccx --version`).
  */
 
-import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, resolve, sep } from "node:path";
@@ -15,6 +14,7 @@ import type {
   EngineeringSolverExecuteResult,
   EngineeringSolverHealth,
   EngineeringSolverVersionObservation,
+  SolverArtifactRef,
 } from "./engineering-solver-adapter";
 import {
   LINEAR_ELASTIC_STATIC_METHOD_KEY,
@@ -26,13 +26,17 @@ import {
   CALCULIX_LINEAR_ELASTIC_DEFAULTS,
   SOLVER_EXECUTION_DEFAULTS_MANIFEST_VERSION,
 } from "./solver-defaults-manifest";
+import {
+  spawnSandboxedSolverProcess,
+  type NodeSpawnedProcess,
+} from "./node-spawned-process";
 
 export const CALCULIX_SOLVER_ID = "calculix" as const;
 export const CALCULIX_ADAPTER_ID = "calculix-ccx-adapter" as const;
 export const CALCULIX_ADAPTER_VERSION = "1.0.0" as const;
 export const CALCULIX_TOOL_REGISTRY_REF = "platform-intelligence:ai_tools:calculix-ccx" as const;
 
-const activeChildren = new Map<string, ReturnType<typeof spawn>>();
+const activeChildren = new Map<string, NodeSpawnedProcess>();
 
 function assertPathInside(rootDir: string, candidate: string): string {
   const root = resolve(rootDir);
@@ -57,10 +61,8 @@ function runProcess(input: {
   stderr: string;
 }> {
   return new Promise((resolvePromise) => {
-    const child = spawn(input.command, input.args, {
+    const child = spawnSandboxedSolverProcess(input.command, input.args, {
       cwd: input.cwd,
-      shell: false,
-      windowsHide: true,
       env: {
         PATH: process.env.PATH,
         SYSTEMROOT: process.env.SYSTEMROOT,
@@ -87,7 +89,7 @@ function runProcess(input: {
       stderr += chunk.toString("utf8");
       if (stderr.length > 64_000) stderr = stderr.slice(-64_000);
     });
-    child.on("error", (err) => {
+    child.on("error", (err: Error) => {
       clearTimeout(timer);
       if (input.requestId) activeChildren.delete(input.requestId);
       resolvePromise({
@@ -98,7 +100,7 @@ function runProcess(input: {
         stderr: `${stderr}\n${err.message}`,
       });
     });
-    child.on("close", (code, signal) => {
+    child.on("close", (code: number | null, signal: string | null) => {
       clearTimeout(timer);
       if (input.requestId) activeChildren.delete(input.requestId);
       if (signal === "SIGTERM" || signal === "SIGINT") cancelled = true;
@@ -411,7 +413,7 @@ export class CalculiXSolverAdapter implements EngineeringSolverAdapter {
 
     const datPath = join(artifactDir, `${jobName}.dat`);
     const frdPath = join(artifactDir, `${jobName}.frd`);
-    const outputRefs = [
+    const outputRefs: SolverArtifactRef[] = [
       {
         artifactRefId: randomUUID(),
         filePathOrId: `platform-files:calculix-inp-${inpHash.slice(0, 16)}`,

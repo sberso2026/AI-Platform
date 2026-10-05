@@ -9,7 +9,8 @@ import type { TwinIdentity } from "./identity";
 import type { TwinRepresentationReference } from "./representation";
 import type { TwinRelationship } from "./relationships";
 import type { DigitalThreadLink } from "./thread";
-import type { TwinStateReference, TwinState, TwinStateVersion, TwinStateSnapshot } from "./state";
+import type { TwinStateReference, TwinState, TwinStateVersion } from "./state";
+import type { TwinSnapshot } from "./snapshot";
 import type { RepresentationVersion } from "./representation-versioning";
 import type { TwinTimelineEvent } from "./timeline";
 import type { DigitalTwinEvent } from "./events";
@@ -28,7 +29,6 @@ import type { TwinRepresentationElementReference } from "./representation-elemen
 import type { TwinRepresentationMapping } from "./representation-mapping";
 import type { TwinSpatialReference } from "./spatial-reference";
 import type { RepresentationChangeImpact } from "./representation-change-impact";
-import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED as VERSION_MEMORY_LOCK } from "../version";
 
 export type PersistedTwinIdentity = TwinIdentity;
 
@@ -39,6 +39,21 @@ export type PersistedTwinRelationship = TwinRelationship;
 export type PersistedThreadLink = DigitalThreadLink;
 
 export type PersistedStateReference = TwinStateReference;
+
+/** Persisted twin state — domain TwinState plus tenant/workspace already on the entity. */
+export type PersistedTwinState = TwinState;
+
+/** Persisted version row for a twin state. Distinct from TwinState (current head). */
+export type PersistedTwinStateVersion = TwinStateVersion;
+
+/** Persisted representation version — append/supersede only. */
+export type PersistedRepresentationVersion = RepresentationVersion;
+
+/** Persisted snapshot of versioned state refs; optional simulated refs stay on TwinSnapshot. */
+export type PersistedTwinSnapshot = TwinSnapshot;
+
+/** Persisted append-only timeline event. */
+export type PersistedTimelineEvent = TwinTimelineEvent;
 
 export type TwinStateReviewRecord = {
   reviewId: string;
@@ -1225,11 +1240,9 @@ export class MemoryDigitalTwinRepository implements DigitalTwinRepositoryPort {
   }
 }
 
-export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = VERSION_MEMORY_LOCK;
-
 export type RepositoryFactoryOptions = {
   adapter?: "memory" | "postgres";
-  nodeEnv?: string;
+  nodeEnv?: "development" | "production" | "test";
   supabase?: unknown;
   memoryStore?: DurableDigitalTwinStore;
 };

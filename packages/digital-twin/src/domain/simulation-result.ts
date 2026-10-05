@@ -208,8 +208,16 @@ export function submitSimulationReview(review: TwinSimulationReview): TwinSimula
   return { ...review, lifecycle: "pending_review", updatedAt: new Date().toISOString() };
 }
 
+export type SimulationReviewDecisionInput = Omit<
+  TwinSimulationReview,
+  "autoApproved" | "aiSelfApproved"
+> & {
+  autoApproved: boolean;
+  aiSelfApproved: boolean;
+};
+
 export function decideSimulationReview(
-  review: TwinSimulationReview,
+  review: SimulationReviewDecisionInput,
   decision: "approved" | "rejected",
   decidedBy?: string,
 ): TwinSimulationReview {
@@ -221,6 +229,8 @@ export function decideSimulationReview(
   }
   return {
     ...review,
+    autoApproved: false,
+    aiSelfApproved: false,
     lifecycle: decision,
     decidedBy,
     updatedAt: new Date().toISOString(),

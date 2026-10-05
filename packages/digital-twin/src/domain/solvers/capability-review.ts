@@ -3,7 +3,7 @@
  * No AI self-approval. Historic reviews are immutable.
  */
 
-export const DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG = "digital_twin.capability_review" as const;
+import { DIGITAL_TWIN_CAPABILITY_REVIEW_SLUG } from "../../version";
 
 export type CapabilityReview = {
   reviewId: string;

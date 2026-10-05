@@ -72,26 +72,42 @@ const REP_CHANGE_IMPACTS = "digital_twin_representation_change_impacts";
 /** Thin spatial refs table (batch_79) — no location hierarchy. */
 const SPATIAL_REFS = "digital_twin_spatial_references";
 
-type AnyClient = {
-  from(table: string): {
-    insert(row: unknown): { select(cols: string): { single(): Promise<{ data: unknown; error: { code?: string; message: string } | null }> } };
-    select(cols: string): {
-      eq(col: string, val: unknown): {
-        eq(col: string, val: unknown): {
-          eq(col: string, val: unknown): {
-            maybeSingle(): Promise<{ data: unknown; error: { message: string } | null }>;
-          };
-          order(col: string, opts: { ascending: boolean }): Promise<{ data: unknown[]; error: { message: string } | null }>;
-        };
-        order(col: string, opts: { ascending: boolean }): Promise<{ data: unknown[]; error: { message: string } | null }>;
-      };
-      eq(col: string, val: unknown): {
-        eq(col: string, val: unknown): Promise<{ data: unknown[]; error: { message: string } | null }>;
-        maybeSingle(): Promise<{ data: unknown; error: { message: string } | null }>;
-      };
-    };
-  };
+type QueryError = { code?: string; message: string };
+type QueryResult<T> = { data: T; error: QueryError | null };
+type TwinRow = Record<string, unknown>;
+
+type FilterBuilder = PromiseLike<QueryResult<TwinRow[] | null>> & {
+  eq(column: string, value: unknown): FilterBuilder;
+  order(column: string, options: { ascending: boolean }): FilterBuilder;
+  maybeSingle(): Promise<QueryResult<TwinRow | null>>;
+  single(): Promise<QueryResult<TwinRow | null>>;
 };
+
+type MutationBuilder = PromiseLike<QueryResult<TwinRow | null>> & {
+  select(columns: string): {
+    single(): Promise<QueryResult<TwinRow | null>>;
+    maybeSingle(): Promise<QueryResult<TwinRow | null>>;
+  };
+  eq(column: string, value: unknown): MutationBuilder;
+};
+
+type TableClient = {
+  insert(row: unknown): MutationBuilder;
+  upsert(row: unknown, options?: { onConflict?: string }): MutationBuilder;
+  update(row: unknown): MutationBuilder;
+  select(columns: string): FilterBuilder;
+};
+
+type DigitalTwinDbClient = {
+  from(table: string): TableClient;
+};
+
+function digitalTwinDbClient(value: unknown): DigitalTwinDbClient {
+  if (!value || typeof value !== "object" || !("from" in value)) {
+    throw new Error("postgres_repository_requires_supabase_client");
+  }
+  return value as DigitalTwinDbClient;
+}
 
 const IDENTITIES = "digital_twin_identities";
 const REPRESENTATIONS = "digital_twin_representations";
@@ -335,7 +351,7 @@ function mapTimelineRow(row: Record<string, unknown>): PersistedTimelineEvent {
 export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort {
   readonly adapterKind = "postgres" as const;
 
-  constructor(private readonly supabase: AnyClient) {
+  constructor(private readonly supabase: DigitalTwinDbClient) {
     assertProductionRepositorySafe("postgres");
   }
 
@@ -371,9 +387,11 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
     const { error } = await this.supabase.from(IDENTITIES).insert(row).select("*").single();
     if (error) {
       if (error.code === "23505" || /duplicate key/i.test(error.message)) {
-        const { error: updateError } = await (this.supabase.from(IDENTITIES) as unknown as {
-          update(row: unknown): { eq(c: string, v: unknown): { eq(c: string, v: unknown): Promise<{ error: { message: string } | null }> } };
-        }).update(row).eq("id", identity.twinId).eq("tenant_id", identity.tenantId);
+        const { error: updateError } = await this.supabase
+          .from(IDENTITIES)
+          .update(row)
+          .eq("id", identity.twinId)
+          .eq("tenant_id", identity.tenantId);
         if (updateError) throw new Error(`twin_identity_persist_failed:${updateError.message}`);
         return identity;
       }
@@ -623,7 +641,7 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId);
     if (twinId) {
-      query = (query as { eq(c: string, v: unknown): typeof query }).eq("twin_id", twinId);
+      query = query.eq("twin_id", twinId);
     }
     const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw new Error(`twin_review_list_failed:${error.message}`);
@@ -711,9 +729,11 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
     const { error } = await this.supabase.from(STATES).insert(row).select("*").single();
     if (error) {
       if (error.code === "23505" || /duplicate key/i.test(error.message)) {
-        const { error: updateError } = await (this.supabase.from(STATES) as unknown as {
-          update(row: unknown): { eq(c: string, v: unknown): { eq(c: string, v: unknown): Promise<{ error: { message: string } | null }> } };
-        }).update(row).eq("id", state.stateId).eq("tenant_id", state.tenantId);
+        const { error: updateError } = await this.supabase
+          .from(STATES)
+          .update(row)
+          .eq("id", state.stateId)
+          .eq("tenant_id", state.tenantId);
         if (updateError) throw new Error(`twin_state_persist_failed:${updateError.message}`);
         return state;
       }
@@ -977,10 +997,10 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
       .eq("tenant_id", tenantId)
       .eq("workspace_id", workspaceId);
     if (twinId) {
-      query = (query as { eq(c: string, v: unknown): typeof query }).eq("twin_id", twinId);
+      query = query.eq("twin_id", twinId);
     }
     if (stateId) {
-      query = (query as { eq(c: string, v: unknown): typeof query }).eq("state_id", stateId);
+      query = query.eq("state_id", stateId);
     }
     const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw new Error(`twin_state_review_list_failed:${error.message}`);
@@ -1821,22 +1841,32 @@ export class PostgresDigitalTwinRepository implements DigitalTwinRepositoryPort 
       .eq("workspace_id", workspaceId)
       .eq("twin_id", twinId);
     if (error) throw new Error(`spatial_references_read_failed:${error.message}`);
-    return (data ?? []).map((row) => ({
-      spatialRefId: String(row.spatial_ref_id),
-      twinId: String(row.twin_id),
-      tenantId: String(row.tenant_id),
-      workspaceId: String(row.workspace_id),
-      canonicalLocationId: String(row.canonical_location_id ?? row.location_ref ?? ""),
-      coordinateReferenceSystem: String(row.coordinate_reference_system),
-      zoneRef: row.zone_ref ? String(row.zone_ref) : undefined,
-      levelRef: row.level_ref ? String(row.level_ref) : undefined,
-      unitSystem: row.unit_system ? String(row.unit_system) : undefined,
-      notes: row.notes ? String(row.notes) : undefined,
-      createdAt: String(row.created_at),
-      updatedAt: String(row.updated_at),
-      ownsCanonicalLocation: false as const,
-      createsLocationHierarchy: false as const,
-    }));
+    return (data ?? []).map((row) => {
+      const sharedSpatialReferenceId = row.shared_spatial_reference_id
+        ? String(row.shared_spatial_reference_id)
+        : undefined;
+      return {
+        spatialRefId: String(row.spatial_ref_id),
+        twinId: String(row.twin_id),
+        tenantId: String(row.tenant_id),
+        workspaceId: String(row.workspace_id),
+        sharedSpatialReferenceId,
+        canonicalLocationId: String(row.canonical_location_id ?? row.location_ref ?? ""),
+        coordinateReferenceSystem: String(row.coordinate_reference_system),
+        zoneRef: row.zone_ref ? String(row.zone_ref) : undefined,
+        levelRef: row.level_ref ? String(row.level_ref) : undefined,
+        unitSystem: row.unit_system ? String(row.unit_system) : undefined,
+        notes: row.notes ? String(row.notes) : undefined,
+        createdAt: String(row.created_at),
+        updatedAt: String(row.updated_at),
+        ownsCanonicalLocation: false as const,
+        createsLocationHierarchy: false as const,
+        inventsLocationRegistry: false as const,
+        bindingMode: sharedSpatialReferenceId
+          ? ("shared_spatial_reference" as const)
+          : ("legacy_location_pointer" as const),
+      };
+    });
   }
 
   async saveRepresentationChangeImpact(
@@ -2175,5 +2205,5 @@ function mapTelemetryProjectionRow(row: Record<string, unknown>): PersistedTelem
 }
 
 export function createPostgresDigitalTwinRepository(supabase: unknown): PostgresDigitalTwinRepository {
-  return new PostgresDigitalTwinRepository(supabase as AnyClient);
+  return new PostgresDigitalTwinRepository(digitalTwinDbClient(supabase));
 }

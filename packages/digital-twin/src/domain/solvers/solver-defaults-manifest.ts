@@ -46,7 +46,23 @@ export const CALCULIX_LINEAR_ELASTIC_DEFAULTS: SolverExecutionDefaultsManifest =
 };
 
 export function assertDefaultsManifest(
-  manifest: Partial<SolverExecutionDefaultsManifest> & { version?: string },
+  manifest: {
+    version?: string;
+    solverId?: string;
+    methodKey?: string;
+    unitSystem?: string;
+    unitCode?: string;
+    youngsModulusPa?: number;
+    poissonsRatio?: number;
+    sectionAreaM2?: number;
+    lengthM?: number;
+    loadN?: number;
+    timeoutMsDefault?: number;
+    materialPin?: string;
+    sectionPin?: string;
+    boundaryCondition?: string;
+    allowUnknownDefaults?: boolean;
+  },
 ): SolverExecutionDefaultsManifest {
   if (manifest.version !== SOLVER_EXECUTION_DEFAULTS_MANIFEST_VERSION) {
     throw new Error("unknown_defaults_manifest_version");
@@ -62,16 +78,20 @@ export function assertDefaultsManifest(
   ) {
     throw new Error("defaults_manifest_pin_mismatch");
   }
-  const requiredNumeric = [
-    "youngsModulusPa",
-    "poissonsRatio",
-    "sectionAreaM2",
-    "lengthM",
-    "loadN",
-    "timeoutMsDefault",
-  ] as const;
-  for (const key of requiredNumeric) {
-    const v = manifest[key];
+  const youngsModulusPa = manifest.youngsModulusPa;
+  const poissonsRatio = manifest.poissonsRatio;
+  const sectionAreaM2 = manifest.sectionAreaM2;
+  const lengthM = manifest.lengthM;
+  const loadN = manifest.loadN;
+  const timeoutMsDefault = manifest.timeoutMsDefault;
+  for (const [key, v] of [
+    ["youngsModulusPa", youngsModulusPa],
+    ["poissonsRatio", poissonsRatio],
+    ["sectionAreaM2", sectionAreaM2],
+    ["lengthM", lengthM],
+    ["loadN", loadN],
+    ["timeoutMsDefault", timeoutMsDefault],
+  ] as const) {
     if (typeof v !== "number" || !Number.isFinite(v)) {
       throw new Error(`defaults_manifest_missing:${key}`);
     }
@@ -85,19 +105,29 @@ export function assertDefaultsManifest(
   ) {
     throw new Error("defaults_manifest_missing_boundary_condition");
   }
+  if (
+    typeof youngsModulusPa !== "number" ||
+    typeof poissonsRatio !== "number" ||
+    typeof sectionAreaM2 !== "number" ||
+    typeof lengthM !== "number" ||
+    typeof loadN !== "number" ||
+    typeof timeoutMsDefault !== "number"
+  ) {
+    throw new Error("defaults_manifest_missing:numeric");
+  }
   return {
     version: SOLVER_EXECUTION_DEFAULTS_MANIFEST_VERSION,
     solverId: "calculix",
     methodKey: "linear_elastic_static",
     unitSystem: "SI",
     unitCode: "N_m",
-    youngsModulusPa: manifest.youngsModulusPa!,
-    poissonsRatio: manifest.poissonsRatio!,
-    sectionAreaM2: manifest.sectionAreaM2!,
-    lengthM: manifest.lengthM!,
-    loadN: manifest.loadN!,
+    youngsModulusPa,
+    poissonsRatio,
+    sectionAreaM2,
+    lengthM,
+    loadN,
     boundaryCondition: manifest.boundaryCondition,
-    timeoutMsDefault: manifest.timeoutMsDefault!,
+    timeoutMsDefault,
     materialPin: manifest.materialPin,
     sectionPin: manifest.sectionPin,
     allowUnknownDefaults: false,

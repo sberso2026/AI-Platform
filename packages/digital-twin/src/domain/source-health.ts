@@ -12,6 +12,8 @@ export function evaluateSourceHealth(input: {
   now?: string;
   degradedAfterMs?: number;
   unavailableAfterMs?: number;
+  /** Binding-policy freshness window; treated as the degraded threshold. */
+  staleAfterMs?: number;
 }): SourceHealth {
   if (input.consecutiveFailures && input.consecutiveFailures >= 3) {
     return "unavailable";
@@ -21,7 +23,7 @@ export function evaluateSourceHealth(input: {
   }
   const now = input.now ?? new Date().toISOString();
   const age = Date.parse(now) - Date.parse(input.lastSuccessfulReadAt);
-  const degradedMs = input.degradedAfterMs ?? 5 * 60_000;
+  const degradedMs = input.degradedAfterMs ?? input.staleAfterMs ?? 5 * 60_000;
   const unavailableMs = input.unavailableAfterMs ?? 30 * 60_000;
   if (age > unavailableMs) {
     return "unavailable";

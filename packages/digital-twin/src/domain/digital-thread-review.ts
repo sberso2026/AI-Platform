@@ -3,8 +3,7 @@
  * No AI self-approval.
  */
 
-export const DIGITAL_TWIN_DIGITAL_THREAD_REVIEW_SLUG =
-  "digital_twin.digital_thread_review" as const;
+import { DIGITAL_TWIN_DIGITAL_THREAD_REVIEW_SLUG } from "../version";
 
 export type DigitalThreadReview = {
   reviewId: string;

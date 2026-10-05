@@ -91,7 +91,7 @@ export type TwinLookupResult = {
   threadLinks: DigitalThreadLink[];
 };
 
-export type DigitalTwinEngineDeps = {
+export type DigitalTwinCoreEngineDeps = {
   repository: DigitalTwinRepositoryPort;
   newId?: (prefix: string) => string;
 };
@@ -101,7 +101,7 @@ export class DigitalTwinCoreEngine {
   private readonly repository: DigitalTwinRepositoryPort;
   private readonly newId: (prefix: string) => string;
 
-  constructor(deps: DigitalTwinEngineDeps) {
+  constructor(deps: DigitalTwinCoreEngineDeps) {
     assertCoreForbiddenCapabilities();
     assertOwnershipLock();
     this.repository = deps.repository;
@@ -330,7 +330,7 @@ export class DigitalTwinCoreEngine {
   }
 }
 
-export function createDigitalTwinCoreEngine(deps: DigitalTwinEngineDeps): DigitalTwinCoreEngine {
+export function createDigitalTwinCoreEngine(deps: DigitalTwinCoreEngineDeps): DigitalTwinCoreEngine {
   return new DigitalTwinCoreEngine(deps);
 }
 

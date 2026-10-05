@@ -15,8 +15,6 @@ import {
 import type { EngineeringSolverAdapter } from "./solvers/engineering-solver-adapter";
 import { SILENT_SOLVER_FALLBACK_ALLOWED } from "../version";
 
-export const FIRST_REAL_SOLVER_ID = CALCULIX_SOLVER_ID;
-
 export const RESERVED_EXTERNAL_SOLVER_ADAPTERS = [
   "ansys",
   "abaqus",

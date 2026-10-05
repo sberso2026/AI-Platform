@@ -6,11 +6,11 @@ import {
   assertProductionRepositorySafe,
   createDurableDigitalTwinMemoryStore,
   MemoryDigitalTwinRepository,
-  PRODUCTION_MEMORY_REPOSITORY_ALLOWED,
   type DurableDigitalTwinStore,
   type DigitalTwinRepositoryPort,
   type RepositoryFactoryOptions,
 } from "./persistence";
+import { PRODUCTION_MEMORY_REPOSITORY_ALLOWED } from "../version";
 import { createPostgresDigitalTwinRepository } from "./postgres-repository";
 
 export function createDigitalTwinRepository(
