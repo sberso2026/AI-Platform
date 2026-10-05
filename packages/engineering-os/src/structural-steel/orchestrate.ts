@@ -11,9 +11,11 @@ import {
   AI_ENGINEERING_APPROVAL,
   CHECK_RESULT_EQUALS_ENGINEERING_APPROVAL,
   LLM_STEEL_CAPACITY_AUTHORITY,
+  OPTIMIZATION_BENDING_RECHECK_REQUIRED,
   OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK,
   UNIVERSAL_INTERACTION_EQUATION_HARDCODED,
 } from "@rtb/types";
+import { toMomentNm } from "../structural-demand/units";
 import { evaluateSteelCapacity } from "./adapters";
 import type { SteelCapacityEngineInput } from "@rtb/types";
 
@@ -115,6 +117,44 @@ export function orchestrateAuTensionDesignCheck(input: {
   });
 }
 
+export function orchestrateAuBendingDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "BENDING_MAJOR" && input.capacityInput.limitState !== "BENDING_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const moment = input.capacityInput.demand.moment;
+  if (!moment || !moment.unit?.trim() || !Number.isFinite(moment.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandNm = toMomentNm({
+    value: Math.abs(moment.signed !== 0 ? moment.signed : moment.value),
+    unit: moment.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandNm, unit: "N.m" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
 export function orchestrateAuCompressionDesignCheck(input: {
   designCheckId: string;
   designContext: SteelDesignContext;
@@ -160,6 +200,11 @@ export function assertOptimizationCandidateRecheck(candidate: SteelOptimizationC
   if (!OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK) throw new Error("optimization candidates must be rechecked deterministically");
   if (!candidate.deterministicRecheckRequired) throw new Error("optimization candidates must be rechecked deterministically");
   if (!candidate.rechecked) throw new Error("candidate optimization section requires deterministic recheck");
+}
+
+export function assertOptimizationBendingRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_BENDING_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
+  assertOptimizationCandidateRecheck(candidate);
 }
 
 export function assertLlmCannotOriginateCapacity(llmOriginated: boolean): void {

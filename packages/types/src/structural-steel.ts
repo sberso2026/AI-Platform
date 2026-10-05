@@ -75,9 +75,18 @@ export type SteelImplementationBindingState = (typeof STEEL_IMPLEMENTATION_BINDI
 
 export const AU_STEEL_UNKNOWN_STANDARD_TOKEN = "UNKNOWN_PENDING_CONFIRMATION" as const;
 export const EOS_D1D_AU2_PHASE = "EOS-D1D-AU-2" as const;
+export const EOS_D1D_AU3_PHASE = "EOS-D1D-AU-3" as const;
 export const ELASTIC_BUCKLING_EQUALS_CODE_CAPACITY = false as const;
 export const LLM_COMPRESSION_CAPACITY_AUTHORITY = false as const;
+export const LLM_BENDING_CAPACITY_AUTHORITY = false as const;
 export const SECTION_CLASSIFICATION_STATE = "VALIDATION_REQUIRED" as const;
+export const SILENT_UNBRACED_LENGTH_ASSUMPTION = false as const;
+export const SILENT_MOMENT_MODIFICATION_FACTOR = false as const;
+export const ELASTIC_LTB_EQUALS_CODE_MEMBER_CAPACITY = false as const;
+export const MECHANICS_REFERENCE_EQUALS_CODE_CAPACITY = false as const;
+export const AI_BENDING_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const OPTIMIZATION_BENDING_RECHECK_REQUIRED = true as const;
+export const AU_BENDING_PILOT_EXPOSURE = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -181,6 +190,10 @@ export type SteelStabilityContext = {
   effectiveLengthProvenanceRef?: string | null;
   effectiveLengthFactorMajor?: SteelGovernedProperty | null;
   effectiveLengthFactorMinor?: SteelGovernedProperty | null;
+  unbracedLengthProvenanceRef?: string | null;
+  warpingRestraint?: string | null;
+  momentDistributionDescription?: string | null;
+  loadApplicationPosition?: string | null;
 };
 
 export type SteelDesignContext = {
@@ -305,6 +318,44 @@ export type AuCompressionDesignContext = {
   sectionClassificationState: typeof SECTION_CLASSIFICATION_STATE;
 };
 
+export type SteelBendingCheckRecord = {
+  methodId: string;
+  methodType: "ELASTIC_BENDING_REFERENCE" | "ELASTIC_LTB_REFERENCE";
+  engineeringRuleRef: string;
+  capacityType: string;
+  resultClass: "MECHANICS_REFERENCE";
+  axis: "MAJOR_AXIS" | "MINOR_AXIS";
+  capacityValueNm: number;
+  units: "N.m";
+  technicalBasisRef: string;
+  standardProfileRef: string;
+  validationState: SteelMethodMaturity;
+  standardConformanceState: SteelStandardConformanceState;
+  unbracedLengthM: number | null;
+};
+
+export type SteelBendingDesignContext = {
+  bendingContextId: string;
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  momentDemandRefs: string[];
+  bendingAxis: "MAJOR_AXIS" | "MINOR_AXIS";
+  memberLengthM: number | null;
+  unbracedLengthM: number | null;
+  unbracedLengthProvenanceRef: string | null;
+  restraintContext: string | null;
+  lateralRestraint: string | null;
+  torsionalRestraint: string | null;
+  warpingRestraint: string | null;
+  momentDistributionContext: string | null;
+  engineeringRuleRef: string;
+  standardProfileRef: string;
+  provenanceRef: EosGlobalProvenanceContract;
+  validationState: string;
+  sectionClassificationState: typeof SECTION_CLASSIFICATION_STATE;
+};
+
 export type SteelCapacityEngineOutput = {
   adapterId: SteelAdapterId;
   maturity: SteelMethodMaturity;
@@ -314,6 +365,7 @@ export type SteelCapacityEngineOutput = {
   sourceAuthority: SteelSourceAuthorityRecord | null;
   tensionChecks?: SteelTensionCheckRecord[];
   compressionChecks?: SteelCompressionCheckRecord[];
+  bendingChecks?: SteelBendingCheckRecord[];
   governingMethodId?: string | null;
   standardConformanceState?: SteelStandardConformanceState;
   implementationBindingState?: SteelImplementationBindingState;

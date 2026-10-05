@@ -182,7 +182,7 @@ describe("EOS-D1D-AU-1 Australian steel tension", () => {
     expect(() => selectSteelAdapter("AU_STEEL", { ...auProfile, jurisdictionProfileRef: "united-states" })).toThrow(/unsupported jurisdiction/);
     expect(() => evaluateSteelCapacity(capacityInput({ standardContext: { ...auProfile, edition: "" } }))).toThrow(/edition/);
     expect(() => evaluateSteelCapacity(capacityInput({
-      limitState: "BENDING_MAJOR",
+      limitState: "SHEAR",
       requiredProperties: [],
     }))).toThrow(/unsupported calculation scope/);
     expect(() => evaluateSteelCapacity(capacityInput({ designContext: { ...designContext(), validationState: "CERTIFIED" } }))).toThrow(/certified/);
