@@ -12,6 +12,7 @@ import {
   UNSOURCED_CODE_FORMULA_ALLOWED,
 } from "@rtb/types";
 import { assertGovernedStandardContext, nationalAnnexRequired } from "../structural-domain/binding";
+import { evaluateAuSteelTension } from "./au-tension/evaluate";
 import { requireMaterialProperties, requireSectionProperties, requireStabilityWhenNeeded } from "./properties";
 
 const ADAPTER_SCOPES: Record<SteelAdapterId, { jurisdictions: string[]; standardPrefixes: string[]; editions: string[] }> = {
@@ -62,6 +63,10 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
   requireMaterialProperties(input.material, input.requiredProperties.filter((name) => name.startsWith("material.")).map((name) => name.slice("material.".length)));
   requireSectionProperties(input.section, input.requiredProperties.filter((name) => name.startsWith("section.")).map((name) => name.slice("section.".length)));
   requireStabilityWhenNeeded(input.limitState, input.stability);
+  if (input.adapterId === "AU_STEEL") {
+    if (input.limitState !== "TENSION") throw new Error("steel design fail closed: unsupported calculation scope");
+    return evaluateAuSteelTension(input);
+  }
   const authority: SteelSourceAuthorityRecord = {
     authorityType: "LICENSED_STANDARD",
     identifier: input.standardContext.standardCode,
@@ -80,7 +85,7 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
 }
 
 export const STEEL_ADAPTER_BOUNDARIES = {
-  AU_STEEL: { ready: true, implemented: false, standards: ["AS 4100"], loadContext: ["AS/NZS 1170"] },
+  AU_STEEL: { ready: true, implemented: true, scope: "TENSION", standards: ["AS 4100"], loadContext: ["AS/NZS 1170"] },
   EU_STEEL: { ready: true, implemented: false, standards: ["EN 1993"], loadContext: ["EN 1990", "EN 1991"], nationalAnnex: true },
   US_STEEL: { ready: true, implemented: false, standards: ["AISC 360"], loadContext: ["ASCE 7"] },
 } as const;

@@ -50,7 +50,7 @@ const auContext: StructuralStandardContext = createConfiguredKnowledgeContext({
   materialScope: "steel",
 });
 
-function demand(memberId = "m1"): Pick<StructuralDemandResult, "resultId" | "memberId" | "shear" | "moment" | "axial" | "deflection" | "capacityPresent" | "standardContext" | "inputEvidenceRefs"> {
+function demand(memberId = "m1"): Pick<StructuralDemandResult, "resultId" | "memberId" | "shear" | "moment" | "axial" | "deflection" | "capacityPresent" | "standardContext" | "inputEvidenceRefs" | "combinationId"> {
   return {
     resultId: "demand-1",
     memberId,
@@ -61,6 +61,7 @@ function demand(memberId = "m1"): Pick<StructuralDemandResult, "resultId" | "mem
     capacityPresent: false,
     standardContext: auContext,
     inputEvidenceRefs: [{ evidenceId: "ev-d", sourceKind: "calculation", reference: "d1c" }],
+    combinationId: null,
   };
 }
 
@@ -101,6 +102,7 @@ function section(areaPresent = true): SteelSectionDesignProperties {
     warpingConstant: null,
     radiusOfGyrationYy: null,
     radiusOfGyrationZz: null,
+    netArea: null,
     geometricDimensions: {},
   };
 }
@@ -214,11 +216,28 @@ describe("EOS-D1D-0 common steel design framework", () => {
       simpleUtilizationValid: true,
       demandValue: { value: 1, unit: "N" },
     })).toThrow(/standard adapter/);
+    const euContext = {
+      ...createConfiguredKnowledgeContext({
+        contextId: "ctx-en1993-framework",
+        jurisdictionProfileRef: "eu-eea",
+        standardFamily: "EN",
+        standardCode: "EN 1993-1-1",
+        edition: "2005",
+        materialScope: "steel",
+      }),
+      nationalAnnexRef: exampleEurocodeAnnex("EN 1993-1-1", "2005"),
+    };
+    const euInput = capacityInput({
+      adapterId: "EU_STEEL",
+      standardContext: euContext,
+      designContext: { ...designContext(), standardContextRef: euContext.contextId },
+      requiredProperties: [],
+    });
     const outcome = orchestrateSteelDesignCheck({
       designCheckId: "chk-t",
       limitState: "TENSION",
-      designContext: designContext(),
-      capacityInput: capacityInput(),
+      designContext: { ...designContext(), standardContextRef: euContext.contextId },
+      capacityInput: euInput,
       simpleUtilizationValid: true,
       demandValue: { value: 100, unit: "kN" },
     });
@@ -226,8 +245,10 @@ describe("EOS-D1D-0 common steel design framework", () => {
     expect(outcome.engineeringApproved).toBe(false);
     expect(outcome.designCheck.approvalState).toBe("not_approved");
     expect(CHECK_RESULT_EQUALS_ENGINEERING_APPROVAL).toBe(false);
-    expect(evaluateSteelCapacity(capacityInput()).maturity).toBe("FRAMEWORK_ONLY");
-    expect(evaluateSteelCapacity(capacityInput()).reason).not.toMatch(/0\.9|phi|γM1|Fy Ag/);
+    const euFramework = evaluateSteelCapacity(euInput);
+    expect(euFramework.maturity).toBe("FRAMEWORK_ONLY");
+    expect(euFramework.implemented).toBe(false);
+    expect(euFramework.reason).not.toMatch(/0\.9|phi|γM1|Fy Ag/);
   });
 
   it("keeps AI, optimization, AUST300, and global-first boundaries honest", () => {

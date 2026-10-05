@@ -26,6 +26,54 @@ export const OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK = true as const;
 export const AU_ONLY_STEEL_CORE = false as const;
 export const EU_ONLY_STEEL_CORE = false as const;
 export const US_ONLY_STEEL_CORE = false as const;
+export const EOS_D1D_AU1_PHASE = "EOS-D1D-AU-1" as const;
+export const LLM_MEMORY_ONLY_RULE_ALLOWED = false as const;
+export const GLOBAL_STEEL_CORE_MODIFIED_FOR_AU_FORMULAS = false as const;
+export const AI_STANDARD_CONFORMANCE_AUTHORITY = false as const;
+export const SILENT_STANDARD_EDITION_INFERENCE = false as const;
+export const UNKNOWN_CODE_PARAMETER_GUESSED = false as const;
+
+export const ENGINEERING_RULE_AUTHORITY_TYPES = [
+  "AUTHORITATIVE_STANDARD_DERIVED",
+  "VALIDATED_ENGINEERING_REFERENCE",
+  "HUMAN_AUTHORED_VALIDATED_RULE",
+  "ESTABLISHED_ENGINEERING_MECHANICS",
+  "CERTIFIED_EXTERNAL_TOOL_REFERENCE",
+  "OTHER_GOVERNED_ENGINEERING_SOURCE",
+] as const;
+export type EngineeringRuleAuthorityType = (typeof ENGINEERING_RULE_AUTHORITY_TYPES)[number];
+
+export const FORBIDDEN_ENGINEERING_RULE_AUTHORITIES = [
+  "LLM_MEMORY_ONLY",
+  "UNSOURCED_WEB_SUMMARY",
+  "BLOG_ONLY",
+  "FORUM_ONLY",
+  "UNVERIFIED_GENERATED_RULE",
+] as const;
+export type ForbiddenEngineeringRuleAuthority = (typeof FORBIDDEN_ENGINEERING_RULE_AUTHORITIES)[number];
+
+export const STEEL_STANDARD_CONFORMANCE_STATES = [
+  "INTENDED_PROFILE",
+  "RULE_TRACEABLE",
+  "BENCHMARKED",
+  "ENGINEER_CONFIRMED",
+  "CONFORMANCE_VALIDATED",
+  "CERTIFIED",
+] as const;
+export type SteelStandardConformanceState = (typeof STEEL_STANDARD_CONFORMANCE_STATES)[number];
+
+export const STEEL_IMPLEMENTATION_BINDING_STATES = [
+  "FRAMEWORK_ONLY",
+  "IMPLEMENTED_UNVERIFIED_STANDARD_BINDING",
+  "IMPLEMENTED",
+  "BENCHMARKED",
+  "HUMAN_VALIDATED",
+  "PILOT",
+  "CERTIFIED",
+] as const;
+export type SteelImplementationBindingState = (typeof STEEL_IMPLEMENTATION_BINDING_STATES)[number];
+
+export const AU_STEEL_UNKNOWN_STANDARD_TOKEN = "UNKNOWN_PENDING_CONFIRMATION" as const;
 
 export const STEEL_LIMIT_STATES = [
   "TENSION",
@@ -105,6 +153,7 @@ export type SteelSectionDesignProperties = {
   warpingConstant: SteelGovernedProperty | null;
   radiusOfGyrationYy: SteelGovernedProperty | null;
   radiusOfGyrationZz: SteelGovernedProperty | null;
+  netArea: SteelGovernedProperty | null;
   geometricDimensions: Record<string, SteelGovernedProperty | null>;
 };
 
@@ -150,6 +199,53 @@ export type SteelSourceAuthorityRecord = {
   licensedMetadataOnly: true;
 };
 
+export type SteelEngineeringRule = {
+  ruleId: string;
+  methodId: string;
+  jurisdiction: string;
+  standardProfileRef: string;
+  authorityType: EngineeringRuleAuthorityType;
+  technicalBasisRef: string;
+  calculationPurpose: string;
+  applicability: string;
+  requiredInputs: string[];
+  outputType: string;
+  units: string;
+  implementationVersion: string;
+  validationState: SteelMethodMaturity;
+  benchmarkRefs: string[];
+  humanReviewState: string;
+  provenanceRef: string;
+  clauseRef: string | null;
+  intendedStandardProfile: "AS4100";
+  standardConformanceState: SteelStandardConformanceState;
+  bindingState: SteelImplementationBindingState;
+};
+
+export type SteelHumanRuleConfirmation = {
+  ruleId: string;
+  confirmedEquationId: string | null;
+  confirmedParameter: { name: string; value: number | string; unit: string | null; provenanceRef: string } | null;
+  confirmedApplicability: string | null;
+  edition: string | null;
+  amendment: string | null;
+  referenceIdentifier: string | null;
+  reviewer: string;
+  confirmedAt: string;
+};
+
+export type SteelTensionCheckRecord = {
+  methodId: string;
+  engineeringRuleRef: string;
+  capacityType: string;
+  capacityValueN: number;
+  units: "N";
+  technicalBasisRef: string;
+  standardProfileRef: string;
+  validationState: SteelMethodMaturity;
+  standardConformanceState: SteelStandardConformanceState;
+};
+
 export type SteelCapacityEngineInput = {
   adapterId: SteelAdapterId;
   designContext: SteelDesignContext;
@@ -157,7 +253,7 @@ export type SteelCapacityEngineInput = {
   material: SteelMaterialDesignProperties;
   section: SteelSectionDesignProperties;
   stability: SteelStabilityContext | null;
-  demand: Pick<StructuralDemandResult, "resultId" | "memberId" | "shear" | "moment" | "axial" | "deflection" | "capacityPresent" | "standardContext" | "inputEvidenceRefs">;
+  demand: Pick<StructuralDemandResult, "resultId" | "memberId" | "shear" | "moment" | "axial" | "deflection" | "capacityPresent" | "standardContext" | "inputEvidenceRefs" | "combinationId">;
   limitState: SteelLimitState;
   requiredProperties: string[];
 };
@@ -165,10 +261,14 @@ export type SteelCapacityEngineInput = {
 export type SteelCapacityEngineOutput = {
   adapterId: SteelAdapterId;
   maturity: SteelMethodMaturity;
-  implemented: false;
+  implemented: boolean;
   capacity: StructuralCapacityResult | null;
   reason: string;
   sourceAuthority: SteelSourceAuthorityRecord | null;
+  tensionChecks?: SteelTensionCheckRecord[];
+  governingMethodId?: string | null;
+  standardConformanceState?: SteelStandardConformanceState;
+  implementationBindingState?: SteelImplementationBindingState;
 };
 
 export type SteelUtilizationComposition = {

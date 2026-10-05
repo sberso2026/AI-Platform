@@ -1,11 +1,13 @@
 export { aust300AsAuCatalogIdentity, assertAust300NotGlobal } from "./aust300";
 export { assertImplementedSteelEdition, evaluateSteelCapacity, selectSteelAdapter, STEEL_ADAPTER_BOUNDARIES } from "./adapters";
+export * from "./au-tension";
 export {
   assertLlmCannotOriginateCapacity,
   assertOptimizationCandidateRecheck,
   AU_STEEL_IMPLEMENTATION_SUBPHASES,
   consumeDemandHandoff,
   EU_STEEL_IMPLEMENTATION_SUBPHASES,
+  orchestrateAuTensionDesignCheck,
   orchestrateSteelDesignCheck,
   simpleUtilization,
   US_STEEL_IMPLEMENTATION_SUBPHASES,

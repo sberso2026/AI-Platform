@@ -32,6 +32,7 @@ export function requireMaterialProperties(material: SteelMaterialDesignPropertie
 export function requireSectionProperties(section: SteelSectionDesignProperties, names: string[]): void {
   const map: Record<string, SteelGovernedProperty | null> = {
     area: section.area,
+    netArea: section.netArea,
     Iyy: section.Iyy,
     Izz: section.Izz,
     sectionModulusYy: section.sectionModulusYy,

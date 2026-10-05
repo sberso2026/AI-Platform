@@ -91,6 +91,30 @@ export function orchestrateSteelDesignCheck(input: {
   };
 }
 
+export function orchestrateAuTensionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL" || input.capacityInput.limitState !== "TENSION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = axial.valueN;
+  const tensileDemand = demandN > 0;
+  return orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "TENSION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: tensileDemand,
+    demandValue: { value: demandN, unit: "N" },
+  });
+}
+
 export function consumeDemandHandoff(demand: Pick<StructuralDemandResult, "resultId" | "capacityPresent" | "memberId">): string {
   if (demand.capacityPresent) throw new Error("D1C demand must not contain capacity");
   if (!demand.resultId) throw new Error("steel design fail closed: demand missing");
