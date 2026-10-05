@@ -3,8 +3,8 @@ import {
   asRecordArray,
   extractApiErrorMessage,
   parseApiJsonResponse,
-} from "../lib/api/parse-json-response.ts";
-import { loadEngineeringListItems } from "../lib/engineering/load-engineering-list.ts";
+} from "../lib/api/parse-json-response";
+import { loadEngineeringListItems } from "../lib/engineering/load-engineering-list";
 
 function mockResponse(
   body: string,

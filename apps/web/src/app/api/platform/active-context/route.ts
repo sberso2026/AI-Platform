@@ -8,6 +8,7 @@ import {
   resolveReviewIdentityPolicy,
 } from "@rtb/engineering-review/identity";
 import {
+  boundActorContextClient,
   canonicalContextCookieOptions,
   loadCanonicalMemberships,
   lookupWorkspaceOwnership,
@@ -50,17 +51,18 @@ export async function GET(request: Request) {
 
   const headerStore = await headers();
   const cookieStore = await cookies();
+  const actorClient = boundActorContextClient(supabase);
   const requested = requestedContextFromStores({
     header: (name) => headerStore.get(name),
     cookie: (name) => cookieStore.get(name)?.value,
   });
-  const memberships = await loadCanonicalMemberships(supabase, user.id);
+  const memberships = await loadCanonicalMemberships(actorClient, user.id);
   if (!requested.ok) {
     return lifecycleErrorResponse(requested.reason, "Active tenant/workspace identifier is invalid", 400, requestId, {
       memberships: publicMemberships(memberships),
     });
   }
-  const ownership = await lookupWorkspaceOwnership(supabase, requested.workspaceId);
+  const ownership = await lookupWorkspaceOwnership(actorClient, requested.workspaceId);
   const resolved = resolveCanonicalActorContext({
     memberships,
     requested,
@@ -106,12 +108,13 @@ export async function POST(request: Request) {
   if (!user) return unauthenticatedResponse(requestId);
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const memberships = await loadCanonicalMemberships(supabase, user.id);
+  const actorClient = boundActorContextClient(supabase);
+  const memberships = await loadCanonicalMemberships(actorClient, user.id);
   const requested = {
     tenantId: typeof body.tenantId === "string" ? body.tenantId : null,
     workspaceId: typeof body.workspaceId === "string" ? body.workspaceId : null,
   };
-  const ownership = await lookupWorkspaceOwnership(supabase, requested.workspaceId);
+  const ownership = await lookupWorkspaceOwnership(actorClient, requested.workspaceId);
   const resolved = resolveCanonicalActorContext({
     memberships,
     requested,

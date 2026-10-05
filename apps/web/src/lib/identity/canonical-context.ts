@@ -22,6 +22,10 @@ type SupabaseLike = {
   };
 };
 
+export function boundActorContextClient(value: unknown): SupabaseLike {
+  return value as SupabaseLike;
+}
+
 export {
   CANONICAL_CONTEXT_TENANT_COOKIE,
   CANONICAL_CONTEXT_WORKSPACE_COOKIE,

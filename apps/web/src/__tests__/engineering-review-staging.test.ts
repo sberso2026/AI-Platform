@@ -116,7 +116,10 @@ describe("EOS-A16C Review staging M365 env propagation", () => {
     NEXT_PUBLIC_RTB_M365_CLIENT_SECRET: fakeSecret,
   };
 
-  function stagingChildEnv(processEnv: NodeJS.ProcessEnv = {}, parsedFileEnv: Record<string, string> = fileEnv) {
+  function stagingChildEnv(
+    processEnv: NodeJS.ProcessEnv = { NODE_ENV: "test" },
+    parsedFileEnv: Record<string, string> = fileEnv,
+  ) {
     const childEnv: NodeJS.ProcessEnv = {
       ...processEnv,
       NEXT_PUBLIC_SUPABASE_URL: "https://rntonzigxwxcjlcsadip.supabase.co",
@@ -132,7 +135,7 @@ describe("EOS-A16C Review staging M365 env propagation", () => {
   }
 
   it("propagates the three server-only M365 keys from fileEnv", () => {
-    const childEnv = stagingChildEnv({});
+    const childEnv = stagingChildEnv();
     expect(childEnv.RTB_M365_APPLICATION_ID).toBe(fileEnv.RTB_M365_APPLICATION_ID);
     expect(childEnv.RTB_M365_CREDENTIAL_SECRET_ID).toBe(fileEnv.RTB_M365_CREDENTIAL_SECRET_ID);
     expect(childEnv.RTB_M365_CLIENT_SECRET).toBe(fakeSecret);
@@ -144,11 +147,14 @@ describe("EOS-A16C Review staging M365 env propagation", () => {
   });
 
   it("leaves missing M365 keys unset and does not fabricate or broadly copy fileEnv", () => {
-    const childEnv = stagingChildEnv({}, {});
+    const childEnv = stagingChildEnv({ NODE_ENV: "test" }, {});
     expect(childEnv.RTB_M365_APPLICATION_ID).toBeUndefined();
     expect(childEnv.RTB_M365_CREDENTIAL_SECRET_ID).toBeUndefined();
     expect(childEnv.RTB_M365_CLIENT_SECRET).toBeUndefined();
-    const partial = stagingChildEnv({}, { RTB_M365_APPLICATION_ID: "app-only", UNRELATED_FILE_KEY: "x" });
+    const partial = stagingChildEnv(
+      { NODE_ENV: "test" },
+      { RTB_M365_APPLICATION_ID: "app-only", UNRELATED_FILE_KEY: "x" },
+    );
     expect(partial.RTB_M365_APPLICATION_ID).toBe("app-only");
     expect(partial.RTB_M365_CREDENTIAL_SECRET_ID).toBeUndefined();
     expect(partial.RTB_M365_CLIENT_SECRET).toBeUndefined();
@@ -171,6 +177,7 @@ describe("EOS-A16C Review staging M365 env propagation", () => {
     });
     try {
       const childEnv = stagingChildEnv({
+        NODE_ENV: "test",
         RTB_M365_APPLICATION_ID: "process-app-id",
         RTB_M365_CLIENT_SECRET: "process-fake-secret",
       });
@@ -188,7 +195,7 @@ describe("EOS-A16C Review staging M365 env propagation", () => {
   });
 
   it("does not expose M365 secrets as NEXT_PUBLIC and keeps Supabase/runtime child env", () => {
-    const childEnv = stagingChildEnv({});
+    const childEnv = stagingChildEnv();
     expect(childEnv.NEXT_PUBLIC_RTB_M365_CLIENT_SECRET).toBeUndefined();
     expect(childEnv.NEXT_PUBLIC_RTB_M365_APPLICATION_ID).toBeUndefined();
     expect(childEnv.NEXT_PUBLIC_RTB_M365_CREDENTIAL_SECRET_ID).toBeUndefined();

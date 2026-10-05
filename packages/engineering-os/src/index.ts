@@ -68,6 +68,23 @@ export * from "./phase-e9";
 export * from "./phase-e10";
 export * from "./phase-e11";
 export * from "./phase-e12";
+export {
+  phaseE3Ready,
+  phaseE4Ready,
+  phaseE5Ready,
+  phaseE6Ready,
+  phaseE7Ready,
+  phaseE8Ready,
+  phaseE9Ready,
+  phaseE10Ready,
+  phaseE11Ready,
+  phaseE12Ready,
+  duplicateEngineeringToolFrameworkDetected,
+  duplicateMemoryFrameworkDetected,
+  duplicateKnowledgeGraphDetected,
+  duplicateWorkflowEngineDetected,
+  implementsOwnAiStack,
+} from "./version";
 export * from "./security-readiness";
 export * from "./security-closure";
 export * from "./manifest";

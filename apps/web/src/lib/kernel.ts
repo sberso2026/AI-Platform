@@ -7,7 +7,7 @@ import { createPlatformCommerce } from "@rtb/platform-commerce";
 import { PermissionService } from "@rtb/platform-core";
 import type { Permission } from "@rtb/types";
 import type { TenantSettings } from "@rtb/types";
-import { resolveRequestActorContext } from "@/lib/identity/canonical-context";
+import { resolveRequestActorContext, boundActorContextClient } from "@/lib/identity/canonical-context";
 import type { CanonicalContextDeniedReason } from "@rtb/engineering-review/identity";
 
 export async function getKernel() {
@@ -43,7 +43,7 @@ export async function resolveAuthContext(): Promise<AuthContextResolution> {
   const headerStore = await headers();
   const cookieStore = await cookies();
   const resolved = await resolveRequestActorContext({
-    supabase,
+    supabase: boundActorContextClient(supabase),
     userId: user.id,
     header: (name) => headerStore.get(name),
     cookie: (name) => cookieStore.get(name)?.value,
