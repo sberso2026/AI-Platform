@@ -1,5 +1,6 @@
 import { CRUSHER_EXPANSION_FEED_PROJECT_ID } from "../../lifecycle-intelligence/fixture";
 import { A11A_SYSTEM_ID } from "../fixture";
+import { createConfiguredKnowledgeContext } from "../../structural-domain/binding";
 import { assembleDesignBasis, provenanceOf } from "./compose";
 import type { GovernedStructuralInput, StructuralDesignBasis, StructuralDesignStandard, StructuralWorkKind } from "./types";
 
@@ -23,6 +24,16 @@ export function crusherStructuralStandards(): StructuralDesignStandard[] {
       source: "project_design_basis_fixture",
       projectApplicability: "CONFIGURED",
       status: "GOVERNED",
+      engineState: "NOT_IMPLEMENTED",
+      certificationState: "NOT_CERTIFIED",
+      context: createConfiguredKnowledgeContext({
+        contextId: "ctx-crusher-as4100-knowledge",
+        jurisdictionProfileRef: "australia",
+        standardFamily: "AS",
+        standardCode: "AS 4100",
+        edition: "2020",
+        materialScope: "steel",
+      }),
     },
     {
       identifier: "AS/NZS 1170.0",
@@ -30,6 +41,16 @@ export function crusherStructuralStandards(): StructuralDesignStandard[] {
       source: "project_design_basis_fixture",
       projectApplicability: "CONFIGURED",
       status: "GOVERNED",
+      engineState: "NOT_IMPLEMENTED",
+      certificationState: "NOT_CERTIFIED",
+      context: createConfiguredKnowledgeContext({
+        contextId: "ctx-crusher-asnzs1170-knowledge",
+        jurisdictionProfileRef: "australia",
+        standardFamily: "AS/NZS",
+        standardCode: "AS/NZS 1170.0",
+        edition: "2002",
+        materialScope: "actions",
+      }),
     },
   ];
 }

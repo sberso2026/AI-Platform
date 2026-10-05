@@ -1,3 +1,5 @@
+import type { StructuralStandardContext } from "@rtb/types";
+
 export const STRUCTURAL_WORK_KINDS = [
   "STRUCTURAL_DESIGN_BASIS",
   "STRUCTURAL_MEMBER_CHECK",
@@ -120,6 +122,9 @@ export type StructuralDesignStandard = {
   source: string;
   projectApplicability: "CONFIGURED" | "NOT_CONFIGURED";
   status: GovernedInputStatus;
+  context: StructuralStandardContext;
+  engineState: "NOT_IMPLEMENTED" | "IMPLEMENTED";
+  certificationState: "NOT_CERTIFIED" | "UNVALIDATED" | "IMPLEMENTED" | "BENCHMARKED" | "HUMAN_VALIDATED" | "PILOT" | "CERTIFIED";
 };
 
 export type StructuralDesignBasis = {

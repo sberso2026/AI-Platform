@@ -150,10 +150,10 @@ describe("EOS-EU-D0 discipline framework high-water-mark review", () => {
       expect.arrayContaining([
         "SPACE_GASS_LIVE_EXECUTION_NOT_CERTIFIED",
         "NO_AS4100_CAPACITY_ENGINE",
-        "NO_STANDARD_EDITION_ANNEX_BINDING_ON_CALCULATIONS",
         "OPTIMIZATION_NOT_CERTIFIED",
-        "DETERMINISTIC_TOOL_JURISDICTION_UNBOUND",
       ]),
     );
+    expect(STRUCTURAL_D1_GAPS).not.toEqual(expect.arrayContaining(["NO_STANDARD_EDITION_ANNEX_BINDING_ON_CALCULATIONS"]));
+    expect(STRUCTURAL_D1_GAPS).not.toEqual(expect.arrayContaining(["DETERMINISTIC_TOOL_JURISDICTION_UNBOUND"]));
   });
 });

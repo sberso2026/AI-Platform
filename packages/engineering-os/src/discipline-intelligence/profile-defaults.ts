@@ -14,9 +14,9 @@ function cap(
 }
 
 const STRUCTURAL_STANDARDS: DisciplineStandardReference[] = [
-  { standardCode: "AS 4100", edition: null, sourceReference: "Standards Australia (reference only)", applicability: "steel structures", status: "CONFIGURED", effectiveDate: null },
-  { standardCode: "AS/NZS 1170", edition: null, sourceReference: "Standards Australia (reference only)", applicability: "actions / loads", status: "CONFIGURED", effectiveDate: null },
-  { standardCode: "AS 3600", edition: null, sourceReference: "Standards Australia (reference only)", applicability: "concrete structures", status: "CONFIGURED", effectiveDate: null },
+  { standardCode: "AS 4100", edition: null, sourceReference: "Standards Australia (reference only)", applicability: "steel structures", status: "CONFIGURED", effectiveDate: null, knowledgeState: "CONFIGURED", engineState: "NOT_IMPLEMENTED", certificationState: "NOT_CERTIFIED" },
+  { standardCode: "AS/NZS 1170", edition: null, sourceReference: "Standards Australia (reference only)", applicability: "actions / loads", status: "CONFIGURED", effectiveDate: null, knowledgeState: "CONFIGURED", engineState: "NOT_IMPLEMENTED", certificationState: "NOT_CERTIFIED" },
+  { standardCode: "AS 3600", edition: null, sourceReference: "Standards Australia (reference only)", applicability: "concrete structures", status: "CONFIGURED", effectiveDate: null, knowledgeState: "CONFIGURED", engineState: "NOT_IMPLEMENTED", certificationState: "NOT_CERTIFIED" },
 ];
 
 const DEFAULT_CAPS: Record<CanonicalDisciplineCode, Omit<DisciplineCapabilityRecord, "effectiveStatus">[]> = {

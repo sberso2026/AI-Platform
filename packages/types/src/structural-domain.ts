@@ -63,7 +63,7 @@ export const STRUCTURAL_FORBIDDEN_CORE_CLAUSE_FIELDS = [
   "as3600Clause",
 ] as const;
 
-/** D1B-ready standard/jurisdiction bind. No clause engines. */
+/** Lightweight object pointer. Canonical governed bind is StructuralStandardContext (D1B). */
 export type StructuralStandardContextRef = {
   jurisdictionProfile: string;
   standardProfile: string;

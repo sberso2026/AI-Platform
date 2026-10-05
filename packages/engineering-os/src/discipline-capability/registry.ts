@@ -143,8 +143,8 @@ const STRUCTURAL_UDL_CALCULATION: EosCalculationDefinition = {
   outputSchema: "shear,moment",
   deterministic: true,
   toolId: STRUCTURAL_SOLVER_BOUNDARY.engineId,
-  standardRefs: [],
-  jurisdictionApplicability: SHARED_JURISDICTIONS,
+  standardRefs: ["SYNTHETIC_STATICS"],
+  jurisdictionApplicability: ["global-baseline"],
   evidenceRequirements: ["human_input", "calculation"],
   provenanceRequirements: ["eos-eu-0-global-provenance"],
   humanReviewRequired: true,
@@ -207,8 +207,8 @@ export const STRUCTURAL_DISCIPLINE_PACK: EosDisciplineDefinition = {
       method: STRUCTURAL_SOLVER_BOUNDARY.method,
       inputs: ["span", "udl"],
       outputs: ["shear", "moment"],
-      standard: null,
-      jurisdiction: null,
+      standard: "SYNTHETIC_STATICS",
+      jurisdiction: "global-baseline",
       provenance: "work-generator/structural",
       validationState: STRUCTURAL_SOLVER_BOUNDARY.methodClassification,
       kind: "internal",
@@ -296,9 +296,7 @@ export const STRUCTURAL_D1_GAPS = [
   "INSPECTION_MODELS_NOT_IMPLEMENTED",
   "DIGITAL_TWIN_EXTENSION_NOT_IMPLEMENTED",
   "DESIGN_CHECK_NOT_CERTIFIED",
-  "NO_STANDARD_EDITION_ANNEX_BINDING_ON_CALCULATIONS",
   "OPTIMIZATION_NOT_CERTIFIED",
-  "DETERMINISTIC_TOOL_JURISDICTION_UNBOUND",
 ] as const;
 
 export const EOS_DISCIPLINE_REGISTRY: readonly EosDisciplineDefinition[] = [

@@ -24,6 +24,9 @@ export type DisciplineStandardReference = {
   applicability: string;
   status: "CONFIGURED" | "PROPOSED" | "SUPERSEDED" | "WITHDRAWN";
   effectiveDate: string | null;
+  knowledgeState?: "CONFIGURED" | "PROPOSED";
+  engineState?: "NOT_IMPLEMENTED" | "IMPLEMENTED";
+  certificationState?: "NOT_CERTIFIED" | "UNVALIDATED" | "IMPLEMENTED" | "BENCHMARKED" | "HUMAN_VALIDATED" | "PILOT" | "CERTIFIED";
 };
 
 export type DisciplineToolBinding = {

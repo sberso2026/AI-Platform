@@ -66,6 +66,8 @@ export const STRUCTURAL_SOLVER_BOUNDARY = {
   notFeaCertification: true,
   notDynamicAnalysisCertification: true,
   capacityFromMemoryCodeEquations: false,
+  jurisdictionNeutralStatics: true,
+  designCodeCertified: false,
 } as const;
 
 export const HOSTED_MALWARE_SCANNER = "DEFERRED_EXTERNAL_DEPENDENCY" as const;
