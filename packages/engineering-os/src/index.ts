@@ -96,6 +96,7 @@ export * from "./workflow-sdk";
 export * from "./mobile-sdk";
 export * from "./shared-services";
 export * from "./ai-framework";
+export * from "./global-governance";
 export * from "./permissions";
 export * from "./engineering-os";
 export {

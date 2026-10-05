@@ -395,3 +395,4 @@ export * from "./engineering-modules";
 export * from "./project-intelligence-integration";
 export * from "./commerce";
 export * from "./os-runtime";
+export * from "./global-governance";
