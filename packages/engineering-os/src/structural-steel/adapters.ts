@@ -14,6 +14,7 @@ import {
 import { assertGovernedStandardContext, nationalAnnexRequired } from "../structural-domain/binding";
 import { evaluateAuSteelBending } from "./au-bending/evaluate";
 import { evaluateAuSteelCompression } from "./au-compression/evaluate";
+import { evaluateAuSteelShear } from "./au-shear/evaluate";
 import { evaluateAuSteelTension } from "./au-tension/evaluate";
 import { requireMaterialProperties, requireSectionProperties, requireStabilityWhenNeeded } from "./properties";
 
@@ -73,6 +74,9 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
     if (input.limitState === "BENDING_MAJOR" || input.limitState === "BENDING_MINOR") {
       return evaluateAuSteelBending(input);
     }
+    if (input.limitState === "SHEAR" || input.limitState === "SHEAR_MAJOR" || input.limitState === "SHEAR_MINOR") {
+      return evaluateAuSteelShear(input);
+    }
     throw new Error("steel design fail closed: unsupported calculation scope");
   }
   const authority: SteelSourceAuthorityRecord = {
@@ -93,7 +97,7 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
 }
 
 export const STEEL_ADAPTER_BOUNDARIES = {
-  AU_STEEL: { ready: true, implemented: true, scope: "TENSION,COMPRESSION,BENDING", standards: ["AS 4100"], loadContext: ["AS/NZS 1170"] },
+  AU_STEEL: { ready: true, implemented: true, scope: "TENSION,COMPRESSION,BENDING,SHEAR", standards: ["AS 4100"], loadContext: ["AS/NZS 1170"] },
   EU_STEEL: { ready: true, implemented: false, standards: ["EN 1993"], loadContext: ["EN 1990", "EN 1991"], nationalAnnex: true },
   US_STEEL: { ready: true, implemented: false, standards: ["AISC 360"], loadContext: ["ASCE 7"] },
 } as const;

@@ -245,7 +245,7 @@ describe("EOS-D1D-AU-2 Australian steel compression/stability", () => {
     });
     expect(tension.verdict).toBe("CHECK_SATISFIED");
     expect(tension.engineeringApproved).toBe(false);
-    expect(() => evaluateSteelCapacity(capacityInput({ limitState: "SHEAR" }))).toThrow(/unsupported calculation scope/);
+    expect(() => evaluateSteelCapacity(capacityInput({ limitState: "OTHER" }))).toThrow(/unsupported calculation scope/);
     expect(() => evaluateSteelCapacity(capacityInput({ limitState: "COMBINED_ACTION" }))).toThrow(/stability context|unsupported calculation scope/);
     expect(AU_COMPRESSION_UNSUPPORTED_METHODS.BENDING).toBe(false);
     expect(AU_COMPRESSION_UNSUPPORTED_METHODS.LTB).toBe(false);

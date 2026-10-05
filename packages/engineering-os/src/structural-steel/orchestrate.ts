@@ -13,9 +13,10 @@ import {
   LLM_STEEL_CAPACITY_AUTHORITY,
   OPTIMIZATION_BENDING_RECHECK_REQUIRED,
   OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK,
+  OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
   UNIVERSAL_INTERACTION_EQUATION_HARDCODED,
 } from "@rtb/types";
-import { toMomentNm } from "../structural-demand/units";
+import { toForceN, toMomentNm } from "../structural-demand/units";
 import { evaluateSteelCapacity } from "./adapters";
 import type { SteelCapacityEngineInput } from "@rtb/types";
 
@@ -117,6 +118,44 @@ export function orchestrateAuTensionDesignCheck(input: {
   });
 }
 
+export function orchestrateAuShearDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "SHEAR" && input.capacityInput.limitState !== "SHEAR_MAJOR" && input.capacityInput.limitState !== "SHEAR_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const shear = input.capacityInput.demand.shear;
+  if (!shear || !shear.unit?.trim() || !Number.isFinite(shear.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = toForceN({
+    value: Math.abs(shear.signed !== 0 ? shear.signed : shear.value),
+    unit: shear.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
 export function orchestrateAuBendingDesignCheck(input: {
   designCheckId: string;
   designContext: SteelDesignContext;
@@ -204,6 +243,11 @@ export function assertOptimizationCandidateRecheck(candidate: SteelOptimizationC
 
 export function assertOptimizationBendingRecheck(candidate: SteelOptimizationCandidate): void {
   if (!OPTIMIZATION_BENDING_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
+  assertOptimizationCandidateRecheck(candidate);
+}
+
+export function assertOptimizationShearRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_SHEAR_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
   assertOptimizationCandidateRecheck(candidate);
 }
 

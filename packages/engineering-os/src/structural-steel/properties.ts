@@ -43,6 +43,9 @@ export function requireSectionProperties(section: SteelSectionDesignProperties, 
     warpingConstant: section.warpingConstant,
     radiusOfGyrationYy: section.radiusOfGyrationYy,
     radiusOfGyrationZz: section.radiusOfGyrationZz,
+    shearArea: section.shearArea ?? null,
+    webDepth: section.webDepth ?? null,
+    webThickness: section.webThickness ?? null,
   };
   for (const name of names) {
     assertGovernedProperty(map[name] ?? section.geometricDimensions[name] ?? null, `section.${name}`);

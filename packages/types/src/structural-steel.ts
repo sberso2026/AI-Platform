@@ -87,6 +87,19 @@ export const MECHANICS_REFERENCE_EQUALS_CODE_CAPACITY = false as const;
 export const AI_BENDING_ASSISTANCE_ADVISORY_ONLY = true as const;
 export const OPTIMIZATION_BENDING_RECHECK_REQUIRED = true as const;
 export const AU_BENDING_PILOT_EXPOSURE = false as const;
+export const EOS_D1D_AU4_PHASE = "EOS-D1D-AU-4" as const;
+export const LLM_SHEAR_CAPACITY_AUTHORITY = false as const;
+export const SILENT_SHEAR_AREA_ASSUMPTION = false as const;
+export const WEB_SLENDERNESS_LIMIT_GUESSED = false as const;
+export const ELASTIC_SHEAR_BUCKLING_EQUALS_CODE_CAPACITY = false as const;
+export const TENSION_FIELD_ACTION_IMPLEMENTED = false as const;
+export const AI_SHEAR_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const OPTIMIZATION_SHEAR_RECHECK_REQUIRED = true as const;
+export const AU_SHEAR_PILOT_EXPOSURE = false as const;
+export const BENDING_SHEAR_INTERACTION_IMPLEMENTED = false as const;
+export const AXIAL_SHEAR_INTERACTION_IMPLEMENTED = false as const;
+export const CONNECTION_SHEAR_DESIGN_IMPLEMENTED = false as const;
+export const INTERACTION_REVIEW_REQUIRED = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -97,6 +110,8 @@ export const STEEL_LIMIT_STATES = [
   "BENDING_MAJOR",
   "BENDING_MINOR",
   "SHEAR",
+  "SHEAR_MAJOR",
+  "SHEAR_MINOR",
   "COMBINED_ACTION",
   "LOCAL_STABILITY",
   "MEMBER_STABILITY",
@@ -170,7 +185,32 @@ export type SteelSectionDesignProperties = {
   radiusOfGyrationYy: SteelGovernedProperty | null;
   radiusOfGyrationZz: SteelGovernedProperty | null;
   netArea: SteelGovernedProperty | null;
+  shearArea?: SteelGovernedProperty | null;
+  webDepth?: SteelGovernedProperty | null;
+  webThickness?: SteelGovernedProperty | null;
   geometricDimensions: Record<string, SteelGovernedProperty | null>;
+};
+
+export const STEEL_SHEAR_AXES = ["MAJOR_SHEAR", "MINOR_SHEAR"] as const;
+export type SteelShearAxis = (typeof STEEL_SHEAR_AXES)[number];
+
+export const STEEL_SHEAR_STIFFENER_STATES = ["UNSTIFFENED", "TRANSVERSE_STIFFENED", "OTHER_GOVERNED_CONFIGURATION"] as const;
+export type SteelShearStiffenerState = (typeof STEEL_SHEAR_STIFFENER_STATES)[number];
+
+export type SteelShearInputContext = {
+  shearAxis: SteelShearAxis;
+  stiffenerState: SteelShearStiffenerState | "unknown";
+  shearBucklingCoefficient?: SteelGovernedProperty | null;
+  stiffenerSpacing?: SteelGovernedProperty | null;
+};
+
+export type SteelWebSlendernessContext = {
+  clearWebDepth: number | null;
+  webThickness: number | null;
+  slendernessRatio: number | null;
+  stiffenerState: SteelShearStiffenerState | "unknown";
+  limitState: "VALIDATION_REQUIRED";
+  technicalRuleRef: null;
 };
 
 export type SteelStabilityContext = {
@@ -281,6 +321,7 @@ export type SteelCapacityEngineInput = {
   demand: Pick<StructuralDemandResult, "resultId" | "memberId" | "shear" | "moment" | "axial" | "deflection" | "capacityPresent" | "standardContext" | "inputEvidenceRefs" | "combinationId">;
   limitState: SteelLimitState;
   requiredProperties: string[];
+  shear?: SteelShearInputContext | null;
 };
 
 export type SteelCompressionCheckRecord = {
@@ -356,6 +397,43 @@ export type SteelBendingDesignContext = {
   sectionClassificationState: typeof SECTION_CLASSIFICATION_STATE;
 };
 
+export type SteelShearCheckRecord = {
+  methodId: string;
+  methodType: "ELASTIC_SHEAR_REFERENCE" | "ELASTIC_SHEAR_BUCKLING_REFERENCE";
+  engineeringRuleRef: string;
+  capacityType: string;
+  resultClass: "MECHANICS_REFERENCE";
+  axis: SteelShearAxis;
+  capacityValueN: number;
+  units: "N";
+  technicalBasisRef: string;
+  standardProfileRef: string;
+  validationState: SteelMethodMaturity;
+  standardConformanceState: SteelStandardConformanceState;
+  stiffenerState: SteelShearStiffenerState;
+  webSlendernessRatio: number | null;
+};
+
+export type SteelShearDesignContext = {
+  shearContextId: string;
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  shearDemandRefs: string[];
+  shearAxis: SteelShearAxis;
+  webDepth: number | null;
+  webThickness: number | null;
+  webSlenderness: SteelWebSlendernessContext;
+  stiffenerState: SteelShearStiffenerState;
+  stiffenerSpacing: number | null;
+  engineeringRuleRef: string;
+  standardProfileRef: string;
+  technicalBasisRef: string;
+  provenanceRef: EosGlobalProvenanceContract;
+  validationState: string;
+  interactionReviewRequired: true;
+};
+
 export type SteelCapacityEngineOutput = {
   adapterId: SteelAdapterId;
   maturity: SteelMethodMaturity;
@@ -366,12 +444,14 @@ export type SteelCapacityEngineOutput = {
   tensionChecks?: SteelTensionCheckRecord[];
   compressionChecks?: SteelCompressionCheckRecord[];
   bendingChecks?: SteelBendingCheckRecord[];
+  shearChecks?: SteelShearCheckRecord[];
   governingMethodId?: string | null;
   standardConformanceState?: SteelStandardConformanceState;
   implementationBindingState?: SteelImplementationBindingState;
   resultClass?: "MECHANICS_REFERENCE" | "DESIGN_CAPACITY";
   designCapacityState?: "VALIDATION_REQUIRED" | "IMPLEMENTED";
   sectionClassificationState?: typeof SECTION_CLASSIFICATION_STATE;
+  interactionReviewRequired?: true;
 };
 
 export type SteelUtilizationComposition = {
