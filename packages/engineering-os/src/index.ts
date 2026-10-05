@@ -100,6 +100,7 @@ export * from "./global-governance";
 export * from "./discipline-capability";
 export * from "./structural-domain";
 export * from "./structural-demand";
+export * from "./structural-steel";
 export * from "./permissions";
 export * from "./engineering-os";
 export {
