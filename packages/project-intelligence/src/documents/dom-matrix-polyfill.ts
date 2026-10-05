@@ -1,9 +1,15 @@
+type NodeDomHost = {
+  DOMMatrix?: unknown;
+  DOMMatrixReadOnly?: unknown;
+  ImageData?: unknown;
+};
+
+function nodeDomHost(value: typeof globalThis): NodeDomHost {
+  return value as unknown as NodeDomHost;
+}
+
 export function ensureNodeDomMatrix(): void {
-  const globalScope = globalThis as typeof globalThis & {
-    DOMMatrix?: unknown;
-    DOMMatrixReadOnly?: unknown;
-    ImageData?: unknown;
-  };
+  const globalScope = nodeDomHost(globalThis);
   if (typeof globalScope.DOMMatrix === "function") {
     try {
       const probe = new (globalScope.DOMMatrix as new () => { a?: number })();
@@ -168,6 +174,25 @@ export function ensureNodeDomMatrix(): void {
         w: 1,
       };
     }
+
+    static fromFloat32Array(array32: Float32Array) {
+      return new DOMMatrixPolyfill(Array.from(array32));
+    }
+
+    static fromFloat64Array(array64: Float64Array) {
+      return new DOMMatrixPolyfill(Array.from(array64));
+    }
+
+    static fromMatrix(other?: { a?: number; b?: number; c?: number; d?: number; e?: number; f?: number }) {
+      return new DOMMatrixPolyfill([
+        other?.a ?? 1,
+        other?.b ?? 0,
+        other?.c ?? 0,
+        other?.d ?? 1,
+        other?.e ?? 0,
+        other?.f ?? 0,
+      ]);
+    }
   }
 
   globalScope.DOMMatrix = DOMMatrixPolyfill;
@@ -177,6 +202,7 @@ export function ensureNodeDomMatrix(): void {
       data: Uint8ClampedArray;
       width: number;
       height: number;
+      colorSpace = "srgb" as const;
       constructor(data: Uint8ClampedArray | number, width?: number, height?: number) {
         if (typeof data === "number") {
           this.width = data;

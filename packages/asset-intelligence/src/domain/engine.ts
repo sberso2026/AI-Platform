@@ -2202,6 +2202,7 @@ export class AssetIntelligenceEngine {
         workspaceId: cmd.workspaceId,
         assetId: cmd.assetId,
         failureModeStateId: failureMode.stateId,
+        recordedAt: failureMode.recordedAt,
       });
     }
 

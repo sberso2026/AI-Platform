@@ -1,3 +1,4 @@
+/// <reference path="./pdfjs-worker-module.d.ts" />
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";

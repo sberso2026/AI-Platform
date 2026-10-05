@@ -80,7 +80,7 @@ describe("Phase 13D.1 Controlled Engineering Execution Host", () => {
       requestedBy: "user",
     });
     expect(rejected.ok).toBe(false);
-    expect(rejected.status).toBe("rejected");
+    if (!rejected.ok) expect(rejected.status).toBe("rejected");
 
     expect(() =>
       createAndAuthorizeExecutionJob({
@@ -112,7 +112,7 @@ describe("Phase 13D.1 Controlled Engineering Execution Host", () => {
       providerAvailable: false,
     });
     expect(unavailable.ok).toBe(false);
-    expect(unavailable.status).toBe("provider_unavailable");
+    if (!unavailable.ok) expect(unavailable.status).toBe("provider_unavailable");
   });
 
   it("isolates workspaces and certifies sandbox baseline", () => {

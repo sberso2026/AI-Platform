@@ -9,6 +9,7 @@
 import type {
   EngineeringSolverExecuteRequest,
   EngineeringSolverExecuteResult,
+  SolverArtifactRef,
 } from "@rtb/digital-twin";
 import { probeSpaceGassLiveHealth } from "./spacegass-live-health";
 import {
@@ -22,8 +23,6 @@ import {
   SPACEGASS_BOUNDED_METHOD,
   SPACEGASS_PROVIDER_KEY,
 } from "./spacegass-version";
-
-export const spaceGassSilentSolverFallbackAllowed = false as const;
 
 export type SpaceGassLiveExecutionOptions = SPACEGASSLiveProviderOptions & {
   provider?: SPACEGASSLiveProvider;
@@ -216,20 +215,20 @@ export async function executeSpaceGassLiveLinearStatic(
       if (isTerminalSuccess(lastStatus)) {
         // Bounded result pull — evidence of RTB EXECUTED RESULT
         const reactions = await provider.queryNodeReactions();
-        const artifacts = [
+        const artifacts: SolverArtifactRef[] = [
           {
             artifactRefId: `sg_run_${runId}`,
             filePathOrId: `spacegass:run:${runId}`,
             label: SPACEGASS_PROVENANCE.rtbExecutedResult,
-            kind: "output" as const,
+            kind: "output",
           },
         ];
         if (reactions.ok) {
           artifacts.push({
             artifactRefId: `sg_reactions_${runId}`,
             filePathOrId: "spacegass:query:node-reactions",
-            label: "node-reactions",
-            kind: "output" as const,
+            label: SPACEGASS_PROVENANCE.rtbExecutedResult,
+            kind: "output",
           });
         }
         return finishBase(request, startedAt, {

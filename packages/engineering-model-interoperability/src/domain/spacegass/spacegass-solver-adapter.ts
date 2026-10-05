@@ -14,6 +14,7 @@ import type {
   EngineeringSolverHealth,
   EngineeringSolverVersionObservation,
 } from "@rtb/digital-twin";
+import { SILENT_SOLVER_FALLBACK_ALLOWED } from "../../version";
 import { mapSpaceGassExecutionInput } from "./spacegass-input-mapper";
 import { probeSpaceGassLicense } from "./spacegass-license";
 import { assessSpaceGassProjectPolicy } from "./spacegass-project-policy";
@@ -25,8 +26,7 @@ import {
   probeSpaceGassVersion,
 } from "./spacegass-version";
 
-export const SILENT_SOLVER_FALLBACK_ALLOWED = false as const;
-export const spaceGassSilentSolverFallbackAllowed = false as const;
+export const spaceGassSilentSolverFallbackAllowed = SILENT_SOLVER_FALLBACK_ALLOWED;
 
 export type SPACEGASSSolverAdapter = EngineeringSolverAdapter & {
   solverId: typeof SPACEGASS_PROVIDER_KEY;

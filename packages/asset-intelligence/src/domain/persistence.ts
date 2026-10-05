@@ -124,6 +124,9 @@ export type PersistedFailureMechanismState = AssetFailureMechanismState & {
   workspaceId: string;
   version: number;
   failureModeStateId?: string;
+  sourceType?: string;
+  createdBy?: string;
+  supersedesId?: string;
 };
 
 export type PersistedFailureCauseState = AssetFailureCauseState & {
@@ -131,6 +134,9 @@ export type PersistedFailureCauseState = AssetFailureCauseState & {
   workspaceId: string;
   version: number;
   failureModeStateId?: string;
+  sourceType?: string;
+  createdBy?: string;
+  supersedesId?: string;
 };
 
 export type PersistedFailureEffectState = AssetFailureEffectState & {
@@ -138,6 +144,7 @@ export type PersistedFailureEffectState = AssetFailureEffectState & {
   workspaceId: string;
   version: number;
   failureModeStateId?: string;
+  sourceType?: string;
 };
 
 export type PersistedFailureConsequenceState = AssetFailureConsequenceState & {
@@ -145,6 +152,7 @@ export type PersistedFailureConsequenceState = AssetFailureConsequenceState & {
   workspaceId: string;
   version: number;
   failureModeStateId?: string;
+  sourceType?: string;
 };
 
 export type PersistedFailureRelationship = FailureRelationship & {
@@ -152,6 +160,7 @@ export type PersistedFailureRelationship = FailureRelationship & {
   workspaceId: string;
   assetId: string;
   failureModeStateId?: string;
+  recordedAt: string;
 };
 
 export type PersistedFailureReview = {
@@ -2373,7 +2382,7 @@ export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = false as const;
 
 export type RepositoryFactoryOptions = {
   adapter?: "memory" | "postgres";
-  nodeEnv?: string;
+  nodeEnv?: "development" | "production" | "test";
   supabase?: unknown;
   memoryStore?: DurableAssetIntelligenceStore;
 };

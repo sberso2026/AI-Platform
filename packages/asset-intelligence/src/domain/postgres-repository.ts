@@ -985,21 +985,21 @@ export class PostgresAssetIntelligenceRepository implements AssetIntelligenceRep
   }
 
   async saveFailureReview(
-    record: PersistedFailureReviewRecord,
-  ): Promise<PersistedFailureReviewRecord> {
+    record: PersistedFailureReview,
+  ): Promise<PersistedFailureReview> {
     const { error } = await this.supabase.from("asset_intelligence_failure_reviews").insert({
-      id: record.id,
+      id: record.reviewId,
       tenant_id: record.tenantId,
       workspace_id: record.workspaceId,
       asset_id: record.assetId,
-      failure_mode_id: record.failureModeId,
+      failure_mode_id: record.failureModeStateId,
       review_instance_id: record.reviewInstanceId ?? null,
       action: record.action,
       reviewer_id: record.reviewerId ?? null,
       reason: record.reason ?? null,
       state_version: record.stateVersion,
       taxonomy_version: record.taxonomyVersion,
-      evidence_confidence: record.evidenceConfidence ?? null,
+      evidence_confidence: record.evidenceConfidenceRef ?? null,
       content_hash: record.contentHash ?? null,
       correlation_id: record.correlationId ?? null,
       created_at: record.createdAt,

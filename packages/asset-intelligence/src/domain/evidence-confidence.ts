@@ -123,6 +123,9 @@ export class EvidenceConfidenceEngine {
     if (input.conflictDetected) {
       dataSufficiency = "conflicting";
       abstentionReason = "conflicting_evidence";
+    } else if ((input.revokedRefs?.length ?? 0) > 0 && refs.length === 0) {
+      dataSufficiency = "revoked";
+      abstentionReason = "revoked_evidence";
     } else if (refs.length === 0) {
       dataSufficiency = "insufficient";
       abstentionReason = "insufficient_evidence";

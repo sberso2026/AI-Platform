@@ -10,6 +10,7 @@ export type FailureLifecycleStatus =
   | "draft"
   | "calculated"
   | "pending_review"
+  | "changes_requested"
   | "approved"
   | "rejected"
   | "published"
