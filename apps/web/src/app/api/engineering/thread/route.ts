@@ -1,6 +1,24 @@
 import { NextResponse } from "next/server";
 import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 
+const ENGINEERING_THREAD_KINDS = [
+  "requirement",
+  "decision",
+  "analysis",
+  "configuration",
+  "change",
+  "graph",
+] as const;
+
+type EngineeringThreadKind = (typeof ENGINEERING_THREAD_KINDS)[number];
+
+function parseEngineeringThreadKind(value: string | null | undefined): EngineeringThreadKind {
+  for (const kind of ENGINEERING_THREAD_KINDS) {
+    if (value === kind) return kind;
+  }
+  return "graph";
+}
+
 function csv(value: string | null): string[] | undefined {
   if (!value) return undefined;
   return value.split(",").map((part) => part.trim()).filter(Boolean);
@@ -27,10 +45,7 @@ export const GET = withEngineeringApi("thread", async ({ ctx, commerce }, reques
   }
   const depth = url.searchParams.get("depth");
   const source = url.searchParams.get("source");
-  const kind =
-    action === "requirement" || action === "decision" || action === "analysis" || action === "configuration" || action === "change"
-      ? action
-      : "graph";
+  const kind = parseEngineeringThreadKind(action);
   const input = {
     objectType,
     objectId,

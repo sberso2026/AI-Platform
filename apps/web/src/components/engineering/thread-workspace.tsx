@@ -103,7 +103,7 @@ export function ThreadWorkspace() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <Header title="Engineering Digital Thread" />
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-6">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Digital Thread" }]} />
         <h1 className="text-2xl font-semibold">Engineering Digital Thread</h1>
@@ -119,7 +119,7 @@ export function ThreadWorkspace() {
         ) : null}
         <div className="flex flex-wrap gap-2">
           {VIEWS.map((id) => (
-            <Button key={id} variant={view === id ? "primary" : "secondary"} onClick={() => setView(id)}>
+            <Button key={id} variant={view === id ? "default" : "secondary"} onClick={() => setView(id)}>
               {id === "assurance" ? "Assurance Gaps" : id[0].toUpperCase() + id.slice(1)}
             </Button>
           ))}
@@ -141,7 +141,7 @@ export function ThreadWorkspace() {
         </div>
         {error ? <OperationalError message={error} /> : null}
         {!payload && !error ? (
-          <EmptyOperationalState title="No thread loaded" body="Select a canonical object and open its authorized trace." />
+          <EmptyOperationalState title="No thread loaded" description="Select a canonical object and open its authorized trace." />
         ) : null}
         {truncated ? <p className="text-sm">Trace truncated — increase is capped server-side (default depth 4, hard maximum 8).</p> : null}
         {explanations.length ? (

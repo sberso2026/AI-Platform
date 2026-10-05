@@ -35,10 +35,15 @@ export default function InformationDetailPage() {
 
   useEffect(() => {
     fetch(`/api/engineering/information?action=detail&id=${encodeURIComponent(params.id)}`)
-      .then((response) => parseApiJsonResponse<{ data?: InfoRef; error?: string }>(response))
+      .then((response) => parseApiJsonResponse<InfoRef>(response))
       .then((json) => {
-        if (json.error) setError(json.error);
-        else setRow(json.data ?? null);
+        if (!json.ok || !json.data) {
+          setRow(null);
+          setError(json.errorMessage ?? "Failed to load information reference");
+          return;
+        }
+        setRow(json.data);
+        setError(null);
       })
       .catch((err: Error) => setError(err.message));
   }, [params.id]);

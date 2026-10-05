@@ -39,6 +39,24 @@ function privilegedMfaEnforcementEnabled(): boolean {
   );
 }
 
+type ActorFilterBuilder = PromiseLike<{ data: unknown[] | null; error: { message: string } | null }> & {
+  eq: (column: string, value: string) => ActorFilterBuilder;
+  maybeSingle: () => PromiseLike<{
+    data: { id?: string; tenant_id?: string } | null;
+    error: { message: string } | null;
+  }>;
+};
+
+type ActorContextClient = {
+  from: (table: string) => {
+    select: (columns: string) => ActorFilterBuilder;
+  };
+};
+
+function boundActorContextClient(value: unknown): ActorContextClient {
+  return value as ActorContextClient;
+}
+
 const PLATFORM_ACCESS_PREFIXES = [
   "/platform/",
   "/system/",
@@ -251,7 +269,7 @@ export async function middleware(request: NextRequest) {
 
   if (user && (pathname === "/review" || pathname.startsWith("/review/") || isDeliverableLifecycleAal2Path(pathname))) {
     const resolved = await resolveRequestActorContext({
-      supabase,
+      supabase: boundActorContextClient(supabase),
       userId: user.id,
       header: (name) => request.headers.get(name),
       cookie: (name) => request.cookies.get(name)?.value,

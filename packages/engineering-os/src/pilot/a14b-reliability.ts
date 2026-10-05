@@ -138,7 +138,12 @@ export function healthPayloadIsSafe(payload: Record<string, unknown>): boolean {
   return !/service_role|eyj|totp|signedurl|content_base64|password=/.test(text);
 }
 
-export function rehearseKillSwitch(env: NodeJS.ProcessEnv = { EOS_CONTROLLED_PILOT_ENABLED: "0" }): {
+export const A14B_KILL_SWITCH_DEFAULT_ENV: NodeJS.ProcessEnv = {
+  NODE_ENV: process.env.NODE_ENV,
+  EOS_CONTROLLED_PILOT_ENABLED: "0",
+};
+
+export function rehearseKillSwitch(env: NodeJS.ProcessEnv = A14B_KILL_SWITCH_DEFAULT_ENV): {
   enabled: boolean;
   dataPreserved: true;
   adminRecoveryPossible: true;

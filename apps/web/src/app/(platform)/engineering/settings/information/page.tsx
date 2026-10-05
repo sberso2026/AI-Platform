@@ -35,16 +35,30 @@ export default function InformationSettingsPage() {
 
   useEffect(() => {
     fetch("/api/engineering/information?action=catalog")
-      .then((response) => parseApiJsonResponse<{ data?: Catalog }>(response))
-      .then((json) => setCatalog(json.data ?? null))
+      .then((response) => parseApiJsonResponse<Catalog>(response))
+      .then((json) => {
+        if (!json.ok) {
+          setError(json.errorMessage ?? "Failed to load information catalog");
+          setCatalog(null);
+          return;
+        }
+        setCatalog(json.data ?? null);
+      })
       .catch((err: Error) => setError(err.message));
   }, []);
 
   useEffect(() => {
     if (!projectId) return;
     fetch(`/api/engineering/information?action=policies&projectId=${encodeURIComponent(projectId)}`)
-      .then((response) => parseApiJsonResponse<{ data?: Policy[] }>(response))
-      .then((json) => setPolicies(Array.isArray(json.data) ? json.data : []))
+      .then((response) => parseApiJsonResponse<Policy[]>(response))
+      .then((json) => {
+        if (!json.ok) {
+          setError(json.errorMessage ?? "Failed to load information policies");
+          setPolicies([]);
+          return;
+        }
+        setPolicies(Array.isArray(json.data) ? json.data : []);
+      })
       .catch((err: Error) => setError(err.message));
   }, [projectId]);
 
@@ -71,8 +85,8 @@ export default function InformationSettingsPage() {
         },
       }),
     });
-    const json = await parseApiJsonResponse<{ error?: string }>(response);
-    if (json.error) setError(json.error);
+    const json = await parseApiJsonResponse(response);
+    if (!json.ok) setError(json.errorMessage ?? "Failed to save information policy");
   }
 
   return (

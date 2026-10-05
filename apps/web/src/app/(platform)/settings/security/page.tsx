@@ -53,8 +53,8 @@ function SecurityMfaPageInner() {
       supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
       supabase.auth.mfa.listFactors(),
     ]);
-    setAal(aalData.currentLevel);
-    setVerified(verifiedTotpFactors(factorData.totp ?? []));
+    setAal(aalData?.currentLevel ?? null);
+    setVerified(verifiedTotpFactors(factorData?.totp ?? []));
     setStatus("ready");
     void fetch("/api/platform/active-context", { credentials: "same-origin" })
       .then((response) => response.json())
@@ -78,7 +78,9 @@ function SecurityMfaPageInner() {
     try {
       const supabase = createClient();
       const existing = await supabase.auth.mfa.listFactors();
-      const unverified = (existing.data?.totp ?? []).filter((factor) => factor.status === "unverified");
+      const unverified = (existing.data?.all ?? []).filter(
+        (factor) => factor.factor_type === "totp" && factor.status === "unverified",
+      );
       for (const factor of unverified) {
         await supabase.auth.mfa.unenroll({ factorId: factor.id });
       }
@@ -129,7 +131,7 @@ function SecurityMfaPageInner() {
       setInfo("MFA configured.");
       await refresh(supabase);
       const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (aalData.currentLevel === "aal2") {
+      if (aalData?.currentLevel === "aal2") {
         router.replace(nextPath);
         router.refresh();
       }

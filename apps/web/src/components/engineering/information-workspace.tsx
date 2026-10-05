@@ -69,8 +69,15 @@ export function InformationWorkspace() {
   useEffect(() => {
     if (!projectId) return;
     fetch(`/api/engineering/information?action=list&projectId=${encodeURIComponent(projectId)}`)
-      .then((response) => parseApiJsonResponse<{ data?: InfoRef[] }>(response))
-      .then((json) => setRows(Array.isArray(json.data) ? json.data : []))
+      .then((response) => parseApiJsonResponse<InfoRef[]>(response))
+      .then((json) => {
+        if (!json.ok) {
+          setError(json.errorMessage ?? "Failed to load information references");
+          setRows([]);
+          return;
+        }
+        setRows(Array.isArray(json.data) ? json.data : []);
+      })
       .catch((err: Error) => setError(err.message));
   }, [projectId]);
 
@@ -92,9 +99,13 @@ export function InformationWorkspace() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "resolve", projectId, informationType, purpose }),
     });
-    const json = await parseApiJsonResponse<{ data?: Resolution; error?: string }>(response);
-    if (json.error) setError(json.error);
-    else setResolution(json.data ?? null);
+    const json = await parseApiJsonResponse<Resolution>(response);
+    if (!json.ok) {
+      setError(json.errorMessage ?? "Failed to resolve information authority");
+      setResolution(null);
+      return;
+    }
+    setResolution(json.data ?? null);
   }
 
   return (

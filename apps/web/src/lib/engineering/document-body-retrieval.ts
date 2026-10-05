@@ -1,4 +1,10 @@
-import type { DocumentBodyRetrievalProbe, EngineeringEvidence, EngineeringSearchQuery } from "@rtb/engineering-os";
+import type {
+  DocumentBodyRetrievalProbe,
+  DocumentBodyRetrievalResult,
+  EngineeringEvidence,
+  EngineeringRetrievalMode,
+  EngineeringSearchQuery,
+} from "@rtb/engineering-os";
 import {
   PostgresDocumentIndexAdapter,
   ProjectIntelligenceDocumentRetrievalService,
@@ -12,6 +18,15 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+export function resolveDocumentBodyRetrievalMode(input: {
+  hybrid: boolean;
+  embeddingsConfigured: boolean;
+}): EngineeringRetrievalMode {
+  if (input.hybrid) return "hybrid";
+  if (input.embeddingsConfigured) return "lexical";
+  return "lexical_fallback";
 }
 
 function citationHref(input: {
@@ -48,7 +63,9 @@ export function createDocumentBodyRetrievalProbe(): DocumentBodyRetrievalProbe {
   };
 }
 
-async function retrieveDocumentBody(query: EngineeringSearchQuery) {
+async function retrieveDocumentBody(
+  query: EngineeringSearchQuery,
+): Promise<DocumentBodyRetrievalResult | null> {
       const workspaceId = query.workspaceId;
       if (!workspaceId) {
         return {
@@ -101,11 +118,12 @@ async function retrieveDocumentBody(query: EngineeringSearchQuery) {
         const status = String(ingestionRow.status ?? "");
         ingestionState = status || "metadata_only";
         if (status && !isAuthoritativeAnswerAllowed(status as DocumentProcessingStatus)) {
+          const retrievalMode: EngineeringRetrievalMode = "lexical";
           return {
             evidence: [],
             limitations: ["This document's source text is not searchable yet. Indexing may still be running, or only the register entry exists."],
             diagnosticLimitations: [`document_ingestion_status:${status || "unregistered"}`],
-            retrievalMode: "lexical",
+            retrievalMode,
             semanticConfigured: false,
             ingestionState: status || "metadata_only",
           };
@@ -234,7 +252,10 @@ async function retrieveDocumentBody(query: EngineeringSearchQuery) {
         evidence,
         limitations: userLimitations,
         diagnosticLimitations: diagnostic,
-        retrievalMode: hybrid ? "hybrid" : embeddings ? "lexical" : "lexical_fallback",
+        retrievalMode: resolveDocumentBodyRetrievalMode({
+          hybrid,
+          embeddingsConfigured: Boolean(embeddings),
+        }),
         semanticConfigured,
         ingestionState,
       };

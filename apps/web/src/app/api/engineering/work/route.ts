@@ -32,6 +32,18 @@ async function safeList<T>(load: () => Promise<T[]>, fallback: T[] = []): Promis
   }
 }
 
+function deliverableExpectationRecords(listed: {
+  expected: Array<{ id: string; definitionCode: string; status: string }>;
+}): Record<string, unknown>[] {
+  return listed.expected.map((row) => ({
+    id: row.id,
+    title: row.definitionCode,
+    name: row.definitionCode,
+    definitionCode: row.definitionCode,
+    status: row.status,
+  }));
+}
+
 async function assemblePlanContext(
   ctx: { engineering: EngineeringOS; tenantId: string },
   requestCtx: { authorize: (segment: string) => Promise<CommerceExecutionContext | null> },
@@ -62,7 +74,11 @@ async function assemblePlanContext(
     ? await safeList(() => ctx.engineering.analysisRequests.list(anlCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
     : [];
   const deliverables = delCommerce
-    ? await safeList(() => ctx.engineering.deliverables.list(delCommerce, ctx.tenantId, projectId) as Promise<Record<string, unknown>[]>)
+    ? await safeList(async () =>
+        deliverableExpectationRecords(
+          await ctx.engineering.deliverables.list(delCommerce, ctx.tenantId, projectId),
+        ),
+      )
     : [];
   let information: Array<Record<string, unknown>> = [];
   let gaps: Array<{ kind: "missing" | "stale" | "unaccepted"; title: string; explanation: string }> = [];

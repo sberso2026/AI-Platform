@@ -71,24 +71,27 @@ export default function EngineeringDocumentDetailPage() {
     const parsed = await parseApiJsonResponse<DocRow>(
       await fetch(`/api/engineering/documents/${documentId}`),
     );
-    if (!parsed.ok) setError(parsed.errorMessage ?? "Failed to load document");
-    else {
-      setDoc(parsed.data);
-      setError(null);
-      const meta = parsed.data.metadata ?? {};
-      const proposed = String(meta.proposed_document_number ?? "");
-      const currentNumber = String(parsed.data.document_number ?? "");
-      const inferred = preferCompleteStandardNumber(
-        proposed,
-        inferStandardDocumentNumber(
-          `${proposed}\n${parsed.data.title ?? ""}\n${parsed.data.file_name ?? ""}`,
-        ),
-      );
-      setReviewNumber(inferred || proposed || currentNumber);
-      setReviewTitle(String(meta.proposed_title ?? parsed.data.title ?? ""));
-      setReviewRevision(String(meta.proposed_revision ?? parsed.data.revision ?? ""));
-      setReviewType(String(meta.proposed_document_type ?? parsed.data.document_type ?? ""));
+    if (!parsed.ok || !parsed.data) {
+      setDoc(null);
+      setError(parsed.errorMessage ?? "Failed to load document");
+      return;
     }
+    const loaded = parsed.data;
+    setDoc(loaded);
+    setError(null);
+    const meta = loaded.metadata ?? {};
+    const proposed = String(meta.proposed_document_number ?? "");
+    const currentNumber = String(loaded.document_number ?? "");
+    const inferred = preferCompleteStandardNumber(
+      proposed,
+      inferStandardDocumentNumber(
+        `${proposed}\n${loaded.title ?? ""}\n${loaded.file_name ?? ""}`,
+      ),
+    );
+    setReviewNumber(inferred || proposed || currentNumber);
+    setReviewTitle(String(meta.proposed_title ?? loaded.title ?? ""));
+    setReviewRevision(String(meta.proposed_revision ?? loaded.revision ?? ""));
+    setReviewType(String(meta.proposed_document_type ?? loaded.document_type ?? ""));
   }
 
   useEffect(() => {
@@ -127,10 +130,11 @@ export default function EngineeringDocumentDetailPage() {
         revision: session.revision,
         attachOnly: true,
       });
-      if (!parsed.ok) {
+      if (!parsed.ok || !parsed.data) {
         throw new Error(parsed.errorMessage ?? "Failed to attach file");
       }
-      setDoc((prev) => ({ ...(prev ?? {}), ...parsed.data }));
+      const attached = parsed.data;
+      setDoc((prev) => ({ ...(prev ?? {}), ...attached }));
       await load();
     } catch (err) {
       setAttachError(err instanceof Error ? err.message : "Failed to attach file");

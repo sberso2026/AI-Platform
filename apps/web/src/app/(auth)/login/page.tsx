@@ -129,10 +129,12 @@ export default function LoginPage() {
       const current = contextBody?.data?.current ?? null;
       if (current?.requireMfa === true) requireMfa = true;
       if (!contextRes.ok || !current) requireMfa = true;
+      const currentAal = aalData?.currentLevel ?? null;
+      const verifiedTotpCount = (factorData?.totp ?? []).filter((factor) => factor.status === "verified").length;
       const destination = postPasswordMfaDestination({
         requireMfa,
-        currentAal: aalData.currentLevel,
-        verifiedTotpCount: (factorData.totp ?? []).filter((factor) => factor.status === "verified").length,
+        currentAal,
+        verifiedTotpCount,
         nextPath,
       });
       router.push(destination);

@@ -89,7 +89,7 @@ export function AnalysisWorkspace() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <Header title="Engineering Analysis" />
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-6">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Analysis" }]} />
         <h1 className="text-2xl font-semibold">Engineering Analysis</h1>
@@ -99,7 +99,7 @@ export function AnalysisWorkspace() {
         </p>
         <div className="flex flex-wrap gap-2">
           {FILTERS.map((tab) => (
-            <Button key={tab.id} variant={filter === tab.id ? "primary" : "secondary"} onClick={() => setFilter(tab.id)}>
+            <Button key={tab.id} variant={filter === tab.id ? "default" : "secondary"} onClick={() => setFilter(tab.id)}>
               {tab.label}
             </Button>
           ))}
@@ -108,8 +108,8 @@ export function AnalysisWorkspace() {
           <CreateForm
             endpoint="/api/engineering/analysis"
             fields={[
-              { name: "discipline", label: "Discipline", required: true },
-              { name: "capability", label: "Capability", required: true },
+              { key: "discipline", label: "Discipline", required: true },
+              { key: "capability", label: "Capability", required: true },
             ]}
             extra={{ projectId }}
             onCreated={reload}
@@ -118,7 +118,7 @@ export function AnalysisWorkspace() {
         {loading ? <OperationalSkeleton /> : null}
         {error ? <OperationalError message={error} /> : null}
         {!loading && !visible.length ? (
-          <EmptyOperationalState title="No analysis requests" body="Create a request or adjust the filter." />
+          <EmptyOperationalState title="No analysis requests" description="Create a request or adjust the filter." />
         ) : (
           <ul className="divide-y rounded border">
             {visible.map((item) => {
@@ -130,7 +130,7 @@ export function AnalysisWorkspace() {
                   <span>
                     {String(item.discipline)} / {String(item.capability)}
                   </span>
-                  <StatusChip status={statusOf(item)} />
+                  <StatusChip value={statusOf(item)} />
                 </li>
               );
             })}
@@ -159,7 +159,7 @@ export function AnalysisWorkspace() {
               <dd>{JSON.stringify(detail.applicableStandardCodes ?? [])}</dd>
               <dt>Status</dt>
               <dd>
-                <StatusChip status={statusOf(detail)} />
+                <StatusChip value={statusOf(detail)} />
               </dd>
             </dl>
             {statusOf(detail) === "blocked" ? (

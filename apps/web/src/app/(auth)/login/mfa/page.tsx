@@ -84,7 +84,7 @@ function MfaChallengeForm() {
         setError("Unable to load authenticator factors.");
         return;
       }
-      const totp = verifiedTotpFactors(factorData.totp ?? [])[0];
+      const totp = verifiedTotpFactors(factorData?.totp ?? [])[0];
       if (!totp) {
         router.replace(`${MFA_SECURITY_ROUTE}?next=${encodeURIComponent(nextPath)}`);
         return;
@@ -101,8 +101,27 @@ function MfaChallengeForm() {
         challengeId: challenge.id,
         code: code.trim(),
       });
+      const verifySession =
+        verifyData &&
+        typeof verifyData === "object" &&
+        "session" in verifyData &&
+        verifyData.session &&
+        typeof verifyData.session === "object"
+          ? verifyData.session
+          : null;
+      const accessToken =
+        verifySession && "access_token" in verifySession && typeof verifySession.access_token === "string"
+          ? verifySession.access_token
+          : undefined;
+      const refreshToken =
+        verifySession && "refresh_token" in verifySession && typeof verifySession.refresh_token === "string"
+          ? verifySession.refresh_token
+          : undefined;
       const observation = await persistVerifiedMfaSession(supabase, {
-        data: verifyData,
+        data:
+          accessToken && refreshToken
+            ? { session: { access_token: accessToken, refresh_token: refreshToken } }
+            : { session: null },
         error: verifyError,
       });
       setPostVerify({
