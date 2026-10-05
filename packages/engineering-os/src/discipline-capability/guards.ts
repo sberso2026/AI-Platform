@@ -5,6 +5,7 @@ import type {
   EosDisciplineDefinition,
 } from "@rtb/types";
 import {
+  DISCIPLINE_SECURITY_OVERRIDE_ALLOWED,
   DUPLICATE_PLATFORM_FRAMEWORK_ALLOWED,
   EOS_CORE_OWNED_REGISTERS,
   EOS_D0_GOVERNANCE_PROFILES,
@@ -48,23 +49,26 @@ export function assertDisciplineAiGovernance(pack: EosDisciplineDefinition): voi
       modelOrTool: null,
       provider: null,
       version: pack.version,
-      inputCategories: ["engineeringData"],
+      inputCategories: cap.dataCategories,
       outputCategories: ["AI_SUGGESTION"],
       engineeringImpact: cap.engineeringImpact,
       humanOversightRequired: cap.humanOversightRequired,
       autonomousActionAllowed: cap.autonomousActionAllowed,
       governedNumericalOutputAllowed: cap.governedNumericalOutputAllowed,
-      evidenceRequired: true,
-      provenanceRequired: true,
-      riskClassification: "requires-assessment",
+      evidenceRequired: cap.evidenceRequired,
+      provenanceRequired: cap.provenanceRequired,
+      riskClassification: cap.riskClassification,
       jurisdictionApplicability: cap.jurisdictionApplicability,
       deploymentRegion: cap.jurisdictionApplicability,
-      dataCategories: ["engineeringData"],
+      dataCategories: cap.dataCategories,
       reviewStatus: "DRAFT",
       effectiveVersion: pack.version,
     } satisfies EosAiCapabilityRecord);
     if (cap.governedNumericalOutputAllowed !== GOVERNED_NUMERICAL_OUTPUT_ALLOWED_FOR_LLM_DEFAULT) {
       throw new Error("LLM governed numerical origination is forbidden by default");
+    }
+    if (!cap.evidenceRequired || !cap.provenanceRequired) {
+      throw new Error("discipline AI capabilities must require evidence and provenance");
     }
   }
   for (const calc of pack.calculationDefinitions) {
@@ -83,6 +87,7 @@ export function assertCoreRegisterOwnership(objectTypeId: string): void {
 
 export function assertNoDuplicatePlatformFramework(framework: string): void {
   if (DUPLICATE_PLATFORM_FRAMEWORK_ALLOWED) throw new Error("duplicate platform frameworks are forbidden");
+  if (DISCIPLINE_SECURITY_OVERRIDE_ALLOWED) throw new Error("discipline security override is forbidden");
   if ((EOS_FORBIDDEN_PLATFORM_FRAMEWORKS as readonly string[]).includes(framework)) {
     throw new Error(`discipline packs must not implement ${framework}`);
   }
@@ -99,6 +104,10 @@ export function assertCrossDisciplineInterface(row: EosCrossDisciplineInterface)
   if (!row.interfaceId || !row.sourceDiscipline || !row.targetDiscipline || !row.relation) {
     throw new Error("cross-discipline interface is incomplete");
   }
+  if (typeof row.humanReviewRequired !== "boolean") {
+    throw new Error("cross-discipline interface must declare human review requirement");
+  }
+  if (!row.status) throw new Error("cross-discipline interface must declare status");
 }
 
 export function assertCrossDisciplineImpact(row: EosCrossDisciplineImpact): void {
@@ -123,6 +132,17 @@ export function assertDisciplinePrivacyAndSecurity(pack: EosDisciplineDefinition
   }
   if (!EOS_SECURITY_BASELINE.controls.includes("MFA") || !EOS_SECURITY_BASELINE.controls.includes("least_privilege")) {
     throw new Error("security baseline missing required controls");
+  }
+  if (DISCIPLINE_SECURITY_OVERRIDE_ALLOWED) throw new Error("discipline packs may not weaken inherited security");
+  for (const model of pack.inspectionModels) {
+    if (model.aiFindingEqualsEngineeringApproval) {
+      throw new Error("inspection AI findings are not engineering approval");
+    }
+  }
+  for (const twin of pack.digitalTwinModels) {
+    if (twin.humanPersonTwinAllowed) {
+      throw new Error("human/person twins are forbidden in discipline extensions");
+    }
   }
 }
 

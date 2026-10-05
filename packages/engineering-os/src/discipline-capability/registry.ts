@@ -13,6 +13,7 @@ import {
   EOS_DISCIPLINE_IDS,
   EOS_EVIDENCE_SOURCE_KINDS,
   EOS_GLOBAL_POLICY_INHERITANCE,
+  EOS_INSPECTION_FINDING_CLASSES,
 } from "@rtb/types";
 import { SPACE_GASS_CATALOG_ENTRY } from "../external-tools/catalog";
 import { STRUCTURAL_SOLVER_BOUNDARY } from "../work-generator/structural/freeze";
@@ -26,6 +27,7 @@ const SHARED_JURISDICTIONS = [
   "canada",
   "middle-east",
   "apac-other",
+  "other",
 ];
 
 const DEFAULT_EVIDENCE: EosEvidenceRule = {
@@ -49,6 +51,25 @@ const DEFAULT_APPROVAL = {
 
 function plannedObjects(ids: Array<{ objectTypeId: string; name: string }>) {
   return ids.map((row) => ({ ...row, implemented: false }));
+}
+
+function declaredInterface(
+  row: Pick<EosCrossDisciplineInterface, "interfaceId" | "relation" | "sourceDiscipline" | "targetDiscipline" | "description"> &
+    Partial<EosCrossDisciplineInterface>,
+): EosCrossDisciplineInterface {
+  return {
+    sourceObject: row.sourceObject ?? null,
+    targetObject: row.targetObject ?? null,
+    evidence: row.evidence ?? null,
+    status: row.status ?? "declared",
+    provenance: row.provenance ?? "eos-eu-0-global-provenance",
+    humanReviewRequired: row.humanReviewRequired ?? true,
+    interfaceId: row.interfaceId,
+    relation: row.relation,
+    sourceDiscipline: row.sourceDiscipline,
+    targetDiscipline: row.targetDiscipline,
+    description: row.description,
+  };
 }
 
 function plannedPack(input: {
@@ -90,11 +111,17 @@ function plannedPack(input: {
     evidenceRules: [DEFAULT_EVIDENCE],
     reviewRules: [DEFAULT_REVIEW],
     approvalRules: [DEFAULT_APPROVAL],
-    inspectionModels: input.inspectionModels.map((row) => ({ ...row, implemented: false })),
+    inspectionModels: input.inspectionModels.map((row) => ({
+      ...row,
+      implemented: false,
+      findingClasses: [...EOS_INSPECTION_FINDING_CLASSES],
+      aiFindingEqualsEngineeringApproval: false,
+    })),
     digitalTwinModels: input.digitalTwinModels.map((row) => ({
       ...row,
       measuredStateDistinctFromInferred: true,
       digitalTwinDistinctFromThreadAndAiMemory: true,
+      humanPersonTwinAllowed: false,
       implemented: false,
     })),
     riskModels: input.riskModels,
@@ -190,16 +217,20 @@ export const STRUCTURAL_DISCIPLINE_PACK: EosDisciplineDefinition = {
       governedNumericalOutputAllowed: false,
       engineeringImpact: "advisory",
       jurisdictionApplicability: SHARED_JURISDICTIONS,
+      evidenceRequired: true,
+      provenanceRequired: true,
+      riskClassification: "requires-assessment",
+      dataCategories: ["engineeringData"],
     },
   ],
   evidenceRules: [DEFAULT_EVIDENCE],
   reviewRules: [DEFAULT_REVIEW],
   approvalRules: [DEFAULT_APPROVAL],
   inspectionModels: [
-    { modelId: "cracking", name: "Cracking", implemented: false },
-    { modelId: "corrosion", name: "Corrosion", implemented: false },
-    { modelId: "fatigue", name: "Fatigue", implemented: false },
-    { modelId: "deflection", name: "Deflection", implemented: false },
+    { modelId: "cracking", name: "Cracking", implemented: false, findingClasses: [...EOS_INSPECTION_FINDING_CLASSES], aiFindingEqualsEngineeringApproval: false },
+    { modelId: "corrosion", name: "Corrosion", implemented: false, findingClasses: [...EOS_INSPECTION_FINDING_CLASSES], aiFindingEqualsEngineeringApproval: false },
+    { modelId: "fatigue", name: "Fatigue", implemented: false, findingClasses: [...EOS_INSPECTION_FINDING_CLASSES], aiFindingEqualsEngineeringApproval: false },
+    { modelId: "deflection", name: "Deflection", implemented: false, findingClasses: [...EOS_INSPECTION_FINDING_CLASSES], aiFindingEqualsEngineeringApproval: false },
   ],
   digitalTwinModels: [
     {
@@ -207,25 +238,30 @@ export const STRUCTURAL_DISCIPLINE_PACK: EosDisciplineDefinition = {
       name: "Structural member state",
       measuredStateDistinctFromInferred: true,
       digitalTwinDistinctFromThreadAndAiMemory: true,
+      humanPersonTwinAllowed: false,
       implemented: false,
     },
   ],
   riskModels: ["structural-stability-advisory"],
   crossDisciplineInterfaces: [
-    {
+    declaredInterface({
       interfaceId: "piping-to-structural-loads",
       relation: "LOAD_TRANSFER",
       sourceDiscipline: "piping",
       targetDiscipline: "structural",
+      sourceObject: "support",
+      targetObject: "member",
       description: "Piping loads may transfer to structural supports.",
-    },
-    {
+    }),
+    declaredInterface({
       interfaceId: "structural-to-geotechnical",
       relation: "REQUIRES_INPUT_FROM",
       sourceDiscipline: "structural",
       targetDiscipline: "geotechnical",
+      sourceObject: "foundation_interface",
+      targetObject: "soil_profile",
       description: "Foundations require geotechnical input.",
-    },
+    }),
   ],
   dataClassifications: [...EOS_DISCIPLINE_CLASSIFIABLE_DATA],
   provenanceRequirements: ["eos-eu-0-global-provenance"],
@@ -245,6 +281,9 @@ export const STRUCTURAL_D1_GAPS = [
   "INSPECTION_MODELS_NOT_IMPLEMENTED",
   "DIGITAL_TWIN_EXTENSION_NOT_IMPLEMENTED",
   "DESIGN_CHECK_NOT_CERTIFIED",
+  "NO_STANDARD_EDITION_ANNEX_BINDING_ON_CALCULATIONS",
+  "OPTIMIZATION_NOT_CERTIFIED",
+  "DETERMINISTIC_TOOL_JURISDICTION_UNBOUND",
 ] as const;
 
 export const EOS_DISCIPLINE_REGISTRY: readonly EosDisciplineDefinition[] = [
@@ -267,13 +306,15 @@ export const EOS_DISCIPLINE_REGISTRY: readonly EosDisciplineDefinition[] = [
     digitalTwinModels: [],
     riskModels: [],
     crossDisciplineInterfaces: [
-      {
+      declaredInterface({
         interfaceId: "civil-to-geotechnical",
         relation: "REQUIRES_INPUT_FROM",
         sourceDiscipline: "civil",
         targetDiscipline: "geotechnical",
+        sourceObject: "earthworks_zone",
+        targetObject: "soil_profile",
         description: "Earthworks and foundations depend on geotechnical input.",
-      },
+      }),
     ],
   }),
   plannedPack({
@@ -312,13 +353,15 @@ export const EOS_DISCIPLINE_REGISTRY: readonly EosDisciplineDefinition[] = [
     digitalTwinModels: [{ extensionId: "mechanical-asset-state", name: "Mechanical asset state" }],
     riskModels: [],
     crossDisciplineInterfaces: [
-      {
+      declaredInterface({
         interfaceId: "process-to-mechanical",
         relation: "PROVIDES_INPUT_TO",
         sourceDiscipline: "process",
         targetDiscipline: "mechanical",
+        sourceObject: "stream",
+        targetObject: "pump",
         description: "Process duty informs mechanical equipment.",
-      },
+      }),
     ],
   }),
   plannedPack({
@@ -345,13 +388,15 @@ export const EOS_DISCIPLINE_REGISTRY: readonly EosDisciplineDefinition[] = [
     digitalTwinModels: [],
     riskModels: [],
     crossDisciplineInterfaces: [
-      {
+      declaredInterface({
         interfaceId: "mechanical-to-piping",
         relation: "PROVIDES_INPUT_TO",
         sourceDiscipline: "mechanical",
         targetDiscipline: "piping",
+        sourceObject: "pump",
+        targetObject: "line",
         description: "Equipment nozzles connect to piping.",
-      },
+      }),
     ],
   }),
   plannedPack({
@@ -406,13 +451,15 @@ export const EOS_DISCIPLINE_REGISTRY: readonly EosDisciplineDefinition[] = [
     digitalTwinModels: [],
     riskModels: [],
     crossDisciplineInterfaces: [
-      {
+      declaredInterface({
         interfaceId: "electrical-to-instrumentation",
         relation: "DATA_DEPENDENCY",
         sourceDiscipline: "electrical",
         targetDiscipline: "instrumentation_control",
+        sourceObject: "switchboard",
+        targetObject: "loop",
         description: "Power and control interfaces.",
-      },
+      }),
     ],
   }),
 ];

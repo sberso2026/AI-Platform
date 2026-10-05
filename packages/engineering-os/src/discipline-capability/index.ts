@@ -7,6 +7,7 @@ export {
   getDisciplinePack,
   listRegisteredDisciplineIds,
 } from "./registry";
+export { EOS_D0_GOVERNANCE_RISK_REGISTER } from "./risks";
 export {
   assertCoreRegisterOwnership,
   assertCrossDisciplineImpact,

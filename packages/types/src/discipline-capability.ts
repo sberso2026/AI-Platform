@@ -93,6 +93,11 @@ export const LLM_ORIGINATES_GOVERNED_NUMERIC_RESULT = false as const;
 export const GOVERNED_NUMERICAL_OUTPUT_ALLOWED_FOR_LLM_DEFAULT = false as const;
 export const UNCERTIFIED_TOOL_SILENT_FALLBACK_ALLOWED = false as const;
 export const DUPLICATE_PLATFORM_FRAMEWORK_ALLOWED = false as const;
+export const DISCIPLINE_SECURITY_OVERRIDE_ALLOWED = false as const;
+export const INSPECTION_AI_FINDING_EQUALS_ENGINEERING_APPROVAL = false as const;
+export const HUMAN_PERSON_TWIN_ALLOWED_DEFAULT = false as const;
+export const DISCIPLINE_ACTIVATION_BYPASSES_PRODUCT_ENTITLEMENT = false as const;
+
 export const EOS_DISCIPLINE_CLASSIFIABLE_DATA = [
   "personalData",
   "engineeringData",
@@ -100,7 +105,42 @@ export const EOS_DISCIPLINE_CLASSIFIABLE_DATA = [
   "operationalData",
   "telemetry",
   "derivedData",
+  "AIInput",
+  "AIOutput",
 ] as const satisfies readonly EosDataCategory[];
+
+export const EOS_INSPECTION_FINDING_CLASSES = [
+  "observed_defect",
+  "measurement",
+  "ai_detection",
+  "ai_classification",
+  "engineering_interpretation",
+  "condition_rating",
+  "human_validation",
+] as const;
+export type EosInspectionFindingClass = (typeof EOS_INSPECTION_FINDING_CLASSES)[number];
+
+export const EOS_OUTPUT_TRANSPARENCY_LABELS = [
+  "AI-generated",
+  "AI-assisted",
+  "deterministic-tool-generated",
+  "human-authored",
+  "human-reviewed",
+  "human-approved",
+] as const;
+export type EosOutputTransparencyLabel = (typeof EOS_OUTPUT_TRANSPARENCY_LABELS)[number];
+
+export const EOS_DISCIPLINE_ROADMAP_ORDER = [
+  "D1_STRUCTURAL",
+  "D2_CIVIL",
+  "D3_GEOTECHNICAL",
+  "D4_MECHANICAL",
+  "D5_PIPING",
+  "D6_PROCESS",
+  "D7_ELECTRICAL",
+  "D8_INSTRUMENTATION_CONTROL",
+  "D9_CROSS_DISCIPLINE_INTELLIGENCE",
+] as const;
 
 export type EosDisciplineGovernanceProfiles = {
   jurisdictionProfile: string;
@@ -195,6 +235,8 @@ export type EosInspectionModelDeclaration = {
   modelId: string;
   name: string;
   implemented: boolean;
+  findingClasses: EosInspectionFindingClass[];
+  aiFindingEqualsEngineeringApproval: false;
 };
 
 export type EosDigitalTwinExtension = {
@@ -202,6 +244,7 @@ export type EosDigitalTwinExtension = {
   name: string;
   measuredStateDistinctFromInferred: true;
   digitalTwinDistinctFromThreadAndAiMemory: true;
+  humanPersonTwinAllowed: false;
   implemented: boolean;
 };
 
@@ -210,6 +253,12 @@ export type EosCrossDisciplineInterface = {
   relation: EosCrossDisciplineRelation;
   sourceDiscipline: EosDisciplineId;
   targetDiscipline: EosDisciplineId;
+  sourceObject: string | null;
+  targetObject: string | null;
+  evidence: string | null;
+  status: "declared" | "active" | "retired";
+  provenance: string | null;
+  humanReviewRequired: boolean;
   description: string;
 };
 
@@ -243,7 +292,22 @@ export type EosDisciplineDefinition = {
   calculationDefinitions: EosCalculationDefinition[];
   deterministicTools: EosDeterministicToolDeclaration[];
   externalTools: EosExternalToolDeclaration[];
-  aiCapabilities: Array<Pick<EosAiCapabilityRecord, "capabilityId" | "intendedPurpose" | "humanOversightRequired" | "autonomousActionAllowed" | "governedNumericalOutputAllowed" | "engineeringImpact" | "jurisdictionApplicability">>;
+  aiCapabilities: Array<
+    Pick<
+      EosAiCapabilityRecord,
+      | "capabilityId"
+      | "intendedPurpose"
+      | "humanOversightRequired"
+      | "autonomousActionAllowed"
+      | "governedNumericalOutputAllowed"
+      | "engineeringImpact"
+      | "jurisdictionApplicability"
+      | "evidenceRequired"
+      | "provenanceRequired"
+      | "riskClassification"
+      | "dataCategories"
+    >
+  >;
   evidenceRules: EosEvidenceRule[];
   reviewRules: EosReviewRule[];
   approvalRules: EosApprovalRule[];
@@ -256,4 +320,14 @@ export type EosDisciplineDefinition = {
   inheritedProfiles: EosDisciplineGovernanceProfiles;
   inheritedPolicies: readonly EosGlobalPolicyInheritance[];
   euOnlyAssumption: false;
+};
+
+export type EosD0GovernanceRisk = {
+  id: string;
+  risk: string;
+  severity: "LOW" | "MEDIUM" | "HIGH";
+  likelihood: "LOW" | "MEDIUM" | "HIGH";
+  mitigation: string;
+  owner: string;
+  phaseToClose: string;
 };
