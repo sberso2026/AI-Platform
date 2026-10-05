@@ -115,6 +115,41 @@ export function orchestrateAuTensionDesignCheck(input: {
   });
 }
 
+export function orchestrateAuCompressionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "COMPRESSION" && input.capacityInput.limitState !== "MEMBER_STABILITY") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const compressionDemandN = axial.valueN < 0 ? Math.abs(axial.valueN) : 0;
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: compressionDemandN > 0,
+    demandValue: { value: compressionDemandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
 export function consumeDemandHandoff(demand: Pick<StructuralDemandResult, "resultId" | "capacityPresent" | "memberId">): string {
   if (demand.capacityPresent) throw new Error("D1C demand must not contain capacity");
   if (!demand.resultId) throw new Error("steel design fail closed: demand missing");

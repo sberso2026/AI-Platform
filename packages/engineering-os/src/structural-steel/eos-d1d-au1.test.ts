@@ -182,20 +182,8 @@ describe("EOS-D1D-AU-1 Australian steel tension", () => {
     expect(() => selectSteelAdapter("AU_STEEL", { ...auProfile, jurisdictionProfileRef: "united-states" })).toThrow(/unsupported jurisdiction/);
     expect(() => evaluateSteelCapacity(capacityInput({ standardContext: { ...auProfile, edition: "" } }))).toThrow(/edition/);
     expect(() => evaluateSteelCapacity(capacityInput({
-      limitState: "COMPRESSION",
-      stability: {
-        stabilityContextId: "stab-au1",
-        memberLengthM: 8,
-        effectiveLengthM: 8,
-        unbracedLengthM: 8,
-        restraintDescription: "explicit",
-        bucklingAxis: "MAJOR",
-        momentGradientRef: null,
-        torsionalRestraint: null,
-        lateralRestraint: null,
-        sourceEvidenceRef: "ev-stab",
-        derived: false,
-      },
+      limitState: "BENDING_MAJOR",
+      requiredProperties: [],
     }))).toThrow(/unsupported calculation scope/);
     expect(() => evaluateSteelCapacity(capacityInput({ designContext: { ...designContext(), validationState: "CERTIFIED" } }))).toThrow(/certified/);
     expect(() => requestAuTensionDesignCapacityReduction()).toThrow(/unknown required code parameter/);

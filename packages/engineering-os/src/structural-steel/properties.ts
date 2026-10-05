@@ -55,7 +55,11 @@ export function requireStabilityWhenNeeded(limitState: string, stability: SteelS
   if (!needsStability) return;
   if (!stability) throw new Error("steel design fail closed: missing stability context");
   if (stability.derived) throw new Error("steel design fail closed: stability context must be explicit, not derived silently");
-  if (limitState === "COMPRESSION" && (stability.effectiveLengthM == null || !(stability.effectiveLengthM > 0))) {
-    throw new Error("steel design fail closed: compression requires explicit governed effective length");
+  if (limitState === "COMPRESSION") {
+    const lePresent =
+      (stability.effectiveLengthM != null && stability.effectiveLengthM > 0)
+      || (stability.effectiveLengthMajorM != null && stability.effectiveLengthMajorM > 0)
+      || (stability.effectiveLengthMinorM != null && stability.effectiveLengthMinorM > 0);
+    if (!lePresent) throw new Error("steel design fail closed: compression requires explicit governed effective length");
   }
 }

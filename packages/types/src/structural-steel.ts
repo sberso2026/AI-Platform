@@ -74,6 +74,13 @@ export const STEEL_IMPLEMENTATION_BINDING_STATES = [
 export type SteelImplementationBindingState = (typeof STEEL_IMPLEMENTATION_BINDING_STATES)[number];
 
 export const AU_STEEL_UNKNOWN_STANDARD_TOKEN = "UNKNOWN_PENDING_CONFIRMATION" as const;
+export const EOS_D1D_AU2_PHASE = "EOS-D1D-AU-2" as const;
+export const ELASTIC_BUCKLING_EQUALS_CODE_CAPACITY = false as const;
+export const LLM_COMPRESSION_CAPACITY_AUTHORITY = false as const;
+export const SECTION_CLASSIFICATION_STATE = "VALIDATION_REQUIRED" as const;
+
+export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
+export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
 
 export const STEEL_LIMIT_STATES = [
   "TENSION",
@@ -169,6 +176,11 @@ export type SteelStabilityContext = {
   lateralRestraint: string | null;
   sourceEvidenceRef: string | null;
   derived: false;
+  effectiveLengthMajorM?: number | null;
+  effectiveLengthMinorM?: number | null;
+  effectiveLengthProvenanceRef?: string | null;
+  effectiveLengthFactorMajor?: SteelGovernedProperty | null;
+  effectiveLengthFactorMinor?: SteelGovernedProperty | null;
 };
 
 export type SteelDesignContext = {
@@ -258,6 +270,41 @@ export type SteelCapacityEngineInput = {
   requiredProperties: string[];
 };
 
+export type SteelCompressionCheckRecord = {
+  methodId: string;
+  engineeringRuleRef: string;
+  capacityType: string;
+  resultClass: "MECHANICS_REFERENCE";
+  axis: SteelBucklingAxis | "SQUASH";
+  capacityValueN: number;
+  units: "N";
+  technicalBasisRef: string;
+  standardProfileRef: string;
+  validationState: SteelMethodMaturity;
+  standardConformanceState: SteelStandardConformanceState;
+  effectiveLengthM: number | null;
+};
+
+export type AuCompressionDesignContext = {
+  compressionContextId: string;
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  axialDemandRef: string;
+  memberLengthM: number;
+  effectiveLengthMajorM: number | null;
+  effectiveLengthMinorM: number | null;
+  bucklingAxes: SteelBucklingAxis[];
+  unbracedLengthM: number | null;
+  restraintContext: string;
+  engineeringRuleRef: string;
+  standardProfileRef: string;
+  provenanceRef: EosGlobalProvenanceContract;
+  validationState: string;
+  effectiveLengthProvenanceRef: string;
+  sectionClassificationState: typeof SECTION_CLASSIFICATION_STATE;
+};
+
 export type SteelCapacityEngineOutput = {
   adapterId: SteelAdapterId;
   maturity: SteelMethodMaturity;
@@ -266,9 +313,13 @@ export type SteelCapacityEngineOutput = {
   reason: string;
   sourceAuthority: SteelSourceAuthorityRecord | null;
   tensionChecks?: SteelTensionCheckRecord[];
+  compressionChecks?: SteelCompressionCheckRecord[];
   governingMethodId?: string | null;
   standardConformanceState?: SteelStandardConformanceState;
   implementationBindingState?: SteelImplementationBindingState;
+  resultClass?: "MECHANICS_REFERENCE" | "DESIGN_CAPACITY";
+  designCapacityState?: "VALIDATION_REQUIRED" | "IMPLEMENTED";
+  sectionClassificationState?: typeof SECTION_CLASSIFICATION_STATE;
 };
 
 export type SteelUtilizationComposition = {
