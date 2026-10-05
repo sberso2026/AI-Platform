@@ -17,6 +17,7 @@ import type {
   ScenarioControlContext,
   ScenarioReviewRecord,
 } from "./scenario";
+import type { ProjectTimelineKind } from "./change";
 import {
   createScenarioIntelligenceEngine,
   type ProjectControlsScenarioIntelligenceEngine,
@@ -101,7 +102,7 @@ export type ScenarioOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;

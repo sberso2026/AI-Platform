@@ -80,7 +80,7 @@ export type LearningBasisReason = (typeof LEARNING_BASIS_REASONS)[number];
 
 export type OrganizationalLearningEvidenceRef = {
   evidenceRefId: string;
-  kind: string;
+  kind: OrganizationalLearningEvidenceKind;
   sourceType: string;
   sourceRef: string;
   sourceKey: string;
@@ -199,7 +199,7 @@ export type OrganizationalLearningSynthesis = {
   reusablePracticeReferences: ReusablePracticeReference[];
   crossProjectKnowledgeRefs: CrossProjectKnowledgeRef[];
   knowledgeProvenanceTraces: KnowledgeProvenanceTrace[];
-  timelineTraces: OrganizationalLearningTimelineTrace[];
+  timelineTraces: readonly OrganizationalLearningTimelineTrace[];
   governanceRefs: OrganizationalLearningGovernanceRef[];
   fabricatedLesson: false;
   unsupportedSimilarityScore: false;
@@ -351,7 +351,7 @@ export type OrganizationalLearningAssessmentState = {
   reusablePracticeReferences: ReusablePracticeReference[];
   crossProjectKnowledgeRefs: CrossProjectKnowledgeRef[];
   knowledgeProvenanceTraces: KnowledgeProvenanceTrace[];
-  timelineTraces: OrganizationalLearningTimelineTrace[];
+  timelineTraces: readonly OrganizationalLearningTimelineTrace[];
   governanceRefs: OrganizationalLearningGovernanceRef[];
   confidence: OrganizationalLearningConfidence;
   assumptions: string[];
@@ -482,7 +482,7 @@ export function basisStatusFromSufficiency(
   return "unknown";
 }
 
-export function reasonFromSufficiency(
+export function organizationalLearningReasonFromSufficiency(
   sufficiency: OrganizationalLearningEvidenceSufficiency,
   hasEvidence: boolean,
 ): LearningBasisReason {

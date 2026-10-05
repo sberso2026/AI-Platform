@@ -64,7 +64,7 @@ export type ExplanationReason = (typeof EXPLANATION_REASONS)[number];
 
 export type ExplainabilityEvidenceRef = {
   evidenceRefId: string;
-  kind: string;
+  kind: ExplainabilityEvidenceKind;
   sourceType: string;
   sourceRef: string;
   sourceKey: string;
@@ -154,7 +154,7 @@ export type ExplainabilitySynthesis = {
   unknownNotes: string[];
   dependencyTraces: ExplainabilityDependencyTrace[];
   provenanceTraces: ExplainabilityProvenanceTrace[];
-  timelineTraces: ExplainabilityTimelineTrace[];
+  timelineTraces: readonly ExplainabilityTimelineTrace[];
   assumptionRefs: ExplainabilityAssumptionRef[];
   confidenceSourceRefs: ExplainabilityConfidenceSourceRef[];
   governanceRefs: ExplainabilityGovernanceRef[];
@@ -299,7 +299,7 @@ export type ExplainabilityAssessmentState = {
   evidenceRefs: ExplainabilityEvidenceRef[];
   dependencyTraces: ExplainabilityDependencyTrace[];
   provenanceTraces: ExplainabilityProvenanceTrace[];
-  timelineTraces: ExplainabilityTimelineTrace[];
+  timelineTraces: readonly ExplainabilityTimelineTrace[];
   assumptionRefs: ExplainabilityAssumptionRef[];
   confidenceSourceRefs: ExplainabilityConfidenceSourceRef[];
   governanceRefs: ExplainabilityGovernanceRef[];

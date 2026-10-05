@@ -9,7 +9,7 @@ import {
   basisStatusFromSufficiency,
   isAbstainingOrganizationalLearningSufficiency,
   organizationalLearningStateKey,
-  reasonFromSufficiency,
+  organizationalLearningReasonFromSufficiency,
   taxonomyFromSufficiency,
   type KnowledgeProvenanceTrace,
   type LearningBasisReason,
@@ -20,7 +20,6 @@ import {
   type OrganizationalLearningContributorRef,
   type OrganizationalLearningEvidence,
   type OrganizationalLearningEvidenceRef,
-  type KnowledgeProvenanceTrace,
   type OrganizationalLearningGovernanceRef,
   type OrganizationalLearningItem,
   type OrganizationalLearningSnapshot,
@@ -257,7 +256,10 @@ export class ProjectControlsOrganizationalLearningEngine {
         confidence.dataSufficiency,
         confidence.conflictState === "detected",
       );
-      integratedReason = reasonFromSufficiency(confidence.dataSufficiency, evidence.length > 0);
+      integratedReason = organizationalLearningReasonFromSufficiency(
+        confidence.dataSufficiency,
+        evidence.length > 0,
+      );
       reasonSummary = buildReasonSummary(taxonomyClass, basisStatus, integratedReason, true);
     } else {
       const derived = deriveLearningItems(
@@ -769,7 +771,10 @@ function deriveLearningItems(
 
   const integratedTaxonomy = taxonomyFromSufficiency(sufficiency, hasHistoricalEvidence);
   const integratedStatus = basisStatusFromSufficiency(sufficiency, false);
-  const integratedReason = reasonFromSufficiency(sufficiency, evidenceRefs.length > 0);
+  const integratedReason = organizationalLearningReasonFromSufficiency(
+    sufficiency,
+    evidenceRefs.length > 0,
+  );
   const reasonSummary = buildReasonSummary(integratedTaxonomy, integratedStatus, integratedReason, false);
 
   return { items, integratedTaxonomy, integratedStatus, integratedReason, reasonSummary, patternRefs };

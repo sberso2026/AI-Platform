@@ -262,6 +262,38 @@ export type PersistedAssuranceConfidence = AssuranceConfidence & {
   recordedAt: string;
 };
 
+export type PersistedExplainabilityEvidence = ExplainabilityEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  explainabilityStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedExplainabilityState = ExplainabilityAssessmentState;
+export type PersistedExplainabilityReview = ExplainabilityReviewRecord;
+export type PersistedExplainabilityConfidence = ExplainabilityConfidence & {
+  explainabilityStateId: string;
+  recordedAt: string;
+};
+
+export type PersistedOrganizationalLearningEvidence = OrganizationalLearningEvidence & {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  organizationalLearningStateId: string;
+  recordedAt: string;
+  createdBy?: string;
+};
+
+export type PersistedOrganizationalLearningState = OrganizationalLearningAssessmentState;
+export type PersistedOrganizationalLearningReview = OrganizationalLearningReviewRecord;
+export type PersistedOrganizationalLearningConfidence = OrganizationalLearningConfidence & {
+  organizationalLearningStateId: string;
+  recordedAt: string;
+};
+
 export type PersistedProjectSnapshot = ProjectSnapshot;
 export type PersistedProjectTimelineEvent = ProjectTimelineEvent;
 
@@ -2828,7 +2860,7 @@ export const PRODUCTION_MEMORY_REPOSITORY_ALLOWED = VERSION_MEMORY_LOCK;
 
 export type RepositoryFactoryOptions = {
   adapter?: "memory" | "postgres";
-  nodeEnv?: string;
+  nodeEnv?: "development" | "production" | "test";
   supabase?: unknown;
   memoryStore?: DurableProjectControlsStore;
 };

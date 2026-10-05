@@ -17,6 +17,7 @@ import type {
   ExplainabilityControlContext,
   ExplainabilityReviewRecord,
 } from "./explainability";
+import type { ProjectTimelineKind } from "./change";
 import {
   createExplainabilityIntelligenceEngine,
   type ProjectControlsExplainabilityIntelligenceEngine,
@@ -103,7 +104,7 @@ export type ExplainabilityOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;

@@ -11,7 +11,6 @@ import {
   type AssuranceConfidence,
   type AssuranceConfidenceClass,
   type AssuranceControlContext,
-  type AssuranceContributorRef,
   type AssuranceEvidence,
   type AssuranceEvidenceProvenance,
   type AssuranceEvidenceSufficiency,
@@ -208,7 +207,7 @@ function confidenceClassFor(
 }
 
 function scoreFreshness(
-  contributors: readonly AssuranceContributorRef[],
+  contributors: readonly { assessedAt?: string }[],
   asOf: string,
   horizonHours: number,
 ): number {
@@ -244,7 +243,7 @@ function scoreProvenance(evidence: readonly AssuranceEvidence[]): number {
 
 function scoreAgreement(
   evidence: readonly AssuranceEvidence[],
-  contributors: readonly AssuranceContributorRef[],
+  contributors: readonly { assessedAt?: string }[],
 ): { agreement: number; signalConflict: boolean } {
   const signals = evidence
     .map((item) => item.declaredSignal)

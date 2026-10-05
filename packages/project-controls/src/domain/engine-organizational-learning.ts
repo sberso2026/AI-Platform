@@ -17,6 +17,7 @@ import type {
   OrganizationalLearningControlContext,
   OrganizationalLearningReviewRecord,
 } from "./organizational-learning";
+import type { ProjectTimelineKind } from "./change";
 import {
   createOrganizationalLearningIntelligenceEngine,
   type ProjectControlsOrganizationalLearningEngine,
@@ -104,7 +105,7 @@ export type OrganizationalLearningOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;
@@ -132,9 +133,9 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
 
   async function emitOrganizationalLearningState(
     eventType:
-      | "engineering.project.organizationalLearning.updated"
-      | "engineering.project.organizationalLearning.reviewed"
-      | "engineering.project.organizationalLearning.published",
+      | "engineering.project.organizational_learning.updated"
+      | "engineering.project.organizational_learning.reviewed"
+      | "engineering.project.organizational_learning.published",
     state: OrganizationalLearningAssessmentState,
     correlationId?: string,
   ) {
@@ -293,9 +294,8 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
           workflowState: started.instance.state,
           createdAt: started.review.createdAt,
           selfApproved: false,
-          approvalAuthorityClaimed: false,
           learningApprovalClaimed: false,
-          fabricatedLesson: false,
+          knowledgeMutationClaimed: false,
         };
       }
 
@@ -320,9 +320,10 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
           unsupportedSimilarityScore: false,
           knowledgeMutationClaimed: false,
           autoExecutionClaimed: false,
-          approvalAuthorityClaimed: false,
           learningApprovalClaimed: false,
-          automaticKnowledgeMutationClaimed: false,
+          recommendationClaimed: false,
+          predictionClaimed: false,
+          optimisationClaimed: false,
           earnedValueDerived: false,
           cpmDerived: false,
           financialPostingClaimed: false,
@@ -345,15 +346,15 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
         workspaceId: saved.workspaceId,
         projectId: saved.projectId,
         stateId: saved.stateId,
-        kind: outcome.abstained ? "organizationalLearning_abstained" : "organizationalLearning_updated",
-        eventType: "engineering.project.organizationalLearning.updated",
+        kind: outcome.abstained ? "organizational_learning_abstained" : "organizational_learning_updated",
+        eventType: "engineering.project.organizational_learning.updated",
         recordedAt: asOf,
         actorId: command.actorId,
         detail: outcome.abstentionReason,
         sourceKey: ORGANIZATIONAL_LEARNING_SOURCE_KEY,
       });
       await emitOrganizationalLearningState(
-        "engineering.project.organizationalLearning.updated",
+        "engineering.project.organizational_learning.updated",
         saved,
         command.correlationId,
       );
@@ -445,9 +446,8 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
         createdAt: command.asOf ?? new Date().toISOString(),
         completedAt: command.asOf ?? new Date().toISOString(),
         selfApproved: false,
-        approvalAuthorityClaimed: false,
         learningApprovalClaimed: false,
-        fabricatedLesson: false,
+        knowledgeMutationClaimed: false,
       };
       await deps.repository.saveOrganizationalLearningReview(review);
 
@@ -456,18 +456,18 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
         workspaceId: saved.workspaceId,
         projectId: saved.projectId,
         stateId: saved.stateId,
-        kind: publish ? "organizationalLearning_published" : "organizationalLearning_reviewed",
+        kind: publish ? "organizational_learning_published" : "organizational_learning_reviewed",
         eventType: publish
-          ? "engineering.project.organizationalLearning.published"
-          : "engineering.project.organizationalLearning.reviewed",
+          ? "engineering.project.organizational_learning.published"
+          : "engineering.project.organizational_learning.reviewed",
         recordedAt: command.asOf ?? new Date().toISOString(),
         actorId: command.reviewerId,
         sourceKey: ORGANIZATIONAL_LEARNING_SOURCE_KEY,
       });
       await emitOrganizationalLearningState(
         publish
-          ? "engineering.project.organizationalLearning.published"
-          : "engineering.project.organizationalLearning.reviewed",
+          ? "engineering.project.organizational_learning.published"
+          : "engineering.project.organizational_learning.reviewed",
         saved,
         command.correlationId,
       );
@@ -478,7 +478,7 @@ export function createOrganizationalLearningOrchestration(deps: OrganizationalLe
         workflowInstance: instance,
         published: publish,
         projectIdentityMutated: false,
-        approvalAuthorityClaimed: false,
+        learningApprovalClaimed: false,
         fabricatedLesson: false,
       };
     },

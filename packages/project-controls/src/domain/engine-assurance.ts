@@ -17,6 +17,7 @@ import type {
   AssuranceControlContext,
   AssuranceReviewRecord,
 } from "./assurance";
+import type { ProjectTimelineKind } from "./change";
 import {
   createAssuranceIntelligenceEngine,
   type ProjectControlsAssuranceIntelligenceEngine,
@@ -104,7 +105,7 @@ export type AssuranceOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;

@@ -6,6 +6,7 @@
  * contractual change approval.
  */
 
+import { randomUUID } from "node:crypto";
 import type {
   ProgressAssessmentState,
   ProjectProfile,
@@ -176,7 +177,7 @@ export type ProjectControlsEvent = {
 };
 
 export function createProjectControlsEvent(input: {
-  eventId: string;
+  eventId?: string;
   eventType: ProjectControlsEventType;
   tenantId: string;
   workspaceId: string;
@@ -188,7 +189,7 @@ export function createProjectControlsEvent(input: {
   payload?: Record<string, unknown>;
 }): ProjectControlsEvent {
   return {
-    eventId: input.eventId,
+    eventId: input.eventId ?? randomUUID(),
     eventType: input.eventType,
     tenantId: input.tenantId,
     workspaceId: input.workspaceId,

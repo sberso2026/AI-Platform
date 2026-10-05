@@ -13,13 +13,24 @@ import {
 } from "./persistence";
 import { createPostgresProjectControlsRepository } from "./postgres-repository";
 
+function resolveNodeEnv(
+  value: string | undefined,
+): "development" | "production" | "test" {
+  if (value === "production" || value === "test") return value;
+  return "development";
+}
+
 export function createProjectControlsRepository(
   options: RepositoryFactoryOptions = {},
 ): ProjectControlsRepositoryPort {
-  const nodeEnv = options.nodeEnv ?? process.env.NODE_ENV ?? "development";
+  const nodeEnv = resolveNodeEnv(options.nodeEnv ?? process.env.NODE_ENV);
   const adapter =
     options.adapter ??
-    (process.env.PROJECT_CONTROLS_REPOSITORY_ADAPTER as "memory" | "postgres" | undefined) ??
+    (process.env.PROJECT_CONTROLS_REPOSITORY_ADAPTER === "postgres"
+      ? "postgres"
+      : process.env.PROJECT_CONTROLS_REPOSITORY_ADAPTER === "memory"
+        ? "memory"
+        : undefined) ??
     (nodeEnv === "production" ? "postgres" : "memory");
 
   if (adapter === "memory") {
@@ -35,7 +46,7 @@ export function createProjectControlsRepository(
   if (!options.supabase) {
     throw new Error("postgres_repository_requires_supabase_client");
   }
-  return createPostgresProjectControlsRepository(options.supabase as never);
+  return createPostgresProjectControlsRepository(options.supabase);
 }
 
 export type { RepositoryFactoryOptions, DurableProjectControlsStore };

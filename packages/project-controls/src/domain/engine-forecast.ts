@@ -13,6 +13,7 @@ import type {
   ProjectControlsRepositoryPort,
 } from "./persistence";
 import type { ForecastAssessmentState, ForecastControlContext, ForecastReviewRecord } from "./forecast";
+import type { ProjectTimelineKind } from "./change";
 import {
   createForecastIntelligenceEngine,
   type ForecastIntelligenceEngine,
@@ -97,7 +98,7 @@ export type ForecastOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;

@@ -17,6 +17,7 @@ import type {
   DecisionControlContext,
   DecisionReviewRecord,
 } from "./decision";
+import type { ProjectTimelineKind } from "./change";
 import {
   createDecisionSupportEngine,
   type DecisionSupportEngine,
@@ -101,7 +102,7 @@ export type DecisionOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;

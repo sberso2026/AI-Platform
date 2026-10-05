@@ -55,6 +55,10 @@ import {
   type PersistedExplainabilityEvidence,
   type PersistedExplainabilityReview,
   type PersistedExplainabilityState,
+  type PersistedOrganizationalLearningConfidence,
+  type PersistedOrganizationalLearningEvidence,
+  type PersistedOrganizationalLearningReview,
+  type PersistedOrganizationalLearningState,
   type PersistedProjectProfile,
   type PersistedProjectSnapshot,
   type PersistedProjectTimelineEvent,
@@ -1675,7 +1679,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       assessment_class: state.assessmentClass,
       forecast_posture: state.forecastPosture,
       control_context: ctx,
-      contributingContributors: state.contributing_contributors,
+      contributing_contributors: state.contributingContributors,
       confidence_class: state.confidence.confidenceClass,
       confidence_score: state.confidence.score,
       data_sufficiency: state.confidence.dataSufficiency,
@@ -2522,8 +2526,8 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       project_id: state.projectId,
       scope_kind: ctx.scope.kind,
       scope_reference_id: ctx.scope.referenceId ?? null,
-      risk_opportunity_unit_id: ctx.assuranceUnitId,
-      risk_opportunity_unit_label: ctx.assuranceUnitLabel ?? null,
+      risk_opportunity_unit_id: ctx.riskOpportunityUnitId,
+      risk_opportunity_unit_label: ctx.riskOpportunityUnitLabel ?? null,
       version: state.version,
       status: state.status,
       assessment_class: state.assessmentClass,
@@ -2835,8 +2839,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       status: state.status,
       assessment_class: state.assessmentClass,
       synthesis: state.synthesis,
-      risk_signals: state.riskSignals,
-      opportunity_signals: state.opportunitySignals,
+      contributor_findings: state.contributorFindings,
       control_context: ctx,
       contributing_contributors: state.contributingContributors,
       assumptions: state.assumptions,
@@ -2982,7 +2985,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       tenant_id: item.tenantId,
       workspace_id: item.workspaceId,
       project_id: item.projectId,
-      assurance_state_id: item.riskOpportunityStateId,
+      assurance_state_id: item.assuranceStateId,
       evidence_kind: item.kind,
       source_type: item.sourceType,
       source_ref: item.sourceRef,
@@ -3042,7 +3045,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       tenant_id: review.tenantId,
       workspace_id: review.workspaceId,
       project_id: review.projectId,
-      assurance_state_id: review.riskOpportunityStateId,
+      assurance_state_id: review.assuranceStateId,
       workflow_instance_id: review.workflowInstanceId,
       workflow_state: review.workflowState,
       outcome: review.outcome ?? null,
@@ -3086,7 +3089,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
       tenant_id: confidence.tenantId,
       workspace_id: confidence.workspaceId,
       project_id: confidence.projectId,
-      assurance_state_id: confidence.riskOpportunityStateId,
+      assurance_state_id: confidence.assuranceStateId,
       confidence_payload: confidence,
       recorded_at: confidence.recordedAt,
     };
@@ -3098,7 +3101,7 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
     if (error) throw new Error(`assurance_confidence_persist_failed:${error.message}`);
     return {
       ...(data.confidence_payload as PersistedAssuranceConfidence),
-      riskOpportunityStateId: data.assurance_state_id,
+      assuranceStateId: data.assurance_state_id,
       recordedAt: data.recorded_at,
     };
   }
@@ -4006,9 +4009,12 @@ export class PostgresProjectControlsRepository implements ProjectControlsReposit
 }
 
 export function createPostgresProjectControlsRepository(
-  supabase: AnyClient,
+  supabase: unknown,
 ): PostgresProjectControlsRepository {
-  return new PostgresProjectControlsRepository(supabase);
+  if (supabase == null || typeof supabase !== "object") {
+    throw new Error("postgres_repository_requires_supabase_client");
+  }
+  return new PostgresProjectControlsRepository(supabase as AnyClient);
 }
 
 // ---------------------------------------------------------------------------
@@ -4853,6 +4859,9 @@ function mapDecisionStateRow(row: any): PersistedDecisionState {
     mutatesProjectIdentity: false,
     mutatesUpstreamContributors: false,
     autonomousPublication: false,
+    completionDatePredicted: false,
+    costDecisionComputed: false,
+    scheduleExecuted: false,
   };
 }
 
@@ -5478,14 +5487,12 @@ function mapExplainabilityEvidenceRow(row: any): PersistedExplainabilityEvidence
     sourceType: row.source_type,
     sourceRef: row.source_ref,
     sourceKey: row.source_key,
-    sourceVersion: row.source_version ?? undefined,
     provenance: row.provenance,
     reviewStatus: row.review_status,
     observedAt: row.observed_at ?? undefined,
     declaredSignal: row.declared_signal ?? undefined,
     narrative: row.narrative ?? undefined,
     revoked: row.revoked ?? false,
-    conflictsWith: row.conflicts_with ?? [],
     contributorKey: row.contributor_key ?? undefined,
     tenantId: row.tenant_id,
     workspaceId: row.workspace_id,
@@ -5494,19 +5501,16 @@ function mapExplainabilityEvidenceRow(row: any): PersistedExplainabilityEvidence
     recordedAt: row.recorded_at,
     createdBy: row.created_by ?? undefined,
     autoExecutionClaimed: false,
-    scheduleExecutionClaimed: false,
-    costExecutionClaimed: false,
-    contractInstructionClaimed: false,
     approvalAuthorityClaimed: false,
     chainOfThoughtExposed: false,
     hiddenReasoningExposed: false,
+    fabricatedProvenance: false,
     automaticEvidenceCreationClaimed: false,
     earnedValueDerived: false,
     cpmDerived: false,
     financialPostingClaimed: false,
-    numericalPrecisionClaimed: false,
     registerMutationClaimed: false,
-    mutatesCoreRisk: false,
+    verificationClaimed: false,
     mutatesUpstreamContributors: false,
   };
 }
@@ -5527,8 +5531,8 @@ function mapExplainabilityReviewRow(row: any): PersistedExplainabilityReview {
     completedAt: row.completed_at ?? undefined,
     selfApproved: false,
     approvalAuthorityClaimed: false,
+    verificationClaimed: false,
     chainOfThoughtExposed: false,
-    hiddenReasoningExposed: false,
   };
 }
 

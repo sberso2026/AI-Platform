@@ -17,6 +17,7 @@ import type {
   RiskOpportunityControlContext,
   RiskOpportunityReviewRecord,
 } from "./risk-opportunity";
+import type { ProjectTimelineKind } from "./change";
 import {
   createRiskOpportunityIntelligenceEngine,
   type ProjectControlsRiskOpportunityIntelligenceEngine,
@@ -104,7 +105,7 @@ export type RiskOpportunityOrchestrationDeps = {
     workspaceId: string;
     projectId: string;
     stateId: string;
-    kind: string;
+    kind: ProjectTimelineKind;
     eventType: string;
     recordedAt: string;
     actorId?: string;
