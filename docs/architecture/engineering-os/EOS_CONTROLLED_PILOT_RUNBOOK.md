@@ -1,14 +1,34 @@
 # EOS Controlled Pilot Runbook (PROFILE A)
 
-Target: STAGING / NON-PRODUCTION only. READY_FOR_PRODUCTION = NO.
+Target: STAGING / NON-PRODUCTION only. READY_FOR_PRODUCTION = NO. EU_MARKET_READY = NO.
+
+## Current operational state (2026-10-05)
+
+Pilot candidate SHA: `f7800618c5e898ae7103eba8e4a71297f0203ae6`  
+Branch: `cursor/era-7a-engineering-review-pilot-gate`  
+Supabase: `rntonzigxwxcjlcsadip`  
+Start: `node scripts/review-staging.mjs` from the canonical repository (not a `cert-*` worktree). Default port `3002` unless `REVIEW_STAGING_WEB_PORT` is set.
+
+| Item | Current state |
+|---|---|
+| Source baseline | Pushed; remote branch SHA must match `f7800618…` before adding multi-user participants |
+| AAL2 | **Required.** Named users complete authenticator TOTP in the browser. Do not share TOTP, inject cookies, or disable MFA. Historical A9F-G/G1 proved `cert-er-a1` aal2. Live re-observation on this SHA must be done on the current staging process (`GET /api/platform/identity-assurance` → `authenticated: true`, `currentLevel: aal2`, `nextLevel: aal2`) then `GET /engineering` HTTP 200 |
+| Engineering entitlement | Product `engineering-os`. `application_not_in_plan` closed for Engineering OS core. Normal engineer does **not** need `engineering.admin` to use EOS. Admin actor remains `cert-er-a-admin` |
+| SharePoint | **READ-only certified** (A16C onboarding + A16D secure pipeline). Mode `RTB_MANAGED_MICROSOFT`. Permission **Sites.Selected** only. `Sites.Read.All` / `Files.Read.All` / `Sites.ReadWrite.All` / `Files.ReadWrite.All` absent. **SharePoint write prohibited** (`SHAREPOINT_PILOT_WRITE_ENABLED=false`) |
+| A16D pipeline | SharePoint READ → scoped metadata → binary retrieval → source hash → quarantine → malware scan → CLEAN release → governed processing → generated artifact → outbound scan → private storage → authorized retrieval → post-retrieval hash match |
+| Hosted malware scanner | Engine **ClamAV**. Fail-closed for unavailable / timeout / error / INFECTED / unscanned. Topology is **staging single hosted HTTPS endpoint**, not production multi-host. Returned binary uploads are allowed **only** while current hosted scanner health is PASS. If health is FAIL/TIMEOUT, returned uploads stay **NO** |
+| SPACE GASS | Live execution **NOT_CERTIFIED**. UI/runtime remain explicit and fail-closed. No silent fallback |
+| EU | Foundation checkpoint only. Not EU market certification |
+
+This file replaces stale A15/A14 statements that said AAL2 BLOCKED, hosted scanner BLOCKED because URL unset, or Live SharePoint prohibited. Historical closeout documents are not rewritten.
 
 ## Profile
 
-PROFILE A — Core EOS Pilot. Workbench, My Engineering Day, work plans, information, templates, DOCX/XLSX/PPTX generation, Office handoff, Pre-Issue Review, Change/Impact, EOS-local RFI/TQ, Digital Thread, human Decisions, handover context.
+PROFILE A — Core EOS Pilot. Workbench, My Engineering Day, work plans, information, templates, DOCX/XLSX/PPTX generation, Office handoff, Pre-Issue Review, Change/Impact, EOS-local RFI/TQ, Digital Thread, human Decisions, handover context. SharePoint READ-only on an approved Sites.Selected repository when Microsoft runtime configuration is present on the staging process.
 
 ## Approved users
 
-- `cert-er-a1@rtb-cert.test` (engineer)
+- `cert-er-a1@rtb-cert.test` (engineer; not engineering admin)
 - `cert-er-a-admin@rtb-cert.test` (engineering admin)
 
 Do not enable EOS for all users. Access must stay intentional and auditable.
@@ -19,49 +39,43 @@ Reuse the existing certification tenant/workspace fixtures. Do not broaden to pr
 
 ## Login / AAL2
 
-1. Open the current staging web process (not a stale server).
+1. Open the **current** staging web process (confirm `/api/platform/build-identity` `commitSha=f7800618…`, `dirty=false`, `reviewRuntime=staging`).
 2. Sign in as a named pilot user.
 3. Complete the authenticator TOTP challenge in the browser.
-4. Do not share TOTP, print authenticator secrets, inject cookies, or disable MFA.
+4. Confirm `GET /api/platform/identity-assurance` is aal2/aal2, then open `/engineering` (HTTP 200, not access-denied).
+5. Do not share TOTP, print authenticator secrets, inject cookies, or disable MFA.
 
-Until HUMAN_AAL2_GATE = PASS, the controlled pilot is not open. Continuation 2026-10-01: current HEAD `f7ee6330` on localhost:3002; password sign-in as `cert-er-a1@rtb-cert.test` reached `/login/mfa?next=/engineering/work` with AAL1 shown. Operator TOTP was not completed in the browser. Do not paste TOTP into chat.
+## Microsoft runtime
 
-## A15A demonstration vs pilot
+Staging child env copies only:
 
-A15A certified a synthetic Crusher Support end-to-end demonstrator. DEMONSTRATOR_READY does not make CONTROLLED_PILOT_READY = YES. Do not present the demonstrator as a live engineering pilot.
+- `RTB_M365_APPLICATION_ID`
+- `RTB_M365_CREDENTIAL_SECRET_ID`
+- `RTB_M365_CLIENT_SECRET`
 
-## Pilot Gate Closeout (2026-10-01)
+Do not log those values. If they are unset, Microsoft onboarding/live Graph is not available; A16D code remains certified. Do not use the provisioning-admin application for EOS runtime.
 
-See `EOS_PILOT_GATE_CLOSEOUT.md`. Remaining Profile A blockers:
+## A15A demonstration vs pilot (historical)
 
-1. HUMAN_AAL2_GATE BLOCKED
-2. AUTHENTICATED_BROWSER_HITL NOT_TESTED
-3. MULTI_PROJECT_BROWSER_HITL NOT_TESTED
-4. LIFECYCLE_BROWSER_HITL NOT_TESTED
-5. HOSTED_MALWARE_SCANNER BLOCKED (`RTB_REVIEW_CLAMAV_URL` unset; localhost is not hosted)
-6. RETURNED_ARTIFACT_PILOT BLOCKED
+A15A certified a synthetic Crusher Support end-to-end demonstrator. DEMONSTRATOR_READY does not make production-ready. See `EOS_A15A_END_TO_END_ENGINEERING_DEMONSTRATOR.md`. Do not treat the 2026-10-01 `EOS_PILOT_GATE_CLOSEOUT.md` blocker list as the current operational state.
 
-DEPENDENCY_POLICY_GATE = PASS (continuation). Bounded production overrides: nanoid, brace-expansion 1.1.21, postcss, image-size >=2.0.3, sharp >=0.35.4. SCA gate ignores expired exceptions. RAW audit may still FAIL on the remaining uuid moderate.
+## Malware / returned uploads
 
-Recommended next: EOS Pilot Gate Closeout continuation — not A15B. Complete operator TOTP in the unlocked MFA browser, then hosted ClamAV.
+Returned/user-supplied files fail closed unless a hosted ClamAV-compatible scanner (`RTB_REVIEW_CLAMAV_URL` HTTPS + `RTB_REVIEW_CLAMAV_AUTH_TOKEN`) returns CLEAN within the certified 8 s timeout. Infected (including EICAR), unavailable, timeout, and scan-failed results are rejected. Do not weaken timeout or fail-closed controls. EOS-generated bytes follow the trusted generation boundary plus OpenXML/integrity validation.
 
-See `EOS_A15A_END_TO_END_ENGINEERING_DEMONSTRATOR.md` and `EOS_A15A_DEMONSTRATION_RUNBOOK.md`.
+Returned binary uploads and direct company-template upload remain prohibited unless scanner health is currently PASS.
 
-## Malware / returned uploads (A14B recheck)
+## Dependency state
 
-HOSTED_MALWARE_SCANNER remains BLOCKED unless `RTB_REVIEW_CLAMAV_URL` points at a reachable hosted scanner. Unit CLEAN/EICAR/fail-closed tests are architecture evidence only. Returned binary uploads stay prohibited.
+DEPENDENCY_POLICY_GATE: critical 0, high 0. RAW audit may FAIL on remaining `uuid@8.3.2` moderate (GHSA-w5hq-g745-h8pq via exceljs). Expired SCA exceptions are not auto-renewed.
 
-## Dependency state (A14B recheck)
+## Backup / restore
 
-Raw production audit must be rerun each phase. Expired SCA exceptions (`review_by: 2026-09-30`) were not auto-renewed. DEPENDENCY_POLICY_GATE = PASS after continuation overrides (critical 0, high 0). RAW_DEPENDENCY_AUDIT remains FAIL while uuid@8.3.2 moderate (GHSA-w5hq-g745-h8pq via exceljs) is present.
-
-## Backup / restore (A14B)
-
-Provider backups: Supabase staging. PITR not claimed. Logical metadata restore rehearsal exists for disposable generated-artifact rows. Object-storage recovery is consistency/orphan/legacy-recreate, not a full region failover. See `EOS_DISASTER_RECOVERY_RUNBOOK.md`.
+Provider backups: Supabase staging. PITR not claimed. See `EOS_DISASTER_RECOVERY_RUNBOOK.md`.
 
 ## Monitoring
 
-System health only: application, database, object storage, malware scanner, jobs. Optional PROFILE A connectors are NOT_APPLICABLE and must not be treated as unhealthy blockers. Do not alert on engineer activity.
+System health only: application, database, object storage, malware scanner, jobs, connector failures, authz failures. Do not alert on engineer activity. Do not introduce employee monitoring.
 
 ## Support / incident
 
@@ -74,21 +88,23 @@ System health only: application, database, object storage, malware scanner, jobs
 
 ## Pilot restrictions
 
-Non-production; named cert users only; Profile A workflows only; no solver; no EXAMPLE_ONLY calculation for design acceptance; no unapproved connectors; no returned uploads until hosted malware PASS; human approval mandatory.
+Non-production; named cert users only; Profile A workflows only; no uncertified solver execution; no EXAMPLE_ONLY calculation for design acceptance; SharePoint write prohibited; no returned uploads unless scanner health is current PASS; human approval mandatory.
 
 ## Allowed workflows
 
-Design report / specification / technical memorandum preparation, Option Study without an autonomous winner, RFI/TQ response from EOS-local governed context, Impact Assessment, Pre-Issue Review, handover preparation, handling of existing engineer-authored calculation artifacts, EOS-generated Office drafts using company official or EOS Professional Default templates.
+Design report / specification / technical memorandum preparation, Option Study without an autonomous winner, RFI/TQ response from EOS-local governed context, Impact Assessment, Pre-Issue Review, handover preparation, handling of existing engineer-authored calculation artifacts, EOS-generated Office drafts using company official or EOS Professional Default templates, SharePoint READ of approved Sites.Selected content through the A16D chain when Microsoft runtime configuration is present.
 
 ## Prohibited workflows
 
 - EXAMPLE_ONLY EOS calculation definitions for real design acceptance
-- Real solver execution (SPACE GASS and others)
-- Live SharePoint / Aconex / ACC / P6
+- Real solver execution (SPACE GASS and others) — live execution NOT_CERTIFIED
+- SharePoint write-back; Aconex / ACC / P6 live
+- Broad Graph permissions
 - PDF export
-- Returned binary uploads and direct company-template upload until hosted malware PASS
+- Returned binary uploads and direct company-template upload unless hosted scanner health is current PASS
 - Personal OneDrive/email/file capture
 - Employee productivity scoring or usage monitoring
+- Autonomous engineering approval
 
 ## Artifact limits (pilot configuration, not universal EOS)
 
@@ -98,25 +114,37 @@ Design report / specification / technical memorandum preparation, Option Study w
 - Malware scan timeout: 8 s
 - Signed URL lifetime: 300 s
 
-## Malware behavior
+## Kill switch / rollback
 
-Returned/user-supplied files fail closed unless a hosted ClamAV-compatible scanner returns CLEAN. Infected (including EICAR), unavailable, timeout, and scan-failed results are rejected and are not published as governed artifacts. EOS-generated bytes follow the trusted generation boundary plus OpenXML/integrity validation.
-
-## Kill switch
+The pilot can be stopped without corrupting governed project data:
 
 1. Suspend the `engineering-os` commerce installation for the tenant, and/or
 2. Set `EOS_CONTROLLED_PILOT_ENABLED=0` and restart the staging process.
+3. Disable the Microsoft connector / omit M365 runtime env if needed.
+4. Stop the staging web process and any background jobs.
+5. Revoke named-user sessions.
+6. Preserve audit rows; do not purge `content_base64`.
+7. Retain or export required governed evidence per the DR runbook.
 
 No new kill-switch infrastructure.
 
 ## Backup / recovery contact
 
-Use the staging Supabase project `rntonzigxwxcjlcsadip` operator process. Record a PITR/backup marker before any later pointer purge (not authorized in A14A). Object-storage recovery rehearsal is A14B.
-
-## Incident response / how to stop the pilot
-
-Disable the kill switch, revoke named-user sessions, and stop the staging web process. Preserve audit rows; do not purge `content_base64`.
+Use the staging Supabase project `rntonzigxwxcjlcsadip` operator process.
 
 ## Engineering workflow feedback
 
 Collect workflow feedback from named pilot users about Workbench, templates, generation, review, and impact. Do not collect keystrokes, screen captures, application-usage duration, browser history, personal email, or ranking/productivity scores.
+
+## Known limitations (retained)
+
+- SPACE GASS live execution uncertified
+- SharePoint write disabled
+- Scanner topology not production HA
+- Moderate uuid advisory via exceljs
+- ERA-2 engineering-review dependency-graph test hygiene
+- Web unit-contract ancestor-layout / string-check debt
+- EOS parallel-suite 5 s timeout flake under load
+- Commerce live RLS optional re-attestation
+- EU market readiness not certified
+- Microsoft live Graph requires `RTB_M365_*` on the staging process
