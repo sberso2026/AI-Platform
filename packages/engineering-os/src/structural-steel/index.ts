@@ -21,6 +21,7 @@ export * from "./us-compression";
 export * from "./us-bending";
 export * from "./us-shear";
 export * from "./us-combined";
+export * from "./us-member";
 export * from "./mechanics";
 export {
   assertLlmCannotOriginateCapacity,

@@ -24,6 +24,12 @@ export function invalidationTags(previous: SteelMemberDesignFingerprint | null |
   if ((previous.edition ?? null) !== (current.edition ?? null)) tags.push("EDITION_CHANGED");
   if ((previous.generationFamily ?? null) !== (current.generationFamily ?? null)) tags.push("GENERATION_CHANGED");
   if ((previous.restraintDescription ?? null) !== (current.restraintDescription ?? null)) tags.push("RESTRAINT_CHANGED");
+  if ((previous.designMethod ?? null) !== (current.designMethod ?? null)) tags.push("DESIGN_METHOD_CHANGED");
+  if ((previous.stabilityMethod ?? null) !== (current.stabilityMethod ?? null)) tags.push("STABILITY_METHOD_CHANGED");
+  if ((previous.classificationState ?? null) !== (current.classificationState ?? null)) tags.push("CLASSIFICATION_CHANGED");
+  if ((previous.buildingCodeEdition ?? null) !== (current.buildingCodeEdition ?? null)) tags.push("BUILDING_CODE_EDITION_CHANGED");
+  if ((previous.localAmendmentSetRef ?? null) !== (current.localAmendmentSetRef ?? null)) tags.push("LOCAL_AMENDMENT_CHANGED");
+  if ((previous.aiscEdition ?? null) !== (current.aiscEdition ?? null)) tags.push("AISC_EDITION_CHANGED");
   return tags;
 }
 

@@ -779,5 +779,6 @@ export const US_STEEL_IMPLEMENTATION_SUBPHASES = [
   "US-4 bending / LTB",
   "US-5 shear",
   "US-6 combined actions (AISC interaction, not a universal D/C)",
-  "US-7 independent certification gate",
+  "US-7 member design orchestration (mechanics vs AISC vs building-code vs approval)",
+  "US-8 independent validation / conformance / release gate",
 ] as const;
