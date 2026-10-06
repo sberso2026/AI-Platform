@@ -15,7 +15,7 @@ export function toSectionModulusM3(property: SteelGovernedProperty, label: strin
 
 /**
  * Elastic first-yield moment My = fy × Z.
- * Established engineering mechanics. Not EN 1993 Mc,Rd.
+ * Established engineering mechanics. Not AS 4100, EN 1993 Mc,Rd, or AISC Mn.
  */
 export function firstYieldMomentNm(fy: SteelGovernedProperty, sectionModulus: SteelGovernedProperty, fyLabel: string, zLabel: string): number {
   if (fy.unit === "MPa" && sectionModulus.unit === "mm3" && typeof fy.value === "number" && typeof sectionModulus.value === "number") {

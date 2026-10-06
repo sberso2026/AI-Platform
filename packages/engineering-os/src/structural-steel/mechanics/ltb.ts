@@ -15,7 +15,7 @@ export function toWarpingM6(property: SteelGovernedProperty, label: string): num
 /**
  * Uniform-moment elastic critical LTB moment for a doubly-symmetric prismatic member:
  * Mcr = sqrt( (π² E Iminor / L²) × (G J + π² E Iw / L²) ).
- * No moment-modification factor. Not EN 1993 Mb,Rd.
+ * No moment-modification factor. Not AS 4100, EN 1993 Mb,Rd, or AISC Mn.
  */
 export function elasticLtbMomentNm(input: {
   EPa: number;

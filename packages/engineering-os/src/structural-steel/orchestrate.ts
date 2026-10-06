@@ -32,6 +32,8 @@ import {
   US_OPTIMIZATION_ACCEPTS_UNDETERMINED_TENSION,
   US_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED,
   US_OPTIMIZATION_ACCEPTS_UNDETERMINED_COMPRESSION,
+  US_OPTIMIZATION_BENDING_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING,
 } from "@rtb/types";
 import { toForceN, toMomentNm } from "../structural-demand/units";
 import { evaluateSteelCapacity } from "./adapters";
@@ -390,6 +392,56 @@ export function assertOptimizationUsCompressionRecheck(candidate: SteelOptimizat
   assertOptimizationCandidateRecheck(candidate);
   if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
     throw new Error("optimizer cannot accept undetermined compression as pass");
+  }
+}
+
+export function orchestrateUsBendingDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "BENDING_MAJOR" && input.capacityInput.limitState !== "BENDING_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK || MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as an AISC check");
+  }
+  const moment = input.capacityInput.demand.moment;
+  if (!moment || !moment.unit?.trim() || !Number.isFinite(moment.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandNm = toMomentNm({
+    value: Math.abs(moment.signed !== 0 ? moment.signed : moment.value),
+    unit: moment.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandNm, unit: "N.m" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationUsBendingRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_BENDING_RECHECK_REQUIRED) throw new Error("US bending optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING) throw new Error("optimizer cannot accept undetermined bending as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined bending as pass");
   }
 }
 

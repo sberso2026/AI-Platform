@@ -473,6 +473,51 @@ export const STABILITY_METHOD_DETERMINES_EFFECTIVE_LENGTH_REQUIREMENT = true as 
 export const MIXED_AUTHORITY_COMPRESSION_COMPARISON_GOVERNED = true as const;
 export const US_COMPRESSION_STANDARD_CONTEXT_REQUIRED = true as const;
 export const US_COMPRESSION_DESIGN_METHOD_REQUIRED = true as const;
+export const EOS_D1D_US4_PHASE = "EOS-D1D-US-4" as const;
+export const PARALLEL_US_BENDING_CORE_CREATED = false as const;
+export const US3_STABILITY_ARCHITECTURE_REUSED = true as const;
+export const COMMON_BENDING_MECHANICS_SHARED_ACROSS_LRFD_ASD = true as const;
+export const LRFD_ASD_BENDING_MECHANICS_DUPLICATED = false as const;
+export const ELASTIC_BENDING_EQUALS_AISC_FLEXURAL_STRENGTH = false as const;
+export const ELASTIC_LTB_EQUALS_AISC_FLEXURAL_STRENGTH = false as const;
+export const US_BENDING_CLASSIFICATION_LIMIT_GUESSED = false as const;
+export const UNKNOWN_US_SECTION_FLEXURAL_PARAMETER_GUESSED = false as const;
+export const PLASTIC_CAPACITY_ASSUMED_WITHOUT_CLASSIFICATION = false as const;
+export const US_LOCAL_BUCKLING_RULE_GUESSED = false as const;
+export const SILENT_US_UNBRACED_LENGTH_ASSUMPTION = false as const;
+export const GENERIC_SUPPORT_AUTOMATICALLY_DEFINES_LTB_RESTRAINT = false as const;
+export const SILENT_US_LTB_RESTRAINT_ASSUMPTION = false as const;
+export const US_CB_FACTOR_GUESSED = false as const;
+export const US_LTB_TRANSITION_PARAMETER_GUESSED = false as const;
+export const US_LTB_STRENGTH_RULE_GUESSED = false as const;
+export const US_BENDING_LRFD_FACTOR_GUESSED = false as const;
+export const US_BENDING_ASD_FACTOR_GUESSED = false as const;
+export const UNKNOWN_US_BENDING_CODE_PARAMETER_GUESSED = false as const;
+export const US_BENDING_DEFLECTION_ENGINE_DUPLICATED = false as const;
+export const LLM_US_BENDING_STRENGTH_AUTHORITY = false as const;
+export const AI_US_BENDING_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_UNBRACED_LENGTH_AUTHORITY = false as const;
+export const AI_LTB_RESTRAINT_AUTHORITY = false as const;
+export const AI_CB_FACTOR_AUTHORITY = false as const;
+export const US_OPTIMIZATION_BENDING_RECHECK_REQUIRED = true as const;
+export const US_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING = false as const;
+export const US_COMBINED_ACTION_IMPLEMENTED = false as const;
+export const US_SHEAR_DESIGN_IMPLEMENTED = false as const;
+export const US_TORSIONAL_DESIGN_IMPLEMENTED = false as const;
+export const US_MEMBER_BENDING_EQUALS_GLOBAL_FRAME_VALIDATION = false as const;
+export const US_SEISMIC_BENDING_DESIGN_IMPLEMENTED = false as const;
+export const US_CONNECTION_BENDING_DESIGN_IMPLEMENTED = false as const;
+export const US_BENDING_STRENGTH_RESULT_STATE = "PARTIAL" as const;
+export const US_BENDING_INDEPENDENT_BENCHMARK_STATE = "PARTIAL" as const;
+export const US_BENDING_HUMAN_VALIDATION_REQUIRED = true as const;
+export const US_BENDING_LRFD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_BENDING_ASD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_CB_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const COMMON_BENDING_BENCHMARK_EQUALS_AISC_CONFORMANCE = false as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US4 = false as const;
+export const US4_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const US_BENDING_STANDARD_CONTEXT_REQUIRED = true as const;
+export const US_BENDING_DESIGN_METHOD_REQUIRED = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -2219,5 +2264,93 @@ export type USSteelCompressionContext = {
   provenance: string;
   effectiveLengthProvenanceRef: string;
   elementClassificationState: UsElementClassificationState;
+  directContractProfile: boolean;
+};
+
+export const US_BENDING_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type UsBendingMethodScopeState = (typeof US_BENDING_METHOD_SCOPE_STATES)[number];
+
+export const US_FLEXURAL_BEHAVIOR_STATES = [
+  "ELASTIC",
+  "PLASTIC",
+  "LOCAL_BUCKLING_CONTROLLED",
+  "VALIDATION_REQUIRED",
+] as const;
+export type UsFlexuralBehaviorState = (typeof US_FLEXURAL_BEHAVIOR_STATES)[number];
+
+export const US_COMPACTNESS_STATES = [
+  "COMPACT",
+  "NONCOMPACT",
+  "SLENDER",
+  "OTHER_GOVERNED_STATE",
+  "VALIDATION_REQUIRED",
+] as const;
+export type UsCompactnessState = (typeof US_COMPACTNESS_STATES)[number];
+
+export type UsBendingClassificationContext = {
+  element: "FLANGE" | "WEB" | "OTHER";
+  axis: "MAJOR_AXIS" | "MINOR_AXIS";
+  limitState: string;
+  compactnessState: UsCompactnessState;
+  limitGuessed: false;
+};
+
+export type UsLtbTransitionParameterContext = {
+  Lp: null;
+  Lr: null;
+  guessed: false;
+  state: "VALIDATION_REQUIRED";
+};
+
+export type UsBendingMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "ELASTIC_BENDING_REFERENCE" | "ELASTIC_LTB_REFERENCE" | "AISC_NOMINAL_FLEXURAL_STRENGTH" | "AISC_LRFD_DESIGN_STRENGTH" | "AISC_ASD_ALLOWABLE_STRENGTH";
+  aiscEditionRequirement: string;
+  designMethodApplicability: "LRFD" | "ASD" | "BOTH";
+  axis: "MAJOR_AXIS" | "MINOR_AXIS" | "LTB" | "CLASSIFICATION" | "SECTION" | "LOCAL_BUCKLING" | "TRANSITION";
+  factorDependencies: readonly string[];
+  localAmendmentDependencies: readonly string[];
+  classificationDependency: boolean;
+  unbracedLengthDependency: boolean;
+  restraintDependency: boolean;
+  momentGradientDependency: boolean;
+  compatibleEditions: readonly string[];
+  scopeState: UsBendingMethodScopeState;
+};
+
+export type USSteelBendingContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  momentDemandRefs: readonly string[];
+  designMethod: UsDesignMethod;
+  unitSystem: UsUnitSystem;
+  bendingAxis: "MAJOR_AXIS" | "MINOR_AXIS";
+  memberLengthM: number | null;
+  unbracedLengthM: number | null;
+  unbracedLengthProvenanceRef: string | null;
+  restraintContext: string | null;
+  lateralRestraint: string | null;
+  torsionalRestraint: string | null;
+  warpingRestraint: string | null;
+  momentGradientContext: string | null;
+  loadApplicationContext: string | null;
+  stabilityAnalysisContext: UsStabilityAnalysisMethod | null;
+  elementClassificationState: UsElementClassificationState;
+  flexuralBehaviorState: UsFlexuralBehaviorState;
+  standardContextRef: string;
+  buildingCodeContextRef: string | null;
+  loadStandardContextRef: string | null;
+  localAmendmentSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenance: string;
   directContractProfile: boolean;
 };
