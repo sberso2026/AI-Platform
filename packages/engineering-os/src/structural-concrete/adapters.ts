@@ -109,6 +109,8 @@ export const CONCRETE_ADAPTER_BOUNDARIES = {
     loadContext: ["EN 1990", "EN 1991"],
     nationalAnnex: true,
     defaultNationalAnnex: false,
+    standardBinding: true,
+    implementationMaturity: "STANDARD_BINDING_FRAMEWORK",
   },
   US_CONCRETE: {
     ready: true,
