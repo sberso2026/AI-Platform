@@ -560,6 +560,35 @@ export const SCHEMA_CHANGE_REQUIRED_FOR_US5 = false as const;
 export const US5_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const US_SHEAR_STANDARD_CONTEXT_REQUIRED = true as const;
 export const US_SHEAR_DESIGN_METHOD_REQUIRED = true as const;
+export const EOS_D1D_US6_PHASE = "EOS-D1D-US-6" as const;
+export const PARALLEL_US_INTERACTION_FRAMEWORK_CREATED = false as const;
+export const US_INTERACTION_STANDARD_CONTEXT_REQUIRED = true as const;
+export const US_INTERACTION_DESIGN_METHOD_REQUIRED = true as const;
+export const MIXED_LRFD_ASD_COMPONENTS_ALLOWED = false as const;
+export const MECHANICS_REFERENCE_AUTOMATICALLY_VALID_FOR_AISC_INTERACTION = false as const;
+export const US_SYNTHETIC_INTERACTION_UTILIZATION = false as const;
+export const UNIVERSAL_US_INTERACTION_EQUATION = false as const;
+export const UNKNOWN_US_INTERACTION_RELATIONSHIP_GUESSED = false as const;
+export const US_INTERACTION_PARAMETER_GUESSED = false as const;
+export const US_INTERACTION_CLASSIFICATION_GUESSED = false as const;
+export const US_INTERACTION_MOMENT_AMPLIFICATION_GUESSED = false as const;
+export const UNKNOWN_US_INTERACTION_PARAMETER_GUESSED = false as const;
+export const US_BENDING_SHEAR_REDUCTION_RULE_GUESSED = false as const;
+export const LLM_US_INTERACTION_AUTHORITY = false as const;
+export const AI_US_INTERACTION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_CLASSIFICATION_AUTHORITY = false as const;
+export const US_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED = true as const;
+export const US_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION = false as const;
+export const US_TORSIONAL_INTERACTION_IMPLEMENTED = false as const;
+export const US_CONNECTION_INTERACTION_IMPLEMENTED = false as const;
+export const US_SEISMIC_INTERACTION_IMPLEMENTED = false as const;
+export const US_MEMBER_INTERACTION_EQUALS_GLOBAL_FRAME_VALIDATION = false as const;
+export const US_INTERACTION_HUMAN_VALIDATION_REQUIRED = true as const;
+export const US_INTERACTION_INDEPENDENT_BENCHMARK_STATE = "NOT_APPLICABLE" as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US6 = false as const;
+export const US6_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const COMPONENT_BENCHMARK_EQUALS_AISC_INTERACTION_CONFORMANCE = false as const;
+export const US_STANDARD_BINDING_REUSED = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -815,6 +844,7 @@ export type SteelCombinedCapacityComponent = {
   revision?: string | null;
   resultClass?: "MECHANICS_REFERENCE" | "DESIGN_CAPACITY";
   authorityState?: "MECHANICS_REFERENCE" | "CODE_PROFILE_CAPACITY";
+  designMethod?: "LRFD" | "ASD";
 };
 
 export type SteelCombinedActionInput = {
@@ -878,7 +908,11 @@ export type SteelCombinedActionResult = {
     | "MISSING_STABILITY"
     | "NATIONAL_ANNEX_REQUIRED"
     | "NDP_REQUIRED"
-    | "REVISION_MISMATCH";
+    | "REVISION_MISMATCH"
+    | "MISSING_LTB"
+    | "MIXED_DESIGN_METHOD"
+    | "STABILITY_METHOD_CONFLICT"
+    | "LOCAL_AMENDMENT_UNRESOLVED";
   governingComponent: string | null;
   technicalBasisRef: string;
   standardProfileRef: string;
@@ -886,6 +920,16 @@ export type SteelCombinedActionResult = {
   edition?: string;
   nationalAnnexRef?: string | null;
   ndpSetRef?: string | null;
+  designMethod?: "LRFD" | "ASD";
+  unitSystem?: "US_CUSTOMARY" | "SI";
+  stabilityMethodRef?: string | null;
+  classificationRefs?: readonly string[];
+  localBucklingRefs?: readonly string[];
+  ltbContextRefs?: readonly string[];
+  buildingCodeContextRef?: string | null;
+  loadStandardContextRef?: string | null;
+  localAmendmentSetRef?: string | null;
+  directContractProfile?: boolean;
   standardConformanceState: SteelStandardConformanceState;
   validationState: SteelMethodMaturity;
   benchmarkState: "NOT_APPLICABLE";
@@ -2440,6 +2484,64 @@ export type USSteelShearContext = {
   stiffenerContext: SteelShearStiffenerState;
   webSlendernessContext: SteelWebSlendernessContext;
   elementClassificationState: UsElementClassificationState;
+  standardContextRef: string;
+  buildingCodeContextRef: string | null;
+  loadStandardContextRef: string | null;
+  localAmendmentSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenance: string;
+  directContractProfile: boolean;
+};
+
+export const US_INTERACTION_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type UsInteractionMethodScopeState = (typeof US_INTERACTION_METHOD_SCOPE_STATES)[number];
+
+export type UsInteractionMethodRecord = SteelEngineeringRule & {
+  methodType: "AISC_PROFILE_COMBINED_ACTION";
+  interactionType: SteelInteractionType;
+  aiscEditionRequirement: string;
+  designMethodApplicability: "LRFD" | "ASD" | "BOTH";
+  componentAuthorityRequirements: readonly ("MECHANICS_REFERENCE" | "NOMINAL_STRENGTH" | "LRFD_DESIGN_STRENGTH" | "ASD_ALLOWABLE_STRENGTH")[];
+  stabilityMethodDependencies: readonly UsStabilityAnalysisMethod[] | readonly ["NONE"];
+  classificationDependencies: "REQUIRED" | "NOT_REQUIRED";
+  localBucklingDependencies: "REQUIRED" | "NOT_REQUIRED";
+  ltbDependencies: "REQUIRED" | "NOT_REQUIRED";
+  factorDependencies: readonly string[];
+  localAmendmentDependencies: readonly string[];
+  compatibleEditions: readonly string[];
+  scopeState: UsInteractionMethodScopeState;
+};
+
+export type USSteelCombinedActionContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  axialDemandRef: string | null;
+  majorMomentDemandRef: string | null;
+  minorMomentDemandRef: string | null;
+  majorShearDemandRef: string | null;
+  minorShearDemandRef: string | null;
+  componentMechanicsRefs: readonly string[];
+  componentStrengthRefs: readonly string[];
+  designMethod: UsDesignMethod;
+  unitSystem: UsUnitSystem;
+  stabilityAnalysisContextRef: UsStabilityAnalysisMethod | null;
+  compressionStabilityContextRef: string | null;
+  bendingStabilityContextRef: string | null;
+  secondOrderAnalysis: UsSecondOrderAnalysisState | null;
+  elementClassificationRefs: readonly UsElementClassificationState[];
+  localBucklingContextRefs: readonly string[];
+  ltbContextRefs: readonly string[];
+  interactionRuleRef: string | null;
   standardContextRef: string;
   buildingCodeContextRef: string | null;
   loadStandardContextRef: string | null;
