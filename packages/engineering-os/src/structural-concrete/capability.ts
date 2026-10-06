@@ -60,6 +60,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "edition UNKNOWN_PENDING_CONFIRMATION; no ACI 318 equations",
     dependencies: ["D1E.GLOBAL.FOUNDATION"],
   },
+  {
+    capabilityId: "D1E.GLOBAL.RC_SECTION_MECHANICS",
+    jurisdiction: "GLOBAL",
+    method: "deterministic RC section geometry and kinematics kernel",
+    authorityType: "ESTABLISHED_ENGINEERING_MECHANICS",
+    implementationState: "MECHANICS_REFERENCE",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "geometry/kinematics/elastic reference only; not AS 3600 / EN 1992 / ACI 318 capacity",
+    dependencies: ["D1E.GLOBAL.FOUNDATION", "D1C bounded demand"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -100,9 +112,9 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-VD-AU-EDITION", category: "STANDARD_EDITION", jurisdiction: "AU", capability: "AS 3600 identity", description: "AS 3600 edition unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "confirmed edition/amendment", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-AU" },
   { debtId: "D1E-VD-EU-EDITION", category: "STANDARD_EDITION", jurisdiction: "EU", capability: "EN 1992 identity", description: "EN 1992 generation/edition/annex/NDP unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "family/part/edition/annex/NDP datasets", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-EU" },
   { debtId: "D1E-VD-US-EDITION", category: "STANDARD_EDITION", jurisdiction: "US", capability: "ACI 318 identity", description: "ACI 318 edition and building-code adoption unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition, adoption, local amendments", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-US" },
-  { debtId: "D1E-VD-MATERIAL-AUTHORITY", category: "MATERIAL_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "concrete material", description: "material-property catalogues not certified", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed catalogue/test certificates", ownerWorkstream: "D1E-1", recommendedFuturePhase: "D1E-1" },
-  { debtId: "D1E-VD-REINFORCEMENT-AUTHORITY", category: "REINFORCEMENT_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "reinforcement material", description: "reinforcement-property catalogues not certified", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed bar/product standards", ownerWorkstream: "D1E-1", recommendedFuturePhase: "D1E-1" },
-  { debtId: "D1E-VD-SECTION-ANALYSIS", category: "SECTION_ANALYSIS", jurisdiction: "GLOBAL", capability: "section equilibrium", description: "deterministic section analysis not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed constitutive rules plus benchmarks", ownerWorkstream: "D1E-1", recommendedFuturePhase: "D1E-1" },
+  { debtId: "D1E-VD-MATERIAL-AUTHORITY", category: "MATERIAL_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "concrete material", description: "material-property catalogues not certified; D1E-1 requires explicitly governed E only", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed catalogue/test certificates", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
+  { debtId: "D1E-VD-REINFORCEMENT-AUTHORITY", category: "REINFORCEMENT_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "reinforcement material", description: "reinforcement-property catalogues not certified; D1E-1 requires explicitly governed Es/area", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed bar/product standards", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
+  { debtId: "D1E-VD-SECTION-ANALYSIS", category: "SECTION_ANALYSIS", jurisdiction: "GLOBAL", capability: "section equilibrium", description: "geometry/kinematics/elastic integration exist; governed constitutive/code section analysis still absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed constitutive rules plus code-capacity benchmarks", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "D1E-AU" },
   { debtId: "D1E-VD-STRESS-BLOCK", category: "STRESS_BLOCK_RULES", jurisdiction: "GLOBAL", capability: "flexure", description: "no global or jurisdiction stress-block parameters", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "adapter-owned governed stress-block rules", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "GLOBAL", capability: "flexure", description: "numerical code flexure absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "jurisdiction flexural methods", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "GLOBAL", capability: "N-M", description: "axial-flexure interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed N-M methods", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
@@ -133,14 +145,21 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
 ];
 
 export const D1E_INTERNAL_ROADMAP = [
-  { id: "D1E-0", scope: "global concrete design foundation", status: "THIS_PHASE" },
-  { id: "D1E-1", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "NEXT" },
-  { id: "D1E-AU", scope: "first bounded AU AS 3600 slice after common section mechanics", status: "PLANNED" },
+  { id: "D1E-0", scope: "global concrete design foundation", status: "CLOSED" },
+  { id: "D1E-1", scope: "common RC section mechanics / deterministic geometry foundation", status: "THIS_PHASE" },
+  { id: "D1E-AU", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "NEXT" },
   { id: "D1E-EU", scope: "EN 1992 family/part/annex/NDP bind then bounded methods", status: "PLANNED" },
   { id: "D1E-US", scope: "ACI 318 family/edition/adoption bind then bounded methods", status: "PLANNED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E1_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
   INTRODUCED: "NONE" as const,

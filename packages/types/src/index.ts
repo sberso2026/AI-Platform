@@ -402,3 +402,4 @@ export * from "./structural-standard-binding";
 export * from "./structural-demand";
 export * from "./structural-steel";
 export * from "./structural-concrete";
+export * from "./structural-concrete-section";

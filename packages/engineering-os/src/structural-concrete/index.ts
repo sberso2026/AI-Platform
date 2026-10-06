@@ -14,6 +14,7 @@ export {
   CONCRETE_PRODUCT_GATING_POLICY,
   concreteProductCapabilityVisible,
   D1E0_D0_RISK_DISPOSITION,
+  D1E1_D0_RISK_DISPOSITION,
   D1E_CANONICAL_ROADMAP_HANDOFF,
   D1E_INTERNAL_ROADMAP,
   D1E_VALIDATION_DEBT_REGISTER,
@@ -36,3 +37,4 @@ export {
   failClosedCheckState,
 } from "./orchestration";
 export { aggregateReinforcementGeometry, assertNoCodeReinforcementRatio } from "./reinforcement";
+export * from "./section-mechanics";

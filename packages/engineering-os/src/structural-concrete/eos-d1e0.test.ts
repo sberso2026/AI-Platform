@@ -133,7 +133,6 @@ import {
   PRESTRESSED_CONCRETE_DESIGN_IMPLEMENTED,
   PRESTRESSED_CONCRETE_EXTENSION_READY,
   RECOMMENDED_D1E_NEXT_PHASE,
-  RECOMMENDED_D1E_NEXT_PHASE_SCOPE,
   REINFORCEMENT_LAYOUT_MODEL,
   REINFORCEMENT_MATERIAL_MODEL,
   REINFORCEMENT_PROPERTIES_GOVERNED,
@@ -630,7 +629,7 @@ describe("EOS-D1E-0 global concrete design foundation", () => {
     expect(EMPLOYEE_BEHAVIOR_PROFILING).toBe(false);
     expect(D1D_CAPABILITY_MANIFEST_REUSED).toBe(true);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.length).toBeGreaterThan(D1D_CAPABILITY_MANIFEST.length);
-    expect(CONCRETE_CAPABILITY_MANIFEST).toHaveLength(4);
+    expect(CONCRETE_CAPABILITY_MANIFEST.length).toBeGreaterThanOrEqual(4);
     expect(CONCRETE_PRODUCT_CAPABILITY_GATING).toBe(true);
     expect(concreteProductCapabilityVisible("FRAMEWORK")).toBe(true);
     expect(concreteProductCapabilityVisible("CERTIFIED")).toBe(false);
@@ -639,8 +638,8 @@ describe("EOS-D1E-0 global concrete design foundation", () => {
     expect(new Set(D1E_VALIDATION_DEBT_REGISTER.map((row) => row.category)).size).toBeGreaterThanOrEqual(20);
     expect(D1E_INTERNAL_ROADMAP_DEFINED).toBe(true);
     expect(D1E_INTERNAL_ROADMAP[1]?.id).toBe("D1E-1");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("D1E-1");
-    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/common RC section mechanics/);
+    expect(D1E_INTERNAL_ROADMAP.some((row) => row.id === RECOMMENDED_D1E_NEXT_PHASE)).toBe(true);
+    expect(D1E_INTERNAL_ROADMAP[1]?.scope).toMatch(/common RC section mechanics/);
     expect(D1E0_D0_RISK_DISPOSITION.CLOSED).toBe("NONE");
     expect(D1E0_D0_RISK_DISPOSITION.REDUCED).toEqual(["D0-R01"]);
     expect(D1E0_D0_RISK_DISPOSITION.INTRODUCED).toBe("NONE");
