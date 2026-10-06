@@ -631,6 +631,30 @@ export const US_STEEL_RELEASE_CLASSIFICATION = "INTERNAL_ENGINEERING_REFERENCE" 
 export const SCHEMA_CHANGE_REQUIRED_FOR_US7 = false as const;
 export const US7_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const US_MEMBER_HUMAN_VALIDATION_REQUIRED = true as const;
+export const EOS_D1D_US8_PHASE = "EOS-D1D-US-8" as const;
+export const US_VALIDATION_DIMENSIONS_SEPARATE = true as const;
+export const US_CONFORMANCE_EVIDENCE_REQUIRED = true as const;
+export const US_BUILDING_CODE_COMPLIANCE_EVIDENCE_REQUIRED = true as const;
+export const US_THIRD_PARTY_VALIDATION_AVAILABLE = false as const;
+export const US_STEEL_PRODUCT_CLAIM_LEVEL = "BENCHMARKED_ENGINEERING_REFERENCE_CAPABILITY" as const;
+export const US_STEEL_STANDARD_CONFORMANCE_STATE = "INTENDED_PROFILE" as const;
+export const US_STEEL_RESULT_WARNING_MODEL = true as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US8 = false as const;
+export const NUMERICAL_US_INTERACTION_METHODS_AFTER_US8 = [] as const;
+export const US8_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const PARALLEL_US_LOAD_COMBINATION_ENGINE = false as const;
+export const D1C_DEMAND_ENGINE_REUSED = true as const;
+export const SILENT_LOAD_STANDARD_EDITION_INFERENCE = false as const;
+export const MIXED_LRFD_ASD_DESIGN_AUTHORITY_ALLOWED = false as const;
+export const AISC_NOT_HARDCODED_TO_US_GEOGRAPHY = true as const;
+export const AISC_CONFORMANCE_EQUALS_PROJECT_APPROVAL = false as const;
+export const BUILDING_CODE_COMPLIANCE_EQUALS_PROJECT_APPROVAL = false as const;
+export const US_SEISMIC_STEEL_DESIGN_VALIDATED = false as const;
+export const US_ENGINEER_METHOD_CONFIRMATION_MODEL = true as const;
+export const AISC_DESIGN_EQUALS_BUILDING_CODE_COMPLIANCE = false as const;
+export const GLOBAL_MECHANICS_JURISDICTION_NEUTRAL = true as const;
+export const STANDARD_TEXT_REQUIRED_BY_RUNTIME = false as const;
+export const COPYRIGHTED_STANDARD_TEXT_COMMITTED = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -1348,6 +1372,7 @@ export type SteelMemberDesignFingerprint = {
   buildingCodeEdition?: string | null;
   localAmendmentSetRef?: string | null;
   aiscEdition?: string | null;
+  secondOrderContext?: string | null;
 };
 
 export type SteelMemberInvalidationTag =
@@ -1368,7 +1393,8 @@ export type SteelMemberInvalidationTag =
   | "CLASSIFICATION_CHANGED"
   | "BUILDING_CODE_EDITION_CHANGED"
   | "LOCAL_AMENDMENT_CHANGED"
-  | "AISC_EDITION_CHANGED";
+  | "AISC_EDITION_CHANGED"
+  | "SECOND_ORDER_CHANGED";
 
 export type SteelOptimizationHandoff = {
   satisfiedChecks: SteelMemberDesignCheckKind[];
@@ -2676,4 +2702,89 @@ export type USSteelMemberDesignRecord = SteelMemberDesignRecord & {
   edition: string;
   aiscAmendmentState: string;
   releaseClassification: typeof US_STEEL_RELEASE_CLASSIFICATION;
+};
+
+export const US_METHOD_CLASSIFICATIONS = [
+  "ENGINEERING_MECHANICS_REFERENCE",
+  "ELASTIC_BUCKLING_REFERENCE",
+  "NOMINAL_STRENGTH_METHOD",
+  "LRFD_DESIGN_STRENGTH_METHOD",
+  "ASD_ALLOWABLE_STRENGTH_METHOD",
+  "INTERACTION_METHOD",
+  "SERVICEABILITY_METHOD",
+  "ORCHESTRATION_METHOD",
+] as const;
+export type UsMethodClassification = (typeof US_METHOD_CLASSIFICATIONS)[number];
+
+export const US_PRODUCT_CLAIM_LEVELS = EU_PRODUCT_CLAIM_LEVELS;
+export type UsProductClaimLevel = EuProductClaimLevel;
+
+export type UsMethodValidationRecord = {
+  methodId: string;
+  category: string;
+  methodType: UsMethodClassification;
+  technicalBasis: string;
+  authorityType: EngineeringRuleAuthorityType;
+  aiscEditionRequirement: typeof AISC_UNKNOWN_EDITION_TOKEN;
+  designMethodApplicability: "LRFD" | "ASD" | "BOTH" | "NOT_APPLICABLE";
+  unitSystemApplicability: "US_CUSTOMARY" | "SI" | "BOTH";
+  loadBasisDependency: "NONE" | "REQUIRED" | "NOT_APPLICABLE";
+  stabilityMethodDependency: "NONE" | "REQUIRED" | "NOT_APPLICABLE";
+  classificationDependency: "NONE" | "REQUIRED" | "NOT_APPLICABLE";
+  localBucklingDependency: "NONE" | "REQUIRED" | "NOT_APPLICABLE";
+  localAmendmentDependency: "NONE" | "OPTIONAL" | "REQUIRED";
+  requiredInputs: string[];
+  supportedScope: string;
+  unsupportedScope: string;
+  implementationVersion: string;
+  benchmarkRefs: string[];
+  numericalValidationState: AuNumericalValidationState;
+  engineeringValidationState: AuEngineeringValidationState;
+  standardConformanceState: SteelStandardConformanceState;
+  humanReviewRequirement: "required";
+  classifications: UsMethodClassification[];
+};
+
+export type UsSteelValidationMatrixRow = {
+  capability: string;
+  implemented: boolean;
+  numericallyValidated: boolean;
+  engineerValidated: boolean;
+  codeProfileImplemented: boolean;
+  conformanceValidated: boolean;
+  buildingCodeComplianceValidated: boolean;
+  certified: boolean;
+  limitation: string;
+};
+
+export type UsMethodEngineeringConfirmation = {
+  methodRef: string;
+  validationScope: string;
+  reviewOutcome: "CONFIRMED" | "REJECTED" | "REQUIRES_REVISION";
+  evidenceRefs: string[];
+  reviewedAt: string;
+  reviewerAuthorityRef: string;
+  projectApprovalImplied: false;
+  professionalCertificationImplied: false;
+  softwareCertificationImplied: false;
+};
+
+export type UsThirdPartyValidationRecord = {
+  software: string;
+  version: string;
+  aiscProfile: string;
+  edition: string;
+  designMethod: "LRFD" | "ASD" | null;
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  difference: number | null;
+  tolerance: { relative: number; absolute: number };
+  reviewState: string;
+  provenance: string;
+};
+
+export type UsValidationDebtItem = {
+  debtId: string;
+  description: string;
+  priority: AuValidationPriority;
 };

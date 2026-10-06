@@ -30,6 +30,7 @@ export function invalidationTags(previous: SteelMemberDesignFingerprint | null |
   if ((previous.buildingCodeEdition ?? null) !== (current.buildingCodeEdition ?? null)) tags.push("BUILDING_CODE_EDITION_CHANGED");
   if ((previous.localAmendmentSetRef ?? null) !== (current.localAmendmentSetRef ?? null)) tags.push("LOCAL_AMENDMENT_CHANGED");
   if ((previous.aiscEdition ?? null) !== (current.aiscEdition ?? null)) tags.push("AISC_EDITION_CHANGED");
+  if ((previous.secondOrderContext ?? null) !== (current.secondOrderContext ?? null)) tags.push("SECOND_ORDER_CHANGED");
   return tags;
 }
 

@@ -534,6 +534,7 @@ export function orchestrateUsSteelMemberDesign(input: UsSteelMemberDesignInput):
     restraintDescription: cap.stability?.restraintDescription ?? null,
     designMethod: us.designMethod,
     stabilityMethod: cap.usStabilityContext?.method ?? null,
+    secondOrderContext: cap.usStabilityContext?.secondOrder ?? null,
     classificationState: classification,
     buildingCodeEdition: us.buildingCodeAdoption?.buildingCodeEdition ?? null,
     localAmendmentSetRef: us.localAmendmentSetRef,
