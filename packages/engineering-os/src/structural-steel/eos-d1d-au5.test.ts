@@ -511,7 +511,7 @@ describe("EOS-D1D-AU-5 Australian steel combined actions", () => {
     };
     const euOut = evaluateSteelCapacity(capacityInput({
       adapterId: "EU_STEEL",
-      limitState: "SHEAR",
+      limitState: "COMBINED_ACTION",
       standardContext: eu,
       designContext: { ...designContext(), standardContextRef: eu.contextId },
       requiredProperties: [],

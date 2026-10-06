@@ -22,6 +22,8 @@ import {
   EU_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED,
   EU_OPTIMIZATION_BENDING_RECHECK_REQUIRED,
   EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING,
+  EU_OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR,
   MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK,
 } from "@rtb/types";
 import { toForceN, toMomentNm } from "../structural-demand/units";
@@ -424,6 +426,56 @@ export function assertOptimizationEuBendingRecheck(candidate: SteelOptimizationC
   assertOptimizationCandidateRecheck(candidate);
   if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
     throw new Error("optimizer cannot accept undetermined bending as pass");
+  }
+}
+
+export function orchestrateEuShearDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "SHEAR" && input.capacityInput.limitState !== "SHEAR_MAJOR" && input.capacityInput.limitState !== "SHEAR_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as a Eurocode design check");
+  }
+  const shear = input.capacityInput.demand.shear;
+  if (!shear || !shear.unit?.trim() || !Number.isFinite(shear.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = toForceN({
+    value: Math.abs(shear.signed !== 0 ? shear.signed : shear.value),
+    unit: shear.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationEuShearRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_SHEAR_RECHECK_REQUIRED) throw new Error("EU shear optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR) throw new Error("optimizer cannot accept undetermined shear as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined shear as pass");
   }
 }
 

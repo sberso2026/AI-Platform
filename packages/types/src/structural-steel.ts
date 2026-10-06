@@ -250,6 +250,24 @@ export const MIXED_AUTHORITY_BENDING_COMPARISON_GOVERNED = true as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_EU4 = false as const;
 export const EU_BENDING_PARTIAL_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
 export const DEFLECTION_ENGINE_DUPLICATED = false as const;
+export const EOS_D1D_EU5_PHASE = "EOS-D1D-EU-5" as const;
+export const GENERIC_SHEAR_MECHANICS_EQUALS_EN1993_CAPACITY = false as const;
+export const EU_WEB_SLENDERNESS_LIMIT_GUESSED = false as const;
+export const UNKNOWN_EU_SECTION_SHEAR_PARAMETER_GUESSED = false as const;
+export const EU_SHEAR_BUCKLING_COEFFICIENT_GUESSED = false as const;
+export const EU_SHEAR_PARTIAL_FACTOR_GUESSED = false as const;
+export const UNKNOWN_EU_SHEAR_CODE_PARAMETER_GUESSED = false as const;
+export const SILENT_STIFFENER_ASSUMPTION = false as const;
+export const EU_TENSION_FIELD_ACTION_IMPLEMENTED = false as const;
+export const LLM_EU_SHEAR_CAPACITY_AUTHORITY = false as const;
+export const AI_EU_SHEAR_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_SHEAR_AREA_AUTHORITY = false as const;
+export const AI_BUCKLING_PARAMETER_AUTHORITY = false as const;
+export const EU_OPTIMIZATION_SHEAR_RECHECK_REQUIRED = true as const;
+export const EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR = false as const;
+export const MIXED_AUTHORITY_SHEAR_COMPARISON_GOVERNED = true as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU5 = false as const;
+export const EU_SHEAR_PARTIAL_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -344,7 +362,13 @@ export type SteelSectionDesignProperties = {
 export const STEEL_SHEAR_AXES = ["MAJOR_SHEAR", "MINOR_SHEAR"] as const;
 export type SteelShearAxis = (typeof STEEL_SHEAR_AXES)[number];
 
-export const STEEL_SHEAR_STIFFENER_STATES = ["UNSTIFFENED", "TRANSVERSE_STIFFENED", "OTHER_GOVERNED_CONFIGURATION"] as const;
+export const STEEL_SHEAR_STIFFENER_STATES = [
+  "UNSTIFFENED",
+  "TRANSVERSE_STIFFENED",
+  "LONGITUDINALLY_STIFFENED",
+  "MULTI_STIFFENED",
+  "OTHER_GOVERNED_CONFIGURATION",
+] as const;
 export type SteelShearStiffenerState = (typeof STEEL_SHEAR_STIFFENER_STATES)[number];
 
 export type SteelShearInputContext = {
@@ -352,6 +376,8 @@ export type SteelShearInputContext = {
   stiffenerState: SteelShearStiffenerState | "unknown";
   shearBucklingCoefficient?: SteelGovernedProperty | null;
   stiffenerSpacing?: SteelGovernedProperty | null;
+  panelLength?: SteelGovernedProperty | null;
+  panelBoundaryMetadata?: string | null;
 };
 
 export type SteelWebSlendernessContext = {
@@ -1383,6 +1409,54 @@ export type EurocodeSteelBendingContext = {
   provenanceRef: string;
   sectionClassificationState: EuSectionClassificationState;
   sectionResistanceClassState: "VALIDATION_REQUIRED";
+};
+
+export const EU_SHEAR_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type EuShearMethodScopeState = (typeof EU_SHEAR_METHOD_SCOPE_STATES)[number];
+
+export type EuShearMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "EUROCODE_PROFILE_SHEAR_CAPACITY" | "EUROCODE_PROFILE_WEB_STABILITY_CAPACITY";
+  standardPartRef: En1993PartId;
+  ndpDependencies: readonly string[];
+  annexDependency: "ANNEX_REQUIRED" | "NDP_REQUIRED" | "ANNEX_OPTIONAL" | "NO_ANNEX_DEPENDENCY";
+  ruleRequiresNdp: boolean;
+  axis: "MAJOR_SHEAR" | "MINOR_SHEAR" | "SHEAR" | "WEB" | "PANEL";
+  compatibleGenerations: readonly EurocodeGenerationFamily[];
+  scopeState: EuShearMethodScopeState;
+};
+
+export type EurocodeSteelShearContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  shearDemandRefs: readonly string[];
+  shearAxis: SteelShearAxis;
+  sectionGeometry: string | null;
+  webGeometry: { clearWebDepth: number | null; webThickness: number | null };
+  shearAreaContext: "GOVERNED_EXPLICIT";
+  stiffenerContext: SteelShearStiffenerState;
+  panelContext: {
+    panelLengthM: number | null;
+    stiffenerSpacingM: number | null;
+    boundaryMetadata: string | null;
+  };
+  webSlenderness: SteelWebSlendernessContext;
+  standardContextRef: string;
+  standardPartRef: En1993PartId | string;
+  standardPartRefs: readonly En1993PartId[];
+  nationalAnnexRef: string | null;
+  ndpSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenanceRef: string;
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

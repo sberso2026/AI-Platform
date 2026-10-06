@@ -229,17 +229,17 @@ describe("EOS-D1D-0 common steel design framework", () => {
     };
     const euInput = capacityInput({
       adapterId: "EU_STEEL",
-      limitState: "SHEAR",
+      limitState: "COMBINED_ACTION",
       standardContext: euContext,
       designContext: { ...designContext(), standardContextRef: euContext.contextId },
       requiredProperties: [],
     });
     const outcome = orchestrateSteelDesignCheck({
       designCheckId: "chk-t",
-      limitState: "SHEAR",
+      limitState: "COMBINED_ACTION",
       designContext: { ...designContext(), standardContextRef: euContext.contextId },
       capacityInput: euInput,
-      simpleUtilizationValid: true,
+      simpleUtilizationValid: false,
       demandValue: { value: 100, unit: "kN" },
     });
     expect(outcome.verdict).toBe("CHECK_UNDETERMINED");

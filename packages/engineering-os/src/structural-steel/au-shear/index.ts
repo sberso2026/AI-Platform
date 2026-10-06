@@ -26,4 +26,3 @@ export {
   AU_SHEAR_YIELD_RULE,
 } from "./registry";
 export { D1D_AU4_D0_RISK_DISPOSITION } from "./risk";
-export { demandShearN, elasticShearBucklingForceN, vonMisesShearYieldN } from "./units";

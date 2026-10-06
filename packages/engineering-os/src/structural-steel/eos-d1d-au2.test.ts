@@ -273,7 +273,7 @@ describe("EOS-D1D-AU-2 Australian steel compression/stability", () => {
     };
     const euOut = evaluateSteelCapacity(capacityInput({
       adapterId: "EU_STEEL",
-      limitState: "SHEAR",
+      limitState: "COMBINED_ACTION",
       standardContext: eu,
       designContext: { ...designContext(), standardContextRef: eu.contextId },
       requiredProperties: [],
