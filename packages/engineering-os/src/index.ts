@@ -101,6 +101,7 @@ export * from "./discipline-capability";
 export * from "./structural-domain";
 export * from "./structural-demand";
 export * from "./structural-steel";
+export * from "./structural-concrete";
 export * from "./permissions";
 export * from "./engineering-os";
 export {
