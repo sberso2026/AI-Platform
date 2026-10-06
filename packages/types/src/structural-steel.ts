@@ -140,6 +140,22 @@ export const UNVALIDATED_METHOD_COUNTS_AS_COMPLETE = false as const;
 export const AI_SECTION_SELECTION_EQUALS_APPROVAL = false as const;
 export const CANDIDATE_FULL_DETERMINISTIC_RECHECK_REQUIRED = true as const;
 export const AI_MEMBER_DESIGN_EXPLANATION_ADVISORY_ONLY = true as const;
+export const EOS_D1D_AU7_PHASE = "EOS-D1D-AU-7" as const;
+export const VALIDATION_DIMENSIONS_SEPARATE = true as const;
+export const BENCHMARK_EQUALS_STANDARD_CONFORMANCE = false as const;
+export const NUMERICAL_VALIDATION_EQUALS_PROJECT_APPROVAL = false as const;
+export const STANDARD_CONFORMANCE_EQUALS_PROJECT_APPROVAL = false as const;
+export const SOFTWARE_CERTIFICATION_EQUALS_PROJECT_APPROVAL = false as const;
+export const AS4100_CONFORMANCE_VALIDATED = false as const;
+export const SELF_REFERENTIAL_BENCHMARKS = false as const;
+export const THIRD_PARTY_VALIDATION_AVAILABLE = false as const;
+export const AU_STEEL_PRODUCT_CLAIM_LEVEL = "BENCHMARKED_ENGINEERING_CAPABILITY" as const;
+export const AU_STEEL_RELEASE_CLASSIFICATION = "INTERNAL_ENGINEERING_REFERENCE" as const;
+export const GENERAL_AU_MEMBER_DESIGN_VALIDATED = false as const;
+export const CONNECTION_DESIGN_VALIDATED = false as const;
+export const MEMBER_VALIDATION_IMPLIES_CONNECTION_VALIDATION = false as const;
+export const MEMBER_VALIDATION_IMPLIES_FOUNDATION_VALIDATION = false as const;
+export const AU_VALIDATION_PILOT_EXPOSURE = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -834,6 +850,108 @@ export type SteelMemberDesignRecord = {
   generalFeaClaimed: false;
   as4100CompliantClaim: false;
   reportLanguage: string;
+};
+
+export const AU_METHOD_CLASSIFICATIONS = [
+  "ENGINEERING_MECHANICS_REFERENCE",
+  "DETERMINISTIC_CAPACITY_METHOD",
+  "STABILITY_REFERENCE",
+  "SERVICEABILITY_METHOD",
+  "CODE_PROFILE_METHOD",
+  "INTERACTION_METHOD",
+] as const;
+export type AuMethodClassification = (typeof AU_METHOD_CLASSIFICATIONS)[number];
+
+export const AU_NUMERICAL_VALIDATION_STATES = ["PASS", "PARTIAL", "FAIL", "NOT_APPLICABLE"] as const;
+export type AuNumericalValidationState = (typeof AU_NUMERICAL_VALIDATION_STATES)[number];
+
+export const AU_ENGINEERING_VALIDATION_STATES = ["VALIDATION_REQUIRED", "ENGINEER_VALIDATED", "REJECTED"] as const;
+export type AuEngineeringValidationState = (typeof AU_ENGINEERING_VALIDATION_STATES)[number];
+
+export const AU_PRODUCT_CLAIM_LEVELS = [
+  "REFERENCE_CAPABILITY",
+  "BENCHMARKED_ENGINEERING_CAPABILITY",
+  "BOUNDED_ENGINEER_VALIDATED_CAPABILITY",
+  "BOUNDED_CONFORMANCE_VALIDATED_CAPABILITY",
+  "CERTIFIED_DESIGN_CAPABILITY",
+] as const;
+export type AuProductClaimLevel = (typeof AU_PRODUCT_CLAIM_LEVELS)[number];
+
+export const AU_RELEASE_CLASSIFICATIONS = [
+  "INTERNAL_ENGINEERING_REFERENCE",
+  "CONTROLLED_ENGINEERING_PREVIEW",
+  "CONTROLLED_PILOT",
+  "GENERAL_AVAILABILITY",
+  "CERTIFIED_ENGINEERING_USE",
+] as const;
+export type AuReleaseClassification = (typeof AU_RELEASE_CLASSIFICATIONS)[number];
+
+export const AU_VALIDATION_PRIORITIES = [
+  "SAFETY_CRITICAL",
+  "CONFORMANCE_CRITICAL",
+  "COMMERCIAL_RELEASE_CRITICAL",
+  "ENHANCEMENT",
+] as const;
+export type AuValidationPriority = (typeof AU_VALIDATION_PRIORITIES)[number];
+
+export type AuMethodValidationRecord = {
+  methodId: string;
+  category: string;
+  purpose: string;
+  technicalBasis: string;
+  authorityType: EngineeringRuleAuthorityType;
+  implementationVersion: string;
+  inputs: string[];
+  outputs: string;
+  benchmarkRefs: string[];
+  numericalValidationState: AuNumericalValidationState;
+  engineeringValidationState: AuEngineeringValidationState;
+  standardProfile: "AS4100";
+  standardConformanceState: SteelStandardConformanceState;
+  classifications: AuMethodClassification[];
+  supportedScope: string;
+  unsupportedScope: string;
+  humanReviewRequirement: "required";
+};
+
+export type AuSteelValidationMatrixRow = {
+  capability: string;
+  implemented: boolean;
+  benchmarked: boolean;
+  engineerValidated: boolean;
+  conformanceValidated: boolean;
+  certified: boolean;
+  limitation: string;
+};
+
+export type AuMethodEngineeringConfirmation = {
+  methodRef: string;
+  validationScope: string;
+  reviewOutcome: "CONFIRMED" | "REJECTED" | "REQUIRES_REVISION";
+  evidenceRefs: string[];
+  reviewedAt: string;
+  reviewerAuthorityRef: string;
+  projectApprovalImplied: false;
+  professionalCertificationImplied: false;
+  softwareCertificationImplied: false;
+};
+
+export type AuThirdPartyValidationRecord = {
+  software: string;
+  version: string;
+  analysisOrDesignMode: string;
+  inputs: Record<string, unknown>;
+  standardProfileSetting: string;
+  outputCompared: { value: number; unit: string };
+  difference: number | null;
+  tolerance: { relative: number; absolute: number };
+  reviewState: string;
+};
+
+export type AuValidationDebtItem = {
+  debtId: string;
+  description: string;
+  priority: AuValidationPriority;
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

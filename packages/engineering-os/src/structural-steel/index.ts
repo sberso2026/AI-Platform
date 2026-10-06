@@ -6,6 +6,7 @@ export * from "./au-bending";
 export * from "./au-shear";
 export * from "./au-combined";
 export * from "./au-member";
+export * from "./au-validation";
 export {
   assertLlmCannotOriginateCapacity,
   assertOptimizationBendingRecheck,
