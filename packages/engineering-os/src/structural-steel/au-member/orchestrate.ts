@@ -275,6 +275,8 @@ export function orchestrateAuSteelMemberDesign(input: SteelMemberDesignInput): S
     rows.push(fromOutcome("SHEAR_MINOR", outcome, "INCOMPLETE_VALIDATION_REQUIRED", "VALIDATION_REQUIRED"));
   } else rows.push(naRow("SHEAR_MINOR"));
 
+  rows.push(naRow("WEB_STABILITY"));
+
   if (applicability.COMBINED_ACTION) {
     if (IMPLEMENTED_INTERACTION_METHODS.length !== 0) {
       throw new Error("AU-6 must propagate AU-5 interaction limitation");

@@ -55,6 +55,7 @@ export function resolveMemberApplicability(input: {
     SHEAR_MAJOR: v > 0 && shearAxis !== "MINOR_SHEAR",
     SHEAR_MINOR: v > 0 && shearAxis === "MINOR_SHEAR",
     COMBINED_ACTION: interaction,
+    WEB_STABILITY: false,
     DEFLECTION: input.serviceabilityRequested,
     OTHER_SERVICEABILITY: input.otherServiceabilityRequested,
   };

@@ -19,6 +19,11 @@ export function invalidationTags(previous: SteelMemberDesignFingerprint | null |
   }
   if (previous.criterionRef !== current.criterionRef) tags.push("SERVICEABILITY_CRITERION_CHANGED");
   if (previous.standardContextId !== current.standardContextId) tags.push("STANDARD_PROFILE_CHANGED");
+  if ((previous.nationalAnnexId ?? null) !== (current.nationalAnnexId ?? null)) tags.push("NATIONAL_ANNEX_CHANGED");
+  if ((previous.ndpSetRef ?? null) !== (current.ndpSetRef ?? null)) tags.push("NDP_CHANGED");
+  if ((previous.edition ?? null) !== (current.edition ?? null)) tags.push("EDITION_CHANGED");
+  if ((previous.generationFamily ?? null) !== (current.generationFamily ?? null)) tags.push("GENERATION_CHANGED");
+  if ((previous.restraintDescription ?? null) !== (current.restraintDescription ?? null)) tags.push("RESTRAINT_CHANGED");
   return tags;
 }
 

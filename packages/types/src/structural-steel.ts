@@ -284,6 +284,26 @@ export const SCHEMA_CHANGE_REQUIRED_FOR_EU6 = false as const;
 export const PARALLEL_INTERACTION_FRAMEWORK_CREATED = false as const;
 export const COMPONENT_BENCHMARK_EQUALS_INTERACTION_CONFORMANCE = false as const;
 export const EU_COMBINED_PILOT_EXPOSURE = false as const;
+export const EOS_D1D_EU7_PHASE = "EOS-D1D-EU-7" as const;
+export const PARALLEL_MEMBER_ORCHESTRATION_CREATED = false as const;
+export const MECHANICS_ONLY_RESULTS_ALLOW_EUROCODE_DESIGN_PASS = false as const;
+export const MECHANICS_COMPLETE_EQUALS_CODE_DESIGN_COMPLETE = false as const;
+export const REFERENCE_METHOD_CANNOT_COMPLETE_CODE_CHECK = true as const;
+export const MISSING_INTERACTION_PREVENTS_EU_CODE_DESIGN_PASS = true as const;
+export const EU_SERVICEABILITY_DEFLECTION_ENGINE_DUPLICATED = false as const;
+export const EU_SPAN_RATIO_DENOMINATOR_GUESSED = false as const;
+export const EU_VIBRATION_DESIGN_IMPLEMENTED = false as const;
+export const EU7_AUTOMATIC_APPROVAL = false as const;
+export const EU_MEMBER_PILOT_EXPOSURE = false as const;
+export const AI_EUROCODE_CAPACITY_PROMOTION_AUTHORITY = false as const;
+export const AI_SERVICEABILITY_CRITERION_AUTHORITY = false as const;
+export const EU_OPTIMIZATION_ACCEPTS_UNDETERMINED = false as const;
+export const GENERAL_EU_MEMBER_CODE_DESIGN_VALIDATED = false as const;
+export const NEW_INTERACTION_METHOD_IMPLEMENTED_IN_EU7 = false as const;
+export const EU6_INTERACTION_LIMITATION_PROPAGATED = true as const;
+export const EU_STEEL_RELEASE_CLASSIFICATION = "INTERNAL_ENGINEERING_REFERENCE" as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU7 = false as const;
+export const APPLICABILITY_EQUALS_SATISFIED = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -817,6 +837,7 @@ export const STEEL_MEMBER_DESIGN_CHECK_KINDS = [
   "STABILITY_COMPRESSION",
   "STABILITY_LTB",
   "COMBINED_ACTION",
+  "WEB_STABILITY",
   "DEFLECTION",
   "OTHER_SERVICEABILITY",
 ] as const;
@@ -841,6 +862,14 @@ export const STEEL_INCOMPLETE_REASONS = [
   "SERVICEABILITY_CRITERION_REQUIRED",
   "STALE_RESULT",
   "UNSUPPORTED_METHOD",
+  "CODE_METHOD_UNAVAILABLE",
+  "INTERACTION_METHOD_UNAVAILABLE",
+  "NATIONAL_ANNEX_REQUIRED",
+  "NDP_REQUIRED",
+  "STANDARD_EDITION_REQUIRED",
+  "STANDARD_CONTEXT_INCOMPLETE",
+  "SECTION_CLASSIFICATION_REQUIRED",
+  "UNSUPPORTED_SCOPE",
 ] as const;
 export type SteelIncompleteReason = (typeof STEEL_INCOMPLETE_REASONS)[number];
 
@@ -849,8 +878,10 @@ export const STEEL_SERVICEABILITY_CRITERION_SOURCES = [
   "CLIENT_REQUIREMENT",
   "ENGINEERING_DESIGN_CRITERIA",
   "VALIDATED_STANDARD_RULE",
+  "NATIONAL_ANNEX_RULE",
   "HUMAN_CONFIRMED_RULE",
   "OTHER_GOVERNED_SOURCE",
+  "OTHER_GOVERNED_ENGINEERING_SOURCE",
 ] as const;
 export type SteelServiceabilityCriterionSource = (typeof STEEL_SERVICEABILITY_CRITERION_SOURCES)[number];
 
@@ -931,6 +962,7 @@ export type SteelMemberDesignCheckRow = {
   utilizationComparable: boolean;
   reportLanguage: string;
   methodMaturity: SteelMethodMaturity | null;
+  authority?: "MECHANICS_REFERENCE" | "CODE_PROFILE" | "GOVERNED";
 };
 
 export type SteelMemberDesignFingerprint = {
@@ -944,6 +976,11 @@ export type SteelMemberDesignFingerprint = {
   standardContextId: string;
   criterionRef: string | null;
   methodVersions: Record<string, string>;
+  nationalAnnexId?: string | null;
+  ndpSetRef?: string | null;
+  edition?: string | null;
+  generationFamily?: string | null;
+  restraintDescription?: string | null;
 };
 
 export type SteelMemberInvalidationTag =
@@ -953,7 +990,12 @@ export type SteelMemberInvalidationTag =
   | "UNBRACED_LENGTH_CHANGED"
   | "EFFECTIVE_LENGTH_CHANGED"
   | "SERVICEABILITY_CRITERION_CHANGED"
-  | "STANDARD_PROFILE_CHANGED";
+  | "STANDARD_PROFILE_CHANGED"
+  | "NATIONAL_ANNEX_CHANGED"
+  | "NDP_CHANGED"
+  | "EDITION_CHANGED"
+  | "GENERATION_CHANGED"
+  | "RESTRAINT_CHANGED";
 
 export type SteelOptimizationHandoff = {
   satisfiedChecks: SteelMemberDesignCheckKind[];
@@ -987,7 +1029,7 @@ export type SteelMemberDesignRecord = {
   completenessState: SteelMemberCompletenessState;
   engineeringCheckState: SteelCheckVerdict;
   standardConformanceState: SteelMemberConformanceSummaryState;
-  implementationMaturity: typeof AU_STEEL_IMPLEMENTATION_MATURITY;
+  implementationMaturity: typeof AU_STEEL_IMPLEMENTATION_MATURITY | typeof EU_STEEL_IMPLEMENTATION_MATURITY;
   humanReviewState: SteelMemberHumanReviewState;
   approvalState: SteelMemberApprovalState;
   evidenceRefs: StructuralEvidenceBinding[];
@@ -1003,6 +1045,44 @@ export type SteelMemberDesignRecord = {
   generalFeaClaimed: false;
   as4100CompliantClaim: false;
   reportLanguage: string;
+};
+
+export const EU_MECHANICS_COMPLETENESS_STATES = [
+  "COMPLETE_FOR_AVAILABLE_MECHANICS",
+  "INCOMPLETE_MECHANICS_INPUT",
+  "MECHANICS_METHOD_UNAVAILABLE",
+  "NOT_APPLICABLE",
+] as const;
+export type EuMechanicsCompletenessState = (typeof EU_MECHANICS_COMPLETENESS_STATES)[number];
+
+export type EurocodeSteelServiceabilityContext = SteelServiceabilityContext & {
+  standardContextRef: string;
+  standardPartRefs: readonly string[];
+  nationalAnnexRef: string | null;
+  ndpRefs: readonly string[];
+  technicalBasisRef: string | null;
+  criterionRequiresNdp: boolean;
+  criterionRequiresAnnex: boolean;
+};
+
+export type EurocodeSteelMemberDesignRecord = SteelMemberDesignRecord & {
+  standardContextRef: string;
+  mechanicsResultRefs: readonly string[];
+  codeProfileCapacityRefs: readonly string[];
+  mechanicsEvaluationState: EuMechanicsCompletenessState;
+  codeDesignCheckState: SteelCheckVerdict;
+  overallEngineeringCheckState: SteelCheckVerdict;
+  governingIssueRef: string | null;
+  governingValidatedCheckRef: string | null;
+  numericalValidationState: "NOT_APPLICABLE" | "VALIDATION_REQUIRED";
+  engineeringValidationState: "VALIDATION_REQUIRED";
+  eurocodeCompliantClaim: false;
+  nationalAnnexRef: string | null;
+  ndpSetRef: string | null;
+  standardPartRefs: readonly string[];
+  edition: string;
+  generationFamily: string | null;
+  releaseClassification: typeof EU_STEEL_RELEASE_CLASSIFICATION;
 };
 
 export const AU_METHOD_CLASSIFICATIONS = [

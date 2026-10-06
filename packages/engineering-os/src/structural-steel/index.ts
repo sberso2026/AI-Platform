@@ -13,6 +13,7 @@ export * from "./eu-compression";
 export * from "./eu-bending";
 export * from "./eu-shear";
 export * from "./eu-combined";
+export * from "./eu-member";
 export * from "./mechanics";
 export {
   assertLlmCannotOriginateCapacity,
