@@ -24,6 +24,8 @@ import {
   EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING,
   EU_OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
   EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR,
+  EU_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION,
   MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK,
 } from "@rtb/types";
 import { toForceN, toMomentNm } from "../structural-demand/units";
@@ -476,6 +478,44 @@ export function assertOptimizationEuShearRecheck(candidate: SteelOptimizationCan
   assertOptimizationCandidateRecheck(candidate);
   if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
     throw new Error("optimizer cannot accept undetermined shear as pass");
+  }
+}
+
+export function orchestrateEuCombinedActionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL" || input.capacityInput.limitState !== "COMBINED_ACTION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "COMBINED_ACTION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: false,
+    demandValue: { value: 0, unit: "1" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    utilization: null,
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+    engineeringApproved: false,
+  };
+}
+
+export function assertOptimizationEuInteractionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED) throw new Error("EU interaction optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION) throw new Error("optimizer cannot accept undetermined interaction as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.interactionCheckState !== "CHECK_SATISFIED" && candidate.interactionCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined interaction as pass");
   }
 }
 

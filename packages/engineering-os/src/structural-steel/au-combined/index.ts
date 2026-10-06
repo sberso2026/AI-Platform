@@ -8,6 +8,7 @@ export {
 } from "./classification";
 export {
   assertAiCannotChangeComponentResults,
+  assertAiCannotCombineIncompatibleCases,
   assertAiCannotInventInteraction,
   assertSameCombination,
   detectRequiredInteractions,

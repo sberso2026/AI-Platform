@@ -229,14 +229,14 @@ describe("EOS-D1D-0 common steel design framework", () => {
     };
     const euInput = capacityInput({
       adapterId: "EU_STEEL",
-      limitState: "COMBINED_ACTION",
+      limitState: "SERVICEABILITY",
       standardContext: euContext,
       designContext: { ...designContext(), standardContextRef: euContext.contextId },
       requiredProperties: [],
     });
     const outcome = orchestrateSteelDesignCheck({
       designCheckId: "chk-t",
-      limitState: "COMBINED_ACTION",
+      limitState: "SERVICEABILITY",
       designContext: { ...designContext(), standardContextRef: euContext.contextId },
       capacityInput: euInput,
       simpleUtilizationValid: false,

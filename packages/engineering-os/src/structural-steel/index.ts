@@ -12,6 +12,7 @@ export * from "./eu-tension";
 export * from "./eu-compression";
 export * from "./eu-bending";
 export * from "./eu-shear";
+export * from "./eu-combined";
 export * from "./mechanics";
 export {
   assertLlmCannotOriginateCapacity,
@@ -22,6 +23,7 @@ export {
   assertOptimizationEuBendingRecheck,
   assertOptimizationEuCompressionRecheck,
   assertOptimizationEuShearRecheck,
+  assertOptimizationEuInteractionRecheck,
   assertOptimizationEuTensionRecheck,
   AU_STEEL_IMPLEMENTATION_SUBPHASES,
   consumeDemandHandoff,
@@ -33,6 +35,7 @@ export {
   orchestrateAuTensionDesignCheck,
   orchestrateEuBendingDesignCheck,
   orchestrateEuCompressionDesignCheck,
+  orchestrateEuCombinedActionDesignCheck,
   orchestrateEuShearDesignCheck,
   orchestrateEuTensionDesignCheck,
   orchestrateSteelDesignCheck,

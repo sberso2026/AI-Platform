@@ -268,6 +268,22 @@ export const EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR = false as const;
 export const MIXED_AUTHORITY_SHEAR_COMPARISON_GOVERNED = true as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_EU5 = false as const;
 export const EU_SHEAR_PARTIAL_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const EOS_D1D_EU6_PHASE = "EOS-D1D-EU-6" as const;
+export const MECHANICS_REFERENCE_AUTOMATICALLY_VALID_FOR_CODE_INTERACTION = false as const;
+export const UNIVERSAL_AXIAL_BIAXIAL_EQUATION = false as const;
+export const EU_INTERACTION_CLASSIFICATION_GUESSED = false as const;
+export const EU_INTERACTION_PARAMETER_GUESSED = false as const;
+export const EU_SHEAR_REDUCTION_RULE_GUESSED = false as const;
+export const LLM_EU_INTERACTION_AUTHORITY = false as const;
+export const AI_EU_INTERACTION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_INTERACTION_PARAMETER_AUTHORITY = false as const;
+export const EU_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED = true as const;
+export const EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION = false as const;
+export const MEMBER_INTERACTION_EQUALS_GLOBAL_FRAME_STABILITY = false as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU6 = false as const;
+export const PARALLEL_INTERACTION_FRAMEWORK_CREATED = false as const;
+export const COMPONENT_BENCHMARK_EQUALS_INTERACTION_CONFORMANCE = false as const;
+export const EU_COMBINED_PILOT_EXPOSURE = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -503,10 +519,11 @@ export type SteelCombinedDemandComponent = {
   resultId: string;
   memberId: string;
   combinationId: string | null;
-  kind: "AXIAL" | "MOMENT_MAJOR" | "MOMENT_MINOR" | "SHEAR";
+  kind: "AXIAL" | "MOMENT_MAJOR" | "MOMENT_MINOR" | "SHEAR" | "SHEAR_MAJOR" | "SHEAR_MINOR";
   value: number;
   unit: string;
   signed: number;
+  revision?: string | null;
 };
 
 export type SteelCombinedCapacityComponent = {
@@ -519,6 +536,9 @@ export type SteelCombinedCapacityComponent = {
   unit: string;
   standardProfileRef: string;
   maturity: SteelMethodMaturity;
+  revision?: string | null;
+  resultClass?: "MECHANICS_REFERENCE" | "DESIGN_CAPACITY";
+  authorityState?: "MECHANICS_REFERENCE" | "CODE_PROFILE_CAPACITY";
 };
 
 export type SteelCombinedActionInput = {
@@ -528,7 +548,7 @@ export type SteelCombinedActionInput = {
 };
 
 export type SteelComponentUtilizationRow = {
-  kind: "AXIAL" | "BENDING_MAJOR" | "BENDING_MINOR" | "SHEAR";
+  kind: "AXIAL" | "BENDING_MAJOR" | "BENDING_MINOR" | "SHEAR" | "SHEAR_MAJOR" | "SHEAR_MINOR";
   demand: { value: number; unit: string };
   capacity: { value: number; unit: string } | null;
   ratio: number | null;
@@ -570,14 +590,26 @@ export type SteelCombinedActionResult = {
   interactionType: SteelInteractionType;
   componentDemandRefs: string[];
   componentCapacityRefs: string[];
+  componentAuthorityStates?: readonly ("MECHANICS_REFERENCE" | "CODE_PROFILE_CAPACITY")[];
   ruleRef: string;
   interactionValue: null;
   criterion: null;
   checkState: SteelCheckVerdict;
-  reason: "INTERACTION_RULE_VALIDATION_REQUIRED";
+  reason:
+    | "INTERACTION_RULE_VALIDATION_REQUIRED"
+    | "INSUFFICIENT_COMPONENT_AUTHORITY"
+    | "MISSING_CLASSIFICATION"
+    | "MISSING_STABILITY"
+    | "NATIONAL_ANNEX_REQUIRED"
+    | "NDP_REQUIRED"
+    | "REVISION_MISMATCH";
   governingComponent: string | null;
   technicalBasisRef: string;
   standardProfileRef: string;
+  standardPartRefs?: readonly string[];
+  edition?: string;
+  nationalAnnexRef?: string | null;
+  ndpSetRef?: string | null;
   standardConformanceState: SteelStandardConformanceState;
   validationState: SteelMethodMaturity;
   benchmarkState: "NOT_APPLICABLE";
@@ -1457,6 +1489,54 @@ export type EurocodeSteelShearContext = {
   validationState: string;
   conformanceState: SteelStandardConformanceState;
   provenanceRef: string;
+};
+
+export const EU_INTERACTION_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type EuInteractionMethodScopeState = (typeof EU_INTERACTION_METHOD_SCOPE_STATES)[number];
+
+export type EuInteractionMethodRecord = SteelEngineeringRule & {
+  methodType: "EUROCODE_PROFILE_COMBINED_ACTION";
+  interactionType: SteelInteractionType;
+  standardPartRef: En1993PartId;
+  standardPartRefs: readonly En1993PartId[];
+  ndpDependencies: readonly string[];
+  annexDependency: "ANNEX_REQUIRED" | "NDP_REQUIRED" | "ANNEX_OPTIONAL" | "NO_ANNEX_DEPENDENCY";
+  ruleRequiresNdp: boolean;
+  classificationDependency: "REQUIRED" | "NOT_REQUIRED";
+  stabilityDependency: "REQUIRED" | "NOT_REQUIRED";
+  compatibleGenerations: readonly EurocodeGenerationFamily[];
+  scopeState: EuInteractionMethodScopeState;
+};
+
+export type EurocodeSteelCombinedActionContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  axialDemandRef: string | null;
+  majorMomentDemandRef: string | null;
+  minorMomentDemandRef: string | null;
+  majorShearDemandRef: string | null;
+  minorShearDemandRef: string | null;
+  componentCapacityRefs: readonly string[];
+  componentMechanicsRefs: readonly string[];
+  compressionStabilityContextRef: string | null;
+  bendingStabilityContextRef: string | null;
+  sectionClassificationRef: EuSectionClassificationState;
+  interactionRuleRef: string | null;
+  standardContextRef: string;
+  standardPartRefs: readonly En1993PartId[];
+  nationalAnnexRef: string | null;
+  ndpSetRef: string | null;
+  technicalBasisRef: string;
+  provenance: string;
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

@@ -412,7 +412,7 @@ describe("EOS-D1D-AU-3 Australian steel bending / LTB", () => {
     };
     const euOut = evaluateSteelCapacity(capacityInput({
       adapterId: "EU_STEEL",
-      limitState: "COMBINED_ACTION",
+      limitState: "SERVICEABILITY",
       standardContext: eu,
       designContext: { ...designContext(), standardContextRef: eu.contextId },
       requiredProperties: [],
