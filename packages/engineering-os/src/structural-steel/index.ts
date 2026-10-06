@@ -70,3 +70,4 @@ export {
   D1D0_D0_RISK_DISPOSITION,
   RISK_LEDGER_DISCREPANCY_CLASSIFICATION,
 } from "./risk-ledger";
+export * from "./d1d-closeout";

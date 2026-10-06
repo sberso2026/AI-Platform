@@ -2788,3 +2788,119 @@ export type UsValidationDebtItem = {
   description: string;
   priority: AuValidationPriority;
 };
+
+export const EOS_D1D_CLOSEOUT_PHASE = "EOS-D1D-CLOSEOUT" as const;
+export const D1D_PHASE_INVENTORY_COMPLETE = true as const;
+export const D1D_CAPABILITY_CLASSIFICATION_SINGLE_SOURCE_OF_TRUTH = true as const;
+export const D1D_ARCHITECTURE_CONTRACT_FROZEN = true as const;
+export const D1D_FUTURE_EXTENSION_RULE_DEFINED = true as const;
+export const D1D_PHASE_COMPLETE = true as const;
+export const COMPLETE_STEEL_DESIGN_PRODUCT = false as const;
+export const D1D_GLOBAL_RELEASE_CLASSIFICATION = "INTERNAL_ENGINEERING_REFERENCE" as const;
+export const D1D_STEEL_MATURITY = "ARCHITECTURE_COMPLETE_REFERENCE_CAPABILITY" as const;
+export const D1D_FUTURE_STANDARDS_VALIDATION_TRACK_DEFINED = true as const;
+export const D1D_EXTERNAL_SOLVER_BOUNDARY_PRESERVED = true as const;
+export const D1D_PRODUCT_CAPABILITY_GATING = true as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_D1D_CLOSEOUT = false as const;
+export const NEW_MAJOR_DESIGN_METHOD_IMPLEMENTED_IN_D1D_CLOSEOUT = false as const;
+export const LLM_NUMERICAL_ENGINEERING_AUTHORITY = false as const;
+export const COMPONENT_UTILIZATION_EQUALS_INTERACTION_CHECK = false as const;
+export const COMMON_MECHANICS_CONTAINS_CODE_AUTHORITY = false as const;
+export const PARALLEL_AU_STEEL_CORE = false as const;
+export const PARALLEL_EU_STEEL_CORE = false as const;
+export const PARALLEL_US_STEEL_CORE = false as const;
+export const GENERAL_CONNECTION_DESIGN_VALIDATED = false as const;
+export const GENERAL_SEISMIC_STEEL_DESIGN_VALIDATED = false as const;
+export const GLOBAL_OPTIMIZATION_ACCEPTS_UNDETERMINED = false as const;
+export const D1D_CANONICAL_NEXT_PHASE = "D1E" as const;
+export const D1D_CANONICAL_NEXT_PHASE_SCOPE = "Concrete Design Capability" as const;
+export const GLOBAL_STEEL_GOVERNANCE_NOT_WEAKENED = true as const;
+export const EU_HIGH_WATER_MARK_INHERITED = true as const;
+export const D1D_GLOBAL_STEEL_ARCHITECTURE_VALIDATED = true as const;
+export const D1D_ENGINEERING_AUTHORITY_LAYERS_SEPARATE = true as const;
+export const D1D_MISLEADING_PRODUCT_CLAIMS = "NONE" as const;
+export const EOS_D1D_CLOSEOUT_CLOSED = true as const;
+export const D1D_RISK_LEDGER_RECONCILED = true as const;
+export const D1_ROADMAP_HANDOFF_VALIDATED = true as const;
+export const D1_CLOSEOUT_ROADMAP_CONFLICT = false as const;
+
+export const D1D_CAPABILITY_GATING_LEVELS = [
+  "MECHANICS_REFERENCE",
+  "FRAMEWORK_ONLY",
+  "VALIDATED_DESIGN_METHOD",
+  "CONFORMANCE_VALIDATED",
+  "CERTIFIED",
+] as const;
+export type D1dCapabilityGatingLevel = (typeof D1D_CAPABILITY_GATING_LEVELS)[number];
+
+export type D1dPhaseInventoryRecord = {
+  phase: string;
+  scope: string;
+  commit: string;
+  verdict: "PASS" | "PASS_WITH_LIMITATIONS";
+  implementedCapability: string;
+  frameworkOnlyCapability: string;
+  validationState: string;
+  conformanceState: string;
+  releaseState: string;
+  knownLimitations: string;
+  validationDebt: string;
+  riskImpact: string;
+};
+
+export type D1dCommonMechanicsRecord = {
+  commonMethodId: string;
+  supportedInputs: readonly string[];
+  supportedOutputs: string;
+  units: string;
+  assumptions: string;
+  benchmarkState: "PASS" | "NOT_APPLICABLE";
+  supportedJurisdictions: readonly ("AU" | "EU" | "US")[];
+  unsupportedInterpretations: string;
+};
+
+export type D1dCapabilityCell = {
+  implemented: boolean;
+  frameworkOnly: boolean;
+  numericallyValidated: boolean;
+  engineerValidated: boolean;
+  codeProfileImplemented: boolean;
+  conformanceValidated: boolean;
+  certified: boolean;
+  releaseState: string;
+  limitation: string;
+};
+
+export type D1dCanonicalCapabilityRow = {
+  capability: string;
+  GLOBAL: D1dCapabilityCell;
+  AU: D1dCapabilityCell;
+  EU: D1dCapabilityCell;
+  US: D1dCapabilityCell;
+};
+
+export type D1dCapabilityManifestRecord = {
+  capabilityId: string;
+  jurisdiction: "GLOBAL" | "AU" | "EU" | "US";
+  method: string;
+  authorityType: string;
+  implementationState: string;
+  validationState: string;
+  conformanceState: string;
+  releaseState: string;
+  limitations: string;
+  dependencies: readonly string[];
+};
+
+export type D1dValidationDebtItem = {
+  debtId: string;
+  category: string;
+  jurisdiction: "GLOBAL" | "AU" | "EU" | "US";
+  capability: string;
+  description: string;
+  priority: AuValidationPriority;
+  blockingState: string;
+  requiredEvidence: string;
+  ownerWorkstream: string;
+  recommendedFuturePhase: string;
+};
