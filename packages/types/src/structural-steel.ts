@@ -518,6 +518,48 @@ export const SCHEMA_CHANGE_REQUIRED_FOR_US4 = false as const;
 export const US4_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const US_BENDING_STANDARD_CONTEXT_REQUIRED = true as const;
 export const US_BENDING_DESIGN_METHOD_REQUIRED = true as const;
+export const EOS_D1D_US5_PHASE = "EOS-D1D-US-5" as const;
+export const PARALLEL_US_SHEAR_CORE_CREATED = false as const;
+export const US4_CLASSIFICATION_ARCHITECTURE_REUSED = true as const;
+export const COMMON_SHEAR_MECHANICS_SHARED_ACROSS_LRFD_ASD = true as const;
+export const LRFD_ASD_SHEAR_MECHANICS_DUPLICATED = false as const;
+export const ELASTIC_SHEAR_EQUALS_AISC_SHEAR_STRENGTH = false as const;
+export const ELASTIC_SHEAR_BUCKLING_EQUALS_AISC_WEB_STRENGTH = false as const;
+export const SILENT_US_SHEAR_AREA_ASSUMPTION = false as const;
+export const US_SHEAR_AREA_RULE_GUESSED = false as const;
+export const US_WEB_SLENDERNESS_LIMIT_GUESSED = false as const;
+export const BENDING_CLASSIFICATION_EQUALS_SHEAR_CLASSIFICATION = false as const;
+export const SILENT_US_STIFFENER_ASSUMPTION = false as const;
+export const US_STIFFENER_DESIGN_IMPLEMENTED = false as const;
+export const US_SHEAR_BUCKLING_COEFFICIENT_GUESSED = false as const;
+export const US_WEB_STABILITY_RULE_GUESSED = false as const;
+export const US_TENSION_FIELD_ACTION_IMPLEMENTED = false as const;
+export const US_TENSION_FIELD_ELIGIBILITY_GUESSED = false as const;
+export const US_SHEAR_LRFD_FACTOR_GUESSED = false as const;
+export const US_SHEAR_ASD_FACTOR_GUESSED = false as const;
+export const UNKNOWN_US_SHEAR_CODE_PARAMETER_GUESSED = false as const;
+export const US_BENDING_SHEAR_INTERACTION_IMPLEMENTED = false as const;
+export const US_SHEAR_REDUCTION_RULE_GUESSED = false as const;
+export const US_AXIAL_SHEAR_INTERACTION_IMPLEMENTED = false as const;
+export const US_CONNECTION_SHEAR_DESIGN_IMPLEMENTED = false as const;
+export const US_SEISMIC_SHEAR_DESIGN_IMPLEMENTED = false as const;
+export const LLM_US_SHEAR_STRENGTH_AUTHORITY = false as const;
+export const AI_US_SHEAR_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_WEB_SLENDERNESS_AUTHORITY = false as const;
+export const AI_STIFFENER_AUTHORITY = false as const;
+export const US_OPTIMIZATION_SHEAR_RECHECK_REQUIRED = true as const;
+export const US_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR = false as const;
+export const US_SHEAR_STRENGTH_RESULT_STATE = "PARTIAL" as const;
+export const US_SHEAR_INDEPENDENT_BENCHMARK_STATE = "PARTIAL" as const;
+export const US_SHEAR_HUMAN_VALIDATION_REQUIRED = true as const;
+export const US_SHEAR_LRFD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_SHEAR_ASD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_SHEAR_BUCKLING_COEFFICIENT_SOURCE = "VALIDATION_REQUIRED" as const;
+export const COMMON_SHEAR_BENCHMARK_EQUALS_AISC_CONFORMANCE = false as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US5 = false as const;
+export const US5_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const US_SHEAR_STANDARD_CONTEXT_REQUIRED = true as const;
+export const US_SHEAR_DESIGN_METHOD_REQUIRED = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -2343,6 +2385,61 @@ export type USSteelBendingContext = {
   stabilityAnalysisContext: UsStabilityAnalysisMethod | null;
   elementClassificationState: UsElementClassificationState;
   flexuralBehaviorState: UsFlexuralBehaviorState;
+  standardContextRef: string;
+  buildingCodeContextRef: string | null;
+  loadStandardContextRef: string | null;
+  localAmendmentSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenance: string;
+  directContractProfile: boolean;
+};
+
+export const US_SHEAR_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type UsShearMethodScopeState = (typeof US_SHEAR_METHOD_SCOPE_STATES)[number];
+
+export type UsShearMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "ELASTIC_SHEAR_REFERENCE" | "ELASTIC_SHEAR_BUCKLING_REFERENCE" | "AISC_NOMINAL_SHEAR_STRENGTH" | "AISC_LRFD_DESIGN_STRENGTH" | "AISC_ASD_ALLOWABLE_STRENGTH";
+  aiscEditionRequirement: string;
+  designMethodApplicability: "LRFD" | "ASD" | "BOTH";
+  axis: "MAJOR_SHEAR" | "MINOR_SHEAR" | "SHEAR" | "WEB" | "PANEL" | "SLENDERNESS";
+  factorDependencies: readonly string[];
+  localAmendmentDependencies: readonly string[];
+  shearAreaDependency: boolean;
+  webSlendernessDependency: boolean;
+  panelDependency: boolean;
+  stiffenerDependency: boolean;
+  compatibleEditions: readonly string[];
+  scopeState: UsShearMethodScopeState;
+};
+
+export type USSteelShearContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  shearDemandRefs: readonly string[];
+  designMethod: UsDesignMethod;
+  unitSystem: UsUnitSystem;
+  shearAxis: SteelShearAxis;
+  sectionGeometry: string | null;
+  webGeometry: { clearWebDepth: number | null; webThickness: number | null };
+  shearAreaContext: "GOVERNED_EXPLICIT";
+  panelGeometryContext: {
+    panelLengthM: number | null;
+    stiffenerSpacingM: number | null;
+    boundaryMetadata: string | null;
+  };
+  stiffenerContext: SteelShearStiffenerState;
+  webSlendernessContext: SteelWebSlendernessContext;
+  elementClassificationState: UsElementClassificationState;
   standardContextRef: string;
   buildingCodeContextRef: string | null;
   loadStandardContextRef: string | null;

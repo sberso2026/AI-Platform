@@ -45,7 +45,7 @@ export function bucklingCoefficient(property: SteelGovernedProperty): number {
 
 /**
  * Von Mises pure-shear yield force Vy = fy × Av / √3.
- * Established engineering mechanics. Not EN 1993 Vpl,Rd and not AS 4100 φVv.
+ * Established engineering mechanics. Not EN 1993 Vpl,Rd, AS 4100 φVv, or AISC Vn.
  */
 export function vonMisesShearYieldN(fy: SteelGovernedProperty, shearArea: SteelGovernedProperty): number {
   if (fy.unit === "MPa" && shearArea.unit === "mm2" && typeof fy.value === "number" && typeof shearArea.value === "number") {
@@ -57,7 +57,7 @@ export function vonMisesShearYieldN(fy: SteelGovernedProperty, shearArea: SteelG
 
 /**
  * Elastic critical shear force for a plate: τcr = kv π² E / (12(1-ν²)(d/t)²); Vcr = τcr × Av.
- * kv must be supplied; it is never defaulted from aspect ratio. Not EN 1993 web resistance.
+ * kv must be supplied; it is never defaulted from aspect ratio. Not EN 1993 web resistance or AISC Vn.
  */
 export function elasticShearBucklingForceN(input: {
   EPa: number;
