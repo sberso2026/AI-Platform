@@ -304,6 +304,28 @@ export const EU6_INTERACTION_LIMITATION_PROPAGATED = true as const;
 export const EU_STEEL_RELEASE_CLASSIFICATION = "INTERNAL_ENGINEERING_REFERENCE" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_EU7 = false as const;
 export const APPLICABILITY_EQUALS_SATISFIED = false as const;
+export const EOS_D1D_EU8_PHASE = "EOS-D1D-EU-8" as const;
+export const EU_VALIDATION_DIMENSIONS_SEPARATE = true as const;
+export const SILENT_STANDARD_IDENTITY_INFERENCE = false as const;
+export const ELASTIC_BENDING_EQUALS_EN1993_SECTION_RESISTANCE = false as const;
+export const ELASTIC_LTB_EQUALS_EN1993_MEMBER_RESISTANCE = false as const;
+export const ELASTIC_SHEAR_EQUALS_EN1993_RESISTANCE = false as const;
+export const BENCHMARK_EQUALS_EUROCODE_CONFORMANCE = false as const;
+export const EU_CONFORMANCE_EVIDENCE_REQUIRED = true as const;
+export const EUROCODE_NOT_HARDCODED_TO_EU_MEMBERSHIP = true as const;
+export const MEMBER_VALIDATION_IMPLIES_GLOBAL_FRAME_VALIDATION = false as const;
+export const ANALYSIS_SCOPE_TRUTHFUL = true as const;
+export const EU_CONNECTION_DESIGN_VALIDATED = false as const;
+export const EU_THIRD_PARTY_VALIDATION_AVAILABLE = false as const;
+export const PACK_CERTIFICATION_NOT_OVERSTATED = true as const;
+export const NEW_MAJOR_DESIGN_METHOD_IMPLEMENTED = false as const;
+export const EU_STEEL_PRODUCT_CLAIM_LEVEL = "BENCHMARKED_ENGINEERING_REFERENCE_CAPABILITY" as const;
+export const EU_STEEL_STANDARD_CONFORMANCE_STATE = "INTENDED_PROFILE" as const;
+export const EU_STEEL_RESULT_WARNING_MODEL = true as const;
+export const EU_VALIDATION_PILOT_EXPOSURE = false as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU8 = false as const;
+export const NUMERICAL_EU_INTERACTION_METHODS_AFTER_EU8 = [] as const;
+export const COMMON_MECHANICS_EQUALS_COMMON_CODE_AUTHORITY = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -1182,6 +1204,90 @@ export type AuThirdPartyValidationRecord = {
 };
 
 export type AuValidationDebtItem = {
+  debtId: string;
+  description: string;
+  priority: AuValidationPriority;
+};
+
+export const EU_METHOD_CLASSIFICATIONS = [
+  "ENGINEERING_MECHANICS_REFERENCE",
+  "DETERMINISTIC_CAPACITY_METHOD",
+  "STABILITY_REFERENCE",
+  "CODE_PROFILE_METHOD",
+  "INTERACTION_METHOD",
+  "SERVICEABILITY_METHOD",
+  "ORCHESTRATION_METHOD",
+] as const;
+export type EuMethodClassification = (typeof EU_METHOD_CLASSIFICATIONS)[number];
+
+export const EU_PRODUCT_CLAIM_LEVELS = [
+  "REFERENCE_CAPABILITY",
+  "BENCHMARKED_ENGINEERING_REFERENCE_CAPABILITY",
+  "BOUNDED_ENGINEER_VALIDATED_CAPABILITY",
+  "BOUNDED_CONFORMANCE_VALIDATED_CAPABILITY",
+  "CERTIFIED_DESIGN_CAPABILITY",
+] as const;
+export type EuProductClaimLevel = (typeof EU_PRODUCT_CLAIM_LEVELS)[number];
+
+export type EuMethodValidationRecord = {
+  methodId: string;
+  category: string;
+  methodType: EuMethodClassification;
+  technicalBasis: string;
+  authorityType: EngineeringRuleAuthorityType;
+  standardFamily: "EUROCODE";
+  standardPart: string;
+  editionRequirement: typeof EUROCODE_UNKNOWN_EDITION_TOKEN;
+  nationalAnnexDependency: "REQUIRED" | "OPTIONAL" | "NOT_REQUIRED" | "NDP_REQUIRED";
+  ndpDependency: boolean;
+  requiredInputs: string[];
+  supportedScope: string;
+  unsupportedScope: string;
+  implementationVersion: string;
+  benchmarkRefs: string[];
+  numericalValidationState: AuNumericalValidationState;
+  engineeringValidationState: AuEngineeringValidationState;
+  standardConformanceState: SteelStandardConformanceState;
+  humanReviewRequirement: "required";
+  classifications: EuMethodClassification[];
+};
+
+export type EuSteelValidationMatrixRow = {
+  capability: string;
+  implemented: boolean;
+  numericallyValidated: boolean;
+  engineerValidated: boolean;
+  codeProfileImplemented: boolean;
+  conformanceValidated: boolean;
+  certified: boolean;
+  limitation: string;
+};
+
+export type EuMethodEngineeringConfirmation = {
+  methodRef: string;
+  validationScope: string;
+  reviewOutcome: "CONFIRMED" | "REJECTED" | "REQUIRES_REVISION";
+  evidenceRefs: string[];
+  reviewedAt: string;
+  reviewerAuthorityRef: string;
+  projectApprovalImplied: false;
+  professionalCertificationImplied: false;
+  softwareCertificationImplied: false;
+};
+
+export type EuThirdPartyValidationRecord = {
+  software: string;
+  version: string;
+  standardProfile: string;
+  nationalAnnex: string | null;
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  difference: number | null;
+  tolerance: { relative: number; absolute: number };
+  reviewState: string;
+};
+
+export type EuValidationDebtItem = {
   debtId: string;
   description: string;
   priority: AuValidationPriority;

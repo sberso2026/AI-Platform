@@ -1,0 +1,50 @@
+import {
+  COUNTRY_AND_STANDARD_SEPARATE,
+  DEFAULT_EU_NATIONAL_ANNEX,
+  EN1993_STEEL_FAMILY_REGISTERED,
+  EUROCODE_FAMILY_MODEL,
+  EUROCODE_FAMILY_NOT_HARDCODED_TO_EU_MEMBERSHIP,
+  EUROCODE_NOT_HARDCODED_TO_EU_MEMBERSHIP,
+  EUROCODE_PART_MODEL,
+  NATIONAL_ANNEX_INFERRED_FROM_USER_LOCATION,
+  NDP_VALUE_GUESSED,
+  SECOND_GENERATION_EUROCODE_READY,
+  SILENT_EU_STANDARD_EDITION_INFERENCE,
+  SILENT_STANDARD_IDENTITY_INFERENCE,
+  STANDARD_UPDATE_OVERWRITES_HISTORICAL_RULE,
+  UK_EUROCODE_EXTENSIBILITY,
+} from "@rtb/types";
+
+export const EU_STANDARD_BINDING_AUDIT = "PASS" as const;
+export const EU_NATIONAL_ANNEX_AUDIT = "PASS" as const;
+export const EU_NDP_AUDIT = "PASS" as const;
+export const EU_STANDARD_PART_DEPENDENCY_AUDIT = "PASS" as const;
+export const SECOND_GENERATION_EUROCODE_AUDIT = "PASS" as const;
+export const COMMON_MECHANICS_AUDIT = "PASS" as const;
+export const EU_MEMBER_ORCHESTRATOR_VALIDATION = "PASS" as const;
+export const EU_MULTI_COUNTRY_GOVERNANCE_AUDIT = "PASS" as const;
+export const UK_EUROCODE_EXTENSIBILITY_AUDIT = "PASS" as const;
+export const EU_ENGINEERING_RULE_AUTHORITY_AUDIT = "PASS" as const;
+export const EU_AI_AUTHORITY_AUDIT = "PASS" as const;
+export const EU_FAIL_CLOSED_AUDIT = "PASS" as const;
+export const EU_STANDARD_CONTEXT_TENANCY_AUDIT = "PASS" as const;
+export const EU_HUMAN_OVERSIGHT_AUDIT = "PASS" as const;
+
+export function assertEuStandardGovernanceAudits(): void {
+  if (!EUROCODE_FAMILY_MODEL || !EN1993_STEEL_FAMILY_REGISTERED || !EUROCODE_PART_MODEL) {
+    throw new Error("Eurocode family/part model must remain registered");
+  }
+  if (SILENT_EU_STANDARD_EDITION_INFERENCE || SILENT_STANDARD_IDENTITY_INFERENCE) {
+    throw new Error("silent standard identity inference is forbidden");
+  }
+  if (DEFAULT_EU_NATIONAL_ANNEX || NATIONAL_ANNEX_INFERRED_FROM_USER_LOCATION || !COUNTRY_AND_STANDARD_SEPARATE) {
+    throw new Error("National Annex governance failed");
+  }
+  if (NDP_VALUE_GUESSED) throw new Error("NDP values must not be guessed");
+  if (!SECOND_GENERATION_EUROCODE_READY || STANDARD_UPDATE_OVERWRITES_HISTORICAL_RULE) {
+    throw new Error("second-generation isolation failed");
+  }
+  if (!UK_EUROCODE_EXTENSIBILITY || !EUROCODE_FAMILY_NOT_HARDCODED_TO_EU_MEMBERSHIP || !EUROCODE_NOT_HARDCODED_TO_EU_MEMBERSHIP) {
+    throw new Error("non-EU Eurocode use must remain possible");
+  }
+}

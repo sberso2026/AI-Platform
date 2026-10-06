@@ -536,7 +536,8 @@ export const EU_STEEL_IMPLEMENTATION_SUBPHASES = [
   "EU-4 bending / LTB",
   "EU-5 shear",
   "EU-6 combined actions (EN interaction, annex-driven)",
-  "EU-7 independent certification gate",
+  "EU-7 member design orchestration",
+  "EU-8 independent validation / conformance / release gate",
 ] as const;
 
 export const US_STEEL_IMPLEMENTATION_SUBPHASES = [
