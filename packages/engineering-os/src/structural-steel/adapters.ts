@@ -17,6 +17,7 @@ import { evaluateAuSteelCombinedAction } from "./au-combined/evaluate";
 import { evaluateAuSteelCompression } from "./au-compression/evaluate";
 import { evaluateAuSteelShear } from "./au-shear/evaluate";
 import { evaluateAuSteelTension } from "./au-tension/evaluate";
+import { evaluateEuSteelBending } from "./eu-bending/evaluate";
 import { evaluateEuSteelCompression } from "./eu-compression/evaluate";
 import { evaluateEuSteelTension } from "./eu-tension/evaluate";
 import { requireMaterialProperties, requireSectionProperties, requireStabilityWhenNeeded } from "./properties";
@@ -88,6 +89,9 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
   }
   if (input.adapterId === "EU_STEEL" && (input.limitState === "COMPRESSION" || input.limitState === "MEMBER_STABILITY")) {
     return evaluateEuSteelCompression(input);
+  }
+  if (input.adapterId === "EU_STEEL" && (input.limitState === "BENDING_MAJOR" || input.limitState === "BENDING_MINOR")) {
+    return evaluateEuSteelBending(input);
   }
   const authority: SteelSourceAuthorityRecord = {
     authorityType: "LICENSED_STANDARD",

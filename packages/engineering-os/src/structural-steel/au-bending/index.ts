@@ -28,4 +28,3 @@ export {
   AU_SECTION_BENDING_METHOD_REGISTRY,
 } from "./registry";
 export { D1D_AU3_D0_RISK_DISPOSITION } from "./risk";
-export { demandMomentNm, elasticLtbMomentNm, firstYieldMomentNm } from "./units";
