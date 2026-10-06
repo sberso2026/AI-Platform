@@ -100,6 +100,20 @@ export const BENDING_SHEAR_INTERACTION_IMPLEMENTED = false as const;
 export const AXIAL_SHEAR_INTERACTION_IMPLEMENTED = false as const;
 export const CONNECTION_SHEAR_DESIGN_IMPLEMENTED = false as const;
 export const INTERACTION_REVIEW_REQUIRED = true as const;
+export const EOS_D1D_AU5_PHASE = "EOS-D1D-AU-5" as const;
+export const LLM_INTERACTION_AUTHORITY = false as const;
+export const AI_INTERACTION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const OPTIMIZATION_INTERACTION_RECHECK_REQUIRED = true as const;
+export const OPTIMIZATION_ACCEPTS_UNDETERMINED_AS_PASS = false as const;
+export const GENERIC_MATHEMATICS_EQUALS_CODE_INTERACTION = false as const;
+export const UNKNOWN_INTERACTION_RELATIONSHIP_GUESSED = false as const;
+export const BIAXIAL_LINEAR_INTERACTION_ASSUMED = false as const;
+export const SHEAR_REDUCTION_RULE_GUESSED = false as const;
+export const AU_COMBINED_PILOT_EXPOSURE = false as const;
+export const TORSIONAL_INTERACTION_IMPLEMENTED = false as const;
+export const CONNECTION_INTERACTION_IMPLEMENTED = false as const;
+export const COMPONENT_VECTOR_EQUALS_INTERACTION_CHECK = false as const;
+export const UNIVERSAL_INTERACTION_EQUATION = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -311,6 +325,104 @@ export type SteelTensionCheckRecord = {
   standardConformanceState: SteelStandardConformanceState;
 };
 
+export const STEEL_INTERACTION_TYPES = [
+  "TENSION_BENDING",
+  "TENSION_BIAXIAL_BENDING",
+  "COMPRESSION_BENDING",
+  "COMPRESSION_BIAXIAL_BENDING",
+  "BIAXIAL_BENDING",
+  "BENDING_SHEAR",
+  "AXIAL_SHEAR",
+  "AXIAL_BIAXIAL_BENDING",
+] as const;
+export type SteelInteractionType = (typeof STEEL_INTERACTION_TYPES)[number];
+
+export type SteelCombinedDemandComponent = {
+  resultId: string;
+  memberId: string;
+  combinationId: string | null;
+  kind: "AXIAL" | "MOMENT_MAJOR" | "MOMENT_MINOR" | "SHEAR";
+  value: number;
+  unit: string;
+  signed: number;
+};
+
+export type SteelCombinedCapacityComponent = {
+  capacityResultId: string;
+  methodId: string;
+  memberId: string;
+  combinationId: string | null;
+  kind: "TENSION" | "COMPRESSION" | "BENDING_MAJOR" | "BENDING_MINOR" | "SHEAR";
+  value: number;
+  unit: string;
+  standardProfileRef: string;
+  maturity: SteelMethodMaturity;
+};
+
+export type SteelCombinedActionInput = {
+  combinationRef: string;
+  componentDemands: SteelCombinedDemandComponent[];
+  componentCapacities: SteelCombinedCapacityComponent[];
+};
+
+export type SteelComponentUtilizationRow = {
+  kind: "AXIAL" | "BENDING_MAJOR" | "BENDING_MINOR" | "SHEAR";
+  demand: { value: number; unit: string };
+  capacity: { value: number; unit: string } | null;
+  ratio: number | null;
+  informationalOnly: true;
+};
+
+export type SteelComponentUtilizationVector = {
+  combinationRef: string;
+  rows: SteelComponentUtilizationRow[];
+  equalsInteractionCheck: false;
+};
+
+export type SteelCombinedActionContext = {
+  combinedContextId: string;
+  memberRef: string;
+  tensionDemandRef: string | null;
+  compressionDemandRef: string | null;
+  majorMomentDemandRef: string | null;
+  minorMomentDemandRef: string | null;
+  shearDemandRefs: string[];
+  tensionCapacityRefs: string[];
+  compressionCapacityRefs: string[];
+  majorBendingCapacityRefs: string[];
+  minorBendingCapacityRefs: string[];
+  shearCapacityRefs: string[];
+  stabilityContextRef: string | null;
+  sectionClassificationRef: typeof SECTION_CLASSIFICATION_STATE;
+  interactionRuleRef: string;
+  standardProfileRef: string;
+  technicalBasisRef: string;
+  provenanceRef: EosGlobalProvenanceContract;
+  validationState: string;
+};
+
+export type SteelCombinedActionResult = {
+  resultId: string;
+  memberRef: string;
+  combinationRef: string;
+  interactionType: SteelInteractionType;
+  componentDemandRefs: string[];
+  componentCapacityRefs: string[];
+  ruleRef: string;
+  interactionValue: null;
+  criterion: null;
+  checkState: SteelCheckVerdict;
+  reason: "INTERACTION_RULE_VALIDATION_REQUIRED";
+  governingComponent: string | null;
+  technicalBasisRef: string;
+  standardProfileRef: string;
+  standardConformanceState: SteelStandardConformanceState;
+  validationState: SteelMethodMaturity;
+  benchmarkState: "NOT_APPLICABLE";
+  humanReviewState: "required";
+  llmOriginated: false;
+};
+
 export type SteelCapacityEngineInput = {
   adapterId: SteelAdapterId;
   designContext: SteelDesignContext;
@@ -322,6 +434,7 @@ export type SteelCapacityEngineInput = {
   limitState: SteelLimitState;
   requiredProperties: string[];
   shear?: SteelShearInputContext | null;
+  combined?: SteelCombinedActionInput | null;
 };
 
 export type SteelCompressionCheckRecord = {
@@ -452,6 +565,9 @@ export type SteelCapacityEngineOutput = {
   designCapacityState?: "VALIDATION_REQUIRED" | "IMPLEMENTED";
   sectionClassificationState?: typeof SECTION_CLASSIFICATION_STATE;
   interactionReviewRequired?: true;
+  combinedResults?: SteelCombinedActionResult[];
+  componentUtilizations?: SteelComponentUtilizationVector;
+  interactionRequired?: boolean;
 };
 
 export type SteelUtilizationComposition = {
@@ -492,6 +608,7 @@ export type SteelOptimizationCandidate = {
   proposedBy: "AI" | "OPTIMIZER" | "HUMAN";
   deterministicRecheckRequired: true;
   rechecked: boolean;
+  interactionCheckState?: SteelCheckVerdict | null;
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

@@ -4,15 +4,18 @@ export * from "./au-tension";
 export * from "./au-compression";
 export * from "./au-bending";
 export * from "./au-shear";
+export * from "./au-combined";
 export {
   assertLlmCannotOriginateCapacity,
   assertOptimizationBendingRecheck,
   assertOptimizationCandidateRecheck,
+  assertOptimizationInteractionRecheck,
   assertOptimizationShearRecheck,
   AU_STEEL_IMPLEMENTATION_SUBPHASES,
   consumeDemandHandoff,
   EU_STEEL_IMPLEMENTATION_SUBPHASES,
   orchestrateAuBendingDesignCheck,
+  orchestrateAuCombinedActionDesignCheck,
   orchestrateAuCompressionDesignCheck,
   orchestrateAuShearDesignCheck,
   orchestrateAuTensionDesignCheck,

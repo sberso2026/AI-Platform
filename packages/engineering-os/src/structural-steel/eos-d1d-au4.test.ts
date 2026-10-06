@@ -411,7 +411,6 @@ describe("EOS-D1D-AU-4 Australian steel shear", () => {
     });
     expect(bending.verdict).toBe("CHECK_UNDETERMINED");
     expect(bending.engineeringApproved).toBe(false);
-    expect(() => evaluateSteelCapacity(capacityInput({ limitState: "COMBINED_ACTION" }))).toThrow(/stability context|unsupported calculation scope/);
     expect(() => evaluateSteelCapacity(capacityInput({ limitState: "OTHER" }))).toThrow(/unsupported calculation scope/);
     expect(() => assertLlmCannotOriginateCapacity(true)).toThrow(/originate capacity/);
     expect(() => assertAiCannotInventShear("AI", false)).toThrow(/AI cannot supply missing shear parameters/);

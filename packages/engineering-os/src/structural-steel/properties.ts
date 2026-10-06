@@ -54,7 +54,7 @@ export function requireSectionProperties(section: SteelSectionDesignProperties, 
 
 export function requireStabilityWhenNeeded(limitState: string, stability: SteelStabilityContext | null): void {
   if (SILENT_EFFECTIVE_LENGTH_ASSUMPTION) throw new Error("effective length must not be assumed silently");
-  const needsStability = limitState === "COMPRESSION" || limitState === "MEMBER_STABILITY" || limitState === "COMBINED_ACTION" || limitState === "LOCAL_STABILITY";
+  const needsStability = limitState === "COMPRESSION" || limitState === "MEMBER_STABILITY" || limitState === "LOCAL_STABILITY";
   if (!needsStability) return;
   if (!stability) throw new Error("steel design fail closed: missing stability context");
   if (stability.derived) throw new Error("steel design fail closed: stability context must be explicit, not derived silently");

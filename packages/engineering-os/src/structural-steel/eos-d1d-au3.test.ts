@@ -381,7 +381,6 @@ describe("EOS-D1D-AU-3 Australian steel bending / LTB", () => {
     expect(compression.verdict).toBe("CHECK_UNDETERMINED");
     expect(compression.utilization?.ratio).toBeCloseTo(400_000 / 616_850, 5);
     expect(() => evaluateSteelCapacity(capacityInput({ limitState: "OTHER" }))).toThrow(/unsupported calculation scope/);
-    expect(() => evaluateSteelCapacity(capacityInput({ limitState: "COMBINED_ACTION" }))).toThrow(/stability context|unsupported calculation scope/);
     expect(() => assertLlmCannotOriginateCapacity(true)).toThrow(/originate capacity/);
     expect(() => assertAiCannotInventLtb("AI", false)).toThrow(/AI cannot invent LTB values/);
     expect(LLM_BENDING_CAPACITY_AUTHORITY).toBe(false);

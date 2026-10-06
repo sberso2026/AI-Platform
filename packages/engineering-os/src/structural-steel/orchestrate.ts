@@ -11,7 +11,9 @@ import {
   AI_ENGINEERING_APPROVAL,
   CHECK_RESULT_EQUALS_ENGINEERING_APPROVAL,
   LLM_STEEL_CAPACITY_AUTHORITY,
+  OPTIMIZATION_ACCEPTS_UNDETERMINED_AS_PASS,
   OPTIMIZATION_BENDING_RECHECK_REQUIRED,
+  OPTIMIZATION_INTERACTION_RECHECK_REQUIRED,
   OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK,
   OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
   UNIVERSAL_INTERACTION_EQUATION_HARDCODED,
@@ -249,6 +251,44 @@ export function assertOptimizationBendingRecheck(candidate: SteelOptimizationCan
 export function assertOptimizationShearRecheck(candidate: SteelOptimizationCandidate): void {
   if (!OPTIMIZATION_SHEAR_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
   assertOptimizationCandidateRecheck(candidate);
+}
+
+export function orchestrateAuCombinedActionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL" || input.capacityInput.limitState !== "COMBINED_ACTION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "COMBINED_ACTION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: false,
+    demandValue: { value: 0, unit: "1" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    utilization: null,
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+    engineeringApproved: false,
+  };
+}
+
+export function assertOptimizationInteractionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_INTERACTION_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
+  if (OPTIMIZATION_ACCEPTS_UNDETERMINED_AS_PASS) throw new Error("optimizer cannot accept undetermined interaction as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.interactionCheckState !== "CHECK_SATISFIED" && candidate.interactionCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined interaction as pass");
+  }
 }
 
 export function assertLlmCannotOriginateCapacity(llmOriginated: boolean): void {
