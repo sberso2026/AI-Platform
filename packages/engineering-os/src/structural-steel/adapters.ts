@@ -22,6 +22,7 @@ import { evaluateEuSteelCombinedAction } from "./eu-combined/evaluate";
 import { evaluateEuSteelCompression } from "./eu-compression/evaluate";
 import { evaluateEuSteelShear } from "./eu-shear/evaluate";
 import { evaluateEuSteelTension } from "./eu-tension/evaluate";
+import { evaluateUsSteelTension } from "./us-tension/evaluate";
 import { requireMaterialProperties, requireSectionProperties, requireStabilityWhenNeeded } from "./properties";
 
 const ADAPTER_SCOPES: Record<SteelAdapterId, { jurisdictions: string[]; standardPrefixes: string[]; editions: string[] }> = {
@@ -100,6 +101,9 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
   }
   if (input.adapterId === "EU_STEEL" && input.limitState === "COMBINED_ACTION") {
     return evaluateEuSteelCombinedAction(input);
+  }
+  if (input.adapterId === "US_STEEL" && input.limitState === "TENSION") {
+    return evaluateUsSteelTension(input);
   }
   const authority: SteelSourceAuthorityRecord = {
     authorityType: "LICENSED_STANDARD",

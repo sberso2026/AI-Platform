@@ -27,6 +27,9 @@ import {
   EU_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED,
   EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION,
   MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK,
+  MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK,
+  US_OPTIMIZATION_TENSION_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_TENSION,
 } from "@rtb/types";
 import { toForceN, toMomentNm } from "../structural-demand/units";
 import { evaluateSteelCapacity } from "./adapters";
@@ -303,6 +306,42 @@ export function assertOptimizationInteractionRecheck(candidate: SteelOptimizatio
 
 export function assertLlmCannotOriginateCapacity(llmOriginated: boolean): void {
   if (llmOriginated || LLM_STEEL_CAPACITY_AUTHORITY) throw new Error("AI cannot originate capacity");
+}
+
+export function orchestrateUsTensionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL" || input.capacityInput.limitState !== "TENSION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK || MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as an AISC check");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = axial.valueN;
+  const tensileDemand = demandN > 0;
+  return orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "TENSION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: tensileDemand,
+    demandValue: { value: demandN, unit: "N" },
+  });
+}
+
+export function assertOptimizationUsTensionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_TENSION_RECHECK_REQUIRED) throw new Error("US tension optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_TENSION) throw new Error("optimizer cannot accept undetermined tension as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState != null && candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined tension as pass");
+  }
 }
 
 export function orchestrateEuTensionDesignCheck(input: {

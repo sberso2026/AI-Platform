@@ -395,6 +395,45 @@ export const THREE_JURISDICTION_ARCHITECTURE_VALIDATED = true as const;
 export const US_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const US_VALIDATION_PILOT_EXPOSURE = false as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_US1 = false as const;
+export const EOS_D1D_US2_PHASE = "EOS-D1D-US-2" as const;
+export const PARALLEL_US_STEEL_CORE_CREATED = false as const;
+export const COMMON_STEEL_FRAMEWORK_REUSED = true as const;
+export const US1_STANDARD_BINDING_REUSED = true as const;
+export const AU_CODE_RULES_REUSED_AS_US_RULES = false as const;
+export const EU_CODE_RULES_REUSED_AS_US_RULES = false as const;
+export const COMMON_MECHANICS_SHARED_ACROSS_LRFD_ASD = true as const;
+export const LRFD_ASD_MECHANICS_DUPLICATED = false as const;
+export const GENERIC_MECHANICS_EQUALS_AISC_DESIGN_STRENGTH = false as const;
+export const MECHANICS_REFERENCE_EQUALS_AISC_NOMINAL_STRENGTH = false as const;
+export const US_LRFD_RESISTANCE_FACTOR_GUESSED = false as const;
+export const US_ASD_FACTOR_GUESSED = false as const;
+export const US_SHEAR_LAG_FACTOR_GUESSED = false as const;
+export const US_HOLE_DEDUCTION_GUESSED = false as const;
+export const UNKNOWN_US_TENSION_CODE_PARAMETER_GUESSED = false as const;
+export const DIRECT_CONTRACT_PROFILE_EQUALS_BUILDING_CODE_COMPLIANCE = false as const;
+export const MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK = false as const;
+export const BENCHMARK_EQUALS_AISC_CONFORMANCE = false as const;
+export const COMMON_BENCHMARK_EQUALS_AISC_CONFORMANCE = false as const;
+export const LLM_US_TENSION_STRENGTH_AUTHORITY = false as const;
+export const AI_US_TENSION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_FACTOR_AUTHORITY = false as const;
+export const AI_NET_AREA_AUTHORITY = false as const;
+export const US_BLOCK_SHEAR_IMPLEMENTED = false as const;
+export const US_CONNECTION_TENSION_DESIGN_IMPLEMENTED = false as const;
+export const US_SEISMIC_TENSION_DESIGN_IMPLEMENTED = false as const;
+export const US_FATIGUE_TENSION_DESIGN_IMPLEMENTED = false as const;
+export const US_OPTIMIZATION_TENSION_RECHECK_REQUIRED = true as const;
+export const US_OPTIMIZATION_ACCEPTS_UNDETERMINED_TENSION = false as const;
+export const US_STEEL_IMPLEMENTATION_MATURITY = "FRAMEWORK_PLUS_BOUNDED_METHODS" as const;
+export const US_STEEL_MATURITY_NOT_OVERSTATED = true as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US2 = false as const;
+export const US_LRFD_RESISTANCE_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_ASD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_SECTION_CATALOG_OPTIONAL = true as const;
+export const US2_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const US_TENSION_STRENGTH_RESULT_STATE = "PARTIAL" as const;
+export const US_TENSION_INDEPENDENT_BENCHMARK_STATE = "PARTIAL" as const;
+export const US_TENSION_HUMAN_VALIDATION_REQUIRED = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -585,7 +624,7 @@ export type SteelEngineeringRule = {
   humanReviewState: string;
   provenanceRef: string;
   clauseRef: string | null;
-  intendedStandardProfile: "AS4100" | "EN1993";
+  intendedStandardProfile: "AS4100" | "EN1993" | "AISC360";
   standardConformanceState: SteelStandardConformanceState;
   bindingState: SteelImplementationBindingState;
 };
@@ -741,6 +780,7 @@ export type SteelCapacityEngineInput = {
   shear?: SteelShearInputContext | null;
   combined?: SteelCombinedActionInput | null;
   eurocodeContext?: EurocodeSteelDesignContext | null;
+  usSteelContext?: USSteelDesignContext | null;
 };
 
 export type SteelCompressionCheckRecord = {
@@ -2012,4 +2052,50 @@ export type UsStandardSourceReference = {
   authorityType: EngineeringRuleAuthorityType;
   validationState: string;
   contentEmbedded: false;
+};
+
+export const US_TENSION_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type UsTensionMethodScopeState = (typeof US_TENSION_METHOD_SCOPE_STATES)[number];
+
+export type UsTensionMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "AISC_LRFD_DESIGN_STRENGTH" | "AISC_ASD_ALLOWABLE_STRENGTH" | "NOMINAL_STRENGTH_REFERENCE";
+  aiscEditionRequirement: string;
+  designMethodApplicability: "LRFD" | "ASD" | "BOTH";
+  loadBasisRequirement: "STRENGTH" | "ALLOWABLE" | "NONE";
+  factorDependencies: readonly string[];
+  localAmendmentDependencies: readonly string[];
+  sectionPropertyDependencies: readonly string[];
+  materialPropertyDependencies: readonly string[];
+  compatibleEditions: readonly string[];
+  scopeState: UsTensionMethodScopeState;
+};
+
+export type USSteelTensionContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  axialDemandRef: string;
+  designMethod: UsDesignMethod;
+  unitSystem: UsUnitSystem;
+  grossAreaRef: string;
+  netAreaRef: string;
+  effectiveNetAreaRef: string | null;
+  standardContextRef: string;
+  buildingCodeContextRef: string | null;
+  loadStandardContextRef: string | null;
+  localAmendmentSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  materialPropertyRefs: readonly string[];
+  sectionPropertyRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenance: string;
+  directContractProfile: boolean;
 };
