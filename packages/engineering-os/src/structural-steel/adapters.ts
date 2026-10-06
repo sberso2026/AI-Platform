@@ -22,6 +22,7 @@ import { evaluateEuSteelCombinedAction } from "./eu-combined/evaluate";
 import { evaluateEuSteelCompression } from "./eu-compression/evaluate";
 import { evaluateEuSteelShear } from "./eu-shear/evaluate";
 import { evaluateEuSteelTension } from "./eu-tension/evaluate";
+import { evaluateUsSteelCompression } from "./us-compression/evaluate";
 import { evaluateUsSteelTension } from "./us-tension/evaluate";
 import { requireMaterialProperties, requireSectionProperties, requireStabilityWhenNeeded } from "./properties";
 
@@ -72,7 +73,10 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
   }
   requireMaterialProperties(input.material, input.requiredProperties.filter((name) => name.startsWith("material.")).map((name) => name.slice("material.".length)));
   requireSectionProperties(input.section, input.requiredProperties.filter((name) => name.startsWith("section.")).map((name) => name.slice("section.".length)));
-  requireStabilityWhenNeeded(input.limitState, input.stability);
+  const usDirectAnalysis = input.adapterId === "US_STEEL"
+    && (input.limitState === "COMPRESSION" || input.limitState === "MEMBER_STABILITY")
+    && input.usStabilityContext?.method === "DIRECT_ANALYSIS_BASED";
+  requireStabilityWhenNeeded(input.limitState, input.stability, { requireEffectiveLength: !usDirectAnalysis });
   if (input.adapterId === "AU_STEEL") {
     if (input.limitState === "TENSION") return evaluateAuSteelTension(input);
     if (input.limitState === "COMPRESSION" || input.limitState === "MEMBER_STABILITY") {
@@ -104,6 +108,9 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
   }
   if (input.adapterId === "US_STEEL" && input.limitState === "TENSION") {
     return evaluateUsSteelTension(input);
+  }
+  if (input.adapterId === "US_STEEL" && (input.limitState === "COMPRESSION" || input.limitState === "MEMBER_STABILITY")) {
+    return evaluateUsSteelCompression(input);
   }
   const authority: SteelSourceAuthorityRecord = {
     authorityType: "LICENSED_STANDARD",

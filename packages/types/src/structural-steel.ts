@@ -434,6 +434,45 @@ export const US2_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const US_TENSION_STRENGTH_RESULT_STATE = "PARTIAL" as const;
 export const US_TENSION_INDEPENDENT_BENCHMARK_STATE = "PARTIAL" as const;
 export const US_TENSION_HUMAN_VALIDATION_REQUIRED = true as const;
+export const EOS_D1D_US3_PHASE = "EOS-D1D-US-3" as const;
+export const PARALLEL_US_COMPRESSION_CORE_CREATED = false as const;
+export const US2_DESIGN_METHOD_ARCHITECTURE_REUSED = true as const;
+export const COMMON_COMPRESSION_MECHANICS_SHARED_ACROSS_LRFD_ASD = true as const;
+export const LRFD_ASD_COMPRESSION_MECHANICS_DUPLICATED = false as const;
+export const STABILITY_ANALYSIS_METHOD_MIXING_ALLOWED = false as const;
+export const SUPPORT_LABEL_AUTOMATICALLY_DEFINES_K_FACTOR = false as const;
+export const DEFAULT_K_FACTOR = false as const;
+export const D1C_EQUALS_COMPLETE_US_STABILITY_ANALYSIS = false as const;
+export const EULER_REFERENCE_EQUALS_AISC_MEMBER_STRENGTH = false as const;
+export const US_CODE_SLENDERNESS_LIMIT_GUESSED = false as const;
+export const US_ELEMENT_CLASSIFICATION_LIMIT_GUESSED = false as const;
+export const US_COMPRESSION_STRENGTH_RULE_GUESSED = false as const;
+export const US_COMPRESSION_LRFD_FACTOR_GUESSED = false as const;
+export const US_COMPRESSION_ASD_FACTOR_GUESSED = false as const;
+export const UNKNOWN_US_COMPRESSION_CODE_PARAMETER_GUESSED = false as const;
+export const US_TORSIONAL_BUCKLING_CODE_METHOD_IMPLEMENTED = false as const;
+export const US_FLEXURAL_TORSIONAL_BUCKLING_CODE_METHOD_IMPLEMENTED = false as const;
+export const LLM_US_COMPRESSION_STRENGTH_AUTHORITY = false as const;
+export const AI_US_COMPRESSION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_EFFECTIVE_LENGTH_FACTOR_AUTHORITY = false as const;
+export const AI_STABILITY_METHOD_AUTHORITY = false as const;
+export const AI_ELEMENT_CLASSIFICATION_AUTHORITY = false as const;
+export const US_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED = true as const;
+export const US_OPTIMIZATION_ACCEPTS_UNDETERMINED_COMPRESSION = false as const;
+export const US_MEMBER_COMPRESSION_EQUALS_GLOBAL_FRAME_VALIDATION = false as const;
+export const US_SEISMIC_COMPRESSION_DESIGN_IMPLEMENTED = false as const;
+export const US_CONNECTION_COMPRESSION_DESIGN_IMPLEMENTED = false as const;
+export const US_COMPRESSION_STRENGTH_RESULT_STATE = "PARTIAL" as const;
+export const US_COMPRESSION_INDEPENDENT_BENCHMARK_STATE = "PARTIAL" as const;
+export const US_COMPRESSION_HUMAN_VALIDATION_REQUIRED = true as const;
+export const US_COMPRESSION_LRFD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const US_COMPRESSION_ASD_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US3 = false as const;
+export const US3_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const STABILITY_METHOD_DETERMINES_EFFECTIVE_LENGTH_REQUIREMENT = true as const;
+export const MIXED_AUTHORITY_COMPRESSION_COMPARISON_GOVERNED = true as const;
+export const US_COMPRESSION_STANDARD_CONTEXT_REQUIRED = true as const;
+export const US_COMPRESSION_DESIGN_METHOD_REQUIRED = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -781,6 +820,7 @@ export type SteelCapacityEngineInput = {
   combined?: SteelCombinedActionInput | null;
   eurocodeContext?: EurocodeSteelDesignContext | null;
   usSteelContext?: USSteelDesignContext | null;
+  usStabilityContext?: UsStabilityAnalysisContext | null;
 };
 
 export type SteelCompressionCheckRecord = {
@@ -2097,5 +2137,87 @@ export type USSteelTensionContext = {
   validationState: string;
   conformanceState: SteelStandardConformanceState;
   provenance: string;
+  directContractProfile: boolean;
+};
+
+export const US_STABILITY_ANALYSIS_METHODS = [
+  "EFFECTIVE_LENGTH_BASED",
+  "DIRECT_ANALYSIS_BASED",
+  "OTHER_GOVERNED_METHOD",
+  "UNKNOWN",
+] as const;
+export type UsStabilityAnalysisMethod = (typeof US_STABILITY_ANALYSIS_METHODS)[number];
+
+export const US_SECOND_ORDER_ANALYSIS_STATES = [
+  "FIRST_ORDER",
+  "SECOND_ORDER",
+  "P_DELTA",
+  "P_SMALL_DELTA",
+  "OTHER_GOVERNED_ANALYSIS",
+  "UNKNOWN",
+] as const;
+export type UsSecondOrderAnalysisState = (typeof US_SECOND_ORDER_ANALYSIS_STATES)[number];
+
+export type UsStabilityAnalysisContext = {
+  method: UsStabilityAnalysisMethod;
+  secondOrder: UsSecondOrderAnalysisState;
+  mixedMethods: boolean;
+};
+
+export const US_COMPRESSION_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type UsCompressionMethodScopeState = (typeof US_COMPRESSION_METHOD_SCOPE_STATES)[number];
+
+export const US_ELEMENT_CLASSIFICATION_STATES = [
+  "CLASSIFIED",
+  "VALIDATION_REQUIRED",
+  "NOT_REQUIRED",
+  "UNSUPPORTED",
+] as const;
+export type UsElementClassificationState = (typeof US_ELEMENT_CLASSIFICATION_STATES)[number];
+
+export type UsCompressionMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "ELASTIC_BUCKLING_REFERENCE" | "AISC_NOMINAL_COMPRESSIVE_STRENGTH" | "AISC_LRFD_DESIGN_STRENGTH" | "AISC_ASD_ALLOWABLE_STRENGTH";
+  aiscEditionRequirement: string;
+  designMethodApplicability: "LRFD" | "ASD" | "BOTH";
+  stabilityAnalysisMethodDependency: UsStabilityAnalysisMethod | "NONE";
+  axis: SteelBucklingAxis | "SQUASH" | "CLASSIFICATION" | "SLENDERNESS" | "STRENGTH_CURVE";
+  factorDependencies: readonly string[];
+  localAmendmentDependencies: readonly string[];
+  elementClassificationDependency: boolean;
+  compatibleEditions: readonly string[];
+  scopeState: UsCompressionMethodScopeState;
+};
+
+export type USSteelCompressionContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  compressionDemandRef: string;
+  designMethod: UsDesignMethod;
+  unitSystem: UsUnitSystem;
+  memberLengthM: number;
+  effectiveLengthMajorM: number | null;
+  effectiveLengthMinorM: number | null;
+  stabilityAnalysisMethod: UsStabilityAnalysisMethod;
+  secondOrderAnalysis: UsSecondOrderAnalysisState;
+  bucklingAxes: SteelBucklingAxis[];
+  restraintContext: string;
+  standardContextRef: string;
+  buildingCodeContextRef: string | null;
+  loadStandardContextRef: string | null;
+  localAmendmentSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenance: string;
+  effectiveLengthProvenanceRef: string;
+  elementClassificationState: UsElementClassificationState;
   directContractProfile: boolean;
 };

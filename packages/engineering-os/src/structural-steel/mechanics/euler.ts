@@ -26,7 +26,7 @@ export function toElasticModulusPa(property: SteelGovernedProperty, label: strin
 
 /**
  * Euler elastic buckling load Pcr = π²EI / Le².
- * Established engineering mechanics. Not EN 1993 member compression resistance.
+ * Established engineering mechanics. Not AS 4100, EN 1993, or AISC member compression strength.
  */
 export function eulerLoadN(elasticModulusPa: number, secondMomentM4: number, effectiveLengthM: number): number {
   if (!(elasticModulusPa > 0) || !(secondMomentM4 > 0) || !(effectiveLengthM > 0)) {
