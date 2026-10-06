@@ -443,6 +443,7 @@ describe("EOS-D1D-AU-4 Australian steel shear", () => {
     };
     const euOut = evaluateSteelCapacity(capacityInput({
       adapterId: "EU_STEEL",
+      limitState: "SHEAR",
       standardContext: eu,
       designContext: { ...designContext(), standardContextRef: eu.contextId },
       requiredProperties: [],

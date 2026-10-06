@@ -496,7 +496,7 @@ describe("EOS-D1D-EU-1 Eurocode steel standard binding", () => {
         inputEvidenceRefs: [],
         combinationId: null,
       },
-      limitState: "TENSION",
+      limitState: "SHEAR",
       requiredProperties: [],
     }).implemented).toBe(false);
   });

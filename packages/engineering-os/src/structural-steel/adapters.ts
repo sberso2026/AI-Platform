@@ -17,6 +17,7 @@ import { evaluateAuSteelCombinedAction } from "./au-combined/evaluate";
 import { evaluateAuSteelCompression } from "./au-compression/evaluate";
 import { evaluateAuSteelShear } from "./au-shear/evaluate";
 import { evaluateAuSteelTension } from "./au-tension/evaluate";
+import { evaluateEuSteelTension } from "./eu-tension/evaluate";
 import { requireMaterialProperties, requireSectionProperties, requireStabilityWhenNeeded } from "./properties";
 
 const ADAPTER_SCOPES: Record<SteelAdapterId, { jurisdictions: string[]; standardPrefixes: string[]; editions: string[] }> = {
@@ -80,6 +81,9 @@ export function evaluateSteelCapacity(input: SteelCapacityEngineInput): SteelCap
     }
     if (input.limitState === "COMBINED_ACTION") return evaluateAuSteelCombinedAction(input);
     throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.adapterId === "EU_STEEL" && input.limitState === "TENSION") {
+    return evaluateEuSteelTension(input);
   }
   const authority: SteelSourceAuthorityRecord = {
     authorityType: "LICENSED_STANDARD",

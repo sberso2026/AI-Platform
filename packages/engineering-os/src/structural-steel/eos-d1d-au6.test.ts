@@ -481,6 +481,7 @@ describe("EOS-D1D-AU-6 Australian steel member design orchestration", () => {
     };
     expect(evaluateSteelCapacity(capacityInput({
       adapterId: "EU_STEEL",
+      limitState: "SHEAR",
       standardContext: eu,
       designContext: { ...designContext(), standardContextRef: eu.contextId },
       requiredProperties: [],

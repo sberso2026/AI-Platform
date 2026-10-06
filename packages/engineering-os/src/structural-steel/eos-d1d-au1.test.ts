@@ -262,6 +262,7 @@ describe("EOS-D1D-AU-1 Australian steel tension", () => {
     };
     const euOut = evaluateSteelCapacity(capacityInput({
       adapterId: "EU_STEEL",
+      limitState: "SHEAR",
       standardContext: eu,
       designContext: { ...designContext(), standardContextRef: eu.contextId, demandRefs: ["demand-au1"] },
       requiredProperties: [],

@@ -191,6 +191,21 @@ export const EU_STEEL_PACK_CERTIFIED = false as const;
 export const READY_FOR_EU2_TENSION_ARCHITECTURE = true as const;
 export const EUROCODE_UNKNOWN_EDITION_TOKEN = "UNKNOWN_PENDING_CONFIRMATION" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_EU1 = false as const;
+export const EOS_D1D_EU2_PHASE = "EOS-D1D-EU-2" as const;
+export const PARALLEL_EU_STEEL_CORE_CREATED = false as const;
+export const AU_CODE_RULES_REUSED_AS_EU_RULES = false as const;
+export const GENERIC_MECHANICS_EQUALS_EN1993_CAPACITY = false as const;
+export const UNKNOWN_EU_CODE_PARAMETER_GUESSED = false as const;
+export const SILENT_NET_AREA_EQUALS_GROSS_AREA = false as const;
+export const EU_PARTIAL_FACTOR_GUESSED = false as const;
+export const BENCHMARK_EQUALS_EN1993_CONFORMANCE = false as const;
+export const AUTOMATIC_ENGINEERING_APPROVAL = false as const;
+export const LLM_EU_TENSION_CAPACITY_AUTHORITY = false as const;
+export const AI_EU_TENSION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED = true as const;
+export const EU_STEEL_IMPLEMENTATION_MATURITY = "FRAMEWORK_PLUS_BOUNDED_METHODS" as const;
+export const EU_PARTIAL_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU2 = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -373,7 +388,7 @@ export type SteelEngineeringRule = {
   humanReviewState: string;
   provenanceRef: string;
   clauseRef: string | null;
-  intendedStandardProfile: "AS4100";
+  intendedStandardProfile: "AS4100" | "EN1993";
   standardConformanceState: SteelStandardConformanceState;
   bindingState: SteelImplementationBindingState;
 };
@@ -512,6 +527,7 @@ export type SteelCapacityEngineInput = {
   requiredProperties: string[];
   shear?: SteelShearInputContext | null;
   combined?: SteelCombinedActionInput | null;
+  eurocodeContext?: EurocodeSteelDesignContext | null;
 };
 
 export type SteelCompressionCheckRecord = {
@@ -1168,5 +1184,38 @@ export type EurocodeSteelResolverInput = {
 export type EurocodeSteelResolverResult =
   | { ok: true; context: EurocodeSteelDesignContext; failReason: null }
   | { ok: false; context: null; failReason: EurocodeResolverFailReason; detail: string; checkState: "CHECK_UNDETERMINED" };
+
+export const EU_TENSION_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type EuTensionMethodScopeState = (typeof EU_TENSION_METHOD_SCOPE_STATES)[number];
+
+export type EuTensionMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "EUROCODE_PROFILE_CAPACITY";
+  standardPartRef: En1993PartId;
+  ndpDependencies: readonly string[];
+  ruleRequiresNdp: boolean;
+  compatibleGenerations: readonly EurocodeGenerationFamily[];
+  scopeState: EuTensionMethodScopeState;
+};
+
+export type EurocodeSteelTensionContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  axialDemandRef: string;
+  standardContextRef: string;
+  standardPartRef: En1993PartId | string;
+  nationalAnnexRef: string | null;
+  ndpSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  provenanceRef: string;
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+};
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

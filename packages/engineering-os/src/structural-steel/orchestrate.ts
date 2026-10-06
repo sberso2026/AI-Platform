@@ -17,6 +17,7 @@ import {
   OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK,
   OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
   UNIVERSAL_INTERACTION_EQUATION_HARDCODED,
+  EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED,
 } from "@rtb/types";
 import { toForceN, toMomentNm } from "../structural-demand/units";
 import { evaluateSteelCapacity } from "./adapters";
@@ -293,6 +294,35 @@ export function assertOptimizationInteractionRecheck(candidate: SteelOptimizatio
 
 export function assertLlmCannotOriginateCapacity(llmOriginated: boolean): void {
   if (llmOriginated || LLM_STEEL_CAPACITY_AUTHORITY) throw new Error("AI cannot originate capacity");
+}
+
+export function orchestrateEuTensionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL" || input.capacityInput.limitState !== "TENSION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = axial.valueN;
+  const tensileDemand = demandN > 0;
+  return orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "TENSION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: tensileDemand,
+    demandValue: { value: demandN, unit: "N" },
+  });
+}
+
+export function assertOptimizationEuTensionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED) throw new Error("EU tension optimizer candidates must be rechecked deterministically");
+  assertOptimizationCandidateRecheck(candidate);
 }
 
 export const AU_STEEL_IMPLEMENTATION_SUBPHASES = [
