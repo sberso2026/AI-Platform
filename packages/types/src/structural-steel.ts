@@ -114,6 +114,32 @@ export const TORSIONAL_INTERACTION_IMPLEMENTED = false as const;
 export const CONNECTION_INTERACTION_IMPLEMENTED = false as const;
 export const COMPONENT_VECTOR_EQUALS_INTERACTION_CHECK = false as const;
 export const UNIVERSAL_INTERACTION_EQUATION = false as const;
+export const EOS_D1D_AU6_PHASE = "EOS-D1D-AU-6" as const;
+export const AU_STEEL_PACK_CERTIFIED = false as const;
+export const AU_STEEL_IMPLEMENTATION_MATURITY = "PARTIAL_METHODS_BENCHMARKED" as const;
+export const AU_STEEL_STANDARD_CONFORMANCE_STATE = "INTENDED_PROFILE" as const;
+export const AU_STEEL_FRAMEWORK_STATE = "FRAMEWORK_IMPLEMENTED" as const;
+export const AU_STEEL_CONFORMANCE_SUMMARY = "CONFORMANCE_NOT_VALIDATED" as const;
+export const DEFAULT_DEFLECTION_LIMIT_GUESSED = false as const;
+export const SPAN_RATIO_DENOMINATOR_GUESSED = false as const;
+export const ULTIMATE_DEMAND_USED_AS_SERVICEABILITY_BY_DEFAULT = false as const;
+export const UNIVERSAL_MEMBER_UTILIZATION = false as const;
+export const HIGHEST_UTILIZATION_ALWAYS_GOVERNS = false as const;
+export const VIBRATION_DESIGN_IMPLEMENTED = false as const;
+export const AU_MEMBER_PILOT_EXPOSURE = false as const;
+export const AU6_AUTOMATIC_APPROVAL = false as const;
+export const MEMBER_CHECK_EQUALS_CONNECTION_CHECK = false as const;
+export const MEMBER_CHECK_EQUALS_FOUNDATION_APPROVAL = false as const;
+export const GENERAL_FEA_CAPABILITY_CLAIMED = false as const;
+export const ORCHESTRATION_EQUALS_CODE_CERTIFICATION = false as const;
+export const STALE_RESULT_REUSE_ALLOWED = false as const;
+export const APPLICABILITY_EQUALS_PASS = false as const;
+export const UNDETERMINED_REQUIRED_CHECK_ALLOWS_COMPLETE = false as const;
+export const COMPONENT_CHECKS_CAN_SUBSTITUTE_FOR_INTERACTION = false as const;
+export const UNVALIDATED_METHOD_COUNTS_AS_COMPLETE = false as const;
+export const AI_SECTION_SELECTION_EQUALS_APPROVAL = false as const;
+export const CANDIDATE_FULL_DETERMINISTIC_RECHECK_REQUIRED = true as const;
+export const AI_MEMBER_DESIGN_EXPLANATION_ADVISORY_ONLY = true as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -609,6 +635,205 @@ export type SteelOptimizationCandidate = {
   deterministicRecheckRequired: true;
   rechecked: boolean;
   interactionCheckState?: SteelCheckVerdict | null;
+  memberCheckState?: SteelCheckVerdict | null;
+};
+
+export const STEEL_MEMBER_DESIGN_CHECK_KINDS = [
+  "TENSION",
+  "COMPRESSION",
+  "BENDING_MAJOR",
+  "BENDING_MINOR",
+  "SHEAR_MAJOR",
+  "SHEAR_MINOR",
+  "STABILITY_COMPRESSION",
+  "STABILITY_LTB",
+  "COMBINED_ACTION",
+  "DEFLECTION",
+  "OTHER_SERVICEABILITY",
+] as const;
+export type SteelMemberDesignCheckKind = (typeof STEEL_MEMBER_DESIGN_CHECK_KINDS)[number];
+
+export const STEEL_MEMBER_COMPLETENESS_STATES = [
+  "COMPLETE",
+  "INCOMPLETE_REQUIRED_INPUT",
+  "INCOMPLETE_METHOD_UNAVAILABLE",
+  "INCOMPLETE_VALIDATION_REQUIRED",
+  "INCOMPLETE_INTERACTION",
+  "NOT_APPLICABLE",
+] as const;
+export type SteelMemberCompletenessState = (typeof STEEL_MEMBER_COMPLETENESS_STATES)[number];
+
+export const STEEL_INCOMPLETE_REASONS = [
+  "NOT_APPLICABLE",
+  "METHOD_NOT_IMPLEMENTED",
+  "VALIDATION_REQUIRED",
+  "MISSING_INPUT",
+  "INTERACTION_RULE_VALIDATION_REQUIRED",
+  "SERVICEABILITY_CRITERION_REQUIRED",
+  "STALE_RESULT",
+  "UNSUPPORTED_METHOD",
+] as const;
+export type SteelIncompleteReason = (typeof STEEL_INCOMPLETE_REASONS)[number];
+
+export const STEEL_SERVICEABILITY_CRITERION_SOURCES = [
+  "PROJECT_REQUIREMENT",
+  "CLIENT_REQUIREMENT",
+  "ENGINEERING_DESIGN_CRITERIA",
+  "VALIDATED_STANDARD_RULE",
+  "HUMAN_CONFIRMED_RULE",
+  "OTHER_GOVERNED_SOURCE",
+] as const;
+export type SteelServiceabilityCriterionSource = (typeof STEEL_SERVICEABILITY_CRITERION_SOURCES)[number];
+
+export const STEEL_SERVICEABILITY_CRITERION_TYPES = ["ABSOLUTE_DISPLACEMENT", "SPAN_RATIO", "OTHER"] as const;
+export type SteelServiceabilityCriterionType = (typeof STEEL_SERVICEABILITY_CRITERION_TYPES)[number];
+
+export const STEEL_OTHER_SERVICEABILITY_MODES = [
+  "VIBRATION",
+  "DRIFT",
+  "ROTATION",
+  "LOCAL_DEFORMATION",
+  "EQUIPMENT_ALIGNMENT",
+  "FLOOR_RESPONSE",
+] as const;
+export type SteelOtherServiceabilityMode = (typeof STEEL_OTHER_SERVICEABILITY_MODES)[number];
+
+export const STEEL_MEMBER_HUMAN_REVIEW_STATES = ["NOT_REVIEWED", "UNDER_REVIEW", "REVIEWED", "REQUIRES_REVISION"] as const;
+export type SteelMemberHumanReviewState = (typeof STEEL_MEMBER_HUMAN_REVIEW_STATES)[number];
+
+export const STEEL_MEMBER_APPROVAL_STATES = ["not_approved", "approved"] as const;
+export type SteelMemberApprovalState = (typeof STEEL_MEMBER_APPROVAL_STATES)[number];
+
+export const STEEL_MEMBER_CONFORMANCE_SUMMARY_STATES = [
+  "INTENDED_PROFILE",
+  "PARTIALLY_TRACEABLE",
+  "ENGINEER_CONFIRMED",
+  "CONFORMANCE_VALIDATED",
+  "CERTIFIED",
+] as const;
+export type SteelMemberConformanceSummaryState = (typeof STEEL_MEMBER_CONFORMANCE_SUMMARY_STATES)[number];
+
+export type SteelServiceabilityContext = {
+  memberRef: string;
+  serviceabilityDemandRef: string | null;
+  criterionRef: string | null;
+  criterionType: SteelServiceabilityCriterionType | null;
+  criterionValue: number | null;
+  criterionUnits: string | null;
+  criterionSource: SteelServiceabilityCriterionSource | null;
+  loadCaseOrCombinationRef: string | null;
+  projectRequirementRef: string | null;
+  standardProfileRef: string | null;
+  evidenceRef: string | null;
+  provenanceRef: EosGlobalProvenanceContract | null;
+  validationState: string;
+  spanM: number | null;
+};
+
+export type SteelServiceabilityResult = {
+  resultId: string;
+  memberRef: string;
+  demandRef: string | null;
+  criterionRef: string | null;
+  criterionSource: SteelServiceabilityCriterionSource | null;
+  loadContextRef: string | null;
+  actualValue: number | null;
+  actualUnits: string | null;
+  allowableValue: number | null;
+  allowableUnits: string | null;
+  ratio: number | null;
+  checkState: SteelCheckVerdict;
+  reason: string;
+  technicalBasisRef: string;
+  standardProfileRef: string;
+  standardConformanceState: SteelStandardConformanceState;
+  provenanceRef: EosGlobalProvenanceContract | null;
+  humanReviewState: "required";
+};
+
+export type SteelMemberDesignCheckRow = {
+  checkKind: SteelMemberDesignCheckKind;
+  applicable: boolean;
+  state: SteelCheckVerdict | null;
+  completeness: SteelMemberCompletenessState;
+  incompleteReason: SteelIncompleteReason | null;
+  checkRef: string | null;
+  utilization: number | null;
+  utilizationComparable: boolean;
+  reportLanguage: string;
+  methodMaturity: SteelMethodMaturity | null;
+};
+
+export type SteelMemberDesignFingerprint = {
+  sectionRef: string;
+  materialRef: string;
+  demandResultId: string;
+  combinationId: string | null;
+  effectiveLengthMajorM: number | null;
+  effectiveLengthMinorM: number | null;
+  unbracedLengthM: number | null;
+  standardContextId: string;
+  criterionRef: string | null;
+  methodVersions: Record<string, string>;
+};
+
+export type SteelMemberInvalidationTag =
+  | "SECTION_CHANGED"
+  | "MATERIAL_CHANGED"
+  | "LOAD_CHANGED"
+  | "UNBRACED_LENGTH_CHANGED"
+  | "EFFECTIVE_LENGTH_CHANGED"
+  | "SERVICEABILITY_CRITERION_CHANGED"
+  | "STANDARD_PROFILE_CHANGED";
+
+export type SteelOptimizationHandoff = {
+  satisfiedChecks: SteelMemberDesignCheckKind[];
+  failedChecks: SteelMemberDesignCheckKind[];
+  undeterminedChecks: SteelMemberDesignCheckKind[];
+  governingCheckKind: SteelMemberDesignCheckKind | null;
+  sectionRef: string;
+  materialRef: string;
+  serviceabilityState: SteelCheckVerdict | null;
+  interactionCompleteness: SteelMemberCompletenessState;
+  validationState: string;
+  optimizationImplemented: false;
+};
+
+export type SteelMemberDesignRecord = {
+  designRecordId: string;
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  standardProfileRef: string;
+  demandSetRef: string;
+  loadCombinationRefs: string[];
+  strengthCheckRefs: string[];
+  stabilityCheckRefs: string[];
+  interactionCheckRefs: string[];
+  serviceabilityCheckRefs: string[];
+  applicableCheckRegistry: SteelMemberDesignCheckKind[];
+  completenessMatrix: SteelMemberDesignCheckRow[];
+  governingCheckRef: string | null;
+  governingCheckKind: SteelMemberDesignCheckKind | null;
+  completenessState: SteelMemberCompletenessState;
+  engineeringCheckState: SteelCheckVerdict;
+  standardConformanceState: SteelMemberConformanceSummaryState;
+  implementationMaturity: typeof AU_STEEL_IMPLEMENTATION_MATURITY;
+  humanReviewState: SteelMemberHumanReviewState;
+  approvalState: SteelMemberApprovalState;
+  evidenceRefs: StructuralEvidenceBinding[];
+  provenanceRef: EosGlobalProvenanceContract;
+  createdAt: string;
+  version: number;
+  fingerprint: SteelMemberDesignFingerprint;
+  invalidationTags: SteelMemberInvalidationTag[];
+  serviceabilityResult: SteelServiceabilityResult | null;
+  optimizationHandoff: SteelOptimizationHandoff;
+  connectionDesignInScope: false;
+  foundationAdequacyInScope: false;
+  generalFeaClaimed: false;
+  as4100CompliantClaim: false;
+  reportLanguage: string;
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];
