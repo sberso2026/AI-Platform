@@ -29,12 +29,12 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     jurisdiction: "AU",
     method: "AS 3600 family adapter",
     authorityType: "FRAMEWORK_ONLY",
-    implementationState: "NOT_IMPLEMENTED",
+    implementationState: "FRAMEWORK_PLUS_COMMON_MECHANICS",
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "edition UNKNOWN_PENDING_CONFIRMATION; no AS 3600 equations",
-    dependencies: ["D1E.GLOBAL.FOUNDATION"],
+    limitations: "edition UNKNOWN_PENDING_CONFIRMATION; uniaxial flexure pipeline reuses D1E-1; no AS 3600 capacity equations",
+    dependencies: ["D1E.GLOBAL.FOUNDATION", "D1E.GLOBAL.RC_SECTION_MECHANICS"],
   },
   {
     capabilityId: "D1E.EU.ADAPTER",
@@ -71,6 +71,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
     limitations: "geometry/kinematics/elastic reference only; not AS 3600 / EN 1992 / ACI 318 capacity",
     dependencies: ["D1E.GLOBAL.FOUNDATION", "D1C bounded demand"],
+  },
+  {
+    capabilityId: "D1E.AU.FLEXURE.UNIAXIAL",
+    jurisdiction: "AU",
+    method: "bounded AU uniaxial RC flexure",
+    authorityType: "ESTABLISHED_ENGINEERING_MECHANICS",
+    implementationState: "FRAMEWORK_PLUS_COMMON_MECHANICS",
+    validationState: "MECHANICS_REFERENCE_BENCHMARKED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "elastic section reference only; AS 3600 flexural capacity FRAMEWORK_ONLY; edition unconfirmed",
+    dependencies: ["D1E.AU.ADAPTER", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
   },
 ];
 
@@ -142,13 +154,41 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-VD-FIRE", category: "FIRE", jurisdiction: "GLOBAL", capability: "fire", description: "fire design absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later fire-resistance track", ownerWorkstream: "later D1E", recommendedFuturePhase: "later D1E" },
   { debtId: "D1E-VD-THIRD-PARTY", category: "EXTERNAL_TOOL_COMPARISON", jurisdiction: "GLOBAL", capability: "benchmarks", description: "independent commercial-tool comparisons not available", priority: "COMMERCIAL_RELEASE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1G / third-party comparisons", ownerWorkstream: "D1G", recommendedFuturePhase: "D1G" },
   { debtId: "D1E-VD-HUMAN", category: "HUMAN_VALIDATION", jurisdiction: "GLOBAL", capability: "human review", description: "human engineering validation of concrete methods not started", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "independent human confirmation", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
+  { debtId: "D1E-AU-VD-EDITION", category: "STANDARD_EDITION", jurisdiction: "AU", capability: "AS 3600 identity", description: "AS 3600 edition/amendment unconfirmed; profile bound only", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "confirmed edition/amendment", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-CONCRETE-MODEL", category: "CONCRETE_MATERIAL_MODEL", jurisdiction: "AU", capability: "AU concrete constitutive", description: "AU governed compression model unpopulated", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable governed compression response", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-REO-MODEL", category: "REINFORCEMENT_MATERIAL_MODEL", jurisdiction: "AU", capability: "AU reinforcement constitutive", description: "AU governed reinforcement response unpopulated", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable governed reinforcement response", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-STRESS-BLOCK", category: "STRESS_BLOCK_RULES", jurisdiction: "AU", capability: "AU stress block", description: "AS 3600 stress-block parameters not governed", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable stress-block rule", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-STRAIN-LIMITS", category: "STRAIN_LIMITS", jurisdiction: "AU", capability: "AU strain limits", description: "ultimate concrete/reinforcement strain ungoverned", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable strain limits", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-PHI", category: "STRENGTH_FACTOR", jurisdiction: "AU", capability: "AU flexure strength factor", description: "design strength factor ungoverned", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable strength-reduction/design factor", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-CODE-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "AU", capability: "AU uniaxial flexure", description: "numerical AS 3600 flexural capacity FRAMEWORK_ONLY", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed method plus independent benchmark plus human confirmation", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-DUCTILITY", category: "DUCTILITY", jurisdiction: "AU", capability: "AU ductility classification", description: "ductility/section-state thresholds not governed", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable ductility rules", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-MIN-REO", category: "MINIMUM_REINFORCEMENT", jurisdiction: "AU", capability: "AU min reinforcement", description: "code minimum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed min-reo method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-MAX-REO", category: "MAXIMUM_REINFORCEMENT", jurisdiction: "AU", capability: "AU max reinforcement", description: "code maximum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed max-reo method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-COVER", category: "COVER", jurisdiction: "AU", capability: "AU cover", description: "AS 3600 cover check absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed cover method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-DURABILITY", category: "DURABILITY", jurisdiction: "AU", capability: "AU durability", description: "AS 3600 durability/exposure checks absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed durability method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-SHEAR", category: "SHEAR", jurisdiction: "AU", capability: "AU shear", description: "AU concrete shear absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed shear method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-PUNCHING", category: "PUNCHING_SHEAR", jurisdiction: "AU", capability: "AU punching", description: "AU punching absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed punching method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "AU", capability: "AU N-M", description: "AU axial-flexure code design absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed N-M method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-BIAXIAL", category: "BIAXIAL_INTERACTION", jurisdiction: "AU", capability: "AU P-M-M", description: "AU biaxial interaction absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed biaxial method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-SECOND-ORDER", category: "SECOND_ORDER_EFFECTS", jurisdiction: "AU", capability: "AU column stability", description: "AU second-order RC effects absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed slenderness method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-CRACK", category: "CRACKING", jurisdiction: "AU", capability: "AU crack control", description: "AS 3600 crack control absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed crack-control method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-DEFLECTION", category: "DEFLECTION", jurisdiction: "AU", capability: "AU long-term deflection", description: "AS 3600 long-term deflection absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed deflection method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "AU", capability: "AU time-dependent", description: "AU creep/shrinkage models absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed time-dependent models", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-DEVELOPMENT", category: "DEVELOPMENT", jurisdiction: "AU", capability: "AU development/anchorage", description: "AU development/anchorage absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed development method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-LAP", category: "LAP_SPLICES", jurisdiction: "AU", capability: "AU laps", description: "AU lap-splice design absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed lap method", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-DETAILING", category: "DETAILING", jurisdiction: "AU", capability: "AU detailing", description: "AU detailing checks absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed detailing methods", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-PRESTRESS", category: "PRESTRESSED_CONCRETE", jurisdiction: "AU", capability: "AU prestress", description: "AU prestressed design absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later prestress track", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-CONNECTIONS", category: "CONNECTIONS", jurisdiction: "AU", capability: "AU connections", description: "AU concrete connections absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1F connection methods", ownerWorkstream: "D1F", recommendedFuturePhase: "D1F" },
+  { debtId: "D1E-AU-VD-SEISMIC", category: "SEISMIC", jurisdiction: "AU", capability: "AU seismic", description: "AU seismic concrete detailing absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later seismic subphase", ownerWorkstream: "later seismic", recommendedFuturePhase: "later bounded seismic subphase" },
+  { debtId: "D1E-AU-VD-HUMAN", category: "HUMAN_VALIDATION", jurisdiction: "AU", capability: "AU human validation", description: "human confirmation of AU concrete methods not started", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "engineer confirmation of edition/models/factors/benchmarks", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
+  { debtId: "D1E-AU-VD-THIRD-PARTY", category: "EXTERNAL_TOOL_COMPARISON", jurisdiction: "AU", capability: "AU third-party", description: "AU concrete third-party comparisons absent", priority: "COMMERCIAL_RELEASE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1G / third-party comparisons", ownerWorkstream: "D1G", recommendedFuturePhase: "D1G" },
 ];
 
 export const D1E_INTERNAL_ROADMAP = [
   { id: "D1E-0", scope: "global concrete design foundation", status: "CLOSED" },
-  { id: "D1E-1", scope: "common RC section mechanics / deterministic geometry foundation", status: "THIS_PHASE" },
-  { id: "D1E-AU", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "NEXT" },
-  { id: "D1E-EU", scope: "EN 1992 family/part/annex/NDP bind then bounded methods", status: "PLANNED" },
+  { id: "D1E-1", scope: "common RC section mechanics / deterministic geometry foundation", status: "CLOSED" },
+  { id: "D1E-AU", scope: "first bounded AU AS 3600 slice after common section mechanics", status: "THIS_PHASE" },
+  { id: "D1E-EU", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "NEXT" },
   { id: "D1E-US", scope: "ACI 318 family/edition/adoption bind then bounded methods", status: "PLANNED" },
 ] as const;
 
@@ -160,6 +200,13 @@ export const D1E0_D0_RISK_DISPOSITION = {
 } as const;
 
 export const D1E1_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_AU1_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
   INTRODUCED: "NONE" as const,

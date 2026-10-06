@@ -403,3 +403,4 @@ export * from "./structural-demand";
 export * from "./structural-steel";
 export * from "./structural-concrete";
 export * from "./structural-concrete-section";
+export * from "./structural-concrete-au";

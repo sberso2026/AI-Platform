@@ -15,6 +15,7 @@ export {
   concreteProductCapabilityVisible,
   D1E0_D0_RISK_DISPOSITION,
   D1E1_D0_RISK_DISPOSITION,
+  D1E_AU1_D0_RISK_DISPOSITION,
   D1E_CANONICAL_ROADMAP_HANDOFF,
   D1E_INTERNAL_ROADMAP,
   D1E_VALIDATION_DEBT_REGISTER,
@@ -38,3 +39,4 @@ export {
 } from "./orchestration";
 export { aggregateReinforcementGeometry, assertNoCodeReinforcementRatio } from "./reinforcement";
 export * from "./section-mechanics";
+export * from "./au-flexure";
