@@ -206,6 +206,28 @@ export const EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED = true as const;
 export const EU_STEEL_IMPLEMENTATION_MATURITY = "FRAMEWORK_PLUS_BOUNDED_METHODS" as const;
 export const EU_PARTIAL_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_EU2 = false as const;
+export const EOS_D1D_EU3_PHASE = "EOS-D1D-EU-3" as const;
+export const EULER_REFERENCE_EQUALS_EN1993_MEMBER_CAPACITY = false as const;
+export const EU_CODE_SLENDERNESS_RULE_GUESSED = false as const;
+export const EU_SECTION_CLASSIFICATION_LIMIT_GUESSED = false as const;
+export const BUCKLING_CURVE_GUESSED = false as const;
+export const EU_BUCKLING_PARAMETER_GUESSED = false as const;
+export const EU_COMPRESSION_PARTIAL_FACTOR_GUESSED = false as const;
+export const UNKNOWN_EU_COMPRESSION_CODE_PARAMETER_GUESSED = false as const;
+export const COMMON_BENCHMARK_EQUALS_EUROCODE_CONFORMANCE = false as const;
+export const MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK = false as const;
+export const LLM_EU_COMPRESSION_CAPACITY_AUTHORITY = false as const;
+export const AI_EU_COMPRESSION_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_BUCKLING_CURVE_AUTHORITY = false as const;
+export const EU_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED = true as const;
+export const EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_STABILITY = false as const;
+export const TORSIONAL_BUCKLING_IMPLEMENTED = false as const;
+export const FLEXURAL_TORSIONAL_BUCKLING_IMPLEMENTED = false as const;
+export const MEMBER_STABILITY_EQUALS_GLOBAL_FRAME_STABILITY = false as const;
+export const MIXED_AUTHORITY_RESULT_COMPARISON_GOVERNED = true as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU3 = false as const;
+export const EU_COMPRESSION_PARTIAL_FACTOR_SOURCE = "VALIDATION_REQUIRED" as const;
+export const EU_CODE_SLENDERNESS_CONTEXT_STATE = "VALIDATION_REQUIRED" as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -1216,6 +1238,78 @@ export type EurocodeSteelTensionContext = {
   provenanceRef: string;
   validationState: string;
   conformanceState: SteelStandardConformanceState;
+};
+
+export const EU_COMPRESSION_METHOD_SCOPE_STATES = [
+  "GOVERNED_IMPLEMENTABLE",
+  "MECHANICS_REFERENCE_ONLY",
+  "FRAMEWORK_ONLY",
+  "VALIDATION_REQUIRED",
+  "NOT_IMPLEMENTED",
+] as const;
+export type EuCompressionMethodScopeState = (typeof EU_COMPRESSION_METHOD_SCOPE_STATES)[number];
+
+export const EU_SECTION_CLASSIFICATION_STATES = [
+  "CLASSIFIED",
+  "VALIDATION_REQUIRED",
+  "NOT_REQUIRED",
+  "UNSUPPORTED",
+] as const;
+export type EuSectionClassificationState = (typeof EU_SECTION_CLASSIFICATION_STATES)[number];
+
+export type EuCompressionMethodRecord = SteelEngineeringRule & {
+  methodType: "ENGINEERING_MECHANICS_REFERENCE" | "EUROCODE_PROFILE_MEMBER_CAPACITY";
+  standardPartRef: En1993PartId;
+  ndpDependencies: readonly string[];
+  annexDependency: "ANNEX_REQUIRED" | "NDP_REQUIRED" | "ANNEX_OPTIONAL" | "NO_ANNEX_DEPENDENCY";
+  ruleRequiresNdp: boolean;
+  axis: SteelBucklingAxis | "SQUASH" | "CLASSIFICATION" | "BUCKLING_CURVE";
+  compatibleGenerations: readonly EurocodeGenerationFamily[];
+  scopeState: EuCompressionMethodScopeState;
+};
+
+export type EurocodeSteelCompressionContext = {
+  memberRef: string;
+  sectionRef: string;
+  materialRef: string;
+  compressionDemandRef: string;
+  memberLengthM: number;
+  effectiveLengthMajorM: number | null;
+  effectiveLengthMinorM: number | null;
+  bucklingAxes: SteelBucklingAxis[];
+  restraintContext: string;
+  standardContextRef: string;
+  standardPartRef: En1993PartId | string;
+  nationalAnnexRef: string | null;
+  ndpSetRef: string | null;
+  engineeringRuleRefs: readonly string[];
+  technicalBasisRefs: readonly string[];
+  validationState: string;
+  conformanceState: SteelStandardConformanceState;
+  provenanceRef: string;
+  effectiveLengthProvenanceRef: string;
+  sectionClassificationState: EuSectionClassificationState;
+};
+
+export type EuBucklingCurveRecord = {
+  curveId: string;
+  axis: SteelBucklingAxis;
+  sectionFamily: string | null;
+  fabricationContext: string | null;
+  materialContext: string | null;
+  standardPart: string;
+  edition: string;
+  nationalAnnexContext: string | null;
+  engineeringRuleRef: string;
+  validationState: "FRAMEWORK_ONLY";
+  coefficientsPopulated: false;
+};
+
+export type EuCodeSlendernessContext = {
+  state: "VALIDATION_REQUIRED";
+  ruleGuessed: false;
+  normalization: null;
+  referenceResistance: null;
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

@@ -18,6 +18,9 @@ import {
   OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
   UNIVERSAL_INTERACTION_EQUATION_HARDCODED,
   EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_STABILITY,
+  EU_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED,
+  MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK,
 } from "@rtb/types";
 import { toForceN, toMomentNm } from "../structural-demand/units";
 import { evaluateSteelCapacity } from "./adapters";
@@ -323,6 +326,53 @@ export function orchestrateEuTensionDesignCheck(input: {
 export function assertOptimizationEuTensionRecheck(candidate: SteelOptimizationCandidate): void {
   if (!EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED) throw new Error("EU tension optimizer candidates must be rechecked deterministically");
   assertOptimizationCandidateRecheck(candidate);
+}
+
+export function orchestrateEuCompressionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "COMPRESSION" && input.capacityInput.limitState !== "MEMBER_STABILITY") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as a Eurocode design check");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const compressionDemandN = axial.valueN < 0 ? Math.abs(axial.valueN) : 0;
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: compressionDemandN > 0,
+    demandValue: { value: compressionDemandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationEuCompressionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED) throw new Error("EU compression optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_STABILITY) throw new Error("optimizer cannot accept undetermined stability as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined stability as pass");
+  }
 }
 
 export const AU_STEEL_IMPLEMENTATION_SUBPHASES = [
