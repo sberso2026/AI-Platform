@@ -326,6 +326,75 @@ export const EU_VALIDATION_PILOT_EXPOSURE = false as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_EU8 = false as const;
 export const NUMERICAL_EU_INTERACTION_METHODS_AFTER_EU8 = [] as const;
 export const COMMON_MECHANICS_EQUALS_COMMON_CODE_AUTHORITY = false as const;
+export const EOS_D1D_US1_PHASE = "EOS-D1D-US-1" as const;
+export const PARALLEL_US_STANDARD_FRAMEWORK_CREATED = false as const;
+export const PARALLEL_US_GOVERNANCE_CREATED = false as const;
+export const US_STANDARD_ECOSYSTEM_MODEL = true as const;
+export const AISC_STEEL_FAMILY_REGISTERED = true as const;
+export const US_STANDARD_VERSION_MODEL = true as const;
+export const AISC_UNKNOWN_EDITION_TOKEN = "UNKNOWN_PENDING_CONFIRMATION" as const;
+export const AISC_STANDARD_EDITION = "UNKNOWN_PENDING_CONFIRMATION" as const;
+export const SILENT_AISC_EDITION_INFERENCE = false as const;
+export const US_DESIGN_METHOD_MODEL = true as const;
+export const DEFAULT_LRFD_OR_ASD = false as const;
+export const DESIGN_METHOD_EXPLICIT = true as const;
+export const DESIGN_METHOD_AND_UNIT_SYSTEM_SEPARATE = true as const;
+export const US_UNIT_SYSTEM_CONTEXT = true as const;
+export const US_BUILDING_CODE_ADOPTION_CONTEXT = true as const;
+export const BUILDING_CODE_AND_STEEL_STANDARD_SEPARATE = true as const;
+export const US_JURISDICTION_AND_STANDARD_SEPARATE = true as const;
+export const US_CODE_PROFILE_INFERRED_FROM_USER_LOCATION = false as const;
+export const US_LOCAL_AMENDMENT_MODEL = true as const;
+export const LOCAL_AMENDMENT_VALUE_GUESSED = false as const;
+export const US_CODE_ADOPTION_RESOLVER = true as const;
+export const DIRECT_CONTRACT_STANDARD_PROFILE_SUPPORTED = true as const;
+export const US_PROJECT_STANDARD_CONTEXT = true as const;
+export const ISSUED_US_CALCULATION_CONTEXT_IMMUTABLE = true as const;
+export const US_LOAD_STANDARD_DEPENDENCY_MODEL = true as const;
+export const US1_LOAD_COMBINATION_ENGINE_CREATED = false as const;
+export const SILENT_ASCE_EDITION_INFERENCE = false as const;
+export const US_LOAD_DESIGN_METHOD_COMPATIBILITY_MODEL = true as const;
+export const US_SEISMIC_STEEL_DEPENDENCY_MODEL = true as const;
+export const US_SEISMIC_PROFILE_ALWAYS_REQUIRED = false as const;
+export const SILENT_SEISMIC_STANDARD_EDITION_INFERENCE = false as const;
+export const US_CONNECTION_STANDARD_DEPENDENCY_MODEL = true as const;
+export const US_CONNECTION_DESIGN_IMPLEMENTED = false as const;
+export const US_MATERIAL_SOURCE_BOUNDARY = true as const;
+export const AUST300_US_DEFAULT = false as const;
+export const EU_SECTION_CATALOG_US_DEFAULT = false as const;
+export const US_SECTION_CATALOG_ADAPTER_READY = true as const;
+export const US_SECTION_PROPERTIES_FROM_UNGOVERNED_DESIGNATION = false as const;
+export const US_ENGINEERING_RULE_AUTHORITY_REQUIRED = true as const;
+export const US_STANDARD_PROFILE_AND_CONFORMANCE_SEPARATE = true as const;
+export const US_STANDARD_CONTEXT_RESOLVER = true as const;
+export const US_STANDARD_CONTEXT_CONFLICT_DETECTION = true as const;
+export const US_METHOD_SPECIFIC_RULE_BINDING = true as const;
+export const SILENT_LRFD_ASD_CONVERSION = false as const;
+export const US_MULTI_JURISDICTION_PROJECT_SUPPORT = true as const;
+export const US_STANDARD_FAMILY_NOT_HARDCODED_TO_US_GEOGRAPHY = true as const;
+export const US_STANDARD_GENERATION_READY = true as const;
+export const US_RULE_VERSION_IMMUTABILITY = true as const;
+export const US_PROJECT_OVERRIDE_GOVERNANCE = true as const;
+export const US_SOURCE_PRECEDENCE_MODEL = true as const;
+export const UNRESOLVED_STANDARD_CONFLICT_FAILS_CLOSED = true as const;
+export const US_STANDARD_CONTEXT_HUMAN_CONFIRMATION_SUPPORTED = true as const;
+export const AI_US_STANDARD_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_AISC_EDITION_AUTHORITY = false as const;
+export const AI_LRFD_ASD_AUTHORITY = false as const;
+export const AI_LOCAL_AMENDMENT_AUTHORITY = false as const;
+export const US_AI_NUMERICAL_AUTHORITY = false as const;
+export const US_STEEL_CONTEXT_PII_REQUIRED = false as const;
+export const US_STEEL_DESIGN_AVAILABLE = false as const;
+export const US_STEEL_PACK_CERTIFIED = false as const;
+export const READY_FOR_US2_TENSION_ARCHITECTURE = true as const;
+export const US_STANDARD_SOURCE_REFERENCE_READY = true as const;
+export const US_STANDARD_TENANT_ISOLATION = true as const;
+export const US_STANDARD_WORKSPACE_ISOLATION = true as const;
+export const US_HUMAN_OVERSIGHT_PRESERVED = true as const;
+export const THREE_JURISDICTION_ARCHITECTURE_VALIDATED = true as const;
+export const US_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
+export const US_VALIDATION_PILOT_EXPOSURE = false as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_US1 = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -1726,3 +1795,221 @@ export type EurocodeSteelCombinedActionContext = {
 };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];
+
+export const US_STEEL_ECOSYSTEM_IDS = [
+  "AISC_360",
+  "AISC_341",
+  "ASCE_7",
+  "IBC",
+  "ASTM_MATERIAL",
+  "RCSC",
+  "AISC_358",
+] as const;
+export type UsSteelEcosystemId = (typeof US_STEEL_ECOSYSTEM_IDS)[number];
+
+export const US_DESIGN_METHODS = ["LRFD", "ASD"] as const;
+export type UsDesignMethod = (typeof US_DESIGN_METHODS)[number];
+
+export const US_UNIT_SYSTEMS = ["US_CUSTOMARY", "SI"] as const;
+export type UsUnitSystem = (typeof US_UNIT_SYSTEMS)[number];
+
+export const US_SOURCE_PRECEDENCE_KINDS = [
+  "MANDATORY_ADOPTED_CODE",
+  "REFERENCED_STANDARD",
+  "LOCAL_AMENDMENT",
+  "CONTRACT_REQUIREMENT",
+  "OWNER_PROJECT_STANDARD",
+  "ENGINEERING_APPROVED_EXCEPTION",
+] as const;
+export type UsSourcePrecedenceKind = (typeof US_SOURCE_PRECEDENCE_KINDS)[number];
+
+export const US_RESOLVER_FAIL_REASONS = [
+  "AISC_EDITION_REQUIRED",
+  "DESIGN_METHOD_REQUIRED",
+  "BUILDING_CODE_CONTEXT_REQUIRED",
+  "LOAD_STANDARD_CONTEXT_REQUIRED",
+  "LOCAL_AMENDMENT_CONFLICT",
+  "SEISMIC_CONTEXT_REQUIRED",
+  "STANDARD_VERSION_CONFLICT",
+  "UNSUPPORTED_STANDARD_PROFILE",
+  "STANDARD_CONTEXT_CONFLICT",
+  "USER_LOCATION_INFERENCE_DENIED",
+  "AI_AUTHORITY_DENIED",
+  "HUMAN_CONFIRMATION_REQUIRED",
+  "RULE_AUTHORITY_DENIED",
+] as const;
+export type UsResolverFailReason = (typeof US_RESOLVER_FAIL_REASONS)[number];
+
+export type UsStandardVersion = {
+  publisher: string;
+  standardFamily: string;
+  standardIdentifier: string;
+  edition: string;
+  publicationDate: string | null;
+  amendment: string | null;
+  errata: string | null;
+  supersessionState: StructuralStandardLifecycle | "UNKNOWN_PENDING_CONFIRMATION";
+  effectiveDate: string | null;
+};
+
+export type BuildingCodeAdoptionContext = {
+  adoptionId: string;
+  jurisdiction: string;
+  adoptingAuthority: string;
+  buildingCodeFamily: string;
+  buildingCodeEdition: string;
+  effectiveDate: string | null;
+  localAmendmentSetRef: string | null;
+  referencedStandards: readonly string[];
+  projectOverrideRefs: readonly string[];
+  validationState: string;
+  sourceAuthorityRef: string;
+};
+
+export type UsLocalAmendment = {
+  amendmentSetId: string;
+  jurisdiction: string;
+  authority: string;
+  baseCodeRef: string;
+  editionCompatibility: string;
+  effectiveDate: string | null;
+  ruleOverrides: readonly Record<string, never>[];
+  sourceAuthorityRef: string;
+  validationState: string;
+};
+
+export type UsLoadStandardDependency = {
+  standardId: "ASCE_7" | string;
+  standardCode: string;
+  edition: string;
+  combinationBasis: "STRENGTH" | "ALLOWABLE" | "UNKNOWN_PENDING_CONFIRMATION";
+  implemented: false;
+};
+
+export type UsSeismicDependency = {
+  applicable: boolean;
+  standardId: "AISC_341" | string;
+  standardCode: string;
+  edition: string;
+  implemented: false;
+};
+
+export type UsProjectOverride = {
+  overrideId: string;
+  sourceExplicit: boolean;
+  authorityExplicit: boolean;
+  scopeExplicit: boolean;
+  conflictBehavior: "FAIL_CLOSED" | "REQUIRE_HUMAN_CONFIRMATION";
+  humanConfirmation: boolean;
+};
+
+export type UsStandardContextConfirmation = {
+  jurisdictionConfirmed: boolean;
+  adoptedCodeConfirmed: boolean | "NOT_APPLICABLE";
+  aiscEditionConfirmed: boolean;
+  designMethodConfirmed: boolean;
+  asceLoadStandardConfirmed: boolean;
+  seismicApplicabilityConfirmed: boolean;
+  localAmendmentsConfirmed: boolean;
+  projectExceptionsConfirmed: boolean;
+  confirmedAt: string;
+  reviewerAuthorityRef: string;
+  aiConfirmed: false;
+  engineeringApprovalImplied: false;
+};
+
+export type USSteelDesignContext = {
+  contextId: string;
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assetId: string | null;
+  jurisdictionProfileRef: string;
+  buildingCodeAdoptionRef: string | null;
+  buildingCodeAdoption: BuildingCodeAdoptionContext | null;
+  steelStandardFamily: "AISC";
+  steelStandardId: string;
+  steelStandardCode: string;
+  edition: string;
+  amendmentErrataState: string;
+  designMethod: UsDesignMethod | null;
+  unitSystem: UsUnitSystem;
+  referencedStandardRefs: readonly string[];
+  localAmendmentSetRef: string | null;
+  localAmendment: UsLocalAmendment | null;
+  loadStandard: UsLoadStandardDependency | null;
+  seismicApplicable: boolean;
+  seismicStandard: UsSeismicDependency | null;
+  connectionStandardRefs: readonly string[];
+  materialSourceKind: "ASTM" | "MANUFACTURER_CATALOG" | "PROJECT_SPECIFICATION" | "ENGINEERING_DATABASE" | "UNBOUND";
+  sectionCatalogRef: string | null;
+  projectStandardContextRef: string | null;
+  calculationContextRef: string | null;
+  engineeringRuleAuthorityRefs: readonly string[];
+  projectOverride: UsProjectOverride | null;
+  sourcePrecedence: readonly UsSourcePrecedenceKind[];
+  intendedStandardProfile: "AISC360";
+  standardConformanceState: SteelStandardConformanceState;
+  validationState: string;
+  provenanceRef: string;
+  issued: boolean;
+  humanConfirmation: UsStandardContextConfirmation | null;
+  piiPresent: false;
+  directContractProfile: boolean;
+};
+
+export type UsProjectStandardContext = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  jurisdictionProfileRef: string;
+  buildingCodeFamily: string | null;
+  buildingCodeEdition: string | null;
+  aiscEdition: string;
+  designMethod: UsDesignMethod | null;
+  unitSystem: UsUnitSystem;
+  asceEdition: string;
+  seismicApplicable: boolean;
+  seismicEdition: string | null;
+  localAmendmentSetRef: string | null;
+  directContractProfile: boolean;
+  workspaceGlobalCodeProfileId: null;
+  designBasisReference: string | null;
+};
+
+export type UsSteelResolverInput = {
+  projectContext: UsProjectStandardContext | null;
+  explicitCalculationContext: USSteelDesignContext | null;
+  issuedContext: USSteelDesignContext | null;
+  adoptionRequired: boolean;
+  loadStandardRequired: boolean;
+  ruleRequiresSeismic: boolean;
+  enforceLoadMethodCompatibility: boolean;
+  unresolvedSourceConflict: boolean;
+  collapseDesignMethodFromUnits: boolean;
+  convertLrfdToAsdSilently: boolean;
+  convertAsdToLrfdSilently: boolean;
+  source: "explicit" | "project_default" | "locale" | "ip" | "browser_locale" | "physical_location" | "tenant_address" | "ai";
+  aiSelectedEdition: boolean;
+  aiSelectedDesignMethod: boolean;
+  aiInventedAmendment: boolean;
+  aiClaimedConformance: boolean;
+  ruleAuthorityType?: string;
+  humanConfirmationRequired: boolean;
+};
+
+export type UsSteelResolverResult =
+  | { ok: true; context: USSteelDesignContext; failReason: null }
+  | { ok: false; context: null; failReason: UsResolverFailReason; detail: string; checkState: "CHECK_UNDETERMINED" };
+
+export type UsStandardSourceReference = {
+  sourceId: string;
+  publisher: string;
+  standardId: string;
+  edition: string | null;
+  referenceIdentifier: string;
+  effectiveDate: string | null;
+  authorityType: EngineeringRuleAuthorityType;
+  validationState: string;
+  contentEmbedded: false;
+};
