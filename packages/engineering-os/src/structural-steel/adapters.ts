@@ -21,7 +21,7 @@ import { requireMaterialProperties, requireSectionProperties, requireStabilityWh
 
 const ADAPTER_SCOPES: Record<SteelAdapterId, { jurisdictions: string[]; standardPrefixes: string[]; editions: string[] }> = {
   AU_STEEL: { jurisdictions: ["australia"], standardPrefixes: ["AS 4100"], editions: [] },
-  EU_STEEL: { jurisdictions: ["eu-eea"], standardPrefixes: ["EN 1993"], editions: [] },
+  EU_STEEL: { jurisdictions: ["eu-eea", "united-kingdom", "other"], standardPrefixes: ["EN 1993"], editions: [] },
   US_STEEL: { jurisdictions: ["united-states"], standardPrefixes: ["AISC 360"], editions: [] },
 };
 

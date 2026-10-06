@@ -6,7 +6,7 @@
 import type { EosGlobalProvenanceContract } from "./global-governance";
 import type { StructuralDemandResult } from "./structural-demand";
 import type { StructuralCapacityResult, StructuralDesignCheck, StructuralEvidenceBinding } from "./structural-domain";
-import type { StructuralStandardContext } from "./structural-standard-binding";
+import type { StructuralStandardContext, StructuralStandardLifecycle } from "./structural-standard-binding";
 
 export const EOS_D1D0_PHASE = "EOS-D1D-0" as const;
 
@@ -156,6 +156,41 @@ export const CONNECTION_DESIGN_VALIDATED = false as const;
 export const MEMBER_VALIDATION_IMPLIES_CONNECTION_VALIDATION = false as const;
 export const MEMBER_VALIDATION_IMPLIES_FOUNDATION_VALIDATION = false as const;
 export const AU_VALIDATION_PILOT_EXPOSURE = false as const;
+export const EOS_D1D_EU1_PHASE = "EOS-D1D-EU-1" as const;
+export const GLOBAL_STANDARD_FRAMEWORK_REUSED = true as const;
+export const PARALLEL_EU_STANDARD_FRAMEWORK_CREATED = false as const;
+export const PARALLEL_EU_GOVERNANCE_CREATED = false as const;
+export const EUROCODE_FAMILY_MODEL = true as const;
+export const EN1993_STEEL_FAMILY_REGISTERED = true as const;
+export const EUROCODE_PART_MODEL = true as const;
+export const EU_INITIAL_STEEL_STANDARD_PART = "EN_1993_1_1" as const;
+export const EU_STANDARD_VERSION_MODEL = true as const;
+export const CROSS_EDITION_RULE_MIXING_ALLOWED = false as const;
+export const SILENT_EU_STANDARD_EDITION_INFERENCE = false as const;
+export const EU_NATIONAL_ANNEX_MODEL = true as const;
+export const COUNTRY_AND_STANDARD_SEPARATE = true as const;
+export const DEFAULT_EU_NATIONAL_ANNEX = false as const;
+export const NDP_MODEL = true as const;
+export const NDP_VALUE_GUESSED = false as const;
+export const NATIONAL_ANNEX_INFERRED_FROM_USER_LOCATION = false as const;
+export const UK_EUROCODE_EXTENSIBILITY = true as const;
+export const EUROCODE_FAMILY_NOT_HARDCODED_TO_EU_MEMBERSHIP = true as const;
+export const SECOND_GENERATION_EUROCODE_READY = true as const;
+export const STANDARD_UPDATE_OVERWRITES_HISTORICAL_RULE = false as const;
+export const EU_RULE_VERSION_IMMUTABILITY = true as const;
+export const AUST300_EU_DEFAULT = false as const;
+export const EU1_LOAD_COMBINATION_ENGINE_CREATED = false as const;
+export const AI_EU_STANDARD_ASSISTANCE_ADVISORY_ONLY = true as const;
+export const AI_NATIONAL_ANNEX_AUTHORITY = false as const;
+export const AI_NDP_AUTHORITY = false as const;
+export const EU_AI_NUMERICAL_AUTHORITY = false as const;
+export const EU_STEEL_CONTEXT_PII_REQUIRED = false as const;
+export const EMPLOYEE_BEHAVIOR_PROFILING = false as const;
+export const EU_STEEL_DESIGN_AVAILABLE = false as const;
+export const EU_STEEL_PACK_CERTIFIED = false as const;
+export const READY_FOR_EU2_TENSION_ARCHITECTURE = true as const;
+export const EUROCODE_UNKNOWN_EDITION_TOKEN = "UNKNOWN_PENDING_CONFIRMATION" as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_EU1 = false as const;
 
 export const STEEL_BUCKLING_AXES = ["MAJOR_AXIS", "MINOR_AXIS", "TORSIONAL", "FLEXURAL_TORSIONAL"] as const;
 export type SteelBucklingAxis = (typeof STEEL_BUCKLING_AXES)[number];
@@ -953,5 +988,185 @@ export type AuValidationDebtItem = {
   description: string;
   priority: AuValidationPriority;
 };
+
+export const EUROCODE_FAMILY_IDS = [
+  "EN_1990",
+  "EN_1991",
+  "EN_1992",
+  "EN_1993",
+  "EN_1994",
+  "EN_1995",
+  "EN_1996",
+  "EN_1997",
+  "EN_1998",
+  "EN_1999",
+] as const;
+export type EurocodeFamilyId = (typeof EUROCODE_FAMILY_IDS)[number];
+
+export const EN1993_PART_IDS = [
+  "EN_1993_1_1",
+  "EN_1993_1_5",
+  "EN_1993_1_8",
+  "EN_1993_1_9",
+  "EN_1993_1_10",
+  "EN_1993_1_12",
+] as const;
+export type En1993PartId = (typeof EN1993_PART_IDS)[number];
+
+export const EUROCODE_GENERATION_FAMILIES = [
+  "FIRST_GENERATION",
+  "SECOND_GENERATION",
+  "UNKNOWN_PENDING_CONFIRMATION",
+] as const;
+export type EurocodeGenerationFamily = (typeof EUROCODE_GENERATION_FAMILIES)[number];
+
+export const EUROCODE_PART_IMPLEMENTATION_STATES = [
+  "REGISTERED_ARCHITECTURE",
+  "NOT_IMPLEMENTED",
+  "FRAMEWORK_ONLY",
+] as const;
+export type EurocodePartImplementationState = (typeof EUROCODE_PART_IMPLEMENTATION_STATES)[number];
+
+export const EUROCODE_RESOLVER_FAIL_REASONS = [
+  "STANDARD_EDITION_REQUIRED",
+  "NATIONAL_ANNEX_REQUIRED",
+  "NATIONAL_ANNEX_MISMATCH",
+  "NDP_REQUIRED",
+  "STANDARD_PART_UNSUPPORTED",
+  "STANDARD_VERSION_CONFLICT",
+  "USER_LOCATION_INFERENCE_DENIED",
+  "AI_AUTHORITY_DENIED",
+  "HUMAN_CONFIRMATION_REQUIRED",
+  "RULE_AUTHORITY_DENIED",
+] as const;
+export type EurocodeResolverFailReason = (typeof EUROCODE_RESOLVER_FAIL_REASONS)[number];
+
+export type EurocodeStandardVersion = {
+  standardIdentifier: string;
+  generationFamily: EurocodeGenerationFamily;
+  edition: string;
+  publicationDate: string | null;
+  amendment: string | null;
+  corrigendum: string | null;
+  supersessionState: StructuralStandardLifecycle | "UNKNOWN_PENDING_CONFIRMATION";
+  effectiveDate: string | null;
+};
+
+export type EurocodeNationalAnnex = {
+  nationalAnnexId: string;
+  countryCode: string;
+  standardPartRef: En1993PartId | string;
+  edition: string;
+  publicationDate: string | null;
+  amendment: string | null;
+  effectiveDate: string | null;
+  status: string;
+  nationalParameterSetRef: string | null;
+  sourceAuthorityRef: string;
+  validationState: string;
+  generationFamily: EurocodeGenerationFamily;
+};
+
+export type EurocodeNdpRecord = {
+  parameterId: string;
+  standardPartRef: En1993PartId | string;
+  ruleRef: string;
+  nationalAnnexRef: string | null;
+  country: string;
+  value: number | string | null;
+  units: string | null;
+  applicability: string;
+  sourceAuthorityRef: string;
+  validationState: string;
+  effectiveDate: string | null;
+  version: string;
+};
+
+export type EurocodeStandardSourceReference = {
+  sourceIdentifier: string;
+  publisher: string;
+  standardIdentifier: string;
+  edition: string | null;
+  part: string | null;
+  referenceIdentifier: string;
+  validationState: string;
+  contentEmbedded: false;
+};
+
+export type EurocodeStandardContextConfirmation = {
+  jurisdictionConfirmed: boolean;
+  generationConfirmed: boolean;
+  partConfirmed: boolean;
+  editionConfirmed: boolean;
+  nationalAnnexConfirmed: boolean;
+  projectExceptionsConfirmed: boolean;
+  confirmedAt: string;
+  reviewerAuthorityRef: string;
+  aiConfirmed: false;
+  engineeringApprovalImplied: false;
+};
+
+export type EurocodeSteelDesignContext = {
+  contextId: string;
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  assetId: string | null;
+  jurisdictionProfileRef: string;
+  countryCode: string;
+  standardFamily: "EUROCODE";
+  standardPart: En1993PartId | string;
+  standardCode: string;
+  version: EurocodeStandardVersion;
+  nationalAnnex: EurocodeNationalAnnex | null;
+  ndpSet: readonly EurocodeNdpRecord[];
+  materialSourceKind: "MATERIAL_STANDARD" | "PRODUCT_STANDARD" | "SECTION_CATALOGUE" | "PROJECT_SPECIFICATION" | "UNBOUND";
+  sectionCatalogRef: string | null;
+  projectContextRef: string | null;
+  calculationContextRef: string | null;
+  sourceAuthorityRef: string;
+  intendedStandardProfile: "EN1993";
+  standardConformanceState: SteelStandardConformanceState;
+  validationState: string;
+  provenanceRef: string;
+  issued: boolean;
+  humanConfirmation: EurocodeStandardContextConfirmation | null;
+  piiPresent: false;
+};
+
+export type EurocodeProjectStandardContext = {
+  tenantId: string;
+  workspaceId: string;
+  projectId: string;
+  jurisdictionProfileRef: string;
+  countryCode: string | null;
+  generationFamily: EurocodeGenerationFamily;
+  governingParts: readonly string[];
+  nationalAnnexSet: readonly EurocodeNationalAnnex[];
+  projectSpecificGovernedParameters: readonly EurocodeNdpRecord[];
+  designBasisReference: string | null;
+  workspaceGlobalAnnexId: null;
+};
+
+export type EurocodeSteelResolverInput = {
+  projectContext: EurocodeProjectStandardContext | null;
+  explicitCalculationContext: EurocodeSteelDesignContext | null;
+  issuedContext: EurocodeSteelDesignContext | null;
+  requestedMethodId: string;
+  requestedPartId: En1993PartId | string;
+  requiredNdpIds: readonly string[];
+  ruleRequiresNdp: boolean;
+  source: "explicit" | "project_default" | "locale" | "ip" | "browser_locale" | "physical_location" | "tenant_address" | "ai";
+  aiSelectedAnnex: boolean;
+  aiSuppliedNdp: boolean;
+  aiInferredEdition: boolean;
+  aiClaimedConformance: boolean;
+  humanConfirmed: boolean;
+  ruleAuthorityType: EngineeringRuleAuthorityType | ForbiddenEngineeringRuleAuthority | string;
+};
+
+export type EurocodeSteelResolverResult =
+  | { ok: true; context: EurocodeSteelDesignContext; failReason: null }
+  | { ok: false; context: null; failReason: EurocodeResolverFailReason; detail: string; checkState: "CHECK_UNDETERMINED" };
 
 export type SteelDemandCapacitySeparation = StructuralDemandResult["capacityPresent"];

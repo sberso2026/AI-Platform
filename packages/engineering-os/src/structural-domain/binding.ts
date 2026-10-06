@@ -216,10 +216,10 @@ export function assertGovernedStandardContext(
   if (nationalAnnexRequired(context) && !context.nationalAnnexRef) {
     throw new Error("Eurocode governed context requires a National Annex");
   }
-  if (!nationalAnnexRequired(context) && context.nationalAnnexRef && context.jurisdictionProfileRef !== "eu-eea") {
-    throw new Error("National Annex is not applicable outside a Eurocode EU/EEA context");
-  }
   if (context.nationalAnnexRef) {
+    if (!isEurocodeFamily(context.standardFamily, context.standardCode)) {
+      throw new Error("National Annex is not applicable outside a Eurocode context");
+    }
     assertAnnexCompatible(context, context.nationalAnnexRef);
   }
   if (context.lifecycle === "SUPERSEDED" || context.lifecycle === "WITHDRAWN") {
