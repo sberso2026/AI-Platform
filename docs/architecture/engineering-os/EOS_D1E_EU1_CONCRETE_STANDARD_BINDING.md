@@ -79,6 +79,6 @@ Candidates must bind explicit Eurocode concrete context before code evaluation. 
 
 Intended profile is not conformance. Unknown edition prevents an affirmative EN 1992 conformance claim. Human confirmation covers generation, edition, part, National Annex, NDP set, material standards, and project overrides. EU-specific validation debt tracks generation, edition, parts, annexes, NDPs, materials, partial factors, stress blocks, strain limits, flexure through seismic, and third-party comparison.
 
-## Next D1E-EU phase
+## Next D1E phase
 
-Canonical remaining D1E-EU work is **bounded Eurocode RC uniaxial flexure** using the D1E-1 kernel and this governed EN 1992 standard context. No copyrighted EN 1992 or National Annex text is required at runtime or committed here.
+D1E-EU-2 closed the bounded Eurocode uniaxial-flexure framework on this standard-binding foundation. Canonical remaining D1E work is **D1E-US** ACI 318 family/edition/adoption bind then bounded methods. No copyrighted EN 1992 or National Annex text is required at runtime or committed here.

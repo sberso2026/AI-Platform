@@ -110,7 +110,7 @@ export const CONCRETE_ADAPTER_BOUNDARIES = {
     nationalAnnex: true,
     defaultNationalAnnex: false,
     standardBinding: true,
-    implementationMaturity: "STANDARD_BINDING_FRAMEWORK",
+    implementationMaturity: "FRAMEWORK_PLUS_COMMON_MECHANICS",
   },
   US_CONCRETE: {
     ready: true,

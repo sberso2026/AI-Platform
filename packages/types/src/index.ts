@@ -405,3 +405,4 @@ export * from "./structural-concrete";
 export * from "./structural-concrete-section";
 export * from "./structural-concrete-au";
 export * from "./structural-concrete-eu";
+export * from "./structural-concrete-eu-flexure";

@@ -254,8 +254,8 @@ describe("EOS-D1E-EU-1 Eurocode concrete standard binding", () => {
     expect(EU_CONCRETE_NATIONAL_ANNEX_INFERRED_FROM_USER_LOCATION).toBe(false);
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
-    expect(EU_CONCRETE_IMPLEMENTATION_MATURITY).toBe("STANDARD_BINDING_FRAMEWORK");
-    expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_STANDARD_PROFILE_FOUNDATION");
+    expect(EU_CONCRETE_IMPLEMENTATION_MATURITY).toBe("FRAMEWORK_PLUS_COMMON_MECHANICS");
+    expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
     expect(PARALLEL_EU_CONCRETE_STANDARD_FRAMEWORK_CREATED).toBe(false);
     expect(EUROCODE_CONCRETE_NOT_HARDCODED_TO_EU_MEMBERSHIP).toBe(true);
@@ -268,9 +268,9 @@ describe("EOS-D1E-EU-1 Eurocode concrete standard binding", () => {
       materialScope: "concrete",
     });
     bindEuConcreteStandardFamily(uk);
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-EU")?.status).toBe("THIS_PHASE");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("D1E-EU");
-    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/flexure/i);
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-EU")?.status).toBe("CLOSED");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("D1E-US");
+    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/ACI 318/);
     expect(EOS_D1E_EU1_CLOSED).toBe(true);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU1).toBe(false);
     expect(disciplineMaturity("structural")).toBe("REFERENCE_PARTIALLY_IMPLEMENTED");
