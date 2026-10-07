@@ -153,7 +153,7 @@ describe("RTB-REL-1 drift report", () => {
     expect(report.readOnly).toBe(true);
     expect(report.synchronizesEnvironments).toBe(false);
     expect(report.counts.inventoried).toBeGreaterThan(149);
-    expect(report.securityBackports).toEqual(["20261007160000", "20261007180000"]);
+    expect(report.securityBackports).toEqual(["20261007160000", "20261007180000", "20261007190000"]);
     expect(report.superseded).toEqual(["20261007120000", "20261007140000"]);
     expect(report.stagingOnly.length).toBe(18);
     expect(report.unknownDrift).toEqual(["20260810210000", "20260810220000"]);

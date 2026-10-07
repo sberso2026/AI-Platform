@@ -338,7 +338,7 @@ Supported Engineering OS reconstruction uses live `supabase/migrations/` and doe
 
 1. Isolated clean-database reconstruction was not executed in REL-1B (static verification only).
 2. A fresh environment will **not** recreate `provision_signup_commercial_defaults`. That is intended: the function is not on the supported signup path.
-3. Production dumps that already contain the residual function should apply `20261007180000` (REL-1D). Clean bootstrap does not create the function.
+3. Production dumps that already contain the residual function should apply `20261007180000` (REL-1D) then `20261007190000` (REL-1E). Clean bootstrap does not create the residual signup function.
 4. `tenant-documents` bucket/policies exist on production and are not live migrations; supported EOS documents use `engineering-documents` at runtime.
 5. Business OS historical artifacts remain excluded from this product line.
 

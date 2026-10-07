@@ -109,4 +109,6 @@ This phase did not spin up a disposable Postgres. Static verification covers: re
 
 ## Production grant status (REL-1D applied)
 
-`20261007180000` revoked PUBLIC/anon/authenticated execute and pinned `search_path`. Anon RPC of the residual function returns 401. Other SECURITY DEFINER helpers with default PUBLIC/anon execute remain a **separate** review backlog and must not be auto-rewritten in this phase.
+`20261007180000` revoked PUBLIC/anon/authenticated execute and pinned `search_path`. Anon RPC of the residual function returns 401.
+
+REL-1E (`20261007190000`) then classified the remaining 28 untrusted DEFINER functions, restricted backend/trigger/PI execute to postgres/service_role, and added tenant-caller gates on remaining authenticated writers. See `docs/security/RTB_PRIVILEGED_RPC_REGISTER.md`.

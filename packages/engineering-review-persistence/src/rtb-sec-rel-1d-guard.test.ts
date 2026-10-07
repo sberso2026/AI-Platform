@@ -96,8 +96,7 @@ describe("RTB-SEC-REL-1D residual DEFINER lockdown guards", () => {
       ]),
     ).toEqual([
       "seed_tenant_engineering_os:PUBLIC:REQUIRES_REVIEW",
-      "create_default_tenant_roles:anon:REQUIRES_REVIEW",
-      "bump_commercial_entitlement_version:authenticated:REQUIRES_REVIEW",
+      "create_default_tenant_roles:anon:QUARANTINED",
       "provision_signup_commercial_defaults:authenticated:QUARANTINED",
     ]);
   });

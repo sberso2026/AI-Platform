@@ -11,7 +11,7 @@
     }
   },
   "ledgers": {
-    "capturedAt": "2026-10-07T04:52:00.000Z",
+    "capturedAt": "2026-10-07T05:20:00.000Z",
     "staging": [
       "20260101000000", "20260101000001", "20260101000002",
       "20260201000000", "20260201000001", "20260201000002", "20260201000003",
@@ -59,7 +59,8 @@
       "20260810210000", "20260810220000",
       "20260901013000",
       "20261007160000",
-      "20261007180000"
+      "20261007180000",
+      "20261007190000"
     ]
   },
   "overrides": [
@@ -157,6 +158,15 @@
       "securityCritical": true,
       "module": "security-rls",
       "notes": "RTB-SEC-REL-1D current-state lockdown of residual provision_signup_commercial_defaults. Revokes PUBLIC/anon/authenticated EXECUTE and pins search_path. NOT reconstruction of 20260810210000 or 20260810220000. Not applied to staging."
+    },
+    {
+      "id": "20261007190000",
+      "releaseState": "PRODUCTION_APPLIED",
+      "driftClass": "SECURITY_BACKPORT",
+      "productionEligible": true,
+      "securityCritical": true,
+      "module": "security-rls",
+      "notes": "RTB-SEC-REL-1E privileged RPC authorization hardening. Restricts backend/trigger/PI DEFINER execute to postgres/service_role; adds tenant-caller gates on remaining authenticated writers. NOT reconstruction of 20260810210000 or 20260810220000. Not applied to staging."
     },
     {
       "id": "20260810210000",

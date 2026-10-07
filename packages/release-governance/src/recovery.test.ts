@@ -84,6 +84,23 @@ describe("RTB-REL-1B current-state recovery baseline", () => {
     if (!promotion.ok) expect(promotion.code).toBe("staging_only");
   });
 
+  it("records REL-1E as a contemporary privileged RPC hardening, not historical recovery", () => {
+    const rel1e = live.find((row) => row.id === "20261007190000");
+    expect(rel1e?.file).toBe("20261007190000_rtb_sec_rel_1e_privileged_rpc_authorization_hardening.sql");
+    expect(rel1e?.releaseState).toBe("PRODUCTION_APPLIED");
+    expect(rel1e?.driftClass).toBe("SECURITY_BACKPORT");
+    const sql = readFileSync(join(root, "supabase/migrations", rel1e!.file!), "utf8");
+    expect(sql).toContain("THIS IS NOT reconstruction of 20260810210000 or 20260810220000");
+    expect(sql).not.toMatch(/^\s*DROP FUNCTION\b/im);
+    expect(sql).toContain("rtb_sec_rel_1e_assert_tenant_caller");
+    const promotion = evaluateProductionPromotion({
+      proposed: ["20261007190000"],
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: live,
+    });
+    expect(promotion).toEqual({ ok: true });
+  });
+
   it("records REL-1D as a contemporary security lockdown, not historical recovery", () => {
     const rel1d = live.find((row) => row.id === "20261007180000");
     expect(rel1d?.file).toBe("20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql");
