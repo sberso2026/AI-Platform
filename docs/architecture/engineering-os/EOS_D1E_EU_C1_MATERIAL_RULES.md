@@ -112,3 +112,42 @@ Profile identity is recorded as first-generation EN 1992-1-1 clause sources. Sec
 New-rule golden cases / numerical validation / deterministic execution: `NOT_APPLICABLE`. Existing C1 regression remains separately PASS. Partial-factor resolver behavior remains fail-closed PASS; factor authority class is now resolved as NDP.
 
 C1C resume gate: FAIL (constitutive minimum dependencies remain blocked). C2 numerical pack: incomplete. Ready to resume C1C only for the evidence-ready subset. Conformance remains `INTENDED_PROFILE`. Pack uncertified. Product claim unchanged.
+
+## C1C-RESUME-1 implemented NDP-dependent subset
+
+R1 implements exactly the four C1C-EVIDENCE `IMPLEMENTATION_READY` rules. It does not implement compression response, strain limits, reinforcement response, reinforcement strain states, a stress block, or member flexure. D1E-1 material integration remains the bounded-C2 section-resistance strategy.
+
+### Implemented rule IDs (cumulative 7)
+
+C1 (3) plus:
+
+- `EU_C1_PARTIAL_FACTOR_GAMMA_C`
+- `EU_C1_PARTIAL_FACTOR_GAMMA_S`
+- `EU_C1_CONCRETE_DESIGN_PROPERTIES`
+- `EU_C1_REINFORCEMENT_DESIGN_PROPERTIES`
+
+### Authority evidence
+
+TIER_A JRC113687 / JRC harmonisation / JRC71599 / Arrieta 2011, independently corroborated by TIER_B TCC lecture 2 (2016). Formula fingerprints are the C1C-EVIDENCE candidates:
+
+- gamma rules: require declared NDP or project override; forbid silent CEN recommended-value default; forbid location-inferred annex
+- concrete design: `fcd = αcc · fck / γc` with declared `αcc` and declared `γc`
+- reinforcement design: `fyd = fyk / γs` with declared `γs`
+
+No packed `1.5`, `1.15`, `0.85`, or `1.0`. Adapter partial-factor slots remain unpopulated. Historical C1C `resolveEuC1cPartialFactor()` without declared context remains fail-closed.
+
+### NDP dependency
+
+`gamma_c`, `gamma_s`, and `αcc` are `NDP_DEPENDENT`. Execution requires a declared National Annex identity or a governed project override plus declared values with units, provenance, and version. Missing NDP returns `STANDARD_CONTEXT_INCOMPLETE`. Implemented does not mean always executable.
+
+### Parameter provenance and validation
+
+Each result records parameter IDs, units, source refs, profile, NDP dependency, evidence version `c1c-evidence.0`, implementation version `c1c-r1.0`, and `NUMERICALLY_VALIDATED` with engineer state `PENDING_HUMAN_ENGINEERING_REVIEW`. Independent golden cases cover representative, second, boundary, and unit-converted inputs without calling production from the golden module. Fail-closed cases cover missing gamma/NDP, invalid characteristic properties, invalid units, NaN, Infinity, unsupported family, and stale versions. Changing NDP, characteristic property, rule version, fingerprint, or evidence version invalidates dependent design-property results.
+
+### Remaining minimum C2 dependencies
+
+- `EU_C1_CONCRETE_COMPRESSION_RESPONSE`
+- `EU_C1_CONCRETE_STRAIN_LIMITS`
+- `EU_C1_REINFORCEMENT_RESPONSE`
+
+`EU_C1_REINFORCEMENT_STRAIN_STATES` is `NOT_CURRENT_MINIMUM_DEPENDENCY` until a reinforcement response model is selected. Next phase type: targeted constitutive/strain evidence recovery. Not broad C1C. Conformance remains `INTENDED_PROFILE`. Pack uncertified. Product claim unchanged.

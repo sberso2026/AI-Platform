@@ -414,3 +414,4 @@ export * from "./structural-concrete-eu-c1b";
 export * from "./structural-concrete-eu-c1";
 export * from "./structural-concrete-eu-c1c";
 export * from "./structural-concrete-eu-c1c-evidence";
+export * from "./structural-concrete-eu-c1c-r1";

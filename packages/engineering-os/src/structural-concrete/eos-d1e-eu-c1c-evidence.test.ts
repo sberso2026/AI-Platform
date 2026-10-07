@@ -164,8 +164,8 @@ describe("EOS-D1E-EU-C1C-EVIDENCE C2 rule-authority recovery", () => {
     expect(EU_C2_NUMERICAL_RULE_PACK_COMPLETE).toBe(false);
     expect(READY_TO_RESUME_C1C).toBe(true);
     expect(EOS_D1E_EU_C1C_EVIDENCE_CLOSED).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C1C");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("THIS_PHASE");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C1C-CONSTITUTIVE");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1C.EVIDENCE")).toBe(true);
     expect(D1E_VALIDATION_DEBT_REGISTER.map((row) => row.debtId)).toEqual(
       expect.arrayContaining(["D1E-EU-C1C-EVIDENCE-VD-CONSTITUTIVE"]),
