@@ -95,4 +95,4 @@ AU, EU, and US now share one common RC section kernel, one common concrete domai
 
 ## Next D1E phase
 
-Canonical remaining D1E-US work is **bounded ACI-profile RC uniaxial flexure using the D1E-1 kernel**. No copyrighted ACI 318, building-code, load-standard, or material-standard text is required at runtime or committed here.
+D1E-US-2 closed bounded ACI-profile uniaxial flexure on this standard-binding foundation. Canonical remaining D1E work is **D1E architecture closeout**; no further generic concrete framework phase. No copyrighted ACI 318, building-code, load-standard, or material-standard text is required at runtime or committed here.

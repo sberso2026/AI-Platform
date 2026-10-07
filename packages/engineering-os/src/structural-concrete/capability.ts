@@ -89,11 +89,11 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     jurisdiction: "US",
     method: "ACI 318 family adapter",
     authorityType: "FRAMEWORK_ONLY",
-    implementationState: "STANDARD_BINDING_FRAMEWORK",
+    implementationState: "FRAMEWORK_PLUS_COMMON_MECHANICS",
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "ACI family/edition/adoption bound; edition UNKNOWN_PENDING_CONFIRMATION; no ACI 318 equations",
+    limitations: "ACI family/edition/adoption bound; uniaxial flexure reuses D1E-1; no ACI 318 resistance equations; edition unconfirmed",
     dependencies: ["D1E.GLOBAL.FOUNDATION", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1B standard bind"],
   },
   {
@@ -113,12 +113,24 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     jurisdiction: "US",
     method: "bounded ACI-profile uniaxial flexure profile",
     authorityType: "FRAMEWORK_ONLY",
-    implementationState: "STANDARD_BINDING_FRAMEWORK",
+    implementationState: "FRAMEWORK_PLUS_COMMON_MECHANICS",
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "profile ready; D1E-1 kernel reused; no numerical ACI flexural resistance",
+    limitations: "profile ready plus D1E-1 elastic mechanics reference; no numerical ACI flexural resistance",
     dependencies: ["D1E.US.STANDARD_CONTEXT", "D1E.GLOBAL.RC_SECTION_MECHANICS"],
+  },
+  {
+    capabilityId: "D1E.US.FLEXURE.UNIAXIAL",
+    jurisdiction: "US",
+    method: "bounded ACI-profile uniaxial RC flexure",
+    authorityType: "ESTABLISHED_ENGINEERING_MECHANICS",
+    implementationState: "FRAMEWORK_PLUS_COMMON_MECHANICS",
+    validationState: "MECHANICS_REFERENCE_BENCHMARKED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "elastic section reference only; ACI flexural resistance FRAMEWORK_ONLY; edition/adoption/amendment unpopulated",
+    dependencies: ["D1E.US.ADAPTER", "D1E.US.STANDARD_CONTEXT", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
   },
   {
     capabilityId: "D1E.US.AXIAL_FLEXURE.PROFILE",
@@ -322,7 +334,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-US-VD-PHI", category: "STRENGTH_REDUCTION_FACTOR", jurisdiction: "US", capability: "ACI strength-reduction factor", description: "phi unpopulated; steel LRFD/ASD not inherited", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable strength-reduction factors", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
   { debtId: "D1E-US-VD-STRESS-BLOCK", category: "STRESS_BLOCK_RULES", jurisdiction: "US", capability: "ACI stress block", description: "ACI stress-block parameters ungoverned", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable stress-block rule", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
   { debtId: "D1E-US-VD-STRAIN-LIMITS", category: "STRAIN_LIMITS", jurisdiction: "US", capability: "ACI strain limits", description: "ultimate concrete/reinforcement strain ungoverned", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable strain limits", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
-  { debtId: "D1E-US-VD-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "US", capability: "US uniaxial flexure", description: "numerical ACI flexural resistance not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed method plus independent benchmark", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
+  { debtId: "D1E-US-VD-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "US", capability: "US uniaxial flexure", description: "numerical ACI flexural resistance FRAMEWORK_ONLY after US-2; elastic mechanics reference only", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed method plus independent benchmark plus human confirmation", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
   { debtId: "D1E-US-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "US", capability: "US N-M", description: "N-M interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed N-M method", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
   { debtId: "D1E-US-VD-BIAXIAL", category: "BIAXIAL_INTERACTION", jurisdiction: "US", capability: "US P-M-M", description: "biaxial interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed biaxial method", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
   { debtId: "D1E-US-VD-SHEAR", category: "SHEAR", jurisdiction: "US", capability: "US shear", description: "numerical ACI shear absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed shear method", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later US concrete" },
@@ -354,7 +366,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "D1E-1", scope: "common RC section mechanics / deterministic geometry foundation", status: "CLOSED" },
   { id: "D1E-AU", scope: "first bounded AU AS 3600 slice after common section mechanics", status: "CLOSED" },
   { id: "D1E-EU", scope: "EN 1992 family/part/annex/NDP bind then bounded uniaxial flexure", status: "CLOSED" },
-  { id: "D1E-US", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
+  { id: "D1E-US", scope: "ACI 318 family/edition/adoption bind then bounded uniaxial flexure", status: "CLOSED" },
+  { id: "D1E-CLOSEOUT", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
@@ -393,6 +406,13 @@ export const D1E_EU2_D0_RISK_DISPOSITION = {
 } as const;
 
 export const D1E_US1_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_US2_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
   INTRODUCED: "NONE" as const,

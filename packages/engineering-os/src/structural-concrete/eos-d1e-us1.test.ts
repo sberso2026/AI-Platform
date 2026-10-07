@@ -72,7 +72,6 @@ import {
   PARALLEL_US_CONCRETE_STANDARD_FRAMEWORK_CREATED,
   PARALLEL_US_RC_SECTION_KERNEL_CREATED,
   RECOMMENDED_D1E_NEXT_PHASE,
-  RECOMMENDED_D1E_NEXT_PHASE_SCOPE,
   SCHEMA_CHANGE_REQUIRED_FOR_D1E_US1,
   SILENT_ACI318_EDITION_INFERENCE,
   SILENT_US_BUILDING_CODE_EDITION_INFERENCE,
@@ -392,8 +391,8 @@ describe("EOS-D1E-US-1 ACI concrete standard binding", () => {
     expect(US_CONCRETE_PROFILE_AND_CONFORMANCE_SEPARATE).toBe(true);
     expect(US_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
     expect(US_CONCRETE_PACK_CERTIFIED).toBe(false);
-    expect(US_CONCRETE_IMPLEMENTATION_MATURITY).toBe("STANDARD_BINDING_FRAMEWORK");
-    expect(US_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("US_CONCRETE_STANDARD_PROFILE_FOUNDATION");
+    expect(US_CONCRETE_IMPLEMENTATION_MATURITY).toBe("FRAMEWORK_PLUS_COMMON_MECHANICS");
+    expect(US_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("US_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(IMPLEMENTED_US_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
     expect(US_CONCRETE_JURISDICTION_AND_STANDARD_SEPARATE).toBe(true);
     expect(US_CONCRETE_STANDARD_INFERRED_FROM_USER_LOCATION).toBe(false);
@@ -415,9 +414,9 @@ describe("EOS-D1E-US-1 ACI concrete standard binding", () => {
     bindUsConcreteStandardFamily(us);
     expect(() => assertBuildingCodeAndAciStandardSeparate("IBC-PROFILE-CA", "ACI 318")).not.toThrow();
     expect(() => assertBuildingCodeAndAciStandardSeparate("ACI 318", "ACI 318")).toThrow(/not a substitute/);
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-US")?.status).toBe("THIS_PHASE");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("D1E-US");
-    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/uniaxial flexure/i);
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-US")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.some((row) => row.id === RECOMMENDED_D1E_NEXT_PHASE)).toBe(true);
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("D1E-CLOSEOUT");
     expect(D1E_US_ROADMAP_HANDOFF_VALIDATED).toBe(true);
     expect(EOS_D1E_US1_CLOSED).toBe(true);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_US1).toBe(false);
@@ -644,7 +643,7 @@ describe("EOS-D1E-US-1 ACI concrete standard binding", () => {
     expect(US_CONCRETE_PARAMETER_LEAKAGE_INTO_EU).toBe(false);
     expect(US_CONCRETE_PARAMETER_LEAKAGE_INTO_COMMON).toBe(false);
     expect(CONCRETE_ADAPTER_BOUNDARIES.US_CONCRETE.implemented).toBe(false);
-    expect(CONCRETE_ADAPTER_BOUNDARIES.US_CONCRETE.implementationMaturity).toBe("STANDARD_BINDING_FRAMEWORK");
+    expect(CONCRETE_ADAPTER_BOUNDARIES.US_CONCRETE.implementationMaturity).toBe("FRAMEWORK_PLUS_COMMON_MECHANICS");
     expect(CONCRETE_ADAPTER_BOUNDARIES.AU_CONCRETE.implemented).toBe(false);
     expect(CONCRETE_ADAPTER_BOUNDARIES.EU_CONCRETE.implemented).toBe(false);
     expect(STEEL_ADAPTER_BOUNDARIES.AU_STEEL.implemented).toBe(true);

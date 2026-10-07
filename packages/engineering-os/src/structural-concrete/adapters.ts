@@ -119,7 +119,7 @@ export const CONCRETE_ADAPTER_BOUNDARIES = {
     edition: US_CONCRETE_STANDARD_EDITION,
     loadContext: ["ASCE 7"],
     standardBinding: true,
-    implementationMaturity: "STANDARD_BINDING_FRAMEWORK",
+    implementationMaturity: "FRAMEWORK_PLUS_COMMON_MECHANICS",
     buildingCodeAdoption: true,
     directContractProfile: true,
     defaultBuildingCode: false,
