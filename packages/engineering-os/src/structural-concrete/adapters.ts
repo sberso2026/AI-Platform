@@ -118,5 +118,10 @@ export const CONCRETE_ADAPTER_BOUNDARIES = {
     standards: ["ACI 318"],
     edition: US_CONCRETE_STANDARD_EDITION,
     loadContext: ["ASCE 7"],
+    standardBinding: true,
+    implementationMaturity: "STANDARD_BINDING_FRAMEWORK",
+    buildingCodeAdoption: true,
+    directContractProfile: true,
+    defaultBuildingCode: false,
   },
 } as const;

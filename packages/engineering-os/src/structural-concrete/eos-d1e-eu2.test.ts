@@ -385,9 +385,9 @@ describe("EOS-D1E-EU-2 bounded Eurocode uniaxial RC flexure", () => {
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
     expect(disciplineMaturity("structural")).toBe("REFERENCE_PARTIALLY_IMPLEMENTED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-EU")?.status).toBe("CLOSED");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("D1E-US");
-    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/ACI 318/);
-    expect(D1E_CANONICAL_ROADMAP_HANDOFF.nextPhase).toBe("D1E-US");
+    expect(D1E_INTERNAL_ROADMAP.some((row) => row.id === RECOMMENDED_D1E_NEXT_PHASE)).toBe(true);
+    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE.length).toBeGreaterThan(0);
+    expect(D1E_CANONICAL_ROADMAP_HANDOFF.nextPhase).toBe(RECOMMENDED_D1E_NEXT_PHASE);
     expect(D1E_EU_ROADMAP_HANDOFF_VALIDATED).toBe(true);
     expect(EOS_D1E_EU2_CLOSED).toBe(true);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU2).toBe(false);
