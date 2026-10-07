@@ -1,8 +1,8 @@
 # RTB Database Recovery Baseline
 
-**Phase:** RTB-REL-1B  
+**Phase:** RTB-REL-1B / RTB-SEC-REL-1D  
 **Date:** 2026-10-07  
-**Status:** CURRENT-STATE recovery documented  
+**Status:** CURRENT-STATE recovery documented; residual DEFINER lockdown applied on production  
 **Production:** Engineering OS `wcydlhqiqdwgoaqrlget`  
 **Staging:** `rntonzigxwxcjlcsadip`
 
@@ -19,9 +19,9 @@ A supported Engineering OS environment is reconstructed from repository-owned li
 2. Do **not** copy `docs/release/historical-migrations/` into `supabase/migrations/`.
 3. Do **not** apply Business OS historical artifacts to Engineering OS.
 4. Do **not** invent SQL for blocked ledger versions `20260810210000` or `20260810220000`.
-5. If restoring a **production dump** that already contains `provision_signup_commercial_defaults`, apply the lockdown artifact in `docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql` under an explicit security-remediation approval. Do not apply it merely to make git match production.
+5. If restoring a **production dump** that already contains `provision_signup_commercial_defaults`, apply `supabase/migrations/20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql` (same lockdown as the recovery copy). Do not replay blocked historical versions.
 
-The lockdown SQL is **not** a live migration. It is not production-eligible until a later security phase applies it deliberately.
+**RESIDUAL_FUNCTION_REQUIRED_FOR_CLEAN_BOOTSTRAP = NO.** A clean Engineering OS reset does not create the function. The 1D migration no-ops if it is absent and still records the ledger version.
 
 ## Required bootstrap objects (supported path)
 
@@ -60,16 +60,18 @@ Read-only production inspection (2026-10-07):
 | Volatility | VOLATILE |
 | Owner | postgres |
 | SECURITY DEFINER | YES |
-| `search_path` | `public` only (not `pg_catalog, public`) |
-| EXECUTE | PUBLIC, anon, authenticated, service_role, postgres |
-| Fingerprint (md5 of `pg_get_functiondef`) | `69634f687e16947f52d71c760d5c0287` |
+| `search_path` (post-1D) | `pg_catalog, public` |
+| EXECUTE (pre-1D) | PUBLIC, anon, authenticated, service_role, postgres |
+| EXECUTE (post-1D, production 2026-10-07) | postgres, service_role only |
+| Fingerprint pre-1D | `69634f687e16947f52d71c760d5c0287` |
+| Fingerprint post-1D | `4d6d64fffe4ecc5eaf178d97a3c9925a` (search_path pin; body not rewritten as historical SQL) |
 | Called from `handle_new_user` | NO |
 | Called from `handle_new_tenant` | NO |
 | Other procedure callers | none |
 
 Observed body (current-state contract, **not** recovered 1021 SQL): given tenant and user IDs, idempotently ensure an Engineering OS `trial` subscription (plan `d1000000-0000-4000-8000-000000000002`), product/application/feature licenses from that plan, a seat pool, a seat assignment, and a commercial installation. Refuses the internal UAT plan. Accepts caller-supplied tenant/user IDs with no membership check.
 
-That grant posture is an **active least-privilege defect**. The recovery lockdown revokes PUBLIC/anon/authenticated execute and pins `search_path`. It does not copy the body into `supabase/migrations/`.
+REL-1D applied that lockdown to production on 2026-10-07. PUBLIC/anon/authenticated execute is revoked. The function body was not copied into live migrations as historical 1021 SQL.
 
 ## Security invariants
 
@@ -83,7 +85,7 @@ That grant posture is an **active least-privilege defect**. The recovery lockdow
 
 | Version | Historical provenance | Current-state recoverability |
 | --- | --- | --- |
-| `20260810210000` | `UNRESOLVED_BLOCKED` | `NOT_REQUIRED` — residual function is orphaned; lockdown artifact only |
+| `20260810210000` | `UNRESOLVED_BLOCKED` | `NOT_REQUIRED` — residual function quarantined by `20261007180000` |
 | `20260810220000` | `UNRESOLVED_BLOCKED` | `INDEPENDENT` / `OBSOLETE` for supported EOS document storage |
 | Business OS `20260818*` / `20260819*` | `RECOVERED_FROM_TRUSTED_HISTORY` | Staging-only sibling product; not in this reconstruction path |
 
@@ -105,6 +107,6 @@ Keep them on the hosted ledger as historical facts. Do not delete, rename, or fi
 
 This phase did not spin up a disposable Postgres. Static verification covers: required signup SQL present in live migrations; residual function absent from live migrations; lockdown SQL does not impersonate historical versions; promotion guard remains fail-closed.
 
-## Production grant defect (unapplied)
+## Production grant status (REL-1D applied)
 
-Live production still has anon/PUBLIC execute on the residual DEFINER function. RTB-REL-1B does **not** modify production. Follow-on security remediation must apply the lockdown (or equivalent REVOKE + `search_path` pin) under its own approval. Until then, treat unauthenticated RPC of `provision_signup_commercial_defaults` as a live risk.
+`20261007180000` revoked PUBLIC/anon/authenticated execute and pinned `search_path`. Anon RPC of the residual function returns 401. Other SECURITY DEFINER helpers with default PUBLIC/anon execute remain a **separate** review backlog and must not be auto-rewritten in this phase.

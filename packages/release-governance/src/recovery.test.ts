@@ -39,7 +39,7 @@ describe("RTB-REL-1B current-state recovery baseline", () => {
     expect(recoverySql).not.toMatch(/^\s*--\s*20260810210000/m);
     expect(recoverySql).not.toMatch(/^\s*--\s*20260810220000/m);
     expect(recoverySql).toContain("IT IS NOT THE ORIGINAL SQL FOR");
-    expect(recoverySql).toContain("DO NOT APPLY AUTOMATICALLY TO PRODUCTION");
+    expect(recoverySql).toContain("20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql");
     expect(recoverySql).toContain("It does not CREATE the function on a clean Engineering OS bootstrap");
     expect(recoveryDoc).toContain("DO NOT REPLAY BLOCKED HISTORICAL VERSIONS FROM INFERRED SQL");
   });
@@ -82,6 +82,23 @@ describe("RTB-REL-1B current-state recovery baseline", () => {
     });
     expect(promotion.ok).toBe(false);
     if (!promotion.ok) expect(promotion.code).toBe("staging_only");
+  });
+
+  it("records REL-1D as a contemporary security lockdown, not historical recovery", () => {
+    const rel1d = live.find((row) => row.id === "20261007180000");
+    expect(rel1d?.file).toBe("20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql");
+    expect(rel1d?.releaseState).toBe("PRODUCTION_APPLIED");
+    expect(rel1d?.driftClass).toBe("SECURITY_BACKPORT");
+    expect(rel1d?.productionEligible).toBe(true);
+    const sql = readFileSync(join(root, "supabase/migrations", rel1d!.file!), "utf8");
+    expect(sql).toContain("THIS IS NOT reconstruction of 20260810210000");
+    expect(sql).not.toMatch(/CREATE OR REPLACE FUNCTION public\.provision_signup_commercial_defaults/i);
+    const promotion = evaluateProductionPromotion({
+      proposed: ["20261007180000"],
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: live,
+    });
+    expect(promotion).toEqual({ ok: true });
   });
 
   it("keeps supported signup in live migrations, not in the residual function", () => {

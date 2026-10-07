@@ -286,12 +286,12 @@ Searches covered current `supabase/migrations`, reachable Git history (`git log 
 | POSSIBLE_OBJECTS | commercial trial bootstrap; EXECUTE grants; `search_path` |
 | CURRENTLY_REQUIRED_OBJECTS | none for supported signup (`handle_new_user`) |
 | CURRENT_APPLICATION_REFERENCES | none in repository, APIs, or trigger neighbors |
-| SECURITY RELEVANCE | YES — live DEFINER with PUBLIC/anon/authenticated EXECUTE |
-| CURRENT SCHEMA RELEVANCE | Residual function present; fingerprint md5 `69634f687e16947f52d71c760d5c0287`; not called by `handle_new_user` |
+| SECURITY RELEVANCE | YES historically; live untrusted EXECUTE closed by `20261007180000` |
+| CURRENT SCHEMA RELEVANCE | Residual function present; EXECUTE postgres/service_role only; `search_path=pg_catalog, public`; post-1D fingerprint `4d6d64fffe4ecc5eaf178d97a3c9925a` |
 | HISTORICAL DISPOSITION | BLOCKED / UNRESOLVED_BLOCKED |
-| CURRENT_STATE_RECOVERABILITY | NOT_REQUIRED (lockdown only if function already exists) |
-| CONFIDENCE | HIGH that SQL is unrecovered; HIGH that current function is orphaned; HIGH that grants are unsafe |
-| RATIONALE | Do not dump current DDL and call it this migration. Supported reconstruction does not replay 1021. Live grant defect is documented in `docs/security/RTB_REL_1B_SIGNUP_COMMERCIAL_DEFINER_GRANT_DEFECT.md` and is **not applied** in REL-1B. |
+| CURRENT_STATE_RECOVERABILITY | NOT_REQUIRED |
+| CONFIDENCE | HIGH that SQL is unrecovered; HIGH that current function is quarantined |
+| RATIONALE | Do not dump current DDL and call it this migration. REL-1D locked down grants without inventing 1021 SQL. |
 
 <a id="20260810220000"></a>
 
@@ -338,7 +338,7 @@ Supported Engineering OS reconstruction uses live `supabase/migrations/` and doe
 
 1. Isolated clean-database reconstruction was not executed in REL-1B (static verification only).
 2. A fresh environment will **not** recreate `provision_signup_commercial_defaults`. That is intended: the function is not on the supported signup path.
-3. Production dumps that already contain the residual function need the REL-1B lockdown SQL under a later security apply; REL-1B did not mutate production.
+3. Production dumps that already contain the residual function should apply `20261007180000` (REL-1D). Clean bootstrap does not create the function.
 4. `tenant-documents` bucket/policies exist on production and are not live migrations; supported EOS documents use `engineering-documents` at runtime.
 5. Business OS historical artifacts remain excluded from this product line.
 

@@ -3,10 +3,10 @@
 -- IT IS NOT THE ORIGINAL SQL FOR 20260810210000 OR 20260810220000.
 -- Identifier: rtb-rel-1b-current-state-signup-commercial-lockdown
 --
--- DO NOT APPLY AUTOMATICALLY TO PRODUCTION.
--- Production already contains provision_signup_commercial_defaults.
--- This file exists for disaster-recovery copies and future controlled
--- security remediation. It does not reconstruct unknown historical SQL.
+-- Canonical live equivalent: supabase/migrations/20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql
+-- REL-1D applied that file to production on 2026-10-07.
+-- Keep this copy for production-dump disaster recovery when the live
+-- migration history is not being replayed. It does not reconstruct unknown historical SQL.
 --
 -- Observed production defect (read-only inspection, 2026-10-07):
 --   SECURITY DEFINER function provision_signup_commercial_defaults(uuid, uuid)

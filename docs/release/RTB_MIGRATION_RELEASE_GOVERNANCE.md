@@ -125,5 +125,6 @@ Use the existing provider backup/PITR runbook (`docs/security/RTB_PLATFORM_BACKU
 | `docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md` | Ledger-only investigation record |
 | `packages/release-governance` | Classifier, graph, guard, report, tests |
 | `docs/recovery/RTB_DATABASE_RECOVERY_BASELINE.md` | Current-state reconstruction path (not historical SQL) |
-| `docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql` | Residual function lockdown for DR copies; not live, not production-applied |
+| `docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql` | DR copy of residual-function lockdown |
+| `supabase/migrations/20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql` | REL-1D production-applied grant quarantine |
 | `docs/release/MIGRATION_HEADER.template.sql` | Lightweight authoring hints |

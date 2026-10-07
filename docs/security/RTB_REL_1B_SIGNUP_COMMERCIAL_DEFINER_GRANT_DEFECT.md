@@ -3,7 +3,7 @@
 **Date:** 2026-10-07  
 **Environment:** production Engineering OS `wcydlhqiqdwgoaqrlget`  
 **Inspection:** read-only  
-**Applied to production:** NO
+**Applied to production:** closed by RTB-SEC-REL-1D (`20261007180000`) on 2026-10-07
 
 ## Finding
 
@@ -25,6 +25,6 @@ The body was observed on production on 2026-10-07. That is current-state evidenc
 4. Do not add authenticated/anon RPC access
 5. Do not wire this function into `handle_new_user` without a separate product decision
 
-Canonical SQL: `docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql`
+Canonical live SQL: `supabase/migrations/20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql`
 
-Do not apply as part of RTB-REL-1B.
+Applied by RTB-SEC-REL-1D. Do not reconstruct this as historical `20260810210000`.

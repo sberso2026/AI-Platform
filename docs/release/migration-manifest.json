@@ -11,7 +11,7 @@
     }
   },
   "ledgers": {
-    "capturedAt": "2026-10-07T04:00:00.000Z",
+    "capturedAt": "2026-10-07T04:52:00.000Z",
     "staging": [
       "20260101000000", "20260101000001", "20260101000002",
       "20260201000000", "20260201000001", "20260201000002", "20260201000003",
@@ -58,7 +58,8 @@
       "20260808010000", "20260808020000", "20260808030000", "20260808040000", "20260808050000", "20260808060000", "20260808070000", "20260808080000", "20260808090000", "20260808100000", "20260808110000", "20260808120000", "20260808130000", "20260808140000", "20260808150000", "20260808160000", "20260808170000", "20260808180000", "20260808190000", "20260808200000", "20260808210000", "20260808220000", "20260808230000", "20260808240000", "20260808250000", "20260808260000", "20260808270000", "20260808280000",
       "20260810210000", "20260810220000",
       "20260901013000",
-      "20261007160000"
+      "20261007160000",
+      "20261007180000"
     ]
   },
   "overrides": [
@@ -149,13 +150,22 @@
       "notes": "RLS-1C certified production backport. Satisfies RLS-1/1A security invariants without deploying Security Assurance or replaying staging-only schema."
     },
     {
+      "id": "20261007180000",
+      "releaseState": "PRODUCTION_APPLIED",
+      "driftClass": "SECURITY_BACKPORT",
+      "productionEligible": true,
+      "securityCritical": true,
+      "module": "security-rls",
+      "notes": "RTB-SEC-REL-1D current-state lockdown of residual provision_signup_commercial_defaults. Revokes PUBLIC/anon/authenticated EXECUTE and pins search_path. NOT reconstruction of 20260810210000 or 20260810220000. Not applied to staging."
+    },
+    {
       "id": "20260810210000",
       "releaseState": "BLOCKED",
       "driftClass": "UNKNOWN_DRIFT",
       "productionEligible": false,
       "securityCritical": true,
       "module": "identity",
-      "notes": "HISTORICAL_PROVENANCE remains UNRESOLVED_BLOCKED. CURRENT_STATE: orphaned provision_signup_commercial_defaults is not on the supported handle_new_user path. Do not treat observed DDL as recovered 1021 SQL. Lockdown artifact is docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql (not applied).",
+      "notes": "HISTORICAL_PROVENANCE remains UNRESOLVED_BLOCKED. CURRENT_STATE: residual function lockdown applied as 20261007180000. Do not treat observed or locked-down DDL as recovered 1021 SQL.",
       "provenance": {
         "disposition": "BLOCKED",
         "recoveryClass": "UNRESOLVED_BLOCKED",
@@ -165,12 +175,12 @@
         "historicalPath": null,
         "checksum": null,
         "securityRelevant": true,
-        "securityRelevanceNotes": "Historical SQL unknown. Current residual DEFINER has EXECUTE for PUBLIC/anon/authenticated and unpinned search_path. Active grant defect; unapplied.",
-        "currentSchemaRelevance": "provision_signup_commercial_defaults(uuid,uuid) exists; not called by handle_new_user. Fingerprint md5 69634f687e16947f52d71c760d5c0287.",
+        "securityRelevanceNotes": "Historical SQL unknown. REL-1D revoked PUBLIC/anon/authenticated EXECUTE and pinned search_path. Live residual remains quarantined, not recovered history.",
+        "currentSchemaRelevance": "Function remains present; EXECUTE postgres/service_role only; search_path=pg_catalog, public. Post-lockdown fingerprint md5 4d6d64fffe4ecc5eaf178d97a3c9925a.",
         "confidence": "HIGH",
         "evidence": "docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md#20260810210000",
         "currentStateRecoverability": "NOT_REQUIRED",
-        "currentStateBaseline": "docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql",
+        "currentStateBaseline": "supabase/migrations/20261007180000_rtb_sec_rel_1d_residual_signup_commercial_lockdown.sql",
         "currentRelevance": "UNKNOWN"
       }
     },
