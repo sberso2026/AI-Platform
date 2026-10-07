@@ -416,3 +416,4 @@ export * from "./structural-concrete-eu-c1c";
 export * from "./structural-concrete-eu-c1c-evidence";
 export * from "./structural-concrete-eu-c1c-r1";
 export * from "./structural-concrete-eu-c1c-constitutive";
+export * from "./structural-concrete-eu-c2";

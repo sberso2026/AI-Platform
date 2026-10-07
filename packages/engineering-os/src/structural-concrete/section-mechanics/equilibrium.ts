@@ -24,45 +24,49 @@ export function sectionEquilibriumResidual(calculated: RcSectionResultants, targ
   };
 }
 
-export function solveElasticEquilibrium(input: {
-  geometry: RcSectionGeometryInput;
-  layout: ReinforcementLayout;
-  concrete: ConcreteMaterial;
-  reinforcement: ReinforcementMaterial;
-  target: { N_N: number; Mx_Nm: number; My_Nm: number };
-  originMm: { xMm: number; yMm: number };
-  displacementTreatment: RcReinforcementDisplacementTreatment;
-  crackState: RcCrackState;
-  provenanceRef: string;
-}): {
+export type RcSectionIntegrateFn = (strain: RcGeneralizedStrainState) => RcSectionResultants;
+
+export type RcEquilibriumSolveResult = {
   state: "CONVERGED" | "NOT_CONVERGED" | "CHECK_UNDETERMINED";
   strain: RcGeneralizedStrainState | null;
   resultants: RcSectionResultants | null;
   residual: RcEquilibriumResidual | null;
   iterations: number;
-  method: "NEWTON_RAPHSON";
+  method: "NEWTON_RAPHSON" | "BRACKETED_AXIAL_BISECTION";
   labelledCodeCapacity: false;
-} {
+};
+
+export function solveSectionEquilibrium(input: {
+  originMm: { xMm: number; yMm: number };
+  target: { N_N: number; Mx_Nm: number; My_Nm: number };
+  integrate: RcSectionIntegrateFn;
+  maxIterations?: number;
+  forceTolN?: number;
+  momentTolNm?: number;
+}): RcEquilibriumSolveResult {
   const method = "NEWTON_RAPHSON" as const;
   let eps = 0;
   let phix = 0;
   let phiy = 0;
   const stepE = RC_NUMERICAL_TOLERANCE.jacobianStrainStep;
   const stepK = RC_NUMERICAL_TOLERANCE.jacobianCurvatureStepPerMm;
-  for (let iter = 1; iter <= RC_NUMERICAL_TOLERANCE.maxNewtonIterations; iter++) {
+  const maxIter = input.maxIterations ?? RC_NUMERICAL_TOLERANCE.maxNewtonIterations;
+  const forceTol = input.forceTolN ?? RC_NUMERICAL_TOLERANCE.forceN;
+  const momentTol = input.momentTolNm ?? RC_NUMERICAL_TOLERANCE.momentNm;
+  for (let iter = 1; iter <= maxIter; iter++) {
     const strain = createStrainState(eps, phix, phiy, input.originMm);
-    const resultants = integrateElasticSection({ ...input, strain });
+    const resultants = input.integrate(strain);
     const residual = sectionEquilibriumResidual(resultants, input.target);
     const ok =
-      Math.abs(residual.rN_N) <= RC_NUMERICAL_TOLERANCE.forceN &&
-      Math.abs(residual.rMx_Nm) <= RC_NUMERICAL_TOLERANCE.momentNm &&
-      Math.abs(residual.rMy_Nm) <= RC_NUMERICAL_TOLERANCE.momentNm;
+      Math.abs(residual.rN_N) <= forceTol &&
+      Math.abs(residual.rMx_Nm) <= momentTol &&
+      Math.abs(residual.rMy_Nm) <= momentTol;
     if (ok) {
       return { state: "CONVERGED", strain, resultants, residual, iterations: iter, method, labelledCodeCapacity: false };
     }
-    const col0 = sectionEquilibriumResidual(integrateElasticSection({ ...input, strain: createStrainState(eps + stepE, phix, phiy, input.originMm) }), input.target);
-    const col1 = sectionEquilibriumResidual(integrateElasticSection({ ...input, strain: createStrainState(eps, phix + stepK, phiy, input.originMm) }), input.target);
-    const col2 = sectionEquilibriumResidual(integrateElasticSection({ ...input, strain: createStrainState(eps, phix, phiy + stepK, input.originMm) }), input.target);
+    const col0 = sectionEquilibriumResidual(input.integrate(createStrainState(eps + stepE, phix, phiy, input.originMm)), input.target);
+    const col1 = sectionEquilibriumResidual(input.integrate(createStrainState(eps, phix + stepK, phiy, input.originMm)), input.target);
+    const col2 = sectionEquilibriumResidual(input.integrate(createStrainState(eps, phix, phiy + stepK, input.originMm)), input.target);
     const J = [
       [(col0.rN_N - residual.rN_N) / stepE, (col1.rN_N - residual.rN_N) / stepK, (col2.rN_N - residual.rN_N) / stepK],
       [(col0.rMx_Nm - residual.rMx_Nm) / stepE, (col1.rMx_Nm - residual.rMx_Nm) / stepK, (col2.rMx_Nm - residual.rMx_Nm) / stepK],
@@ -76,7 +80,96 @@ export function solveElasticEquilibrium(input: {
     phix += delta[1];
     phiy += delta[2];
   }
-  return { state: "NOT_CONVERGED", strain: null, resultants: null, residual: null, iterations: RC_NUMERICAL_TOLERANCE.maxNewtonIterations, method, labelledCodeCapacity: false };
+  return { state: "NOT_CONVERGED", strain: null, resultants: null, residual: null, iterations: maxIter, method, labelledCodeCapacity: false };
+}
+
+export function solveElasticEquilibrium(input: {
+  geometry: RcSectionGeometryInput;
+  layout: ReinforcementLayout;
+  concrete: ConcreteMaterial;
+  reinforcement: ReinforcementMaterial;
+  target: { N_N: number; Mx_Nm: number; My_Nm: number };
+  originMm: { xMm: number; yMm: number };
+  displacementTreatment: RcReinforcementDisplacementTreatment;
+  crackState: RcCrackState;
+  provenanceRef: string;
+}): RcEquilibriumSolveResult {
+  return solveSectionEquilibrium({
+    originMm: input.originMm,
+    target: input.target,
+    integrate: (strain) => integrateElasticSection({ ...input, strain }),
+  });
+}
+
+export function solveAxialEquilibrium1d(input: {
+  integrate: RcSectionIntegrateFn;
+  strainFromParam: (param: number) => RcGeneralizedStrainState;
+  targetN: number;
+  paramLow: number;
+  paramHigh: number;
+  forceTolN: number;
+  maxIterations: number;
+}): RcEquilibriumSolveResult {
+  const method = "BRACKETED_AXIAL_BISECTION" as const;
+  const nAt = (param: number): { resultants: RcSectionResultants; residual: RcEquilibriumResidual } | null => {
+    try {
+      const strain = input.strainFromParam(param);
+      const resultants = input.integrate(strain);
+      if (!Number.isFinite(resultants.N_N)) return null;
+      return { resultants, residual: sectionEquilibriumResidual(resultants, { N_N: input.targetN, Mx_Nm: resultants.Mx_Nm, My_Nm: resultants.My_Nm }) };
+    } catch {
+      return null;
+    }
+  };
+  let lo = input.paramLow;
+  let hi = input.paramHigh;
+  const left = nAt(lo);
+  const right = nAt(hi);
+  if (!left || !right) {
+    return { state: "NOT_CONVERGED", strain: null, resultants: null, residual: null, iterations: 0, method, labelledCodeCapacity: false };
+  }
+  let nLo = left.residual.rN_N;
+  let nHi = right.residual.rN_N;
+  if (nLo * nHi > 0) {
+    return { state: "NOT_CONVERGED", strain: null, resultants: null, residual: left.residual, iterations: 0, method, labelledCodeCapacity: false };
+  }
+  let best = Math.abs(nLo) < Math.abs(nHi) ? { param: lo, sample: left } : { param: hi, sample: right };
+  for (let iter = 1; iter <= input.maxIterations; iter++) {
+    const mid = 0.5 * (lo + hi);
+    const sample = nAt(mid);
+    if (!sample) {
+      return { state: "NOT_CONVERGED", strain: null, resultants: null, residual: best.sample.residual, iterations: iter, method, labelledCodeCapacity: false };
+    }
+    const nMid = sample.residual.rN_N;
+    if (Math.abs(nMid) < Math.abs(best.sample.residual.rN_N)) best = { param: mid, sample };
+    if (Math.abs(nMid) <= input.forceTolN) {
+      return {
+        state: "CONVERGED",
+        strain: input.strainFromParam(mid),
+        resultants: sample.resultants,
+        residual: sample.residual,
+        iterations: iter,
+        method,
+        labelledCodeCapacity: false,
+      };
+    }
+    if (nLo * nMid <= 0) {
+      hi = mid;
+      nHi = nMid;
+    } else {
+      lo = mid;
+      nLo = nMid;
+    }
+  }
+  return {
+    state: "NOT_CONVERGED",
+    strain: null,
+    resultants: null,
+    residual: best.sample.residual,
+    iterations: input.maxIterations,
+    method,
+    labelledCodeCapacity: false,
+  };
 }
 
 function solve3(A: number[][], b: number[]): [number, number, number] | null {

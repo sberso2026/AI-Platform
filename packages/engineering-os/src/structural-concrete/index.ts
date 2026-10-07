@@ -27,6 +27,7 @@ export {
   D1E_EU_C1C_EVIDENCE_D0_RISK_DISPOSITION,
   D1E_EU_C1C_R1_D0_RISK_DISPOSITION,
   D1E_EU_C1C_CONSTITUTIVE_D0_RISK_DISPOSITION,
+  D1E_EU_C2_D0_RISK_DISPOSITION,
   D1E_CANONICAL_ROADMAP_HANDOFF,
   D1E_INTERNAL_ROADMAP,
   D1E_VALIDATION_DEBT_REGISTER,
@@ -62,3 +63,4 @@ export * from "./eu-c1";
 export * from "./eu-c1c";
 export * from "./eu-c1c-r1";
 export * from "./eu-c1c-constitutive";
+export * from "./eu-c2";

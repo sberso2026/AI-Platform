@@ -1,6 +1,14 @@
 export { screenGenerativeRcCandidate } from "./candidate";
 export { discretizeSection, assertDiscretizationConservation } from "./discretization";
-export { solveElasticEquilibrium, sectionEquilibriumResidual, assertNonconvergenceFailsClosed } from "./equilibrium";
+export {
+  solveElasticEquilibrium,
+  solveSectionEquilibrium,
+  solveAxialEquilibrium1d,
+  sectionEquilibriumResidual,
+  assertNonconvergenceFailsClosed,
+  type RcSectionIntegrateFn,
+  type RcEquilibriumSolveResult,
+} from "./equilibrium";
 export { fingerprintRcSectionConfiguration, geometryInvalidationTags } from "./fingerprint";
 export {
   computeGrossSectionProperties,

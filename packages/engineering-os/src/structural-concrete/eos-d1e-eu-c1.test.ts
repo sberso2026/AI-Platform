@@ -156,7 +156,10 @@ describe("EOS-D1E-EU-C1 governed Eurocode concrete material rule pack", () => {
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_IMPLEMENTATION_MATURITY).toBe("FRAMEWORK_PLUS_COMMON_MECHANICS");
-    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
+    expect([...IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
     expect(DEFAULT_EU_CONCRETE_NATIONAL_ANNEX).toBe(false);
     expect(NATIONAL_ANNEX_INFERRED_FROM_LOCATION).toBe(false);
     expect(LLM_MEMORY_ONLY_RULE_ALLOWED).toBe(false);
@@ -288,7 +291,7 @@ describe("EOS-D1E-EU-C1 governed Eurocode concrete material rule pack", () => {
       "EU_C1_STRESS_BLOCK_OR_SECTION_MODEL",
     ]);
     expect(NEXT_PHASE_TYPE).toBe("BOUNDED_RULE_GAP_IMPLEMENTATION");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C2");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1.MATERIAL_RULES")).toBe(true);

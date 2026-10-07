@@ -424,9 +424,11 @@ describe("EOS-D1E-EU-2 bounded Eurocode uniaxial RC flexure", () => {
   });
 
   it("keeps EN 1992 code flexure framework-only and fails closed on missing annex, NDP, and axial action", () => {
-    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
-    expect(FRAMEWORK_ONLY_EU_CONCRETE_FLEXURE_METHODS).toContain("EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR");
-    expect(FRAMEWORK_ONLY_EU_CONCRETE_FLEXURE_METHODS).toContain("EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR");
+    expect([...IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
+    expect(FRAMEWORK_ONLY_EU_CONCRETE_FLEXURE_METHODS).toHaveLength(0);
     expect(EU_CONCRETE_FLEXURE_METHOD_REGISTRY).toBe(true);
     expect(EU_CONCRETE_STRESS_BLOCK_DEPENDENCY.parameters.eta.value).toBeNull();
     expect(EU_CONCRETE_STRESS_BLOCK_DEPENDENCY.parameters.lambda.value).toBeNull();
@@ -620,7 +622,9 @@ describe("EOS-D1E-EU-2 bounded Eurocode uniaxial RC flexure", () => {
   });
 
   it("preserves boundaries, AI limits, debt, regressions, and copyright", () => {
-    expect(EU_CONCRETE_FLEXURE_METHODS.every((row) => row.methodScope === "MECHANICS_REFERENCE_ONLY" || row.methodScope === "FRAMEWORK_ONLY")).toBe(true);
+    expect(EU_CONCRETE_FLEXURE_METHODS.every((row) =>
+      row.methodScope === "MECHANICS_REFERENCE_ONLY" || row.methodScope === "FRAMEWORK_ONLY" || row.methodScope === "GOVERNED_IMPLEMENTABLE",
+    )).toBe(true);
     expect(EU_CONCRETE_FLEXURE_METHODS.every((row) => row.part === "EN_1992_1_1")).toBe(true);
     expect(EU_MINIMUM_REINFORCEMENT_CODE_CHECK_IMPLEMENTED).toBe(false);
     expect(EU_MAXIMUM_REINFORCEMENT_CODE_CHECK_IMPLEMENTED).toBe(false);

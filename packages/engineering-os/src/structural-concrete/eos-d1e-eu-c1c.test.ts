@@ -153,7 +153,10 @@ describe("EOS-D1E-EU-C1C bounded C2 rule-gap classification", () => {
     expect(COPYRIGHTED_STANDARD_TEXT_REPRODUCED).toBe(false);
     expect(DEFAULT_EU_CONCRETE_NATIONAL_ANNEX).toBe(false);
     expect(NATIONAL_ANNEX_INFERRED_FROM_LOCATION).toBe(false);
-    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
+    expect([...IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
     expect(NUMERICAL_VALIDATION_EQUALS_STANDARD_CONFORMANCE).toBe(false);
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
@@ -165,7 +168,7 @@ describe("EOS-D1E-EU-C1C bounded C2 rule-gap classification", () => {
     expect(EU_C2_REQUIRED_RULE_DEPENDENCIES_COMPLETE).toBe(false);
     expect(EU_C1_RULE_PACK_READY_FOR_FLEXURE).toBe(false);
     expect(NEXT_PHASE_TYPE).toBe("BOUNDED_RULE_GAP_IMPLEMENTATION");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C2");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1C.RULE_GAPS")).toBe(true);
     expect(EU_C1C_CAPABILITY_MANIFEST_NEW_RULE_COUNT).toBe(0);

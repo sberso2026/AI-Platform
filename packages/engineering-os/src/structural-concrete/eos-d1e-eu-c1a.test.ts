@@ -82,8 +82,14 @@ describe("EOS-D1E-EU-C1A Eurocode concrete rule-evidence recovery", () => {
     expect(D1E_FROZEN_ARCHITECTURE_PRESERVED).toBe(true);
     expect(PARALLEL_EU_C1A_ARCHITECTURE_CREATED).toBe(false);
     expect(EU_C1A_NUMERICAL_RULE_IMPLEMENTATION_COUNT).toBe(0);
-    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
-    expect(IMPLEMENTED_FLEXURE).toBe("NONE");
+    expect([...IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
+    expect([...IMPLEMENTED_FLEXURE]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
@@ -184,7 +190,7 @@ describe("EOS-D1E-EU-C1A Eurocode concrete rule-evidence recovery", () => {
     ]);
     expect(EU_C1A_READY_TO_RESUME_EU_C1).toBe(false);
     expect(EOS_D1E_EU_C1A_CLOSED).toBe(false);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C2");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1A")?.status).toBe("BLOCKED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1A.RULE_EVIDENCE")).toBe(true);

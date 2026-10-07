@@ -169,7 +169,7 @@ export type EuConcreteFlexureMethodRecord = {
   applicability: string;
   requiredInputs: readonly string[];
   outputSemantics: EuFlexureResultAuthority;
-  implementationVersion: typeof EU_FLEXURE_IMPLEMENTATION_VERSION;
+  implementationVersion: string;
   numericalValidationState: string;
   engineeringValidationState: string;
   standardConformanceState: typeof EU_CONCRETE_STANDARD_CONFORMANCE_STATE;
@@ -237,7 +237,20 @@ export type EuConcreteFlexureResult = {
   neutralAxis: { exists: boolean; labelledCodeResistance: false };
   strainStateRefs: readonly string[];
   materialResponseRefs: readonly string[];
+  methodId: string;
+  momentSign: "POSITIVE" | "NEGATIVE" | null;
   referenceMomentNm: number | null;
+  resistanceMomentNm: number | null;
+  resistanceMomentUnit: "N.m";
+  designRuleResistanceNm: number | null;
+  designRuleUtilization: number | null;
+  resistanceAuthorityLayer: string | null;
+  equilibriumResidualN: number | null;
+  geometryFingerprint: string | null;
+  resultFingerprint: string | null;
+  integrationConfiguration: string | null;
+  solverConfiguration: string | null;
+  constitutiveParameterVersion: string | null;
   nominalDesignResistanceNm: null;
   designResistanceNm: null;
   en1992Utilization: null;
@@ -250,7 +263,7 @@ export type EuConcreteFlexureResult = {
   ndpSetRef: string | null;
   stressBlockOrDesignModelRef: string | null;
   partialFactorRefs: readonly string[];
-  methodVersion: typeof EU_FLEXURE_IMPLEMENTATION_VERSION;
+  methodVersion: string;
   validationState: string;
   conformanceState: typeof EU_CONCRETE_STANDARD_CONFORMANCE_STATE;
   benchmarkState: string;

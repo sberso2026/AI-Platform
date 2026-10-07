@@ -77,7 +77,10 @@ describe("EOS-D1E-EU-C1B Eurocode concrete rule-authority recovery", () => {
     expect(LLM_MEMORY_ONLY_RULE_ALLOWED).toBe(false);
     expect(MODEL_SUGGESTED_PARAMETER_REQUIRES_EXTERNAL_VALIDATION).toBe(true);
     expect(PARALLEL_EU_RULE_ENGINE_CREATED).toBe(false);
-    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
+    expect([...IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
   });
 
   it("reclassifies the C1 inventory without guessing coefficients or claiming conformance", () => {

@@ -2,6 +2,7 @@ import type {
   ConcreteMaterial,
   EuConcreteFlexureResult,
   EuConcreteResolverInput,
+  EuC2MethodId,
   EuFlexureAxis,
   EuFlexureWarningCode,
   EurocodeConcreteCalculationContext,
@@ -44,6 +45,8 @@ import {
 } from "../section-mechanics";
 import { resolveEurocodeConcreteContext } from "../eu-standard/resolver";
 import { EU_CONCRETE_PARTIAL_FACTOR_DEPENDENCY as PARTIAL_FACTOR_SLOT, EU_CONCRETE_STRAIN_LIMIT_DEPENDENCY as STRAIN_SLOT, EU_CONCRETE_STRESS_BLOCK_DEPENDENCY as STRESS_SLOT } from "../eu-standard/profiles";
+import type { EuC1cConstitutiveContext } from "../eu-c1c-constitutive";
+import { evaluateEuC2UniaxialFlexureResistance, euC2MomentSignFromDemand } from "../eu-c2";
 import { assertCodeParameterNotGuessed, assertEuFlexureAiBoundary, assertEuFlexureRuleAuthority, assertGenerativeCannotChangeStandardContext } from "./authority";
 import { assertEuFlexureMaterialGovernance, assertPureEuFlexureApplicability, toEuFlexureContext } from "./context";
 import { euFlexureFingerprint, sectionLayoutFingerprint } from "./invalidation";
@@ -58,8 +61,43 @@ export type EuConcreteFlexureInput = {
   reinforcement: ReinforcementMaterial;
   demand: StructuralDemandResult;
   resolverInput: EuConcreteResolverInput;
+  constitutiveContext?: EuC1cConstitutiveContext;
   generativeAttemptedStandardContextChange?: boolean;
 };
+
+function c2ResultFields(partial: Partial<EuConcreteFlexureResult> = {}): Pick<
+  EuConcreteFlexureResult,
+  | "methodId"
+  | "momentSign"
+  | "resistanceMomentNm"
+  | "resistanceMomentUnit"
+  | "designRuleResistanceNm"
+  | "designRuleUtilization"
+  | "resistanceAuthorityLayer"
+  | "equilibriumResidualN"
+  | "geometryFingerprint"
+  | "resultFingerprint"
+  | "integrationConfiguration"
+  | "solverConfiguration"
+  | "constitutiveParameterVersion"
+> {
+  return {
+    methodId: "",
+    momentSign: null,
+    resistanceMomentNm: null,
+    resistanceMomentUnit: "N.m",
+    designRuleResistanceNm: null,
+    designRuleUtilization: null,
+    resistanceAuthorityLayer: null,
+    equilibriumResidualN: null,
+    geometryFingerprint: null,
+    resultFingerprint: null,
+    integrationConfiguration: null,
+    solverConfiguration: null,
+    constitutiveParameterVersion: null,
+    ...partial,
+  };
+}
 
 function fail(message: string): never {
   throw new Error(`EU concrete flexure fail closed: ${message}`);
@@ -128,7 +166,7 @@ export function evaluateEuConcreteFlexure(input: EuConcreteFlexureInput): EuConc
     ...input.resolverInput,
     requestedPartId: method.part,
     ruleRequiresNdp: method.nationalAnnexDependency,
-    requiredNdpIds: method.methodScope === "GOVERNED_IMPLEMENTABLE" ? [...method.ndpDependency] : [],
+    requiredNdpIds: [],
   };
   const ctxOrFail = resolvedContext({ ...input, resolverInput: resolverForMethod });
   if ("undetermined" in ctxOrFail) return ctxOrFail.undetermined;
@@ -142,7 +180,7 @@ export function evaluateEuConcreteFlexure(input: EuConcreteFlexureInput): EuConc
     return undetermined(input, method.outputSemantics === "CODE_DESIGN_RESISTANCE" ? "CODE_PROFILE_REFERENCE" : "MECHANICS_REFERENCE", "UNSUPPORTED_SCOPE", ["UNSUPPORTED_AXIAL_ACTION"], euContext);
   }
 
-  const demandNm = input.axis === "MINOR_AXIS" ? actions.My_Nm : actions.Mx_Nm;
+  const demandNm = actions.Mx_Nm;
   if (!Number.isFinite(demandNm)) fail("missing demand");
 
   toEuFlexureContext({
@@ -179,11 +217,101 @@ export function evaluateEuConcreteFlexure(input: EuConcreteFlexureInput): EuConc
     methodVersion: EU_FLEXURE_IMPLEMENTATION_VERSION,
   });
 
-  if (method.methodType === "EN1992_UNIAXIAL_FLEXURE" || method.methodScope === "FRAMEWORK_ONLY") {
-    const extra: EuFlexureWarningCode[] = [];
-    if (!euContext.nationalAnnex) extra.push("NATIONAL_ANNEX_MISSING");
-    if (method.ndpDependency.length) extra.push("NDP_MISSING");
-    return undetermined(input, "CODE_PROFILE_REFERENCE", "METHOD_NOT_IMPLEMENTED", extra, euContext);
+  if (method.methodType === "EN1992_UNIAXIAL_FLEXURE") {
+    if (!input.constitutiveContext) {
+      const extra: EuFlexureWarningCode[] = [];
+      if (!euContext.nationalAnnex) extra.push("NATIONAL_ANNEX_MISSING");
+      extra.push("NDP_MISSING");
+      return undetermined(input, "CODE_PROFILE_REFERENCE", "STANDARD_CONTEXT_INCOMPLETE", extra, euContext);
+    }
+    const momentSign = euC2MomentSignFromDemand(demandNm);
+    const solved = evaluateEuC2UniaxialFlexureResistance({
+      methodId: method.methodId as EuC2MethodId,
+      axis: input.axis,
+      momentSign,
+      geometry: input.geometry,
+      layout: input.layout,
+      concrete: input.concrete,
+      reinforcement: input.reinforcement,
+      context: input.constitutiveContext,
+      provenanceRef: input.geometry.provenanceRef,
+    });
+    if (!solved.ok) {
+      const extra: EuFlexureWarningCode[] = solved.failReason.includes("converge") ? ["EQUILIBRIUM_NOT_CONVERGED"] : [];
+      return undetermined(
+        input,
+        "CODE_PROFILE_REFERENCE",
+        solved.checkState === "UNSUPPORTED_SCOPE" ? "UNSUPPORTED_SCOPE" : "CHECK_UNDETERMINED",
+        extra,
+        euContext,
+      );
+    }
+    const absDemand = Math.abs(demandNm);
+    const absResistance = Math.abs(solved.resistanceMomentNm);
+    const utilization = absResistance > 0 ? absDemand / absResistance : null;
+    const checkState =
+      utilization == null ? "CHECK_UNDETERMINED" : absDemand <= absResistance ? "CHECK_SATISFIED" : "CHECK_NOT_SATISFIED";
+    const na = neutralAxisFromStrainState(solved.strain);
+    if (EU_NEUTRAL_AXIS_EQUALS_CODE_RESISTANCE_STATE || na.labelledCodeCapacity) fail("neutral axis is not a code resistance state");
+    if (MECHANICS_RATIO_LABELLED_AS_EN1992_CHECK) fail("mechanics ratio must not be labelled EN 1992 utilization");
+    return {
+      memberRef: input.demand.memberId,
+      sectionRef: input.geometry.sectionId,
+      axis: input.axis,
+      momentDemandRef: actions.demandResultId,
+      momentDemandNm: demandNm,
+      mechanicsState: "EQUILIBRATED",
+      codeDesignState: "CHECK_UNDETERMINED",
+      checkState,
+      resultAuthority: "CODE_PROFILE_REFERENCE",
+      neutralAxis: { exists: na.exists, labelledCodeResistance: false },
+      strainStateRefs: [method.technicalBasisRef],
+      materialResponseRefs: [...method.requiredMaterialModels],
+      ...c2ResultFields({
+        methodId: method.methodId,
+        momentSign,
+        resistanceMomentNm: solved.resistanceMomentNm,
+        designRuleResistanceNm: solved.resistanceMomentNm,
+        designRuleUtilization: utilization,
+        resistanceAuthorityLayer: solved.resistanceAuthorityLayer,
+        equilibriumResidualN: solved.equilibriumResidualN,
+        geometryFingerprint: solved.geometryFingerprint,
+        resultFingerprint: solved.resultFingerprint,
+        integrationConfiguration: solved.integrationConfiguration,
+        solverConfiguration: solved.solverConfiguration,
+        constitutiveParameterVersion: solved.materialRuleVersions[0] ?? null,
+      }),
+      referenceMomentNm: solved.resistanceMomentNm,
+      nominalDesignResistanceNm: null,
+      designResistanceNm: null,
+      en1992Utilization: null,
+      mechanicsDemandRatio: utilization,
+      standardFamily: "EN 1992",
+      generation: euContext.version.generationFamily,
+      edition: euContext.version.edition,
+      part: euContext.standardPart,
+      nationalAnnexRef: euContext.nationalAnnex?.nationalAnnexId ?? null,
+      ndpSetRef: euContext.nationalAnnex?.nationalParameterSetRef ?? null,
+      stressBlockOrDesignModelRef: "MATERIAL_INTEGRATION",
+      partialFactorRefs: method.partialFactorDependencies,
+      methodVersion: method.implementationVersion,
+      validationState: "NUMERICALLY_VALIDATED",
+      conformanceState: "INTENDED_PROFILE",
+      benchmarkState: "INDEPENDENT_NUMERICAL_REFERENCE",
+      provenance: input.demand.provenanceRef,
+      humanReviewState: "required",
+      approvalState: "not_approved",
+      warnings: [
+        "STANDARD_EDITION_UNCONFIRMED",
+        "VALIDATION_REQUIRED",
+        "HUMAN_ENGINEERING_REVIEW_REQUIRED",
+        "NOT_APPROVED_FOR_CONSTRUCTION",
+      ],
+      completeness: "VALIDATION_REQUIRED",
+      labelledEn1992Resistance: false,
+      detailingComplianceImplied: false,
+      statutoryEuComplianceClaimed: euContext.statutoryEuComplianceClaimed,
+    };
   }
 
   const props = computeGrossSectionProperties(input.geometry);
@@ -234,6 +362,7 @@ export function evaluateEuConcreteFlexure(input: EuConcreteFlexureInput): EuConc
     neutralAxis: { exists: na.exists, labelledCodeResistance: false },
     strainStateRefs: [method.technicalBasisRef],
     materialResponseRefs: ["RC_LINEAR_ELASTIC_CONCRETE_REFERENCE", "RC_LINEAR_ELASTIC_REINFORCEMENT_REFERENCE"],
+    ...c2ResultFields({ methodId: method.methodId, momentSign: demandNm < 0 ? "NEGATIVE" : "POSITIVE" }),
     referenceMomentNm: mechanicsMoment,
     nominalDesignResistanceNm: null,
     designResistanceNm: null,
@@ -270,7 +399,7 @@ function undetermined(
   euContext: EurocodeConcreteCalculationContext | null,
 ): EuConcreteFlexureResult {
   const actions = consumeD1cSectionActions(input.demand);
-  const demandNm = input.axis === "MINOR_AXIS" ? actions.My_Nm : actions.Mx_Nm;
+  const demandNm = actions.Mx_Nm;
   return {
     memberRef: input.demand.memberId,
     sectionRef: input.geometry.sectionId,
@@ -284,6 +413,7 @@ function undetermined(
     neutralAxis: { exists: false, labelledCodeResistance: false },
     strainStateRefs: [],
     materialResponseRefs: [],
+    ...c2ResultFields({ methodId: input.methodId }),
     referenceMomentNm: null,
     nominalDesignResistanceNm: null,
     designResistanceNm: null,

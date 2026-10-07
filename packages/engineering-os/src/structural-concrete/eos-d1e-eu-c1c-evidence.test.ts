@@ -151,7 +151,10 @@ describe("EOS-D1E-EU-C1C-EVIDENCE C2 rule-authority recovery", () => {
     expect(NATIONAL_ANNEX_INFERRED_FROM_LOCATION).toBe(false);
     expect(LLM_MEMORY_ONLY_RULE_ALLOWED).toBe(false);
     expect(PARALLEL_EU_C1C_EVIDENCE_ARCHITECTURE_CREATED).toBe(false);
-    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
+    expect([...IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS]).toEqual([
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
@@ -164,7 +167,7 @@ describe("EOS-D1E-EU-C1C-EVIDENCE C2 rule-authority recovery", () => {
     expect(EU_C2_NUMERICAL_RULE_PACK_COMPLETE).toBe(false);
     expect(READY_TO_RESUME_C1C).toBe(true);
     expect(EOS_D1E_EU_C1C_EVIDENCE_CLOSED).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C2");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1C.EVIDENCE")).toBe(true);
     expect(D1E_VALIDATION_DEBT_REGISTER.map((row) => row.debtId)).toEqual(
