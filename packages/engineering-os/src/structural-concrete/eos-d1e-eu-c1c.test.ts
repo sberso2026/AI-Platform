@@ -1,0 +1,179 @@
+import { describe, expect, it } from "vitest";
+import {
+  C1_IMPLEMENTED_RULE_REGRESSION,
+  COMMON_RC_KERNEL_CONTAINS_EN1992_SECTION_MODEL,
+  COPYRIGHTED_STANDARD_TEXT_REPRODUCED,
+  DEFAULT_EU_CONCRETE_NATIONAL_ANNEX,
+  D1E_FROZEN_ARCHITECTURE_PRESERVED,
+  EOS_D1E_EU_C1C_CLOSED,
+  EU_C1C_BLOCKED_RULE_IDS,
+  EU_C1C_BLOCKER,
+  EU_C1C_C2_SECTION_RESISTANCE_STRATEGY,
+  EU_C1C_CAPABILITY_MANIFEST_NEW_RULE_COUNT,
+  EU_C1C_CONCRETE_COMPRESSION_RESPONSE_IMPLEMENTED,
+  EU_C1C_CONCRETE_DESIGN_PROPERTIES_IMPLEMENTED,
+  EU_C1C_EXISTING_RULE_EVIDENCE_LOADED,
+  EU_C1C_FAIL_CLOSED_AUDIT,
+  EU_C1C_GAMMA_C_DEPENDENCY_CLASS,
+  EU_C1C_GAMMA_C_IMPLEMENTED,
+  EU_C1C_GAMMA_S_DEPENDENCY_CLASS,
+  EU_C1C_GAMMA_S_IMPLEMENTED,
+  EU_C1C_GAP_CLASSIFICATION_COMPLETE,
+  EU_C1C_IMPLEMENTED_NUMERICAL_RULE_COUNT,
+  EU_C1C_IMPLEMENTED_RULE_IDS,
+  EU_C1C_IMPLEMENTED_RULE_WITHOUT_GOVERNED_EVIDENCE,
+  EU_C1C_IMPLEMENTATION_READY_RULE_IDS,
+  EU_C1C_INITIAL_GAP_COUNT,
+  EU_C1C_INITIAL_GAP_RULE_IDS,
+  EU_C1C_NUMERICALLY_VALIDATED_RULE_COUNT,
+  EU_C1C_PARTIAL_FACTOR_SOURCE_RESOLUTION,
+  EU_C1C_READY_FOR_NEXT_PHASE,
+  EU_C1C_REINFORCEMENT_DESIGN_PROPERTIES_IMPLEMENTED,
+  EU_C1C_REINFORCEMENT_RESPONSE_IMPLEMENTED,
+  EU_C1C_REINFORCEMENT_STRAIN_STATES_IMPLEMENTED,
+  EU_C1C_SECTION_MODEL_IMPLEMENTED,
+  EU_C1C_SOURCE_CONFLICT_IDS,
+  EU_C1C_UNPROVENANCED_NUMERICAL_CONSTANT_COUNT,
+  EU_C1_IMPLEMENTED_NUMERICAL_RULE_COUNT,
+  EU_C1_RULE_PACK_READY_FOR_FLEXURE,
+  EU_C2_REQUIRED_RULE_DEPENDENCIES_COMPLETE,
+  EU_CONCRETE_IMPLEMENTATION_MATURITY,
+  EU_CONCRETE_PACK_CERTIFIED,
+  EU_CONCRETE_PRODUCT_CLAIM_LEVEL,
+  EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+  EU_CUMULATIVE_CAPABILITY_MANIFEST_RULE_COUNT,
+  EU_CUMULATIVE_IMPLEMENTED_NUMERICAL_RULE_COUNT,
+  EU_VALIDATION_DEBT_REDUCED_ITEMS,
+  LICENSED_STANDARD_DOCUMENT_REQUIRED_FOR_IMPLEMENTATION,
+  LLM_MEMORY_ONLY_RULE_ALLOWED,
+  NATIONAL_ANNEX_INFERRED_FROM_LOCATION,
+  NEXT_PHASE_TYPE,
+  NUMERICAL_VALIDATION_EQUALS_STANDARD_CONFORMANCE,
+  PARALLEL_EU_RULE_ENGINE_CREATED,
+  PARALLEL_EU_STANDARD_FRAMEWORK_CREATED,
+  PARALLEL_EU_VALIDATION_FRAMEWORK_CREATED,
+  RECOMMENDED_D1E_NEXT_PHASE,
+} from "@rtb/types";
+import { CONCRETE_CAPABILITY_MANIFEST, D1E_INTERNAL_ROADMAP, D1E_VALIDATION_DEBT_REGISTER } from "./capability";
+import { evaluateEuC1ConcreteCharProperties, evaluateEuC1ConcreteTensionTreatment } from "./eu-c1";
+import {
+  EU_C1C_GAP_CLASSIFICATION,
+  assertEuC1cFailClosed,
+  assertStaleEuC1cNotReused,
+  evaluateEuC1cGapRule,
+  resolveEuC1cPartialFactor,
+} from "./eu-c1c";
+import { IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS } from "./eu-flexure";
+import { governedProvenance } from "../structural-domain/catalog";
+import type { ConcreteMaterial } from "@rtb/types";
+
+function property(name: string, value: number, unit: string) {
+  return { name, value, unit, provenanceRef: "cert-c1c", sourceAuthority: "USER_SUPPLIED_STANDARD_REFERENCE" as const };
+}
+
+function concrete(): ConcreteMaterial {
+  return {
+    materialRef: "eu-c1c-conc",
+    designation: "C30",
+    compressiveStrength: property("fc", 30, "MPa"),
+    tensileStrength: null,
+    elasticModulus: property("Ec", 30000, "MPa"),
+    density: null,
+    poissonRatio: null,
+    age: null,
+    strengthReferenceAge: null,
+    materialClass: null,
+    materialStandardRef: "project-certificate",
+    sourceAuthority: "USER_SUPPLIED_STANDARD_REFERENCE",
+    testCertificateRef: "tc-1",
+    environmentalMetadata: null,
+    version: "c1",
+    provenance: governedProvenance({ jurisdiction: "eu", standard: "EN 1992", version: "c1.0" }),
+  };
+}
+
+describe("EOS-D1E-EU-C1C bounded C2 rule-gap classification", () => {
+  it("reclassifies the nine C2 gaps as BLOCKED_RULE_AUTHORITY without guessing coefficients", () => {
+    expect(EU_C1C_EXISTING_RULE_EVIDENCE_LOADED).toBe(true);
+    expect(EU_C1C_INITIAL_GAP_COUNT).toBe(9);
+    expect([...EU_C1C_INITIAL_GAP_RULE_IDS]).toEqual([
+      "EU_C1_CONCRETE_DESIGN_PROPERTIES",
+      "EU_C1_REINFORCEMENT_DESIGN_PROPERTIES",
+      "EU_C1_PARTIAL_FACTOR_GAMMA_C",
+      "EU_C1_PARTIAL_FACTOR_GAMMA_S",
+      "EU_C1_CONCRETE_COMPRESSION_RESPONSE",
+      "EU_C1_CONCRETE_STRAIN_LIMITS",
+      "EU_C1_REINFORCEMENT_RESPONSE",
+      "EU_C1_REINFORCEMENT_STRAIN_STATES",
+      "EU_C1_STRESS_BLOCK_OR_SECTION_MODEL",
+    ]);
+    expect(EU_C1C_GAP_CLASSIFICATION_COMPLETE).toBe(true);
+    expect(EU_C1C_IMPLEMENTATION_READY_RULE_IDS).toHaveLength(0);
+    expect([...EU_C1C_BLOCKED_RULE_IDS]).toEqual([...EU_C1C_INITIAL_GAP_RULE_IDS]);
+    expect(EU_C1C_GAP_CLASSIFICATION.every((row) => row.readiness === "BLOCKED_RULE_AUTHORITY")).toBe(true);
+    expect(EU_C1C_IMPLEMENTED_RULE_IDS).toHaveLength(0);
+    expect(EU_C1C_IMPLEMENTED_RULE_WITHOUT_GOVERNED_EVIDENCE).toBe(false);
+    expect(EU_C1C_UNPROVENANCED_NUMERICAL_CONSTANT_COUNT).toBe(0);
+    expect(EU_C1C_CONCRETE_DESIGN_PROPERTIES_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_REINFORCEMENT_DESIGN_PROPERTIES_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_GAMMA_C_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_GAMMA_S_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_GAMMA_C_DEPENDENCY_CLASS).toBe("UNRESOLVED");
+    expect(EU_C1C_GAMMA_S_DEPENDENCY_CLASS).toBe("UNRESOLVED");
+    expect(EU_C1C_CONCRETE_COMPRESSION_RESPONSE_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_REINFORCEMENT_RESPONSE_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_REINFORCEMENT_STRAIN_STATES_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_SECTION_MODEL_IMPLEMENTED).toBe(false);
+    expect(EU_C1C_C2_SECTION_RESISTANCE_STRATEGY).toBe("UNRESOLVED");
+    expect(COMMON_RC_KERNEL_CONTAINS_EN1992_SECTION_MODEL).toBe(false);
+    expect(EU_C1C_SOURCE_CONFLICT_IDS).toHaveLength(0);
+    expect(LLM_MEMORY_ONLY_RULE_ALLOWED).toBe(false);
+    assertEuC1cFailClosed();
+  });
+
+  it("fails closed on gap execution, preserves C1 rules, and does not claim flexure or conformance", () => {
+    expect(evaluateEuC1cGapRule("EU_C1_PARTIAL_FACTOR_GAMMA_C").failReason).toBe("BLOCKED_RULE_AUTHORITY");
+    expect(resolveEuC1cPartialFactor("gamma_c").ok).toBe(false);
+    expect(EU_C1C_PARTIAL_FACTOR_SOURCE_RESOLUTION).toBe("PASS");
+    expect(EU_C1C_FAIL_CLOSED_AUDIT).toBe("PASS");
+    expect(() => assertStaleEuC1cNotReused(true)).toThrow(/stale/i);
+    const char = evaluateEuC1ConcreteCharProperties({ concrete: concrete() });
+    expect(char.ok).toBe(true);
+    expect(evaluateEuC1ConcreteTensionTreatment().ok).toBe(true);
+    expect(C1_IMPLEMENTED_RULE_REGRESSION).toBe(false);
+    expect(EU_C1_IMPLEMENTED_NUMERICAL_RULE_COUNT).toBe(3);
+    expect(EU_C1C_IMPLEMENTED_NUMERICAL_RULE_COUNT).toBe(0);
+    expect(EU_C1C_NUMERICALLY_VALIDATED_RULE_COUNT).toBe(0);
+    expect(EU_CUMULATIVE_IMPLEMENTED_NUMERICAL_RULE_COUNT).toBe(3);
+    expect(D1E_FROZEN_ARCHITECTURE_PRESERVED).toBe(true);
+    expect(PARALLEL_EU_RULE_ENGINE_CREATED).toBe(false);
+    expect(PARALLEL_EU_STANDARD_FRAMEWORK_CREATED).toBe(false);
+    expect(PARALLEL_EU_VALIDATION_FRAMEWORK_CREATED).toBe(false);
+    expect(LICENSED_STANDARD_DOCUMENT_REQUIRED_FOR_IMPLEMENTATION).toBe(false);
+    expect(COPYRIGHTED_STANDARD_TEXT_REPRODUCED).toBe(false);
+    expect(DEFAULT_EU_CONCRETE_NATIONAL_ANNEX).toBe(false);
+    expect(NATIONAL_ANNEX_INFERRED_FROM_LOCATION).toBe(false);
+    expect(IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS).toBe("NONE");
+    expect(NUMERICAL_VALIDATION_EQUALS_STANDARD_CONFORMANCE).toBe(false);
+    expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
+    expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
+    expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
+    expect(EU_CONCRETE_IMPLEMENTATION_MATURITY).toBe("FRAMEWORK_PLUS_COMMON_MECHANICS");
+  });
+
+  it("keeps C2 incomplete and C1C open until governed coefficient sources exist", () => {
+    expect(EU_C2_REQUIRED_RULE_DEPENDENCIES_COMPLETE).toBe(false);
+    expect(EU_C1_RULE_PACK_READY_FOR_FLEXURE).toBe(false);
+    expect(NEXT_PHASE_TYPE).toBe("BOUNDED_RULE_GAP_IMPLEMENTATION");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C1C");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("THIS_PHASE");
+    expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1C.RULE_GAPS")).toBe(true);
+    expect(EU_C1C_CAPABILITY_MANIFEST_NEW_RULE_COUNT).toBe(0);
+    expect(EU_CUMULATIVE_CAPABILITY_MANIFEST_RULE_COUNT).toBe(3);
+    expect(EU_VALIDATION_DEBT_REDUCED_ITEMS).toHaveLength(0);
+    expect(D1E_VALIDATION_DEBT_REGISTER.map((row) => row.debtId)).toEqual(expect.arrayContaining(["D1E-EU-C1C-VD-GAPS"]));
+    expect(EOS_D1E_EU_C1C_CLOSED).toBe(false);
+    expect(EU_C1C_READY_FOR_NEXT_PHASE).toBe(false);
+    expect(EU_C1C_BLOCKER).toBe("BLOCKED_RULE_AUTHORITY");
+  });
+});

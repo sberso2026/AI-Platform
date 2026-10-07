@@ -56,6 +56,14 @@ Exact missing C2 rule IDs:
 
 Next phase type: `BOUNDED_RULE_GAP_IMPLEMENTATION` (`EOS-D1E-EU-C1C`).
 
+## C1C gap classification
+
+C1C reloaded C1B evidence and the C1 rule pack. Initial C2 gap count remains 9. Every remaining gap is `BLOCKED_RULE_AUTHORITY`. None is `IMPLEMENTATION_READY`. Adapter slots for `gamma_c`, `gamma_s`, constitutive response, strain limits, and `eta`/`lambda` remain unpopulated. Framework `ndpCapable` flags are not legal NDP status. Dependency class for all nine gaps is `UNRESOLVED` (not assumed National Annex/NDP/base-standard). No source conflict IDs. Section resistance strategy remains `UNRESOLVED`.
+
+Implemented C1C numerical rule IDs: none. Formula fingerprints and golden cases are not required until a governed source exists. Fail-closed evaluators return `CHECK_UNDETERMINED` / `BLOCKED_RULE_AUTHORITY` with no silent fallback.
+
+C2 remaining missing rule IDs are unchanged (the nine IDs above). `EU_C1_RULE_PACK_READY_FOR_FLEXURE = NO`. `EU_C2_REQUIRED_RULE_DEPENDENCIES_COMPLETE = NO`. Engineer validation remains pending. Conformance remains `INTENDED_PROFILE`. Licensed PDF absence is not the blocker.
+
 ## AI authority and validation debt
 
 AI may explain rules, identify missing dependencies, and suggest test vectors. AI may not invent parameters or formulas, resolve source conflicts, select NDPs, promote maturity, claim conformance, or approve design.
