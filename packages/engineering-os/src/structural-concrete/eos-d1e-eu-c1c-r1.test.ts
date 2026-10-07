@@ -365,7 +365,7 @@ describe("EOS-D1E-EU-C1C-RESUME-1 authority-ready C2 subset", () => {
     expect(EU_C2_NUMERICAL_RULE_PACK_COMPLETE).toBe(false);
     expect(EU_C2_READY_FOR_IMPLEMENTATION).toBe(false);
     expect(EU_C1C_R1_NEXT_PHASE_TYPE).toBe("TARGETED_CONSTITUTIVE_EVIDENCE_RECOVERY");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C-CONSTITUTIVE")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1C.R1.DESIGN_PROPERTIES")).toBe(true);

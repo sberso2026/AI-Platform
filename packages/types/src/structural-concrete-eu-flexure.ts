@@ -150,8 +150,8 @@ export type EuFlexureWarningCode = (typeof EU_FLEXURE_WARNING_CODES)[number];
 
 export type EuConcreteFlexureMethodRecord = {
   methodId: string;
-  methodType: "ELASTIC_SECTION_REFERENCE" | "EN1992_UNIAXIAL_FLEXURE" | "EN1992_UNIAXIAL_AXIAL_FLEXURE";
-  axis: EuFlexureAxis;
+  methodType: "ELASTIC_SECTION_REFERENCE" | "EN1992_UNIAXIAL_FLEXURE" | "EN1992_UNIAXIAL_AXIAL_FLEXURE" | "EN1992_BIAXIAL_PMM";
+  axis: EuFlexureAxis | "BIAXIAL_PMM";
   engineeringRuleRef: string;
   authorityType: EngineeringRuleAuthorityType;
   technicalBasisRef: string;

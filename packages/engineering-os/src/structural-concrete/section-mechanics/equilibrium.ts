@@ -43,11 +43,12 @@ export function solveSectionEquilibrium(input: {
   maxIterations?: number;
   forceTolN?: number;
   momentTolNm?: number;
+  initial?: { axialStrain: number; curvatureXPerMm: number; curvatureYPerMm: number };
 }): RcEquilibriumSolveResult {
   const method = "NEWTON_RAPHSON" as const;
-  let eps = 0;
-  let phix = 0;
-  let phiy = 0;
+  let eps = input.initial?.axialStrain ?? 0;
+  let phix = input.initial?.curvatureXPerMm ?? 0;
+  let phiy = input.initial?.curvatureYPerMm ?? 0;
   const stepE = RC_NUMERICAL_TOLERANCE.jacobianStrainStep;
   const stepK = RC_NUMERICAL_TOLERANCE.jacobianCurvatureStepPerMm;
   const maxIter = input.maxIterations ?? RC_NUMERICAL_TOLERANCE.maxNewtonIterations;

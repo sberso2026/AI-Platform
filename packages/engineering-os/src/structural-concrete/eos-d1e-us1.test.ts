@@ -416,7 +416,7 @@ describe("EOS-D1E-US-1 ACI concrete standard binding", () => {
     expect(() => assertBuildingCodeAndAciStandardSeparate("ACI 318", "ACI 318")).toThrow(/not a substitute/);
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-US")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.some((row) => row.id === RECOMMENDED_D1E_NEXT_PHASE)).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5");
     expect(D1E_US_ROADMAP_HANDOFF_VALIDATED).toBe(true);
     expect(EOS_D1E_US1_CLOSED).toBe(true);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_US1).toBe(false);

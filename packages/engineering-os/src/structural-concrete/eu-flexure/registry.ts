@@ -6,6 +6,9 @@ import {
   EU_C3_ENGINEER_VALIDATION_STATE,
   EU_C3_FLEXURE_IMPLEMENTATION_VERSION,
   EU_C3_METHOD_IDS,
+  EU_C4_ENGINEER_VALIDATION_STATE,
+  EU_C4_FLEXURE_IMPLEMENTATION_VERSION,
+  EU_C4_METHOD_IDS,
   EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
   EU_CONCRETE_STANDARD_EDITION,
   EU_FLEXURE_IMPLEMENTATION_VERSION,
@@ -156,6 +159,48 @@ export const EU_CONCRETE_AXIAL_FLEXURE_METHODS: readonly EuConcreteFlexureMethod
   EU_RC_AXIAL_FLEXURE_EN1992_MAJOR,
   EU_RC_AXIAL_FLEXURE_EN1992_MINOR,
 ];
+
+export const EU_RC_BIAXIAL_EN1992_PMM_RECTANGULAR: EuConcreteFlexureMethodRecord = {
+  methodId: EU_C4_METHOD_IDS[0],
+  methodType: "EN1992_BIAXIAL_PMM",
+  axis: "BIAXIAL_PMM",
+  engineeringRuleRef: "EU-RC-BIAXIAL-EN1992-PMM-RECT-C4",
+  authorityType: "ESTABLISHED_ENGINEERING_MECHANICS",
+  technicalBasisRef: "d1e1-material-integration-uls-biaxial-pmm-eps-cu2-or-eps-yd-c3-principal-anchors",
+  standardFamily: "EN 1992",
+  generation: "UNKNOWN_PENDING_CONFIRMATION",
+  edition: EU_CONCRETE_STANDARD_EDITION,
+  part: EU_INITIAL_CONCRETE_STANDARD_PART,
+  nationalAnnexDependency: true,
+  ndpDependency: ["gamma_c", "gamma_s", "alpha_cc"],
+  requiredMaterialModels: ["EU_C1_CONCRETE_COMPRESSION_RESPONSE", "EU_C1_REINFORCEMENT_RESPONSE"],
+  stressBlockOrDesignModelDependency: "MATERIAL_INTEGRATION",
+  strainLimitDependencies: ["EU_C1_CONCRETE_STRAIN_LIMITS"],
+  partialFactorDependencies: ["gamma_c", "gamma_s"],
+  reinforcementDependencies: ["D1E1_REINFORCEMENT_LAYOUT"],
+  applicability:
+    "reinforced concrete; biaxial N-Mx-My section resistance; RECTANGULAR geometry numerically validated; axial domain subset of C3 mechanics anchors; material integration; declared NDP required; first-order section only; not slenderness, second-order, shear, punching, torsion, or prestress",
+  requiredInputs: [
+    "concrete.compressiveStrength",
+    "reinforcement.yieldStrength",
+    "standardPart",
+    "declaredNdpContext",
+    "demand.axial",
+    "demand.moment",
+    "demand.minorMoment",
+    "section",
+    "layout",
+  ],
+  outputSemantics: "CODE_PROFILE_REFERENCE",
+  implementationVersion: EU_C4_FLEXURE_IMPLEMENTATION_VERSION,
+  numericalValidationState: "NUMERICALLY_VALIDATED",
+  engineeringValidationState: EU_C4_ENGINEER_VALIDATION_STATE,
+  standardConformanceState: EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+  benchmarkRefs: ["EU-C4-BM-INDEPENDENT-EQUIV-RECT-PRINCIPAL", "EU-C4-BM-INDEPENDENT-DIAGONAL-45"],
+  methodScope: "GOVERNED_IMPLEMENTABLE",
+};
+
+export const EU_CONCRETE_BIAXIAL_METHODS: readonly EuConcreteFlexureMethodRecord[] = [EU_RC_BIAXIAL_EN1992_PMM_RECTANGULAR];
 
 export const IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS = EU_C2_METHOD_IDS;
 export const FRAMEWORK_ONLY_EU_CONCRETE_FLEXURE_METHODS = [] as const;

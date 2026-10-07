@@ -145,9 +145,9 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
   },
   {
     capability: "biaxial interaction",
-    GLOBAL: none("P-M-M not implemented"),
+    GLOBAL: none("P-M-M not implemented globally"),
     AU: none("no AU biaxial code method"),
-    EU: none("no EU biaxial code method"),
+    EU: framework("C4 bounded rectangular N-Mx-My numerical reference; not column design; not CONFORMANCE_VALIDATED"),
     US: none("no US biaxial code method"),
   },
   {

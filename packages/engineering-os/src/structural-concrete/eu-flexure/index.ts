@@ -5,11 +5,13 @@ export { assertEuFlexureOptimizerRejectsUndetermined, assertEuParetoRejectsUndet
 export { assertStaleEuFlexureNotReused, euFlexureFingerprint, euFlexureInvalidationTags } from "./invalidation";
 export {
   EU_CONCRETE_AXIAL_FLEXURE_METHODS,
+  EU_CONCRETE_BIAXIAL_METHODS,
   EU_CONCRETE_FLEXURE_METHODS,
   EU_FLEXURE_DUCTILITY,
   EU_FLEXURE_TOOL_REF,
   EU_RC_AXIAL_FLEXURE_EN1992_MAJOR,
   EU_RC_AXIAL_FLEXURE_EN1992_MINOR,
+  EU_RC_BIAXIAL_EN1992_PMM_RECTANGULAR,
   EU_RC_FLEXURE_ELASTIC_MAJOR,
   EU_RC_FLEXURE_ELASTIC_MINOR,
   EU_RC_FLEXURE_EN1992_MAJOR,
