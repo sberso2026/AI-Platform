@@ -1,0 +1,13 @@
+-- rtb-rel-module: <owning package or domain>
+-- rtb-rel-depends-on: <comma-separated migration ids or none>
+-- rtb-rel-staging-only: false
+-- rtb-rel-production-eligible: false
+-- rtb-rel-security-boundary: false
+-- rtb-rel-destructive: false
+-- rtb-rel-data-migration: false
+-- rtb-rel-app-compat: none
+--
+-- Timestamp is not production approval.
+-- Default: DEVELOPMENT until staging-applied, then STAGING_VALIDATED.
+-- Production requires an explicit PRODUCTION_APPROVED manifest override
+-- after dependency validation. Do not bulk-push supabase/migrations.

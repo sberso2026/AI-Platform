@@ -28,7 +28,9 @@
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/database/src/types.ts",
-    "review:staging": "node scripts/review-staging.mjs"
+    "review:staging": "node scripts/review-staging.mjs",
+    "release:drift-report": "pnpm --filter @rtb/release-governance report",
+    "release:production-guard": "pnpm --filter @rtb/release-governance guard"
   },
   "devDependencies": {
     "turbo": "^2.5.4",
