@@ -216,6 +216,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "family/part confirmed; generation/edition/amendment unbound; no numerical EN 1992 rules; human confirmation required",
     dependencies: ["D1E.EU.ADAPTER", "D1E.EU.STANDARD_CONTEXT", "D1E.CLOSEOUT.ARCHITECTURE"],
   },
+  {
+    capabilityId: "D1E.EU.C1B.RULE_AUTHORITY",
+    jurisdiction: "EU",
+    method: "Eurocode concrete non-reproductive rule-authority policy",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "POLICY_CORRECTION_ONLY",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "licensed standard file is not an implementation gate; bounded characteristic-property/tension-omission subset implementable; no EN 1992 coefficients bound; conformance unclaimed",
+    dependencies: ["D1E.EU.C1A.RULE_EVIDENCE", "D1E.GLOBAL.FOUNDATION", "D1E.CLOSEOUT.ARCHITECTURE"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -319,6 +331,8 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-C1A-VD-PROFILE", category: "STANDARD_IDENTITY", jurisdiction: "EU", capability: "EU-C1A profile", description: "authoritative EN 1992 generation/edition/amendment still unbound after C1A evidence search", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "human-confirmed generation, edition, amendment, technical basis, authority source", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
   { debtId: "D1E-EU-C1A-VD-HUMAN", category: "HUMAN_ENGINEERING_VALIDATION", jurisdiction: "EU", capability: "EU-C1A human confirmation", description: "human confirmation contract exists; no confirmer has bound a profile", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "completed EuC1aHumanConfirmationInput", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
   { debtId: "D1E-EU-C1A-VD-PARAMETER-CLASS", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "C1 parameter class", description: "gamma_c/gamma_s/strain/section-model dependency class remains UNRESOLVED pending confirmed edition", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-confirmed dependency class and authority-bound values", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
+  { debtId: "D1E-EU-C1B-VD-COEFFICIENTS", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "EU-C1B coefficients", description: "partial factors, strain limits, and section-model coefficients remain unbound; licensed PDF is not the blocker", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "independently governed engineering reference plus corroboration plus tests", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
+  { debtId: "D1E-EU-C1B-VD-CONFORMANCE", category: "STANDARD_IDENTITY", jurisdiction: "EU", capability: "EU-C1B conformance", description: "exact generation/edition/amendment still required for CONFORMANCE_VALIDATED; reference implementation is not conformance", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "authoritative profile validation against exact intended edition", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-PART", category: "STANDARD_PART", jurisdiction: "EU", capability: "EN 1992 part applicability", description: "part applicability for numerical methods unvalidated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "method-to-part evidence", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-ANNEX", category: "NATIONAL_ANNEX", jurisdiction: "EU", capability: "National Annex profiles", description: "National Annex datasets unpopulated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed annex metadata per country/part", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-NDP", category: "NDP", jurisdiction: "EU", capability: "NDP datasets", description: "NDP values unpopulated; guessing forbidden", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -396,6 +410,7 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "D1E-US", scope: "ACI 318 family/edition/adoption bind then bounded uniaxial flexure", status: "CLOSED" },
   { id: "D1E-CLOSEOUT", scope: "global D1E concrete architecture freeze and Eurocode conformance handoff", status: "CLOSED" },
   { id: "EOS-D1E-EU-C1A", scope: "authoritative EN 1992 profile and rule-evidence binding", status: "BLOCKED" },
+  { id: "EOS-D1E-EU-C1B", scope: "non-reproductive Eurocode concrete rule-authority policy", status: "CLOSED" },
   { id: "EOS-D1E-EU-C1", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
@@ -449,6 +464,13 @@ export const D1E_US2_D0_RISK_DISPOSITION = {
 } as const;
 
 export const D1E_EU_C1A_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: "NONE" as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_EU_C1B_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: "NONE" as const,
   INTRODUCED: "NONE" as const,

@@ -410,3 +410,4 @@ export * from "./structural-concrete-us";
 export * from "./structural-concrete-us-flexure";
 export * from "./structural-concrete-closeout";
 export * from "./structural-concrete-eu-c1a";
+export * from "./structural-concrete-eu-c1b";

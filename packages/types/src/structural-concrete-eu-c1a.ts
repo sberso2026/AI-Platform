@@ -46,9 +46,9 @@ export const EU_C1A_C2_DEPENDENCY_INVENTORY_COMPLETE = true as const;
 export const EU_C1A_HUMAN_ENGINEERING_CONFIRMATION_REQUIRED = true as const;
 export const EU_C1A_NUMERICAL_RULE_IMPLEMENTATION_COUNT = 0 as const;
 export const UNAUTHORIZED_CAPABILITY_PROMOTION = false as const;
-export const EU_C1_RESUME_GATE = "FAIL" as const;
+export const EU_C1A_RESUME_GATE = "FAIL" as const;
 export const EOS_D1E_EU_C1A_CLOSED = false as const;
-export const READY_TO_RESUME_EU_C1 = false as const;
+export const EU_C1A_READY_TO_RESUME_EU_C1 = false as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C1A = false as const;
 export const EU_C1A_HUMAN_INPUT_REQUIRED = true as const;
 

@@ -97,7 +97,7 @@ export function assertEuC1aEvidenceConflictsFailClosed(records: readonly EuC1aEv
   }
 }
 
-export function assertEuC1ResumeGate(): "FAIL" {
+export function assertEuC1aResumeGate(): "FAIL" {
   assertEuC1aEvidenceConflictsFailClosed();
   if (EU_C1A_STANDARD_PROFILE_EXACTLY_RESOLVED) throw new Error("profile must not be marked resolved without human-confirmed edition evidence");
   if (EU_C1A_IMPLEMENTABLE_C1_RULE_COUNT !== 0) throw new Error("implementable C1 rule count must remain zero until profile evidence exists");

@@ -48,11 +48,11 @@ import {
   EU_CONCRETE_PRODUCT_CLAIM_LEVEL,
   EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
   EU_CONCRETE_STANDARD_EDITION,
-  EU_C1_RESUME_GATE,
+  EU_C1A_READY_TO_RESUME_EU_C1,
+  EU_C1A_RESUME_GATE,
   IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS,
   LLM_MEMORY_ONLY_RULE_ALLOWED,
   PARALLEL_EU_C1A_ARCHITECTURE_CREATED,
-  READY_TO_RESUME_EU_C1,
   RECOMMENDED_D1E_NEXT_PHASE,
   STANDARD_TEXT_REQUIRED_BY_RUNTIME,
   UNAUTHORIZED_CAPABILITY_PROMOTION,
@@ -69,7 +69,7 @@ import {
   EU_C1A_REQUIRED_RULE_CATEGORIES,
   EU_C1A_RULE_AUTHORITY_MATRIX_ROWS,
   EU_C1A_RULE_EVIDENCE_RECORDS,
-  assertEuC1ResumeGate,
+  assertEuC1aResumeGate,
   assertEuC1aEvidenceConflictsFailClosed,
   assertEuC1aHumanConfirmationContract,
   assertHumanConfirmedEuC1aProfile,
@@ -169,8 +169,8 @@ describe("EOS-D1E-EU-C1A Eurocode concrete rule-evidence recovery", () => {
     expect(EU_C1A_IMPLEMENTABLE_C1_RULE_COUNT).toBe(0);
     expect(EU_C1A_C2_DEPENDENCY_INVENTORY_COMPLETE).toBe(true);
     expect(EU_C1A_C2_DEPENDENCY_INVENTORY.filter((row) => row.classification === "UNBOUND").length).toBeGreaterThan(0);
-    expect(EU_C1_RESUME_GATE).toBe("FAIL");
-    expect(assertEuC1ResumeGate()).toBe("FAIL");
+    expect(EU_C1A_RESUME_GATE).toBe("FAIL");
+    expect(assertEuC1aResumeGate()).toBe("FAIL");
     assertEuC1aEvidenceConflictsFailClosed();
     expect(EU_C1A_PRESENT_BLOCKERS).toEqual([
       "MISSING_STANDARD_GENERATION",
@@ -182,7 +182,7 @@ describe("EOS-D1E-EU-C1A Eurocode concrete rule-evidence recovery", () => {
       "MISSING_SECTION_MODEL_AUTHORITY",
       "HUMAN_CONFIRMATION_REQUIRED",
     ]);
-    expect(READY_TO_RESUME_EU_C1).toBe(false);
+    expect(EU_C1A_READY_TO_RESUME_EU_C1).toBe(false);
     expect(EOS_D1E_EU_C1A_CLOSED).toBe(false);
     expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C1");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1A")?.status).toBe("BLOCKED");

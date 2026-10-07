@@ -8,7 +8,7 @@ export {
   EU_C1A_PRESENT_BLOCKERS,
   EU_C1A_RULE_AUTHORITY_MATRIX_ROWS,
   EU_C1A_RULE_EVIDENCE_RECORDS,
-  assertEuC1ResumeGate,
+  assertEuC1aResumeGate,
   assertEuC1aEvidenceConflictsFailClosed,
 } from "./evidence";
 export {

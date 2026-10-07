@@ -21,6 +21,7 @@ export {
   D1E_US1_D0_RISK_DISPOSITION,
   D1E_US2_D0_RISK_DISPOSITION,
   D1E_EU_C1A_D0_RISK_DISPOSITION,
+  D1E_EU_C1B_D0_RISK_DISPOSITION,
   D1E_CANONICAL_ROADMAP_HANDOFF,
   D1E_INTERNAL_ROADMAP,
   D1E_VALIDATION_DEBT_REGISTER,
@@ -51,3 +52,4 @@ export * from "./us-standard";
 export * from "./us-flexure";
 export * from "./d1e-closeout";
 export * from "./eu-c1a";
+export * from "./eu-c1b";
