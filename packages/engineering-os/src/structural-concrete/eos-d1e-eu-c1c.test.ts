@@ -168,7 +168,7 @@ describe("EOS-D1E-EU-C1C bounded C2 rule-gap classification", () => {
     expect(EU_C2_REQUIRED_RULE_DEPENDENCIES_COMPLETE).toBe(false);
     expect(EU_C1_RULE_PACK_READY_FOR_FLEXURE).toBe(false);
     expect(NEXT_PHASE_TYPE).toBe("BOUNDED_RULE_GAP_IMPLEMENTATION");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1C.RULE_GAPS")).toBe(true);
     expect(EU_C1C_CAPABILITY_MANIFEST_NEW_RULE_COUNT).toBe(0);

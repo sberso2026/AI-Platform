@@ -1,0 +1,307 @@
+import { describe, expect, it } from "vitest";
+import {
+  AI_EU_C5_ASSISTANCE_ADVISORY_ONLY,
+  AI_EU_C5_CHECK_OVERRIDE_AUTHORITY,
+  AI_EU_C5_CONFORMANCE_AUTHORITY,
+  AI_EU_C5_ENGINEERING_APPROVAL,
+  AI_EU_C5_NDP_AUTHORITY,
+  AI_EU_C5_RULE_PARAMETER_AUTHORITY,
+  AI_EU_C5_SOURCE_CONFLICT_AUTHORITY,
+  CONCRETE_PUNCHING_SHEAR_FRAMEWORK,
+  CONCRETE_SHEAR_FRAMEWORK,
+  CONCRETE_TORSION_FRAMEWORK,
+  COPYRIGHTED_STANDARD_TEXT_REPRODUCED,
+  D1C_PUNCHING_ACTIONS_REUSED,
+  D1C_SHEAR_DEMAND_REUSED,
+  D1C_TORSION_DEMAND_REUSED,
+  D1E_COMMON_PUNCHING_FRAMEWORK_AVAILABLE,
+  D1E_COMMON_PUNCHING_FRAMEWORK_REUSED,
+  D1E_COMMON_SHEAR_FRAMEWORK_AVAILABLE,
+  D1E_COMMON_SHEAR_FRAMEWORK_REUSED,
+  D1E_COMMON_TORSION_FRAMEWORK_AVAILABLE,
+  D1E_COMMON_TORSION_FRAMEWORK_REUSED,
+  D1E_FROZEN_ARCHITECTURE_PRESERVED,
+  DEFAULT_EU_CONCRETE_NATIONAL_ANNEX,
+  EOS_D1E_EU_C5_CLOSED,
+  EU_C2_METHOD_IDS,
+  EU_C3_METHOD_IDS,
+  EU_C4_METHOD_IDS,
+  EU_C5_BENCHMARK_COVERAGE,
+  EU_C5_BLOCKER,
+  EU_C5_CANONICAL_NEXT_PHASE,
+  EU_C5_CANONICAL_NEXT_PHASE_SCOPE,
+  EU_C5_CHECKS_EQUAL_MEMBER_CONFORMANCE,
+  EU_C5_CROSS_GENERATION_RULE_MIXING,
+  EU_C5_D1E_FROZEN_ARCHITECTURE_PRESERVED,
+  EU_C5_ENGINEER_VALIDATION_STATE,
+  EU_C5_EXTERNAL_SOFTWARE_COMPARISON,
+  EU_C5_IMPLEMENTED_METHOD_IDS,
+  EU_C5_IMPLEMENTED_PUNCHING_METHOD_COUNT,
+  EU_C5_IMPLEMENTED_RULE_IDS,
+  EU_C5_IMPLEMENTED_SHEAR_METHOD_COUNT,
+  EU_C5_IMPLEMENTED_TORSION_METHOD_COUNT,
+  EU_C5_INVERSE_DESIGN_RECHECK_READY,
+  EU_C5_METHOD_REGISTRY_UPDATED,
+  EU_C5_NDP_VALUE_GUESSED,
+  EU_C5_NEXT_PHASE_TYPE,
+  EU_C5_PUNCHING_BOUNDED_CAPABILITY_COMPLETE,
+  EU_C5_PUNCHING_BLOCKED_RULE_IDS,
+  EU_C5_PUNCHING_CONTROL_PERIMETER_GOVERNED,
+  EU_C5_PUNCHING_GOLDEN_CASES,
+  EU_C5_PUNCHING_IMPLEMENTATION_READY_RULE_IDS,
+  EU_C5_PUNCHING_REQUIRED_RULE_IDS,
+  EU_C5_PUNCHING_RULE_AUTHORITY_COMPLETE,
+  EU_C5_READY_FOR_NEXT_PHASE,
+  EU_C5_RULE_AUTHORITY_POLICY_REUSED,
+  EU_C5_SELF_REFERENTIAL_BENCHMARKS,
+  EU_C5_SHEAR_BOUNDED_CAPABILITY_COMPLETE,
+  EU_C5_SHEAR_BLOCKED_RULE_IDS,
+  EU_C5_SHEAR_GOLDEN_CASES,
+  EU_C5_SHEAR_IMPLEMENTATION_READY_RULE_IDS,
+  EU_C5_SHEAR_PUNCHING_TORSION_SEMANTICS_SEPARATE,
+  EU_C5_SHEAR_REQUIRED_RULE_IDS,
+  EU_C5_SHEAR_RULE_AUTHORITY_COMPLETE,
+  EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_STATE,
+  EU_C5_SHEAR_WITH_REINFORCEMENT_METHOD_STATE,
+  EU_C5_TORSION_BOUNDED_CAPABILITY_COMPLETE,
+  EU_C5_TORSION_BLOCKED_RULE_IDS,
+  EU_C5_TORSION_GOLDEN_CASES,
+  EU_C5_TORSION_IMPLEMENTATION_READY_RULE_IDS,
+  EU_C5_TORSION_INTERACTION_RULE_STATE,
+  EU_C5_TORSION_REQUIRED_RULE_IDS,
+  EU_C5_TORSION_RULE_AUTHORITY_COMPLETE,
+  EU_C5_UNGOVERNED_COMBINED_ACTION_INTERACTION,
+  EU_C5_UNGOVERNED_TORSION_INTERACTION_USED,
+  EU_C5_UNPROVENANCED_NUMERICAL_CONSTANT_COUNT,
+  EU_C5_VALIDATION_DEBT_REDUCED_ITEMS,
+  EU_C5_VERDICT,
+  EU_CONCRETE_PACK_CERTIFIED,
+  EU_CONCRETE_PRODUCT_CLAIM_LEVEL,
+  EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+  GENERATIVE_MODEL_CAN_BYPASS_EU_C5,
+  LICENSED_STANDARD_DOCUMENT_REQUIRED_FOR_IMPLEMENTATION,
+  LLM_EU_C5_NUMERICAL_AUTHORITY,
+  LLM_MEMORY_ONLY_RULE_ALLOWED,
+  NATIONAL_ANNEX_INFERRED_FROM_LOCATION,
+  NUMERICAL_C5_VALIDATION_EQUALS_STANDARD_CONFORMANCE,
+  NUMERICAL_CONCRETE_CODE_SHEAR_IMPLEMENTED,
+  NUMERICAL_CONCRETE_TORSION_IMPLEMENTED,
+  NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED,
+  NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED,
+  PARALLEL_EU_C5_RULE_ENGINE_CREATED,
+  PARALLEL_EU_C5_STANDARD_CONTEXT_CREATED,
+  PARALLEL_EU_SHEAR_DEMAND_ENGINE_CREATED,
+  RECOMMENDED_D1E_NEXT_PHASE,
+  RECOMMENDED_D1E_NEXT_PHASE_SCOPE,
+  RISKS_CLOSED_BY_EU_C5,
+  RISKS_INTRODUCED_BY_EU_C5,
+  RISKS_REDUCED_BY_EU_C5,
+  RISKS_REMAINING_AFTER_EU_C5,
+  SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C5,
+  STANDARD_DOCUMENT_REQUIRED_AT_RUNTIME,
+  STANDARD_DOCUMENT_REQUIRED_IN_REPOSITORY,
+} from "@rtb/types";
+import {
+  CONCRETE_CAPABILITY_MANIFEST,
+  D1E_EU_C5_D0_RISK_DISPOSITION,
+  D1E_INTERNAL_ROADMAP,
+  D1E_VALIDATION_DEBT_REGISTER,
+} from "./capability";
+import {
+  EU_C5_EVIDENCE_RULE_RECORDS,
+  assertEuC5AuthorityBoundary,
+  assertEuC5FailClosed,
+  assertEuC5OptimizerRejectsUndetermined,
+  assertEuC5ParetoRejectsUndetermined,
+  assertStaleEuC5NotReused,
+  evaluateEuC5Punching,
+  evaluateEuC5Shear,
+  evaluateEuC5Torsion,
+  euC5InvalidationTags,
+} from ".";
+import { EU_CONCRETE_BIAXIAL_METHODS } from "./eu-flexure";
+import type { StructuralDemandResult } from "@rtb/types";
+
+function demand(): Pick<StructuralDemandResult, "resultId" | "capacityPresent" | "memberId" | "shear" | "torsion" | "combinationId"> {
+  return {
+    resultId: "d1c-c5-1",
+    capacityPresent: false,
+    memberId: "m-c5",
+    combinationId: "uls-1",
+    shear: { value: 120000, unit: "N", locationM: 0.25, signed: 120000 },
+    torsion: { status: "NOT_IMPLEMENTED" },
+  };
+}
+
+describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => {
+  it("reuses D1E frameworks and C1B policy without inventing numerical methods", () => {
+    assertEuC5FailClosed();
+    assertEuC5AuthorityBoundary();
+    expect(D1E_FROZEN_ARCHITECTURE_PRESERVED).toBe(true);
+    expect(EU_C5_D1E_FROZEN_ARCHITECTURE_PRESERVED).toBe(true);
+    expect(PARALLEL_EU_C5_RULE_ENGINE_CREATED).toBe(false);
+    expect(PARALLEL_EU_C5_STANDARD_CONTEXT_CREATED).toBe(false);
+    expect(PARALLEL_EU_SHEAR_DEMAND_ENGINE_CREATED).toBe(false);
+    expect(CONCRETE_SHEAR_FRAMEWORK).toBe(true);
+    expect(CONCRETE_PUNCHING_SHEAR_FRAMEWORK).toBe(true);
+    expect(CONCRETE_TORSION_FRAMEWORK).toBe(true);
+    expect(D1E_COMMON_SHEAR_FRAMEWORK_AVAILABLE).toBe(true);
+    expect(D1E_COMMON_SHEAR_FRAMEWORK_REUSED).toBe(true);
+    expect(D1E_COMMON_PUNCHING_FRAMEWORK_AVAILABLE).toBe(true);
+    expect(D1E_COMMON_PUNCHING_FRAMEWORK_REUSED).toBe(true);
+    expect(D1E_COMMON_TORSION_FRAMEWORK_AVAILABLE).toBe(true);
+    expect(D1E_COMMON_TORSION_FRAMEWORK_REUSED).toBe(true);
+    expect(EU_C5_RULE_AUTHORITY_POLICY_REUSED).toBe(true);
+    expect(LLM_MEMORY_ONLY_RULE_ALLOWED).toBe(false);
+    expect(EU_C5_CROSS_GENERATION_RULE_MIXING).toBe(false);
+    expect(EU_C5_SHEAR_PUNCHING_TORSION_SEMANTICS_SEPARATE).toBe(true);
+    expect(LICENSED_STANDARD_DOCUMENT_REQUIRED_FOR_IMPLEMENTATION).toBe(false);
+    expect(STANDARD_DOCUMENT_REQUIRED_AT_RUNTIME).toBe(false);
+    expect(STANDARD_DOCUMENT_REQUIRED_IN_REPOSITORY).toBe(false);
+    expect(COPYRIGHTED_STANDARD_TEXT_REPRODUCED).toBe(false);
+    expect(DEFAULT_EU_CONCRETE_NATIONAL_ANNEX).toBe(false);
+    expect(NATIONAL_ANNEX_INFERRED_FROM_LOCATION).toBe(false);
+    expect(EU_C5_NDP_VALUE_GUESSED).toBe(false);
+  });
+
+  it("classifies required C5 rules from repository architecture and keeps all families blocked", () => {
+    expect([...EU_C5_SHEAR_REQUIRED_RULE_IDS]).toEqual([
+      "EU_C5_SHEAR_RESISTANCE_WITHOUT_TRANSVERSE_REINFORCEMENT",
+      "EU_C5_SHEAR_EFFECTIVE_GEOMETRY",
+      "EU_C1_PARTIAL_FACTOR_GAMMA_C",
+      "EU_C1_CONCRETE_DESIGN_PROPERTIES",
+    ]);
+    expect([...EU_C5_PUNCHING_REQUIRED_RULE_IDS]).toEqual([
+      "EU_C5_PUNCHING_CONTROL_PERIMETER",
+      "EU_C5_PUNCHING_CONCRETE_RESISTANCE",
+      "EU_C1_PARTIAL_FACTOR_GAMMA_C",
+    ]);
+    expect([...EU_C5_TORSION_REQUIRED_RULE_IDS]).toEqual(["EU_C5_TORSION_RESISTANCE", "EU_C5_TORSION_DEMAND"]);
+    expect([...EU_C5_SHEAR_IMPLEMENTATION_READY_RULE_IDS]).toEqual([]);
+    expect([...EU_C5_PUNCHING_IMPLEMENTATION_READY_RULE_IDS]).toEqual([]);
+    expect([...EU_C5_TORSION_IMPLEMENTATION_READY_RULE_IDS]).toEqual([]);
+    expect([...EU_C5_SHEAR_BLOCKED_RULE_IDS]).toEqual([
+      "EU_C5_SHEAR_RESISTANCE_WITHOUT_TRANSVERSE_REINFORCEMENT",
+      "EU_C5_SHEAR_EFFECTIVE_GEOMETRY",
+    ]);
+    expect([...EU_C5_PUNCHING_BLOCKED_RULE_IDS]).toEqual([
+      "EU_C5_PUNCHING_CONTROL_PERIMETER",
+      "EU_C5_PUNCHING_CONCRETE_RESISTANCE",
+    ]);
+    expect([...EU_C5_TORSION_BLOCKED_RULE_IDS]).toEqual(["EU_C5_TORSION_RESISTANCE", "EU_C5_TORSION_DEMAND"]);
+    expect(EU_C5_SHEAR_RULE_AUTHORITY_COMPLETE).toBe(false);
+    expect(EU_C5_PUNCHING_RULE_AUTHORITY_COMPLETE).toBe(false);
+    expect(EU_C5_TORSION_RULE_AUTHORITY_COMPLETE).toBe(false);
+    expect(EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_STATE).toBe("BLOCKED");
+    expect(EU_C5_SHEAR_WITH_REINFORCEMENT_METHOD_STATE).toBe("OUT_OF_SCOPE");
+    expect(EU_C5_PUNCHING_CONTROL_PERIMETER_GOVERNED).toBe("NOT_IMPLEMENTED");
+    expect(EU_C5_TORSION_INTERACTION_RULE_STATE).toBe("OUT_OF_SCOPE");
+    expect(EU_C5_UNGOVERNED_TORSION_INTERACTION_USED).toBe(false);
+    expect(EU_C5_UNGOVERNED_COMBINED_ACTION_INTERACTION).toBe(false);
+    expect(D1C_SHEAR_DEMAND_REUSED).toBe(true);
+    expect(D1C_PUNCHING_ACTIONS_REUSED).toBe("NOT_APPLICABLE");
+    expect(D1C_TORSION_DEMAND_REUSED).toBe("NOT_AVAILABLE");
+    const blocked = EU_C5_EVIDENCE_RULE_RECORDS.filter((row) => row.readiness === "BLOCKED_RULE_AUTHORITY");
+    expect(blocked.every((row) => row.implementable === false && row.packConstantValue === null)).toBe(true);
+    expect(EU_C5_EVIDENCE_RULE_RECORDS.every((row) => row.formulaFingerprint?.startsWith("fp:"))).toBe(true);
+  });
+
+  it("fails closed on shear, punching, and torsion evaluation without guessing formulas", () => {
+    const shear = evaluateEuC5Shear({ demand: demand(), geometryFingerprint: "g1", reinforcementFingerprint: "r1" });
+    expect(shear.ok).toBe(false);
+    expect(shear.checkState).toBe("CHECK_UNDETERMINED");
+    expect(shear.failReason).toBe("BLOCKED_RULE_AUTHORITY");
+    expect(shear.methodId).toBeNull();
+    expect(shear.resistance).toBeNull();
+    expect(shear.demand.source).toBe("D1C");
+    expect(shear.demand.value).toBe(120000);
+    expect(shear.demand.unit).toBe("N");
+    expect(shear.conformanceState).toBe("INTENDED_PROFILE");
+    expect(shear.fingerprint.length).toBeGreaterThan(20);
+
+    const punching = evaluateEuC5Punching({ demand: demand() });
+    expect(punching.failReason).toBe("D1C_PUNCHING_ACTION_NOT_AVAILABLE");
+    expect(punching.demand.value).toBeNull();
+    expect(punching.warnings.some((row) => /beam shear is not punching/i.test(row))).toBe(true);
+
+    const torsion = evaluateEuC5Torsion({ demand: demand() });
+    expect(torsion.failReason).toBe("D1C_TORSION_DEMAND_NOT_AVAILABLE");
+    expect(torsion.warnings.some((row) => /shear demand is not a torsion/i.test(row))).toBe(true);
+
+    const tags = euC5InvalidationTags(shear.fingerprint, `${shear.fingerprint}-stale`);
+    expect(() => assertStaleEuC5NotReused(true, tags)).toThrow(/stale/i);
+    expect(() => assertEuC5OptimizerRejectsUndetermined(true)).toThrow(/UNDETERMINED/i);
+    expect(() => assertEuC5ParetoRejectsUndetermined(true)).toThrow(/UNDETERMINED/i);
+    expect(EU_C5_UNPROVENANCED_NUMERICAL_CONSTANT_COUNT).toBe(0);
+    expect(EU_C5_SELF_REFERENTIAL_BENCHMARKS).toBe(false);
+    expect(EU_C5_SHEAR_GOLDEN_CASES).toBe("NOT_IMPLEMENTED");
+    expect(EU_C5_PUNCHING_GOLDEN_CASES).toBe("NOT_IMPLEMENTED");
+    expect(EU_C5_TORSION_GOLDEN_CASES).toBe("NOT_IMPLEMENTED");
+    expect(EU_C5_BENCHMARK_COVERAGE).toBe("NOT_APPLICABLE");
+    expect(EU_C5_EXTERNAL_SOFTWARE_COMPARISON).toBe("NOT_AVAILABLE");
+  });
+
+  it("does not promote numerical C5 methods, C2/C3/C4, or conformance", () => {
+    expect([...EU_C5_IMPLEMENTED_RULE_IDS]).toEqual([]);
+    expect([...EU_C5_IMPLEMENTED_METHOD_IDS]).toEqual([]);
+    expect(EU_C5_IMPLEMENTED_SHEAR_METHOD_COUNT).toBe(0);
+    expect(EU_C5_IMPLEMENTED_PUNCHING_METHOD_COUNT).toBe(0);
+    expect(EU_C5_IMPLEMENTED_TORSION_METHOD_COUNT).toBe(0);
+    expect(NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED).toBe(false);
+    expect(NUMERICAL_CONCRETE_CODE_SHEAR_IMPLEMENTED).toBe(false);
+    expect(NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED).toBe(false);
+    expect(NUMERICAL_CONCRETE_TORSION_IMPLEMENTED).toBe(false);
+    expect([...EU_C2_METHOD_IDS]).toEqual(["EU_RC_FLEXURE_EN1992_UNIAXIAL_MAJOR", "EU_RC_FLEXURE_EN1992_UNIAXIAL_MINOR"]);
+    expect([...EU_C3_METHOD_IDS]).toEqual([
+      "EU_RC_AXIAL_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+      "EU_RC_AXIAL_FLEXURE_EN1992_UNIAXIAL_MINOR",
+    ]);
+    expect([...EU_C4_METHOD_IDS]).toEqual(["EU_RC_BIAXIAL_EN1992_PMM_RECTANGULAR"]);
+    expect(EU_CONCRETE_BIAXIAL_METHODS).toHaveLength(1);
+    expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
+    expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
+    expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
+    expect(NUMERICAL_C5_VALIDATION_EQUALS_STANDARD_CONFORMANCE).toBe(false);
+    expect(EU_C5_CHECKS_EQUAL_MEMBER_CONFORMANCE).toBe(false);
+    expect(EU_C5_METHOD_REGISTRY_UPDATED).toBe("NO_AS_NO_NEW_METHODS");
+    expect(EU_C5_INVERSE_DESIGN_RECHECK_READY).toBe(false);
+    expect(GENERATIVE_MODEL_CAN_BYPASS_EU_C5).toBe(false);
+    expect(LLM_EU_C5_NUMERICAL_AUTHORITY).toBe(false);
+    expect(AI_EU_C5_ASSISTANCE_ADVISORY_ONLY).toBe(true);
+    expect(AI_EU_C5_RULE_PARAMETER_AUTHORITY).toBe(false);
+    expect(AI_EU_C5_NDP_AUTHORITY).toBe(false);
+    expect(AI_EU_C5_SOURCE_CONFLICT_AUTHORITY).toBe(false);
+    expect(AI_EU_C5_CHECK_OVERRIDE_AUTHORITY).toBe(false);
+    expect(AI_EU_C5_CONFORMANCE_AUTHORITY).toBe(false);
+    expect(AI_EU_C5_ENGINEERING_APPROVAL).toBe(false);
+    expect(EU_C5_ENGINEER_VALIDATION_STATE).toBe("PENDING_HUMAN_ENGINEERING_REVIEW");
+    expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C5).toBe(false);
+  });
+
+  it("closes the C5 audit as BLOCKED and hands off to targeted evidence recovery", () => {
+    expect(EU_C5_VERDICT).toBe("BLOCKED");
+    expect(EOS_D1E_EU_C5_CLOSED).toBe(true);
+    expect(EU_C5_READY_FOR_NEXT_PHASE).toBe(true);
+    expect(EU_C5_BLOCKER).toMatch(/BLOCKED_RULE_AUTHORITY/);
+    expect(EU_C5_SHEAR_BOUNDED_CAPABILITY_COMPLETE).toBe(false);
+    expect(EU_C5_PUNCHING_BOUNDED_CAPABILITY_COMPLETE).toBe(false);
+    expect(EU_C5_TORSION_BOUNDED_CAPABILITY_COMPLETE).toBe(false);
+    expect(EU_C5_NEXT_PHASE_TYPE).toBe("TARGETED_C5_EVIDENCE_RECOVERY");
+    expect(EU_C5_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
+    expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/shear \/ punching \/ torsion/i);
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
+    expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/shear|punching|torsion/i);
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5-EVIDENCE")?.status).toBe("THIS_PHASE");
+    expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.RULE_EVIDENCE")).toBe(true);
+    expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.SHEAR")).toBe(false);
+    expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-VD-SHEAR")?.blockingState).toBe("UNRESOLVED");
+    expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-C5-VD-EVIDENCE")?.blockingState).toBe("UNRESOLVED");
+    expect([...EU_C5_VALIDATION_DEBT_REDUCED_ITEMS]).toEqual([]);
+    expect(RISKS_CLOSED_BY_EU_C5).toBe("NONE");
+    expect(RISKS_REDUCED_BY_EU_C5).toBe("NONE");
+    expect(RISKS_INTRODUCED_BY_EU_C5).toBe("NONE");
+    expect([...D1E_EU_C5_D0_RISK_DISPOSITION.REMAINING]).toEqual([...RISKS_REMAINING_AFTER_EU_C5]);
+    expect(D1E_EU_C5_D0_RISK_DISPOSITION.CLOSED).toBe("NONE");
+  });
+});

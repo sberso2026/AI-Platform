@@ -249,10 +249,10 @@ describe("EOS-D1E-EU-C4 bounded biaxial P-M-M", () => {
     expect(EU_C4_OPTIMIZATION_ACCEPTS_UNDETERMINED).toBe(false);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C4).toBe(false);
     expect(EOS_D1E_EU_C4_CLOSED).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
     expect(EU_C4_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C5");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C4")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5")?.status).toBe("THIS_PHASE");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C4.BIAXIAL.PMM")).toBe(true);
     expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-VD-BIAXIAL")?.blockingState).toBe("PARTIAL");
     expect([...EU_C4_SUPPORTED_GEOMETRY_TYPES]).toEqual(["RECTANGULAR"]);

@@ -324,6 +324,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "RECTANGULAR geometry only; first-order biaxial section resistance; axial domain subset of C3; no second-order/slenderness/column design; engineer validation pending; edition unconfirmed; not certified EN 1992",
     dependencies: ["D1E.EU.C3.AXIAL_FLEXURE.UNIAXIAL", "D1E.EU.C2.FLEXURE.UNIAXIAL", "D1E.EU.C1C.CONSTITUTIVE.MATERIAL_RESPONSE", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
   },
+  {
+    capabilityId: "D1E.EU.C5.RULE_EVIDENCE",
+    jurisdiction: "EU",
+    method: "Eurocode shear / punching / torsion rule-authority audit",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "FRAMEWORK_PLUS_COMMON_MECHANICS",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "C5 classified required shear/punching/torsion rules as BLOCKED_RULE_AUTHORITY; no numerical EN 1992 shear, punching, or torsion method; not CONFORMANCE_VALIDATED",
+    dependencies: ["D1E.EU.C1B.RULE_AUTHORITY", "D1E.EU.ADAPTER", "D1C bounded demand"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -450,9 +462,10 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-C4-VD-ENGINEER", category: "HUMAN_VALIDATION", jurisdiction: "EU", capability: "EU-C4 engineer validation", description: "numerical independent P-M-M benchmarks do not promote engineer validation", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "explicit human engineering review of C4 P-M-M methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "EU", capability: "EU N-M", description: "C3 implements bounded uniaxial N-M section reference for RECTANGULAR geometry; engineer validation, exact edition, member stability, and CONFORMANCE_VALIDATED remain pending", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review plus confirmed edition/annex/NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-BIAXIAL", category: "BIAXIAL_INTERACTION", jurisdiction: "EU", capability: "EU P-M-M", description: "C4 implements bounded rectangular N-Mx-My section reference; engineer validation, exact edition, member stability, and CONFORMANCE_VALIDATED remain pending", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review plus confirmed edition/annex/NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-SHEAR", category: "SHEAR", jurisdiction: "EU", capability: "EU shear", description: "numerical EN 1992 shear absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed shear method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-PUNCHING", category: "PUNCHING_SHEAR", jurisdiction: "EU", capability: "EU punching", description: "numerical punching absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed punching method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-TORSION", category: "TORSION", jurisdiction: "EU", capability: "EU torsion", description: "numerical torsion absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed torsion method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-C5-VD-EVIDENCE", category: "SHEAR", jurisdiction: "EU", capability: "EU-C5 rule evidence", description: "C5 classified required shear, punching, and torsion numerical rules as BLOCKED_RULE_AUTHORITY; no independently governed coefficient/formula source in-repository", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "independently governed first-generation engineering reference plus corroboration plus tests for each C5 family", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
+  { debtId: "D1E-EU-VD-SHEAR", category: "SHEAR", jurisdiction: "EU", capability: "EU shear", description: "C5 bounded without-reinforcement shear remains BLOCKED_RULE_AUTHORITY; numerical EN 1992 shear absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed shear resistance and effective-geometry rules", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
+  { debtId: "D1E-EU-VD-PUNCHING", category: "PUNCHING_SHEAR", jurisdiction: "EU", capability: "EU punching", description: "C5 interior punching remains BLOCKED_RULE_AUTHORITY; control perimeter not implemented; numerical punching absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed punching perimeter and resistance rules", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
+  { debtId: "D1E-EU-VD-TORSION", category: "TORSION", jurisdiction: "EU", capability: "EU torsion", description: "C5 torsion remains BLOCKED_RULE_AUTHORITY; D1C torsion demand NOT_IMPLEMENTED; numerical torsion absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed torsion resistance plus D1C torsional action", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
   { debtId: "D1E-EU-VD-CRACK", category: "CRACKING", jurisdiction: "EU", capability: "EU crack control", description: "EN 1992 crack control absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed crack-control method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-DEFLECTION", category: "DEFLECTION", jurisdiction: "EU", capability: "EU deflection", description: "EN 1992 deflection/stress-limitation absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed SLS methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "EU", capability: "EU time-dependent", description: "no default creep/shrinkage model", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed time-dependent models", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -523,7 +536,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C2", scope: "Validated bounded Eurocode RC uniaxial flexural resistance using D1E-1 section kernel, material integration and governed EU rule pack", status: "CLOSED" },
   { id: "EOS-D1E-EU-C3", scope: "Validated bounded Eurocode RC axial-flexure / P-M interaction using D1E-1 section kernel and governed EU rule pack", status: "CLOSED" },
   { id: "EOS-D1E-EU-C4", scope: "Validated bounded Eurocode RC biaxial P-M-M section interaction using D1E-1 section kernel and governed EU rule pack", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C5", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
+  { id: "EOS-D1E-EU-C5", scope: "Bounded Eurocode RC shear / punching / torsion rule-authority audit", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C5-EVIDENCE", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
@@ -651,6 +665,13 @@ export const D1E_EU_C3_D0_RISK_DISPOSITION = {
 export const D1E_EU_C4_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_EU_C5_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: "NONE" as const,
   INTRODUCED: "NONE" as const,
   REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
 } as const;

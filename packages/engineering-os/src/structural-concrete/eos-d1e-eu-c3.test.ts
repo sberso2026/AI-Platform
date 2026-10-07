@@ -225,7 +225,7 @@ describe("EOS-D1E-EU-C3 bounded uniaxial N-M", () => {
     expect(EU_C3_OPTIMIZATION_ACCEPTS_UNDETERMINED).toBe(false);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C3).toBe(false);
     expect(EOS_D1E_EU_C3_CLOSED).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
     expect(EU_C3_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C3")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C3.AXIAL_FLEXURE.UNIAXIAL")).toBe(true);
