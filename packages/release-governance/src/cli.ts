@@ -1,6 +1,6 @@
 import { PRODUCTION_PROJECT_REF } from "./types";
 import { buildInventory } from "./classify";
-import { evaluateProductionPromotion } from "./guard";
+import { evaluateLedgerOnlyGuard, evaluateProductionPromotion } from "./guard";
 import { driftReport } from "./report";
 
 const command = process.argv[2] ?? "report";
@@ -9,6 +9,12 @@ if (command === "report") {
   const report = driftReport(buildInventory());
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   process.exit(0);
+}
+
+if (command === "ledger-only") {
+  const decision = evaluateLedgerOnlyGuard(buildInventory());
+  process.stdout.write(`${JSON.stringify(decision, null, 2)}\n`);
+  process.exit(decision.ok ? 0 : 1);
 }
 
 if (command === "guard") {
@@ -28,5 +34,5 @@ if (command === "guard") {
   process.exit(decision.ok ? 0 : 1);
 }
 
-console.error("usage: report | guard --proposed id[,id] [--project-ref ref]");
+console.error("usage: report | ledger-only | guard --proposed id[,id] [--project-ref ref]");
 process.exit(2);

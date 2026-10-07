@@ -1,6 +1,8 @@
+import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildInventory } from "./classify";
-import { evaluateProductionPromotion } from "./guard";
+import { buildInventory, repoRootFromHere, unclassifiedLedgerOnlyVersions } from "./classify";
+import { evaluateLedgerOnlyGuard, evaluateProductionPromotion } from "./guard";
 import { productionApprovalAllowed, unsatisfiedDependencies } from "./graph";
 import { driftReport } from "./report";
 import {
@@ -12,6 +14,7 @@ import {
 function record(partial: Partial<MigrationRecord> & Pick<MigrationRecord, "id" | "releaseState">): MigrationRecord {
   return {
     file: `${partial.id}.sql`,
+    historicalFile: null,
     module: "test",
     driftClass: "NONE",
     stagingApplied: false,
@@ -24,6 +27,7 @@ function record(partial: Partial<MigrationRecord> & Pick<MigrationRecord, "id" |
     supersededBy: null,
     backports: [],
     notes: "",
+    provenance: null,
     ...partial,
   };
 }
@@ -151,9 +155,167 @@ describe("RTB-REL-1 drift report", () => {
     expect(report.counts.inventoried).toBeGreaterThan(149);
     expect(report.securityBackports).toEqual(["20261007160000"]);
     expect(report.superseded).toEqual(["20261007120000", "20261007140000"]);
-    expect(report.stagingOnly.length).toBe(6);
-    expect(report.unknownDrift.length).toBeGreaterThan(0);
-    expect(report.blocked).toEqual(expect.arrayContaining(report.unknownDrift));
+    expect(report.stagingOnly.length).toBe(18);
+    expect(report.unknownDrift).toEqual(["20260810210000", "20260810220000"]);
+    expect(report.blocked).toEqual(report.unknownDrift);
+    expect(report.recoveredHistorical).toHaveLength(12);
+    expect(report.unresolvedBlocked).toEqual(["20260810210000", "20260810220000"]);
+    expect(report.unclassifiedLedgerOnly).toEqual([]);
     expect(report.productionApprovedNotApplied).toEqual([]);
+  });
+});
+
+describe("RTB-REL-1A ledger-only provenance guard", () => {
+  const live = buildInventory();
+  const recoveredIds = [
+    "20260818000000",
+    "20260818120000",
+    "20260818130000",
+    "20260818140000",
+    "20260819100000",
+    "20260819110000",
+    "20260819120000",
+    "20260819130000",
+    "20260819140000",
+    "20260819150000",
+    "20260819160000",
+    "20260819170000",
+  ];
+
+  it("fails an unknown ledger-only version", () => {
+    const unknown = record({
+      id: "20990101000000",
+      file: null,
+      releaseState: "BLOCKED",
+      driftClass: "UNKNOWN_DRIFT",
+      stagingApplied: true,
+    });
+    const decision = evaluateLedgerOnlyGuard([...live, unknown]);
+    expect(decision.ok).toBe(false);
+    if (!decision.ok) {
+      expect(decision.code).toBe("unknown_ledger_only");
+      expect(decision.detail).toContain("20990101000000");
+    }
+  });
+
+  it("passes recovered historical migrations without treating them as unknown drift", () => {
+    for (const id of recoveredIds) {
+      const row = live.find((item) => item.id === id);
+      expect(row?.file).toBeNull();
+      expect(row?.historicalFile).toBeTruthy();
+      expect(row?.releaseState).toBe("STAGING_ONLY");
+      expect(row?.provenance?.recoveryClass).toBe("RECOVERED_FROM_TRUSTED_HISTORY");
+      expect(row?.provenance?.checksum).toMatch(/^[0-9a-f]{40}$/);
+      const root = repoRootFromHere();
+      const blob = execFileSync(
+        "git",
+        ["hash-object", join("docs/release/historical-migrations", row!.historicalFile!)],
+        { encoding: "utf8", cwd: root },
+      ).trim();
+      expect(blob).toBe(row!.provenance!.checksum);
+    }
+    expect(evaluateLedgerOnlyGuard(live)).toEqual({ ok: true });
+    const promotion = evaluateProductionPromotion({
+      proposed: recoveredIds,
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: live,
+    });
+    expect(promotion.ok).toBe(false);
+    if (!promotion.ok) expect(promotion.code).toBe("staging_only");
+  });
+
+  it("passes a superseded historical version with evidence", () => {
+    const successor = record({
+      id: "20261008000000",
+      releaseState: "PRODUCTION_APPLIED",
+      productionApplied: true,
+      productionEligible: true,
+      backports: ["20980101000000"],
+    });
+    const superseded = record({
+      id: "20980101000000",
+      file: null,
+      historicalFile: null,
+      releaseState: "SUPERSEDED",
+      driftClass: "SUPERSEDED",
+      stagingApplied: true,
+      supersededBy: "20261008000000",
+      provenance: {
+        disposition: "SUPERSEDED",
+        recoveryClass: "SUPERSEDED_WITH_EVIDENCE",
+        supersedingMigration: "20261008000000",
+      },
+    });
+    expect(evaluateLedgerOnlyGuard([...live, superseded, successor])).toEqual({ ok: true });
+    const promotion = evaluateProductionPromotion({
+      proposed: ["20980101000000"],
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: [...live, superseded, successor],
+    });
+    expect(promotion.ok).toBe(false);
+    if (!promotion.ok) expect(promotion.code).toBe("superseded");
+  });
+
+  it("passes a formally retired historical version", () => {
+    const retired = record({
+      id: "20970101000000",
+      file: null,
+      historicalFile: null,
+      releaseState: "BLOCKED",
+      driftClass: "NONE",
+      stagingApplied: true,
+      provenance: {
+        disposition: "RETIRED",
+        recoveryClass: "FORMALLY_RETIRED",
+      },
+    });
+    expect(evaluateLedgerOnlyGuard([...live, retired])).toEqual({ ok: true });
+    const promotion = evaluateProductionPromotion({
+      proposed: ["20970101000000"],
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: [...live, retired],
+    });
+    expect(promotion.ok).toBe(false);
+    if (!promotion.ok) expect(promotion.code).toBe("blocked");
+  });
+
+  it("fails production promotion of a security-relevant unresolved version", () => {
+    const row = live.find((item) => item.id === "20260810210000");
+    expect(row?.provenance?.recoveryClass).toBe("UNRESOLVED_BLOCKED");
+    expect(row?.securityCritical).toBe(true);
+    expect(row?.file).toBeNull();
+    expect(row?.historicalFile).toBeNull();
+    const decision = evaluateProductionPromotion({
+      proposed: ["20260810210000"],
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: live,
+    });
+    expect(decision.ok).toBe(false);
+    if (!decision.ok) expect(decision.code).toBe("blocked");
+    expect(evaluateLedgerOnlyGuard(live)).toEqual({ ok: true });
+  });
+
+  it("passes a certified security backport relationship", () => {
+    const decision = evaluateProductionPromotion({
+      proposed: ["20261007160000"],
+      productionProjectRef: PRODUCTION_PROJECT_REF,
+      records: live,
+    });
+    expect(decision).toEqual({ ok: true });
+    expect(evaluateLedgerOnlyGuard(live)).toEqual({ ok: true });
+  });
+
+  it("fails when a ledger snapshot refresh introduces a new unknown version", () => {
+    const refreshed = record({
+      id: "20990101000001",
+      file: null,
+      releaseState: "BLOCKED",
+      driftClass: "UNKNOWN_DRIFT",
+      productionApplied: true,
+    });
+    expect(unclassifiedLedgerOnlyVersions([...live, refreshed])).toEqual(["20990101000001"]);
+    const decision = evaluateLedgerOnlyGuard([...live, refreshed]);
+    expect(decision.ok).toBe(false);
+    if (!decision.ok) expect(decision.code).toBe("unknown_ledger_only");
   });
 });

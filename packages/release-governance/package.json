@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "report": "tsx src/cli.ts report",
-    "guard": "tsx src/cli.ts guard"
+    "guard": "tsx src/cli.ts guard",
+    "ledger-only": "tsx src/cli.ts ledger-only"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

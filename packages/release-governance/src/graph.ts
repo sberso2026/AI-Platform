@@ -38,5 +38,6 @@ export function productionApprovalAllowed(record: MigrationRecord, records: Migr
   if (record.releaseState === "BLOCKED" || record.releaseState === "STAGING_ONLY") return false;
   if (record.releaseState === "SUPERSEDED") return false;
   if (record.driftClass === "UNKNOWN_DRIFT") return false;
+  if (!record.file) return false;
   return unsatisfiedDependencies(record, records).length === 0;
 }

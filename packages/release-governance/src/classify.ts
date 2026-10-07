@@ -1,7 +1,14 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { DriftClass, ManifestOverride, MigrationRecord, ReleaseManifest, ReleaseState } from "./types";
+import type {
+  DriftClass,
+  ManifestOverride,
+  MigrationProvenance,
+  MigrationRecord,
+  ReleaseManifest,
+  ReleaseState,
+} from "./types";
 
 const ID_RE = /^(\d{14})/;
 
@@ -25,6 +32,7 @@ export function domainFromFile(file: string): string {
   if (n.includes("project_controls")) return "project-controls";
   if (n.includes("inspection")) return "inspection-intelligence";
   if (n.includes("project_intelligence") || n.includes("_pi_")) return "project-intelligence";
+  if (n.includes("business_os") || n.includes("business-os")) return "business-os";
   if (n.includes("commerce") || n.includes("installation")) return "commerce";
   if (n.includes("invite") || n.includes("signup") || n.includes("identity") || n.includes("oidc")) return "identity";
   if (n.includes("spatial") || n.includes("interoperability") || n.includes("execution_host")) return "engineering-model";
@@ -36,9 +44,18 @@ export function domainFromFile(file: string): string {
 
 function defaultState(input: {
   file: string | null;
+  historicalFile: string | null;
   stagingApplied: boolean;
   productionApplied: boolean;
 }): { releaseState: ReleaseState; driftClass: DriftClass; productionEligible: boolean; notes: string } {
+  if (!input.file && input.historicalFile) {
+    return {
+      releaseState: "STAGING_ONLY",
+      driftClass: "EXPECTED_FEATURE_DRIFT",
+      productionEligible: false,
+      notes: "Recovered historical artifact. Not a live supabase/migrations file. Not production-executable.",
+    };
+  }
   if (!input.file) {
     return {
       releaseState: "BLOCKED",
@@ -71,8 +88,10 @@ function defaultState(input: {
   };
 }
 
-export function listMigrationFiles(root = repoRootFromHere()): Array<{ id: string; file: string }> {
-  const dir = join(root, "supabase/migrations");
+function listTimestampedSql(dir: string, missingDirMessage: string): Array<{ id: string; file: string }> {
+  if (!existsSync(dir)) {
+    throw new Error(missingDirMessage);
+  }
   return readdirSync(dir)
     .filter((name) => name.endsWith(".sql"))
     .map((file) => {
@@ -81,6 +100,19 @@ export function listMigrationFiles(root = repoRootFromHere()): Array<{ id: strin
       return { id: match[1], file };
     })
     .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export function listMigrationFiles(root = repoRootFromHere()): Array<{ id: string; file: string }> {
+  return listTimestampedSql(
+    join(root, "supabase/migrations"),
+    "missing supabase/migrations directory",
+  );
+}
+
+export function listHistoricalMigrationFiles(root = repoRootFromHere()): Array<{ id: string; file: string }> {
+  const dir = join(root, "docs/release/historical-migrations");
+  if (!existsSync(dir)) return [];
+  return listTimestampedSql(dir, "missing docs/release/historical-migrations directory");
 }
 
 export function isDestructiveSql(sql: string): boolean {
@@ -92,27 +124,43 @@ export function buildInventory(root = repoRootFromHere()): MigrationRecord[] {
   const staging = new Set(manifest.ledgers.staging);
   const production = new Set(manifest.ledgers.production);
   const files = listMigrationFiles(root);
+  const historical = listHistoricalMigrationFiles(root);
   const byId = new Map(files.map((row) => [row.id, row.file]));
+  const historicalById = new Map(historical.map((row) => [row.id, row.file]));
   const overrideById = new Map(manifest.overrides.map((row) => [row.id, row]));
 
-  const ids = new Set<string>([...byId.keys(), ...staging, ...production, ...overrideById.keys()]);
+  const ids = new Set<string>([
+    ...byId.keys(),
+    ...historicalById.keys(),
+    ...staging,
+    ...production,
+    ...overrideById.keys(),
+  ]);
   const records: MigrationRecord[] = [];
 
   for (const id of [...ids].sort()) {
     const file = byId.get(id) ?? null;
+    const historicalFile = historicalById.get(id) ?? null;
     const stagingApplied = staging.has(id);
     const productionApplied = production.has(id);
-    const defaults = defaultState({ file, stagingApplied, productionApplied });
+    const defaults = defaultState({ file, historicalFile, stagingApplied, productionApplied });
     const override: ManifestOverride | undefined = overrideById.get(id);
     let destructive = false;
-    if (file) {
-      const sql = readFileSync(join(root, "supabase/migrations", file), "utf8");
-      destructive = isDestructiveSql(sql);
+    const sqlPath = file
+      ? join(root, "supabase/migrations", file)
+      : historicalFile
+        ? join(root, "docs/release/historical-migrations", historicalFile)
+        : null;
+    if (sqlPath) {
+      destructive = isDestructiveSql(readFileSync(sqlPath, "utf8"));
     }
+    const provenance: MigrationProvenance | null = override?.provenance ?? null;
+    const moduleSource = file ?? historicalFile;
     const merged: MigrationRecord = {
       id,
       file,
-      module: override?.module ?? (file ? domainFromFile(file) : "unknown"),
+      historicalFile,
+      module: override?.module ?? (moduleSource ? domainFromFile(moduleSource) : "unknown"),
       releaseState: (override?.releaseState ?? defaults.releaseState) as ReleaseState,
       driftClass: (override?.driftClass ?? defaults.driftClass) as DriftClass,
       stagingApplied,
@@ -125,10 +173,43 @@ export function buildInventory(root = repoRootFromHere()): MigrationRecord[] {
       supersededBy: override?.supersededBy ?? null,
       backports: override?.backports ?? [],
       notes: override?.notes ?? defaults.notes,
+      provenance,
     };
     records.push(merged);
   }
   return records;
+}
+
+export function hasApprovedHistoricalRepresentation(record: MigrationRecord): boolean {
+  if (record.file) return true;
+  if (record.historicalFile) return true;
+  if (record.releaseState === "SUPERSEDED" && Boolean(record.supersededBy)) return true;
+  const recovery = record.provenance?.recoveryClass;
+  return recovery === "FORMALLY_RETIRED" || recovery === "SUPERSEDED_WITH_EVIDENCE";
+}
+
+export function isClassifiedLedgerOnly(record: MigrationRecord): boolean {
+  const recovery = record.provenance?.recoveryClass;
+  return (
+    recovery === "RECOVERED_EXACT" ||
+    recovery === "RECOVERED_FROM_TRUSTED_HISTORY" ||
+    recovery === "EQUIVALENT_STATE_PROVEN" ||
+    recovery === "SUPERSEDED_WITH_EVIDENCE" ||
+    recovery === "FORMALLY_RETIRED" ||
+    recovery === "UNRESOLVED_BLOCKED"
+  );
+}
+
+export function isUnclassifiedLedgerOnly(record: MigrationRecord): boolean {
+  if (!record.stagingApplied && !record.productionApplied) return false;
+  if (hasApprovedHistoricalRepresentation(record)) return false;
+  if (isClassifiedLedgerOnly(record)) return false;
+  if (record.driftClass === "SECURITY_BACKPORT") return false;
+  return true;
+}
+
+export function unclassifiedLedgerOnlyVersions(records: MigrationRecord[]): string[] {
+  return records.filter(isUnclassifiedLedgerOnly).map((row) => row.id);
 }
 
 export function recordById(records: MigrationRecord[]): Map<string, MigrationRecord> {

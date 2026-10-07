@@ -6,7 +6,7 @@ import {
   type MigrationRecord,
   type PromotionDecision,
 } from "./types";
-import { recordById } from "./classify";
+import { recordById, unclassifiedLedgerOnlyVersions } from "./classify";
 import { unsatisfiedDependencies } from "./graph";
 
 export function assertProductionIdentity(projectRef: string): PromotionDecision {
@@ -49,6 +49,31 @@ export function evaluateProductionPromotion(input: {
   if (blocked.length) {
     return { ok: false, code: "blocked", detail: blocked.join(",") };
   }
+  const historicalOnly = proposed.filter((id) => {
+    const record = byId.get(id);
+    return Boolean(record && !record.file && record.historicalFile);
+  });
+  if (historicalOnly.length) {
+    return { ok: false, code: "historical_artifact", detail: historicalOnly.join(",") };
+  }
+  const ledgerOnly = proposed.filter((id) => {
+    const record = byId.get(id);
+    return Boolean(record && !record.file && !record.historicalFile);
+  });
+  if (ledgerOnly.length) {
+    const certified = ledgerOnly.filter((id) => {
+      const record = byId.get(id);
+      if (!record) return false;
+      if (record.releaseState === "SUPERSEDED" && record.supersededBy) return true;
+      if (record.driftClass === "SECURITY_BACKPORT") return true;
+      const recovery = record.provenance?.recoveryClass;
+      return recovery === "FORMALLY_RETIRED" || recovery === "SUPERSEDED_WITH_EVIDENCE";
+    });
+    const uncertified = ledgerOnly.filter((id) => !certified.includes(id));
+    if (uncertified.length) {
+      return { ok: false, code: "ledger_only", detail: uncertified.join(",") };
+    }
+  }
   const unknown = proposed.filter((id) => !byId.has(id) || byId.get(id)?.driftClass === "UNKNOWN_DRIFT");
   if (unknown.length) {
     return { ok: false, code: "unknown_state", detail: unknown.join(",") };
@@ -88,5 +113,13 @@ export function evaluateProductionPromotion(input: {
     return { ok: false, code: "bulk_sync_refused", detail: unapprovedBulk.join(",") };
   }
 
+  return { ok: true };
+}
+
+export function evaluateLedgerOnlyGuard(records: MigrationRecord[]): PromotionDecision {
+  const unknown = unclassifiedLedgerOnlyVersions(records);
+  if (unknown.length) {
+    return { ok: false, code: "unknown_ledger_only", detail: unknown.join(",") };
+  }
   return { ok: true };
 }

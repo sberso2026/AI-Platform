@@ -30,7 +30,8 @@
     "db:types": "supabase gen types typescript --local > packages/database/src/types.ts",
     "review:staging": "node scripts/review-staging.mjs",
     "release:drift-report": "pnpm --filter @rtb/release-governance report",
-    "release:production-guard": "pnpm --filter @rtb/release-governance guard"
+    "release:production-guard": "pnpm --filter @rtb/release-governance guard",
+    "release:ledger-only": "pnpm --filter @rtb/release-governance ledger-only"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

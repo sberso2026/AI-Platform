@@ -1,4 +1,5 @@
 import type { MigrationRecord } from "./types";
+import { unclassifiedLedgerOnlyVersions } from "./classify";
 
 export type DriftReport = {
   readOnly: true;
@@ -15,6 +16,9 @@ export type DriftReport = {
     blocked: number;
     superseded: number;
     unknownDrift: number;
+    recoveredHistorical: number;
+    unresolvedBlocked: number;
+    unclassifiedLedgerOnly: number;
   };
   stagingOnly: string[];
   productionApplied: string[];
@@ -24,6 +28,9 @@ export type DriftReport = {
   securityBackports: string[];
   superseded: string[];
   development: string[];
+  recoveredHistorical: string[];
+  unresolvedBlocked: string[];
+  unclassifiedLedgerOnly: string[];
 };
 
 export function driftReport(records: MigrationRecord[]): DriftReport {
@@ -41,6 +48,13 @@ export function driftReport(records: MigrationRecord[]): DriftReport {
   const superseded = pick((row) => row.releaseState === "SUPERSEDED");
   const development = pick((row) => row.releaseState === "DEVELOPMENT");
   const stagingValidated = pick((row) => row.releaseState === "STAGING_VALIDATED");
+  const recoveredHistorical = pick(
+    (row) =>
+      row.provenance?.recoveryClass === "RECOVERED_EXACT" ||
+      row.provenance?.recoveryClass === "RECOVERED_FROM_TRUSTED_HISTORY",
+  );
+  const unresolvedBlocked = pick((row) => row.provenance?.recoveryClass === "UNRESOLVED_BLOCKED");
+  const unclassifiedLedgerOnly = unclassifiedLedgerOnlyVersions(records);
 
   return {
     readOnly: true,
@@ -57,6 +71,9 @@ export function driftReport(records: MigrationRecord[]): DriftReport {
       blocked: blocked.length,
       superseded: superseded.length,
       unknownDrift: unknownDrift.length,
+      recoveredHistorical: recoveredHistorical.length,
+      unresolvedBlocked: unresolvedBlocked.length,
+      unclassifiedLedgerOnly: unclassifiedLedgerOnly.length,
     },
     stagingOnly,
     productionApplied,
@@ -66,5 +83,8 @@ export function driftReport(records: MigrationRecord[]): DriftReport {
     securityBackports,
     superseded,
     development,
+    recoveredHistorical,
+    unresolvedBlocked,
+    unclassifiedLedgerOnly,
   };
 }

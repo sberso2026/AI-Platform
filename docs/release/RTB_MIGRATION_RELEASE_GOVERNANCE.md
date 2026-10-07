@@ -1,7 +1,7 @@
 # RTB Migration Release Governance
 
-**Phase:** RTB-REL-1  
-**Status:** CERTIFIED  
+**Phase:** RTB-REL-1 / RTB-REL-1A  
+**Status:** CERTIFIED (REL-1); provenance closeout in REL-1A  
 **Principle:** A file in `supabase/migrations` is not authorization to deploy it to production.
 
 This exists because RTB-SEC-RLS-1B correctly refused to apply staging-certified SQL that referenced Security Assurance tables production does not have. RTB-SEC-RLS-1C then backported the **security invariants** without deploying that product schema. Staging/production catalog drift is legitimate. Ungoverned promotion is not.
@@ -31,6 +31,17 @@ Do not infer production identity from staging. Do not `supabase db push` the ful
 | BLOCKED | Must not be proposed (unknown SQL, unsafe, or ledger-only) |
 
 **Staging drift is not automatically an error.** Staging-only and staging-validated features are expected. **UNKNOWN_DRIFT is an error** requiring investigation; those IDs are BLOCKED until SQL is recovered or the ledger row is explained.
+
+Ledger-only versions (hosted ledger present, live `supabase/migrations` SQL absent) are fail-closed for production promotion unless an explicit certified relationship exists:
+
+- recovered historical artifact under `docs/release/historical-migrations/` (still not production-executable)
+- `SECURITY_BACKPORT`
+- `SUPERSEDED` with `supersededBy`
+- `FORMALLY_RETIRED` provenance
+
+A classified `UNRESOLVED_BLOCKED` row is not an unknown/unclassified gap, but it remains blocked for promotion. A new ledger snapshot ID without repository SQL, historical artifact, or certified provenance fails `evaluateLedgerOnlyGuard`.
+
+Do not invent historical SQL to close a ledger gap.
 
 ## Promotion workflow
 
@@ -82,11 +93,14 @@ pnpm --filter @rtb/release-governance guard --proposed 20261007160000 --project-
 
 - project ref is not Engineering OS production
 - proposal includes STAGING_ONLY, BLOCKED, SUPERSEDED, or unknown IDs
+- proposal includes recovered historical artifacts or uncertified ledger-only versions
 - migration is not PRODUCTION_APPROVED / PRODUCTION_APPLIED
 - dependencies are unsatisfied
 - the proposal is empty
 
-It does not connect to the database and does not apply SQL.
+`evaluateLedgerOnlyGuard` fails when a hosted ledger version has no live SQL, no historical artifact, and no certified SUPERSEDED / RETIRED / SECURITY_BACKPORT / classified UNRESOLVED_BLOCKED provenance.
+
+Neither command connects to the database or applies SQL.
 
 ## Emergency security remediation
 
@@ -106,6 +120,8 @@ Use the existing provider backup/PITR runbook (`docs/security/RTB_PLATFORM_BACKU
 
 | File | Role |
 | --- | --- |
-| `docs/release/migration-manifest.json` | Ledgers, environments, overrides |
+| `docs/release/migration-manifest.json` | Ledgers, environments, overrides, provenance |
+| `docs/release/historical-migrations/` | Recovered historical SQL artifacts (not executable) |
+| `docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md` | Ledger-only investigation record |
 | `packages/release-governance` | Classifier, graph, guard, report, tests |
 | `docs/release/MIGRATION_HEADER.template.sql` | Lightweight authoring hints |
