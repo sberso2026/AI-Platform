@@ -69,3 +69,46 @@ C2 remaining missing rule IDs are unchanged (the nine IDs above). `EU_C1_RULE_PA
 AI may explain rules, identify missing dependencies, and suggest test vectors. AI may not invent parameters or formulas, resolve source conflicts, select NDPs, promote maturity, claim conformance, or approve design.
 
 Validation debt reduced only for the executed characteristic-property/tension-omission contract. Flexure, N-M, shear, serviceability, detailing, and formal conformance debts remain.
+
+## C1C-EVIDENCE public / governed triangulation
+
+C1C-EVIDENCE reloaded C1B/C1/C1C records. The original nine C2 gap IDs are unchanged. Minimum bounded-C2 uniaxial-flexure dependencies, given D1E-1 geometry/kinematics/fiber integration/equilibrium and the C1 characteristic/tension pack, are seven rules:
+
+- `EU_C1_CONCRETE_DESIGN_PROPERTIES`
+- `EU_C1_REINFORCEMENT_DESIGN_PROPERTIES`
+- `EU_C1_PARTIAL_FACTOR_GAMMA_C`
+- `EU_C1_PARTIAL_FACTOR_GAMMA_S`
+- `EU_C1_CONCRETE_COMPRESSION_RESPONSE`
+- `EU_C1_CONCRETE_STRAIN_LIMITS`
+- `EU_C1_REINFORCEMENT_RESPONSE`
+
+`EU_C1_STRESS_BLOCK_OR_SECTION_MODEL` is classified `SATISFIED_BY_MATERIAL_INTEGRATION`. A simplified stress block is an alternative first-generation method (Walraven workshop 3.1.7) and is not required. `EU_C1_REINFORCEMENT_STRAIN_STATES` remains `UNRESOLVED` as a separate rule.
+
+Section-resistance strategy: `MATERIAL_INTEGRATION`. Strategy is resolved. Constitutive parameters required by that strategy are not yet governed.
+
+### Bound sources (no licensed EN PDF; no copyrighted standard tables copied)
+
+TIER_A: JRC113687 Table 8 (EN 1992-1-1 2.4.2.4(1); CEN recommended γc=1.5, γs=1.15; DNK diverges); JRC Eurocodes harmonisation page (material partial factors are NDPs); JRC71599 (recommended γC/γS; fcd=fck/γC and fyd=fyk/γS identities); JRC Arrieta 2011 workshop (example γc=1,50, γs=1,15); JRC Walraven 2011 workshop (stress-block example path; fcd=25/1,5).
+
+TIER_B independent group TCC_UK: Concrete Centre lecture 2 (2016) corroborates Table 2.1N/NA persistent γC=1.50, γS=1.15 and the identity fcd=αcc fck/γc. UK αcc=0.85 for flexure is National Annex practice and is not packed.
+
+TIER_D web summaries and unauthorized full-standard PDFs are not numerical authority.
+
+Profile identity is recorded as first-generation EN 1992-1-1 clause sources. Second-generation FprEN 2023 constitutive notes are not mixed into first-generation parameter binding. Pack generation/edition remain `UNKNOWN_PENDING_CONFIRMATION`.
+
+### Implementation-ready (evidence only; numerical count 0)
+
+- `EU_C1_PARTIAL_FACTOR_GAMMA_C` / `EU_C1_PARTIAL_FACTOR_GAMMA_S`: `NDP_DEPENDENT`. Next C1C implementation may apply a declared National Annex or validated project override. CEN recommended values are evidence, not pack constants. No silent fallback. No location-inferred annex.
+- `EU_C1_CONCRETE_DESIGN_PROPERTIES`: derived identity `fcd = αcc · fck / γc` with declared `αcc` and declared `γc`. `αcc` is NDP; 0.85 and 1.0 are not defaulted.
+- `EU_C1_REINFORCEMENT_DESIGN_PROPERTIES`: derived identity `fyd = fyk / γs` with declared `γs`.
+
+### Still blocked
+
+- `EU_C1_CONCRETE_COMPRESSION_RESPONSE`
+- `EU_C1_CONCRETE_STRAIN_LIMITS` (no generic `ecu` collapse; required strain-state IDs unbound)
+- `EU_C1_REINFORCEMENT_RESPONSE`
+- `EU_C1_REINFORCEMENT_STRAIN_STATES`
+
+New-rule golden cases / numerical validation / deterministic execution: `NOT_APPLICABLE`. Existing C1 regression remains separately PASS. Partial-factor resolver behavior remains fail-closed PASS; factor authority class is now resolved as NDP.
+
+C1C resume gate: FAIL (constitutive minimum dependencies remain blocked). C2 numerical pack: incomplete. Ready to resume C1C only for the evidence-ready subset. Conformance remains `INTENDED_PROFILE`. Pack uncertified. Product claim unchanged.
