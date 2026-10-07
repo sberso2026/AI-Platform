@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -103,8 +103,7 @@ describe.skipIf(!LIVE)("EOS-A11E live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("EOS-A11E-IMPACT-ASSESSMENT");
 
     const anon = await rest(`engineering_impact_assessments?select=id&id=eq.${assessmentId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("normal engineer cannot delete impact assessments", async () => {

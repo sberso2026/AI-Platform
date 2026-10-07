@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -130,8 +130,7 @@ describe.skipIf(!LIVE)("EOS-A14A live JWT RLS and staging artifact inventory", (
     expect(ids(b1.body)).toEqual([]);
 
     const anon = await rest(`engineering_artifact_storage_migrations?select=id&id=eq.${migrationId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
 
     const engineerInsert = await rest(
       "engineering_artifact_storage_migrations",

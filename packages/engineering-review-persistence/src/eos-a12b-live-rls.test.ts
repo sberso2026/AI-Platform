@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -93,8 +93,7 @@ describe.skipIf(!LIVE)("EOS-A12B live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("WAITING_ON_OTHERS");
 
     const anon = await rest(`engineering_attention_acknowledgements?select=id&id=eq.${ackId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("engineer cannot insert an acknowledgement for another user", async () => {

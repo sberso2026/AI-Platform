@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -198,7 +198,6 @@ describe.skipIf(!LIVE)("EOS-A13B live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("A13B live EDMS");
 
     const anon = await rest(`engineering_external_connections?select=id&id=eq.${connectionId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 });

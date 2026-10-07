@@ -48,3 +48,9 @@ export function mutationDenied(result: RestResult): boolean {
   if (result.status === 200) return ids(result.body).length === 0;
   return result.status >= 400 && result.status < 500;
 }
+
+/** Anon may receive 401/403 after GRANT revoke, or 200 with zero rows under RLS. */
+export function anonReadDenied(result: RestResult): boolean {
+  if (result.status === 200) return Array.isArray(result.body) && result.body.length === 0;
+  return result.status === 401 || result.status === 403 || result.status === 404;
+}

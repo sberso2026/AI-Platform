@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -119,8 +119,7 @@ describe.skipIf(!LIVE)("ERA-6 Core JWT RLS security gate", () => {
       expect(ids(b1.body), `${table} B1`).toEqual([]);
 
       const anon = await rest(`${table}?select=id&id=eq.${ownerId(table)}`);
-      expect(anon.status).toBe(200);
-      expect(ids(anon.body), `${table} anon`).toEqual([]);
+      expect(anonReadDenied(anon), `${table} anon ${JSON.stringify(anon.body)}`).toBe(true);
     }
   });
 

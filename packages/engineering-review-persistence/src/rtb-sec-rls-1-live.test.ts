@@ -50,6 +50,7 @@ describe.skipIf(!LIVE)("RTB-SEC-RLS-1 hosted public RLS certification", () => {
     }
     const applied = await applyHostedSqlFiles([
       "supabase/migrations/20261007120000_rtb_sec_rls_1_public_schema_remediation.sql",
+      "supabase/migrations/20261007140000_rtb_sec_rls_1a_least_privilege_closeout.sql",
     ]);
     if (applied.failed) {
       throw new Error(`RTB-SEC-RLS-1 migration failed: ${applied.failed}`);

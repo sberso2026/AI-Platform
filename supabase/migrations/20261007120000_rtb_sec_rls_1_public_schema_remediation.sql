@@ -88,6 +88,7 @@ SELECT
     ) THEN 'PLATFORM_REFERENCE'
     WHEN c.relname IN (
       'rtb_public_table_security_classification',
+      'rtb_anon_table_grant_exceptions',
       'security_assurance_compliance_frameworks',
       'security_assurance_compliance_framework_versions',
       'security_assurance_compliance_requirements',

@@ -114,12 +114,14 @@ Wired into `test:rls` via `src/rtb-sec-rls-1-live.test.ts` and CI path `supabase
 
 ## Remaining limitations
 
-1. Security Advisor UI was not queried programmatically. Equivalent PostgreSQL check is clean. `SECURITY_ADVISOR_UI_RECHECK_REQUIRED = YES`.
-2. Other public tables still commonly `GRANT ALL` to `anon` while RLS is enabled. This phase did not revoke those grants. RLS-filtered anon SELECT returning zero rows is not a cross-tenant leak, but grant hygiene is a follow-on phase.
-3. Existing `USING (true)` SELECT policies on some PLATFORM_REFERENCE catalogs (commerce features, plugins, inspection pack registry, etc.) were not tightened. Do not weaken; later hardening only.
-4. `get_user_tenant_ids()` / related helpers should pin `search_path` in a dedicated helper-hardening phase.
-5. Production was not migrated. Staging certification is not production cutover.
-6. Package `typecheck` still fails pre-existing `rootDir` / implicit-any errors in unrelated scripts. Not repaired.
+Closed in [RTB-SEC-RLS-1A](./RTB_SEC_RLS_1A_LEAST_PRIVILEGE_CLOSEOUT.md): residual anon GRANT ALL, unrestricted catalog SELECT TO public, taxonomy write-true, and unpinned `get_user_tenant_ids()` search_path.
+
+Still open:
+
+1. Security Advisor UI was not queried programmatically. `SECURITY_ADVISOR_UI_RECHECK_REQUIRED = YES`.
+2. Production was not migrated. Staging certification is not production cutover.
+3. Package `typecheck` still fails pre-existing `rootDir` / implicit-any errors in unrelated scripts. Not repaired.
+4. Hosted `supabase_admin` default privileges could not be revoked (permission denied).
 
 ## Application regression
 

@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -134,8 +134,7 @@ describe.skipIf(!LIVE)("EOS-A12A live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("ABC-ENG-REPORT");
 
     const anon = await rest(`engineering_artifact_template_policies?select=id&id=eq.${policyId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("normal engineer cannot mutate template policy", async () => {

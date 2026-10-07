@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -128,8 +128,7 @@ describe.skipIf(!LIVE)("EOS-A10B live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("doc-a10b-live");
 
     const anon = await rest(`engineering_work_events?select=id&id=eq.${eventId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("normal engineer cannot mutate managed repository policy; admin can insert permitted repository", async () => {

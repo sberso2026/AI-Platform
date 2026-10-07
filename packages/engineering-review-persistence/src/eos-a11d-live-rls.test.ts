@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -135,8 +135,7 @@ describe.skipIf(!LIVE)("EOS-A11D live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("EOS-PRE-ISSUE-REVIEW");
 
     const anon = await rest(`engineering_pre_issue_reviews?select=id&id=eq.${reviewId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("normal engineer cannot delete pre-issue reviews", async () => {

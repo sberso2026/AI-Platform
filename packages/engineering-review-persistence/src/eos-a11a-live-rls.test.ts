@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -103,8 +103,7 @@ describe.skipIf(!LIVE)("EOS-A11A live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("EWT-DD-FOUNDATION");
 
     const anon = await rest(`engineering_work_plans?select=id&id=eq.${planId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("normal engineer may update a plan; admin-only delete is retained", async () => {

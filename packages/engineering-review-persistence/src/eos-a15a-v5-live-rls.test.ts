@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -98,8 +98,7 @@ describe.skipIf(!LIVE)("EOS-A15A-V5 live JWT RLS for structural calculations", (
     expect(ids(b1.body)).toEqual([]);
 
     const anon = await rest(`engineering_structural_calculations?select=id&id=eq.${calculationId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
 
     const spoofTenant = await rest(
       `engineering_structural_calculations?id=eq.${calculationId}`,

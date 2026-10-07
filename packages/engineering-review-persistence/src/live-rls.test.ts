@@ -141,8 +141,11 @@ describe.skipIf(!LIVE)("ERA-3 live JWT RLS security gate", () => {
   it("SELECT: anonymous JWT sees zero review rows", async () => {
     for (const table of REVIEW_TABLES) {
       const result = await rest(`${table}?select=id&limit=5`);
-      expect(result.status).toBe(200);
-      expect(ids(result.body), table).toEqual([]);
+      const denied =
+        result.status === 401 ||
+        result.status === 403 ||
+        (result.status === 200 && ids(result.body).length === 0);
+      expect(denied, `${table} anon ${result.status}`).toBe(true);
     }
   });
 

@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -146,8 +146,7 @@ describe.skipIf(!LIVE)("EOS-A15A-V3 live JWT RLS for governed MTO snapshots", ()
     expect(JSON.stringify(b1.body)).not.toContain("live-rls-mto");
 
     const anon = await rest(`engineering_mto_snapshots?select=id&id=eq.${snapshotId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
 
     const spoofTenant = await rest(
       `engineering_mto_snapshots?id=eq.${snapshotId}`,

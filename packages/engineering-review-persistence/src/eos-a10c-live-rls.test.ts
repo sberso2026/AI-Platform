@@ -8,7 +8,7 @@ import {
   resolveSupabaseAnonKey,
   resolveSupabaseUrl,
 } from "./env";
-import { ids, mutationDenied, restFetch } from "./live-http";
+import { anonReadDenied, ids, mutationDenied, restFetch } from "./live-http";
 import {
   cleanupTransientReviewPackages,
   provisionReviewRlsFixtures,
@@ -108,8 +108,7 @@ describe.skipIf(!LIVE)("EOS-A10C live JWT RLS", () => {
     expect(JSON.stringify(b1.body)).not.toContain("A10C live design criteria");
 
     const anon = await rest(`engineering_information_requirements?select=id&id=eq.${requirementId}`);
-    expect(anon.status).toBe(200);
-    expect(ids(anon.body)).toEqual([]);
+    expect(anonReadDenied(anon), JSON.stringify(anon.body)).toBe(true);
   });
 
   it("normal engineer may update permitted requirement workflow; admin-only delete is retained", async () => {
