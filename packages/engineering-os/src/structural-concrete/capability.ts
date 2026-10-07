@@ -276,6 +276,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "four C1C-EVIDENCE ready rules only; declared NDP/project override required; no CEN default; constitutive/strain still unbound; not member flexure; not CONFORMANCE_VALIDATED",
     dependencies: ["D1E.EU.C1C.EVIDENCE", "D1E.EU.C1.MATERIAL_RULES", "D1E.EU.C1B.RULE_AUTHORITY"],
   },
+  {
+    capabilityId: "D1E.EU.C1C.CONSTITUTIVE.MATERIAL_RESPONSE",
+    jurisdiction: "EU",
+    method: "first-generation parabola-rectangle concrete and horizontal-bilinear reinforcement response",
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    implementationState: "NUMERICALLY_VALIDATED_MATERIAL_RULE_PACK",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "three constitutive rules only; fck≤50 MPa constant-strain domain; horizontal reo branch without εud; TEST_ONLY_NON_CONFORMANCE NDP never a default; not member flexure; not CONFORMANCE_VALIDATED",
+    dependencies: ["D1E.EU.C1C.R1.DESIGN_PROPERTIES", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1E.EU.C1.MATERIAL_RULES"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -384,8 +396,9 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-C1-VD-C2-GAPS", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "EU-C1 C2 gaps", description: "C1 numerically validated characteristic-property/tension-omission pack; remaining C2 material/design rules still unbound", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed sources for design properties, partial factors, constitutive response, strain limits, and section model", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1C" },
   { debtId: "D1E-EU-C1-VD-ENGINEER", category: "HUMAN_VALIDATION", jurisdiction: "EU", capability: "EU-C1 engineer validation", description: "C1 numerical golden-case validation does not promote engineer validation", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "explicit human engineering review of the C1 rule pack", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-C1C-VD-GAPS", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "EU-C1C C2 gaps", description: "C1C reconfirmed nine C2 material/design-rule gaps as BLOCKED_RULE_AUTHORITY; no governed coefficient source in-repository", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "independently governed engineering reference plus corroboration plus tests for each remaining C2 rule", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1C" },
-  { debtId: "D1E-EU-C1C-EVIDENCE-VD-CONSTITUTIVE", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "EU-C1C evidence constitutive", description: "C2 constitutive compression/reinforcement response and strain-state identities remain unbound after public TIER_A/B triangulation; CEN γ recommended values are evidence-only and not packed", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "independently governed first-generation constitutive/strain source that is not a copyrighted standard reproduction", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1C-CONSTITUTIVE" },
+  { debtId: "D1E-EU-C1C-EVIDENCE-VD-CONSTITUTIVE", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "EU-C1C evidence constitutive", description: "C1C-CONSTITUTIVE numerically implements first-generation parabola-rectangle compression/strain states and horizontal-bilinear reinforcement response for fck≤50 MPa; engineer validation and edition confirmation remain pending", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review plus confirmed edition/amendment before CONFORMANCE_VALIDATED", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C2" },
   { debtId: "D1E-EU-C1C-R1-VD-ENGINEER", category: "HUMAN_VALIDATION", jurisdiction: "EU", capability: "EU-C1C-R1 engineer validation", description: "R1 numerical golden-case validation of declared-NDP gamma and design-property identities does not promote engineer validation", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "explicit human engineering review of the R1 rule pack", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-C1C-CONSTITUTIVE-VD-ENGINEER", category: "HUMAN_VALIDATION", jurisdiction: "EU", capability: "EU-C1C-CONSTITUTIVE engineer validation", description: "numerical golden-case validation of constitutive response is not engineer validation", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "explicit human engineering review of the constitutive rule pack", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-PART", category: "STANDARD_PART", jurisdiction: "EU", capability: "EN 1992 part applicability", description: "part applicability for numerical methods unvalidated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "method-to-part evidence", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-ANNEX", category: "NATIONAL_ANNEX", jurisdiction: "EU", capability: "National Annex profiles", description: "National Annex datasets unpopulated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed annex metadata per country/part", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-NDP", category: "NDP", jurisdiction: "EU", capability: "NDP datasets", description: "NDP values unpopulated; guessing forbidden", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -394,7 +407,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-PARTIAL-FACTOR", category: "PARTIAL_FACTOR", jurisdiction: "EU", capability: "EU partial factors", description: "R1 implements declared-NDP gamma_c/gamma_s resolution; adapter slots remain unpopulated; no CEN default; NDP catalog still empty", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "edition/annex NDP catalog plus engineer review", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-DESIGN-STRENGTH", category: "DESIGN_STRENGTH", jurisdiction: "EU", capability: "EU design strengths", description: "R1 implements fcd=αcc·fck/γc and fyd=fyk/γs from declared NDP plus C1 characteristic properties; αcc/γ not packed", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "engineer review plus constitutive consumption in bounded C2", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-STRESS-BLOCK", category: "STRESS_BLOCK_RULES", jurisdiction: "EU", capability: "EU stress block", description: "EN 1992 stress-block parameters ungoverned", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable stress-block rule", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-STRAIN-LIMITS", category: "STRAIN_LIMITS", jurisdiction: "EU", capability: "EU strain limits", description: "ultimate concrete/reinforcement strain ungoverned", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-applicable strain limits", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-VD-STRAIN-LIMITS", category: "STRAIN_LIMITS", jurisdiction: "EU", capability: "EU strain limits", description: "parabola-rectangle εc2/εcu2 bound for fck≤50 MPa; high-strength identities fail closed on source conflict; reinforcement εud not required for the selected horizontal branch", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "engineer review plus high-strength resolution if that domain is later opened", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C2" },
   { debtId: "D1E-EU-VD-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "EU", capability: "EU uniaxial flexure", description: "numerical EN 1992 flexural resistance not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed method plus independent benchmark", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "EU", capability: "EU N-M", description: "N-M interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed N-M method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-BIAXIAL", category: "BIAXIAL_INTERACTION", jurisdiction: "EU", capability: "EU P-M-M", description: "biaxial interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed biaxial method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -467,7 +480,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C1", scope: "Governed Eurocode concrete material/design rule foundation", status: "CLOSED" },
   { id: "EOS-D1E-EU-C1C", scope: "Bounded Eurocode concrete rule-gap implementation for remaining C2 material/design-rule dependencies", status: "CLOSED" },
   { id: "EOS-D1E-EU-C1C-RESUME-1", scope: "Implement C1C-EVIDENCE ready NDP-dependent design-property and partial-factor rules", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C1C-CONSTITUTIVE", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
+  { id: "EOS-D1E-EU-C1C-CONSTITUTIVE", scope: "Targeted first-generation constitutive and strain evidence recovery plus bounded numerical implementation", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C2", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
@@ -565,6 +579,13 @@ export const D1E_EU_C1C_EVIDENCE_D0_RISK_DISPOSITION = {
 } as const;
 
 export const D1E_EU_C1C_R1_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_EU_C1C_CONSTITUTIVE_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
   INTRODUCED: "NONE" as const,

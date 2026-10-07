@@ -1,7 +1,9 @@
 import type {
   ConcreteMaterial,
+  RcConcreteTensionTreatment,
   RcCrackState,
   RcGeneralizedStrainState,
+  RcMaterialResponse,
   RcReinforcementDisplacementTreatment,
   RcSectionGeometryInput,
   RcSectionResultants,
@@ -20,7 +22,20 @@ import { strainAtPoint } from "./kinematics";
 import { evaluateLinearElasticConcrete, evaluateLinearElasticReinforcement } from "./material-response";
 import { failClosed, nMmToNm } from "./units";
 
-export function integrateElasticSection(input: {
+export type RcConcreteFiberResponse = (
+  material: ConcreteMaterial,
+  strain: number,
+  tensionTreatment: RcConcreteTensionTreatment,
+  provenanceRef: string,
+) => RcMaterialResponse;
+
+export type RcReinforcementPointResponse = (
+  material: ReinforcementMaterial,
+  strain: number,
+  provenanceRef: string,
+) => RcMaterialResponse;
+
+export type RcSectionIntegrationInput = {
   geometry: RcSectionGeometryInput;
   layout: ReinforcementLayout;
   concrete: ConcreteMaterial;
@@ -31,7 +46,15 @@ export function integrateElasticSection(input: {
   resolutionX?: number;
   resolutionY?: number;
   provenanceRef: string;
-}): RcSectionResultants {
+  tensionTreatment?: RcConcreteTensionTreatment;
+  concreteResponse?: RcConcreteFiberResponse;
+  reinforcementResponse?: RcReinforcementPointResponse;
+  concreteModelId?: string;
+  reinforcementModelId?: string;
+  resultAuthority?: RcSectionResultants["resultAuthority"];
+};
+
+export function integrateSectionWithMaterialResponse(input: RcSectionIntegrationInput): RcSectionResultants {
   if (DEFAULT_CONCRETE_CRACKING_MODEL) failClosed("default cracking model is forbidden");
   if (input.crackState !== "UNCRACKED_REFERENCE" && input.crackState !== "CRACK_STATE_NOT_EVALUATED") {
     failClosed("unsupported crack state");
@@ -39,7 +62,9 @@ export function integrateElasticSection(input: {
   if (LINEAR_ELASTIC_REFERENCE_EQUALS_CODE_CAPACITY) failClosed("elastic reference is not code capacity");
   const mesh = discretizeSection(input.geometry, input.resolutionX ?? 40, input.resolutionY ?? 40);
   const bars = evaluateBarGeometry(input.layout, input.geometry);
-  const tensionTreatment = input.crackState === "UNCRACKED_REFERENCE" ? "ELASTIC_TENSION" : "ELASTIC_TENSION";
+  const tensionTreatment = input.tensionTreatment ?? "ELASTIC_TENSION";
+  const concreteResponse = input.concreteResponse ?? evaluateLinearElasticConcrete;
+  const reinforcementResponse = input.reinforcementResponse ?? evaluateLinearElasticReinforcement;
   let N = 0;
   let MxNmm = 0;
   let MyNmm = 0;
@@ -57,7 +82,7 @@ export function integrateElasticSection(input: {
       if (hit) continue;
     }
     const eps = strainAtPoint(input.strain, fiber.centroidMm);
-    const response = evaluateLinearElasticConcrete(input.concrete, eps, tensionTreatment, input.provenanceRef);
+    const response = concreteResponse(input.concrete, eps, tensionTreatment, input.provenanceRef);
     const forceN = response.stressMPa * fiber.areaMm2;
     const IownX = (fiber.widthMm * fiber.heightMm ** 3) / 12;
     const IownY = (fiber.heightMm * fiber.widthMm ** 3) / 12;
@@ -68,15 +93,16 @@ export function integrateElasticSection(input: {
   }
   for (const bar of bars.bars) {
     const eps = strainAtPoint(input.strain, { xMm: bar.xMm, yMm: bar.yMm });
-    const response = evaluateLinearElasticReinforcement(input.reinforcement, eps, input.provenanceRef);
+    const response = reinforcementResponse(input.reinforcement, eps, input.provenanceRef);
     const forceN = response.stressMPa * bar.areaMm2;
     N += forceN;
     MxNmm += -forceN * (bar.yMm - y0);
     MyNmm += -forceN * (bar.xMm - x0);
   }
   void occupied;
+  const usingDefaultElastic = !input.concreteResponse && !input.reinforcementResponse;
   return {
-    resultAuthority: "ELASTIC_REFERENCE",
+    resultAuthority: input.resultAuthority ?? (usingDefaultElastic ? "ELASTIC_REFERENCE" : "MECHANICS_REFERENCE"),
     N_N: N,
     Mx_Nm: nMmToNm(MxNmm),
     My_Nm: nMmToNm(MyNmm),
@@ -86,8 +112,8 @@ export function integrateElasticSection(input: {
     geometryVersion: input.geometry.geometryVersion,
     reinforcementLayoutVersion: input.layout.layoutId,
     generalizedStrainState: input.strain,
-    concreteModelId: "RC_LINEAR_ELASTIC_CONCRETE_REFERENCE",
-    reinforcementModelId: "RC_LINEAR_ELASTIC_REINFORCEMENT_REFERENCE",
+    concreteModelId: input.concreteModelId ?? "RC_LINEAR_ELASTIC_CONCRETE_REFERENCE",
+    reinforcementModelId: input.reinforcementModelId ?? "RC_LINEAR_ELASTIC_REINFORCEMENT_REFERENCE",
     integrationAlgorithm: "CARTESIAN_CELL_PLUS_BAR_POINTS",
     tolerances: RC_NUMERICAL_TOLERANCE,
     displacementTreatment: input.displacementTreatment,
@@ -95,6 +121,17 @@ export function integrateElasticSection(input: {
     labelledCodeCapacity: false,
     provenanceRef: input.provenanceRef,
   };
+}
+
+export function integrateElasticSection(input: RcSectionIntegrationInput): RcSectionResultants {
+  return integrateSectionWithMaterialResponse({
+    ...input,
+    concreteResponse: evaluateLinearElasticConcrete,
+    reinforcementResponse: evaluateLinearElasticReinforcement,
+    concreteModelId: "RC_LINEAR_ELASTIC_CONCRETE_REFERENCE",
+    reinforcementModelId: "RC_LINEAR_ELASTIC_REINFORCEMENT_REFERENCE",
+    resultAuthority: "ELASTIC_REFERENCE",
+  });
 }
 
 export const RC_ELASTIC_REFERENCE_EXCLUSIONS = [

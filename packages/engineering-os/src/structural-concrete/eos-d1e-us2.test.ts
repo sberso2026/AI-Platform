@@ -415,7 +415,7 @@ describe("EOS-D1E-US-2 bounded ACI-profile uniaxial RC flexure", () => {
     expect(disciplineMaturity("structural")).toBe("REFERENCE_PARTIALLY_IMPLEMENTED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-US")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.some((row) => row.id === RECOMMENDED_D1E_NEXT_PHASE)).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C1C-CONSTITUTIVE");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C2");
     expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/Eurocode|EN 1992|rule-gap|C2/i);
     expect(D1E_CANONICAL_ROADMAP_HANDOFF.nextPhase).toBe(RECOMMENDED_D1E_NEXT_PHASE);
     expect(D1E_CONCRETE_ARCHITECTURE_READY_FOR_CLOSEOUT).toBe(true);

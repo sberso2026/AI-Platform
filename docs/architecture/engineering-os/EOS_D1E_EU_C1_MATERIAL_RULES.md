@@ -151,3 +151,39 @@ Each result records parameter IDs, units, source refs, profile, NDP dependency, 
 - `EU_C1_REINFORCEMENT_RESPONSE`
 
 `EU_C1_REINFORCEMENT_STRAIN_STATES` is `NOT_CURRENT_MINIMUM_DEPENDENCY` until a reinforcement response model is selected. Next phase type: targeted constitutive/strain evidence recovery. Not broad C1C. Conformance remains `INTENDED_PROFILE`. Pack uncertified. Product claim unchanged.
+
+## C1C-CONSTITUTIVE implemented first-generation constitutive pack
+
+This phase recovers governed public authority for the three remaining minimum-C2 constitutive rules and implements them through the existing D1E-1 `RcMaterialResponse` contract. No parallel RC kernel, material engine, equilibrium solver, or capability manifest was created. Licensed EN 1992 PDF text is not required at runtime or in-repository. No copyrighted standard tables are reproduced.
+
+### Target rule IDs (cumulative 10)
+
+C1 (3) + R1 (4) plus:
+
+- `EU_C1_CONCRETE_COMPRESSION_RESPONSE`
+- `EU_C1_CONCRETE_STRAIN_LIMITS`
+- `EU_C1_REINFORCEMENT_RESPONSE`
+
+### Source hierarchy
+
+TIER_A JRC Walraven 2008 workshop (parabola-rectangle section-analysis law; `fck ≤ 50 MPa` strain identities). Independent corroboration: TIER_B Concrete Centre lecture 2 (2016); Oasys AdSec parabola-rectangle theory (`n = 2` for `fc ≤ 50 MPa`); Plevris et al. EC2 ULS section paper (horizontal-top reinforcement branch without a separate `εud` check). Public web copies are corroboration only. GeoStru high-strength `εcu2` disagrees with JRC/TCC; that conflict fails closed and high-strength parameters are not packed.
+
+Profile evidence: sources claim first-generation EN 1992-1-1 section analysis. Pack generation/edition remain `UNKNOWN_PENDING_CONFIRMATION`. Second-generation FprEN parameters are not mixed.
+
+### Selected models
+
+Concrete compression: parabola-rectangle for section analysis. Kernel sign convention remains D1E-1 tension-positive; EC2 compression-positive strains are mapped explicitly. Tension is omitted (C1 `NO_TENSION`). Required strain states are `eps_c2` and `eps_cu2` (not a generic `ecu`). Exponent `n` and the `fck` constant-strain limit are provenanced parameters. Applicability: normal-weight concrete, static ULS, ambient temperature, `fck` at or below the constant-strain-parameter limit.
+
+Reinforcement: new EU rule using the existing material-response interface. Elastic branch uses governed `Es`; plateau is `±fyd` from the R1 identity `fyd = fyk/γs`. Horizontal top branch. `EU_C1_REINFORCEMENT_STRAIN_STATES` is `NOT_REQUIRED_FOR_BOUNDED_C2`. Common linear-elastic D1E-1 reinforcement remains available and is not a ULS design response.
+
+Section resistance strategy remains `MATERIAL_INTEGRATION`. No separate Eurocode stress-block engine.
+
+### Fingerprints / provenance / golden cases
+
+Deterministic formula fingerprints cover compression, strain states, and reinforcement response. Every packed numerical value has `parameterId`, units, source authority, source reference, profile/material applicability, version `c1c-constitutive.0`, and `NUMERICALLY_VALIDATED`. Independent golden cases cover zero, initial, intermediate, transition, plateau, ultimate, elastic, yield, post-yield, compression, and fail-closed outside-domain/NaN/Infinity/missing-property/high-strength-conflict/stale states without calling production from the golden module.
+
+### C2 closure
+
+Minimum C2 dependency set recomputed from implemented rules: remaining gap `NONE` / `0`. Authority complete: yes. Numerical pack complete: yes. Bounded pre-integration smoke test (governed context → D1E-1 plane-section strain → concrete response → reinforcement response → D1E-1 integration) passes. Smoke-test NDPs are labelled `TEST_ONLY_NON_CONFORMANCE` and must never become default runtime NDPs. The smoke test does not compute or claim member flexural resistance.
+
+Engineer validation remains `PENDING_HUMAN_ENGINEERING_REVIEW`. Conformance remains `INTENDED_PROFILE`. Pack uncertified. Product claim remains `EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY`. Next phase: `EOS-D1E-EU-C2`.

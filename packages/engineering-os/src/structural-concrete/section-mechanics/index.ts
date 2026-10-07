@@ -13,7 +13,15 @@ export {
   geometricClearanceToSurfaceMm,
 } from "./geometry";
 export { consumeD1cSectionActions, rcSectionOptimizationHandoff, rcSectionMtoHandoff } from "./handoff";
-export { integrateElasticSection, uncrackedElasticSectionReference, RC_ELASTIC_REFERENCE_EXCLUSIONS } from "./integration";
+export {
+  integrateElasticSection,
+  integrateSectionWithMaterialResponse,
+  uncrackedElasticSectionReference,
+  RC_ELASTIC_REFERENCE_EXCLUSIONS,
+  type RcConcreteFiberResponse,
+  type RcReinforcementPointResponse,
+  type RcSectionIntegrationInput,
+} from "./integration";
 export {
   createStrainState,
   evaluateStrainField,

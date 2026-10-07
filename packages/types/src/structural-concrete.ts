@@ -135,9 +135,9 @@ export const CONCRETE_STANDARD_CONFORMANCE_STATE = "INTENDED_PROFILE" as const;
 export const CONCRETE_CONFORMANCE_VALIDATED = false as const;
 export const D1E_VALIDATION_DEBT_REGISTER_DEFINED = true as const;
 export const D1E_INTERNAL_ROADMAP_DEFINED = true as const;
-export const RECOMMENDED_D1E_NEXT_PHASE = "EOS-D1E-EU-C1C-CONSTITUTIVE" as const;
+export const RECOMMENDED_D1E_NEXT_PHASE = "EOS-D1E-EU-C2" as const;
 export const RECOMMENDED_D1E_NEXT_PHASE_SCOPE =
-  "Targeted first-generation constitutive and strain evidence recovery for remaining bounded-C2 material-integration dependencies" as const;
+  "Validated bounded Eurocode RC uniaxial flexural resistance using D1E-1 section kernel, material integration and governed EU rule pack" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E0 = false as const;
 export const D1E0_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const EOS_D1E0_CLOSED = true as const;
