@@ -52,6 +52,9 @@ export type MigrationProvenance = {
   currentSchemaRelevance?: string;
   confidence?: "HIGH" | "MEDIUM" | "LOW";
   evidence?: string;
+  currentStateRecoverability?: "REQUIRED" | "NOT_REQUIRED" | "INDEPENDENT" | "UNKNOWN";
+  currentStateBaseline?: string | null;
+  currentRelevance?: "CURRENTLY_REQUIRED" | "SUPERSEDED" | "OBSOLETE" | "UNKNOWN";
 };
 
 export const STAGING_PROJECT_REF = "rntonzigxwxcjlcsadip";

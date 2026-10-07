@@ -1,10 +1,10 @@
 # RTB Migration Provenance Register
 
-**Phase:** RTB-REL-1A  
+**Phase:** RTB-REL-1A / RTB-REL-1B  
 **Date:** 2026-10-07  
 **Branch:** `cursor/era-7a-engineering-review-pilot-gate`  
-**Baseline HEAD:** `60817d12b81ebefceaf317b5627f296ab61784fd`  
-**Principle:** A missing historical migration is an evidence problem. Do not invent SQL.
+**REL-1A HEAD:** `a3fd0f6a0c598ee35218f0a3d0c673bc7b36a2e7`  
+**Principle:** A missing historical migration is an evidence problem. Do not invent SQL. Historical provenance and current-state recoverability are separate.
 
 Hosted ledgers were re-queried independently of the RTB-REL-1 snapshot.
 
@@ -280,13 +280,18 @@ Searches covered current `supabase/migrations`, reachable Git history (`git log 
 | --- | --- |
 | ENVIRONMENT | production |
 | ORIGINAL STATUS | BLOCKED / UNKNOWN_DRIFT |
-| DISCOVERY RESULT | SQL not recovered. Hosted name only. |
+| DISCOVERY RESULT | Historical SQL not recovered. Hosted name only. Current residual function inspected read-only. |
 | SOURCE | production ledger name `batch_98_signup_commercial_bootstrap`; `statement_count` 0 |
-| SECURITY RELEVANCE | YES (unresolved exact behavior) |
-| CURRENT SCHEMA RELEVANCE | `public.provision_signup_commercial_defaults` exists on production. `handle_new_user` also exists. No repository SQL defines `provision_signup_commercial_defaults`. |
-| DISPOSITION | BLOCKED / UNRESOLVED_BLOCKED |
-| CONFIDENCE | HIGH that SQL is unrecovered; LOW that current functions equal this version |
-| RATIONALE | Neighbor `20260901013000` rewrites `handle_new_user` (invite / no stray tenant). That later rewrite does **not** prove the historical body of `20260810210000` and does not authorize SUPERSEDED_WITH_EVIDENCE. Current function presence is an effect, not exact SQL. Formal retirement fails criterion 7 (unknown security behavior) and criterion 1 (SQL not recovered). Do not dump current function DDL and call it this migration. |
+| KNOWN_OBJECTS | `provision_signup_commercial_defaults(uuid, uuid)` on production (effect, not proven 1021 body) |
+| POSSIBLE_OBJECTS | commercial trial bootstrap; EXECUTE grants; `search_path` |
+| CURRENTLY_REQUIRED_OBJECTS | none for supported signup (`handle_new_user`) |
+| CURRENT_APPLICATION_REFERENCES | none in repository, APIs, or trigger neighbors |
+| SECURITY RELEVANCE | YES — live DEFINER with PUBLIC/anon/authenticated EXECUTE |
+| CURRENT SCHEMA RELEVANCE | Residual function present; fingerprint md5 `69634f687e16947f52d71c760d5c0287`; not called by `handle_new_user` |
+| HISTORICAL DISPOSITION | BLOCKED / UNRESOLVED_BLOCKED |
+| CURRENT_STATE_RECOVERABILITY | NOT_REQUIRED (lockdown only if function already exists) |
+| CONFIDENCE | HIGH that SQL is unrecovered; HIGH that current function is orphaned; HIGH that grants are unsafe |
+| RATIONALE | Do not dump current DDL and call it this migration. Supported reconstruction does not replay 1021. Live grant defect is documented in `docs/security/RTB_REL_1B_SIGNUP_COMMERCIAL_DEFINER_GRANT_DEFECT.md` and is **not applied** in REL-1B. |
 
 <a id="20260810220000"></a>
 
@@ -296,13 +301,19 @@ Searches covered current `supabase/migrations`, reachable Git history (`git log 
 | --- | --- |
 | ENVIRONMENT | production |
 | ORIGINAL STATUS | BLOCKED / UNKNOWN_DRIFT |
-| DISCOVERY RESULT | SQL not recovered. Hosted name only. |
+| DISCOVERY RESULT | Historical SQL not recovered. Hosted name only. |
 | SOURCE | production ledger name `batch_99_document_storage_ai_assistant_uat`; `statement_count` 0 |
-| SECURITY RELEVANCE | UNRESOLVED — treated as security-relevant fail-closed |
-| CURRENT SCHEMA RELEVANCE | No matching public tables, functions, or policies found for assistant/document-storage/bootstrap naming. Effect may have been storage-bucket policy, UAT data, or since-removed objects. |
-| DISPOSITION | BLOCKED / UNRESOLVED_BLOCKED |
-| CONFIDENCE | HIGH that SQL is unrecovered |
-| RATIONALE | Cannot reconstruct SQL. Cannot prove later migrations superseded it. Cannot prove disaster recovery does not need it. Cannot prove it did not touch storage policies or grants. Keep blocked. |
+| KNOWN_OBJECTS | none proven |
+| POSSIBLE_OBJECTS | `tenant-documents` bucket + tenant-scoped storage policies; UAT helpers since removed |
+| CURRENTLY_REQUIRED_OBJECTS | none — supported EOS documents use `engineering-documents` via service client |
+| CURRENT_APPLICATION_REFERENCES | `apps/web/src/lib/engineering/document-storage.ts` uses `engineering-documents`, not this ledger version |
+| SECURITY RELEVANCE | Historical unknown; current `tenant-documents` policies are tenant-scoped via `get_user_tenant_ids()` (ownership by 1022 unproven) |
+| CURRENT SCHEMA RELEVANCE | No public assistant tables. Storage policies exist on `tenant-documents` only. |
+| HISTORICAL DISPOSITION | BLOCKED / UNRESOLVED_BLOCKED |
+| CURRENT_STATE_RECOVERABILITY | INDEPENDENT |
+| CURRENT RELEVANCE | OBSOLETE for supported Engineering OS document storage |
+| CONFIDENCE | HIGH that SQL is unrecovered; MEDIUM that 1022 is unrelated to current EOS docs |
+| RATIONALE | Do not infer that 1022 created `tenant-documents`. Keep historical blocked. Reconstruct documents via the app bucket helper and A14A artifacts bucket. |
 
 ## Formal retirement checklist (production pair)
 
@@ -310,11 +321,11 @@ Searches covered current `supabase/migrations`, reachable Git history (`git log 
 | --- | --- | --- |
 | 1. Exact SQL cannot reasonably be recovered | YES | YES |
 | 2. Hosted ledger confirms historical application | YES | YES |
-| 3. Current schema does not depend on replaying missing SQL for supported deploy paths | UNPROVEN | UNPROVEN |
-| 4. Later migrations or baseline establish required current state | NO — `provision_signup_commercial_defaults` has no repo SQL | NO — resulting objects unknown |
-| 5. Disaster recovery does not require the missing SQL as executable | UNPROVEN | UNPROVEN |
-| 6. Dependency graph can model it as historical/non-replayable | PARTIAL (BLOCKED) | PARTIAL (BLOCKED) |
-| 7. Retirement does not hide unknown security behavior | NO | NO |
+| 3. Current schema does not depend on replaying missing SQL for supported deploy paths | YES — supported signup is `handle_new_user` | YES — supported docs are `engineering-documents` |
+| 4. Later migrations or baseline establish required current state | PARTIAL — lockdown artifact exists; function body not promoted into live migrations | YES for supported EOS docs |
+| 5. Disaster recovery does not require the missing SQL as executable | YES for supported path; leftover function uses lockdown, not 1021 replay | YES |
+| 6. Dependency graph can model it as historical/non-replayable | YES (BLOCKED, not promoted) | YES (BLOCKED, not promoted) |
+| 7. Retirement does not hide unknown security behavior | NO — live DEFINER grant defect would be hidden by retirement | NO — storage-policy ownership still unproven |
 | Result | UNRESOLVED_BLOCKED | UNRESOLVED_BLOCKED |
 
 ## Disaster recovery / from-scratch
@@ -323,11 +334,13 @@ This branch creates a new database from `supabase/migrations/` via the existing 
 
 **DATABASE_FROM_SCRATCH_REPRODUCIBLE = PARTIAL**
 
-1. Engineering OS product schema on this branch can be replayed from live migrations, including certified RLS-1C.
-2. Business OS staging schema is intentionally not in the live path; a new Engineering OS environment should not receive it.
-3. First reproducibility gap: production currently has `provision_signup_commercial_defaults` with no repository SQL. A fresh environment from this repo will not recreate that function.
-4. Second gap: production ledger versions `20260810210000` and `20260810220000` cannot be replayed. No baseline dump or migration squash exists in-repo to capture that residual state.
-5. This phase did not implement a squash.
+Supported Engineering OS reconstruction uses live `supabase/migrations/` and does **not** require unknown 1021/1022 SQL. Remaining limitations:
+
+1. Isolated clean-database reconstruction was not executed in REL-1B (static verification only).
+2. A fresh environment will **not** recreate `provision_signup_commercial_defaults`. That is intended: the function is not on the supported signup path.
+3. Production dumps that already contain the residual function need the REL-1B lockdown SQL under a later security apply; REL-1B did not mutate production.
+4. `tenant-documents` bucket/policies exist on production and are not live migrations; supported EOS documents use `engineering-documents` at runtime.
+5. Business OS historical artifacts remain excluded from this product line.
 
 ## Guard behavior
 

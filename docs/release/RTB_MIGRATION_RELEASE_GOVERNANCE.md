@@ -114,7 +114,7 @@ If production has an authorization defect and the staging migration is incompati
 
 ## Rollback / recovery
 
-Use the existing provider backup/PITR runbook (`docs/security/RTB_PLATFORM_BACKUP_RESTORE_RUNBOOK.md`). Governance tooling does not roll back databases. Restore remains an operator decision on an isolated target.
+Use the existing provider backup/PITR runbook (`docs/security/RTB_PLATFORM_BACKUP_RESTORE_RUNBOOK.md`). Reconstruct supported Engineering OS from live `supabase/migrations/` plus `docs/recovery/RTB_DATABASE_RECOVERY_BASELINE.md`. Governance tooling does not roll back databases. Restore remains an operator decision on an isolated target. Do not replay blocked historical ledger versions from inferred SQL.
 
 ## Canonical files
 
@@ -124,4 +124,6 @@ Use the existing provider backup/PITR runbook (`docs/security/RTB_PLATFORM_BACKU
 | `docs/release/historical-migrations/` | Recovered historical SQL artifacts (not executable) |
 | `docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md` | Ledger-only investigation record |
 | `packages/release-governance` | Classifier, graph, guard, report, tests |
+| `docs/recovery/RTB_DATABASE_RECOVERY_BASELINE.md` | Current-state reconstruction path (not historical SQL) |
+| `docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql` | Residual function lockdown for DR copies; not live, not production-applied |
 | `docs/release/MIGRATION_HEADER.template.sql` | Lightweight authoring hints |

@@ -155,7 +155,7 @@
       "productionEligible": false,
       "securityCritical": true,
       "module": "identity",
-      "notes": "Production ledger-only. Hosted name batch_98_signup_commercial_bootstrap with empty statements. SQL not in git. Current schema has provision_signup_commercial_defaults; that proves an effect, not exact historical SQL. Not superseded by 20260901013000. UNRESOLVED_BLOCKED.",
+      "notes": "HISTORICAL_PROVENANCE remains UNRESOLVED_BLOCKED. CURRENT_STATE: orphaned provision_signup_commercial_defaults is not on the supported handle_new_user path. Do not treat observed DDL as recovered 1021 SQL. Lockdown artifact is docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql (not applied).",
       "provenance": {
         "disposition": "BLOCKED",
         "recoveryClass": "UNRESOLVED_BLOCKED",
@@ -165,10 +165,13 @@
         "historicalPath": null,
         "checksum": null,
         "securityRelevant": true,
-        "securityRelevanceNotes": "Signup/commercial bootstrap naming plus production SECURITY DEFINER candidate provision_signup_commercial_defaults. Exact GRANT/RLS/auth SQL unknown.",
-        "currentSchemaRelevance": "Function provision_signup_commercial_defaults exists on production; no matching repository SQL. Later handle_new_user rewrite 20260901013000 does not prove this version.",
+        "securityRelevanceNotes": "Historical SQL unknown. Current residual DEFINER has EXECUTE for PUBLIC/anon/authenticated and unpinned search_path. Active grant defect; unapplied.",
+        "currentSchemaRelevance": "provision_signup_commercial_defaults(uuid,uuid) exists; not called by handle_new_user. Fingerprint md5 69634f687e16947f52d71c760d5c0287.",
         "confidence": "HIGH",
-        "evidence": "docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md#20260810210000"
+        "evidence": "docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md#20260810210000",
+        "currentStateRecoverability": "NOT_REQUIRED",
+        "currentStateBaseline": "docs/recovery/sql/rtb_rel_1b_current_state_signup_commercial_lockdown.sql",
+        "currentRelevance": "UNKNOWN"
       }
     },
     {
@@ -178,7 +181,7 @@
       "productionEligible": false,
       "securityCritical": true,
       "module": "unknown",
-      "notes": "Production ledger-only. Hosted name batch_99_document_storage_ai_assistant_uat with empty statements. SQL not in git. No matching public tables. Security relevance unresolved. UNRESOLVED_BLOCKED.",
+      "notes": "HISTORICAL_PROVENANCE remains UNRESOLVED_BLOCKED. CURRENT_STATE: supported EOS document storage is engineering-documents via service client; not proven to be this ledger version. Do not replay inferred SQL.",
       "provenance": {
         "disposition": "BLOCKED",
         "recoveryClass": "UNRESOLVED_BLOCKED",
@@ -188,10 +191,13 @@
         "historicalPath": null,
         "checksum": null,
         "securityRelevant": true,
-        "securityRelevanceNotes": "Name suggests document storage / AI assistant UAT. Could have included storage policies. Exact security behavior unknown; fail-closed.",
-        "currentSchemaRelevance": "No matching public tables, functions, or policies recovered for this name.",
+        "securityRelevanceNotes": "Historical SQL unknown. Current tenant-documents storage policies exist and are tenant-scoped; ownership by this version is unproven.",
+        "currentSchemaRelevance": "No matching public assistant tables. Supported EOS docs use engineering-documents. tenant-documents policies use get_user_tenant_ids().",
         "confidence": "HIGH",
-        "evidence": "docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md#20260810220000"
+        "evidence": "docs/release/RTB_MIGRATION_PROVENANCE_REGISTER.md#20260810220000",
+        "currentStateRecoverability": "INDEPENDENT",
+        "currentStateBaseline": "docs/recovery/RTB_DATABASE_RECOVERY_BASELINE.md",
+        "currentRelevance": "OBSOLETE"
       }
     },
     {
