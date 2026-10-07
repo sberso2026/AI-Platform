@@ -129,7 +129,7 @@ describe("EOS-D1E-EU-C1B Eurocode concrete rule-authority recovery", () => {
     expect(READY_TO_RESUME_EU_C1).toBe(true);
     expect(EOS_D1E_EU_C1B_CLOSED).toBe(true);
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1B")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("THIS_PHASE");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1B.RULE_AUTHORITY")).toBe(true);
     expect(CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C1B.RULE_AUTHORITY")?.implementationState).toBe("POLICY_CORRECTION_ONLY");
     expect(D1E_VALIDATION_DEBT_REGISTER.map((row) => row.debtId)).toEqual(expect.arrayContaining([
