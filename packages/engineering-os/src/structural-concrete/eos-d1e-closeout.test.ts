@@ -344,14 +344,15 @@ describe("EOS-D1E-CLOSEOUT concrete architecture freeze", () => {
     ]);
     expect(CANONICAL_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C1");
     expect(CANONICAL_D1E_NEXT_PHASE_SCOPE).toMatch(/Governed Eurocode/);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
     expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/axial-flexure|P-M/i);
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "D1E-CLOSEOUT")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C-CONSTITUTIVE")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C2")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C3")?.status).toBe("THIS_PHASE");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C3")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C4")?.status).toBe("THIS_PHASE");
     expect(D1E_CANONICAL_ROADMAP_HANDOFF.nextPhase).toBe(RECOMMENDED_D1E_NEXT_PHASE);
     expect(D1E_CANONICAL_ROADMAP_HANDOFF_CLOSEOUT.nextPhase).toBe("EOS-D1E-EU-C1");
     expect(D1E_ROADMAP_HANDOFF_VALIDATED).toBe(true);

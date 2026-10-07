@@ -1,7 +1,11 @@
 export { assertEuC2AiBoundary, assertEuC2ArchitectureFreeze } from "./authority";
 export {
+  bindEuC2MaterialIntegrator,
+  euC2RectangularBounds,
+  euC2UlsStrainFromNa,
   evaluateEuC2UniaxialFlexureResistance,
   euC2MomentSignFromDemand,
+  solveEuProfileUlsAxialTarget,
   type EuC2FlexureSolveInput,
   type EuC2FlexureSolveResult,
 } from "./evaluate";

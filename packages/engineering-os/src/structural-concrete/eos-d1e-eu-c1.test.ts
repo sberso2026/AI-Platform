@@ -291,7 +291,7 @@ describe("EOS-D1E-EU-C1 governed Eurocode concrete material rule pack", () => {
       "EU_C1_STRESS_BLOCK_OR_SECTION_MODEL",
     ]);
     expect(NEXT_PHASE_TYPE).toBe("BOUNDED_RULE_GAP_IMPLEMENTATION");
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1C")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1.MATERIAL_RULES")).toBe(true);

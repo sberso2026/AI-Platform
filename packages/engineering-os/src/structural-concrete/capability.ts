@@ -300,6 +300,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "RECTANGULAR geometry only; pure-flexure zero axial; material integration; engineer validation pending; edition/annex unconfirmed; not certified EN 1992",
     dependencies: ["D1E.EU.C1C.CONSTITUTIVE.MATERIAL_RESPONSE", "D1E.EU.FLEXURE.UNIAXIAL", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
   },
+  {
+    capabilityId: "D1E.EU.C3.AXIAL_FLEXURE.UNIAXIAL",
+    jurisdiction: "EU",
+    method: "bounded Eurocode-profile uniaxial RC N-M section interaction",
+    authorityType: "ESTABLISHED_ENGINEERING_MECHANICS",
+    implementationState: "FRAMEWORK_PLUS_BOUNDED_METHODS",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "RECTANGULAR geometry only; uniaxial N-M section resistance; no second-order/slenderness/column design; engineer validation pending; edition unconfirmed; not certified EN 1992",
+    dependencies: ["D1E.EU.C2.FLEXURE.UNIAXIAL", "D1E.EU.C1C.CONSTITUTIVE.MATERIAL_RESPONSE", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -342,10 +354,10 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-VD-US-EDITION", category: "STANDARD_EDITION", jurisdiction: "US", capability: "ACI 318 identity", description: "ACI 318 edition and building-code adoption unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition, adoption, local amendments", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-US" },
   { debtId: "D1E-VD-MATERIAL-AUTHORITY", category: "MATERIAL_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "concrete material", description: "material-property catalogues not certified; D1E-1 requires explicitly governed E only", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed catalogue/test certificates", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-REINFORCEMENT-AUTHORITY", category: "REINFORCEMENT_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "reinforcement material", description: "reinforcement-property catalogues not certified; D1E-1 requires explicitly governed Es/area", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed bar/product standards", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
-  { debtId: "D1E-VD-SECTION-ANALYSIS", category: "SECTION_ANALYSIS", jurisdiction: "GLOBAL", capability: "section equilibrium", description: "EU C2 reuses D1E-1 material integration for bounded uniaxial flexure; AU/US code section analysis still absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "jurisdiction code-capacity benchmarks plus engineer review", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "EOS-D1E-EU-C3" },
+  { debtId: "D1E-VD-SECTION-ANALYSIS", category: "SECTION_ANALYSIS", jurisdiction: "GLOBAL", capability: "section equilibrium", description: "EU C2/C3 reuse D1E-1 material integration for bounded uniaxial flexure and N-M; AU/US code section analysis still absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "jurisdiction code-capacity benchmarks plus engineer review", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "EOS-D1E-EU-C4" },
   { debtId: "D1E-VD-STRESS-BLOCK", category: "STRESS_BLOCK_RULES", jurisdiction: "GLOBAL", capability: "flexure", description: "no global or jurisdiction stress-block parameters", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "adapter-owned governed stress-block rules", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "GLOBAL", capability: "flexure", description: "numerical code flexure absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "jurisdiction flexural methods", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
-  { debtId: "D1E-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "GLOBAL", capability: "N-M", description: "axial-flexure interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed N-M methods", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
+  { debtId: "D1E-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "GLOBAL", capability: "N-M", description: "EU C3 implements bounded uniaxial N-M section reference; AU/US axial-flexure still absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "AU/US governed N-M methods plus EU engineer review", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-BIAXIAL", category: "BIAXIAL_INTERACTION", jurisdiction: "GLOBAL", capability: "P-M-M", description: "biaxial interaction surfaces not generated", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed P-M-M generation", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-SHEAR", category: "SHEAR", jurisdiction: "GLOBAL", capability: "shear", description: "numerical code shear absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "jurisdiction shear methods", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-TORSION", category: "TORSION", jurisdiction: "GLOBAL", capability: "torsion", description: "numerical torsion absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "jurisdiction torsion methods", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
@@ -422,7 +434,8 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-STRAIN-LIMITS", category: "STRAIN_LIMITS", jurisdiction: "EU", capability: "EU strain limits", description: "parabola-rectangle εc2/εcu2 bound for fck≤50 MPa; high-strength identities fail closed on source conflict; reinforcement εud not required for the selected horizontal branch", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "engineer review plus high-strength resolution if that domain is later opened", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C2" },
   { debtId: "D1E-EU-VD-FLEXURE", category: "FLEXURAL_DESIGN", jurisdiction: "EU", capability: "EU uniaxial flexure", description: "C2 implements bounded uniaxial numerical flexure reference for RECTANGULAR pure-flexure; engineer validation, exact edition, and CONFORMANCE_VALIDATED remain pending", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review plus confirmed edition/annex/NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-C2-VD-ENGINEER", category: "HUMAN_VALIDATION", jurisdiction: "EU", capability: "EU-C2 engineer validation", description: "numerical independent flexural benchmarks do not promote engineer validation", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "explicit human engineering review of C2 resistance methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "EU", capability: "EU N-M", description: "N-M interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed N-M method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-C3-VD-ENGINEER", category: "HUMAN_VALIDATION", jurisdiction: "EU", capability: "EU-C3 engineer validation", description: "numerical independent N-M benchmarks do not promote engineer validation", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "explicit human engineering review of C3 N-M methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-VD-AXIAL-FLEXURE", category: "AXIAL_FLEXURE", jurisdiction: "EU", capability: "EU N-M", description: "C3 implements bounded uniaxial N-M section reference for RECTANGULAR geometry; engineer validation, exact edition, member stability, and CONFORMANCE_VALIDATED remain pending", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review plus confirmed edition/annex/NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-BIAXIAL", category: "BIAXIAL_INTERACTION", jurisdiction: "EU", capability: "EU P-M-M", description: "biaxial interaction not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed biaxial method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-SHEAR", category: "SHEAR", jurisdiction: "EU", capability: "EU shear", description: "numerical EN 1992 shear absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed shear method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-PUNCHING", category: "PUNCHING_SHEAR", jurisdiction: "EU", capability: "EU punching", description: "numerical punching absent", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed punching method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -495,7 +508,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C1C-RESUME-1", scope: "Implement C1C-EVIDENCE ready NDP-dependent design-property and partial-factor rules", status: "CLOSED" },
   { id: "EOS-D1E-EU-C1C-CONSTITUTIVE", scope: "Targeted first-generation constitutive and strain evidence recovery plus bounded numerical implementation", status: "CLOSED" },
   { id: "EOS-D1E-EU-C2", scope: "Validated bounded Eurocode RC uniaxial flexural resistance using D1E-1 section kernel, material integration and governed EU rule pack", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C3", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
+  { id: "EOS-D1E-EU-C3", scope: "Validated bounded Eurocode RC axial-flexure / P-M interaction using D1E-1 section kernel and governed EU rule pack", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C4", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
@@ -607,6 +621,13 @@ export const D1E_EU_C1C_CONSTITUTIVE_D0_RISK_DISPOSITION = {
 } as const;
 
 export const D1E_EU_C2_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_EU_C3_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
   INTRODUCED: "NONE" as const,

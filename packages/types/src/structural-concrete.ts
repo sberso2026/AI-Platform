@@ -135,9 +135,9 @@ export const CONCRETE_STANDARD_CONFORMANCE_STATE = "INTENDED_PROFILE" as const;
 export const CONCRETE_CONFORMANCE_VALIDATED = false as const;
 export const D1E_VALIDATION_DEBT_REGISTER_DEFINED = true as const;
 export const D1E_INTERNAL_ROADMAP_DEFINED = true as const;
-export const RECOMMENDED_D1E_NEXT_PHASE = "EOS-D1E-EU-C3" as const;
+export const RECOMMENDED_D1E_NEXT_PHASE = "EOS-D1E-EU-C4" as const;
 export const RECOMMENDED_D1E_NEXT_PHASE_SCOPE =
-  "Validated bounded Eurocode RC axial-flexure / P-M interaction using D1E-1 section kernel and governed EU rule pack" as const;
+  "Validated bounded Eurocode RC biaxial P-M-M section interaction using D1E-1 section kernel and governed EU rule pack" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E0 = false as const;
 export const D1E0_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const EOS_D1E0_CLOSED = true as const;

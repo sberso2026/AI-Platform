@@ -190,7 +190,7 @@ describe("EOS-D1E-EU-C1A Eurocode concrete rule-evidence recovery", () => {
     ]);
     expect(EU_C1A_READY_TO_RESUME_EU_C1).toBe(false);
     expect(EOS_D1E_EU_C1A_CLOSED).toBe(false);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1A")?.status).toBe("BLOCKED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C1")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C1A.RULE_EVIDENCE")).toBe(true);

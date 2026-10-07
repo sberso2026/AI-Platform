@@ -3,6 +3,9 @@ import {
   EU_C2_ENGINEER_VALIDATION_STATE,
   EU_C2_FLEXURE_IMPLEMENTATION_VERSION,
   EU_C2_METHOD_IDS,
+  EU_C3_ENGINEER_VALIDATION_STATE,
+  EU_C3_FLEXURE_IMPLEMENTATION_VERSION,
+  EU_C3_METHOD_IDS,
   EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
   EU_CONCRETE_STANDARD_EDITION,
   EU_FLEXURE_IMPLEMENTATION_VERSION,
@@ -100,6 +103,58 @@ export const EU_CONCRETE_FLEXURE_METHODS: readonly EuConcreteFlexureMethodRecord
   EU_RC_FLEXURE_ELASTIC_MINOR,
   EU_RC_FLEXURE_EN1992_MAJOR,
   EU_RC_FLEXURE_EN1992_MINOR,
+];
+
+export const EU_RC_AXIAL_FLEXURE_EN1992_MAJOR: EuConcreteFlexureMethodRecord = {
+  methodId: "EU_RC_AXIAL_FLEXURE_EN1992_UNIAXIAL_MAJOR",
+  methodType: "EN1992_UNIAXIAL_AXIAL_FLEXURE",
+  axis: "MAJOR_AXIS",
+  engineeringRuleRef: "EU-RC-AXIAL-FLEXURE-EN1992-MAJOR-C3",
+  authorityType: "ESTABLISHED_ENGINEERING_MECHANICS",
+  technicalBasisRef: "d1e1-material-integration-uls-uniaxial-nm-eps-cu2-and-eps-yd-governed-c1c",
+  standardFamily: "EN 1992",
+  generation: "UNKNOWN_PENDING_CONFIRMATION",
+  edition: EU_CONCRETE_STANDARD_EDITION,
+  part: EU_INITIAL_CONCRETE_STANDARD_PART,
+  nationalAnnexDependency: true,
+  ndpDependency: ["gamma_c", "gamma_s", "alpha_cc"],
+  requiredMaterialModels: ["EU_C1_CONCRETE_COMPRESSION_RESPONSE", "EU_C1_REINFORCEMENT_RESPONSE"],
+  stressBlockOrDesignModelDependency: "MATERIAL_INTEGRATION",
+  strainLimitDependencies: ["EU_C1_CONCRETE_STRAIN_LIMITS"],
+  partialFactorDependencies: ["gamma_c", "gamma_s"],
+  reinforcementDependencies: ["D1E1_REINFORCEMENT_LAYOUT"],
+  applicability:
+    "reinforced concrete; uniaxial N-M; RECTANGULAR geometry numerically validated; axial domain between uniform εcu2 compression and uniform εyd tension mechanics anchors; material integration; declared NDP required; section resistance only; not biaxial, slenderness, second-order, shear, punching, torsion, or prestress",
+  requiredInputs: [
+    "concrete.compressiveStrength",
+    "reinforcement.yieldStrength",
+    "standardPart",
+    "declaredNdpContext",
+    "demand.axial",
+    "demand.moment",
+    "section",
+    "layout",
+  ],
+  outputSemantics: "CODE_PROFILE_REFERENCE",
+  implementationVersion: EU_C3_FLEXURE_IMPLEMENTATION_VERSION,
+  numericalValidationState: "NUMERICALLY_VALIDATED",
+  engineeringValidationState: EU_C3_ENGINEER_VALIDATION_STATE,
+  standardConformanceState: EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+  benchmarkRefs: ["EU-C3-BM-INDEPENDENT-EQUIV-RECT-MAJOR-NM-1"],
+  methodScope: "GOVERNED_IMPLEMENTABLE",
+};
+
+export const EU_RC_AXIAL_FLEXURE_EN1992_MINOR: EuConcreteFlexureMethodRecord = {
+  ...EU_RC_AXIAL_FLEXURE_EN1992_MAJOR,
+  methodId: "EU_RC_AXIAL_FLEXURE_EN1992_UNIAXIAL_MINOR",
+  axis: "MINOR_AXIS",
+  engineeringRuleRef: "EU-RC-AXIAL-FLEXURE-EN1992-MINOR-C3",
+  benchmarkRefs: ["EU-C3-BM-INDEPENDENT-EQUIV-RECT-MINOR-NM-1"],
+};
+
+export const EU_CONCRETE_AXIAL_FLEXURE_METHODS: readonly EuConcreteFlexureMethodRecord[] = [
+  EU_RC_AXIAL_FLEXURE_EN1992_MAJOR,
+  EU_RC_AXIAL_FLEXURE_EN1992_MINOR,
 ];
 
 export const IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS = EU_C2_METHOD_IDS;

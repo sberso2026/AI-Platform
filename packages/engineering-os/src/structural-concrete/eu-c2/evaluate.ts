@@ -93,7 +93,7 @@ export type EuC2FlexureSolveFailure = {
 
 export type EuC2FlexureSolveResult = EuC2FlexureSolveSuccess | EuC2FlexureSolveFailure;
 
-function rectangularBounds(geometry: RcSectionGeometryInput): { xMin: number; xMax: number; yMin: number; yMax: number } {
+export function euC2RectangularBounds(geometry: RcSectionGeometryInput): { xMin: number; xMax: number; yMin: number; yMax: number } {
   if (geometry.shape !== "RECTANGULAR" || geometry.regions[0]?.kind !== "RECTANGLE") {
     failClosed("C2 numerically validated geometry is rectangular only");
   }
@@ -107,7 +107,7 @@ function rectangularBounds(geometry: RcSectionGeometryInput): { xMin: number; xM
   return { xMin: origin.xMm, xMax: origin.xMm + width, yMin: origin.yMm, yMax: origin.yMm + depth };
 }
 
-function ulsStrain(input: {
+export function euC2UlsStrainFromNa(input: {
   axis: EuFlexureAxis;
   momentSign: EuC2MomentSign;
   originMm: { xMm: number; yMm: number };
@@ -161,40 +161,19 @@ function assertC2Inputs(input: EuC2FlexureSolveInput): EuC2FlexureSolveFailure |
   return null;
 }
 
-export function evaluateEuC2UniaxialFlexureResistance(input: EuC2FlexureSolveInput): EuC2FlexureSolveResult {
-  const blocked = assertC2Inputs(input);
-  if (blocked) return blocked;
-  try {
-    assertTestOnlyNdpNeverDefault(input.context);
-  } catch (error) {
-    return { ok: false, failReason: error instanceof Error ? error.message : "test-only NDP misuse", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
-  }
-  if (EU_C2_AXIAL_APPLICABILITY !== "PURE_FLEXURE_ZERO_APPLIED_AXIAL_ONLY" || EU_C2_NONZERO_AXIAL_ACTION_SILENTLY_IGNORED) {
-    return { ok: false, failReason: "C2 axial applicability drifted", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
-  }
-  const gammaC = evaluateEuC1PartialFactorGammaC({ context: input.context });
-  const gammaS = evaluateEuC1PartialFactorGammaS({ context: input.context });
-  if (!gammaC.ok) return { ok: false, failReason: gammaC.failReason ?? "gamma_c unresolved", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
-  if (!gammaS.ok) return { ok: false, failReason: gammaS.failReason ?? "gamma_s unresolved", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
-  const strainLimits = evaluateEuC1ConcreteStrainLimits({ concrete: input.concrete, context: input.context });
-  if (!strainLimits.ok) {
-    const undetermined = strainLimits.checkState === "UNSUPPORTED_SCOPE" ? "UNSUPPORTED_SCOPE" : "CHECK_UNDETERMINED";
-    return { ok: false, failReason: strainLimits.failReason ?? "strain limits unresolved", checkState: undetermined, labelledCodeCapacity: false };
-  }
-  try {
-    evaluateBarGeometry(input.layout, input.geometry);
-  } catch (error) {
-    return { ok: false, failReason: error instanceof Error ? error.message : "invalid bar geometry", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
-  }
-  const props = computeGrossSectionProperties(input.geometry);
-  const originMm = { xMm: props.centroidXMm, yMm: props.centroidYMm };
-  const bounds = rectangularBounds(input.geometry);
-  const span = input.axis === "MAJOR_AXIS" ? bounds.yMax - bounds.yMin : bounds.xMax - bounds.xMin;
-  const lo = (input.axis === "MAJOR_AXIS" ? bounds.yMin : bounds.xMin) + 0.004 * span;
-  const hi = (input.axis === "MAJOR_AXIS" ? bounds.yMax : bounds.xMax) - 0.004 * span;
+export function bindEuC2MaterialIntegrator(input: {
+  geometry: RcSectionGeometryInput;
+  layout: ReinforcementLayout;
+  concrete: ConcreteMaterial;
+  reinforcement: ReinforcementMaterial;
+  context: EuC1cConstitutiveContext;
+  resolutionX?: number;
+  resolutionY?: number;
+  provenanceRef: string;
+}): (strain: RcGeneralizedStrainState) => RcSectionResultants {
   const resolutionX = input.resolutionX ?? EU_C2_DEFAULT_MESH.resolutionX;
   const resolutionY = input.resolutionY ?? EU_C2_DEFAULT_MESH.resolutionY;
-  const integrate = (strain: RcGeneralizedStrainState): RcSectionResultants =>
+  return (strain: RcGeneralizedStrainState): RcSectionResultants =>
     integrateSectionWithMaterialResponse({
       geometry: input.geometry,
       layout: input.layout,
@@ -213,10 +192,53 @@ export function evaluateEuC2UniaxialFlexureResistance(input: EuC2FlexureSolveInp
       reinforcementModelId: EU_C1C_CONSTITUTIVE_REO_MODEL_ID,
       resultAuthority: "MECHANICS_REFERENCE",
     });
+}
+
+export function evaluateEuC2UniaxialFlexureResistance(input: EuC2FlexureSolveInput): EuC2FlexureSolveResult {
+  if (EU_C2_AXIAL_APPLICABILITY !== "PURE_FLEXURE_ZERO_APPLIED_AXIAL_ONLY" || EU_C2_NONZERO_AXIAL_ACTION_SILENTLY_IGNORED) {
+    return { ok: false, failReason: "C2 axial applicability drifted", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
+  }
+  return solveEuProfileUlsAxialTarget({ ...input, targetAxialN: 0 });
+}
+
+export function solveEuProfileUlsAxialTarget(input: EuC2FlexureSolveInput & { targetAxialN: number }): EuC2FlexureSolveResult {
+  const blocked = assertC2Inputs(input);
+  if (blocked) return blocked;
+  try {
+    assertTestOnlyNdpNeverDefault(input.context);
+  } catch (error) {
+    return { ok: false, failReason: error instanceof Error ? error.message : "test-only NDP misuse", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
+  }
+  if (!Number.isFinite(input.targetAxialN)) {
+    return { ok: false, failReason: "non-finite axial target", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
+  }
+  const gammaC = evaluateEuC1PartialFactorGammaC({ context: input.context });
+  const gammaS = evaluateEuC1PartialFactorGammaS({ context: input.context });
+  if (!gammaC.ok) return { ok: false, failReason: gammaC.failReason ?? "gamma_c unresolved", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
+  if (!gammaS.ok) return { ok: false, failReason: gammaS.failReason ?? "gamma_s unresolved", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
+  const strainLimits = evaluateEuC1ConcreteStrainLimits({ concrete: input.concrete, context: input.context });
+  if (!strainLimits.ok) {
+    const undetermined = strainLimits.checkState === "UNSUPPORTED_SCOPE" ? "UNSUPPORTED_SCOPE" : "CHECK_UNDETERMINED";
+    return { ok: false, failReason: strainLimits.failReason ?? "strain limits unresolved", checkState: undetermined, labelledCodeCapacity: false };
+  }
+  try {
+    evaluateBarGeometry(input.layout, input.geometry);
+  } catch (error) {
+    return { ok: false, failReason: error instanceof Error ? error.message : "invalid bar geometry", checkState: "CHECK_UNDETERMINED", labelledCodeCapacity: false };
+  }
+  const props = computeGrossSectionProperties(input.geometry);
+  const originMm = { xMm: props.centroidXMm, yMm: props.centroidYMm };
+  const bounds = euC2RectangularBounds(input.geometry);
+  const span = input.axis === "MAJOR_AXIS" ? bounds.yMax - bounds.yMin : bounds.xMax - bounds.xMin;
+  const lo = (input.axis === "MAJOR_AXIS" ? bounds.yMin : bounds.xMin) + 0.004 * span;
+  const hi = (input.axis === "MAJOR_AXIS" ? bounds.yMax : bounds.xMax) - 0.004 * span;
+  const resolutionX = input.resolutionX ?? EU_C2_DEFAULT_MESH.resolutionX;
+  const resolutionY = input.resolutionY ?? EU_C2_DEFAULT_MESH.resolutionY;
+  const integrate = bindEuC2MaterialIntegrator(input);
   const solved = solveAxialEquilibrium1d({
     integrate,
     strainFromParam: (na) =>
-      ulsStrain({
+      euC2UlsStrainFromNa({
         axis: input.axis,
         momentSign: input.momentSign,
         originMm,
@@ -224,7 +246,7 @@ export function evaluateEuC2UniaxialFlexureResistance(input: EuC2FlexureSolveInp
         naCoordMm: na,
         epsCu2: strainLimits.outputs.epsCu2,
       }),
-    targetN: 0,
+    targetN: input.targetAxialN,
     paramLow: lo,
     paramHigh: hi,
     forceTolN: EU_C2_NUMERICAL_TOLERANCE.equilibriumResidualN,
@@ -251,7 +273,7 @@ export function evaluateEuC2UniaxialFlexureResistance(input: EuC2FlexureSolveInp
     ...input.layout.bars.map((bar) => `${bar.barId}:${bar.xMm}:${bar.yMm}:${bar.areaMm2?.value ?? ""}:${bar.count}`),
   ].join(";");
   const integrationConfiguration = `CARTESIAN_CELL_PLUS_BAR_POINTS:${resolutionX}x${resolutionY}`;
-  const solverConfiguration = `${solved.method}:${input.axis}:${input.momentSign}:N=0:eps_cu2`;
+  const solverConfiguration = `${solved.method}:${input.axis}:${input.momentSign}:N=${input.targetAxialN}:eps_cu2`;
   const ndpContextRef = [
     input.context.nationalAnnexRef ?? "",
     input.context.gamma_c?.value ?? "",

@@ -140,7 +140,7 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "axial-flexure",
     GLOBAL: none("N-M not implemented"),
     AU: framework("profile ready; no numerical AS 3600 N-M"),
-    EU: framework("profile ready; no numerical EN 1992 N-M"),
+    EU: framework("C3 bounded uniaxial N-M numerical reference; not column design; not CONFORMANCE_VALIDATED"),
     US: framework("profile ready; no numerical ACI N-M"),
   },
   {

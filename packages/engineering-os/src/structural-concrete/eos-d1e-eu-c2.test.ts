@@ -380,7 +380,7 @@ describe("EOS-D1E-EU-C2 bounded uniaxial flexure", () => {
     expect(EU_C2_OPTIMIZATION_ACCEPTS_UNDETERMINED).toBe(false);
     expect(SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C2).toBe(false);
     expect(EOS_D1E_EU_C2_CLOSED).toBe(true);
-    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
+    expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C4");
     expect(EU_C2_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C3");
     expect(EU_C2_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/P-M|axial-flexure/i);
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C2")?.status).toBe("CLOSED");
