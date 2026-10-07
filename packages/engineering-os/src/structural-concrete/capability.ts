@@ -204,6 +204,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "architecture phase complete; not a complete concrete design product; numerical code methods remain 0/0/0",
     dependencies: ["D1E.GLOBAL.FOUNDATION", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1E.AU.ADAPTER", "D1E.EU.ADAPTER", "D1E.US.ADAPTER"],
   },
+  {
+    capabilityId: "D1E.EU.C1A.RULE_EVIDENCE",
+    jurisdiction: "EU",
+    method: "Eurocode concrete rule-evidence recovery",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "EVIDENCE_BINDING_ONLY",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "family/part confirmed; generation/edition/amendment unbound; no numerical EN 1992 rules; human confirmation required",
+    dependencies: ["D1E.EU.ADAPTER", "D1E.EU.STANDARD_CONTEXT", "D1E.CLOSEOUT.ARCHITECTURE"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -242,7 +254,7 @@ export function assertConcreteProductCapabilityGating(): void {
 
 export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-VD-AU-EDITION", category: "STANDARD_EDITION", jurisdiction: "AU", capability: "AS 3600 identity", description: "AS 3600 edition unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "confirmed edition/amendment", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-AU" },
-  { debtId: "D1E-VD-EU-EDITION", category: "STANDARD_EDITION", jurisdiction: "EU", capability: "EN 1992 identity", description: "EN 1992 generation/edition/annex/NDP unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "family/part/edition/annex/NDP datasets", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-EU" },
+  { debtId: "D1E-VD-EU-EDITION", category: "STANDARD_EDITION", jurisdiction: "EU", capability: "EN 1992 identity", description: "EN 1992 generation/edition/annex/NDP unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "family/part/edition/annex/NDP datasets", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
   { debtId: "D1E-VD-US-EDITION", category: "STANDARD_EDITION", jurisdiction: "US", capability: "ACI 318 identity", description: "ACI 318 edition and building-code adoption unknown", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition, adoption, local amendments", ownerWorkstream: "US_CONCRETE_CONFORMANCE", recommendedFuturePhase: "D1E-US" },
   { debtId: "D1E-VD-MATERIAL-AUTHORITY", category: "MATERIAL_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "concrete material", description: "material-property catalogues not certified; D1E-1 requires explicitly governed E only", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed catalogue/test certificates", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
   { debtId: "D1E-VD-REINFORCEMENT-AUTHORITY", category: "REINFORCEMENT_PROPERTY_AUTHORITY", jurisdiction: "GLOBAL", capability: "reinforcement material", description: "reinforcement-property catalogues not certified; D1E-1 requires explicitly governed Es/area", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed bar/product standards", ownerWorkstream: "AU/EU/US concrete", recommendedFuturePhase: "jurisdiction concrete track" },
@@ -303,7 +315,10 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-AU-VD-HUMAN", category: "HUMAN_VALIDATION", jurisdiction: "AU", capability: "AU human validation", description: "human confirmation of AU concrete methods not started", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "engineer confirmation of edition/models/factors/benchmarks", ownerWorkstream: "AU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later AU concrete" },
   { debtId: "D1E-AU-VD-THIRD-PARTY", category: "EXTERNAL_TOOL_COMPARISON", jurisdiction: "AU", capability: "AU third-party", description: "AU concrete third-party comparisons absent", priority: "COMMERCIAL_RELEASE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1G / third-party comparisons", ownerWorkstream: "D1G", recommendedFuturePhase: "D1G" },
   { debtId: "D1E-EU-VD-GENERATION", category: "STANDARD_GENERATION", jurisdiction: "EU", capability: "EN 1992 generation", description: "EN 1992 generation unconfirmed", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "confirmed first/second generation applicability", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-EDITION", category: "STANDARD_EDITION", jurisdiction: "EU", capability: "EN 1992 identity", description: "EN 1992 edition/amendment unconfirmed", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "confirmed edition/amendment", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-VD-EDITION", category: "STANDARD_EDITION", jurisdiction: "EU", capability: "EN 1992 identity", description: "EN 1992 edition/amendment unconfirmed; C1A human-confirmation contract issued; no numerical values bound", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "confirmed edition/amendment", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
+  { debtId: "D1E-EU-C1A-VD-PROFILE", category: "STANDARD_IDENTITY", jurisdiction: "EU", capability: "EU-C1A profile", description: "authoritative EN 1992 generation/edition/amendment still unbound after C1A evidence search", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "human-confirmed generation, edition, amendment, technical basis, authority source", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
+  { debtId: "D1E-EU-C1A-VD-HUMAN", category: "HUMAN_ENGINEERING_VALIDATION", jurisdiction: "EU", capability: "EU-C1A human confirmation", description: "human confirmation contract exists; no confirmer has bound a profile", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "completed EuC1aHumanConfirmationInput", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
+  { debtId: "D1E-EU-C1A-VD-PARAMETER-CLASS", category: "DESIGN_FACTORS", jurisdiction: "EU", capability: "C1 parameter class", description: "gamma_c/gamma_s/strain/section-model dependency class remains UNRESOLVED pending confirmed edition", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "edition-confirmed dependency class and authority-bound values", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C1" },
   { debtId: "D1E-EU-VD-PART", category: "STANDARD_PART", jurisdiction: "EU", capability: "EN 1992 part applicability", description: "part applicability for numerical methods unvalidated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "method-to-part evidence", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-ANNEX", category: "NATIONAL_ANNEX", jurisdiction: "EU", capability: "National Annex profiles", description: "National Annex datasets unpopulated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed annex metadata per country/part", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-NDP", category: "NDP", jurisdiction: "EU", capability: "NDP datasets", description: "NDP values unpopulated; guessing forbidden", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed NDP catalog", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -380,6 +395,7 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "D1E-EU", scope: "EN 1992 family/part/annex/NDP bind then bounded uniaxial flexure", status: "CLOSED" },
   { id: "D1E-US", scope: "ACI 318 family/edition/adoption bind then bounded uniaxial flexure", status: "CLOSED" },
   { id: "D1E-CLOSEOUT", scope: "global D1E concrete architecture freeze and Eurocode conformance handoff", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C1A", scope: "authoritative EN 1992 profile and rule-evidence binding", status: "BLOCKED" },
   { id: "EOS-D1E-EU-C1", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
@@ -428,6 +444,13 @@ export const D1E_US1_D0_RISK_DISPOSITION = {
 export const D1E_US2_D0_RISK_DISPOSITION = {
   CLOSED: "NONE" as const,
   REDUCED: ["D0-R01"] as const,
+  INTRODUCED: "NONE" as const,
+  REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
+} as const;
+
+export const D1E_EU_C1A_D0_RISK_DISPOSITION = {
+  CLOSED: "NONE" as const,
+  REDUCED: "NONE" as const,
   INTRODUCED: "NONE" as const,
   REMAINING: CANONICAL_D0_D1_RISK_STATE.REMAINING,
 } as const;
