@@ -1,0 +1,83 @@
+/**
+ * EOS-D1E-CLOSEOUT — global reinforced-concrete architecture freeze.
+ * Architecture / capability truth / debt / handoff only.
+ * Not a numerical AS 3600, EN 1992, or ACI 318 design-method phase.
+ */
+
+export const EOS_D1E_CLOSEOUT_PHASE = "EOS-D1E-CLOSEOUT" as const;
+export const D1E_PHASE_INVENTORY_COMPLETE = true as const;
+export const D1E_SOURCE_CONTROL_TRACEABILITY = "PASS" as const;
+export const D1E_GLOBAL_CONCRETE_ARCHITECTURE_VALIDATED = true as const;
+export const PARALLEL_AU_RC_CORE = false as const;
+export const PARALLEL_EU_RC_CORE = false as const;
+export const PARALLEL_US_RC_CORE = false as const;
+export const COMMON_RC_KERNEL_INVENTORY_COMPLETE = true as const;
+export const COMMON_RC_KERNEL_VALIDATION_AUDIT = "PASS" as const;
+export const COMMON_RC_KERNEL_JURISDICTION_NEUTRAL = true as const;
+export const THREE_JURISDICTION_CONCRETE_ARCHITECTURE_AUDIT = "PASS" as const;
+export const D1E_ENGINEERING_AUTHORITY_LAYERS_SEPARATE = true as const;
+export const AU_D1E_RECONCILIATION = "PASS" as const;
+export const EU_D1E_RECONCILIATION = "PASS" as const;
+export const US_D1E_RECONCILIATION = "PASS" as const;
+export const AU_IMPLEMENTED_CODE_METHOD_COUNT = 0 as const;
+export const EU_IMPLEMENTED_CODE_METHOD_COUNT = 0 as const;
+export const US_IMPLEMENTED_CODE_METHOD_COUNT = 0 as const;
+export const AU_NUMERICAL_CONCRETE_CODE_METHOD_COUNT = 0 as const;
+export const EU_NUMERICAL_CONCRETE_CODE_METHOD_COUNT = 0 as const;
+export const US_NUMERICAL_CONCRETE_CODE_METHOD_COUNT = 0 as const;
+export const D1E_CANONICAL_CAPABILITY_MATRIX_DEFINED = true as const;
+export const D1E_CAPABILITY_SINGLE_SOURCE_OF_TRUTH = true as const;
+export const D1E_CONCRETE_CAPABILITY_MANIFEST_RECONCILED = true as const;
+export const D1E_MISLEADING_CONCRETE_PRODUCT_CLAIMS = "NONE" as const;
+export const COMMON_RC_BENCHMARK_EQUALS_AU_CONFORMANCE = false as const;
+export const COMMON_RC_BENCHMARK_EQUALS_EU_CONFORMANCE = false as const;
+export const COMMON_RC_BENCHMARK_EQUALS_US_CONFORMANCE = false as const;
+export const COMMON_RC_INVALIDATION_JURISDICTION_NEUTRAL = true as const;
+export const AU_CONCRETE_INVALIDATION_REGRESSION = false as const;
+export const EU_CONCRETE_INVALIDATION_REGRESSION = false as const;
+export const US_CONCRETE_INVALIDATION_REGRESSION = false as const;
+export const D1E_GLOBAL_FAIL_CLOSED_AUDIT = "PASS" as const;
+export const D1E_INVERSE_DESIGN_ARCHITECTURE_READY = true as const;
+export const GENERATIVE_MODEL_CAN_BYPASS_RC_KERNEL = false as const;
+export const GENERATIVE_MODEL_CAN_BYPASS_CODE_ADAPTER = false as const;
+export const GENERATIVE_MODEL_CAN_APPROVE_DESIGN = false as const;
+export const D1E_OPTIMIZATION_ACCEPTS_UNDETERMINED = false as const;
+export const D1E_PARETO_ACCEPTS_UNDETERMINED_AS_FEASIBLE = false as const;
+export const D1E_OPTIMIZATION_RECHECK_GOVERNANCE = "PASS" as const;
+export const GENERAL_PRESTRESSED_CONCRETE_DESIGN_VALIDATED = false as const;
+export const GENERAL_CONCRETE_CONNECTION_DESIGN_VALIDATED = false as const;
+export const GENERAL_CONCRETE_SEISMIC_DESIGN_VALIDATED = false as const;
+export const GENERAL_CONCRETE_FIRE_DESIGN_VALIDATED = false as const;
+export const CONCRETE_DESIGN_IMPLIES_GEOTECHNICAL_VALIDATION = false as const;
+export const D1E_VALIDATION_DEBT_REGISTER_RECONCILED = true as const;
+export const D1E_VALIDATION_PRIORITY_PLAN_DEFINED = true as const;
+export const D1E_ARCHITECTURE_CONTRACT_FROZEN = true as const;
+export const D1E_FUTURE_EXTENSION_RULE_DEFINED = true as const;
+export const D1E_ARCHITECTURE_PHASE_COMPLETE = true as const;
+export const COMPLETE_CONCRETE_DESIGN_PRODUCT = false as const;
+export const D1E_GLOBAL_RELEASE_CLASSIFICATION = "INTERNAL_ENGINEERING_REFERENCE" as const;
+export const D1E_CONCRETE_MATURITY = "ARCHITECTURE_COMPLETE_REFERENCE_CAPABILITY" as const;
+export const EU_CONCRETE_CONFORMANCE_TRACK_DEFINED = true as const;
+export const EU_CONCRETE_V1_SCOPE_DEFINED = true as const;
+export const EU_CONCRETE_CONFORMANCE_PHASE_PLAN_DEFINED = true as const;
+export const CANONICAL_D1E_NEXT_PHASE = "EOS-D1E-EU-C1" as const;
+export const CANONICAL_D1E_NEXT_PHASE_SCOPE =
+  "Governed Eurocode concrete material/design rule foundation" as const;
+export const D1E_ROADMAP_HANDOFF_VALIDATED = true as const;
+export const SCHEMA_CHANGE_REQUIRED_FOR_D1E_CLOSEOUT = false as const;
+export const NEW_MAJOR_DESIGN_METHOD_IMPLEMENTED_IN_D1E_CLOSEOUT = false as const;
+export const EOS_D1E_CLOSEOUT_CLOSED = true as const;
+export const READY_FOR_EU_CONCRETE_CONFORMANCE_TRACK = true as const;
+export const D1E0_REGRESSION = false as const;
+export const D1E1_COMMON_RC_KERNEL_REGRESSION = false as const;
+export const AU_CONCRETE_REGRESSION = false as const;
+export const EU_CONCRETE_REGRESSION = false as const;
+export const US_CONCRETE_REGRESSION = false as const;
+export const D1D_STEEL_ARCHITECTURE_REGRESSION = false as const;
+export const D1A_STRUCTURAL_DOMAIN_REGRESSION = false as const;
+export const D1B_STANDARD_BINDING_REGRESSION = false as const;
+export const D1C_MECHANICS_REGRESSION = false as const;
+export const EU_CONCRETE_STANDARD_GOVERNANCE_RECONCILIATION = "PASS" as const;
+export const US_CONCRETE_STANDARD_GOVERNANCE_RECONCILIATION = "PASS" as const;
+export const AU_CONCRETE_STANDARD_GOVERNANCE_RECONCILIATION = "PASS" as const;
+export const D1E_RISK_LEDGER_RECONCILED = true as const;

@@ -48,3 +48,4 @@ export * from "./eu-standard";
 export * from "./eu-flexure";
 export * from "./us-standard";
 export * from "./us-flexure";
+export * from "./d1e-closeout";

@@ -192,6 +192,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "elastic section reference only; AS 3600 flexural capacity FRAMEWORK_ONLY; edition unconfirmed",
     dependencies: ["D1E.AU.ADAPTER", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
   },
+  {
+    capabilityId: "D1E.CLOSEOUT.ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "D1E concrete architecture freeze",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "ARCHITECTURE_COMPLETE_REFERENCE_CAPABILITY",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "architecture phase complete; not a complete concrete design product; numerical code methods remain 0/0/0",
+    dependencies: ["D1E.GLOBAL.FOUNDATION", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1E.AU.ADAPTER", "D1E.EU.ADAPTER", "D1E.US.ADAPTER"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -367,7 +379,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "D1E-AU", scope: "first bounded AU AS 3600 slice after common section mechanics", status: "CLOSED" },
   { id: "D1E-EU", scope: "EN 1992 family/part/annex/NDP bind then bounded uniaxial flexure", status: "CLOSED" },
   { id: "D1E-US", scope: "ACI 318 family/edition/adoption bind then bounded uniaxial flexure", status: "CLOSED" },
-  { id: "D1E-CLOSEOUT", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
+  { id: "D1E-CLOSEOUT", scope: "global D1E concrete architecture freeze and Eurocode conformance handoff", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C1", scope: RECOMMENDED_D1E_NEXT_PHASE_SCOPE, status: "THIS_PHASE" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
