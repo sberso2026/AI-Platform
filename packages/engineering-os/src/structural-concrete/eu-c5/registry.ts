@@ -1,0 +1,41 @@
+import {
+  EU_C5_IMPLEMENTATION_VERSION,
+  EU_C5_PUNCHING_BOUNDED_SCOPE,
+  EU_C5_PUNCHING_INTERIOR_METHOD_ID,
+  EU_C5_PUNCHING_REQUIRED_RULE_IDS,
+  EU_C5_SHEAR_BOUNDED_SCOPE,
+  EU_C5_SHEAR_REQUIRED_RULE_IDS,
+  EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_ID,
+  EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+} from "@rtb/types";
+
+export const EU_C5_METHOD_REGISTRY = [
+  {
+    methodId: EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_ID,
+    capabilityFamily: "SHEAR" as const,
+    boundedScope: EU_C5_SHEAR_BOUNDED_SCOPE,
+    requiredRuleIds: EU_C5_SHEAR_REQUIRED_RULE_IDS,
+    requiredParameters: ["d", "bw", "Asl", "fck", "CRd,c", "v_min_coefficient", "axialForceN", "designShearReinforcement"],
+    ndpRequirements: ["CRd,c", "v_min_coefficient", EU_C5_SHEAR_BOUNDED_SCOPE],
+    generationProfile: "FIRST_GENERATION_CLAIMED_BY_SOURCES / pack UNKNOWN_PENDING_CONFIRMATION",
+    implementationVersion: EU_C5_IMPLEMENTATION_VERSION,
+    numericalValidationState: "NUMERICALLY_VALIDATED" as const,
+    engineerValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
+    conformanceState: EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+    benchmarkReferences: ["JRC_WALRAVEN_2011_BEAM_SHEAR_47_8_KN", "SOFISTIK_DCE_EN7_VMIN_62_517_KN"],
+  },
+  {
+    methodId: EU_C5_PUNCHING_INTERIOR_METHOD_ID,
+    capabilityFamily: "PUNCHING" as const,
+    boundedScope: EU_C5_PUNCHING_BOUNDED_SCOPE,
+    requiredRuleIds: EU_C5_PUNCHING_REQUIRED_RULE_IDS,
+    requiredParameters: ["c1", "c2", "d", "rhoX", "rhoY", "fck", "beta", "punchingForce", "CRd,c", "v_min_coefficient"],
+    ndpRequirements: ["CRd,c", "v_min_coefficient"],
+    generationProfile: "FIRST_GENERATION_CLAIMED_BY_SOURCES / pack UNKNOWN_PENDING_CONFIRMATION",
+    implementationVersion: EU_C5_IMPLEMENTATION_VERSION,
+    numericalValidationState: "NUMERICALLY_VALIDATED" as const,
+    engineerValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
+    conformanceState: EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+    benchmarkReferences: ["JRC_WALRAVEN_2011_COLUMN_B2_VRD_C_0_67_MPA"],
+  },
+] as const;

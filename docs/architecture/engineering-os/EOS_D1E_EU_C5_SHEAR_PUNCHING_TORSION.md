@@ -2,118 +2,99 @@
 
 Phase: EOS-D1E-EU-C5  
 Parent: EOS-D1E-EU-C4 (PASS_WITH_LIMITATIONS)  
-Mode: rule-authority audit + bounded numerical implementation + independent validation  
-Verdict: BLOCKED
+Mode: governed numerical implementation of the resolved bounded methods, with unresolved families left blocked  
+Verdict: PASS_WITH_LIMITATIONS
 
-This phase audited the minimum governed rule set for the first Eurocode-profile shear, punching, and torsion capabilities. It did not implement numerical resistance methods. No EN 1992 coefficients, limits, or National Annex values were guessed.
+This phase implemented two first-generation numerical methods whose minimum dependency sets are triangulated. It did not implement torsion. It did not pack recommended National Annex coefficients. Copyrighted standard text is not reproduced.
 
 ## Bounded scope by family
 
 ### Shear
 
-Intended smallest useful v1: ULS check of members **without** design shear reinforcement, consuming D1C shear demand (`N`).
+Implemented method: `EU_RC_SHEAR_EN1992_WITHOUT_TRANSVERSE_REINFORCEMENT`.
 
-Out of bounded v1: members with shear reinforcement, strut/compression limitation, axial-force modifiers.
+Scope: members without design shear reinforcement, explicit zero axial force, explicit effective depth, web width, and longitudinal tension area, characteristic concrete strength, and declared `CRd,c` plus the recommended minimum-stress coefficient. Demand is D1C shear in newtons.
 
-State: **NONE_IMPLEMENTABLE**. Without-reinforcement method `BLOCKED`. With-reinforcement method `OUT_OF_SCOPE`.
+Out of scope: design shear reinforcement, strut/compression limitation, non-zero axial force, second-generation shear models.
 
 ### Punching
 
-Intended smallest useful v1: interior-support concrete punching resistance **if** a governed control-perimeter rule exists.
+Implemented method: `EU_RC_PUNCHING_EN1992_INTERIOR_RECTANGULAR_CONCRETE`.
 
-Out of bounded v1: openings, edge/corner, eccentricity/moment transfer, punching reinforcement, maximum punching resistance.
+Scope: interior rectangular loaded area, basic control perimeter at an offset of two effective depths, explicit punching force, explicit beta, geometric-mean reinforcement ratio, and the same declared concrete-stress coefficients. Beam shear is not punching demand. D1C has no punching-action contract (`NOT_APPLICABLE`).
 
-State: **NONE_IMPLEMENTABLE**. Control perimeter `NOT_IMPLEMENTED`. Opening/edge/eccentricity `OUT_OF_SCOPE`.
+Out of scope: openings, edge and corner supports, calculated moment transfer, punching reinforcement, and the column-face maximum stress check.
 
 ### Torsion
 
-Intended smallest useful v1: standalone torsional resistance using D1C torsion demand.
+None implementable. D1C torsion remains `NOT_IMPLEMENTED`. A complete standalone torsional resistance was not bound. Thin-wall geometry and V+T / M+T / N+M+V+T interaction are not implemented.
 
-Out of bounded v1: torsion threshold, torsional reinforcement, equivalent thin-wall geometry, V+T / M+T / N+M+V+T interaction.
+## Dependency rules
 
-State: **NONE_IMPLEMENTABLE**. D1C torsion demand is `NOT_IMPLEMENTED`. Interaction `OUT_OF_SCOPE`. Ungoverned interaction was not used.
+Shear, all implementation-ready:
 
-## Required rule IDs
+- `EU_C5_SHEAR_RESISTANCE_WITHOUT_TRANSVERSE_REINFORCEMENT`
+- `EU_C5_SHEAR_EFFECTIVE_GEOMETRY`
+- `EU_C5_SHEAR_MINIMUM_RESISTANCE`
+- `EU_C5_SHEAR_DECLARED_CRDC`
 
-Shear:
+Punching, all implementation-ready:
 
-- `EU_C5_SHEAR_RESISTANCE_WITHOUT_TRANSVERSE_REINFORCEMENT` — BLOCKED_RULE_AUTHORITY
-- `EU_C5_SHEAR_EFFECTIVE_GEOMETRY` — BLOCKED_RULE_AUTHORITY
-- `EU_C1_PARTIAL_FACTOR_GAMMA_C` — SATISFIED_BY_EXISTING_RULE
-- `EU_C1_CONCRETE_DESIGN_PROPERTIES` — SATISFIED_BY_EXISTING_RULE
+- `EU_C5_PUNCHING_CONTROL_PERIMETER`
+- `EU_C5_PUNCHING_CONCRETE_RESISTANCE`
+- `EU_C5_PUNCHING_DECLARED_CRDC`
+- `EU_C5_PUNCHING_DECLARED_VMIN`
 
-Punching:
+Torsion, blocked:
 
-- `EU_C5_PUNCHING_CONTROL_PERIMETER` — BLOCKED_RULE_AUTHORITY
-- `EU_C5_PUNCHING_CONCRETE_RESISTANCE` — BLOCKED_RULE_AUTHORITY
-- `EU_C1_PARTIAL_FACTOR_GAMMA_C` — SATISFIED_BY_EXISTING_RULE
+- `EU_C5_TORSION_RESISTANCE`
+- `EU_C5_TORSION_DEMAND`
 
-Torsion:
+## Evidence and profile identity
 
-- `EU_C5_TORSION_RESISTANCE` — BLOCKED_RULE_AUTHORITY
-- `EU_C5_TORSION_DEMAND` — BLOCKED_RULE_AUTHORITY (D1C not available)
+Sources are recorded with publisher, type, generation claim, and independence group:
 
-Implementation-ready C5-specific rule IDs: none. Implemented method IDs: none.
+- JRC Walraven workshop, 25 October 2011 (Tier A)
+- SOFiSTiK EN 1992-1-1:2004 shear benchmark (independent software benchmark)
+- InfoGraph punching help, recommended values separated from national modifications
+- Concrete Centre lecture, 26 October 2017
+- Markova, Holický, Jung, and Sýkora punching procedures
 
-## Authority state
+Claimed generation for the implemented expressions is first-generation. The pack edition remains `UNKNOWN_PENDING_CONFIRMATION`. A second-generation size-factor presentation is classified `BLOCKED_PROFILE_IDENTITY` and is not mixed in. A different national minimum-stress expression is `BLOCKED_NDP` and is not averaged or selected.
 
-C1B policy reused. Licensed standard files are not an implementation gate. Standard text is not required at runtime or in-repository. Copyrighted standard text was not reproduced. LLM-memory-only rules remain forbidden.
+## NDP classification
 
-Allowed authority classes remain those of C1B. No C5 numerical rule reached IMPLEMENTATION_READY because the repository still has `NO_GOVERNED_COEFFICIENT_SOURCE_IN_REPOSITORY` for shear, punching, and torsion formulas.
+`CRd,c` and the minimum-stress coefficient are `NDP_DEPENDENT` declared inputs. The size-factor depth numerator, size-factor cap, longitudinal-ratio cap, stress scale, and perimeter offset factor are `STANDARD_DEFINED`. No default National Annex. No location-inferred annex. No packed 0.18, 0.035, or 1.5.
 
-## Source hierarchy and profile / generation
+## Geometry and demand
 
-Primary evidence is D1E architecture, not a formula source:
+Shear `k` and `rho_l` are derived only from explicit depth, width, and tension area. Punching perimeter length is derived only for an interior rectangle. D1C shear demand is reused. No parallel demand engine was created.
 
-- D1E-0 `CONCRETE_SHEAR_FRAMEWORK` / `CONCRETE_PUNCHING_SHEAR_FRAMEWORK` / `CONCRETE_TORSION_FRAMEWORK` = true, numerical flags = false
-- EU adapter profiles `EU_RC_SHEAR_EN1992` and `EU_RC_PUNCHING_EN1992` (`methodScope` NOT_IMPLEMENTED)
-- D1E-0 statement that punching does not assume critical perimeter, effective depth, column-face, or shear-stress rule
-- D1C shear demand implemented; D1C torsion `{ status: "NOT_IMPLEMENTED" }`
-- C1/C1C-R1 governed `gamma_c` and concrete design-property identities
+## Combined actions
 
-Claimed generation/edition remain `UNKNOWN_PENDING_CONFIRMATION`. Cross-generation mixing: NO.
+C2, C3, and C4 are reused and not reimplemented. No governed shear-torsion, flexure-torsion, or axial-torsion interaction method is implemented.
 
-## NDP dependencies
+## Benchmarks
 
-EU shear profile records `gamma_c` and `gamma_s` as NDP-capable dependencies. Bounded shear v1 reuses existing `gamma_c`. Punching profile records `gamma_c`. Additional shear/punching/torsion NDPs were not invented. No default National Annex. No location-inferred annex. No guessed NDP values.
+Expected values are independent hand expressions plus published anchors:
 
-## Implemented methods
+- Walraven beam example, reported 47.8 kN
+- SOFiSTiK minimum-resistance example, reported 62.517 kN
+- Walraven column B2 concrete punching stress, reported 0.67 MPa, perimeter reported 4060 mm
 
-None. Fail-closed evaluators return `CHECK_UNDETERMINED` with `methodId = null` and `resistance = null`.
+Live commercial software was not executed (`NOT_AVAILABLE`). Engineer validation remains pending. Numerical validation is not standard conformance.
 
-- Shear reuses D1C `shear.value` (`N`) then fails closed on missing resistance authority
-- Punching does not treat beam shear as punching demand
-- Torsion does not treat shear as torsion
+## Conformance and product claim
 
-## Blocked methods
-
-All three families. Formula fingerprints on blocked records identify the fail-closed operation set, not a resistance equation. Parameter provenance records unbound values as unbound. Unprovenanced numerical constant count: 0.
-
-## Demand reuse
-
-- D1C shear demand reused: YES
-- Parallel EU shear demand engine: NO
-- D1C punching actions: NOT_APPLICABLE
-- D1C torsion demand: NOT_AVAILABLE
-
-## Combined-action boundaries
-
-C2 uniaxial flexure, C3 N-M, and C4 N-Mx-My are reused and not reimplemented. Passing a future C5 check would not mean member conformance. Ungoverned combined-action interaction is forbidden.
-
-## Independent benchmarks
-
-Not implemented. External software comparison: NOT_AVAILABLE. Self-referential benchmarks: NO.
-
-## Engineer-validation and conformance
-
-Engineer validation: PENDING_HUMAN_ENGINEERING_REVIEW (0 methods).  
-`EU_CONCRETE_STANDARD_CONFORMANCE_STATE` remains INTENDED_PROFILE.  
+`EU_CONCRETE_STANDARD_CONFORMANCE_STATE` remains `INTENDED_PROFILE`.  
 `EU_CONCRETE_PACK_CERTIFIED` remains NO.  
-Numerical C5 validation does not equal standard conformance.
+Product claim remains `EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY`.
 
-## Next-phase decision
+A satisfied shear or punching check is not member, flexural, detailing, durability, or professional approval.
 
-Type: TARGETED_C5_EVIDENCE_RECOVERY  
-Canonical next: EOS-D1E-EU-C5-EVIDENCE  
+## Next phase
 
-Recover independently governed first-generation EN 1992 shear / punching / torsion numerical-rule evidence without reproducing copyrighted standard text. Do not advance to EOS-D1E-EU-C6 while C5 families remain evidence-blocked.
+Type: `TARGETED_C5_EVIDENCE_RECOVERY`  
+Canonical next: `EOS-D1E-EU-C5-EVIDENCE`
+
+Recover governed torsion resistance and a D1C torsional action. Do not advance to `EOS-D1E-EU-C6` while torsion, shear reinforcement, and the excluded punching cases remain unresolved.

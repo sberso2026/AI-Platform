@@ -67,8 +67,8 @@ export function assertEuC5NoGuessedParameters(): void {
   if (EU_C5_UNPROVENANCED_NUMERICAL_CONSTANT_COUNT !== 0) {
     throw new Error("C5 must not introduce unprovenanced numerical constants");
   }
-  if (EU_C5_IMPLEMENTED_RULE_IDS.length > 0 || EU_C5_IMPLEMENTED_METHOD_IDS.length > 0) {
-    throw new Error("C5 must not claim implemented rules or methods without governed formula sources");
+  if (EU_C5_IMPLEMENTED_RULE_IDS.length !== 8 || EU_C5_IMPLEMENTED_METHOD_IDS.length !== 2) {
+    throw new Error("C5 implemented shear and punching methods drifted");
   }
   if (EU_C5_UNGOVERNED_TORSION_INTERACTION_USED || EU_C5_UNGOVERNED_COMBINED_ACTION_INTERACTION) {
     throw new Error("C5 must not invent ungoverned combined-action interaction");

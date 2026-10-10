@@ -1,3 +1,5 @@
+export { EU_C5_METHOD_REGISTRY } from "./registry";
+export { EU_C5_PARAMETER_PROVENANCE } from "./parameters";
 export { assertEuC5AuthorityBoundary } from "./authority";
 export {
   evaluateEuC5Family,

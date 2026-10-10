@@ -137,7 +137,7 @@ export const D1E_VALIDATION_DEBT_REGISTER_DEFINED = true as const;
 export const D1E_INTERNAL_ROADMAP_DEFINED = true as const;
 export const RECOMMENDED_D1E_NEXT_PHASE = "EOS-D1E-EU-C5-EVIDENCE" as const;
 export const RECOMMENDED_D1E_NEXT_PHASE_SCOPE =
-  "Recover independently governed first-generation EN 1992 shear / punching / torsion numerical-rule evidence without reproducing copyrighted standard text" as const;
+  "Recover governed first-generation EN 1992 torsion resistance and a D1C torsional action; shear-with-reinforcement, punching edge/opening/eccentricity, and National Annex expressions remain outside the implemented C5 shear and punching methods" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E0 = false as const;
 export const D1E0_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const EOS_D1E0_CLOSED = true as const;

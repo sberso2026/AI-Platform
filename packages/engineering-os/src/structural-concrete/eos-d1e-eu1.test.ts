@@ -401,8 +401,8 @@ describe("EOS-D1E-EU-1 Eurocode concrete standard binding", () => {
     expect(EU_REINFORCEMENT_CATALOG.defaultNationalCatalog).toBeNull();
     expect(() => resolveEuConcreteCatalogGrade("C30/37")).toThrow(/catalog unpopulated/i);
     expect(EU_CONCRETE_GRADE_AUTOMATICALLY_GENERATES_PROPERTIES).toBe(false);
-    expect(NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED).toBe(false);
-    expect(NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED).toBe(false);
+    expect(NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED).toBe(true);
+    expect(NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED).toBe(true);
     expect(DEFAULT_EU_CREEP_MODEL).toBe(false);
     expect(DEFAULT_EU_SHRINKAGE_MODEL).toBe(false);
     expect(DEFAULT_EU_CONCRETE_COVER).toBe(false);

@@ -80,9 +80,9 @@ export const IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS = [
 ] as const;
 export const EU_CONCRETE_AXIAL_FLEXURE_PROFILE_READY = true as const;
 export const EU_CONCRETE_SHEAR_PROFILE_READY = true as const;
-export const NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED = false as const;
+export const NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED = true as const;
 export const EU_CONCRETE_PUNCHING_PROFILE_READY = true as const;
-export const NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED = false as const;
+export const NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED = true as const;
 export const EU_CONCRETE_SERVICEABILITY_PROFILE_READY = true as const;
 export const EU_CONCRETE_TIME_DEPENDENT_MODEL_INTERFACE = true as const;
 export const DEFAULT_EU_CREEP_MODEL = false as const;

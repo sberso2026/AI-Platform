@@ -154,14 +154,22 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "shear",
     GLOBAL: none("code shear absent"),
     AU: none("no AS 3600 shear"),
-    EU: framework("C5 evidence audit; profile ready; no numerical EN 1992 shear"),
+    EU: cell({
+      implemented: true,
+      numericallyValidated: true,
+      limitation: "C5 bounded members without design shear reinforcement; declared CRd,c and vmin coefficient; zero axial; not with-reinforcement; not CONFORMANCE_VALIDATED",
+    }),
     US: framework("profile ready; no numerical ACI shear"),
   },
   {
     capability: "punching",
     GLOBAL: none("punching absent"),
     AU: none("no AU punching"),
-    EU: framework("C5 evidence audit; profile ready; no numerical punching"),
+    EU: cell({
+      implemented: true,
+      numericallyValidated: true,
+      limitation: "C5 interior rectangular concrete punching at a 2d control perimeter; explicit punching force and beta; openings, edge/corner, and eccentricity calculation excluded; not CONFORMANCE_VALIDATED",
+    }),
     US: framework("profile ready; no numerical punching"),
   },
   {

@@ -8,9 +8,11 @@ export function euC5ResultFingerprint(
 ): string {
   return JSON.stringify({
     family: result.family,
+    capabilityFamily: result.capabilityFamily,
     methodId: result.methodId,
     demand: result.demand,
     resistance: result.resistance,
+    utilization: result.utilization,
     units: result.units,
     checkState: result.checkState,
     governingRuleIds: result.governingRuleIds,

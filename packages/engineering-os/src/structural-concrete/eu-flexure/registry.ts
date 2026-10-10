@@ -202,6 +202,8 @@ export const EU_RC_BIAXIAL_EN1992_PMM_RECTANGULAR: EuConcreteFlexureMethodRecord
 
 export const EU_CONCRETE_BIAXIAL_METHODS: readonly EuConcreteFlexureMethodRecord[] = [EU_RC_BIAXIAL_EN1992_PMM_RECTANGULAR];
 
+export { EU_C5_METHOD_REGISTRY } from "../eu-c5/registry";
+
 export const IMPLEMENTED_EU_CONCRETE_CODE_FLEXURE_METHODS = EU_C2_METHOD_IDS;
 export const FRAMEWORK_ONLY_EU_CONCRETE_FLEXURE_METHODS = [] as const;
 

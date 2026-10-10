@@ -7,287 +7,287 @@ import {
   EU_C5_TORSION_REQUIRED_RULE_IDS,
 } from "@rtb/types";
 import { formulaFingerprint } from "../eu-c1b/fingerprint";
+import { EU_C5_PUNCHING_OPERATIONS, EU_C5_SHEAR_OPERATIONS } from "./parameters";
 
-const INTENDED = {
-  claimedStandardGeneration: "UNKNOWN_PENDING_CONFIRMATION",
-  claimedEdition: "UNKNOWN_PENDING_CONFIRMATION",
-  packConstantValue: null,
-  version: EU_C5_IMPLEMENTATION_VERSION,
-  engineeringValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
-  conformanceState: "INTENDED_PROFILE" as const,
-};
+const PROFILE = "FIRST_GENERATION claimed by sources; pack generation/edition UNKNOWN_PENDING_CONFIRMATION";
 
-function architectureBlocked(
+function record(
   ruleId: EuC5RuleId,
   family: EuC5EvidenceRuleRecord["family"],
   readiness: EuC5Readiness,
-  architectureIdentity: string,
-  provenance: string,
-  extra?: Partial<Pick<EuC5EvidenceRuleRecord, "parameterIds" | "units" | "nationalAnnexDependency" | "ndpDependency" | "independentCorroboration">>,
+  fields: Omit<
+    EuC5EvidenceRuleRecord,
+    | "ruleId"
+    | "family"
+    | "readiness"
+    | "claimedStandardGeneration"
+    | "claimedEdition"
+    | "packConstantValue"
+    | "version"
+    | "engineeringValidationState"
+    | "conformanceState"
+    | "formulaFingerprint"
+  > & { operations: readonly string[] },
 ): EuC5EvidenceRuleRecord {
+  const { operations, ...rest } = fields;
   return {
-    ...INTENDED,
+    ...rest,
     ruleId,
     family,
     readiness,
-    authorityType: readiness === "SATISFIED_BY_EXISTING_RULE" ? "VALIDATED_ENGINEERING_REFERENCE" : "UNBOUND",
-    source: architectureIdentity,
-    publisher: "RTB Engineering OS D1E architecture",
-    sourceType: readiness === "SATISFIED_BY_EXISTING_RULE" ? "EXISTING_GOVERNED_EU_RULE_PACK" : "REPOSITORY_ARCHITECTURE_GAP",
-    parameterIds: extra?.parameterIds ?? [],
-    units: extra?.units ?? null,
-    applicability: "EN 1992 / EN_1992_1_1 intended profile; C5 bounded v1; generation/edition unconfirmed; no default National Annex",
-    nationalAnnexDependency: extra?.nationalAnnexDependency ?? "UNRESOLVED",
-    ndpDependency: extra?.ndpDependency ?? "UNRESOLVED",
-    independentCorroboration: extra?.independentCorroboration ?? [
-      "packages/types/src/structural-concrete.ts D1E-0 shear/punching/torsion frameworks",
-      "packages/engineering-os/src/structural-concrete/eu-c1b/inventory.ts NO_GOVERNED_COEFFICIENT_SOURCE_IN_REPOSITORY",
-    ],
-    validationState: "NOT_STARTED",
-    formulaFingerprint:
-      readiness === "BLOCKED_RULE_AUTHORITY"
-        ? formulaFingerprint({
-            ruleId,
-            operations: ["FAIL_CLOSED_BLOCKED_RULE_AUTHORITY", "FORBID_LLM_MEMORY_COEFFICIENT"],
-            parameterIds: extra?.parameterIds ?? [],
-          })
-        : readiness === "SATISFIED_BY_EXISTING_RULE"
-          ? formulaFingerprint({
-              ruleId,
-              operations: ["REUSE_EXISTING_GOVERNED_RULE", "NO_C5_REIMPLEMENTATION"],
-              parameterIds: extra?.parameterIds ?? [],
-            })
-          : formulaFingerprint({
-              ruleId,
-              operations: ["NOT_REQUIRED_FOR_BOUNDED_C5_SCOPE"],
-              parameterIds: [],
-            }),
-    implementable: false,
-    provenance,
+    claimedStandardGeneration: PROFILE,
+    claimedEdition: "UNKNOWN_PENDING_CONFIRMATION",
+    packConstantValue: null,
+    formulaFingerprint: formulaFingerprint({ ruleId, operations, parameterIds: rest.parameterIds }),
+    version: EU_C5_IMPLEMENTATION_VERSION,
+    engineeringValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW",
+    conformanceState: "INTENDED_PROFILE",
   };
 }
 
-const SHEAR_WITHOUT = architectureBlocked(
+const READY_SHEAR = record(
   "EU_C5_SHEAR_RESISTANCE_WITHOUT_TRANSVERSE_REINFORCEMENT",
   "SHEAR",
-  "BLOCKED_RULE_AUTHORITY",
-  "EU_CONCRETE_SHEAR_PROFILE methodId EU_RC_SHEAR_EN1992; NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED=false; D1E-0 no code shear equations",
-  "D1E-0 and EU shear profile record a framework only. No independently governed shear-resistance coefficient or formula is bound in-repository. C1B inventory sourceReference remains NO_GOVERNED_COEFFICIENT_SOURCE_IN_REPOSITORY for code coefficients.",
+  "IMPLEMENTATION_READY",
+  {
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "JRC_WALRAVEN_2011",
+    publisher: "European Commission Joint Research Centre",
+    sourceType: "OFFICIAL_INSTITUTIONAL_WORKSHOP",
+    parameterIds: ["CRd,c", "k", "rho_l", "fck", "bw", "d", "v_min_coefficient"],
+    units: "resistance N; fck MPa; bw and d mm",
+    applicability: "members without design shear reinforcement; zero axial; first-generation expression",
+    nationalAnnexDependency: true,
+    ndpDependency: true,
+    ndpClassification: "NDP_DEPENDENT",
+    independentCorroboration: ["SOFISTIK_DCE_EN7"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: EU_C5_SHEAR_OPERATIONS,
+    provenance: "Walraven 2011 beam shear worked example corroborated by the SOFiSTiK EN 1992-1-1:2004 shear benchmark. CRd,c and the vmin coefficient stay declared inputs.",
+  },
 );
 
-const SHEAR_GEOMETRY = architectureBlocked(
+const GEOMETRY = record(
   "EU_C5_SHEAR_EFFECTIVE_GEOMETRY",
   "SHEAR",
-  "BLOCKED_RULE_AUTHORITY",
-  "D1E-0 shear/punching geometry: no assumed effective depth from generic RC section; D1E-1 section geometry is not a shear-rule derivation",
-  "Governed shear rules must define how effective depth/width are obtained. Generic D1E-1 section dimensions are not silently promoted to shear geometry.",
-  { parameterIds: ["effectiveDepth", "effectiveWidth"], units: "mm when later bound; currently unbound", nationalAnnexDependency: "UNRESOLVED", ndpDependency: "UNRESOLVED" },
+  "IMPLEMENTATION_READY",
+  {
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "JRC_WALRAVEN_2011",
+    publisher: "European Commission Joint Research Centre",
+    sourceType: "OFFICIAL_INSTITUTIONAL_WORKSHOP",
+    parameterIds: ["d", "bw", "Asl", "k_depth_numerator", "k_upper_bound", "rho_l_upper_bound"],
+    units: "mm and mm2",
+    applicability: "explicit effective depth, web width, and longitudinal tension area; k and rho_l derived only from those inputs",
+    nationalAnnexDependency: false,
+    ndpDependency: false,
+    ndpClassification: "STANDARD_DEFINED",
+    independentCorroboration: ["SOFISTIK_DCE_EN7"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: ["REQUIRE_EXPLICIT_D_BW_ASL", "DERIVE_K_AND_RHO_L"],
+    provenance: "Effective depth and web width are calculation inputs. The size factor and longitudinal ratio use the corroborated definitions and are not inferred from a generic section.",
+  },
 );
 
-const GAMMA_C = architectureBlocked(
-  "EU_C1_PARTIAL_FACTOR_GAMMA_C",
+const VMIN = record(
+  "EU_C5_SHEAR_MINIMUM_RESISTANCE",
   "SHEAR",
-  "SATISFIED_BY_EXISTING_RULE",
-  "EOS-D1E-EU-C1C-RESUME-1 declared-NDP gamma_c resolver; EU_CONCRETE_SHEAR_PROFILE.ndpDependencies includes gamma_c",
-  "C5 reuses the existing governed gamma_c identity. No C5 reimplementation. Not a shear-resistance equation.",
+  "IMPLEMENTATION_READY",
   {
-    parameterIds: ["gamma_c"],
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "SOFISTIK_DCE_EN7",
+    publisher: "SOFiSTiK AG",
+    sourceType: "VALIDATED_ENGINEERING_SOFTWARE_BENCHMARK",
+    parameterIds: ["v_min_coefficient", "k", "fck"],
+    units: "stress MPa when fck is MPa",
+    applicability: "recommended k^(3/2)*fck^(1/2) expression only; coefficient is a declared NDP",
+    nationalAnnexDependency: true,
+    ndpDependency: true,
+    ndpClassification: "NDP_DEPENDENT",
+    independentCorroboration: ["INFOGRAPH_EN1992_PUNCHING"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: ["STRESS_MIN_DECLARED_COEFFICIENT_TIMES_K_POW_3_2_TIMES_SQRT_FCK"],
+    provenance: "SOFiSTiK and InfoGraph state the recommended minimum-stress expression. The coefficient is not packed. A different national expression is a separate blocked rule.",
+  },
+);
+
+const CRDC = record(
+  "EU_C5_SHEAR_DECLARED_CRDC",
+  "SHEAR",
+  "IMPLEMENTATION_READY",
+  {
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "JRC_WALRAVEN_2011",
+    publisher: "European Commission Joint Research Centre",
+    sourceType: "OFFICIAL_INSTITUTIONAL_WORKSHOP",
+    parameterIds: ["CRd,c"],
     units: "dimensionless",
+    applicability: "declared NDP; recommended 0.18/gamma_c is not a runtime default",
     nationalAnnexDependency: true,
     ndpDependency: true,
-    independentCorroboration: [
-      "packages/engineering-os/src/structural-concrete/eu-c1c-r1",
-      "packages/engineering-os/src/structural-concrete/eu-standard/profiles.ts EU_CONCRETE_SHEAR_PROFILE",
-    ],
+    ndpClassification: "NDP_DEPENDENT",
+    independentCorroboration: ["SOFISTIK_DCE_EN7", "INFOGRAPH_EN1992_PUNCHING"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: ["REQUIRE_DECLARED_CRDC", "DO_NOT_PACK_RECOMMENDED_VALUE"],
+    provenance: "Sources identify CRd,c as a country-specific recommended parameter. C5 requires the value and does not divide by gamma_c again.",
   },
 );
 
-const CONCRETE_DESIGN = architectureBlocked(
-  "EU_C1_CONCRETE_DESIGN_PROPERTIES",
-  "SHEAR",
-  "SATISFIED_BY_EXISTING_RULE",
-  "EOS-D1E-EU-C1C-RESUME-1 fcd identity from declared NDP plus C1 characteristic properties",
-  "C5 reuses existing concrete design-property identity as a material input dependency. Not a shear-resistance equation.",
-  {
-    parameterIds: ["fck", "alpha_cc", "gamma_c", "fcd"],
-    units: "stress units explicit at existing rule; not packed here",
-    nationalAnnexDependency: true,
-    ndpDependency: true,
-    independentCorroboration: ["packages/engineering-os/src/structural-concrete/eu-c1c-r1"],
-  },
-);
-
-const PUNCHING_PERIMETER = architectureBlocked(
+const PUNCH_PERIMETER = record(
   "EU_C5_PUNCHING_CONTROL_PERIMETER",
   "PUNCHING",
-  "BLOCKED_RULE_AUTHORITY",
-  "D1E-0: punching does not assume critical perimeter, effective depth, column-face definition, or shear-stress rule; EU_CONCRETE_PUNCHING_PROFILE methodId EU_RC_PUNCHING_EN1992 numericalImplemented=false",
-  "Punching control perimeters are code-rule geometry. C5 does not invent perimeter offsets from generic slab geometry.",
-  { parameterIds: ["controlPerimeter"], units: "mm when later bound; currently unbound" },
+  "IMPLEMENTATION_READY",
+  {
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "JRC_WALRAVEN_2011",
+    publisher: "European Commission Joint Research Centre",
+    sourceType: "OFFICIAL_INSTITUTIONAL_WORKSHOP",
+    parameterIds: ["c1", "c2", "d", "punching_control_perimeter_offset_factor"],
+    units: "mm",
+    applicability: "interior rectangular loaded area; offset factor 2; no openings",
+    nationalAnnexDependency: false,
+    ndpDependency: false,
+    ndpClassification: "STANDARD_DEFINED",
+    independentCorroboration: ["TCC_LECTURE6_2017", "MARKOVA_PUNCHING_2019"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: ["U1_INTERIOR_RECTANGLE"],
+    provenance: "Walraven places the basic control perimeter at 2.0d and gives the rectangular interior length. TCC and Markova corroborate the 2d offset. Edge and corner perimeters are not this rule.",
+  },
 );
 
-const PUNCHING_RESISTANCE = architectureBlocked(
+const PUNCH_RESISTANCE = record(
   "EU_C5_PUNCHING_CONCRETE_RESISTANCE",
   "PUNCHING",
-  "BLOCKED_RULE_AUTHORITY",
-  "EU_CONCRETE_PUNCHING_PROFILE NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED=false; D1E-EU-VD-PUNCHING UNRESOLVED",
-  "No independently governed punching-resistance equation is bound. Beam-shear rules are not reused as punching.",
-);
-
-const PUNCHING_GAMMA_C = architectureBlocked(
-  "EU_C1_PARTIAL_FACTOR_GAMMA_C",
-  "PUNCHING",
-  "SATISFIED_BY_EXISTING_RULE",
-  "EU_CONCRETE_PUNCHING_PROFILE.ndpDependencies includes gamma_c; R1 declared-NDP resolver",
-  "Punching reuses existing gamma_c identity. Not a punching-resistance equation.",
+  "IMPLEMENTATION_READY",
   {
-    parameterIds: ["gamma_c"],
-    units: "dimensionless",
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "JRC_WALRAVEN_2011",
+    publisher: "European Commission Joint Research Centre",
+    sourceType: "OFFICIAL_INSTITUTIONAL_WORKSHOP",
+    parameterIds: ["CRd,c", "k", "rho_l", "fck", "beta", "punchingForce"],
+    units: "stress MPa; punching force N",
+    applicability: "interior concrete punching stress; rho_l is the geometric mean of orthogonal ratios; not beam shear",
     nationalAnnexDependency: true,
     ndpDependency: true,
-    independentCorroboration: [
-      "packages/engineering-os/src/structural-concrete/eu-c1c-r1",
-      "packages/engineering-os/src/structural-concrete/eu-standard/profiles.ts EU_CONCRETE_PUNCHING_PROFILE",
-    ],
+    ndpClassification: "NDP_DEPENDENT",
+    independentCorroboration: ["INFOGRAPH_EN1992_PUNCHING", "TCC_LECTURE6_2017", "MARKOVA_PUNCHING_2019"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: EU_C5_PUNCHING_OPERATIONS,
+    provenance: "Punching uses the unitary concrete stress expression with its own perimeter, geometric-mean reinforcement ratio, and explicit punching force. Beam shear demand is not reused.",
   },
 );
 
-const TORSION_RESISTANCE = architectureBlocked(
-  "EU_C5_TORSION_RESISTANCE",
-  "TORSION",
-  "BLOCKED_RULE_AUTHORITY",
-  "CONCRETE_TORSION_FRAMEWORK=true; NUMERICAL_CONCRETE_TORSION_IMPLEMENTED=false; NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED=false; closeout EU torsion cell none",
-  "Global torsion framework exists without an EU numerical method. Shear formulas are not reused as torsion.",
-);
-
-const TORSION_DEMAND = architectureBlocked(
-  "EU_C5_TORSION_DEMAND",
-  "TORSION",
-  "BLOCKED_RULE_AUTHORITY",
-  "packages/engineering-os/src/structural-demand/engine.ts torsion status NOT_IMPLEMENTED; TORSION_DEMAND_SCOPE NOT_IMPLEMENTED",
-  "D1C does not produce a torsional action. C5 does not create a parallel structural-analysis engine.",
+const PUNCH_CRDC = record(
+  "EU_C5_PUNCHING_DECLARED_CRDC",
+  "PUNCHING",
+  "IMPLEMENTATION_READY",
   {
-    parameterIds: ["torsionDemand"],
-    units: "N.m when later bound; currently unavailable",
-    independentCorroboration: [
-      "packages/types/src/structural-demand.ts StructuralDemandResult.torsion",
-      "packages/engineering-os/src/structural-demand/eos-d1c.test.ts",
-    ],
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "INFOGRAPH_EN1992_PUNCHING",
+    publisher: "InfoGraph",
+    sourceType: "ENGINEERING_SOFTWARE_REFERENCE",
+    parameterIds: ["CRd,c"],
+    units: "dimensionless",
+    applicability: "declared punching CRd,c; German u0/d modification is not applied",
+    nationalAnnexDependency: true,
+    ndpDependency: true,
+    ndpClassification: "NDP_DEPENDENT",
+    independentCorroboration: ["JRC_WALRAVEN_2011"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: ["REQUIRE_DECLARED_CRDC"],
+    provenance: "InfoGraph separates the recommended CRd,c from national modifications. The recommended numerator is not packed.",
   },
 );
 
-const OPTIONAL: readonly EuC5EvidenceRuleRecord[] = [
-  architectureBlocked(
-    "EU_C5_SHEAR_RESISTANCE_WITH_TRANSVERSE_REINFORCEMENT",
-    "SHEAR",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "CONCRETE_TRANSVERSE_REINFORCEMENT_MODEL=true; no code shear-reinforcement equation",
-    "Bounded C5 v1 is members without design shear reinforcement. Transverse-reinforcement contribution remains classified and unbound.",
-  ),
-  architectureBlocked(
-    "EU_C5_SHEAR_STRUT_OR_COMPRESSION_LIMIT",
-    "SHEAR",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "D1E-0 no code shear equations; no in-repo strut-limit identity",
-    "Do not assume a compression-strut limit is universal across EN 1992 generations. Out of bounded v1 until a governed resistance rule exists.",
-  ),
-  architectureBlocked(
-    "EU_C5_SHEAR_AXIAL_DEPENDENCY",
-    "SHEAR",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "EU_CONCRETE_SHEAR_PROFILE does not bind an axial-force shear modifier",
-    "Axial-force dependency is not fabricated. Out of bounded v1.",
-  ),
-  architectureBlocked(
-    "EU_C5_PUNCHING_REINFORCEMENT_CONTRIBUTION",
-    "PUNCHING",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "D1E-0 punching framework without reinforcement punching equation",
-    "Bounded v1 is concrete-only interior punching if a perimeter rule is later bound.",
-  ),
-  architectureBlocked(
-    "EU_C5_PUNCHING_MAXIMUM_RESISTANCE",
-    "PUNCHING",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "No governed maximum punching-resistance identity in-repository",
-    "Out of bounded v1. Not guessed from beam-shear compression limits.",
-  ),
-  architectureBlocked(
-    "EU_C5_PUNCHING_OPENING_EFFECTS",
-    "PUNCHING",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "D1E-0 does not define opening corrections",
-    "Opening effects remain out of bounded v1 pending governed authority.",
-  ),
-  architectureBlocked(
-    "EU_C5_PUNCHING_EDGE_CORNER",
-    "PUNCHING",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "D1E-0 does not define edge/corner punching geometry",
-    "Edge and corner support remain out of bounded v1.",
-  ),
-  architectureBlocked(
-    "EU_C5_PUNCHING_ECCENTRICITY",
-    "PUNCHING",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "D1E-0 does not define moment-transfer/eccentricity punching corrections",
-    "Eccentricity/moment transfer remain out of bounded v1.",
-  ),
-  architectureBlocked(
-    "EU_C5_TORSION_THRESHOLD",
-    "TORSION",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "No governed torsion ignore/threshold identity in-repository",
-    "Do not assume a torsion-may-be-ignored criterion without authority.",
-  ),
-  architectureBlocked(
-    "EU_C5_TORSION_REINFORCEMENT",
-    "TORSION",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "CONCRETE_TRANSVERSE_REINFORCEMENT_MODEL is not a torsion-reinforcement equation",
-    "Torsional reinforcement remains out of bounded v1.",
-  ),
-  architectureBlocked(
-    "EU_C5_TORSION_THIN_WALL_GEOMETRY",
-    "TORSION",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "D1E-1 section geometry is not an equivalent thin-wall torsion model",
-    "Do not invent teff/Ak or any equivalent thin-wall construction without a governed model.",
-  ),
-  architectureBlocked(
-    "EU_C5_TORSION_SHEAR_INTERACTION",
-    "TORSION",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "No governed V+T interaction identity in-repository",
-    "Ungoverned combined shear-torsion interaction is forbidden.",
-  ),
-  architectureBlocked(
-    "EU_C5_TORSION_FLEXURE_INTERACTION",
-    "TORSION",
-    "NOT_REQUIRED_FOR_BOUNDED_SCOPE",
-    "C2/C3/C4 resistance methods are not torsion interaction equations",
-    "Ungoverned M+T or N+M+V+T interaction is forbidden. C2/C3/C4 results are not mutated.",
-  ),
-];
+const PUNCH_VMIN = record(
+  "EU_C5_PUNCHING_DECLARED_VMIN",
+  "PUNCHING",
+  "IMPLEMENTATION_READY",
+  {
+    authorityType: "AUTHORITATIVE_STANDARD_DERIVED",
+    source: "INFOGRAPH_EN1992_PUNCHING",
+    publisher: "InfoGraph",
+    sourceType: "ENGINEERING_SOFTWARE_REFERENCE",
+    parameterIds: ["v_min_coefficient"],
+    units: "dimensionless",
+    applicability: "same recommended minimum-stress expression as shear; coefficient declared",
+    nationalAnnexDependency: true,
+    ndpDependency: true,
+    ndpClassification: "NDP_DEPENDENT",
+    independentCorroboration: ["SOFISTIK_DCE_EN7"],
+    validationState: "NUMERICALLY_VALIDATED",
+    implementable: true,
+    operations: ["STRESS_MIN_DECLARED_COEFFICIENT_TIMES_K_POW_3_2_TIMES_SQRT_FCK"],
+    provenance: "The recommended minimum expression is shared as a stress identity. It is not a reuse of the beam shear force equation.",
+  },
+);
+
+function blocked(
+  ruleId: EuC5RuleId,
+  family: EuC5EvidenceRuleRecord["family"],
+  readiness: EuC5Readiness,
+  provenance: string,
+  ndpClassification: EuC5EvidenceRuleRecord["ndpClassification"] = "UNRESOLVED",
+): EuC5EvidenceRuleRecord {
+  return record(ruleId, family, readiness, {
+    authorityType: readiness === "SATISFIED_BY_EXISTING_RULE" ? "VALIDATED_ENGINEERING_REFERENCE" : "UNBOUND",
+    source: "D1E architecture / excluded source",
+    publisher: "RTB Engineering OS",
+    sourceType: "REPOSITORY_ARCHITECTURE_OR_EXCLUDED_SOURCE",
+    parameterIds: [],
+    units: null,
+    applicability: "outside the implemented C5 bounded methods",
+    nationalAnnexDependency: "UNRESOLVED",
+    ndpDependency: "UNRESOLVED",
+    ndpClassification,
+    independentCorroboration: ["packages/engineering-os/src/structural-demand"],
+    validationState: "NOT_STARTED",
+    implementable: false,
+    operations: [readiness],
+    provenance,
+  });
+}
 
 export const EU_C5_EVIDENCE_RULE_RECORDS: readonly EuC5EvidenceRuleRecord[] = [
-  SHEAR_WITHOUT,
-  SHEAR_GEOMETRY,
-  GAMMA_C,
-  CONCRETE_DESIGN,
-  PUNCHING_PERIMETER,
-  PUNCHING_RESISTANCE,
-  PUNCHING_GAMMA_C,
-  TORSION_RESISTANCE,
-  TORSION_DEMAND,
-  ...OPTIONAL,
+  READY_SHEAR,
+  GEOMETRY,
+  VMIN,
+  CRDC,
+  PUNCH_PERIMETER,
+  PUNCH_RESISTANCE,
+  PUNCH_CRDC,
+  PUNCH_VMIN,
+  blocked("EU_C5_TORSION_RESISTANCE", "TORSION", "BLOCKED_RULE_AUTHORITY", "No complete standalone torsion resistance is triangulated without an interaction equation or an ungoverned thin-wall resistance."),
+  blocked("EU_C5_TORSION_DEMAND", "TORSION", "BLOCKED_RULE_AUTHORITY", "D1C torsion status is NOT_IMPLEMENTED. C5 does not create a torsion analysis engine."),
+  blocked("EU_C5_SHEAR_RESISTANCE_WITH_TRANSVERSE_REINFORCEMENT", "SHEAR", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Strut-and-tie shear reinforcement is outside the bounded v1 method."),
+  blocked("EU_C5_SHEAR_STRUT_OR_COMPRESSION_LIMIT", "SHEAR", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Web-crushing resistance is outside the without-reinforcement method."),
+  blocked("EU_C5_SHEAR_AXIAL_DEPENDENCY", "SHEAR", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Bounded v1 is zero axial. A non-zero axial force fails closed. k1 is not packed."),
+  blocked("EU_C1_PARTIAL_FACTOR_GAMMA_C", "SHEAR", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "CRd,c is the declared NDP. Gamma_c is not applied a second time."),
+  blocked("EU_C1_CONCRETE_DESIGN_PROPERTIES", "SHEAR", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "The bounded expression uses fck, not fcd."),
+  blocked("EU_C5_SHEAR_SECOND_GENERATION_MODEL", "SHEAR", "BLOCKED_PROFILE_IDENTITY", "Mancini bridge slides use a different size-factor length unit and coefficient and are not mixed into the first-generation method.", "UNRESOLVED"),
+  blocked("EU_C5_VMIN_NATIONAL_EXPRESSION_ALTERNATIVE", "SHEAR", "BLOCKED_NDP", "A German-practice minimum expression with a different power of k is not selected and is not averaged with the recommended expression.", "NDP_DEPENDENT"),
+  blocked("EU_C5_PUNCHING_REINFORCEMENT_CONTRIBUTION", "PUNCHING", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Punching reinforcement is outside the concrete-only interior method."),
+  blocked("EU_C5_PUNCHING_MAXIMUM_RESISTANCE", "PUNCHING", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "The column-face maximum stress check is outside the basic-perimeter method."),
+  blocked("EU_C5_PUNCHING_OPENING_EFFECTS", "PUNCHING", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Openings are out of the interior rectangular method."),
+  blocked("EU_C5_PUNCHING_EDGE_CORNER", "PUNCHING", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Edge and corner perimeters are not the interior rectangle."),
+  blocked("EU_C5_PUNCHING_ECCENTRICITY", "PUNCHING", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Beta is an explicit input. Moment-transfer beta is not calculated."),
+  blocked("EU_C5_TORSION_THRESHOLD", "TORSION", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "No torsion threshold is implemented."),
+  blocked("EU_C5_TORSION_REINFORCEMENT", "TORSION", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "Torsional reinforcement is not implemented."),
+  blocked("EU_C5_TORSION_THIN_WALL_GEOMETRY", "TORSION", "BLOCKED_RULE_AUTHORITY", "Thin-wall geometry is not implemented because the torsion resistance dependency set is unresolved."),
+  blocked("EU_C5_TORSION_SHEAR_INTERACTION", "TORSION", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "No V+T interaction is implemented."),
+  blocked("EU_C5_TORSION_FLEXURE_INTERACTION", "TORSION", "NOT_REQUIRED_FOR_BOUNDED_SCOPE", "No M+T or N+M+V+T interaction is implemented."),
 ];
 
 export function assertEuC5EvidenceLoaded(): void {
   const ids = EU_C5_EVIDENCE_RULE_RECORDS.map((row) => `${row.family}:${row.ruleId}`);
-  if (new Set(ids).size !== ids.length) {
-    throw new Error("EU C5 evidence records must be unique per family and rule");
-  }
+  if (new Set(ids).size !== ids.length) throw new Error("EU C5 evidence records must be unique per family and rule");
   const required = [
     ...EU_C5_SHEAR_REQUIRED_RULE_IDS.map((ruleId) => `SHEAR:${ruleId}`),
     ...EU_C5_PUNCHING_REQUIRED_RULE_IDS.map((ruleId) => `PUNCHING:${ruleId}`),
@@ -303,10 +303,12 @@ export function assertEuC5EvidenceLoaded(): void {
   }
   for (const row of EU_C5_EVIDENCE_RULE_RECORDS) {
     if (row.packConstantValue != null) throw new Error(`EU C5 pack constant on ${row.ruleId}`);
-    if (row.implementable) throw new Error(`EU C5 must not mark ${row.ruleId} implementable without governed formula source`);
     if (!row.source || !row.publisher || !row.sourceType) throw new Error(`EU C5 ${row.ruleId} missing source identity`);
-    if (row.readiness === "IMPLEMENTATION_READY") {
-      throw new Error(`EU C5 ${row.ruleId} must not be IMPLEMENTATION_READY without a governed coefficient source`);
+    if (row.readiness === "IMPLEMENTATION_READY" && !row.implementable) {
+      throw new Error(`EU C5 ${row.ruleId} marked ready but not implementable`);
+    }
+    if (row.readiness !== "IMPLEMENTATION_READY" && row.implementable) {
+      throw new Error(`EU C5 ${row.ruleId} must not be implementable while unresolved`);
     }
   }
 }
