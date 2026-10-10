@@ -276,10 +276,10 @@ export const RISKS_REMAINING_AFTER_EU_C5 = [
   "D0-R12",
 ] as const;
 
-export const EU_C5_NEXT_PHASE_TYPE = "LICENSED_OR_VALIDATED_PROFILE_INPUT_REQUIRED" as const;
+export const EU_C5_NEXT_PHASE_TYPE = "HUMAN_PROFILE_INPUT_REQUIRED" as const;
 export const EU_C5_CANONICAL_NEXT_PHASE = "EOS-D1E-EU-C5-EVIDENCE" as const;
 export const EU_C5_CANONICAL_NEXT_PHASE_SCOPE =
-  "LICENSED_OR_VALIDATED_PROFILE_INPUT_REQUIRED before EOS-D1E-EU-C6: a human must bind one EN 1992 national annex torsion parameter set; shear and punching methods stay unchanged" as const;
+  "HUMAN_PROFILE_INPUT_REQUIRED before EOS-D1E-EU-C6: a human must supply one EN 1992 national annex torsion parameter set; shear and punching methods stay unchanged" as const;
 
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C5 = false as const;
 export const EOS_D1E_EU_C5_CLOSED = true as const;
@@ -290,6 +290,10 @@ export const EU_C5_T2_FINAL_TORSION_DISPOSITION = "BLOCKED_REQUIRED_NATIONAL_ANN
 export const EU_C5_T2_SELECTED_PROFILE_ID = "NONE" as const;
 export const EU_C5_T2_IMPLEMENTATION_AUTHORIZED = false as const;
 export const EU_C5_T2_FINAL_EXTERNAL_ACTION_REQUIRED = "LICENSED_OR_VALIDATED_PROFILE_INPUT_REQUIRED" as const;
+export const EU_C5_T3_EXTERNAL_PROFILE_INPUT_PRESENT = false as const;
+export const EU_C5_T3_PROFILE_TORSION_BINDING_COMPLETE = false as const;
+export const EU_C5_T3_TORSION_METHOD_COUNT = 0 as const;
+export const EU_C5_T3_NEXT_ACTION = "HUMAN_PROFILE_INPUT_REQUIRED" as const;
 export const EU_C5_VERDICT = "PASS_WITH_LIMITATIONS" as const;
 export const EU_C5_IMPLEMENTATION_VERSION = "d1e-eu-c5.1" as const;
 export const EU_C5_PARAMETER_VERSION = "d1e-eu-c5.1" as const;
