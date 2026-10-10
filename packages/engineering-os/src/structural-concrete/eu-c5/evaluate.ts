@@ -284,11 +284,21 @@ export function evaluateEuC5Punching(input: EuC5EvaluateInput): EuC5CheckResult 
 export function evaluateEuC5Torsion(input: EuC5EvaluateInput): EuC5CheckResult {
   assertEuC5FailClosed();
   consumeConcreteDemandHandoff(input.demand);
-  if (D1C_TORSION_DEMAND_REUSED !== "NOT_AVAILABLE") {
-    throw new Error("C5 must report D1C torsion demand as NOT_AVAILABLE");
+  if (D1C_TORSION_DEMAND_REUSED !== "EXPLICIT_TRANSPORT_ONLY") {
+    throw new Error("C5 torsion demand reuse must stay explicit transport only");
   }
-  if (input.demand.torsion.status !== "NOT_IMPLEMENTED") {
+  if (input.demand.torsion.status !== "NOT_IMPLEMENTED" && input.demand.torsion.status !== "TRANSPORTED") {
     throw new Error("C5 must not consume a fabricated torsion demand");
+  }
+  if (input.demand.torsion.status === "TRANSPORTED") {
+    return undetermined(
+      "TORSION",
+      input,
+      { value: input.demand.torsion.signedValueNm, unit: "N.m", source: "D1C_EXPLICIT_TORSION_TRANSPORT" },
+      "BLOCKED_RULE_AUTHORITY",
+      EU_C5_TORSION_BLOCKED_RULE_IDS,
+      ["transported torsional action is not a resistance; strut-angle profile and NDP remain unresolved"],
+    );
   }
   return undetermined(
     "TORSION",

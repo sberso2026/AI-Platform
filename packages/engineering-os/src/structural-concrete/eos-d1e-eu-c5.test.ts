@@ -208,7 +208,7 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
     expect(EU_C5_UNGOVERNED_COMBINED_ACTION_INTERACTION).toBe(false);
     expect(D1C_SHEAR_DEMAND_REUSED).toBe(true);
     expect(D1C_PUNCHING_ACTIONS_REUSED).toBe("NOT_APPLICABLE");
-    expect(D1C_TORSION_DEMAND_REUSED).toBe("NOT_AVAILABLE");
+    expect(D1C_TORSION_DEMAND_REUSED).toBe("EXPLICIT_TRANSPORT_ONLY");
     const blocked = EU_C5_EVIDENCE_RULE_RECORDS.filter((row) => row.readiness === "BLOCKED_RULE_AUTHORITY");
     expect(blocked.every((row) => row.implementable === false && row.packConstantValue === null)).toBe(true);
     expect(EU_C5_PARAMETER_PROVENANCE.some((row) => row.value === 0.18 || row.value === 0.035 || row.value === 1.5)).toBe(false);
@@ -299,14 +299,15 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
     expect(EU_C5_SHEAR_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(EU_C5_PUNCHING_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(EU_C5_TORSION_BOUNDED_CAPABILITY_COMPLETE).toBe(false);
-    expect(EU_C5_NEXT_PHASE_TYPE).toBe("TARGETED_C5_EVIDENCE_RECOVERY");
+    expect(EU_C5_NEXT_PHASE_TYPE).toBe("BLOCKED_UNTIL_TORSION_PROFILE_BOUND");
     expect(EU_C5_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
     expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/torsion/i);
     expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/shear/i);
     expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
     expect(RECOMMENDED_D1E_NEXT_PHASE_SCOPE).toMatch(/shear|punching|torsion/i);
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5-EVIDENCE")?.status).toBe("THIS_PHASE");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5-EVIDENCE")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C5-T1")?.status).toBe("CLOSED");
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.RULE_EVIDENCE")).toBe(true);
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.SHEAR")).toBe(true);
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.PUNCHING")).toBe(true);

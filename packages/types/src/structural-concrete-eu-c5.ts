@@ -127,7 +127,7 @@ export const EU_C5_PUNCHING_FAIL_CLOSED_AUDIT = "PASS" as const;
 export const EU_C5_TORSION_RULE_CLASSIFICATION_COMPLETE = true as const;
 export const EU_C5_TORSION_IMPLEMENTATION_READY_RULE_IDS = [] as const;
 export const EU_C5_TORSION_BLOCKED_RULE_IDS = ["EU_C5_TORSION_RESISTANCE", "EU_C5_TORSION_DEMAND"] as const;
-export const D1C_TORSION_DEMAND_REUSED = "NOT_AVAILABLE" as const;
+export const D1C_TORSION_DEMAND_REUSED = "EXPLICIT_TRANSPORT_ONLY" as const;
 export const EU_C5_TORSION_GEOMETRY_DERIVATION_GOVERNED = "NOT_IMPLEMENTED" as const;
 export const EU_C5_TORSION_GEOMETRY_PARAMETER_GUESSED = false as const;
 export const EU_C5_TORSION_INTERACTION_RULE_STATE = "OUT_OF_SCOPE" as const;
@@ -276,10 +276,10 @@ export const RISKS_REMAINING_AFTER_EU_C5 = [
   "D0-R12",
 ] as const;
 
-export const EU_C5_NEXT_PHASE_TYPE = "TARGETED_C5_EVIDENCE_RECOVERY" as const;
+export const EU_C5_NEXT_PHASE_TYPE = "BLOCKED_UNTIL_TORSION_PROFILE_BOUND" as const;
 export const EU_C5_CANONICAL_NEXT_PHASE = "EOS-D1E-EU-C5-EVIDENCE" as const;
 export const EU_C5_CANONICAL_NEXT_PHASE_SCOPE =
-  "Recover governed first-generation EN 1992 torsion resistance and a D1C torsional action; shear-with-reinforcement, punching edge/opening/eccentricity, and National Annex expressions remain outside the implemented C5 shear and punching methods" as const;
+  "EOS-D1E-EU-C6 stays blocked until one explicit EN 1992 national profile binds torsion strut-angle bounds, the strength-reduction factor, and the shear-torsion interaction form; implemented shear and punching methods stay unchanged" as const;
 
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E_EU_C5 = false as const;
 export const EOS_D1E_EU_C5_CLOSED = true as const;

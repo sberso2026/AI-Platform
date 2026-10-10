@@ -32,7 +32,7 @@ Returns `UNSUPPORTED_CASE` (fail closed, no fabricated numbers):
 - missing/unknown units
 - second-order, nonlinear, dynamic, seismic engines
 - general frame/matrix FEA
-- torsion (never reported as zero)
+- analytical torsion (never calculated, and never reported as zero). An externally supplied member torsion may be validated and transported; the engine does not derive it from loads, eccentricity, stiffness, or a structural model.
 - deflection without explicit `E` and `I` (result field `NOT_IMPLEMENTED`, not `0`)
 - jurisdiction code factors invented by the generic engine
 

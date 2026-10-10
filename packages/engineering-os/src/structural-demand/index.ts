@@ -18,4 +18,6 @@ export {
 } from "./engine";
 export { assertDemandMethodsNotCertifiedByUnitTests, demandMethodRecord, STRUCTURAL_DEMAND_METHOD_REGISTRY } from "./methods";
 export { evaluateLoadPrimitive, superposePrimitives } from "./statics";
+export { transportGovernedTorsionalAction } from "./torsion-action";
+export type { GovernedTorsionalActionDraft, TransportedTorsionalAction } from "./torsion-action";
 export { nearlyEqual } from "./units";

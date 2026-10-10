@@ -176,7 +176,7 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "torsion",
     GLOBAL: none("torsion absent"),
     AU: none("no AU torsion"),
-    EU: none("C5 evidence audit; no EU torsion numerical method; D1C torsion demand unavailable"),
+    EU: none("C5-T1 explicit D1C torsion transport only; no EU torsion numerical method"),
     US: none("no US torsion"),
   },
   {

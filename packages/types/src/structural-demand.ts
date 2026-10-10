@@ -20,6 +20,14 @@ export const HUMAN_REVIEW_REQUIRED_FOR_GOVERNED_DEMAND = true as const;
 export const EU_ONLY_DEMAND_ENGINE = false as const;
 export const AU_ONLY_DEMAND_ENGINE = false as const;
 export const TORSION_DEMAND_SCOPE = "NOT_IMPLEMENTED" as const;
+export const D1C_TORSIONAL_ACTION_ID = "MEMBER_TORSION" as const;
+export const D1C_TORSIONAL_ACTION_TYPE = "EXPLICIT_GOVERNED_ACTION" as const;
+export const D1C_TORSIONAL_ACTION_UNIT = "N.m" as const;
+export const D1C_TORSIONAL_ACTION_AXIS = "MEMBER_X" as const;
+export const D1C_TORSIONAL_ACTION_SIGN_CONVENTION = "RIGHT_HAND_ABOUT_MEMBER_X_INCREASING" as const;
+export const TORSIONAL_ACTION_TRANSPORT_IMPLEMENTED = true as const;
+export const GENERAL_TORSIONAL_ANALYSIS_IMPLEMENTED = false as const;
+export const EU_SPECIFIC_TORSION_ACTION_CREATED = false as const;
 
 export const STRUCTURAL_ACTION_CATEGORIES = [
   "DEAD",
@@ -104,6 +112,7 @@ export const STRUCTURAL_SIGN_CONVENTION = {
   deflectionPositive: "downward",
   appliedMomentPositive: "clockwise when x increases to the right",
   axialPositive: "tension",
+  torsionPositive: "right-hand rule about member x, thumb toward increasing x",
 } as const;
 
 export type StructuralQuantity = {
@@ -197,7 +206,25 @@ export type StructuralDemandResult = {
   moment: StructuralEnvelopeValue;
   axial: { valueN: number; unit: "N"; method: "AXIAL_DIRECT" } | { status: "NO_AXIAL_COMPONENTS"; valueN: 0 };
   deflection: StructuralEnvelopeValue | { status: "NOT_IMPLEMENTED"; reason: string };
-  torsion: { status: "NOT_IMPLEMENTED" };
+  torsion:
+    | { status: "NOT_IMPLEMENTED" }
+    | {
+        status: "TRANSPORTED";
+        actionId: typeof D1C_TORSIONAL_ACTION_ID;
+        actionType: typeof D1C_TORSIONAL_ACTION_TYPE;
+        signedValueNm: number;
+        unit: typeof D1C_TORSIONAL_ACTION_UNIT;
+        axis: typeof D1C_TORSIONAL_ACTION_AXIS;
+        signConvention: typeof D1C_TORSIONAL_ACTION_SIGN_CONVENTION;
+        combinationId: string;
+        provenance: {
+          evidenceId: string;
+          sourceDiscipline: string;
+          sourceObjectId: string;
+          revision: string;
+        };
+        fingerprint: string;
+      };
   stiffness: { EPa: number; I_m4: number } | null;
   equilibriumResidual: { forceN: number; momentNm: number };
   outputClass: "DETERMINISTIC_DEMAND";

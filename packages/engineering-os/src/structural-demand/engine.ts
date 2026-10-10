@@ -12,6 +12,8 @@ import {
   D1C_CAPACITY_ENGINE_PRESENT,
   D1C_DESIGN_PASS_FAIL_PRESENT,
   ENGINEERING_NUMERICAL_TOLERANCE,
+  GENERAL_FEA_IMPLEMENTED,
+  GENERAL_TORSIONAL_ANALYSIS_IMPLEMENTED,
   HUMAN_REVIEW_REQUIRED_FOR_GOVERNED_DEMAND,
   LLM_DEMAND_RESULT_AUTHORITY,
   TORSION_DEMAND_SCOPE,
@@ -21,6 +23,7 @@ import { governedProvenance } from "../structural-domain/catalog";
 import { STRUCTURAL_SOLVER_BOUNDARY } from "../work-generator/structural/freeze";
 import { scaleByFactor } from "./combine";
 import { evaluateLoadPrimitive, superposePrimitives, type StiffnessSI } from "./statics";
+import { transportGovernedTorsionalAction, type GovernedTorsionalActionDraft } from "./torsion-action";
 import { toEPa, toIm4, toLengthM } from "./units";
 
 export type DemandAnalysisInput = {
@@ -35,6 +38,7 @@ export type DemandAnalysisInput = {
   standardContext: StructuralStandardContext | "JURISDICTION_NEUTRAL_STATICS";
   stiffness?: { E: { value: number; unit: string }; I: { value: number; unit: string } } | null;
   evidenceRefs: StructuralEvidenceBinding[];
+  governedTorsion?: GovernedTorsionalActionDraft | null;
 };
 
 function resolveContext(context: DemandAnalysisInput["standardContext"]): StructuralStandardContext {
@@ -75,6 +79,9 @@ export function runDeterministicDemand(input: DemandAnalysisInput): StructuralDe
     throw new Error("D1C must not emit capacity or design pass/fail");
   }
   if (TORSION_DEMAND_SCOPE !== "NOT_IMPLEMENTED") throw new Error("torsion demand is not implemented");
+  if (GENERAL_TORSIONAL_ANALYSIS_IMPLEMENTED || GENERAL_FEA_IMPLEMENTED) {
+    throw new Error("torsional analysis and FEA are not implemented");
+  }
   if (!HUMAN_REVIEW_REQUIRED_FOR_GOVERNED_DEMAND) throw new Error("governed demand requires human review");
   if (input.spanUnit !== "m") throw new Error("unsupported unit; span must be explicit metres");
   const L = toLengthM(input.spanM, input.spanUnit);
@@ -163,7 +170,12 @@ export function runDeterministicDemand(input: DemandAnalysisInput): StructuralDe
       ? { status: "NO_AXIAL_COMPONENTS", valueN: 0 }
       : { valueN: combined.axialN, unit: "N", method: "AXIAL_DIRECT" },
     deflection,
-    torsion: { status: "NOT_IMPLEMENTED" },
+    torsion: input.governedTorsion
+      ? transportGovernedTorsionalAction(input.governedTorsion, {
+          combinationId: input.combinationId,
+          evidenceRefs: input.evidenceRefs,
+        })
+      : { status: "NOT_IMPLEMENTED" },
     stiffness,
     equilibriumResidual: { forceN: forceResidual, momentNm: momentResidual },
     outputClass: "DETERMINISTIC_DEMAND",
