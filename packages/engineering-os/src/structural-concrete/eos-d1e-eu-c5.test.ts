@@ -294,12 +294,12 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
   it("closes C5 with limitations and keeps the next phase inside torsion evidence recovery", () => {
     expect(EU_C5_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(EOS_D1E_EU_C5_CLOSED).toBe(true);
-    expect(EU_C5_READY_FOR_NEXT_PHASE).toBe(true);
+    expect(EU_C5_READY_FOR_NEXT_PHASE).toBe(false);
     expect(EU_C5_BLOCKER).toMatch(/TORSION_BLOCKED_RULE_AUTHORITY/);
     expect(EU_C5_SHEAR_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(EU_C5_PUNCHING_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(EU_C5_TORSION_BOUNDED_CAPABILITY_COMPLETE).toBe(false);
-    expect(EU_C5_NEXT_PHASE_TYPE).toBe("BLOCKED_UNTIL_TORSION_PROFILE_BOUND");
+    expect(EU_C5_NEXT_PHASE_TYPE).toBe("LICENSED_OR_VALIDATED_PROFILE_INPUT_REQUIRED");
     expect(EU_C5_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
     expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/torsion/i);
     expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/shear/i);
