@@ -26,6 +26,7 @@ export function euC5ResultFingerprint(
     failReason: result.failReason,
     demandResultId,
     combinationId,
+    ...(result.torsionDetail ? { torsionDetail: result.torsionDetail } : {}),
   });
 }
 

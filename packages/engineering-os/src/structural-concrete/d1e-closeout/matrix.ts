@@ -176,7 +176,7 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "torsion",
     GLOBAL: none("torsion absent"),
     AU: none("no AU torsion"),
-    EU: none("C5-T3R reference torsion profile bound; no EU torsion numerical method"),
+    EU: none("C5-T4 rectangular reference torsion method numerically validated; not formal conformance"),
     US: none("no US torsion"),
   },
   {

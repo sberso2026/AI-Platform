@@ -218,7 +218,15 @@ export const EU_C5_T3R_SOURCE_CONFLICT_RECORDS = [
   { id: "REINFORCEMENT_ANGLE_PLACEMENT", cause: "DIFFERENT_PROFILE", selected: "COT_IN_TRANSVERSE_DENOMINATOR", rejected: "KIT_TAN_DENOMINATOR" },
 ] as const;
 
+/** Bound closed-shear-flow denominator shared by geometry, resistance, and reinforcement. */
+export const EU_C5_T3R_CLOSED_SHEAR_FLOW_FACTOR = 2 as const;
 export const EU_C5_T3R_CRACKING_THRESHOLD_STATE = "NOT_REQUIRED_FOR_SELECTED_BOUNDED_METHOD" as const;
+
+export function euC5TorsionProfileNumber(parameterId: string): number {
+  const row = EU_C5_T3R_TORSION_PARAMETERS.find((item) => item.parameterId === parameterId);
+  if (row?.value == null) throw new Error(`torsion profile parameter ${parameterId} is not a bound number`);
+  return row.value;
+}
 export const EU_C5_T3R_VT_INTERACTION_STATE = "MANDATORY_AND_IMPLEMENTATION_READY" as const;
 
 export function resolveEuC5TorsionNationalProfile(): never {
@@ -289,7 +297,9 @@ export function resolveEuC5TorsionReferenceProfile(input: EuC5TorsionReferenceRe
   if (input.sectionKind === "HOLLOW" && !(input.actualWallThicknessMm != null && input.actualWallThicknessMm > 0)) {
     throw new Error("MISSING_PARAMETER");
   }
-  if (!Number.isFinite(input.cotTheta) || input.cotTheta < 1 || input.cotTheta > 2.5) {
+  const cotMin = euC5TorsionProfileNumber("cotThetaMin");
+  const cotMax = euC5TorsionProfileNumber("cotThetaMax");
+  if (!Number.isFinite(input.cotTheta) || input.cotTheta < cotMin || input.cotTheta > cotMax) {
     throw new Error("INVALID_STRUT_ANGLE_DOMAIN");
   }
   return { profileId: PROFILE_ID, generation: GENERATION, resistanceComputed: false };

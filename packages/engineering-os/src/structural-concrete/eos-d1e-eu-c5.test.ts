@@ -199,11 +199,11 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
     expect([...EU_C5_TORSION_BLOCKED_RULE_IDS]).toEqual(["EU_C5_TORSION_RESISTANCE", "EU_C5_TORSION_DEMAND"]);
     expect(EU_C5_SHEAR_RULE_AUTHORITY_COMPLETE).toBe(true);
     expect(EU_C5_PUNCHING_RULE_AUTHORITY_COMPLETE).toBe(true);
-    expect(EU_C5_TORSION_RULE_AUTHORITY_COMPLETE).toBe(false);
+    expect(EU_C5_TORSION_RULE_AUTHORITY_COMPLETE).toBe(true);
     expect(EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_STATE).toBe("IMPLEMENTED");
     expect(EU_C5_SHEAR_WITH_REINFORCEMENT_METHOD_STATE).toBe("OUT_OF_SCOPE");
     expect(EU_C5_PUNCHING_CONTROL_PERIMETER_GOVERNED).toBe("YES");
-    expect(EU_C5_TORSION_INTERACTION_RULE_STATE).toBe("OUT_OF_SCOPE");
+    expect(EU_C5_TORSION_INTERACTION_RULE_STATE).toBe("IMPLEMENTED");
     expect(EU_C5_UNGOVERNED_TORSION_INTERACTION_USED).toBe(false);
     expect(EU_C5_UNGOVERNED_COMBINED_ACTION_INTERACTION).toBe(false);
     expect(D1C_SHEAR_DEMAND_REUSED).toBe(true);
@@ -246,7 +246,7 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
     expect(EU_C5_SELF_REFERENTIAL_BENCHMARKS).toBe(false);
     expect(EU_C5_SHEAR_GOLDEN_CASES).toBe("PASS");
     expect(EU_C5_PUNCHING_GOLDEN_CASES).toBe("PASS");
-    expect(EU_C5_TORSION_GOLDEN_CASES).toBe("NOT_IMPLEMENTED");
+    expect(EU_C5_TORSION_GOLDEN_CASES).toBe("PASS");
     expect(EU_C5_BENCHMARK_COVERAGE).toBe("PASS");
     expect(EU_C5_EXTERNAL_SOFTWARE_COMPARISON).toBe("NOT_AVAILABLE");
   });
@@ -257,7 +257,7 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
     expect(EU_C5_IMPLEMENTED_SHEAR_METHOD_COUNT).toBe(EU_C5_NUMERICALLY_VALIDATED_SHEAR_METHOD_COUNT);
     expect(EU_C5_IMPLEMENTED_PUNCHING_METHOD_COUNT).toBe(EU_C5_NUMERICALLY_VALIDATED_PUNCHING_METHOD_COUNT);
     expect(EU_C5_IMPLEMENTED_TORSION_METHOD_COUNT).toBe(EU_C5_NUMERICALLY_VALIDATED_TORSION_METHOD_COUNT);
-    expect(EU_C5_IMPLEMENTED_METHOD_IDS).toHaveLength(2);
+    expect(EU_C5_IMPLEMENTED_METHOD_IDS).toHaveLength(3);
     expect(EU_C5_IMPLEMENTED_RULE_IDS.length).toBeGreaterThan(0);
     expect(NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED).toBe(true);
     expect(NUMERICAL_CONCRETE_CODE_SHEAR_IMPLEMENTED).toBe(false);
@@ -294,13 +294,13 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
   it("closes C5 with limitations and keeps the next phase inside torsion evidence recovery", () => {
     expect(EU_C5_VERDICT).toBe("PASS_WITH_LIMITATIONS");
     expect(EOS_D1E_EU_C5_CLOSED).toBe(true);
-    expect(EU_C5_READY_FOR_NEXT_PHASE).toBe(false);
-    expect(EU_C5_BLOCKER).toMatch(/TORSION_BLOCKED_RULE_AUTHORITY/);
+    expect(EU_C5_READY_FOR_NEXT_PHASE).toBe(true);
+    expect(EU_C5_BLOCKER).toBe("NONE");
     expect(EU_C5_SHEAR_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(EU_C5_PUNCHING_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
-    expect(EU_C5_TORSION_BOUNDED_CAPABILITY_COMPLETE).toBe(false);
-    expect(EU_C5_NEXT_PHASE_TYPE).toBe("HUMAN_PROFILE_INPUT_REQUIRED");
-    expect(EU_C5_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
+    expect(EU_C5_TORSION_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
+    expect(EU_C5_NEXT_PHASE_TYPE).toBe("EU_C6");
+    expect(EU_C5_CANONICAL_NEXT_PHASE).toBe("EOS-D1E-EU-C6");
     expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/torsion/i);
     expect(EU_C5_CANONICAL_NEXT_PHASE_SCOPE).toMatch(/shear/i);
     expect(RECOMMENDED_D1E_NEXT_PHASE).toBe("EOS-D1E-EU-C5-EVIDENCE");
@@ -312,7 +312,7 @@ describe("EOS-D1E-EU-C5 shear / punching / torsion rule-authority audit", () => 
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.SHEAR")).toBe(true);
     expect(CONCRETE_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1E.EU.C5.PUNCHING")).toBe(true);
     expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-VD-SHEAR")?.blockingState).toBe("PARTIAL");
-    expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-VD-TORSION")?.blockingState).toBe("UNRESOLVED");
+    expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-VD-TORSION")?.blockingState).toBe("PARTIAL");
     expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-C5-VD-EVIDENCE")?.blockingState).toBe("PARTIAL");
     expect([...EU_C5_VALIDATION_DEBT_REDUCED_ITEMS]).toEqual(["D1E-EU-VD-SHEAR", "D1E-EU-VD-PUNCHING", "D1E-EU-C5-VD-EVIDENCE"]);
     expect(RISKS_CLOSED_BY_EU_C5).toBe("NONE");

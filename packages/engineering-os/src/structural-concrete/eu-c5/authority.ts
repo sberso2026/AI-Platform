@@ -46,8 +46,11 @@ export function assertEuC5AuthorityBoundary(): void {
   if (!NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED || NUMERICAL_PUNCHING_SHEAR_IMPLEMENTED) {
     throw new Error("C5 punching belongs to the EU adapter, not a common punching kernel");
   }
-  if (NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED || NUMERICAL_CONCRETE_TORSION_IMPLEMENTED) {
-    throw new Error("C5 must not promote numerical torsion implementation");
+  if (NUMERICAL_CONCRETE_TORSION_IMPLEMENTED) {
+    throw new Error("C5 torsion belongs to the EU adapter, not a common torsion kernel");
+  }
+  if (!NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED) {
+    throw new Error("C5 torsion method flag drifted");
   }
   if (EU_C5_IMPLEMENTED_SHEAR_METHOD_COUNT !== EU_C5_NUMERICALLY_VALIDATED_SHEAR_METHOD_COUNT) {
     throw new Error("implemented shear methods must be numerically validated");
@@ -55,10 +58,10 @@ export function assertEuC5AuthorityBoundary(): void {
   if (EU_C5_IMPLEMENTED_PUNCHING_METHOD_COUNT !== EU_C5_NUMERICALLY_VALIDATED_PUNCHING_METHOD_COUNT) {
     throw new Error("implemented punching methods must be numerically validated");
   }
-  if (EU_C5_IMPLEMENTED_TORSION_METHOD_COUNT !== 0 || EU_C5_NUMERICALLY_VALIDATED_TORSION_METHOD_COUNT !== 0) {
-    throw new Error("torsion methods must remain unimplemented");
+  if (EU_C5_IMPLEMENTED_TORSION_METHOD_COUNT !== 1 || EU_C5_NUMERICALLY_VALIDATED_TORSION_METHOD_COUNT !== 1) {
+    throw new Error("the bounded torsion method must be implemented and numerically validated");
   }
-  if (EU_C5_IMPLEMENTED_METHOD_IDS.length !== EU_C5_IMPLEMENTED_SHEAR_METHOD_COUNT + EU_C5_IMPLEMENTED_PUNCHING_METHOD_COUNT) {
+  if (EU_C5_IMPLEMENTED_METHOD_IDS.length !== EU_C5_IMPLEMENTED_SHEAR_METHOD_COUNT + EU_C5_IMPLEMENTED_PUNCHING_METHOD_COUNT + EU_C5_IMPLEMENTED_TORSION_METHOD_COUNT) {
     throw new Error("C5 method count drifted");
   }
   if (EU_C4_METHOD_IDS.length !== 1) {

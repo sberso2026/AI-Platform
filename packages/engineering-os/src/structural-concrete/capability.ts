@@ -333,7 +333,7 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "C5 implemented bounded shear without transverse reinforcement and interior rectangular punching; torsion remains blocked; not CONFORMANCE_VALIDATED",
+    limitations: "C5 implemented bounded shear, interior rectangular punching, and rectangular reference torsion; not CONFORMANCE_VALIDATED",
     dependencies: ["D1E.EU.C1B.RULE_AUTHORITY", "D1E.EU.ADAPTER", "D1C bounded demand"],
   },
   {
@@ -359,6 +359,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
     limitations: "interior rectangular loaded area; explicit punching force and beta; openings, edge/corner, and calculated eccentricity excluded; not CONFORMANCE_VALIDATED",
     dependencies: ["D1E.EU.C5.RULE_EVIDENCE"],
+  },
+  {
+    capabilityId: "D1E.EU.C5.TORSION",
+    jurisdiction: "EU",
+    method: "EU_RC_TORSION_EN1992_RECTANGULAR_REFERENCE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "FRAMEWORK_PLUS_BOUNDED_METHODS",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "rectangular solid or hollow reference profile; declared alpha_cc, gamma_c, gamma_s; designer cotTheta; reinforcement checked not designed; no M-T or N-T; engineer validation pending; not a national annex; not CONFORMANCE_VALIDATED",
+    dependencies: ["D1E.EU.C5.RULE_EVIDENCE", "D1E.EU.C1C.R1", "D1C MEMBER_TORSION"],
   },
 ];
 
@@ -489,7 +501,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-C5-VD-EVIDENCE", category: "SHEAR", jurisdiction: "EU", capability: "EU-C5 rule evidence", description: "C5 bound first-generation shear and interior punching evidence; torsion resistance and D1C torsion demand remain unbound", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed torsion resistance plus D1C torsional action", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
   { debtId: "D1E-EU-VD-SHEAR", category: "SHEAR", jurisdiction: "EU", capability: "EU shear", description: "C5 bounded without-reinforcement zero-axial shear is numerically validated; with-reinforcement, strut limit, and axial modification remain absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed shear reinforcement and axial modification rules", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
   { debtId: "D1E-EU-VD-PUNCHING", category: "PUNCHING_SHEAR", jurisdiction: "EU", capability: "EU punching", description: "C5 interior rectangular concrete punching is numerically validated; edge, corner, openings, eccentricity, and punching reinforcement remain absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed edge/corner/opening/eccentricity punching rules", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
-  { debtId: "D1E-EU-VD-TORSION", category: "TORSION", jurisdiction: "EU", capability: "EU torsion", description: "C5-T3R bound the first-generation recommended torsion reference profile. Numerical torsional resistance is still not implemented. Engineer validation and formal conformance remain pending.", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "T4 deterministic implementation and independent numerical validation of EU-EN1992-1-1-GEN1-TORSION-REFERENCE", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-T4" },
+  { debtId: "D1E-EU-VD-TORSION", category: "TORSION", jurisdiction: "EU", capability: "EU torsion", description: "C5-T4 numerically validated the rectangular reference torsion method. Engineer validation, national-annex conformance, and formal EN 1992 conformance remain pending.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "engineer review of the bound reference method; formal conformance is a separate gate", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C6" },
   { debtId: "D1E-EU-VD-CRACK", category: "CRACKING", jurisdiction: "EU", capability: "EU crack control", description: "EN 1992 crack control absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed crack-control method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-DEFLECTION", category: "DEFLECTION", jurisdiction: "EU", capability: "EU deflection", description: "EN 1992 deflection/stress-limitation absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed SLS methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "EU", capability: "EU time-dependent", description: "no default creep/shrinkage model", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed time-dependent models", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -566,6 +578,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C5-T2", scope: "National-annex discovery; no qualifying torsion profile; resistance not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C5-T3", scope: "Human national-annex binding for torsion; input absent", status: "BLOCKED" },
   { id: "EOS-D1E-EU-C5-T3R", scope: "First-generation torsion reference profile bound; resistance method not implemented", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C5-T4", scope: "Bounded rectangular torsion reference method numerically validated", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C6", scope: "RC second-order / stability", status: "OPEN" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {

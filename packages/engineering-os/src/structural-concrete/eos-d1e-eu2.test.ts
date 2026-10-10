@@ -634,7 +634,7 @@ describe("EOS-D1E-EU-2 bounded Eurocode uniaxial RC flexure", () => {
     expect(EU_BIAXIAL_CODE_DESIGN_IMPLEMENTED).toBe(false);
     expect(NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED).toBe(true);
     expect(NUMERICAL_EU_PUNCHING_SHEAR_IMPLEMENTED).toBe(true);
-    expect(NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED).toBe(false);
+    expect(NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED).toBe(true);
     expect(NUMERICAL_EU_CRACK_WIDTH_DESIGN_IMPLEMENTED).toBe(false);
     expect(EU_LONG_TERM_DEFLECTION_IMPLEMENTED).toBe(false);
     expect(NUMERICAL_EU_CODE_COVER_CHECK_IMPLEMENTED).toBe(false);

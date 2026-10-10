@@ -10,6 +10,8 @@ import {
   EU_C5_SHEAR_REQUIRED_RULE_IDS,
   EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_ID,
   EU_C5_TORSION_BLOCKED_RULE_IDS,
+  EU_C5_TORSION_RECTANGULAR_METHOD_ID,
+  EU_C5_T4_TORSION_RULE_IDS,
   EU_C5_VMIN_EXPRESSION_ID,
   EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
   NUMERICAL_EU_CONCRETE_SHEAR_IMPLEMENTED,
@@ -20,6 +22,7 @@ import { consumeConcreteDemandHandoff } from "../orchestration";
 import { assertEuC5FailClosed } from "./policy";
 import { euC5ResultFingerprint } from "./invalidation";
 import { concreteShearStressMPa, interiorRectangularControlPerimeterMm, shearResistanceN } from "./resistance";
+import { evaluateBoundedEuC5Torsion, type EuC5TorsionMethodInput } from "./torsion";
 
 export type EuC5Quantity = { value: number; unit: string; sourceRef?: string };
 
@@ -49,6 +52,7 @@ export type EuC5EvaluateInput = {
   supportPosition?: "INTERIOR" | "EDGE" | "CORNER";
   openingPresent?: boolean;
   eccentricityMode?: "EXPLICIT_BETA_ONLY" | "COMPUTE_MOMENT_TRANSFER";
+  torsionRequest?: Omit<EuC5TorsionMethodInput, "signedTorsionNm"> | null;
 };
 
 function finish(
@@ -291,14 +295,39 @@ export function evaluateEuC5Torsion(input: EuC5EvaluateInput): EuC5CheckResult {
     throw new Error("C5 must not consume a fabricated torsion demand");
   }
   if (input.demand.torsion.status === "TRANSPORTED") {
-    return undetermined(
-      "TORSION",
-      input,
-      { value: input.demand.torsion.signedValueNm, unit: "N.m", source: "D1C_EXPLICIT_TORSION_TRANSPORT" },
-      "BLOCKED_RULE_AUTHORITY",
-      EU_C5_TORSION_BLOCKED_RULE_IDS,
-      ["transported torsional action is not a resistance; strut-angle profile and NDP remain unresolved"],
-    );
+    const request = input.torsionRequest;
+    if (!request) {
+      return undetermined("TORSION", input, { value: input.demand.torsion.signedValueNm, unit: "N.m", source: "D1C_EXPLICIT_TORSION_TRANSPORT" }, "MISSING_GEOMETRY", EU_C5_T4_TORSION_RULE_IDS, ["transported torsion has no bounded section, material, or reinforcement input"], EU_C5_TORSION_RECTANGULAR_METHOD_ID);
+    }
+    if (input.demand.torsion.unit !== "N.m") {
+      return undetermined("TORSION", input, { value: input.demand.torsion.signedValueNm, unit: input.demand.torsion.unit, source: "D1C_EXPLICIT_TORSION_TRANSPORT" }, "INVALID_INPUT", EU_C5_T4_TORSION_RULE_IDS, ["D1C torsion transport unit must be N.m"], EU_C5_TORSION_RECTANGULAR_METHOD_ID);
+    }
+    const calculated = evaluateBoundedEuC5Torsion({ ...request, signedTorsionNm: input.demand.torsion.signedValueNm });
+    if (!calculated.ok) {
+      return undetermined("TORSION", input, { value: input.demand.torsion.signedValueNm, unit: "N.m", source: "D1C_EXPLICIT_TORSION_TRANSPORT" }, calculated.failReason, EU_C5_T4_TORSION_RULE_IDS, [calculated.warning], EU_C5_TORSION_RECTANGULAR_METHOD_ID);
+    }
+    return finish("TORSION", input, {
+      ok: calculated.checkState === "CHECK_SATISFIED",
+      family: "TORSION",
+      methodId: EU_C5_TORSION_RECTANGULAR_METHOD_ID,
+      demand: { value: input.demand.torsion.signedValueNm, unit: "N.m", source: "D1C_EXPLICIT_TORSION_TRANSPORT" },
+      resistance: { value: calculated.detail.maximumTorsionalResistanceNm, unit: "N.m" },
+      utilization: calculated.utilization,
+      units: { demand: "N.m", resistance: "N.m" },
+      checkState: calculated.checkState,
+      governingRuleIds: calculated.governingRuleIds,
+      parameterVersions: [EU_C5_IMPLEMENTATION_VERSION, EU_C5_PARAMETER_VERSION, calculated.detail.profileFingerprint],
+      geometryFingerprint: input.geometryFingerprint ?? `b:${request.widthMm};h:${request.heightMm};tef-rule:A/u`,
+      reinforcementFingerprint: input.reinforcementFingerprint ?? `asw:${request.transverseProvidedMm2PerMm};asl:${request.longitudinalProvidedMm2}`,
+      standardProfileContext: calculated.detail.profileId,
+      ndpContext: request.ndpSourceRef,
+      validationState: "NUMERICALLY_VALIDATED",
+      conformanceState: "INTENDED_PROFILE",
+      warnings: ["torsion check is a reference implementation, not formal EN 1992 conformance", "reinforcement was checked, not designed", "magnitude is used because closed shear flow reverses with sign"],
+      provenance: "EU-EN1992-1-1-GEN1-TORSION-REFERENCE; C1 design strengths; D1C MEMBER_TORSION",
+      failReason: null,
+      torsionDetail: calculated.detail,
+    });
   }
   return undetermined(
     "TORSION",

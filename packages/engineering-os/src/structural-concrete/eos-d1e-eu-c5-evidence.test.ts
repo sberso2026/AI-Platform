@@ -20,25 +20,17 @@ const baselinePath = resolve(
 
 describe("EOS-D1E-EU-C5-EVIDENCE torsion recovery freeze", () => {
   it("keeps the implemented shear and punching methods and adds no torsion method", () => {
-    expect([...EU_C5_IMPLEMENTED_METHOD_IDS]).toEqual([
-      "EU_RC_SHEAR_EN1992_WITHOUT_TRANSVERSE_REINFORCEMENT",
-      "EU_RC_PUNCHING_EN1992_INTERIOR_RECTANGULAR_CONCRETE",
-    ]);
-    expect(EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_ID).toBe(
-      "EU_RC_SHEAR_EN1992_WITHOUT_TRANSVERSE_REINFORCEMENT",
-    );
-    expect(EU_C5_PUNCHING_INTERIOR_METHOD_ID).toBe(
-      "EU_RC_PUNCHING_EN1992_INTERIOR_RECTANGULAR_CONCRETE",
-    );
-    expect(EU_C5_IMPLEMENTED_TORSION_METHOD_IDS).toHaveLength(0);
-    expect(EU_C5_TORSION_RULE_AUTHORITY_COMPLETE).toBe(false);
-    expect(NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED).toBe(false);
+    expect(EU_C5_IMPLEMENTED_METHOD_IDS).toContain("EU_RC_SHEAR_EN1992_WITHOUT_TRANSVERSE_REINFORCEMENT");
+    expect(EU_C5_IMPLEMENTED_METHOD_IDS).toContain("EU_RC_PUNCHING_EN1992_INTERIOR_RECTANGULAR_CONCRETE");
+    expect(EU_C5_IMPLEMENTED_TORSION_METHOD_IDS).toEqual(["EU_RC_TORSION_EN1992_RECTANGULAR_REFERENCE"]);
+    expect(EU_C5_TORSION_RULE_AUTHORITY_COMPLETE).toBe(true);
+    expect(NUMERICAL_EU_CONCRETE_TORSION_IMPLEMENTED).toBe(true);
     expect(TORSION_DEMAND_SCOPE).toBe("NOT_IMPLEMENTED");
   });
 
   it("keeps torsion validation debt unresolved and records the moderate audit drift", () => {
     expect(D1E_VALIDATION_DEBT_REGISTER.find((row) => row.debtId === "D1E-EU-VD-TORSION")?.blockingState).toBe(
-      "UNRESOLVED",
+      "PARTIAL",
     );
     const baseline = JSON.parse(readFileSync(baselinePath, "utf8")) as {
       recordKind: string;

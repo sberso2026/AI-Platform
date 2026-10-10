@@ -6,6 +6,10 @@ import {
   EU_C5_SHEAR_BOUNDED_SCOPE,
   EU_C5_SHEAR_REQUIRED_RULE_IDS,
   EU_C5_SHEAR_WITHOUT_REINFORCEMENT_METHOD_ID,
+  EU_C5_T3R_REFERENCE_PROFILE_ID,
+  EU_C5_T4_TORSION_RULE_IDS,
+  EU_C5_TORSION_BOUNDED_SCOPE,
+  EU_C5_TORSION_RECTANGULAR_METHOD_ID,
   EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
 } from "@rtb/types";
 
@@ -37,5 +41,19 @@ export const EU_C5_METHOD_REGISTRY = [
     engineerValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
     conformanceState: EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
     benchmarkReferences: ["JRC_WALRAVEN_2011_COLUMN_B2_VRD_C_0_67_MPA"],
+  },
+  {
+    methodId: EU_C5_TORSION_RECTANGULAR_METHOD_ID,
+    capabilityFamily: "TORSION" as const,
+    boundedScope: EU_C5_TORSION_BOUNDED_SCOPE,
+    requiredRuleIds: EU_C5_T4_TORSION_RULE_IDS,
+    requiredParameters: ["TEd", "VEd", "VRdMax", "width", "height", "cotTheta", "fck", "alpha_cc", "gamma_c", "gamma_s", "fyk", "Asw/s", "Asl"],
+    ndpRequirements: ["alpha_cc", "gamma_c", "gamma_s"],
+    generationProfile: EU_C5_T3R_REFERENCE_PROFILE_ID,
+    implementationVersion: EU_C5_IMPLEMENTATION_VERSION,
+    numericalValidationState: "NUMERICALLY_VALIDATED" as const,
+    engineerValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
+    conformanceState: EU_CONCRETE_STANDARD_CONFORMANCE_STATE,
+    benchmarkReferences: ["INDEPENDENT_CLOSED_FORM_REFERENCE_PROFILE"],
   },
 ] as const;
