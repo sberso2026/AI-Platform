@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "rtb-dependency-sca-moderate-baseline/1",
+  "recordKind": "VISIBLE_DEBT_NOT_AN_EXCEPTION",
+  "policy": "moderate findings stay reported; this file does not suppress, downgrade, or except them",
+  "auditCommand": "pnpm audit --prod --json",
+  "reconciledPhase": "EOS-D1E-EU-C5-EVIDENCE",
+  "historicalModerateCount": 2,
+  "c5ReportedModerateCount": 4,
+  "rerunModerateCount": 4,
+  "lockfileChangedFromC4Baseline": false,
+  "c4Baseline": "e00bbbbbeb8718d79b1e83064e9adbed312eda7e",
+  "c5StartHead": "86c1d114062a046c7884480891f27440c10b1ab9",
+  "findings": [
+    {
+      "advisory": "GHSA-w5hq-g745-h8pq",
+      "cve": "CVE-2026-41907",
+      "package": "uuid",
+      "installedVersion": "8.3.2",
+      "affectedPath": "apps/web > @rtb/engineering-os > exceljs@4.4.0 > uuid@8.3.2",
+      "severity": "moderate",
+      "introducedByCurrentPhase": false,
+      "presentBeforeC5": true,
+      "classification": "RUNTIME_TRANSITIVE",
+      "disposition": "KNOWN_BASELINE_MODERATE"
+    },
+    {
+      "advisory": "GHSA-hp3w-g68c-fv3c",
+      "cve": "CVE-2026-97058",
+      "package": "sprintf-js",
+      "installedVersion": "1.0.3",
+      "affectedPath": "packages/project-intelligence > mammoth@1.12.0 > argparse@1.0.10 > sprintf-js@1.0.3",
+      "severity": "moderate",
+      "introducedByCurrentPhase": false,
+      "presentBeforeC5": true,
+      "classification": "RUNTIME_TRANSITIVE",
+      "disposition": "KNOWN_BASELINE_MODERATE"
+    },
+    {
+      "advisory": "GHSA-4jqv-mc3x-m676",
+      "cve": "CVE-2026-94543",
+      "package": "next",
+      "installedVersion": "15.5.24",
+      "affectedPath": "apps/web > next@15.5.24",
+      "severity": "moderate",
+      "introducedByCurrentPhase": false,
+      "presentBeforeC5": false,
+      "classification": "RUNTIME",
+      "disposition": "ADVISORY_DATABASE_DRIFT_UNCHANGED_PACKAGE"
+    },
+    {
+      "advisory": "GHSA-mcj8-r9mp-w47p",
+      "cve": "CVE-2026-94484",
+      "package": "next",
+      "installedVersion": "15.5.24",
+      "affectedPath": "apps/web > next@15.5.24",
+      "severity": "moderate",
+      "introducedByCurrentPhase": false,
+      "presentBeforeC5": false,
+      "classification": "RUNTIME",
+      "disposition": "ADVISORY_DATABASE_DRIFT_UNCHANGED_PACKAGE"
+    }
+  ],
+  "unchangedHigh": {
+    "advisory": "GHSA-68fv-2mgg-jv7q",
+    "cve": "CVE-2026-93749",
+    "package": "source-map-js",
+    "installedVersion": "1.2.1",
+    "affectedPath": "apps/web > next@15.5.24 > postcss@8.5.28 > source-map-js@1.2.1",
+    "severity": "high",
+    "introducedByCurrentPhase": false,
+    "presentBeforeC5": true,
+    "classification": "BUILD_TOOLCHAIN",
+    "disposition": "KNOWN_BASELINE_HIGH"
+  }
+}
