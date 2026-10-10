@@ -1,6 +1,10 @@
 export { EU_C5_METHOD_REGISTRY } from "./registry";
 export { EU_C5_PARAMETER_PROVENANCE } from "./parameters";
-export { resolveEuC5TorsionNationalProfile } from "./profile-binding";
+export {
+  resolveEuC5TorsionNationalProfile,
+  resolveEuC5TorsionReferenceProfile,
+  validateEuC5TorsionProfilePack,
+} from "./profile-binding";
 export { assertEuC5AuthorityBoundary } from "./authority";
 export {
   evaluateEuC5Family,

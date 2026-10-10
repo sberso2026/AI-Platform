@@ -137,7 +137,7 @@ export const D1E_VALIDATION_DEBT_REGISTER_DEFINED = true as const;
 export const D1E_INTERNAL_ROADMAP_DEFINED = true as const;
 export const RECOMMENDED_D1E_NEXT_PHASE = "EOS-D1E-EU-C5-EVIDENCE" as const;
 export const RECOMMENDED_D1E_NEXT_PHASE_SCOPE =
-  "HUMAN_PROFILE_INPUT_REQUIRED before EOS-D1E-EU-C6: a human must supply one EN 1992 national annex torsion parameter set; shear and punching methods stay unchanged" as const;
+  "EOS-D1E-EU-C5-T4 implements bounded EN 1992 first-generation torsion from the reference profile; shear and punching methods stay unchanged" as const;
 export const SCHEMA_CHANGE_REQUIRED_FOR_D1E0 = false as const;
 export const D1E0_GOVERNANCE_DOES_NOT_REDUCE_EU_HIGH_WATER_MARK = true as const;
 export const EOS_D1E0_CLOSED = true as const;

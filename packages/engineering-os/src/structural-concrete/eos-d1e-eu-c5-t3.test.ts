@@ -22,6 +22,6 @@ describe("EOS-D1E-EU-C5-T3 human profile binding", () => {
       "EU_RC_SHEAR_EN1992_WITHOUT_TRANSVERSE_REINFORCEMENT",
       "EU_RC_PUNCHING_EN1992_INTERIOR_RECTANGULAR_CONCRETE",
     ]);
-    expect(() => resolveEuC5TorsionNationalProfile()).toThrow(/HUMAN_PROFILE_INPUT_REQUIRED/);
+    expect(() => resolveEuC5TorsionNationalProfile()).toThrow(/NATIONAL_ANNEX_NOT_BOUND/);
   });
 });
