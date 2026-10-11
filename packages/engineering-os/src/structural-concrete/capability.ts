@@ -372,6 +372,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "rectangular solid or hollow reference profile; declared alpha_cc, gamma_c, gamma_s; designer cotTheta; reinforcement checked not designed; no M-T or N-T; engineer validation pending; not a national annex; not CONFORMANCE_VALIDATED",
     dependencies: ["D1E.EU.C5.RULE_EVIDENCE", "D1E.EU.C1C.R1", "D1C MEMBER_TORSION"],
   },
+  {
+    capabilityId: "D1E.EU.C6.NOMINAL_CURVATURE",
+    jurisdiction: "EU",
+    method: "EU_RC_SECOND_ORDER_EN1992_NOMINAL_CURVATURE_REFERENCE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "FRAMEWORK_PLUS_BOUNDED_METHODS",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "isolated prismatic rectangular uniaxial compression; explicit effective length, end moments, phiEf, Es, and d; second-order always included; C3 section check reused; nominal stiffness, biaxial, and frame stability absent; engineer validation pending; not a national annex; not CONFORMANCE_VALIDATED",
+    dependencies: ["D1E.EU.C3.AXIAL_FLEXURE.UNIAXIAL", "D1E.EU.C1C.R1.DESIGN_PROPERTIES", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -512,7 +524,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-ANCHORAGE", category: "ANCHORAGE", jurisdiction: "EU", capability: "EU anchorage", description: "anchorage/development not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed development method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-LAP", category: "LAP_SPLICES", jurisdiction: "EU", capability: "EU laps", description: "lap-splice design not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed lap method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "detailing checks not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed detailing methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-SECOND-ORDER", category: "SECOND_ORDER_EFFECTS", jurisdiction: "EU", capability: "EU member stability", description: "C6-R1 bound the nominal-curvature reference profile. Numerical member second-order evaluation, engineer validation, and formal conformance remain unbound. Steel stability is not reused.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "deterministic nominal-curvature evaluation and independent numerical checks", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C6-R2" },
+  { debtId: "D1E-EU-VD-SECOND-ORDER", category: "SECOND_ORDER_EFFECTS", jurisdiction: "EU", capability: "EU member stability", description: "C6-R2 numerically validated the bounded nominal-curvature member method and C3 handoff. Engineer validation, national annex, nominal stiffness, biaxial second-order, and formal conformance remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review; nominal stiffness and biaxial member effects are separate scopes", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7" },
   { debtId: "D1E-EU-VD-PRESTRESS", category: "PRESTRESSED_CONCRETE", jurisdiction: "EU", capability: "EU prestress", description: "prestressed design not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later prestress track", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-CONNECTIONS", category: "CONNECTIONS", jurisdiction: "EU", capability: "EU connections", description: "joints/anchors/embedded plates not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1F connection methods", ownerWorkstream: "D1F", recommendedFuturePhase: "D1F" },
   { debtId: "D1E-EU-VD-FIRE", category: "FIRE", jurisdiction: "EU", capability: "EU fire", description: "EN 1992-1-2 fire design not implemented", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later fire-resistance track", ownerWorkstream: "later D1E", recommendedFuturePhase: "later D1E" },
@@ -579,8 +591,9 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C5-T3", scope: "Human national-annex binding for torsion; input absent", status: "BLOCKED" },
   { id: "EOS-D1E-EU-C5-T3R", scope: "First-generation torsion reference profile bound; resistance method not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C5-T4", scope: "Bounded rectangular torsion reference method numerically validated", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C6", scope: "RC member second-order; numerical method not implemented", status: "OPEN" },
+  { id: "EOS-D1E-EU-C6", scope: "Bounded nominal-curvature member second-order numerically validated; nominal stiffness unbound", status: "CLOSED" },
   { id: "EOS-D1E-EU-C6-R1", scope: "Nominal-curvature reference profile bound; runtime method not implemented", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C6-R2", scope: "Bounded nominal-curvature runtime method numerically validated with C3 handoff", status: "CLOSED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
