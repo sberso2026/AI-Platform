@@ -384,6 +384,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "isolated prismatic rectangular uniaxial compression; explicit effective length, end moments, phiEf, Es, and d; second-order always included; C3 section check reused; nominal stiffness, biaxial, and frame stability absent; engineer validation pending; not a national annex; not CONFORMANCE_VALIDATED",
     dependencies: ["D1E.EU.C3.AXIAL_FLEXURE.UNIAXIAL", "D1E.EU.C1C.R1.DESIGN_PROPERTIES", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand"],
   },
+  {
+    capabilityId: "D1E.EU.C7.SLS_REFERENCE",
+    jurisdiction: "EU",
+    method: "EU-EN1992-1-1-GEN1-C7-SLS-REFERENCE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "STANDARD_BINDING_FRAMEWORK",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "crack-width reference profile bound for ordinary rectangular reinforced concrete; no runtime crack width, deflection, creep, or shrinkage calculation; creep and shrinkage remain explicit inputs; span-to-depth expression unbound; not a national annex; not CONFORMANCE_VALIDATED",
+    dependencies: ["D1E.EU.C1.MATERIAL_RULES", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand", "D1E.EU.C6.NOMINAL_CURVATURE"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -514,9 +526,9 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-SHEAR", category: "SHEAR", jurisdiction: "EU", capability: "EU shear", description: "C5 bounded without-reinforcement zero-axial shear is numerically validated; with-reinforcement, strut limit, and axial modification remain absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed shear reinforcement and axial modification rules", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
   { debtId: "D1E-EU-VD-PUNCHING", category: "PUNCHING_SHEAR", jurisdiction: "EU", capability: "EU punching", description: "C5 interior rectangular concrete punching is numerically validated; edge, corner, openings, eccentricity, and punching reinforcement remain absent", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed edge/corner/opening/eccentricity punching rules", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C5-EVIDENCE" },
   { debtId: "D1E-EU-VD-TORSION", category: "TORSION", jurisdiction: "EU", capability: "EU torsion", description: "C5-T4 numerically validated the rectangular reference torsion method. Engineer validation, national-annex conformance, and formal EN 1992 conformance remain pending.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "engineer review of the bound reference method; formal conformance is a separate gate", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C6" },
-  { debtId: "D1E-EU-VD-CRACK", category: "CRACKING", jurisdiction: "EU", capability: "EU crack control", description: "EN 1992 crack control absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed crack-control method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-DEFLECTION", category: "DEFLECTION", jurisdiction: "EU", capability: "EU deflection", description: "EN 1992 deflection/stress-limitation absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed SLS methods", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
-  { debtId: "D1E-EU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "EU", capability: "EU time-dependent", description: "no default creep/shrinkage model", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed time-dependent models", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
+  { debtId: "D1E-EU-VD-CRACK", category: "CRACKING", jurisdiction: "EU", capability: "EU crack control", description: "C7-R1 bound the crack-width reference profile. Numerical evaluation, minimum crack reinforcement, and bar diameter/spacing tables remain unbound.", priority: "CONFORMANCE_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "numerical crack-width validation; minimum reinforcement and bar tables", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R2-CRACKING" },
+  { debtId: "D1E-EU-VD-DEFLECTION", category: "DEFLECTION", jurisdiction: "EU", capability: "EU deflection", description: "span-to-depth evidence exists but the algebraic expression is not bound; curvature interpolation was not recovered", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "clean span-to-depth expression or a governed curvature method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R4-DEFLECTION" },
+  { debtId: "D1E-EU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "EU", capability: "EU time-dependent", description: "C7-R1 accepts explicit creep coefficient and shrinkage strain only. Calculated creep and shrinkage models remain unbound. C6 still requires its own explicit phiEf.", priority: "CONFORMANCE_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed creep and shrinkage calculation without default humidity or age", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R3-LONG-TERM" },
   { debtId: "D1E-EU-VD-COVER", category: "COVER", jurisdiction: "EU", capability: "EU cover", description: "EN 1992 cover check absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed cover method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-DURABILITY", category: "DURABILITY", jurisdiction: "EU", capability: "EU durability", description: "exposure/design-life datasets unpopulated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed durability method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-MIN-REO", category: "MINIMUM_REINFORCEMENT", jurisdiction: "EU", capability: "EU min reinforcement", description: "minimum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed min-reo method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -594,6 +606,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C6", scope: "Bounded nominal-curvature member second-order numerically validated; nominal stiffness unbound", status: "CLOSED" },
   { id: "EOS-D1E-EU-C6-R1", scope: "Nominal-curvature reference profile bound; runtime method not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C6-R2", scope: "Bounded nominal-curvature runtime method numerically validated with C3 handoff", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C7", scope: "Serviceability, cracking, and long-term reference profile; runtime methods not implemented", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C7-R1", scope: "Crack-width reference profile bound; deflection expression and calculated creep/shrinkage unbound", status: "CLOSED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
