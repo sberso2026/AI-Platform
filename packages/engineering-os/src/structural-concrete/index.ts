@@ -70,3 +70,4 @@ export * from "./eu-c2";
 export * from "./eu-c3";
 export * from "./eu-c4";
 export * from "./eu-c5";
+export * from "./eu-c6";
