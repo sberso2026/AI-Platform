@@ -296,6 +296,35 @@ export type EuC8BasicAnchorageResolveResult =
     }
   | { ok: false; reason: string };
 
+export function resolveEuC8BasicAnchorageDiameterDivisor(
+  rows: readonly { parameterId: string; value: number | null; units: string; authority?: string; sources?: readonly string[] }[] = EU_C8_R4_PARAMETERS,
+):
+  | {
+      ok: true;
+      parameterId: typeof EU_C8_R4_DIAMETER_DIVISOR_PARAMETER_ID;
+      value: number;
+      units: "1";
+      authority: string;
+      sources: readonly string[];
+    }
+  | { ok: false; reason: "MISSING_PROFILE_DIAMETER_DIVISOR" | "INVALID_PROFILE_DIAMETER_DIVISOR" } {
+  const row = rows.find((item) => item.parameterId === EU_C8_R4_DIAMETER_DIVISOR_PARAMETER_ID);
+  if (!row || typeof row.value !== "number" || !Number.isFinite(row.value)) {
+    return { ok: false, reason: "MISSING_PROFILE_DIAMETER_DIVISOR" };
+  }
+  if (!(row.value > 0) || row.units !== EU_C8_R4_PARAMETERS[0].units) {
+    return { ok: false, reason: "INVALID_PROFILE_DIAMETER_DIVISOR" };
+  }
+  return {
+    ok: true,
+    parameterId: EU_C8_R4_DIAMETER_DIVISOR_PARAMETER_ID,
+    value: row.value,
+    units: "1",
+    authority: row.authority ?? EU_C8_R4_PARAMETERS[0].authority,
+    sources: row.sources ?? EU_C8_R4_PARAMETERS[0].sources,
+  };
+}
+
 function finiteNumber(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }

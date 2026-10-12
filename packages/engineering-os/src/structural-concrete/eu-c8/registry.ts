@@ -8,6 +8,17 @@ import {
 import { EU_C8_R2_CMIN_FORMULA_FINGERPRINT, EU_C8_R2_CNOM_FORMULA_FINGERPRINT } from "./fingerprints";
 import { EU_C8_R2_METHOD_ID } from "./evaluate";
 import { EU_C8_R3B_METHOD_ID } from "./spacing-evaluate";
+import { EU_C8_R4B_METHOD_ID } from "./anchorage-evaluate";
+import {
+  EU_C8_R4_ANCHORAGE_PROFILE_GENERATION,
+  EU_C8_R4_ANCHORAGE_PROFILE_ID,
+  EU_C8_R4_ANCHORAGE_PROFILE_VERSION,
+  EU_C8_R4_DIAMETER_DIVISOR_PARAMETER_ID,
+  EU_C8_R4_FORMULA_FINGERPRINT,
+  EU_C8_R4_PARAMETERS,
+  EU_C8_R4_PARENT_PROFILE_ID,
+  EU_C8_R4_RULES,
+} from "./anchorage-profile";
 import {
   EU_C8_R3_NDP_PARAMETER_IDS,
   EU_C8_R3_PARAMETERS,
@@ -75,3 +86,39 @@ export const EU_C8_R3B_METHOD_REGISTRY_UPDATED = "YES" as const;
 export const EU_C8_R3B_IMPLEMENTED_METHOD_COUNT = EU_C8_R3B_METHOD_REGISTRY.length;
 export const EU_C8_R3B_NUMERICALLY_VALIDATED_METHOD_COUNT = EU_C8_R3B_METHOD_REGISTRY.filter((method) => method.validationState === "NUMERICALLY_VALIDATED").length;
 export const EU_C8_R3B_ENGINEER_VALIDATED_METHOD_COUNT = EU_C8_R3B_METHOD_REGISTRY.filter((method) => method.engineerValidationState !== "PENDING_HUMAN_ENGINEERING_REVIEW").length;
+
+export const EU_C8_R4B_METHOD_REGISTRY = [
+  {
+    methodId: EU_C8_R4B_METHOD_ID,
+    profileId: EU_C8_R4_PARENT_PROFILE_ID,
+    anchorageProfileId: EU_C8_R4_ANCHORAGE_PROFILE_ID,
+    profileVersion: EU_C8_R4_ANCHORAGE_PROFILE_VERSION,
+    generation: EU_C8_R4_ANCHORAGE_PROFILE_GENERATION,
+    capabilityLevel: "BASIC_REQUIRED_STRAIGHT_BAR_ANCHORAGE",
+    scope: "BASIC_REQUIRED_STRAIGHT_BAR_ANCHORAGE_ONLY",
+    applicability: "one straight deformed bar in tension; explicit nominal diameter; explicit governed design steel stress; explicit governed design bond strength; profile diameter divisor; explicit available length and critical section only for a comparison",
+    forceStateScope: "TENSION_ONLY",
+    barShapeScope: "STRAIGHT",
+    diameterDivisorParameterId: EU_C8_R4_DIAMETER_DIVISOR_PARAMETER_ID,
+    designSteelStressContract: "EXPLICIT_DESIGN_STEEL_STRESS_TENSION_MAGNITUDE",
+    designBondStrengthContract: "EXPLICIT_GOVERNED_INPUT",
+    designBondStrengthProvenanceRequired: true,
+    availableLengthContract: "EXPLICIT_SUPPLIED_LENGTH",
+    criticalSectionContract: "EXPLICIT_REFERENCE_REQUIRED_WHEN_CHECK_REQUESTED",
+    unsupportedLevelBModifiers: ["BAR_SHAPE", "COVER_CONFINEMENT", "TRANSVERSE_REINFORCEMENT", "WELDED_TRANSVERSE_REINFORCEMENT", "TRANSVERSE_PRESSURE", "MINIMUM_DESIGN_ANCHORAGE"],
+    ruleIds: EU_C8_R4_RULES.map((rule) => rule.ruleId),
+    parameterIds: EU_C8_R4_PARAMETERS.map((parameter) => parameter.parameterId),
+    formulaFingerprints: {
+      EU_C8_R4_LB_RQD_BASIC: EU_C8_R4_FORMULA_FINGERPRINT,
+    },
+    validationState: "NUMERICALLY_VALIDATED" as const,
+    engineerValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
+    conformanceState: "INTENDED_PROFILE" as const,
+    benchmarkReference: "independent algebraic reconstruction in eos-d1e-eu-c8-r4b.test.ts",
+  },
+] as const;
+
+export const EU_C8_R4B_METHOD_REGISTRY_UPDATED = "YES" as const;
+export const EU_C8_R4B_IMPLEMENTED_METHOD_COUNT = EU_C8_R4B_METHOD_REGISTRY.length;
+export const EU_C8_R4B_NUMERICALLY_VALIDATED_METHOD_COUNT = EU_C8_R4B_METHOD_REGISTRY.filter((method) => method.validationState === "NUMERICALLY_VALIDATED").length;
+export const EU_C8_R4B_ENGINEER_VALIDATED_METHOD_COUNT = EU_C8_R4B_METHOD_REGISTRY.filter((method) => method.engineerValidationState !== "PENDING_HUMAN_ENGINEERING_REVIEW").length;

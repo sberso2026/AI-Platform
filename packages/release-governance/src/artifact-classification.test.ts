@@ -4,6 +4,7 @@ import {
   classifyChangedFiles,
   classifyPathSensitivity,
   R1_COMMIT_CHANGED_FILES,
+  R4_ANCHORAGE_AUTHORITY_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -22,6 +23,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFilesChanged).toBe(true);
     expect(classified.releaseSensitiveFiles).toContain(
       "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+  });
+
+  it("classifies the R4 anchorage profile and rule file as release-sensitive", () => {
+    const classified = classifyChangedFiles(R4_ANCHORAGE_AUTHORITY_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/eu-c8/anchorage-profile.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classifyPathSensitivity("packages/engineering-os/src/structural-concrete/eu-c8/anchorage-evaluate.ts")).toBe(
+      "RELEASE_SENSITIVE",
     );
   });
 

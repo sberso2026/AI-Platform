@@ -260,7 +260,7 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "detailing",
     GLOBAL: none("no global numeric detailing limits"),
     AU: none("no AU detailing"),
-    EU: kernel("bounded equal-diameter minimum clear spacing numerically validated; basic straight-bar anchorage reference profile bound, runtime not implemented; design anchorage and laps unbound"),
+    EU: kernel("bounded equal-diameter minimum clear spacing numerically validated; basic required straight-bar anchorage numerically validated; design anchorage and laps unbound"),
     US: framework("profile ready; no numerical detailing"),
   },
   {
