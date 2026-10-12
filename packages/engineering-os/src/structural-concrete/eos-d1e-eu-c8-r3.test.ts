@@ -159,6 +159,7 @@ describe("EOS-D1E-EU-C8-R3 spacing authority", () => {
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("NOT_STARTED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R3-SPACING-AUTHORITY")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R3B-SPACING-IMPLEMENTATION")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R4-ANCHORAGE-AUTHORITY")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R4-ANCHORAGE-AUTHORITY")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R4B-ANCHORAGE-IMPLEMENTATION")?.status).toBe("NOT_STARTED");
   });
 });
