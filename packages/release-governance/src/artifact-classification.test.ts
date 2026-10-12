@@ -5,6 +5,7 @@ import {
   classifyPathSensitivity,
   R1_COMMIT_CHANGED_FILES,
   R4_ANCHORAGE_AUTHORITY_CHANGED_FILES,
+  R5_LAP_AUTHORITY_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -37,6 +38,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classifyPathSensitivity("packages/engineering-os/src/structural-concrete/eu-c8/anchorage-evaluate.ts")).toBe(
       "RELEASE_SENSITIVE",
     );
+  });
+
+  it("classifies the R5 lap authority record as release-sensitive", () => {
+    const classified = classifyChangedFiles(R5_LAP_AUTHORITY_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/eu-c8/lap-authority.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
   });
 
   it("does not treat ordinary constitutive implementation files as release-sensitive by path alone", () => {

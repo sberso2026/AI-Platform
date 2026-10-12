@@ -20,6 +20,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/structural-concrete\/eu-c8\/anchorage-profile\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c8\/anchorage-evaluate\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c8\/registry\.ts$/,
+  /packages\/engineering-os\/src\/structural-concrete\/eu-c8\/lap-authority\.ts$/,
 ];
 
 const SECURITY_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
@@ -83,6 +84,14 @@ export const R4_ANCHORAGE_AUTHORITY_CHANGED_FILES = [
   "packages/engineering-os/src/structural-concrete/eos-d1e-eu-c8-r4.test.ts",
   "packages/engineering-os/src/structural-concrete/eu-c8/anchorage-profile.ts",
   "packages/engineering-os/src/structural-concrete/eu-c8/index.ts",
+] as const;
+
+/** R5 lap authority decision record. No runtime method is registered. */
+export const R5_LAP_AUTHORITY_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1E_EU_C8_R5_LAPS_AUTHORITY.md",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-concrete/d1e-closeout/matrix.ts",
+  "packages/engineering-os/src/structural-concrete/eu-c8/lap-authority.ts",
 ] as const;
 
 /** R1 commit range 5fca4aa8..9d208dce — used to prove the historical classifier gap is now closed. */

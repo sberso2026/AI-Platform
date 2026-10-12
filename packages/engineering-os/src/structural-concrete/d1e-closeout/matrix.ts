@@ -253,14 +253,14 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "laps",
     GLOBAL: none("no default lap length"),
     AU: none("no AU lap splice"),
-    EU: none("no EU lap splice"),
+    EU: none("lap authority deferred after targeted recovery; no lap length"),
     US: none("no US lap splice"),
   },
   {
     capability: "detailing",
     GLOBAL: none("no global numeric detailing limits"),
     AU: none("no AU detailing"),
-    EU: kernel("bounded equal-diameter minimum clear spacing numerically validated; basic required straight-bar anchorage numerically validated; design anchorage and laps unbound"),
+    EU: kernel("bounded equal-diameter minimum clear spacing numerically validated; basic required straight-bar anchorage numerically validated; design anchorage unbound; laps deferred after targeted recovery"),
     US: framework("profile ready; no numerical detailing"),
   },
   {

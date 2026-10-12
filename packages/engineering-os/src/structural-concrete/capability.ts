@@ -468,6 +468,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "BASIC_REQUIRED_STRAIGHT_BAR_ANCHORAGE_REFERENCE_CAPABILITY. One straight deformed bar in tension. Explicit design steel stress and explicit design bond strength. Profile diameter divisor. Calculation or explicit available-length comparison. DESIGN_ANCHORAGE = NOT_IMPLEMENTED. LAPS = NOT_IMPLEMENTED. DURABILITY_LOOKUP = NOT_IMPLEMENTED. Engineer validation pending. Not CONFORMANCE_VALIDATED.",
     dependencies: ["D1E.EU.C8.BASIC_ANCHORAGE_PROFILE"],
   },
+  {
+    capabilityId: "D1E.EU.C8.LAPS",
+    jurisdiction: "EU",
+    method: "NONE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "C8-R5 deferred the design lap. The lecture names the basic required anchorage length as the lap basis and names shape, cover, transverse reinforcement, and transverse pressure factors without expressions. No lap profile. No runtime lap method. Not design anchorage. Not a national annex. Not CONFORMANCE_VALIDATED.",
+    dependencies: ["D1E.EU.C8.BASIC_REQUIRED_ANCHORAGE"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -606,8 +618,8 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-MIN-REO", category: "MINIMUM_REINFORCEMENT", jurisdiction: "EU", capability: "EU min reinforcement", description: "minimum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed min-reo method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C8" },
   { debtId: "D1E-EU-VD-MAX-REO", category: "MAXIMUM_REINFORCEMENT", jurisdiction: "EU", capability: "EU max reinforcement", description: "maximum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed max-reo method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-ANCHORAGE", category: "ANCHORAGE", jurisdiction: "EU", capability: "EU anchorage", description: "ANCHORAGE = BLOCKED_RULE_AUTHORITY. C8-R2 did not implement an anchorage runtime method.", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed development method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later anchorage authority recovery" },
-  { debtId: "D1E-EU-VD-LAP", category: "LAP_SPLICES", jurisdiction: "EU", capability: "EU laps", description: "LAPS = BLOCKED_RULE_AUTHORITY. C8-R2 did not implement a lap runtime method.", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed lap method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later lap authority recovery" },
-  { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "C8-R3B numerically validated bounded minimum clear spacing. C8-R4B numerically validated bounded basic required straight-bar anchorage. Design bond derivation, design-length factors, minimum design anchorage, and laps remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed lap authority; design anchorage remains separate", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C8-R5-LAPS-AUTHORITY" },
+  { debtId: "D1E-EU-VD-LAP", category: "LAP_SPLICES", jurisdiction: "EU", capability: "EU laps", description: "C8-R5 deferred straight-bar laps. The lecture lap length uses the basic required anchorage length, but shape, cover, transverse reinforcement, and transverse pressure factors are named without expressions. No lap profile is bound. LAP_RUNTIME is not implemented.", priority: "SAFETY_CRITICAL", blockingState: "DEFERRED_RULE_AUTHORITY", requiredEvidence: "materially new governed lap-factor expressions; not another autonomous search", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C8-R6-CLOSEOUT" },
+  { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "C8-R3B numerically validated bounded minimum clear spacing. C8-R4B numerically validated bounded basic required straight-bar anchorage. C8-R5 deferred laps after targeted recovery. Design bond derivation, design-length factors, and minimum design anchorage remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "C8 closeout; design anchorage remains separate from the deferred lap product", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C8-R6-CLOSEOUT" },
   { debtId: "D1E-EU-VD-SECOND-ORDER", category: "SECOND_ORDER_EFFECTS", jurisdiction: "EU", capability: "EU member stability", description: "C6-R2 numerically validated the bounded nominal-curvature member method and C3 handoff. Engineer validation, national annex, nominal stiffness, biaxial second-order, and formal conformance remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review; nominal stiffness and biaxial member effects are separate scopes", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7" },
   { debtId: "D1E-EU-VD-PRESTRESS", category: "PRESTRESSED_CONCRETE", jurisdiction: "EU", capability: "EU prestress", description: "prestressed design not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later prestress track", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-CONNECTIONS", category: "CONNECTIONS", jurisdiction: "EU", capability: "EU connections", description: "joints/anchors/embedded plates not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1F connection methods", ownerWorkstream: "D1F", recommendedFuturePhase: "D1F" },
@@ -692,7 +704,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C8-R3B-SPACING-IMPLEMENTATION", scope: "Bounded minimum clear spacing numerically validated; anchorage not started", status: "CLOSED" },
   { id: "EOS-D1E-EU-C8-R4-ANCHORAGE-AUTHORITY", scope: "Basic required straight-bar anchorage profile bound; design-length factors deferred; runtime not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C8-R4B-ANCHORAGE-IMPLEMENTATION", scope: "Bounded basic required straight-bar anchorage numerically validated; design anchorage not implemented", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C8-R5-LAPS-AUTHORITY", scope: "Targeted governed straight-bar lap rule recovery; runtime not started", status: "NOT_STARTED" },
+  { id: "EOS-D1E-EU-C8-R5-LAPS-AUTHORITY", scope: "Lap authority deferred: design-lap factors named but not quantified; runtime not implemented", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C8-R6-CLOSEOUT", scope: "Close C8 with cover, spacing, and basic anchorage implemented; laps deferred", status: "NOT_STARTED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
