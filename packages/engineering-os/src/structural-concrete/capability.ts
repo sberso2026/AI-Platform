@@ -432,6 +432,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "Minimum clear-spacing reference sub-pack only. Runtime spacing is not implemented. Bar-diameter coefficient and aggregate allowance are explicit NDP inputs; slide recommendations are not applied. Individual equal-diameter deformed bars. Bundles, mesh, prestress, couplers, and seismic detailing excluded. Not a national annex. Not CONFORMANCE_VALIDATED.",
     dependencies: ["D1E.EU.C8.COVER_ASSEMBLY", "D1E reinforcement geometry"],
   },
+  {
+    capabilityId: "D1E.EU.C8.MIN_CLEAR_SPACING",
+    jurisdiction: "EU",
+    method: "EU_RC_MIN_CLEAR_SPACING_EN1992_REFERENCE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "IMPLEMENTED_NUMERICALLY_VALIDATED",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Equal-diameter individual deformed bars. Explicit maximum aggregate size, bar-diameter coefficient, and aggregate allowance. Absolute minimum from the spacing profile. Surface-to-surface clearance from D1E geometry. Horizontal and vertical contexts are explicit. Bundles, mesh, prestress, project spacing overlay, anchorage, and laps are not implemented. DURABILITY_LOOKUP = NOT_IMPLEMENTED. ANCHORAGE = NOT_IMPLEMENTED. LAPS = NOT_IMPLEMENTED. Engineer validation pending. Not CONFORMANCE_VALIDATED.",
+    dependencies: ["D1E.EU.C8.SPACING_PROFILE", "D1E reinforcement geometry"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -571,7 +583,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-MAX-REO", category: "MAXIMUM_REINFORCEMENT", jurisdiction: "EU", capability: "EU max reinforcement", description: "maximum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed max-reo method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-ANCHORAGE", category: "ANCHORAGE", jurisdiction: "EU", capability: "EU anchorage", description: "ANCHORAGE = BLOCKED_RULE_AUTHORITY. C8-R2 did not implement an anchorage runtime method.", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed development method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later anchorage authority recovery" },
   { debtId: "D1E-EU-VD-LAP", category: "LAP_SPLICES", jurisdiction: "EU", capability: "EU laps", description: "LAPS = BLOCKED_RULE_AUTHORITY. C8-R2 did not implement a lap runtime method.", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed lap method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later lap authority recovery" },
-  { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "C8-R3 bound the minimum-clear-spacing reference sub-pack. Spacing runtime numerical validation is not done. Anchorage and laps remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "numerical validation of the bound spacing rule; anchorage and lap authority remain separate", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C8-R3B-SPACING-IMPLEMENTATION" },
+  { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "C8-R3B numerically validated bounded minimum clear spacing. Anchorage and laps remain unbound. Bundles, mesh, prestress spacing, and project spacing overlays remain deferred.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed straight-bar anchorage authority; lap authority remains separate", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C8-R4-ANCHORAGE-AUTHORITY" },
   { debtId: "D1E-EU-VD-SECOND-ORDER", category: "SECOND_ORDER_EFFECTS", jurisdiction: "EU", capability: "EU member stability", description: "C6-R2 numerically validated the bounded nominal-curvature member method and C3 handoff. Engineer validation, national annex, nominal stiffness, biaxial second-order, and formal conformance remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review; nominal stiffness and biaxial member effects are separate scopes", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7" },
   { debtId: "D1E-EU-VD-PRESTRESS", category: "PRESTRESSED_CONCRETE", jurisdiction: "EU", capability: "EU prestress", description: "prestressed design not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later prestress track", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-CONNECTIONS", category: "CONNECTIONS", jurisdiction: "EU", capability: "EU connections", description: "joints/anchors/embedded plates not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1F connection methods", ownerWorkstream: "D1F", recommendedFuturePhase: "D1F" },
@@ -653,7 +665,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C8-R1", scope: "Cover assembly profile bound; spacing, anchorage, and laps unbound", status: "CLOSED" },
   { id: "EOS-D1E-EU-C8-R2-COVER-DURABILITY", scope: "Bounded cover-assembly requirement numerically validated; durability lookup not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C8-R3-SPACING-AUTHORITY", scope: "Minimum-clear-spacing reference sub-pack bound; runtime not implemented", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C8-R3B-SPACING-IMPLEMENTATION", scope: "Bounded minimum-clear-spacing implementation and numerical validation; not started", status: "NOT_STARTED" },
+  { id: "EOS-D1E-EU-C8-R3B-SPACING-IMPLEMENTATION", scope: "Bounded minimum clear spacing numerically validated; anchorage not started", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C8-R4-ANCHORAGE-AUTHORITY", scope: "Targeted governed straight-bar anchorage rule recovery; runtime not started", status: "NOT_STARTED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {

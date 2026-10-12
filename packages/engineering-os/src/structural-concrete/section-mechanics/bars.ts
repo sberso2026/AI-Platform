@@ -140,9 +140,7 @@ export function evaluateBarGeometry(layout: ReinforcementLayout, geometry: RcSec
       const a = bars[i];
       const b = bars[j];
       if (!a || !b) continue;
-      const ra = (a.diameterMm ?? 0) / 2;
-      const rb = (b.diameterMm ?? 0) / 2;
-      const clear = Math.hypot(a.xMm - b.xMm, a.yMm - b.yMm) - ra - rb;
+      const clear = barPairClearSpacingMm(a, b);
       minClear = minClear == null ? clear : Math.min(minClear, clear);
     }
   }
@@ -157,6 +155,16 @@ export function evaluateBarGeometry(layout: ReinforcementLayout, geometry: RcSec
     layerCentroids,
     minBarClearSpacingMm: minClear,
   };
+}
+
+/** Surface-to-surface clear distance used by evaluateBarGeometry. One formula for every bar pair. */
+export function barPairClearSpacingMm(
+  a: { xMm: number; yMm: number; diameterMm: number | null },
+  b: { xMm: number; yMm: number; diameterMm: number | null },
+): number {
+  const ra = (a.diameterMm ?? 0) / 2;
+  const rb = (b.diameterMm ?? 0) / 2;
+  return Math.hypot(a.xMm - b.xMm, a.yMm - b.yMm) - ra - rb;
 }
 
 export function geometricClearances(layout: ReinforcementLayout, geometry: RcSectionGeometryInput): { barId: string; geometricClearanceMm: number; codeCoverCompliance: false }[] {

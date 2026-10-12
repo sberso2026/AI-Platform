@@ -7,6 +7,17 @@ import {
 } from "./profile";
 import { EU_C8_R2_CMIN_FORMULA_FINGERPRINT, EU_C8_R2_CNOM_FORMULA_FINGERPRINT } from "./fingerprints";
 import { EU_C8_R2_METHOD_ID } from "./evaluate";
+import { EU_C8_R3B_METHOD_ID } from "./spacing-evaluate";
+import {
+  EU_C8_R3_NDP_PARAMETER_IDS,
+  EU_C8_R3_PARAMETERS,
+  EU_C8_R3_PARENT_PROFILE_ID,
+  EU_C8_R3_RULES,
+  EU_C8_R3_SMIN_FORMULA_FINGERPRINT,
+  EU_C8_R3_SPACING_PROFILE_GENERATION,
+  EU_C8_R3_SPACING_PROFILE_ID,
+  EU_C8_R3_SPACING_PROFILE_VERSION,
+} from "./spacing-profile";
 
 export const EU_C8_R2_METHOD_REGISTRY = [
   {
@@ -34,3 +45,33 @@ export const EU_C8_R2_METHOD_REGISTRY = [
 
 export const EU_C8_R2_METHOD_REGISTRY_UPDATED = "YES" as const;
 export const PARALLEL_METHOD_REGISTRY_CREATED = false as const;
+
+export const EU_C8_R3B_METHOD_REGISTRY = [
+  {
+    methodId: EU_C8_R3B_METHOD_ID,
+    profileId: EU_C8_R3_PARENT_PROFILE_ID,
+    spacingProfileId: EU_C8_R3_SPACING_PROFILE_ID,
+    profileVersion: EU_C8_R3_SPACING_PROFILE_VERSION,
+    generation: EU_C8_R3_SPACING_PROFILE_GENERATION,
+    scope: "MINIMUM_CLEAR_REINFORCEMENT_SPACING",
+    applicability: "equal-diameter individual deformed bars; explicit HORIZONTAL_ADJACENT or VERTICAL_LAYER_ADJACENT context; surface-to-surface clearance from D1E barPairClearSpacingMm; explicit maximum aggregate size; explicit NDP bar-diameter coefficient; explicit NDP aggregate allowance; profile absolute minimum",
+    barDiameterScope: "EQUAL_DIAMETER_ADJACENT_BARS_ONLY",
+    aggregateContract: "MAXIMUM_AGGREGATE_SIZE",
+    geometryContract: "SURFACE_TO_SURFACE",
+    ndpInputs: EU_C8_R3_NDP_PARAMETER_IDS,
+    ruleIds: EU_C8_R3_RULES.map((rule) => rule.ruleId),
+    parameterIds: EU_C8_R3_PARAMETERS.map((parameter) => parameter.parameterId),
+    formulaFingerprints: {
+      EU_C8_R3_SMIN_CLEAR_ASSEMBLY: EU_C8_R3_SMIN_FORMULA_FINGERPRINT,
+    },
+    validationState: "NUMERICALLY_VALIDATED" as const,
+    engineerValidationState: "PENDING_HUMAN_ENGINEERING_REVIEW" as const,
+    conformanceState: "INTENDED_PROFILE" as const,
+    benchmarkReference: "independent algebraic reconstruction in eos-d1e-eu-c8-r3b.test.ts",
+  },
+] as const;
+
+export const EU_C8_R3B_METHOD_REGISTRY_UPDATED = "YES" as const;
+export const EU_C8_R3B_IMPLEMENTED_METHOD_COUNT = EU_C8_R3B_METHOD_REGISTRY.length;
+export const EU_C8_R3B_NUMERICALLY_VALIDATED_METHOD_COUNT = EU_C8_R3B_METHOD_REGISTRY.filter((method) => method.validationState === "NUMERICALLY_VALIDATED").length;
+export const EU_C8_R3B_ENGINEER_VALIDATED_METHOD_COUNT = EU_C8_R3B_METHOD_REGISTRY.filter((method) => method.engineerValidationState !== "PENDING_HUMAN_ENGINEERING_REVIEW").length;
