@@ -211,7 +211,7 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "cover",
     GLOBAL: none("no default minimum cover"),
     AU: none("geometric clearance ≠ AS 3600 cover"),
-    EU: framework("profile ready; no numerical cover check"),
+    EU: framework("cover assembly profile bound; durability lookup and numerical cover check absent"),
     US: framework("profile ready; no numerical cover check"),
   },
   {

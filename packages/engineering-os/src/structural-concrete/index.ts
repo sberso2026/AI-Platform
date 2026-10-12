@@ -72,3 +72,4 @@ export * from "./eu-c4";
 export * from "./eu-c5";
 export * from "./eu-c6";
 export * from "./eu-c7";
+export * from "./eu-c8";
