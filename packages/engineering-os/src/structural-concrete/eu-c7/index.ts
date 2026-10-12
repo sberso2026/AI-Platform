@@ -21,4 +21,19 @@ export {
   selectEuC7SigmaS,
 } from "./evaluate";
 export type { EuC7CrackWidthInput, EuC7CrackWidthResult } from "./evaluate";
-export { EU_C7_R2_METHOD_REGISTRY, EU_C7_R2_METHOD_REGISTRY_UPDATED } from "./registry";
+export { EU_C7_R2_METHOD_REGISTRY, EU_C7_R2_METHOD_REGISTRY_UPDATED, EU_C7_R3_METHOD_REGISTRY, EU_C7_R3_METHOD_REGISTRY_UPDATED } from "./registry";
+export {
+  assertEuC7LongTermOptimizerRejectsUngoverned,
+  assertEuC7LongTermResultCurrent,
+  euC7LongTermInputFingerprint,
+  evaluateEuC7LongTermState,
+  EU_C7_R3_PHIEF_TRANSFORMATION_EXTENSION_POINT,
+  prepareEuC7C6CreepHandoff,
+  prepareEuC7R2DurationContext,
+  prepareEuC7R4DeflectionInputs,
+  selectEuC7Creep,
+  selectEuC7PhiEfTransformation,
+  selectEuC7Shrinkage,
+  selectEuC7TimeContext,
+} from "./long-term";
+export type { EuC7LongTermInput, EuC7LongTermResult } from "./long-term";

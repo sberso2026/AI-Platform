@@ -396,6 +396,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     limitations: "ordinary non-prestressed rectangular beams and solid slabs; quasi-permanent SLS crack-width check numerically validated; explicit fct,eff, moduli, cover to bar surface, cracked-section steel stress, duration, bond, and project crack limit; uncracked sections do not enter the cracked formula; minimum reinforcement, bar tables, service stress limits, calculated creep and shrinkage, and deflection absent; engineer validation pending; not a national annex; not CONFORMANCE_VALIDATED",
     dependencies: ["D1E.EU.C1.MATERIAL_RULES", "D1E.GLOBAL.RC_SECTION_MECHANICS", "D1C bounded demand", "D1E.EU.C6.NOMINAL_CURVATURE"],
   },
+  {
+    capabilityId: "D1E.EU.C7.EXPLICIT_LONG_TERM",
+    jurisdiction: "EU",
+    method: "EU_RC_LONG_TERM_EXPLICIT_EN1992_REFERENCE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "FRAMEWORK_PLUS_BOUNDED_METHODS",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "EXPLICIT_GOVERNED_LONG_TERM_INPUT_STATE for dimensionless creep coefficient and shrinkage magnitude; microstrain normalizes to strain; phi is not C6 phiEf; no calculated humidity, age, cement, or notional-size model; no deflection; engineer validation pending; not a national annex; not CONFORMANCE_VALIDATED",
+    dependencies: ["D1E.EU.C1.MATERIAL_RULES", "D1E time-dependent framework", "D1E.EU.C6.NOMINAL_CURVATURE", "D1E.EU.C7.SLS_REFERENCE"],
+  },
 ];
 
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
@@ -528,7 +540,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-TORSION", category: "TORSION", jurisdiction: "EU", capability: "EU torsion", description: "C5-T4 numerically validated the rectangular reference torsion method. Engineer validation, national-annex conformance, and formal EN 1992 conformance remain pending.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "engineer review of the bound reference method; formal conformance is a separate gate", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C6" },
   { debtId: "D1E-EU-VD-CRACK", category: "CRACKING", jurisdiction: "EU", capability: "EU crack control", description: "C7-R2 numerically validated the bounded quasi-permanent crack-width check. Minimum crack reinforcement, bar diameter and spacing tables, and service stress limits remain unbound.", priority: "CONFORMANCE_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "minimum reinforcement and bar-table rules; engineer review of the crack-width method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R3-LONG-TERM" },
   { debtId: "D1E-EU-VD-DEFLECTION", category: "DEFLECTION", jurisdiction: "EU", capability: "EU deflection", description: "span-to-depth evidence exists but the algebraic expression is not bound; curvature interpolation was not recovered", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "clean span-to-depth expression or a governed curvature method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R4-DEFLECTION" },
-  { debtId: "D1E-EU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "EU", capability: "EU time-dependent", description: "C7-R1 accepts explicit creep coefficient and shrinkage strain only. Calculated creep and shrinkage models remain unbound. C6 still requires its own explicit phiEf.", priority: "CONFORMANCE_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed creep and shrinkage calculation without default humidity or age", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R3-LONG-TERM" },
+  { debtId: "D1E-EU-VD-CREEP-SHRINK", category: "CREEP_SHRINKAGE", jurisdiction: "EU", capability: "EU time-dependent", description: "C7-R3 numerically validated explicit governed creep coefficient and shrinkage strain, including units, sign, provenance, and fingerprints. Calculated creep and shrinkage models, and any phi-to-phiEf transformation, remain unbound. C6 still requires its own explicit phiEf.", priority: "CONFORMANCE_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "governed creep and shrinkage calculation without default humidity or age", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7-R4-DEFLECTION" },
   { debtId: "D1E-EU-VD-COVER", category: "COVER", jurisdiction: "EU", capability: "EU cover", description: "EN 1992 cover check absent", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed cover method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-DURABILITY", category: "DURABILITY", jurisdiction: "EU", capability: "EU durability", description: "exposure/design-life datasets unpopulated", priority: "CONFORMANCE_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed durability method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-MIN-REO", category: "MINIMUM_REINFORCEMENT", jurisdiction: "EU", capability: "EU min reinforcement", description: "minimum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed min-reo method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
@@ -609,6 +621,7 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C7", scope: "Serviceability, cracking, and long-term reference profile; runtime methods not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C7-R1", scope: "Crack-width reference profile bound; deflection expression and calculated creep/shrinkage unbound", status: "CLOSED" },
   { id: "EOS-D1E-EU-C7-R2-CRACKING", scope: "Bounded quasi-permanent crack-width check numerically validated", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C7-R3-LONG-TERM", scope: "Explicit governed creep coefficient and shrinkage strain numerically validated", status: "CLOSED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {
