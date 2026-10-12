@@ -260,7 +260,7 @@ export const D1E_CANONICAL_CAPABILITY_MATRIX: readonly D1dCanonicalCapabilityRow
     capability: "detailing",
     GLOBAL: none("no global numeric detailing limits"),
     AU: none("no AU detailing"),
-    EU: framework("profile ready; no numerical detailing"),
+    EU: framework("minimum clear-spacing reference profile bound; spacing runtime not implemented; anchorage and laps unbound"),
     US: framework("profile ready; no numerical detailing"),
   },
   {
