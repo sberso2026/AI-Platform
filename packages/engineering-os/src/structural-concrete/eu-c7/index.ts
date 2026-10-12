@@ -11,3 +11,14 @@ export {
   validateEuC7ProfilePack,
 } from "./profile-binding";
 export type { EuC7ProfileResolutionInput } from "./profile-binding";
+export {
+  assertEuC7CrackOptimizerRejectsUndetermined,
+  assertEuC7CrackParetoRejectsUndetermined,
+  assertEuC7CrackResultCurrent,
+  euC7CrackInputFingerprint,
+  evaluateEuC7CrackWidth,
+  selectEuC7CrackLimit,
+  selectEuC7SigmaS,
+} from "./evaluate";
+export type { EuC7CrackWidthInput, EuC7CrackWidthResult } from "./evaluate";
+export { EU_C7_R2_METHOD_REGISTRY, EU_C7_R2_METHOD_REGISTRY_UPDATED } from "./registry";
