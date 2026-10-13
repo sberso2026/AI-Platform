@@ -12,6 +12,7 @@ import {
   R9_C9_COLUMN_CHANGED_FILES,
   R9_C9_SLAB_CHANGED_FILES,
   R9_C9_WALL_CHANGED_FILES,
+  R9_C9_CLOSEOUT_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -78,6 +79,20 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.releaseSensitiveFiles).toContain(
       "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+  });
+
+  it("classifies the C9 closeout as release-sensitive", () => {
+    const classified = classifyChangedFiles(R9_C9_CLOSEOUT_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/eu-c9/closeout.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1E_EU_C9_R6_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
   });

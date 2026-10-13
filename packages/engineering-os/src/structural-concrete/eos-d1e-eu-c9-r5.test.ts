@@ -887,6 +887,7 @@ describe("EOS-D1E-EU-C9-R5 bounded wall-section orchestration", () => {
     expect(manifest?.method).toBe("EU_RC_WALL_SECTION_ORCHESTRATION_EN1992_REFERENCE");
     expect(manifest?.limitations).toContain("section check is not wall-member design");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R5-WALL-ORCHESTRATION")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R6-CLOSEOUT")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R6-CLOSEOUT")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R1-INDEPENDENT-VALIDATION-READINESS")?.status).toBe("NOT_STARTED");
   });
 });
