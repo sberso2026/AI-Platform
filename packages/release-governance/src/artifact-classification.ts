@@ -23,6 +23,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/structural-concrete\/eu-c8\/lap-authority\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c8\/closeout\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/foundation\.ts$/,
+  /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/beam\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/d1e-closeout\/matrix\.ts$/,
 ];
 
@@ -110,6 +111,13 @@ export const R9_C9_FOUNDATION_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1E_EU_C9_R1_MEMBER_ORCHESTRATION_FOUNDATION.md",
   "packages/engineering-os/src/structural-concrete/capability.ts",
   "packages/engineering-os/src/structural-concrete/eu-c9/foundation.ts",
+] as const;
+
+/** R2 bounded beam orchestrator. No new engineering formula is registered. */
+export const R9_C9_BEAM_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1E_EU_C9_R2_BEAM_ORCHESTRATION.md",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-concrete/eu-c9/beam.ts",
 ] as const;
 
 /** R1 commit range 5fca4aa8..9d208dce — used to prove the historical classifier gap is now closed. */

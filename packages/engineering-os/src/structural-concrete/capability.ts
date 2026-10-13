@@ -520,8 +520,20 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "C9-R1 compatibility, status, and execution-graph foundation only. No beam, column, slab, or wall runtime orchestrator. No new engineering formula. Deferred C7 and C8 methods stay unavailable. Not CONFORMANCE_VALIDATED.",
+    limitations: "C9-R1 compatibility, status, and execution-graph foundation only. No member runtime in the foundation module. No new engineering formula. Deferred C7 and C8 methods stay unavailable. Not CONFORMANCE_VALIDATED.",
     dependencies: ["D1E.EU.C2.FLEXURE.UNIAXIAL", "D1E.EU.C8.BASIC_REQUIRED_ANCHORAGE"],
+  },
+  {
+    capabilityId: "D1E.EU.C9.BEAM_ORCHESTRATION",
+    jurisdiction: "EU",
+    method: "EU_RC_BEAM_ORCHESTRATION_EN1992_REFERENCE",
+    authorityType: "VALIDATED_ENGINEERING_REFERENCE",
+    implementationState: "IMPLEMENTED_NUMERICALLY_VALIDATED",
+    validationState: "NUMERICALLY_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Bounded ordinary non-prestressed rectangular beam orchestration of existing C2-C8 methods. Routing and aggregation only. No new engineering formula. No general beam analysis. C6 and punching are not beam checks. Crack width is not complete serviceability. Cover assembly is not cover compliance. Basic anchorage is not design anchorage. Deflection, design anchorage, laps, calculated creep, and calculated shrinkage remain unavailable. Engineer validation pending. Not CONFORMANCE_VALIDATED.",
+    dependencies: ["D1E.EU.C9.ORCHESTRATION_FOUNDATION", "D1E.EU.C2.FLEXURE.UNIAXIAL"],
   },
   ...EU_C8_UNSUPPORTED_CAPABILITY_ROWS,
 ];
@@ -663,7 +675,7 @@ export const D1E_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] = [
   { debtId: "D1E-EU-VD-MAX-REO", category: "MAXIMUM_REINFORCEMENT", jurisdiction: "EU", capability: "EU max reinforcement", description: "maximum reinforcement not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "governed max-reo method", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-ANCHORAGE", category: "ANCHORAGE", jurisdiction: "EU", capability: "EU anchorage", description: "C8-R4B numerically validated basic required straight-bar tension anchorage. Design anchorage modifiers, minimum design anchorage, compression anchorage, hooks, and bends remain unimplemented. Basic required length is not design anchorage length.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "materially new governed design-anchorage factors; not another autonomous search", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later governed design anchorage recovery" },
   { debtId: "D1E-EU-VD-LAP", category: "LAP_SPLICES", jurisdiction: "EU", capability: "EU laps", description: "C8-R5 deferred straight-bar laps. Shape, cover, transverse reinforcement, transverse pressure, the percentage-dependent product, and the minimum lap remain ungoverned. No lap profile is bound. LAP_RUNTIME is not implemented.", priority: "SAFETY_CRITICAL", blockingState: "DEFERRED_RULE_AUTHORITY", requiredEvidence: "materially new governed lap-factor expressions; not another autonomous search", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later governed lap recovery" },
-  { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "C8 bounded track closed. Cover assembly, minimum clear spacing, and basic required anchorage are numerically validated. Design anchorage and laps remain deferred. C9-R1 records member compatibility only. Complete EN 1992 detailing is not claimed.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "bounded beam orchestration of existing methods; design anchorage and laps stay outside that orchestration", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C9-R2-BEAM-ORCHESTRATION" },
+  { debtId: "D1E-EU-VD-DETAILING", category: "DETAILING", jurisdiction: "EU", capability: "EU detailing", description: "C8 bounded track closed. Cover assembly, minimum clear spacing, and basic required anchorage are numerically validated. C9-R2 orchestrates those methods for a bounded rectangular beam. Design anchorage and laps remain deferred. Complete EN 1992 detailing is not claimed.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "bounded column orchestration of existing methods; design anchorage and laps stay outside member orchestration", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C9-R3-COLUMN-ORCHESTRATION" },
   { debtId: "D1E-EU-VD-SECOND-ORDER", category: "SECOND_ORDER_EFFECTS", jurisdiction: "EU", capability: "EU member stability", description: "C6-R2 numerically validated the bounded nominal-curvature member method and C3 handoff. Engineer validation, national annex, nominal stiffness, biaxial second-order, and formal conformance remain unbound.", priority: "SAFETY_CRITICAL", blockingState: "PARTIAL", requiredEvidence: "human engineering review; nominal stiffness and biaxial member effects are separate scopes", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "EOS-D1E-EU-C7" },
   { debtId: "D1E-EU-VD-PRESTRESS", category: "PRESTRESSED_CONCRETE", jurisdiction: "EU", capability: "EU prestress", description: "prestressed design not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "later prestress track", ownerWorkstream: "EU_CONCRETE_CONFORMANCE", recommendedFuturePhase: "later EU concrete" },
   { debtId: "D1E-EU-VD-CONNECTIONS", category: "CONNECTIONS", jurisdiction: "EU", capability: "EU connections", description: "joints/anchors/embedded plates not implemented", priority: "SAFETY_CRITICAL", blockingState: "UNRESOLVED", requiredEvidence: "D1F connection methods", ownerWorkstream: "D1F", recommendedFuturePhase: "D1F" },
@@ -751,7 +763,8 @@ export const D1E_INTERNAL_ROADMAP = [
   { id: "EOS-D1E-EU-C8-R5-LAPS-AUTHORITY", scope: "Lap authority deferred: design-lap factors named but not quantified; runtime not implemented", status: "CLOSED" },
   { id: "EOS-D1E-EU-C8-R6-CLOSEOUT", scope: "Bounded C8 detailing track closed; laps and design anchorage deferred", status: "CLOSED" },
   { id: "EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION", scope: "Member compatibility, execution graph, and result contract recorded; no member runtime", status: "CLOSED" },
-  { id: "EOS-D1E-EU-C9-R2-BEAM-ORCHESTRATION", scope: "Bounded RC beam orchestration using only existing verified C2-C8 methods", status: "NOT_STARTED" },
+  { id: "EOS-D1E-EU-C9-R2-BEAM-ORCHESTRATION", scope: "Bounded rectangular RC beam orchestration of existing C2-C8 methods; no new formula", status: "CLOSED" },
+  { id: "EOS-D1E-EU-C9-R3-COLUMN-ORCHESTRATION", scope: "Bounded RC column orchestration using only existing verified C2-C8 methods", status: "NOT_STARTED" },
 ] as const;
 
 export const D1E0_D0_RISK_DISPOSITION = {

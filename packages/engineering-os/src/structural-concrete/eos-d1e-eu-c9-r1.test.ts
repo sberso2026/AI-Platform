@@ -42,7 +42,7 @@ describe("EOS-D1E-EU-C9-R1 member orchestration foundation", () => {
     expect(source).not.toContain("fyd");
     expect(source).not.toMatch(/Math\./);
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R2-BEAM-ORCHESTRATION")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R2-BEAM-ORCHESTRATION")?.status).toBe("CLOSED");
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
