@@ -46,7 +46,6 @@ import { governedProvenance } from "../structural-domain/catalog";
 import { createConfiguredKnowledgeContext } from "../structural-domain/binding";
 import type { EuC9R2SectionActions } from "./eu-c9/beam";
 import {
-  EU_C9_ORCHESTRATOR_REGISTRY,
   EU_C9_R4_C2_SLAB_APPLICABILITY,
   EU_C9_R4_C3_SLAB_APPLICABILITY,
   EU_C9_R4_C4_SLAB_APPLICABILITY,
@@ -70,6 +69,7 @@ import {
   type EuC9R4SlabInput,
   type EuC9R4Strip,
 } from "./eu-c9/slab";
+import { EU_C9_ORCHESTRATOR_REGISTRY } from "./eu-c9/wall";
 
 function zeroAxialActions(patch: Partial<EuC9R2SectionActions> = {}): EuC9R2SectionActions {
   return {
@@ -734,10 +734,12 @@ describe("EOS-D1E-EU-C9-R4 bounded solid slab orchestration", () => {
       "EU_RC_BEAM_ORCHESTRATION_EN1992_REFERENCE",
       "EU_RC_COLUMN_ORCHESTRATION_EN1992_REFERENCE",
       "EU_RC_SOLID_SLAB_ORCHESTRATION_EN1992_REFERENCE",
+      "EU_RC_WALL_SECTION_ORCHESTRATION_EN1992_REFERENCE",
     ]);
     expect(CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C9.SOLID_SLAB_ORCHESTRATION")?.implementationState).toBe("IMPLEMENTED_NUMERICALLY_VALIDATED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R4-SOLID-SLAB-ORCHESTRATION")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R5-WALL-ORCHESTRATION")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R5-WALL-ORCHESTRATION")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R6-CLOSEOUT")?.status).toBe("NOT_STARTED");
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");

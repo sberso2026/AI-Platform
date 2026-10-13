@@ -63,7 +63,7 @@ import {
   routeEuC9R3ColumnSection,
   type EuC9R3ColumnInput,
 } from "./eu-c9/column";
-import { EU_C9_ORCHESTRATOR_REGISTRY } from "./eu-c9/slab";
+import { EU_C9_ORCHESTRATOR_REGISTRY } from "./eu-c9/wall";
 import type { EuC9R2SectionActions } from "./eu-c9/beam";
 
 function actions(patch: Partial<EuC9R2SectionActions> = {}): EuC9R2SectionActions {
@@ -621,11 +621,13 @@ describe("EOS-D1E-EU-C9-R3 bounded column orchestration", () => {
       "EU_RC_BEAM_ORCHESTRATION_EN1992_REFERENCE",
       "EU_RC_COLUMN_ORCHESTRATION_EN1992_REFERENCE",
       "EU_RC_SOLID_SLAB_ORCHESTRATION_EN1992_REFERENCE",
+      "EU_RC_WALL_SECTION_ORCHESTRATION_EN1992_REFERENCE",
     ]);
     expect(CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C9.COLUMN_ORCHESTRATION")?.implementationState).toBe("IMPLEMENTED_NUMERICALLY_VALIDATED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R3-COLUMN-ORCHESTRATION")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R4-SOLID-SLAB-ORCHESTRATION")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R5-WALL-ORCHESTRATION")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R5-WALL-ORCHESTRATION")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R6-CLOSEOUT")?.status).toBe("NOT_STARTED");
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
     expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
