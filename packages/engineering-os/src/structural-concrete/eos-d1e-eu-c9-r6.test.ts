@@ -97,6 +97,7 @@ describe("EOS-D1E-EU-C9-R6 closeout", () => {
     expect(row("D1E.EU.C8.LAPS")?.implementationState).toBe("DEFERRED_RULE_AUTHORITY");
     expect(row("D1E.EU.C8.DESIGN_ANCHORAGE")?.implementationState).toBe("NOT_IMPLEMENTED");
     expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C9-R6-CLOSEOUT")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C10-R1-INDEPENDENT-VALIDATION-READINESS")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C10-R1-INDEPENDENT-VALIDATION-READINESS")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C10-R2-METHOD-MEMBER-BENCHMARKS")?.status).toBe("NOT_STARTED");
   });
 });

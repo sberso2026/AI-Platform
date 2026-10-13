@@ -888,6 +888,7 @@ describe("EOS-D1E-EU-C9-R5 bounded wall-section orchestration", () => {
     expect(manifest?.limitations).toContain("section check is not wall-member design");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R5-WALL-ORCHESTRATION")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C9-R6-CLOSEOUT")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R1-INDEPENDENT-VALIDATION-READINESS")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R1-INDEPENDENT-VALIDATION-READINESS")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R2-METHOD-MEMBER-BENCHMARKS")?.status).toBe("NOT_STARTED");
   });
 });
