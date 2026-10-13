@@ -65,7 +65,7 @@ describe("EOS-D1E-EU-C7-R5 closeout", () => {
     const deflection = D1E_VALIDATION_DEBT_REGISTER.find((item) => item.debtId === "D1E-EU-VD-DEFLECTION");
     expect(deflection?.blockingState).toBe("DEFERRED_RULE_AUTHORITY");
     expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C7-R5-CLOSEOUT")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C8")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C8")?.status).toBe("CLOSED");
     const manifest = CONCRETE_CAPABILITY_MANIFEST.filter((item) => item.capabilityId.startsWith("D1E.EU.C7"));
     expect(manifest.every((item) => item.conformanceState === "INTENDED_PROFILE")).toBe(true);
     expect(manifest.every((item) => item.limitations.includes("DEFLECTION_RUNTIME_CAPABILITY = NOT_IMPLEMENTED"))).toBe(true);

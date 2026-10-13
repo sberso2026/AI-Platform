@@ -171,11 +171,11 @@ describe("EOS-D1E-EU-C8-R4 anchorage authority", () => {
     const anchorage = CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C8.BASIC_ANCHORAGE_PROFILE");
     expect(anchorage?.implementationState).toBe("PROFILE_BOUND_REFERENCE");
     expect(anchorage?.validationState).toBe("NOT_VALIDATED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R4-ANCHORAGE-AUTHORITY")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R4B-ANCHORAGE-IMPLEMENTATION")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R5-LAPS-AUTHORITY")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R6-CLOSEOUT")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R6-CLOSEOUT")?.status).toBe("CLOSED");
     expect(EU_C7_DEFLECTION_RUNTIME_CAPABILITY).toBe("NOT_IMPLEMENTED");
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);

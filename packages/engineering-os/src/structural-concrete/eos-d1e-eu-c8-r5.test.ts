@@ -57,10 +57,10 @@ describe("EOS-D1E-EU-C8-R5 lap authority", () => {
     expect(EU_C8_BASIC_ANCHORAGE_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(EU_C8_SPACING_BOUNDED_CAPABILITY_COMPLETE).toBe(true);
     expect(CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C8.COVER_ASSEMBLY")?.validationState).toBe("NUMERICALLY_VALIDATED");
-    expect(CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C8.LAPS")?.implementationState).toBe("NOT_IMPLEMENTED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("NOT_STARTED");
+    expect(CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C8.LAPS")?.implementationState).toBe("DEFERRED_RULE_AUTHORITY");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R5-LAPS-AUTHORITY")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R6-CLOSEOUT")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R6-CLOSEOUT")?.status).toBe("CLOSED");
     expect(DEFLECTION_RUNTIME_CAPABILITY).toBe("NOT_IMPLEMENTED");
     expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
     expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);

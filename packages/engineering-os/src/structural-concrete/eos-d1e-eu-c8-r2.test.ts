@@ -264,8 +264,8 @@ describe("EOS-D1E-EU-C8-R2 cover assembly", () => {
     expect(manifest?.validationState).toBe("NUMERICALLY_VALIDATED");
     expect(manifest?.conformanceState).toBe("INTENDED_PROFILE");
     expect(manifest?.limitations).toContain("DURABILITY_LOOKUP = NOT_IMPLEMENTED");
-    expect(manifest?.limitations).toContain("SPACING = NOT_IMPLEMENTED");
-    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("NOT_STARTED");
+    expect(manifest?.limitations).toContain("Spacing, basic anchorage, and laps are separate capabilities");
+    expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8")?.status).toBe("CLOSED");
     expect(D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C8-R2-COVER-DURABILITY")?.status).toBe("CLOSED");
     const evaluateSource = readFileSync(new URL("./eu-c8/evaluate.ts", import.meta.url), "utf8");
     expect(evaluateSource).not.toMatch(/(?<![A-Za-z0-9_])\d/);

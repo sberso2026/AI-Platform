@@ -6,6 +6,7 @@ import {
   R1_COMMIT_CHANGED_FILES,
   R4_ANCHORAGE_AUTHORITY_CHANGED_FILES,
   R5_LAP_AUTHORITY_CHANGED_FILES,
+  R6_C8_CLOSEOUT_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -44,6 +45,20 @@ describe("release-sensitive artifact classification", () => {
     const classified = classifyChangedFiles(R5_LAP_AUTHORITY_CHANGED_FILES);
     expect(classified.releaseSensitiveFiles).toContain(
       "packages/engineering-os/src/structural-concrete/eu-c8/lap-authority.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+  });
+
+  it("classifies the R6 C8 closeout record as release-sensitive", () => {
+    const classified = classifyChangedFiles(R6_C8_CLOSEOUT_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/eu-c8/closeout.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/d1e-closeout/matrix.ts",
     );
     expect(classified.releaseSensitiveFiles).toContain(
       "packages/engineering-os/src/structural-concrete/capability.ts",
