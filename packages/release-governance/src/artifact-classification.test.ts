@@ -9,6 +9,7 @@ import {
   R6_C8_CLOSEOUT_CHANGED_FILES,
   R9_C9_FOUNDATION_CHANGED_FILES,
   R9_C9_BEAM_CHANGED_FILES,
+  R9_C9_COLUMN_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -72,6 +73,17 @@ describe("release-sensitive artifact classification", () => {
     const classified = classifyChangedFiles(R9_C9_FOUNDATION_CHANGED_FILES);
     expect(classified.releaseSensitiveFiles).toContain(
       "packages/engineering-os/src/structural-concrete/eu-c9/foundation.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+  });
+
+  it("classifies the C9 column orchestrator as release-sensitive", () => {
+    const classified = classifyChangedFiles(R9_C9_COLUMN_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/eu-c9/column.ts",
     );
     expect(classified.releaseSensitiveFiles).toContain(
       "packages/engineering-os/src/structural-concrete/capability.ts",
