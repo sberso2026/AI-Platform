@@ -25,6 +25,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/foundation\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/beam\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/column\.ts$/,
+  /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/slab\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/d1e-closeout\/matrix\.ts$/,
 ];
 
@@ -112,6 +113,13 @@ export const R9_C9_FOUNDATION_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1E_EU_C9_R1_MEMBER_ORCHESTRATION_FOUNDATION.md",
   "packages/engineering-os/src/structural-concrete/capability.ts",
   "packages/engineering-os/src/structural-concrete/eu-c9/foundation.ts",
+] as const;
+
+/** R4 bounded solid-slab orchestrator. No new engineering formula is registered. */
+export const R9_C9_SLAB_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1E_EU_C9_R4_SOLID_SLAB_ORCHESTRATION.md",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-concrete/eu-c9/slab.ts",
 ] as const;
 
 /** R3 bounded column orchestrator. No new engineering formula is registered. */
