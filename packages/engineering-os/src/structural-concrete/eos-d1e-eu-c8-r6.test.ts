@@ -82,6 +82,6 @@ describe("EOS-D1E-EU-C8-R6 closeout", () => {
     expect(matrix("anchorage")?.EU.numericallyValidated).toBe(true);
     expect(matrix("anchorage")?.EU.limitation).toContain("design anchorage not implemented");
     expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C8-R6-CLOSEOUT")?.status).toBe("CLOSED");
-    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION")?.status).toBe("NOT_STARTED");
+    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION")?.status).toBe("CLOSED");
   });
 });
