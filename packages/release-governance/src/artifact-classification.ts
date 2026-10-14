@@ -29,6 +29,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/wall\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c9\/closeout\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c10\/readiness\.ts$/,
+  /packages\/engineering-os\/src\/structural-concrete\/eu-c10\/benchmarks\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/d1e-closeout\/matrix\.ts$/,
 ];
 
@@ -120,6 +121,14 @@ export const R9_C9_FOUNDATION_CHANGED_FILES = [
 
 /** R6 C9 member-orchestration closeout. No new engineering formula is registered. */
 /** R1 C10 independent-validation readiness. No engineering formula is registered. */
+/** R2 C10 independent benchmark evidence. No engineering formula is registered. */
+export const R10_C10_R2_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1E_EU_C10_R2_METHOD_MEMBER_BENCHMARKS.md",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-concrete/eu-c10/benchmarks.ts",
+  "packages/engineering-os/src/structural-concrete/eu-c10/readiness.ts",
+] as const;
+
 export const R10_C10_R1_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1E_EU_C10_R1_INDEPENDENT_VALIDATION_READINESS.md",
   "packages/engineering-os/src/structural-concrete/capability.ts",

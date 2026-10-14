@@ -723,8 +723,11 @@ export function assertEuC10ReadinessPreservesLimits(): void {
   if (D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R1-INDEPENDENT-VALIDATION-READINESS")?.status !== "CLOSED") {
     throw new Error("C10-R1 roadmap is not closed");
   }
-  if (D1E_INTERNAL_ROADMAP.find((row) => row.id === EU_C10_NEXT_PHASE)?.status !== "NOT_STARTED") {
-    throw new Error("C10-R2 must remain not started");
+  if (D1E_INTERNAL_ROADMAP.find((row) => row.id === EU_C10_NEXT_PHASE)?.status !== "CLOSED") {
+    throw new Error("C10-R2 benchmark execution is not closed");
+  }
+  if (D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R3-ENGINEER-VALIDATION-EVIDENCE")?.status !== "NOT_STARTED") {
+    throw new Error("C10-R3 must remain not started");
   }
   if (EU_C5_SOURCES.length < 2) throw new Error("C5 source inventory collapsed");
   for (const deferred of EU_C10_DEFERRED_CAPABILITY_INVENTORY) {
