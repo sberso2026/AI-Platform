@@ -726,8 +726,14 @@ export function assertEuC10ReadinessPreservesLimits(): void {
   if (D1E_INTERNAL_ROADMAP.find((row) => row.id === EU_C10_NEXT_PHASE)?.status !== "CLOSED") {
     throw new Error("C10-R2 benchmark execution is not closed");
   }
+  if (D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R3A-ENGINEER-REVIEW-PACK-PREPARATION")?.status !== "CLOSED") {
+    throw new Error("C10-R3A review-pack preparation is not closed");
+  }
   if (D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R3-ENGINEER-VALIDATION-EVIDENCE")?.status !== "NOT_STARTED") {
     throw new Error("C10-R3 must remain not started");
+  }
+  if (D1E_INTERNAL_ROADMAP.find((row) => row.id === "EOS-D1E-EU-C10-R3B-ENGINEER-VALIDATION-EVIDENCE-INGESTION")?.status !== "NOT_STARTED") {
+    throw new Error("C10-R3B must remain not started until human evidence exists");
   }
   if (EU_C5_SOURCES.length < 2) throw new Error("C5 source inventory collapsed");
   for (const deferred of EU_C10_DEFERRED_CAPABILITY_INVENTORY) {

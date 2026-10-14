@@ -15,6 +15,7 @@ import {
   R9_C9_CLOSEOUT_CHANGED_FILES,
   R10_C10_R1_CHANGED_FILES,
   R10_C10_R2_CHANGED_FILES,
+  R10_C10_R3A_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -109,6 +110,23 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1E_EU_C10_R2_METHOD_MEMBER_BENCHMARKS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+  });
+
+  it("classifies C10 review packs as release-sensitive", () => {
+    const classified = classifyChangedFiles(R10_C10_R3A_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/eu-c10/review-packs.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1E_EU_C10_R3A_ENGINEER_REVIEW_PACK_PREPARATION.md",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/eu-c10/review-packs/REVIEW_TEMPLATE.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
   });
