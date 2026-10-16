@@ -35,6 +35,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems\.ts$/,
   /packages\/types\/src\/structural-systems-r1\.ts$/,
   /packages\/types\/src\/structural-systems-r2\.ts$/,
+  /packages\/types\/src\/structural-systems-r3\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -165,6 +166,19 @@ export const D1F_R2_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/result-binding.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1f-r2.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+/** D1F-R3 system-to-member evaluation. No solver or new design formula is registered. */
+export const D1F_R3_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1F_R3_SYSTEM_TO_MEMBER_EVALUATION_ORCHESTRATION.md",
+  "packages/types/src/structural-systems-r3.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/system-evaluation.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1f-r3.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
