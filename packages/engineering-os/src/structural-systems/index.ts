@@ -25,3 +25,4 @@ export {
 } from "./runtime";
 export { evaluateAnalysisResultBinding, promoteAnalysisResultAuthority, recordSuccessorAnalysisRun } from "./result-binding";
 export { evaluateSystemMemberPlan, recordSuccessorSystemEvaluation } from "./system-evaluation";
+export { evaluateConnectionInterface, recordSuccessorConnectionInterface } from "./connection-interface";
