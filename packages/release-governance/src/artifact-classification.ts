@@ -32,6 +32,8 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/structural-concrete\/eu-c10\/benchmarks\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/eu-c10\/review-packs\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/d1e-closeout\/matrix\.ts$/,
+  /packages\/types\/src\/structural-systems\.ts$/,
+  /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
 const SECURITY_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
@@ -123,6 +125,22 @@ export const R9_C9_FOUNDATION_CHANGED_FILES = [
 /** R6 C9 member-orchestration closeout. No new engineering formula is registered. */
 /** R1 C10 independent-validation readiness. No engineering formula is registered. */
 /** R2 C10 independent benchmark evidence. No engineering formula is registered. */
+/** D1F-0 structural systems architecture. No solver or design formula is registered. */
+export const D1F_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1F_0_STRUCTURAL_SYSTEMS_ARCHITECTURE.md",
+  "packages/types/src/structural-systems.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/contract.ts",
+  "packages/engineering-os/src/structural-systems/fingerprint.ts",
+  "packages/engineering-os/src/structural-systems/formula-scan.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1f-0.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 /** R3A C10 engineer review-pack preparation. No engineering formula is registered. */
 export const R10_C10_R3A_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1E_EU_C10_R3A_ENGINEER_REVIEW_PACK_PREPARATION.md",

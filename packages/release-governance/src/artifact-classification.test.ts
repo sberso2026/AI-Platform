@@ -16,6 +16,7 @@ import {
   R10_C10_R1_CHANGED_FILES,
   R10_C10_R2_CHANGED_FILES,
   R10_C10_R3A_CHANGED_FILES,
+  D1F_0_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -112,6 +113,22 @@ describe("release-sensitive artifact classification", () => {
       "docs/architecture/engineering-os/EOS_D1E_EU_C10_R2_METHOD_MEMBER_BENCHMARKS.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
+  });
+
+  it("classifies D1F structural systems architecture as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1F_0_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/structural-systems.ts");
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/contract.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-concrete/capability.ts",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1F_0_STRUCTURAL_SYSTEMS_ARCHITECTURE.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
   });
 
   it("classifies C10 review packs as release-sensitive", () => {

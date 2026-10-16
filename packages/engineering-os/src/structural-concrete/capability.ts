@@ -577,6 +577,18 @@ export const CONCRETE_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[
 export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecord[] = [
   ...D1D_CAPABILITY_MANIFEST,
   ...CONCRETE_CAPABILITY_MANIFEST,
+  {
+    capabilityId: "D1F.STRUCTURAL_SYSTEMS.ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "structural systems architecture",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "ARCHITECTURE_DEFINED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Architecture and fail-closed handoff contracts only. No structural solver, external solver connector, connection design, foundation design, or new steel or concrete formula. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW. Not an implemented analysis capability.",
+    dependencies: ["D1A structural domain", "D1B standard bind", "D1C bounded demand", "D1D steel member checks", "D1E concrete member checks"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {
