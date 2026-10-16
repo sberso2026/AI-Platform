@@ -33,6 +33,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/structural-concrete\/eu-c10\/review-packs\.ts$/,
   /packages\/engineering-os\/src\/structural-concrete\/d1e-closeout\/matrix\.ts$/,
   /packages\/types\/src\/structural-systems\.ts$/,
+  /packages\/types\/src\/structural-systems-r1\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -137,6 +138,19 @@ export const D1F_0_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/formula-scan.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1f-0.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+/** D1F-R1 structural-system topology runtime. No solver or design formula is registered. */
+export const D1F_R1_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1F_R1_STRUCTURAL_SYSTEM_CONTEXT_TOPOLOGY.md",
+  "packages/types/src/structural-systems-r1.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/runtime.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1f-r1.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

@@ -589,6 +589,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "Architecture and fail-closed handoff contracts only. No structural solver, external solver connector, connection design, foundation design, or new steel or concrete formula. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW. Not an implemented analysis capability.",
     dependencies: ["D1A structural domain", "D1B standard bind", "D1C bounded demand", "D1D steel member checks", "D1E concrete member checks"],
   },
+  {
+    capabilityId: "D1F.R1.STRUCTURAL_SYSTEM_CONTEXT_AND_TOPOLOGY",
+    jurisdiction: "GLOBAL",
+    method: "structural system context and physical topology",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_RUNTIME_FOUNDATION",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Runtime foundation for structural-system identity, physical topology, connectivity, supports, releases, coordinates, units, provenance, fingerprints, and invalidation. It does not analyse the system, calculate action effects, or execute steel, concrete, connection, or foundation design. Topology completeness is not analysis readiness or design adequacy. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW.",
+    dependencies: ["D1F.STRUCTURAL_SYSTEMS.ARCHITECTURE", "D1A structural domain", "D1B standard bind", "D1C bounded demand"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

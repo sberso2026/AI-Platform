@@ -17,3 +17,9 @@ export {
 } from "./contract";
 export { fingerprintStructuralSubject } from "./fingerprint";
 export { scanAnalysisFormulaBypass } from "./formula-scan";
+export {
+  assertTopologyFingerprintCurrent,
+  confirmConnectivity,
+  evaluateStructuralSystemTopology,
+  reviseStructuralTopology,
+} from "./runtime";
