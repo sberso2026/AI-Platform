@@ -601,6 +601,30 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "Runtime foundation for structural-system identity, physical topology, connectivity, supports, releases, coordinates, units, provenance, fingerprints, and invalidation. It does not analyse the system, calculate action effects, or execute steel, concrete, connection, or foundation design. Topology completeness is not analysis readiness or design adequacy. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW.",
     dependencies: ["D1F.STRUCTURAL_SYSTEMS.ARCHITECTURE", "D1A structural domain", "D1B standard bind", "D1C bounded demand"],
   },
+  {
+    capabilityId: "D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME",
+    jurisdiction: "GLOBAL",
+    method: "provider-neutral structural analysis result runtime",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_PROVIDER_NEUTRAL_FOUNDATION",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Provider-neutral analysis-model, run, raw-result, and normalized-result identity. No structural solver, external solver connector, envelope engine, or design execution. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW.",
+    dependencies: ["D1F.R1.STRUCTURAL_SYSTEM_CONTEXT_AND_TOPOLOGY", "D1C bounded demand"],
+  },
+  {
+    capabilityId: "D1F.R2.STRUCTURAL_MEMBER_ACTION_BINDING",
+    jurisdiction: "GLOBAL",
+    method: "structural member action binding",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_RUNTIME_FOUNDATION",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Binds governed canonical action effects to existing steel demand slots and concrete section-action slots. It does not execute steel or concrete checks, sum multi-element forces, or treat absence as zero. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW.",
+    dependencies: ["D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME", "D1D steel member checks", "D1E concrete member checks"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

@@ -23,3 +23,4 @@ export {
   evaluateStructuralSystemTopology,
   reviseStructuralTopology,
 } from "./runtime";
+export { evaluateAnalysisResultBinding, promoteAnalysisResultAuthority, recordSuccessorAnalysisRun } from "./result-binding";

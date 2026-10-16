@@ -424,3 +424,4 @@ export * from "./structural-concrete-eu-c6";
 export * from "./structural-concrete-eu-c7";
 export * from "./structural-systems";
 export * from "./structural-systems-r1";
+export * from "./structural-systems-r2";
