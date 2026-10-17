@@ -4,7 +4,7 @@ import {
   D1G_R4_MAPPING_MANIFEST_ID,
   D1G_R4_MAPPING_MANIFEST_VERSION,
   D1G_R4_PROVIDER_ID,
-  D1G_R4_SUPPORTED_PROVIDER_VERSIONS,
+  D1G_R5_API_GENERATION,
 } from "@rtb/types";
 import { fingerprintCanonical } from "../optimization-intelligence/fingerprint";
 
@@ -64,7 +64,7 @@ export function spaceGassAdapter(): D1gR1AdapterIdentity {
     adapterVersion: D1G_R4_CONNECTOR_VERSION,
     adapterSchemaVersion: "d1g-r4-1",
     providerId: D1G_R4_PROVIDER_ID,
-    supportedProviderVersions: D1G_R4_SUPPORTED_PROVIDER_VERSIONS,
+    supportedProviderVersions: [D1G_R5_API_GENERATION],
     adapterType: "API_PROVIDER",
     capabilityManifestRef: "cap-d1g-r4-space-gass",
     mappingManifestRef: D1G_R4_MAPPING_MANIFEST_ID,

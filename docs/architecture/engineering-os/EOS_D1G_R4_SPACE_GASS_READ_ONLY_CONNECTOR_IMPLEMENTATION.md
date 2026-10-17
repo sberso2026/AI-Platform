@@ -8,7 +8,7 @@ The integration mode remains the local REST read selected in D1G-R3. The officia
 
 ## Version and licence
 
-Accepted desktop versions are only the documented pairing examples 15.0.2 and 15.1.0. Any other version, including a missing version, fails closed. The connector does not guess a version from a file name or an install path. The documented local API uses no API key. No licence key is read or stored. A licence failure is returned as LICENSE_UNAVAILABLE and is not bypassed.
+R5 corrected the version claim. API generation v1 is the supported contract. Desktop versions 15.0.2 and 15.1.0 remain SDK pairing examples and are not a proven REST compatibility range. A missing version still fails closed. A non-v1 API generation fails closed. A reported desktop version is recorded and is not accepted as compatible. The connector does not guess a version from a file name or an install path. The documented local API uses no API key. No licence key is read or stored. A licence failure is returned as LICENSE_UNAVAILABLE and is not bypassed.
 
 ## Transport
 

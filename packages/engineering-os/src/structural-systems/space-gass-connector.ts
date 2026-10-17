@@ -16,11 +16,15 @@ import {
   D1G_R4_FEATURE_FLAG_DEFAULT,
   D1G_R4_PROVIDER_ID,
   D1G_R4_PROVIDER_PRODUCT,
-  D1G_R4_SUPPORTED_PROVIDER_VERSIONS,
+  D1G_R5_API_GENERATION,
+  D1G_R5_DESKTOP_VERSION_COMPATIBILITY,
+  D1G_R5_MAX_NATIVE_PAGES,
+  D1G_R5_NATIVE_PAGE_LIMIT,
 } from "@rtb/types";
 import { fingerprintCanonical } from "../optimization-intelligence/fingerprint";
 import { D1G_R3_SELECTION_RECORD } from "./provider-selection";
 import { ingestStructuralResultPackage } from "./result-package";
+import { readSpaceGassEndpoint, type SpaceGassTransportConfig } from "./space-gass-transport";
 import { manifestForGovernedMaps, spaceGassAdapter, spaceGassMappingFingerprint, SPACE_GASS_MAPPING_MANIFEST, SPACE_GASS_SIGN_STATEMENTS, SPACE_GASS_UNRESOLVED_MAPPING } from "./space-gass-mapping";
 
 export const D1G_R4_SELECTION_RECORD_VERIFIED =
@@ -63,10 +67,10 @@ export function spaceGassReadOnlyConnectorEnabled(flag: boolean = D1G_R4_FEATURE
   return flag === true;
 }
 
-export function validateSpaceGassProviderVersion(version: string): { ok: true; version: string } | { ok: false; code: "UNSUPPORTED_PROVIDER_VERSION" | "UNRESOLVED_PROVIDER_VERSION" } {
-  if (!version) return { ok: false, code: "UNRESOLVED_PROVIDER_VERSION" };
-  if (!D1G_R4_SUPPORTED_PROVIDER_VERSIONS.includes(version as never)) return { ok: false, code: "UNSUPPORTED_PROVIDER_VERSION" };
-  return { ok: true, version };
+export function validateSpaceGassProviderVersion(version: string): { ok: true; apiGeneration: "v1"; desktopVersion: string; desktopCompatibility: typeof D1G_R5_DESKTOP_VERSION_COMPATIBILITY } | { ok: false; code: "UNSUPPORTED_PROVIDER_VERSION" | "UNRESOLVED_PROVIDER_VERSION" } {
+  if (!version.trim()) return { ok: false, code: "UNRESOLVED_PROVIDER_VERSION" };
+  if (version === "v2" || version.startsWith("api-v")) return { ok: false, code: "UNSUPPORTED_PROVIDER_VERSION" };
+  return { ok: true, apiGeneration: D1G_R5_API_GENERATION, desktopVersion: version, desktopCompatibility: D1G_R5_DESKTOP_VERSION_COMPATIBILITY };
 }
 
 function sha256(text: string): string {
@@ -77,19 +81,47 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
+function isProviderError(value: unknown): boolean {
+  return isRecord(value) && !("Results" in value) && (typeof value.error === "string" || typeof value.Error === "string" || typeof value.title === "string" || typeof value.Title === "string");
+}
+
 function responseText(snapshot: SpaceGassSnapshot, endpointId: string): string | null {
   const rows = snapshot.responses.filter((row) => row.endpointId === endpointId);
   if (rows.length !== 1) return null;
   return rows[0]!.rawText;
 }
 
+const FIELD_ALIASES: Readonly<Record<string, string>> = {
+  id: "Id", nodeA: "NodeA", nodeB: "NodeB", directionAngle: "DirectionAngle", nodeType: "NodeType",
+  x: "X", y: "Y", z: "Z", node: "Node", title: "Title", items: "Items", force: "Force", length: "Length", moment: "Moment",
+  status: "Status", runId: "RunId", member: "Member", station: "Station", location: "Location",
+  fx: "Fx", fy: "Fy", fz: "Fz", mx: "Mx", my: "My", mz: "Mz", results: "Results", warnings: "Warnings",
+  loadCasesNotAnalyzed: "LoadCasesNotAnalyzed", restraintCode: "RestraintCode",
+};
+
 function readJson(text: string | null): unknown {
   if (text == null) return undefined;
   try {
-    return JSON.parse(text) as unknown;
+    return withOfficialAliases(JSON.parse(text) as unknown);
   } catch {
     return undefined;
   }
+}
+
+function withOfficialAliases(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => withOfficialAliases(item));
+  if (!isRecord(value)) return value;
+  const copy: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value)) {
+    const aliased = withOfficialAliases(child);
+    if (key === "loadCase") {
+      if (copy.Case === undefined) copy.Case = aliased;
+      if (copy.LoadCase === undefined) copy.LoadCase = aliased;
+      continue;
+    }
+    copy[FIELD_ALIASES[key] ?? key] = aliased;
+  }
+  return copy;
 }
 
 function finite(value: unknown): number | null {
@@ -113,6 +145,70 @@ export function nativeSnapshotFingerprint(snapshot: SpaceGassSnapshot): string {
   return sha256(rows.map((row) => `${row.endpointId}\n${JSON.stringify(leftQuery(row.query))}\n${row.rawText}`).join("\n"));
 }
 
+function pageOffset(query: Readonly<Record<string, string>>): number {
+  const raw = query.offset ?? query.Offset ?? "";
+  return raw === "" ? 0 : Number(raw);
+}
+
+function nativeResultIdentity(endpoint: string, item: Record<string, unknown>): string {
+  if (endpoint === "MEMBER_INTERMEDIATE_FORCES") return `force:${String(item.Member)}|${String(item.Case)}|${JSON.stringify(item.Station)}`;
+  if (endpoint === "NODE_REACTIONS") return `reaction:${String(item.Node)}|${String(item.LoadCase)}`;
+  return `row:${String(item.Id ?? "")}`;
+}
+
+export function assessSpaceGassNativePages(responses: readonly SpaceGassSnapshotResponse[]): { complete: boolean; duplicateIdentities: string[] } {
+  const grouped = new Map<string, SpaceGassSnapshotResponse[]>();
+  for (const row of responses) {
+    const list = grouped.get(row.endpointId) ?? [];
+    list.push(row);
+    grouped.set(row.endpointId, list);
+  }
+  const duplicates: string[] = [];
+  let complete = true;
+  for (const [endpoint, rows] of grouped) {
+    const paged = rows.some((row) => row.query.offset !== undefined || row.query.Offset !== undefined);
+    if (!paged) continue;
+    const pages = [...rows].sort((left, right) => pageOffset(left.query) - pageOffset(right.query));
+    const limit = Number(pages[0]?.query.limit ?? pages[0]?.query.Limit ?? "");
+    if (!Number.isInteger(limit) || limit < 1 || pageOffset(pages[0]!.query) !== 0) complete = false;
+    for (let index = 1; index < pages.length; index += 1) {
+      if (pageOffset(pages[index]!.query) !== pageOffset(pages[index - 1]!.query) + limit) complete = false;
+    }
+    const seen = new Set<string>();
+    for (const page of pages) {
+      for (const item of envelopeRows(readJson(page.rawText))) {
+        const identity = nativeResultIdentity(endpoint, item);
+        if (seen.has(identity)) duplicates.push(identity);
+        seen.add(identity);
+      }
+    }
+  }
+  if (duplicates.length > 0) complete = false;
+  return { complete, duplicateIdentities: [...new Set(duplicates)] };
+}
+
+function mergedEnvelope(snapshot: SpaceGassSnapshot, endpointId: string): unknown {
+  const rows = snapshot.responses.filter((row) => row.endpointId === endpointId);
+  if (rows.length === 0) return undefined;
+  if (rows.length === 1 && rows[0]!.query.offset === undefined && rows[0]!.query.Offset === undefined) return readJson(rows[0]!.rawText);
+  const results: Record<string, unknown>[] = [];
+  const missing: number[] = [];
+  const seen = new Set<string>();
+  for (const row of [...rows].sort((left, right) => pageOffset(left.query) - pageOffset(right.query))) {
+    const parsed = readJson(row.rawText);
+    if (isRecord(parsed) && isRecord(parsed.Warnings) && Array.isArray(parsed.Warnings.LoadCasesNotAnalyzed)) {
+      for (const id of parsed.Warnings.LoadCasesNotAnalyzed) if (typeof id === "number") missing.push(id);
+    }
+    for (const item of envelopeRows(parsed)) {
+      const identity = nativeResultIdentity(endpointId, item);
+      if (seen.has(identity)) continue;
+      seen.add(identity);
+      results.push(item);
+    }
+  }
+  return { Results: results, Warnings: { LoadCasesNotAnalyzed: [...new Set(missing)] } };
+}
+
 function leftQuery(query: Readonly<Record<string, string>>): Record<string, string> {
   return Object.fromEntries(Object.entries(query).sort((left, right) => left[0].localeCompare(right[0])));
 }
@@ -122,7 +218,9 @@ export function executeSpaceGassReadOnlyConnector(input: SpaceGassConnectorInput
   const findings: SpaceGassFinding[] = [];
   const add = (code: string, layer: SpaceGassFinding["layer"], message: string) => findings.push({ code, layer, message });
   const version = validateSpaceGassProviderVersion(input.snapshot.productVersion);
-  if (!version.ok) add(version.code, "PROVIDER", "provider version is outside the explicit tested pairing examples");
+  if (!version.ok) add(version.code, "PROVIDER", "provider version is missing or is not API generation v1");
+  const nativePages = assessSpaceGassNativePages(input.snapshot.responses);
+  if (!nativePages.complete) add("SOURCE_INVALID", "CONNECTOR", "native page collection is incomplete or contains a duplicate result identity");
   const limits = input.limits ?? D1G_R2_DEFAULT_RESOURCE_LIMITS;
   const nativeFingerprint = nativeSnapshotFingerprint(input.snapshot);
   const unitsText = responseText(input.snapshot, "JOB_UNITS");
@@ -136,10 +234,11 @@ export function executeSpaceGassReadOnlyConnector(input: SpaceGassConnectorInput
   const restraints = arrayOf(readJson(responseText(input.snapshot, "NODE_RESTRAINTS")));
   const cases = arrayOf(readJson(responseText(input.snapshot, "LOAD_CASES")));
   const combinations = arrayOf(readJson(responseText(input.snapshot, "COMBINATION_LOAD_CASES")));
-  const forceEnvelope = readJson(responseText(input.snapshot, "MEMBER_INTERMEDIATE_FORCES"));
-  const reactionEnvelope = readJson(responseText(input.snapshot, "NODE_REACTIONS"));
+  const forceEnvelope = mergedEnvelope(input.snapshot, "MEMBER_INTERMEDIATE_FORCES");
+  const reactionEnvelope = mergedEnvelope(input.snapshot, "NODE_REACTIONS");
+  if (isProviderError(forceEnvelope) || isProviderError(reactionEnvelope)) add("OTHER_PROVIDER_ERROR", "PROVIDER", "the provider returned an error object instead of a result collection");
   const runBody = readJson(responseText(input.snapshot, "RUN_STATUS"));
-  if (unitsText == null || !Array.isArray(nodes) || !Array.isArray(members)) add("SOURCE_INVALID", "CONNECTOR", "the snapshot is missing a required read response");
+  if (unitsText == null || readJson(unitsText) === undefined || !Array.isArray(nodes) || !Array.isArray(members)) add("SOURCE_INVALID", "CONNECTOR", "the snapshot is missing a required read response");
 
   const run = isRecord(runBody) ? runBody : null;
   const runStatus = typeof run?.Status === "string" ? run.Status : "";
@@ -230,7 +329,7 @@ export function executeSpaceGassReadOnlyConnector(input: SpaceGassConnectorInput
 
   const modelId = safeName(input.snapshot.inertDisplayName) ?? `job-${nativeFingerprint.slice(0, 16)}`;
   const manifest = manifestForGovernedMaps(input.caseMap, input.combinationMap);
-  const source = buildSource(input, version.ok ? version.version : input.snapshot.productVersion, modelId, providerRunId, runStatus || "UNRESOLVED", warnings, approved);
+  const source = buildSource(input, version.ok ? version.apiGeneration : input.snapshot.productVersion, modelId, providerRunId, runStatus || "UNRESOLVED", warnings, approved);
   const request: D1gR1AdapterRequest = {
     adapter: spaceGassAdapter(),
     source,
@@ -239,7 +338,7 @@ export function executeSpaceGassReadOnlyConnector(input: SpaceGassConnectorInput
     governed: input.governed,
     transform: null,
   };
-  const bundle = buildBundle({ input, source, request, limits, nativeFingerprint, modelId, providerRunId, findings });
+  const bundle = buildBundle({ input, source, request, limits, nativeFingerprint, modelId, providerRunId, findings, nativePagesComplete: nativePages.complete });
   const mutated = input.snapshot.responses.some((row, index) => row.rawText !== preserved[index]);
   if (mutated) add("SOURCE_INVALID", "CONNECTOR", "native snapshot bytes changed");
   const log = { provider: D1G_R4_PROVIDER_ID, endpoint: "SNAPSHOT", status: runStatus || "UNRESOLVED", resultCount: approved.length, fingerprint: nativeFingerprint };
@@ -248,7 +347,10 @@ export function executeSpaceGassReadOnlyConnector(input: SpaceGassConnectorInput
     providerId: D1G_R4_PROVIDER_ID,
     product: D1G_R4_PROVIDER_PRODUCT,
     productVersion: input.snapshot.productVersion,
-    apiGeneration: "v1",
+    apiGeneration: version.ok ? version.apiGeneration : "UNRESOLVED",
+    desktopCompatibility: version.ok ? version.desktopCompatibility : "UNRESOLVED",
+    desktopVersionAcceptedAsCompatible: false,
+    nativePageDuplicates: nativePages.duplicateIdentities,
     modelId,
     providerRunId,
     providerRunState: runStatus,
@@ -305,6 +407,7 @@ function arrayOf(value: unknown): Record<string, unknown>[] | null {
 }
 
 function envelopeRows(value: unknown): Record<string, unknown>[] {
+  if (Array.isArray(value)) return value.filter(isRecord);
   if (!isRecord(value) || !Array.isArray(value.Results)) return [];
   return value.Results.filter(isRecord);
 }
@@ -364,6 +467,7 @@ function buildBundle(args: {
   modelId: string;
   providerRunId: string;
   findings: SpaceGassFinding[];
+  nativePagesComplete: boolean;
 }) {
   const station = args.source.results.filter((row) => row.providerCategory === "MEMBER_STATION_ACTION").sort((left, right) => left.providerResultId.localeCompare(right.providerResultId));
   const reactions = args.source.results.filter((row) => row.providerCategory === "SUPPORT_FORCE").sort((left, right) => left.providerResultId.localeCompare(right.providerResultId));
@@ -372,7 +476,7 @@ function buildBundle(args: {
     ...pack(reactions, "SUPPORT_REACTIONS", args).map((rows, index) => packageChunk(args, `reaction-${index + 1}`, "SUPPORT_REACTIONS", rows, ["SUPPORT_REACTIONS"])),
     packageChunk(args, "warnings-1", "WARNINGS_RUN_STATUS", [], ["WARNINGS"]),
   ].filter((chunk) => chunk != null);
-  const complete = args.findings.every((row) => row.code !== "MODEL_NOT_ANALYZED" && row.code !== "UNIT_MAPPING_FAILED" && row.code !== "UNSUPPORTED_PROVIDER_VERSION" && row.code !== "UNRESOLVED_PROVIDER_VERSION");
+  const complete = args.nativePagesComplete && args.findings.every((row) => row.code !== "MODEL_NOT_ANALYZED" && row.code !== "UNIT_MAPPING_FAILED" && row.code !== "UNSUPPORTED_PROVIDER_VERSION" && row.code !== "UNRESOLVED_PROVIDER_VERSION" && row.code !== "SOURCE_INVALID");
   const descriptors = chunks.map((chunk, index) => ({
     chunkId: chunk.packageId,
     chunkType: chunk.chunkType,
@@ -389,7 +493,7 @@ function buildBundle(args: {
     findings: [] as string[],
   }));
   const fingerprint = spaceGassBundleFingerprint({
-    providerVersion: args.source.providerVersion,
+    providerVersion: args.input.snapshot.productVersion,
     connectorVersion: D1G_R4_CONNECTOR_VERSION,
     mappingManifestFingerprint: spaceGassMappingFingerprint(),
     nativeSourceFingerprint: args.nativeFingerprint,
@@ -493,7 +597,7 @@ function packageChunk(args: { input: SpaceGassConnectorInput; source: D1gR1Provi
 export function spaceGassBundleFingerprint(identity: { providerVersion: string; connectorVersion: string; mappingManifestFingerprint: string; nativeSourceFingerprint: string; chunks: readonly { chunkId: string; packageFingerprint: string }[]; objectMappingId: string; projectId: string }): string {
   return fingerprintCanonical({
     subject: "SPACE_GASS_RESULT_BUNDLE",
-    identity: { ...identity, chunks: [...identity.chunks].sort((left, right) => left.chunkId.localeCompare(right.chunkId)) },
+    identity: { ...identity, apiGeneration: D1G_R5_API_GENERATION, chunks: [...identity.chunks].sort((left, right) => left.chunkId.localeCompare(right.chunkId)) },
   });
 }
 
@@ -547,4 +651,33 @@ export function extractWarnings(execution: ReturnType<typeof executeSpaceGassRea
 }
 export function produceNeutralAdapterInput(execution: ReturnType<typeof executeSpaceGassReadOnlyConnector>) {
   return execution.request;
+}
+
+export async function readSpaceGassBoundedCollection(
+  config: SpaceGassTransportConfig,
+  endpoint: "NODES" | "MEMBERS" | "LOAD_CASES" | "COMBINATION_LOAD_CASES" | "NODE_REACTIONS" | "MEMBER_INTERMEDIATE_FORCES",
+  filter: Readonly<Record<string, string>>,
+): Promise<{ complete: boolean; pages: number; duplicateIdentities: string[]; responses: SpaceGassSnapshotResponse[] }> {
+  const responses: SpaceGassSnapshotResponse[] = [];
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  let offset = 0;
+  for (let page = 0; page < D1G_R5_MAX_NATIVE_PAGES; page += 1) {
+    const query = { ...filter, offset: String(offset), limit: String(D1G_R5_NATIVE_PAGE_LIMIT) };
+    const read = await readSpaceGassEndpoint(config, endpoint, query);
+    if (!("ok" in read) || read.ok !== true) return { complete: false, pages: responses.length, duplicateIdentities: duplicates, responses };
+    const rawText = new TextDecoder().decode(read.bytes);
+    responses.push({ endpointId: endpoint, query, rawText });
+    const rows = envelopeRows(readJson(rawText));
+    for (const item of rows) {
+      const identity = nativeResultIdentity(endpoint, item);
+      if (seen.has(identity)) duplicates.push(identity);
+      seen.add(identity);
+    }
+    if (rows.length < D1G_R5_NATIVE_PAGE_LIMIT) {
+      return { complete: duplicates.length === 0, pages: responses.length, duplicateIdentities: [...new Set(duplicates)], responses };
+    }
+    offset += D1G_R5_NATIVE_PAGE_LIMIT;
+  }
+  return { complete: false, pages: responses.length, duplicateIdentities: [...new Set(duplicates)], responses };
 }

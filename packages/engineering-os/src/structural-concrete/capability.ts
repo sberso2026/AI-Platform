@@ -802,7 +802,7 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "Ingests one UTF-8 JSON result package and hands it to the D1G-R1 adapter. The file does not authorize results, mappings, projects, or profiles. No commercial solver connector is implemented.",
+    limitations: "Ingests one UTF-8 JSON result package and hands it to the D1G-R1 adapter. The file does not authorize results, mappings, projects, or profiles. Package ingestion is not itself a commercial solver.",
     dependencies: ["D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION", "D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME"],
   },
   {
@@ -814,7 +814,7 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "No ETABS, SAP2000, STAAD, Robot, or SPACE GASS connector is implemented.",
+    limitations: "One read-only SPACE GASS connector is implemented. ETABS, SAP2000, STAAD, and Robot connectors are not implemented. The SPACE GASS connector does not execute a solver.",
     dependencies: ["D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
   },
   {
@@ -850,7 +850,7 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "Offline conformance only. LIVE_PROVIDER_VALIDATION_PENDING. The connector is not a solver, not model authoring, and not an engineering approval.",
+    limitations: "Offline conformance only. LIVE_PROVIDER_VALIDATION_PENDING. API generation v1 is the supported contract. Desktop version compatibility is not yet validated. Scale is a bounded filtered pilot, not production capacity. The connector is not a solver, not model authoring, and not an engineering approval.",
     dependencies: ["D1G.R3.FIRST_PROVIDER_CONNECTOR_ARCHITECTURE", "D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
   },
   {
@@ -934,8 +934,20 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "A station index is not treated as a member end.",
+    limitations: "A station index is not treated as a member end. The official schema names a member-end path, and this closeout does not enable it.",
     dependencies: ["D1G.R4.SPACE_GASS_READ_ONLY_CONNECTOR"],
+  },
+  {
+    capabilityId: "D1G.R5.SPACE_GASS_CONNECTOR_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "SPACE GASS read-only connector hardening and D1G closeout",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_OFFLINE_CONFORMANCE_VALIDATED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Closes the D1G track at offline conformance. Live provider validation is pending. Desktop compatibility is not a proven REST range. Native retrieval is filter and offset bounded. Reaction moments, member-end import, nonlinear convergence, and generic major or minor axes remain unresolved. This is not engineer validation, code conformance, or structural analysis.",
+    dependencies: ["D1G.R4.SPACE_GASS_READ_ONLY_CONNECTOR", "D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION", "D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
   },
 ];
 

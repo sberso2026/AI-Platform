@@ -5,6 +5,8 @@ import {
   D1G_R4_REQUEST_CONCURRENCY_LIMIT,
   D1G_R4_REQUEST_TIMEOUT_MS,
   D1G_R4_RETRY_LIMIT,
+  D1G_R5_MAX_NATIVE_PAGES,
+  D1G_R5_NATIVE_PAGE_LIMIT,
 } from "@rtb/types";
 
 /**
@@ -28,7 +30,7 @@ export const D1G_R4_ENDPOINT_ALLOWLIST = {
 } as const;
 
 export type SpaceGassEndpointId = keyof typeof D1G_R4_ENDPOINT_ALLOWLIST;
-export const D1G_R4_QUERY_PARAMETERS = ["LoadCases", "Members", "Nodes", "NodeType"] as const;
+export const D1G_R4_QUERY_PARAMETERS = ["loadCases", "members", "nodes", "nodeType", "offset", "limit"] as const;
 export const D1G_R4_REQUEST_TIMEOUT_CONTRACT = `EVERY_GET_ABORTS_AT_${D1G_R4_REQUEST_TIMEOUT_MS}_MS` as const;
 export const D1G_R4_RETRY_POLICY = `GET_ONLY_MAX_${D1G_R4_RETRY_LIMIT}_RETRIES_FOR_TIMEOUT_OR_503_NO_RETRY_ON_OTHER_STATUS` as const;
 
@@ -50,6 +52,7 @@ export type SpaceGassTransportConfig = {
   maxResponseBytes?: number;
   fetchImpl?: SpaceGassFetch;
   liveEnabled?: boolean;
+  featureEnabled?: boolean;
 };
 
 export type SpaceGassTransportError = { code: string; message: string };
@@ -64,16 +67,17 @@ export function validateSpaceGassBaseUrl(raw: string, loopbackPort?: number): { 
   } catch {
     return { ok: false, code: "SOURCE_INVALID" };
   }
-  if (parsed.username || parsed.password) return { ok: false, code: "SOURCE_INVALID" };
+  if (parsed.username || parsed.password || raw.includes("@")) return { ok: false, code: "SOURCE_INVALID" };
   if (parsed.hash) return { ok: false, code: "SOURCE_INVALID" };
   if (parsed.protocol !== "http:") return { ok: false, code: "SOURCE_INVALID" };
   if (parsed.search) return { ok: false, code: "SOURCE_INVALID" };
-  const host = parsed.hostname.toLowerCase();
-  if (!LOOPBACK_HOSTS.has(host)) return { ok: false, code: "SOURCE_INVALID" };
-  const port = parsed.port === "" ? 80 : Number(parsed.port);
   const allowedPort = loopbackPort ?? 34560;
   if (!Number.isInteger(allowedPort) || allowedPort < 1 || allowedPort > 65535) return { ok: false, code: "SOURCE_INVALID" };
-  if (port !== allowedPort) return { ok: false, code: "SOURCE_INVALID" };
+  const authority = raw.slice(raw.indexOf("://") + 3).split("/")[0]?.toLowerCase() ?? "";
+  const allowedAuthority = new Set([`127.0.0.1:${allowedPort}`, `localhost:${allowedPort}`, `[::1]:${allowedPort}`]);
+  if (!allowedAuthority.has(authority)) return { ok: false, code: "SOURCE_INVALID" };
+  const host = parsed.hostname.toLowerCase();
+  if (!LOOPBACK_HOSTS.has(host)) return { ok: false, code: "SOURCE_INVALID" };
   if (parsed.pathname.replace(/\/$/, "") !== "/api/v1") return { ok: false, code: "SOURCE_INVALID" };
   return { ok: true, baseUrl: `${parsed.origin}/api/v1` };
 }
@@ -88,7 +92,7 @@ export function documentedLocalhostBaseUrl(): string {
 
 function queryFor(endpoint: SpaceGassEndpointId, query: Readonly<Record<string, string>>, runId?: string): { path: string } | { code: string } {
   if (endpoint === "RUN_STATUS") {
-    if (!runId || !/^[0-9]+$/.test(runId)) return { code: "SOURCE_INVALID" };
+    if (!runId || !/^(?:[0-9]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(runId)) return { code: "SOURCE_INVALID" };
     return { path: `/job/analysis/runs/${runId}` };
   }
   const path = D1G_R4_ENDPOINT_ALLOWLIST[endpoint];
@@ -96,8 +100,15 @@ function queryFor(endpoint: SpaceGassEndpointId, query: Readonly<Record<string, 
   for (const key of Object.keys(query)) {
     if (!D1G_R4_QUERY_PARAMETERS.includes(key as never)) return { code: "SOURCE_INVALID" };
     const value = query[key] ?? "";
-    if (key === "NodeType" && value !== "Restrained") return { code: "SOURCE_INVALID" };
-    if (key !== "NodeType" && !LIST_FILTER.test(value)) return { code: "SOURCE_INVALID" };
+    if (key === "nodeType" && value !== "Restrained") return { code: "SOURCE_INVALID" };
+    if (key === "offset" || key === "limit") {
+      if (!/^(?:0|[1-9][0-9]{0,6})$/.test(value)) return { code: "SOURCE_INVALID" };
+      const numeric = Number(value);
+      if (key === "limit" && (numeric < 1 || numeric > D1G_R5_NATIVE_PAGE_LIMIT)) return { code: "SOURCE_INVALID" };
+      if (key === "offset" && numeric > D1G_R5_NATIVE_PAGE_LIMIT * D1G_R5_MAX_NATIVE_PAGES) return { code: "SOURCE_INVALID" };
+      continue;
+    }
+    if (key !== "nodeType" && !LIST_FILTER.test(value)) return { code: "SOURCE_INVALID" };
   }
   return { path };
 }
@@ -135,6 +146,10 @@ async function readOnce(fetchImpl: SpaceGassFetch, url: string, timeoutMs: numbe
   if (response.status === 409) return { ok: false, code: "MODEL_NOT_ANALYZED", status: response.status };
   if (response.status === 503) return { ok: false, code: "PROVIDER_UNAVAILABLE", status: response.status };
   if (response.status !== 200) return { ok: false, code: "SOURCE_INVALID", status: response.status };
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("/") && !contentType.toLowerCase().includes("json")) {
+    return { ok: false, code: "SOURCE_INVALID", status: response.status };
+  }
   const declared = Number(response.headers.get("content-length") ?? "");
   if (Number.isFinite(declared) && declared > maxBytes) return { ok: false, code: "SOURCE_TOO_LARGE", status: response.status };
   const bytes = response.body ?? new Uint8Array();
@@ -148,7 +163,7 @@ export async function readSpaceGassEndpoint(
   query: Readonly<Record<string, string>> = {},
   runId?: string,
 ): Promise<{ ok: true; endpoint: SpaceGassEndpointId; urlPath: string; bytes: Uint8Array } | SpaceGassTransportError> {
-  if (config.liveEnabled !== true) return { code: "PROVIDER_UNAVAILABLE", message: "live local read is disabled" };
+  if (config.liveEnabled !== true || config.featureEnabled !== true) return { code: "PROVIDER_UNAVAILABLE", message: "live local read is disabled" };
   const base = validateSpaceGassBaseUrl(config.baseUrl ?? D1G_R4_CANONICAL_BASE_URL, config.loopbackPort);
   if (!base.ok) return { code: base.code, message: "base url is outside the local read boundary" };
   const routed = queryFor(endpoint, query, runId);

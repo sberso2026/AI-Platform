@@ -105,9 +105,12 @@ describe("EOS-D1G-R4 SPACE GASS read-only connector", () => {
   it("maps a synthetic snapshot into neutral records without solver execution", () => {
     const execution = run();
     expect(execution.productVersion).toBe("15.0.2");
-    expect(validateSpaceGassProviderVersionSafe(run("15.1.0").productVersion)).toBe(true);
-    expect(run("14.5").findings.some((row) => row.code === "UNSUPPORTED_PROVIDER_VERSION")).toBe(true);
-    expect(run("16.0.0").findings.some((row) => row.code === "UNSUPPORTED_PROVIDER_VERSION")).toBe(true);
+    expect(execution.apiGeneration).toBe("v1");
+    expect(execution.desktopVersionAcceptedAsCompatible).toBe(false);
+    expect(run("15.1.0").desktopCompatibility).toBe("DESKTOP_VERSION_COMPATIBILITY_NOT_YET_VALIDATED");
+    expect(run("14.5").desktopVersionAcceptedAsCompatible).toBe(false);
+    expect(run("16.0.0").findings.some((row) => row.code === "UNSUPPORTED_PROVIDER_VERSION")).toBe(false);
+    expect(run("v2").findings.some((row) => row.code === "UNSUPPORTED_PROVIDER_VERSION")).toBe(true);
     expect(run("").findings.some((row) => row.code === "UNRESOLVED_PROVIDER_VERSION")).toBe(true);
     expect(execution.cases.map((row) => row.providerCaseId)).toEqual(["1", "2"]);
     expect(execution.cases.every((row) => row.title !== "LC-1" && row.title !== row.providerCaseId)).toBe(true);
@@ -213,26 +216,26 @@ describe("EOS-D1G-R4 SPACE GASS read-only connector", () => {
     const disabled = await readSpaceGassEndpoint({ liveEnabled: false, fetchImpl }, "JOB_UNITS");
     expect("code" in disabled && disabled.code).toBe("PROVIDER_UNAVAILABLE");
     expect(calls).toEqual([]);
-    const ok = await readSpaceGassEndpoint({ liveEnabled: true, fetchImpl }, "JOB_UNITS", { LoadCases: "1,2" });
+    const ok = await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, fetchImpl }, "JOB_UNITS", { loadCases: "1,2" });
     expect(ok).toMatchObject({ ok: true });
     expect(calls[0]).toContain("GET ");
     expect(calls[0]).not.toContain("POST");
-    const remote = await readSpaceGassEndpoint({ liveEnabled: true, fetchImpl, baseUrl: "http://example.com/api/v1" }, "JOB_UNITS");
+    const remote = await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, fetchImpl, baseUrl: "http://example.com/api/v1" }, "JOB_UNITS");
     expect("code" in remote && remote.code).toBe("SOURCE_INVALID");
-    const arbitrary = await readSpaceGassEndpoint({ liveEnabled: true, fetchImpl }, "JOB_UNITS", { FilePath: "C:/secret.sg" });
+    const arbitrary = await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, fetchImpl }, "JOB_UNITS", { FilePath: "C:/secret.sg" });
     expect("code" in arbitrary && arbitrary.code).toBe("SOURCE_INVALID");
-    const redirected = await readSpaceGassEndpoint({ liveEnabled: true, baseUrl: "http://127.0.0.1:34560/api/v1", fetchImpl: async (url) => ({ status: url.includes("job/units") ? 302 : 200, headers: { get: () => "http://example.com" }, body: new Uint8Array() }) }, "JOB_UNITS");
+    const redirected = await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, baseUrl: "http://127.0.0.1:34560/api/v1", fetchImpl: async (url) => ({ status: url.includes("job/units") ? 302 : 200, headers: { get: () => "http://example.com" }, body: new Uint8Array() }) }, "JOB_UNITS");
     expect(redirected).toMatchObject({ code: "SOURCE_INVALID" });
-    const huge = await readSpaceGassEndpoint({ liveEnabled: true, fetchImpl: async () => ({ status: 200, headers: { get: () => String(D1G_R4_NATIVE_RESPONSE_SIZE_LIMIT_BYTES + 1) }, body: new Uint8Array(8) }) }, "NODE_REACTIONS");
+    const huge = await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, fetchImpl: async () => ({ status: 200, headers: { get: () => String(D1G_R4_NATIVE_RESPONSE_SIZE_LIMIT_BYTES + 1) }, body: new Uint8Array(8) }) }, "NODE_REACTIONS");
     expect(huge).toMatchObject({ code: "SOURCE_TOO_LARGE" });
     let attempts = 0;
-    const retried = await readSpaceGassEndpoint({ liveEnabled: true, fetchImpl: async () => { attempts += 1; return attempts < 2 ? { status: 503, headers: { get: () => null }, body: null } : { status: 200, headers: { get: () => null }, body: new Uint8Array([123, 125]) }; } }, "LOAD_CASES");
+    const retried = await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, fetchImpl: async () => { attempts += 1; return attempts < 2 ? { status: 503, headers: { get: () => null }, body: null } : { status: 200, headers: { get: () => null }, body: new Uint8Array([123, 125]) }; } }, "LOAD_CASES");
     expect(retried).toMatchObject({ ok: true });
     expect(attempts).toBe(2);
     let denied = 0;
-    await readSpaceGassEndpoint({ liveEnabled: true, fetchImpl: async () => { denied += 1; return { status: 404, headers: { get: () => null }, body: null }; } }, "MEMBERS");
+    await readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, fetchImpl: async () => { denied += 1; return { status: 404, headers: { get: () => null }, body: null }; } }, "MEMBERS");
     expect(denied).toBe(1);
-    const hanging = readSpaceGassEndpoint({ liveEnabled: true, timeoutMs: 20, fetchImpl: (_url, init) => new Promise((_resolve, reject) => { init.signal.addEventListener("abort", () => reject(new Error("aborted"))); }) }, "NODES");
+    const hanging = readSpaceGassEndpoint({ liveEnabled: true, featureEnabled: true, timeoutMs: 20, fetchImpl: (_url, init) => new Promise((_resolve, reject) => { init.signal.addEventListener("abort", () => reject(new Error("aborted"))); }) }, "NODES");
     await expect(hanging).resolves.toMatchObject({ code: "PROVIDER_UNAVAILABLE" });
     expect(D1G_R4_ENDPOINT_ALLOWLIST.JOB_UNITS).toBe("/job/units");
     expect(Object.values(D1G_R4_ENDPOINT_ALLOWLIST).join(" ")).not.toContain("run-linear");
@@ -244,10 +247,6 @@ describe("EOS-D1G-R4 SPACE GASS read-only connector", () => {
     expect(scanAnalysisFormulaBypass("space-gass-transport.ts", transport)).toEqual([]);
   });
 });
-
-function validateSpaceGassProviderVersionSafe(version: string): boolean {
-  return version === "15.0.2" || version === "15.1.0";
-}
 
 function inputOf(_execution: ReturnType<typeof executeSpaceGassReadOnlyConnector>) {
   return { snapshot: snapshot("15.0.2"), governed: governed(), objectMapping: objects(), caseMap: { "1": "LC-1", "2": "LC-2" }, combinationMap: { "10": "COM-10" } };

@@ -433,3 +433,4 @@ export * from "./structural-systems-d1g-r1";
 export * from "./structural-systems-d1g-r2";
 export * from "./structural-systems-d1g-r3";
 export * from "./structural-systems-d1g-r4";
+export * from "./structural-systems-d1g-r5";

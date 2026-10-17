@@ -43,6 +43,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-d1g-r2\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r3\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r4\.ts$/,
+  /packages\/types\/src\/structural-systems-d1g-r5\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -283,6 +284,21 @@ export const D1G_R4_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/space-gass-connector.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1g-r4.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D1G_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1G_R5_SPACE_GASS_CONNECTOR_HARDENING_AND_D1G_CLOSEOUT.md",
+  "docs/architecture/engineering-os/EOS_D1G_R4_SPACE_GASS_READ_ONLY_CONNECTOR_IMPLEMENTATION.md",
+  "packages/types/src/structural-systems-d1g-r5.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/space-gass-transport.ts",
+  "packages/engineering-os/src/structural-systems/space-gass-mapping.ts",
+  "packages/engineering-os/src/structural-systems/space-gass-connector.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-r4.test.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-r5.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
