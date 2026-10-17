@@ -24,6 +24,7 @@ import {
   D1F_R5_CHANGED_FILES,
   D1F_R6_CHANGED_FILES,
   D1G_R1_CHANGED_FILES,
+  D1G_R2_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -237,6 +238,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1G_R1_PROVIDER_NEUTRAL_SOLVER_ADAPTER_FOUNDATION.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies D1G-R2 result package files as release-sensitive and the architecture note as not", () => {
+    const classified = classifyChangedFiles(D1G_R2_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/structural-systems-d1g-r2.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/result-package.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/eos-structural-result-package-v1.schema.json");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1G_R2_PROVIDER_NEUTRAL_RESULT_PACKAGE_INGESTION.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

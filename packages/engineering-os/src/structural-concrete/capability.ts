@@ -793,6 +793,30 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "No ETABS, SAP2000, STAAD, Robot, or SPACE GASS connector is implemented.",
     dependencies: ["D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION"],
   },
+  {
+    capabilityId: "D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION",
+    jurisdiction: "GLOBAL",
+    method: "provider-neutral external result package ingestion",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_PROVIDER_NEUTRAL_V1",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Ingests one UTF-8 JSON result package and hands it to the D1G-R1 adapter. The file does not authorize results, mappings, projects, or profiles. No commercial solver connector is implemented.",
+    dependencies: ["D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION", "D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME"],
+  },
+  {
+    capabilityId: "D1G.R2.COMMERCIAL_SOLVER_CONNECTOR",
+    jurisdiction: "GLOBAL",
+    method: "commercial solver connector",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "No ETABS, SAP2000, STAAD, Robot, or SPACE GASS connector is implemented.",
+    dependencies: ["D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

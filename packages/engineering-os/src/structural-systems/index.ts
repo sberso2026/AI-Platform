@@ -35,3 +35,9 @@ export {
   negotiateAdapterCapabilities,
   recordSuccessorAdapterExecution,
 } from "./solver-adapter";
+export {
+  ingestStructuralResultPackage,
+  inspectStructuralPackageText,
+  recordSuccessorPackageIngestion,
+  semanticPackageFingerprint,
+} from "./result-package";
