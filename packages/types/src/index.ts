@@ -428,3 +428,4 @@ export * from "./structural-systems-r2";
 export * from "./structural-systems-r3";
 export * from "./structural-systems-r4";
 export * from "./structural-systems-r5";
+export * from "./structural-systems-r6";

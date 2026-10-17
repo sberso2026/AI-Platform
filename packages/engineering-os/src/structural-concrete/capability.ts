@@ -757,6 +757,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "Geotechnical design remains a future D3 capability. Soil parameters are not calculated or inferred.",
     dependencies: [],
   },
+  {
+    capabilityId: "D1F.R6.STRUCTURAL_SYSTEMS_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "structural systems closeout reconciliation",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "RECONCILED_BOUNDED_CLOSEOUT",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Reconciles R1 through R5. It does not add structural analysis, connection design, foundation design, geotechnical design, or an external solver connector. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW. D1G readiness is not general design readiness.",
+    dependencies: ["D1F.R1.STRUCTURAL_SYSTEM_CONTEXT_AND_TOPOLOGY", "D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME", "D1F.R3.STRUCTURAL_SYSTEM_MEMBER_EVALUATION_ORCHESTRATION", "D1F.R4.STRUCTURAL_CONNECTION_INTERFACE", "D1F.R5.STRUCTURAL_FOUNDATION_SUPPORT_INTERFACE"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

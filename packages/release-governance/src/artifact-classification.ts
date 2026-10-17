@@ -38,6 +38,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-r3\.ts$/,
   /packages\/types\/src\/structural-systems-r4\.ts$/,
   /packages\/types\/src\/structural-systems-r5\.ts$/,
+  /packages\/types\/src\/structural-systems-r6\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -207,6 +208,19 @@ export const D1F_R5_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/foundation-interface.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1f-r5.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+/** D1F-R6 structural systems closeout. No new engineering formula is registered. */
+export const D1F_R6_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1F_R6_STRUCTURAL_SYSTEMS_CLOSEOUT.md",
+  "packages/types/src/structural-systems-r6.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/closeout.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1f-r6.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

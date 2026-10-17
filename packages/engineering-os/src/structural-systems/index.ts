@@ -27,3 +27,4 @@ export { evaluateAnalysisResultBinding, promoteAnalysisResultAuthority, recordSu
 export { evaluateSystemMemberPlan, recordSuccessorSystemEvaluation } from "./system-evaluation";
 export { evaluateConnectionInterface, recordSuccessorConnectionInterface } from "./connection-interface";
 export { evaluateFoundationInterface, recordSuccessorFoundationInterface } from "./foundation-interface";
+export { executeD1fCloseoutFixture } from "./closeout";
