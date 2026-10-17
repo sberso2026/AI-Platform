@@ -26,6 +26,7 @@ import {
   D1G_R1_CHANGED_FILES,
   D1G_R2_CHANGED_FILES,
   D1G_R3_CHANGED_FILES,
+  D1G_R4_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -266,6 +267,18 @@ describe("release-sensitive artifact classification", () => {
       "docs/architecture/engineering-os/EOS_D1G_R3_PROVIDER_SELECTION_FIRST_CONNECTOR_ARCHITECTURE.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1G-R4 local transport as security-sensitive and the mapping as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1G_R4_CHANGED_FILES);
+    expect(classified.securitySensitiveFiles).toContain("packages/engineering-os/src/structural-systems/space-gass-transport.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/space-gass-connector.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/structural-systems-d1g-r4.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain("packages/engineering-os/src/structural-systems/space-gass-transport.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1G_R4_SPACE_GASS_READ_ONLY_CONNECTOR_IMPLEMENTATION.md",
+    );
     expect(classified.capabilityManifestChanged).toBe(true);
   });
 

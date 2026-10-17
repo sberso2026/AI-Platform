@@ -42,6 +42,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-d1g-r1\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r2\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r3\.ts$/,
+  /packages\/types\/src\/structural-systems-d1g-r4\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -52,6 +53,7 @@ const SECURITY_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /secret-scan/i,
   /RLS/i,
   /docs\/security\//,
+  /packages\/engineering-os\/src\/structural-systems\/space-gass-transport\.ts$/,
 ];
 
 export type ArtifactSensitivity = "RELEASE_SENSITIVE" | "SECURITY_SENSITIVE" | "NOT_SENSITIVE";
@@ -266,6 +268,21 @@ export const D1G_R3_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-d1g-r3-provider-selection.json",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1g-r3.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+/** D1G-R4 SPACE GASS read-only connector. No solver execution is registered. */
+export const D1G_R4_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1G_R4_SPACE_GASS_READ_ONLY_CONNECTOR_IMPLEMENTATION.md",
+  "packages/types/src/structural-systems-d1g-r4.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/space-gass-transport.ts",
+  "packages/engineering-os/src/structural-systems/space-gass-mapping.ts",
+  "packages/engineering-os/src/structural-systems/space-gass-connector.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-r4.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

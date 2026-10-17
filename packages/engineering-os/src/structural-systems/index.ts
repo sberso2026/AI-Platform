@@ -42,3 +42,23 @@ export {
   semanticPackageFingerprint,
 } from "./result-package";
 export { D1G_R3_ARCHITECTURE, D1G_R3_SELECTION_RECORD, d1gR3SelectionFingerprint, reviewD1gR3ProviderArchitecture } from "./provider-selection";
+export {
+  assessSpaceGassBundleCompleteness,
+  executeSpaceGassReadOnlyConnector,
+  extractLoadCases,
+  extractLoadCombinations,
+  extractMemberResults,
+  extractObjects,
+  extractProviderMetadata,
+  extractRunMetadata,
+  extractSupportReactions,
+  extractWarnings,
+  ingestSpaceGassChunk,
+  inspectSource,
+  produceNeutralAdapterInput,
+  recordSpaceGassSuccessor,
+  spaceGassBundleFingerprint,
+  spaceGassReadOnlyConnectorEnabled,
+  validateCompatibility,
+} from "./space-gass-connector";
+export { D1G_R4_ENDPOINT_ALLOWLIST, readSpaceGassEndpoint, validateSpaceGassBaseUrl } from "./space-gass-transport";
