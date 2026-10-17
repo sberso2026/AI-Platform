@@ -39,6 +39,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-r4\.ts$/,
   /packages\/types\/src\/structural-systems-r5\.ts$/,
   /packages\/types\/src\/structural-systems-r6\.ts$/,
+  /packages\/types\/src\/structural-systems-d1g-r1\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -221,6 +222,19 @@ export const D1F_R6_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/closeout.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1f-r6.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+/** D1G-R1 provider-neutral solver adapter. No commercial connector or solver is registered. */
+export const D1G_R1_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1G_R1_PROVIDER_NEUTRAL_SOLVER_ADAPTER_FOUNDATION.md",
+  "packages/types/src/structural-systems-d1g-r1.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/solver-adapter.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-r1.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

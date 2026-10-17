@@ -769,6 +769,30 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "Reconciles R1 through R5. It does not add structural analysis, connection design, foundation design, geotechnical design, or an external solver connector. Concrete C10 remains PENDING_QUALIFIED_HUMAN_REVIEW. D1G readiness is not general design readiness.",
     dependencies: ["D1F.R1.STRUCTURAL_SYSTEM_CONTEXT_AND_TOPOLOGY", "D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME", "D1F.R3.STRUCTURAL_SYSTEM_MEMBER_EVALUATION_ORCHESTRATION", "D1F.R4.STRUCTURAL_CONNECTION_INTERFACE", "D1F.R5.STRUCTURAL_FOUNDATION_SUPPORT_INTERFACE"],
   },
+  {
+    capabilityId: "D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION",
+    jurisdiction: "GLOBAL",
+    method: "provider-neutral external solver adapter",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_PROVIDER_NEUTRAL",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Translates an explicit fixture provider into existing D1F raw results. It does not solve, connect to a commercial solver, or promote D1F or C10 maturity.",
+    dependencies: ["D1F.R2.STRUCTURAL_ANALYSIS_RESULT_RUNTIME"],
+  },
+  {
+    capabilityId: "D1G.R1.EXTERNAL_COMMERCIAL_SOLVER_CONNECTOR",
+    jurisdiction: "GLOBAL",
+    method: "commercial solver connector",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "No ETABS, SAP2000, STAAD, Robot, or SPACE GASS connector is implemented.",
+    dependencies: ["D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

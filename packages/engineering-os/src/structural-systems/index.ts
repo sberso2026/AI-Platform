@@ -28,3 +28,10 @@ export { evaluateSystemMemberPlan, recordSuccessorSystemEvaluation } from "./sys
 export { evaluateConnectionInterface, recordSuccessorConnectionInterface } from "./connection-interface";
 export { evaluateFoundationInterface, recordSuccessorFoundationInterface } from "./foundation-interface";
 export { executeD1fCloseoutFixture } from "./closeout";
+export {
+  assessAdapterConformance,
+  createD1gFixtureSolverRequest,
+  executeProviderNeutralAdapter,
+  negotiateAdapterCapabilities,
+  recordSuccessorAdapterExecution,
+} from "./solver-adapter";

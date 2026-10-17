@@ -429,3 +429,4 @@ export * from "./structural-systems-r3";
 export * from "./structural-systems-r4";
 export * from "./structural-systems-r5";
 export * from "./structural-systems-r6";
+export * from "./structural-systems-d1g-r1";
