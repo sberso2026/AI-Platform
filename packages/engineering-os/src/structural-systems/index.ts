@@ -41,3 +41,4 @@ export {
   recordSuccessorPackageIngestion,
   semanticPackageFingerprint,
 } from "./result-package";
+export { D1G_R3_ARCHITECTURE, D1G_R3_SELECTION_RECORD, d1gR3SelectionFingerprint, reviewD1gR3ProviderArchitecture } from "./provider-selection";

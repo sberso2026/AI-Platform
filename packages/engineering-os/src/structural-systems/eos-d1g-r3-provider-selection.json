@@ -1,0 +1,32 @@
+{
+  "decisionVersion": "d1g-r3-1",
+  "evidenceAccessDate": "2026-10-17",
+  "selectionResult": "PROVIDER_SELECTED",
+  "selectedProvider": "SPACE_GASS",
+  "product": "SPACE GASS",
+  "versionScope": "API_URL_V1_DESKTOP_SDK_PAIRING_EXAMPLES_15_0_2_AND_15_1_0_OTHER_VERSIONS_FAIL_CLOSED",
+  "integrationMode": "LOCAL_REST_READ_ONLY",
+  "officialSourceIds": [
+    "SG-API-PRODUCT",
+    "SG-API-CONCEPTS",
+    "SG-API-VERSIONING",
+    "SG-API-AUTH",
+    "SG-API-RESULTS",
+    "SG-API-REACTIONS",
+    "SG-API-BEAM",
+    "SG-MANUAL-AXES",
+    "SG-MANUAL-SIGNS",
+    "SG-MANUAL-ACTIONS"
+  ],
+  "mandatoryGate": "PASS_FOR_BOUNDED_STATION_AND_REACTION_FORCE_SCOPE",
+  "knownLimitations": [
+    "MEMBER_END_RESULT_ENDPOINT_NAME_UNRESOLVED",
+    "REACTION_MOMENT_FIELD_NAMES_UNRESOLVED",
+    "OBJECT_ID_STABILITY_UNKNOWN",
+    "R2_PACKAGE_LIMITS_ARE_FIXTURE_ONLY"
+  ],
+  "licensingReviewState": "REQUIRED",
+  "scaleClassification": "FIXTURE_ONLY",
+  "connectorImplemented": false,
+  "usage": "ARCHITECTURE_RECORD_NOT_A_CONNECTOR"
+}

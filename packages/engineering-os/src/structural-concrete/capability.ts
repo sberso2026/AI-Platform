@@ -817,6 +817,30 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "No ETABS, SAP2000, STAAD, Robot, or SPACE GASS connector is implemented.",
     dependencies: ["D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
   },
+  {
+    capabilityId: "D1G.R3.FIRST_PROVIDER_CONNECTOR_ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "first structural solver provider selection and connector architecture",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "FIRST_PROVIDER_SELECTED_AND_CONNECTOR_ARCHITECTURE_DEFINED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Selects a read-only SPACE GASS local API architecture from official documentation and repository evidence. The selection is not engineering authority. No connector, solver execution, or model edit is implemented. R2 package limits remain fixture-scale.",
+    dependencies: ["D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION", "D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
+  },
+  {
+    capabilityId: "D1G.R3.SPACE_GASS_READ_ONLY_CONNECTOR",
+    jurisdiction: "GLOBAL",
+    method: "SPACE GASS read-only connector",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Disabled by default. R4 may implement only the approved read-only local route. Opening a model, running analysis, and editing a model are out of scope.",
+    dependencies: ["D1G.R3.FIRST_PROVIDER_CONNECTOR_ARCHITECTURE"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

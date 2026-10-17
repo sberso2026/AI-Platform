@@ -41,6 +41,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-r6\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r1\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r2\.ts$/,
+  /packages\/types\/src\/structural-systems-d1g-r3\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -251,6 +252,20 @@ export const D1G_R2_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-structural-result-package-v1.example.json",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-systems/eos-d1g-r2.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+/** D1G-R3 first provider selection. No commercial connector runtime is registered. */
+export const D1G_R3_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1G_R3_PROVIDER_SELECTION_FIRST_CONNECTOR_ARCHITECTURE.md",
+  "packages/types/src/structural-systems-d1g-r3.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/provider-selection.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-r3-provider-selection.json",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-r3.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
