@@ -62,3 +62,15 @@ export {
   validateCompatibility,
 } from "./space-gass-connector";
 export { D1G_R4_ENDPOINT_ALLOWLIST, readSpaceGassEndpoint, validateSpaceGassBaseUrl } from "./space-gass-transport";
+export {
+  bindStructuralInspectionTarget,
+  correctStructuralInspectionEvidence,
+  deriveStructuralInspectionEvidence,
+  evaluateStructuralInspectionEvidence,
+  invalidateStructuralInspectionRecord,
+  provenanceChain,
+  recordExplicitNegativeObservation,
+  recordStructuralInspectionContext,
+  recordStructuralInspectionCoverage,
+  recordStructuralInspectionEvidence,
+} from "./inspection-evidence";
