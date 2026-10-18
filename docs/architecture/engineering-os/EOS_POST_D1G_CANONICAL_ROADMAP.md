@@ -10,9 +10,9 @@ D1G remains closed at EXTERNAL_SOLVER_INTEGRATION_IMPLEMENTED_WITH_SPACE_GASS_RE
 
 ## Next track and next phase
 
-The next canonical D1 development track is D1H STRUCTURAL INSPECTION & CONDITION.
+The next canonical D1 development track after this decision was D1H STRUCTURAL INSPECTION & CONDITION. That track is now closed at bounded runtime maturity. See the D1H closeout section.
 
-The next canonical implementation phase after this decision was EOS-D1H-0-STRUCTURAL-INSPECTION-CONDITION-ARCHITECTURE. That architecture is defined in EOS_D1H_0_STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE.md. The bounded evidence foundation EOS-D1H-R1-STRUCTURAL-INSPECTION-EVIDENCE-FOUNDATION is implemented. The bounded finding, measurement, and human-validation foundation EOS-D1H-R2-STRUCTURAL-FINDING-MEASUREMENT-VALIDATION-FOUNDATION is implemented. The bounded condition-state, profile-bound condition-rating, and engineering-interpretation runtime EOS-D1H-R3-CONDITION-STATE-RATING-INTERPRETATION is implemented. The bounded temporal association, historical comparison, and analysis-result linkage runtime EOS-D1H-R4-TEMPORAL-HISTORY-ASSOCIATION-ANALYSIS-LINKAGE is implemented. Structural adequacy, capacity assessment, repair design, deterioration prediction, causal diagnosis, and digital-twin implementation are not implemented.
+The next canonical implementation phase after this decision was EOS-D1H-0-STRUCTURAL-INSPECTION-CONDITION-ARCHITECTURE. That architecture is defined in EOS_D1H_0_STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE.md. The bounded evidence foundation EOS-D1H-R1-STRUCTURAL-INSPECTION-EVIDENCE-FOUNDATION is implemented. The bounded finding, measurement, and human-validation foundation EOS-D1H-R2-STRUCTURAL-FINDING-MEASUREMENT-VALIDATION-FOUNDATION is implemented. The bounded condition-state, profile-bound condition-rating, and engineering-interpretation runtime EOS-D1H-R3-CONDITION-STATE-RATING-INTERPRETATION is implemented. The bounded temporal association, historical comparison, and analysis-result linkage runtime EOS-D1H-R4-TEMPORAL-HISTORY-ASSOCIATION-ANALYSIS-LINKAGE is implemented. The closeout EOS-D1H-R5-STRUCTURAL-INSPECTION-CONDITION-CLOSEOUT records that chain as complete with limitations. Structural adequacy, capacity assessment, repair design, deterioration prediction, causal diagnosis, and digital-twin implementation are not implemented.
 
 ## D1H purpose
 
@@ -75,3 +75,14 @@ Post-D1G roadmap canonicalized. D1H selected as the next track. D1H-0 architectu
 Claims not made: D1H implemented, structural condition assessment implemented, structural inspection model implemented, D1 complete, D2 started, D3 started, inspection AI has engineering authority, condition rating equals adequacy, D1G live validation, concrete engineer validation, D1F orchestration engineer validation, or GA security debt resolved.
 
 No database migration and no engineering formula are added.
+
+## D1H closeout
+
+EOS-D1H-R5-STRUCTURAL-INSPECTION-CONDITION-CLOSEOUT closes the D1H track at STRUCTURAL_INSPECTION_CONDITION_BOUNDED_RUNTIME_IMPLEMENTED. Status is COMPLETE_BOUNDED_WITH_LIMITATIONS. The canonical chain is D1H-0 architecture, R1 inspection context and evidence, R2 finding measurement and scoped human validation, R3 interpretation and profile-bound condition rating and condition state, and R4 association, continuity, historical comparison, change evidence, and governed analysis linkage. Registered rating-scheme content is frozen for an id and version, and temporal comparison also requires the scheme fingerprint captured at assessment time.
+
+This maturity means a governed structural inspection and condition information runtime exists with bounded temporal continuity. It does not mean software engineer validation, method conformance, structural adequacy automation, capacity assessment, repair approval, fitness for service, deterioration forecasting, causal diagnosis, or a digital twin. Record-level human validation of an inspection subject is not validation of the D1H software.
+
+Remaining D1H debt is software engineer validation pending, method conformance pending, no structural adequacy automation, no capacity assessment from condition, no repair design, no fitness-for-service, no deterioration prediction, no causal diagnosis, no computer-vision runtime, no SHM runtime, no digital-twin runtime, no automatic cross-scheme rating translation, rating-scheme profile governance required, and AI remains advisory. Concrete C10 human review, D1F system-orchestrator human review, SPACE GASS live validation, and the GA security debt remain. They do not block this bounded closeout. The GA security debt still blocks general availability.
+
+D1I STRUCTURAL DIGITAL TWIN remains unimplemented. This roadmap names that track and does not define an exact implementation phase identifier. The next authorized development step is EOS-ROADMAP-POST-D1H-CANONICALIZATION. That roadmap governance step must formally record this closeout, confirm D1I as the next structural track, define its first governed architecture phase and boundaries, reuse D1H condition history by reference, and prevent digital-twin state from reauthoring or overriding D1H inspection and condition evidence. D2 is not started by this closeout. D1J, D1K, and D1L remain not implemented. D1M and D1N remain unimplemented boundaries.
+

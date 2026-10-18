@@ -363,6 +363,18 @@ export const D1H_R4_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1H_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1H_R5_STRUCTURAL_INSPECTION_CONDITION_CLOSEOUT.md",
+  "docs/architecture/engineering-os/EOS_POST_D1G_CANONICAL_ROADMAP.md",
+  "packages/engineering-os/src/structural-systems/inspection-condition.ts",
+  "packages/engineering-os/src/structural-systems/inspection-temporal.ts",
+  "packages/engineering-os/src/structural-systems/inspection-closeout.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1h-r5.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 /** R3A C10 engineer review-pack preparation. No engineering formula is registered. */
 export const R10_C10_R3A_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1E_EU_C10_R3A_ENGINEER_REVIEW_PACK_PREPARATION.md",

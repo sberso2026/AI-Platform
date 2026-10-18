@@ -33,6 +33,7 @@ import {
   D1H_R2_CHANGED_FILES,
   D1H_R3_CHANGED_FILES,
   D1H_R4_CHANGED_FILES,
+  D1H_R5_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -353,6 +354,17 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1H-R5 closeout as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1H_R5_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/inspection-closeout.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/inspection-condition.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1H_R5_STRUCTURAL_INSPECTION_CONDITION_CLOSEOUT.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(false);
   });
 
   it("classifies C10 review packs as release-sensitive", () => {

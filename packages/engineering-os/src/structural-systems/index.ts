@@ -125,3 +125,13 @@ export {
   temporalProvenance,
   withdrawAssociationConfirmation,
 } from "./inspection-temporal";
+export {
+  CANONICAL_NEXT_IMPLEMENTATION_PHASE,
+  D1H_R5_FINAL_MATURITY_STATE,
+  D2_STARTED_BY_D1H_CLOSEOUT,
+  d1hCapabilityManifestReconciled,
+  d1hCloseoutHandoff,
+  d1hValidationMatrixReconciled,
+  POST_D1H_NEXT_TRACK,
+} from "./inspection-closeout";
+export { ratingSchemesHistoricallyComparable, TEMPORAL_RATING_COMPARABILITY_REQUIRES_SCHEME_FINGERPRINT_MATCH } from "./inspection-temporal";

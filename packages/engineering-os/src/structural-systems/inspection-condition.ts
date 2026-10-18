@@ -286,6 +286,7 @@ export type D1hR3ConditionRating = {
   targetId: string;
   ratingSchemeId: string;
   schemeVersion: string;
+  schemeFingerprint: string;
   ratingValueCode: string;
   numericQuantity: false;
   averaged: false;
@@ -317,6 +318,7 @@ export type D1hR3ConditionState = {
   assessmentScope: string;
   ratingSchemeId: string | null;
   schemeVersion: string | null;
+  schemeFingerprint: string | null;
   ratingId: string | null;
   ratingValueCode: string | null;
   interpretationId: string | null;
@@ -574,25 +576,33 @@ export function registerConditionRatingScheme(r1: D1hR1Store, r3: D1hR3Store, in
   }
   if (input.ratingSchemeId.startsWith("TEST_") && input.status !== "TEST_ONLY") fail("TEST_SCHEME_NOT_PRODUCTION");
   if (r3.schemes.some((row) => row.ratingSchemeId === input.ratingSchemeId && row.schemeVersion === input.schemeVersion)) fail("DUPLICATE_SCHEME_VERSION");
+  const ratingValueDefinitions = Object.freeze(input.ratingValueDefinitions.map((value) => Object.freeze({ ...value })));
+  const applicability = Object.freeze({ ...input.applicability, targetKinds: Object.freeze([...input.applicability.targetKinds]) });
   const fingerprint = fingerprintCanonical({
     subject: "D1H_R3_SCHEME",
     ratingSchemeId: input.ratingSchemeId,
     schemeVersion: input.schemeVersion,
     profileRef: input.profileRef,
     schemeAuthority: input.schemeAuthority,
-    applicability: input.applicability,
-    ratingValueDefinitions: input.ratingValueDefinitions,
+    applicability,
+    ratingValueDefinitions,
     status: input.status,
   });
-  const record: D1hR3ConditionRatingScheme = {
+  const record: D1hR3ConditionRatingScheme = Object.freeze({
     recordKind: "CONDITION_RATING_SCHEME",
-    ...input,
-    provenance: { ...input.provenance, fingerprint },
+    ratingSchemeId: input.ratingSchemeId,
+    schemeVersion: input.schemeVersion,
+    profileRef: input.profileRef,
+    schemeAuthority: input.schemeAuthority,
+    applicability,
+    ratingValueDefinitions,
+    provenance: Object.freeze({ ...input.provenance, fingerprint }),
+    status: input.status,
     fingerprint,
-    productionDefault: false,
-    universalScale: false,
-    continuousQuantity: false,
-  };
+    productionDefault: false as const,
+    universalScale: false as const,
+    continuousQuantity: false as const,
+  });
   r3.schemes.push(record);
   remember(r3, "SCHEME", `${record.ratingSchemeId}@${record.schemeVersion}`, "CREATED", record.schemeVersion, fingerprint, input.provenance.timestamp, null, "CURRENT");
   return record;
@@ -755,6 +765,7 @@ export function recordConditionRating(r1: D1hR1Store, r2: D1hR2Store, r3: D1hR3S
     subject: "D1H_R3_RATING",
     ratingSchemeId: input.ratingSchemeId,
     schemeVersion: input.schemeVersion,
+    schemeFingerprint: scheme.fingerprint,
     ratingValueCode: input.ratingValueCode,
     targetId: input.targetId,
     assessmentBasisRef: input.assessmentBasisRef,
@@ -772,6 +783,7 @@ export function recordConditionRating(r1: D1hR1Store, r2: D1hR2Store, r3: D1hR3S
     targetId: input.targetId,
     ratingSchemeId: input.ratingSchemeId,
     schemeVersion: input.schemeVersion,
+    schemeFingerprint: scheme.fingerprint,
     ratingValueCode: input.ratingValueCode,
     numericQuantity: false,
     averaged: false,
@@ -864,6 +876,7 @@ export function recordConditionState(r1: D1hR1Store, r2: D1hR2Store, r3: D1hR3St
     targetId: input.targetId,
     ratingSchemeId: rating?.ratingSchemeId ?? null,
     schemeVersion: rating?.schemeVersion ?? null,
+    schemeFingerprint: rating?.schemeFingerprint ?? null,
     ratingValueCode: rating?.ratingValueCode ?? null,
     interpretationId,
     supportingFindingIds: sorted(input.supportingFindingIds),
@@ -886,6 +899,7 @@ export function recordConditionState(r1: D1hR1Store, r2: D1hR2Store, r3: D1hR3St
     assessmentScope: input.assessmentScope,
     ratingSchemeId: rating?.ratingSchemeId ?? null,
     schemeVersion: rating?.schemeVersion ?? null,
+    schemeFingerprint: rating?.schemeFingerprint ?? null,
     ratingId: rating?.ratingId ?? null,
     ratingValueCode: rating?.ratingValueCode ?? null,
     interpretationId,

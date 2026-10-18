@@ -76,7 +76,9 @@ export const NEW_ASSOCIATION_STATE_OVERWRITES_PRIOR_ASSOCIATION = false as const
 export const SAME_RATING_EQUALS_UNCHANGED_CONDITION = false as const;
 export const DIFFERENT_RATING_EQUALS_PHYSICAL_DETERIORATION = false as const;
 export const D1H_R4_CROSS_SCHEME_RATING_COMPARISON_ALLOWED = false as const;
-export const D1H_R4_SCHEME_VERSION_COMPARABILITY_POLICY = "Rating values may be placed side by side only when both condition states use the same rating scheme id and the same scheme version. A scheme version change does not make the old and new value codes comparable. Different schemes are not compared, translated, averaged, or ordered against each other." as const;
+export const D1H_R4_SCHEME_VERSION_COMPARABILITY_POLICY = "Rating values may be placed side by side only when both condition states use the same rating scheme id, the same scheme version, and the same scheme content fingerprint captured at assessment time. A scheme version change or a content fingerprint change does not make the value codes comparable. Different schemes are not compared, translated, averaged, or ordered against each other." as const;
+export const TEMPORAL_RATING_COMPARABILITY_REQUIRES_SCHEME_FINGERPRINT_MATCH = true as const;
+export const D1H_R5_SAME_SCHEME_ID_VERSION_DIFFERENT_FINGERPRINT_COMPARABLE = false as const;
 export const D1H_R4_REAUTHORS_R3_CONDITION_HISTORY = false as const;
 export const D1H_R4_TEMPORAL_ORDER_INFERRED_FROM_RECORD_ORDER = false as const;
 export const D1H_R4_LATE_ENTRY_REWRITES_HISTORY = false as const;
@@ -303,8 +305,10 @@ export type D1hR4ConditionContinuity = {
   currentInspectionContextId: string;
   priorRatingSchemeId: string | null;
   priorSchemeVersion: string | null;
+  priorSchemeFingerprint: string | null;
   currentRatingSchemeId: string | null;
   currentSchemeVersion: string | null;
+  currentSchemeFingerprint: string | null;
   associationIds: readonly string[];
   comparisonIds: readonly string[];
   continuityStatus: "RECORDED" | "CONTINUITY_UNRESOLVED";
@@ -811,8 +815,12 @@ export function compareConditionRatings(r3: D1hR3Store, priorConditionStateId: s
   const prior = r3.conditionStates.find((row) => row.conditionStateId === priorConditionStateId);
   const current = r3.conditionStates.find((row) => row.conditionStateId === currentConditionStateId);
   if (!prior || !current) fail("CONDITION_STATE_UNKNOWN");
-  if (prior.ratingSchemeId !== current.ratingSchemeId || prior.schemeVersion !== current.schemeVersion) fail("CROSS_SCHEME_RATING_COMPARISON_REJECTED");
+  if (prior.ratingSchemeId !== current.ratingSchemeId || prior.schemeVersion !== current.schemeVersion || prior.schemeFingerprint !== current.schemeFingerprint) fail("CROSS_SCHEME_RATING_COMPARISON_REJECTED");
   return { comparable: false, numericComparison: false, deterioration: false };
+}
+
+export function ratingSchemesHistoricallyComparable(left: { ratingSchemeId: string; schemeVersion: string; fingerprint: string }, right: { ratingSchemeId: string; schemeVersion: string; fingerprint: string }): boolean {
+  return left.ratingSchemeId === right.ratingSchemeId && left.schemeVersion === right.schemeVersion && left.fingerprint === right.fingerprint;
 }
 
 export type D1hR4ContinuityInput = {
@@ -852,8 +860,10 @@ export function recordConditionContinuity(r1: D1hR1Store, r3: D1hR3Store, r4: D1
     currentConditionStateId: current.conditionStateId,
     priorRatingSchemeId: prior.ratingSchemeId,
     priorSchemeVersion: prior.schemeVersion,
+    priorSchemeFingerprint: prior.schemeFingerprint,
     currentRatingSchemeId: current.ratingSchemeId,
     currentSchemeVersion: current.schemeVersion,
+    currentSchemeFingerprint: current.schemeFingerprint,
     associationIds: input.associationIds,
     comparisonIds: input.comparisonIds,
     continuityStatus: input.continuityStatus,
@@ -870,8 +880,10 @@ export function recordConditionContinuity(r1: D1hR1Store, r3: D1hR3Store, r4: D1
     currentInspectionContextId: current.inspectionContextId,
     priorRatingSchemeId: prior.ratingSchemeId,
     priorSchemeVersion: prior.schemeVersion,
+    priorSchemeFingerprint: prior.schemeFingerprint,
     currentRatingSchemeId: current.ratingSchemeId,
     currentSchemeVersion: current.schemeVersion,
+    currentSchemeFingerprint: current.schemeFingerprint,
     associationIds: input.associationIds,
     comparisonIds: input.comparisonIds,
     continuityStatus: input.continuityStatus,
