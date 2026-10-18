@@ -86,3 +86,19 @@ export {
   structuralFindingProvenance,
   withdrawHumanValidation,
 } from "./inspection-finding";
+export {
+  aggregateMemberRatingsToSystem,
+  averageConditionRatings,
+  convertConditionRatingScheme,
+  correctConditionRating,
+  correctConditionState,
+  correctEngineeringInterpretation,
+  createD1hR3Store,
+  evaluateStructuralCondition,
+  recordConditionRating,
+  recordConditionScopedValidation,
+  recordConditionState,
+  recordEngineeringInterpretation,
+  registerConditionRatingScheme,
+  retireConditionRatingScheme,
+} from "./inspection-condition";

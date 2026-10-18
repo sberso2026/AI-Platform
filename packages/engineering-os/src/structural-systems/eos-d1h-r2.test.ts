@@ -308,7 +308,7 @@ describe("EOS-D1H-R2 finding measurement validation foundation", () => {
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_FINDING_RUNTIME")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_MEASUREMENT_RUNTIME")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_HUMAN_VALIDATION_RUNTIME")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_CONDITION_STATE")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_CONDITION_STATE")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(sourcePath, "utf8");
     const doc = readFileSync(docPath, "utf8");
     expect(scanAnalysisFormulaBypass(sourcePath, sourceText)).toEqual([]);
