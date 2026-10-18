@@ -35,6 +35,7 @@ import {
   D1H_R4_CHANGED_FILES,
   D1H_R5_CHANGED_FILES,
   POST_D1H_ROADMAP_CHANGED_FILES,
+  D1I_0_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -374,6 +375,21 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_POST_D1H_CANONICAL_ROADMAP.md");
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(false);
+  });
+
+  it("classifies the D1I-0 digital twin architecture as release-sensitive where it states engineering authority", () => {
+    const classified = classifyChangedFiles(D1I_0_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/structural-digital-twin-d1i-0.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/eos-structural-twin-architecture.test.ts",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1I_0_STRUCTURAL_DIGITAL_TWIN_ARCHITECTURE.md",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain("packages/types/src/index.ts");
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
   });
 
   it("classifies C10 review packs as release-sensitive", () => {

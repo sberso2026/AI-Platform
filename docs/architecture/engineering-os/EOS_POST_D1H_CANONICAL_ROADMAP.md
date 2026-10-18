@@ -81,3 +81,7 @@ Post-D1H roadmap canonicalized. D1I selected as the next structural track. EOS-D
 Claims not made: D1I runtime implemented, digital twin implemented, digital twin equals digital thread, digital twin equals analysis model, digital twin equals latest solver result, D1I owns D1H records, D1I mutates D1H history, analysis state equals physical state, inferred state equals measured state, predicted state equals observed state, AI selects governing truth, newest record governs, conflicts are automatically reconciled, a sensor stream is required, automatic calibration exists, automatic model update exists, capacity assessment exists, deterioration prediction exists, safe or unsafe determination exists, repair design exists, a person twin exists, D1J started, D1K started, D1L started, D2 started, D3 started, D1 complete, D1H engineer validated, or GA security debt resolved.
 
 No database migration and no engineering formula are added.
+
+## Architecture successor
+
+EOS-D1I-0-STRUCTURAL-DIGITAL-TWIN-ARCHITECTURE is now defined in EOS_D1I_0_STRUCTURAL_DIGITAL_TWIN_ARCHITECTURE.md. The architecture owns reference composition only. Runtime remains unimplemented. The next implementation phase is EOS-D1I-R1-TWIN-IDENTITY-STATE-REFERENCE-FOUNDATION. The historical authorization above is unchanged: the D1I-0 identifier did not exist before this governance decision.

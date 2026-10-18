@@ -1174,7 +1174,7 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "Digital twin runtime is not implemented.",
+    limitations: "Digital twin runtime is not implemented. D1I-0 defines architecture only.",
     dependencies: ["D1H.STRUCTURAL_CONDITION_TEMPORAL_CONTINUITY"],
   },
   {
@@ -1188,6 +1188,31 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
     limitations: "This umbrella row is not an adequacy, capacity, repair, deterioration, or digital-twin runtime. Bounded condition, rating, interpretation, association, continuity, comparison, change evidence, and analysis linkage are recorded on their own rows.",
     dependencies: ["D1H.R1.STRUCTURAL_INSPECTION_EVIDENCE_FOUNDATION"],
+  },
+  {
+    capabilityId: "D1I.0.STRUCTURAL_DIGITAL_TWIN_ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "structural digital twin architecture",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "ARCHITECTURE_DEFINED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations:
+      "Architecture only. Twin runtime, snapshots, conflict resolution, telemetry, calibration, and prediction are not implemented.",
+    dependencies: ["D1F.STRUCTURAL_SYSTEMS.ARCHITECTURE", "D1H.STRUCTURAL_CONDITION_STATE"],
+  },
+  {
+    capabilityId: "D1I.STRUCTURAL_DIGITAL_TWIN_RUNTIME",
+    jurisdiction: "GLOBAL",
+    method: "structural digital twin runtime",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Digital twin runtime is not implemented.",
+    dependencies: ["D1I.0.STRUCTURAL_DIGITAL_TWIN_ARCHITECTURE"],
   },
 ];
 
