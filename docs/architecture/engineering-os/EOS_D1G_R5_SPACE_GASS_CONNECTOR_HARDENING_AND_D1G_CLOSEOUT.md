@@ -60,7 +60,9 @@ A second commercial provider would be useful later to test that the neutral adap
 
 ## Next phase evidence
 
-D1F-0 lists D1G as the last numbered item in the structural systems sequence and names D1H condition assessment and D1I structural digital twin only as unimplemented boundaries. It does not assign a phase identifier or scope for the work after D1G closeout. The older structural completion plan lists D1H Inspection and Condition after D1G in a recommended order, and its own next step is still D1A. That plan does not define a current post-closeout phase identifier. The successor is therefore not determinable from the repository. The next action is a read-only roadmap audit. This closeout does not invent a D1H phase number.
+D1F-0 lists D1G as the last numbered item in the structural systems sequence and names D1H condition assessment and D1I structural digital twin only as unimplemented boundaries. It does not assign a phase identifier or scope for the work after D1G closeout. The older structural completion plan lists D1H Inspection and Condition after D1G in a recommended order, and its own next step is still D1A. That plan does not define a current post-closeout phase identifier. The successor is therefore not determinable from the repository at this closeout. The next action recorded here is a read-only roadmap audit. This closeout does not invent a D1H phase number.
+
+A later governance decision, recorded in EOS_POST_D1G_CANONICAL_ROADMAP.md, selects D1H STRUCTURAL INSPECTION & CONDITION and authorizes EOS-D1H-0-STRUCTURAL-INSPECTION-CONDITION-ARCHITECTURE. That decision does not change this closeout record, D1G maturity, or any D1G claim.
 
 ## Release
 
