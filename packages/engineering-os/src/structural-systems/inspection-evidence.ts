@@ -438,6 +438,13 @@ export type D1hR1Store = {
   events: D1hR1Event[];
 };
 
+/** Runtime diagnostic. This is not a D1H structural finding. */
+export type D1hRuntimeDiagnostic = {
+  kind: "RUNTIME_DIAGNOSTIC";
+  code: string;
+  structuralFinding: false;
+};
+
 export type D1hR1RuntimeResult = {
   resultId: string;
   inspectionContextId: string;
@@ -448,8 +455,12 @@ export type D1hR1RuntimeResult = {
   evidenceIds: readonly string[];
   scope: string;
   completeness: D1hR1EvidenceCompleteness;
+  /** Compatibility name for runtime diagnostic codes. Not structural findings. */
   findings: readonly string[];
+  /** Compatibility name for blocking runtime diagnostic codes. Not structural findings. */
   blockingFindings: readonly string[];
+  runtimeDiagnostics: readonly D1hRuntimeDiagnostic[];
+  blockingRuntimeDiagnostics: readonly D1hRuntimeDiagnostic[];
   provenance: D1hProvenanceRef;
   fingerprint: string;
   warnings: readonly string[];
@@ -536,7 +547,7 @@ function sorted(values: readonly string[]): string[] {
   return [...values].sort((a, b) => a.localeCompare(b));
 }
 
-function currentEffective(store: D1hR1Store, kind: D1hR1HistoryEntry["subjectKind"], subjectId: string): D1hR1EffectiveState {
+export function currentD1hR1Effective(store: D1hR1Store, kind: D1hR1HistoryEntry["subjectKind"], subjectId: string): D1hR1EffectiveState {
   const matches = store.states.filter((row) => row.subjectKind === kind && row.subjectId === subjectId);
   return matches.length === 0 ? "CURRENT" : matches[matches.length - 1]!.effective;
 }
@@ -769,7 +780,7 @@ function evidenceBase(store: D1hR1Store, catalog: D1hR1GovernedCatalog, input: D
   if (input.inspectionSessionId !== context.inspectionSessionId) fail("INSPECTION_SESSION_MISMATCH");
   const target = store.targets.find((row) => row.inspectionContextId === context.inspectionContextId && row.targetId === input.targetId);
   if (!target) fail("TARGET_UNKNOWN");
-  if (currentEffective(store, "TARGET", target.targetId) === "STALE") fail("STALE_TARGET");
+  if (currentD1hR1Effective(store, "TARGET", target.targetId) === "STALE") fail("STALE_TARGET");
   assertProvenance(input.provenance, context);
   required(input.capturedAt, "CAPTURE_TIME_REQUIRED");
   required(input.capturedBy, "SOURCE_ACTOR_REQUIRED");
@@ -869,7 +880,7 @@ export function correctStructuralInspectionEvidence(store: D1hR1Store, catalog: 
   if (input.version === prior.version) fail("CORRECTION_VERSION_REQUIRED");
   const record = evidenceBase(store, catalog, input, predecessorEvidenceId, "CORRECTED");
   if (JSON.stringify(prior) !== priorSnapshot || prior.fingerprint !== priorFingerprint) fail("HISTORICAL_RECORD_MUTATED");
-  const predecessorState = currentEffective(store, "EVIDENCE", predecessorEvidenceId);
+  const predecessorState = currentD1hR1Effective(store, "EVIDENCE", predecessorEvidenceId);
   if (predecessorState === "CURRENT") {
     store.states.push({ subjectKind: "EVIDENCE", subjectId: predecessorEvidenceId, effective: "SUPERSEDED", recordedAt: input.recordedAt });
     store.history.push({
@@ -1000,7 +1011,7 @@ function closedClaims(): Pick<D1hR1RuntimeResult, "structuralFindingIds" | "meas
 
 export function evaluateStructuralInspectionEvidence(store: D1hR1Store, inspectionContextId: string): D1hR1RuntimeResult {
   const context = contextOf(store, inspectionContextId);
-  const effective = currentEffective(store, "CONTEXT", context.inspectionContextId);
+  const effective = currentD1hR1Effective(store, "CONTEXT", context.inspectionContextId);
   const targets = store.targets.filter((row) => row.inspectionContextId === context.inspectionContextId);
   const coverages = store.coverages.filter((row) => row.inspectionContextId === context.inspectionContextId);
   const evidence = store.evidence.filter((row) => row.inspectionContextId === context.inspectionContextId);
@@ -1014,9 +1025,9 @@ export function evaluateStructuralInspectionEvidence(store: D1hR1Store, inspecti
   if (coverages.some((row) => row.accessState === "INSPECTED_WITH_FINDINGS")) warnings.push("FINDING_RUNTIME_NOT_IN_SCOPE");
   const stale = effective === "STALE"
     || effective === "SUPERSEDED"
-    || targets.some((row) => currentEffective(store, "TARGET", row.targetId) === "STALE")
-    || coverages.some((row) => currentEffective(store, "COVERAGE", row.coverageId) === "STALE")
-    || evidence.some((row) => currentEffective(store, "EVIDENCE", row.evidenceId) === "STALE");
+    || targets.some((row) => currentD1hR1Effective(store, "TARGET", row.targetId) === "STALE")
+    || coverages.some((row) => currentD1hR1Effective(store, "COVERAGE", row.coverageId) === "STALE")
+    || evidence.some((row) => currentD1hR1Effective(store, "EVIDENCE", row.evidenceId) === "STALE");
   let completeness: D1hR1EvidenceCompleteness;
   if (stale) completeness = "STALE";
   else if (blockingFindings.length > 0) completeness = "INVALID";
@@ -1053,6 +1064,8 @@ export function evaluateStructuralInspectionEvidence(store: D1hR1Store, inspecti
     completeness,
     findings,
     blockingFindings: payload.blockingFindings,
+    runtimeDiagnostics: [...findings, ...payload.warnings].map((code) => ({ kind: "RUNTIME_DIAGNOSTIC" as const, code, structuralFinding: false as const })),
+    blockingRuntimeDiagnostics: payload.blockingFindings.map((code) => ({ kind: "RUNTIME_DIAGNOSTIC" as const, code, structuralFinding: false as const })),
     provenance: context.provenance,
     fingerprint,
     warnings: payload.warnings,

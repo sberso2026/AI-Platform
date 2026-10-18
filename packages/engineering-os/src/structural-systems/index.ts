@@ -74,3 +74,15 @@ export {
   recordStructuralInspectionCoverage,
   recordStructuralInspectionEvidence,
 } from "./inspection-evidence";
+export {
+  correctInspectionMeasurement,
+  correctStructuralFinding,
+  createD1hR2Store,
+  evaluateStructuralFindingMeasurementValidation,
+  propagateR1EvidenceStaleness,
+  recordHumanValidation,
+  recordInspectionMeasurement,
+  recordStructuralFinding,
+  structuralFindingProvenance,
+  withdrawHumanValidation,
+} from "./inspection-finding";

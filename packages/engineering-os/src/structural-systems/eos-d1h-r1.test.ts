@@ -591,6 +591,8 @@ describe("EOS-D1H-R1 structural inspection evidence foundation", () => {
     expect(store.evidence[0]?.observedCondition).toBe(false);
     expect(store.evidence[0]?.measuredResponse).toBe(false);
     expect(result.structuralFindingIds).toEqual([]);
+    expect(result.runtimeDiagnostics.every((row) => row.kind === "RUNTIME_DIAGNOSTIC" && row.structuralFinding === false)).toBe(true);
+    expect(result.blockingRuntimeDiagnostics.every((row) => row.kind === "RUNTIME_DIAGNOSTIC" && row.structuralFinding === false)).toBe(true);
     expect(result.measurementIds).toEqual([]);
     expect(result.conditionStateIds).toEqual([]);
     expect(result.conditionRatingIds).toEqual([]);
@@ -656,9 +658,12 @@ describe("EOS-D1H-R1 structural inspection evidence foundation", () => {
     expect(evaluateStructuralInspectionEvidence(recorded, "ctx-open").completeness).toBe("INCOMPLETE");
     const manifest = STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.R1.STRUCTURAL_INSPECTION_EVIDENCE_FOUNDATION");
     expect(manifest?.implementationState).toBe("IMPLEMENTED_RUNTIME");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_FINDING_RUNTIME")?.implementationState).toBe("NOT_IMPLEMENTED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_MEASUREMENT_RUNTIME")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_FINDING_RUNTIME")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_MEASUREMENT_RUNTIME")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_CONDITION_RUNTIME")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_CONDITION_STATE")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_CONDITION_RATING")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1H.STRUCTURAL_ENGINEERING_INTERPRETATION")?.implementationState).toBe("NOT_IMPLEMENTED");
   });
 
   it("rejects engineering formulas, condition scoring, and surveillance behavior", () => {
