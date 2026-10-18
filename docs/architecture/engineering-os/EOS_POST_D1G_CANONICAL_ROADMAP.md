@@ -86,3 +86,7 @@ Remaining D1H debt is software engineer validation pending, method conformance p
 
 D1I STRUCTURAL DIGITAL TWIN remains unimplemented. This roadmap names that track and does not define an exact implementation phase identifier. The next authorized development step is EOS-ROADMAP-POST-D1H-CANONICALIZATION. That roadmap governance step must formally record this closeout, confirm D1I as the next structural track, define its first governed architecture phase and boundaries, reuse D1H condition history by reference, and prevent digital-twin state from reauthoring or overriding D1H inspection and condition evidence. D2 is not started by this closeout. D1J, D1K, and D1L remain not implemented. D1M and D1N remain unimplemented boundaries.
 
+## Scheduling successor
+
+The closeout finding above is preserved. It recorded that no exact D1I implementation phase identifier existed at D1H closeout. The later governance decision EOS-ROADMAP-POST-D1H-CANONICALIZATION is recorded in EOS_POST_D1H_CANONICAL_ROADMAP.md. That successor supersedes only the post-D1H scheduling sentence. It does not rewrite this historical D1G or D1H record.
+

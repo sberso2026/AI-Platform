@@ -135,3 +135,4 @@ export {
   POST_D1H_NEXT_TRACK,
 } from "./inspection-closeout";
 export { ratingSchemesHistoricallyComparable, TEMPORAL_RATING_COMPARABILITY_REQUIRES_SCHEME_FINGERPRINT_MATCH } from "./inspection-temporal";
+export { CANONICAL_NEXT_PHASE as POST_D1H_CANONICAL_NEXT_PHASE, D1I_CANONICAL_NAME, D1I_RUNTIME_IMPLEMENTED } from "./post-d1h-roadmap";
