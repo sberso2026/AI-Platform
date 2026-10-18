@@ -949,6 +949,30 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "Closes the D1G track at offline conformance. Live provider validation is pending. Desktop compatibility is not a proven REST range. Native retrieval is filter and offset bounded. Reaction moments, member-end import, nonlinear convergence, and generic major or minor axes remain unresolved. This is not engineer validation, code conformance, or structural analysis.",
     dependencies: ["D1G.R4.SPACE_GASS_READ_ONLY_CONNECTOR", "D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION", "D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION"],
   },
+  {
+    capabilityId: "D1H.0.STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "structural inspection and condition architecture",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "ARCHITECTURE_DEFINED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Architecture contracts only. Reuses inspection-intelligence and D1A/D1F identities. No condition engine, no inspection runtime, no computer vision, no capacity change, no repair design, and no digital twin. Not engineer validated and not conformance validated.",
+    dependencies: ["D1A structural domain", "D1F structural systems", "inspection-intelligence platform"],
+  },
+  {
+    capabilityId: "D1H.STRUCTURAL_INSPECTION_CONDITION_RUNTIME",
+    jurisdiction: "GLOBAL",
+    method: "structural inspection and condition runtime",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Runtime is not implemented. Architecture does not authorize a condition engine, adequacy claim, or repair decision.",
+    dependencies: ["D1H.0.STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

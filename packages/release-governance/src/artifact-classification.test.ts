@@ -28,6 +28,7 @@ import {
   D1G_R3_CHANGED_FILES,
   D1G_R4_CHANGED_FILES,
   D1G_R5_CHANGED_FILES,
+  D1H_0_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -292,6 +293,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1G_R5_SPACE_GASS_CONNECTOR_HARDENING_AND_D1G_CLOSEOUT.md",
     );
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1H-0 architecture contracts as release-sensitive and the documents as not release-sensitive", () => {
+    const classified = classifyChangedFiles(D1H_0_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/structural-inspection-d1h-0.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1H_0_STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
   });
 

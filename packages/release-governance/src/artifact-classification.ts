@@ -44,6 +44,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-d1g-r3\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r4\.ts$/,
   /packages\/types\/src\/structural-systems-d1g-r5\.ts$/,
+  /packages\/types\/src\/structural-inspection-d1h-0\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -299,6 +300,17 @@ export const D1G_R5_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/space-gass-connector.ts",
   "packages/engineering-os/src/structural-systems/eos-d1g-r4.test.ts",
   "packages/engineering-os/src/structural-systems/eos-d1g-r5.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D1H_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1H_0_STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE.md",
+  "docs/architecture/engineering-os/EOS_POST_D1G_CANONICAL_ROADMAP.md",
+  "packages/types/src/structural-inspection-d1h-0.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1h-0.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

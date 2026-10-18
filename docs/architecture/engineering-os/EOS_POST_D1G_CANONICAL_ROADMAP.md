@@ -12,7 +12,7 @@ D1G remains closed at EXTERNAL_SOLVER_INTEGRATION_IMPLEMENTED_WITH_SPACE_GASS_RE
 
 The next canonical D1 development track is D1H STRUCTURAL INSPECTION & CONDITION.
 
-The next canonical implementation phase is EOS-D1H-0-STRUCTURAL-INSPECTION-CONDITION-ARCHITECTURE. Its type is architecture. It is authorized and not started. D1H runtime is not implemented.
+The next canonical implementation phase after this decision was EOS-D1H-0-STRUCTURAL-INSPECTION-CONDITION-ARCHITECTURE. That architecture is now defined in EOS_D1H_0_STRUCTURAL_INSPECTION_CONDITION_ARCHITECTURE.md. D1H runtime is not implemented.
 
 ## D1H purpose
 
