@@ -39,6 +39,7 @@ import {
   D1I_0_CHANGED_FILES,
   D1J_0_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
+  D1J_R2_CHANGED_FILES,
   D1I_R1_CHANGED_FILES,
   D1I_R2_CHANGED_FILES,
   D1I_R3_CHANGED_FILES,
@@ -388,6 +389,19 @@ describe("release-sensitive artifact classification", () => {
       "docs/architecture/engineering-os/EOS_D1J_0_STRUCTURAL_OPTIMIZATION_CERTIFICATION_ARCHITECTURE.md",
     );
     expect(classified.releaseSensitiveFiles).not.toContain("packages/types/src/index.ts");
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1J-R2 evaluation reference foundation as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1J_R2_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/objective-constraint-foundation.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1J_R2_OBJECTIVE_CONSTRAINT_FEASIBILITY_REFERENCE_FOUNDATION.md",
+    );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
   });
