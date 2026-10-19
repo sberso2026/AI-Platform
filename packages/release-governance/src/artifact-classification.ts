@@ -46,6 +46,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-systems-d1g-r5\.ts$/,
   /packages\/types\/src\/structural-inspection-d1h-0\.ts$/,
   /packages\/types\/src\/structural-digital-twin-d1i-0\.ts$/,
+  /packages\/types\/src\/structural-optimization-d1j-0\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -427,6 +428,16 @@ export const D1I_R1_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-structural-twin-reference.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D1J_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1J_0_STRUCTURAL_OPTIMIZATION_CERTIFICATION_ARCHITECTURE.md",
+  "packages/types/src/structural-optimization-d1j-0.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-optimization-architecture.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
