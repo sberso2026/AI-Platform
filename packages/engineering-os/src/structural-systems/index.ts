@@ -136,3 +136,15 @@ export {
 } from "./inspection-closeout";
 export { ratingSchemesHistoricallyComparable, TEMPORAL_RATING_COMPARABILITY_REQUIRES_SCHEME_FINGERPRINT_MATCH } from "./inspection-temporal";
 export { CANONICAL_NEXT_PHASE as POST_D1H_CANONICAL_NEXT_PHASE, D1I_CANONICAL_NAME, D1I_RUNTIME_IMPLEMENTED } from "./post-d1h-roadmap";
+export {
+  D1I_R1_MATURITY_STATE,
+  D1I_R1_RUNTIME_API,
+  createD1iR1Store,
+  createTwin,
+  evaluateStateReferenceStatus,
+  inspectStateReference,
+  inspectTwin,
+  produceTwinReferenceFoundationResult,
+  registerStateReference,
+  supersedeStateReference,
+} from "./twin-reference-foundation";
