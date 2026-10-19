@@ -35,6 +35,7 @@ import {
   D1H_R4_CHANGED_FILES,
   D1H_R5_CHANGED_FILES,
   POST_D1H_ROADMAP_CHANGED_FILES,
+  POST_D1I_ROADMAP_CHANGED_FILES,
   D1I_0_CHANGED_FILES,
   D1I_R1_CHANGED_FILES,
   D1I_R2_CHANGED_FILES,
@@ -370,6 +371,14 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1H_R5_STRUCTURAL_INSPECTION_CONDITION_CLOSEOUT.md",
     );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(false);
+  });
+
+  it("classifies the post-D1I roadmap decision as release-sensitive where it states engineering authority", () => {
+    const classified = classifyChangedFiles(POST_D1I_ROADMAP_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/roadmap-after-twin-closeout.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_POST_D1I_CANONICAL_ROADMAP.md");
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(false);
   });
