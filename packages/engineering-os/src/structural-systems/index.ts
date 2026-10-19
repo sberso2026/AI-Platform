@@ -231,3 +231,4 @@ export {
 } from "./optimization-problem-foundation";
 export { D1J_R2_MATURITY_STATE, D1J_R3_CANONICAL_PHASE, createD1jR2Store, deriveFeasibilityReference } from "./objective-constraint-foundation";
 export { D1J_R3_MATURITY_STATE, D1J_R4_CANONICAL_PHASE, composeMultiObjectiveCandidateSet, createD1jR3Store } from "./candidate-composition";
+export { D1J_R4_MATURITY_STATE, D1J_R5_CANONICAL_PHASE, assessCertificationReadiness, createD1jR4Store } from "./certification-readiness-gate";
