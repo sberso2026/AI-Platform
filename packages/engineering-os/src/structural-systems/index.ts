@@ -219,3 +219,13 @@ export {
   NEXT_PHASE_TYPE,
 } from "./twin-closeout";
 export { CANONICAL_NEXT_PHASE as POST_D1I_CANONICAL_NEXT_PHASE, D1J_0_ARCHITECTURE_AUTHORIZED, D1J_CURRENT_STATUS } from "./roadmap-after-twin-closeout";
+export {
+  D1J_R1_MATURITY_STATE,
+  D1J_R2_CANONICAL_PHASE,
+  createD1jR1Store,
+  createOptimizationProblemFoundation,
+  createVariableSet,
+  evaluateOptimizationProblemFoundationStatus,
+  produceOptimizationProblemFoundationResult,
+  registerDesignVariableDefinition,
+} from "./optimization-problem-foundation";
