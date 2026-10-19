@@ -858,7 +858,7 @@ export function registerStateReference(store: D1iR1Store, actor: D1iR1Actor, inp
   };
   const record: D1iR1StateReference = { ...draft, fingerprint, provenance };
   store.references.push(record);
-  remember(store, "STATE_REFERENCE", record.stateReferenceId, "REGISTERED", record.version, record.fingerprint, null, "TWIN_STATE_REFERENCE_REGISTERED");
+  remember(store, "STATE_REFERENCE", record.stateReferenceId, `REGISTERED:${referenceStatus}`, record.version, record.fingerprint, null, "TWIN_STATE_REFERENCE_REGISTERED");
   return record;
 }
 
