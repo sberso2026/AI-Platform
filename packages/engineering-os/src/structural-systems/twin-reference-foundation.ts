@@ -191,13 +191,13 @@ export const D1I_R1_CROSS_TWIN_REFERENCE_REUSE_POLICY = "Different governed twin
 export const D1I_R1_RUNTIME_API = "createTwin, inspectTwin, registerStateReference, inspectStateReference, supersedeStateReference, evaluateStateReferenceStatus, produceTwinReferenceFoundationResult." as const;
 export const D1I_R1_TWIN_IDENTITY_RUNTIME_CONTRACT = "createTwin records twinId, tenant, workspace, project, scope, governed structural target, explicit purpose, registration authority, governance profile, trusted createdAt, version, fingerprint, and RECORDED status." as const;
 export const D1I_R1_STATE_REFERENCE_RUNTIME_CONTRACT = "registerStateReference records a pinned pointer with state class, source domain, allowlisted object type, object id, resolved version, resolved fingerprint, source authority, source validation, target, source-derived effective time, trusted known-at time, source times, reference status, limitations, registration authority, provenance, version, and fingerprint." as const;
-export const D1I_R1_SOURCE_RESOLVER_REGISTRY = "Explicit resolvers: D1A design identity, D1F structural identity, D1F analysis identity, D1G external analysis identity, D1H finding, measurement, interpretation, and condition state. No generic object fetch is registered." as const;
+export const D1I_R1_SOURCE_RESOLVER_REGISTRY = "Explicit resolvers: D1A design identity, D1F structural identity, D1F analysis identity, D1G external analysis identity, D1H finding, measurement, interpretation, and condition state. An R4 telemetry data reference resolves only when that exact pin is already published. No generic object fetch is registered." as const;
 export const D1I_R2_REQUIRED_R1_CONTRACTS = "twinIdentity, governedStructuralTarget, stateReferenceIdentity, sourceDomain, stateClass, resolvedSourceIdentity, sourceVersion, sourceFingerprint, sourceAuthority, sourceValidation, effectiveTime, knownAtTime, sourceTimes, referenceStatus, registrationAuthority, provenance, fingerprint, history, staleness." as const;
 export const D1I_R1_CANONICAL_NAME = "STRUCTURAL DIGITAL TWIN" as const;
 
 export type D1iR1TargetKind = (typeof D1I_R1_SUPPORTED_TWIN_TARGET_KINDS)[number];
 export type D1iR1TwinScope = (typeof D1I_R1_TWIN_SCOPES)[number];
-export type D1iR1SourceDomain = (typeof D1I_R1_RUNTIME_SUPPORTED_SOURCE_DOMAINS)[number];
+export type D1iR1SourceDomain = (typeof D1I_R1_RUNTIME_SUPPORTED_SOURCE_DOMAINS)[number] | "FUTURE_TELEMETRY";
 export type D1iR1ReferenceStatus = (typeof D1I_R1_REFERENCE_STATUSES)[number];
 export type D1iR1Completeness = (typeof D1I_R1_COMPLETENESS_STATES)[number];
 export type D1iR1StateClass = "DESIGN_OR_REFERENCE_STATE" | "ANALYTICAL_STATE" | "OBSERVED_STATE" | "MEASURED_STATE" | "ENGINEERING_INTERPRETED_STATE" | "CONDITION_STATE" | "INFERRED_STATE" | "PREDICTED_STATE" | "TELEMETRY_STATE";
@@ -332,6 +332,20 @@ export type D1iR1HistoryEntry = {
   predecessorId: string | null;
 };
 
+export type D1iR1TelemetryPin = {
+  telemetryReferenceId: string;
+  version: string;
+  fingerprint: string;
+  structuralTargetRef: D1iR1TargetPin;
+  sourceAuthority: string;
+  sourceValidationState: string;
+  effectiveTime: string;
+  sourceTimes: D1iR1SourceTimes;
+  bindingFingerprint: string;
+  qualityCalibrationIdentity: string;
+  status: "ACTIVE" | "STALE" | "INVALID";
+};
+
 export type D1iR1Store = {
   catalog: D1iR1Catalog;
   now: () => string;
@@ -339,6 +353,7 @@ export type D1iR1Store = {
   references: D1iR1StateReference[];
   history: D1iR1HistoryEntry[];
   events: Array<{ eventId: string; eventType: (typeof D1I_R1_EVENTS)[number]; subjectId: string; recordedAt: string; engineeringApproval: false }>;
+  telemetryPins?: D1iR1TelemetryPin[];
 };
 
 export type D1iR1CreateTwinInput = {
@@ -394,6 +409,7 @@ const DOMAIN_TYPES: Record<D1iR1SourceDomain, readonly string[]> = {
   D1F_ANALYSIS: ["ANALYSIS_RESULT"],
   D1G_EXTERNAL_ANALYSIS_RESULT: ["ANALYSIS_RESULT"],
   D1H_INSPECTION_CONDITION: ["STRUCTURAL_FINDING", "INSPECTION_MEASUREMENT", "ENGINEERING_INTERPRETATION", "CONDITION_STATE"],
+  FUTURE_TELEMETRY: ["TELEMETRY_DATA_REFERENCE"],
 };
 
 const CLASS_BY_TYPE: Record<string, D1iR1StateClass> = {
@@ -409,6 +425,7 @@ const CLASS_BY_TYPE: Record<string, D1iR1StateClass> = {
   "D1H_INSPECTION_CONDITION:INSPECTION_MEASUREMENT": "MEASURED_STATE",
   "D1H_INSPECTION_CONDITION:ENGINEERING_INTERPRETATION": "ENGINEERING_INTERPRETED_STATE",
   "D1H_INSPECTION_CONDITION:CONDITION_STATE": "CONDITION_STATE",
+  "FUTURE_TELEMETRY:TELEMETRY_DATA_REFERENCE": "TELEMETRY_STATE",
 };
 
 function fail(code: string): never {
@@ -678,9 +695,57 @@ function baseD1h(id: string, objectType: string, version: string, fingerprint: s
   };
 }
 
-function resolveSource(catalog: D1iR1Catalog, domain: string, objectType: string, objectId: string, twin: D1iR1TwinRecord): Resolved {
-  if (domain === "FUTURE_TELEMETRY" || domain === "OTHER_GOVERNED_SOURCE") fail("SOURCE_DOMAIN_UNSUPPORTED");
-  if (!D1I_R1_RUNTIME_SUPPORTED_SOURCE_DOMAINS.includes(domain as D1iR1SourceDomain)) fail("SOURCE_DOMAIN_UNSUPPORTED");
+function resolveTelemetryPin(store: D1iR1Store, objectId: string, twin: D1iR1TwinRecord): Resolved {
+  const pin = store.telemetryPins?.find((row) => row.telemetryReferenceId === objectId);
+  if (!pin) fail("SOURCE_NOT_FOUND");
+  if (pin.status === "INVALID") fail("SOURCE_INVALID");
+  if (pin.status === "STALE") fail("SOURCE_STALE");
+  assertInTwinScope(twin, pin.structuralTargetRef);
+  return {
+    sourceDomain: "FUTURE_TELEMETRY",
+    sourceObjectType: "TELEMETRY_DATA_REFERENCE",
+    sourceObjectId: pin.telemetryReferenceId,
+    sourceVersion: pin.version,
+    sourceFingerprint: pin.fingerprint,
+    sourceAuthority: pin.sourceAuthority,
+    sourceValidationState: pin.sourceValidationState,
+    analysisAuthorityClass: null,
+    analysisModelId: null,
+    analysisRunId: null,
+    structuralTargetRef: pin.structuralTargetRef,
+    effectiveTime: pin.effectiveTime,
+    sourceTimes: pin.sourceTimes,
+    historicalContext: false,
+  };
+}
+
+export function publishTelemetryPin(store: D1iR1Store, pin: D1iR1TelemetryPin): void {
+  if (!store.telemetryPins) store.telemetryPins = [];
+  const existing = store.telemetryPins.find((row) => row.telemetryReferenceId === pin.telemetryReferenceId);
+  if (!existing) {
+    store.telemetryPins.push({ ...pin, sourceTimes: { ...pin.sourceTimes }, structuralTargetRef: { ...pin.structuralTargetRef } });
+    return;
+  }
+  if (existing.fingerprint !== pin.fingerprint) {
+    existing.status = "STALE";
+    return;
+  }
+  existing.status = pin.status;
+}
+
+export function markTelemetryPinStatus(store: D1iR1Store, telemetryReferenceId: string, status: D1iR1TelemetryPin["status"]): void {
+  const pin = store.telemetryPins?.find((row) => row.telemetryReferenceId === telemetryReferenceId);
+  if (!pin) fail("SOURCE_NOT_FOUND");
+  pin.status = status;
+}
+
+function resolveSource(catalog: D1iR1Catalog, domain: string, objectType: string, objectId: string, twin: D1iR1TwinRecord, store: D1iR1Store): Resolved {
+  if (domain === "FUTURE_TELEMETRY") {
+    if (objectType !== "TELEMETRY_DATA_REFERENCE") fail("SOURCE_DOMAIN_UNSUPPORTED");
+    return resolveTelemetryPin(store, objectId, twin);
+  }
+  if (domain === "OTHER_GOVERNED_SOURCE") fail("SOURCE_DOMAIN_UNSUPPORTED");
+  if (!D1I_R1_RUNTIME_SUPPORTED_SOURCE_DOMAINS.includes(domain as (typeof D1I_R1_RUNTIME_SUPPORTED_SOURCE_DOMAINS)[number])) fail("SOURCE_DOMAIN_UNSUPPORTED");
   const typed = domain as D1iR1SourceDomain;
   const allowed = DOMAIN_TYPES[typed];
   if (!allowed.includes(objectType)) fail("SOURCE_OBJECT_TYPE_UNSUPPORTED");
@@ -791,10 +856,11 @@ export function registerStateReference(store: D1iR1Store, actor: D1iR1Actor, inp
   assertActor(actor, twin);
   const objectId = assertSelector(input.sourceObjectId);
   const objectType = required(input.sourceObjectType, "SOURCE_OBJECT_TYPE_UNSUPPORTED");
-  const resolved = resolveSource(store.catalog, input.sourceDomain, objectType, objectId, twin);
+  const resolved = resolveSource(store.catalog, input.sourceDomain, objectType, objectId, twin, store);
   const expectedClass = CLASS_BY_TYPE[`${resolved.sourceDomain}:${resolved.sourceObjectType}`];
   if (!expectedClass || input.stateClass !== expectedClass) fail("STATE_CLASS_SOURCE_MISMATCH");
-  if (input.stateClass === "INFERRED_STATE" || input.stateClass === "PREDICTED_STATE" || input.stateClass === "TELEMETRY_STATE") fail("STATE_CLASS_SOURCE_MISMATCH");
+  if (input.stateClass === "INFERRED_STATE" || input.stateClass === "PREDICTED_STATE") fail("STATE_CLASS_SOURCE_MISMATCH");
+  if (input.stateClass === "TELEMETRY_STATE" && resolved.sourceObjectType !== "TELEMETRY_DATA_REFERENCE") fail("STATE_CLASS_SOURCE_MISMATCH");
   if (input.expectedSourceFingerprint !== undefined && input.expectedSourceFingerprint !== resolved.sourceFingerprint) fail("SOURCE_FINGERPRINT_MISMATCH");
   if (input.expectedSourceVersion !== undefined && input.expectedSourceVersion !== resolved.sourceVersion) fail("SOURCE_VERSION_MISMATCH");
   if (input.assertedSourceAuthority !== undefined && input.assertedSourceAuthority !== resolved.sourceAuthority) fail("SOURCE_AUTHORITY_ASSERTION_REJECTED");
@@ -896,7 +962,7 @@ export function evaluateStateReferenceStatus(store: D1iR1Store, stateReferenceId
   let next: D1iR1ReferenceStatus = reference.referenceStatus;
   if (!targetIdentity || targetIdentity.lifecycle === "SUPERSEDED") next = "STALE_REFERENCE";
   try {
-    const live = resolveSource(store.catalog, reference.sourceDomain, reference.sourceObjectType, reference.sourceObjectId, twin);
+    const live = resolveSource(store.catalog, reference.sourceDomain, reference.sourceObjectType, reference.sourceObjectId, twin, store);
     if (live.sourceFingerprint !== pinnedFingerprint) next = "STALE_REFERENCE";
     else if (live.sourceAuthority !== reference.sourceAuthority || live.sourceValidationState !== reference.sourceValidationState) {
       next = live.sourceAuthority === "INVALID" || live.sourceValidationState === "INVALID" || live.sourceAuthority === "WITHDRAWN" ? "INVALID_REFERENCE" : "STALE_REFERENCE";

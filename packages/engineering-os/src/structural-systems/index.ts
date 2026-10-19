@@ -194,3 +194,20 @@ export {
   recordConflictDisposition,
   recordConflictReview,
 } from "./twin-conflict-composition";
+export {
+  D1I_R4_MATURITY_STATE,
+  D1I_R4_RUNTIME_API,
+  D1I_R5_CANONICAL_PHASE_FROM_REPOSITORY,
+  D1I_R5_CANONICAL_SCOPE_FROM_REPOSITORY,
+  D1I_R5_HANDOFF_READY,
+  assessClockCompatibility,
+  bindMonitoringChannelToStructuralTarget,
+  createD1iR4Store,
+  produceTelemetryMonitoringReferenceResult,
+  registerMonitoringChannelReference,
+  registerMonitoringDeviceReference,
+  registerMonitoringSource,
+  registerTelemetryDataReference,
+  registerTelemetryStateReference,
+  supersedeMonitoringTargetBinding,
+} from "./twin-monitoring-reference";
