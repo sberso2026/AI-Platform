@@ -282,6 +282,7 @@ export type D1jR2ObjectiveSource = {
   targetId: string;
   status: "CURRENT" | "STALE" | "INVALID";
   evidenceClass: "OWNED" | "FIXTURE";
+  designStateFingerprint?: string | null;
 };
 
 export type D1jR2OwnedCheck = {
@@ -303,6 +304,7 @@ export type D1jR2OwnedCheck = {
   projectId: string;
   status: "CURRENT" | "STALE" | "INVALID" | "UNSUPPORTED";
   evidenceClass: "OWNED" | "FIXTURE";
+  designStateFingerprint?: string | null;
 };
 
 export type D1jR2OwnedAnalysis = {
@@ -320,6 +322,7 @@ export type D1jR2OwnedAnalysis = {
   projectId: string;
   status: "CURRENT" | "STALE" | "INVALID";
   evidenceClass: "OWNED" | "FIXTURE";
+  designStateFingerprint?: string | null;
 };
 
 export type D1jR2ApplicabilityRuling = {
@@ -460,10 +463,15 @@ export type D1jR2Problem = {
 
 export type D1jR2Subject = {
   subjectId: string;
-  subjectKind: "BASELINE_DESIGN_REFERENCE";
+  subjectKind: "BASELINE_DESIGN_REFERENCE" | "D1J_CANDIDATE_REFERENCE";
   baselineRefId: string;
   baselineFingerprint: string;
   fingerprint: string;
+  candidateId?: string;
+  candidateFingerprint?: string;
+  candidateDesignStateFingerprint?: string;
+  problemFingerprint?: string;
+  assignmentSetFingerprint?: string | null;
 };
 
 export type D1jR2CheckRef = {
@@ -822,7 +830,7 @@ export function registerCheckResultReference(store: D1jR2Store, actor: D1jR2Acto
   assertHuman(actor);
   if (input.sourceCheckResultId === "latest") fail("CHECK_RESULT_NOT_FOUND");
   const subject = store.subjects.find((row) => row.subjectId === input.subjectId) ?? fail("EVALUATION_SUBJECT_UNSUPPORTED");
-  if (subject.subjectKind !== "BASELINE_DESIGN_REFERENCE") fail("EVALUATION_SUBJECT_UNSUPPORTED");
+  if (subject.subjectKind !== "BASELINE_DESIGN_REFERENCE" && subject.subjectKind !== "D1J_CANDIDATE_REFERENCE") fail("EVALUATION_SUBJECT_UNSUPPORTED");
   const constraint = store.constraints.find((row) => row.constraintId === input.constraintId) ?? fail("REQUIRED_CHECK_MISSING");
   const source = store.catalog.checkResults.find((row) => row.checkResultId === input.sourceCheckResultId);
   if (!source) fail("CHECK_RESULT_NOT_FOUND");
@@ -835,6 +843,7 @@ export function registerCheckResultReference(store: D1jR2Store, actor: D1jR2Acto
   if (source.targetId !== constraint.targetId) fail("CHECK_TARGET_MISMATCH");
   const standards = [...source.standardBindingRefs].sort().join("|");
   if (standards !== [...constraint.standardBindingRefs].sort().join("|") || source.jurisdictionBindingRef !== constraint.jurisdictionBindingRef) fail("CHECK_STANDARD_MISMATCH");
+  if (subject.subjectKind === "D1J_CANDIDATE_REFERENCE" && (!source.designStateFingerprint || source.designStateFingerprint !== subject.candidateDesignStateFingerprint)) fail("CANDIDATE_EVIDENCE_UNCORRELATED");
   if (!source.authoritativeVerdict) fail("CHECK_STATUS_UNRESOLVED");
   const authoritativeStatus = VERDICT_MAP[source.authoritativeVerdict];
   const fingerprint = fingerprintCanonical({ source: source.fingerprint, constraint: constraint.fingerprint, subject: subject.fingerprint, status: authoritativeStatus });
@@ -896,7 +905,13 @@ export function registerObjectiveValueReference(store: D1jR2Store, actor: D1jR2A
   if (input.callerRate != null || input.callerFactor != null) fail("OBJECTIVE_VALUE_NOT_FOUND");
   const subject = store.subjects.find((row) => row.subjectId === input.subjectId) ?? fail("EVALUATION_SUBJECT_UNSUPPORTED");
   const objective = store.objectives.find((row) => row.objectiveId === input.objectiveId) ?? fail("OBJECTIVE_VALUE_NOT_FOUND");
-  const source = store.catalog.objectiveSources.find((row) => row.sourceId === objective.sourceId);
+  let source = store.catalog.objectiveSources.find((row) => row.sourceId === objective.sourceId);
+  if (subject.subjectKind === "D1J_CANDIDATE_REFERENCE") {
+    const matches = store.catalog.objectiveSources.filter((row) => row.designStateFingerprint === subject.candidateDesignStateFingerprint && row.quantity === objective.quantity && row.sourceDomain === objective.sourceDomain && row.status === "CURRENT" && existingUnitPairCompatible(objective.quantity, objective.unit, row.unit));
+    if (matches.length === 0) fail("CANDIDATE_EVIDENCE_UNCORRELATED");
+    if (matches.length > 1) fail("EVIDENCE_AMBIGUOUS");
+    source = matches[0];
+  }
   if (!source || source.status !== "CURRENT") fail("OBJECTIVE_VALUE_NOT_FOUND");
   if (input.expectedFingerprint != null && input.expectedFingerprint !== source.fingerprint) fail("OBJECTIVE_VALUE_FINGERPRINT_MISMATCH");
   if (input.expectedValue != null && input.expectedValue !== source.value) fail("OBJECTIVE_VALUE_FINGERPRINT_MISMATCH");

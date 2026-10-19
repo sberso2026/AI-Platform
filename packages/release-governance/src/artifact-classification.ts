@@ -432,6 +432,17 @@ export const D1I_R1_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1J_R3_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1J_R3_CANDIDATE_LINEAGE_COMPARISON_COMPOSITION.md",
+  "packages/engineering-os/src/structural-systems/candidate-composition.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-optimization-composition.test.ts",
+  "packages/engineering-os/src/structural-systems/objective-constraint-foundation.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1J_R2_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1J_R2_OBJECTIVE_CONSTRAINT_FEASIBILITY_REFERENCE_FOUNDATION.md",
   "packages/engineering-os/src/structural-systems/objective-constraint-foundation.ts",
