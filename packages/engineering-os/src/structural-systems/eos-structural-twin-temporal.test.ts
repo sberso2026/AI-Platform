@@ -278,7 +278,9 @@ describe("EOS-D1I-R2 temporal snapshot and current selection", () => {
     expect(D1I_R3_HANDOFF_READY).toBe(true);
     const current = STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1I.STRUCTURAL_DIGITAL_TWIN_CURRENT_STATE");
     const conflict = STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1I.STRUCTURAL_DIGITAL_TWIN_CONFLICT");
+    const telemetry = STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1I.STRUCTURAL_DIGITAL_TWIN_TELEMETRY");
     expect(current?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(conflict?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(conflict?.implementationState).toBe("IMPLEMENTED_BOUNDED");
+    expect(telemetry?.implementationState).toBe("NOT_IMPLEMENTED");
   });
 });

@@ -376,6 +376,17 @@ export const D1H_R5_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1I_R3_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1I_R3_STATE_CONFLICT_MULTI_SOURCE_COMPOSITION.md",
+  "packages/engineering-os/src/structural-systems/twin-conflict-composition.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-twin-conflict.test.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-twin-temporal.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1I_R2_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1I_R2_TEMPORAL_SNAPSHOT_CURRENT_AS_OF_STATE_GOVERNANCE.md",
   "packages/engineering-os/src/structural-systems/twin-temporal-governance.ts",

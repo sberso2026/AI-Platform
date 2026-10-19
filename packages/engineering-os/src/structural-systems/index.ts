@@ -178,3 +178,19 @@ export {
   supersedeCurrentStateSelection,
   withdrawSelectionAuthority,
 } from "./twin-temporal-governance";
+export {
+  D1I_R3_MATURITY_STATE,
+  D1I_R3_RUNTIME_API,
+  D1I_R4_CANONICAL_PHASE_FROM_REPOSITORY,
+  D1I_R4_CANONICAL_SCOPE_FROM_REPOSITORY,
+  D1I_R4_HANDOFF_READY,
+  assessStateCompatibility,
+  composeMultiSourceState,
+  confirmConflict,
+  confirmNoConflict,
+  createConflictCandidate,
+  createD1iR3Store,
+  produceTwinConflictCompositionResult,
+  recordConflictDisposition,
+  recordConflictReview,
+} from "./twin-conflict-composition";

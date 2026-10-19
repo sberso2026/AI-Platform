@@ -38,6 +38,7 @@ import {
   D1I_0_CHANGED_FILES,
   D1I_R1_CHANGED_FILES,
   D1I_R2_CHANGED_FILES,
+  D1I_R3_CHANGED_FILES,
 } from "./artifact-classification";
 
 describe("release-sensitive artifact classification", () => {
@@ -377,6 +378,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_POST_D1H_CANONICAL_ROADMAP.md");
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(false);
+  });
+
+  it("classifies the D1I-R3 conflict composition as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1I_R3_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/twin-conflict-composition.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1I_R3_STATE_CONFLICT_MULTI_SOURCE_COMPOSITION.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
   });
 
   it("classifies the D1I-R2 temporal snapshot governance as release-sensitive", () => {
