@@ -376,6 +376,18 @@ export const D1H_R5_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1I_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1I_R5_STRUCTURAL_DIGITAL_TWIN_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/twin-closeout.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-twin-closeout.test.ts",
+  "packages/engineering-os/src/structural-systems/twin-monitoring-reference.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-twin-monitoring.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1I_R4_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1I_R4_EXTERNAL_TELEMETRY_MONITORING_REFERENCE_INTERFACE.md",
   "packages/engineering-os/src/structural-systems/twin-monitoring-reference.ts",

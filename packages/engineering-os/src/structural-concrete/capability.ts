@@ -1418,6 +1418,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     limitations: "Monitoring references do not calibrate or modify an analysis model.",
     dependencies: ["D1I.0.STRUCTURAL_DIGITAL_TWIN_ARCHITECTURE"],
   },
+  {
+    capabilityId: "D1I.STRUCTURAL_DIGITAL_TWIN_BOUNDED_RUNTIME",
+    jurisdiction: "GLOBAL",
+    method: "structural digital twin bounded runtime",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Bounded reference composition is implemented. Engineer validation, conformance validation, live monitoring, diagnosis, calibration, adequacy, prediction, and repair are not.",
+    dependencies: ["D1I.0.STRUCTURAL_DIGITAL_TWIN_ARCHITECTURE"],
+  },
 ];
 
 export const CONCRETE_PRODUCT_GATING_POLICY: Record<ConcreteProductGatingLevel, {

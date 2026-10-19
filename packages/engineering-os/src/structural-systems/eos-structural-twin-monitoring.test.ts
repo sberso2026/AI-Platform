@@ -36,6 +36,7 @@ import {
   registerMonitoringChannelReference,
   registerMonitoringDeviceReference,
   registerMonitoringSource,
+  registerGovernedMonitoringImport,
   registerTelemetryDataReference,
   registerTelemetryStateReference,
   reportObservedSourceFingerprint,
@@ -90,24 +91,32 @@ function channel(runtime: D1iR4Store, id: string, deviceReferenceId: string, ove
   return registerMonitoringChannelReference(runtime, actor, { channelReferenceId: id, deviceReferenceId, externalChannelId: `ch-${id}`, channelName: "X", measurementQuantity: "acceleration", unit: "m/s2", axis: "member-local-x", processingClass: "RAW_SOURCE_DATA", version: "1", ...overrides });
 }
 
-function bind(runtime: D1iR4Store, id: string, channelReferenceId: string, targetId = "mem-1") {
-  return bindMonitoringChannelToStructuralTarget(runtime, actor, { bindingId: id, twinId: "twin-1", channelReferenceId, targetKind: "MEMBER", targetId, bindingPurpose: "local-response-reference", basis: "installation-record", limitations: "not global response", version: "1" });
+function bind(runtime: D1iR4Store, id: string, channelReferenceId: string, targetId = "mem-1", interval: { from: string; to: string } | null = null) {
+  return bindMonitoringChannelToStructuralTarget(runtime, actor, { bindingId: id, twinId: "twin-1", channelReferenceId, targetKind: "MEMBER", targetId, bindingPurpose: "local-response-reference", basis: "installation-record", limitations: "not global response", effectiveFrom: interval?.from ?? null, effectiveTo: interval?.to ?? null, version: "1" });
 }
 
+const covered = { from: "2026-01-01T00:00:00.000Z", to: "2026-12-31T00:00:00.000Z" };
+
 function dataset(runtime: D1iR4Store, id: string, bindingId: string, channelReferenceId: string, overrides: Partial<Parameters<typeof registerTelemetryDataReference>[2]> = {}) {
+  const externalDatasetOrObservationId = overrides.externalDatasetOrObservationId ?? `dataset-${id}`;
+  const explicitFingerprint = Object.prototype.hasOwnProperty.call(overrides, "governedSourceFingerprint");
+  const governed = explicitFingerprint ? overrides.governedSourceFingerprint : `governed-${id}`;
+  if (governed) {
+    registerGovernedMonitoringImport(runtime, actor, { importId: `import-${id}`, monitoringSourceId: "src-1", artifactId: `artifact-${id}`, externalDatasetOrObservationId, sourceFingerprint: governed, version: "1" });
+  }
   return registerTelemetryDataReference(runtime, actor, {
     telemetryReferenceId: id,
     monitoringSourceId: "src-1",
     deviceReferenceId: "dev-1",
     channelReferenceIds: [channelReferenceId],
-    externalDatasetOrObservationId: `dataset-${id}`,
     sourceDataClass: "RAW_SOURCE_DATA",
-    governedSourceFingerprint: `governed-${id}`,
     targetBindingIds: [bindingId],
     limitations: "reference only",
     version: "1",
     timeBasis: { deviceTime: "2026-06-01T00:00:00.000Z", observationTime: "2026-06-01T00:00:00.000Z", datasetStart: "2026-06-01T00:00:00.000Z", datasetEnd: "2026-06-01T00:00:00.000Z", clockQuality: "UNKNOWN", clockClaimAuthority: "UNKNOWN" },
     ...overrides,
+    externalDatasetOrObservationId,
+    governedImportId: governed ? `import-${id}` : undefined,
   });
 }
 
@@ -152,7 +161,7 @@ describe("EOS-D1I-R4 external monitoring reference interface", () => {
     source(runtime);
     device(runtime, "dev-1", "serial-a");
     channel(runtime, "ch-1", "dev-1");
-    bind(runtime, "bind-1", "ch-1");
+    bind(runtime, "bind-1", "ch-1", "mem-1", covered);
     const raw = dataset(runtime, "tel-1", "bind-1", "ch-1");
     expect(raw.sourceDataClass).toBe("RAW_SOURCE_DATA");
     expect(JSON.stringify(raw)).not.toContain("samples");
@@ -183,7 +192,7 @@ describe("EOS-D1I-R4 external monitoring reference interface", () => {
     source(runtime);
     device(runtime, "dev-1", "serial-a");
     const firstCalibration = channel(runtime, "ch-1", "dev-1", { calibration: { calibrationStatus: "CALIBRATED_SOURCE_REPORTED", calibrationReferenceId: "cal-1", calibrationDate: "2026-01-01T00:00:00.000Z" } });
-    bind(runtime, "bind-1", "ch-1");
+    bind(runtime, "bind-1", "ch-1", "mem-1", covered);
     const early = dataset(runtime, "tel-1", "bind-1", "ch-1", { calibration: firstCalibration.calibration });
     expect(early.timeBasis.clockQuality).toBe("UNKNOWN");
     expect(early.timeBasis.knownAtTime).toBe("2026-06-20T00:00:00.000Z");
@@ -220,7 +229,7 @@ describe("EOS-D1I-R4 external monitoring reference interface", () => {
     source(runtime);
     device(runtime, "dev-1", "serial-a");
     channel(runtime, "ch-1", "dev-1");
-    bind(runtime, "bind-1", "ch-1");
+    bind(runtime, "bind-1", "ch-1", "mem-1", covered);
     const row = dataset(runtime, "tel-1", "bind-1", "ch-1");
     const pinned = registerTelemetryStateReference(runtime, actor, { telemetryReferenceId: row.telemetryReferenceId, stateReferenceId: "tel-state-1", version: "1", limitations: "pin" });
     const state = runtime.references.find((item) => item.stateReferenceId === pinned.stateReferenceId);
@@ -259,7 +268,7 @@ describe("EOS-D1I-R4 history, isolation, and scope boundary", () => {
     expect(first.externalDeviceId).toBe("serial-a");
     channel(runtime, "ch-1", "dev-1");
     expect(() => channel(runtime, "ch-1", "dev-1", { unit: "mm/s2", version: "2" })).toThrow("CHANNEL_CONFIGURATION_MUTATED");
-    const bound = bind(runtime, "bind-1", "ch-1");
+    const bound = bind(runtime, "bind-1", "ch-1", "mem-1", covered);
     const row = dataset(runtime, "tel-1", "bind-1", "ch-1");
     registerTelemetryStateReference(runtime, actor, { telemetryReferenceId: row.telemetryReferenceId, version: "1", limitations: "pin" });
     const beforeFingerprint = row.fingerprint;

@@ -229,7 +229,7 @@ export const D1I_R4_SOURCE_AUTHORITY_WITHDRAWAL_POLICY = "Withdrawn source autho
 export const D1I_R4_R2_BITEMPORAL_INTEGRATION_CONTRACT = "A telemetry state reference keeps the declared reference-point or single observation time as effective time and the trusted registration clock as known-at. A dataset window is not a validity interval. Later registration does not rewrite earlier R2 as-known history." as const;
 export const D1I_R4_DATASET_EFFECTIVE_TIME_POLICY = "A window is stored as start and end. R1 registration uses an explicit reference-point time, or the observation time when start and end are that same instant. A window is not collapsed to an arbitrary point." as const;
 export const D1I_R4_MONITORING_SOURCE_STATUS = "REGISTERED, ACTIVE_REFERENCE_SOURCE, INACTIVE, STALE, SUPERSEDED, INVALID. Status is administrative reference state, not data quality or structural condition." as const;
-export const D1I_R4_RUNTIME_API = "registerMonitoringSource, inspectMonitoringSource, registerMonitoringDeviceReference, inspectMonitoringDeviceReference, supersedeMonitoringDevice, registerMonitoringChannelReference, inspectMonitoringChannelReference, bindMonitoringChannelToStructuralTarget, supersedeMonitoringTargetBinding, registerTelemetryDataReference, inspectTelemetryDataReference, reportObservedSourceFingerprint, evaluateTelemetryReferenceStatus, registerTelemetryStateReference, assessClockCompatibility, withdrawMonitoringSourceAuthority, produceTelemetryMonitoringReferenceResult." as const;
+export const D1I_R4_RUNTIME_API = "registerMonitoringSource, inspectMonitoringSource, registerMonitoringDeviceReference, inspectMonitoringDeviceReference, supersedeMonitoringDevice, registerMonitoringChannelReference, inspectMonitoringChannelReference, bindMonitoringChannelToStructuralTarget, supersedeMonitoringTargetBinding, registerGovernedMonitoringImport, registerTelemetryDataReference, inspectTelemetryDataReference, reportObservedSourceFingerprint, evaluateTelemetryReferenceStatus, registerTelemetryStateReference, assessClockCompatibility, withdrawMonitoringSourceAuthority, produceTelemetryMonitoringReferenceResult." as const;
 export const D1I_R4_REGISTRATION_TRUST_BOUNDARY = "The caller may supply external identifiers, declared provider metadata, an inert artifact id, a target-binding request, an expected checksum, and declared channel semantics. The caller cannot author known-at time, engineering authority, adequacy, calibration validation, or data-quality validation." as const;
 export const D1I_R4_ERROR_TAXONOMY = "MONITORING_SOURCE_NOT_FOUND, DEVICE_NOT_FOUND, CHANNEL_NOT_FOUND, TELEMETRY_REFERENCE_NOT_FOUND, UNSUPPORTED_PROVIDER, UNSUPPORTED_SOURCE_CLASS, UNSUPPORTED_QUANTITY, UNIT_REQUIRED, AXIS_REQUIRED, TARGET_NOT_FOUND, TARGET_SCOPE_MISMATCH, TARGET_BINDING_REQUIRED, TARGET_BINDING_STALE, SOURCE_FINGERPRINT_MISMATCH, SOURCE_FINGERPRINT_UNRESOLVED, CALIBRATION_UNKNOWN, CLOCK_SYNC_UNKNOWN, TIME_BASIS_UNRESOLVED, CROSS_PROJECT_OPERATION, CROSS_TENANT_OPERATION, UNAUTHORIZED, ARBITRARY_URL_REJECTED, ARBITRARY_PATH_REJECTED, SAMPLE_PAYLOAD_REJECTED, SECRET_STORAGE_REJECTED, TEMPORAL_HISTORY_TAMPERING_REJECTED, CHANNEL_CONFIGURATION_MUTATED." as const;
 export const D1I_R4_RUNTIME_RESULT_CONTRACT = "A result names resultId, twinId, source ids, device ids, channel ids, binding ids, telemetry reference ids, R1 telemetry-state reference ids, scope, completeness, diagnostics, warnings, provenance, and fingerprint. Diagnostics are not findings or conflicts." as const;
@@ -397,12 +397,26 @@ export type D1iR4TelemetryReference = {
   stateReferenceId: string | null;
 };
 
+export type D1iR4GovernedImport = {
+  recordKind: "GOVERNED_MONITORING_IMPORT";
+  importId: string;
+  monitoringSourceId: string;
+  artifactId: string;
+  externalDatasetOrObservationId: string;
+  sourceFingerprint: string;
+  importAuthority: string;
+  recordedAt: string;
+  fingerprint: string;
+  callerEstablished: false;
+};
+
 export type D1iR4Store = D1iR3Store & {
   monitoringSources: D1iR4MonitoringSource[];
   devices: D1iR4DeviceReference[];
   channels: D1iR4ChannelReference[];
   bindings: D1iR4TargetBinding[];
   telemetryReferences: D1iR4TelemetryReference[];
+  governedImports: D1iR4GovernedImport[];
   monitoringHistory: Array<{ historyId: string; subjectKind: string; subjectId: string; action: string; recordedAt: string; predecessorId: string | null }>;
   monitoringEvents: Array<{ eventId: string; eventType: (typeof D1I_R4_EVENTS)[number]; subjectId: string; recordedAt: string; engineeringApproval: false; storesSample: false }>;
   withdrawnMonitoringAuthorities: string[];
@@ -492,6 +506,7 @@ export function createD1iR4Store(store: D1iR3Store): D1iR4Store {
   next.channels = [];
   next.bindings = [];
   next.telemetryReferences = [];
+  next.governedImports = [];
   next.monitoringHistory = [];
   next.monitoringEvents = [];
   next.withdrawnMonitoringAuthorities = [];
@@ -843,6 +858,62 @@ export function assessClockCompatibility(left: D1iR4TimeBasis, right: D1iR4TimeB
   return { compatible: false, synchronized: false, aligned: false };
 }
 
+export function registerGovernedMonitoringImport(store: D1iR4Store, actor: D1iR1Actor, input: {
+  importId: string;
+  monitoringSourceId: string;
+  artifactId: string;
+  externalDatasetOrObservationId: string;
+  sourceFingerprint: string;
+  version: string;
+}): D1iR4GovernedImport {
+  rejectUnsafe(input);
+  const source = inspectMonitoringSource(store, input.monitoringSourceId);
+  assertActor(actor, source);
+  const sourceFingerprint = required(input.sourceFingerprint, "SOURCE_FINGERPRINT_UNRESOLVED");
+  const artifactId = selector(input.artifactId, "SOURCE_FINGERPRINT_UNRESOLVED");
+  const externalDatasetOrObservationId = selector(input.externalDatasetOrObservationId, "TELEMETRY_REFERENCE_NOT_FOUND");
+  const fingerprint = fingerprintCanonical({
+    monitoringSourceId: source.monitoringSourceId,
+    artifactId,
+    externalDatasetOrObservationId,
+    sourceFingerprint,
+    version: required(input.version, "SOURCE_FINGERPRINT_UNRESOLVED"),
+  });
+  const existing = store.governedImports.find((row) => row.importId === input.importId);
+  if (existing) {
+    if (existing.fingerprint !== fingerprint) fail("SOURCE_FINGERPRINT_MISMATCH");
+    return existing;
+  }
+  const record: D1iR4GovernedImport = {
+    recordKind: "GOVERNED_MONITORING_IMPORT",
+    importId: selector(input.importId, "SOURCE_FINGERPRINT_UNRESOLVED"),
+    monitoringSourceId: source.monitoringSourceId,
+    artifactId,
+    externalDatasetOrObservationId,
+    sourceFingerprint,
+    importAuthority: actor.authority,
+    recordedAt: store.now(),
+    fingerprint,
+    callerEstablished: false,
+  };
+  store.governedImports.push(record);
+  remember(store, "GOVERNED_IMPORT", record.importId, "REGISTERED");
+  return record;
+}
+
+function attributionSpan(timeBasis: D1iR4TimeBasis): { start: string; end: string } {
+  const start = timeBasis.observationTime ?? timeBasis.datasetStart;
+  const end = timeBasis.datasetEnd ?? timeBasis.observationTime ?? timeBasis.datasetStart;
+  if (!start || !end) fail("BINDING_TIME_UNRESOLVED");
+  return { start, end };
+}
+
+function assertBindingApplicable(binding: D1iR4TargetBinding, timeBasis: D1iR4TimeBasis): void {
+  if (!binding.effectiveFrom || !binding.effectiveTo) fail("BINDING_TIME_UNRESOLVED");
+  const span = attributionSpan(timeBasis);
+  if (span.start < binding.effectiveFrom || span.end > binding.effectiveTo || span.start > span.end) fail("BINDING_TIME_INCOMPATIBLE");
+}
+
 export function registerTelemetryDataReference(store: D1iR4Store, actor: D1iR1Actor, input: {
   telemetryReferenceId: string;
   monitoringSourceId: string;
@@ -851,6 +922,7 @@ export function registerTelemetryDataReference(store: D1iR4Store, actor: D1iR1Ac
   externalDatasetOrObservationId: string;
   sourceDataClass: string;
   timeBasis?: Partial<D1iR4TimeBasis>;
+  governedImportId?: string;
   governedSourceFingerprint?: string;
   callerChecksum?: string;
   sampleCount?: number | null;
@@ -869,7 +941,11 @@ export function registerTelemetryDataReference(store: D1iR4Store, actor: D1iR1Ac
   if (store.withdrawnMonitoringAuthorities.includes(source.sourceAuthority)) fail("UNAUTHORIZED");
   if (!(D1I_R4_SOURCE_DATA_CLASSES as readonly string[]).includes(input.sourceDataClass)) fail("UNSUPPORTED_SOURCE_CLASS");
   if (input.sourceDataClass === "RAW_SOURCE_DATA" && input.derivedAlgorithmId) fail("UNSUPPORTED_SOURCE_CLASS");
-  const governed = required(input.governedSourceFingerprint, "SOURCE_FINGERPRINT_UNRESOLVED");
+  const imported = store.governedImports.find((row) => row.importId === input.governedImportId);
+  if (!imported || imported.monitoringSourceId !== source.monitoringSourceId) fail("SOURCE_FINGERPRINT_UNRESOLVED");
+  if (imported.externalDatasetOrObservationId !== selector(input.externalDatasetOrObservationId, "TELEMETRY_REFERENCE_NOT_FOUND")) fail("SOURCE_FINGERPRINT_MISMATCH");
+  const governed = imported.sourceFingerprint;
+  if (input.governedSourceFingerprint !== undefined && input.governedSourceFingerprint !== governed) fail("SOURCE_FINGERPRINT_MISMATCH");
   if (input.callerChecksum !== undefined && input.callerChecksum !== governed) fail("SOURCE_FINGERPRINT_MISMATCH");
   const device = inspectMonitoringDeviceReference(store, input.deviceReferenceId);
   if (device.monitoringSourceId !== source.monitoringSourceId) fail("DEVICE_NOT_FOUND");
@@ -882,6 +958,14 @@ export function registerTelemetryDataReference(store: D1iR4Store, actor: D1iR1Ac
   const calibration = input.calibration ? calibrationOf(input.calibration) : channels[0]!.calibration;
   const knownAtTime = store.now();
   const timeBasis = timeBasisOf(input.timeBasis, knownAtTime);
+  const coveredChannels = new Set<string>();
+  for (const binding of bindings) {
+    const ownsChannel = channels.some((row) => row.channelReferenceId === binding.channelReferenceId);
+    if (!ownsChannel) fail("TARGET_BINDING_REQUIRED");
+    assertBindingApplicable(binding, timeBasis);
+    coveredChannels.add(binding.channelReferenceId);
+  }
+  if (channels.some((row) => !coveredChannels.has(row.channelReferenceId))) fail("TARGET_BINDING_REQUIRED");
   const channelFingerprints = channels.map((row) => row.fingerprint).sort();
   const bindingFingerprints = bindings.map((row) => row.fingerprint).sort();
   const fingerprint = fingerprintCanonical({
@@ -974,12 +1058,21 @@ export function evaluateTelemetryReferenceStatus(store: D1iR4Store, telemetryRef
   return reference;
 }
 
-function referencePoint(reference: D1iR4TelemetryReference, explicitPoint: string | undefined): string {
+function referencePoint(store: D1iR4Store, reference: D1iR4TelemetryReference, explicitPoint: string | undefined): string {
   const start = reference.timeBasis.datasetStart;
   const end = reference.timeBasis.datasetEnd;
   const window = start && end && start !== end;
   if (window && !explicitPoint) fail("TIME_BASIS_UNRESOLVED");
-  if (explicitPoint) return explicitPoint;
+  if (explicitPoint) {
+    const start = reference.timeBasis.datasetStart;
+    const end = reference.timeBasis.datasetEnd;
+    if (start && end && (explicitPoint < start || explicitPoint > end)) fail("TIME_BASIS_UNRESOLVED");
+    for (const bindingId of reference.targetBindingIds) {
+      const binding = store.bindings.find((row) => row.bindingId === bindingId);
+      if (!binding?.effectiveFrom || !binding.effectiveTo || explicitPoint < binding.effectiveFrom || explicitPoint > binding.effectiveTo) fail("BINDING_TIME_INCOMPATIBLE");
+    }
+    return explicitPoint;
+  }
   if (reference.timeBasis.observationTime) return reference.timeBasis.observationTime;
   if (start && start === end) return start;
   fail("TIME_BASIS_UNRESOLVED");
@@ -998,7 +1091,7 @@ export function registerTelemetryStateReference(store: D1iR4Store, actor: D1iR1A
   assertActor(actor, source);
   if (!reference.sourceFingerprint) fail("SOURCE_FINGERPRINT_UNRESOLVED");
   const binding = store.bindings.find((row) => row.bindingId === reference.targetBindingIds[0]) ?? fail("TARGET_BINDING_REQUIRED");
-  const effectiveTime = referencePoint(reference, input.referencePointTime);
+  const effectiveTime = referencePoint(store, reference, input.referencePointTime);
   const sourceTimes: D1iR1SourceTimes = {
     inspectionTime: null,
     measurementTime: reference.timeBasis.observationTime,

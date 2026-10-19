@@ -209,5 +209,12 @@ export {
   registerMonitoringSource,
   registerTelemetryDataReference,
   registerTelemetryStateReference,
+  registerGovernedMonitoringImport,
   supersedeMonitoringTargetBinding,
 } from "./twin-monitoring-reference";
+export {
+  D1I_R5_FINAL_MATURITY_STATE,
+  D1I_TRACK_STATUS,
+  CANONICAL_NEXT_PHASE,
+  NEXT_PHASE_TYPE,
+} from "./twin-closeout";
