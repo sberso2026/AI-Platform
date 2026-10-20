@@ -43,6 +43,7 @@ import {
   D1K_R1_CHANGED_FILES,
   D1K_R2_CHANGED_FILES,
   D1K_R3_CHANGED_FILES,
+  D1K_R4_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
   D1J_R3_CHANGED_FILES,
@@ -384,6 +385,19 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(false);
+  });
+
+  it("classifies the D1K-R4 interface reference composition as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1K_R4_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/interface-reference-composition.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1K_R4_INTERNAL_EXTERNAL_REFERENCE_COMPOSITION_CLOSEOUT.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
   });
 
   it("classifies the D1K-R3 interface handoff governance as release-sensitive", () => {

@@ -256,3 +256,10 @@ export {
   deriveInterfaceGovernanceState,
   recordInterfaceRequest,
 } from "./interface-handoff-governance";
+export {
+  D1K_R4_MATURITY_STATE,
+  D1K_R5_CANONICAL_PHASE,
+  assessNativeEosSourceSeam,
+  composeExternalGovernedReference,
+  createD1kR4Store,
+} from "./interface-reference-composition";

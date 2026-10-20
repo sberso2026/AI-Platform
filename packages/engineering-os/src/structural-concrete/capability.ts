@@ -1755,6 +1755,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE", "D1K.R2.SEMANTIC_UNIT_COORDINATE_AXIS_COMPATIBILITY"],
   },
   {
+    capabilityId: "D1K.R4.INTERNAL_EXTERNAL_REFERENCE_COMPOSITION",
+    jurisdiction: "GLOBAL",
+    method: "cross-discipline structural interface reference composition",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Composes an allowlisted external or manual source into the existing interface pin and checks a future native source contract. Does not ingest files, add connectors, start D2 through D8, start D9, or approve engineering.",
+    dependencies: ["D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE", "D1K.R2.SEMANTIC_UNIT_COORDINATE_AXIS_COMPATIBILITY", "D1K.R3.HANDOFF_RESPONSE_CHANGE_CONFLICT_GOVERNANCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
