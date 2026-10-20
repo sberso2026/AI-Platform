@@ -270,3 +270,9 @@ export {
   createD1lR1Store,
   recordCertificationClaimManifest,
 } from "./certification-claim-manifest";
+export {
+  D1L_R2_MATURITY_STATE,
+  D1L_R3_CANONICAL_PHASE,
+  evaluateCertificationEligibility,
+  resolveCertificationRequirements,
+} from "./certification-eligibility";

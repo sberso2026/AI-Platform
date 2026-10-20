@@ -1803,6 +1803,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1L.0.STRUCTURAL_GLOBAL_CERTIFICATION_GATE_ARCHITECTURE"],
   },
   {
+    capabilityId: "D1L.R2.ELIGIBILITY_BLOCKER_EVALUATION",
+    jurisdiction: "GLOBAL",
+    method: "structural certification eligibility and blocker evaluation",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Evaluates one exact claim manifest for eligibility and blockers. Does not issue certification, waive blockers, certify a solver, or start D2 through D9.",
+    dependencies: ["D1L.R1.CERTIFICATION_CLAIM_EVIDENCE_MANIFEST"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
