@@ -1815,6 +1815,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1L.R1.CERTIFICATION_CLAIM_EVIDENCE_MANIFEST"],
   },
   {
+    capabilityId: "D1L.R3.STANDARDS_JURISDICTION_PROFILE_GOVERNANCE",
+    jurisdiction: "GLOBAL",
+    method: "structural certification standards and jurisdiction profile governance",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Governs exact standard, jurisdiction, and requirement-set mappings for one claim. Does not issue certification, judge code compliance, certify a solver, or start D2 through D9.",
+    dependencies: ["D1L.R2.ELIGIBILITY_BLOCKER_EVALUATION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

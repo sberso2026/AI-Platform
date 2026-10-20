@@ -276,3 +276,10 @@ export {
   evaluateCertificationEligibility,
   resolveCertificationRequirements,
 } from "./certification-eligibility";
+export {
+  D1L_R3_MATURITY_STATE,
+  D1L_R4_CANONICAL_PHASE,
+  createD1lR3Store,
+  evaluateUnderGovernedProfile,
+  resolveCertificationProfile,
+} from "./certification-profile-governance";

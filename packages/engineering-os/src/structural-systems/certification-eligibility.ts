@@ -161,6 +161,14 @@ export type D1lR2EvaluationInput = {
   upgradeStandard?: boolean;
   upgradeJurisdiction?: boolean;
   freeformRequirement?: string;
+  governedProfile?: {
+    standardFingerprint: string;
+    jurisdictionFingerprint: string;
+    requirementSetId: string;
+    requirementSetVersion: string;
+    requirementSetFingerprint: string;
+    mappingFingerprint: string;
+  };
 };
 
 export type D1lR2Condition = {
@@ -175,9 +183,12 @@ export type D1lR2Result = {
   claimFingerprint: string;
   manifestId: string;
   manifestFingerprint: string;
-  requirementSetIdentity: typeof D1L_R2_REQUIREMENT_SET_ID;
-  requirementSetVersion: typeof D1L_R2_REQUIREMENT_SET_VERSION;
+  requirementSetIdentity: string;
+  requirementSetVersion: string;
   requirementSetFingerprint: string;
+  standardFingerprint?: string;
+  jurisdictionFingerprint?: string;
+  mappingFingerprint?: string;
   evaluatedRequirements: string[];
   hardBlockers: D1lR2Condition[];
   advisories: D1lR2Condition[];
@@ -362,9 +373,16 @@ export function evaluateCertificationEligibility(claims: D1lR1Store, results: D1
     claimFingerprint: manifest.claimFingerprint,
     manifestId: manifest.manifestId,
     manifestFingerprint: manifest.manifestFingerprint,
-    requirementSetIdentity: D1L_R2_REQUIREMENT_SET_ID,
-    requirementSetVersion: D1L_R2_REQUIREMENT_SET_VERSION,
-    requirementSetFingerprint: D1L_R2_REQUIREMENT_SET_FINGERPRINT,
+    requirementSetIdentity: input.governedProfile?.requirementSetId ?? D1L_R2_REQUIREMENT_SET_ID,
+    requirementSetVersion: input.governedProfile?.requirementSetVersion ?? D1L_R2_REQUIREMENT_SET_VERSION,
+    requirementSetFingerprint: input.governedProfile?.requirementSetFingerprint ?? D1L_R2_REQUIREMENT_SET_FINGERPRINT,
+    ...(input.governedProfile
+      ? {
+          standardFingerprint: input.governedProfile.standardFingerprint,
+          jurisdictionFingerprint: input.governedProfile.jurisdictionFingerprint,
+          mappingFingerprint: input.governedProfile.mappingFingerprint,
+        }
+      : {}),
     evaluatedRequirements: requirements,
     hardBlockers,
     advisories,
