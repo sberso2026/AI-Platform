@@ -437,3 +437,4 @@ export * from "./structural-systems-d1g-r5";
 export * from "./structural-inspection-d1h-0";
 export * from "./structural-digital-twin-d1i-0";
 export * from "./structural-optimization-d1j-0";
+export * from "./structural-interfaces-d1k-0";

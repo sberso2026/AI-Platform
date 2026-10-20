@@ -39,6 +39,7 @@ import {
   POST_D1J_ROADMAP_CHANGED_FILES,
   D1I_0_CHANGED_FILES,
   D1J_0_CHANGED_FILES,
+  D1K_0_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
   D1J_R3_CHANGED_FILES,
@@ -380,6 +381,21 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(false);
+  });
+
+  it("classifies the D1K-0 interface architecture as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1K_0_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/structural-interfaces-d1k-0.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/eos-structural-interface-architecture.test.ts",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1K_0_CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE.md",
+    );
+    expect(classified.releaseSensitiveFiles).not.toContain("packages/types/src/index.ts");
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
   });
 
   it("classifies the D1J-0 optimization architecture as release-sensitive", () => {
