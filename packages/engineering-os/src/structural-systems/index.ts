@@ -234,3 +234,11 @@ export { D1J_R3_MATURITY_STATE, D1J_R4_CANONICAL_PHASE, composeMultiObjectiveCan
 export { D1J_R4_MATURITY_STATE, D1J_R5_CANONICAL_PHASE, assessCertificationReadiness, createD1jR4Store } from "./certification-readiness-gate";
 export { D1J_FINAL_MATURITY, D1J_FINAL_TRACK_STATUS, claimScopeSupported } from "./optimization-closeout";
 export { CANONICAL_NEXT_PHASE as POST_D1J_CANONICAL_NEXT_PHASE, D1K_0_ARCHITECTURE_AUTHORIZED } from "./post-d1j-roadmap";
+export {
+  D1K_R1_MATURITY_STATE,
+  D1K_R1_REFERENCE_RUNTIME_READY,
+  D1K_R2_CANONICAL_PHASE,
+  createD1kR1Store,
+  registerStructuralInterfaceIdentity,
+  supersedeStructuralInterfaceSource,
+} from "./interface-identity-foundation";

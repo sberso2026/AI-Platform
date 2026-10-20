@@ -40,6 +40,7 @@ import {
   D1I_0_CHANGED_FILES,
   D1J_0_CHANGED_FILES,
   D1K_0_CHANGED_FILES,
+  D1K_R1_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
   D1J_R3_CHANGED_FILES,
@@ -381,6 +382,19 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(false);
+  });
+
+  it("classifies the D1K-R1 interface identity foundation as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1K_R1_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/interface-identity-foundation.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1K_R1_INTERFACE_IDENTITY_SOURCE_REFERENCE_FOUNDATION_CLOSEOUT.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
   });
 
   it("classifies the D1K-0 interface architecture as release-sensitive", () => {

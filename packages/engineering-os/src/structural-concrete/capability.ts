@@ -1719,6 +1719,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1A structural domain", "D1F.STRUCTURAL_SYSTEMS.ARCHITECTURE"],
   },
   {
+    capabilityId: "D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE",
+    jurisdiction: "GLOBAL",
+    method: "cross-discipline structural interface identity and exact source reference",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records interface identity and an exact source pin. Does not assess compatibility, execute a handoff, integrate D2 through D8, start D9, or approve engineering.",
+    dependencies: ["D1K.0.CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
@@ -1727,7 +1739,7 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "Interface records, compatibility checks, and external references are not operational.",
+    limitations: "The umbrella interface runtime remains unimplemented. An R1 identity record does not make compatibility, handoff, or external references operational.",
     dependencies: ["D1K.0.CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE"],
   },
   {
