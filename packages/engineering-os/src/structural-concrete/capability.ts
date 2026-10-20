@@ -1731,6 +1731,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1K.0.CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE"],
   },
   {
+    capabilityId: "D1K.R2.SEMANTIC_UNIT_COORDINATE_AXIS_COMPATIBILITY",
+    jurisdiction: "GLOBAL",
+    method: "cross-discipline structural interface compatibility diagnostics",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Diagnoses semantic, schema, unit, coordinate, and axis or sign identity. Does not convert, transform, reconcile, hand off, or approve engineering.",
+    dependencies: ["D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

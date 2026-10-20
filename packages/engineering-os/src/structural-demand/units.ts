@@ -17,30 +17,52 @@ export function assertExplicitUnit(quantity: StructuralQuantity, allowed: readon
   return quantity.value;
 }
 
+export const EXISTING_FORCE_UNITS = ["N", "kN"] as const;
+export const EXISTING_MOMENT_UNITS = ["N.m", "kN.m"] as const;
+export const EXISTING_DISTRIBUTED_FORCE_UNITS = ["N/m", "kN/m"] as const;
+export const EXISTING_STRESS_UNITS = ["Pa", "MPa", "GPa"] as const;
+export const EXISTING_LENGTH_UNITS = ["m"] as const;
+
+const EXISTING_UNIT_FAMILIES = {
+  force: EXISTING_FORCE_UNITS,
+  moment: EXISTING_MOMENT_UNITS,
+  distributedForce: EXISTING_DISTRIBUTED_FORCE_UNITS,
+  stress: EXISTING_STRESS_UNITS,
+  length: EXISTING_LENGTH_UNITS,
+  deflection: EXISTING_LENGTH_UNITS,
+} as const;
+
+/** Identity-only family lookup. Does not scale a numeric value. */
+export function existingUnitFamily(quantity: string, unit: string): string | null {
+  if (!Object.prototype.hasOwnProperty.call(EXISTING_UNIT_FAMILIES, quantity)) return null;
+  const allowed = EXISTING_UNIT_FAMILIES[quantity as keyof typeof EXISTING_UNIT_FAMILIES];
+  return (allowed as readonly string[]).includes(unit) ? quantity : null;
+}
+
 export function toForceN(quantity: StructuralQuantity): number {
-  const value = assertExplicitUnit(quantity, ["N", "kN"]);
+  const value = assertExplicitUnit(quantity, EXISTING_FORCE_UNITS);
   return quantity.unit === "kN" ? value * 1000 : value;
 }
 
 export function toMomentNm(quantity: StructuralQuantity): number {
-  const value = assertExplicitUnit(quantity, ["N.m", "kN.m"]);
+  const value = assertExplicitUnit(quantity, EXISTING_MOMENT_UNITS);
   return quantity.unit === "kN.m" ? value * 1000 : value;
 }
 
 export function toDistributedNpm(quantity: StructuralQuantity): number {
-  const value = assertExplicitUnit(quantity, ["N/m", "kN/m"]);
+  const value = assertExplicitUnit(quantity, EXISTING_DISTRIBUTED_FORCE_UNITS);
   return quantity.unit === "kN/m" ? value * 1000 : value;
 }
 
 export function toLengthM(value: number, unit: string): number {
   if (!unit?.trim()) throw new Error("governed load input is malformed: length units are required");
-  if (unit !== "m") throw new Error(`unsupported length unit ${unit}; canonical internal unit is m`);
+  if (!(EXISTING_LENGTH_UNITS as readonly string[]).includes(unit)) throw new Error(`unsupported length unit ${unit}; canonical internal unit is m`);
   if (!Number.isFinite(value) || value < 0) throw new Error("governed load input is malformed: length must be a finite non-negative metre value");
   return value;
 }
 
 export function toEPa(quantity: StructuralQuantity): number {
-  const value = assertExplicitUnit(quantity, ["Pa", "MPa", "GPa"]);
+  const value = assertExplicitUnit(quantity, EXISTING_STRESS_UNITS);
   if (quantity.unit === "GPa") return value * 1e9;
   if (quantity.unit === "MPa") return value * 1e6;
   return value;

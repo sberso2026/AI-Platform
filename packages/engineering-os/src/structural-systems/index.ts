@@ -242,3 +242,10 @@ export {
   registerStructuralInterfaceIdentity,
   supersedeStructuralInterfaceSource,
 } from "./interface-identity-foundation";
+export {
+  D1K_R2_MATURITY_STATE,
+  D1K_R3_CANONICAL_PHASE,
+  aggregateCompatibility,
+  createD1kR2Store,
+  evaluateInterfaceCompatibility,
+} from "./interface-compatibility";
