@@ -1695,6 +1695,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1J.R4.HUMAN_SELECTION"],
   },
   {
+    capabilityId: "D1J.R5.TRACK_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "structural optimization certification closeout",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Bounded closeout records current truth. It does not add search, generation, solver execution, model mutation, engineer validation, conformance validation, or certification eligibility.",
+    dependencies: ["D1J.R4.READINESS_GATE"],
+  },
+  {
     capabilityId: "D1J.STRUCTURAL_OPTIMIZATION_CANDIDATE_GENERATION",
     jurisdiction: "GLOBAL",
     method: "structural optimization candidate generation",
