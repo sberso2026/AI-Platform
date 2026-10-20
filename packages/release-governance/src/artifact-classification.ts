@@ -484,6 +484,16 @@ export const D1J_R1_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1K_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1K_R5_CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/interface-closeout.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-interface-closeout.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1K_R4_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1K_R4_INTERNAL_EXTERNAL_REFERENCE_COMPOSITION_CLOSEOUT.md",
   "packages/engineering-os/src/structural-systems/interface-reference-composition.ts",

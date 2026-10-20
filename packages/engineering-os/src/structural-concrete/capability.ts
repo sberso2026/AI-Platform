@@ -1767,6 +1767,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE", "D1K.R2.SEMANTIC_UNIT_COORDINATE_AXIS_COMPATIBILITY", "D1K.R3.HANDOFF_RESPONSE_CHANGE_CONFLICT_GOVERNANCE"],
   },
   {
+    capabilityId: "D1K.R5.CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "cross-discipline structural interface closeout",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Closes the bounded interface track. Does not add a new interface capability, start D2 through D9, grant certification, or approve engineering.",
+    dependencies: ["D1K.R4.INTERNAL_EXTERNAL_REFERENCE_COMPOSITION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
