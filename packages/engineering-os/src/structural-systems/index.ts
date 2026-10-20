@@ -264,3 +264,9 @@ export {
   createD1kR4Store,
 } from "./interface-reference-composition";
 export { D1K_R5_MATURITY_STATE, D1K_R5_TRACK_STATUS, D1L_0_CANONICAL_PHASE } from "./interface-closeout";
+export {
+  D1L_R1_MATURITY_STATE,
+  D1L_R2_CANONICAL_PHASE,
+  createD1lR1Store,
+  recordCertificationClaimManifest,
+} from "./certification-claim-manifest";

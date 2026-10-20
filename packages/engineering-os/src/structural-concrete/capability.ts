@@ -1791,6 +1791,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1A structural domain", "D1K.R5.CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_CLOSEOUT"],
   },
   {
+    capabilityId: "D1L.R1.CERTIFICATION_CLAIM_EVIDENCE_MANIFEST",
+    jurisdiction: "GLOBAL",
+    method: "structural certification claim and evidence manifest",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records a scoped claim and an exact evidence manifest. Does not evaluate eligibility, clear blockers, issue certification, certify a solver, or start D2 through D9.",
+    dependencies: ["D1L.0.STRUCTURAL_GLOBAL_CERTIFICATION_GATE_ARCHITECTURE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
