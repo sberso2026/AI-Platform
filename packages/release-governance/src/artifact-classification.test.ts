@@ -36,6 +36,7 @@ import {
   D1H_R5_CHANGED_FILES,
   POST_D1H_ROADMAP_CHANGED_FILES,
   POST_D1I_ROADMAP_CHANGED_FILES,
+  POST_D1J_ROADMAP_CHANGED_FILES,
   D1I_0_CHANGED_FILES,
   D1J_0_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
@@ -459,6 +460,14 @@ describe("release-sensitive artifact classification", () => {
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the post-D1J roadmap decision as release-sensitive where it states engineering authority", () => {
+    const classified = classifyChangedFiles(POST_D1J_ROADMAP_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/post-d1j-roadmap.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_POST_D1J_CANONICAL_ROADMAP.md");
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(false);
   });
 
   it("classifies the post-D1I roadmap decision as release-sensitive where it states engineering authority", () => {

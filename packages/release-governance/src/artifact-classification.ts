@@ -504,6 +504,15 @@ export const D1I_0_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const POST_D1J_ROADMAP_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_POST_D1J_CANONICAL_ROADMAP.md",
+  "packages/engineering-os/src/structural-systems/post-d1j-roadmap.ts",
+  "packages/engineering-os/src/structural-systems/eos-post-d1j-roadmap.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const POST_D1I_ROADMAP_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_POST_D1I_CANONICAL_ROADMAP.md",
   "packages/engineering-os/src/structural-systems/roadmap-after-twin-closeout.ts",
