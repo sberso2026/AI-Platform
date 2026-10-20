@@ -1743,6 +1743,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE"],
   },
   {
+    capabilityId: "D1K.R3.HANDOFF_RESPONSE_CHANGE_CONFLICT_GOVERNANCE",
+    jurisdiction: "GLOBAL",
+    method: "cross-discipline structural interface handoff governance",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records requests, provisions, acknowledgements, responses, source changes, staleness, conflicts, and human disposition evidence. Does not resolve engineering conflicts, convert or transform source data, approve engineering, or start another discipline.",
+    dependencies: ["D1K.R1.INTERFACE_IDENTITY_SOURCE_REFERENCE", "D1K.R2.SEMANTIC_UNIT_COORDINATE_AXIS_COMPATIBILITY"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

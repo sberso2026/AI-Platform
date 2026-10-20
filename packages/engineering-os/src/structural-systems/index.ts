@@ -249,3 +249,10 @@ export {
   createD1kR2Store,
   evaluateInterfaceCompatibility,
 } from "./interface-compatibility";
+export {
+  D1K_R3_MATURITY_STATE,
+  D1K_R4_CANONICAL_PHASE,
+  createD1kR3Store,
+  deriveInterfaceGovernanceState,
+  recordInterfaceRequest,
+} from "./interface-handoff-governance";

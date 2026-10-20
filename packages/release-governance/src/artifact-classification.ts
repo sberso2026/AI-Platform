@@ -484,6 +484,16 @@ export const D1J_R1_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1K_R3_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1K_R3_HANDOFF_RESPONSE_CHANGE_CONFLICT_GOVERNANCE_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/interface-handoff-governance.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-interface-lifecycle.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1K_R2_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1K_R2_SEMANTIC_UNIT_COORDINATE_AXIS_COMPATIBILITY_CLOSEOUT.md",
   "packages/engineering-os/src/structural-systems/interface-compatibility.ts",
