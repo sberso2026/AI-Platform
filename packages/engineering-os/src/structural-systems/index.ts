@@ -298,3 +298,4 @@ export {
   recordCertificationInvalidation,
 } from "./certification-lifecycle";
 export { D1L_R6_MATURITY_STATE, D1L_R6_TRACK_COMPLETE, D1L_R6_TRACK_STATUS } from "./certification-gate-closeout";
+export { D1M_0_ARCHITECTURE_AUTHORIZED, D1M_0_CANONICAL_PHASE as POST_D1L_CANONICAL_NEXT_PHASE } from "./post-d1l-roadmap";

@@ -1863,6 +1863,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1L.R5.EVIDENCE_INVALIDATION_SUPERSESSION"],
   },
   {
+    capabilityId: "D1M.0.CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM intelligence architecture",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "The next architecture phase is named and not started. It does not author CAD or BIM models, grant certification, absorb D1N, or start D9.",
+    dependencies: ["D1L.R6.STRUCTURAL_GLOBAL_CERTIFICATION_GATE_CLOSEOUT"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
