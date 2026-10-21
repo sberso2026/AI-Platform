@@ -297,3 +297,4 @@ export {
   createD1lR5Store,
   recordCertificationInvalidation,
 } from "./certification-lifecycle";
+export { D1L_R6_MATURITY_STATE, D1L_R6_TRACK_COMPLETE, D1L_R6_TRACK_STATUS } from "./certification-gate-closeout";

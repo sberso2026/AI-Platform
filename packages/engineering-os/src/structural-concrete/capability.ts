@@ -1851,6 +1851,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1L.R4.CERTIFICATION_AUTHORITY_DECISION_RECORD"],
   },
   {
+    capabilityId: "D1L.R6.STRUCTURAL_GLOBAL_CERTIFICATION_GATE_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "structural global certification gate closeout",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Closes the bounded certification-governance track. Does not make current evidence eligible, issue an external certificate, absorb D1M or D1N, or start D2 through D9.",
+    dependencies: ["D1L.R5.EVIDENCE_INVALIDATION_SUPERSESSION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
