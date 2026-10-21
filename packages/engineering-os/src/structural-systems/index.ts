@@ -290,3 +290,10 @@ export {
   recordCertificationDecision,
   registerCertificationAuthority,
 } from "./certification-decision";
+export {
+  D1L_R5_MATURITY_STATE,
+  D1L_R6_CANONICAL_PHASE,
+  assessDecisionCurrentness,
+  createD1lR5Store,
+  recordCertificationInvalidation,
+} from "./certification-lifecycle";

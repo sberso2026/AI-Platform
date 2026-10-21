@@ -1839,6 +1839,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1L.R3.STANDARDS_JURISDICTION_PROFILE_GOVERNANCE"],
   },
   {
+    capabilityId: "D1L.R5.EVIDENCE_INVALIDATION_SUPERSESSION",
+    jurisdiction: "GLOBAL",
+    method: "structural certification evidence invalidation and supersession",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records when a historical certification decision is no longer current. Does not rewrite that decision, recertify the claim, issue a certificate, or start D2 through D9.",
+    dependencies: ["D1L.R4.CERTIFICATION_AUTHORITY_DECISION_RECORD"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
