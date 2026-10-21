@@ -49,6 +49,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-optimization-d1j-0\.ts$/,
   /packages\/types\/src\/structural-interfaces-d1k-0\.ts$/,
   /packages\/types\/src\/structural-certification-d1l-0\.ts$/,
+  /packages\/types\/src\/structural-cad-bim-d1m-0\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -481,6 +482,17 @@ export const D1J_R1_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-structural-optimization-foundation.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D1M_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1M_0_CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE.md",
+  "packages/types/src/structural-cad-bim-d1m-0.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-cad-bim-architecture.test.ts",
+  "packages/engineering-os/src/structural-systems/eos-post-d1l-roadmap.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

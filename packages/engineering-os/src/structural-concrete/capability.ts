@@ -1867,11 +1867,11 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     jurisdiction: "GLOBAL",
     method: "structural CAD or BIM intelligence architecture",
     authorityType: "FRAMEWORK_ONLY",
-    implementationState: "NOT_IMPLEMENTED",
+    implementationState: "ARCHITECTURE_DEFINED",
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "The next architecture phase is named and not started. It does not author CAD or BIM models, grant certification, absorb D1N, or start D9.",
+    limitations: "Architecture only. No CAD or BIM runtime, parser, connector, geometry transformation, unit conversion, certification, D1N orchestration, or D9 reasoning.",
     dependencies: ["D1L.R6.STRUCTURAL_GLOBAL_CERTIFICATION_GATE_CLOSEOUT"],
   },
   {
