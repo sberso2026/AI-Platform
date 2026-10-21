@@ -311,3 +311,10 @@ export {
   createD1mR2Store,
   recordSourceObjectMapping,
 } from "./cad-bim-object-mapping";
+export {
+  D1M_R3_MATURITY_STATE,
+  D1M_R4_CANONICAL_PHASE,
+  createD1mR3Store,
+  recordGeometryEvidence,
+  recordSemanticEvidence,
+} from "./cad-bim-model-evidence";
