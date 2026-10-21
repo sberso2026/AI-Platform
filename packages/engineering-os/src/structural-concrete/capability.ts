@@ -1875,6 +1875,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1L.R6.STRUCTURAL_GLOBAL_CERTIFICATION_GATE_CLOSEOUT"],
   },
   {
+    capabilityId: "D1M.R1.CAD_OR_BIM_ARTIFACT_SOURCE_REVISION",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM artifact source revision reference",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records one exact CAD or BIM source revision reference. Does not parse, ingest a file, map an object, extract geometry, claim a format, or validate engineering.",
+    dependencies: ["D1M.0.CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
