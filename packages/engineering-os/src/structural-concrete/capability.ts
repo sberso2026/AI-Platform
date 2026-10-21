@@ -1887,6 +1887,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.0.CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE"],
   },
   {
+    capabilityId: "D1M.R2.SOURCE_OBJECT_STRUCTURAL_TARGET_MAPPING",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM source object to structural target mapping",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Maps one declared source object on an exact CAD or BIM source revision to one existing structural target. Does not parse, extract geometry or semantics, match by shape or label, or validate engineering.",
+    dependencies: ["D1M.R1.CAD_OR_BIM_ARTIFACT_SOURCE_REVISION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

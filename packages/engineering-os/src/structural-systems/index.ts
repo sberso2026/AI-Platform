@@ -305,3 +305,9 @@ export {
   createD1mR1Store,
   recordCadBimSourceRevision,
 } from "./cad-bim-source-revision";
+export {
+  D1M_R2_MATURITY_STATE,
+  D1M_R3_CANONICAL_PHASE,
+  createD1mR2Store,
+  recordSourceObjectMapping,
+} from "./cad-bim-object-mapping";
