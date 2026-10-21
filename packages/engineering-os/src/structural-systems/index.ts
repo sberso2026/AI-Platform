@@ -283,3 +283,10 @@ export {
   evaluateUnderGovernedProfile,
   resolveCertificationProfile,
 } from "./certification-profile-governance";
+export {
+  D1L_R4_MATURITY_STATE,
+  D1L_R5_CANONICAL_PHASE,
+  createD1lR4Store,
+  recordCertificationDecision,
+  registerCertificationAuthority,
+} from "./certification-decision";

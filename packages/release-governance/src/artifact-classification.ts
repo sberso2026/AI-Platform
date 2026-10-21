@@ -485,6 +485,17 @@ export const D1J_R1_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1L_R4_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1L_R4_CERTIFICATION_AUTHORITY_DECISION_RECORD_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/certification-decision.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-certification-decision.test.ts",
+  "packages/engineering-os/src/structural-systems/certification-eligibility.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1L_R3_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1L_R3_STANDARDS_JURISDICTION_PROFILE_GOVERNANCE_CLOSEOUT.md",
   "packages/engineering-os/src/structural-systems/certification-profile-governance.ts",

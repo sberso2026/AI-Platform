@@ -209,6 +209,48 @@ export type D1lR2Store = {
   results: D1lR2Result[];
 };
 
+export function fingerprintStoredEligibilityResult(result: {
+  claimId: string;
+  claimFingerprint: string;
+  manifestId: string;
+  manifestFingerprint: string;
+  requirementSetIdentity: string;
+  requirementSetVersion: string;
+  requirementSetFingerprint: string;
+  standardFingerprint?: string;
+  jurisdictionFingerprint?: string;
+  mappingFingerprint?: string;
+  evaluatedRequirements: string[];
+  hardBlockers: D1lR2Condition[];
+  advisories: D1lR2Condition[];
+  pendingConditions: D1lR2Condition[];
+  eligibilityState: D1lR2EligibilityState;
+  evidenceFingerprints: Array<{ evidenceId: string; sourceFingerprint: string | null }>;
+}): string {
+  return fingerprintCanonical({
+    claimId: result.claimId,
+    claimFingerprint: result.claimFingerprint,
+    manifestId: result.manifestId,
+    manifestFingerprint: result.manifestFingerprint,
+    requirementSetIdentity: result.requirementSetIdentity,
+    requirementSetVersion: result.requirementSetVersion,
+    requirementSetFingerprint: result.requirementSetFingerprint,
+    ...(result.standardFingerprint
+      ? {
+          standardFingerprint: result.standardFingerprint,
+          jurisdictionFingerprint: result.jurisdictionFingerprint,
+          mappingFingerprint: result.mappingFingerprint,
+        }
+      : {}),
+    evaluatedRequirements: result.evaluatedRequirements,
+    hardBlockers: result.hardBlockers,
+    advisories: result.advisories,
+    pendingConditions: result.pendingConditions,
+    eligibilityState: result.eligibilityState,
+    evidenceFingerprints: result.evidenceFingerprints,
+  });
+}
+
 function fail(code: string): never {
   throw new Error(code);
 }
@@ -390,7 +432,24 @@ export function evaluateCertificationEligibility(claims: D1lR1Store, results: D1
     eligibilityState,
     evidenceFingerprints,
   };
-  const resultFingerprint = fingerprintCanonical(stable);
+  const resultFingerprint = fingerprintStoredEligibilityResult({
+    claimId: stable.claimId,
+    claimFingerprint: stable.claimFingerprint,
+    manifestId: stable.manifestId,
+    manifestFingerprint: stable.manifestFingerprint,
+    requirementSetIdentity: stable.requirementSetIdentity,
+    requirementSetVersion: stable.requirementSetVersion,
+    requirementSetFingerprint: stable.requirementSetFingerprint,
+    standardFingerprint: input.governedProfile?.standardFingerprint,
+    jurisdictionFingerprint: input.governedProfile?.jurisdictionFingerprint,
+    mappingFingerprint: input.governedProfile?.mappingFingerprint,
+    evaluatedRequirements: stable.evaluatedRequirements,
+    hardBlockers: stable.hardBlockers,
+    advisories: stable.advisories,
+    pendingConditions: stable.pendingConditions,
+    eligibilityState: stable.eligibilityState,
+    evidenceFingerprints: stable.evidenceFingerprints,
+  });
   const existing = results.results.find((row) => row.manifestFingerprint === manifest.manifestFingerprint && row.resultFingerprint === resultFingerprint && row.recordStatus === "CURRENT");
   if (existing) return existing;
   for (const prior of results.results) if (prior.claimId === manifest.claimId && prior.recordStatus === "CURRENT") prior.recordStatus = "SUPERSEDED";
