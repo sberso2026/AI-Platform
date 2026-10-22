@@ -318,3 +318,10 @@ export {
   recordGeometryEvidence,
   recordSemanticEvidence,
 } from "./cad-bim-model-evidence";
+export {
+  D1M_R4_MATURITY_STATE,
+  D1M_R5_CANONICAL_PHASE,
+  compareReferenceContexts,
+  createD1mR4Store,
+  recordReferenceContext,
+} from "./cad-bim-reference-context";

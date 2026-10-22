@@ -1911,6 +1911,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R2.SOURCE_OBJECT_STRUCTURAL_TARGET_MAPPING"],
   },
   {
+    capabilityId: "D1M.R4.UNIT_COORDINATE_AXIS_REFERENCE",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM unit coordinate and axis reference",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records exact unit, coordinate, and axis or sign reference context for existing geometry and semantic evidence, plus deterministic compatibility diagnostics. Does not convert units, transform coordinates, infer axes, or validate engineering.",
+    dependencies: ["D1M.R3.GEOMETRY_SEMANTIC_EVIDENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
