@@ -478,3 +478,10 @@ export {
   recordSurveySourceContext,
   recordSurfaceContext,
 } from "./civil/spatial-surface-context";
+export {
+  D2_R3_MATURITY_STATE,
+  D2_R4_CANONICAL_PHASE,
+  createD2R3Store,
+  recordGradingContext,
+  recordEarthworksContext,
+} from "./civil/grading-earthworks-context";

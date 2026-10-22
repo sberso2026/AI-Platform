@@ -339,6 +339,6 @@ describe("EOS-D2-R2 survey spatial and surface context", () => {
     expect(source).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "spatial-surface-context.ts"), source)).toEqual([]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R2.SURVEY_SPATIAL_AND_SURFACE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R3.GRADING_AND_EARTHWORKS_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R3.GRADING_AND_EARTHWORKS_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });
