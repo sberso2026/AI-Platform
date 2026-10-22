@@ -1995,6 +1995,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R9.CAD_OR_BIM_INTELLIGENCE_CLOSEOUT"],
   },
   {
+    capabilityId: "D1N.0.CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE",
+    jurisdiction: "GLOBAL",
+    method: "concept-to-detailed orchestration architecture",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "ARCHITECTURE_DEFINED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Architecture only. Defines orchestration state, progression context, requests, and boundaries. Does not start D1N runtime, validate engineering, approve a stage, certify, or absorb D1M, D1K, D1L, or D9.",
+    dependencies: ["D1N.FOUNDATIONAL_ARCHITECTURE_DECISIONS"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

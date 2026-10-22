@@ -1,0 +1,260 @@
+/**
+ * EOS-D1N-0 concept-to-detailed orchestration architecture.
+ * Contracts only. No orchestration runtime, stage engine, or engineering action.
+ */
+import { D1N_CONCEPT_TO_DETAILED_ORCHESTRATOR_IMPLEMENTED } from "./structural-systems";
+
+export const D1N_0_STATUS = "ARCHITECTURE_DEFINED" as const;
+export const D1N_0_MATURITY = "STRUCTURAL_CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE_DEFINED" as const;
+export const D1N_0_PHASE = "EOS-D1N-0-CONCEPT-TO-DETAILED-ORCHESTRATION-ARCHITECTURE" as const;
+export const D1N_0_PHASE_TYPE = "CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE" as const;
+export const D1N_0_ARCHITECTURE_PATH =
+  "docs/architecture/engineering-os/EOS_D1N_0_CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE.md" as const;
+export const D1N_0_PARENT_DECISIONS_PATH =
+  "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md" as const;
+export const D1N_ARCHITECTURE_DEFINED = true as const;
+export const D1N_ARCHITECTURE_READY = true as const;
+export const D1N_0_IMPLEMENTED = D1N_CONCEPT_TO_DETAILED_ORCHESTRATOR_IMPLEMENTED;
+
+export const D1N_0_CANONICAL_PURPOSE =
+  "Formalize Structural concept-to-detailed orchestration. D1N owns orchestration state and requests. It does not own engineering truth." as const;
+export const D1N_0_CANONICAL_SCOPE =
+  "Define orchestration identity, the five design-progression states, transition requests, prerequisite gaps, alternative-branch references, currentness response, and the handoff boundaries with D1M, D1K, and D1L. Decompose the later runtime. Do not implement it." as const;
+export const D1N_0_CANONICAL_NON_SCOPE =
+  "No engineering validation, approval, conformance, certification, solver execution, structural calculation authorship, CAD or BIM interpretation, D9 reasoning, D2 through D8 runtime, or construction through modification." as const;
+
+export const D1N_0_DESIGN_MATURITY_STATES = ["CONCEPT", "PREFEASIBILITY", "FEASIBILITY", "FEED", "DETAILED_DESIGN"] as const;
+export const D1N_0_OUT_OF_SCOPE_LIFECYCLE_STAGES = ["CONSTRUCTION", "COMMISSIONING", "OPERATIONS", "MODIFICATION"] as const;
+export const D1N_0_DESIGN_MATURITY_MODEL_DEFINED = true as const;
+export const D1N_0_CREATES_PARALLEL_MATURITY_ENUM = false as const;
+export const D1N_0_OWNS_LIFECYCLE_STAGE_ASSIGNMENT = false as const;
+export const D1N_0_PROGRESSION_STAGE_EQUALS_ENGINEERING_MATURITY = false as const;
+export const D1N_0_DESIGN_MATURITY_STAGE_EQUALS_ENGINEERING_VALIDATION = false as const;
+export const D1N_0_DESIGN_MATURITY_STAGE_EQUALS_ENGINEERING_APPROVAL = false as const;
+export const D1N_0_DESIGN_MATURITY_STAGE_EQUALS_CERTIFICATION = false as const;
+export const D1N_0_FEASIBILITY_STAGE_EQUALS_ENGINEERING_VALIDATED = false as const;
+export const D1N_0_DETAILED_DESIGN_EQUALS_ISSUED_FOR_CONSTRUCTION = false as const;
+export const D1N_0_STAGE_USES_PERCENT_COMPLETE = false as const;
+
+export const D1N_0_STAGE_TRANSITION_GOVERNANCE_DEFINED = true as const;
+export const D1N_0_ALLOWED_FORWARD_TRANSITIONS = [
+  "CONCEPT_TO_PREFEASIBILITY",
+  "PREFEASIBILITY_TO_FEASIBILITY",
+  "FEASIBILITY_TO_FEED",
+  "FEED_TO_DETAILED_DESIGN",
+] as const;
+export const D1N_0_STAGE_SKIP_INVENTED_BY_D1N = false as const;
+export const D1N_0_TRANSITION_MUST_MATCH_ASSIGNED_LIFECYCLE_PROFILE = true as const;
+export const D1N_0_RECORDS_STAGE_TRANSITION_REQUEST = true as const;
+export const D1N_0_ISSUES_GATE_DECISION = false as const;
+export const D1N_0_STAGE_TRANSITION_REQUEST_EQUALS_STAGE_APPROVAL = false as const;
+
+export const D1N_0_OWNED_CAPABILITIES = [
+  "ORCHESTRATION_STATE",
+  "WORKFLOW_PROGRESSION_RECORD",
+  "PREREQUISITE_ASSESSMENT",
+  "STAGE_TRANSITION_REQUEST",
+  "ORCHESTRATION_MANIFEST",
+  "WORKFLOW_HISTORY",
+] as const;
+export const D1N_0_ORCHESTRATED_CAPABILITIES = [
+  "REQUIREMENTS_GAP_FOLLOW_UP",
+  "ASSUMPTION_REVIEW_REQUEST",
+  "INTERFACE_EVIDENCE_REQUEST",
+  "ENGINEERING_EVIDENCE_CITATION",
+  "D1M_CURRENT_HANDOFF_INCLUSION",
+  "REVIEW_PACKAGE_REQUEST",
+] as const;
+export const D1N_0_CONSUMED_CAPABILITIES = [
+  "D1A_IDENTITY",
+  "REQUIREMENTS",
+  "ASSUMPTIONS",
+  "STRUCTURAL_SYSTEMS",
+  "D1K_INTERFACE_EVIDENCE",
+  "CHANGE_AND_CURRENTNESS",
+  "D1M_CAD_OR_BIM_EVIDENCE",
+  "LIFECYCLE_STAGE_CONTEXT",
+] as const;
+export const D1N_0_EXTERNAL_AUTHORITY_CAPABILITIES = [
+  "DECISIONS",
+  "HUMAN_REVIEW",
+  "ENGINEERING_VALIDATION",
+  "SOLVER_EXECUTION",
+  "CONFORMANCE",
+  "CONCRETE_AND_MATERIAL_SEMANTICS",
+  "D1K_INTERFACE_GOVERNANCE",
+  "D1L_CERTIFICATION_GOVERNANCE",
+  "LIFECYCLE_GATE_DECISION",
+] as const;
+export const D1N_0_OUT_OF_SCOPE_CAPABILITIES = [
+  "D9_MULTIDISCIPLINARY_REASONING",
+  "D2_THROUGH_D8_DISCIPLINE_ENGINEERING",
+  "CONSTRUCTION_THROUGH_MODIFICATION",
+  "STRUCTURAL_CALCULATION_AUTHORSHIP",
+  "CERTIFICATION_ISSUANCE",
+  "CAD_OR_BIM_INTERPRETATION",
+] as const;
+export const D1N_0_OWNERSHIP_ORCHESTRATION_MATRIX_DEFINED = true as const;
+
+export const D1N_0_INPUT_CATEGORIES = [
+  "IDENTITY_CONTEXT",
+  "STANDARDS_PROFILE_REFERENCE",
+  "REQUIREMENTS",
+  "ASSUMPTIONS",
+  "DECISIONS",
+  "SYSTEMS",
+  "INTERFACES",
+  "ENGINEERING_EVIDENCE_REFERENCES",
+  "D1M_CURRENT_HANDOFF",
+  "CURRENTNESS",
+  "HUMAN_GATE_STATE",
+] as const;
+export const D1N_0_REQUIRED_INPUTS = ["IDENTITY_CONTEXT", "REQUIREMENTS", "ASSUMPTIONS", "CURRENTNESS", "HUMAN_GATE_STATE"] as const;
+export const D1N_0_INPUT_CONTRACT_DEFINED = true as const;
+export const D1N_0_MISSING_REQUIRED_INPUT_AUTO_INVENTED = false as const;
+export const D1N_0_STALE_INPUT_ALLOWED_FOR_CURRENT_D1N_TRANSITION = false as const;
+
+export const D1N_0_OUTPUT_CATEGORIES = [
+  "ORCHESTRATION_STATE_RECORD",
+  "DESIGN_PROGRESSION_CONTEXT_PIN",
+  "PREREQUISITE_ASSESSMENT",
+  "EVIDENCE_GAP_LIST",
+  "NEXT_ACTION_REQUEST",
+  "ENGINEERING_REVIEW_REQUEST",
+  "HUMAN_DECISION_REQUEST",
+  "STAGE_TRANSITION_REQUEST",
+  "ORCHESTRATION_MANIFEST",
+  "WORKFLOW_HISTORY",
+  "ALTERNATIVE_BRANCH_REFERENCE",
+  "DOWNSTREAM_HANDOFF_PACKAGE",
+] as const;
+export const D1N_0_OUTPUT_KINDS = ["INFORMATION", "RECOMMENDATION", "REQUEST", "ORCHESTRATION_STATE"] as const;
+export const D1N_0_OUTPUT_CONTRACT_DEFINED = true as const;
+export const D1N_0_OUTPUT_EQUALS_ENGINEERING_APPROVAL = false as const;
+export const D1N_0_OUTPUT_EQUALS_ENGINEERING_VALIDATION = false as const;
+export const D1N_0_OUTPUT_EQUALS_CERTIFICATION = false as const;
+
+export const D1N_0_ORCHESTRATION_EQUALS_ENGINEERING_VALIDATION = false as const;
+export const D1N_0_ORCHESTRATION_EQUALS_ENGINEERING_APPROVAL = false as const;
+export const D1N_0_ORCHESTRATION_EQUALS_CERTIFICATION = false as const;
+export const D1N_0_ORCHESTRATION_EQUALS_AUTONOMOUS_DESIGN_AUTHORITY = false as const;
+
+export const D1N_0_PREREQUISITE_STATUSES = ["AVAILABLE", "AVAILABLE_WITH_LIMITATIONS", "NOT_AVAILABLE", "EXTERNAL_AUTHORITY_REQUIRED", "FUTURE_DEPENDENCY"] as const;
+export const D1N_0_PREREQUISITE_MATRIX = [
+  { area: "LIFECYCLE_STAGE_VOCABULARY", status: "AVAILABLE" },
+  { area: "GATE_DECISION_VOCABULARY", status: "AVAILABLE" },
+  { area: "FINGERPRINT_AND_PROVENANCE", status: "AVAILABLE" },
+  { area: "TENANT_WORKSPACE_PROJECT_SCOPE", status: "AVAILABLE" },
+  { area: "REQUIREMENTS_ASSUMPTIONS_DECISIONS", status: "AVAILABLE" },
+  { area: "D1M_CURRENT_HANDOFF", status: "AVAILABLE_WITH_LIMITATIONS" },
+  { area: "D1K_INTERFACE_RECORDS", status: "AVAILABLE_WITH_LIMITATIONS" },
+  { area: "D1L_CERTIFICATION_GOVERNANCE", status: "AVAILABLE_WITH_LIMITATIONS" },
+  { area: "OPTION_AND_DECISION_ALTERNATIVES", status: "AVAILABLE_WITH_LIMITATIONS" },
+  { area: "ENGINEERING_VALIDATION", status: "NOT_AVAILABLE" },
+  { area: "CERTIFIED_SOLVER", status: "NOT_AVAILABLE" },
+  { area: "C10_ENGINEER_REVIEW", status: "NOT_AVAILABLE" },
+  { area: "D1F_HUMAN_REVIEW", status: "NOT_AVAILABLE" },
+  { area: "D1K_INTELLIGENCE", status: "NOT_AVAILABLE" },
+  { area: "D1N_ORCHESTRATION_RUNTIME", status: "NOT_AVAILABLE" },
+  { area: "HUMAN_GATE_DECISION", status: "EXTERNAL_AUTHORITY_REQUIRED" },
+  { area: "CERTIFICATION_DECISION", status: "EXTERNAL_AUTHORITY_REQUIRED" },
+  { area: "D9", status: "FUTURE_DEPENDENCY" },
+  { area: "D2_THROUGH_D8", status: "FUTURE_DEPENDENCY" },
+] as const;
+export const D1N_0_PREREQUISITE_MATRIX_DEFINED = true as const;
+
+export const D1N_0_HUMAN_GATES = [
+  "CONCEPT_ACCEPTANCE",
+  "DESIGN_CRITERIA_ACCEPTANCE",
+  "MAJOR_SYSTEM_SELECTION",
+  "ASSUMPTION_ACCEPTANCE",
+  "DESIGN_PROGRESSION_ADVANCEMENT",
+  "DETAILED_DESIGN_RELEASE",
+  "EXCEPTION_OR_DEVIATION",
+] as const;
+export const D1N_0_HUMAN_GATE_MODEL_DEFINED = true as const;
+export const D1N_0_HUMAN_REVIEW_RUNTIME_COMPLETE = false as const;
+export const D1N_0_AUTHORITY_MODEL_DEFINED = true as const;
+export const D1N_0_AI_EQUALS_D1N_ENGINEERING_AUTHORITY = false as const;
+export const D1N_0_ADMIN_EQUALS_D1N_ENGINEERING_AUTHORITY = false as const;
+export const D1N_0_AI_CAN_AUTHORITATIVELY_SELECT_DESIGN_ALTERNATIVE = false as const;
+export const D1N_0_CAN_AUTONOMOUSLY_APPROVE_DESIGN_ALTERNATIVE = false as const;
+
+export const D1N_0_CURRENTNESS_MODEL_DEFINED = true as const;
+export const D1N_0_CREATES_PARALLEL_CURRENTNESS_ENGINE = false as const;
+export const D1N_0_CREATES_PARALLEL_LIFECYCLE_ENGINE = false as const;
+export const D1N_0_SILENT_STAGE_RETENTION_ON_CHANGE = false as const;
+export const D1N_0_CHANGED_DEPENDENCY_REQUIRES_REEVALUATION = true as const;
+
+export const D1N_0_ALTERNATIVE_BRANCH_ARCHITECTURE_DEFINED = true as const;
+export const D1N_0_BRANCH_RECORD_STATES = ["OPEN", "DECISION_CITED", "RETAINED_HISTORICAL"] as const;
+export const D1N_0_ALTERNATIVE_BRANCH_RUNTIME_COUNT = 0 as const;
+export const D1N_0_ALTERNATIVE_RANKING_RUNTIME_COUNT = 0 as const;
+
+export const D1N_0_CANONICAL_FINGERPRINT_REUSED = true as const;
+export const D1N_0_SECOND_FINGERPRINT_ALGORITHM_CREATED = false as const;
+export const D1N_0_CANONICAL_DIGITAL_THREAD_REUSED = true as const;
+export const D1N_0_PARALLEL_DIGITAL_THREAD_CREATED = false as const;
+export const D1N_0_DIGITAL_THREAD_BOUNDARY_DEFINED = true as const;
+export const D1N_0_HISTORICAL_MUTATION_ALLOWED = false as const;
+
+export const D1N_0_D1M_HANDOFF_REUSED = true as const;
+export const D1N_0_D1M_REOPENED = false as const;
+export const D1N_0_D1K_INTERNAL_INTEGRATION_READY = false as const;
+export const D1N_0_D1K_INTELLIGENCE_READY = false as const;
+export const D1N_0_D1K_LIMITATIONS_PRESERVED = true as const;
+export const D1N_0_D1L_ELIGIBILITY_DETERMINED_BY_D1N = false as const;
+export const D1N_0_D1L_HISTORY_MUTABLE_BY_D1N = false as const;
+export const D1N_0_D9_REPLACED_BY_D1N = false as const;
+export const D1N_0_D9_RUNTIME_STARTED = false as const;
+export const D1N_0_D9_RUNTIME_COUNT = 0 as const;
+export const D1N_0_D2_D8_RUNTIME_STARTED = false as const;
+export const D1N_0_D2_D8_RUNTIME_COUNT = 0 as const;
+export const D1N_0_ABSORBS_D1M = false as const;
+export const D1N_0_ABSORBS_D1K = false as const;
+export const D1N_0_ABSORBS_D1L = false as const;
+export const D1N_0_ABSORBS_D9 = false as const;
+
+export const D1N_0_C10_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1F_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1G_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1H_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1I_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1J_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1K_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_D1L_DEBT_CLASSIFICATION = "DOES_NOT_BLOCK_D1N_BUT_REMAINS_LIMITATION" as const;
+export const D1N_0_STRUCTURAL_PACK_COMPLETE = false as const;
+export const D1N_0_POST_D1J_DEBT_PRESERVED = true as const;
+export const D1N_0_D1G_BLOCKER_PRESERVED = true as const;
+export const D1N_0_GA_SECURITY_DEBT_BLOCKS_GENERAL_AVAILABILITY = true as const;
+
+export const D1N_0_ORCHESTRATION_RUNTIME_COUNT = 0 as const;
+export const D1N_0_STAGE_TRANSITION_RUNTIME_COUNT = 0 as const;
+export const D1N_0_PREREQUISITE_RUNTIME_COUNT = 0 as const;
+export const D1N_0_DATABASE_SCHEMA_CHANGED = false as const;
+export const D1N_0_NEW_DEPENDENCY_ADDED = false as const;
+export const D1N_0_NEW_SUBSTANTIVE_RUNTIME_ADDED = false as const;
+
+export const D1N_0_IMPLEMENTATION_PHASES = [
+  "EOS-D1N-R1-ORCHESTRATION-IDENTITY-AND-STATE-FOUNDATION",
+  "EOS-D1N-R2-DESIGN-PROGRESSION-CONTEXT",
+  "EOS-D1N-R3-PREREQUISITE-ASSESSMENT-AND-EVIDENCE-GAPS",
+  "EOS-D1N-R4-STAGE-TRANSITION-REQUEST-GOVERNANCE",
+  "EOS-D1N-R5-HUMAN-DECISION-AND-REVIEW-GATE-INTEGRATION",
+  "EOS-D1N-R6-ALTERNATIVE-DESIGN-BRANCH-GOVERNANCE",
+  "EOS-D1N-R7-CURRENTNESS-STALENESS-AND-REASSESSMENT",
+  "EOS-D1N-R8-D1M-D1K-D1L-HANDOFF-INTEGRATION",
+  "EOS-D1N-R9-CONCEPT-TO-DETAILED-ORCHESTRATION-CLOSEOUT",
+] as const;
+export const D1N_0_IMPLEMENTATION_DECOMPOSITION_DEFINED = true as const;
+export const D1N_0_IMPLEMENTATION_PHASE_COUNT = D1N_0_IMPLEMENTATION_PHASES.length;
+export const D1N_R1_CANONICAL_PHASE = "EOS-D1N-R1-ORCHESTRATION-IDENTITY-AND-STATE-FOUNDATION" as const;
+export const D1N_R1_PHASE_TYPE = "ORCHESTRATION_IDENTITY_AND_STATE_FOUNDATION" as const;
+export const D1N_R1_CANONICAL_SCOPE =
+  "Record one governed Structural orchestration context: identity, tenant, workspace, project, cited lifecycle-stage context, provenance, and fingerprint. Do not assess prerequisites, request a stage transition, select an alternative, or perform an engineering action." as const;
+export const D1N_0_READY_FOR_NEXT_PHASE = true as const;
+export const D1N_0_NEXT_PHASE = D1N_R1_CANONICAL_PHASE;
+export const D1N_0_NEXT_PHASE_TYPE = D1N_R1_PHASE_TYPE;
+export const D1N_0_CANONICAL_NEXT_PHASE = D1N_R1_CANONICAL_PHASE;
+export const D1N_0_CANONICAL_NEXT_PHASE_SCOPE = D1N_R1_CANONICAL_SCOPE;
+export const D1N_0_NEXT_PHASE_STARTED = false as const;

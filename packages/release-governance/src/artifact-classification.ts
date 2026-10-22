@@ -50,6 +50,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-interfaces-d1k-0\.ts$/,
   /packages\/types\/src\/structural-certification-d1l-0\.ts$/,
   /packages\/types\/src\/structural-cad-bim-d1m-0\.ts$/,
+  /packages\/types\/src\/structural-orchestration-d1n-0\.ts$/,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -593,6 +594,16 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D1N_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1N_0_CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE.md",
+  "packages/types/src/structural-orchestration-d1n-0.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1n-0-orchestration-architecture.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
