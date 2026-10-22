@@ -401,3 +401,11 @@ export {
   recordAlternativeBranch,
   reconstructAlternativeBranch,
 } from "./alternative-branch";
+export {
+  D1N_R7_MATURITY_STATE,
+  D1N_R8_CANONICAL_PHASE,
+  createD1nR7Store,
+  recordCurrentness,
+  recordReassessment,
+  reconstructReassessment,
+} from "./currentness-reassessment";

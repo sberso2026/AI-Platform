@@ -598,6 +598,16 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1N_R7_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1N_R7_CURRENTNESS_STALENESS_AND_REASSESSMENT_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/currentness-reassessment.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1n-r7-currentness-reassessment.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1N_R6_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1N_R6_ALTERNATIVE_DESIGN_BRANCH_GOVERNANCE_CLOSEOUT.md",
   "packages/engineering-os/src/structural-systems/alternative-branch.ts",

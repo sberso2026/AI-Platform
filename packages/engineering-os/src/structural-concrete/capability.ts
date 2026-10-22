@@ -2079,6 +2079,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.R5.HUMAN_DECISION_AND_REVIEW_GATE"],
   },
   {
+    capabilityId: "D1N.R7.CURRENTNESS_STALENESS_AND_REASSESSMENT",
+    jurisdiction: "GLOBAL",
+    method: "currentness staleness and reassessment",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records whether an exact D1N record is current against explicit dependencies. Does not repoint history, revalidate, reapprove, reselect, certify, or change progression.",
+    dependencies: ["D1N.R6.ALTERNATIVE_DESIGN_BRANCH_GOVERNANCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
