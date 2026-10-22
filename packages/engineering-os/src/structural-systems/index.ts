@@ -348,3 +348,12 @@ export {
   registerChange,
   registerGovernedRecord,
 } from "./cad-bim-change-governance";
+export {
+  D1M_R8_MATURITY_STATE,
+  D1M_R9_CANONICAL_PHASE,
+  confirmHandoffReview,
+  createD1mR8Store,
+  issueEvidenceHandoff,
+  refreshHandoffCurrentness,
+  reconstructHandoff,
+} from "./cad-bim-evidence-handoff";

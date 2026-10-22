@@ -1959,6 +1959,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R6.FILE_API_ADAPTER_BOUNDARY"],
   },
   {
+    capabilityId: "D1M.R8.D1K_D1L_D1N_EVIDENCE_HANDOFF",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM evidence handoff to D1K, D1L, and future D1N",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Hands current D1M evidence references to D1K interface governance, D1L certification evidence governance, and a future D1N orchestration contract. It does not make D1K intelligent, make a certification claim eligible, certify, or start D1N.",
+    dependencies: ["D1M.R7.CHANGE_STALENESS_SUPERSESSION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

@@ -60,6 +60,7 @@ import {
   D1M_R5_CHANGED_FILES,
   D1M_R6_CHANGED_FILES,
   D1M_R7_CHANGED_FILES,
+  D1M_R8_CHANGED_FILES,
   POST_D1L_ROADMAP_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
@@ -518,6 +519,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1M_R7_CHANGE_STALENESS_SUPERSESSION_CLOSEOUT.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1M R8 evidence handoff as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1M_R8_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/structural-systems/cad-bim-evidence-handoff.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D1M_R8_D1K_D1L_D1N_EVIDENCE_HANDOFF_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
