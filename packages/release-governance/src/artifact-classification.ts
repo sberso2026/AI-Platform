@@ -598,6 +598,16 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1N_R9_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1N_R9_CONCEPT_TO_DETAILED_ORCHESTRATION_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/orchestration-closeout.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1n-r9-orchestration-closeout.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1N_R8_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1N_R8_D1M_D1K_D1L_HANDOFF_INTEGRATION_CLOSEOUT.md",
   "packages/engineering-os/src/structural-systems/handoff-integration.ts",

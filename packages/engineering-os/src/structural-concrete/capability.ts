@@ -2103,6 +2103,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.R7.CURRENTNESS_STALENESS_AND_REASSESSMENT"],
   },
   {
+    capabilityId: "D1N.R9.CONCEPT_TO_DETAILED_ORCHESTRATION_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "concept-to-detailed orchestration bounded closeout",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Closes the bounded D1N orchestration track. Does not add a runtime, execute a stage transition, validate engineering, approve engineering, certify, absorb D1M, D1K, or D1L, complete the structural pack, or start D9 or D2 through D8.",
+    dependencies: ["D1N.R8.D1M_D1K_D1L_HANDOFF_INTEGRATION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
