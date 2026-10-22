@@ -401,6 +401,6 @@ describe("EOS-D2-R3 grading and earthworks context", () => {
     expect(source).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "grading-earthworks-context.ts"), source)).toEqual([]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R3.GRADING_AND_EARTHWORKS_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R4.ROADS_AND_ACCESS_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R4.ROADS_AND_ACCESS_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

@@ -485,3 +485,9 @@ export {
   recordGradingContext,
   recordEarthworksContext,
 } from "./civil/grading-earthworks-context";
+export {
+  D2_R4_MATURITY_STATE,
+  D2_R5_CANONICAL_PHASE,
+  createD2R4Store,
+  recordRoadsAccessContext,
+} from "./civil/roads-access-context";
