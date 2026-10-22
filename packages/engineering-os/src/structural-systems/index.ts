@@ -418,3 +418,8 @@ export {
   reconstructHandoffIntegration,
 } from "./handoff-integration";
 export { D1N_R9_MATURITY_STATE, D1N_R9_TRACK_COMPLETE, D1N_R9_TRACK_STATUS } from "./orchestration-closeout";
+export {
+  D1_STRUCTURAL_PACK_COMPLETION_CRITERIA_DEFINED,
+  D1_STRUCTURAL_PACK_SEQUENCING_STATUS,
+  D2_0_CANONICAL_PHASE,
+} from "./structural-pack-sequencing";
