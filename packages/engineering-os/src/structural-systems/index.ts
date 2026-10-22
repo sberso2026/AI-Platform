@@ -340,3 +340,11 @@ export {
   recordAdapterIdentity,
   submitAdapterEvidence,
 } from "./cad-bim-adapter-boundary";
+export {
+  D1M_R7_MATURITY_STATE,
+  D1M_R8_CANONICAL_PHASE,
+  createD1mR7Store,
+  reconstructGovernedRecord,
+  registerChange,
+  registerGovernedRecord,
+} from "./cad-bim-change-governance";

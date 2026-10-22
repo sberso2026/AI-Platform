@@ -1947,6 +1947,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R5.MODEL_RELATIONSHIP_EVIDENCE"],
   },
   {
+    capabilityId: "D1M.R7.CHANGE_STALENESS_SUPERSESSION",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM change staleness and supersession",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records governed change, currentness, staleness, and supersession across explicit D1M dependency links. A fingerprint change is not an engineering impact. It does not revalidate, reinterpret, recertify, or poll an external source.",
+    dependencies: ["D1M.R6.FILE_API_ADAPTER_BOUNDARY"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
