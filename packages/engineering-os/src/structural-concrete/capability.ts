@@ -1983,6 +1983,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R8.D1K_D1L_D1N_EVIDENCE_HANDOFF"],
   },
   {
+    capabilityId: "D1N.FOUNDATIONAL_ARCHITECTURE_DECISIONS",
+    jurisdiction: "GLOBAL",
+    method: "concept-to-detailed orchestration foundational decisions",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "NOT_IMPLEMENTED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records design progression, ownership, inputs, and outputs for a later architecture phase. Does not write the implementation decomposition, start D1N runtime, validate engineering, certify, or absorb D1M, D1K, D1L, or D9.",
+    dependencies: ["D1M.R9.CAD_OR_BIM_INTELLIGENCE_CLOSEOUT"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

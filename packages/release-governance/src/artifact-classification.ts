@@ -587,6 +587,16 @@ export const D1M_R9_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1N_FOUNDATIONS_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+  "packages/engineering-os/src/structural-systems/d1n-foundational-decisions.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const POST_D1L_ROADMAP_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_POST_D1L_CANONICAL_ROADMAP.md",
   "packages/engineering-os/src/structural-systems/post-d1l-roadmap.ts",

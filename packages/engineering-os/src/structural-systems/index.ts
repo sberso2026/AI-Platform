@@ -358,3 +358,4 @@ export {
   reconstructHandoff,
 } from "./cad-bim-evidence-handoff";
 export { D1M_R9_MATURITY_STATE, D1M_R9_TRACK_COMPLETE, D1M_R9_TRACK_STATUS } from "./cad-bim-intelligence-closeout";
+export { D1N_0_ARCHITECTURE_AUTHORIZED, D1N_0_CANONICAL_PHASE as POST_D1M_CANONICAL_NEXT_PHASE } from "./d1n-foundational-decisions";
