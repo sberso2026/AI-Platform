@@ -206,6 +206,6 @@ describe("EOS D1 structural pack completion criteria and roadmap sequencing", ()
     expect(index.match(/D2_0_CANONICAL_PHASE/g)).toHaveLength(1);
     expect(index.match(/D1N_R9_CANONICAL_PHASE/g)).toHaveLength(1);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.some((row) => row.capabilityId === "D1.STRUCTURAL_PACK_COMPLETION_CRITERIA_AND_ROADMAP_SEQUENCING")).toBe(true);
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.0.CIVIL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.0.CIVIL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
   });
 });

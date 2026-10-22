@@ -441,3 +441,4 @@ export * from "./structural-interfaces-d1k-0";
 export * from "./structural-certification-d1l-0";
 export * from "./structural-cad-bim-d1m-0";
 export * from "./structural-orchestration-d1n-0";
+export * from "./civil-architecture-d2-0";
