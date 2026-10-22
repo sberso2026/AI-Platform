@@ -200,6 +200,6 @@ describe("EOS-D2-0 Civil architecture", () => {
     expect(doc).toContain("EOS-D2-R1-CIVIL-IDENTITY-AND-OBJECT-FOUNDATION");
     expect(doc).not.toContain("```");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.0.CIVIL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R1.CIVIL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R1.CIVIL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

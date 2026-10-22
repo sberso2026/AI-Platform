@@ -462,3 +462,11 @@ export {
   sourceChecksumOf,
   type DocumentIdentityRecord,
 } from "./services/document-identity";
+export {
+  D2_R1_MATURITY_STATE,
+  D2_R2_CANONICAL_PHASE,
+  createD2R1Store,
+  recordCivilContext,
+  recordCivilObjectIdentity,
+  reconstructCivilContext,
+} from "./civil/identity-foundation";
