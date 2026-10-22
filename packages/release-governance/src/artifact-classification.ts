@@ -537,6 +537,16 @@ export const D1M_R4_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1M_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1M_R5_MODEL_RELATIONSHIP_EVIDENCE_CLOSEOUT.md",
+  "packages/engineering-os/src/structural-systems/cad-bim-model-relationship.ts",
+  "packages/engineering-os/src/structural-systems/eos-structural-cad-bim-model-relationship.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const POST_D1L_ROADMAP_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_POST_D1L_CANONICAL_ROADMAP.md",
   "packages/engineering-os/src/structural-systems/post-d1l-roadmap.ts",

@@ -1923,6 +1923,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R3.GEOMETRY_SEMANTIC_EVIDENCE"],
   },
   {
+    capabilityId: "D1M.R5.MODEL_RELATIONSHIP_EVIDENCE",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM model relationship evidence",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records an explicit source relationship between two exact mapped endpoints and its supporting evidence. Does not infer connectivity, a load path, clash, or global dependency, and does not validate engineering.",
+    dependencies: ["D1M.R4.UNIT_COORDINATE_AXIS_REFERENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

@@ -325,3 +325,9 @@ export {
   createD1mR4Store,
   recordReferenceContext,
 } from "./cad-bim-reference-context";
+export {
+  D1M_R5_MATURITY_STATE,
+  D1M_R6_CANONICAL_PHASE,
+  createD1mR5Store,
+  recordModelRelationship,
+} from "./cad-bim-model-relationship";
