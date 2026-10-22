@@ -236,6 +236,6 @@ describe("EOS-D2-R1 Civil identity and object foundation", () => {
     expect(source).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "identity-foundation.ts"), source)).toEqual([]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R1.CIVIL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R2.SURVEY_SPATIAL_AND_SURFACE_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R2.SURVEY_SPATIAL_AND_SURFACE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

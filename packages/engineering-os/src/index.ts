@@ -470,3 +470,11 @@ export {
   recordCivilObjectIdentity,
   reconstructCivilContext,
 } from "./civil/identity-foundation";
+export {
+  D2_R2_MATURITY_STATE,
+  D2_R3_CANONICAL_PHASE,
+  createD2R2Store,
+  recordSpatialReference,
+  recordSurveySourceContext,
+  recordSurfaceContext,
+} from "./civil/spatial-surface-context";
