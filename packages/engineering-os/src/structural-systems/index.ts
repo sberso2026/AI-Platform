@@ -380,3 +380,10 @@ export {
   recordPrerequisiteAssessment,
   reconstructPrerequisiteAssessment,
 } from "./prerequisite-assessment";
+export {
+  D1N_R4_MATURITY_STATE,
+  D1N_R5_CANONICAL_PHASE,
+  createD1nR4Store,
+  recordTransitionRequest,
+  reconstructTransitionRequest,
+} from "./stage-transition-request";

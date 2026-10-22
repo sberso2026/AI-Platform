@@ -2043,6 +2043,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.R2.DESIGN_PROGRESSION_CONTEXT"],
   },
   {
+    capabilityId: "D1N.R4.STAGE_TRANSITION_REQUEST_GOVERNANCE",
+    jurisdiction: "GLOBAL",
+    method: "stage transition request governance",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records a request to consider a canonical forward transition against an existing orchestration, progression, and prerequisite context. Does not approve or execute the transition, change progression, validate, approve, certify, or select the next stage.",
+    dependencies: ["D1N.R3.PREREQUISITE_ASSESSMENT_AND_EVIDENCE_GAPS"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
