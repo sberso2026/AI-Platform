@@ -2007,6 +2007,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.FOUNDATIONAL_ARCHITECTURE_DECISIONS"],
   },
   {
+    capabilityId: "D1N.R1.ORCHESTRATION_IDENTITY_AND_STATE_FOUNDATION",
+    jurisdiction: "GLOBAL",
+    method: "orchestration identity and state foundation",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records one orchestration context with identity, scope, cited lifecycle stage, provenance, authority, fingerprint, and history. Does not progress design, assess prerequisites, request a transition, validate, approve, certify, or start D9 or D2-D8.",
+    dependencies: ["D1N.0.CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
