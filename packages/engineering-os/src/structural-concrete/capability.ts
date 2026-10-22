@@ -1971,6 +1971,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R7.CHANGE_STALENESS_SUPERSESSION"],
   },
   {
+    capabilityId: "D1M.R9.CAD_OR_BIM_INTELLIGENCE_CLOSEOUT",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM intelligence bounded closeout",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Closes the bounded CAD or BIM evidence track. It does not add parsing, a format adapter, Structural interpretation, engineering validation, certification, D1K intelligence, D1N orchestration, or D9 runtime.",
+    dependencies: ["D1M.R8.D1K_D1L_D1N_EVIDENCE_HANDOFF"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
