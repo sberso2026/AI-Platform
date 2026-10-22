@@ -1935,6 +1935,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1M.R4.UNIT_COORDINATE_AXIS_REFERENCE"],
   },
   {
+    capabilityId: "D1M.R6.FILE_API_ADAPTER_BOUNDARY",
+    jurisdiction: "GLOBAL",
+    method: "structural CAD or BIM file and API adapter boundary",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records adapter identity, an exact contract, a capability declaration, and the file or API trust boundary. A declaration is not format support. It does not parse, ingest, or add a vendor connector.",
+    dependencies: ["D1M.R5.MODEL_RELATIONSHIP_EVIDENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

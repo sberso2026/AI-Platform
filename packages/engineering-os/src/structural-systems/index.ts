@@ -331,3 +331,12 @@ export {
   createD1mR5Store,
   recordModelRelationship,
 } from "./cad-bim-model-relationship";
+export {
+  D1M_R6_MATURITY_STATE,
+  D1M_R7_CANONICAL_PHASE,
+  createD1mR6Store,
+  declareFormatCapability,
+  recordAdapterContract,
+  recordAdapterIdentity,
+  submitAdapterEvidence,
+} from "./cad-bim-adapter-boundary";
