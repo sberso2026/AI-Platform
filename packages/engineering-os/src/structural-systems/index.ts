@@ -387,3 +387,10 @@ export {
   recordTransitionRequest,
   reconstructTransitionRequest,
 } from "./stage-transition-request";
+export {
+  D1N_R5_MATURITY_STATE,
+  D1N_R6_CANONICAL_PHASE,
+  createD1nR5Store,
+  recordHumanDecision,
+  reconstructHumanDecision,
+} from "./human-decision-record";
