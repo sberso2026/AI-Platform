@@ -2031,6 +2031,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.R1.ORCHESTRATION_IDENTITY_AND_STATE_FOUNDATION"],
   },
   {
+    capabilityId: "D1N.R3.PREREQUISITE_ASSESSMENT_AND_EVIDENCE_GAPS",
+    jurisdiction: "GLOBAL",
+    method: "prerequisite assessment and evidence gaps",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records prerequisite status and evidence gaps against an existing orchestration and progression context. Does not decide stage readiness, request or approve a transition, validate, approve, certify, or invent missing evidence.",
+    dependencies: ["D1N.R2.DESIGN_PROGRESSION_CONTEXT"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

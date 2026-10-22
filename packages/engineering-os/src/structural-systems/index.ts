@@ -373,3 +373,10 @@ export {
   recordDesignProgression,
   reconstructDesignProgression,
 } from "./design-progression-context";
+export {
+  D1N_R3_MATURITY_STATE,
+  D1N_R4_CANONICAL_PHASE,
+  createD1nR3Store,
+  recordPrerequisiteAssessment,
+  reconstructPrerequisiteAssessment,
+} from "./prerequisite-assessment";
