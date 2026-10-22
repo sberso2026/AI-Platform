@@ -394,3 +394,10 @@ export {
   recordHumanDecision,
   reconstructHumanDecision,
 } from "./human-decision-record";
+export {
+  D1N_R6_MATURITY_STATE,
+  D1N_R7_CANONICAL_PHASE,
+  createD1nR6Store,
+  recordAlternativeBranch,
+  reconstructAlternativeBranch,
+} from "./alternative-branch";
