@@ -600,6 +600,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D2_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D2_R5_DRAINAGE_AND_STORMWATER_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/civil/drainage-stormwater-context.ts",
+  "packages/engineering-os/src/civil/eos-d2-r5-drainage-stormwater-context.test.ts",
+  "packages/engineering-os/src/civil/eos-d2-r4-roads-access-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D2_R4_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D2_R4_ROADS_AND_ACCESS_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/civil/roads-access-context.ts",
