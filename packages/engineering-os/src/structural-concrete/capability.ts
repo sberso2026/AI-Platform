@@ -2019,6 +2019,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.0.CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE"],
   },
   {
+    capabilityId: "D1N.R2.DESIGN_PROGRESSION_CONTEXT",
+    jurisdiction: "GLOBAL",
+    method: "design progression context",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records an explicit design-progression state on an existing orchestration context. Does not infer the stage, decide readiness, request or approve a transition, validate, approve, certify, or start prerequisite assessment.",
+    dependencies: ["D1N.R1.ORCHESTRATION_IDENTITY_AND_STATE_FOUNDATION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

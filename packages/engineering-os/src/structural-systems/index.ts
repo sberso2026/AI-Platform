@@ -366,3 +366,10 @@ export {
   recordOrchestrationContext,
   reconstructOrchestrationContext,
 } from "./orchestration-context";
+export {
+  D1N_R2_MATURITY_STATE,
+  D1N_R3_CANONICAL_PHASE,
+  createD1nR2Store,
+  recordDesignProgression,
+  reconstructDesignProgression,
+} from "./design-progression-context";
