@@ -2091,6 +2091,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1N.R6.ALTERNATIVE_DESIGN_BRANCH_GOVERNANCE"],
   },
   {
+    capabilityId: "D1N.R8.D1M_D1K_D1L_HANDOFF_INTEGRATION",
+    jurisdiction: "GLOBAL",
+    method: "d1m d1k d1l handoff integration",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Cites exact D1M, D1K, and D1L records under R7 currentness. Does not absorb those tracks, interpret CAD or BIM, resolve interfaces, determine certification eligibility, certify, or change progression.",
+    dependencies: ["D1N.R7.CURRENTNESS_STALENESS_AND_REASSESSMENT"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

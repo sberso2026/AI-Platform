@@ -409,3 +409,11 @@ export {
   recordReassessment,
   reconstructReassessment,
 } from "./currentness-reassessment";
+export {
+  D1N_R8_MATURITY_STATE,
+  D1N_R9_CANONICAL_PHASE,
+  createD1nR8Store,
+  reassessHandoffIntegration,
+  recordHandoffIntegration,
+  reconstructHandoffIntegration,
+} from "./handoff-integration";
