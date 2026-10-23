@@ -518,3 +518,11 @@ export {
   createD2R8Store,
   recordCivilInterfaceHandoff,
 } from "./civil/discipline-interfaces-handoffs";
+export {
+  D2_R9_MATURITY_STATE,
+  D2_R10_CANONICAL_PHASE,
+  createD2R9Store,
+  recordCivilReviewFinding,
+  recordCivilReviewRequest,
+  recordCivilValidationGovernance,
+} from "./civil/review-validation-governance";
