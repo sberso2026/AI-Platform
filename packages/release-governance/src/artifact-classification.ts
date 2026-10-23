@@ -602,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R7_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_R7_REQUIREMENTS_ASSUMPTIONS_AND_CHANGE_CLOSEOUT.md",
+  "packages/engineering-os/src/geotechnical/requirements-assumptions-change.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r7-requirements-assumptions-change.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r6-foundation-excavation-slope-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D3_R6_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D3_R6_FOUNDATION_EXCAVATION_AND_SLOPE_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/geotechnical/foundation-excavation-slope-context.ts",

@@ -591,3 +591,12 @@ export {
   recordGroundImprovementContext,
   recordSlopeGeohazardContext,
 } from "./geotechnical/foundation-excavation-slope-context";
+export {
+  D3_R7_MATURITY_STATE,
+  D3_R8_CANONICAL_PHASE,
+  createD3R7Store,
+  recordGeotechnicalAssumption,
+  recordGeotechnicalChange,
+  recordGeotechnicalDecision,
+  recordGeotechnicalRequirement,
+} from "./geotechnical/requirements-assumptions-change";
