@@ -569,3 +569,10 @@ export {
   recordMaterialClassificationContext,
   recordStratigraphicInterpretation,
 } from "./geotechnical/stratigraphy-groundwater-material";
+export {
+  D3_R4_MATURITY_STATE,
+  D3_R5_CANONICAL_PHASE,
+  createD3R4Store,
+  recordFieldTestResult,
+  recordLaboratoryTestResult,
+} from "./geotechnical/field-lab-test-context";

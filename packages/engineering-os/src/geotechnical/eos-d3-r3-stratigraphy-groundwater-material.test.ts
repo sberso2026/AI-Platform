@@ -798,6 +798,6 @@ describe("EOS-D3-R3 stratigraphy groundwater and material context", () => {
       "zod",
     ]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R3.STRATIGRAPHY_GROUNDWATER_AND_MATERIAL_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R4.FIELD_AND_LAB_TEST_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R4.FIELD_AND_LAB_TEST_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

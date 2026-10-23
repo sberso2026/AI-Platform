@@ -602,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R4_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_R4_FIELD_AND_LAB_TEST_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/geotechnical/field-lab-test-context.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r4-field-lab-test-context.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r3-stratigraphy-groundwater-material.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D3_R3_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D3_R3_STRATIGRAPHY_GROUNDWATER_AND_MATERIAL_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/geotechnical/stratigraphy-groundwater-material.ts",
