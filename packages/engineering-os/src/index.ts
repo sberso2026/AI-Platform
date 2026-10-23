@@ -503,3 +503,12 @@ export {
   createD2R6Store,
   recordCivilUtilityCorridorContext,
 } from "./civil/utility-corridor-context";
+export {
+  D2_R7_MATURITY_STATE,
+  D2_R8_CANONICAL_PHASE,
+  createD2R7Store,
+  recordCivilAssumption,
+  recordCivilChange,
+  recordCivilDecision,
+  recordCivilRequirement,
+} from "./civil/requirements-assumptions-change";
