@@ -582,3 +582,12 @@ export {
   createD3R5Store,
   recordGeotechnicalParameter,
 } from "./geotechnical/geotechnical-parameter-context";
+export {
+  D3_R6_MATURITY_STATE,
+  D3_R7_CANONICAL_PHASE,
+  createD3R6Store,
+  recordExcavationGeotechnicalContext,
+  recordFoundationGeotechnicalContext,
+  recordGroundImprovementContext,
+  recordSlopeGeohazardContext,
+} from "./geotechnical/foundation-excavation-slope-context";
