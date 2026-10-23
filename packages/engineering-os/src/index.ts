@@ -526,3 +526,11 @@ export {
   recordCivilReviewRequest,
   recordCivilValidationGovernance,
 } from "./civil/review-validation-governance";
+export {
+  D2_R10_MATURITY_STATE,
+  D2_R11_CANONICAL_PHASE,
+  createD2R10Store,
+  recordCivilCurrentness,
+  recordCivilLineage,
+  recordCivilSupersession,
+} from "./civil/currentness-digital-thread";
