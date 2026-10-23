@@ -600,3 +600,9 @@ export {
   recordGeotechnicalDecision,
   recordGeotechnicalRequirement,
 } from "./geotechnical/requirements-assumptions-change";
+export {
+  D3_R8_MATURITY_STATE,
+  D3_R9_CANONICAL_PHASE,
+  createD3R8Store,
+  recordGeotechnicalInterfaceHandoff,
+} from "./geotechnical/discipline-interfaces-handoffs";
