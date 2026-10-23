@@ -606,3 +606,12 @@ export {
   createD3R8Store,
   recordGeotechnicalInterfaceHandoff,
 } from "./geotechnical/discipline-interfaces-handoffs";
+export {
+  D3_R9_MATURITY_STATE,
+  D3_R10_CANONICAL_PHASE,
+  createD3R9Store,
+  recordGeotechnicalReviewCompletion,
+  recordGeotechnicalReviewFinding,
+  recordGeotechnicalReviewRequest,
+  recordGeotechnicalValidationState,
+} from "./geotechnical/review-validation-governance";

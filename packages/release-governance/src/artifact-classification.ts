@@ -602,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R9_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_R9_REVIEW_AND_VALIDATION_GOVERNANCE_CLOSEOUT.md",
+  "packages/engineering-os/src/geotechnical/review-validation-governance.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r9-review-validation-governance.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r8-discipline-interfaces-handoffs.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D3_R8_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D3_R8_DISCIPLINE_INTERFACES_AND_HANDOFFS_CLOSEOUT.md",
   "packages/engineering-os/src/geotechnical/discipline-interfaces-handoffs.ts",

@@ -96,6 +96,7 @@ import {
   D3_R6_CHANGED_FILES,
   D3_R7_CHANGED_FILES,
   D3_R8_CHANGED_FILES,
+  D3_R9_CHANGED_FILES,
   POST_D1L_ROADMAP_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
@@ -593,6 +594,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D3-R9 review and validation governance as release-sensitive", () => {
+    const classified = classifyChangedFiles(D3_R9_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/geotechnical/review-validation-governance.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D3_R9_REVIEW_AND_VALIDATION_GOVERNANCE_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
