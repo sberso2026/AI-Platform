@@ -551,3 +551,13 @@ export {
   recordGeotechnicalContext,
   recordGeotechnicalObjectIdentity,
 } from "./geotechnical/identity-foundation";
+export {
+  D3_R2_MATURITY_STATE,
+  D3_R3_CANONICAL_PHASE,
+  createD3R2Store,
+  recordBoreholeEvidenceContext,
+  recordInvestigationEvidenceReference,
+  recordInvestigationLocationContext,
+  recordInvestigationProgram,
+  recordTestPitEvidenceContext,
+} from "./geotechnical/site-investigation-evidence";

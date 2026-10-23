@@ -602,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R2_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_R2_SITE_INVESTIGATION_AND_EVIDENCE_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/geotechnical/site-investigation-evidence.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r2-site-investigation-evidence.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r1-geotechnical-identity.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D3_R1_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D3_R1_GEOTECHNICAL_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
   "packages/engineering-os/src/geotechnical/identity-foundation.ts",
