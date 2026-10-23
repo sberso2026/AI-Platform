@@ -540,3 +540,7 @@ export {
   createD2R11Store,
   recordCivilSourceContract,
 } from "./civil/d9-source-contract";
+export {
+  D2_R12_MATURITY_STATE,
+  D3_0_CANONICAL_PHASE,
+} from "./civil/civil-bounded-closeout";
