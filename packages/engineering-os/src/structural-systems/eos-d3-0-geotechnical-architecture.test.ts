@@ -316,7 +316,7 @@ describe("EOS-D3-0 Geotechnical architecture", () => {
     expect(D3_0_BLOCKER).toBe("NONE");
     expect(D3_0_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.0.GEOTECHNICAL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R1.GEOTECHNICAL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R1.GEOTECHNICAL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R12.CIVIL_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

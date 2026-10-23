@@ -544,3 +544,10 @@ export {
   D2_R12_MATURITY_STATE,
   D3_0_CANONICAL_PHASE,
 } from "./civil/civil-bounded-closeout";
+export {
+  D3_R1_MATURITY_STATE,
+  D3_R2_CANONICAL_PHASE,
+  createD3R1Store,
+  recordGeotechnicalContext,
+  recordGeotechnicalObjectIdentity,
+} from "./geotechnical/identity-foundation";
