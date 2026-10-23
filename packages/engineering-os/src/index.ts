@@ -512,3 +512,9 @@ export {
   recordCivilDecision,
   recordCivilRequirement,
 } from "./civil/requirements-assumptions-change";
+export {
+  D2_R8_MATURITY_STATE,
+  D2_R9_CANONICAL_PHASE,
+  createD2R8Store,
+  recordCivilInterfaceHandoff,
+} from "./civil/discipline-interfaces-handoffs";
