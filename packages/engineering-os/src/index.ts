@@ -534,3 +534,9 @@ export {
   recordCivilLineage,
   recordCivilSupersession,
 } from "./civil/currentness-digital-thread";
+export {
+  D2_R11_MATURITY_STATE,
+  D2_R12_CANONICAL_PHASE,
+  createD2R11Store,
+  recordCivilSourceContract,
+} from "./civil/d9-source-contract";
