@@ -736,6 +736,6 @@ describe("EOS-D3-R2 site investigation and evidence context", () => {
       "zod",
     ]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R2.SITE_INVESTIGATION_AND_EVIDENCE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R3.STRATIGRAPHY_GROUNDWATER_AND_MATERIAL_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.R3.STRATIGRAPHY_GROUNDWATER_AND_MATERIAL_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

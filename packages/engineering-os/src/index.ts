@@ -561,3 +561,11 @@ export {
   recordInvestigationProgram,
   recordTestPitEvidenceContext,
 } from "./geotechnical/site-investigation-evidence";
+export {
+  D3_R3_MATURITY_STATE,
+  D3_R4_CANONICAL_PHASE,
+  createD3R3Store,
+  recordGroundwaterContext,
+  recordMaterialClassificationContext,
+  recordStratigraphicInterpretation,
+} from "./geotechnical/stratigraphy-groundwater-material";
