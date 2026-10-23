@@ -479,6 +479,6 @@ describe("EOS-D2-R5 drainage and stormwater context", () => {
     expect(source).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "drainage-stormwater-context.ts"), source)).toEqual([]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R5.DRAINAGE_AND_STORMWATER_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R6.CIVIL_UTILITY_AND_CORRIDOR_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D2.R6.CIVIL_UTILITY_AND_CORRIDOR_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

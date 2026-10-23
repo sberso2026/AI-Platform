@@ -497,3 +497,9 @@ export {
   createD2R5Store,
   recordDrainageStormwaterContext,
 } from "./civil/drainage-stormwater-context";
+export {
+  D2_R6_MATURITY_STATE,
+  D2_R7_CANONICAL_PHASE,
+  createD2R6Store,
+  recordCivilUtilityCorridorContext,
+} from "./civil/utility-corridor-context";
