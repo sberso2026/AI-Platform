@@ -576,3 +576,9 @@ export {
   recordFieldTestResult,
   recordLaboratoryTestResult,
 } from "./geotechnical/field-lab-test-context";
+export {
+  D3_R5_MATURITY_STATE,
+  D3_R6_CANONICAL_PHASE,
+  createD3R5Store,
+  recordGeotechnicalParameter,
+} from "./geotechnical/geotechnical-parameter-context";
