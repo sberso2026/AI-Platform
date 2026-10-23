@@ -282,6 +282,6 @@ describe("EOS-D2-R12 Civil bounded closeout", () => {
     ]) {
       expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === id)?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     }
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.0.GEOTECHNICAL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D3.0.GEOTECHNICAL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
   });
 });

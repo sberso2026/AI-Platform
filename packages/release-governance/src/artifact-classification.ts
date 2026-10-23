@@ -52,6 +52,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/structural-cad-bim-d1m-0\.ts$/,
   /packages\/types\/src\/structural-orchestration-d1n-0\.ts$/,
   /packages\/types\/src\/civil-architecture-d2-0\.ts$/,
+  /packages\/types\/src\/geotechnical-architecture-d3-0\.ts$/,
   /packages\/engineering-os\/src\/civil\//,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
@@ -596,6 +597,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D3_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_0_GEOTECHNICAL_ARCHITECTURE.md",
+  "packages/types/src/geotechnical-architecture-d3-0.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-d3-0-geotechnical-architecture.test.ts",
+  "packages/engineering-os/src/civil/eos-d2-r12-civil-bounded-closeout.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
