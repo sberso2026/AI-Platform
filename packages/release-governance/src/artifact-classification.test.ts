@@ -113,6 +113,7 @@ import {
   D5_R3_CHANGED_FILES,
   D5_R4_CHANGED_FILES,
   D5_R5_CHANGED_FILES,
+  D5_R6_CHANGED_FILES,
   D4_R12_CHANGED_FILES,
   D4_R11_CHANGED_FILES,
   D4_R10_CHANGED_FILES,
@@ -616,6 +617,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D5-R6 Piping stress support and test evidence context as release-sensitive", () => {
+    const classified = classifyChangedFiles(D5_R6_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/piping/stress-support-test-evidence-context.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D5_R6_STRESS_SUPPORT_AND_TEST_EVIDENCE_CONTEXT_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

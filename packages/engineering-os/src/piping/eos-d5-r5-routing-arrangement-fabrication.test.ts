@@ -312,7 +312,7 @@ describe("EOS-D5-R5 piping routing arrangement and fabrication context", () => {
     expect(D5_R5_CANONICAL_NEXT_PHASE_SCOPE).toContain("exact R1-R5 revisions");
     expect(D5_R5_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R5.ROUTING_ARRANGEMENT_AND_FABRICATION_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R6.STRESS_SUPPORT_AND_TEST_EVIDENCE_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R6.STRESS_SUPPORT_AND_TEST_EVIDENCE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const r1 = createD5R1Store();
     recordPipingContext(r1, actor, { contextId: "ctx-1", citedLifecycleStage: "FEED", provenanceRef: "prov-ctx" });
