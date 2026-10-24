@@ -725,3 +725,9 @@ export {
   recordMechanicalSupersession,
   traceMechanicalDigitalThread,
 } from "./mechanical/currentness-digital-thread";
+export {
+  D4_R11_MATURITY_STATE,
+  D4_R12_CANONICAL_PHASE,
+  createD4R11Store,
+  recordMechanicalSourceContract,
+} from "./mechanical/d9-source-contract";

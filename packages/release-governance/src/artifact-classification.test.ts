@@ -107,6 +107,7 @@ import {
   D4_R4_CHANGED_FILES,
   D4_R5_CHANGED_FILES,
   D4_R6_CHANGED_FILES,
+  D4_R11_CHANGED_FILES,
   D4_R10_CHANGED_FILES,
   D4_R9_CHANGED_FILES,
   D4_R8_CHANGED_FILES,
@@ -608,6 +609,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D4-R11 D9 source contract as release-sensitive", () => {
+    const classified = classifyChangedFiles(D4_R11_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/mechanical/d9-source-contract.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D4_R11_D9_SOURCE_CONTRACT_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
