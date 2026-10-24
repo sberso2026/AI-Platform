@@ -606,6 +606,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D5_R5_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D5_R5_ROUTING_ARRANGEMENT_AND_FABRICATION_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/piping/routing-arrangement-fabrication-context.ts",
+  "packages/engineering-os/src/piping/eos-d5-r5-routing-arrangement-fabrication.test.ts",
+  "packages/engineering-os/src/piping/eos-d5-r4-component-connection-valve.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D5_R4_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D5_R4_COMPONENT_CONNECTION_AND_VALVE_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/piping/component-connection-valve-context.ts",

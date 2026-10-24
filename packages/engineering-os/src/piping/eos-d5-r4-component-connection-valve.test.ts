@@ -321,7 +321,7 @@ describe("EOS-D5-R4 piping component connection and valve context", () => {
     expect(D5_R4_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R3.DESIGN_CONDITIONS_AND_SPECIFICATION_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R4.COMPONENT_CONNECTION_AND_VALVE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R5.ROUTING_ARRANGEMENT_AND_FABRICATION_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R5.ROUTING_ARRANGEMENT_AND_FABRICATION_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const r1 = createD5R1Store();
     recordPipingContext(r1, actor, { contextId: "ctx-1", citedLifecycleStage: "FEED", provenanceRef: "prov-ctx" });
