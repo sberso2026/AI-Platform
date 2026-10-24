@@ -759,3 +759,12 @@ export {
   recordPipingDesignCondition,
   recordPipingSpecificationContext,
 } from "./piping/design-condition-specification-context";
+export {
+  D5_R4_MATURITY_STATE,
+  D5_R5_CANONICAL_PHASE,
+  createD5R4Store,
+  recordPipingComponentContext,
+  recordPipingConnectionContext,
+  recordPipingSpecialtyContext,
+  recordPipingValveContext,
+} from "./piping/component-connection-valve-context";

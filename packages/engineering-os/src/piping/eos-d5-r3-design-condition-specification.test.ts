@@ -292,7 +292,7 @@ describe("EOS-D5-R3 piping design conditions and specification context", () => {
     expect(D5_R3_CANONICAL_NEXT_PHASE_SCOPE).toContain("exact R1-R3 identities");
     expect(D5_R3_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R3.DESIGN_CONDITIONS_AND_SPECIFICATION_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R4.COMPONENT_CONNECTION_AND_VALVE_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R4.COMPONENT_CONNECTION_AND_VALVE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const r1 = createD5R1Store();
     recordPipingContext(r1, actor, { contextId: "ctx-1", citedLifecycleStage: "FEED", provenanceRef: "prov-ctx" });
