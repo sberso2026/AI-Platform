@@ -817,3 +817,13 @@ export {
   recordPipingReviewRequest,
   recordPipingValidationState,
 } from "./piping/review-validation-governance";
+export {
+  D5_R10_MATURITY_STATE,
+  D5_R11_CANONICAL_PHASE,
+  createD5R10Store,
+  exposedPipingCurrentness,
+  recordPipingCurrentness,
+  recordPipingLineage,
+  recordPipingSupersession,
+  tracePipingDigitalThread,
+} from "./piping/currentness-digital-thread";
