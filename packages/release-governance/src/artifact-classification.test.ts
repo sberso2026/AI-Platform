@@ -106,6 +106,7 @@ import {
   D4_R3_CHANGED_FILES,
   D4_R4_CHANGED_FILES,
   D4_R5_CHANGED_FILES,
+  D4_R6_CHANGED_FILES,
   POST_D1L_ROADMAP_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
@@ -603,6 +604,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D4-R6 maintainability access and package context as release-sensitive", () => {
+    const classified = classifyChangedFiles(D4_R6_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/mechanical/maintainability-access-package-context.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D4_R6_MAINTAINABILITY_ACCESS_AND_PACKAGE_CONTEXT_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
