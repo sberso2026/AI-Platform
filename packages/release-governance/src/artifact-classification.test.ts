@@ -108,6 +108,7 @@ import {
   D4_R5_CHANGED_FILES,
   D4_R6_CHANGED_FILES,
   D5_0_CHANGED_FILES,
+  D5_R1_CHANGED_FILES,
   D4_R12_CHANGED_FILES,
   D4_R11_CHANGED_FILES,
   D4_R10_CHANGED_FILES,
@@ -611,6 +612,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D5-R1 Piping identity foundation as release-sensitive", () => {
+    const classified = classifyChangedFiles(D5_R1_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/piping/identity-foundation.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D5_R1_PIPING_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

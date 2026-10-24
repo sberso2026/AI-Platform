@@ -58,6 +58,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/civil\//,
   /packages\/engineering-os\/src\/geotechnical\//,
   /packages\/engineering-os\/src\/mechanical\//,
+  /packages\/engineering-os\/src\/piping\//,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -601,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D5_R1_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D5_R1_PIPING_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
+  "packages/engineering-os/src/piping/identity-foundation.ts",
+  "packages/engineering-os/src/piping/eos-d5-r1-piping-identity.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-d5-0-piping-architecture.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

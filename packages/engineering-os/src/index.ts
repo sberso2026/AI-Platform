@@ -735,3 +735,10 @@ export {
   D4_R12_MATURITY_STATE,
   D5_0_CANONICAL_PHASE,
 } from "./mechanical/mechanical-bounded-closeout";
+export {
+  D5_R1_MATURITY_STATE,
+  D5_R2_CANONICAL_PHASE,
+  createD5R1Store,
+  recordPipingContext,
+  recordPipingObjectIdentity,
+} from "./piping/identity-foundation";
