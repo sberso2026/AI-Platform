@@ -56,6 +56,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/mechanical-architecture-d4-0\.ts$/,
   /packages\/engineering-os\/src\/civil\//,
   /packages\/engineering-os\/src\/geotechnical\//,
+  /packages\/engineering-os\/src\/mechanical\//,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -599,6 +600,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D4_R1_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D4_R1_MECHANICAL_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
+  "packages/engineering-os/src/mechanical/identity-foundation.ts",
+  "packages/engineering-os/src/mechanical/eos-d4-r1-mechanical-identity.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/engineering-os/src/structural-systems/eos-d4-0-mechanical-architecture.test.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;

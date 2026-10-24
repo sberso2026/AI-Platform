@@ -633,3 +633,10 @@ export {
   D3_R12_MATURITY_STATE,
   D4_0_CANONICAL_PHASE,
 } from "./geotechnical/geotechnical-bounded-closeout";
+export {
+  D4_R1_MATURITY_STATE,
+  D4_R2_CANONICAL_PHASE,
+  createD4R1Store,
+  recordMechanicalContext,
+  recordMechanicalObjectIdentity,
+} from "./mechanical/identity-foundation";
