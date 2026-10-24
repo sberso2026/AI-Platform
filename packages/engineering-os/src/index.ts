@@ -752,3 +752,10 @@ export {
   recordPipingSystemContext,
   recordPipingSystemLineMembership,
 } from "./piping/system-line-service-context";
+export {
+  D5_R3_MATURITY_STATE,
+  D5_R4_CANONICAL_PHASE,
+  createD5R3Store,
+  recordPipingDesignCondition,
+  recordPipingSpecificationContext,
+} from "./piping/design-condition-specification-context";
