@@ -844,3 +844,11 @@ export {
   recordProcessContext,
   recordProcessObjectIdentity,
 } from "./process/identity-foundation";
+export {
+  D6_R2_MATURITY_STATE,
+  D6_R3_CANONICAL_PHASE,
+  createD6R2Store,
+  recordProcessServiceFunction,
+  recordProcessStreamContext,
+  recordProcessSystemContext,
+} from "./process/system-stream-service-context";

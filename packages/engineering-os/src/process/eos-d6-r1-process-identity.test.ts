@@ -260,7 +260,7 @@ describe("EOS-D6-R1 Process identity and object foundation", () => {
     expect(D6_CONTEXT_AUTHORITY).toBe("PROCESS_CONTEXT_AUTHORITY");
     expect(D6_DISCIPLINE).toBe("PROCESS");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R1.PROCESS_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R2.PROCESS_SYSTEM_STREAM_AND_SERVICE_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R2.PROCESS_SYSTEM_STREAM_AND_SERVICE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const actor = { actorId: "proc-recorder", tenantId: "t1", workspaceId: "w1", projectId: "p1", authority: D6_CONTEXT_AUTHORITY };
     const store = createD6R1Store();
