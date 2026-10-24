@@ -602,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R11_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_R11_D9_SOURCE_CONTRACT_CLOSEOUT.md",
+  "packages/engineering-os/src/geotechnical/d9-source-contract.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r11-d9-source-contract.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r10-currentness-digital-thread.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D3_R10_CHANGED_FILES = [
   "apps/web/package.json",
   "docs/architecture/engineering-os/EOS_D3_R10_CURRENTNESS_AND_DIGITAL_THREAD_CLOSEOUT.md",

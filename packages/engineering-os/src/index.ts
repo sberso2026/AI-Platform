@@ -623,3 +623,9 @@ export {
   recordGeotechnicalLineage,
   recordGeotechnicalSupersession,
 } from "./geotechnical/currentness-digital-thread";
+export {
+  D3_R11_MATURITY_STATE,
+  D3_R12_CANONICAL_PHASE,
+  createD3R11Store,
+  recordGeotechnicalSourceContract,
+} from "./geotechnical/d9-source-contract";
