@@ -120,6 +120,7 @@ import {
   D5_R10_CHANGED_FILES,
   D5_R11_CHANGED_FILES,
   D5_R12_CHANGED_FILES,
+  D6_0_CHANGED_FILES,
   D4_R12_CHANGED_FILES,
   D4_R11_CHANGED_FILES,
   D4_R10_CHANGED_FILES,
@@ -623,6 +624,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D6-0 Process architecture as release-sensitive", () => {
+    const classified = classifyChangedFiles(D6_0_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/types/src/process-architecture-d6-0.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D6_0_PROCESS_ARCHITECTURE.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

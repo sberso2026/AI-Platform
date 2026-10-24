@@ -401,7 +401,7 @@ describe("EOS-D5-R12 Piping bounded closeout", () => {
       expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === id)?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     }
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.0.PIPING_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.0.PROCESS_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.0.PROCESS_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
     const here = dirname(fileURLToPath(import.meta.url));
     const sourceText = readFileSync(join(here, "piping-bounded-closeout.ts"), "utf8");
     expect(sourceText).not.toMatch(/createD5R12Store|recordPiping|createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
