@@ -107,6 +107,7 @@ import {
   D4_R4_CHANGED_FILES,
   D4_R5_CHANGED_FILES,
   D4_R6_CHANGED_FILES,
+  D4_R10_CHANGED_FILES,
   D4_R9_CHANGED_FILES,
   D4_R8_CHANGED_FILES,
   D4_R7_CHANGED_FILES,
@@ -607,6 +608,19 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D4-R10 currentness and digital thread as release-sensitive", () => {
+    const classified = classifyChangedFiles(D4_R10_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain(
+      "packages/engineering-os/src/mechanical/currentness-digital-thread.ts",
+    );
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D4_R10_CURRENTNESS_AND_DIGITAL_THREAD_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

@@ -716,3 +716,12 @@ export {
   recordMechanicalReviewRequest,
   recordMechanicalValidationState,
 } from "./mechanical/review-validation-governance";
+export {
+  D4_R10_MATURITY_STATE,
+  D4_R11_CANONICAL_PHASE,
+  createD4R10Store,
+  recordMechanicalCurrentness,
+  recordMechanicalLineage,
+  recordMechanicalSupersession,
+  traceMechanicalDigitalThread,
+} from "./mechanical/currentness-digital-thread";
