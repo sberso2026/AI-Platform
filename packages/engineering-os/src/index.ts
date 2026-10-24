@@ -789,3 +789,15 @@ export {
   recordPipingStressFlexibilityEvidence,
   recordPipingSupportRestraintContext,
 } from "./piping/stress-support-test-evidence-context";
+export {
+  D5_R7_MATURITY_STATE,
+  D5_R8_CANONICAL_PHASE,
+  createD5R7Store,
+  markPipingDependentCurrentness,
+  recordPipingAssumption,
+  recordPipingChange,
+  recordPipingEngineeringDecision,
+  recordPipingGovernedRequirement,
+  recordPipingReassessment,
+  recordPipingSourceRequirement,
+} from "./piping/requirements-assumptions-change";
