@@ -21,6 +21,7 @@ export type EngineeringCoreEventType =
   | "engineering.technical_query.created"
   | "engineering.technical_query.answered"
   | "engineering.lesson.created"
+  | "engineering.work.event"
   | "engineering.ai.run.completed"
   | "engineering.demo.seeded"
   | "engineering.demo.reset";
@@ -53,6 +54,7 @@ export const ENGINEERING_CORE_EVENT_TYPES: EngineeringCoreEventType[] = [
   "engineering.issue.created",
   "engineering.technical_query.created",
   "engineering.lesson.created",
+  "engineering.work.event",
 ];
 
 export const PROJECT_INTELLIGENCE_EVENT_TYPES: ProjectIntelligenceEventType[] = [

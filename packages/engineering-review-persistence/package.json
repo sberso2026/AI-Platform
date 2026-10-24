@@ -1,0 +1,34 @@
+{
+  "name": "@rtb/engineering-review-persistence",
+  "version": "0.7.0-era-7",
+  "private": true,
+  "type": "module",
+  "description": "Production Supabase adapter and live RLS security gate for Engineering Review AI. Not the domain engine.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run src/adapter.test.ts src/boundary.test.ts src/secret-scan.test.ts src/security-alert.test.ts src/rtb-sec-rls-1-guard.test.ts src/rtb-sec-rls-1-secret.test.ts src/rtb-sec-rls-1a-guard.test.ts src/rtb-sec-rls-1b-guard.test.ts src/rtb-sec-rls-1c-guard.test.ts src/rtb-sec-rel-1d-guard.test.ts src/rtb-sec-rel-1e-guard.test.ts",
+    "test:rls": "vitest run src/live-rls.test.ts src/live-core-rls.test.ts src/live-audit.test.ts src/live-identity.test.ts src/live-schema.test.ts src/live-restore.test.ts src/eos-a10a-live-rls.test.ts src/eos-a10b-live-rls.test.ts src/eos-a10c-live-rls.test.ts src/eos-a11a-live-rls.test.ts src/eos-a11b-live-rls.test.ts src/eos-a11c-live-rls.test.ts src/eos-a11d-live-rls.test.ts src/eos-a11e-live-rls.test.ts src/eos-a12a-live-rls.test.ts src/eos-a12b-live-rls.test.ts src/eos-a13a-live-rls.test.ts src/eos-a13b-live-rls.test.ts src/eos-a13c-live-rls.test.ts src/eos-a14a-live-rls.test.ts src/eos-a14b-live-restore.test.ts src/eos-a15a-v3-live-rls.test.ts src/eos-a15a-v5-live-rls.test.ts src/eos-a16d-index-job-live-rls.test.ts src/rtb-sec-rls-1-live.test.ts src/rtb-sec-rls-1a-live.test.ts",
+    "restore:pilot": "tsx scripts/restore-review-package.ts",
+    "apply:hosted-migration": "tsx scripts/apply-hosted-migration.ts",
+    "audit:core-rls": "tsx scripts/audit-core-rls-data.ts",
+    "secret-scan": "tsx scripts/secret-scan.ts"
+  },
+  "dependencies": {
+    "@rtb/engineering-review": "workspace:*",
+    "@rtb/platform-core": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "pg": "^8.16.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

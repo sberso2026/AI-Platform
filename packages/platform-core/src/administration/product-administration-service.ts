@@ -53,10 +53,10 @@ export function buildProductCatalogSummary(
     installationHealth = "suspended";
   }
 
-  const appCount =
-    commerceData?.application_installations?.filter((a) =>
-      ["active", "healthy", "degraded"].includes(a.status)
-    ).length ?? summary.installedApplications;
+  const liveAppCount = commerceData?.application_installations?.filter((a) =>
+    ["active", "healthy", "degraded"].includes(a.status)
+  ).length;
+  const appCount = liveAppCount && liveAppCount > 0 ? liveAppCount : summary.installedApplications;
 
   return {
     installedOperatingSystems: summary.installedProducts,

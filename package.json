@@ -27,7 +27,11 @@
     "project-intelligence:certify:meetings": "pnpm --filter @rtb/project-intelligence-certification certify:meetings",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > packages/database/src/types.ts"
+    "db:types": "supabase gen types typescript --local > packages/database/src/types.ts",
+    "review:staging": "node scripts/review-staging.mjs",
+    "release:drift-report": "pnpm --filter @rtb/release-governance report",
+    "release:production-guard": "pnpm --filter @rtb/release-governance guard",
+    "release:ledger-only": "pnpm --filter @rtb/release-governance ledger-only"
   },
   "devDependencies": {
     "turbo": "^2.5.4",
@@ -36,6 +40,18 @@
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=22.0.0 <23",
-    "pnpm": "9.15.0"
+    "pnpm": "9.15.x"
+  },
+  "pnpm": {
+    "overrides": {
+      "next": "15.5.28",
+      "source-map-js": "1.2.2",
+      "@xmldom/xmldom": "^0.8.15",
+      "nanoid": ">=3.3.18",
+      "brace-expansion": "1.1.21",
+      "postcss": ">=8.5.18",
+      "image-size": ">=2.0.3",
+      "sharp": ">=0.35.4"
+    }
   }
 }

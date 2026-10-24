@@ -25,6 +25,17 @@ export default function SettingsPage() {
               <p className="text-sm text-muted-foreground">Stored in platform_settings table.</p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Multi-Factor Authentication</CardTitle>
+              <CardDescription>Authenticator app enrollment for Review AAL2</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/settings/security" className="text-sm text-primary hover:underline">
+                Open security settings
+              </a>
+            </CardContent>
+          </Card>
         </div>
       </main>
       </>

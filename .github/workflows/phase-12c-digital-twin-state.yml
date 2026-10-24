@@ -1,0 +1,110 @@
+name: Phase 12C Digital Twin State
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/digital-twin/**"
+      - "packages/digital-twin-certification/**"
+      - "packages/platform-certification/src/phase12c*"
+      - "supabase/migrations/*batch_76*"
+      - "apps/web/src/app/api/engineering/digital-twin/**"
+      - "docs/architecture/DIGITAL_TWIN_PHASE_12C*"
+      - ".github/workflows/phase-12c-digital-twin-state.yml"
+
+concurrency:
+  group: phase-12c-digital-twin-state-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm --filter @rtb/digital-twin test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase12c-digital-twin-state.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/digital-twin-certification secret-scan
+      - name: Phase 12C certification (gates A–AY)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/digital-twin-certification certify:phase12c
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/digital-twin-certification/artifacts/phase12c-digital-twin-state-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===51],
+            ["version", a.version==="0.3.0-state"],
+            ["status", a.status==="state"],
+            ["digitalTwinImplemented", a.digitalTwinImplemented===true],
+            ["productionDigitalTwinReady", a.productionDigitalTwinReady===false],
+            ["twinStateReady", a.twinStateReady===true],
+            ["twinVersioningReady", a.twinVersioningReady===true],
+            ["representationVersioningReady", a.representationVersioningReady===true],
+            ["twinSnapshotReady", a.twinSnapshotReady===true],
+            ["twinTimelineReady", a.twinTimelineReady===true],
+            ["twinIdentityReady", a.twinIdentityReady===true],
+            ["hostedDigitalTwinPersistenceReady", a.hostedDigitalTwinPersistenceReady===true],
+            ["digitalTwinRuntimeImplemented", a.digitalTwinRuntimeImplemented===false],
+            ["liveTelemetryImplemented", a.liveTelemetryImplemented===false],
+            ["simulationExecutionImplemented", a.simulationExecutionImplemented===false],
+            ["threeDViewerImplemented", a.threeDViewerImplemented===false],
+            ["physicalActuationEnabled", a.physicalActuationEnabled===false],
+            ["automaticControlEnabled", a.automaticControlEnabled===false],
+            ["projectControlsV1Intact", a.projectControlsV1Intact===true],
+            ["assetIntelligenceV1Intact", a.assetIntelligenceV1Intact===true],
+            ["phase12DReady", a.phase12DReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["publicContractVersion", a.publicContractVersion==="0.3.0-state-draft"],
+            ["stateReviewSlug", a.stateReviewSlug==="digital_twin.state_review"],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            phase12DReady: a.phase12DReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase12c-digital-twin-state-certification
+          path: packages/digital-twin-certification/artifacts/phase12c-digital-twin-state-certification.json
+          if-no-files-found: warn

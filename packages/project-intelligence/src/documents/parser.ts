@@ -1,3 +1,5 @@
+import { segmentEngineeringPage } from "./engineering-text";
+
 export interface ParsedTable {
   title?: string;
   headers: readonly string[];
@@ -49,32 +51,13 @@ export interface ProjectIntelligenceDocumentParser {
 }
 
 function decodeUtf8(bytes: Uint8Array): string {
-  return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+  return new TextDecoder("utf-8", { fatal: false }).decode(bytes).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
 function splitPages(text: string): string[] {
   const formFeed = text.split(/\f/);
   if (formFeed.length > 1) return formFeed.map((page) => page.trimEnd());
   return [text];
-}
-
-function detectTableBlock(lines: string[]): ParsedTable | null {
-  if (lines.length < 2) return null;
-  const delimiter = lines.every((line) => line.includes("|"))
-    ? "|"
-    : lines.every((line) => line.includes("\t"))
-      ? "\t"
-      : null;
-  if (!delimiter) return null;
-  const cells = lines.map((line) =>
-    line
-      .split(delimiter)
-      .map((cell) => cell.trim())
-      .filter((cell, index, arr) => !(delimiter === "|" && (index === 0 || index === arr.length - 1) && cell === "")),
-  );
-  if (cells.some((row) => row.length < 2)) return null;
-  const [headers, ...rows] = cells;
-  return { headers, rows };
 }
 
 export class NativeTextDocumentParser implements ProjectIntelligenceDocumentParser {
@@ -100,30 +83,7 @@ export class NativeTextDocumentParser implements ProjectIntelligenceDocumentPars
     const pageTexts = splitPages(text);
     const pages = pageTexts.map((pageText, index) => {
       const pageNumber = index + 1;
-      const rawBlocks = pageText.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
-      const blocks: ParsedBlock[] = [];
-      for (const raw of rawBlocks) {
-        const lines = raw.split(/\n/).map((line) => line.trimEnd());
-        const table = detectTableBlock(lines);
-        if (table) {
-          blocks.push({
-            type: "table",
-            text: raw,
-            page: pageNumber,
-            table: { ...table, page: pageNumber },
-            confidence: 0.9,
-          });
-          continue;
-        }
-        const isHeading = lines.length === 1 && lines[0].length <= 120 && !lines[0].endsWith(".");
-        blocks.push({
-          type: isHeading ? "heading" : "paragraph",
-          text: raw,
-          page: pageNumber,
-          sectionPath: isHeading ? lines[0] : undefined,
-          confidence: 0.85,
-        });
-      }
+      const blocks = segmentEngineeringPage(pageText, pageNumber);
       return { pageNumber, text: pageText, blocks };
     });
 

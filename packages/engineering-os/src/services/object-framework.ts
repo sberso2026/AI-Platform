@@ -3,6 +3,7 @@ import type { PlatformKernel } from "@rtb/platform-kernel";
 import type { CommerceExecutionContext, EngineeringObjectType } from "@rtb/types";
 import { REGISTER_KG_NODE_TYPES } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
+import type { EngineeringDigitalThreadProjectionService } from "../digital-thread/projection/service";
 
 type EngineeringObjectTable =
   | "engineering_decisions"
@@ -13,13 +14,20 @@ type EngineeringObjectTable =
   | "engineering_lessons"
   | "engineering_projects"
   | "engineering_assets"
-  | "engineering_documents";
+  | "engineering_documents"
+  | "engineering_assumptions";
 
 export class EngineeringObjectFramework {
+  private threadProjection?: EngineeringDigitalThreadProjectionService;
+
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly kernel?: PlatformKernel
   ) {}
+
+  setThreadProjection(projection: EngineeringDigitalThreadProjectionService): void {
+    this.threadProjection = projection;
+  }
 
   async recordTimeline(input: {
     tenantId: string;
@@ -91,12 +99,16 @@ export class EngineeringObjectFramework {
 
   async linkObjects(input: {
     tenantId: string;
+    workspaceId?: string;
     fromType: EngineeringObjectType | string;
     fromId: string;
     toType: EngineeringObjectType | string;
     toId: string;
     relationship: string;
     createdBy?: string;
+    /** EOS-A2: persist governed taxonomy. Legacy callers omit this (false). */
+    governed?: boolean;
+    metadata?: Record<string, unknown>;
   }) {
     const { data, error } = await this.supabase
       .from("engineering_object_links")
@@ -108,13 +120,31 @@ export class EngineeringObjectFramework {
         to_id: input.toId,
         relationship: input.relationship,
         created_by: input.createdBy ?? null,
+        relationship_governed: input.governed === true,
+        metadata: (input.metadata ?? {}) as Json,
       })
       .select()
       .single();
     if (error) throw new Error(`Failed to link objects: ${error.message}`);
 
-    // Best-effort KG edge if both knowledge nodes known
-    if (this.kernel) {
+    if (input.governed === true && this.threadProjection && input.workspaceId && data?.id) {
+      try {
+        await this.threadProjection.projectLink({
+          id: String(data.id),
+          tenantId: input.tenantId,
+          workspaceId: input.workspaceId,
+          fromType: String(input.fromType),
+          fromId: input.fromId,
+          toType: String(input.toType),
+          toId: input.toId,
+          relationship: input.relationship,
+          governed: true,
+          createdBy: input.createdBy ?? null,
+        });
+      } catch {
+        this.threadProjection.recordFailure();
+      }
+    } else if (this.kernel && input.governed !== true) {
       try {
         const fromNode = await this.resolveKnowledgeNode(input.fromType, input.fromId);
         const toNode = await this.resolveKnowledgeNode(input.toType, input.toId);
@@ -128,10 +158,52 @@ export class EngineeringObjectFramework {
           });
         }
       } catch {
-        // ignore
+        // ignore ungoverned best-effort KG edges
       }
     }
     return data;
+  }
+
+  async unlinkObjects(input: {
+    tenantId: string;
+    workspaceId?: string;
+    fromType: string;
+    fromId: string;
+    toType: string;
+    toId: string;
+    relationship: string;
+  }) {
+    const { data: existing } = await this.supabase
+      .from("engineering_object_links")
+      .select("id")
+      .eq("tenant_id", input.tenantId)
+      .eq("from_type", input.fromType)
+      .eq("from_id", input.fromId)
+      .eq("to_type", input.toType)
+      .eq("to_id", input.toId)
+      .eq("relationship", input.relationship)
+      .maybeSingle();
+    const { error } = await this.supabase
+      .from("engineering_object_links")
+      .delete()
+      .eq("tenant_id", input.tenantId)
+      .eq("from_type", input.fromType)
+      .eq("from_id", input.fromId)
+      .eq("to_type", input.toType)
+      .eq("to_id", input.toId)
+      .eq("relationship", input.relationship);
+    if (error) throw new Error(`Failed to unlink objects: ${error.message}`);
+    if (this.threadProjection && input.workspaceId && existing?.id) {
+      try {
+        await this.threadProjection.removeProjectedLink({
+          tenantId: input.tenantId,
+          workspaceId: input.workspaceId,
+          linkId: String(existing.id),
+        });
+      } catch {
+        this.threadProjection.recordFailure();
+      }
+    }
   }
 
   async addComment(input: {
@@ -277,6 +349,7 @@ export class EngineeringObjectFramework {
       project: "engineering_projects",
       asset: "engineering_assets",
       document: "engineering_documents",
+      assumption: "engineering_assumptions",
     };
     return map[objectType] ?? null;
   }

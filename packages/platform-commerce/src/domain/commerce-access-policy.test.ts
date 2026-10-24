@@ -4,6 +4,7 @@ import {
   getEngineeringApiPolicy,
   resolveApiPolicyKey,
 } from "./commerce-access-policy";
+import { ENGINEERING_SERVICE_POLICIES } from "./engineering-service-policies";
 
 const ENGINEERING_API_SEGMENTS = [
   "health",
@@ -14,6 +15,22 @@ const ENGINEERING_API_SEGMENTS = [
   "companies",
   "disciplines",
   "decisions",
+  "assumptions",
+  "systems",
+  "interfaces",
+  "requirements",
+  "changes",
+  "impacts",
+  "configuration",
+  "optimization",
+  "analysis",
+  "thread",
+  "assurance",
+  "lifecycle",
+  "deliverables",
+  "information",
+  "work",
+  "information-requirements",
   "risks",
   "issues",
   "actions",
@@ -24,6 +41,8 @@ const ENGINEERING_API_SEGMENTS = [
   "search",
   "ai",
   "settings",
+  "external-tools",
+  "discipline-intelligence",
   "applications",
   "demo",
 ];
@@ -41,8 +60,139 @@ describe("ENGINEERING_API_POLICIES", () => {
     }
   });
 
+  it("maps inspection workflow segment to inspection_intelligence", () => {
+    const policy = getEngineeringApiPolicy("inspection-intelligence-workflow", "POST");
+    expect(policy.applicationKey).toBe("inspection_intelligence");
+    expect(policy.action).toBe("inspection.write");
+    expect(policy.cachePolicy).toBe("fresh");
+  });
+
   it("requires fresh cache for write operations", () => {
     const write = getEngineeringApiPolicy("projects", "POST");
     expect(write.cachePolicy).toBe("fresh");
+  });
+
+  it("maps External Tools settings API to Engineering OS settings entitlement", () => {
+    const read = getEngineeringApiPolicy("external-tools", "GET");
+    const write = getEngineeringApiPolicy("external-tools", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.action).toBe("settings.read");
+    expect(write.action).toBe("settings.write");
+  });
+
+  it("maps Discipline Intelligence settings API to Engineering OS settings entitlement", () => {
+    const read = getEngineeringApiPolicy("discipline-intelligence", "GET");
+    const write = getEngineeringApiPolicy("discipline-intelligence", "POST");
+    expect(read.action).toBe("settings.read");
+    expect(write.action).toBe("settings.write");
+  });
+
+  it("maps Engineering projects API to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("projects", "GET");
+    const write = getEngineeringApiPolicy("projects", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("project.read");
+    expect(write.action).toBe("project.create");
+    expect(write.cachePolicy).toBe("fresh");
+  });
+
+  it("maps Analysis to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("analysis", "GET");
+    const write = getEngineeringApiPolicy("analysis", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+  });
+
+  it("maps Engineering Assurance to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("assurance", "GET");
+    const write = getEngineeringApiPolicy("assurance", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+  });
+
+  it("maps Engineering Information Intelligence to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("information", "GET");
+    const write = getEngineeringApiPolicy("information", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+    expect(ENGINEERING_SERVICE_POLICIES["information.policy.write"].action).toBe("settings.write");
+  });
+
+  it("maps Engineering Information Requirements to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("information-requirements", "GET");
+    const write = getEngineeringApiPolicy("information-requirements", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+    expect(ENGINEERING_SERVICE_POLICIES["information-requirements.write"].action).toBe("analysis.write");
+  });
+
+  it("maps Engineering Work Context to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("work", "GET");
+    const write = getEngineeringApiPolicy("work", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+    expect(ENGINEERING_SERVICE_POLICIES["work.repository.write"].action).toBe("settings.write");
+    expect(ENGINEERING_SERVICE_POLICIES["artifact.template.write"].action).toBe("settings.write");
+    expect(ENGINEERING_SERVICE_POLICIES["artifact.template.list"].action).toBe("analysis.read");
+  });
+
+  it("maps Engineering Lifecycle to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("lifecycle", "GET");
+    const write = getEngineeringApiPolicy("lifecycle", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("analysis.read");
+    expect(write.action).toBe("analysis.write");
+  });
+
+  it("maps Optimization to Engineering OS product, not Project Intelligence", () => {
+    const read = getEngineeringApiPolicy("optimization", "GET");
+    const write = getEngineeringApiPolicy("optimization", "POST");
+    expect(read.productKey).toBe("engineering-os");
+    expect(write.productKey).toBe("engineering-os");
+    expect(read.applicationKey).toBeUndefined();
+    expect(write.applicationKey).toBeUndefined();
+    expect(read.action).toBe("optimization.read");
+    expect(write.action).toBe("optimization.write");
+  });
+
+  it("maps canonical Engineering project service policies to OS core, not Project Intelligence", () => {
+    for (const key of ["project.list", "project.get", "project.create", "project.update", "project.search"] as const) {
+      expect(ENGINEERING_SERVICE_POLICIES[key].productKey).toBe("engineering-os");
+      expect(ENGINEERING_SERVICE_POLICIES[key].applicationKey).toBeUndefined();
+    }
+    expect(ENGINEERING_SERVICE_POLICIES["project.list"].action).toBe("project.read");
+  });
+
+  it("maps Engineering OS A2-A4 registers to product entitlement, not PI", () => {
+    for (const segment of ["decisions", "assumptions", "systems", "interfaces", "requirements", "changes", "impacts", "configuration"]) {
+      const policy = getEngineeringApiPolicy(segment, "GET");
+      expect(policy.productKey).toBe("engineering-os");
+      expect(policy.applicationKey).toBeUndefined();
+    }
   });
 });

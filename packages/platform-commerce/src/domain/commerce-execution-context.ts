@@ -10,9 +10,25 @@ import type { EntitlementDecision } from "./entitlement-reason-codes";
 import { CommerceDomainError } from "./errors";
 
 const AUTH_TTL_MS = 5 * 60 * 1000;
+const DEVELOPMENT_ONLY_COMMERCE_AUTH_SECRET = "rtb-dev-commerce-auth-secret";
+
+function isProductionRuntime(): boolean {
+  return process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+}
 
 function authSecret(): string {
-  return process.env.COMMERCE_AUTH_SECRET ?? "rtb-dev-commerce-auth-secret";
+  const value = process.env.COMMERCE_AUTH_SECRET;
+  if (isProductionRuntime()) {
+    if (!value || value === DEVELOPMENT_ONLY_COMMERCE_AUTH_SECRET) {
+      throw new CommerceDomainError(
+        "COMMERCE_AUTH_SECRET is required in production and must not use the development default",
+        "secret_required",
+        500,
+      );
+    }
+    return value;
+  }
+  return value ?? DEVELOPMENT_ONLY_COMMERCE_AUTH_SECRET;
 }
 
 function signPayload(payload: Record<string, string>): string {

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/kernel";
 import { runDocumentWorkerOnce } from "@/lib/project-intelligence/documents-service";
 
+export const maxDuration = 60;
+
 function correlationId(request: Request): string {
   return request.headers.get("x-correlation-id") ?? crypto.randomUUID();
 }

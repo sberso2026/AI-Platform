@@ -1,0 +1,117 @@
+name: Phase 12H Digital Twin Simulation Assurance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/digital-twin/**"
+      - "packages/digital-twin-certification/**"
+      - "packages/platform-certification/src/phase12h*"
+      - "supabase/migrations/*batch_81*"
+      - "apps/web/src/app/api/engineering/digital-twin/**"
+      - "apps/web/src/app/(platform)/engineering/apps/digital-twin/**"
+      - "docs/architecture/DIGITAL_TWIN_*QUALIFICATION*"
+      - "docs/architecture/DIGITAL_TWIN_PHASE_12H*"
+      - ".github/workflows/phase-12h-digital-twin-simulation-assurance.yml"
+
+concurrency:
+  group: phase-12h-digital-twin-simulation-assurance-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_BROWSER: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm --filter @rtb/digital-twin test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase12h-digital-twin-simulation.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/digital-twin-certification secret-scan
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/digital-twin-certification exec playwright install --with-deps chromium
+      - name: Browser E2E simulation assurance (CERTIFY_BROWSER=1)
+        run: pnpm --filter @rtb/digital-twin-certification test:e2e:simulation-assurance
+      - name: Phase 12H certification (gates A–BR)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+          CERTIFY_BROWSER: "1"
+        run: pnpm --filter @rtb/digital-twin-certification certify:phase12h
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/digital-twin-certification/artifacts/phase12h-digital-twin-simulation-assurance-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===70],
+            ["version", a.version==="0.8.0-simulation-assurance"],
+            ["status", a.status==="simulation_assurance"],
+            ["digitalTwinImplemented", a.digitalTwinImplemented===true],
+            ["productionDigitalTwinReady", a.productionDigitalTwinReady===false],
+            ["twinSimulationFrameworkReady", a.twinSimulationFrameworkReady===true],
+            ["simulationMethodQualificationReady", a.simulationMethodQualificationReady===true],
+            ["simulationProviderQualificationReady", a.simulationProviderQualificationReady===true],
+            ["simulationApplicationQualificationReady", a.simulationApplicationQualificationReady===true],
+            ["simulationExecutionQualificationReady", a.simulationExecutionQualificationReady===true],
+            ["simulationQualificationEligibilityReady", a.simulationQualificationEligibilityReady===true],
+            ["twinSimulationPackageReady", a.twinSimulationPackageReady===true],
+            ["simulationPackageIntegrityReady", a.simulationPackageIntegrityReady===true],
+            ["simulationReproducibilityReady", a.simulationReproducibilityReady===true],
+            ["simulationExecutionImplemented", a.simulationExecutionImplemented===true],
+            ["nativeEngineeringSolverImplemented", a.nativeEngineeringSolverImplemented===false],
+            ["externalEngineeringSolverAdaptersImplemented", a.externalEngineeringSolverAdaptersImplemented===false],
+            ["simulationOptimizationImplemented", a.simulationOptimizationImplemented===false],
+            ["automaticSimulationApprovalEnabled", a.automaticSimulationApprovalEnabled===false],
+            ["predictiveTwinImplemented", a.predictiveTwinImplemented===false],
+            ["shmRuntimeImplemented", a.shmRuntimeImplemented===false],
+            ["spatialOwnershipFullyResolved", a.spatialOwnershipFullyResolved===false],
+            ["duplicateEngineeringToolFrameworkDetected", a.duplicateEngineeringToolFrameworkDetected===false],
+            ["phase12IReady", a.phase12IReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["publicContractVersion", a.publicContractVersion==="0.8.0-simulation-assurance-draft"],
+            ["unexpected5xx", a.unexpected5xx===0],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({ verdict: a.verdict, version: a.version }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase12h-digital-twin-simulation-assurance-certification
+          path: packages/digital-twin-certification/artifacts/phase12h-digital-twin-simulation-assurance-certification.json
+          if-no-files-found: warn

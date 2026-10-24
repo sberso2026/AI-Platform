@@ -1,0 +1,28 @@
+export const PHASE_9I_INSPECTION_AI_VISION_GATES = [
+  ["A", "Repository and build identity"],
+  ["B", "Prior phase regression"],
+  ["C", "Project Intelligence v1 tag integrity"],
+  ["D", "Vision analysis contract"],
+  ["E", "Immutable evidence and derivative lineage"],
+  ["F", "Privacy and preprocessing"],
+  ["G", "Provider governance and fail-closed"],
+  ["H", "Model assurance"],
+  ["I", "Human validation"],
+  ["J", "Governed condition linkage"],
+  ["K", "Pack-aware adapters"],
+  ["L", "Mobile and offline continuity"],
+  ["M", "Vision UI"],
+  ["N", "Events"],
+  ["O", "Unit and architecture tests"],
+  ["P", "Tenant isolation"],
+  ["Q", "Threat model"],
+  ["R", "Browser E2E"],
+  ["S", "Device evidence"],
+  ["T", "No Asset Intelligence / Digital Twin ownership"],
+  ["U", "No accuracy or RUL claims"],
+  ["V", "Secret exposure"],
+  ["W", "Artifact identity"],
+  ["X", "Release eligibility and next-phase readiness"],
+] as const;
+
+export type Phase9iGateId = (typeof PHASE_9I_INSPECTION_AI_VISION_GATES)[number][0];

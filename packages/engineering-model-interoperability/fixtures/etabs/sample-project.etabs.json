@@ -1,0 +1,85 @@
+{
+  "format": "etabs_export_fixture",
+  "formatVersion": "1.0",
+  "providerKey": "etabs",
+  "productName": "CSI ETABS",
+  "productVersionHint": "21.0",
+  "federationPath": "export_fixture",
+  "liveNativeCom": false,
+  "project": {
+    "externalModelId": "etabs-fixture-office-tower-01",
+    "displayName": "Sample Office Tower (ETABS export fixture)",
+    "unitSystem": "SI",
+    "unitCode": "N_mm_t"
+  },
+  "joints": [
+    { "id": "J1", "x": 0, "y": 0, "z": 0 },
+    { "id": "J2", "x": 8000, "y": 0, "z": 0 },
+    { "id": "J3", "x": 0, "y": 6000, "z": 0 },
+    { "id": "J4", "x": 8000, "y": 6000, "z": 0 },
+    { "id": "J5", "x": 0, "y": 0, "z": 3500 },
+    { "id": "J6", "x": 8000, "y": 0, "z": 3500 },
+    { "id": "J7", "x": 0, "y": 6000, "z": 3500 },
+    { "id": "J8", "x": 8000, "y": 6000, "z": 3500 }
+  ],
+  "frames": [
+    { "id": "F1", "jointI": "J1", "jointJ": "J5", "sectionId": "SEC_W310", "materialId": "MAT_STEEL300" },
+    { "id": "F2", "jointI": "J2", "jointJ": "J6", "sectionId": "SEC_W310", "materialId": "MAT_STEEL300" },
+    { "id": "F3", "jointI": "J3", "jointJ": "J7", "sectionId": "SEC_W310", "materialId": "MAT_STEEL300" },
+    { "id": "F4", "jointI": "J4", "jointJ": "J8", "sectionId": "SEC_W310", "materialId": "MAT_STEEL300" },
+    { "id": "F5", "jointI": "J5", "jointJ": "J6", "sectionId": "SEC_W360", "materialId": "MAT_STEEL300" },
+    { "id": "F6", "jointI": "J7", "jointJ": "J8", "sectionId": "SEC_W360", "materialId": "MAT_STEEL300" }
+  ],
+  "areas": [
+    {
+      "id": "A1",
+      "jointIds": ["J5", "J6", "J8", "J7"],
+      "thicknessMm": 150,
+      "materialId": "MAT_CONC32"
+    }
+  ],
+  "links": [
+    { "id": "L1", "jointI": "J1", "jointJ": "J2", "linkPropertyId": "LINK_GAP" }
+  ],
+  "stories": [
+    { "id": "STORY1", "name": "Level 1", "elevationMm": 0 },
+    { "id": "STORY2", "name": "Level 2", "elevationMm": 3500 }
+  ],
+  "sections": [
+    { "id": "SEC_W310", "name": "W310x52", "areaMm2": 6650 },
+    { "id": "SEC_W360", "name": "W360x57", "areaMm2": 7230 }
+  ],
+  "materials": [
+    { "id": "MAT_STEEL300", "name": "Grade 300 Steel", "E": 200000, "nu": 0.3, "density": 7850 },
+    { "id": "MAT_CONC32", "name": "Concrete 32 MPa", "E": 30000, "nu": 0.2, "density": 2400 }
+  ],
+  "groups": [
+    { "id": "G_COLUMNS", "name": "Columns", "memberIds": ["F1", "F2", "F3", "F4"] },
+    { "id": "G_BEAMS", "name": "Beams", "memberIds": ["F5", "F6"] }
+  ],
+  "loadPatterns": [
+    { "id": "LP_DEAD", "name": "Dead", "type": "Dead" },
+    { "id": "LP_LIVE", "name": "Live", "type": "Live" }
+  ],
+  "loadCases": [
+    { "id": "LC_DEAD", "name": "Dead Case", "patternId": "LP_DEAD" },
+    { "id": "LC_LIVE", "name": "Live Case", "patternId": "LP_LIVE" }
+  ],
+  "combinations": [
+    { "id": "COMB_1_2DL_LL", "name": "1.2D+1.5L", "caseIds": ["LC_DEAD", "LC_LIVE"] }
+  ],
+  "existingResults": [
+    {
+      "externalResultId": "RES_LS_COMB_A",
+      "resultKind": "linear_elastic_static",
+      "loadCase": "1.2D+1.5L",
+      "provenance": "external_existing",
+      "summary": {
+        "maxDisplacementMm": 18.6,
+        "maxMomentKNm": 142.3,
+        "maxAxialKN": 980.0
+      }
+    }
+  ],
+  "notes": "Fixture export for federation only. NOT live native COM / NOT hosted execution. Existing results must never be classified rtb_execution_certified without RTB execution evidence. Imported ≠ rtb_execution_certified."
+}

@@ -118,6 +118,6 @@ describe("Phase 8A Engineering OS foundation", () => {
     );
     expect(dash).toContain('data-testid="engineering-os-shell"');
     expect(modules).toContain('data-testid="engineering-module-launcher"');
-    expect(defaultEngineeringModuleRegistry.listInitial()).toHaveLength(4);
+    expect(defaultEngineeringModuleRegistry.listInitial()).toHaveLength(6);
   });
 });

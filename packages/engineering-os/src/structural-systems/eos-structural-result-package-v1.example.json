@@ -1,0 +1,235 @@
+{
+  "packageFormat": "EOS_STRUCTURAL_RESULT_PACKAGE",
+  "schemaVersion": "1",
+  "packageId": "payload-fixture-1",
+  "createdAt": "2026-10-17T00:00:00.000Z",
+  "completeness": "COMPLETE",
+  "producer": {
+    "producerId": "synthetic-producer",
+    "producerName": "D1G_R2_TEST_ONLY"
+  },
+  "provider": {
+    "providerId": "d1g-fixture-solver",
+    "providerName": "D1G_FIXTURE_SOLVER",
+    "providerVersion": "1.0.0"
+  },
+  "source": {
+    "sourceName": "fixture-solver-source",
+    "sourceVersion": "1",
+    "sourceTimestamp": "2026-10-17T00:00:00.000Z"
+  },
+  "model": {
+    "providerModelId": "fixture-model-1",
+    "modelVersion": "model-rev-1",
+    "analysisType": "STATIC_RESULT_IMPORT",
+    "unitContextRef": "FIXTURE_UNITS_V1",
+    "coordinateSystemRef": "FIXTURE_GLOBAL_V1",
+    "signConventionRef": "FIXTURE_SIGN_V1"
+  },
+  "run": {
+    "providerRunId": "fixture-run-1",
+    "providerRunState": "PROVIDER_FINISHED",
+    "providerConvergenceState": "PROVIDER_CONVERGED",
+    "runVersion": "run-rev-1",
+    "runTimestamp": "2026-10-17T00:00:00.000Z"
+  },
+  "capabilities": [
+    "MODEL_METADATA",
+    "NODES",
+    "ANALYTICAL_ELEMENTS",
+    "LOAD_CASES",
+    "LOAD_COMBINATIONS",
+    "MEMBER_END_FORCES",
+    "MEMBER_STATION_FORCES",
+    "SUPPORT_REACTIONS",
+    "NODE_DISPLACEMENTS",
+    "WARNINGS",
+    "CONVERGENCE_STATUS"
+  ],
+  "mappingExpectation": {
+    "mappingManifestId": "map-d1g-r1",
+    "mappingManifestVersion": "1",
+    "mappingManifestFingerprint": null
+  },
+  "objectMappingExpectation": {
+    "objectMappingId": "obj-d1g-r1",
+    "objectMappingVersion": "1"
+  },
+  "loadCases": [
+    {
+      "providerCaseId": "CASE-DEAD",
+      "providerCaseName": "DL",
+      "providerCaseType": "DEAD"
+    }
+  ],
+  "loadCombinations": [
+    {
+      "providerCombinationId": "COM-1",
+      "providerCombinationName": "COM-1",
+      "providerCombinationType": "ULS"
+    }
+  ],
+  "providerObjects": [
+    { "providerObjectId": "e-1", "providerObjectType": "ELEMENT", "providerModelId": "fixture-model-1" },
+    { "providerObjectId": "e-2", "providerObjectType": "ELEMENT", "providerModelId": "fixture-model-1" },
+    { "providerObjectId": "s-1", "providerObjectType": "SUPPORT", "providerModelId": "fixture-model-1" },
+    { "providerObjectId": "n-1", "providerObjectType": "NODE", "providerModelId": "fixture-model-1" }
+  ],
+  "results": [
+    {
+      "providerResultId": "r-n",
+      "providerObjectId": "e-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "MEMBER_END_ACTION",
+      "providerQuantityName": "P_AX",
+      "rawValue": 12.5,
+      "explicitZero": false,
+      "rawUnit": "kN",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "START",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": ["warn-1"]
+    },
+    {
+      "providerResultId": "r-v",
+      "providerObjectId": "e-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "MEMBER_END_ACTION",
+      "providerQuantityName": "V2_LOCAL",
+      "rawValue": -3,
+      "explicitZero": false,
+      "rawUnit": "kN",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "START",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    },
+    {
+      "providerResultId": "r-m",
+      "providerObjectId": "e-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "MEMBER_END_ACTION",
+      "providerQuantityName": "M3_LOCAL",
+      "rawValue": 4,
+      "explicitZero": false,
+      "rawUnit": "kN.m",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "START",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    },
+    {
+      "providerResultId": "r-t",
+      "providerObjectId": "e-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "MEMBER_END_ACTION",
+      "providerQuantityName": "T_LOCAL",
+      "rawValue": 0,
+      "explicitZero": true,
+      "rawUnit": "kN.m",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "START",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    },
+    {
+      "providerResultId": "r-station",
+      "providerObjectId": "e-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "MEMBER_STATION_ACTION",
+      "providerQuantityName": "V_STATION",
+      "rawValue": 1.5,
+      "explicitZero": false,
+      "rawUnit": "kN",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "STATION",
+      "station": { "value": 0.25, "unit": "m", "origin": "MEMBER_START", "orientation": "LOCAL_I_TO_J" },
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    },
+    {
+      "providerResultId": "r-rev",
+      "providerObjectId": "e-2",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "MEMBER_END_ACTION",
+      "providerQuantityName": "P_AX",
+      "rawValue": 1,
+      "explicitZero": false,
+      "rawUnit": "kN",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "LOCAL-I",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    },
+    {
+      "providerResultId": "r-rz",
+      "providerObjectId": "s-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "SUPPORT_FORCE",
+      "providerQuantityName": "FZ_SUP",
+      "rawValue": 8.25,
+      "explicitZero": false,
+      "rawUnit": "kN",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "SUPPORT_POINT",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    },
+    {
+      "providerResultId": "r-ux",
+      "providerObjectId": "n-1",
+      "providerRunId": "fixture-run-1",
+      "resultCategory": "NODE_MOVE",
+      "providerQuantityName": "UX_NODE",
+      "rawValue": 0.002,
+      "explicitZero": false,
+      "rawUnit": "m",
+      "coordinateSystem": "FIXTURE_GLOBAL_V1",
+      "signConvention": "FIXTURE_SIGN_V1",
+      "resultLocation": "NODE",
+      "station": null,
+      "providerCaseId": null,
+      "providerCombinationId": "COM-1",
+      "warningIds": []
+    }
+  ],
+  "warnings": [
+    {
+      "warningId": "warn-1",
+      "code": "MESH",
+      "text": "fixture warning retained",
+      "resultId": "r-n"
+    }
+  ],
+  "extensions": {
+    "synthetic": true,
+    "usage": "TEST_ONLY",
+    "declaredProjectId": "project-spoof",
+    "declaredTenantId": "tenant-spoof",
+    "declaredProfileId": "spoof-profile",
+    "declaredAuthority": "VERIFIED_GOVERNED",
+    "declaredModelValidated": true,
+    "declaredAdapterVersion": "9.9.9",
+    "url": "https://example.invalid/package"
+  }
+}

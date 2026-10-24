@@ -1,0 +1,16 @@
+AS/NZS 1252:1996
+High-strength steel bolts with associated nuts and washers for structural engineering
+
+Section 3.4 Test Methods
+
+The test methods for determining the mechanical properties of high-strength nuts shall be in accordance with AS/NZS 4291.2.
+
+This clause identifies the applicable standard. It does not reproduce the detailed test procedures contained in AS/NZS 4291.2.
+
+Figure 2.3 Tolerance on Straightness of High-Strength Steel Bolts
+
+The displayed straightness relationship is:
+
+t = 2(0.0025 l' + 0.05)
+
+where t is the tolerance and l' is the length used by the figure. A numerical M20 shank straightness tolerance cannot be derived solely from nominal diameter if the required l' is not established by the available evidence.

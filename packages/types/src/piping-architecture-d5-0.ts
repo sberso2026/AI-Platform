@@ -1,0 +1,485 @@
+/**
+ * EOS-D5-0 Piping architecture.
+ * Contracts only. No Piping object runtime, calculation, routing, stress analysis, validation, approval, or certification.
+ */
+import { EOS_JURISDICTION_PROFILE_IDS } from "./global-governance";
+import {
+  D4_CURRENTNESS_STATES,
+  D4_D5_FUTURE_CONTRACT_SUBJECTS,
+  D4_DIGITAL_THREAD_MODULE,
+  D4_FINGERPRINT_ALGORITHM,
+  D4_MATURITY_STATES,
+} from "./mechanical-architecture-d4-0";
+
+export const D5_0_STATUS = "ARCHITECTURE_DEFINED" as const;
+export const D5_0_MATURITY = "ARCHITECTURE_DEFINED" as const;
+export const D5_0_PHASE = "EOS-D5-0-PIPING-ARCHITECTURE-CANONICALIZATION" as const;
+export const D5_0_PHASE_TYPE = "PIPING_ARCHITECTURE_CANONICALIZATION" as const;
+export const D5_ARCHITECTURE_PATH = "docs/architecture/engineering-os/EOS_D5_0_PIPING_ARCHITECTURE.md" as const;
+export const D5_0_CLOSEOUT_PATH = "docs/architecture/engineering-os/EOS_D5_0_PIPING_ARCHITECTURE_CANONICALIZATION_CLOSEOUT.md" as const;
+export const D5_ARCHITECTURE_DEFINED = true as const;
+export const D5_ARCHITECTURE_READY = true as const;
+export const D5_SCOPE_DEFINED = true as const;
+export const D5_OWNERSHIP_DEFINED = true as const;
+export const D5_PARENT_MECHANICAL_CLOSEOUT_PATH =
+  "docs/architecture/engineering-os/EOS_D4_R12_MECHANICAL_BOUNDED_CLOSEOUT.md" as const;
+
+export const D5_CANONICAL_SCOPE =
+  "Bounded Piping engineering truth and governance context for plant and project piping systems assigned to the Piping discipline: system and line identity, service, design-condition context, material specification and class context, explicitly supplied size and dimensional context, components, connections, routing and arrangement constraints, insulation coating and tracing requirements where Piping-owned, support and restraint requirements, stress and flexibility evidence context, fabrication spool and isometric context, inspection NDE and test context, requirements, assumptions, decisions, evidence, interfaces, review and validation, currentness, lineage, and a future D9 source contract. No Piping calculation runtime." as const;
+export const D5_CANONICAL_NON_SCOPE =
+  "No Process engineering, Mechanical equipment design, Structural support design, Civil underground or site design, Geotechnical engineering, Electrical engineering, or Instrumentation and Control design. No pressure-vessel Mechanical design. No long-distance pipeline engineering unless a later canonical project architecture explicitly includes it. No multidisciplinary reasoning. No pipe sizing, hydraulics, pressure drop, wall thickness, branch reinforcement, flange rating, stress, flexibility, support-load calculation, route optimization, automatic routing, or spatial clash detection." as const;
+export const D5_SCOPE_CANONICALIZED = true as const;
+export const D5_LONG_DISTANCE_PIPELINE_CANONICAL_PLACE_FOUND = false as const;
+export const D5_ABSORBS_LONG_DISTANCE_PIPELINE_ENGINEERING = false as const;
+export const D5_ABSORBS_D1_D4 = false as const;
+export const D5_ABSORBS_D6_D8 = false as const;
+export const D5_ABSORBS_D9 = false as const;
+
+export const D5_EQUALS_D1_STRUCTURAL_AUTHORITY = false as const;
+export const D5_EQUALS_D2_CIVIL_AUTHORITY = false as const;
+export const D5_EQUALS_D3_GEOTECHNICAL_AUTHORITY = false as const;
+export const D5_EQUALS_D4_MECHANICAL_AUTHORITY = false as const;
+export const D5_EQUALS_D6_PROCESS_AUTHORITY = false as const;
+export const D5_EQUALS_D7_ELECTRICAL_AUTHORITY = false as const;
+export const D5_EQUALS_D8_INSTRUMENTATION_CONTROL_AUTHORITY = false as const;
+export const D5_TRANSFERS_STRUCTURAL_AUTHORITY = false as const;
+export const D5_TRANSFERS_CIVIL_AUTHORITY = false as const;
+export const D5_TRANSFERS_GEOTECHNICAL_AUTHORITY = false as const;
+export const D5_TRANSFERS_MECHANICAL_AUTHORITY = false as const;
+export const D5_TRANSFERS_PROCESS_AUTHORITY = false as const;
+export const D5_TRANSFERS_ELECTRICAL_AUTHORITY = false as const;
+export const D5_TRANSFERS_IAC_AUTHORITY = false as const;
+
+export const D5_OBJECT_TAXONOMY_DEFINED = true as const;
+export const FREEFORM_AUTHORITATIVE_D5_OBJECT_TYPES_ALLOWED = false as const;
+export const UNKNOWN_D5_OBJECT_TYPE_AUTO_ACCEPTED = false as const;
+export const D5_PIPING_OBJECT_TYPES = [
+  "PIPING_SYSTEM_CONTEXT",
+  "PIPING_LINE",
+  "PIPING_SERVICE_CONTEXT",
+  "PIPING_DESIGN_CONDITION_CONTEXT",
+  "PIPING_SPECIFICATION_CONTEXT",
+  "PIPING_COMPONENT_CONTEXT",
+  "PIPING_VALVE_CONTEXT",
+  "PIPING_SPECIALTY_CONTEXT",
+  "PIPING_CONNECTION_CONTEXT",
+  "PIPING_ROUTE_CONTEXT",
+  "PIPING_SUPPORT_REQUIREMENT_CONTEXT",
+  "PIPING_STRESS_FLEXIBILITY_CONTEXT",
+  "PIPING_FABRICATION_CONTEXT",
+  "PIPING_TEST_INSPECTION_CONTEXT",
+  "PIPING_INTERFACE_POINT",
+  "PIPING_GOVERNANCE_RECORD",
+] as const;
+export const D5_GOVERNED_RECORD_TYPES = [
+  "PIPING_REQUIREMENT",
+  "PIPING_ASSUMPTION",
+  "PIPING_DECISION",
+  "PIPING_EVIDENCE_REFERENCE",
+] as const;
+export const D5_COMPONENT_CLASSIFICATIONS = [
+  "PIPE",
+  "ELBOW",
+  "TEE",
+  "REDUCER",
+  "FLANGE",
+  "VALVE",
+  "STRAINER",
+  "EXPANSION_JOINT",
+  "FLEXIBLE_CONNECTION",
+  "SPECIALTY",
+  "BRANCH_CONNECTION",
+  "FITTING",
+] as const;
+export const D5_DOCUMENT_FORMATS_ARE_NOT_OBJECT_TYPES = true as const;
+
+export const D5_OBJECT_IDENTITY_FIELDS = [
+  "STABLE_OBJECT_IDENTITY",
+  "TENANT_WORKSPACE_PROJECT_SCOPE",
+  "CANONICAL_OBJECT_TYPE",
+  "LINE_NUMBER_OR_TAG",
+  "SERVICE_OR_FUNCTION",
+  "LIFECYCLE_OR_MATURITY",
+  "EXACT_REVISION",
+  "EXPLICIT_RELATIONSHIPS",
+  "PROVENANCE",
+  "CURRENTNESS",
+  "CANONICAL_FINGERPRINT",
+  "IMMUTABLE_HISTORY",
+] as const;
+export const D5_REUSES_CANONICAL_IDENTITY_GOVERNANCE = true as const;
+export const PARALLEL_D5_IDENTITY_SYSTEM_CREATED = false as const;
+export const D5_OBJECT_IDENTITY_EQUALS_ENGINEERING_CONTENT = false as const;
+export const D5_OBJECT_IDENTITY_EQUALS_VALIDATED_ENGINEERING = false as const;
+export const PIPING_LINE_IDENTITY_EQUALS_PROCESS_STREAM = false as const;
+export const PIPING_SERVICE_CONTEXT_EQUALS_PROCESS_DESIGN = false as const;
+export const PIPING_LINE_MEMBERSHIP_INFERRED_AUTOMATICALLY = false as const;
+export const D5_INFERRED_LINE_RELATIONSHIP_SOURCES_PROHIBITED = [
+  "TAG_SIMILARITY",
+  "DOCUMENT_COOCCURRENCE",
+  "FILENAME",
+  "SEMANTIC_SIMILARITY",
+] as const;
+
+export const PROCESS_CONDITION_EQUALS_PIPING_DESIGN_CONDITION = false as const;
+export const D5_CREATES_AUTHORITATIVE_PROCESS_CONDITION = false as const;
+export const D5_CREATES_AUTHORITATIVE_PROCESS_DESIGN = false as const;
+export const SOURCE_CONDITION_EQUALS_ADOPTED_PIPING_DESIGN_CONDITION = false as const;
+export const PIPING_DESIGN_CONDITION_EQUALS_VALIDATED_PIPING_DESIGN = false as const;
+export const D5_DESIGN_CONDITION_FIELDS = [
+  "DESIGN_PRESSURE",
+  "DESIGN_TEMPERATURE",
+  "OPERATING_PRESSURE",
+  "OPERATING_TEMPERATURE",
+  "VACUUM_CONDITION",
+  "TRANSIENT_OR_DESIGN_CASE",
+  "TEST_CONDITION",
+  "CORROSION_OR_EROSION_ALLOWANCE",
+  "DESIGN_LIFE_CONTEXT",
+] as const;
+export const D5_DERIVES_DESIGN_VALUES = false as const;
+
+export const PIPING_SPECIFICATION_REFERENCE_EQUALS_CODE_CONFORMANCE = false as const;
+export const PIPING_CLASS_EQUALS_VALIDATED_MATERIAL_SELECTION = false as const;
+export const D5_SPECIFICATION_FIELDS = [
+  "PIPING_MATERIAL_SPECIFICATION",
+  "PIPING_CLASS_OR_SPEC",
+  "MATERIAL_DESIGNATION",
+  "PRESSURE_RATING_CONTEXT",
+  "FLANGE_RATING_CONTEXT",
+  "WALL_OR_SCHEDULE_CONTEXT",
+  "CORROSION_ALLOWANCE",
+  "COMPONENT_CLASS_APPLICABILITY",
+  "SERVICE_APPLICABILITY",
+  "STANDARDS_OR_CODE_REFERENCE",
+] as const;
+export const D5_AUTOMATED_MATERIAL_SELECTION_ALLOWED = false as const;
+
+export const PIPING_COMPONENT_PRESENT_EQUALS_ENGINEERING_VALIDATED = false as const;
+export const MECHANICAL_NOZZLE_CONTEXT_EQUALS_PIPING_DESIGN = false as const;
+export const PIPING_CONNECTION_CONTEXT_EQUALS_MECHANICAL_EQUIPMENT_DESIGN = false as const;
+
+export const PIPING_ROUTE_CONTEXT_EQUALS_CLASH_FREE = false as const;
+export const PIPING_ROUTE_CONTEXT_EQUALS_CONSTRUCTABLE = false as const;
+export const PIPING_ROUTE_CONTEXT_EQUALS_OPTIMIZED = false as const;
+export const D5_ROUTE_CONTEXT_FIELDS = [
+  "ROUTE_SEGMENT",
+  "ROUTING_CONSTRAINT",
+  "SLOPE_REQUIREMENT",
+  "ELEVATION_CONTEXT",
+  "EQUIPMENT_CONNECTION",
+  "ACCESS_CONSTRAINT",
+  "MAINTENANCE_CLEARANCE_REFERENCE",
+  "DRAIN_OR_VENT_REQUIREMENT",
+  "UNDERGROUND_OR_ABOVE_GROUND",
+  "CONSTRUCTABILITY_CONSTRAINT",
+] as const;
+
+export const PIPING_SUPPORT_REQUIREMENT_EQUALS_STRUCTURAL_SUPPORT_DESIGN = false as const;
+export const PIPING_SUPPORT_CONTEXT_EQUALS_STRUCTURAL_ADEQUACY = false as const;
+export const PIPING_SUPPORT_REQUIREMENT_EQUALS_STRUCTURAL_DESIGN = false as const;
+export const STRESS_ANALYSIS_RESULT_EQUALS_VALIDATED_PIPING_DESIGN = false as const;
+export const STRESS_ANALYSIS_RESULT_EQUALS_STRUCTURAL_SUPPORT_VALIDATION = false as const;
+export const PIPING_STRESS_RESULT_EQUALS_ENGINEERING_VALIDATED = false as const;
+
+export const PIPING_HEAT_TRACING_REQUIREMENT_EQUALS_ELECTRICAL_DESIGN = false as const;
+export const D5_PROTECTION_CONTEXT_FIELDS = [
+  "INSULATION_REQUIREMENT",
+  "COATING_OR_LINING",
+  "HEAT_TRACING_REQUIREMENT",
+  "PERSONNEL_PROTECTION",
+  "CORROSION_PROTECTION_CONTEXT",
+] as const;
+
+export const PIPING_ISOMETRIC_EQUALS_PIPING_IDENTITY = false as const;
+export const PIPING_SPOOL_DOCUMENT_EQUALS_ENGINEERING_VALIDATED = false as const;
+export const D5_FABRICATION_CONTEXT_FIELDS = [
+  "ISOMETRIC_CONTEXT",
+  "SPOOL_CONTEXT",
+  "FABRICATION_STATUS",
+  "WELD_OR_JOINT_IDENTITY",
+  "FIELD_OR_SHOP",
+  "FABRICATION_EVIDENCE",
+  "REVISION_OR_CURRENTNESS",
+  "INSPECTION_OR_TEST_ASSOCIATION",
+] as const;
+
+export const TEST_REQUIREMENT_EQUALS_TEST_COMPLETED = false as const;
+export const TEST_COMPLETED_EQUALS_ENGINEERING_VALIDATED = false as const;
+export const NDE_RESULT_EQUALS_CODE_CONFORMANCE = false as const;
+export const TEST_RESULT_EQUALS_ENGINEERING_VALIDATED = false as const;
+export const D5_TEST_CONTEXT_FIELDS = [
+  "INSPECTION_REQUIREMENT",
+  "NDE_REQUIREMENT",
+  "WELD_EXAMINATION",
+  "HYDROTEST",
+  "PNEUMATIC_OR_LEAK_TEST",
+  "TEST_PACK",
+  "TEST_EVIDENCE",
+  "RESULT_OR_STATUS",
+  "CERTIFICATE_OR_EVIDENCE",
+] as const;
+
+export const OBSERVATION_EQUALS_ENGINEERING_INTERPRETATION = false as const;
+export const SOURCE_REQUIREMENT_EQUALS_ADOPTED_PIPING_REQUIREMENT = false as const;
+export const VENDOR_DATA_EQUALS_PIPING_ENGINEERING_ADOPTION = false as const;
+export const D5_VENDOR_DATA_EQUALS_ENGINEERING_VALIDATED = false as const;
+
+export const D5_REUSES_CANONICAL_REQUIREMENT_GOVERNANCE = true as const;
+export const D5_REUSES_CANONICAL_ASSUMPTION_GOVERNANCE = true as const;
+export const D5_REUSES_CANONICAL_DECISION_GOVERNANCE = true as const;
+export const D5_REUSES_CANONICAL_CHANGE_GOVERNANCE = true as const;
+export const PARALLEL_D5_REQUIREMENT_ENGINE_CREATED = false as const;
+export const PARALLEL_D5_ASSUMPTION_ENGINE_CREATED = false as const;
+export const PARALLEL_D5_DECISION_ENGINE_CREATED = false as const;
+export const PARALLEL_D5_CHANGE_ENGINE_CREATED = false as const;
+export const D5_REUSES_CANONICAL_EOS_GOVERNANCE = true as const;
+export const PARALLEL_D5_PLATFORM_GOVERNANCE_CREATED = false as const;
+
+export const AI_EQUALS_D5_PIPING_ENGINEERING_AUTHORITY = false as const;
+export const ADMIN_EQUALS_D5_PIPING_ENGINEERING_AUTHORITY = false as const;
+export const AI_EQUALS_D5_PIPING_ENGINEERING_REVIEWER_AUTHORITY = false as const;
+export const ADMIN_EQUALS_D5_PIPING_ENGINEERING_REVIEWER_AUTHORITY = false as const;
+export const AI_CAN_INVENT_AUTHORITATIVE_PROCESS_CONDITION = false as const;
+export const AI_CAN_INVENT_AUTHORITATIVE_PIPING_DESIGN_CONDITION = false as const;
+export const AI_CAN_INVENT_AUTHORITATIVE_PIPING_REQUIREMENT = false as const;
+export const AI_CAN_INFER_AUTHORITATIVE_PIPING_LINEAGE = false as const;
+export const AI_CAN_AUTO_VALIDATE_PIPING_ENGINEERING = false as const;
+export const D5_AI_SUGGESTIONS_ARE_NON_AUTHORITATIVE_CANDIDATES = true as const;
+export const D5_REVIEWED_EQUALS_VALIDATED = false as const;
+export const D5_VALIDATED_EQUALS_CONFORMANT = false as const;
+export const D5_VALIDATED_EQUALS_APPROVED = false as const;
+export const D5_VALIDATED_EQUALS_CERTIFIED = false as const;
+export const VALIDATED_EQUALS_APPROVED = false as const;
+
+export const D5_D1_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D1_FUTURE_CONTRACT_SUBJECTS = [
+  "SUPPORT_REACTION_OR_LOAD_CONTEXT",
+  "SUPPORT_OR_RESTRAINT_REQUIREMENT",
+  "ANCHOR_LOADS",
+  "EQUIPMENT_OR_PIPING_IMPOSED_LOAD_CONTEXT",
+  "STRUCTURAL_PENETRATION_OR_SUPPORT_REQUIREMENT",
+] as const;
+export const D5_D2_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D2_FUTURE_CONTRACT_SUBJECTS = [
+  "UNDERGROUND_PIPING_CORRIDOR",
+  "BURIED_PIPING_CONTEXT",
+  "TRENCH",
+  "CROSSING",
+  "DRAINAGE_INTERACTION",
+  "SITE_ROUTING_CONSTRAINT",
+  "CIVIL_SUPPORT_OR_ENCASEMENT",
+] as const;
+export const D5_D3_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D3_FUTURE_CONTRACT_SUBJECTS = [
+  "BURIED_PIPE_GROUND_INTERACTION_SOURCE",
+  "SETTLEMENT_RELATED_PIPING_REQUIREMENT",
+  "SUPPORT_OR_FOUNDATION_GROUND_CONDITION_REFERENCE",
+  "TRENCH_GEOTECHNICAL_SOURCE",
+] as const;
+export const D5_D3_CREATES_GEOTECHNICAL_CONCLUSION = false as const;
+export const D5_D4_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D4_REUSES_D4_FUTURE_PIPING_CONTRACT = true as const;
+export const D5_D4_INTERFACE_SUBJECTS = [
+  ...D4_D5_FUTURE_CONTRACT_SUBJECTS,
+  "NOZZLE_ORIENTATION",
+  "PACKAGE_PIPING_BOUNDARY",
+  "EQUIPMENT_MOVEMENT_OR_DISPLACEMENT_CONTEXT",
+  "MAINTENANCE_OR_ACCESS_CONSTRAINT_RELEVANT_TO_PIPING",
+] as const;
+export const D5_D6_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D6_FUTURE_CONTRACT_SUBJECTS = [
+  "PROCESS_CONDITION",
+  "FLUID_OR_SERVICE_IDENTITY",
+  "STREAM_OR_SERVICE_SOURCE",
+  "PROCESS_DESIGN_CASE",
+  "LINE_SIZING_SOURCE_OR_RESULT_REFERENCE",
+  "RELIEF_BLOWDOWN_DRAIN_OR_VENT_REQUIREMENT",
+  "PROCESS_REQUIREMENT_DRIVING_PIPING_CONTEXT",
+] as const;
+export const D5_D7_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D7_FUTURE_CONTRACT_SUBJECTS = [
+  "ELECTRIC_HEAT_TRACING_REQUIREMENT",
+  "BONDING_OR_EARTHING_REQUIREMENT_CONTEXT",
+  "ELECTRICALLY_ACTUATED_VALVE_INTERFACE",
+  "PACKAGE_OR_INTERFACE_REQUIREMENT",
+] as const;
+export const D5_D8_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D5_D8_FUTURE_CONTRACT_SUBJECTS = [
+  "CONTROL_VALVE_OR_INSTRUMENT_CONNECTION",
+  "INLINE_INSTRUMENT",
+  "TAPPING_OR_INTERFACE_REQUIREMENT",
+  "ACTUATED_VALVE_INTERFACE",
+  "MEASUREMENT_CONNECTION",
+  "PACKAGE_INSTRUMENTATION_BOUNDARY",
+] as const;
+export const D5_INSTRUMENT_CONNECTION_CONTEXT_EQUALS_IAC_DESIGN = false as const;
+
+export const D5_D9_SOURCE_CONTRACT_ARCHITECTURE_DEFINED = true as const;
+export const D5_D9_SOURCE_CONTRACT_FIELDS = [
+  "IDENTITY",
+  "SYSTEM_OR_LINE_CONTEXT",
+  "SERVICE",
+  "DESIGN_CONDITIONS",
+  "SPECIFICATIONS_OR_CLASSES",
+  "COMPONENT_CONTEXT",
+  "ROUTING_CONSTRAINTS",
+  "SUPPORT_OR_RESTRAINT_CONTEXT",
+  "STRESS_OR_FLEXIBILITY_EVIDENCE",
+  "FABRICATION_OR_TESTING_EVIDENCE",
+  "REQUIREMENTS_ASSUMPTIONS_DECISIONS_OR_CHANGE",
+  "INTERFACES",
+  "REVIEW_VALIDATION",
+  "CURRENTNESS",
+  "LINEAGE",
+  "AUTHORITY",
+  "LIMITATIONS",
+  "PROVENANCE",
+  "FINGERPRINT",
+] as const;
+export const D5_D9_SOURCE_CONTRACT_RUNTIME_COUNT = 0 as const;
+export const D5_D9_RUNTIME_INTEGRATION_COUNT = 0 as const;
+export const D5_D9_SOURCE_CONTRACT_CREATES_NEW_ENGINEERING_FACT = false as const;
+export const D5_D9_SOURCE_CONTRACT_TRANSFERS_ENGINEERING_AUTHORITY = false as const;
+
+export const D5_CROSS_DISCIPLINE_REASONING_RUNTIME_COUNT = 0 as const;
+export const D5_CROSS_DISCIPLINE_CONFLICT_DETECTION_RUNTIME_COUNT = 0 as const;
+export const D5_CROSS_DISCIPLINE_CONFLICT_RESOLUTION_RUNTIME_COUNT = 0 as const;
+export const D5_CROSS_DISCIPLINE_RECOMMENDATION_RUNTIME_COUNT = 0 as const;
+
+export const D5_PIPE_SIZING_RUNTIME_COUNT = 0 as const;
+export const D5_HYDRAULIC_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_PRESSURE_DROP_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_WALL_THICKNESS_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_BRANCH_REINFORCEMENT_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_FLANGE_RATING_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_PIPING_STRESS_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_FLEXIBILITY_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_SUPPORT_LOAD_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D5_ROUTE_OPTIMIZATION_RUNTIME_COUNT = 0 as const;
+export const D5_AUTOMATIC_ROUTING_RUNTIME_COUNT = 0 as const;
+export const D5_SPATIAL_CLASH_DETECTION_RUNTIME_COUNT = 0 as const;
+export const D5_AUTOMATIC_REDESIGN_RUNTIME_COUNT = 0 as const;
+export const D5_AUTOMATIC_ENGINEERING_VALIDATION_RUNTIME_COUNT = 0 as const;
+export const D5_CONFORMANCE_DETERMINATION_RUNTIME_COUNT = 0 as const;
+export const D5_APPROVAL_RUNTIME_COUNT = 0 as const;
+export const D5_CERTIFICATION_RUNTIME_COUNT = 0 as const;
+export const D5_HIDDEN_CALCULATION_ALLOWED = false as const;
+
+export const D5_CURRENTNESS_STATES = D4_CURRENTNESS_STATES;
+export const D5_REUSES_CANONICAL_CURRENTNESS = true as const;
+export const D5_CURRENTNESS_ARCHITECTURE_DEFINED = true as const;
+export const PARALLEL_D5_CURRENTNESS_ENGINE_CREATED = false as const;
+export const D5_FINGERPRINT_ALGORITHM = D4_FINGERPRINT_ALGORITHM;
+export const D5_REUSES_CANONICAL_FINGERPRINT = true as const;
+export const SECOND_D5_FINGERPRINT_ALGORITHM_CREATED = false as const;
+export const D5_DIGITAL_THREAD_MODULE = D4_DIGITAL_THREAD_MODULE;
+export const D5_REUSES_CANONICAL_DIGITAL_THREAD = true as const;
+export const D5_DIGITAL_THREAD_ARCHITECTURE_DEFINED = true as const;
+export const PARALLEL_D5_DIGITAL_THREAD_CREATED = false as const;
+export const D5_INFERRED_LINEAGE_ALLOWED = false as const;
+export const D5_HISTORICAL_REFERENCE_AUTO_REPOINT_ALLOWED = false as const;
+export const D5_EXACT_REVISION_REQUIRED = true as const;
+export const D5_MATURITY_STATES = D4_MATURITY_STATES;
+export const D5_CREATES_PARALLEL_MATURITY_ENUM = false as const;
+
+export const D5_JURISDICTION_PROFILE_IDS = EOS_JURISDICTION_PROFILE_IDS;
+export const D5_ADDS_JURISDICTION_PROFILE_ID = false as const;
+export const D5_CLAIMS_LEGAL_OR_REGULATORY_COMPLIANCE = false as const;
+export const D5_ENGINEERING_VALIDATED = false as const;
+export const D5_CONFORMANT = false as const;
+export const D5_APPROVED = false as const;
+export const D5_CERTIFIED = false as const;
+export const D5_GA_READY = false as const;
+
+export const D5_0_RUNTIME_STARTED = false as const;
+export const D5_RUNTIME_COUNT = 0 as const;
+export const D5_0_ADDS_SUBSTANTIVE_PIPING_RUNTIME = false as const;
+export const D5_PIPING_OBJECT_RUNTIME_COUNT = 0 as const;
+export const D5_0_DATABASE_SCHEMA_CHANGED = false as const;
+export const D5_0_NEW_DEPENDENCY_ADDED = false as const;
+export const D5_0_NEW_SUBSTANTIVE_RUNTIME_ADDED = false as const;
+
+export const D5_PRESERVES_D1_STRUCTURAL_PACK_INCOMPLETE = true as const;
+export const D5_PRESERVES_D1N_CLOSED = true as const;
+export const D5_PRESERVES_D2_TRACK_COMPLETE = true as const;
+export const D5_PRESERVES_D3_TRACK_COMPLETE = true as const;
+export const D5_PRESERVES_D4_TRACK_COMPLETE = true as const;
+export const D5_REOPENS_D1 = false as const;
+export const D5_REOPENS_D2 = false as const;
+export const D5_REOPENS_D3 = false as const;
+export const D5_REOPENS_D4 = false as const;
+export const D4_REOPENED = false as const;
+
+export const D5_IMPLEMENTATION_PHASES = [
+  "EOS-D5-R1-PIPING-IDENTITY-AND-OBJECT-FOUNDATION",
+  "EOS-D5-R2-PIPING-SYSTEM-LINE-AND-SERVICE-CONTEXT",
+  "EOS-D5-R3-DESIGN-CONDITIONS-AND-SPECIFICATION-CONTEXT",
+  "EOS-D5-R4-COMPONENT-CONNECTION-AND-VALVE-CONTEXT",
+  "EOS-D5-R5-ROUTING-ARRANGEMENT-AND-FABRICATION-CONTEXT",
+  "EOS-D5-R6-STRESS-SUPPORT-AND-TEST-EVIDENCE-CONTEXT",
+  "EOS-D5-R7-REQUIREMENTS-ASSUMPTIONS-AND-CHANGE",
+  "EOS-D5-R8-DISCIPLINE-INTERFACES-AND-HANDOFFS",
+  "EOS-D5-R9-REVIEW-AND-VALIDATION-GOVERNANCE",
+  "EOS-D5-R10-CURRENTNESS-AND-DIGITAL-THREAD",
+  "EOS-D5-R11-D9-SOURCE-CONTRACT",
+  "EOS-D5-R12-PIPING-BOUNDED-CLOSEOUT",
+] as const;
+export const D5_IMPLEMENTATION_PHASE_TYPES = [
+  "PIPING_IDENTITY_AND_OBJECT_FOUNDATION",
+  "PIPING_SYSTEM_LINE_AND_SERVICE_CONTEXT",
+  "DESIGN_CONDITIONS_AND_SPECIFICATION_CONTEXT",
+  "COMPONENT_CONNECTION_AND_VALVE_CONTEXT",
+  "ROUTING_ARRANGEMENT_AND_FABRICATION_CONTEXT",
+  "STRESS_SUPPORT_AND_TEST_EVIDENCE_CONTEXT",
+  "REQUIREMENTS_ASSUMPTIONS_AND_CHANGE",
+  "DISCIPLINE_INTERFACES_AND_HANDOFFS",
+  "REVIEW_AND_VALIDATION_GOVERNANCE",
+  "CURRENTNESS_AND_DIGITAL_THREAD",
+  "D9_SOURCE_CONTRACT",
+  "PIPING_BOUNDED_CLOSEOUT",
+] as const;
+export const D5_PHASE_DECOMPOSITION_DEFINED = true as const;
+export const D5_CANONICAL_PHASE_COUNT = D5_IMPLEMENTATION_PHASES.length;
+export const D5_CANONICAL_PHASE_SEQUENCE = D5_IMPLEMENTATION_PHASES.join(", ");
+export const D5_PHASE_PRIMARY_SUBJECTS = [
+  "IDENTITY_AND_OBJECT_FOUNDATION",
+  "SYSTEM_LINE_AND_SERVICE_CONTEXT",
+  "DESIGN_CONDITIONS_AND_SPECIFICATION_CONTEXT",
+  "COMPONENT_CONNECTION_AND_VALVE_CONTEXT",
+  "ROUTING_ARRANGEMENT_AND_FABRICATION_CONTEXT",
+  "STRESS_SUPPORT_AND_TEST_EVIDENCE_CONTEXT",
+  "REQUIREMENTS_ASSUMPTIONS_AND_CHANGE",
+  "DISCIPLINE_INTERFACES_AND_HANDOFFS",
+  "REVIEW_AND_VALIDATION_GOVERNANCE",
+  "CURRENTNESS_AND_DIGITAL_THREAD",
+  "D9_SOURCE_CONTRACT",
+  "BOUNDED_CLOSEOUT",
+] as const;
+export const D5_R1_CANONICAL_PHASE = D5_IMPLEMENTATION_PHASES[0];
+export const D5_R1_PHASE_TYPE = D5_IMPLEMENTATION_PHASE_TYPES[0];
+export const D5_R1_CANONICAL_SCOPE =
+  "Implement exact governed Piping identities and canonical object taxonomy with tenant/workspace/project scope, lifecycle/maturity, provenance, canonical currentness and canonical fingerprint. Do not implement line/service technical context, design conditions, specifications, components, routing, stress/support, review/validation, interfaces, D9 source contract or calculations." as const;
+export const D5_R1_STARTED = false as const;
+export const D5_0_READY_FOR_NEXT_PHASE = true as const;
+export const D5_0_NEXT_PHASE = D5_R1_CANONICAL_PHASE;
+export const D5_0_NEXT_PHASE_TYPE = D5_R1_PHASE_TYPE;
+export const D5_0_CANONICAL_NEXT_PHASE = D5_R1_CANONICAL_PHASE;
+export const D5_0_CANONICAL_NEXT_PHASE_SCOPE = D5_R1_CANONICAL_SCOPE;
+export const D5_0_BLOCKER = "NONE" as const;
+export const D5_0_MACHINE_READABLE_ROADMAP_UPDATED = true as const;
+export const D5_0_UNAUTHORIZED_D1_PACK_COMPLETION = false as const;
+export const D5_0_UNAUTHORIZED_D2_REOPEN = false as const;
+export const D5_0_UNAUTHORIZED_D3_REOPEN = false as const;
+export const D5_0_UNAUTHORIZED_D4_REOPEN = false as const;
+export const D5_0_UNAUTHORIZED_D5_RUNTIME_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_D6_D8_RUNTIME_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_D9_RUNTIME_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_PIPING_CALCULATION_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_PIPING_VALIDATION_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_PIPING_CONFORMANCE_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_PIPING_APPROVAL_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_PIPING_CERTIFICATION_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_CROSS_DISCIPLINE_REASONING_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_GA_PROMOTION = false as const;
+export const D5_0_UNAUTHORIZED_PRODUCT_CLAIM = false as const;

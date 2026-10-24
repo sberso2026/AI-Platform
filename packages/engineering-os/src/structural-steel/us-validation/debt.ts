@@ -1,0 +1,42 @@
+import type { UsValidationDebtItem } from "@rtb/types";
+
+export const US_VALIDATION_DEBT_REGISTER: readonly UsValidationDebtItem[] = [
+  { debtId: "US-VD-EDITION", description: "exact AISC standard edition unknown", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-AMENDMENT", description: "amendment/errata state unknown", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-ADOPTION", description: "building-code adoption datasets not populated", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-LOAD-EDITION", description: "load-standard edition/context not confirmed", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-AMENDMENT-SET", description: "local amendment datasets not populated", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-MATERIAL", description: "material/product property sources not certified as AISC design values", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-CATALOG", description: "US section/property catalogs not certified", priority: "COMMERCIAL_RELEASE_CRITICAL" },
+  { debtId: "US-VD-EFFECTIVE-NET", description: "effective-net-area rules not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-HOLE-DEDUCTION", description: "hole-deduction rules not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-TENSION-LRFD", description: "LRFD tension rules/factors not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-TENSION-ASD", description: "ASD tension rules/factors not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-COMPRESSION-CODE", description: "compression strength rules not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-STABILITY-METHOD", description: "stability-analysis-method validation not complete", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-CLASSIFICATION", description: "classification/local-buckling rules not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-TORSIONAL", description: "torsional buckling not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-FT-BUCKLING", description: "flexural-torsional buckling not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-FLEXURAL-CODE", description: "flexural strength not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-LTB-CODE", description: "LTB rules not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-CB", description: "Cb governance not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-TRANSITION", description: "transition parameters not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-SHEAR-AREA", description: "shear-area rules not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-WEB-SLENDERNESS", description: "web slenderness not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-WEB-STABILITY", description: "web stability not implemented", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-TENSION-FIELD", description: "tension-field action not implemented", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-INTERACTION", description: "combined-action equations unavailable", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-SLS-CRITERIA", description: "serviceability code criteria not supplied as default", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-THIRD-PARTY", description: "independent commercial-tool comparisons not available", priority: "COMMERCIAL_RELEASE_CRITICAL" },
+  { debtId: "US-VD-HUMAN", description: "human engineering validation of methods not complete", priority: "CONFORMANCE_CRITICAL" },
+  { debtId: "US-VD-SOLVER", description: "general structural analysis certification not present", priority: "COMMERCIAL_RELEASE_CRITICAL" },
+  { debtId: "US-VD-CONNECTION", description: "connection design outside member scope", priority: "SAFETY_CRITICAL" },
+  { debtId: "US-VD-SEISMIC", description: "seismic design outside current member scope", priority: "SAFETY_CRITICAL" },
+];
+
+export const US_VALIDATION_PRIORITY_PLAN = [
+  { rank: 1, priority: "SAFETY_CRITICAL" as const, items: US_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "SAFETY_CRITICAL").map((row) => row.debtId) },
+  { rank: 2, priority: "CONFORMANCE_CRITICAL" as const, items: US_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "CONFORMANCE_CRITICAL").map((row) => row.debtId) },
+  { rank: 3, priority: "COMMERCIAL_RELEASE_CRITICAL" as const, items: US_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "COMMERCIAL_RELEASE_CRITICAL").map((row) => row.debtId) },
+  { rank: 4, priority: "ENHANCEMENT" as const, items: [] as string[] },
+] as const;

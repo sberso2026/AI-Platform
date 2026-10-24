@@ -1,0 +1,1387 @@
+/**
+ * Phase 11G — Project Context Engine.
+ *
+ * Composes a `ProjectProfile` from the intelligence Project Controls owns.
+ * Active contributors: progress intelligence (11B), schedule intelligence (11C),
+ * change intelligence (11D), cost intelligence (11E), productivity intelligence
+ * (11F), forecast intelligence (11G), decision support (11H), scenario
+ * intelligence (11I), and risk & opportunity intelligence (11J). Contingency
+ * and earned value stay reserved.
+ *
+ * The engine reads a `ProjectReference` for identity fields. It never writes
+ * identity and never re-derives it from its own tables.
+ */
+
+import type { ProjectReference } from "@rtb/engineering-shared-project-domain";
+import {
+  PROJECT_PROFILE_CONTRIBUTOR_KEYS,
+  type ProgressAssessmentState,
+  type ProgressBand,
+  type ProgressConfidenceClass,
+  type ProgressEvidenceSufficiency,
+  type ProjectProfile,
+  type ProjectProfileContributor,
+  type ProjectProfileContributorKey,
+} from "./progress";
+import {
+  dominantMilestonePosture,
+  type MilestonePosture,
+  type ScheduleAssessmentState,
+  type ScheduleConfidenceClass,
+  type ScheduleEvidenceSufficiency,
+} from "./schedule";
+import {
+  dominantChangeClass,
+  type ChangeClassification,
+  type ChangeConfidenceClass,
+  type ChangeEvidenceSufficiency,
+  type ChangeIntelligenceState,
+  type ChangeProfileContribution,
+} from "./change";
+import {
+  dominantCostPosture,
+  type CostConfidenceClass,
+  type CostEvidenceSufficiency,
+  type CostIntelligenceState,
+  type CostPosture,
+  type CostProfileContribution,
+  type CostVarianceAttribution,
+} from "./cost";
+import {
+  dominantProductivityPosture,
+  type ProductivityAssessmentState,
+  type ProductivityConfidenceClass,
+  type ProductivityEvidenceSufficiency,
+  type ProductivityPosture,
+  type ProductivityProfileContribution,
+} from "./productivity";
+import {
+  dominantForecastPosture,
+  type ForecastAssessmentState,
+  type ForecastConfidenceClass,
+  type ForecastEvidenceSufficiency,
+  type ForecastPosture,
+  type ForecastProfileContribution,
+} from "./forecast";
+import {
+  dominantDecisionClass,
+  type DecisionAssessmentState,
+  type DecisionConfidenceClass,
+  type DecisionEvidenceSufficiency,
+  type DecisionClass,
+  type DecisionProfileContribution,
+} from "./decision";
+import {
+  type ScenarioAssessmentState,
+  type ScenarioConfidenceClass,
+  type ScenarioEvidenceSufficiency,
+  type ScenarioType,
+  type ScenarioProfileContribution,
+} from "./scenario";
+import {
+  type RiskOpportunityAssessmentState,
+  type RiskOpportunityConfidenceClass,
+  type RiskOpportunityEvidenceSufficiency,
+  type RiskOpportunityProfileContribution,
+  type RiskSignal,
+  type OpportunitySignal,
+} from "./risk-opportunity";
+import {
+  type AssuranceAssessmentState,
+  type AssuranceConfidenceClass,
+  type AssuranceEvidenceSufficiency,
+  type AssuranceFindingKind,
+  type AssurancePosture,
+  type AssuranceProfileContribution,
+} from "./assurance";
+import {
+  type ExplainabilityAssessmentState,
+  type ExplainabilityConfidenceClass,
+  type ExplainabilityEvidenceSufficiency,
+  type ExplanationReason,
+  type ExplanationStatus,
+  type ExplainabilityProfileContribution,
+} from "./explainability";
+import type {
+  OrganizationalLearningAssessmentState,
+  OrganizationalLearningProfileContribution,
+} from "./organizational-learning";
+import { PROJECT_CONTEXT_ENGINE_READY } from "../version";
+
+export const PROJECT_PROFILE_CONTRIBUTORS: readonly ProjectProfileContributor[] = [
+  {
+    key: "progress_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes: "Advisory, evidence-driven progress assessments. Implemented in Phase 11B.",
+  },
+  {
+    key: "schedule_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory, evidence-driven schedule / milestone posture. Implemented in Phase 11C. Not CPM.",
+  },
+  {
+    key: "change_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory, evidence-driven change assessment. Implemented in Phase 11D. Not contractual change authority.",
+  },
+  {
+    key: "cost_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory, evidence-driven cost posture assessment. Implemented in Phase 11E. Not a budget ledger or financial posting.",
+  },
+  {
+    key: "productivity_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory, evidence-driven execution efficiency assessment. Implemented in Phase 11F. Not workforce management or labour %.",
+  },
+  {
+    key: "forecast",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory trajectory from composed contributors. Implemented in Phase 11G. Not completion date or cost forecast.",
+  },
+  {
+    key: "decision_support",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory options and recommendations from composed contributors and forecast. Implemented in Phase 11H. Not auto-execution or contract approval.",
+  },
+  {
+    key: "scenario_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Exploratory scenario comparison from composed contributors, forecast, and decision support. Implemented in Phase 11I. Not preferred selection or optimisation.",
+  },
+  {
+    key: "risk_opportunity_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory risk/opportunity intelligence signals from composed contributors through scenario intelligence. Implemented in Phase 11J. Not register mutation, owner assignment, or treatment execution.",
+  },
+  {
+    key: "assurance_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory assurance posture from all published contributors and evidence metadata. Implemented in Phase 11K. Not verification, certification, approval, or evidence approval.",
+  },
+  {
+    key: "explainability_intelligence",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Public explainability summaries with evidence/provenance/dependency traces. Implemented in Phase 11L. Not chain-of-thought, hidden inference, approval, or verification.",
+  },
+  {
+    key: "organizational_learning",
+    status: "active",
+    ownedBy: "project_controls",
+    notes:
+      "Advisory organizational learning references from historical evidence. Implemented in Phase 11M. Not prediction, recommendation, approval, or knowledge mutation.",
+  },
+  {
+    key: "contingency_intelligence",
+    status: "reserved",
+    ownedBy: "project_controls",
+    notes: "Reserved. No contingency drawdown.",
+  },
+  {
+    key: "earned_value",
+    status: "reserved",
+    ownedBy: "project_controls",
+    notes: "Reserved and forbidden to implement.",
+  },
+] as const;
+
+export const ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS: readonly ProjectProfileContributorKey[] =
+  PROJECT_PROFILE_CONTRIBUTORS.filter((c) => c.status === "active").map((c) => c.key);
+
+export const RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS: readonly ProjectProfileContributorKey[] =
+  PROJECT_PROFILE_CONTRIBUTORS.filter((c) => c.status === "reserved").map((c) => c.key);
+
+export type ProjectContextComposeInput = {
+  tenantId: string;
+  workspaceId: string;
+  projectReference: ProjectReference;
+  progress: readonly ProgressAssessmentState[];
+  schedule?: readonly ScheduleAssessmentState[];
+  change?: readonly ChangeIntelligenceState[];
+  cost?: readonly CostIntelligenceState[];
+  productivity?: readonly ProductivityAssessmentState[];
+  forecast?: readonly ForecastAssessmentState[];
+  decision?: readonly DecisionAssessmentState[];
+  scenario?: readonly ScenarioAssessmentState[];
+  riskOpportunity?: readonly RiskOpportunityAssessmentState[];
+  assurance?: readonly AssuranceAssessmentState[];
+  explainability?: readonly ExplainabilityAssessmentState[];
+  organizationalLearning?: readonly OrganizationalLearningAssessmentState[];
+  /** Number of open change candidates; a candidate is never an approved change. */
+  changeCandidateCount?: number;
+  version?: number;
+  asOf?: string;
+  createdBy?: string;
+  supersedesId?: string;
+};
+
+export type ProjectContextComposeResult = {
+  profile: ProjectProfile;
+  abstained: boolean;
+  abstentionReason?: string;
+};
+
+export type ProjectContextEngineDeps = {
+  newId?: (prefix: string) => string;
+};
+
+const PROGRESS_CONFIDENCE_ORDER: ProgressConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const SCHEDULE_CONFIDENCE_ORDER: ScheduleConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const CHANGE_CONFIDENCE_ORDER: ChangeConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const COST_CONFIDENCE_ORDER: CostConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const PRODUCTIVITY_CONFIDENCE_ORDER: ProductivityConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const FORECAST_CONFIDENCE_ORDER: ForecastConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const DECISION_CONFIDENCE_ORDER: DecisionConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const SCENARIO_CONFIDENCE_ORDER: ScenarioConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const ASSURANCE_CONFIDENCE_ORDER: AssuranceConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const EXPLAINABILITY_CONFIDENCE_ORDER: ExplainabilityConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+const RISK_OPPORTUNITY_CONFIDENCE_ORDER: RiskOpportunityConfidenceClass[] = [
+  "unavailable",
+  "low",
+  "medium",
+  "high",
+];
+
+export class ProjectContextEngine {
+  readonly kind = "project_context_engine" as const;
+  private readonly newId: (prefix: string) => string;
+
+  constructor(deps: ProjectContextEngineDeps = {}) {
+    if (!PROJECT_CONTEXT_ENGINE_READY) {
+      throw new Error("project_context_engine_not_ready");
+    }
+    this.newId = deps.newId ?? ((prefix) => `${prefix}_${Math.random().toString(36).slice(2, 12)}`);
+  }
+
+  compose(input: ProjectContextComposeInput): ProjectContextComposeResult {
+    const asOf = input.asOf ?? new Date().toISOString();
+    const reference = input.projectReference;
+    if (reference.owner !== "engineering_os_shared_project_domain") {
+      throw new Error("project_reference_owner_mismatch");
+    }
+    if (reference.projectId === "") throw new Error("project_id_required");
+
+    const progress = (input.progress ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const schedule = (input.schedule ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const change = (input.change ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const cost = (input.cost ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const productivity = (input.productivity ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const forecast = (input.forecast ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const decision = (input.decision ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const scenario = (input.scenario ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const riskOpportunity = (input.riskOpportunity ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const assurance = (input.assurance ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const explainability = (input.explainability ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+
+    const reasons: string[] = [];
+    const progressAssessed = progress.filter((state) => !state.abstained);
+    const progressAbstained = progress.filter((state) => state.abstained);
+    const progressPublished = progress.filter((state) => state.status === "published");
+    const scheduleAssessed = schedule.filter((state) => !state.abstained);
+    const scheduleAbstained = schedule.filter((state) => state.abstained);
+    const schedulePublished = schedule.filter((state) => state.status === "published");
+    const changeAssessed = change.filter((state) => !state.abstained);
+    const changeAbstained = change.filter((state) => state.abstained);
+    const changePublished = change.filter((state) => state.status === "published");
+    const costAssessed = cost.filter((state) => !state.abstained);
+    const costAbstained = cost.filter((state) => state.abstained);
+    const costPublished = cost.filter((state) => state.status === "published");
+    const productivityAssessed = productivity.filter((state) => !state.abstained);
+    const productivityAbstained = productivity.filter((state) => state.abstained);
+    const productivityPublished = productivity.filter((state) => state.status === "published");
+    const forecastAssessed = forecast.filter((state) => !state.abstained);
+    const forecastAbstained = forecast.filter((state) => state.abstained);
+    const forecastPublished = forecast.filter((state) => state.status === "published");
+    const decisionAssessed = decision.filter((state) => !state.abstained);
+    const decisionAbstained = decision.filter((state) => state.abstained);
+    const decisionPublished = decision.filter((state) => state.status === "published");
+    const scenarioAssessed = scenario.filter((state) => !state.abstained);
+    const scenarioAbstained = scenario.filter((state) => state.abstained);
+    const scenarioPublished = scenario.filter((state) => state.status === "published");
+    const riskOpportunityAssessed = riskOpportunity.filter((state) => !state.abstained);
+    const riskOpportunityAbstained = riskOpportunity.filter((state) => state.abstained);
+    const riskOpportunityPublished = riskOpportunity.filter((state) => state.status === "published");
+    const assuranceAssessed = assurance.filter((state) => !state.abstained);
+    const assuranceAbstained = assurance.filter((state) => state.abstained);
+    const assurancePublished = assurance.filter((state) => state.status === "published");
+    const explainabilityAssessed = explainability.filter((state) => !state.abstained);
+    const explainabilityAbstained = explainability.filter((state) => state.abstained);
+    const explainabilityPublished = explainability.filter((state) => state.status === "published");
+    const organizationalLearning = (input.organizationalLearning ?? []).filter(
+      (state) =>
+        state.projectId === reference.projectId &&
+        state.tenantId === input.tenantId &&
+        state.workspaceId === input.workspaceId,
+    );
+    const organizationalLearningAssessed = organizationalLearning.filter((state) => !state.abstained);
+    const organizationalLearningAbstained = organizationalLearning.filter((state) => state.abstained);
+    const organizationalLearningPublished = organizationalLearning.filter((state) => state.status === "published");
+
+    const projectProgress = progress
+      .filter((state) => state.scope.kind === "project")
+      .sort((a, b) => Date.parse(b.assessedAt) - Date.parse(a.assessedAt))[0];
+
+    let abstained = false;
+    let abstentionReason: string | undefined;
+    let profileClass: ProjectProfile["profileClass"] = "composed";
+
+    if (
+      progress.length === 0 &&
+      schedule.length === 0 &&
+      change.length === 0 &&
+      cost.length === 0 &&
+      productivity.length === 0 &&
+      forecast.length === 0 &&
+      decision.length === 0 &&
+      scenario.length === 0 &&
+      riskOpportunity.length === 0
+    ) {
+      abstained = true;
+      abstentionReason = "no_project_controls_intelligence_available";
+      profileClass = "abstained";
+      reasons.push("no_project_controls_intelligence_available");
+    } else if (
+      progressAssessed.length === 0 &&
+      scheduleAssessed.length === 0 &&
+      changeAssessed.length === 0 &&
+      costAssessed.length === 0 &&
+      productivityAssessed.length === 0 &&
+      forecastAssessed.length === 0 &&
+      decisionAssessed.length === 0 &&
+      scenarioAssessed.length === 0 &&
+      riskOpportunityAssessed.length === 0
+    ) {
+      abstained = true;
+      abstentionReason = "all_intelligence_assessments_abstained";
+      profileClass = "abstained";
+      reasons.push("all_intelligence_assessments_abstained");
+    } else if (
+      progressAbstained.length > 0 ||
+      scheduleAbstained.length > 0 ||
+      changeAbstained.length > 0 ||
+      costAbstained.length > 0 ||
+      productivityAbstained.length > 0 ||
+      forecastAbstained.length > 0 ||
+      decisionAbstained.length > 0 ||
+      scenarioAbstained.length > 0 ||
+      riskOpportunityAbstained.length > 0 ||
+      assuranceAbstained.length > 0 ||
+      explainabilityAbstained.length > 0 ||
+      progressPublished.length === 0 ||
+      (schedule.length > 0 && schedulePublished.length === 0) ||
+      (change.length > 0 && changePublished.length === 0) ||
+      (cost.length > 0 && costPublished.length === 0) ||
+      (productivity.length > 0 && productivityPublished.length === 0) ||
+      (forecast.length > 0 && forecastPublished.length === 0) ||
+      (decision.length > 0 && decisionPublished.length === 0) ||
+      (scenario.length > 0 && scenarioPublished.length === 0) ||
+      (riskOpportunity.length > 0 && riskOpportunityPublished.length === 0)
+    ) {
+      profileClass = "partially_composed";
+      if (progressAbstained.length > 0) reasons.push("some_progress_scopes_abstained");
+      if (scheduleAbstained.length > 0) reasons.push("some_schedule_scopes_abstained");
+      if (changeAbstained.length > 0) reasons.push("some_change_assessments_abstained");
+      if (costAbstained.length > 0) reasons.push("some_cost_assessments_abstained");
+      if (productivityAbstained.length > 0) reasons.push("some_productivity_assessments_abstained");
+      if (forecastAbstained.length > 0) reasons.push("some_forecast_assessments_abstained");
+      if (decisionAbstained.length > 0) reasons.push("some_decision_assessments_abstained");
+      if (scenarioAbstained.length > 0) reasons.push("some_scenario_assessments_abstained");
+      if (riskOpportunityAbstained.length > 0) reasons.push("some_risk_opportunity_assessments_abstained");
+      if (assuranceAbstained.length > 0) reasons.push("some_assurance_assessments_abstained");
+      if (explainabilityAbstained.length > 0) {
+        reasons.push("some_explainability_assessments_abstained");
+      }
+      if (progressPublished.length === 0 && progress.length > 0) {
+        reasons.push("no_published_progress_yet");
+      }
+      if (schedule.length > 0 && schedulePublished.length === 0) {
+        reasons.push("no_published_schedule_yet");
+      }
+      if (change.length > 0 && changePublished.length === 0) {
+        reasons.push("no_published_change_assessment_yet");
+      }
+      if (cost.length > 0 && costPublished.length === 0) {
+        reasons.push("no_published_cost_assessment_yet");
+      }
+      if (productivity.length > 0 && productivityPublished.length === 0) {
+        reasons.push("no_published_productivity_assessment_yet");
+      }
+      if (forecast.length > 0 && forecastPublished.length === 0) {
+        reasons.push("no_published_forecast_assessment_yet");
+      }
+      if (decision.length > 0 && decisionPublished.length === 0) {
+        reasons.push("no_published_decision_assessment_yet");
+      }
+      if (scenario.length > 0 && scenarioPublished.length === 0) {
+        reasons.push("no_published_scenario_assessment_yet");
+      }
+      if (riskOpportunity.length > 0 && riskOpportunityPublished.length === 0) {
+        reasons.push("no_published_risk_opportunity_assessment_yet");
+      }
+    }
+
+    reasons.push(`reserved_contributors:${RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS.join("|")}`);
+
+    const schedulePostures = scheduleAssessed
+      .map((state) => state.milestonePosture)
+      .filter((value): value is MilestonePosture => typeof value === "string");
+
+    const profile: ProjectProfile = {
+      profileId: this.newId("pcprofile"),
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      projectId: reference.projectId,
+      version: input.version ?? 1,
+      profileClass,
+      composedAt: asOf,
+      recordedAt: asOf,
+      projectCode: reference.projectCode,
+      projectName: reference.projectName,
+      projectPhase: reference.projectPhase,
+      projectStatus: reference.status,
+      progress: {
+        scopesAssessed: progressAssessed.length,
+        scopesAbstained: progressAbstained.length,
+        publishedScopes: progressPublished.length,
+        projectScopeIndication:
+          projectProgress && !projectProgress.abstained
+            ? projectProgress.indicatedCompletion
+            : undefined,
+        projectScopeBand:
+          projectProgress && !projectProgress.abstained
+            ? (projectProgress.band as ProgressBand | undefined)
+            : undefined,
+        lowestConfidenceClass: lowestProgressConfidence(progress),
+        dominantSufficiency: dominantProgress(progress),
+        latestAssessmentAt: latestAt(progress.map((s) => s.assessedAt)),
+      },
+      schedule: {
+        scopesAssessed: scheduleAssessed.length,
+        scopesAbstained: scheduleAbstained.length,
+        publishedScopes: schedulePublished.length,
+        dominantMilestonePosture: dominantMilestonePosture(schedulePostures),
+        lowestConfidenceClass: lowestScheduleConfidence(schedule),
+        dominantSufficiency: dominantSchedule(schedule),
+        latestAssessmentAt: latestAt(schedule.map((s) => s.assessedAt)),
+      },
+      change: {
+        changesAssessed: changeAssessed.length,
+        changesAbstained: changeAbstained.length,
+        publishedChanges: changePublished.length,
+        candidateCount: input.changeCandidateCount ?? 0,
+        pendingContextCount: countStatusContext(changeAssessed, "pending"),
+        approvedContextCount: countStatusContext(changeAssessed, "approved_context"),
+        rejectedContextCount: countStatusContext(changeAssessed, "rejected_context"),
+        dominantChangeClass: dominantChangeClass(
+          changeAssessed.map((state) => state.changeClass),
+        ),
+        lowestConfidenceClass: lowestChangeConfidence(change),
+        dominantSufficiency: dominantChange(change),
+        latestAssessmentAt: latestAt(change.map((s) => s.assessedAt)),
+        contractualAuthorityClaimed: false,
+      } satisfies ChangeProfileContribution,
+      cost: {
+        costsAssessed: costAssessed.length,
+        costsAbstained: costAbstained.length,
+        publishedCosts: costPublished.length,
+        overCount: countPosture(costAssessed, "over"),
+        underCount: countPosture(costAssessed, "under"),
+        withinToleranceCount: countPosture(costAssessed, "within_tolerance"),
+        attentionRequiredCount: countPosture(costAssessed, "attention_required"),
+        unexplainedVarianceCount: countVarianceAttribution(
+          costAssessed,
+          "unexplained_movement",
+        ),
+        changeExplainedVarianceCount: countVarianceAttribution(
+          costAssessed,
+          "explained_by_approved_change",
+        ),
+        dominantPosture: dominantCostPosture(
+          costAssessed.map((state) => state.costPosture),
+        ),
+        dominantVarianceAttribution: dominantVarianceAttribution(costAssessed),
+        lowestConfidenceClass: lowestCostConfidence(cost),
+        dominantSufficiency: dominantCost(cost),
+        latestAssessmentAt: latestAt(cost.map((s) => s.assessedAt)),
+        financialPostingClaimed: false,
+      } satisfies CostProfileContribution,
+      productivity: {
+        productivityAssessed: productivityAssessed.length,
+        productivityAbstained: productivityAbstained.length,
+        publishedProductivity: productivityPublished.length,
+        improvingCount: countProductivityPosture(productivityAssessed, "improving"),
+        stableCount: countProductivityPosture(productivityAssessed, "stable"),
+        decliningCount: countProductivityPosture(productivityAssessed, "declining"),
+        constrainedCount: countProductivityPosture(productivityAssessed, "constrained"),
+        recoveringCount: countProductivityPosture(productivityAssessed, "recovering"),
+        dominantPosture: dominantProductivityPosture(
+          productivityAssessed.map((state) => state.productivityPosture),
+        ),
+        factorPresenceCount: productivityAssessed.reduce(
+          (sum, state) => sum + state.factors.filter((f) => f.present).length,
+          0,
+        ),
+        lowestConfidenceClass: lowestProductivityConfidence(productivity),
+        dominantSufficiency: dominantProductivity(productivity),
+        latestAssessmentAt: latestAt(productivity.map((s) => s.assessedAt)),
+        labourProductivityPercentClaimed: false,
+      } satisfies ProductivityProfileContribution,
+      forecast: {
+        forecastsAssessed: forecastAssessed.length,
+        forecastsAbstained: forecastAbstained.length,
+        publishedForecasts: forecastPublished.length,
+        favourableCount: countForecastPosture(forecastAssessed, "favourable"),
+        stableCount: countForecastPosture(forecastAssessed, "stable"),
+        uncertainCount: countForecastPosture(forecastAssessed, "uncertain"),
+        deterioratingCount: countForecastPosture(forecastAssessed, "deteriorating"),
+        recoveryPossibleCount: countForecastPosture(forecastAssessed, "recovery_possible"),
+        dominantPosture: dominantForecastPosture(
+          forecastAssessed.map((state) => state.forecastPosture),
+        ),
+        contributorCoverageCount: forecastAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestForecastConfidence(forecast),
+        dominantSufficiency: dominantForecast(forecast),
+        latestAssessmentAt: latestAt(forecast.map((s) => s.assessedAt)),
+        completionDateClaimed: false,
+      } satisfies ForecastProfileContribution,
+      decisionSupport: {
+        decisionsAssessed: decisionAssessed.length,
+        decisionsAbstained: decisionAbstained.length,
+        publishedDecisions: decisionPublished.length,
+        monitorCount: countDecisionClass(decisionAssessed, "monitor"),
+        investigateCount: countDecisionClass(decisionAssessed, "investigate"),
+        escalateCount: countDecisionClass(decisionAssessed, "escalate"),
+        reviewCount: countDecisionClass(decisionAssessed, "review"),
+        coordinateCount: countDecisionClass(decisionAssessed, "coordinate"),
+        deferCount: countDecisionClass(decisionAssessed, "defer"),
+        prioritiseCount: countDecisionClass(decisionAssessed, "prioritise"),
+        dominantDecisionClass: dominantDecisionClass(
+          decisionAssessed.flatMap((state) =>
+            state.recommendations.map((rec) => rec.decisionClass),
+          ),
+        ),
+        recommendationCount: decisionAssessed.reduce(
+          (sum, state) => sum + state.recommendations.length,
+          0,
+        ),
+        contributorCoverageCount: decisionAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestDecisionConfidence(decision),
+        dominantSufficiency: dominantDecision(decision),
+        latestAssessmentAt: latestAt(decision.map((s) => s.assessedAt)),
+        autoExecutionClaimed: false,
+        approvalAuthorityClaimed: false,
+        completionDatePredicted: false,
+        costDecisionComputed: false,
+        scheduleExecuted: false,
+      } satisfies DecisionProfileContribution,
+      scenarioIntelligence: {
+        scenariosAssessed: scenarioAssessed.length,
+        scenariosAbstained: scenarioAbstained.length,
+        publishedScenarios: scenarioPublished.length,
+        maintainCurrentPostureCount: countScenarioType(scenarioAssessed, "maintain_current_posture"),
+        investigateCount: countScenarioType(scenarioAssessed, "investigate"),
+        coordinateCount: countScenarioType(scenarioAssessed, "coordinate"),
+        prioritiseCount: countScenarioType(scenarioAssessed, "prioritise"),
+        deferCount: countScenarioType(scenarioAssessed, "defer"),
+        recoveryPlanningCount: countScenarioType(scenarioAssessed, "recovery_planning"),
+        alternativeSequenceCount: countScenarioType(scenarioAssessed, "alternative_sequence"),
+        unknownCount: countScenarioType(scenarioAssessed, "unknown"),
+        scenarioOptionCount: scenarioAssessed.reduce(
+          (sum, state) => sum + state.scenarioOptions.length,
+          0,
+        ),
+        contributorCoverageCount: scenarioAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestScenarioConfidence(scenario),
+        dominantSufficiency: dominantScenario(scenario),
+        latestAssessmentAt: latestAt(scenario.map((s) => s.assessedAt)),
+        autoExecutionClaimed: false,
+        approvalAuthorityClaimed: false,
+        preferredScenarioSelected: false,
+        optimisationPerformed: false,
+        completionDatePredicted: false,
+        costDecisionComputed: false,
+        scheduleExecuted: false,
+      } satisfies ScenarioProfileContribution,
+      riskOpportunityIntelligence: {
+        assessmentsCompleted: riskOpportunityAssessed.length,
+        assessmentsAbstained: riskOpportunityAbstained.length,
+        publishedAssessments: riskOpportunityPublished.length,
+        emergingRiskCount: countRiskSignal(riskOpportunityAssessed, "emerging"),
+        increasingRiskCount: countRiskSignal(riskOpportunityAssessed, "increasing"),
+        persistentRiskCount: countRiskSignal(riskOpportunityAssessed, "persistent"),
+        interactingRiskCount: countRiskSignal(riskOpportunityAssessed, "interacting"),
+        unresolvedRiskCount: countRiskSignal(riskOpportunityAssessed, "unresolved"),
+        evidenceGapRiskCount: countRiskSignal(riskOpportunityAssessed, "evidence_gap"),
+        unknownRiskCount: countRiskSignal(riskOpportunityAssessed, "unknown"),
+        recoveryOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "recovery"),
+        mitigationOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "mitigation"),
+        coordinationOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "coordination"),
+        sequencingOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "sequencing"),
+        productivityOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "productivity"),
+        costAvoidanceOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "cost_avoidance"),
+        scheduleProtectionOpportunityCount: countOpportunitySignal(
+          riskOpportunityAssessed,
+          "schedule_protection",
+        ),
+        unknownOpportunityCount: countOpportunitySignal(riskOpportunityAssessed, "unknown"),
+        riskSignalCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.riskSignals.length,
+          0,
+        ),
+        opportunitySignalCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.opportunitySignals.length,
+          0,
+        ),
+        crossContributorConflictCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.synthesis.crossContributorConflicts.length,
+          0,
+        ),
+        escalationIndicatorCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.synthesis.escalationIndicators.length,
+          0,
+        ),
+        contributorCoverageCount: riskOpportunityAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestRiskOpportunityConfidence(riskOpportunity),
+        dominantSufficiency: dominantRiskOpportunity(riskOpportunity),
+        latestAssessmentAt: latestAt(riskOpportunity.map((s) => s.assessedAt)),
+        autoExecutionClaimed: false,
+        approvalAuthorityClaimed: false,
+        riskRegisterMutated: false,
+        opportunityRegisterMutated: false,
+        ownerAssignmentPerformed: false,
+        treatmentExecutionPerformed: false,
+        duplicateRiskOwnershipDetected: false,
+      } satisfies RiskOpportunityProfileContribution,
+      assuranceIntelligence: {
+        assessmentsCompleted: assuranceAssessed.length,
+        assessmentsAbstained: assuranceAbstained.length,
+        publishedAssessments: assurancePublished.length,
+        strongPostureCount: countAssurancePosture(assuranceAssessed, "strong"),
+        adequatePostureCount: countAssurancePosture(assuranceAssessed, "adequate"),
+        constrainedPostureCount: countAssurancePosture(assuranceAssessed, "constrained"),
+        weakPostureCount: countAssurancePosture(assuranceAssessed, "weak"),
+        insufficientPostureCount: countAssurancePosture(assuranceAssessed, "insufficient"),
+        conflictingPostureCount: countAssurancePosture(assuranceAssessed, "conflicting"),
+        unknownPostureCount: countAssurancePosture(assuranceAssessed, "unknown"),
+        completeFindingCount: countAssuranceFinding(assuranceAssessed, "complete"),
+        incompleteFindingCount: countAssuranceFinding(assuranceAssessed, "incomplete"),
+        staleFindingCount: countAssuranceFinding(assuranceAssessed, "stale"),
+        conflictingFindingCount: countAssuranceFinding(assuranceAssessed, "conflicting"),
+        missingSourceFindingCount: countAssuranceFinding(assuranceAssessed, "missing_source"),
+        missingProvenanceFindingCount: countAssuranceFinding(assuranceAssessed, "missing_provenance"),
+        unsupportedFindingCount: countAssuranceFinding(assuranceAssessed, "unsupported"),
+        dependencyGapFindingCount: countAssuranceFinding(assuranceAssessed, "dependency_gap"),
+        unavailableFindingCount: countAssuranceFinding(assuranceAssessed, "unavailable"),
+        unknownFindingCount: countAssuranceFinding(assuranceAssessed, "unknown"),
+        contributorCoverageCount: assuranceAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        crossContributorConflictCount: assuranceAssessed.reduce(
+          (sum, state) => sum + state.synthesis.crossContributorConflicts.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestAssuranceConfidence(assurance),
+        dominantSufficiency: dominantAssurance(assurance),
+        latestAssessmentAt: latestAt(assurance.map((s) => s.assessedAt)),
+      } satisfies AssuranceProfileContribution,
+      organizationalLearning: {
+        assessmentsCompleted: organizationalLearningAssessed.length,
+        assessmentsAbstained: organizationalLearningAbstained.length,
+        publishedAssessments: organizationalLearningPublished.length,
+        historicalPatternCount: countTaxonomy(organizationalLearningAssessed, "historical_pattern"),
+        recurringIssueCount: countTaxonomy(organizationalLearningAssessed, "recurring_issue"),
+        recurringSuccessCount: countTaxonomy(organizationalLearningAssessed, "recurring_success"),
+        lessonLearnedCount: countTaxonomy(organizationalLearningAssessed, "lesson_learned"),
+        knowledgeGapCount: countTaxonomy(organizationalLearningAssessed, "knowledge_gap"),
+        bestPracticeCount: countTaxonomy(organizationalLearningAssessed, "best_practice"),
+        similarProjectCount: countTaxonomy(organizationalLearningAssessed, "similar_project"),
+        unknownCount: countTaxonomy(organizationalLearningAssessed, "unknown"),
+        contributorCoverageCount: organizationalLearningAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        crossProjectRefCount: organizationalLearningAssessed.reduce(
+          (sum, state) => sum + state.crossProjectKnowledgeRefs.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestOrganizationalLearningConfidence(organizationalLearning),
+        dominantSufficiency: dominantOrganizationalLearning(organizationalLearning),
+        latestAssessmentAt: latestAt(organizationalLearning.map((s) => s.assessedAt)),
+      } satisfies OrganizationalLearningProfileContribution,
+      explainabilityIntelligence: {
+        assessmentsCompleted: explainabilityAssessed.length,
+        assessmentsAbstained: explainabilityAbstained.length,
+        publishedAssessments: explainabilityPublished.length,
+        supportedCount: countExplanationStatus(explainabilityAssessed, "supported"),
+        partiallySupportedCount: countExplanationStatus(explainabilityAssessed, "partially_supported"),
+        unsupportedCount: countExplanationStatus(explainabilityAssessed, "unsupported"),
+        conflictingCount: countExplanationStatus(explainabilityAssessed, "conflicting"),
+        incompleteCount: countExplanationStatus(explainabilityAssessed, "incomplete"),
+        unknownCount: countExplanationStatus(explainabilityAssessed, "unknown"),
+        evidenceBasedReasonCount: countExplanationReason(explainabilityAssessed, "evidence_based"),
+        derivedReasonCount: countExplanationReason(explainabilityAssessed, "derived"),
+        assumedReasonCount: countExplanationReason(explainabilityAssessed, "assumed"),
+        insufficientEvidenceReasonCount: countExplanationReason(
+          explainabilityAssessed,
+          "insufficient_evidence",
+        ),
+        unknownReasonCount: countExplanationReason(explainabilityAssessed, "unknown"),
+        contributorCoverageCount: explainabilityAssessed.reduce(
+          (sum, state) => sum + state.contributingContributors.length,
+          0,
+        ),
+        crossContributorConflictCount: explainabilityAssessed.reduce(
+          (sum, state) => sum + state.synthesis.crossContributorConflictNotes.length,
+          0,
+        ),
+        lowestConfidenceClass: lowestExplainabilityConfidence(explainability),
+        dominantSufficiency: dominantExplainability(explainability),
+        latestAssessmentAt: latestAt(explainability.map((s) => s.assessedAt)),
+      } satisfies ExplainabilityProfileContribution,
+      contributors: PROJECT_PROFILE_CONTRIBUTORS,
+      activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
+      reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
+      reasons: [...new Set(reasons)],
+      abstained,
+      abstentionReason,
+      createdBy: input.createdBy,
+      supersedesId: input.supersedesId,
+      earnedValueComputed: false,
+      criticalPathComputed: false,
+      floatComputed: false,
+      costIntegrated: false,
+      financialPostingPerformed: false,
+      contractualApprovalClaimed: false,
+      forecastProduced: false,
+      advisoryOnly: true,
+      mutatesProjectIdentity: false,
+      isProjectRegistry: false,
+    };
+
+    return { profile, abstained, abstentionReason };
+  }
+}
+
+export function createProjectContextEngine(
+  deps: ProjectContextEngineDeps = {},
+): ProjectContextEngine {
+  return new ProjectContextEngine(deps);
+}
+
+export function assertProjectProfileContributorsComplete(): {
+  ok: true;
+  activeContributorKeys: readonly ProjectProfileContributorKey[];
+  reservedContributorKeys: readonly ProjectProfileContributorKey[];
+} {
+  const declared = new Set(PROJECT_PROFILE_CONTRIBUTOR_KEYS);
+  const listed = new Set(PROJECT_PROFILE_CONTRIBUTORS.map((c) => c.key));
+  if (declared.size !== listed.size) {
+    throw new Error("project_profile_contributor_list_incomplete");
+  }
+  for (const key of declared) {
+    if (!listed.has(key)) throw new Error(`project_profile_contributor_missing:${key}`);
+  }
+  if (ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.length !== 12) {
+    throw new Error("phase_11m_must_have_exactly_twelve_active_contributors");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("progress_intelligence")) {
+    throw new Error("progress_intelligence_must_stay_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("schedule_intelligence")) {
+    throw new Error("schedule_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("change_intelligence")) {
+    throw new Error("change_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("cost_intelligence")) {
+    throw new Error("cost_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("productivity_intelligence")) {
+    throw new Error("productivity_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("forecast")) {
+    throw new Error("forecast_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("decision_support")) {
+    throw new Error("decision_support_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("scenario_intelligence")) {
+    throw new Error("scenario_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("risk_opportunity_intelligence")) {
+    throw new Error("risk_opportunity_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("assurance_intelligence")) {
+    throw new Error("assurance_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("explainability_intelligence")) {
+    throw new Error("explainability_intelligence_must_be_active");
+  }
+  if (!ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS.includes("organizational_learning")) {
+    throw new Error("organizational_learning_must_be_active");
+  }
+  for (const key of ["contingency_intelligence", "earned_value"] as const) {
+    const row = PROJECT_PROFILE_CONTRIBUTORS.find((c) => c.key === key);
+    if (!row || row.status !== "reserved") {
+      throw new Error(`contributor_must_stay_reserved:${key}`);
+    }
+  }
+  return {
+    ok: true,
+    activeContributorKeys: ACTIVE_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
+    reservedContributorKeys: RESERVED_PROJECT_PROFILE_CONTRIBUTOR_KEYS,
+  };
+}
+
+function lowestProgressConfidence(
+  states: readonly ProgressAssessmentState[],
+): ProgressConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      PROGRESS_CONFIDENCE_ORDER.indexOf(current) < PROGRESS_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function lowestScheduleConfidence(
+  states: readonly ScheduleAssessmentState[],
+): ScheduleConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      SCHEDULE_CONFIDENCE_ORDER.indexOf(current) < SCHEDULE_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantProgress(
+  states: readonly ProgressAssessmentState[],
+): ProgressEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ProgressEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function dominantSchedule(
+  states: readonly ScheduleAssessmentState[],
+): ScheduleEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ScheduleEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function lowestChangeConfidence(
+  states: readonly ChangeIntelligenceState[],
+): ChangeConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      CHANGE_CONFIDENCE_ORDER.indexOf(current) < CHANGE_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantChange(
+  states: readonly ChangeIntelligenceState[],
+): ChangeEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ChangeEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countStatusContext(
+  states: readonly ChangeIntelligenceState[],
+  context: ChangeIntelligenceState["changeStatusContext"],
+): number {
+  return states.filter((state) => state.changeStatusContext === context).length;
+}
+
+function latestAt(values: string[]): string | undefined {
+  if (values.length === 0) return undefined;
+  return values.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+}
+
+function lowestCostConfidence(states: readonly CostIntelligenceState[]): CostConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      COST_CONFIDENCE_ORDER.indexOf(current) < COST_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantCost(states: readonly CostIntelligenceState[]): CostEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<CostEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countPosture(states: readonly CostIntelligenceState[], posture: CostPosture): number {
+  return states.filter((state) => state.costPosture === posture).length;
+}
+
+function countVarianceAttribution(
+  states: readonly CostIntelligenceState[],
+  attribution: CostVarianceAttribution,
+): number {
+  return states.filter((state) => state.varianceAttribution === attribution).length;
+}
+
+function dominantVarianceAttribution(
+  states: readonly CostIntelligenceState[],
+): CostVarianceAttribution | undefined {
+  if (states.length === 0) return undefined;
+  const counts = new Map<CostVarianceAttribution, number>();
+  for (const state of states) {
+    counts.set(state.varianceAttribution, (counts.get(state.varianceAttribution) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function lowestProductivityConfidence(
+  states: readonly ProductivityAssessmentState[],
+): ProductivityConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      PRODUCTIVITY_CONFIDENCE_ORDER.indexOf(current) <
+      PRODUCTIVITY_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantProductivity(
+  states: readonly ProductivityAssessmentState[],
+): ProductivityEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ProductivityEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countProductivityPosture(
+  states: readonly ProductivityAssessmentState[],
+  posture: ProductivityPosture,
+): number {
+  return states.filter((state) => state.productivityPosture === posture).length;
+}
+
+function lowestForecastConfidence(states: readonly ForecastAssessmentState[]): ForecastConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      FORECAST_CONFIDENCE_ORDER.indexOf(current) < FORECAST_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantForecast(states: readonly ForecastAssessmentState[]): ForecastEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ForecastEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countForecastPosture(states: readonly ForecastAssessmentState[], posture: ForecastPosture): number {
+  return states.filter((state) => state.forecastPosture === posture).length;
+}
+
+function lowestDecisionConfidence(
+  states: readonly DecisionAssessmentState[],
+): DecisionConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      DECISION_CONFIDENCE_ORDER.indexOf(current) < DECISION_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantDecision(states: readonly DecisionAssessmentState[]): DecisionEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<DecisionEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countDecisionClass(states: readonly DecisionAssessmentState[], decisionClass: DecisionClass): number {
+  return states.reduce(
+    (sum, state) =>
+      sum + state.recommendations.filter((rec) => rec.decisionClass === decisionClass).length,
+    0,
+  );
+}
+
+function lowestScenarioConfidence(
+  states: readonly ScenarioAssessmentState[],
+): ScenarioConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      SCENARIO_CONFIDENCE_ORDER.indexOf(current) < SCENARIO_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantScenario(states: readonly ScenarioAssessmentState[]): ScenarioEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ScenarioEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countScenarioType(states: readonly ScenarioAssessmentState[], scenarioType: ScenarioType): number {
+  return states.reduce(
+    (sum, state) =>
+      sum + state.scenarioOptions.filter((opt) => opt.scenarioType === scenarioType).length,
+    0,
+  );
+}
+
+function lowestRiskOpportunityConfidence(
+  states: readonly RiskOpportunityAssessmentState[],
+): RiskOpportunityConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      RISK_OPPORTUNITY_CONFIDENCE_ORDER.indexOf(current) <
+      RISK_OPPORTUNITY_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantRiskOpportunity(
+  states: readonly RiskOpportunityAssessmentState[],
+): RiskOpportunityEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<RiskOpportunityEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countRiskSignal(states: readonly RiskOpportunityAssessmentState[], riskSignal: RiskSignal): number {
+  return states.reduce(
+    (sum, state) => sum + state.riskSignals.filter((signal) => signal.riskSignal === riskSignal).length,
+    0,
+  );
+}
+
+function countOpportunitySignal(
+  states: readonly RiskOpportunityAssessmentState[],
+  opportunitySignal: OpportunitySignal,
+): number {
+  return states.reduce(
+    (sum, state) =>
+      sum + state.opportunitySignals.filter((signal) => signal.opportunitySignal === opportunitySignal).length,
+    0,
+  );
+}
+
+
+function lowestAssuranceConfidence(
+  states: readonly AssuranceAssessmentState[],
+): AssuranceConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      ASSURANCE_CONFIDENCE_ORDER.indexOf(current) < ASSURANCE_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantAssurance(states: readonly AssuranceAssessmentState[]): AssuranceEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<AssuranceEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countAssurancePosture(
+  states: readonly AssuranceAssessmentState[],
+  posture: AssurancePosture,
+): number {
+  return states.filter((state) => state.assurancePosture === posture).length;
+}
+
+function countAssuranceFinding(
+  states: readonly AssuranceAssessmentState[],
+  findingKind: AssuranceFindingKind,
+): number {
+  return states.reduce(
+    (sum, state) =>
+      sum + state.contributorFindings.filter((finding) => finding.findingKind === findingKind).length,
+    0,
+  );
+}
+
+function countTaxonomy(
+  states: readonly OrganizationalLearningAssessmentState[],
+  taxonomy: OrganizationalLearningAssessmentState["taxonomyClass"],
+): number {
+  return states.filter((s) => s.taxonomyClass === taxonomy).length;
+}
+
+function lowestOrganizationalLearningConfidence(
+  states: readonly OrganizationalLearningAssessmentState[],
+): OrganizationalLearningProfileContribution["lowestConfidenceClass"] {
+  const order = ["unavailable", "low", "medium", "high"] as const;
+  let worst: (typeof order)[number] = "high";
+  for (const state of states) {
+    const cls = state.confidence.confidenceClass;
+    if (order.indexOf(cls) < order.indexOf(worst)) worst = cls;
+  }
+  return states.length === 0 ? "unavailable" : worst;
+}
+
+function dominantOrganizationalLearning(
+  states: readonly OrganizationalLearningAssessmentState[],
+): OrganizationalLearningProfileContribution["dominantSufficiency"] {
+  const counts = new Map<string, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  let best: OrganizationalLearningProfileContribution["dominantSufficiency"] = "insufficient";
+  let max = -1;
+  for (const [k, v] of counts) {
+    if (v > max) {
+      max = v;
+      best = k as OrganizationalLearningProfileContribution["dominantSufficiency"];
+    }
+  }
+  return best;
+}
+
+function lowestExplainabilityConfidence(
+  states: readonly ExplainabilityAssessmentState[],
+): ExplainabilityConfidenceClass {
+  if (states.length === 0) return "unavailable";
+  return states
+    .map((state) => state.confidence.confidenceClass)
+    .reduce((lowest, current) =>
+      EXPLAINABILITY_CONFIDENCE_ORDER.indexOf(current) <
+      EXPLAINABILITY_CONFIDENCE_ORDER.indexOf(lowest)
+        ? current
+        : lowest,
+    );
+}
+
+function dominantExplainability(
+  states: readonly ExplainabilityAssessmentState[],
+): ExplainabilityEvidenceSufficiency {
+  if (states.length === 0) return "insufficient";
+  const counts = new Map<ExplainabilityEvidenceSufficiency, number>();
+  for (const state of states) {
+    const key = state.confidence.dataSufficiency;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function countExplanationStatus(
+  states: readonly ExplainabilityAssessmentState[],
+  status: ExplanationStatus,
+): number {
+  return states.filter((state) => state.explanationStatus === status).length;
+}
+
+function countExplanationReason(
+  states: readonly ExplainabilityAssessmentState[],
+  reason: ExplanationReason,
+): number {
+  return states.filter((state) => state.synthesis.integratedReason === reason).length;
+}

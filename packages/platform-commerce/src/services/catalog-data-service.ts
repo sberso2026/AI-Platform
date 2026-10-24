@@ -18,33 +18,50 @@ import type {
 function mapSubscriptionStatus(status: SubscriptionStatus): UiSubscriptionStatus {
   switch (status) {
     case "trial":
+    case "trialing":
       return "trialing";
     case "active":
     case "grace_period":
     case "pending_renewal":
+    case "scheduled_cancellation":
       return "active";
     case "pending_payment":
     case "paused":
+    case "past_due":
       return "past_due";
     case "cancelled":
       return "cancelled";
+    case "expired":
     case "suspended":
+      return "expired";
     default:
       return "expired";
   }
 }
 
 function mapLicenseStatus(status: LicenseStatus): UiLicenceStatus {
-  if (status === "active") return "active";
+  if (status === "active" || status === "expiring_soon") return "active";
   if (status === "suspended") return "suspended";
   return "expired";
 }
 
 function mapInstallationStatus(status: InstallationStatus): UiInstallationStatus {
-  if (status === "healthy") return "healthy";
-  if (status === "degraded") return "degraded";
-  if (status === "installing" || status === "uninstalling") return "installing";
-  if (status === "failed") return "failed";
+  const value = String(status);
+  if (value === "healthy" || value === "active") return "active";
+  if (value === "degraded") return "degraded";
+  if (value === "suspended") return "suspended";
+  if (value === "failed") return "failed";
+  if (
+    value === "installing" ||
+    value === "provisioning" ||
+    value === "queued" ||
+    value === "requested" ||
+    value === "validating" ||
+    value === "upgrading"
+  ) {
+    return "provisioning";
+  }
+  if (value === "uninstalling" || value === "uninstall_pending") return "uninstalling";
   return "not_installed";
 }
 
@@ -97,6 +114,7 @@ export class CatalogDataService {
         description: p.description ?? "",
         icon: p.icon ?? undefined,
         lifecycle_status: p.lifecycle_status,
+        marketplace_visible: p.marketplace_visible,
       })),
       commercial_plans: allPlans.map((plan) => ({
         id: plan.id,
@@ -106,6 +124,7 @@ export class CatalogDataService {
       commercial_subscriptions: tenantSubscriptions.map((s) => ({
         id: s.id,
         product_id: s.product_id,
+        plan_id: s.plan_id ?? undefined,
         status: mapSubscriptionStatus(s.status),
         renewal_date: s.renewal_date ?? undefined,
       })),
@@ -113,6 +132,8 @@ export class CatalogDataService {
         id: l.id,
         product_id: l.product_id ?? "",
         status: mapLicenseStatus(l.status),
+        license_type: l.license_type,
+        application_key: l.application_key ?? undefined,
       })),
       product_installations: tenantInstallations.map((i) => ({
         id: i.id,

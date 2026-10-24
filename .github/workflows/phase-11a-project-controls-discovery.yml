@@ -1,0 +1,113 @@
+name: Phase 11A Project Controls Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/project-controls/**"
+      - "packages/project-controls-certification/**"
+      - "packages/platform-certification/src/phase11a*"
+      - "packages/engineering-os/src/module-registry.ts"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "packages/platform-commerce/src/domain/engineering-service-policies.ts"
+      - "docs/architecture/PROJECT_CONTROLS_*"
+      - ".github/workflows/phase-11a-project-controls-discovery.yml"
+
+concurrency:
+  group: phase-11a-project-controls-discovery-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm --filter @rtb/project-controls test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase11a-project-controls-discovery.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/project-controls-certification secret-scan
+      - name: Phase 11A certification (gates A–AE)
+        run: pnpm --filter @rtb/project-controls-certification certify:phase11a
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/project-controls-certification/artifacts/phase11a-project-controls-discovery-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===31],
+            ["version", a.version==="0.1.0-discovery"],
+            ["status", a.status==="discovery"],
+            ["productionProjectControlsReady", a.productionProjectControlsReady===false],
+            ["projectControlsImplemented", a.projectControlsImplemented===false],
+            ["discoveryImplemented", a.discoveryImplemented===true],
+            ["projectIdentityOwnership", a.projectIdentityOwnership==="engineering_core"],
+            ["canonicalProjectIdentityNotClaimed", a.canonicalProjectIdentityClaimedByProjectControls===false],
+            ["canonicalAssetIdentityOwnership", a.canonicalAssetIdentityOwnership==="engineering_os_shared_domain"],
+            ["canonicalEngineeringRiskOwnership", a.canonicalEngineeringRiskOwnership==="engineering_core"],
+            ["assetIntelligenceV1Intact", a.assetIntelligenceV1Intact===true],
+            ["assetIntelligenceV1TagNotMoved", a.assetIntelligenceV1TagMoved===false],
+            ["assetIntelligenceV1TagTarget", a.assetIntelligenceV1TagTarget==="925e2ed74025cac6a145c346c17c53320efb8757"],
+            ["assetIntelligenceV1SurfaceUnchanged", a.assetIntelligenceV1SurfaceUnchanged===true],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact===true],
+            ["inspectionIntelligenceV1Intact", a.inspectionIntelligenceV1Intact===true],
+            ["earnedValueImplemented", a.earnedValueImplemented===false],
+            ["cpmSchedulingImplemented", a.cpmSchedulingImplemented===false],
+            ["costEngineImplemented", a.costEngineImplemented===false],
+            ["scheduleExecutionImplemented", a.scheduleExecutionImplemented===false],
+            ["budgetLedgerImplemented", a.budgetLedgerImplemented===false],
+            ["workPackagingUiImplemented", a.workPackagingUiImplemented===false],
+            ["productTablesIntroduced", a.projectControlsProductTablesIntroduced===false],
+            ["productMigrations", Array.isArray(a.projectControlsProductMigrations) && a.projectControlsProductMigrations.length===0],
+            ["productUiImplemented", a.projectControlsProductUiImplemented===false],
+            ["moduleRegistryStatus", a.moduleRegistryStatus==="coming_soon"],
+            ["entitlementsAreEntitlementOnly", a.entitlementsAreEntitlementOnly===true],
+            ["duplicateAssetOwnershipIntroduced", a.duplicateAssetOwnershipIntroduced===false],
+            ["canonicalLifecycleMutationAllowed", a.canonicalLifecycleMutationAllowed===false],
+            ["riskCoreAutoMutationAllowed", a.riskCoreAutoMutationAllowed===false],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+            ["phase11BReady", a.phase11BReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            phase11BReady: a.phase11BReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase11a-project-controls-discovery-certification
+          path: packages/project-controls-certification/artifacts/phase11a-project-controls-discovery-certification.json
+          if-no-files-found: warn

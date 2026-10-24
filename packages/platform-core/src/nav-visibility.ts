@@ -109,6 +109,10 @@ export interface SidebarNavContext {
   hasPermission: (resource: string, action: string) => boolean;
   /** Active domain OS ids (e.g. engineering). Empty = platform-only. */
   activeOperatingSystemIds?: string[];
+  /** Entitled commerce feature keys (capability-based nav). */
+  entitledFeatureKeys?: string[];
+  /** Entitled commerce application keys (capability-based nav). */
+  entitledApplicationKeys?: string[];
 }
 
 export function resolveNavTier(roleSlug: string): NavTier {
@@ -129,7 +133,15 @@ export function isPlatformAdmin(roleSlug: string): boolean {
 export function defaultNavAudience(item: NavItem): NavTier {
   if (item.audience) return item.audience;
   const group = item.group ?? "platform";
-  if (group === "engineering" || group === "engineering_registers") return "viewer";
+  if (
+    group === "engineering" ||
+    group === "engineering_work" ||
+    group === "engineering_registers" ||
+    group === "engineering_analysis" ||
+    group === "engineering_ai"
+  ) {
+    return "viewer";
+  }
   if (group === "engineering_admin") return "manager";
   if (group === "platform" || group === "platform_advanced") return "admin";
   return "admin";
@@ -144,7 +156,14 @@ export function isOwnerOnlyCommerceRoute(pathname: string): boolean {
 export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolean {
   if (item.sidebarHidden) return false;
 
-  const engGroups = new Set(["engineering", "engineering_registers", "engineering_admin"]);
+  const engGroups = new Set([
+    "engineering",
+    "engineering_work",
+    "engineering_registers",
+    "engineering_analysis",
+    "engineering_ai",
+    "engineering_admin",
+  ]);
   if (engGroups.has(item.group ?? "")) {
     const active = context.activeOperatingSystemIds ?? [];
     if (!active.includes("engineering")) return false;
@@ -175,6 +194,17 @@ export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolea
     return item.permissions.every((p) =>
       context.hasPermission(p.resource, p.action)
     );
+  }
+
+  if (item.featureKey) {
+    const features = context.entitledFeatureKeys;
+    // Until capability snapshot loads, hide gated items (no dead tabs).
+    if (!features || !features.includes(item.featureKey)) return false;
+  }
+
+  if (item.applicationKey) {
+    const apps = context.entitledApplicationKeys;
+    if (!apps || !apps.includes(item.applicationKey)) return false;
   }
 
   return true;

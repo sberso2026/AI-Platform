@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, Button, Input } from "@rtb/ui";
+import { Card, CardContent, Button } from "@rtb/ui";
+import { LabeledTextField } from "@/components/engineering/labeled-field";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 export default function NewEngineeringProjectPage() {
   const router = useRouter();
@@ -31,9 +33,11 @@ export default function NewEngineeringProjectPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to create project");
-      router.push(`/engineering/projects/${json.data.id}`);
+      const parsed = await parseApiJsonResponse<{ id: string }>(res);
+      if (!parsed.ok || !parsed.data?.id) {
+        throw new Error(parsed.errorMessage ?? "Failed to create project");
+      }
+      router.push(`/engineering/projects/${parsed.data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
       setLoading(false);
@@ -47,39 +51,39 @@ export default function NewEngineeringProjectPage() {
         <Card className="max-w-2xl">
           <CardContent className="p-6">
             <form onSubmit={onSubmit} className="space-y-4">
-              <Field
+              <LabeledTextField
                 label="Project Code"
                 value={form.projectCode}
                 onChange={(v) => setForm({ ...form, projectCode: v })}
                 required
               />
-              <Field
+              <LabeledTextField
                 label="Project Name"
                 value={form.projectName}
                 onChange={(v) => setForm({ ...form, projectName: v })}
                 required
               />
-              <Field
+              <LabeledTextField
                 label="Client"
                 value={form.clientName}
                 onChange={(v) => setForm({ ...form, clientName: v })}
               />
-              <Field
+              <LabeledTextField
                 label="Site"
                 value={form.siteName}
                 onChange={(v) => setForm({ ...form, siteName: v })}
               />
-              <Field
+              <LabeledTextField
                 label="Location"
                 value={form.location}
                 onChange={(v) => setForm({ ...form, location: v })}
               />
-              <Field
+              <LabeledTextField
                 label="Industry"
                 value={form.industry}
                 onChange={(v) => setForm({ ...form, industry: v })}
               />
-              <Field
+              <LabeledTextField
                 label="Project Type"
                 value={form.projectType}
                 onChange={(v) => setForm({ ...form, projectType: v })}
@@ -93,30 +97,5 @@ export default function NewEngineeringProjectPage() {
         </Card>
       </main>
       </>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-      />
-    </div>
   );
 }

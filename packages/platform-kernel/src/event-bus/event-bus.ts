@@ -2,13 +2,13 @@ import { z } from "zod";
 import type { Json, SupabaseClient } from "@rtb/database";
 import type { EventSubscriber, PlatformEvent } from "@rtb/types";
 
-const eventPayloadSchema = z.object({
+export const eventPayloadSchema = z.object({
   tenantId: z.string().uuid(),
   workspaceId: z.string().uuid().optional(),
   eventType: z.string().min(1),
   source: z.string().default("platform"),
-  payload: z.record(z.unknown()).default({}),
-  metadata: z.record(z.unknown()).default({}),
+  payload: z.record(z.string(), z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
   correlationId: z.string().uuid().optional(),
   causationId: z.string().uuid().optional(),
 });

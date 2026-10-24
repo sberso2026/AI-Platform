@@ -1,0 +1,487 @@
+{
+  "schemaVersion": "phase15a-security-assurance-discovery/1",
+  "phase": "15A",
+  "name": "phase15a-security-assurance-discovery-certification",
+  "version": "0.1.0-discovery",
+  "status": "discovery",
+  "title": "Security & Assurance Discovery / Architecture Lock",
+  "verdict": "PASS",
+  "commit": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "artifactCommitSha": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "ciHeadSha": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "buildIdentitySha": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "SecurityAssuranceDiscoveryReady": true,
+  "SecurityAssuranceOwnershipLocked": true,
+  "SecurityAssuranceBoundaryLocked": true,
+  "SecurityAssuranceRuntimeImplemented": false,
+  "SecurityIntelligenceImplemented": false,
+  "ComplianceIntelligenceImplemented": false,
+  "CustomerTrustCenterImplemented": false,
+  "duplicatePolicyEngineDetected": false,
+  "EngineeringOSV1Intact": true,
+  "phase15BReady": true,
+  "releaseEligible": true,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "unexpected5xx": 0,
+  "requiredTestsSkipped": 0,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "3bfc02478f50ce17f7a81e4e312986c9e1377535"
+    },
+    {
+      "id": "B",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Discovery version 0.1.0-discovery",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Existing control inventory",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Ownership matrix",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Domain model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Control framework",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Policy Engine reuse",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Evidence and posture model",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Continuous monitoring architecture",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "Isolation Assurance boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Artifact Integrity boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "AI Trust boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Secure Compute boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "Privileged Access boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Data Governance boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Secure SDLC boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Supply Chain / Threat Intel boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Incident/Resilience boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Backup Assurance boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "External integration boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Customer Assurance boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Framework mapping honesty",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "External assurance boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Tier-1 S07/S08 ownership",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Capability maturity matrix",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Draft contracts 0.1.0-draft",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Package placement Platform-level",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Commercial boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "No universal security score",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Event/KG/workflow/file boundaries",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Anti-duplication flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Gap register",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Implementation roadmap",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "SecurityAssuranceDiscoveryReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Ownership/Boundary locked flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Architecture defined flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Runtime unimplemented flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Module V1 intact flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Phase 14 S01–S06 CLOSED preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "No Sec&A inside engineering-os",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "No Trust Center package",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "No Security Intelligence package",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "Platform architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "Phase 15A overview",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "Architecture boundaries doc",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "Public contracts draft",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "phase15BReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "S07 remains Tier-1",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "S08 owned by Identity",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "No ISO certification claim",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "3bfc02478f50ce17f7a81e4e312986c9e1377535"
+    },
+    {
+      "id": "BF",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BG",
+      "name": "UNKNOWN ownership none",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "Boundary MUST_NEVER_OWN IdP",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Boundary MUST_NEVER_OWN SIEM",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "EOS GA version still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Discovery package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ],
+  "requiredGates": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "AA",
+    "AB",
+    "AC",
+    "AD",
+    "AE",
+    "AF",
+    "AG",
+    "AH",
+    "AI",
+    "AJ",
+    "AK",
+    "AL",
+    "AM",
+    "AN",
+    "AO",
+    "AP",
+    "AQ",
+    "AR",
+    "AS",
+    "AT",
+    "AU",
+    "AV",
+    "AW",
+    "AX",
+    "AY",
+    "AZ",
+    "BA",
+    "BB",
+    "BC",
+    "BD",
+    "BE",
+    "BF",
+    "BG",
+    "BH",
+    "BI",
+    "BJ",
+    "BK",
+    "BL"
+  ],
+  "gateCount": 64,
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "generatedAt": "2026-08-09T06:27:11.332Z"
+}

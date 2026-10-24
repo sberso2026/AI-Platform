@@ -1,11 +1,85 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/kernel";
+import { getAuthContext, type AuthContext } from "@/lib/kernel";
 import { getEngineeringApiPolicy } from "@rtb/platform-commerce";
 import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
+import type { CommerceExecutionContext } from "@rtb/types";
+import {
+  resolveReviewIdentityPolicy,
+  type ReviewIdentityClaims,
+} from "@rtb/engineering-review";
 import { enforceCommercePolicy, type CommerceHandlerContext } from "./with-commerce-entitlement";
-import { lifecycleErrorResponse, unauthenticatedResponse } from "@/lib/lifecycle-api";
+import {
+  decideEngineeringIdentityAssurance,
+  engineeringApiRequiresIdentityAssurance,
+} from "./engineering-identity-assurance";
+import {
+  forbiddenResponse,
+  handleCommerceDomainError,
+  lifecycleErrorResponse,
+  unauthenticatedResponse,
+} from "@/lib/lifecycle-api";
+import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
+import { hasEngineeringAdminAuthority } from "@/lib/commerce/engineering-admin-authority";
 
 export type { CommerceHandlerContext };
+
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return {};
+    const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const json = Buffer.from(padded, "base64").toString("utf8");
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+async function engineeringIdentityClaims(ctx: AuthContext): Promise<ReviewIdentityClaims> {
+  const { data } = await ctx.supabase.auth.getSession();
+  const payload = data.session?.access_token ? decodeJwtPayload(data.session.access_token) : {};
+  const { data: userData } = await ctx.supabase.auth.getUser();
+  return {
+    aal: typeof payload.aal === "string" ? payload.aal : null,
+    amr: Array.isArray(payload.amr) ? (payload.amr as Array<string | { method?: string }>) : null,
+    appMetadata: (userData.user?.app_metadata as Record<string, unknown> | undefined) ?? null,
+  };
+}
+
+export function hasMicrosoftConnectionAdmin(ctx: Pick<AuthContext, "roleSlug" | "permissions">): boolean {
+  return hasEngineeringAdminAuthority({ roleSlug: ctx.roleSlug, permissions: ctx.permissions });
+}
+
+/** OAuth start/callback must match engineering_m365_connections INSERT (engineering admin + AAL2). */
+export async function microsoftConnectionOAuthDenial(
+  ctx: AuthContext,
+): Promise<"admin_required" | "sign_in_required" | null> {
+  if (!hasMicrosoftConnectionAdmin(ctx)) return "admin_required";
+  const identityDenied = await denyIfEngineeringIdentityInsufficient(ctx, "settings", "POST");
+  if (identityDenied) return "sign_in_required";
+  return null;
+}
+
+async function denyIfEngineeringIdentityInsufficient(
+  ctx: AuthContext,
+  segment: string,
+  method: string,
+): Promise<NextResponse | null> {
+  if (!engineeringApiRequiresIdentityAssurance(segment, method)) return null;
+  const { data: tenant } = await ctx.supabase.from("tenants").select("settings").eq("id", ctx.tenantId).maybeSingle();
+  const policy = resolveReviewIdentityPolicy((tenant?.settings as Record<string, unknown> | null) ?? {});
+  const claims = await engineeringIdentityClaims(ctx);
+  const decision = decideEngineeringIdentityAssurance({ segment, method, policy, claims });
+  if (decision.allowed) return null;
+  return lifecycleErrorResponse(
+    "identity_assurance_insufficient",
+    "Authentication succeeded but Deliverables/Lifecycle identity policy was not met",
+    403,
+    crypto.randomUUID(),
+    { reason: decision.reason, segment },
+  );
+}
 
 const PI_NOT_INSTALLED_REASONS = new Set([
   "application_not_in_plan",
@@ -34,7 +108,15 @@ function projectIntelligenceEntitlementCode(reasonCode: string): string {
 }
 
 async function projectIntelligenceGuardError(response: NextResponse, requestId: string): Promise<NextResponse> {
-  const body = await response.clone().json().catch(() => ({}));
+  const text = await response.clone().text().catch(() => "");
+  let body: Record<string, unknown> = {};
+  if (text.trim()) {
+    try {
+      body = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      body = {};
+    }
+  }
   const reasonCode = typeof body?.code === "string" ? body.code : "entitlement_denied";
   return lifecycleErrorResponse(
     projectIntelligenceEntitlementCode(reasonCode),
@@ -51,6 +133,18 @@ export async function guardEngineeringApi(
 ): Promise<CommerceHandlerContext | NextResponse> {
   const ctx = await getAuthContext();
   if (!ctx) return unauthenticatedResponse(crypto.randomUUID());
+
+  const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
+  if (mutating && isReadOnlyEngineeringRole(ctx.roleSlug)) {
+    return forbiddenResponse(
+      crypto.randomUUID(),
+      "Read-only role cannot mutate engineering records",
+      "read_only",
+    );
+  }
+
+  const identityDenied = await denyIfEngineeringIdentityInsufficient(ctx, segment, method);
+  if (identityDenied) return identityDenied;
 
   const policy = getEngineeringApiPolicy(segment, method);
   const result = await enforceCommercePolicy(ctx, policy);
@@ -77,14 +171,39 @@ export async function guardEngineeringApi(
   };
 }
 
+/** Authorize a distinct engineering API segment with its own commerce action. */
+export async function authorizeEngineeringSegment(
+  ctx: AuthContext,
+  segment: string,
+  method: string,
+  correlationId: string,
+): Promise<CommerceExecutionContext | null> {
+  const policy = getEngineeringApiPolicy(segment, method);
+  const result = await enforceCommercePolicy(ctx, policy);
+  if (result instanceof NextResponse) return null;
+  return createCommerceExecutionContext({
+    tenantId: ctx.tenantId,
+    workspaceId: ctx.workspaceId,
+    actorUserId: ctx.userId,
+    correlationId,
+    decision: result,
+    policy,
+  });
+}
+
 export function withEngineeringApi(
   segment: string,
   handler: (context: CommerceHandlerContext, request: Request) => Promise<NextResponse>
 ) {
   return async (request: Request): Promise<NextResponse> => {
-    const guarded = await guardEngineeringApi(segment, request.method);
-    if (guarded instanceof NextResponse) return guarded;
-    return handler(guarded, request);
+    try {
+      const guarded = await guardEngineeringApi(segment, request.method);
+      if (guarded instanceof NextResponse) return guarded;
+      return await handler(guarded, request);
+    } catch (err) {
+      // Guard and handler must both return JSON — never an empty non-JSON 500.
+      return handleCommerceDomainError(err, crypto.randomUUID());
+    }
   };
 }
 
@@ -100,9 +219,13 @@ export function withEngineeringApiParams<T extends Record<string, string>>(
     request: Request,
     routeContext: { params: Promise<T> }
   ): Promise<NextResponse> => {
-    const guarded = await guardEngineeringApi(segment, request.method);
-    if (guarded instanceof NextResponse) return guarded;
-    const params = await routeContext.params;
-    return handler(guarded, request, params);
+    try {
+      const guarded = await guardEngineeringApi(segment, request.method);
+      if (guarded instanceof NextResponse) return guarded;
+      const params = await routeContext.params;
+      return await handler(guarded, request, params);
+    } catch (err) {
+      return handleCommerceDomainError(err, crypto.randomUUID());
+    }
   };
 }

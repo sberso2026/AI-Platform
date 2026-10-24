@@ -325,6 +325,10 @@ export interface NavItem {
   audience?: NavTier;
   /** Route exists but is omitted from sidebar (advanced/legacy routes) */
   sidebarHidden?: boolean;
+  /** Optional commerce feature gate for capability-based primary nav visibility */
+  featureKey?: string;
+  /** Optional commerce application gate for capability-based primary nav visibility */
+  applicationKey?: string;
 }
 
 export type NavGroup =
@@ -333,7 +337,10 @@ export type NavGroup =
   | "intelligence"
   | "platform_intelligence"
   | "engineering"
+  | "engineering_work"
   | "engineering_registers"
+  | "engineering_analysis"
+  | "engineering_ai"
   | "engineering_admin"
   | "reference_os"
   | "kernel"
@@ -388,3 +395,53 @@ export * from "./engineering-modules";
 export * from "./project-intelligence-integration";
 export * from "./commerce";
 export * from "./os-runtime";
+export * from "./global-governance";
+export * from "./discipline-capability";
+export * from "./structural-domain";
+export * from "./structural-standard-binding";
+export * from "./structural-demand";
+export * from "./structural-steel";
+export * from "./structural-concrete";
+export * from "./structural-concrete-section";
+export * from "./structural-concrete-au";
+export * from "./structural-concrete-eu";
+export * from "./structural-concrete-eu-flexure";
+export * from "./structural-concrete-us";
+export * from "./structural-concrete-us-flexure";
+export * from "./structural-concrete-closeout";
+export * from "./structural-concrete-eu-c1a";
+export * from "./structural-concrete-eu-c1b";
+export * from "./structural-concrete-eu-c1";
+export * from "./structural-concrete-eu-c1c";
+export * from "./structural-concrete-eu-c1c-evidence";
+export * from "./structural-concrete-eu-c1c-r1";
+export * from "./structural-concrete-eu-c1c-constitutive";
+export * from "./structural-concrete-eu-c2";
+export * from "./structural-concrete-eu-c3";
+export * from "./structural-concrete-eu-c4";
+export * from "./structural-concrete-eu-c5";
+export * from "./structural-concrete-eu-c6";
+export * from "./structural-concrete-eu-c7";
+export * from "./structural-systems";
+export * from "./structural-systems-r1";
+export * from "./structural-systems-r2";
+export * from "./structural-systems-r3";
+export * from "./structural-systems-r4";
+export * from "./structural-systems-r5";
+export * from "./structural-systems-r6";
+export * from "./structural-systems-d1g-r1";
+export * from "./structural-systems-d1g-r2";
+export * from "./structural-systems-d1g-r3";
+export * from "./structural-systems-d1g-r4";
+export * from "./structural-systems-d1g-r5";
+export * from "./structural-inspection-d1h-0";
+export * from "./structural-digital-twin-d1i-0";
+export * from "./structural-optimization-d1j-0";
+export * from "./structural-interfaces-d1k-0";
+export * from "./structural-certification-d1l-0";
+export * from "./structural-cad-bim-d1m-0";
+export * from "./structural-orchestration-d1n-0";
+export * from "./civil-architecture-d2-0";
+export * from "./geotechnical-architecture-d3-0";
+export * from "./mechanical-architecture-d4-0";
+export * from "./piping-architecture-d5-0";

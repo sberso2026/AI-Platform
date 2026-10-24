@@ -1,0 +1,696 @@
+{
+  "title": "Platform Enterprise SSO / S08 Closure",
+  "schemaVersion": "platform-enterprise-sso-certification/1",
+  "phase": "16B",
+  "verdict": "PASS",
+  "version": "0.2.0-enterprise-sso",
+  "status": "enterprise_sso",
+  "commit": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e",
+  "artifactCommitSha": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e",
+  "ciHeadSha": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e",
+  "buildIdentitySha": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e",
+  "phase16ABaseline": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e",
+  "securityAssuranceV1Baseline": "cf3e9eff49c1314ea16e115dcde26cd45e520121",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 65,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 16A baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Security & Assurance V1 tag intact"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.2.0-enterprise-sso"
+    },
+    {
+      "id": "G",
+      "name": "Ownership locked"
+    },
+    {
+      "id": "H",
+      "name": "Provider configuration"
+    },
+    {
+      "id": "I",
+      "name": "OIDC federation"
+    },
+    {
+      "id": "J",
+      "name": "Entra first-class"
+    },
+    {
+      "id": "K",
+      "name": "Issuer validation"
+    },
+    {
+      "id": "L",
+      "name": "Audience validation"
+    },
+    {
+      "id": "M",
+      "name": "JWKS/signature validation"
+    },
+    {
+      "id": "N",
+      "name": "State validation"
+    },
+    {
+      "id": "O",
+      "name": "Nonce validation"
+    },
+    {
+      "id": "P",
+      "name": "PKCE support"
+    },
+    {
+      "id": "Q",
+      "name": "SSO policy"
+    },
+    {
+      "id": "R",
+      "name": "Password fallback denial"
+    },
+    {
+      "id": "S",
+      "name": "Domain verification"
+    },
+    {
+      "id": "T",
+      "name": "Discovery"
+    },
+    {
+      "id": "U",
+      "name": "Identity binding"
+    },
+    {
+      "id": "V",
+      "name": "Binding history"
+    },
+    {
+      "id": "W",
+      "name": "Account linking"
+    },
+    {
+      "id": "X",
+      "name": "Tenant/user resolution"
+    },
+    {
+      "id": "Y",
+      "name": "JIT boundary"
+    },
+    {
+      "id": "Z",
+      "name": "Role mapping"
+    },
+    {
+      "id": "AA",
+      "name": "MFA assurance"
+    },
+    {
+      "id": "AB",
+      "name": "Session lifecycle"
+    },
+    {
+      "id": "AC",
+      "name": "Logout"
+    },
+    {
+      "id": "AD",
+      "name": "Offboarding"
+    },
+    {
+      "id": "AE",
+      "name": "Provider health"
+    },
+    {
+      "id": "AF",
+      "name": "Tenant isolation"
+    },
+    {
+      "id": "AG",
+      "name": "Issuer/audience confusion"
+    },
+    {
+      "id": "AH",
+      "name": "Key rotation posture"
+    },
+    {
+      "id": "AI",
+      "name": "Customer UI"
+    },
+    {
+      "id": "AJ",
+      "name": "Admin UI marker"
+    },
+    {
+      "id": "AK",
+      "name": "Audit"
+    },
+    {
+      "id": "AL",
+      "name": "Events"
+    },
+    {
+      "id": "AM",
+      "name": "Security & Assurance evidence boundary"
+    },
+    {
+      "id": "AN",
+      "name": "S08 closure"
+    },
+    {
+      "id": "AO",
+      "name": "S07 preservation"
+    },
+    {
+      "id": "AP",
+      "name": "SAML boundary"
+    },
+    {
+      "id": "AQ",
+      "name": "SCIM boundary"
+    },
+    {
+      "id": "AR",
+      "name": "Secrets"
+    },
+    {
+      "id": "AS",
+      "name": "Migration batch_96"
+    },
+    {
+      "id": "AT",
+      "name": "RLS"
+    },
+    {
+      "id": "AU",
+      "name": "Operations doc"
+    },
+    {
+      "id": "AV",
+      "name": "Threat-model regression"
+    },
+    {
+      "id": "AW",
+      "name": "Performance baselines"
+    },
+    {
+      "id": "AX",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AY",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AZ",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "BA",
+      "name": "Accessibility"
+    },
+    {
+      "id": "BB",
+      "name": "Responsive"
+    },
+    {
+      "id": "BC",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "BD",
+      "name": "Architecture test"
+    },
+    {
+      "id": "BE",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "BF",
+      "name": "Frozen integrity flags"
+    },
+    {
+      "id": "BG",
+      "name": "nearFinalTier1AttackSurface"
+    },
+    {
+      "id": "BH",
+      "name": "Tier1 still false"
+    },
+    {
+      "id": "BI",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "BJ",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "BK",
+      "name": "phase16CReady"
+    },
+    {
+      "id": "BL",
+      "name": "No package 1.0.0"
+    },
+    {
+      "id": "BM",
+      "name": "Controlled Entra not fabricated live claim"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "requiredTestsSkipped": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "EnterpriseSsoRuntimeImplemented": true,
+  "EnterpriseOidcFederationReady": true,
+  "MicrosoftEntraEnterpriseSsoReady": true,
+  "CustomerSsoProductionReady": true,
+  "S08CustomerSsoProductionReady": true,
+  "S07ExternalPenTestComplete": false,
+  "Tier1EnterpriseProductionReady": false,
+  "nearFinalTier1AttackSurfaceReadyForExternalPenTest": true,
+  "passwordFallbackWhenRequired": false,
+  "knownEnterpriseIdentityCrossTenantLeakageDetected": false,
+  "SamlFederationImplemented": false,
+  "ScimProvisioningImplemented": false,
+  "LiveEntraIntegrationImplemented": false,
+  "ControlledEntraPathCertified": true,
+  "SecurityAssuranceV1Intact": true,
+  "EngineeringOSV1Intact": true,
+  "phase16CReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e"
+    },
+    {
+      "id": "B",
+      "name": "Phase 16A baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Security & Assurance V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.2.0-enterprise-sso",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Ownership locked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Provider configuration",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "OIDC federation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Entra first-class",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Issuer validation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "Audience validation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "JWKS/signature validation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "State validation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Nonce validation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "PKCE support",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "SSO policy",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Password fallback denial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Domain verification",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Discovery",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Identity binding",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Binding history",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Account linking",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Tenant/user resolution",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "JIT boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Role mapping",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "MFA assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Session lifecycle",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Logout",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Offboarding",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Provider health",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Tenant isolation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Issuer/audience confusion",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Key rotation posture",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Customer UI",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Admin UI marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Audit",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Events",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Security & Assurance evidence boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "S08 closure",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "S07 preservation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "SAML boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "SCIM boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Secrets",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Migration batch_96",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "RLS",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Operations doc",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Threat-model regression",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "Performance baselines",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "Accessibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "Responsive",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Frozen integrity flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "nearFinalTier1AttackSurface",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "Tier1 still false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "af1e0425c77c516d4cf99a42d5e3eab9bee7206e"
+    },
+    {
+      "id": "BJ",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BK",
+      "name": "phase16CReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "No package 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "Controlled Entra not fabricated live claim",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

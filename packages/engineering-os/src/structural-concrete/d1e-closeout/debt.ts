@@ -1,0 +1,93 @@
+import type { D1eValidationDebtItem } from "@rtb/types";
+import { D1E_VALIDATION_DEBT_REGISTER } from "../capability";
+
+const CATEGORY_ALIAS: Record<string, string> = {
+  STANDARD_EDITION: "STANDARD_IDENTITY",
+  STANDARD_AMENDMENT: "STANDARD_IDENTITY",
+  STANDARD_GENERATION: "STANDARD_IDENTITY",
+  STANDARD_ANNEX: "STANDARD_IDENTITY",
+  STANDARD_NDP: "STANDARD_IDENTITY",
+  MATERIAL_PROPERTY_AUTHORITY: "MATERIAL_RULES",
+  REINFORCEMENT_PROPERTY_AUTHORITY: "MATERIAL_RULES",
+  CONCRETE_MATERIAL_MODEL: "MATERIAL_RULES",
+  REINFORCEMENT_MATERIAL_MODEL: "MATERIAL_RULES",
+  STRESS_BLOCK_RULES: "STRESS_BLOCK",
+  STRENGTH_FACTOR: "DESIGN_FACTORS",
+  STRENGTH_REDUCTION_FACTOR: "DESIGN_FACTORS",
+  PARTIAL_FACTOR: "DESIGN_FACTORS",
+  FLEXURAL_DESIGN: "FLEXURE",
+  PUNCHING_SHEAR: "PUNCHING",
+  SECOND_ORDER_EFFECTS: "COLUMN_STABILITY",
+  PRESTRESSED_CONCRETE: "PRESTRESS",
+  HUMAN_VALIDATION: "HUMAN_ENGINEERING_VALIDATION",
+  EXTERNAL_TOOL_COMPARISON: "THIRD_PARTY_VALIDATION",
+};
+
+export const D1E_CANONICAL_VALIDATION_DEBT_CATEGORIES = [
+  "STANDARD_IDENTITY",
+  "MATERIAL_RULES",
+  "STRESS_BLOCK",
+  "STRAIN_LIMITS",
+  "DESIGN_FACTORS",
+  "FLEXURE",
+  "AXIAL_FLEXURE",
+  "BIAXIAL_INTERACTION",
+  "SHEAR",
+  "PUNCHING",
+  "TORSION",
+  "COLUMN_STABILITY",
+  "SERVICEABILITY",
+  "CRACKING",
+  "DEFLECTION",
+  "CREEP",
+  "SHRINKAGE",
+  "COVER",
+  "DURABILITY",
+  "MINIMUM_REINFORCEMENT",
+  "MAXIMUM_REINFORCEMENT",
+  "DEVELOPMENT",
+  "ANCHORAGE",
+  "LAP_SPLICES",
+  "DETAILING",
+  "PRESTRESS",
+  "CONNECTIONS",
+  "SEISMIC",
+  "FIRE",
+  "THIRD_PARTY_VALIDATION",
+  "HUMAN_ENGINEERING_VALIDATION",
+] as const;
+
+export const D1E_RECONCILED_VALIDATION_DEBT_REGISTER: readonly D1eValidationDebtItem[] =
+  D1E_VALIDATION_DEBT_REGISTER.map((row) => ({
+    ...row,
+    category: CATEGORY_ALIAS[row.category] ?? row.category,
+    recommendedFuturePhase:
+      row.jurisdiction === "EU" && row.recommendedFuturePhase.startsWith("D1E-EU")
+        ? "EOS-D1E-EU-C1"
+        : row.recommendedFuturePhase === "later EU concrete"
+          ? "EU_CONCRETE_CONFORMANCE_TRACK"
+          : row.recommendedFuturePhase,
+  }));
+
+export const D1E_VALIDATION_PRIORITY_PLAN = [
+  {
+    rank: 1,
+    priority: "SAFETY_CRITICAL" as const,
+    items: D1E_RECONCILED_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "SAFETY_CRITICAL").map((row) => row.debtId),
+  },
+  {
+    rank: 2,
+    priority: "CONFORMANCE_CRITICAL" as const,
+    items: D1E_RECONCILED_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "CONFORMANCE_CRITICAL").map((row) => row.debtId),
+  },
+  {
+    rank: 3,
+    priority: "COMMERCIAL_RELEASE_CRITICAL" as const,
+    items: D1E_RECONCILED_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "COMMERCIAL_RELEASE_CRITICAL").map((row) => row.debtId),
+  },
+  {
+    rank: 4,
+    priority: "ENHANCEMENT" as const,
+    items: D1E_RECONCILED_VALIDATION_DEBT_REGISTER.filter((row) => row.priority === "ENHANCEMENT").map((row) => row.debtId),
+  },
+] as const;

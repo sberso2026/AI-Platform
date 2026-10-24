@@ -58,7 +58,7 @@ export const pluginManifestSchema = z.object({
       })
     )
     .optional(),
-  settings_schema: z.record(z.unknown()).optional(),
+  settings_schema: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ValidatedPluginManifest = z.infer<typeof pluginManifestSchema>;

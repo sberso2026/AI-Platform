@@ -1,48 +1,56 @@
 import Link from "next/link";
 import { getAuthContext } from "@/lib/kernel";
+import { AskEngineeringAI } from "@/components/engineering/operational";
 
-const DASHBOARD_PANELS = [
+const PANELS = [
   {
     id: "recent-activity",
     title: "Recent activity",
-    body: "Latest document processing, meeting reviews, and mapping events in this workspace.",
+    body: "Latest document processing, meeting reviews, and mapping events.",
     href: "/engineering/apps/project-intelligence/health",
+    action: "View activity",
   },
   {
     id: "assigned-work",
     title: "Assigned work",
-    body: "Review queues and approval items requiring your seat in this workspace.",
+    body: "Reviews and approvals that need your attention.",
     href: "/engineering/apps/project-intelligence/documents/review",
+    action: "Review queue",
   },
   {
     id: "documents",
     title: "Documents",
-    body: "Document Intelligence — ingestion, retrieval, and grounded answers.",
+    body: "Ingestion, retrieval, and grounded answers from project documents.",
     href: "/engineering/apps/project-intelligence/documents",
+    action: "Open documents",
   },
   {
     id: "meetings",
     title: "Meetings",
-    body: "Meeting Intelligence — capture, minutes, and provider integrations.",
+    body: "Capture, minutes, and meeting follow-up.",
     href: "/engineering/apps/project-intelligence/meetings",
+    action: "Open meetings",
   },
   {
     id: "findings",
-    title: "Findings",
-    body: "Findings Intelligence — consolidated evidence across documents and meetings.",
+    title: "Risks / changes",
+    body: "Findings across documents and meetings — evidence-linked.",
     href: "/engineering/apps/project-intelligence/findings",
+    action: "Open findings",
   },
   {
     id: "reports",
-    title: "Reports",
-    body: "Reporting Intelligence — module reports over shared Engineering services.",
+    title: "Forecast & reports",
+    body: "Project reports and executive summary from recorded evidence.",
     href: "/engineering/apps/project-intelligence/reports",
+    action: "Open reports",
   },
   {
     id: "ai-insights",
-    title: "AI insights",
-    body: "Evidence-bound insights via Platform AI Runtime and Engineering Intelligence Framework.",
-    href: "/engineering/apps/project-intelligence/documents/query",
+    title: "AI Project Analyst",
+    body: "Advisory, evidence-bound answers. Human review required before any approval.",
+    href: "/engineering/apps/project-intelligence/reasoning",
+    action: "Ask the analyst",
   },
 ] as const;
 
@@ -75,30 +83,32 @@ export default async function ProjectIntelligenceOverviewPage() {
 
   return (
     <section data-testid="project-intelligence-ready">
-      <p className="text-sm font-medium text-cyan-700">Engineering OS module</p>
-      <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">Project Intelligence</h2>
-      <p className="mt-3 max-w-2xl text-slate-600">
-        Flagship Engineering OS module for document, meeting, findings, and reporting intelligence —
-        consuming shared Engineering Domain, shared services, and Platform AI Runtime.
+      <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Project status</h2>
+      <p className="mt-2 max-w-2xl text-slate-600">
+        Status, schedule and cost signals, risks, queries, and recent activity from recorded
+        project evidence. Insights are advisory.
       </p>
+      <div className="mt-4">
+        <AskEngineeringAI q="What is the current project status from recorded evidence?" />
+      </div>
 
       <div
         className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         data-testid="project-intelligence-dashboard"
       >
-        {DASHBOARD_PANELS.map((panel) => (
+        {PANELS.map((panel) => (
           <article
             key={panel.id}
             data-testid={`project-intelligence-panel-${panel.id}`}
-            className="rounded-lg border border-slate-200 p-5 shadow-sm"
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
           >
             <h3 className="font-medium text-slate-900">{panel.title}</h3>
             <p className="mt-2 text-sm text-slate-600">{panel.body}</p>
             <Link
               href={panel.href}
-              className="mt-4 inline-block text-sm font-medium text-cyan-700 hover:underline"
+              className="mt-4 inline-block text-sm font-medium text-slate-900 underline-offset-2 hover:underline"
             >
-              Open
+              {panel.action}
             </Link>
           </article>
         ))}

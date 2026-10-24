@@ -143,6 +143,13 @@ export default function ExecutiveIntelligenceDashboardPage() {
           and Engineering Core. No duplicate ownership. Drill down preserves originating feature
           context. AI executive summaries require human review before publish.
         </p>
+        <p
+          className="mt-2 text-sm font-medium text-slate-700"
+          data-testid="executive-dashboard-scope"
+        >
+          Scope: All Projects (workspace) — not project-specific. Counts include the full tenant /
+          workspace footprint (demo and unscoped records may appear).
+        </p>
         {snapshot ? (
           <p className="mt-2 text-xs text-slate-500" data-testid="executive-dashboard-live-flag">
             liveAggregation={String(snapshot.liveAggregation)} · duplicateStorage=

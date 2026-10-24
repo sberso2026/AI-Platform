@@ -1,0 +1,91 @@
+name: Phase 10A Asset Intelligence Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - release/**
+      - cursor/**
+    paths:
+      - "packages/asset-intelligence/**"
+      - "packages/asset-intelligence-certification/**"
+      - "packages/platform-certification/src/phase10a*"
+      - "docs/architecture/ASSET_INTELLIGENCE*"
+      - "docs/migration/ASSET_INTELLIGENCE*"
+      - "docs/contracts/ASSET_INTELLIGENCE*"
+      - "docs/commercial/ASSET_INTELLIGENCE*"
+      - ".github/workflows/phase-10a-asset-intelligence-discovery.yml"
+
+concurrency:
+  group: phase-10a-asset-intelligence-discovery-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm --filter @rtb/asset-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase10a-asset-intelligence-discovery.test.ts
+      - name: Phase 10A certification (gates A–AK)
+        run: pnpm --filter @rtb/asset-intelligence-certification certify:phase10a
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const { readFileSync } = require("fs");
+          const path = "packages/asset-intelligence-certification/artifacts/phase10a-asset-intelligence-discovery-certification.json";
+          const a = JSON.parse(readFileSync(path, "utf8"));
+          const checks = [
+            ["verdict", a.verdict === "PASS"],
+            ["failedGateCount", a.failedGateCount === 0],
+            ["skippedGateCount", a.skippedGateCount === 0],
+            ["notExecutedGateCount", a.notExecutedGateCount === 0],
+            ["duplicateAssetOwnershipDetected", a.duplicateAssetOwnershipDetected === false],
+            ["assetIdentityOwnership", a.assetIdentityOwnership === "engineering_os_shared_domain"],
+            ["productionAssetIntelligenceReady", a.productionAssetIntelligenceReady === false],
+            ["assetIntelligenceImplemented", a.assetIntelligenceImplemented === false],
+            ["accuracyClaimsCertified", a.accuracyClaimsCertified === false],
+            ["rulClaimsCertified", a.rulClaimsCertified === false],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact === true],
+            ["inspectionIntelligenceV1Intact", a.inspectionIntelligenceV1Intact === true],
+            ["secretExposureDetected", a.secretExposureDetected === false],
+            ["releaseEligible", a.releaseEligible === true],
+            ["phase10BReady", a.phase10BReady === true],
+            ["gatesExecuted", Array.isArray(a.requiredGates) && a.requiredGates.length === 37],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            process.exit(1);
+          }
+          console.log(JSON.stringify({ verdict: a.verdict, phase10BReady: a.phase10BReady }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase10a-asset-intelligence-discovery-certification
+          path: packages/asset-intelligence-certification/artifacts/phase10a-asset-intelligence-discovery-certification.json
+          if-no-files-found: warn

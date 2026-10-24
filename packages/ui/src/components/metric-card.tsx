@@ -16,11 +16,11 @@ export interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const TONE_ICON: Record<MetricTone, string> = {
-  blue: "border-blue-200 bg-blue-50 text-blue-700",
-  amber: "border-amber-200 bg-amber-50 text-amber-800",
-  red: "border-red-200 bg-red-50 text-red-800",
-  green: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  slate: "border-slate-200 bg-slate-50 text-slate-600",
+  blue: "border-[color:color-mix(in_srgb,var(--eos-accent)_40%,transparent)] bg-[color:var(--eos-accent-soft)] text-[color:var(--eos-accent)]",
+  amber: "border-[color:color-mix(in_srgb,var(--eos-warning)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-warning)_12%,transparent)] text-[color:var(--eos-warning)]",
+  red: "border-[color:color-mix(in_srgb,var(--eos-danger)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-danger)_12%,transparent)] text-[color:var(--eos-danger)]",
+  green: "border-[color:color-mix(in_srgb,var(--eos-success)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-success)_12%,transparent)] text-[color:var(--eos-success)]",
+  slate: "border-[color:var(--eos-border)] bg-[color:var(--eos-bg-secondary)] text-[color:var(--eos-text-secondary)]",
 };
 
 export function MetricCard({
@@ -36,9 +36,10 @@ export function MetricCard({
 }: MetricCardProps) {
   return (
     <Card
+      variant="kpi"
       className={cn(
-        "h-full border-slate-200 bg-white transition-colors",
-        secondary && "border-slate-200/90 bg-slate-50/50",
+        "h-full transition-colors",
+        secondary && "opacity-95",
         className
       )}
       data-testid="metric-card"

@@ -3,7 +3,7 @@ import { cn } from "../lib/utils";
 import { TYPOGRAPHY } from "../lib/typography";
 
 /**
- * Batch 2.11 — nav item chrome.
+ * Primary nav item chrome.
  * Parent is a flex row; SidebarNavItem supplies fixed-width icon + spaced label.
  */
 export function sidebarNavItemClassName({
@@ -14,13 +14,13 @@ export function sidebarNavItemClassName({
   className?: string;
 }) {
   return cn(
-    "flex min-h-10 items-center rounded-lg px-4 py-2.5 transition-colors",
-    "gap-3", // 12px minimum between icon rail and label
+    "flex min-h-12 items-center rounded-lg px-4 py-2.5 transition-colors",
+    "gap-3",
     TYPOGRAPHY.sidebarItem,
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]",
     active
-      ? "bg-sidebar-accent font-semibold text-white shadow-sm ring-1 ring-white/10"
-      : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+      ? "bg-[color:var(--eos-accent-soft)] font-semibold text-[color:var(--eos-text-primary)] shadow-[0_0_18px_rgba(56,189,248,0.16)] ring-1 ring-[color:var(--eos-border-active)]"
+      : "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
     className
   );
 }
@@ -62,7 +62,7 @@ export function SidebarNavItem({
       ) : null}
       {!compact ? (
         <span
-          className="nav-label min-w-0 truncate text-[0.9375rem] font-medium leading-5"
+          className="nav-label min-w-0 truncate text-[1rem] font-medium leading-5"
           data-testid="sidebar-nav-label"
         >
           {label}

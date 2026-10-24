@@ -1,0 +1,744 @@
+{
+  "title": "Security & Assurance V1 GA Readiness",
+  "verdict": "PASS",
+  "version": "0.8.0-ga-readiness",
+  "status": "ga_readiness",
+  "commit": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2",
+  "artifactCommitSha": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2",
+  "ciHeadSha": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2",
+  "buildIdentitySha": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2",
+  "phase15GBaseline": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2",
+  "phase15FBaseline": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",
+  "phase15EBaseline": "aa5150fc4acf287b50c973220c40d62b7f91687f",
+  "phase15DBaseline": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "phase15CBaseline": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "phase15BBaseline": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "phase15ABaseline": "4748972076f77e7392bb41ec664adddfeb677407",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 70,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15G baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15F–15A regression"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.8.0-ga-readiness"
+    },
+    {
+      "id": "G",
+      "name": "Status ga_readiness / contracts not 1.0.0"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / unknown=0"
+    },
+    {
+      "id": "I",
+      "name": "Architecture chain"
+    },
+    {
+      "id": "J",
+      "name": "MUST_NEVER_OWN boundary"
+    },
+    {
+      "id": "K",
+      "name": "Public contracts review"
+    },
+    {
+      "id": "L",
+      "name": "Control/evidence integrity"
+    },
+    {
+      "id": "M",
+      "name": "Assessment governance"
+    },
+    {
+      "id": "N",
+      "name": "Framework claim safety"
+    },
+    {
+      "id": "O",
+      "name": "Customer disclosure / projection"
+    },
+    {
+      "id": "P",
+      "name": "External assurance / S07 S08"
+    },
+    {
+      "id": "Q",
+      "name": "Tenant isolation / IDOR"
+    },
+    {
+      "id": "R",
+      "name": "RLS migration lineage"
+    },
+    {
+      "id": "S",
+      "name": "Security flags / anti-automation"
+    },
+    {
+      "id": "T",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "U",
+      "name": "Operations runbook"
+    },
+    {
+      "id": "V",
+      "name": "Observability health signals"
+    },
+    {
+      "id": "W",
+      "name": "Backup/restore truth"
+    },
+    {
+      "id": "X",
+      "name": "Upgrade path 0.7.0→1.0.0 candidate"
+    },
+    {
+      "id": "Y",
+      "name": "Performance baselines"
+    },
+    {
+      "id": "Z",
+      "name": "Commercial packaging"
+    },
+    {
+      "id": "AA",
+      "name": "Entitlements server-side"
+    },
+    {
+      "id": "AB",
+      "name": "Capability maturity matrix"
+    },
+    {
+      "id": "AC",
+      "name": "GA gap register complete"
+    },
+    {
+      "id": "AD",
+      "name": "Gap classification no UNKNOWN"
+    },
+    {
+      "id": "AE",
+      "name": "Open BLOCKER=0"
+    },
+    {
+      "id": "AF",
+      "name": "Open REQUIRED_BEFORE_GA=0"
+    },
+    {
+      "id": "AG",
+      "name": "securityAssuranceV1GaReady decision"
+    },
+    {
+      "id": "AH",
+      "name": "securityAssuranceV1GaCertified=false"
+    },
+    {
+      "id": "AI",
+      "name": "phase15IReady"
+    },
+    {
+      "id": "AJ",
+      "name": "Contracts not frozen 1.0.0"
+    },
+    {
+      "id": "AK",
+      "name": "UI v1-readiness marker"
+    },
+    {
+      "id": "AL",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AM",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AN",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "AO",
+      "name": "Accessibility"
+    },
+    {
+      "id": "AP",
+      "name": "Responsive"
+    },
+    {
+      "id": "AQ",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AR",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AS",
+      "name": "Foundation+Isolation+AI/SC+Compliance+Customer ready"
+    },
+    {
+      "id": "AT",
+      "name": "Advanced products unimplemented"
+    },
+    {
+      "id": "AU",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "AV",
+      "name": "Module V1 intact"
+    },
+    {
+      "id": "AW",
+      "name": "No GA-only migration rewrite"
+    },
+    {
+      "id": "AX",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "AY",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "AZ",
+      "name": "CustomerTrustCenterImplemented=false"
+    },
+    {
+      "id": "BA",
+      "name": "S07ExternalPenTestComplete=false"
+    },
+    {
+      "id": "BB",
+      "name": "S08CustomerSsoProductionReady=false"
+    },
+    {
+      "id": "BC",
+      "name": "EOS still 1.0.0"
+    },
+    {
+      "id": "BD",
+      "name": "Package not 1.0.0"
+    },
+    {
+      "id": "BE",
+      "name": "Phase 15H docs"
+    },
+    {
+      "id": "BF",
+      "name": "Tier-1 distinct from subsystem GA"
+    },
+    {
+      "id": "BG",
+      "name": "No Trust Center/GRC/SIEM packages"
+    },
+    {
+      "id": "BH",
+      "name": "Internal/customer separation preserved"
+    },
+    {
+      "id": "BI",
+      "name": "Evidence absence remains unknown"
+    },
+    {
+      "id": "BJ",
+      "name": "Posture no universal score"
+    },
+    {
+      "id": "BK",
+      "name": "Migration inventory batch_90–95"
+    },
+    {
+      "id": "BL",
+      "name": "GaReadinessAssessmentComplete"
+    },
+    {
+      "id": "BM",
+      "name": "Capability matrix ready flag"
+    },
+    {
+      "id": "BN",
+      "name": "Gap register ready flag"
+    },
+    {
+      "id": "BO",
+      "name": "Operations runbook ready flag"
+    },
+    {
+      "id": "BP",
+      "name": "Commercial packaging defined flag"
+    },
+    {
+      "id": "BQ",
+      "name": "SecurityAssuranceBoundaryLocked"
+    },
+    {
+      "id": "BR",
+      "name": "No Phase 15I started"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "SecurityAssuranceGaReadinessAssessmentComplete": true,
+  "securityAssuranceV1GaReady": true,
+  "securityAssuranceV1GaCertified": false,
+  "SecurityAssurancePublicContractsFrozenAt1_0_0": false,
+  "openBlockers": 0,
+  "openRequiredBeforeGa": 0,
+  "CustomerAssuranceImplemented": true,
+  "ComplianceIntelligenceImplemented": true,
+  "CustomerTrustCenterImplemented": false,
+  "S07ExternalPenTestComplete": false,
+  "S08CustomerSsoProductionReady": false,
+  "EngineeringOSV1Intact": true,
+  "phase15IReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15G baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15F–15A regression",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.8.0-ga-readiness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Status ga_readiness / contracts not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / unknown=0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Architecture chain",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "MUST_NEVER_OWN boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Public contracts review",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "Control/evidence integrity",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Assessment governance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Framework claim safety",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Customer disclosure / projection",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "External assurance / S07 S08",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Tenant isolation / IDOR",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "RLS migration lineage",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Security flags / anti-automation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Operations runbook",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Observability health signals",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Backup/restore truth",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Upgrade path 0.7.0→1.0.0 candidate",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Performance baselines",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Commercial packaging",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Entitlements server-side",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Capability maturity matrix",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "GA gap register complete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Gap classification no UNKNOWN",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Open BLOCKER=0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Open REQUIRED_BEFORE_GA=0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "securityAssuranceV1GaReady decision",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "securityAssuranceV1GaCertified=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "phase15IReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Contracts not frozen 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "UI v1-readiness marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Accessibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Responsive",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Foundation+Isolation+AI/SC+Compliance+Customer ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Advanced products unimplemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Module V1 intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "No GA-only migration rewrite",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "a7b309fbb556ed96f03a8e1c206955e54d90f1b2"
+    },
+    {
+      "id": "AY",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "AZ",
+      "name": "CustomerTrustCenterImplemented=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "S07ExternalPenTestComplete=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "S08CustomerSsoProductionReady=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "EOS still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "Package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Phase 15H docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "Tier-1 distinct from subsystem GA",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "No Trust Center/GRC/SIEM packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "Internal/customer separation preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Evidence absence remains unknown",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "Posture no universal score",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Migration inventory batch_90–95",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "GaReadinessAssessmentComplete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "Capability matrix ready flag",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BN",
+      "name": "Gap register ready flag",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BO",
+      "name": "Operations runbook ready flag",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BP",
+      "name": "Commercial packaging defined flag",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BQ",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BR",
+      "name": "No Phase 15I started",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

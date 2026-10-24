@@ -1,8 +1,19 @@
-import type { Json, SupabaseClient } from "@rtb/database";
+﻿import type { Json, SupabaseClient } from "@rtb/database";
 import type { PlatformKernel } from "@rtb/platform-kernel";
 import type { CommerceExecutionContext } from "@rtb/types";
 import { assertEngineeringService } from "../commerce/service-guard";
+import { workspaceScopeId } from "../commerce/workspace-scope";
+import { sanitizePostgrestIlike } from "./postgrest-ilike";
 import { EngineeringObjectFramework } from "./object-framework";
+import {
+  assertApprovalAction,
+  assertHumanApprovalActor,
+  assertSingleSelectedAlternative,
+  assertSupersessionPair,
+  type DecisionApprovalAction,
+} from "../decision-intelligence/invariants";
+import { assertGovernedRelationWrite, type A2WritableRelation } from "../decision-intelligence/relations";
+export { EngineeringTechnicalQueryService } from "./technical-query-service";
 
 type EngineeringRegisterTable =
   | "engineering_decisions"
@@ -10,7 +21,8 @@ type EngineeringRegisterTable =
   | "engineering_risks"
   | "engineering_issues"
   | "engineering_technical_queries"
-  | "engineering_lessons";
+  | "engineering_lessons"
+  | "engineering_assumptions";
 
 type CreateCommon = {
   tenantId: string;
@@ -133,10 +145,13 @@ export class EngineeringDecisionService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "decision.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_decisions")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -154,11 +169,18 @@ export class EngineeringDecisionService {
       .eq("id", id)
       .single();
     if (error) return null;
-    const [links, comments] = await Promise.all([
+    const workspaceId = workspaceScopeId(commerce);
+    if (workspaceId && data.workspace_id && data.workspace_id !== workspaceId) return null;
+    const [links, comments, alternatives, approvals] = await Promise.all([
       this.framework.listLinks(tenantId, "decision", id),
       this.framework.listComments(tenantId, "decision", id),
+      this.listAlternatives(commerce, tenantId, id),
+      this.listApprovals(commerce, tenantId, id),
     ]);
-    return { decision: data, links, comments };
+    const assumptionLinks = (links as { to_type?: string; from_type?: string }[]).filter(
+      (link) => link.to_type === "assumption" || link.from_type === "assumption",
+    );
+    return { decision: data, links, comments, alternatives, approvals, assumptionLinks };
   }
 
   async create(
@@ -171,6 +193,10 @@ export class EngineeringDecisionService {
       alternatives?: unknown[];
       consequences?: string;
       confidence?: number;
+      decisionQuestion?: string;
+      authorityId?: string;
+      effectiveAt?: string;
+      supersedesDecisionId?: string;
     },
     policyKey = "decision.create"
   ) {
@@ -206,6 +232,10 @@ export class EngineeringDecisionService {
         alternatives: (input.alternatives ?? []) as Json,
         consequences: input.consequences ?? null,
         confidence: input.confidence ?? null,
+        decision_question: input.decisionQuestion ?? null,
+        authority_id: input.authorityId ?? input.ownerId ?? null,
+        effective_at: input.effectiveAt ?? null,
+        supersedes_decision_id: input.supersedesDecisionId ?? null,
         review_status: "pending",
         approval_status: "pending",
         due_date: input.dueDate ?? null,
@@ -215,6 +245,10 @@ export class EngineeringDecisionService {
       .select()
       .single();
     if (error || !data) throw new Error(`Failed to create decision: ${error?.message}`);
+
+    if (Array.isArray(input.alternatives) && input.alternatives.length > 0) {
+      await this.materializeLegacyAlternatives(data.id as string, input.tenantId, input.alternatives, input.createdBy);
+    }
 
     // Start decision approval workflow if available
     if (this.kernel) {
@@ -243,55 +277,436 @@ export class EngineeringDecisionService {
 
   async approve(commerce: CommerceExecutionContext, tenantId: string, id: string, approvedBy: string) {
     assertEngineeringService(commerce, "decision.create", tenantId);
-    const { data, error } = await this.supabase
-      .from("engineering_decisions")
-      .update({
-        approval_status: "approved",
-        review_status: "approved",
-        approved_by: approvedBy,
-        status: "approved",
-        decision_date: new Date().toISOString().slice(0, 10),
-      })
-      .eq("id", id)
-      .eq("tenant_id", tenantId)
-      .select()
-      .single();
-    if (error || !data) throw new Error(`Failed to approve decision: ${error?.message}`);
-
-    await this.framework.publishCreated({
-      tenantId,
-      objectType: "decision",
-      objectId: id,
-      title: `Decision approved: ${data.title}`,
-      projectId: data.project_id as string | undefined,
+    assertHumanApprovalActor("human", approvedBy);
+    return this.recordApproval(commerce, tenantId, id, {
+      action: "approved",
       actorId: approvedBy,
-      eventSuffix: "approved",
     });
-
-    if (approvedBy) {
-      await this.kernel?.notifications
-        .create({
-          tenantId,
-          userId: approvedBy,
-          type: "engineering.decision.approved",
-          title: "Decision approved",
-          body: String(data.title),
-        })
-        .catch(() => undefined);
-    }
-    return data;
   }
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "decision.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_decisions")
       .select("*")
       .eq("tenant_id", tenantId)
-      .or(`decision_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .eq("workspace_id", workspaceId)
+      .or(`decision_number.ilike.%${needle}%,title.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  }
+
+  async listAlternatives(commerce: CommerceExecutionContext, tenantId: string, decisionId: string) {
+    assertEngineeringService(commerce, "decision.get", tenantId);
+    const { data, error } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("decision_id", decisionId)
+      .order("created_at");
+    if (error) throw new Error(`Failed to list alternatives: ${error.message}`);
+    return data ?? [];
+  }
+
+  async listApprovals(commerce: CommerceExecutionContext, tenantId: string, decisionId: string) {
+    assertEngineeringService(commerce, "decision.get", tenantId);
+    const { data, error } = await this.supabase
+      .from("engineering_decision_approvals")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("decision_id", decisionId)
+      .order("created_at");
+    if (error) throw new Error(`Failed to list approvals: ${error.message}`);
+    return data ?? [];
+  }
+
+  async createAlternative(
+    commerce: CommerceExecutionContext,
+    input: {
+      tenantId: string;
+      decisionId: string;
+      name: string;
+      alternativeCode?: string;
+      description?: string;
+      rationale?: string;
+      source?: string;
+      createdBy?: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "decision.create", input.tenantId);
+    const parent = await this.requireDecision(input.tenantId, input.decisionId, commerce);
+    const { count } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .select("*", { count: "exact", head: true })
+      .eq("decision_id", input.decisionId)
+      .eq("tenant_id", input.tenantId);
+    const code = input.alternativeCode?.trim() || `ALT-${String((count ?? 0) + 1).padStart(2, "0")}`;
+    const { data, error } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .insert({
+        tenant_id: parent.tenant_id,
+        workspace_id: parent.workspace_id ?? null,
+        project_id: parent.project_id ?? null,
+        decision_id: input.decisionId,
+        alternative_code: code,
+        name: input.name,
+        description: input.description ?? null,
+        rationale: input.rationale ?? null,
+        source: input.source ?? null,
+        status: "considered",
+        is_selected: false,
+        created_by: input.createdBy ?? null,
+      })
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to create alternative: ${error?.message}`);
+    return data;
+  }
+
+  async updateAlternative(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    alternativeId: string,
+    patch: { name?: string; description?: string; rationale?: string; status?: string },
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const { data, error } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .update({
+        ...(patch.name !== undefined ? { name: patch.name } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.rationale !== undefined ? { rationale: patch.rationale } : {}),
+        ...(patch.status !== undefined ? { status: patch.status } : {}),
+      })
+      .eq("id", alternativeId)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update alternative: ${error?.message}`);
+    return data;
+  }
+
+  async selectAlternative(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    decisionId: string,
+    alternativeId: string,
+    actorId?: string,
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const { data: alternative, error: altError } = await this.supabase
+      .from("engineering_decision_alternatives")
+      .select("*")
+      .eq("id", alternativeId)
+      .eq("tenant_id", tenantId)
+      .eq("decision_id", decisionId)
+      .single();
+    if (altError || !alternative) throw new Error("Alternative not found for this decision");
+    const { data, error } = await this.supabase
+      .from("engineering_decisions")
+      .update({ selected_alternative_id: alternativeId })
+      .eq("id", decisionId)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to select alternative: ${error?.message}`);
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (data.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: decisionId,
+      title: `Alternative selected: ${alternative.name}`,
+      projectId: data.project_id as string | undefined,
+      actorId,
+      eventSuffix: "updated",
+    });
+    await this.framework
+      .linkObjects({
+        tenantId,
+        fromType: "decision",
+        fromId: decisionId,
+        toType: "alternative",
+        toId: alternativeId,
+        relationship: "SELECTS",
+        createdBy: actorId,
+        governed: true,
+      })
+      .catch(() => undefined);
+    return data;
+  }
+
+  async recordApproval(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    decisionId: string,
+    input: {
+      action: DecisionApprovalAction | string;
+      actorId: string;
+      comments?: string;
+      authorityRole?: string;
+      evidenceRef?: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    assertApprovalAction(input.action);
+    assertHumanApprovalActor("human", input.actorId);
+    const parent = await this.requireDecision(tenantId, decisionId, commerce);
+    const { data: approval, error: approvalError } = await this.supabase
+      .from("engineering_decision_approvals")
+      .insert({
+        tenant_id: parent.tenant_id,
+        workspace_id: parent.workspace_id ?? null,
+        project_id: parent.project_id ?? null,
+        decision_id: decisionId,
+        action: input.action,
+        actor_id: input.actorId,
+        actor_kind: "human",
+        authority_role: input.authorityRole ?? null,
+        comments: input.comments ?? null,
+        evidence_ref: input.evidenceRef ?? null,
+      })
+      .select()
+      .single();
+    if (approvalError || !approval) throw new Error(`Failed to record approval: ${approvalError?.message}`);
+
+    const parentPatch: Record<string, unknown> = {};
+    if (input.action === "approved") {
+      parentPatch.approval_status = "approved";
+      parentPatch.review_status = "approved";
+      parentPatch.approved_by = input.actorId;
+      parentPatch.status = "approved";
+      parentPatch.decision_date = new Date().toISOString().slice(0, 10);
+      parentPatch.effective_at = parent.effective_at ?? new Date().toISOString();
+    } else if (input.action === "rejected") {
+      parentPatch.approval_status = "rejected";
+      parentPatch.status = "rejected";
+    } else if (input.action === "withdrawn") {
+      parentPatch.approval_status = "withdrawn";
+    } else if (input.action === "submitted") {
+      parentPatch.approval_status = "pending";
+      parentPatch.review_status = "in_review";
+    } else if (input.action === "superseded") {
+      parentPatch.status = "superseded";
+      parentPatch.approval_status = "superseded";
+    }
+
+    let updated = parent;
+    if (Object.keys(parentPatch).length > 0) {
+      const { data, error } = await this.supabase
+        .from("engineering_decisions")
+        .update(parentPatch)
+        .eq("id", decisionId)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
+      if (error || !data) throw new Error(`Failed to update decision after approval: ${error?.message}`);
+      updated = data as Record<string, unknown>;
+    }
+
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (parent.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: decisionId,
+      title: `Decision ${input.action}: ${updated.title}`,
+      projectId: updated.project_id as string | undefined,
+      actorId: input.actorId,
+      eventSuffix: input.action === "approved" ? "approved" : "updated",
+    });
+
+    if (input.action === "approved") {
+      await this.kernel?.notifications
+        .create({
+          tenantId,
+          userId: input.actorId,
+          type: "engineering.decision.approved",
+          title: "Decision approved",
+          body: String(updated.title),
+        })
+        .catch(() => undefined);
+    }
+    return { decision: updated, approval };
+  }
+
+  async supersede(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    successorId: string,
+    supersededId: string,
+    actorId: string,
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const successor = await this.requireDecision(tenantId, successorId, commerce);
+    const prior = await this.requireDecision(tenantId, supersededId, commerce);
+    assertSupersessionPair({
+      decisionId: successorId,
+      supersedesDecisionId: supersededId,
+      tenantId,
+      workspaceId: successor.workspace_id as string | null,
+      prior: {
+        id: prior.id as string,
+        tenant_id: prior.tenant_id as string,
+        workspace_id: (prior.workspace_id as string | null) ?? null,
+        supersedes_decision_id: (prior.supersedes_decision_id as string | null) ?? null,
+      },
+    });
+    const { data, error } = await this.supabase
+      .from("engineering_decisions")
+      .update({ supersedes_decision_id: supersededId })
+      .eq("id", successorId)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to supersede decision: ${error?.message}`);
+    await this.recordApproval(commerce, tenantId, supersededId, {
+      action: "superseded",
+      actorId,
+      comments: `Superseded by ${String(successor.decision_number ?? successorId)}`,
+    });
+    await this.framework
+      .linkObjects({
+        tenantId,
+        fromType: "decision",
+        fromId: successorId,
+        toType: "decision",
+        toId: supersededId,
+        relationship: "SUPERSEDES",
+        createdBy: actorId,
+        governed: true,
+      })
+      .catch(() => undefined);
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (data.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: successorId,
+      title: "Decision superseded prior record",
+      projectId: data.project_id as string | undefined,
+      actorId,
+      eventSuffix: "updated",
+    });
+    return data;
+  }
+
+  async updateDecision(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    patch: {
+      title?: string;
+      description?: string;
+      rationale?: string;
+      decisionQuestion?: string;
+      authorityId?: string | null;
+      confidence?: number | null;
+      recommendation?: string;
+      effectiveAt?: string | null;
+    },
+    actorId?: string,
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    const row: Record<string, unknown> = {};
+    if (patch.title !== undefined) row.title = patch.title;
+    if (patch.description !== undefined) row.description = patch.description;
+    if (patch.rationale !== undefined) row.rationale = patch.rationale;
+    if (patch.decisionQuestion !== undefined) row.decision_question = patch.decisionQuestion;
+    if (patch.authorityId !== undefined) row.authority_id = patch.authorityId;
+    if (patch.confidence !== undefined) row.confidence = patch.confidence;
+    if (patch.recommendation !== undefined) row.recommendation = patch.recommendation;
+    if (patch.effectiveAt !== undefined) row.effective_at = patch.effectiveAt;
+    const { data, error } = await this.supabase
+      .from("engineering_decisions")
+      .update(row)
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update decision: ${error?.message}`);
+    await this.framework.publishCreated({
+      tenantId,
+      workspaceId: (data.workspace_id as string | undefined) ?? undefined,
+      objectType: "decision",
+      objectId: id,
+      title: `Decision updated: ${data.title}`,
+      projectId: data.project_id as string | undefined,
+      actorId,
+      eventSuffix: "updated",
+    });
+    return data;
+  }
+
+  async linkGoverned(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    input: {
+      fromType: string;
+      fromId: string;
+      toType: string;
+      toId: string;
+      relationship: A2WritableRelation;
+      createdBy?: string;
+    },
+  ) {
+    assertEngineeringService(commerce, "decision.create", tenantId);
+    assertGovernedRelationWrite(input);
+    return this.framework.linkObjects({
+      tenantId,
+      fromType: input.fromType,
+      fromId: input.fromId,
+      toType: input.toType,
+      toId: input.toId,
+      relationship: input.relationship,
+      createdBy: input.createdBy,
+      governed: true,
+    });
+  }
+
+  private async requireDecision(
+    tenantId: string,
+    id: string,
+    commerce: CommerceExecutionContext,
+  ): Promise<Record<string, unknown>> {
+    const workspaceId = workspaceScopeId(commerce);
+    let q = this.supabase.from("engineering_decisions").select("*").eq("tenant_id", tenantId).eq("id", id);
+    if (workspaceId) q = q.eq("workspace_id", workspaceId);
+    const { data, error } = await q.maybeSingle();
+    if (error || !data) throw new Error("Decision not found in tenant/workspace scope");
+    return data as Record<string, unknown>;
+  }
+
+  private async materializeLegacyAlternatives(
+    decisionId: string,
+    tenantId: string,
+    alternatives: unknown[],
+    createdBy?: string,
+  ) {
+    for (const [index, item] of alternatives.entries()) {
+      const name =
+        typeof item === "string"
+          ? item
+          : typeof item === "object" && item && "name" in item
+            ? String((item as { name: unknown }).name)
+            : `Alternative ${index + 1}`;
+      const description =
+        typeof item === "object" && item && "description" in item
+          ? String((item as { description: unknown }).description ?? "")
+          : null;
+      await this.supabase.from("engineering_decision_alternatives").insert({
+        tenant_id: tenantId,
+        decision_id: decisionId,
+        alternative_code: `ALT-${String(index + 1).padStart(2, "0")}`,
+        name,
+        description,
+        status: "considered",
+        is_selected: false,
+        created_by: createdBy ?? null,
+      });
+    }
   }
 }
 
@@ -306,10 +721,13 @@ export class EngineeringActionService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "action.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_actions")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -388,14 +806,48 @@ export class EngineeringActionService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "action.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_actions")
       .select("*")
       .eq("tenant_id", tenantId)
-      .or(`action_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .eq("workspace_id", workspaceId)
+      .or(`action_number.ilike.%${needle}%,title.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  }
+
+  async updateStatus(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    status: string
+  ) {
+    assertEngineeringService(commerce, "action.update", tenantId);
+    const allowed = ["open", "in_progress", "completed", "cancelled"] as const;
+    if (!allowed.includes(status as (typeof allowed)[number])) {
+      throw new Error(`Unsupported action status: ${status}`);
+    }
+    const { data: existing, error: lookupError } = await this.supabase
+      .from("engineering_actions")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (lookupError || !existing) throw new Error("Action not found");
+    const { data, error } = await this.supabase
+      .from("engineering_actions")
+      .update({ status })
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update action: ${error?.message}`);
+    return data;
   }
 }
 
@@ -410,10 +862,13 @@ export class EngineeringRiskService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "risk.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_risks")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("score", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -511,14 +966,59 @@ export class EngineeringRiskService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "risk.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_risks")
       .select("*")
       .eq("tenant_id", tenantId)
-      .or(`risk_number.ilike.%${query}%,title.ilike.%${query}%,category.ilike.%${query}%`)
+      .eq("workspace_id", workspaceId)
+      .or(`risk_number.ilike.%${needle}%,title.ilike.%${needle}%,category.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  }
+
+  async update(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    id: string,
+    patch: {
+      status?: string;
+      mitigation?: string;
+      probability?: number;
+      consequence?: number;
+    }
+  ) {
+    assertEngineeringService(commerce, "risk.update", tenantId);
+    const { data: existing, error: lookupError } = await this.supabase
+      .from("engineering_risks")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (lookupError || !existing) throw new Error("Risk not found");
+    const allowedStatus = ["open", "mitigated", "closed", "accepted"] as const;
+    if (patch.status && !allowedStatus.includes(patch.status as (typeof allowedStatus)[number])) {
+      throw new Error(`Unsupported risk status: ${patch.status}`);
+    }
+    const update: Record<string, unknown> = {};
+    if (patch.status) update.status = patch.status;
+    if (patch.mitigation !== undefined) update.mitigation = patch.mitigation;
+    if (patch.probability !== undefined) update.probability = patch.probability;
+    if (patch.consequence !== undefined) update.consequence = patch.consequence;
+    if (Object.keys(update).length === 0) return existing;
+    const { data, error } = await this.supabase
+      .from("engineering_risks")
+      .update(update)
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(`Failed to update risk: ${error?.message}`);
+    return data;
   }
 }
 
@@ -533,10 +1033,13 @@ export class EngineeringIssueService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "issue.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_issues")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -641,137 +1144,22 @@ export class EngineeringIssueService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "issue.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_issues")
       .select("*")
       .eq("tenant_id", tenantId)
-      .or(`issue_number.ilike.%${query}%,title.ilike.%${query}%`)
+      .eq("workspace_id", workspaceId)
+      .or(`issue_number.ilike.%${needle}%,title.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
   }
 }
 
-export class EngineeringTechnicalQueryService {
-  private framework: EngineeringObjectFramework;
-  constructor(
-    private readonly supabase: SupabaseClient,
-    kernel?: PlatformKernel
-  ) {
-    this.framework = new EngineeringObjectFramework(supabase, kernel);
-  }
-
-  async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
-    assertEngineeringService(commerce, "technical_query.list", tenantId, options);
-    let q = this.supabase
-      .from("engineering_technical_queries")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("updated_at", { ascending: false })
-      .limit(limit);
-    if (projectId) q = q.eq("project_id", projectId);
-    const { data, error } = await q;
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  }
-
-  async get(commerce: CommerceExecutionContext, tenantId: string, id: string) {
-    assertEngineeringService(commerce, "technical_query.get", tenantId);
-    const { data, error } = await this.supabase
-      .from("engineering_technical_queries")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .eq("id", id)
-      .single();
-    if (error) return null;
-    const comments = await this.framework.listComments(tenantId, "technical_query", id);
-    return { query: data, comments };
-  }
-
-  async create(
-    commerce: CommerceExecutionContext,
-    input: CreateCommon & {
-      question: string;
-      requesterId?: string;
-      responderId?: string;
-      documentId?: string;
-      responseDue?: string;
-    }
-  ) {
-    assertEngineeringService(commerce, "technical_query.create", input.tenantId);
-    const number = await nextNumber(
-      this.supabase,
-      input.tenantId,
-      "engineering_technical_queries",
-      "tq_number",
-      "TQ"
-    );
-    const { data, error } = await this.supabase
-      .from("engineering_technical_queries")
-      .insert({
-        tenant_id: input.tenantId,
-        workspace_id: input.workspaceId ?? null,
-        tq_number: number,
-        title: input.title,
-        question: input.question,
-        description: input.description ?? null,
-        status: input.status ?? "open",
-        priority: input.priority ?? "medium",
-        requester_id: input.requesterId ?? input.createdBy ?? null,
-        responder_id: input.responderId ?? null,
-        document_id: input.documentId ?? null,
-        response_due: input.responseDue ?? input.dueDate ?? null,
-        discipline_id: input.disciplineId ?? null,
-        project_id: input.projectId ?? null,
-        asset_id: input.assetId ?? null,
-        company_id: input.companyId ?? null,
-        owner_id: input.ownerId ?? input.createdBy ?? null,
-        created_by: input.createdBy ?? null,
-        assigned_to: input.assignedTo ?? null,
-        due_date: input.dueDate ?? null,
-        ai_context: (input.aiContext ?? {}) as Json,
-        metadata: (input.metadata ?? {}) as Json,
-      })
-      .select()
-      .single();
-    if (error || !data) throw new Error(`Failed to create TQ: ${error?.message}`);
-
-    if (input.documentId) {
-      await this.framework
-        .linkObjects({
-          tenantId: input.tenantId,
-          fromType: "technical_query",
-          fromId: data.id as string,
-          toType: "document",
-          toId: input.documentId,
-          relationship: "references",
-          createdBy: input.createdBy,
-        })
-        .catch(() => undefined);
-    }
-
-    return afterCreate(
-      this.framework,
-      this.supabase,
-      "engineering_technical_queries",
-      "technical_query",
-      data,
-      { ...input, numberField: number }
-    );
-  }
-
-  async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
-    assertEngineeringService(commerce, "technical_query.search", tenantId, options);
-    const { data, error } = await this.supabase
-      .from("engineering_technical_queries")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .or(`tq_number.ilike.%${query}%,title.ilike.%${query}%,question.ilike.%${query}%`)
-      .limit(20);
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  }
-}
 
 export class EngineeringLessonService {
   private framework: EngineeringObjectFramework;
@@ -784,10 +1172,13 @@ export class EngineeringLessonService {
 
   async list(commerce: CommerceExecutionContext, tenantId: string, projectId?: string, limit = 50, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "lesson.list", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
     let q = this.supabase
       .from("engineering_lessons")
       .select("*")
       .eq("tenant_id", tenantId)
+      .eq("workspace_id", workspaceId)
       .order("updated_at", { ascending: false })
       .limit(limit);
     if (projectId) q = q.eq("project_id", projectId);
@@ -873,11 +1264,16 @@ export class EngineeringLessonService {
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, options?: { aggregate?: boolean }) {
     assertEngineeringService(commerce, "lesson.search", tenantId, options);
+    const workspaceId = workspaceScopeId(commerce);
+    if (!workspaceId) return [];
+    const needle = sanitizePostgrestIlike(query);
+    if (!needle) return [];
     const { data, error } = await this.supabase
       .from("engineering_lessons")
       .select("*")
       .eq("tenant_id", tenantId)
-      .or(`lesson_number.ilike.%${query}%,title.ilike.%${query}%,lesson.ilike.%${query}%`)
+      .eq("workspace_id", workspaceId)
+      .or(`lesson_number.ilike.%${needle}%,title.ilike.%${needle}%,lesson.ilike.%${needle}%`)
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];

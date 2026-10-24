@@ -3,7 +3,10 @@ import type { NavItem } from "@rtb/types";
 /** Preferred display order for sidebar groups (Batch 2.07) */
 export const NAV_GROUP_ORDER = [
   "engineering",
+  "engineering_work",
   "engineering_registers",
+  "engineering_analysis",
+  "engineering_ai",
   "engineering_admin",
   "reference_os",
   "platform",
@@ -438,8 +441,8 @@ export const INTELLIGENCE_NAVIGATION: NavItem[] = [
 
 export const ENGINEERING_NAVIGATION: NavItem[] = [
   {
-    id: "eng-dashboard",
-    label: "Engineering Command Center",
+    id: "eng-home",
+    label: "Command Centre",
     icon: "LayoutDashboard",
     href: "/engineering",
     group: "engineering",
@@ -447,7 +450,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
   },
   {
     id: "eng-modules",
-    label: "Modules",
+    label: "Engineering Systems",
     icon: "AppWindow",
     href: "/engineering/modules",
     group: "engineering",
@@ -458,7 +461,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     label: "Projects",
     icon: "FolderKanban",
     href: "/engineering/projects",
-    group: "engineering",
+    group: "engineering_work",
     audience: "viewer",
   },
   {
@@ -466,40 +469,42 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     label: "Assets",
     icon: "Boxes",
     href: "/engineering/assets",
-    group: "engineering",
+    group: "engineering_work",
     audience: "viewer",
+  },
+  {
+    id: "eng-inspections",
+    label: "Inspections",
+    icon: "ClipboardCheck",
+    href: "/engineering/apps/inspection-intelligence",
+    group: "engineering_work",
+    audience: "viewer",
+    applicationKey: "inspection_intelligence",
   },
   {
     id: "eng-documents",
     label: "Documents",
     icon: "FileText",
     href: "/engineering/documents",
-    group: "engineering",
+    group: "engineering_work",
+    audience: "viewer",
+    applicationKey: "documents",
+  },
+  {
+    id: "eng-risks",
+    label: "Risks",
+    icon: "AlertTriangle",
+    href: "/engineering/risks",
+    group: "engineering_registers",
     audience: "viewer",
   },
   {
-    id: "eng-ai",
-    label: "AI Workspace",
-    icon: "Brain",
-    href: "/engineering/ai",
-    group: "engineering",
-    audience: "engineer",
-  },
-  {
-    id: "eng-search",
-    label: "Search",
-    icon: "Search",
-    href: "/engineering/search",
-    group: "engineering",
+    id: "eng-tqs",
+    label: "Technical Queries",
+    icon: "MessageSquare",
+    href: "/engineering/technical-queries",
+    group: "engineering_registers",
     audience: "viewer",
-  },
-  {
-    id: "eng-reports",
-    label: "Reports",
-    icon: "ClipboardList",
-    href: "/engineering/reports",
-    group: "engineering",
-    audience: "engineer",
   },
   {
     id: "eng-decisions",
@@ -516,14 +521,106 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/actions",
     group: "engineering_registers",
     audience: "viewer",
+    applicationKey: "project_controls",
   },
   {
-    id: "eng-risks",
-    label: "Risks",
-    icon: "AlertTriangle",
-    href: "/engineering/risks",
-    group: "engineering_registers",
+    id: "eng-models",
+    label: "Models",
+    icon: "Network",
+    href: "/engineering/apps/model-interoperability",
+    group: "engineering_analysis",
     audience: "viewer",
+    applicationKey: "engineering_model_interoperability",
+  },
+  {
+    id: "eng-digital-twin",
+    label: "Digital Twin",
+    icon: "Layers",
+    href: "/engineering/apps/digital-twin",
+    group: "engineering_analysis",
+    audience: "viewer",
+    applicationKey: "digital_twin",
+  },
+  {
+    id: "eng-reports",
+    label: "Reports",
+    icon: "ClipboardList",
+    href: "/engineering/reports",
+    group: "engineering_analysis",
+    audience: "viewer",
+  },
+  {
+    id: "eng-ask",
+    label: "Engineering AI",
+    icon: "Brain",
+    href: "/engineering/ask",
+    group: "engineering_ai",
+    audience: "engineer",
+    featureKey: "ai_assistant",
+  },
+  {
+    id: "eng-review",
+    label: "Engineering Review",
+    icon: "ClipboardList",
+    href: "/review",
+    group: "engineering_ai",
+    audience: "engineer",
+  },
+  /** Reachable routes — not primary nav */
+  {
+    id: "eng-my",
+    label: "My Engineering",
+    icon: "UserRound",
+    href: "/engineering/my",
+    group: "engineering",
+    audience: "viewer",
+    sidebarHidden: true,
+  },
+  {
+    id: "eng-explore",
+    label: "Explore",
+    icon: "Compass",
+    href: "/engineering/explore",
+    group: "engineering",
+    audience: "viewer",
+    sidebarHidden: true,
+  },
+  {
+    id: "eng-intelligence",
+    label: "Intelligence",
+    icon: "Sparkles",
+    href: "/engineering/intelligence",
+    group: "engineering",
+    audience: "viewer",
+    sidebarHidden: true,
+  },
+  {
+    id: "eng-dashboard",
+    label: "Engineering Command Center",
+    icon: "LayoutDashboard",
+    href: "/engineering",
+    group: "engineering",
+    audience: "viewer",
+    sidebarHidden: true,
+  },
+  {
+    id: "eng-ai",
+    label: "AI Workspace",
+    icon: "Brain",
+    href: "/engineering/ai",
+    group: "engineering_ai",
+    audience: "engineer",
+    featureKey: "ai_assistant",
+    sidebarHidden: true,
+  },
+  {
+    id: "eng-search",
+    label: "Search",
+    icon: "Search",
+    href: "/engineering/search",
+    group: "engineering",
+    audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-issues",
@@ -532,14 +629,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/issues",
     group: "engineering_registers",
     audience: "viewer",
-  },
-  {
-    id: "eng-tqs",
-    label: "Technical Queries",
-    icon: "MessageSquare",
-    href: "/engineering/technical-queries",
-    group: "engineering_registers",
-    audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-lessons",
@@ -548,6 +638,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/lessons",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-timeline",
@@ -556,6 +647,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/timeline",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
   },
   {
     id: "eng-activity",
@@ -564,6 +656,16 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     href: "/engineering/activity",
     group: "engineering_registers",
     audience: "viewer",
+    sidebarHidden: true,
+  },
+  {
+    id: "eng-governance",
+    label: "Governance & Assurance",
+    icon: "ShieldCheck",
+    href: "/engineering/governance",
+    group: "engineering_admin",
+    audience: "manager",
+    permissions: [{ resource: "engineering", action: "admin" }],
   },
   {
     id: "eng-disciplines",
@@ -609,6 +711,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     group: "engineering_admin",
     audience: "manager",
     permissions: [{ resource: "engineering", action: "admin" }],
+    sidebarHidden: true,
   },
 ];
 
@@ -727,8 +830,11 @@ export function groupNavigation(items: NavItem[]): Record<string, NavItem[]> {
 
 export const NAV_GROUP_LABELS: Record<string, string> = {
   engineering: "Engineering OS",
-  engineering_registers: "Engineering Registers",
-  engineering_admin: "Engineering Administration",
+  engineering_work: "Work",
+  engineering_registers: "Engineering",
+  engineering_analysis: "Analysis",
+  engineering_ai: "AI",
+  engineering_admin: "Administration",
   reference_os: "Reference OS",
   platform: "System Administration",
   platform_advanced: "Advanced Platform Tools",
@@ -761,14 +867,32 @@ export const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     defaultExpanded: true,
   },
   {
+    id: "engineering_work",
+    label: "Work",
+    groups: ["engineering_work"],
+    defaultExpanded: true,
+  },
+  {
     id: "engineering_registers",
-    label: "Engineering Registers",
+    label: "Engineering",
     groups: ["engineering_registers"],
     defaultExpanded: true,
   },
   {
+    id: "engineering_analysis",
+    label: "Analysis",
+    groups: ["engineering_analysis"],
+    defaultExpanded: true,
+  },
+  {
+    id: "engineering_ai",
+    label: "AI",
+    groups: ["engineering_ai"],
+    defaultExpanded: true,
+  },
+  {
     id: "engineering_admin",
-    label: "Engineering Administration",
+    label: "Administration",
     groups: ["engineering_admin"],
     defaultExpanded: false,
   },
@@ -836,5 +960,25 @@ export function itemsForSidebarSection(
     if (list?.length) items.push(...list);
   }
   return items;
+}
+
+/**
+ * Longest-prefix active match so `/engineering` is exact-only when a more
+ * specific primary href such as `/engineering/projects` also matches.
+ */
+export function isNavItemActive(
+  pathname: string,
+  href: string,
+  siblingHrefs: readonly string[],
+): boolean {
+  if (href === "/engineering" || href === "/engineering/modules") {
+    return pathname === href || pathname === `${href}/`;
+  }
+  const matches = (candidate: string) =>
+    pathname === candidate || pathname.startsWith(`${candidate}/`);
+  if (!matches(href)) return false;
+  return !siblingHrefs.some(
+    (other) => other !== href && other.length > href.length && matches(other),
+  );
 }
 

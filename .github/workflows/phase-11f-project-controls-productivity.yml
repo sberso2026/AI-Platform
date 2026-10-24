@@ -1,0 +1,116 @@
+name: Phase 11F Project Controls Productivity Intelligence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/project-controls/**"
+      - "packages/project-controls-certification/**"
+      - "packages/engineering-shared-project-domain/**"
+      - "packages/platform-certification/src/phase11f*"
+      - "supabase/migrations/*batch_66*"
+      - "apps/web/src/app/api/engineering/project-controls/**"
+      - "docs/architecture/PROJECT_CONTROLS_*"
+      - ".github/workflows/phase-11f-project-controls-productivity.yml"
+
+concurrency:
+  group: phase-11f-project-controls-productivity-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Shared project domain unit tests
+        run: pnpm --filter @rtb/engineering-shared-project-domain test
+      - name: Project Controls unit tests
+        run: pnpm --filter @rtb/project-controls test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase11f-project-controls-productivity.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/project-controls-certification secret-scan
+      - name: Phase 11F certification (gates A–BC)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/project-controls-certification certify:phase11f
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/project-controls-certification/artifacts/phase11f-project-controls-productivity-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===55],
+            ["version", a.version==="0.6.0-productivity-intelligence"],
+            ["status", a.status==="productivity_intelligence"],
+            ["progressIntelligenceReady", a.progressIntelligenceReady===true],
+            ["scheduleIntelligenceReady", a.scheduleIntelligenceReady===true],
+            ["changeIntelligenceReady", a.changeIntelligenceReady===true],
+            ["costIntelligenceReady", a.costIntelligenceReady===true],
+            ["productivityIntelligenceReady", a.productivityIntelligenceReady===true],
+            ["productivityIntelligenceIsAdvisoryOnly", a.productivityIntelligenceIsAdvisoryOnly===true],
+            ["projectSnapshotReady", a.projectSnapshotReady===true],
+            ["projectTimelineReady", a.projectTimelineReady===true],
+            ["progressIntelligence11bIntact", a.progressIntelligence11bIntact===true],
+            ["changeIntelligence11dIntact", a.changeIntelligence11dIntact===true],
+            ["costIntelligence11eIntact", a.costIntelligence11eIntact===true],
+            ["productionProjectControlsReady", a.productionProjectControlsReady===false],
+            ["resourcePlanningImplemented", a.resourcePlanningImplemented===false],
+            ["timesheetSystemImplemented", a.timesheetSystemImplemented===false],
+            ["payrollImplemented", a.payrollImplemented===false],
+            ["labourCostEngineImplemented", a.labourCostEngineImplemented===false],
+            ["earnedValueImplemented", a.earnedValueImplemented===false],
+            ["forecastEngineImplemented", a.forecastEngineImplemented===false],
+            ["phase11fReady", a.phase11fReady===true],
+            ["phase11gReady", a.phase11gReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["requiredTestsSkipped", a.requiredTestsSkipped===false],
+            ["artifactCommitSha", a.artifactCommitSha===a.ciHeadSha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates, hostedDetail: a.hostedDetail }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            productivityIntelligenceReady: a.productivityIntelligenceReady,
+            phase11gReady: a.phase11gReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase11f-project-controls-productivity-certification
+          path: packages/project-controls-certification/artifacts/phase11f-project-controls-productivity-certification.json
+          if-no-files-found: warn

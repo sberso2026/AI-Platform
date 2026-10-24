@@ -1,0 +1,740 @@
+{
+  "title": "Security & Assurance Secure Compute Assurance",
+  "verdict": "PASS",
+  "version": "0.5.0-secure-compute",
+  "status": "secure_compute",
+  "commit": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "artifactCommitSha": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "ciHeadSha": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "buildIdentitySha": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "phase15DBaseline": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "phase15CBaseline": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "phase15BBaseline": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "phase15ABaseline": "4748972076f77e7392bb41ec664adddfeb677407",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 70,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15D baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15C/15B/15A regression"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.5.0-secure-compute"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.5.0-secure-compute"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / reuse boundary"
+    },
+    {
+      "id": "I",
+      "name": "Missing identity fail-closed"
+    },
+    {
+      "id": "J",
+      "name": "WORKLOAD_IDENTITY plane"
+    },
+    {
+      "id": "K",
+      "name": "TENANT_WORKSPACE_SCOPE plane"
+    },
+    {
+      "id": "L",
+      "name": "EXECUTION_AUTHORIZATION plane"
+    },
+    {
+      "id": "M",
+      "name": "RUNTIME_ISOLATION plane"
+    },
+    {
+      "id": "N",
+      "name": "FILESYSTEM_SCOPE plane"
+    },
+    {
+      "id": "O",
+      "name": "NETWORK_EGRESS plane"
+    },
+    {
+      "id": "P",
+      "name": "SECRET_ACCESS plane"
+    },
+    {
+      "id": "Q",
+      "name": "RESOURCE_LIMITS plane"
+    },
+    {
+      "id": "R",
+      "name": "EXECUTION_TIMEOUT plane"
+    },
+    {
+      "id": "S",
+      "name": "ARTEFACT_INTEGRITY plane"
+    },
+    {
+      "id": "T",
+      "name": "EXECUTION_PROVENANCE plane"
+    },
+    {
+      "id": "U",
+      "name": "OUTPUT_HANDLING plane"
+    },
+    {
+      "id": "V",
+      "name": "TEMPORARY_DATA plane"
+    },
+    {
+      "id": "W",
+      "name": "LOGGING_TELEMETRY plane"
+    },
+    {
+      "id": "X",
+      "name": "HOST_POSTURE plane"
+    },
+    {
+      "id": "Y",
+      "name": "Cross-tenant execution denial"
+    },
+    {
+      "id": "Z",
+      "name": "Cross-workspace execution denial"
+    },
+    {
+      "id": "AA",
+      "name": "Role-insufficient denial"
+    },
+    {
+      "id": "AB",
+      "name": "Policy linkage"
+    },
+    {
+      "id": "AC",
+      "name": "Runtime isolation assessment"
+    },
+    {
+      "id": "AD",
+      "name": "Timeout/error != PASS"
+    },
+    {
+      "id": "AE",
+      "name": "Artefact/hash evidence"
+    },
+    {
+      "id": "AF",
+      "name": "Unsupported control != PASS"
+    },
+    {
+      "id": "AG",
+      "name": "No confidential computing claim"
+    },
+    {
+      "id": "AH",
+      "name": "Probe error != PASS"
+    },
+    {
+      "id": "AI",
+      "name": "Findings != incidents"
+    },
+    {
+      "id": "AJ",
+      "name": "No autonomous remediation"
+    },
+    {
+      "id": "AK",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "AL",
+      "name": "Isolation+AI/data dimensions preserved"
+    },
+    {
+      "id": "AM",
+      "name": "Posture no universal score"
+    },
+    {
+      "id": "AN",
+      "name": "Events secure_compute.*"
+    },
+    {
+      "id": "AO",
+      "name": "Workflow secure_compute_review"
+    },
+    {
+      "id": "AP",
+      "name": "Admin UI marker"
+    },
+    {
+      "id": "AQ",
+      "name": "Migration batch_93"
+    },
+    {
+      "id": "AR",
+      "name": "RLS tenant/workspace"
+    },
+    {
+      "id": "AS",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AT",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AU",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "AV",
+      "name": "Accessibility"
+    },
+    {
+      "id": "AW",
+      "name": "Responsive"
+    },
+    {
+      "id": "AX",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AY",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AZ",
+      "name": "SecureComputeAssuranceReady flags"
+    },
+    {
+      "id": "BA",
+      "name": "Advanced products unimplemented"
+    },
+    {
+      "id": "BB",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "BC",
+      "name": "Module V1 intact"
+    },
+    {
+      "id": "BD",
+      "name": "phase15FReady"
+    },
+    {
+      "id": "BE",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "BF",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "BG",
+      "name": "Semantics locks"
+    },
+    {
+      "id": "BH",
+      "name": "Foundation+Isolation+AI/data still ready"
+    },
+    {
+      "id": "BI",
+      "name": "No SIEM/TEE/Trust Center packages"
+    },
+    {
+      "id": "BJ",
+      "name": "EOS still 1.0.0"
+    },
+    {
+      "id": "BK",
+      "name": "Package not 1.0.0"
+    },
+    {
+      "id": "BL",
+      "name": "Secure compute docs"
+    },
+    {
+      "id": "BM",
+      "name": "Secret non-exposure in evidence"
+    },
+    {
+      "id": "BN",
+      "name": "Provenance implemented"
+    },
+    {
+      "id": "BO",
+      "name": "Integrity assessment implemented"
+    },
+    {
+      "id": "BP",
+      "name": "Background-job scope"
+    },
+    {
+      "id": "BQ",
+      "name": "duplicateExecutionHostDetected=false"
+    },
+    {
+      "id": "BR",
+      "name": "SecurityAssuranceBoundaryLocked"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "SecureComputeAssuranceReady": true,
+  "SecureComputeAssuranceRuntimeImplemented": true,
+  "AiDataSecurityReady": true,
+  "IsolationAssuranceReady": true,
+  "duplicateExecutionHostDetected": false,
+  "automaticRemediationEnabled": false,
+  "automaticRuntimeMutationEnabled": false,
+  "SecurityIntelligenceImplemented": false,
+  "AiTrustRuntimeImplemented": false,
+  "confidentialComputingClaimed": false,
+  "EngineeringOSV1Intact": true,
+  "phase15FReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15D baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15C/15B/15A regression",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.5.0-secure-compute",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.5.0-secure-compute",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / reuse boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Missing identity fail-closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "WORKLOAD_IDENTITY plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "TENANT_WORKSPACE_SCOPE plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "EXECUTION_AUTHORIZATION plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "RUNTIME_ISOLATION plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "FILESYSTEM_SCOPE plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "NETWORK_EGRESS plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "SECRET_ACCESS plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "RESOURCE_LIMITS plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "EXECUTION_TIMEOUT plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "ARTEFACT_INTEGRITY plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "EXECUTION_PROVENANCE plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "OUTPUT_HANDLING plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "TEMPORARY_DATA plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "LOGGING_TELEMETRY plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "HOST_POSTURE plane",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Cross-tenant execution denial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Cross-workspace execution denial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Role-insufficient denial",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Policy linkage",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Runtime isolation assessment",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Timeout/error != PASS",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Artefact/hash evidence",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Unsupported control != PASS",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "No confidential computing claim",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Probe error != PASS",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Findings != incidents",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "No autonomous remediation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Isolation+AI/data dimensions preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Posture no universal score",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Events secure_compute.*",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Workflow secure_compute_review",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Admin UI marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Migration batch_93",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "RLS tenant/workspace",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Accessibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "Responsive",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "SecureComputeAssuranceReady flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "Advanced products unimplemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "Module V1 intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "phase15FReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207"
+    },
+    {
+      "id": "BF",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BG",
+      "name": "Semantics locks",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "Foundation+Isolation+AI/data still ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "No SIEM/TEE/Trust Center packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "EOS still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "Secure compute docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "Secret non-exposure in evidence",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BN",
+      "name": "Provenance implemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BO",
+      "name": "Integrity assessment implemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BP",
+      "name": "Background-job scope",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BQ",
+      "name": "duplicateExecutionHostDetected=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BR",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

@@ -1,13 +1,16 @@
 {
   "name": "@rtb/engineering-os",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./browser": "./src/browser.ts",
     "./manifest": "./src/manifest.ts",
-    "./commerce": "./src/commerce/service-guard.ts"
+    "./commerce": "./src/commerce/service-guard.ts",
+    "./security-closure": "./src/security-closure/index.ts",
+    "./security-closure/privileged-mfa": "./src/security-closure/privileged-mfa.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -16,11 +19,15 @@
   },
   "dependencies": {
     "@rtb/database": "workspace:*",
+    "@rtb/engineering-review": "workspace:*",
     "@rtb/platform-commerce": "workspace:*",
-    "@rtb/platform-kernel": "workspace:*",
     "@rtb/platform-intelligence": "workspace:*",
+    "@rtb/platform-kernel": "workspace:*",
     "@rtb/types": "workspace:*",
-    "zod": "^3.25.36"
+    "docx": "^9.8.1",
+    "exceljs": "^4.4.0",
+    "pptxgenjs": "^4.0.1",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

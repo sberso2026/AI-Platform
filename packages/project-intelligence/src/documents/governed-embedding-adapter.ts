@@ -305,3 +305,26 @@ export class GovernedEmbeddingAdapter implements ProjectIntelligenceEmbeddingAda
     };
   }
 }
+
+export function tryCreateGovernedEmbeddingAdapter(
+  options: GovernedEmbeddingAdapterOptions = {},
+): GovernedEmbeddingAdapter | null {
+  try {
+    return new GovernedEmbeddingAdapter(options);
+  } catch {
+    return null;
+  }
+}
+
+export class UnavailableEmbeddingAdapter implements ProjectIntelligenceEmbeddingAdapter {
+  readonly modelId = "unavailable";
+
+  async embed(): Promise<EmbeddingResult> {
+    throw new DocumentIntelligenceError(
+      "document_embedding_failed",
+      "No governed embedding API key configured",
+      503,
+    );
+  }
+}
+

@@ -1,9 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, StatusChip } from "@rtb/ui";
+import { StatusChip } from "@rtb/ui";
+import { loadEngineeringListItems } from "@/lib/engineering/load-engineering-list";
+import {
+  useResolvedEngineeringProjectId,
+  withProjectQuery,
+} from "@/hooks/use-engineering-project-filter";
+import {
+  EmptyOperationalState,
+  OperationalError,
+  OperationalSkeleton,
+  StatusTable,
+  type OperationalRow,
+} from "@/components/engineering/operational";
+import { formatOperationalDate, pickExistingField } from "@/lib/engineering/enterprise-ux";
 
 export function EngineeringListPage({
   title,
@@ -11,77 +24,141 @@ export function EngineeringListPage({
   apiEndpoint,
   createHref,
   createLabel,
+  emptyTitle,
   emptyMessage,
+  emptyDescription,
   renderItem,
+  columns,
+  rowHref,
 }: {
   title: string;
   description: string;
   apiEndpoint: string;
   createHref?: string;
   createLabel?: string;
+  emptyTitle?: string;
   emptyMessage?: string;
+  emptyDescription?: string;
   renderItem?: (item: Record<string, unknown>) => React.ReactNode;
+  columns?: Array<{ key: string; label: string; hrefKey?: boolean; status?: boolean }>;
+  rowHref?: (item: Record<string, unknown>) => string;
 }) {
+  const projectId = useResolvedEngineeringProjectId();
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scopedEndpoint = useMemo(
+    () => withProjectQuery(apiEndpoint, projectId),
+    [apiEndpoint, projectId],
+  );
 
   useEffect(() => {
-    fetch(apiEndpoint)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.error) setError(json.error);
-        else setItems(Array.isArray(json.data) ? json.data : []);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    loadEngineeringListItems(scopedEndpoint)
+      .then((result) => {
+        if (cancelled) return;
+        setItems(result.items);
+        setError(result.error);
         setLoading(false);
       })
-      .catch((e) => {
-        setError(e.message);
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to load records");
         setLoading(false);
       });
-  }, [apiEndpoint]);
+    return () => {
+      cancelled = true;
+    };
+  }, [scopedEndpoint]);
+
+  const createButton =
+    createHref ? (
+      <Link
+        href={withProjectQuery(createHref, projectId)}
+        className="inline-flex min-h-11 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        data-testid="engineering-list-create"
+      >
+        {createLabel ?? "Create"}
+      </Link>
+    ) : null;
+
+  const tableRows: OperationalRow[] = items.map((item) => ({
+    ...item,
+    href: rowHref?.(item),
+    project:
+      [item.project_code, item.project_name].filter(Boolean).join(" — ") ||
+      pickExistingField(item, ["project_name", "project_code"]),
+    asset:
+      [item.asset_tag, item.asset_name].filter(Boolean).join(" — ") ||
+      pickExistingField(item, ["asset_name", "asset_tag"]),
+    owner: pickExistingField(item, ["assigned_to", "owner_id", "owner"]),
+    due: formatOperationalDate(item.due_date ?? item.response_due),
+    updated: formatOperationalDate(item.updated_at),
+    criticality: item.criticality ?? "—",
+  }));
 
   return (
-      <>
-        <Header title={title} description={description} />
-              <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
+    <>
+      <Header title={title} description={description} />
+      <main
+        className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
+        data-testid="page-main"
+      >
         <div className="mb-4 flex items-center justify-between">
           <p className="text-[0.9375rem] text-slate-500">
-            {loading ? "Loading..." : `${items.length} records`}
+            {loading ? "Loading…" : `${items.length} records`}
+            {projectId ? " · selected project" : " · workspace"}
           </p>
-          {createHref && (
-            <Link
-              href={createHref}
-              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              {createLabel ?? "Create"}
-            </Link>
-          )}
+          {createButton}
         </div>
-        {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
-        {!loading && !error && items.length === 0 && (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">
-                {emptyMessage ?? "No records yet."}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-        <div className="grid gap-4">
-          {items.map((item, i) => (
-            <Card key={(item.id as string) ?? i}>
-              <CardContent className="p-4">
-                {renderItem ? (
-                  renderItem(item)
-                ) : (
-                  <DefaultEngItem item={item} />
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {error ? (
+          <div className="mb-4" data-testid="engineering-list-error">
+            <OperationalError message={error} />
+          </div>
+        ) : null}
+        {loading ? <OperationalSkeleton label={`Loading ${title}…`} /> : null}
+        {!loading && !error && items.length === 0 ? (
+          <div data-testid="engineering-list-empty">
+            <EmptyOperationalState
+              title={emptyTitle ?? "No records yet"}
+              description={
+                emptyDescription ??
+                emptyMessage ??
+                "Nothing is recorded in this scope yet. That can be normal for a new workspace."
+              }
+              action={createButton}
+            />
+          </div>
+        ) : null}
+        {!loading && items.length > 0 ? (
+          columns ? (
+            <StatusTable
+              columns={columns}
+              rows={tableRows}
+              emptyTitle={emptyTitle ?? "No records yet"}
+              emptyDescription={emptyDescription ?? emptyMessage ?? "No records yet."}
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+              <table className="min-w-full text-left text-sm">
+                <caption className="sr-only">{title}</caption>
+                <tbody className="divide-y divide-slate-100">
+                  {items.map((item, i) => (
+                    <tr key={(item.id as string) ?? i} className="hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        {renderItem ? renderItem(item) : <DefaultEngItem item={item} />}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : null}
       </main>
-      </>
+    </>
   );
 }
 

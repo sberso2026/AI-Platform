@@ -1,0 +1,186 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import {
+  EOS_CROSS_DISCIPLINE_RELATIONS,
+  EOS_DISCIPLINE_IDS,
+  D1K_0_AI_AUTHORITY_BOUNDARY_DEFINED,
+  D1K_0_AI_CAN_APPROVE_INTERFACE,
+  D1K_0_AI_CAN_CHANGE_SOURCE_AUTHORITY,
+  D1K_0_AI_CAN_INVENT_COUNTERPARTY_RESPONSES,
+  D1K_0_AI_CAN_INVENT_ENGINEERING_INPUTS,
+  D1K_0_AI_CAN_RESOLVE_GOVERNING_ENGINEERING_CONFLICT,
+  D1K_0_ARCHITECTURE_READY,
+  D1K_0_AUTOMATIC_CONFLICT_RESOLUTION_AUTHORIZED,
+  D1K_0_AXIS_SIGN_ARCHITECTURE_DEFINED,
+  D1K_0_CANONICAL_FINGERPRINT_REUSED,
+  D1K_0_COMPATIBILITY_DIAGNOSTIC_ARCHITECTURE_DEFINED,
+  D1K_0_COORDINATE_SYSTEM_ARCHITECTURE_DEFINED,
+  D1K_0_CROSS_DISCIPLINE_INTELLIGENCE_READY,
+  D1K_0_D0_INTERFACE_CONTRACT_REUSED,
+  D1K_0_D0_STATUS_EQUALS_ENGINEERING_APPROVAL,
+  D1K_0_D1A_REUSE_CONFIRMED,
+  D1K_0_D1F_REUSE_CONFIRMED,
+  D1K_0_D1L_HANDOFF_ARCHITECTURE_DEFINED,
+  D1K_0_D1L_STARTED,
+  D1K_0_D1M_ABSORBED,
+  D1K_0_D1N_ABSORBED,
+  D1K_0_D2_D8_RUNTIME_COUNT,
+  D1K_0_D2_D8_RUNTIME_STARTED,
+  D1K_0_D9_CYCLE_DETECTION_IMPLEMENTED_BY_D1K,
+  D1K_0_D9_RUNTIME_COUNT,
+  D1K_0_D9_RUNTIME_STARTED,
+  D1K_0_DATABASE_SCHEMA_CHANGE_REQUIRED,
+  D1K_0_DEPENDS_ON_D1J,
+  D1K_0_DIGITAL_THREAD_REUSED,
+  D1K_0_DISCIPLINE_IDENTITY_ALLOWLIST,
+  D1K_0_EXISTING_UNIT_SYSTEM_REUSED,
+  D1K_0_EXTERNAL_MANUAL_REFERENCE_SEAM_DEFINED,
+  D1K_0_EXTERNAL_REFERENCE_READY,
+  D1K_0_EXTERNAL_SOURCE_IS_NATIVE_PACK_OUTPUT,
+  D1K_0_FLOATING_LATEST_SOURCE_ALLOWED,
+  D1K_0_FREEFORM_DISCIPLINE_IDENTITY_ALLOWED,
+  D1K_0_GENERIC_PAYLOAD_ENGINE_AUTHORIZED,
+  D1K_0_GLOBAL_CYCLE_DETECTION_RUNTIME_COUNT,
+  D1K_0_INTERFACE_ACCEPTED_EQUALS_ENGINEERING_APPROVAL,
+  D1K_0_INTERFACE_CLOSED_EQUALS_DESIGN_APPROVAL,
+  D1K_0_INTERFACE_COMPATIBILITY_RUNTIME_COUNT,
+  D1K_0_INTERFACE_DIRECTION_ARCHITECTURE_DEFINED,
+  D1K_0_INTERFACE_HISTORY_REQUIRED,
+  D1K_0_INTERFACE_RUNTIME_COUNT,
+  D1K_0_INTERNAL_DISCIPLINE_INTEGRATION_READY,
+  D1K_0_INTERNAL_EOS_INTERFACE_SEAM_DEFINED,
+  D1K_0_MATURITY,
+  D1K_0_NEW_ENGINEERING_FORMULA_COUNT,
+  D1K_0_PARALLEL_APPROVAL_ENGINE_CREATED,
+  D1K_0_PARALLEL_DIGITAL_THREAD_CREATED,
+  D1K_0_PARALLEL_INTERFACE_IDENTITY_CREATED,
+  D1K_0_PARALLEL_STRUCTURAL_ASSET_IDENTITY_CREATED,
+  D1K_0_PARALLEL_UNIT_SYSTEM_CREATED,
+  D1K_0_POST_D1J_DEBT_PRESERVED,
+  D1K_0_REFERENCE_RUNTIME_READY,
+  D1K_0_RELATION_ALLOWLIST,
+  D1K_0_SECOND_FINGERPRINT_ALGORITHM_CREATED,
+  D1K_0_SILENT_AXIS_SIGN_INFERENCE_AUTHORIZED,
+  D1K_0_SILENT_COORDINATE_INFERENCE_AUTHORIZED,
+  D1K_0_SILENT_UNIT_CONVERSION_AUTHORIZED,
+  D1K_0_STATUS,
+  D1K_0_UNAUTHORIZED_CERTIFICATION_PROMOTION,
+  D1K_0_UNAUTHORIZED_CONFORMANCE_PROMOTION,
+  D1K_0_UNAUTHORIZED_PRODUCT_CLAIM,
+  D1K_0_UNAUTHORIZED_VALIDATION_PROMOTION,
+  D1K_0_UPSTREAM_SOURCE_MUTATION_AUTHORIZED,
+  D1K_CANONICAL_NAME,
+  D1K_R1_CANONICAL_PHASE,
+  D1K_R1_PHASE_TYPE,
+} from "@rtb/types";
+import { STRUCTURAL_CAPABILITY_MANIFEST } from "../structural-concrete/capability";
+import { scanAnalysisFormulaBypass } from "./formula-scan";
+import { D1K_ARCHITECTURE_READY, D1K_CURRENT_STATUS } from "./post-d1j-roadmap";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const contractPath = join(here, "../../../types/src/structural-interfaces-d1k-0.ts");
+const docPath = join(here, "../../../../docs/architecture/engineering-os/EOS_D1K_0_CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE.md");
+
+describe("EOS-D1K-0 cross-discipline structural interface architecture", () => {
+  it("reuses D0 identities and does not create a parallel interface or asset identity", () => {
+    expect(D1K_CANONICAL_NAME).toBe("CROSS-DISCIPLINE STRUCTURAL INTERFACES");
+    expect(D1K_0_STATUS).toBe("ARCHITECTURE_DEFINED");
+    expect(D1K_0_MATURITY).toBe("STRUCTURAL_CROSS_DISCIPLINE_INTERFACE_ARCHITECTURE_DEFINED");
+    expect(D1K_0_D0_INTERFACE_CONTRACT_REUSED).toBe(true);
+    expect(D1K_0_D1A_REUSE_CONFIRMED).toBe(true);
+    expect(D1K_0_D1F_REUSE_CONFIRMED).toBe(true);
+    expect(D1K_0_DISCIPLINE_IDENTITY_ALLOWLIST).toEqual(EOS_DISCIPLINE_IDS);
+    expect(D1K_0_RELATION_ALLOWLIST).toEqual(EOS_CROSS_DISCIPLINE_RELATIONS);
+    expect(D1K_0_FREEFORM_DISCIPLINE_IDENTITY_ALLOWED).toBe(false);
+    expect(D1K_0_PARALLEL_INTERFACE_IDENTITY_CREATED).toBe(false);
+    expect(D1K_0_PARALLEL_STRUCTURAL_ASSET_IDENTITY_CREATED).toBe(false);
+    expect(D1K_0_DEPENDS_ON_D1J).toBe(false);
+    expect(D1K_CURRENT_STATUS).toBe("NOT_STARTED");
+    expect(D1K_ARCHITECTURE_READY).toBe(false);
+  });
+
+  it("keeps acceptance, closure, and D0 status distinct from engineering approval", () => {
+    expect(D1K_0_INTERFACE_ACCEPTED_EQUALS_ENGINEERING_APPROVAL).toBe(false);
+    expect(D1K_0_INTERFACE_CLOSED_EQUALS_DESIGN_APPROVAL).toBe(false);
+    expect(D1K_0_D0_STATUS_EQUALS_ENGINEERING_APPROVAL).toBe(false);
+    expect(D1K_0_PARALLEL_APPROVAL_ENGINE_CREATED).toBe(false);
+    expect(D1K_0_INTERFACE_DIRECTION_ARCHITECTURE_DEFINED).toBe(true);
+  });
+
+  it("keeps D9 cycle detection and other-discipline runtime outside D1K", () => {
+    expect(D1K_0_D9_CYCLE_DETECTION_IMPLEMENTED_BY_D1K).toBe(false);
+    expect(D1K_0_D9_RUNTIME_STARTED).toBe(false);
+    expect(D1K_0_D2_D8_RUNTIME_STARTED).toBe(false);
+    expect(D1K_0_D1L_STARTED).toBe(false);
+    expect(D1K_0_D1L_HANDOFF_ARCHITECTURE_DEFINED).toBe(true);
+    expect(D1K_0_D1M_ABSORBED).toBe(false);
+    expect(D1K_0_D1N_ABSORBED).toBe(false);
+    expect(D1K_0_AUTOMATIC_CONFLICT_RESOLUTION_AUTHORIZED).toBe(false);
+    expect(D1K_0_GLOBAL_CYCLE_DETECTION_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_D2_D8_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_D9_RUNTIME_COUNT).toBe(0);
+  });
+
+  it("does not authorize silent inference, latest sources, formulas, or runtime readiness", () => {
+    expect(D1K_0_EXISTING_UNIT_SYSTEM_REUSED).toBe(true);
+    expect(D1K_0_PARALLEL_UNIT_SYSTEM_CREATED).toBe(false);
+    expect(D1K_0_SILENT_UNIT_CONVERSION_AUTHORIZED).toBe(false);
+    expect(D1K_0_COORDINATE_SYSTEM_ARCHITECTURE_DEFINED).toBe(true);
+    expect(D1K_0_SILENT_COORDINATE_INFERENCE_AUTHORIZED).toBe(false);
+    expect(D1K_0_AXIS_SIGN_ARCHITECTURE_DEFINED).toBe(true);
+    expect(D1K_0_SILENT_AXIS_SIGN_INFERENCE_AUTHORIZED).toBe(false);
+    expect(D1K_0_FLOATING_LATEST_SOURCE_ALLOWED).toBe(false);
+    expect(D1K_0_INTERFACE_HISTORY_REQUIRED).toBe(true);
+    expect(D1K_0_UPSTREAM_SOURCE_MUTATION_AUTHORIZED).toBe(false);
+    expect(D1K_0_DIGITAL_THREAD_REUSED).toBe(true);
+    expect(D1K_0_PARALLEL_DIGITAL_THREAD_CREATED).toBe(false);
+    expect(D1K_0_CANONICAL_FINGERPRINT_REUSED).toBe(true);
+    expect(D1K_0_SECOND_FINGERPRINT_ALGORITHM_CREATED).toBe(false);
+    expect(D1K_0_GENERIC_PAYLOAD_ENGINE_AUTHORIZED).toBe(false);
+    expect(D1K_0_EXTERNAL_SOURCE_IS_NATIVE_PACK_OUTPUT).toBe(false);
+    expect(D1K_0_INTERNAL_EOS_INTERFACE_SEAM_DEFINED).toBe(true);
+    expect(D1K_0_EXTERNAL_MANUAL_REFERENCE_SEAM_DEFINED).toBe(true);
+    expect(D1K_0_COMPATIBILITY_DIAGNOSTIC_ARCHITECTURE_DEFINED).toBe(true);
+    expect(D1K_0_NEW_ENGINEERING_FORMULA_COUNT).toBe(0);
+    expect(D1K_0_INTERFACE_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_INTERFACE_COMPATIBILITY_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_DATABASE_SCHEMA_CHANGE_REQUIRED).toBe(false);
+    expect(D1K_0_ARCHITECTURE_READY).toBe(true);
+    expect(D1K_0_REFERENCE_RUNTIME_READY).toBe(false);
+    expect(D1K_0_EXTERNAL_REFERENCE_READY).toBe(false);
+    expect(D1K_0_INTERNAL_DISCIPLINE_INTEGRATION_READY).toBe(false);
+    expect(D1K_0_CROSS_DISCIPLINE_INTELLIGENCE_READY).toBe(false);
+    expect(D1K_0_AI_AUTHORITY_BOUNDARY_DEFINED).toBe(true);
+    expect(D1K_0_AI_CAN_INVENT_ENGINEERING_INPUTS).toBe(false);
+    expect(D1K_0_AI_CAN_INVENT_COUNTERPARTY_RESPONSES).toBe(false);
+    expect(D1K_0_AI_CAN_CHANGE_SOURCE_AUTHORITY).toBe(false);
+    expect(D1K_0_AI_CAN_APPROVE_INTERFACE).toBe(false);
+    expect(D1K_0_AI_CAN_RESOLVE_GOVERNING_ENGINEERING_CONFLICT).toBe(false);
+    expect(D1K_0_POST_D1J_DEBT_PRESERVED).toBe(true);
+    expect(D1K_0_UNAUTHORIZED_VALIDATION_PROMOTION).toBe(false);
+    expect(D1K_0_UNAUTHORIZED_CONFORMANCE_PROMOTION).toBe(false);
+    expect(D1K_0_UNAUTHORIZED_CERTIFICATION_PROMOTION).toBe(false);
+    expect(D1K_0_UNAUTHORIZED_PRODUCT_CLAIM).toBe(false);
+    expect(D1K_R1_CANONICAL_PHASE).toBe("EOS-D1K-R1-INTERFACE-IDENTITY-SOURCE-REFERENCE-FOUNDATION");
+    expect(D1K_R1_PHASE_TYPE).toBe("STRUCTURAL_INTERFACE_IDENTITY_SOURCE_REFERENCE_FOUNDATION");
+    const source = readFileSync(contractPath, "utf8");
+    const doc = readFileSync(docPath, "utf8");
+    expect(source).not.toMatch(/\bfetch\(|mqtt|opcua|modbus|WebSocket|fft\(|child_process|eval\(|new Function/);
+    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source).toContain("No separate inbound, outbound, or bidirectional enum is a governing name");
+    expect(doc).toContain("does not operate an interface runtime");
+    expect(doc).toContain("latest is not an exact reference");
+    expect(doc).not.toMatch(/```/);
+    expect(scanAnalysisFormulaBypass(contractPath, source)).toEqual([]);
+    expect(scanAnalysisFormulaBypass(docPath, doc)).toEqual([]);
+    expect(readdirSync(here).filter((name) => /digital-twin|d1i-/i.test(name))).toEqual([]);
+    const architecture = STRUCTURAL_CAPABILITY_MANIFEST.find(
+      (row) => row.capabilityId === "D1K.0.CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE",
+    );
+    const runtime = STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1K.STRUCTURAL_INTERFACE_RUNTIME");
+    expect(architecture?.implementationState).toBe("ARCHITECTURE_DEFINED");
+    expect(runtime?.implementationState).toBe("NOT_IMPLEMENTED");
+  });
+});

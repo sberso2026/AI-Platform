@@ -72,6 +72,11 @@ export const ENGINEERING_CAPABILITIES = [
   },
   { key: "engineering_search", name: "Engineering Search", description: "Cross-entity engineering search" },
   { key: "engineering_reporting", name: "Engineering Reporting", description: "Engineering report shell" },
+  {
+    key: "engineering_optimization",
+    name: "Engineering Optimization",
+    description: "Optimization studies, runs, and trusted result ingestion under Engineering OS",
+  },
 ] as const;
 
 export const ENGINEERING_DISCIPLINES = [

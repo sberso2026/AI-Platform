@@ -5,18 +5,27 @@ import { TYPOGRAPHY } from "../lib/typography";
 export interface PageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   description?: string;
+  wrapDescription?: boolean;
 }
 
 /**
  * Page title block used inside the app header / page chrome.
  * Typography: ~30px title, ~15px subtitle.
  */
-export function PageHeader({ title, description, className, ...props }: PageHeaderProps) {
+export function PageHeader({ title, description, wrapDescription, className, ...props }: PageHeaderProps) {
   return (
     <div className={cn("min-w-0", className)} data-testid="page-header" {...props}>
       <h1 className={cn(TYPOGRAPHY.pageTitle, "select-none truncate")}>{title}</h1>
       {description && (
-        <p className={cn(TYPOGRAPHY.pageSubtitle, "mt-1 select-none truncate")}>{description}</p>
+        <p
+          className={cn(
+            TYPOGRAPHY.pageSubtitle,
+            "mt-1 select-none",
+            wrapDescription ? "whitespace-normal break-words line-clamp-2" : "truncate",
+          )}
+        >
+          {description}
+        </p>
       )}
     </div>
   );

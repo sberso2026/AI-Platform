@@ -1,0 +1,740 @@
+{
+  "title": "Security & Assurance Customer Assurance",
+  "verdict": "PASS",
+  "version": "0.7.0-customer-assurance",
+  "status": "customer_assurance",
+  "commit": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",
+  "artifactCommitSha": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",
+  "ciHeadSha": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",
+  "buildIdentitySha": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",
+  "phase15FBaseline": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446",
+  "phase15EBaseline": "aa5150fc4acf287b50c973220c40d62b7f91687f",
+  "phase15DBaseline": "ef8efd2b4b30082e9c26ac867c65c51e3e39d207",
+  "phase15CBaseline": "897383f5a95cf81847ee866c1c1fdac5012b25a5",
+  "phase15BBaseline": "c0e96eaa03c76146bbeb6eb68bdc8c49f5efdf0f",
+  "phase15ABaseline": "4748972076f77e7392bb41ec664adddfeb677407",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 70,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15F baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15E–15A regression"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.7.0-customer-assurance"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.7.0-customer-assurance"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / reuse boundary"
+    },
+    {
+      "id": "I",
+      "name": "CustomerAssuranceProfile"
+    },
+    {
+      "id": "J",
+      "name": "AssuranceDisclosurePolicy"
+    },
+    {
+      "id": "K",
+      "name": "Disclosure classification fail-closed"
+    },
+    {
+      "id": "L",
+      "name": "AssuranceClaimReference"
+    },
+    {
+      "id": "M",
+      "name": "Claim lifecycle / status taxonomy"
+    },
+    {
+      "id": "N",
+      "name": "Approved claim library"
+    },
+    {
+      "id": "O",
+      "name": "External assurance surfaces"
+    },
+    {
+      "id": "P",
+      "name": "Questionnaire mapping"
+    },
+    {
+      "id": "Q",
+      "name": "CustomerAssurancePackage"
+    },
+    {
+      "id": "R",
+      "name": "AssuranceDocumentReference / Platform Files"
+    },
+    {
+      "id": "S",
+      "name": "Framework customer-safe view"
+    },
+    {
+      "id": "T",
+      "name": "Data governance / residency"
+    },
+    {
+      "id": "U",
+      "name": "Subprocessor assurance"
+    },
+    {
+      "id": "V",
+      "name": "AI assurance (customer-safe)"
+    },
+    {
+      "id": "W",
+      "name": "Isolation assurance projection"
+    },
+    {
+      "id": "X",
+      "name": "Secure compute assurance projection"
+    },
+    {
+      "id": "Y",
+      "name": "Secure SDLC assurance"
+    },
+    {
+      "id": "Z",
+      "name": "Incident assurance"
+    },
+    {
+      "id": "AA",
+      "name": "Backup/recovery assurance"
+    },
+    {
+      "id": "AB",
+      "name": "Tier-1 S07/S08 truthful"
+    },
+    {
+      "id": "AC",
+      "name": "Internal/customer separation"
+    },
+    {
+      "id": "AD",
+      "name": "Identity/entitlements reuse"
+    },
+    {
+      "id": "AE",
+      "name": "Governed review action"
+    },
+    {
+      "id": "AF",
+      "name": "Disclosure audit"
+    },
+    {
+      "id": "AG",
+      "name": "Events customer.*"
+    },
+    {
+      "id": "AH",
+      "name": "Evidence freshness / stale claims"
+    },
+    {
+      "id": "AI",
+      "name": "Claim revocation"
+    },
+    {
+      "id": "AJ",
+      "name": "Versioning / immutable packages"
+    },
+    {
+      "id": "AK",
+      "name": "Tenant/customer package isolation (IDOR)"
+    },
+    {
+      "id": "AL",
+      "name": "Sensitive metadata filtering"
+    },
+    {
+      "id": "AM",
+      "name": "Migration batch_95"
+    },
+    {
+      "id": "AN",
+      "name": "RLS"
+    },
+    {
+      "id": "AO",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AP",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AQ",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "AR",
+      "name": "Accessibility"
+    },
+    {
+      "id": "AS",
+      "name": "Responsive"
+    },
+    {
+      "id": "AT",
+      "name": "Performance baselines"
+    },
+    {
+      "id": "AU",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AV",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AW",
+      "name": "CustomerAssurance flags"
+    },
+    {
+      "id": "AX",
+      "name": "Advanced products unimplemented"
+    },
+    {
+      "id": "AY",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "AZ",
+      "name": "Module V1 intact"
+    },
+    {
+      "id": "BA",
+      "name": "phase15HReady"
+    },
+    {
+      "id": "BB",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "BC",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "BD",
+      "name": "Semantics / claim safety locks"
+    },
+    {
+      "id": "BE",
+      "name": "Foundation+Isolation+AI/data+SC+Compliance still ready"
+    },
+    {
+      "id": "BF",
+      "name": "No Trust Center/GRC packages"
+    },
+    {
+      "id": "BG",
+      "name": "EOS still 1.0.0"
+    },
+    {
+      "id": "BH",
+      "name": "Package not 1.0.0"
+    },
+    {
+      "id": "BI",
+      "name": "Customer Assurance docs"
+    },
+    {
+      "id": "BJ",
+      "name": "Anti-duplication"
+    },
+    {
+      "id": "BK",
+      "name": "No automatic publication/disclosure"
+    },
+    {
+      "id": "BL",
+      "name": "CustomerTrustCenterImplemented=false"
+    },
+    {
+      "id": "BM",
+      "name": "ComplianceIntelligenceImplemented=true"
+    },
+    {
+      "id": "BN",
+      "name": "S07ExternalPenTestComplete=false"
+    },
+    {
+      "id": "BO",
+      "name": "S08CustomerSsoProductionReady=false"
+    },
+    {
+      "id": "BP",
+      "name": "SecurityAssuranceBoundaryLocked"
+    },
+    {
+      "id": "BQ",
+      "name": "No fabricated certification wording"
+    },
+    {
+      "id": "BR",
+      "name": "CustomerAssuranceImplemented=true"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "CustomerAssuranceImplemented": true,
+  "ComplianceIntelligenceImplemented": true,
+  "CustomerTrustCenterImplemented": false,
+  "S07ExternalPenTestComplete": false,
+  "S08CustomerSsoProductionReady": false,
+  "automaticCustomerAssurancePublicationEnabled": false,
+  "automaticExternalDisclosureEnabled": false,
+  "automaticCertificationEnabled": false,
+  "EngineeringOSV1Intact": true,
+  "phase15HReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15F baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Phase 15E–15A regression",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Version 0.7.0-customer-assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Contracts 0.7.0-customer-assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Ownership / reuse boundary",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "CustomerAssuranceProfile",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "AssuranceDisclosurePolicy",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Disclosure classification fail-closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "AssuranceClaimReference",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Claim lifecycle / status taxonomy",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Approved claim library",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "External assurance surfaces",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "Questionnaire mapping",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "CustomerAssurancePackage",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "AssuranceDocumentReference / Platform Files",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Framework customer-safe view",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Data governance / residency",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "Subprocessor assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "AI assurance (customer-safe)",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Isolation assurance projection",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "Secure compute assurance projection",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "Secure SDLC assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "Incident assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Backup/recovery assurance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "Tier-1 S07/S08 truthful",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Internal/customer separation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Identity/entitlements reuse",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Governed review action",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "Disclosure audit",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Events customer.*",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Evidence freshness / stale claims",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Claim revocation",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Versioning / immutable packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Tenant/customer package isolation (IDOR)",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Sensitive metadata filtering",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Migration batch_95",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "RLS",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Accessibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Responsive",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Performance baselines",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "CustomerAssurance flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "Advanced products unimplemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "Module V1 intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "phase15HReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "924b2eaa7f6bfc635d742c5310cff3a22ed5d446"
+    },
+    {
+      "id": "BC",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BD",
+      "name": "Semantics / claim safety locks",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Foundation+Isolation+AI/data+SC+Compliance still ready",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BF",
+      "name": "No Trust Center/GRC packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BG",
+      "name": "EOS still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "Package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "Customer Assurance docs",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "Anti-duplication",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "No automatic publication/disclosure",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "CustomerTrustCenterImplemented=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "ComplianceIntelligenceImplemented=true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BN",
+      "name": "S07ExternalPenTestComplete=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BO",
+      "name": "S08CustomerSsoProductionReady=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BP",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BQ",
+      "name": "No fabricated certification wording",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BR",
+      "name": "CustomerAssuranceImplemented=true",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}
