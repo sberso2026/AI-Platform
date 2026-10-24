@@ -742,3 +742,13 @@ export {
   recordPipingContext,
   recordPipingObjectIdentity,
 } from "./piping/identity-foundation";
+export {
+  D5_R2_MATURITY_STATE,
+  D5_R3_CANONICAL_PHASE,
+  createD5R2Store,
+  recordPipingLineContext,
+  recordPipingLineServiceAssociation,
+  recordPipingServiceFunction,
+  recordPipingSystemContext,
+  recordPipingSystemLineMembership,
+} from "./piping/system-line-service-context";

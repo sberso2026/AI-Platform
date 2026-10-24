@@ -274,7 +274,7 @@ describe("EOS-D5-R1 piping identity and object foundation", () => {
     expect(D5_CONTEXT_AUTHORITY).toBe("PIPING_CONTEXT_AUTHORITY");
     expect(D5_DISCIPLINE).toBe("PIPING");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R1.PIPING_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R2.PIPING_SYSTEM_LINE_AND_SERVICE_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R2.PIPING_SYSTEM_LINE_AND_SERVICE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const store = createD5R1Store();
     const context = recordPipingContext(store, actor, {

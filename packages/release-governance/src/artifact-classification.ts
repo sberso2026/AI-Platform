@@ -606,6 +606,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D5_R2_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D5_R2_PIPING_SYSTEM_LINE_AND_SERVICE_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/piping/system-line-service-context.ts",
+  "packages/engineering-os/src/piping/eos-d5-r2-piping-system-line-service.test.ts",
+  "packages/engineering-os/src/piping/eos-d5-r1-piping-identity.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D5_R1_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D5_R1_PIPING_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
   "packages/engineering-os/src/piping/identity-foundation.ts",
