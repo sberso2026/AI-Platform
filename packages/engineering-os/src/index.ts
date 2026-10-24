@@ -827,3 +827,9 @@ export {
   recordPipingSupersession,
   tracePipingDigitalThread,
 } from "./piping/currentness-digital-thread";
+export {
+  D5_R11_MATURITY_STATE,
+  D5_R12_CANONICAL_PHASE,
+  createD5R11Store,
+  recordPipingSourceContract,
+} from "./piping/d9-source-contract";
