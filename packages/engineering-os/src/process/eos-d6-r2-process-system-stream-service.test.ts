@@ -326,7 +326,7 @@ describe("EOS-D6-R2 Process system stream and service context", () => {
     expect(D6_PROCESS_OBJECT_TYPES).not.toContain("PROCESS_PHASE");
     expect(D6_PROCESS_OBJECT_TYPES).not.toContain("PIPING_LINE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R2.PROCESS_SYSTEM_STREAM_AND_SERVICE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R3.OPERATING_AND_DESIGN_BASIS_AND_CONDITIONS")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R3.OPERATING_AND_DESIGN_BASIS_AND_CONDITIONS")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const actor = { actorId: "proc-recorder", tenantId: "t1", workspaceId: "w1", projectId: "p1", authority: D6_CONTEXT_AUTHORITY };
     const r1 = createD6R1Store();

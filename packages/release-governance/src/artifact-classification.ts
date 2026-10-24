@@ -608,6 +608,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D6_R3_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D6_R3_OPERATING_AND_DESIGN_BASIS_AND_CONDITIONS_CLOSEOUT.md",
+  "packages/engineering-os/src/process/operating-design-basis-conditions.ts",
+  "packages/engineering-os/src/process/eos-d6-r3-operating-design-basis-conditions.test.ts",
+  "packages/engineering-os/src/process/eos-d6-r2-process-system-stream-service.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D6_R2_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D6_R2_PROCESS_SYSTEM_STREAM_AND_SERVICE_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/process/system-stream-service-context.ts",

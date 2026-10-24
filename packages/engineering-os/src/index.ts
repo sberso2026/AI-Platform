@@ -852,3 +852,11 @@ export {
   recordProcessStreamContext,
   recordProcessSystemContext,
 } from "./process/system-stream-service-context";
+export {
+  D6_R3_MATURITY_STATE,
+  D6_R4_CANONICAL_PHASE,
+  createD6R3Store,
+  recordProcessDesignCaseContext,
+  recordProcessOperatingCaseContext,
+  recordProcessOperatingCondition,
+} from "./process/operating-design-basis-conditions";
