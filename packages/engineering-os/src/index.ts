@@ -873,3 +873,10 @@ export {
   recordProcessEquipmentDutyContext,
   recordSuppliedProcessUtilityEvidence,
 } from "./process/equipment-duty-utility-context";
+export {
+  D6_R6_MATURITY_STATE,
+  D6_R7_CANONICAL_PHASE,
+  createD6R6Store,
+  recordProcessSafetyContext,
+  recordReliefScenarioContext,
+} from "./process/process-safety-relief-context";

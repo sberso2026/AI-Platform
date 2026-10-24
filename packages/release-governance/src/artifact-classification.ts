@@ -608,6 +608,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D6_R6_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D6_R6_PROCESS_SAFETY_AND_RELIEF_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/process/process-safety-relief-context.ts",
+  "packages/engineering-os/src/process/eos-d6-r6-process-safety-relief-context.test.ts",
+  "packages/engineering-os/src/process/eos-d6-r5-equipment-duty-utility-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D6_R5_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D6_R5_EQUIPMENT_DUTY_AND_UTILITY_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/process/equipment-duty-utility-context.ts",
