@@ -833,3 +833,7 @@ export {
   createD5R11Store,
   recordPipingSourceContract,
 } from "./piping/d9-source-contract";
+export {
+  D5_R12_MATURITY_STATE,
+  D6_0_CANONICAL_PHASE,
+} from "./piping/piping-bounded-closeout";
