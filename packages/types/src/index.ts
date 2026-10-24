@@ -444,3 +444,4 @@ export * from "./structural-orchestration-d1n-0";
 export * from "./civil-architecture-d2-0";
 export * from "./geotechnical-architecture-d3-0";
 export * from "./mechanical-architecture-d4-0";
+export * from "./piping-architecture-d5-0";

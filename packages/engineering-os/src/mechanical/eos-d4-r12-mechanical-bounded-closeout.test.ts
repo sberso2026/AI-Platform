@@ -431,6 +431,6 @@ describe("EOS-D4-R12 Mechanical bounded closeout", () => {
       expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === id)?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     }
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.0.MECHANICAL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.0.PIPING_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.0.PIPING_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
   });
 });
