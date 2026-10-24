@@ -801,3 +801,10 @@ export {
   recordPipingReassessment,
   recordPipingSourceRequirement,
 } from "./piping/requirements-assumptions-change";
+export {
+  D5_R8_MATURITY_STATE,
+  D5_R9_CANONICAL_PHASE,
+  createD5R8Store,
+  markPipingInterfaceFromChange,
+  recordPipingInterfaceHandoff,
+} from "./piping/discipline-interfaces-handoffs";
