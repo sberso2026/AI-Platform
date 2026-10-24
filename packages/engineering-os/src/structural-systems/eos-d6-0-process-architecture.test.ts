@@ -423,7 +423,7 @@ describe("EOS-D6-0 Process architecture", () => {
     expect(D6_0_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D6_0_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.0.PROCESS_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R1.PROCESS_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R1.PROCESS_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R12.PIPING_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const here = dirname(fileURLToPath(import.meta.url));
     const repoRoot = join(here, "../../../..");

@@ -837,3 +837,10 @@ export {
   D5_R12_MATURITY_STATE,
   D6_0_CANONICAL_PHASE,
 } from "./piping/piping-bounded-closeout";
+export {
+  D6_R1_MATURITY_STATE,
+  D6_R2_CANONICAL_PHASE,
+  createD6R1Store,
+  recordProcessContext,
+  recordProcessObjectIdentity,
+} from "./process/identity-foundation";
