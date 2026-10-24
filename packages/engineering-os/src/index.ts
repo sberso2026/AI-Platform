@@ -866,3 +866,10 @@ export {
   createD6R4Store,
   recordProcessCalculationEvidence,
 } from "./process/process-evidence-balances";
+export {
+  D6_R5_MATURITY_STATE,
+  D6_R6_CANONICAL_PHASE,
+  createD6R5Store,
+  recordProcessEquipmentDutyContext,
+  recordSuppliedProcessUtilityEvidence,
+} from "./process/equipment-duty-utility-context";
