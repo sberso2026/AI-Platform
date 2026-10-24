@@ -869,6 +869,6 @@ describe("EOS-D4-R3 Mechanical design conditions and performance context", () =>
       "zod",
     ]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R3.DESIGN_CONDITIONS_AND_PERFORMANCE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R4.VENDOR_DATA_AND_EVIDENCE_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R4.VENDOR_DATA_AND_EVIDENCE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });

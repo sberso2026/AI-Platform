@@ -604,6 +604,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D4_R4_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D4_R4_VENDOR_DATA_AND_EVIDENCE_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/mechanical/vendor-data-evidence-context.ts",
+  "packages/engineering-os/src/mechanical/eos-d4-r4-vendor-data-and-evidence-context.test.ts",
+  "packages/engineering-os/src/mechanical/eos-d4-r3-design-conditions-and-performance-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D4_R3_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D4_R3_DESIGN_CONDITIONS_AND_PERFORMANCE_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/mechanical/design-condition-performance-context.ts",

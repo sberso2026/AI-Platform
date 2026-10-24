@@ -659,3 +659,13 @@ export {
   recordMechanicalPerformanceContext,
   recordProcessConditionReference,
 } from "./mechanical/design-condition-performance-context";
+export {
+  D4_R4_MATURITY_STATE,
+  D4_R5_CANONICAL_PHASE,
+  createD4R4Store,
+  recordMechanicalCertificateEvidence,
+  recordMechanicalInspectionTestEvidence,
+  recordMechanicalPerformanceCurveEvidence,
+  recordMechanicalVendorData,
+  recordMechanicalVendorDocument,
+} from "./mechanical/vendor-data-evidence-context";
