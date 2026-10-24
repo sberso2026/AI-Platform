@@ -707,3 +707,12 @@ export {
   createD4R8Store,
   recordMechanicalInterfaceHandoff,
 } from "./mechanical/discipline-interfaces-handoffs";
+export {
+  D4_R9_MATURITY_STATE,
+  D4_R10_CANONICAL_PHASE,
+  createD4R9Store,
+  recordMechanicalReviewCompletion,
+  recordMechanicalReviewFinding,
+  recordMechanicalReviewRequest,
+  recordMechanicalValidationState,
+} from "./mechanical/review-validation-governance";
