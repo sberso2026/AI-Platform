@@ -1,0 +1,460 @@
+/**
+ * EOS-D4-0 Mechanical architecture.
+ * Contracts only. No Mechanical object runtime, calculation, validation, approval, or certification.
+ */
+import { EOS_JURISDICTION_PROFILE_IDS } from "./global-governance";
+import {
+  D3_CURRENTNESS_STATES,
+  D3_DIGITAL_THREAD_MODULE,
+  D3_FINGERPRINT_ALGORITHM,
+  D3_MATURITY_STATES,
+} from "./geotechnical-architecture-d3-0";
+
+export const D4_0_STATUS = "ARCHITECTURE_DEFINED" as const;
+export const D4_0_PHASE = "EOS-D4-0-MECHANICAL-ARCHITECTURE-CANONICALIZATION" as const;
+export const D4_0_PHASE_TYPE = "MECHANICAL_ARCHITECTURE_CANONICALIZATION" as const;
+export const D4_ARCHITECTURE_PATH = "docs/architecture/engineering-os/EOS_D4_0_MECHANICAL_ARCHITECTURE.md" as const;
+export const D4_ARCHITECTURE_DEFINED = true as const;
+export const D4_ARCHITECTURE_READY = true as const;
+export const D4_PARENT_GEOTECHNICAL_CLOSEOUT_PATH =
+  "docs/architecture/engineering-os/EOS_D3_R12_GEOTECHNICAL_BOUNDED_CLOSEOUT.md" as const;
+
+export const D4_CANONICAL_SCOPE =
+  "Bounded Mechanical engineering context for equipment and mechanical systems: rotating equipment, static equipment, mechanical packages, HVAC and materials-handling equipment where the project assigns them to Mechanical, equipment identity, service, technical requirements, mechanical attributes, supplied operating and design-condition references, vendor and manufacturer information, package boundaries, arrangement, maintainability and access context, requirements, assumptions, decisions, evidence, review and validation, interfaces, currentness, and a future D9 source contract. No Mechanical calculation runtime." as const;
+export const D4_CANONICAL_NON_SCOPE =
+  "No equipment sizing, rotating or static equipment calculations, thermal-mechanical calculations, mechanical load calculations, vibration analysis, fatigue analysis, or mechanical design optimization. No Structural, Civil, Geotechnical, Piping, Process, Electrical, or Instrumentation and Control authority. No pipe routing, piping stress, piping supports, piping material classes, or piping hydraulic design. No process simulation, heat and material balance, or process sizing. No D9 reasoning, and no validation, approval, certification, or general availability." as const;
+export const D4_SCOPE_CANONICALIZED = true as const;
+
+export const D4_EQUALS_D1_STRUCTURAL_AUTHORITY = false as const;
+export const D4_EQUALS_D2_CIVIL_AUTHORITY = false as const;
+export const D4_EQUALS_D3_GEOTECHNICAL_AUTHORITY = false as const;
+export const D4_EQUALS_D5_PIPING_AUTHORITY = false as const;
+export const D4_EQUALS_D6_PROCESS_AUTHORITY = false as const;
+export const D4_EQUALS_D7_ELECTRICAL_AUTHORITY = false as const;
+export const D4_EQUALS_D8_INSTRUMENTATION_CONTROL_AUTHORITY = false as const;
+export const D4_MECHANICAL_EQUIPMENT_EQUALS_D5_PIPING_SYSTEM = false as const;
+export const D4_NOZZLE_CONTEXT_TRANSFERS_PIPING_AUTHORITY = false as const;
+export const D4_EQUIPMENT_CONTEXT_EQUALS_PROCESS_DESIGN = false as const;
+export const D4_TRANSFERS_PROCESS_AUTHORITY = false as const;
+export const D4_MECHANICAL_LOAD_CONTEXT_EQUALS_STRUCTURAL_DESIGN = false as const;
+export const D4_TRANSFERS_STRUCTURAL_AUTHORITY = false as const;
+export const D4_TRANSFERS_CIVIL_AUTHORITY = false as const;
+export const D4_TRANSFERS_GEOTECHNICAL_AUTHORITY = false as const;
+export const D4_ABSORBS_D5_D8 = false as const;
+export const D4_ABSORBS_D9 = false as const;
+
+export const D4_OBJECT_TAXONOMY_DEFINED = true as const;
+export const FREEFORM_AUTHORITATIVE_D4_OBJECT_MODEL_PLANNED = false as const;
+export const D4_UNKNOWN_OBJECT_TYPE_BECOMES_AUTHORITATIVE = false as const;
+export const D4_MECHANICAL_OBJECT_TYPES = [
+  "MECHANICAL_SYSTEM_CONTEXT",
+  "MECHANICAL_EQUIPMENT",
+  "ROTATING_EQUIPMENT",
+  "STATIC_EQUIPMENT",
+  "MECHANICAL_PACKAGE",
+  "MECHANICAL_COMPONENT_CONTEXT",
+  "MECHANICAL_EQUIPMENT_REQUIREMENT",
+  "MECHANICAL_DESIGN_CONDITION_CONTEXT",
+  "MECHANICAL_PERFORMANCE_CONTEXT",
+  "MECHANICAL_INTERFACE_POINT",
+  "MECHANICAL_VENDOR_DOCUMENT_CONTEXT",
+  "MECHANICAL_MAINTAINABILITY_CONTEXT",
+  "MECHANICAL_GOVERNANCE_RECORD",
+  "MECHANICAL_REQUIREMENT",
+  "MECHANICAL_ASSUMPTION",
+  "MECHANICAL_DECISION",
+  "MECHANICAL_EVIDENCE_REFERENCE",
+] as const;
+
+export const D4_OBJECT_IDENTITY_FIELDS = [
+  "STABLE_OBJECT_IDENTITY",
+  "TENANT_WORKSPACE_PROJECT_SCOPE",
+  "CANONICAL_OBJECT_TYPE",
+  "TAG_OR_REFERENCE",
+  "SERVICE_OR_FUNCTION",
+  "LIFECYCLE_OR_MATURITY",
+  "EXACT_REVISION",
+  "EXPLICIT_RELATIONSHIPS",
+  "PROVENANCE",
+  "CURRENTNESS",
+  "CANONICAL_FINGERPRINT",
+  "IMMUTABLE_HISTORY",
+] as const;
+export const D4_OBJECT_IDENTITY_EQUALS_ENGINEERING_CONTENT = false as const;
+export const D4_OBJECT_IDENTITY_EQUALS_VALIDATED_ENGINEERING = false as const;
+
+export const D4_ROTATING_EQUIPMENT_CATEGORIES = [
+  "PUMP",
+  "COMPRESSOR",
+  "FAN_OR_BLOWER",
+  "TURBINE",
+  "MOTOR_MECHANICAL_CONTEXT",
+  "OTHER_ROTATING_MACHINERY",
+] as const;
+export const D4_STATIC_EQUIPMENT_CATEGORIES = [
+  "VESSEL",
+  "TANK",
+  "HEAT_EXCHANGER",
+  "SEPARATOR",
+  "MECHANICAL_SKID",
+  "PACKAGED_STATIC_EQUIPMENT",
+] as const;
+export const D4_PACKAGED_EQUIPMENT_CATEGORIES = [
+  "VENDOR_PACKAGE",
+  "MODULAR_MECHANICAL_PACKAGE",
+  "PACKAGED_UTILITY_WHERE_MECHANICAL_OWNED",
+] as const;
+export const D4_OTHER_MECHANICAL_CATEGORIES = [
+  "HVAC_WHERE_PROJECT_ASSIGNS_MECHANICAL",
+  "MATERIALS_HANDLING",
+  "LIFTING_OR_MECHANICAL_HANDLING",
+] as const;
+export const D4_CLAIMS_ALL_EQUIPMENT_TYPES = false as const;
+export const D4_MOTOR_ELECTRICAL_OWNERSHIP_REMAINS_D7 = true as const;
+
+export const SOURCE_REQUIREMENT_EQUALS_MECHANICAL_INTERPRETATION = false as const;
+export const PROCESS_CONDITION_EQUALS_MECHANICAL_DESIGN_CONDITION = false as const;
+export const D4_MECHANICAL_DESIGN_CONDITION_EQUALS_VALIDATED_DESIGN_CONDITION = false as const;
+export const VENDOR_DATA_EQUALS_ENGINEERING_APPROVAL = false as const;
+export const D4_AI_FABRICATION_PROHIBITED = [
+  "DESIGN_PRESSURE",
+  "DESIGN_TEMPERATURE",
+  "EQUIPMENT_DUTY",
+  "FLOW",
+  "POWER",
+  "CAPACITY",
+  "SPEED",
+  "EFFICIENCY",
+  "MASS",
+  "CENTER_OF_GRAVITY",
+  "NOZZLE_LOADS",
+  "DYNAMIC_LOADS",
+  "MATERIAL_SELECTION",
+  "ALLOWABLE_LIMITS",
+] as const;
+export const AI_CAN_FABRICATE_D4_DESIGN_VALUE = false as const;
+
+export const D4_PERFORMANCE_CONTEXT_FIELDS = [
+  "CAPACITY",
+  "DUTY",
+  "SPEED",
+  "POWER",
+  "EFFICIENCY",
+  "HEAD",
+  "TORQUE",
+  "TEMPERATURE",
+  "PRESSURE",
+  "VIBRATION_CRITERIA",
+  "NOISE_CRITERIA",
+  "MECHANICAL_OPERATING_ENVELOPE",
+] as const;
+export const D4_PERFORMANCE_CONTEXT_EQUALS_MECHANICAL_CALCULATION = false as const;
+export const D4_PERFORMANCE_CONTEXT_EQUALS_VALIDATED_PERFORMANCE = false as const;
+
+export const D4_VENDOR_INFORMATION_KINDS = [
+  "VENDOR_DATASHEET",
+  "CERTIFIED_OR_VENDOR_DRAWING",
+  "MANUAL",
+  "EQUIPMENT_CURVE",
+  "PERFORMANCE_DATA",
+  "DIMENSIONS",
+  "WEIGHTS",
+  "CENTER_OF_GRAVITY",
+  "NOZZLE_INFORMATION",
+  "PACKAGE_INTERFACES",
+  "INSPECTION_OR_TEST_RECORD",
+  "DEVIATION",
+  "QUALIFICATION_OR_EXCEPTION",
+] as const;
+export const D4_VENDOR_RECORD_FIELDS = [
+  "EXACT_SOURCE",
+  "REVISION",
+  "VENDOR_OR_MANUFACTURER",
+  "PROVENANCE",
+  "AUTHORITY",
+  "STATUS",
+  "LIMITATIONS",
+  "CURRENTNESS",
+] as const;
+export const VENDOR_DATA_EQUALS_ENGINEERING_VALIDATED = false as const;
+
+export const D4_EVIDENCE_CLASSES = [
+  "SUPPLIED_CALCULATION",
+  "DATASHEET",
+  "DRAWING",
+  "VENDOR_DOCUMENT",
+  "SPECIFICATION",
+  "INSPECTION_OR_TEST_REPORT",
+  "EQUIPMENT_CURVE",
+  "CERTIFICATE",
+  "PHOTOGRAPH",
+  "MANUFACTURER_LITERATURE",
+  "PROJECT_ENGINEERING_RECORD",
+] as const;
+export const EVIDENCE_EQUALS_MECHANICAL_VALIDATION = false as const;
+export const AI_CAN_FABRICATE_MECHANICAL_EVIDENCE = false as const;
+
+export const D4_MAINTAINABILITY_TOPICS = [
+  "ACCESS",
+  "MAINTENANCE_ENVELOPE",
+  "LIFTING_OR_REMOVAL_SPACE",
+  "REPLACEMENT_PATH",
+  "SERVICE_CLEARANCES",
+  "EQUIPMENT_ORIENTATION",
+  "MAINTENANCE_REQUIREMENTS",
+  "PACKAGE_ACCESS_RESTRICTIONS",
+] as const;
+export const D4_MAINTAINABILITY_CONTEXT_EQUALS_SPATIAL_VALIDATION = false as const;
+export const D4_SPATIAL_CLASH_DETECTION_RUNTIME_COUNT = 0 as const;
+
+export const D4_D1_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_TO_D1_HANDOFF_SUBJECTS = [
+  "EQUIPMENT_MASS_OR_LOAD_CONTEXT",
+  "DYNAMIC_LOAD_CONTEXT",
+  "SUPPORT_OR_BASEPLATE_CONTEXT",
+  "ANCHOR_OR_INTERFACE_REQUIREMENTS",
+  "EQUIPMENT_FOOTPRINT",
+  "CENTER_OF_GRAVITY_CONTEXT",
+] as const;
+export const D1_TO_D4_REFERENCE_SUBJECTS = [
+  "STRUCTURAL_SUPPORT_GEOMETRY",
+  "SUPPORT_CAPACITY_CONTEXT",
+  "FOUNDATION_OR_SUPPORT_REFERENCES",
+] as const;
+
+export const D4_D2_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_TO_D2_HANDOFF_SUBJECTS = [
+  "FOOTPRINT",
+  "ACCESS",
+  "SITE_ARRANGEMENT",
+  "EQUIPMENT_PAD_OR_SITE_REQUIREMENTS",
+  "DRAINAGE_OR_SITE_CONSTRAINTS",
+] as const;
+
+export const D4_D3_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_TO_D3_REFERENCE_SUBJECTS = [
+  "FOUNDATION_OR_SITE_CONSTRAINTS",
+  "SETTLEMENT_CONTEXT",
+  "GROUND_CONDITION_LIMITATIONS",
+] as const;
+
+export const D4_D5_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_D5_FUTURE_CONTRACT_SUBJECTS = [
+  "NOZZLE_OR_INTERFACE_POINTS",
+  "ALLOWABLE_NOZZLE_LOAD_REFERENCES",
+  "CONNECTION_GEOMETRY",
+  "EQUIPMENT_CONNECTION_REQUIREMENTS",
+] as const;
+export const D4_PIPING_RUNTIME_PROHIBITED = [
+  "PIPE_ROUTING",
+  "PIPING_LINE_DESIGN",
+  "PIPING_STRESS",
+  "PIPING_SUPPORTS",
+  "PIPING_MATERIAL_CLASSES",
+  "PIPING_HYDRAULIC_DESIGN",
+] as const;
+
+export const D4_D6_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_D6_FUTURE_CONTRACT_SUBJECTS = [
+  "PROCESS_DUTY",
+  "OPERATING_OR_DESIGN_CONDITION_SOURCE",
+  "PROCESS_CAPACITY_REQUIREMENT",
+  "PROCESS_SERVICE",
+] as const;
+
+export const D4_D7_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_D7_FUTURE_CONTRACT_SUBJECTS = [
+  "ELECTRICAL_LOAD_OR_DEMAND",
+  "MOTOR_REQUIREMENTS",
+  "SUPPLY_CHARACTERISTICS",
+  "HAZARDOUS_AREA_OR_ELECTRICAL_INTERFACE",
+] as const;
+
+export const D4_D8_INTERFACE_ARCHITECTURE_DEFINED = true as const;
+export const D4_D8_FUTURE_CONTRACT_SUBJECTS = [
+  "INSTRUMENTATION_INTERFACE_POINTS",
+  "CONTROL_OR_MONITORING_REQUIREMENTS",
+  "TRIP_OR_ALARM_INTERFACES",
+  "PACKAGE_CONTROL_INTERFACES",
+] as const;
+
+export const D4_REUSES_CANONICAL_EOS_GOVERNANCE = true as const;
+export const PARALLEL_D4_PLATFORM_GOVERNANCE_CREATED = false as const;
+export const D4_CURRENTNESS_STATES = D3_CURRENTNESS_STATES;
+export const D4_REUSES_CANONICAL_CURRENTNESS = true as const;
+export const PARALLEL_D4_CURRENTNESS_ENGINE_CREATED = false as const;
+export const D4_FINGERPRINT_ALGORITHM = D3_FINGERPRINT_ALGORITHM;
+export const D4_REUSES_CANONICAL_FINGERPRINT = true as const;
+export const SECOND_D4_FINGERPRINT_ALGORITHM_CREATED = false as const;
+export const D4_DIGITAL_THREAD_MODULE = D3_DIGITAL_THREAD_MODULE;
+export const D4_REUSES_CANONICAL_DIGITAL_THREAD = true as const;
+export const PARALLEL_D4_DIGITAL_THREAD_CREATED = false as const;
+export const D4_SILENT_REPOINTING_ALLOWED = false as const;
+export const D4_EXACT_REVISION_REQUIRED = true as const;
+export const D4_IMMUTABLE_HISTORY_REQUIRED = true as const;
+
+export const D4_MATURITY_STATES = D3_MATURITY_STATES;
+export const D4_CREATES_PARALLEL_MATURITY_ENUM = false as const;
+export const D4_AUTHORITY_ROLES = [
+  "AUTHOR_DESIGNER",
+  "REVIEWER",
+  "APPROVER",
+  "MECHANICAL_ENGINEERING_AUTHORITY",
+  "LIFECYCLE_AUTHORITY",
+  "SOURCE_SYSTEM_AUTHORITY",
+  "AI_ASSISTANT",
+  "ADMINISTRATOR",
+] as const;
+export const AI_EQUALS_D4_MECHANICAL_ENGINEERING_AUTHORITY = false as const;
+export const ADMIN_EQUALS_D4_MECHANICAL_ENGINEERING_AUTHORITY = false as const;
+export const D4_TRUTH_STATES = [
+  "SOURCE_EVIDENCE",
+  "CANDIDATE_INFORMATION",
+  "ADOPTED_ENGINEERING_INFORMATION",
+  "REVIEWED",
+  "VALIDATED",
+  "CONFORMANT",
+  "APPROVED",
+  "CERTIFIED",
+] as const;
+export const REVIEWED_EQUALS_VALIDATED = false as const;
+export const D4_VALIDATED_EQUALS_CONFORMANT = false as const;
+export const D4_VALIDATED_EQUALS_APPROVED = false as const;
+export const D4_VALIDATED_EQUALS_CERTIFIED = false as const;
+
+export const D4_D9_SOURCE_CONTRACT_ARCHITECTURE_DEFINED = true as const;
+export const D4_D9_SOURCE_CONTRACT_FIELDS = [
+  "EXACT_OBJECT_REVISION",
+  "EQUIPMENT_IDENTITY",
+  "EQUIPMENT_TYPE",
+  "REQUIREMENTS",
+  "DESIGN_CONDITION_CONTEXT",
+  "PERFORMANCE_CONTEXT",
+  "VENDOR_INFORMATION",
+  "MECHANICAL_INTERFACES",
+  "MAINTAINABILITY_CONSTRAINTS",
+  "ASSUMPTIONS",
+  "DECISIONS",
+  "CHANGE_OR_REASSESSMENT_STATE",
+  "REVIEW_VALIDATION_STATE",
+  "AUTHORITY",
+  "CURRENTNESS",
+  "PROVENANCE",
+  "LIMITATIONS",
+  "LINEAGE",
+  "CANONICAL_FINGERPRINT",
+] as const;
+export const D4_D9_SOURCE_CONTRACT_RUNTIME_COUNT = 0 as const;
+export const D4_D9_RUNTIME_INTEGRATION_COUNT = 0 as const;
+export const D4_CROSS_DISCIPLINE_REASONING_RUNTIME_COUNT = 0 as const;
+export const D4_CROSS_DISCIPLINE_CONFLICT_DETECTION_RUNTIME_COUNT = 0 as const;
+export const D4_CROSS_DISCIPLINE_CONFLICT_RESOLUTION_RUNTIME_COUNT = 0 as const;
+export const D4_CROSS_DISCIPLINE_RECOMMENDATION_RUNTIME_COUNT = 0 as const;
+
+export const D4_JURISDICTION_PROFILE_IDS = EOS_JURISDICTION_PROFILE_IDS;
+export const D4_ADDS_JURISDICTION_PROFILE_ID = false as const;
+export const D4_CLAIMS_LEGAL_OR_REGULATORY_COMPLIANCE = false as const;
+
+export const D4_0_RUNTIME_STARTED = false as const;
+export const D4_RUNTIME_COUNT = 0 as const;
+export const D4_MECHANICAL_OBJECT_RUNTIME_COUNT = 0 as const;
+export const D4_EQUIPMENT_CONTEXT_RUNTIME_COUNT = 0 as const;
+export const D4_DESIGN_CONDITION_RUNTIME_COUNT = 0 as const;
+export const D4_PERFORMANCE_CONTEXT_RUNTIME_COUNT = 0 as const;
+export const D4_VENDOR_DATA_RUNTIME_COUNT = 0 as const;
+export const D4_MECHANICAL_REQUIREMENT_RUNTIME_COUNT = 0 as const;
+export const D4_MAINTAINABILITY_RUNTIME_COUNT = 0 as const;
+export const D4_REQUIREMENTS_ASSUMPTIONS_CHANGE_RUNTIME_COUNT = 0 as const;
+export const D4_DISCIPLINE_INTERFACE_RUNTIME_COUNT = 0 as const;
+export const D4_REVIEW_VALIDATION_GOVERNANCE_RUNTIME_COUNT = 0 as const;
+export const D4_CURRENTNESS_DIGITAL_THREAD_DEDICATED_RUNTIME_COUNT = 0 as const;
+export const D4_EQUIPMENT_SIZING_RUNTIME_COUNT = 0 as const;
+export const D4_ROTATING_EQUIPMENT_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D4_STATIC_EQUIPMENT_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D4_THERMAL_MECHANICAL_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D4_MECHANICAL_LOAD_CALCULATION_RUNTIME_COUNT = 0 as const;
+export const D4_VIBRATION_ANALYSIS_RUNTIME_COUNT = 0 as const;
+export const D4_FATIGUE_ANALYSIS_RUNTIME_COUNT = 0 as const;
+export const D4_MECHANICAL_DESIGN_OPTIMIZATION_RUNTIME_COUNT = 0 as const;
+export const D4_0_DATABASE_SCHEMA_CHANGED = false as const;
+export const D4_0_NEW_DEPENDENCY_ADDED = false as const;
+export const D4_0_NEW_SUBSTANTIVE_RUNTIME_ADDED = false as const;
+
+export const D4_PRESERVES_D1_STRUCTURAL_PACK_INCOMPLETE = true as const;
+export const D4_PRESERVES_D1N_CLOSED = true as const;
+export const D4_PRESERVES_D2_TRACK_COMPLETE = true as const;
+export const D4_PRESERVES_D3_TRACK_COMPLETE = true as const;
+export const D4_REOPENS_D1 = false as const;
+export const D4_REOPENS_D2 = false as const;
+export const D4_REOPENS_D3 = false as const;
+export const D3_REOPENED = false as const;
+
+export const D4_IMPLEMENTATION_PHASES = [
+  "EOS-D4-R1-MECHANICAL-IDENTITY-AND-OBJECT-FOUNDATION",
+  "EOS-D4-R2-EQUIPMENT-AND-SYSTEM-CONTEXT",
+  "EOS-D4-R3-DESIGN-CONDITIONS-AND-PERFORMANCE-CONTEXT",
+  "EOS-D4-R4-VENDOR-DATA-AND-EVIDENCE-CONTEXT",
+  "EOS-D4-R5-MECHANICAL-REQUIREMENTS-AND-TECHNICAL-CONTEXT",
+  "EOS-D4-R6-MAINTAINABILITY-ACCESS-AND-PACKAGE-CONTEXT",
+  "EOS-D4-R7-REQUIREMENTS-ASSUMPTIONS-AND-CHANGE",
+  "EOS-D4-R8-DISCIPLINE-INTERFACES-AND-HANDOFFS",
+  "EOS-D4-R9-REVIEW-AND-VALIDATION-GOVERNANCE",
+  "EOS-D4-R10-CURRENTNESS-AND-DIGITAL-THREAD",
+  "EOS-D4-R11-D9-SOURCE-CONTRACT",
+  "EOS-D4-R12-MECHANICAL-BOUNDED-CLOSEOUT",
+] as const;
+export const D4_IMPLEMENTATION_PHASE_TYPES = [
+  "MECHANICAL_IDENTITY_AND_OBJECT_FOUNDATION",
+  "EQUIPMENT_AND_SYSTEM_CONTEXT",
+  "DESIGN_CONDITIONS_AND_PERFORMANCE_CONTEXT",
+  "VENDOR_DATA_AND_EVIDENCE_CONTEXT",
+  "MECHANICAL_REQUIREMENTS_AND_TECHNICAL_CONTEXT",
+  "MAINTAINABILITY_ACCESS_AND_PACKAGE_CONTEXT",
+  "REQUIREMENTS_ASSUMPTIONS_AND_CHANGE",
+  "DISCIPLINE_INTERFACES_AND_HANDOFFS",
+  "REVIEW_AND_VALIDATION_GOVERNANCE",
+  "CURRENTNESS_AND_DIGITAL_THREAD",
+  "D9_SOURCE_CONTRACT",
+  "MECHANICAL_BOUNDED_CLOSEOUT",
+] as const;
+export const D4_PHASE_DECOMPOSITION_DEFINED = true as const;
+export const D4_CANONICAL_PHASE_COUNT = D4_IMPLEMENTATION_PHASES.length;
+export const D4_CANONICAL_PHASE_SEQUENCE = D4_IMPLEMENTATION_PHASES.join(", ");
+export const D4_PHASE_PRIMARY_SUBJECTS = [
+  "IDENTITY_AND_OBJECT_FOUNDATION",
+  "EQUIPMENT_AND_SYSTEM_CONTEXT",
+  "DESIGN_CONDITIONS_AND_PERFORMANCE_CONTEXT",
+  "VENDOR_DATA_AND_EVIDENCE",
+  "MECHANICAL_TECHNICAL_REQUIREMENTS",
+  "MAINTAINABILITY_ACCESS_AND_PACKAGE_CONTEXT",
+  "REQUIREMENTS_ASSUMPTIONS_DECISIONS_AND_CHANGE",
+  "DISCIPLINE_INTERFACES_AND_HANDOFFS",
+  "REVIEW_AND_VALIDATION_GOVERNANCE",
+  "CURRENTNESS_AND_DIGITAL_THREAD",
+  "D9_SOURCE_CONTRACT",
+  "BOUNDED_CLOSEOUT",
+] as const;
+export const D4_R1_CANONICAL_PHASE = D4_IMPLEMENTATION_PHASES[0];
+export const D4_R1_PHASE_TYPE = D4_IMPLEMENTATION_PHASE_TYPES[0];
+export const D4_R1_CANONICAL_SCOPE =
+  "Implement the governed D4 Mechanical context and Mechanical-owned object identities using the exact D4-0 taxonomy, canonical EOS object identity, tenant/workspace/project scope, lifecycle/maturity, explicit relationships, provenance, currentness, canonical fingerprint and immutable history. Do not yet create substantive equipment engineering data, performance/design-condition records, vendor data, calculations, interfaces, validation or D5-D9 runtime." as const;
+export const D4_R1_STARTED = false as const;
+export const D4_0_READY_FOR_NEXT_PHASE = true as const;
+export const D4_0_NEXT_PHASE = D4_R1_CANONICAL_PHASE;
+export const D4_0_NEXT_PHASE_TYPE = D4_R1_PHASE_TYPE;
+export const D4_0_CANONICAL_NEXT_PHASE = D4_R1_CANONICAL_PHASE;
+export const D4_0_CANONICAL_NEXT_PHASE_SCOPE = D4_R1_CANONICAL_SCOPE;
+export const D4_0_BLOCKER = "NONE" as const;
+export const D4_0_MACHINE_READABLE_ROADMAP_UPDATED = true as const;
+export const D4_0_UNAUTHORIZED_D1_PACK_COMPLETION = false as const;
+export const D4_0_UNAUTHORIZED_D2_REOPEN = false as const;
+export const D4_0_UNAUTHORIZED_D3_REOPEN = false as const;
+export const D4_0_UNAUTHORIZED_D4_RUNTIME_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_D5_D8_RUNTIME_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_D9_RUNTIME_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_CROSS_DISCIPLINE_REASONING_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_MECHANICAL_VALIDATION_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_MECHANICAL_APPROVAL_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_MECHANICAL_CERTIFICATION_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_GA_PROMOTION = false as const;
+export const D4_0_UNAUTHORIZED_PRODUCT_CLAIM = false as const;
