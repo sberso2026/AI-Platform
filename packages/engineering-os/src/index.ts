@@ -650,3 +650,12 @@ export {
   recordMechanicalServiceFunction,
   recordMechanicalSystemMembership,
 } from "./mechanical/equipment-system-context";
+export {
+  D4_R3_MATURITY_STATE,
+  D4_R4_CANONICAL_PHASE,
+  adoptMechanicalDesignCondition,
+  createD4R3Store,
+  recordMechanicalDesignCondition,
+  recordMechanicalPerformanceContext,
+  recordProcessConditionReference,
+} from "./mechanical/design-condition-performance-context";
