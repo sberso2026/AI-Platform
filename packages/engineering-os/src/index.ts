@@ -701,3 +701,9 @@ export {
   recordMechanicalGovernedRequirement,
   recordMechanicalReassessment,
 } from "./mechanical/requirements-assumptions-change";
+export {
+  D4_R8_MATURITY_STATE,
+  D4_R9_CANONICAL_PHASE,
+  createD4R8Store,
+  recordMechanicalInterfaceHandoff,
+} from "./mechanical/discipline-interfaces-handoffs";
