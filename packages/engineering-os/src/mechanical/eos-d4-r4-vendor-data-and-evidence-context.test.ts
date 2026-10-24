@@ -767,6 +767,6 @@ describe("EOS-D4-R4 Mechanical vendor data and evidence context", () => {
       "zod",
     ]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R4.VENDOR_DATA_AND_EVIDENCE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R5.MECHANICAL_REQUIREMENTS_AND_TECHNICAL_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R5.MECHANICAL_REQUIREMENTS_AND_TECHNICAL_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });
 });
