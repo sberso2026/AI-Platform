@@ -691,3 +691,13 @@ export {
   recordMechanicalPackageContext,
   recordMechanicalRemovalReplacementContext,
 } from "./mechanical/maintainability-access-package-context";
+export {
+  D4_R7_MATURITY_STATE,
+  D4_R8_CANONICAL_PHASE,
+  createD4R7Store,
+  recordMechanicalAssumption,
+  recordMechanicalChange,
+  recordMechanicalEngineeringDecision,
+  recordMechanicalGovernedRequirement,
+  recordMechanicalReassessment,
+} from "./mechanical/requirements-assumptions-change";
