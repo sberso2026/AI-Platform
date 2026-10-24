@@ -860,3 +860,9 @@ export {
   recordProcessOperatingCaseContext,
   recordProcessOperatingCondition,
 } from "./process/operating-design-basis-conditions";
+export {
+  D6_R4_MATURITY_STATE,
+  D6_R5_CANONICAL_PHASE,
+  createD6R4Store,
+  recordProcessCalculationEvidence,
+} from "./process/process-evidence-balances";

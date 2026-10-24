@@ -327,7 +327,7 @@ describe("EOS-D6-R3 operating and design basis and conditions", () => {
     expect(D6_R3_CANONICAL_NEXT_PHASE_SCOPE).toContain("exact R1-R3 revisions");
     expect(D6_R3_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R3.OPERATING_AND_DESIGN_BASIS_AND_CONDITIONS")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R4.PROCESS_EVIDENCE_AND_BALANCES")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R4.PROCESS_EVIDENCE_AND_BALANCES")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const actor = { actorId: "proc-recorder", tenantId: "t1", workspaceId: "w1", projectId: "p1", authority: D6_CONTEXT_AUTHORITY };
     const r1 = createD6R1Store();

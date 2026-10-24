@@ -124,6 +124,7 @@ import {
   D6_R1_CHANGED_FILES,
   D6_R2_CHANGED_FILES,
   D6_R3_CHANGED_FILES,
+  D6_R4_CHANGED_FILES,
   D4_R12_CHANGED_FILES,
   D4_R11_CHANGED_FILES,
   D4_R10_CHANGED_FILES,
@@ -627,6 +628,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D6-R4 Process evidence and balances as release-sensitive", () => {
+    const classified = classifyChangedFiles(D6_R4_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/process/process-evidence-balances.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D6_R4_PROCESS_EVIDENCE_AND_BALANCES_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
