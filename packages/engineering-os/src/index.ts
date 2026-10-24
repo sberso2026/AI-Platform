@@ -880,3 +880,10 @@ export {
   recordProcessSafetyContext,
   recordReliefScenarioContext,
 } from "./process/process-safety-relief-context";
+export {
+  D6_R7_MATURITY_STATE,
+  D6_R8_CANONICAL_PHASE,
+  createD6R7Store,
+  recordProcessSourceRequirement,
+  recordProcessChange,
+} from "./process/requirements-assumptions-change";
