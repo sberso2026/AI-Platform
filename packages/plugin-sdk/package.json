@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@rtb/types": "workspace:*",
-    "zod": "^3.25.36"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

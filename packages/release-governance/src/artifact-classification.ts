@@ -602,6 +602,32 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R10_CHANGED_FILES = [
+  "apps/web/package.json",
+  "docs/architecture/engineering-os/EOS_D3_R10_CURRENTNESS_AND_DIGITAL_THREAD_CLOSEOUT.md",
+  "packages/engineering-os/package.json",
+  "packages/engineering-os/src/geotechnical/currentness-digital-thread.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r10-currentness-digital-thread.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r9-review-validation-governance.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/platform-commerce/package.json",
+  "packages/platform-core/package.json",
+  "packages/platform-intelligence/package.json",
+  "packages/platform-kernel/package.json",
+  "packages/platform-kernel/src/event-bus/event-bus.ts",
+  "packages/platform-kernel/src/event-bus/event-bus.zod.test.ts",
+  "packages/plugin-sdk/package.json",
+  "packages/plugin-sdk/src/index.ts",
+  "packages/plugin-sdk/src/manifest.zod.test.ts",
+  "packages/plugin-sdk/tsconfig.json",
+  "packages/project-intelligence/package.json",
+  "packages/project-intelligence/src/documents/types.zod.test.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+  "pnpm-lock.yaml",
+] as const;
+
 export const D3_R9_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D3_R9_REVIEW_AND_VALIDATION_GOVERNANCE_CLOSEOUT.md",
   "packages/engineering-os/src/geotechnical/review-validation-governance.ts",

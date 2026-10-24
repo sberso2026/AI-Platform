@@ -112,8 +112,8 @@ importers:
         specifier: ^3.3.0
         version: 3.6.0
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.1.8
@@ -427,8 +427,8 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -679,8 +679,8 @@ importers:
         specifier: ^2.49.8
         version: 2.110.1
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -704,8 +704,8 @@ importers:
         specifier: workspace:*
         version: link:../types
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       typescript:
         specifier: ^5.8.3
@@ -754,8 +754,8 @@ importers:
         specifier: workspace:*
         version: link:../types
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -782,8 +782,8 @@ importers:
         specifier: workspace:*
         version: link:../types
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -801,8 +801,8 @@ importers:
         specifier: workspace:*
         version: link:../types
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       typescript:
         specifier: ^5.8.3
@@ -873,8 +873,8 @@ importers:
         specifier: 2.4.5
         version: 2.4.5
       zod:
-        specifier: ^3.25.36
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.15.29
@@ -3846,8 +3846,8 @@ packages:
     resolution: {integrity: sha512-9qv4rlDiopXg4E69k+vMHjNN63YFMe9sZMrdlvKnCjlCRWeCBswPPMPUfx+ipsAWq1LXHe70RcbaHdJJpS6hyQ==}
     engines: {node: '>= 10'}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -6915,4 +6915,4 @@ snapshots:
       compress-commons: 4.1.2
       readable-stream: 3.6.2
 
-  zod@3.25.76: {}
+  zod@4.6.7: {}

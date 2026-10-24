@@ -615,3 +615,11 @@ export {
   recordGeotechnicalReviewRequest,
   recordGeotechnicalValidationState,
 } from "./geotechnical/review-validation-governance";
+export {
+  D3_R10_MATURITY_STATE,
+  D3_R11_CANONICAL_PHASE,
+  createD3R10Store,
+  recordGeotechnicalCurrentness,
+  recordGeotechnicalLineage,
+  recordGeotechnicalSupersession,
+} from "./geotechnical/currentness-digital-thread";
