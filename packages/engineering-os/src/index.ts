@@ -640,3 +640,13 @@ export {
   recordMechanicalContext,
   recordMechanicalObjectIdentity,
 } from "./mechanical/identity-foundation";
+export {
+  D4_R2_MATURITY_STATE,
+  D4_R3_CANONICAL_PHASE,
+  createD4R2Store,
+  recordMechanicalDescriptiveContext,
+  recordMechanicalEquipmentClassification,
+  recordMechanicalPackageMembership,
+  recordMechanicalServiceFunction,
+  recordMechanicalSystemMembership,
+} from "./mechanical/equipment-system-context";

@@ -102,6 +102,7 @@ import {
   D3_R12_CHANGED_FILES,
   D4_0_CHANGED_FILES,
   D4_R1_CHANGED_FILES,
+  D4_R2_CHANGED_FILES,
   POST_D1L_ROADMAP_CHANGED_FILES,
   D1J_R1_CHANGED_FILES,
   D1J_R2_CHANGED_FILES,
@@ -599,6 +600,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D4-R2 equipment and system context as release-sensitive", () => {
+    const classified = classifyChangedFiles(D4_R2_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/mechanical/equipment-system-context.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D4_R2_EQUIPMENT_AND_SYSTEM_CONTEXT_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
