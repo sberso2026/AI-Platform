@@ -808,3 +808,12 @@ export {
   markPipingInterfaceFromChange,
   recordPipingInterfaceHandoff,
 } from "./piping/discipline-interfaces-handoffs";
+export {
+  D5_R9_MATURITY_STATE,
+  D5_R10_CANONICAL_PHASE,
+  createD5R9Store,
+  recordPipingReviewCompletion,
+  recordPipingReviewFinding,
+  recordPipingReviewRequest,
+  recordPipingValidationState,
+} from "./piping/review-validation-governance";

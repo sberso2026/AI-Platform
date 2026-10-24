@@ -331,7 +331,7 @@ describe("EOS-D5-R8 discipline interfaces and handoffs", () => {
     expect(D5_R8_CANONICAL_NEXT_PHASE_SCOPE).toContain("exact R1-R8 revisions");
     expect(D5_R8_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R8.DISCIPLINE_INTERFACES_AND_HANDOFFS")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R9.REVIEW_AND_VALIDATION_GOVERNANCE")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R9.REVIEW_AND_VALIDATION_GOVERNANCE")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const r1 = createD5R1Store();
     recordPipingContext(r1, actor, { contextId: "ctx-1", citedLifecycleStage: "FEED", provenanceRef: "prov-ctx" });
