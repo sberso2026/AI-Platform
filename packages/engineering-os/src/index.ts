@@ -629,3 +629,7 @@ export {
   createD3R11Store,
   recordGeotechnicalSourceContract,
 } from "./geotechnical/d9-source-contract";
+export {
+  D3_R12_MATURITY_STATE,
+  D4_0_CANONICAL_PHASE,
+} from "./geotechnical/geotechnical-bounded-closeout";

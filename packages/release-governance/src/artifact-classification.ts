@@ -602,6 +602,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D3_R12_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D3_R12_GEOTECHNICAL_BOUNDED_CLOSEOUT.md",
+  "packages/engineering-os/src/geotechnical/geotechnical-bounded-closeout.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r12-geotechnical-bounded-closeout.test.ts",
+  "packages/engineering-os/src/geotechnical/eos-d3-r11-d9-source-contract.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D3_R11_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D3_R11_D9_SOURCE_CONTRACT_CLOSEOUT.md",
   "packages/engineering-os/src/geotechnical/d9-source-contract.ts",
