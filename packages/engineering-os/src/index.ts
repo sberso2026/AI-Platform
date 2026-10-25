@@ -970,3 +970,10 @@ export {
   recordElectricalReassessment,
   recordElectricalSourceRequirement,
 } from "./electrical/requirements-assumptions-change";
+export {
+  D7_R8_MATURITY_STATE,
+  D7_R9_CANONICAL_PHASE,
+  createD7R8Store,
+  markElectricalInterfaceFromChange,
+  recordElectricalInterfaceHandoff,
+} from "./electrical/discipline-interfaces-handoffs";

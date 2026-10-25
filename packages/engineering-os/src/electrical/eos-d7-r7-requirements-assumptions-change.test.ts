@@ -401,7 +401,7 @@ describe("EOS-D7-R7 requirements assumptions and change", () => {
     expect(feederContext.protectionCoordination).toBe(false);
     expect(load.fingerprint).toBe(identityFingerprint);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R7.REQUIREMENTS_ASSUMPTIONS_AND_CHANGE")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R8.DISCIPLINE_INTERFACES_AND_HANDOFFS")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R8.DISCIPLINE_INTERFACES_AND_HANDOFFS")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "requirements-assumptions-change.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
