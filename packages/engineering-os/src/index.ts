@@ -958,3 +958,15 @@ export {
   recordElectricalProtectionDeviceContext,
   recordElectricalProtectionSetting,
 } from "./electrical/protection-grounding-hazardous-area-context";
+export {
+  D7_R7_MATURITY_STATE,
+  D7_R8_CANONICAL_PHASE,
+  createD7R7Store,
+  markElectricalDependentCurrentness,
+  recordAdoptedElectricalRequirement,
+  recordElectricalAssumption,
+  recordElectricalChange,
+  recordElectricalEngineeringDecision,
+  recordElectricalReassessment,
+  recordElectricalSourceRequirement,
+} from "./electrical/requirements-assumptions-change";

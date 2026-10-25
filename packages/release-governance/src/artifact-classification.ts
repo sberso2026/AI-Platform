@@ -610,6 +610,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D7_R7_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D7_R7_REQUIREMENTS_ASSUMPTIONS_AND_CHANGE_CLOSEOUT.md",
+  "packages/engineering-os/src/electrical/requirements-assumptions-change.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r7-requirements-assumptions-change.test.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r6-protection-grounding-hazardous-area-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D7_R6_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D7_R6_PROTECTION_GROUNDING_AND_HAZARDOUS_AREA_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/electrical/protection-grounding-hazardous-area-context.ts",
