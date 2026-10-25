@@ -1063,3 +1063,9 @@ export {
   createD8R9Store,
   recordIacReviewRequest,
 } from "./instrumentation-control/review-validation-governance";
+export {
+  D8_R10_MATURITY_STATE,
+  D8_R11_CANONICAL_PHASE,
+  createD8R10Store,
+  recordIacCurrentnessTransition,
+} from "./instrumentation-control/currentness-digital-thread";
