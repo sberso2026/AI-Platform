@@ -610,6 +610,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D7_R10_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D7_R10_CURRENTNESS_AND_DIGITAL_THREAD_CLOSEOUT.md",
+  "packages/engineering-os/src/electrical/currentness-digital-thread.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r10-currentness-digital-thread.test.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r9-review-and-validation-governance.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D7_R9_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D7_R9_REVIEW_AND_VALIDATION_GOVERNANCE_CLOSEOUT.md",
   "packages/engineering-os/src/electrical/review-validation-governance.ts",

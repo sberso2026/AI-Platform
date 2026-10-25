@@ -988,3 +988,12 @@ export {
   recordElectricalReviewRequest,
   recordElectricalValidationState,
 } from "./electrical/review-validation-governance";
+export {
+  D7_R10_MATURITY_STATE,
+  D7_R11_CANONICAL_PHASE,
+  createD7R10Store,
+  currentElectricalThreadPins,
+  recordElectricalCurrentness,
+  recordElectricalLineage,
+  traceElectricalDigitalThread,
+} from "./electrical/currentness-digital-thread";
