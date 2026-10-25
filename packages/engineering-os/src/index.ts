@@ -1033,3 +1033,9 @@ export {
   createD8R4Store,
   recordIacSignalContext,
 } from "./instrumentation-control/signal-io-control-loop-context";
+export {
+  D8_R5_MATURITY_STATE,
+  D8_R6_CANONICAL_PHASE,
+  createD8R5Store,
+  recordIacControlSystemContext,
+} from "./instrumentation-control/control-system-architecture-context";
