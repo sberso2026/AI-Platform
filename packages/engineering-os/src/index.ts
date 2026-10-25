@@ -899,3 +899,9 @@ export {
   createD6R9Store,
   recordProcessReviewRequest,
 } from "./process/review-validation-governance";
+export {
+  D6_R10_MATURITY_STATE,
+  D6_R11_CANONICAL_PHASE,
+  createD6R10Store,
+  recordProcessLineage,
+} from "./process/currentness-digital-thread";

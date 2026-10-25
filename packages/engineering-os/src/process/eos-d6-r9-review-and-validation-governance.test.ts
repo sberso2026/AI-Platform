@@ -254,7 +254,7 @@ describe("EOS-D6-R9 review and validation governance", () => {
     expect(DATABASE_SCHEMA_CHANGED || NEW_DEPENDENCY_ADDED).toBe(false);
     expect(D6_PROCESS_IDENTITY_RUNTIME_READY && D6_SYSTEM_STREAM_SERVICE_RUNTIME_READY && D6_DESIGN_BASIS_CONDITION_RUNTIME_READY && D6_PROCESS_EVIDENCE_RUNTIME_READY && D6_EQUIPMENT_DUTY_RUNTIME_READY && D6_PROCESS_SAFETY_RELIEF_RUNTIME_READY && D6_REQUIREMENTS_ASSUMPTIONS_CHANGE_RUNTIME_READY && D6_DISCIPLINE_INTERFACE_RUNTIME_READY).toBe(true);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R9.REVIEW_AND_VALIDATION_GOVERNANCE")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R10.CURRENTNESS_AND_DIGITAL_THREAD")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R10.CURRENTNESS_AND_DIGITAL_THREAD")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const actor = { actorId: "proc-recorder", tenantId: "t1", workspaceId: "w1", projectId: "p1", authority: D6_CONTEXT_AUTHORITY };
     const reviewer = { ...actor, actorId: "rev-1", authority: "REVIEWER" as const, actorKind: "human" as const, aal: "aal2" };
