@@ -284,7 +284,7 @@ describe("EOS-D7-R11 D9 source contract", () => {
     expect(feeder.fingerprint).toBe(identityFingerprint);
     expect(handoff.counterpart?.sourceRevision).toBe("rev-mech");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R11.D9_SOURCE_CONTRACT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R12.ELECTRICAL_BOUNDED_CLOSEOUT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R12.ELECTRICAL_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "d9-source-contract.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).toMatch(/D7_D9_SOURCE_CONTRACT_FIELDS/);

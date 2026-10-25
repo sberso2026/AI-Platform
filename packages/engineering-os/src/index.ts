@@ -1003,3 +1003,7 @@ export {
   createD7R11Store,
   recordElectricalSourceContract,
 } from "./electrical/d9-source-contract";
+export {
+  D7_R12_MATURITY_STATE,
+  D8_0_CANONICAL_PHASE,
+} from "./electrical/electrical-bounded-closeout";

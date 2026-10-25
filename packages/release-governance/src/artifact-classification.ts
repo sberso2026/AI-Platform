@@ -610,6 +610,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D7_R12_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D7_R12_ELECTRICAL_BOUNDED_CLOSEOUT.md",
+  "packages/engineering-os/src/electrical/electrical-bounded-closeout.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r12-electrical-bounded-closeout.test.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r11-d9-source-contract.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D7_R11_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D7_R11_D9_SOURCE_CONTRACT_CLOSEOUT.md",
   "packages/engineering-os/src/electrical/d9-source-contract.ts",
