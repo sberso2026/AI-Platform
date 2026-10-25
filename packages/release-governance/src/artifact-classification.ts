@@ -62,6 +62,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/engineering-os\/src\/mechanical\//,
   /packages\/engineering-os\/src\/piping\//,
   /packages\/engineering-os\/src\/process\//,
+  /packages\/engineering-os\/src\/electrical\//,
   /packages\/engineering-os\/src\/structural-systems\//,
 ];
 
@@ -604,6 +605,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/d1n-foundational-decisions.ts",
   "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D7_R1_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D7_R1_ELECTRICAL_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
+  "packages/engineering-os/src/electrical/identity-foundation.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r1-electrical-identity.test.ts",
+  "packages/engineering-os/src/structural-systems/eos-d7-0-electrical-architecture.test.ts",
+  "packages/engineering-os/src/index.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",

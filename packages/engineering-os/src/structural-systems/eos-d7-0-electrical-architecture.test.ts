@@ -320,7 +320,7 @@ describe("EOS-D7-0 electrical architecture canonicalization", () => {
     expect(D7_0_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D7_0_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.0.ELECTRICAL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R1.ELECTRICAL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R1.ELECTRICAL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "../../../types/src/electrical-architecture-d7-0.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "../../../types/src/electrical-architecture-d7-0.ts"), sourceText)).toEqual([]);

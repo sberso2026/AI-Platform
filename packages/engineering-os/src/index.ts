@@ -915,3 +915,10 @@ export {
   D6_R12_MATURITY_STATE,
   D7_0_CANONICAL_PHASE,
 } from "./process/process-bounded-closeout";
+export {
+  D7_R1_MATURITY_STATE,
+  D7_R2_CANONICAL_PHASE,
+  createD7R1Store,
+  recordElectricalContext,
+  recordElectricalObjectIdentity,
+} from "./electrical/identity-foundation";
