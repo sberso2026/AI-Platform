@@ -236,7 +236,7 @@ describe("EOS-D7-R10 currentness and digital thread", () => {
     expect(handoff.counterpart?.fingerprint).toBe("fp-mech");
     expect(validated.fingerprint).toBe(validationEnd.subjectFingerprint);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R10.CURRENTNESS_AND_DIGITAL_THREAD")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R11.D9_SOURCE_CONTRACT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R11.D9_SOURCE_CONTRACT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "currentness-digital-thread.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).toMatch(/THREAD_DEFAULT_MAX_DEPTH/);

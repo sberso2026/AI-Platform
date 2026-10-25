@@ -997,3 +997,9 @@ export {
   recordElectricalLineage,
   traceElectricalDigitalThread,
 } from "./electrical/currentness-digital-thread";
+export {
+  D7_R11_MATURITY_STATE,
+  D7_R12_CANONICAL_PHASE,
+  createD7R11Store,
+  recordElectricalSourceContract,
+} from "./electrical/d9-source-contract";
