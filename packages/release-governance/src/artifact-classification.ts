@@ -612,6 +612,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D8_R6_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D8_R6_SAFETY_INTERLOCK_AND_SHUTDOWN_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/instrumentation-control/safety-interlock-shutdown-context.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r6-safety-interlock-and-shutdown-context.test.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r5-control-system-architecture-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D8_R5_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D8_R5_CONTROL_SYSTEM_ARCHITECTURE_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/instrumentation-control/control-system-architecture-context.ts",

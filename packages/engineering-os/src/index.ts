@@ -1039,3 +1039,9 @@ export {
   createD8R5Store,
   recordIacControlSystemContext,
 } from "./instrumentation-control/control-system-architecture-context";
+export {
+  D8_R6_MATURITY_STATE,
+  D8_R7_CANONICAL_PHASE,
+  createD8R6Store,
+  recordIacSafetyContext,
+} from "./instrumentation-control/safety-interlock-shutdown-context";

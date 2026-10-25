@@ -368,7 +368,7 @@ describe("EOS-D8-R5 control-system architecture context", () => {
     expect(r1.objects.find((row) => row.objectId === "sys-101")?.controlSystemContextEstablished).toBe(false);
 
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R5.CONTROL_SYSTEM_ARCHITECTURE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R6.SAFETY_INTERLOCK_AND_SHUTDOWN_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R6.SAFETY_INTERLOCK_AND_SHUTDOWN_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "control-system-architecture-context.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
