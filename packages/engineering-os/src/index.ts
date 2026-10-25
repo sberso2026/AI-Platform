@@ -905,3 +905,9 @@ export {
   createD6R10Store,
   recordProcessLineage,
 } from "./process/currentness-digital-thread";
+export {
+  D6_R11_MATURITY_STATE,
+  D6_R12_CANONICAL_PHASE,
+  createD6R11Store,
+  recordProcessSourceContract,
+} from "./process/d9-source-contract";
