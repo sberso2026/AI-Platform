@@ -612,6 +612,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D8_R8_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D8_R8_DISCIPLINE_INTERFACES_AND_HANDOFFS_CLOSEOUT.md",
+  "packages/engineering-os/src/instrumentation-control/discipline-interfaces-handoffs.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r8-discipline-interfaces-and-handoffs.test.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r7-requirements-assumptions-and-change.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D8_R7_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D8_R7_REQUIREMENTS_ASSUMPTIONS_AND_CHANGE_CLOSEOUT.md",
   "packages/engineering-os/src/instrumentation-control/requirements-assumptions-change.ts",

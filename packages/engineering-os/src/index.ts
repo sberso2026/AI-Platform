@@ -1051,3 +1051,9 @@ export {
   createD8R7Store,
   recordIacSourceRequirement,
 } from "./instrumentation-control/requirements-assumptions-change";
+export {
+  D8_R8_MATURITY_STATE,
+  D8_R9_CANONICAL_PHASE,
+  createD8R8Store,
+  recordIacInterfaceHandoff,
+} from "./instrumentation-control/discipline-interfaces-handoffs";
