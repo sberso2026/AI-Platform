@@ -893,3 +893,9 @@ export {
   createD6R8Store,
   recordProcessInterfaceHandoff,
 } from "./process/discipline-interfaces-handoffs";
+export {
+  D6_R9_MATURITY_STATE,
+  D6_R10_CANONICAL_PHASE,
+  createD6R9Store,
+  recordProcessReviewRequest,
+} from "./process/review-validation-governance";
