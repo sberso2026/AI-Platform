@@ -1014,3 +1014,10 @@ export {
   recordIacContext,
   recordIacObjectIdentity,
 } from "./instrumentation-control/identity-foundation";
+export {
+  D8_R2_MATURITY_STATE,
+  D8_R3_CANONICAL_PHASE,
+  createD8R2Store,
+  recordIacTagContext,
+  recordProcessMeasurementContext,
+} from "./instrumentation-control/process-measurement-tag-context";

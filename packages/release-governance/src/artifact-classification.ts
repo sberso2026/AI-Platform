@@ -612,6 +612,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D8_R2_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D8_R2_PROCESS_MEASUREMENT_AND_TAG_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/instrumentation-control/process-measurement-tag-context.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r2-process-measurement-tag-context.test.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r1-instrumentation-control-identity.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D8_R1_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D8_R1_INSTRUMENTATION_CONTROL_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
   "packages/engineering-os/src/instrumentation-control/identity-foundation.ts",
