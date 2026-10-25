@@ -384,7 +384,7 @@ describe("EOS-D8-R3 instrument and device context", () => {
     expect(r2.measurements[0].fingerprint).toBe(measured.fingerprint);
 
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R3.INSTRUMENT_AND_DEVICE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R4.SIGNAL_IO_AND_CONTROL_LOOP_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R4.SIGNAL_IO_AND_CONTROL_LOOP_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "instrument-device-context.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
