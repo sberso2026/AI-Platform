@@ -131,6 +131,7 @@ import {
   D6_R8_CHANGED_FILES,
   D6_R9_CHANGED_FILES,
   D6_R10_CHANGED_FILES,
+  D7_R5_CHANGED_FILES,
   D7_R4_CHANGED_FILES,
   D7_R3_CHANGED_FILES,
   D7_R2_CHANGED_FILES,
@@ -641,6 +642,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D7-R5 Electrical calculation evidence as release-sensitive", () => {
+    const classified = classifyChangedFiles(D7_R5_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/electrical/calculation-evidence.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D7_R5_ELECTRICAL_CALCULATION_EVIDENCE_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

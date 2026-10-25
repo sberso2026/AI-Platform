@@ -943,3 +943,9 @@ export {
   recordElectricalCableContext,
   recordElectricalFeederContext,
 } from "./electrical/feeder-cable-rating-context";
+export {
+  D7_R5_MATURITY_STATE,
+  D7_R6_CANONICAL_PHASE,
+  createD7R5Store,
+  recordElectricalCalculationEvidence,
+} from "./electrical/calculation-evidence";
