@@ -1057,3 +1057,9 @@ export {
   createD8R8Store,
   recordIacInterfaceHandoff,
 } from "./instrumentation-control/discipline-interfaces-handoffs";
+export {
+  D8_R9_MATURITY_STATE,
+  D8_R10_CANONICAL_PHASE,
+  createD8R9Store,
+  recordIacReviewRequest,
+} from "./instrumentation-control/review-validation-governance";
