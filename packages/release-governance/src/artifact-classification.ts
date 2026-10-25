@@ -610,6 +610,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D7_R2_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D7_R2_ELECTRICAL_SYSTEM_SOURCE_AND_DISTRIBUTION_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/electrical/system-source-distribution-context.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r2-electrical-system-source-distribution.test.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r1-electrical-identity.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D7_R1_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D7_R1_ELECTRICAL_IDENTITY_AND_OBJECT_FOUNDATION_CLOSEOUT.md",
   "packages/engineering-os/src/electrical/identity-foundation.ts",

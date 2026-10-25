@@ -922,3 +922,10 @@ export {
   recordElectricalContext,
   recordElectricalObjectIdentity,
 } from "./electrical/identity-foundation";
+export {
+  D7_R2_MATURITY_STATE,
+  D7_R3_CANONICAL_PHASE,
+  createD7R2Store,
+  recordElectricalDistributionRelationship,
+  recordElectricalSystemContext,
+} from "./electrical/system-source-distribution-context";
