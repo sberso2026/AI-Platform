@@ -1021,3 +1021,9 @@ export {
   recordIacTagContext,
   recordProcessMeasurementContext,
 } from "./instrumentation-control/process-measurement-tag-context";
+export {
+  D8_R3_MATURITY_STATE,
+  D8_R4_CANONICAL_PHASE,
+  createD8R3Store,
+  recordInstrumentDeviceContext,
+} from "./instrumentation-control/instrument-device-context";
