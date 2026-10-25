@@ -911,3 +911,7 @@ export {
   createD6R11Store,
   recordProcessSourceContract,
 } from "./process/d9-source-contract";
+export {
+  D6_R12_MATURITY_STATE,
+  D7_0_CANONICAL_PHASE,
+} from "./process/process-bounded-closeout";

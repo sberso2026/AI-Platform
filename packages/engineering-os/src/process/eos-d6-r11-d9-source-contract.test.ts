@@ -298,7 +298,7 @@ describe("EOS-D6-R11 D9 source contract", () => {
     expect(D9_RUNTIME_COUNT).toBe(0);
     expect(DATABASE_SCHEMA_CHANGED || NEW_DEPENDENCY_ADDED).toBe(false);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R11.D9_SOURCE_CONTRACT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R12.PROCESS_BOUNDED_CLOSEOUT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D6.R12.PROCESS_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
 
     const actor = { actorId: "proc-recorder", tenantId: "t1", workspaceId: "w1", projectId: "p1", authority: D6_CONTEXT_AUTHORITY };
     const reviewer = { ...actor, actorId: "rev-1", authority: "REVIEWER" as const, actorKind: "human" as const, aal: "aal2" };
