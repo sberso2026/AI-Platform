@@ -181,7 +181,7 @@ describe("EOS-D7-R5 electrical calculation evidence", () => {
     expect(cableContext.suppliedSizeAttribute).toBe("4/0");
     expect(systemContext.fingerprint).toBe(systemFingerprint);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R5.ELECTRICAL_CALCULATION_EVIDENCE")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R6.PROTECTION_GROUNDING_AND_HAZARDOUS_AREA_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R6.PROTECTION_GROUNDING_AND_HAZARDOUS_AREA_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "calculation-evidence.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);

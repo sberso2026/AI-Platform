@@ -949,3 +949,12 @@ export {
   createD7R5Store,
   recordElectricalCalculationEvidence,
 } from "./electrical/calculation-evidence";
+export {
+  D7_R6_MATURITY_STATE,
+  D7_R7_CANONICAL_PHASE,
+  createD7R6Store,
+  recordElectricalGroundingContext,
+  recordElectricalHazardousAreaContext,
+  recordElectricalProtectionDeviceContext,
+  recordElectricalProtectionSetting,
+} from "./electrical/protection-grounding-hazardous-area-context";
