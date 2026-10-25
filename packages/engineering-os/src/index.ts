@@ -1045,3 +1045,9 @@ export {
   createD8R6Store,
   recordIacSafetyContext,
 } from "./instrumentation-control/safety-interlock-shutdown-context";
+export {
+  D8_R7_MATURITY_STATE,
+  D8_R8_CANONICAL_PHASE,
+  createD8R7Store,
+  recordIacSourceRequirement,
+} from "./instrumentation-control/requirements-assumptions-change";
