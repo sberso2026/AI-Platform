@@ -887,3 +887,9 @@ export {
   recordProcessSourceRequirement,
   recordProcessChange,
 } from "./process/requirements-assumptions-change";
+export {
+  D6_R8_MATURITY_STATE,
+  D6_R9_CANONICAL_PHASE,
+  createD6R8Store,
+  recordProcessInterfaceHandoff,
+} from "./process/discipline-interfaces-handoffs";
