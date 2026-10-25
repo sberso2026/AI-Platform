@@ -185,7 +185,7 @@ describe("EOS-D8-0 instrumentation and control architecture canonicalization", (
     expect(D8_0_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D8_0_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.0.INSTRUMENTATION_CONTROL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R1.INSTRUMENTATION_CONTROL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R1.INSTRUMENTATION_CONTROL_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "../../../types/src/instrumentation-control-architecture-d8-0.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "../../../types/src/instrumentation-control-architecture-d8-0.ts"), sourceText)).toEqual([]);

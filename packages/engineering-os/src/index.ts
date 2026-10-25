@@ -1007,3 +1007,10 @@ export {
   D7_R12_MATURITY_STATE,
   D8_0_CANONICAL_PHASE,
 } from "./electrical/electrical-bounded-closeout";
+export {
+  D8_R1_MATURITY_STATE,
+  D8_R2_CANONICAL_PHASE,
+  createD8R1Store,
+  recordIacContext,
+  recordIacObjectIdentity,
+} from "./instrumentation-control/identity-foundation";
