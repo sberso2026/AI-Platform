@@ -936,3 +936,10 @@ export {
   recordElectricalConsumerContext,
   recordElectricalLoadContext,
 } from "./electrical/load-consumer-equipment-context";
+export {
+  D7_R4_MATURITY_STATE,
+  D7_R5_CANONICAL_PHASE,
+  createD7R4Store,
+  recordElectricalCableContext,
+  recordElectricalFeederContext,
+} from "./electrical/feeder-cable-rating-context";

@@ -610,6 +610,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D7_R4_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D7_R4_FEEDER_CABLE_AND_RATING_CONTEXT_CLOSEOUT.md",
+  "packages/engineering-os/src/electrical/feeder-cable-rating-context.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r4-feeder-cable-rating-context.test.ts",
+  "packages/engineering-os/src/electrical/eos-d7-r3-load-consumer-equipment-context.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D7_R3_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D7_R3_LOAD_CONSUMER_AND_EQUIPMENT_CONTEXT_CLOSEOUT.md",
   "packages/engineering-os/src/electrical/load-consumer-equipment-context.ts",

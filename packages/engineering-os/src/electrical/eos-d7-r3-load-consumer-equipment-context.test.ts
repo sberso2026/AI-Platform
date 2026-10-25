@@ -142,7 +142,7 @@ describe("EOS-D7-R3 electrical load consumer and equipment context", () => {
     expect(() => repointElectricalLoadContext()).toThrow(/AUTO_REPOINT_REJECTED/);
     expect(systemContext.fingerprint).toBe(systemFingerprint);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R3.LOAD_CONSUMER_AND_EQUIPMENT_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R4.FEEDER_CABLE_AND_RATING_CONTEXT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R4.FEEDER_CABLE_AND_RATING_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "load-consumer-equipment-context.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
