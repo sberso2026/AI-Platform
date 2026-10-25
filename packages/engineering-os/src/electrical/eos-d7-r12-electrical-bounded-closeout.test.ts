@@ -463,7 +463,7 @@ describe("EOS-D7-R12 electrical bounded closeout", () => {
     expect(D7_R12_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D7_R12_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D7.R12.ELECTRICAL_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.0.INSTRUMENTATION_CONTROL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.0.INSTRUMENTATION_CONTROL_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
     const sourceText = readFileSync(join(here, "electrical-bounded-closeout.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function|fetch\(/);
     expect(scanAnalysisFormulaBypass(join(here, "electrical-bounded-closeout.ts"), sourceText)).toEqual([]);
