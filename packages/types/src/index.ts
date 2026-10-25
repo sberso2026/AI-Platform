@@ -446,3 +446,4 @@ export * from "./geotechnical-architecture-d3-0";
 export * from "./mechanical-architecture-d4-0";
 export * from "./piping-architecture-d5-0";
 export * from "./process-architecture-d6-0";
+export * from "./electrical-architecture-d7-0";
