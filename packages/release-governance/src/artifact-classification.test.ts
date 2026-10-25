@@ -131,6 +131,7 @@ import {
   D6_R8_CHANGED_FILES,
   D6_R9_CHANGED_FILES,
   D6_R10_CHANGED_FILES,
+  D7_R9_CHANGED_FILES,
   D7_R8_CHANGED_FILES,
   D7_R7_CHANGED_FILES,
   D7_R6_CHANGED_FILES,
@@ -645,6 +646,17 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
+    );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D7-R9 Electrical review and validation governance as release-sensitive", () => {
+    const classified = classifyChangedFiles(D7_R9_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/electrical/review-validation-governance.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain(
+      "docs/architecture/engineering-os/EOS_D7_R9_REVIEW_AND_VALIDATION_GOVERNANCE_CLOSEOUT.md",
     );
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);

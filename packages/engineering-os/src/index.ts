@@ -977,3 +977,14 @@ export {
   markElectricalInterfaceFromChange,
   recordElectricalInterfaceHandoff,
 } from "./electrical/discipline-interfaces-handoffs";
+export {
+  D7_R9_MATURITY_STATE,
+  D7_R10_CANONICAL_PHASE,
+  createD7R9Store,
+  currentElectricalValidations,
+  recordElectricalFindingDisposition,
+  recordElectricalReviewCompletion,
+  recordElectricalReviewFinding,
+  recordElectricalReviewRequest,
+  recordElectricalValidationState,
+} from "./electrical/review-validation-governance";
