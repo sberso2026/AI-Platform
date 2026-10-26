@@ -3423,6 +3423,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1I.VALIDATION_EVIDENCE"],
   },
   {
+    capabilityId: "D1K.INTERNAL_INTEGRATION_EVIDENCE",
+    jurisdiction: "GLOBAL",
+    method: "D1K structural internal integration evidence",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records that existing D1 inspection, twin, and optimization records compose on one governed identity. This evidence is not the historical cross-discipline interface track and it does not take over D9. An integration pass is not qualified structural review, engineering approval, certification, or pack completion. C10 and D1F human review remain unsatisfied.",
+    dependencies: ["D1J.VALIDATION_EVIDENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
