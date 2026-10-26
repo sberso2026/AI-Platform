@@ -614,6 +614,16 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1H_VALIDATION_EVIDENCE_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1H_VALIDATION_EVIDENCE.md",
+  "packages/engineering-os/src/structural-systems/d1h-validation-evidence.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1h-validation-evidence.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1G_VALIDATION_ROUTE_EXECUTION_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1G_VALIDATION_ROUTE_EXECUTION.md",
   "packages/engineering-os/src/structural-systems/d1g-validation-route-execution.ts",

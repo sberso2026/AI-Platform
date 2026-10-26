@@ -451,6 +451,13 @@ export {
   verifyDevelopmentFirstRoadmapResequencing,
 } from "./d1-development-first-roadmap-resequencing";
 export {
+  D1G_EXECUTION_MATURITY,
+  D1G_EXECUTION_STATUS,
+  D1G_TECHNICAL_VALIDATION_ROUTE_EXECUTED,
+  D1G_VALIDATION_ROUTE_EXECUTED,
+  verifyD1gValidationRouteExecution,
+} from "./d1g-validation-route-execution";
+export {
   D1_CANONICAL_NEXT_PHASE,
   D1_CANONICAL_NEXT_PHASE_SCOPE,
   D1_CANONICAL_NEXT_PHASE_TYPE,
@@ -459,9 +466,9 @@ export {
   D1_COMPLETED_MILESTONE_COUNT,
   D1_REMAINING_CANONICAL_PHASE_LIST,
   D1_REMAINING_MILESTONE_COUNT,
-  D1G_EXECUTION_MATURITY,
-  D1G_EXECUTION_STATUS,
-  D1G_TECHNICAL_VALIDATION_ROUTE_EXECUTED,
-  D1G_VALIDATION_ROUTE_EXECUTED,
-  verifyD1gValidationRouteExecution,
-} from "./d1g-validation-route-execution";
+  D1H_METHOD_CONFORMANCE_EVIDENCE_SATISFIED,
+  D1H_VALIDATION_EVIDENCE_SATISFIED,
+  D1H_VALIDATION_MATURITY,
+  D1H_VALIDATION_STATUS,
+  verifyD1hValidationEvidence,
+} from "./d1h-validation-evidence";

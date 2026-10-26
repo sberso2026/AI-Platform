@@ -3387,6 +3387,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1.DEVELOPMENT_FIRST_ROADMAP_RESEQUENCING"],
   },
   {
+    capabilityId: "D1H.VALIDATION_EVIDENCE",
+    jurisdiction: "GLOBAL",
+    method: "D1H software-engineering validation evidence",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records that the bounded D1H record methods match their documented rules. A method match is not engineering conformance, certification, regulatory approval, or qualified structural review. The historical inspection track stays closed. D1I, D1J, D1K, C10, and D1F remain unsatisfied.",
+    dependencies: ["D1G.VALIDATION_ROUTE_EXECUTION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
