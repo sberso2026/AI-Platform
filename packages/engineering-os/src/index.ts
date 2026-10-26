@@ -1109,3 +1109,9 @@ export {
   createD9R5Store,
   recordD9Recommendation,
 } from "./cross-discipline/recommendation-support";
+export {
+  D9_R6_MATURITY_STATE,
+  D9_R7_CANONICAL_PHASE,
+  createD9R6Store,
+  recordD9CurrentnessAssessment,
+} from "./cross-discipline/currentness-digital-thread";
