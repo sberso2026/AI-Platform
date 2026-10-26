@@ -246,7 +246,7 @@ describe("EOS-D9-R4 conflict governance and escalation", () => {
     expect(D9_R4_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D9_R4_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R4.CONFLICT_GOVERNANCE_AND_ESCALATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R5.RECOMMENDATION_SUPPORT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R5.RECOMMENDATION_SUPPORT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "conflict-governance-escalation.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "conflict-governance-escalation.ts"), sourceText)).toEqual([]);
