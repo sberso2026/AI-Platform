@@ -375,7 +375,7 @@ describe("EOS-D8-R10 currentness and digital thread", () => {
     expect(completed.validated).toBe(false);
 
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R10.CURRENTNESS_AND_DIGITAL_THREAD")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R11.D9_SOURCE_CONTRACT")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R11.D9_SOURCE_CONTRACT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "currentness-digital-thread.ts"), "utf8");
     expect(sourceText).toMatch(/fingerprintCanonical/);
     expect(sourceText).toMatch(/isGovernedRelationType/);

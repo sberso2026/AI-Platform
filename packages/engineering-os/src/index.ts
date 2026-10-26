@@ -1069,3 +1069,9 @@ export {
   createD8R10Store,
   recordIacCurrentnessTransition,
 } from "./instrumentation-control/currentness-digital-thread";
+export {
+  D8_R11_MATURITY_STATE,
+  D8_R12_CANONICAL_PHASE,
+  createD8R11Store,
+  recordIacD9SourceContract,
+} from "./instrumentation-control/d9-source-contract";
