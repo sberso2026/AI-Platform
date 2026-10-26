@@ -1097,3 +1097,9 @@ export {
   createD9R3Store,
   recordD9ConflictCandidate,
 } from "./cross-discipline/conflict-candidate-detection";
+export {
+  D9_R4_MATURITY_STATE,
+  D9_R5_CANONICAL_PHASE,
+  createD9R4Store,
+  recordD9ConflictGovernance,
+} from "./cross-discipline/conflict-governance-escalation";
