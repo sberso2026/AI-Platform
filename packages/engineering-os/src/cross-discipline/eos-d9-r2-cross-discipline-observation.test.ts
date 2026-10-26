@@ -202,7 +202,7 @@ describe("EOS-D9-R2 cross-discipline observation", () => {
     expect(D9_R2_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D9_R2_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R2.CROSS_DISCIPLINE_OBSERVATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R3.CONFLICT_CANDIDATE_DETECTION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R3.CONFLICT_CANDIDATE_DETECTION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "cross-discipline-observation.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "cross-discipline-observation.ts"), sourceText)).toEqual([]);
