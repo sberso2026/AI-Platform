@@ -4,7 +4,7 @@ Path: docs/architecture/engineering-os/EOS_D1_C10_HUMAN_REVIEW_INVENTORY.md
 
 This inventory lists the sixteen frozen C10 human-review records. It preserves the reviewer-supplied outcomes. It does not upgrade any outcome. It does not supply reviewer identity, role, qualification, authority basis, or review date. It is not engineering approval, certification, regulatory approval, full code compliance, or end-to-end discipline validation.
 
-Sixteen review records do not satisfy C10 qualified human review while C3 uniaxial and C7 long-term remain REVIEW_INCOMPLETE, and while reviewer identity, qualification, authority basis, and review date remain blank.
+Sixteen review records do not satisfy C10 qualified human review. The original C3 pack file remains REVIEW_INCOMPLETE and has not been rewritten. A supplemental C3 nonzero N-M re-review is recorded separately as ACCEPTED_FOR_STATED_SCOPE. C7 long-term remains REVIEW_INCOMPLETE. Reviewer identity, qualification, authority basis, and review date remain blank.
 
 FROZEN_RUNTIME_BASELINE: ef416f1f4ec92e1e97e97096ae625f8d61ca6265
 FROZEN_RUNTIME_BASELINE_CHANGED: NO
@@ -14,14 +14,25 @@ REVIEWER_IDENTITY_FABRICATED: NO
 
 TOTAL_PACKS: 16
 REVIEW_RECORDS_PRESENT: 16
-ACCEPTED_FOR_STATED_SCOPE: 14
-REVIEW_INCOMPLETE: 2
-C3_UNIAXIAL_RECOVERY_REQUIRED: YES
+C10_TOTAL_PACK_COUNT: 16
+C10_REVIEW_RECORD_COUNT: 16
+ACCEPTED_FOR_STATED_SCOPE: 15
+REVIEW_INCOMPLETE: 1
+ACCEPTED_FOR_STATED_SCOPE_COUNT: 15
+REVIEW_INCOMPLETE_COUNT: 1
+ONLY_REMAINING_INCOMPLETE_C10_SUBJECT: C7-LONG-TERM
+C3_UNIAXIAL_RECOVERY_REQUIRED: NO
 C7_LONG_TERM_RECOVERY_REQUIRED: YES
-C3_NONZERO_NM_VALIDATION_SATISFIED: NO
+C3_NONZERO_NM_VALIDATION_SATISFIED: YES
 C3_NONZERO_NM_TECHNICAL_VALIDATION_SATISFIED: YES
-C3_CURRENT_HUMAN_REVIEW_STATUS: REVIEW_INCOMPLETE
-C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: YES
+C3_CURRENT_REVIEW_STATUS: ACCEPTED_FOR_STATED_SCOPE
+C3_CURRENT_SUPPLEMENTAL_REVIEW_STATUS: ACCEPTED_FOR_STATED_SCOPE
+ORIGINAL_C3_PACK_RECORD_OUTCOME: REVIEW_INCOMPLETE
+ORIGINAL_C3_PACK_RECORD_REWRITTEN: NO
+C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: NO
+C3_QUALIFIED_HUMAN_REREVIEW_SUPPLIED: YES
+COMPLETE_INTERACTION_SURFACE_VALIDATED: NO
+C7_LONG_TERM_REVIEW_STATUS: REVIEW_INCOMPLETE
 C7_CALCULATED_CREEP_VALIDATED: NO
 C7_CALCULATED_SHRINKAGE_VALIDATED: NO
 C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
@@ -36,7 +47,7 @@ REVIEWER_QUALIFICATION_COMPLETE: NO
 REVIEWER_AUTHORITY_BASIS_COMPLETE: NO
 REVIEW_DATE_COMPLETE: NO
 
-The two incomplete records are exactly C10-R3A-PACK-C3-UNIAXIAL and C10-R3A-PACK-C7-LONG-TERM. Both remain REVIEW_INCOMPLETE.
+Current inventory counts are 15 ACCEPTED_FOR_STATED_SCOPE and 1 REVIEW_INCOMPLETE. The only remaining incomplete subject is C7-LONG-TERM. The original C3 file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C3 status is the supplemental re-review in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md, outcome ACCEPTED_FOR_STATED_SCOPE.
 
 Routing-state boundaries preserved from the C9 records:
 
@@ -47,7 +58,7 @@ C9 wall BLOCKED_SCOPE_MISMATCH and NOT_IMPLEMENTED are not a completed wall-desi
 
 Known product gaps identified by the records and left unchanged:
 
-C3 nonzero N-M validation remains unsatisfied.
+C3 bounded nonzero N-M validation is satisfied for the stated scope. Complete interaction-surface validation remains unclaimed.
 C7 calculated creep and calculated shrinkage remain unvalidated. phi = 2.4 and shrinkage strain = 0.00032 remain supplied explicit-state values.
 Two-way slab analysis and design remain outside the recorded slab routing review.
 Complete reinforced-concrete wall design, wall shear, wall second-order behavior, boundary elements, and seismic wall detailing remain unimplemented.
@@ -66,10 +77,11 @@ REVIEWER_METADATA: blank
 
 FROZEN_FINGERPRINT: a32bf2a00b313d9d
 EVIDENCE_PATH: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REVIEW_EVIDENCE.md
-HUMAN_REVIEW_OUTCOME: REVIEW_INCOMPLETE
+HISTORICAL_FILE_OUTCOME: REVIEW_INCOMPLETE
+HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
-CURRENT_LIMITATION: The zero-axial representative point is independently supported and no material discrepancy was found for that point. The historical review found nonzero N-M coverage missing. That historical finding is unchanged. A later supplemental nonzero benchmark is recorded in docs/architecture/engineering-os/EOS_D1_C3_NONZERO_NM_VALIDATION_EVIDENCE.md. It does not change this outcome. C3_NONZERO_NM_VALIDATION_SATISFIED: NO. C3_NONZERO_NM_TECHNICAL_VALIDATION_SATISFIED: YES. C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: YES.
+CURRENT_LIMITATION: The original file outcome remains REVIEW_INCOMPLETE and was not rewritten. The current supplemental re-review outcome is ACCEPTED_FOR_STATED_SCOPE for the stated bounded nonzero uniaxial scope. That acceptance does not establish complete interaction-surface validation, member stability, validated National Annex conformity, regulatory approval, or complete member design. SUPPLEMENTAL_REREVIEW_PATH: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md.
 REVIEWER_METADATA: blank
 
 ## C10-R3A-PACK-C4-BIAXIAL

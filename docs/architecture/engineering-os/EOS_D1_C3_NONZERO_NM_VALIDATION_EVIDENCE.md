@@ -89,12 +89,12 @@ SECOND_RELATIVE_MOMENT_DIFFERENCE: 0.0075540140250987976
 SECOND_NONZERO_POINT_RESULT: PASS
 
 APPLICABILITY: rectangular 300 mm by 500 mm singly reinforced section, positive major-axis interaction, declared test partial factors, at the two stated compressive targets.
-LIMITATIONS: one or two nonzero points are not a complete interaction surface. Member stability is not validated. The national profile is not validated. Regulatory approval is not claimed. The historical zero-axial human review remains REVIEW_INCOMPLETE until a human reviews this supplemental evidence.
+LIMITATIONS: one or two nonzero points are not a complete interaction surface. Member stability is not validated. The national profile is not validated. Regulatory approval is not claimed. The historical zero-axial human review file remains REVIEW_INCOMPLETE and was not rewritten. The supplemental human re-review is ACCEPTED_FOR_STATED_SCOPE for the stated bounded scope.
 REPRODUCIBILITY: packages/engineering-os/src/structural-concrete/eos-d1e-eu-c3-nonzero-nm-validation.test.ts computes the independent report before calling evaluateEuC3InteractionPoint. The independent module does not import the production evaluator.
-REVIEWER_REREVIEW_REQUIRED: YES
-C3_CURRENT_HUMAN_REVIEW_STATUS: REVIEW_INCOMPLETE
+REVIEWER_REREVIEW_REQUIRED: NO
+C3_CURRENT_HUMAN_REVIEW_STATUS: ACCEPTED_FOR_STATED_SCOPE
 C3_NONZERO_NM_TECHNICAL_VALIDATION_SATISFIED: YES
-C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: YES
+C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: NO
 MEMBER_STABILITY_VALIDATED: NO
 NATIONAL_PROFILE_VALIDATED: NO
 REGULATORY_APPROVAL: NO
