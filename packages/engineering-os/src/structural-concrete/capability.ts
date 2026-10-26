@@ -3399,6 +3399,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1G.VALIDATION_ROUTE_EXECUTION"],
   },
   {
+    capabilityId: "D1I.VALIDATION_EVIDENCE",
+    jurisdiction: "GLOBAL",
+    method: "D1I software-engineering validation evidence",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records that the bounded D1I twin methods match their documented state rules. Twin state is not physical truth, engineering validation, approval, certification, or regulatory approval. The historical twin track stays closed. D1J, D1K, C10, and D1F remain unsatisfied.",
+    dependencies: ["D1H.VALIDATION_EVIDENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
