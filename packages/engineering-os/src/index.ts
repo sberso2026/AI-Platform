@@ -1115,3 +1115,9 @@ export {
   createD9R6Store,
   recordD9CurrentnessAssessment,
 } from "./cross-discipline/currentness-digital-thread";
+export {
+  D9_R7_MATURITY_STATE,
+  D9_R8_CANONICAL_PHASE,
+  createD9R7Store,
+  recordD9Review,
+} from "./cross-discipline/review-validation-governance";
