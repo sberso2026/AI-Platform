@@ -1075,3 +1075,7 @@ export {
   createD8R11Store,
   recordIacD9SourceContract,
 } from "./instrumentation-control/d9-source-contract";
+export {
+  D8_R12_MATURITY_STATE,
+  D9_0_CANONICAL_PHASE,
+} from "./instrumentation-control/instrumentation-control-bounded-closeout";
