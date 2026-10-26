@@ -30,7 +30,27 @@ D1G.R4 reaction-moment import: NOT_APPLICABLE. The capability is out of scope an
 
 D1G.R4 solver execution: NOT_APPLICABLE. The connector does not run a solver.
 
-Technical results: 5 PASS, 0 FAIL, 0 BLOCKED, 3 NOT_APPLICABLE. Six rows still require qualified human review and remain DEFERRED_HUMAN_REVIEW.
+Technical results form one partition: 5 PASS, 0 FAIL, 0 BLOCKED, 3 NOT_APPLICABLE. Those four technical classes sum to 8.
+
+Human review is a second dimension. It is not a fifth mutually exclusive case result. Six rows require qualified human review, all six remain DEFERRED, and none are complete. Five of those six also have technical PASS. Adding the deferred count to the pass count double-counts those five rows. The historical engineering PASS rule still requires the qualified engineer. A technical PASS does not satisfy that rule.
+
+Case ledger, with technical status first and human-review status second:
+
+D1G.R1.EXTERNAL_SOLVER_ADAPTER_FOUNDATION. Subject adapter blob 8c0b567e5b2e58423ce62b30f38bd82c85d78b63. Technical EXECUTED and PASS. Human review required and DEFERRED, as a separate review obligation. Independent reference complete. Method evidence not required for this row. Reproducibility record not the required class. Applicability is the declared fixture member. Limitation: ingestion fidelity is not structural analysis.
+
+D1G.R2.EXTERNAL_RESULT_PACKAGE_INGESTION. Subject result-package blob 3e6a57d294f6d2c69718d30db124715a816e7113. Technical EXECUTED and PASS. Human review required and DEFERRED. Method-implementation evidence complete. Independent comparison and the reproducibility record are not the required class for this row. Applicability is the version 1 package fixture. Limitation: ingestion is not engineering acceptance.
+
+D1G.R4.SPACE_GASS_MEMBER_STATION_FORCE_IMPORT. Subject connector blob 89db7e6482cb2e2f0a4cfb620efeb552d0c358d8. Technical EXECUTED and PASS. Human review required and DEFERRED. Independent reference complete. Applicability is one station force at member start with node A as origin. Limitation: design axes are not implied, and the snapshot is not a commercial solver session.
+
+D1G.R4.SPACE_GASS_SUPPORT_REACTION_FORCE_IMPORT. Same connector blob. Technical EXECUTED and PASS. Human review required and DEFERRED. Independent reference complete by exact identity of the frozen force components. Applicability is Fx, Fy, and Fz at the declared support node. Limitation: reaction moments are outside this capability.
+
+D1G.R5.SPACE_GASS_CONNECTOR_CLOSEOUT. Same connector blob. Technical EXECUTED and PASS. Human review required and DEFERRED. Reproducibility record complete. This replay is not independent validation. Applicability is the exact frozen snapshot. Limitation: offline replay is not live connectivity.
+
+D1G.LIVE_CONNECTIVITY. Same connector subject. Technical disposition NOT_APPLICABLE. No live session was run. Human review remains required and DEFERRED. The route marks the session optional, so the missing session is not a failed technical case.
+
+D1G.R4.SPACE_GASS_REACTION_MOMENT_IMPORT. Technical disposition NOT_APPLICABLE. Human review is not required. The capability is not implemented.
+
+D1G.R4.SPACE_GASS_SOLVER_EXECUTION. Technical disposition NOT_APPLICABLE. Human review is not required. The connector does not run a solver.
 
 ## Evidence classes
 

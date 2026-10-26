@@ -294,7 +294,44 @@ export const D1G_VALIDATION_SCOPE_MATRIX_EXECUTED_COUNT = executed.rows.length;
 export const D1G_VALIDATION_SCOPE_MATRIX_PASS_COUNT = executed.rows.filter((row) => row.technicalResult === "PASS").length;
 export const D1G_VALIDATION_SCOPE_MATRIX_FAIL_COUNT = executed.rows.filter((row) => row.technicalResult === "FAIL").length;
 export const D1G_VALIDATION_SCOPE_MATRIX_BLOCKED_COUNT = 0 as const;
+/** Review-dimension count. It is not a mutually exclusive case result and is not added to the technical partition. */
 export const D1G_VALIDATION_SCOPE_MATRIX_DEFERRED_HUMAN_REVIEW_COUNT = executed.rows.filter((row) => row.reviewStatus === "DEFERRED_HUMAN_REVIEW").length;
+export const D1G_CASE_RESULT_CLASSES_MUTUALLY_EXCLUSIVE = false as const;
+export const D1G_TECHNICAL_CASE_COUNT = executed.rows.length;
+export const D1G_TECHNICAL_PASS_COUNT = D1G_VALIDATION_SCOPE_MATRIX_PASS_COUNT;
+export const D1G_TECHNICAL_FAIL_COUNT = D1G_VALIDATION_SCOPE_MATRIX_FAIL_COUNT;
+export const D1G_TECHNICAL_BLOCKED_COUNT = D1G_VALIDATION_SCOPE_MATRIX_BLOCKED_COUNT;
+export const D1G_TECHNICAL_NOT_APPLICABLE_COUNT = executed.rows.filter((row) => row.technicalResult === "NOT_APPLICABLE").length;
+export const D1G_HUMAN_REVIEW_REQUIRED_CASE_COUNT = executed.rows.filter((row) => row.reviewStatus === "DEFERRED_HUMAN_REVIEW").length;
+export const D1G_HUMAN_REVIEW_DEFERRED_CASE_COUNT = D1G_HUMAN_REVIEW_REQUIRED_CASE_COUNT;
+export const D1G_HUMAN_REVIEW_COMPLETE_CASE_COUNT = 0 as const;
+
+export const D1G_CASE_LEDGER = executed.rows.map((row) => {
+  const subjectRevision = row.capability.startsWith("D1G.R2")
+    ? D1G_SUBJECT_REVISIONS.resultPackage
+    : row.capability.startsWith("D1G.R1")
+      ? D1G_SUBJECT_REVISIONS.adapter
+      : D1G_SUBJECT_REVISIONS.spaceGassConnector;
+  const humanReviewRequired = row.reviewStatus === "DEFERRED_HUMAN_REVIEW";
+  return {
+    caseId: row.capability,
+    capability: row.capability,
+    subjectRevision,
+    technicalExecutionStatus: row.technicalResult === "NOT_APPLICABLE" ? "DISPOSITION_RECORDED" : "EXECUTED",
+    technicalValidationStatus: row.technicalResult,
+    technicalPassFailStatus: row.technicalResult,
+    humanReviewRequired,
+    humanReviewStatus: humanReviewRequired ? "DEFERRED" : "NOT_REQUIRED",
+    independentReferenceStatus: row.evidenceType === "INDEPENDENT_CALCULATION" ? "COMPLETE" : "NOT_REQUIRED",
+    methodImplementationEvidenceStatus: row.evidenceType === "METHOD_IMPLEMENTATION_EVIDENCE" ? "COMPLETE" : "NOT_REQUIRED",
+    reproducibilityStatus: row.evidenceType === "REPRODUCIBILITY_RECORD" ? "COMPLETE" : "NOT_REQUIRED",
+    applicability: row.applicability,
+    limitations: row.limitations,
+    deferredItemClassification: humanReviewRequired ? "SEPARATE_REVIEW_OBLIGATION" : "NOT_A_REVIEW_OBLIGATION",
+  } as const;
+});
+export const D1G_PREVIOUSLY_REPORTED_PASS_CASES = D1G_CASE_LEDGER.filter((row) => row.technicalValidationStatus === "PASS").map((row) => row.caseId);
+export const D1G_PREVIOUSLY_REPORTED_DEFERRED_HUMAN_ITEMS = D1G_CASE_LEDGER.filter((row) => row.humanReviewStatus === "DEFERRED").map((row) => row.caseId);
 export const D1G_EVIDENCE_CLASSES_USED = ["INDEPENDENT_CALCULATION", "METHOD_IMPLEMENTATION_EVIDENCE", "REPRODUCIBILITY_RECORD"] as const;
 export const D1G_REQUIRED_MACHINE_EVIDENCE_COMPLETE = true as const;
 export const D1G_INDEPENDENT_REFERENCE_COMPARISON_COMPLETE = true as const;
@@ -314,7 +351,10 @@ export function verifyD1gValidationRouteExecution(): { completed: number; remain
   if (D1_REMAINING_CANONICAL_PHASE_LIST[0] !== "EOS-D1H-VALIDATION-EVIDENCE" || D1_CANONICAL_NEXT_PHASE !== "EOS-D1H-VALIDATION-EVIDENCE") throw new Error("NEXT");
   if (!D1G_VALIDATION_ROUTE_DEFINED || !D1G_VALIDATION_ROUTE_EXECUTED || !D1G_TECHNICAL_VALIDATION_ROUTE_EXECUTED) throw new Error("EXECUTED");
   if (D1G_VALIDATION_SCOPE_MATRIX_CASE_COUNT !== 8 || D1G_VALIDATION_SCOPE_MATRIX_PASS_COUNT !== 5 || D1G_VALIDATION_SCOPE_MATRIX_FAIL_COUNT !== 0 || D1G_VALIDATION_SCOPE_MATRIX_BLOCKED_COUNT !== 0) throw new Error("MATRIX");
-  if (D1G_VALIDATION_SCOPE_MATRIX_DEFERRED_HUMAN_REVIEW_COUNT !== 6) throw new Error("DEFERRED");
+  if (D1G_CASE_RESULT_CLASSES_MUTUALLY_EXCLUSIVE) throw new Error("PARTITION");
+  if (D1G_TECHNICAL_PASS_COUNT + D1G_TECHNICAL_FAIL_COUNT + D1G_TECHNICAL_BLOCKED_COUNT + D1G_TECHNICAL_NOT_APPLICABLE_COUNT !== D1G_TECHNICAL_CASE_COUNT) throw new Error("TECHNICAL_PARTITION");
+  if (D1G_VALIDATION_SCOPE_MATRIX_DEFERRED_HUMAN_REVIEW_COUNT !== 6 || D1G_HUMAN_REVIEW_REQUIRED_CASE_COUNT !== 6 || D1G_HUMAN_REVIEW_DEFERRED_CASE_COUNT !== 6 || D1G_HUMAN_REVIEW_COMPLETE_CASE_COUNT !== 0) throw new Error("DEFERRED");
+  if (D1G_CASE_LEDGER.filter((row) => row.technicalValidationStatus === "PASS" && row.humanReviewStatus === "DEFERRED").length !== 5) throw new Error("OVERLAP");
   if (D1G_SELF_REFERENCE_EQUALS_INDEPENDENT_VALIDATION || !D1G_INDEPENDENT_REFERENCE_COMPARISON_COMPLETE || D1G_ANALYTICAL_BENCHMARK_FAIL_COUNT !== 0) throw new Error("REFERENCE");
   if (!D1G_REPRODUCIBILITY_EVIDENCE_COMPLETE || !D1G_METHOD_IMPLEMENTATION_EVIDENCE_COMPLETE) throw new Error("EVIDENCE");
   if (!D1G_TOLERANCE_REQUIRED || !D1G_TOLERANCE_JUSTIFICATION_REQUIRED || D1G_UNJUSTIFIED_TOLERANCE_WIDENING_DETECTED || D1G_TOLERANCE_RECORD.absolute !== 0) throw new Error("TOLERANCE");
