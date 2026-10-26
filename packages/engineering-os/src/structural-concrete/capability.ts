@@ -3411,6 +3411,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1H.VALIDATION_EVIDENCE"],
   },
   {
+    capabilityId: "D1J.VALIDATION_EVIDENCE",
+    jurisdiction: "GLOBAL",
+    method: "D1J software-engineering validation evidence",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Records that the bounded D1J optimization methods match their documented rules. A method match is not engineering conformance. An optimization result is not an engineering decision, approval, certification, or regulatory approval. Concrete parameter semantics stay NOT_AVAILABLE. The historical optimization track stays closed. D1K, C10, and D1F remain unsatisfied.",
+    dependencies: ["D1I.VALIDATION_EVIDENCE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
