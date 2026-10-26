@@ -3327,6 +3327,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D9.R7.REVIEW_AND_VALIDATION_GOVERNANCE"],
   },
   {
+    capabilityId: "D1.STRUCTURAL_DEBT_CANONICALIZATION",
+    jurisdiction: "GLOBAL",
+    method: "structural debt inspection and remaining roadmap",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Classifies remaining D1 structural debt and names the next route-canonicalization phase. Adds no structural runtime, solver, validation, review authority, or source contract. Does not complete the structural pack, reopen D1K, D1L, D1N, or D2 through D9, or declare general availability.",
+    dependencies: ["D9.R8.CROSS_DISCIPLINE_BOUNDED_CLOSEOUT"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

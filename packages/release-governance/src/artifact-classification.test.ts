@@ -131,6 +131,7 @@ import {
   D6_R8_CHANGED_FILES,
   D6_R9_CHANGED_FILES,
   D6_R10_CHANGED_FILES,
+  D1_DEBT_CANONICALIZATION_CHANGED_FILES,
   D9_R8_CHANGED_FILES,
   D9_R7_CHANGED_FILES,
   D9_R6_CHANGED_FILES,
@@ -676,7 +677,16 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.capabilityManifestChanged).toBe(true);
   });
 
-  it("classifies the D9-R8 cross-discipline bounded closeout as release-sensitive", () => {
+  it("classifies the D1 structural debt canonicalization as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1_DEBT_CANONICALIZATION_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/d1-structural-debt-canonicalization.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_D1_STRUCTURAL_DEBT_CANONICALIZATION.md");
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D9-R8 bounded closeout as release-sensitive", () => {
     const classified = classifyChangedFiles(D9_R8_CHANGED_FILES);
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/cross-discipline/cross-discipline-bounded-closeout.ts");
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
