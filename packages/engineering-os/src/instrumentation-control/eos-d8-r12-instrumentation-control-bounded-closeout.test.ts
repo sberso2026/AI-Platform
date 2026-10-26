@@ -315,7 +315,7 @@ describe("EOS-D8-R12 instrumentation and control bounded closeout", () => {
     expect(D8_R12_CANONICAL_NEXT_PHASE_SCOPE).toBe(D9_0_CANONICAL_SCOPE);
     expect(verifyD8BoundedCloseout()).toEqual({ runtimeCount: 11, newRuntimeCount: 0, substantive: 11, milestones: 13 });
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D8.R12.INSTRUMENTATION_CONTROL_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.0.CROSS_DISCIPLINE_INTELLIGENCE_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.0.CROSS_DISCIPLINE_INTELLIGENCE_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
     const sourceText = readFileSync(join(here, "instrumentation-control-bounded-closeout.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "instrumentation-control-bounded-closeout.ts"), sourceText)).toEqual([]);

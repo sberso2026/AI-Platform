@@ -448,3 +448,4 @@ export * from "./piping-architecture-d5-0";
 export * from "./process-architecture-d6-0";
 export * from "./electrical-architecture-d7-0";
 export * from "./instrumentation-control-architecture-d8-0";
+export * from "./cross-discipline-intelligence-architecture-d9-0";

@@ -58,6 +58,7 @@ const RELEASE_SENSITIVE_PATH_PATTERNS: readonly RegExp[] = [
   /packages\/types\/src\/process-architecture-d6-0\.ts$/,
   /packages\/types\/src\/electrical-architecture-d7-0\.ts$/,
   /packages\/types\/src\/instrumentation-control-architecture-d8-0\.ts$/,
+  /packages\/types\/src\/cross-discipline-intelligence-architecture-d9-0\.ts$/,
   /packages\/engineering-os\/src\/civil\//,
   /packages\/engineering-os\/src\/geotechnical\//,
   /packages\/engineering-os\/src\/mechanical\//,
@@ -607,6 +608,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/engineering-os/src/structural-systems/d1n-foundational-decisions.ts",
   "packages/engineering-os/src/structural-systems/eos-d1n-foundational-decisions.test.ts",
   "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
+export const D9_0_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D9_0_CROSS_DISCIPLINE_INTELLIGENCE_ARCHITECTURE_CANONICALIZATION_CLOSEOUT.md",
+  "packages/types/src/cross-discipline-intelligence-architecture-d9-0.ts",
+  "packages/types/src/index.ts",
+  "packages/engineering-os/src/structural-systems/eos-d9-0-cross-discipline-intelligence-architecture.test.ts",
+  "packages/engineering-os/src/instrumentation-control/eos-d8-r12-instrumentation-control-bounded-closeout.test.ts",
   "packages/engineering-os/src/structural-concrete/capability.ts",
   "packages/release-governance/src/artifact-classification.ts",
   "packages/release-governance/src/artifact-classification.test.ts",
