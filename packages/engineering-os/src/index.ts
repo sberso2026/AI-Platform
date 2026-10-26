@@ -1121,3 +1121,7 @@ export {
   createD9R7Store,
   recordD9Review,
 } from "./cross-discipline/review-validation-governance";
+export {
+  D9_R8_MATURITY_STATE,
+  verifyD9BoundedCloseout,
+} from "./cross-discipline/cross-discipline-bounded-closeout";

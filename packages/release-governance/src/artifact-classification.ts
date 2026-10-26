@@ -614,6 +614,17 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D9_R8_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D9_R8_CROSS_DISCIPLINE_BOUNDED_CLOSEOUT.md",
+  "packages/engineering-os/src/cross-discipline/cross-discipline-bounded-closeout.ts",
+  "packages/engineering-os/src/cross-discipline/eos-d9-r8-cross-discipline-bounded-closeout.test.ts",
+  "packages/engineering-os/src/cross-discipline/eos-d9-r7-review-validation-governance.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D9_R7_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D9_R7_REVIEW_AND_VALIDATION_GOVERNANCE_CLOSEOUT.md",
   "packages/engineering-os/src/cross-discipline/review-validation-governance.ts",

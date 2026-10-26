@@ -3319,11 +3319,11 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     jurisdiction: "GLOBAL",
     method: "cross-discipline bounded closeout",
     authorityType: "FRAMEWORK_ONLY",
-    implementationState: "NOT_IMPLEMENTED",
+    implementationState: "IMPLEMENTED_BOUNDED",
     validationState: "NOT_VALIDATED",
     conformanceState: "INTENDED_PROFILE",
     releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
-    limitations: "Names a future bounded closeout. Closeout adds no substantive runtime. D9 completion would remain bounded with limitations while D1 is incomplete. Does not decide, approve, resolve, or mutate a source.",
+    limitations: "Verifies the nine D9 milestones and seven substantive runtimes. Adds no eighth runtime. D9 completion is bounded with limitations. D1 remains incomplete. Does not validate a discipline, decide, approve, resolve, or claim EOS general availability.",
     dependencies: ["D9.R7.REVIEW_AND_VALIDATION_GOVERNANCE"],
   },
   {
