@@ -1,5 +1,7 @@
 # EOS-D1E-EU-C1 Eurocode Concrete Rule-Authority Policy
 
+Global standards-reference and intellectual-property policy: docs/architecture/engineering-os/EOS_ENGINEERING_STANDARDS_REFERENCE_AND_IP_POLICY.md. This C1 document remains the Eurocode concrete rule-authority application of that policy.
+
 C1B policy correction. Licensed standard files are not a software implementation gate. Formal standard conformance remains stricter than reference implementation.
 
 `EU_CONCRETE_PRODUCT_CLAIM_LEVEL` remains `EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY`. Conformance remains `INTENDED_PROFILE`. Pack remains uncertified.

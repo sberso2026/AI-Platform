@@ -1,5 +1,7 @@
 # EOS-D1B Structural Standard Binding
 
+Global standards-reference and intellectual-property policy: docs/architecture/engineering-os/EOS_ENGINEERING_STANDARDS_REFERENCE_AND_IP_POLICY.md. Possession of a licensed standards document inside the repository is not required to bind a standard reference.
+
 Governed binding between Structural calculations and jurisdiction, standard family/code, edition, amendment, National Annex, effective period, deterministic tool, tool version, and calculation method. Binding, resolution, validation, and provenance only. No design-code formulas, load-combination engines, SPACE GASS execution, solvers, or optimization.
 
 Package decision: contracts in `@rtb/types` `structural-standard-binding.ts`; resolution/guards in `@rtb/engineering-os` `src/structural-domain/binding.ts`. Reuses EOS-EU-0 `JurisdictionProfile`, engineering standards records, global provenance, discipline governance, and AI governance. No parallel Structural jurisdiction framework. No persistence migration.

@@ -48,7 +48,7 @@ Deterministic metadata only: explicit codes/keys, document discipline, asset typ
 
 ## Standards
 
-References only (code, edition, source, applicability). No copyrighted standard text.
+References only (code, edition, source, applicability). No copyrighted standard text. Global policy: docs/architecture/engineering-os/EOS_ENGINEERING_STANDARDS_REFERENCE_AND_IP_POLICY.md. A licensed standards document is not required in the repository.
 
 ## Tool bindings
 
