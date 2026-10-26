@@ -1,0 +1,53 @@
+# EOS D1 C10 C3 uniaxial nonzero N-M re-review worksheet
+
+Path: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_REREVIEW_WORKSHEET.md
+
+This worksheet prepares a targeted human re-review of the supplemental nonzero axial-flexure evidence. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REVIEW_EVIDENCE.md. Human review fields below are unfilled.
+
+REVIEWER_NAME:
+blank
+REVIEWER_ROLE:
+blank
+REVIEWER_QUALIFICATION:
+blank
+REVIEWER_AUTHORITY_BASIS:
+blank
+REVIEW_DATE:
+blank
+
+OLD_C3_FINGERPRINT:
+a32bf2a00b313d9d
+IMPLEMENTATION_REVISION:
+ef416f1f4ec92e1e97e97096ae625f8d61ca6265
+SUPPLEMENTAL_EVIDENCE_FINGERPRINT:
+fp:48f5b4c8
+NONZERO_AXIAL_TARGET:
+-100000 N
+INDEPENDENT_METHOD:
+EQUIVALENT_RECTANGULAR_NM_HAND_DERIVATION
+INDEPENDENT_RESULT:
+187666.36658471118 N.m at independent axial force -100000.47245854925 N
+EOS_RESULT:
+187353.39590468965 N.m at achieved axial force -100046.01443391509 N
+DIFFERENCE:
+312.9706800215354 N.m, relative difference 0.0016676972316201515
+GOVERNED_TOLERANCE:
+EU_C3_NUMERICAL_TOLERANCE equilibrium residual 50 N, resistance comparison 8000 N.m or relative 0.08, whichever limit is larger
+
+METHOD_REVIEW:
+blank
+UNIT_REVIEW:
+blank
+ASSUMPTION_REVIEW:
+blank
+APPLICABILITY_REVIEW:
+blank
+LIMITATION_REVIEW:
+blank
+FINDINGS:
+blank
+REVIEWER_OUTCOME:
+blank
+
+C3_CURRENT_HUMAN_REVIEW_STATUS: REVIEW_INCOMPLETE
+C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: YES

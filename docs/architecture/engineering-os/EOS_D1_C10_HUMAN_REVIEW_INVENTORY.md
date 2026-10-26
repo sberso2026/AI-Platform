@@ -19,6 +19,9 @@ REVIEW_INCOMPLETE: 2
 C3_UNIAXIAL_RECOVERY_REQUIRED: YES
 C7_LONG_TERM_RECOVERY_REQUIRED: YES
 C3_NONZERO_NM_VALIDATION_SATISFIED: NO
+C3_NONZERO_NM_TECHNICAL_VALIDATION_SATISFIED: YES
+C3_CURRENT_HUMAN_REVIEW_STATUS: REVIEW_INCOMPLETE
+C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: YES
 C7_CALCULATED_CREEP_VALIDATED: NO
 C7_CALCULATED_SHRINKAGE_VALIDATED: NO
 C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
@@ -66,7 +69,7 @@ EVIDENCE_PATH: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REV
 HUMAN_REVIEW_OUTCOME: REVIEW_INCOMPLETE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
-CURRENT_LIMITATION: The zero-axial representative point is independently supported and no material discrepancy was found for that point. Nonzero N-M coverage is missing. The supplemental nonzero N-M requirement is unsatisfied. C3_NONZERO_NM_VALIDATION_SATISFIED: NO
+CURRENT_LIMITATION: The zero-axial representative point is independently supported and no material discrepancy was found for that point. The historical review found nonzero N-M coverage missing. That historical finding is unchanged. A later supplemental nonzero benchmark is recorded in docs/architecture/engineering-os/EOS_D1_C3_NONZERO_NM_VALIDATION_EVIDENCE.md. It does not change this outcome. C3_NONZERO_NM_VALIDATION_SATISFIED: NO. C3_NONZERO_NM_TECHNICAL_VALIDATION_SATISFIED: YES. C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: YES.
 REVIEWER_METADATA: blank
 
 ## C10-R3A-PACK-C4-BIAXIAL
