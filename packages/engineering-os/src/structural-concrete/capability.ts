@@ -3339,6 +3339,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D9.R8.CROSS_DISCIPLINE_BOUNDED_CLOSEOUT"],
   },
   {
+    capabilityId: "D1G.VALIDATION_ROUTE_CANONICALIZATION",
+    jurisdiction: "GLOBAL",
+    method: "D1G validation route evidence contract",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Defines the D1G validation route. Does not execute it, invent a tolerance value, certify a solver, satisfy C10 or D1F review, or complete the structural pack.",
+    dependencies: ["D1.STRUCTURAL_DEBT_CANONICALIZATION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

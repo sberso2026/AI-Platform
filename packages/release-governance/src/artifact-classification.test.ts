@@ -131,6 +131,7 @@ import {
   D6_R8_CHANGED_FILES,
   D6_R9_CHANGED_FILES,
   D6_R10_CHANGED_FILES,
+  D1G_VALIDATION_ROUTE_CHANGED_FILES,
   D1_DEBT_CANONICALIZATION_CHANGED_FILES,
   D9_R8_CHANGED_FILES,
   D9_R7_CHANGED_FILES,
@@ -673,6 +674,15 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).not.toContain(
       "docs/architecture/engineering-os/EOS_D1N_FOUNDATIONAL_ARCHITECTURE_DECISIONS.md",
     );
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1G validation route canonicalization as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1G_VALIDATION_ROUTE_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/d1g-validation-route-canonicalization.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_D1G_VALIDATION_ROUTE_CANONICALIZATION.md");
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
   });

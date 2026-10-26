@@ -614,6 +614,16 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1G_VALIDATION_ROUTE_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1G_VALIDATION_ROUTE_CANONICALIZATION.md",
+  "packages/engineering-os/src/structural-systems/d1g-validation-route-canonicalization.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1g-validation-route-canonicalization.test.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1_DEBT_CANONICALIZATION_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1_STRUCTURAL_DEBT_CANONICALIZATION.md",
   "packages/engineering-os/src/structural-systems/d1-structural-debt-canonicalization.ts",
