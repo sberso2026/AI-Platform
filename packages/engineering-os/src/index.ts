@@ -1085,3 +1085,9 @@ export {
   createD9R1Store,
   recordD9SourceContractEntry,
 } from "./cross-discipline/source-contract-read-model";
+export {
+  D9_R2_MATURITY_STATE,
+  D9_R3_CANONICAL_PHASE,
+  createD9R2Store,
+  recordD9CrossDisciplineObservation,
+} from "./cross-discipline/cross-discipline-observation";

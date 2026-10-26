@@ -614,6 +614,18 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D9_R2_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D9_R2_CROSS_DISCIPLINE_OBSERVATION_CLOSEOUT.md",
+  "packages/engineering-os/src/cross-discipline/cross-discipline-observation.ts",
+  "packages/engineering-os/src/cross-discipline/source-contract-read-model.ts",
+  "packages/engineering-os/src/cross-discipline/eos-d9-r2-cross-discipline-observation.test.ts",
+  "packages/engineering-os/src/cross-discipline/eos-d9-r1-source-contract-read-model.test.ts",
+  "packages/engineering-os/src/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D9_R1_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D9_R1_SOURCE_CONTRACT_READ_MODEL_CLOSEOUT.md",
   "packages/engineering-os/src/cross-discipline/source-contract-read-model.ts",

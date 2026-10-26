@@ -547,8 +547,7 @@ export function recordD1IncompletePosture(store: D9R1Store, actor: D9R1Actor): D
   return posture;
 }
 
-export function readD9SourceManifest(store: D9R1Store, actor: D9R1Actor): D9R1Manifest {
-  assertActor(actor, store);
+export function buildD9SourceManifest(store: D9R1Store): D9R1Manifest {
   if (!store.d1Posture) fail("D1_POSTURE_REQUIRED");
   const entries = [...store.entries]
     .map((row) => ({ sourceDiscipline: row.sourceDiscipline, contractId: row.contractId, exactRevision: row.exactRevision, fingerprint: row.fingerprint }))
@@ -563,6 +562,11 @@ export function readD9SourceManifest(store: D9R1Store, actor: D9R1Actor): D9R1Ma
     entries,
     fingerprint: fingerprintCanonical({ d1: store.d1Posture.fingerprint, entries }),
   });
+}
+
+export function readD9SourceManifest(store: D9R1Store, actor: D9R1Actor): D9R1Manifest {
+  assertActor(actor, store);
+  return buildD9SourceManifest(store);
 }
 
 export function readD9SourceEntries(store: D9R1Store, actor: D9R1Actor): readonly D9R1SourceEntry[] {

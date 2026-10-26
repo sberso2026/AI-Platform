@@ -224,7 +224,7 @@ describe("EOS-D9-R1 source contract read model", () => {
     expect(D9_R1_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D9_R1_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R1.SOURCE_CONTRACT_READ_MODEL")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R2.CROSS_DISCIPLINE_OBSERVATION")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R2.CROSS_DISCIPLINE_OBSERVATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "source-contract-read-model.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "source-contract-read-model.ts"), sourceText)).toEqual([]);
