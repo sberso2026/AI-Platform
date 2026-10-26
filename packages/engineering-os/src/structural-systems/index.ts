@@ -432,6 +432,11 @@ export {
   verifyD1DebtCanonicalization,
 } from "./d1-structural-debt-canonicalization";
 export {
+  D1_QUALIFIED_REVIEW_MATURITY,
+  D1_QUALIFIED_REVIEW_STATUS,
+  verifyQualifiedStructuralReview,
+} from "./d1-qualified-structural-review";
+export {
   D1_CANONICAL_NEXT_PHASE,
   D1_CANONICAL_NEXT_PHASE_SCOPE,
   D1_CANONICAL_NEXT_PHASE_TYPE,

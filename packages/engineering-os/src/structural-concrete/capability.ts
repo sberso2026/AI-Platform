@@ -3351,6 +3351,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1.STRUCTURAL_DEBT_CANONICALIZATION"],
   },
   {
+    capabilityId: "D1.QUALIFIED_STRUCTURAL_REVIEW_ACTION_PACKAGE",
+    jurisdiction: "GLOBAL",
+    method: "qualified structural review action package",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Prepares the C10 and D1F review package. Does not record a human reviewer, satisfy either review, execute D1G validation, or complete the structural pack.",
+    dependencies: ["D1G.VALIDATION_ROUTE_CANONICALIZATION"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
