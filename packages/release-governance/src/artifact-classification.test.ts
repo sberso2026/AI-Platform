@@ -132,6 +132,7 @@ import {
   D6_R9_CHANGED_FILES,
   D6_R10_CHANGED_FILES,
   D1_DEVELOPMENT_FIRST_ROADMAP_CHANGED_FILES,
+  D1G_VALIDATION_ROUTE_EXECUTION_CHANGED_FILES,
   D1_QUALIFIED_REVIEW_CHANGED_FILES,
   D1G_VALIDATION_ROUTE_CHANGED_FILES,
   D1_DEBT_CANONICALIZATION_CHANGED_FILES,
@@ -685,6 +686,15 @@ describe("release-sensitive artifact classification", () => {
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/d1-development-first-roadmap-resequencing.ts");
     expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
     expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_D1_DEVELOPMENT_FIRST_ROADMAP_RESEQUENCING.md");
+    expect(classified.securitySensitiveFiles).toEqual([]);
+    expect(classified.capabilityManifestChanged).toBe(true);
+  });
+
+  it("classifies the D1G validation route execution as release-sensitive", () => {
+    const classified = classifyChangedFiles(D1G_VALIDATION_ROUTE_EXECUTION_CHANGED_FILES);
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-systems/d1g-validation-route-execution.ts");
+    expect(classified.releaseSensitiveFiles).toContain("packages/engineering-os/src/structural-concrete/capability.ts");
+    expect(classified.releaseSensitiveFiles).not.toContain("docs/architecture/engineering-os/EOS_D1G_VALIDATION_ROUTE_EXECUTION.md");
     expect(classified.securitySensitiveFiles).toEqual([]);
     expect(classified.capabilityManifestChanged).toBe(true);
   });

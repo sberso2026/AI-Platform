@@ -3375,6 +3375,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1.QUALIFIED_STRUCTURAL_REVIEW_ACTION_PACKAGE"],
   },
   {
+    capabilityId: "D1G.VALIDATION_ROUTE_EXECUTION",
+    jurisdiction: "GLOBAL",
+    method: "D1G technical validation route execution",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Executes the machine-readable D1G route against frozen fixtures. A passing comparison is not engineering conformance, certification, or qualified human review. C10 and D1F remain unsatisfied. The structural pack remains incomplete.",
+    dependencies: ["D1.DEVELOPMENT_FIRST_ROADMAP_RESEQUENCING"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",
