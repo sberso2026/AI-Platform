@@ -437,10 +437,6 @@ export {
   verifyQualifiedStructuralReview,
 } from "./d1-qualified-structural-review";
 export {
-  D1_CANONICAL_NEXT_PHASE,
-  D1_CANONICAL_NEXT_PHASE_SCOPE,
-  D1_CANONICAL_NEXT_PHASE_TYPE,
-  D1_CANONICAL_PHASE_LIST,
   D1_CANONICAL_TOTAL_MILESTONE_COUNT,
   D1_CLOSEOUT_TARGET,
   D1_COMPLETED_MILESTONE_COUNT,
@@ -452,3 +448,13 @@ export {
   D1G_VALIDATION_ROUTE_EXECUTED,
   verifyD1gValidationRoute,
 } from "./d1g-validation-route-canonicalization";
+export {
+  D1_CANONICAL_NEXT_PHASE,
+  D1_CANONICAL_NEXT_PHASE_SCOPE,
+  D1_CANONICAL_NEXT_PHASE_TYPE,
+  D1_CANONICAL_PHASE_LIST,
+  D1_DEVELOPMENT_FIRST_READY_FOR_NEXT_PHASE,
+  D1_QUALIFIED_STRUCTURAL_REVIEW_STATUS,
+  D1_RESEQUENCING_STATUS,
+  verifyDevelopmentFirstRoadmapResequencing,
+} from "./d1-development-first-roadmap-resequencing";

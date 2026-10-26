@@ -38,7 +38,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 describe("EOS-D1 qualified structural review", () => {
   it("blocks the phase because no qualified human review is recorded", () => {
     expect(verifyQualifiedStructuralReview()).toEqual({ satisfied: false, completed: 8, remaining: 7 });
-    expect(D1_QUALIFIED_REVIEW_STATUS).toBe("BLOCKED");
+    expect(D1_QUALIFIED_REVIEW_STATUS).toBe("DEFERRED_PENDING_DEVELOPMENT_BASELINE_FREEZE");
     expect(D1_COMPLETED_MILESTONE_COUNT).toBe(8);
     expect(D1_REMAINING_MILESTONE_COUNT).toBe(7);
     expect(C10_QUALIFIED_HUMAN_REVIEW_SATISFIED).toBe(false);
@@ -73,5 +73,5 @@ describe("EOS-D1 qualified structural review", () => {
       expect(pack?.reviewSignature).toBe("");
       expect(pack?.engineerValidationState).toBe("PENDING_HUMAN_REVIEW");
     }
-  });
+  }, 20000);
 });

@@ -3363,6 +3363,18 @@ export const STRUCTURAL_CAPABILITY_MANIFEST: readonly D1dCapabilityManifestRecor
     dependencies: ["D1G.VALIDATION_ROUTE_CANONICALIZATION"],
   },
   {
+    capabilityId: "D1.DEVELOPMENT_FIRST_ROADMAP_RESEQUENCING",
+    jurisdiction: "GLOBAL",
+    method: "development-first remaining D1 roadmap",
+    authorityType: "FRAMEWORK_ONLY",
+    implementationState: "IMPLEMENTED_BOUNDED",
+    validationState: "NOT_VALIDATED",
+    conformanceState: "INTENDED_PROFILE",
+    releaseState: D1D_GLOBAL_RELEASE_CLASSIFICATION,
+    limitations: "Resequences remaining D1 milestones so development and evidence precede qualified human review. Does not execute D1G validation, satisfy C10 or D1F review, freeze the review baseline, or complete the structural pack.",
+    dependencies: ["D1.QUALIFIED_STRUCTURAL_REVIEW_ACTION_PACKAGE"],
+  },
+  {
     capabilityId: "D1K.STRUCTURAL_INTERFACE_RUNTIME",
     jurisdiction: "GLOBAL",
     method: "cross-discipline structural interface runtime",

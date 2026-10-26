@@ -614,6 +614,19 @@ export const D1N_FOUNDATIONS_CHANGED_FILES = [
   "packages/release-governance/src/artifact-classification.test.ts",
 ] as const;
 
+export const D1_DEVELOPMENT_FIRST_ROADMAP_CHANGED_FILES = [
+  "docs/architecture/engineering-os/EOS_D1_DEVELOPMENT_FIRST_ROADMAP_RESEQUENCING.md",
+  "packages/engineering-os/src/structural-systems/d1-development-first-roadmap-resequencing.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1-development-first-roadmap-resequencing.test.ts",
+  "packages/engineering-os/src/structural-systems/d1-qualified-structural-review.ts",
+  "packages/engineering-os/src/structural-systems/eos-d1-qualified-structural-review.test.ts",
+  "packages/engineering-os/src/structural-systems/d1g-validation-route-canonicalization.ts",
+  "packages/engineering-os/src/structural-systems/index.ts",
+  "packages/engineering-os/src/structural-concrete/capability.ts",
+  "packages/release-governance/src/artifact-classification.ts",
+  "packages/release-governance/src/artifact-classification.test.ts",
+] as const;
+
 export const D1_QUALIFIED_REVIEW_CHANGED_FILES = [
   "docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEW_ACTION_PACKAGE.md",
   "packages/engineering-os/src/structural-systems/d1-qualified-structural-review.ts",

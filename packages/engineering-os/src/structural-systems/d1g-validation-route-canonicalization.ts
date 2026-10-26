@@ -206,6 +206,7 @@ export const D1G_EXECUTION_FAIL_RULE = "FAIL when a numeric comparison is outsid
 export const D1G_EXECUTION_BLOCKED_RULE = "BLOCKED when the independent reference, the tolerance basis, or the qualified structural engineer is not available. Current execution status is NOT_EXECUTED." as const;
 export const D1G_EXECUTION_STATUS = "NOT_EXECUTED" as const;
 
+/** Snapshot at route canonicalization. The live remaining order is the development-first resequencing module. */
 export const D1_CANONICAL_PHASE_LIST = D1_PHASE_LIST_AT_DEBT_INSPECTION;
 export const D1_CANONICAL_TOTAL_MILESTONE_COUNT = D1_TOTAL_AT_DEBT_INSPECTION;
 export const D1_COMPLETED_MILESTONE_COUNT = D1_COMPLETED_AT_DEBT_INSPECTION + 1;
