@@ -221,7 +221,7 @@ describe("EOS-D9-0 cross-discipline intelligence architecture canonicalization",
     expect(D9_0_MACHINE_READABLE_ROADMAP_UPDATED).toBe(true);
     expect(D9_0_BLOCKER).toBe("NONE");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.0.CROSS_DISCIPLINE_INTELLIGENCE_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
-    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R1.SOURCE_CONTRACT_READ_MODEL")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D9.R1.SOURCE_CONTRACT_READ_MODEL")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     const sourceText = readFileSync(join(here, "../../../types/src/cross-discipline-intelligence-architecture-d9-0.ts"), "utf8");
     expect(sourceText).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE|eval\(|child_process|new Function/);
     expect(scanAnalysisFormulaBypass(join(here, "../../../types/src/cross-discipline-intelligence-architecture-d9-0.ts"), sourceText)).toEqual([]);

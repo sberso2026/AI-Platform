@@ -1079,3 +1079,9 @@ export {
   D8_R12_MATURITY_STATE,
   D9_0_CANONICAL_PHASE,
 } from "./instrumentation-control/instrumentation-control-bounded-closeout";
+export {
+  D9_R1_MATURITY_STATE,
+  D9_R2_CANONICAL_PHASE,
+  createD9R1Store,
+  recordD9SourceContractEntry,
+} from "./cross-discipline/source-contract-read-model";
