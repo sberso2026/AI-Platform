@@ -111,4 +111,16 @@ SECURITY_RELEASE_REGRESSION_GATE: PASS
 
 ## Result
 
-The pilot stays closed. The unresolved operator actions are in docs/architecture/engineering-os/EOS_1_0_0_PILOT_MANUAL_ACTION_HANDOFF.md. The next phase does not start until DNS, production environment, a governed deployment, and the live isolation, monitoring, audit, and smoke gates pass.
+The pilot stays closed. The unresolved operator actions are in docs/architecture/engineering-os/EOS_1_0_0_PILOT_MANUAL_ACTION_HANDOFF.md.
+
+## Finalization recheck after the governed deployment
+
+Checked 2026-10-27 after deployment dpl_HQJCcTcuN1zKyJgJr1TVxtjk3L9T. Repository HEAD was da6b78fd3137f8209ae8271bd88373641e42f43c and the worktree was clean. The deployment was Ready, target production, and its build identity returned that commit, branch cursor/era-7a-engineering-review-pilot-gate, vercelEnv production, and packageVersion 0.1.0. The 0.1.0 value is the web package version. The deployment status for that deployment reported graphMode off, with no missing public or server Supabase names. The eight required production variable names were present. The app URL, graph mode, and corepack flag matched the expected non-secret settings, and the Supabase URL was the production project. Secret values were not recorded.
+
+https://eos-pilot.rtbea.com.au still uses CNAME 56a9c976bfd65e4d.vercel-dns-017.com. GET /api/platform/build-identity on that hostname returned commit 4cf16a2f7da5bf39e133b4a32eaab8239d98b454, branch cursor/eos-ux-1-operational-experience, packageVersion 0.1.0. GET /api/deployment/status on that hostname returned graphMode live. HTTP returned 308 to HTTPS. The certificate subject was CN=eos-pilot.rtbea.com.au, issued by Let's Encrypt, and the handshake succeeded. That certificate belongs to the hostname, not to proof that the governed deployment is served there.
+
+Live workspace, RLS, storage, file-security, kill-switch, monitoring, audit, feedback, data-policy, authority-notice, and smoke checks were not run against the old revision. No synthetic production data was created. The production ledger was read only: migration_count 143, max_version 20261027170000. No migration was replayed.
+
+Repository gates at this recheck: persistence unit 37 passed and 1 skipped, engineering-review 164 passed and 1 skipped, GA security closure 7 passed, secret scan PASS across 624 files with 0 findings, dependency audit critical 0, high 0, moderate 1, release-governance 220 passed, typecheck PASS, ledger-only ok true. These repository results do not make the custom-domain pilot ready.
+
+CONTROLLED_PRODUCTION_PILOT_READY: NO. FIRST_PILOT_USER_CAN_BE_INVITED: NO. The blocker is the DNS cutover in the manual handoff.
