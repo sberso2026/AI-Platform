@@ -2,98 +2,95 @@
 
 Path: docs/architecture/engineering-os/EOS_1_0_0_PRODUCTION_DATABASE_PROMOTION_PLAN.md
 
+Evidence: docs/architecture/engineering-os/EOS_1_0_0_DATABASE_RECOVERY_AND_MIGRATION_REHEARSAL.md
+
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
 PRODUCTION_MIGRATIONS_APPLIED: NO
 PRODUCTION_SCHEMA_MUTATION_ALLOWED: NO
 
-This plan does not authorize a production apply. Recovery was not rehearsed on an isolated target.
+This plan does not authorize a production apply. The logical schema restore was rehearsed on an isolated local PostgreSQL 17.6 container. The repository migration sequence did not pass, and post-migration tenant isolation did not pass.
 
-## 1. Current production schema
+## 1. Production preflight
 
-Project wcydlhqiqdwgoaqrlget. Applied versions: 102. Highest version: 20261007190000. Public tables: 478, all with row security. Public policies: 1120. Engineering tables: 60. Engineering policies: 174. WAL archiver reports archived_count 2954 and failed_count 0. That shows the server is archiving write-ahead logs. It is not a named backup id, a retention period, or a tested restore.
+Target ref must be wcydlhqiqdwgoaqrlget. Staging ref rntonzigxwxcjlcsadip must not be the apply target. The repository link stays on staging. Production ledger length must still be 102 and the maximum version must still be 20261007190000 before any later apply. engineering_work_plans must still be absent. security_assurance_controls must still be absent. Do not include 20260808290000 through 20260808340000, 20260831230000, 20260903080000, 20260930050000, 20261007120000, or 20261007140000.
 
-## 2. Required GA target
+## 2. Pilot access
 
-A controlled pilot that uses Engineering OS work plans, reviews, artifacts, and requirements needs the engineering tables that exist on staging and are absent on production. The security backport already on production stays. Security Assurance product tables stay off production. The superseded RLS-1 staging files stay off production.
+Pilot access stays disabled. This plan does not invite a user, change Auth signup, or change a Vercel environment.
 
-## 3. Exact promotion list
+## 3. Backup creation
 
-No migration is cleared for production execution in this phase.
+Provider physical backups are available. Seven completed backups were listed for 2026-10-20 through 2026-10-26. The newest listed id is 2078357680 at 2026-10-26T17:11:08.561Z. pitr_enabled is false. WAL-G is enabled and pg_stat_archiver had archived_count 2960 with failed_count 0. That is not point-in-time recovery.
 
-Candidate historical files, if a later phase has a verified restore and a passing isolated rehearsal: the 38 row-security migrations that create the missing engineering and identity tables, plus 20260930020000 and 20261001200000, which only add columns to tables those migrations create. That candidate count is 40. It is not an approval to run them.
+Before any production apply, record a new completed physical backup id from supabase backups list for wcydlhqiqdwgoaqrlget. Do not run supabase backups restore against production.
 
-## 4. Excluded migrations
+A schema-only logical dump was created on 2026-10-27T08:25:10.617Z, sha256 cd577f40dee47f5444e5f7a3943c7757a816395412b7728cce3a077058af2f75, 1972801 bytes. It contained no table-data sections. It was restored, verified, and then deleted. It is not a retained copy of customer rows and it is not in git.
 
-20260808290000 through 20260808340000: staging-only Security Assurance. Six files. Absent on production. Do not apply.
+## 4. Backup integrity
 
-20261007120000 and 20261007140000: superseded by 20261007160000, which is already applied. Do not apply.
+The schema dump was restored into the isolated container. After vector was installed and its dependent objects were replayed, public table, index, policy, function, trigger, and constraint names matched production with no missing and no extra names. Auth and storage table counts matched. Treat that as integrity of the schema script only.
 
-20260831230000: replaced by 20260901013000, which is already applied. Production handle_new_user already contains the invite-tenant path. Replaying the older function would roll that behavior backward. Do not apply.
+## 5. Exact migrations
 
-20260903080000: the gpt-4o-mini model_registry row is already present on production. Count observed: 1. Do not replay.
+Forty files, in this order. Thirty-nine are the repository files. 20260930090000 must be a safe forward replacement, not the repository file as it stands.
 
-20260930050000: an index on knowledge_nodes. The index is absent. It is not required to open the pilot. Do not apply in this set.
+20260808350000, 20260919120000, 20260919133000, 20260920040000, 20260920120000, 20260929180000, 20260929190000, 20260929200000, 20260929210000, 20260929220000, 20260929230000, 20260929240000, 20260930010000, 20260930020000, 20260930030000, 20260930040000, 20260930060000, 20260930070000, 20260930080000, 20260930090000, 20260930100000, 20260930110000, 20260930120000, 20260930130000, 20260930140000, 20260930150000, 20260930160000, 20260930170000, 20260930180000, 20260930190000, 20260930200000, 20261001000000, 20261001120000, 20261001180000, 20261001190000, 20261001200000, 20261001210000, 20261002120000, 20261002140000, 20261004180000.
 
-## 5. Destructive migration
+The replacement for 20260930090000 moves the same-scope triggers for engineering_lifecycle_gate_decisions and engineering_lifecycle_transitions to after those CREATE TABLE statements. The repository file creates those triggers first and fails. Do not apply the repository file until that order is the committed file.
 
-DESTRUCTIVE_MIGRATION_ID: 20261007120000
-DESTRUCTIVE_OPERATION: DROP POLICY IF EXISTS on generated policy names, then recreate. The file header says it is additive and forbids destructive schema or data operations. The prior count treated DROP POLICY as destructive.
-AFFECTED_OBJECTS: policies on the eight public tables named in that staging file, plus rtb_public_table_security_classification.
-DATA_AT_RISK: none identified as a table drop or delete. The risk is replacing policies and requiring Security Assurance tables that production does not have.
-REQUIRED_FOR_GA_PILOT: NO
-SAFE_ALTERNATIVE_AVAILABLE: YES. 20261007160000 is already applied and created the classification register without those staging dependencies.
-DESTRUCTIVE_MIGRATION_RISK_RESOLVED: YES, by exclusion. It must not be executed.
+Run the apply as postgres. postgres default privileges grant new public tables and functions to authenticated and service_role. A rehearsal as supabase_admin did not receive those grants until they were added explicitly.
 
-## 6. Data-transforming controls
+## 6. Execution order
 
-20260831230000 replaces handle_new_user. Source is the current production function. Target would be the older function body. Production already has the later function from 20260901013000. Replaying it is not idempotent with respect to the later body. Failure mode is a signup trigger that no longer matches the later invite rule. Validation already performed read-only: invite variable is present and the later version id is applied. Do not run it.
+The order is the list in section 5. Stop on the first error. Do not continue after a failed file. Earlier files will already be committed.
 
-20260903080000 inserts one model_registry row and updates it on conflict. The row is already present. A replay would still update display and cost columns. It is not required. Do not run it.
+## 7. Validation after critical migrations
 
-DATA_TRANSFORMATION_VALIDATED: NO as an executed dry run. The read-only checks are enough to exclude both files, not enough to approve a transform.
+After 20260930090000, engineering_lifecycle_gate_decisions and engineering_lifecycle_transitions must both exist, and each must have its same-scope trigger. After 20260930160000, engineering_work_plans must exist. After 20261001200000, engineering_generated_artifacts.storage_kind must exist. After 20261001210000, storage.buckets must contain engineering-artifacts with public false, and storage.objects must have the restrictive client policy. security_assurance_controls must remain absent.
 
-## 7. RLS policy changes
+## 8. Data transformation validation
 
-Production engineering policies are a subset of staging. In common: 174. Only on staging: 342. Only on production: 0. A promotion that copied the staging engineering policies would add policies. It would not, on this evidence, remove a production engineering policy. Storage policies were not changed and were not line-diffed. Full text of each policy expression was not exported.
+Do not run 20260831230000. An isolated transaction showed that it changes handle_new_user and that rollback restores the later body. 20260901013000 is already applied.
 
-RLS_POLICY_DIFF_COMPLETE: YES for engineering policy identity and command. NO for a line-by-line expression diff of every public policy.
+Do not run 20260903080000. Production already has the gpt-4o-mini row. An isolated transaction showed the conflict update keeps one row, rewrites display and support flags, and inserts model_routes. Rollback removed the synthetic rows. No row loss was observed. The rewrite is still unwanted.
 
-## 8. Backup procedure
+## 9. RLS validation
 
-Do not start promotion on the WAL archive counter alone. Before any later apply, record a provider backup id for wcydlhqiqdwgoaqrlget from the Supabase backup list. This session could not list that id. Do not copy production rows into the repository.
+Use two synthetic workspaces and two users. User A must read workspace A and not workspace B. User B must read workspace B and not workspace A. An unauthenticated role must read neither.
 
-## 9. Restore procedure
+The isolated rehearsal passed that matrix for engineering_work_plans. It failed for nine existing inspection tables whose policy uses COALESCE of the JWT tenant claim and the row tenant id. When the claim is absent, those policies are true for every row. Do not promote until that fail-open behavior is corrected by a reviewed forward change. Do not weaken the engineering workspace policies to match it.
 
-Restore only to an isolated target. Do not overwrite wcydlhqiqdwgoaqrlget. Confirm the restored catalog reaches version 20261007190000 and that engineering_work_plans is still absent before applying anything new. This session did not perform that restore.
+## 10. Storage validation
 
-## 10. Preflight checks
+Synthetic files only. User A must read the tenant A object and not the tenant B object. User B must read the tenant B object and not the tenant A object. An unauthenticated role must read neither. Authenticated and anon roles must not read engineering-artifacts. The isolated rehearsal passed this matrix. The document policy keys the first folder to the tenant id.
 
-Production ref is wcydlhqiqdwgoaqrlget. Staging ref is rntonzigxwxcjlcsadip. Highest production version is still 20261007190000. The repository link remains staging. engineering_work_plans is absent. The two superseded RLS files are not applied. No bulk push.
+## 11. Application smoke validation
 
-## 11. Promotion order
+Not run. Do not point the live RLS suite at production. Its schema test applies a hosted migration. engineering_review_security_schema_status() returned ready on the isolated database. That does not replace an application run.
 
-None. There is no authorized order while restore and rehearsal are open.
+## 12. Stop conditions
 
-## 12. Validation queries
+Stop if the target ref is wrong, if an excluded file is included, if 20260930090000 still creates a trigger before its table, if a physical backup id newer than the apply has not been recorded, if security_assurance_controls would be created, if a cross-tenant read returns a row, or if the application smoke cannot run without using the service role in place of the user.
 
-After a future authorized apply, read-only checks are: highest migration version, to_regclass of engineering_work_plans, engineering policy count greater than 174, and a two-workspace denial test. Do not run those writes now.
+## 13. Recovery action
 
-## 13. Stop conditions
+If a file fails, stop. Do not invent a down migration. The observed failure left the earlier files applied. Restore the recorded physical backup to an isolated target and retry with the corrected file. Do not restore over wcydlhqiqdwgoaqrlget as a test. Irreversible migrations are RESTORE_AND_RETRY, not automatic ROLLBACK. The trigger-order defect is a FORWARD_FIX and it is not yet committed.
 
-Stop if the target ref is not wcydlhqiqdwgoaqrlget, if a file in the excluded list is included, if restore has not been rehearsed on an isolated target, if a policy drop appears, or if the application cannot read a workspace without using service role as a substitute for a user.
+## 14. Promotion decision
 
-## 14. Recovery
+PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
 
-If a future apply fails, stop and restore the isolated target or the production project from the recorded backup id. Do not invent a down migration. An irreversible change is not an automatic rollback.
+Blocked because the repository copy of 20260930090000 fails, nine inspection policies leak when the tenant claim is absent, and the GA application was not run against the migrated schema. Production migrations were not applied.
 
 ## Gate
 
-EXACT_TARGET_SCHEMA_DEFINED: YES, as the staging engineering shape minus Security Assurance and minus the superseded files.
-ACTUAL_REQUIRED_MIGRATION_SET_FINAL: NO. The candidate count is 40 and it is not executable.
-BACKUP_AVAILABLE: WAL archive is active. A named backup was not identified.
-RESTORE_PATH_VERIFIED: NO
-MANUAL_RESTORE_VERIFICATION_REQUIRED: YES
-STAGING_MIGRATION_REHEARSAL: NOT_PERFORMED. Staging already contains the feature tables. Replaying onto that shared project is not an isolated rehearsal from the production baseline.
-POST_MIGRATION_RLS_REHEARSAL: NOT_RUN
+EXACT_TARGET_SCHEMA_DEFINED: YES
+ACTUAL_REQUIRED_MIGRATION_SET_FINAL: YES, with 20260930090000 classified as a safe forward replacement
+BACKUP_AVAILABLE: physical backups listed; PITR disabled
+RESTORE_PATH_VERIFIED: YES for the logical schema restore; NO for provider PITR
+MANUAL_RESTORE_VERIFICATION_REQUIRED: YES for a fresh physical backup id before any production apply
+STAGING_MIGRATION_REHEARSAL: NOT_PERFORMED. The shared staging project was not used as the restore target.
+POST_MIGRATION_RLS_REHEARSAL: FAIL
+CROSS_TENANT_LEAK_COUNT: 9
 GA_APPLICATION_SCHEMA_COMPATIBILITY: NOT_RUN
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
