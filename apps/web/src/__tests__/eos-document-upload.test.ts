@@ -48,8 +48,8 @@ describe("EOS document upload-first registration", () => {
   });
 
   it("does not look up documents with a read action during write upload routes", () => {
-    const sessionRoute = readApp("src/app/api/engineering/documents/upload-session/route.ts");
-    const completeRoute = readApp("src/app/api/engineering/documents/upload-complete/route.ts");
+    const sessionRoute = readApp("src/app/api/engineering/documents/upload-session/handler.ts");
+    const completeRoute = readApp("src/app/api/engineering/documents/upload-complete/handler.ts");
     expect(sessionRoute).not.toMatch(/documents\.get\(/);
     expect(completeRoute).not.toMatch(/documents\.get\(/);
     expect(completeRoute).toContain("attachOnly");
@@ -70,7 +70,7 @@ describe("EOS document upload-first registration", () => {
   });
 
   it("registers checksum identity and reuses instead of timestamp revisions", () => {
-    const completeRoute = readApp("src/app/api/engineering/documents/upload-complete/route.ts");
+    const completeRoute = readApp("src/app/api/engineering/documents/upload-complete/handler.ts");
     const uploadPage = readApp("src/app/(platform)/engineering/documents/upload/page.tsx");
     const identity = readFileSync(
       resolve(WEB_ROOT, "../../packages/engineering-os/src/services/document-identity.ts"),
