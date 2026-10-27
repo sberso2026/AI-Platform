@@ -128,3 +128,11 @@ Email provider and monitoring vendor beyond /api/health: NOT_VERIFIED.
 
 FIRST_PILOT_USER_CAN_BE_INVITED: NO until the GA revision is the deployed revision, public signup is disabled, and an admin invitation is verified.
 INITIAL_PILOT_USER_TARGET: 5_TO_10, a planning target only.
+
+## Executor live evidence
+
+The executor confirmed Supabase access to Engineering OS wcydlhqiqdwgoaqrlget and to staging rntonzigxwxcjlcsadip. They are separate projects. The live production migration catalog still ends at 20261007190000. engineering_work_plans, engineering_generated_artifacts, engineering_pre_issue_reviews, and engineering_m365_connections are absent. No migration was applied.
+
+Vercel access is limited to the team Silvestre's projects. The rtb-ai-platform project in that team does not serve eos-pilot.rtbea.com.au. No deploy was made. The public hostname still serves commit 4cf16a2f7da5bf39e133b4a32eaab8239d98b454.
+
+CONTROLLED_PRODUCTION_PILOT_READY remains NO. The remaining human actions are in docs/architecture/engineering-os/EOS_1_0_0_PILOT_MANUAL_ACTION_HANDOFF.md. The migration classification is in docs/architecture/engineering-os/EOS_1_0_0_PRODUCTION_MIGRATION_RECONCILIATION.md.
