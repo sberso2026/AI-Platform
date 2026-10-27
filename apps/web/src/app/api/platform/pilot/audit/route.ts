@@ -10,8 +10,8 @@ export async function GET(request: Request) {
   }
   let ctx;
   try {
-    const { getAuthContext } = await import("@/lib/kernel");
-    ctx = await getAuthContext();
+    const { getPilotSession } = await import("@/lib/pilot/pilot-session");
+    ctx = await getPilotSession();
   } catch {
     logPilotEvent({ eventClass: "authentication_failure", action: "pilot_audit", result: "unauthenticated" });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -7,8 +7,8 @@ export async function GET(request: Request) {
   const hasSessionCookie = hasAuthSessionCookie(request.headers.get("cookie"));
   let ctx;
   try {
-    const { getAuthContext } = await import("@/lib/kernel");
-    ctx = await getAuthContext();
+    const { getPilotSession } = await import("@/lib/pilot/pilot-session");
+    ctx = await getPilotSession();
   } catch (error) {
     const failure = currentUserFailureResponse(hasSessionCookie);
     logPilotEvent({

@@ -76,7 +76,8 @@ describe("EOS pilot operational readiness controls", () => {
     const membersHandler = readFileSync(resolve(root, "src/app/api/platform/identity/members/handler.ts"), "utf8");
     expect(members).toContain("Unauthorized");
     expect(membersHandler).toContain("membershipStatus");
-    expect(membersHandler).toContain("await import(\"@/lib/kernel\")");
+    expect(membersHandler).toContain("getPilotSession");
+    expect(membersHandler).not.toContain("from \"@/lib/kernel\"");
     expect(members).not.toContain("from \"@/lib/kernel\"");
     const migration = readFileSync(
       resolve(root, "../../supabase/migrations/20261027233000_eos_pilot_storage_writes_closed.sql"),

@@ -35,8 +35,8 @@ async function loadAdminContext(request: Request) {
     return { ctx: null, failure: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
   try {
-    const { getAuthContext } = await import("@/lib/kernel");
-    const ctx = await getAuthContext();
+    const { getPilotSession } = await import("@/lib/pilot/pilot-session");
+    const ctx = await getPilotSession();
     if (!ctx) {
       logPilotEvent({ eventClass: "authentication_failure", action: "pilot_members", result: "unauthenticated" });
       return { ctx: null, failure: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
@@ -107,16 +107,19 @@ export async function POST(request: Request) {
     });
     let seatBlocked = false;
     if (body.assignSeat === true && typeof body.seatPoolId === "string") {
-      const pools = await ctx.commerce.seatAssignment.listPools(ctx.tenantId);
+      const { getAuthContext } = await import("@/lib/kernel");
+      const full = await getAuthContext();
+      if (!full) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const pools = await full.commerce.seatAssignment.listPools(ctx.tenantId);
       const pool = pools.find((item) => item.id === body.seatPoolId);
       const assignments = pool
-        ? await ctx.commerce.seatAssignment.listAssignments(ctx.tenantId, pool.id)
+        ? await full.commerce.seatAssignment.listAssignments(ctx.tenantId, pool.id)
         : [];
       if (!pool || shouldBlockSeatAssignment(assignments.length, pool.total_seats)) {
         seatBlocked = true;
       } else {
         try {
-          await ctx.commerce.seatAssignment.assign({
+          await full.commerce.seatAssignment.assign({
             tenantId: ctx.tenantId,
             seatPoolId: body.seatPoolId,
             userId: invited.userId,

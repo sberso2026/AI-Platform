@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { buildPilotFeedbackRecord, logPilotEvent } from "@/lib/pilot/pilot-controls";
 
 async function authContext() {
-  const { getAuthContext } = await import("@/lib/kernel");
-  return getAuthContext();
+  const { getPilotSession } = await import("@/lib/pilot/pilot-session");
+  return getPilotSession();
 }
 
 export const dynamic = "force-dynamic";
