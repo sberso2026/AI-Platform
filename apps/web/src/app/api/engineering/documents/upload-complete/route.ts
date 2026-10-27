@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { pilotFileIngestionEnabled } from "@/lib/pilot/pilot-controls";
+import { logPilotEvent, pilotFileIngestionEnabled } from "@/lib/pilot/pilot-controls";
 
 const CLOSED_MESSAGE =
   "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.";
 
 export async function POST(request: Request) {
   if (!pilotFileIngestionEnabled()) {
+    logPilotEvent({ eventClass: "storage_file_processing_failure", action: "upload_complete", result: "denied" });
     return NextResponse.json(
       { error: { code: "pilot_file_upload_disabled", message: CLOSED_MESSAGE } },
       { status: 403 },

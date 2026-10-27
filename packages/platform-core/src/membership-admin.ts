@@ -512,6 +512,49 @@ export class MembershipAdminService {
     return data;
   }
 
+  async setMembershipStatus(input: {
+    tenantId: string;
+    actorUserId: string;
+    userId: string;
+    status: "active" | "suspended";
+  }) {
+    if (input.actorUserId === input.userId) {
+      throw new IdentityProvisioningError(
+        "self_status_forbidden",
+        "An administrator cannot suspend or restore their own access.",
+        403,
+      );
+    }
+    if (input.status !== "active" && input.status !== "suspended") {
+      throw new IdentityProvisioningError(
+        "invalid_membership_status",
+        "Membership status must be active or suspended.",
+        422,
+      );
+    }
+    const { data, error } = await this.admin
+      .from("tenant_memberships")
+      .update({ status: input.status })
+      .eq("tenant_id", input.tenantId)
+      .eq("user_id", input.userId)
+      .select("id, user_id, status")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data?.id) {
+      throw new IdentityProvisioningError(
+        "membership_not_found",
+        "That user is not a member of this tenant.",
+        404,
+      );
+    }
+    return {
+      membershipId: data.id as string,
+      userId: data.user_id as string,
+      status: data.status as "active" | "suspended",
+      engineeringAuthority: false,
+    };
+  }
+
   private async attachMembership(input: { tenantId: string; workspaceId: string; userId: string; roleId: string }) {
     const { error } = await this.admin.from("tenant_memberships").upsert(
       {

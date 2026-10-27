@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { IdentityProvisioningError } from "./identity-onboarding";
 import {
   CANONICAL_TENANT_ONBOARDING_MODEL,
+  MembershipAdminService,
   assertCanAssignInviteRole,
   isPilotInviteRoleSlug,
   mapPilotInviteRole,
@@ -23,6 +25,45 @@ describe("pilot invite role mapping", () => {
     expect(isPilotInviteRoleSlug("admin")).toBe(true);
     expect(isPilotInviteRoleSlug("owner")).toBe(false);
     expect(isPilotInviteRoleSlug("engineer")).toBe(false);
+  });
+
+  it("suspends another member in the same tenant and refuses self or a missing member", async () => {
+    const calls: string[] = [];
+    const client = {
+      from(table: string) {
+        calls.push(table);
+        return {
+          update(values: { status: string }) {
+            calls.push(values.status);
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          select() {
+            return this;
+          },
+          maybeSingle: async () => ({ data: { id: "membership-1", user_id: "user-b", status: "suspended" }, error: null }),
+        };
+      },
+    };
+    const service = new MembershipAdminService(client as never);
+    const updated = await service.setMembershipStatus({
+      tenantId: "tenant-a",
+      actorUserId: "user-a",
+      userId: "user-b",
+      status: "suspended",
+    });
+    expect(updated).toMatchObject({ status: "suspended", engineeringAuthority: false });
+    expect(calls).toEqual(["tenant_memberships", "suspended"]);
+    await expect(
+      service.setMembershipStatus({
+        tenantId: "tenant-a",
+        actorUserId: "user-a",
+        userId: "user-a",
+        status: "suspended",
+      }),
+    ).rejects.toBeInstanceOf(IdentityProvisioningError);
   });
 
   it("refuses invite-role mutation of an existing owner", () => {

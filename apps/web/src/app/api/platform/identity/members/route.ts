@@ -9,14 +9,13 @@ import {
   shouldBlockSeatAssignment,
 } from "@rtb/platform-core";
 import { SeatLimitExceededError } from "@rtb/platform-commerce";
-import { getAuthContext } from "@/lib/kernel";
 import { createServiceClient } from "@/lib/supabase/service";
+import { classifyPilotFailure, currentUserFailureResponse, hasAuthSessionCookie, logPilotEvent } from "@/lib/pilot/pilot-controls";
 import {
   forbiddenResponse,
   handleCommerceDomainError,
   lifecycleErrorResponse,
   resolveRequestId,
-  unauthenticatedResponse,
 } from "@/lib/lifecycle-api";
 
 function activationRedirect(request: Request): string | undefined {
@@ -25,6 +24,33 @@ function activationRedirect(request: Request): string | undefined {
     requestOrigin: request.headers.get("origin"),
     vercelUrl: process.env.VERCEL_URL,
   });
+}
+
+export const dynamic = "force-dynamic";
+
+async function loadAdminContext(request: Request) {
+  const hasSessionCookie = hasAuthSessionCookie(request.headers.get("cookie"));
+  if (!hasSessionCookie) {
+    logPilotEvent({ eventClass: "authentication_failure", action: "pilot_members", result: "unauthenticated" });
+    return { ctx: null, failure: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  try {
+    const { getAuthContext } = await import("@/lib/kernel");
+    const ctx = await getAuthContext();
+    if (!ctx) {
+      logPilotEvent({ eventClass: "authentication_failure", action: "pilot_members", result: "unauthenticated" });
+      return { ctx: null, failure: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    }
+    return { ctx, failure: null };
+  } catch (error) {
+    const failure = currentUserFailureResponse(true);
+    logPilotEvent({
+      eventClass: "application_exception",
+      action: "pilot_members",
+      result: classifyPilotFailure(error),
+    });
+    return { ctx: null, failure: NextResponse.json(failure.body, { status: failure.status }) };
+  }
 }
 
 function identityErrorResponse(err: unknown, requestId: string) {
@@ -37,14 +63,17 @@ function identityErrorResponse(err: unknown, requestId: string) {
 
 export async function GET(request: Request) {
   const requestId = resolveRequestId(request);
-  const ctx = await getAuthContext();
-  if (!ctx) return unauthenticatedResponse(requestId);
+  const loaded = await loadAdminContext(request);
+  if (!loaded.ctx) return loaded.failure;
+  const ctx = loaded.ctx;
   if (!isPlatformAdmin(ctx.roleSlug)) {
+    logPilotEvent({ eventClass: "authorization_denial", action: "pilot_members", result: "denied" });
     return forbiddenResponse(requestId, "User administration requires an owner or administrator", "unauthorized");
   }
   try {
     const admin = new MembershipAdminService(createServiceClient());
     const data = await admin.listMembers(ctx.tenantId);
+    logPilotEvent({ eventClass: "pilot_admin", action: "membership_list", result: `count:${data.length}` });
     return NextResponse.json({ data, requestId });
   } catch (err) {
     return handleCommerceDomainError(err, requestId);
@@ -53,9 +82,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const requestId = resolveRequestId(request);
-  const ctx = await getAuthContext();
-  if (!ctx) return unauthenticatedResponse(requestId);
+  const loaded = await loadAdminContext(request);
+  if (!loaded.ctx) return loaded.failure;
+  const ctx = loaded.ctx;
   if (!isPlatformAdmin(ctx.roleSlug)) {
+    logPilotEvent({ eventClass: "authorization_denial", action: "pilot_members", result: "denied" });
     return forbiddenResponse(requestId, "User administration requires an owner or administrator", "unauthorized");
   }
   if (!ctx.workspaceId) {
@@ -131,9 +162,11 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const requestId = resolveRequestId(request);
-  const ctx = await getAuthContext();
-  if (!ctx) return unauthenticatedResponse(requestId);
+  const loaded = await loadAdminContext(request);
+  if (!loaded.ctx) return loaded.failure;
+  const ctx = loaded.ctx;
   if (!isPlatformAdmin(ctx.roleSlug)) {
+    logPilotEvent({ eventClass: "authorization_denial", action: "pilot_members", result: "denied" });
     return forbiddenResponse(requestId, "User administration requires an owner or administrator", "unauthorized");
   }
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
@@ -161,6 +194,20 @@ export async function PATCH(request: Request) {
       });
       return NextResponse.json({ data, requestId });
     }
+    if (body.membershipStatus === "active" || body.membershipStatus === "suspended") {
+      const data = await admin.setMembershipStatus({
+        tenantId: ctx.tenantId,
+        actorUserId: ctx.userId,
+        userId: body.userId,
+        status: body.membershipStatus,
+      });
+      logPilotEvent({
+        eventClass: "pilot_admin",
+        action: "membership_status",
+        result: `${data.status}:${data.userId}`,
+      });
+      return NextResponse.json({ data, requestId });
+    }
     if (typeof body.roleSlug === "string") {
       const data = await admin.assignRole({
         tenantId: ctx.tenantId,
@@ -178,7 +225,7 @@ export async function PATCH(request: Request) {
       });
       return NextResponse.json({ data, requestId });
     }
-    return NextResponse.json({ error: "roleSlug, workspaceId, or resendActivation required" }, { status: 422 });
+    return NextResponse.json({ error: "roleSlug, workspaceId, membershipStatus, or resendActivation required" }, { status: 422 });
   } catch (err) {
     return identityErrorResponse(err, requestId);
   }

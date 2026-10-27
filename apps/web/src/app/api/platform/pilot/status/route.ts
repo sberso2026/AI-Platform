@@ -3,6 +3,7 @@ import {
   PILOT_FILE_UPLOAD_REQUIRED,
   PRODUCTION_MONITORING_CHANNELS,
   PRODUCTION_MONITORING_EVENT_CLASSES,
+  logPilotEvent,
   pilotFileIngestionEnabled,
   pilotKillSwitchSuspended,
 } from "@/lib/pilot/pilot-controls";
@@ -11,6 +12,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const suspended = pilotKillSwitchSuspended();
+  logPilotEvent({
+    eventClass: "kill_switch",
+    action: "pilot_status",
+    result: suspended ? "suspended" : "active",
+  });
   return NextResponse.json({
     data: {
       controlledPilotEnabled: !suspended,

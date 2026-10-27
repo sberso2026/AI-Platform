@@ -15,7 +15,7 @@ import {
   resolveRequestActorContext,
 } from "@/lib/identity/canonical-context";
 import { resolvePublicSupabaseConfig } from "@/lib/supabase/public-config";
-import { hasAuthSessionCookie, pilotKillSwitchSuspended } from "@/lib/pilot/pilot-edge";
+import { hasAuthSessionCookie, logPilotEdgeEvent, pilotKillSwitchSuspended } from "@/lib/pilot/pilot-edge";
 import { canAccessPlatformRoute, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
 import type { NavTier } from "@rtb/types";
 
@@ -151,7 +151,14 @@ function pilotSuspensionResponse(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   if (pilotKillSwitchSuspended()) {
     const suspended = pilotSuspensionResponse(request);
-    if (suspended) return suspended;
+    if (suspended) {
+      logPilotEdgeEvent({
+        eventClass: "kill_switch",
+        action: "pilot_access",
+        result: "suspended",
+      });
+      return suspended;
+    }
   }
 
   let response = NextResponse.next({ request });

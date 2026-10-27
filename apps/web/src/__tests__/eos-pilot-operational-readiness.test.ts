@@ -72,5 +72,20 @@ describe("EOS pilot operational readiness controls", () => {
     expect(currentUser).toContain("currentUserFailureResponse");
     expect(uploadSession).toContain("pilot_file_upload_disabled");
     expect(users).toContain("not an engineering validator");
+    const members = readFileSync(resolve(root, "src/app/api/platform/identity/members/route.ts"), "utf8");
+    expect(members).toContain("membershipStatus");
+    expect(members).toContain("await import(\"@/lib/kernel\")");
+    expect(members).not.toContain("from \"@/lib/kernel\"");
+    const migration = readFileSync(
+      resolve(root, "../../supabase/migrations/20261027233000_eos_pilot_storage_writes_closed.sql"),
+      "utf8",
+    );
+    expect(migration).toContain("DROP POLICY IF EXISTS tenant_documents_insert");
+    expect(migration).toContain("tenant_documents_insert_closed");
+    expect(migration).toContain("engineering_documents_insert_closed");
+    expect(migration).not.toContain("DROP POLICY IF EXISTS tenant_documents_select");
+    expect(migration).not.toMatch(/DROP TABLE|TRUNCATE|DELETE FROM/i);
+    const middleware = readFileSync(resolve(root, "src/middleware.ts"), "utf8");
+    expect(middleware).toContain("logPilotEdgeEvent");
   });
 });

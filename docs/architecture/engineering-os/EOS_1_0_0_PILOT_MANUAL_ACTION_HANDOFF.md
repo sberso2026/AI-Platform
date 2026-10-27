@@ -2,11 +2,11 @@
 
 Path: docs/architecture/engineering-os/EOS_1_0_0_PILOT_MANUAL_ACTION_HANDOFF.md
 
-Checked again on 2026-10-27 after the governed production deployment. No secret values are included. Do not invite a pilot user until the deployment record says the pilot is ready.
+Checked again on 2026-10-27 after the controlled-pilot storage close. No secret values are included. Do not invite a pilot user from this document. This phase does not declare the pilot ready.
 
-Authoritative DNS for eos-pilot.rtbea.com.au now CNAMEs to bde154f6774d54de.vercel-dns-016.com. Vercel reports the domain verified and configured correctly on rtb-ai-platform. A request to that current address returns deployment dpl_HQJCcTcuN1zKyJgJr1TVxtjk3L9T, commit da6b78fd3137f8209ae8271bd88373641e42f43c, and graphMode off. The pilot is still not ready to invite a user.
+Authoritative DNS for eos-pilot.rtbea.com.au CNAMEs to bde154f6774d54de.vercel-dns-016.com. Confirm the live deployment id and commit from `/api/platform/build-identity` on that domain. Do not treat `dpl_HQJCcTcuN1zKyJgJr1TVxtjk3L9T` or commit `da6b78fd3137f8209ae8271bd88373641e42f43c` as the current production revision.
 
-Production migrations are already applied. Ledger count 143. Maximum version 20261027170000. Do not run supabase db push. Do not replay the approved sequence.
+Production ledger count is 144. Maximum version is `20261027233000`. That migration closes authenticated writes to `tenant-documents` and `engineering-documents`. Do not run supabase db push. Do not replay earlier migrations. Rollback SQL is in `EOS_1_0_0_PILOT_STORAGE_WRITE_CLOSE_ROLLBACK.md` and must not be applied while the pilot upload path stays closed.
 
 ## 1. DNS cutover
 
@@ -14,9 +14,7 @@ Completed. Do not change the apex nameservers. Do not change the TXT values for 
 
 ## 2. Production environment and governed deployment
 
-Completed for the Vercel project. The eight required production names are present. The non-secret checks match the pilot URL, graph mode off, and corepack 1. The public Supabase URL is the production project. Secret values were not recorded.
-
-Production deployment dpl_HQJCcTcuN1zKyJgJr1TVxtjk3L9T is Ready at https://rtb-ai-platform-4wkewy79q-silvestres-projects-96ea276a.vercel.app. Its build identity is commit da6b78fd3137f8209ae8271bd88373641e42f43c on cursor/era-7a-engineering-review-pilot-gate. The web package version reported by that deployment is 0.1.0. That is the apps/web package metadata, not a substitute for the hostname serving this commit. PI_TEAMS_GRAPH_MODE is off on that deployment. Do not redeploy 4cf16a2f7da5bf39e133b4a32eaab8239d98b454.
+The production project keeps the existing environment names. The non-secret checks remain the pilot URL, graph mode off, and corepack 1. Secret values are not recorded here. `EOS_CONTROLLED_PILOT_ENABLED` must not be left at `0`. The web package version 0.1.0 is apps/web metadata. PI_TEAMS_GRAPH_MODE stays off. Do not redeploy `4cf16a2f7da5bf39e133b4a32eaab8239d98b454`.
 
 ## 3. Production monitoring for the controlled pilot
 
@@ -28,11 +26,9 @@ Retention is whatever the current Vercel and Supabase project plans keep. This p
 
 ## 4. Remaining live pilot limits
 
-Direct authenticated upload to `engineering-documents` returns HTTP 400 because storage row-level security denies the insert. That bucket has no authenticated policy. The denial message is `new row violates row-level security policy`. The tenant-scoped bucket is `tenant-documents`, whose first folder must be one of the caller's tenant ids.
+Authenticated insert, update, and delete on `tenant-documents` and `engineering-documents` are denied by storage policy. `tenant_documents_select` remains tenant-folder scoped. Service-role storage access stays server-only. Application upload routes return `pilot_file_upload_disabled`. File upload is outside this pilot, so malware scanning is not a pilot pass.
 
-Engineering file ingestion is fail-closed while no hosted malware scanner is configured. Upload session, upload complete, query-image upload, and metadata extraction reject with `pilot_file_upload_disabled`. The raw `tenant-documents` storage API can still accept an authenticated object. Closing that path needs a storage policy change, and this phase does not add or run a migration.
-
-The production kill switch remains `EOS_CONTROLLED_PILOT_ENABLED=0`. Tenant administrators receive HTTP 403 if they try to activate it. Do not leave the variable set to `0`. Do not invite a user from this document. Public signup stays disabled. `PI_TEAMS_GRAPH_MODE` stays off.
+The production kill switch is `EOS_CONTROLLED_PILOT_ENABLED=0`, applied by an operator deployment. Tenant administrators receive HTTP 403 if they try to activate or restore it. Do not leave the variable set to `0`. Do not invite a user from this document. Public signup stays disabled. `PI_TEAMS_GRAPH_MODE` stays off. A tenant administrator can list members, suspend or restore another member of the same tenant, and read pilot audit and feedback rows. That role is not an engineering reviewer, validator, approver, or certifier.
 
 ## Completed in this session
 
