@@ -35,6 +35,8 @@ const pdfTraceIncludes = [
   .filter((value): value is string => Boolean(value))
   .map(toWebRelative);
 
+const structuralExampleTrace = "../../packages/engineering-os/src/structural-systems/eos-structural-result-package-v1.example.json";
+
 const nextConfig: NextConfig = {
   transpilePackages: [
     "@rtb/ui",
@@ -61,7 +63,7 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
   },
   outputFileTracingIncludes: {
-    "/api/**": pdfTraceIncludes,
+    "/api/**": [...pdfTraceIncludes, structuralExampleTrace],
     "/api/engineering/documents/**": pdfTraceIncludes,
   },
   webpack: (config, { isServer }) => {

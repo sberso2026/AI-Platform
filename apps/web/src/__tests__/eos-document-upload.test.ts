@@ -32,6 +32,7 @@ describe("EOS document upload-first registration", () => {
     expect(nextConfig).toContain("pdf-parse");
     expect(nextConfig).toContain("pdfjs-dist");
     expect(nextConfig).toContain("outputFileTracingIncludes");
+    expect(nextConfig).toContain("eos-structural-result-package-v1.example.json");
     const webPkg = JSON.parse(readApp("package.json"));
     expect(webPkg.dependencies["pdf-parse"]).toBe("2.4.5");
   });
