@@ -189,3 +189,5 @@ Observed class for 20260930090000: the failing file stops, earlier files stay ap
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
 
 The logical schema restore was real. The pilot set is classified. Both data transforms were measured and rolled back. The repository sequence still fails, nine existing inspection policies leak when the tenant claim is absent, and the GA application was not run. Production migrations remain unapplied.
+
+The later remediation is recorded in EOS_1_0_0_MIGRATION_20260930090000_AND_INSPECTION_RLS_REMEDIATION.md. That phase did not rewrite 20260930090000. It added 20260930090001 and 20261027170000, rehearsed 41 files from a fresh restore, and recorded cross-tenant leak count 0. This document remains the evidence of the original failure.

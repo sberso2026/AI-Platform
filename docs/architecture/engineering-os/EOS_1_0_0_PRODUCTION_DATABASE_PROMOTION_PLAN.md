@@ -4,11 +4,12 @@ Path: docs/architecture/engineering-os/EOS_1_0_0_PRODUCTION_DATABASE_PROMOTION_P
 
 Evidence: docs/architecture/engineering-os/EOS_1_0_0_DATABASE_RECOVERY_AND_MIGRATION_REHEARSAL.md
 
-PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
+PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
+PRODUCTION_MIGRATION_EXECUTION_ALLOWED: NO
 PRODUCTION_MIGRATIONS_APPLIED: NO
 PRODUCTION_SCHEMA_MUTATION_ALLOWED: NO
 
-This plan does not authorize a production apply. The logical schema restore was rehearsed on an isolated local PostgreSQL 17.6 container. The repository migration sequence did not pass, and post-migration tenant isolation did not pass.
+The executable sequence was rehearsed on a fresh isolated PostgreSQL 17.6 restore. Do not run it on production until a new completed physical backup id is recorded. PITR is disabled. Do not run supabase backups restore against wcydlhqiqdwgoaqrlget.
 
 ## 1. Production preflight
 
@@ -32,11 +33,11 @@ The schema dump was restored into the isolated container. After vector was insta
 
 ## 5. Exact migrations
 
-Forty files, in this order. Thirty-nine are the repository files. 20260930090000 must be a safe forward replacement, not the repository file as it stands.
+Forty-one files, in this order. Do not execute 20260930090000. Execute 20260930090001 in its place. Execute 20261027170000 after the pilot files.
 
-20260808350000, 20260919120000, 20260919133000, 20260920040000, 20260920120000, 20260929180000, 20260929190000, 20260929200000, 20260929210000, 20260929220000, 20260929230000, 20260929240000, 20260930010000, 20260930020000, 20260930030000, 20260930040000, 20260930060000, 20260930070000, 20260930080000, 20260930090000, 20260930100000, 20260930110000, 20260930120000, 20260930130000, 20260930140000, 20260930150000, 20260930160000, 20260930170000, 20260930180000, 20260930190000, 20260930200000, 20261001000000, 20261001120000, 20261001180000, 20261001190000, 20261001200000, 20261001210000, 20261002120000, 20261002140000, 20261004180000.
+20260808350000, 20260919120000, 20260919133000, 20260920040000, 20260920120000, 20260929180000, 20260929190000, 20260929200000, 20260929210000, 20260929220000, 20260929230000, 20260929240000, 20260930010000, 20260930020000, 20260930030000, 20260930040000, 20260930060000, 20260930070000, 20260930080000, 20260930090001, 20260930100000, 20260930110000, 20260930120000, 20260930130000, 20260930140000, 20260930150000, 20260930160000, 20260930170000, 20260930180000, 20260930190000, 20260930200000, 20261001000000, 20261001120000, 20261001180000, 20261001190000, 20261001200000, 20261001210000, 20261002120000, 20261002140000, 20261004180000, 20261027170000.
 
-The replacement for 20260930090000 moves the same-scope triggers for engineering_lifecycle_gate_decisions and engineering_lifecycle_transitions to after those CREATE TABLE statements. The repository file creates those triggers first and fails. Do not apply the repository file until that order is the committed file.
+20260930090000 remains in the tree and still creates two triggers before their tables. 20260930090001 is the idempotent substitute. 20261027170000 replaces the twelve fail-open inspection policies with membership checks. Do not use a directory-wide db push, because that would still run 20260930090000.
 
 Run the apply as postgres. postgres default privileges grant new public tables and functions to authenticated and service_role. A rehearsal as supabase_admin did not receive those grants until they were added explicitly.
 
@@ -78,19 +79,22 @@ If a file fails, stop. Do not invent a down migration. The observed failure left
 
 ## 14. Promotion decision
 
-PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
+PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
+PRODUCTION_MIGRATION_EXECUTION_ALLOWED: NO
 
-Blocked because the repository copy of 20260930090000 fails, nine inspection policies leak when the tenant claim is absent, and the GA application was not run against the migrated schema. Production migrations were not applied.
+The executable 41-file sequence passed on a fresh isolated restore. Inspection cross-tenant reads are zero. Execution stays blocked until a new completed physical backup id is recorded. PITR remains disabled. Production migrations were not applied. See EOS_1_0_0_MIGRATION_20260930090000_AND_INSPECTION_RLS_REMEDIATION.md.
 
 ## Gate
 
 EXACT_TARGET_SCHEMA_DEFINED: YES
-ACTUAL_REQUIRED_MIGRATION_SET_FINAL: YES, with 20260930090000 classified as a safe forward replacement
+ACTUAL_REQUIRED_MIGRATION_SET_FINAL: YES
+FINAL_REQUIRED_MIGRATION_COUNT: 41
 BACKUP_AVAILABLE: physical backups listed; PITR disabled
 RESTORE_PATH_VERIFIED: YES for the logical schema restore; NO for provider PITR
 MANUAL_RESTORE_VERIFICATION_REQUIRED: YES for a fresh physical backup id before any production apply
 STAGING_MIGRATION_REHEARSAL: NOT_PERFORMED. The shared staging project was not used as the restore target.
-POST_MIGRATION_RLS_REHEARSAL: FAIL
-CROSS_TENANT_LEAK_COUNT: 9
-GA_APPLICATION_SCHEMA_COMPATIBILITY: NOT_RUN
-PRODUCTION_MIGRATION_PROMOTION_ALLOWED: NO
+POST_MIGRATION_RLS_REHEARSAL: PASS
+CROSS_TENANT_LEAK_COUNT: 0
+GA_APPLICATION_SCHEMA_COMPATIBILITY: PASS
+PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
+PRODUCTION_MIGRATION_EXECUTION_ALLOWED: NO
