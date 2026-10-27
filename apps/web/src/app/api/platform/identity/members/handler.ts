@@ -11,12 +11,22 @@ import {
 import { SeatLimitExceededError } from "@rtb/platform-commerce";
 import { createServiceClient } from "@/lib/supabase/service";
 import { classifyPilotFailure, currentUserFailureResponse, hasAuthSessionCookie, logPilotEvent } from "@/lib/pilot/pilot-controls";
-import {
-  forbiddenResponse,
-  handleCommerceDomainError,
-  lifecycleErrorResponse,
-  resolveRequestId,
-} from "@/lib/lifecycle-api";
+
+function requestIdOf(request: Request): string {
+  return request.headers.get("x-request-id") ?? crypto.randomUUID();
+}
+
+function forbidden(requestId: string, message: string) {
+  return NextResponse.json({ error: { code: "unauthorized", message, requestId } }, { status: 403 });
+}
+
+function failure(err: unknown, requestId: string) {
+  const classified = classifyIdentityFailure(err);
+  return NextResponse.json(
+    { error: { code: classified.code, message: classified.message, requestId } },
+    { status: classified.status },
+  );
+}
 
 function activationRedirect(request: Request): string | undefined {
   return buildAuthActivationRedirect({
@@ -54,21 +64,17 @@ async function loadAdminContext(request: Request) {
 }
 
 function identityErrorResponse(err: unknown, requestId: string) {
-  const classified = classifyIdentityFailure(err);
-  if (classified.code === "identity_failed") {
-    return handleCommerceDomainError(err, requestId);
-  }
-  return lifecycleErrorResponse(classified.code, classified.message, classified.status, requestId, classified.details);
+  return failure(err, requestId);
 }
 
 export async function GET(request: Request) {
-  const requestId = resolveRequestId(request);
+  const requestId = requestIdOf(request);
   const loaded = await loadAdminContext(request);
   if (!loaded.ctx) return loaded.failure;
   const ctx = loaded.ctx;
   if (!isPlatformAdmin(ctx.roleSlug)) {
     logPilotEvent({ eventClass: "authorization_denial", action: "pilot_members", result: "denied" });
-    return forbiddenResponse(requestId, "User administration requires an owner or administrator", "unauthorized");
+    return forbidden(requestId, "User administration requires an owner or administrator");
   }
   try {
     const admin = new MembershipAdminService(createServiceClient());
@@ -76,18 +82,18 @@ export async function GET(request: Request) {
     logPilotEvent({ eventClass: "pilot_admin", action: "membership_list", result: `count:${data.length}` });
     return NextResponse.json({ data, requestId });
   } catch (err) {
-    return handleCommerceDomainError(err, requestId);
+    return failure(err, requestId);
   }
 }
 
 export async function POST(request: Request) {
-  const requestId = resolveRequestId(request);
+  const requestId = requestIdOf(request);
   const loaded = await loadAdminContext(request);
   if (!loaded.ctx) return loaded.failure;
   const ctx = loaded.ctx;
   if (!isPlatformAdmin(ctx.roleSlug)) {
     logPilotEvent({ eventClass: "authorization_denial", action: "pilot_members", result: "denied" });
-    return forbiddenResponse(requestId, "User administration requires an owner or administrator", "unauthorized");
+    return forbidden(requestId, "User administration requires an owner or administrator");
   }
   if (!ctx.workspaceId) {
     return NextResponse.json({ error: { code: "unauthorized", message: "Workspace required", requestId, details: {} } }, { status: 403 });
@@ -164,13 +170,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const requestId = resolveRequestId(request);
+  const requestId = requestIdOf(request);
   const loaded = await loadAdminContext(request);
   if (!loaded.ctx) return loaded.failure;
   const ctx = loaded.ctx;
   if (!isPlatformAdmin(ctx.roleSlug)) {
     logPilotEvent({ eventClass: "authorization_denial", action: "pilot_members", result: "denied" });
-    return forbiddenResponse(requestId, "User administration requires an owner or administrator", "unauthorized");
+    return forbidden(requestId, "User administration requires an owner or administrator");
   }
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   if (typeof body.userId !== "string") {
