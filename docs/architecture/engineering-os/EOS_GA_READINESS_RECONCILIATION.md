@@ -10,7 +10,8 @@ ALL_DISCIPLINE_TRACKS_BOUNDED_COMPLETE: YES
 EOS_TRACK_WEIGHTED_PROGRESS: 100%
 DISCIPLINE_REOPEN_REQUIRED: NO
 EOS_GA_READY: YES
-EOS_GA: NO
+EOS_GA: YES
+The release decision is recorded in docs/architecture/engineering-os/EOS_GA_FINAL_READINESS_AND_RELEASE_DECISION.md.
 
 D2 through D9 remain the closed bounded tracks already recorded by their closeouts. D1 bounded completion stays the governed closeout result in docs/architecture/engineering-os/EOS_D1_STRUCTURAL_PACK_BOUNDED_CLOSEOUT.md. The older TypeScript pack formula still reads pre-review constants and was not flipped. That lag is not a discipline reopen and is not a separate GA root cause.
 
@@ -151,5 +152,5 @@ EXTERNAL_CERTIFICATION_GA_BLOCKING: NO
 The pre-recovery inventory above recorded EOS_GA_READY as NO because GA-02 was open. The A16D recovery closed that root cause. Recomputed gate result: 12 gates, 12 meeting their GA-required status, 0 failed, 0 blocked. D1G certification and D1L project eligibility stay unsatisfied and are still not platform GA prerequisites.
 
 EOS_GA_READY: YES
-EOS_GA: NO
-EOS_GA remains NO until the final readiness and release decision. Historical TypeScript constants that still read EOS_GA_READY false were not flipped. Evidence modules reject that flip, and this recovery does not reopen D1 through D9. The recomputed decision is this document.
+EOS_GA: YES
+The final release decision is docs/architecture/engineering-os/EOS_GA_FINAL_READINESS_AND_RELEASE_DECISION.md. Historical TypeScript constants that still read EOS_GA_READY false were not flipped. Evidence modules reject that flip, and this decision does not reopen D1 through D9.

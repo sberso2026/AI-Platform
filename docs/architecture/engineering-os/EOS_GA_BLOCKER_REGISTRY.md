@@ -6,7 +6,7 @@ Active blockers are the current platform GA root causes. Downstream status flags
 
 ## Active
 
-No active platform GA root cause remains after the A16D recovery.
+No active platform GA root cause remains. The final release decision is docs/architecture/engineering-os/EOS_GA_FINAL_READINESS_AND_RELEASE_DECISION.md. ACTIVE_GA_BLOCKER_COUNT: 0. RESOLVED_GA_BLOCKER_COUNT: 1.
 
 ## Resolved
 
