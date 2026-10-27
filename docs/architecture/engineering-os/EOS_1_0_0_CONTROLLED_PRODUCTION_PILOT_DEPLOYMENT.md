@@ -123,4 +123,18 @@ Live workspace, RLS, storage, file-security, kill-switch, monitoring, audit, fee
 
 Repository gates at this recheck: persistence unit 37 passed and 1 skipped, engineering-review 164 passed and 1 skipped, GA security closure 7 passed, secret scan PASS across 624 files with 0 findings, dependency audit critical 0, high 0, moderate 1, release-governance 220 passed, typecheck PASS, ledger-only ok true. These repository results do not make the custom-domain pilot ready.
 
-CONTROLLED_PRODUCTION_PILOT_READY: NO. FIRST_PILOT_USER_CAN_BE_INVITED: NO. The blocker is the DNS cutover in the manual handoff.
+CONTROLLED_PRODUCTION_PILOT_READY: NO. FIRST_PILOT_USER_CAN_BE_INVITED: NO. The blocker at that time was the DNS cutover in the manual handoff.
+
+## Final validation after DNS remediation
+
+Checked 2026-10-27 after the DNS change. Repository HEAD was 7c6f27a2a3660c937433bf8cbf240d10072d578b. The governed application source was not redeployed and remains da6b78fd3137f8209ae8271bd88373641e42f43c.
+
+Authoritative nameservers and public resolvers 1.1.1.1 and 8.8.8.8 return CNAME bde154f6774d54de.vercel-dns-016.com. Vercel domain verification reports configured-correctly, verified true, and no conflicts. A request pinned to 216.150.1.1 for eos-pilot.rtbea.com.au returned HTTP 200 from /api/platform/build-identity with that deployment id, that commit, branch cursor/era-7a-engineering-review-pilot-gate, vercelEnv production, and packageVersion 0.1.0. The 0.1.0 value is the web package version. EOS release 1.0.0 is the governed source. /api/deployment/status on that route reported graphMode off, with no missing public or server Supabase names. HTTP on port 80 returned 308 to HTTPS. /engineering without a session returned 307 to /login. The eight production variable names are present. Secret values were not recorded. No migration was replayed.
+
+Public signup returned HTTP 422 signup_disabled and created no user. Two synthetic users signed in through the normal password grant. Each could read one workspace and update that workspace. Each received zero rows when reading or updating the other workspace. An anonymous workspace read returned 401. Cross-workspace leak count was 0. Direct storage calls for a synthetic text object returned HTTP 400 for upload, retrieval, and delete, so authorized storage and the live file-security path were not proven. The synthetic auth users were deleted and the two synthetic tenants were removed. Leftover users, profiles, tenants, and probe objects were 0.
+
+Unauthenticated calls to /api/platform/current-user returned a generic HTTP 500 page with no account data. The login and signup pages do not present the pilot data notice or the engineering-authority notice. The kill switch was not activated. No external monitoring provider is configured. The full feedback category set was not exercised.
+
+Repository gates: persistence unit 37 passed and 1 skipped, engineering-review 164 passed and 1 skipped, GA security closure 7 passed, secret scan PASS across 624 files with 0 findings, dependency audit critical 0, high 0, moderate 1, release-governance 220 passed, typecheck PASS, ledger-only ok true.
+
+CONTROLLED_PRODUCTION_PILOT_READY: NO. FIRST_PILOT_USER_CAN_BE_INVITED: NO. The remaining blocker is the unproven live storage and file-security path, together with the missing user-facing pilot data notice, engineering-authority notice, verified kill switch, and monitoring.
