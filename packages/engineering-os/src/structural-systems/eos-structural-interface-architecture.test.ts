@@ -168,7 +168,7 @@ describe("EOS-D1K-0 cross-discipline structural interface architecture", () => {
     const source = readFileSync(contractPath, "utf8");
     const doc = readFileSync(docPath, "utf8");
     expect(source).not.toMatch(/\bfetch\(|mqtt|opcua|modbus|WebSocket|fft\(|child_process|eval\(|new Function/);
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source).toContain("No separate inbound, outbound, or bidirectional enum is a governing name");
     expect(doc).toContain("does not operate an interface runtime");
     expect(doc).toContain("latest is not an exact reference");

@@ -293,7 +293,7 @@ describe("EOS-D3-R12 Geotechnical bounded closeout", () => {
     expect(sourceText).not.toMatch(/createD3R12Store|recordGeotechnical|createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "geotechnical-bounded-closeout.ts"), sourceText)).toEqual([]);
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
-    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/engineering-review", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
+    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
     for (const id of [
       "D3.R1.GEOTECHNICAL_IDENTITY_AND_OBJECT_FOUNDATION",
       "D3.R2.SITE_INVESTIGATION_AND_EVIDENCE_CONTEXT",

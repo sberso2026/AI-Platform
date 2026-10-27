@@ -625,7 +625,7 @@ describe("EOS-D4-R2 Mechanical equipment and system context", () => {
     expect(source).not.toMatch(/createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "equipment-system-context.ts"), source)).toEqual([]);
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
-    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/engineering-review", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
+    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R2.EQUIPMENT_AND_SYSTEM_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R3.DESIGN_CONDITIONS_AND_PERFORMANCE_CONTEXT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
   });

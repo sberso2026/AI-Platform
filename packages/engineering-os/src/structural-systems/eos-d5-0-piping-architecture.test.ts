@@ -447,7 +447,7 @@ describe("EOS-D5-0 Piping architecture", () => {
     expect(sourceText).not.toMatch(/createD5|recordPiping|createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(repoRoot, "packages/types/src/piping-architecture-d5-0.ts"), sourceText)).toEqual([]);
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
-    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/engineering-review", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
+    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.0.PIPING_ARCHITECTURE_CANONICALIZATION")?.implementationState).toBe("ARCHITECTURE_DEFINED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D5.R1.PIPING_IDENTITY_AND_OBJECT_FOUNDATION")?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(STRUCTURAL_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D4.R12.MECHANICAL_BOUNDED_CLOSEOUT")?.implementationState).toBe("IMPLEMENTED_BOUNDED");

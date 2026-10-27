@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { EICAR_TEST_SIGNATURE } from "@rtb/engineering-review";
+import { EICAR_TEST_SIGNATURE } from "@rtb/types";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { writeZip } from "../../artifact-automation/zip";
 import { CRUSHER_FEED_OTHER_TENANT, CRUSHER_FEED_OTHER_WORKSPACE } from "../../digital-thread/fixture";

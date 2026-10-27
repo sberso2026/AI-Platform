@@ -449,3 +449,6 @@ export * from "./process-architecture-d6-0";
 export * from "./electrical-architecture-d7-0";
 export * from "./instrumentation-control-architecture-d8-0";
 export * from "./cross-discipline-intelligence-architecture-d9-0";
+export * from "./review-error";
+export * from "./review-finding-category";
+export * from "./review-malware-scan";

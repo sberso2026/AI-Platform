@@ -395,7 +395,7 @@ describe("EOS-D5-R2 piping system line and service context", () => {
     expect(source.includes("createHash")).toBe(false);
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
     expect(Object.keys(packageJson.dependencies).sort()).toEqual([
-      "@rtb/database", "@rtb/engineering-review", "@rtb/platform-commerce", "@rtb/platform-intelligence",
+      "@rtb/database", "@rtb/platform-commerce", "@rtb/platform-intelligence",
       "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod",
     ]);
   });

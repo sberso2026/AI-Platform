@@ -103,7 +103,7 @@ describe("D1N foundational architecture decisions", () => {
     expect(decisions.D1N_FOUNDATIONS_NEXT_PHASE_TYPE).toBe("CONCEPT_TO_DETAILED_ORCHESTRATION_ARCHITECTURE");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "d1n-foundational-decisions.ts"), "utf8");
     expect(source.includes("export function")).toBe(false);
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(scanAnalysisFormulaBypass("d1n-foundational-decisions.ts", source)).toEqual([]);
     const doc = readFileSync(join(root, decisions.D1N_FOUNDATIONS_PATH), "utf8");

@@ -413,7 +413,7 @@ describe("EOS-D4-R12 Mechanical bounded closeout", () => {
     expect(sourceText).not.toMatch(/createD4R12Store|recordMechanical|createHash|from ["']@rtb\/engineering-review["']|CREATE TABLE/);
     expect(scanAnalysisFormulaBypass(join(here, "mechanical-bounded-closeout.ts"), sourceText)).toEqual([]);
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
-    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/engineering-review", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
+    expect(Object.keys(packageJson.dependencies).sort()).toEqual(["@rtb/database", "@rtb/platform-commerce", "@rtb/platform-intelligence", "@rtb/platform-kernel", "@rtb/types", "docx", "exceljs", "pptxgenjs", "zod"]);
     for (const id of [
       "D4.R1.MECHANICAL_IDENTITY_AND_OBJECT_FOUNDATION",
       "D4.R2.EQUIPMENT_AND_SYSTEM_CONTEXT",

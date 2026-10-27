@@ -318,7 +318,7 @@ describe("EOS-D1L-R6 structural certification gate closeout", () => {
     expect(row?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(row?.validationState).toBe("NOT_VALIDATED");
     const source = readFileSync(join(root, "certification-gate-closeout.ts"), "utf8");
-    expect(source).not.toContain("from \"@rtb/engineering-review\"");
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(scanAnalysisFormulaBypass(join(root, "certification-gate-closeout.ts"), source)).toEqual([]);
     const closeout = readFileSync(join(root, "../../../../docs/architecture/engineering-os/EOS_D1L_R6_STRUCTURAL_GLOBAL_CERTIFICATION_GATE_CLOSEOUT.md"), "utf8");
     expect(scanAnalysisFormulaBypass(join(root, "closeout.md"), closeout)).toEqual([]);

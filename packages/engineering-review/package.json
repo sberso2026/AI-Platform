@@ -17,7 +17,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@rtb/platform-commerce": "workspace:*",
     "@types/node": "^22.15.29",
+    "exceljs": "^4.4.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.1"
   }

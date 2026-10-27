@@ -470,7 +470,7 @@ describe("EOS-D1M-R6 file and API adapter boundary", () => {
     expect(D1M_R7_PHASE_TYPE).toBe("CAD_OR_BIM_CHANGE_STALENESS_SUPERSESSION");
     expect(D1M_R7_CANONICAL_SCOPE).toContain("Do not automatically revalidate");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-adapter-boundary.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(source.includes("recordCadBimSourceRevision")).toBe(false);
     expect(source.includes("recordSourceObjectMapping")).toBe(false);

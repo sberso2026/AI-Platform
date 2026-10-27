@@ -6,43 +6,48 @@ Active blockers are the current platform GA root causes. Downstream status flags
 
 ## Active
 
+No active platform GA root cause remains after the A16D recovery.
+
+## Resolved
+
 BLOCKER_ID: GA-A16D-IMPORT-BOUNDARY
 TITLE: Engineering OS imports @rtb/engineering-review
 ROOT_CAUSE: ARCHITECTURE_BOUNDARY_VIOLATION
 SOURCE_GATE: GA-02 A16D_ENGINEERING_REVIEW_IMPORT_BOUNDARY
 CATEGORY: SECURITY
-CURRENT_STATE: OPEN
+CURRENT_STATE: RESOLVED
 REQUIRED_GA_STATE: both boundary assertions pass without weakening the forbidden-import rule
 OWNER_TYPE: INTERNAL_SECURITY_FIX
 INTERNAL_OR_EXTERNAL: INTERNAL
 DEPENDENCIES: none
-CLOSURE_EVIDENCE_REQUIRED: packages/engineering-review/src/migration.test.ts dependency-graph assertion passes, and packages/engineering-review-persistence/src/boundary.test.ts reverse-import assertion passes, after the engineering-os source imports are removed. The first current match is packages/engineering-os/src/connectors/m365/eos-a16d-generic-binary-retrieval.test.ts. Production import sites covered by the same rule must be cleared as well, including the M365 connector service, the engineering-os barrel, the pilot profile, tool-orchestration return validation, and pre-issue review.
-STATUS: OPEN
-GA_BLOCKING: YES
-SEVERITY: P0_GA_BLOCKING
+CLOSURE_EVIDENCE_REQUIRED: packages/engineering-review/src/migration.test.ts dependency-graph assertion passes, and packages/engineering-review-persistence/src/boundary.test.ts reverse-import assertion passes, with no engineering-os source import of @rtb/engineering-review.
+CLOSURE_EVIDENCE: docs/architecture/engineering-os/EOS_GA_A16D_ENGINEERING_REVIEW_IMPORT_SECURITY_DEBT_RECOVERY.md
+STATUS: RESOLVED
+GA_BLOCKING: NO
+SEVERITY: was P0_GA_BLOCKING
 
 ## Derived status, not a second root cause
 
 BLOCKER_ID: GA-SECURITY-DEBT-FLAG
 TITLE: GA_SECURITY_DEBT_BLOCKS_GENERAL_AVAILABILITY
 ROOT_CAUSE: GA-A16D-IMPORT-BOUNDARY
-CURRENT_STATE: true
-STATUS: DERIVED
-GA_BLOCKING: YES only as the name of the A16D debt
+CURRENT_STATE: closed with the A16D root. Historical constants may still read true and are not the recomputed decision.
+STATUS: RESOLVED_DERIVED
+GA_BLOCKING: NO
 
 BLOCKER_ID: GA-READY-FLAG
 TITLE: EOS_GA_READY
 ROOT_CAUSE: GA-A16D-IMPORT-BOUNDARY
-CURRENT_STATE: false
-STATUS: DERIVED
-GA_BLOCKING: NO as an independent cause
+CURRENT_STATE: recomputed YES in the readiness reconciliation. Historical constants were not flipped.
+STATUS: RESOLVED_DERIVED
+GA_BLOCKING: NO
 
 BLOCKER_ID: GA-SECURITY-SUITE-PAIR
 TITLE: Two canonical security assertions
 ROOT_CAUSE: GA-A16D-IMPORT-BOUNDARY
-CURRENT_STATE: 2 failures, 1 root cause
-STATUS: SYMPTOM
-GA_BLOCKING: YES only through the A16D root
+CURRENT_STATE: 0 failures
+STATUS: RESOLVED_SYMPTOM
+GA_BLOCKING: NO
 
 ## Not platform GA blockers
 

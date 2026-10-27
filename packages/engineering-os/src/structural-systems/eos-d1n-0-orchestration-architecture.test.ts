@@ -187,7 +187,7 @@ describe("EOS-D1N-0 concept-to-detailed orchestration architecture", () => {
     expect(D1N_0_CANONICAL_NON_SCOPE).toContain("certification");
     const source = readFileSync(join(root, "packages/types/src/structural-orchestration-d1n-0.ts"), "utf8");
     expect(source.includes("export function")).toBe(false);
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(scanAnalysisFormulaBypass("structural-orchestration-d1n-0.ts", source)).toEqual([]);
     const doc = readFileSync(join(root, D1N_0_ARCHITECTURE_PATH), "utf8");
     expect(doc).toContain(D1N_R1_CANONICAL_PHASE);

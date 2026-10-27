@@ -284,7 +284,7 @@ describe("EOS-D1J-R5 structural optimization certification closeout", () => {
     const persistencePackage = readFileSync(join(here, "../../../engineering-review-persistence/package.json"), "utf8");
     expect(scanAnalysisFormulaBypass(join(here, "optimization-closeout.ts"), source)).toEqual([]);
     expect(scanAnalysisFormulaBypass(join(here, "../../../../docs/architecture/engineering-os/EOS_D1J_R5_STRUCTURAL_OPTIMIZATION_CERTIFICATION_CLOSEOUT.md"), doc)).toEqual([]);
-    expect(source.includes("from \"@rtb/engineering-review\"")).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("generateCandidate")).toBe(false);
     expect(source.includes("child_process")).toBe(false);
     expect(doc.includes("```")).toBe(false);

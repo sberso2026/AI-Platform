@@ -3,7 +3,7 @@ import {
   hostedAuthenticatedMalwareScannerAvailable,
   reviewMalwareScanTimeoutMs,
   EICAR_TEST_SIGNATURE as REVIEW_EICAR,
-} from "@rtb/engineering-review";
+} from "@rtb/types";
 import { assertOfficePackage } from "../artifact-automation/validate";
 import { sanitizeArtifactFileName } from "../artifact-automation/filename";
 import type { ArtifactOutputFormat } from "../artifact-automation/types";

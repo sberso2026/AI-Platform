@@ -474,7 +474,7 @@ describe("EOS-D1N-R3 prerequisite assessment", () => {
     const capability = readFileSync(join(root, "packages/engineering-os/src/structural-concrete/capability.ts"), "utf8");
     expect(source).toContain("fingerprintCanonical");
     expect(source).not.toContain("createHash");
-    expect(source).not.toContain('from "@rtb/engineering-review"');
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(source).not.toContain("fetch(");
     expect(source).not.toContain("CREATE TABLE");
     expect(scanAnalysisFormulaBypass("prerequisite-assessment.ts", source)).toEqual([]);

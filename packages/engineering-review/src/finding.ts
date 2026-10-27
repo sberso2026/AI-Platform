@@ -18,18 +18,10 @@ import {
 import type { ReviewFindingStatus } from "./lifecycle";
 import { createReviewOwnership, type ReviewOwnership } from "./ownership";
 import { isReviewSeverity, type ReviewSeverity } from "./severity";
+import { REVIEW_FINDING_CATEGORIES, type ReviewFindingCategory } from "../../types/src/review-finding-category";
 import { ENGINEERING_REVIEW_ENGINE_VERSION } from "./version";
 
-export const REVIEW_FINDING_CATEGORIES = [
-  "cross_document_inconsistency",
-  "missing_information",
-  "requirement_traceability_gap",
-  "unsupported_assumption",
-  "revision_inconsistency",
-  "missing_engineering_evidence",
-  "other_observation",
-] as const;
-export type ReviewFindingCategory = (typeof REVIEW_FINDING_CATEGORIES)[number];
+export { REVIEW_FINDING_CATEGORIES, type ReviewFindingCategory };
 
 export const FINDING_VERIFICATION_STATES = [
   "unverified",

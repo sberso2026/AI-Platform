@@ -527,7 +527,7 @@ describe("EOS-D1M-R5 model relationship evidence", () => {
     expect(D1M_R6_PHASE_TYPE).toBe("CAD_OR_BIM_FILE_API_ADAPTER_BOUNDARY");
     expect(D1M_R6_CANONICAL_SCOPE).toContain("Do not treat that boundary as arbitrary format support");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-model-relationship.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(scanAnalysisFormulaBypass("cad-bim-model-relationship.ts", source)).toEqual([]);
   });

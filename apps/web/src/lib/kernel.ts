@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createPlatformKernel } from "@rtb/platform-kernel";
 import { createEngineeringOS } from "@rtb/engineering-os";
+import { createPreIssueReviewBridge } from "@rtb/engineering-review";
 import { createPlatformCommerce } from "@rtb/platform-commerce";
 import { PermissionService } from "@rtb/platform-core";
 import type { Permission } from "@rtb/types";
@@ -63,6 +64,7 @@ export async function resolveAuthContext(): Promise<AuthContextResolution> {
     },
     projectionWriteClient: serviceClient,
     artifactStorageClient: serviceClient,
+    reviewBridge: createPreIssueReviewBridge(),
   });
   const commerce = createPlatformCommerce(supabase);
   const permissionService = new PermissionService(supabase);

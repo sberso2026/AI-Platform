@@ -47,3 +47,4 @@ export * from "./telemetry";
 export * from "./application";
 export * from "./adapters";
 export * from "./persistence";
+export { createPreIssueReviewBridge } from "./eos-pre-issue-bridge";

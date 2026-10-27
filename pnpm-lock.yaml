@@ -402,9 +402,6 @@ importers:
       '@rtb/database':
         specifier: workspace:*
         version: link:../database
-      '@rtb/engineering-review':
-        specifier: workspace:*
-        version: link:../engineering-review
       '@rtb/platform-commerce':
         specifier: workspace:*
         version: link:../platform-commerce
@@ -461,9 +458,15 @@ importers:
 
   packages/engineering-review:
     devDependencies:
+      '@rtb/platform-commerce':
+        specifier: workspace:*
+        version: link:../platform-commerce
       '@types/node':
         specifier: ^22.15.29
         version: 22.20.1
+      exceljs:
+        specifier: ^4.4.0
+        version: 4.4.0
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
@@ -975,6 +978,9 @@ importers:
 
   packages/types:
     devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.20.1
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

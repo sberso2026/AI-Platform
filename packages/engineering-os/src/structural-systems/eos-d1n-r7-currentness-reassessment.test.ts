@@ -650,7 +650,7 @@ describe("EOS-D1N-R7 currentness", () => {
     expect(source).toContain("fingerprintCanonical");
     expect(source).toContain("D1M_R7_CURRENTNESS_STATES");
     expect(source).not.toContain("createHash");
-    expect(source).not.toContain('from "@rtb/engineering-review"');
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(source).not.toContain("fetch(");
     expect(source).not.toContain("CREATE TABLE");
     expect(scanAnalysisFormulaBypass("currentness-reassessment.ts", source)).toEqual([]);

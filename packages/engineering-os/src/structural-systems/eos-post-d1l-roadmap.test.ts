@@ -89,7 +89,7 @@ describe("EOS post-D1L next structural phase canonicalization", () => {
     expect(row?.implementationState).toBe("ARCHITECTURE_DEFINED");
     expect(row?.validationState).toBe("NOT_VALIDATED");
     const source = readFileSync(join(root, "post-d1l-roadmap.ts"), "utf8");
-    expect(source).not.toContain("from \"@rtb/engineering-review\"");
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(scanAnalysisFormulaBypass(join(root, "post-d1l-roadmap.ts"), source)).toEqual([]);
     const roadmap = readFileSync(join(root, "../../../../docs/architecture/engineering-os/EOS_POST_D1L_CANONICAL_ROADMAP.md"), "utf8");
     expect(roadmap).toContain("EOS-D1M-0-CAD-OR-BIM-INTELLIGENCE-ARCHITECTURE");

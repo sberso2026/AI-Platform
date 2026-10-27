@@ -1,20 +1,21 @@
+import { createPreIssueReviewBridge } from "../src/eos-pre-issue-bridge";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { describe, expect, it } from "vitest";
-import { generateEngineeringWorkPlan } from "../work-generator/generator";
-import { templateFor } from "../work-generator/catalog";
+import { generateEngineeringWorkPlan } from "../../engineering-os/src/work-generator/generator";
+import { templateFor } from "../../engineering-os/src/work-generator/catalog";
 import {
   A11A_SYSTEM_ID,
   CRUSHER_EXPANSION_FEED_PROJECT_ID,
   constructionSnapshot,
   WORKFLOW_READINESS,
-} from "../work-generator/fixture";
-import { createMemoryWorkPlanStore } from "../work-generator/memory-store";
-import { createMemoryArtifactStore } from "../artifact-automation/memory-store";
-import { createTestArtifactService } from "../artifact-automation/service";
-import { createTestPreIssueService } from "../pre-issue-review/service";
-import { CHANGE_WORKBENCH_AI_BOUNDARY, CHANGE_WORKBENCH_PRIVACY, CHANGE_WORKBENCH_RECON, FORBIDDEN_IMPACT_ASSESSMENT_STATES } from "./types";
-import { IMPACT_ASSESSMENT_POLICY } from "./policy";
-import { createTestChangeWorkbenchService } from "./service";
+} from "../../engineering-os/src/work-generator/fixture";
+import { createMemoryWorkPlanStore } from "../../engineering-os/src/work-generator/memory-store";
+import { createMemoryArtifactStore } from "../../engineering-os/src/artifact-automation/memory-store";
+import { createTestArtifactService } from "../../engineering-os/src/artifact-automation/service";
+import { createTestPreIssueService } from "../../engineering-os/src/pre-issue-review/service";
+import { CHANGE_WORKBENCH_AI_BOUNDARY, CHANGE_WORKBENCH_PRIVACY, CHANGE_WORKBENCH_RECON, FORBIDDEN_IMPACT_ASSESSMENT_STATES } from "../../engineering-os/src/change-workbench/types";
+import { IMPACT_ASSESSMENT_POLICY } from "../../engineering-os/src/change-workbench/policy";
+import { createTestChangeWorkbenchService } from "../../engineering-os/src/change-workbench/service";
 import {
   A11E_PROJECT_A,
   A11E_PROJECT_B,
@@ -30,7 +31,7 @@ import {
   loadChangeFixture,
   requirementChangeFixture,
   steelConcreteOptions,
-} from "./fixture";
+} from "../../engineering-os/src/change-workbench/fixture";
 
 function commerce(action: "analysis.read" | "analysis.write" = "analysis.write") {
   return createTestCommerceExecutionContext({
@@ -321,7 +322,7 @@ describe("EOS-A11E Change Impact, Option Study & Construction Workbench", () => 
     if (!generated.ok) throw new Error("rfi generate failed");
     expect(generated.artifact.status).toMatch(/DRAFT|READY_FOR_ENGINEER_REVIEW/);
     const stored = await artifacts.getArtifact(generated.artifact.id);
-    const review = createTestPreIssueService({ artifacts, loadPlan: (id) => plans.getPlan(id) });
+    const review = createTestPreIssueService({ bridge: createPreIssueReviewBridge(), artifacts, loadPlan: (id) => plans.getPlan(id) });
     const ran = await review.run(commerce(), A11E_TENANT, { workPlanId: plan.id, artifactId: stored!.id });
     expect(ran.review.engineeringApproved).toBe(false);
     expect(ran.review.designApproved).toBe(false);

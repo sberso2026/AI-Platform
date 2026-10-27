@@ -1,27 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@rtb/database";
 import type { CommerceExecutionContext } from "@rtb/types";
-import {
-  RejectingInferenceProvider,
-  asUntrustedDocumentText,
-  createReviewFinding,
-  createReviewPackage,
-  createReviewRun,
-  createReviewScope,
-  constructFindingFromDetection,
-  runDetectors,
-  transitionReviewRun,
-  verifyFindingEvidence,
-  MVP_REVIEW_TYPES,
-  MemoryEngineeringReviewStore,
-  createSharedReviewMemory,
-  createReviewOwnership,
-  type EngineeringReviewStore,
-  type ReviewAccessPrincipal,
-  type ReviewFinding,
-  type ReviewInferenceProvider,
-  type ReviewPackage,
-} from "@rtb/engineering-review";
 import { assertEngineeringService } from "../commerce/service-guard";
 import { workspaceScopeId } from "../commerce/workspace-scope";
 import {
@@ -52,6 +31,14 @@ import {
   type PreIssueCondition,
   type PreIssueReviewRecord,
 } from "./types";
+import type {
+  PreIssueBoundStore,
+  PreIssueInference,
+  PreIssueReviewBridge,
+  PreIssueReviewFinding,
+  PreIssueReviewPackage,
+  PreIssueReviewRun,
+} from "./review-bridge";
 
 export const CALLER_SUPPLIED_REVIEW_KEYS = ["tenantId", "workspaceId", "aal", "approved", "authoritative", "current"] as const;
 
@@ -96,15 +83,6 @@ export type PreIssueEventRecorder = (
   },
 ) => Promise<void>;
 
-function reviewPrincipal(tenantId: string, workspaceId: string, userId: string): ReviewAccessPrincipal {
-  return {
-    userId,
-    tenantIds: [tenantId],
-    workspaceIds: [workspaceId],
-    permissions: [{ resource: "engineering", action: "execute" }],
-  };
-}
-
 function documentRole(artifactType: string): "calculation" | "specification" | "drawing" | "basis" | "other" {
   if (artifactType === "CALCULATION_WORKBOOK") return "calculation";
   if (artifactType === "SPECIFICATION") return "specification";
@@ -115,14 +93,17 @@ function documentRole(artifactType: string): "calculation" | "specification" | "
 export class EngineeringPreIssueReviewService {
   constructor(
     private readonly supabase: SupabaseClient,
+    private readonly bridge: PreIssueReviewBridge,
     private readonly artifacts: ArtifactStore = new SupabaseArtifactStore(supabase),
     private readonly reviews: PreIssueReviewStore = createMemoryPreIssueStore(),
-    private readonly reviewStoreFactory: (tenantId: string, workspaceId: string, userId: string) => EngineeringReviewStore = (tenantId, workspaceId, userId) =>
-      new MemoryEngineeringReviewStore(reviewPrincipal(tenantId, workspaceId, userId), createSharedReviewMemory()),
     private readonly loadPlan: (id: string) => Promise<EngineeringWorkPlan | null> = async () => null,
     private readonly recordEvent?: PreIssueEventRecorder,
-    private readonly inference: ReviewInferenceProvider = new RejectingInferenceProvider(),
-  ) {}
+    private readonly inference: PreIssueInference = bridge.rejectingInference(),
+  ) {
+    this.reviewMemory = bridge.createMemory();
+  }
+
+  private readonly reviewMemory: ReturnType<PreIssueReviewBridge["createMemory"]>;
 
   private mtoLoader: ((planId: string) => Promise<CompositionContext | PreIssueQuantityEvidence | { items: QuantityItem[]; staleness: string; fingerprint?: string | null; revision?: string | null; snapshotId?: string | null } | null>) | null = null;
   private structuralLoader: ((planId: string) => Promise<{
@@ -245,12 +226,12 @@ export class EngineeringPreIssueReviewService {
     });
 
     const userId = commerce.actorUserId ?? "engineer";
-    const store = this.reviewStoreFactory(tenantId, workspaceId, userId);
+    const store = this.bridge.createStore(this.reviewMemory, tenantId, workspaceId, userId);
     const pkg = await this.composePackage(store, plan, artifacts, chosen, userId);
-    let run = createReviewRun({
+    let run = this.bridge.createReviewRun({
       id: randomUUID(),
       pkg,
-      scope: createReviewScope({ reviewTypes: MVP_REVIEW_TYPES, discipline: plan.discipline ?? undefined }),
+      scope: this.bridge.createReviewScope({ reviewTypes: this.bridge.mvpReviewTypes, discipline: plan.discipline ?? undefined }),
       rules: PRE_ISSUE_REVIEW_POLICY.checks.map((check) => ({ ruleId: check.checkType, version: PRE_ISSUE_REVIEW_POLICY.version })),
     });
     run = await store.queueReviewRun(run);
@@ -331,9 +312,9 @@ export class EngineeringPreIssueReviewService {
     store.registerKnownDocument({ documentId: plan.id, tenantId, workspaceId, projectId });
     store.registerKnownDocument({ documentId: "drawing", tenantId, workspaceId, projectId });
 
-    const findings: ReviewFinding[] = [];
+    const findings: PreIssueReviewFinding[] = [];
     for (const item of deterministic.conditions) {
-      const finding = createReviewFinding({
+      const finding = this.bridge.createReviewFinding({
         id: item.id,
         tenantId,
         workspaceId,
@@ -360,11 +341,11 @@ export class EngineeringPreIssueReviewService {
         recommendedAction: item.actions[0]?.label ?? "Human reviewer to disposition",
         provenance: { origin: "detector", ruleId: item.checkType, ruleVersion: PRE_ISSUE_REVIEW_POLICY.version, detectorId: item.code },
       });
-      findings.push(verifyFindingEvidence(finding));
+      findings.push(this.bridge.verifyFindingEvidence(finding));
     }
 
     const documents = governedArtifacts.map((artifact) => ({
-      ...createReviewOwnership({ tenantId, workspaceId, projectId }),
+      ...this.bridge.createReviewOwnership({ tenantId, workspaceId, projectId }),
       documentId: artifact.id,
       revision: artifact.templateVersion,
       role: documentRole(artifact.artifactType),
@@ -375,7 +356,7 @@ export class EngineeringPreIssueReviewService {
         sha256: artifact.sha256,
         lineageKind: artifact.lineageKind,
       },
-      extractedText: asUntrustedDocumentText(
+      extractedText: this.bridge.asUntrustedDocumentText(
         artifact.provenance.information.map((row) => `${row.title} Rev ${row.revision ?? ""}`).join("\n"),
       ),
       requirements: plan.context.requirements.map((row) => ({
@@ -389,13 +370,13 @@ export class EngineeringPreIssueReviewService {
         supported: !row.stale && !/unsupported|without evidence/i.test(row.whyIncluded),
       })),
     }));
-    const detections = runDetectors({
-      ownership: createReviewOwnership({ tenantId: pkg.tenantId, workspaceId: pkg.workspaceId, projectId: pkg.projectId }),
+    const detections = this.bridge.runDetectors({
+      ownership: this.bridge.createReviewOwnership({ tenantId: pkg.tenantId, workspaceId: pkg.workspaceId, projectId: pkg.projectId }),
       documents,
       scope: run.scope,
     });
     for (const [index, detection] of detections.entries()) {
-      const finding = verifyFindingEvidence(constructFindingFromDetection(detection, { run, pkg, documents, now: new Date().toISOString() }, 1000 + index));
+      const finding = this.bridge.verifyFindingEvidence(this.bridge.constructFindingFromDetection(detection, { run, pkg, documents, now: new Date().toISOString() }, 1000 + index));
       if (finding.status !== "candidate") continue;
       findings.push(finding);
       if (!deterministic.conditions.some((row) => row.title === finding.title)) {
@@ -424,9 +405,9 @@ export class EngineeringPreIssueReviewService {
         documents: documents.map((doc) => doc.extractedText),
         scope: run.scope,
       });
-      semanticAiReview = this.inference instanceof RejectingInferenceProvider ? "unavailable" : "available";
+      semanticAiReview = this.bridge.isRejectingInference(this.inference) ? "unavailable" : "available";
       for (const [index, candidate] of proposed.entries()) {
-        const finding = createReviewFinding({
+        const finding = this.bridge.createReviewFinding({
           id: randomUUID(),
           tenantId,
           workspaceId,
@@ -468,7 +449,7 @@ export class EngineeringPreIssueReviewService {
       semanticAiReview = "unavailable";
     }
     const semanticAiDurationMs = Date.now() - semanticStarted;
-    if (semanticAiReview === "unavailable" && !(this.inference instanceof RejectingInferenceProvider)) {
+    if (semanticAiReview === "unavailable" && !this.bridge.isRejectingInference(this.inference)) {
       semanticAiReview = "unavailable";
     }
 
@@ -483,7 +464,7 @@ export class EngineeringPreIssueReviewService {
       }
     }
     await store.persistCandidateFindings(findings);
-    run = transitionReviewRun(run, "completed");
+    run = this.bridge.transitionReviewRun(run, "completed");
     await store.saveReviewRun(run);
 
     const fingerprintChanged = chosen.provenance.inputFingerprint !== plan.inputFingerprint;
@@ -620,7 +601,7 @@ export class EngineeringPreIssueReviewService {
     if (!workspaceId) throw new Error("workspace_required");
     const plan = await this.loadPlan(input.workPlanId);
     if (!plan || plan.tenantId !== tenantId || plan.workspaceId !== workspaceId) throw new Error("not_found");
-    const store = this.reviewStoreFactory(tenantId, workspaceId, commerce.actorUserId ?? "engineer");
+    const store = this.bridge.createStore(this.reviewMemory, tenantId, workspaceId, commerce.actorUserId ?? "engineer");
     const result = await store.recordHumanDisposition({
       findingId: input.findingId,
       action: input.action,
@@ -639,12 +620,12 @@ export class EngineeringPreIssueReviewService {
   }
 
   private async composePackage(
-    store: EngineeringReviewStore,
+    store: PreIssueBoundStore,
     plan: EngineeringWorkPlan,
     artifacts: import("../artifact-automation/types").GeneratedEngineeringArtifact[],
     target: import("../artifact-automation/types").GeneratedEngineeringArtifact,
     createdBy: string,
-  ): Promise<ReviewPackage> {
+  ): Promise<PreIssueReviewPackage> {
     const documents = artifacts.map((artifact) => ({
       documentId: artifact.id,
       revision: artifact.lineageKind === "RETURNED_FROM_ENGINEER" ? "RETURNED" : "DRAFT",
@@ -661,7 +642,7 @@ export class EngineeringPreIssueReviewService {
         inclusion: "current",
       });
     }
-    const pkg = createReviewPackage({
+    const pkg = this.bridge.createReviewPackage({
       id: randomUUID(),
       tenantId: plan.tenantId,
       workspaceId: plan.workspaceId,
@@ -675,18 +656,18 @@ export class EngineeringPreIssueReviewService {
 }
 
 export function createTestPreIssueService(input: {
+  bridge: PreIssueReviewBridge;
   artifacts: ArtifactStore;
   loadPlan: (id: string) => Promise<EngineeringWorkPlan | null>;
   recorder?: PreIssueEventRecorder;
-  inference?: ReviewInferenceProvider;
+  inference?: PreIssueInference;
   store?: PreIssueReviewStore;
 }) {
-  const memory = createSharedReviewMemory();
   return new EngineeringPreIssueReviewService(
     { from() { return this; } } as never,
+    input.bridge,
     input.artifacts,
     input.store ?? createMemoryPreIssueStore(),
-    (tenantId, workspaceId, userId) => new MemoryEngineeringReviewStore(reviewPrincipal(tenantId, workspaceId, userId), memory),
     input.loadPlan,
     input.recorder,
     input.inference,

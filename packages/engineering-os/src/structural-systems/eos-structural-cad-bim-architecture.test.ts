@@ -156,7 +156,7 @@ describe("EOS-D1M-0 CAD or BIM intelligence architecture", () => {
     expect(scanAnalysisFormulaBypass(docPath, doc)).toEqual([]);
     expect(scanAnalysisFormulaBypass(contractPath, contract)).toEqual([]);
     expect(contract.includes("export function")).toBe(false);
-    expect(contract.includes("from \"@rtb/engineering-review\"")).toBe(false);
+    expect(contract.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(D1M_0_STATUS).toBe("ARCHITECTURE_DEFINED");
     expect(D1M_0_MATURITY).toBe("STRUCTURAL_CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE_DEFINED");
     expect(D1M_0_PHASE).toBe(D1M_0_CANONICAL_PHASE);

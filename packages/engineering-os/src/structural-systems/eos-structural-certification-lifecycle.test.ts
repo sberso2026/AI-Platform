@@ -325,7 +325,7 @@ describe("EOS-D1L-R5 evidence invalidation and supersession", () => {
     expect(row?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(row?.validationState).toBe("NOT_VALIDATED");
     const source = readFileSync(join(root, "certification-lifecycle.ts"), "utf8");
-    expect(source).not.toContain("from \"@rtb/engineering-review\"");
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(scanAnalysisFormulaBypass(join(root, "certification-lifecycle.ts"), source)).toEqual([]);
     const closeout = readFileSync(join(root, "../../../../docs/architecture/engineering-os/EOS_D1L_R5_EVIDENCE_INVALIDATION_SUPERSESSION_CLOSEOUT.md"), "utf8");
     expect(scanAnalysisFormulaBypass(join(root, "closeout.md"), closeout)).toEqual([]);

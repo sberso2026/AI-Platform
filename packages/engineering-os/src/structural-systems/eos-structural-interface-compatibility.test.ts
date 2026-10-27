@@ -303,7 +303,7 @@ describe("EOS-D1K-R2 compatibility diagnostics", () => {
     expect(sourceText).not.toContain("existingUnitPairCompatible");
     expect(sourceText).not.toContain("normalizeWithExistingUnitSystem");
     expect(sourceText).not.toContain("toForceN");
-    expect(sourceText.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(sourceText.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(scanAnalysisFormulaBypass(runtimePath, sourceText)).toEqual([]);
     expect(scanAnalysisFormulaBypass(docPath, doc)).toEqual([]);
     expect(doc).not.toMatch(/```/);

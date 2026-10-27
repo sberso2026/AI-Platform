@@ -1,8 +1,9 @@
+import { createPreIssueReviewBridge } from "../src/eos-pre-issue-bridge";
 import ExcelJS from "exceljs";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { describe, expect, it } from "vitest";
-import { generateEngineeringWorkPlan } from "../work-generator/generator";
-import { templateFor } from "../work-generator/catalog";
+import { generateEngineeringWorkPlan } from "../../engineering-os/src/work-generator/generator";
+import { templateFor } from "../../engineering-os/src/work-generator/catalog";
 import {
   A11A_SYSTEM_ID,
   CRUSHER_EXPANSION_FEED_PROJECT_ID,
@@ -12,19 +13,19 @@ import {
   detailedDesignReadySnapshot,
   optionStudySnapshot,
   WORKFLOW_READINESS,
-} from "../work-generator/fixture";
-import { createMemoryWorkPlanStore } from "../work-generator/memory-store";
-import { createMemoryArtifactStore } from "../artifact-automation/memory-store";
-import { createTestArtifactService } from "../artifact-automation/service";
-import { createTestOrchestrationService } from "../tool-orchestration/service";
-import { PRE_ISSUE_AI_BOUNDARY, PRE_ISSUE_PRIVACY, PRE_ISSUE_REVIEW_RECON } from "./types";
-import { PRE_ISSUE_REVIEW_POLICY } from "./policy";
-import { createTestPreIssueService } from "./service";
-import type { EngineeringWorkPlan } from "../work-generator/types";
-import type { GeneratorWorkType } from "../work-generator/types";
-import type { LifecycleStage } from "../lifecycle-intelligence/types";
-import type { WorkPlanContextSnapshot } from "../work-generator/types";
-import type { WorkReadinessResolution } from "../information-requirements/readiness";
+} from "../../engineering-os/src/work-generator/fixture";
+import { createMemoryWorkPlanStore } from "../../engineering-os/src/work-generator/memory-store";
+import { createMemoryArtifactStore } from "../../engineering-os/src/artifact-automation/memory-store";
+import { createTestArtifactService } from "../../engineering-os/src/artifact-automation/service";
+import { createTestOrchestrationService } from "../../engineering-os/src/tool-orchestration/service";
+import { PRE_ISSUE_AI_BOUNDARY, PRE_ISSUE_PRIVACY, PRE_ISSUE_REVIEW_RECON } from "../../engineering-os/src/pre-issue-review/types";
+import { PRE_ISSUE_REVIEW_POLICY } from "../../engineering-os/src/pre-issue-review/policy";
+import { createTestPreIssueService } from "../../engineering-os/src/pre-issue-review/service";
+import type { EngineeringWorkPlan } from "../../engineering-os/src/work-generator/types";
+import type { GeneratorWorkType } from "../../engineering-os/src/work-generator/types";
+import type { LifecycleStage } from "../../engineering-os/src/lifecycle-intelligence/types";
+import type { WorkPlanContextSnapshot } from "../../engineering-os/src/work-generator/types";
+import type { WorkReadinessResolution } from "../../engineering-os/src/information-requirements/readiness";
 
 function commerce(action: "analysis.read" | "analysis.write" = "analysis.write") {
   return createTestCommerceExecutionContext({
@@ -60,7 +61,7 @@ async function desk(
   const events: string[] = [];
   const artifactSvc = createTestArtifactService(artifacts, (id) => plans.getPlan(id));
   const orch = createTestOrchestrationService({ artifacts, loadPlan: (id) => plans.getPlan(id) });
-  const review = createTestPreIssueService({
+  const review = createTestPreIssueService({ bridge: createPreIssueReviewBridge(),
     artifacts,
     loadPlan: (id) => plans.getPlan(id),
     recorder: async (_c, _t, input) => {

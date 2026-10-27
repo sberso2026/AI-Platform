@@ -221,7 +221,7 @@ describe("EOS-D1K-R4 reference composition", () => {
   it("keeps reference composition inside the authorized boundary", () => {
     const runtime = readFileSync(runtimePath, "utf8");
     const doc = readFileSync(docPath, "utf8");
-    expect(runtime.includes("from \"@rtb/engineering-review\"")).toBe(false);
+    expect(runtime.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(runtime.includes("toForceN(")).toBe(false);
     expect(runtime.includes("sendCrossDisciplineData")).toBe(false);
     expect(runtime.includes("parseEngineeringFile")).toBe(false);

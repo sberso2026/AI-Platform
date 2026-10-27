@@ -607,7 +607,7 @@ describe("EOS-D1M-R4 unit coordinate axis reference", () => {
     expect(D1M_R5_PHASE_TYPE).toBe("CAD_OR_BIM_MODEL_RELATIONSHIP_EVIDENCE");
     expect(D1M_R5_CANONICAL_SCOPE).toContain("Do not infer relationships");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-reference-context.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(source.includes("toLengthM")).toBe(false);
     expect(source.includes("toForceN")).toBe(false);

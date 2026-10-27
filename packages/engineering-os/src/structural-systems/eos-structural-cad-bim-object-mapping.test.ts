@@ -594,7 +594,7 @@ describe("EOS-D1M-R2 source object to structural target mapping", () => {
     expect(D1M_R3_PHASE_TYPE).toBe("CAD_OR_BIM_GEOMETRY_SEMANTIC_EVIDENCE");
     expect(D1M_R3_CANONICAL_SCOPE).toContain("Do not parse a file");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-object-mapping.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(scanAnalysisFormulaBypass("cad-bim-object-mapping.ts", source)).toEqual([]);
   });

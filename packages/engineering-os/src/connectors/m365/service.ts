@@ -6,7 +6,7 @@ import {
   assertReviewScanAllowsExecution,
   scanReviewDocumentBytes,
   type ReviewMalwareScanState,
-} from "@rtb/engineering-review";
+} from "@rtb/types";
 import { assertEngineeringService, assertEngineeringTenantScope } from "../../commerce/service-guard";
 import { workspaceScopeId } from "../../commerce/workspace-scope";
 import { assertOfficePackage } from "../../artifact-automation/validate";

@@ -71,7 +71,7 @@ import { EngineeringQuantityMtoService } from "./lifecycle-intelligence/quantity
 import { SupabaseQuantityMtoStore } from "./lifecycle-intelligence/quantity-mto-store";
 import { EngineeringStructuralWorkService } from "./work-generator/structural/service";
 import { SupabaseStructuralCalculationStore } from "./work-generator/structural/store";
-import { MemoryEngineeringReviewStore, createSharedReviewMemory } from "@rtb/engineering-review";
+import type { PreIssueReviewBridge } from "./pre-issue-review/review-bridge";
 import { SupabaseWorkPlanStore } from "./work-generator/supabase-store";
 import { registerAnalysisExecuteHandler } from "./analysis-intelligence/job-handler";
 import { registerOptimizationEvaluateHandler } from "./optimization-intelligence/job-handler";
@@ -141,6 +141,7 @@ export function createEngineeringOS(
     documentBodyRetriever?: DocumentBodyRetrievalProbe;
     projectionWriteClient?: SupabaseClient;
     artifactStorageClient?: SupabaseClient;
+    reviewBridge: PreIssueReviewBridge;
   },
 ): EngineeringOS {
   const projects = new EngineeringProjectService(supabase, kernel);
@@ -315,21 +316,12 @@ export function createEngineeringOS(
     },
     artifactBinaryStore,
   );
-  const hostedReviewMemory = createSharedReviewMemory();
+  if (!options?.reviewBridge) throw new Error("review_bridge_required");
   const preIssueReview = new EngineeringPreIssueReviewService(
     supabase,
+    options.reviewBridge,
     undefined,
     new SupabasePreIssueStore(supabase),
-    (tenantId, workspaceId, userId) =>
-      new MemoryEngineeringReviewStore(
-        {
-          userId,
-          tenantIds: [tenantId],
-          workspaceIds: [workspaceId],
-          permissions: [{ resource: "engineering", action: "execute" }],
-        },
-        hostedReviewMemory,
-      ),
     (id) => new SupabaseWorkPlanStore(supabase).getPlan(id),
     async (commerce, tenantId, input) => {
       await work.recordMaterialEvent(commerce, tenantId, {

@@ -1,15 +1,16 @@
+import { createPreIssueReviewBridge } from "../src/eos-pre-issue-bridge";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { describe, expect, it } from "vitest";
-import { createTestArtifactService } from "../artifact-automation/service";
-import { createMemoryArtifactStore } from "../artifact-automation/memory-store";
-import { createMemoryTemplatePolicyStore, policyRecord } from "../artifact-automation/memory-template-store";
-import { createTestPreIssueService } from "../pre-issue-review/service";
-import { createTestChangeWorkbenchService } from "../change-workbench/service";
-import { handoverStaleFixture, loadChangeFixture } from "../change-workbench/fixture";
-import { evaluateHandoverCompleteness } from "../information-requirements/handover";
-import { mixedScopeView } from "../lifecycle-intelligence/resolve";
-import { DEFAULT_ENGINEERING_LIFECYCLE_PROFILE, transitionAllowed } from "../lifecycle-intelligence/profile";
-import { ref, snapshotFromPlan, workPlanThreadGraph } from "../work-generator/compose";
+import { createTestArtifactService } from "../../engineering-os/src/artifact-automation/service";
+import { createMemoryArtifactStore } from "../../engineering-os/src/artifact-automation/memory-store";
+import { createMemoryTemplatePolicyStore, policyRecord } from "../../engineering-os/src/artifact-automation/memory-template-store";
+import { createTestPreIssueService } from "../../engineering-os/src/pre-issue-review/service";
+import { createTestChangeWorkbenchService } from "../../engineering-os/src/change-workbench/service";
+import { handoverStaleFixture, loadChangeFixture } from "../../engineering-os/src/change-workbench/fixture";
+import { evaluateHandoverCompleteness } from "../../engineering-os/src/information-requirements/handover";
+import { mixedScopeView } from "../../engineering-os/src/lifecycle-intelligence/resolve";
+import { DEFAULT_ENGINEERING_LIFECYCLE_PROFILE, transitionAllowed } from "../../engineering-os/src/lifecycle-intelligence/profile";
+import { ref, snapshotFromPlan, workPlanThreadGraph } from "../../engineering-os/src/work-generator/compose";
 import {
   A11A_SYSTEM_ID,
   commissioningSnapshot,
@@ -24,15 +25,15 @@ import {
   handoverSnapshot,
   optionStudySnapshot,
   WORKFLOW_READINESS,
-} from "../work-generator/fixture";
-import { createMemoryWorkPlanStore } from "../work-generator/memory-store";
-import { EngineeringWorkGeneratorService } from "../work-generator/service";
-import { explainWhyAffected, explainWhyRelated } from "./explain-lifecycle";
-import { appendJourneyTrace, createJourneyTrace } from "./journey-trace";
-import { A12C_LIFECYCLE_RECON } from "./journeys";
-import { lifecycleTaskLabel } from "./lifecycle-attention";
-import { composeOperationsReference } from "./operations-reference";
-import { workbenchActionsForLifecycle } from "./lifecycle-actions";
+} from "../../engineering-os/src/work-generator/fixture";
+import { createMemoryWorkPlanStore } from "../../engineering-os/src/work-generator/memory-store";
+import { EngineeringWorkGeneratorService } from "../../engineering-os/src/work-generator/service";
+import { explainWhyAffected, explainWhyRelated } from "../../engineering-os/src/workbench/explain-lifecycle";
+import { appendJourneyTrace, createJourneyTrace } from "../../engineering-os/src/workbench/journey-trace";
+import { A12C_LIFECYCLE_RECON } from "../../engineering-os/src/workbench/journeys";
+import { lifecycleTaskLabel } from "../../engineering-os/src/workbench/lifecycle-attention";
+import { composeOperationsReference } from "../../engineering-os/src/workbench/operations-reference";
+import { workbenchActionsForLifecycle } from "../../engineering-os/src/workbench/lifecycle-actions";
 
 const SME_PROJECT = "project-beta-sme";
 
@@ -57,7 +58,7 @@ describe("EOS-A12C crusher support end-to-end lifecycle journey", () => {
     const policies = createMemoryTemplatePolicyStore();
     const artifacts = createMemoryArtifactStore();
     const artifactSvc = createTestArtifactService(artifacts, (id) => plans.getPlan(id), undefined, policies);
-    const review = createTestPreIssueService({ artifacts, loadPlan: (id) => plans.getPlan(id) });
+    const review = createTestPreIssueService({ bridge: createPreIssueReviewBridge(), artifacts, loadPlan: (id) => plans.getPlan(id) });
     const trace = createJourneyTrace("Crusher Support System");
 
     const concept = await wired.generatePlan(commerce(), CRUSHER_FEED_TENANT, {

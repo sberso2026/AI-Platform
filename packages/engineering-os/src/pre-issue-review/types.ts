@@ -1,4 +1,4 @@
-import type { ReviewFindingCategory } from "@rtb/engineering-review";
+import type { ReviewFindingCategory } from "@rtb/types";
 import type { ArtifactType } from "../artifact-automation/types";
 import type { GeneratorWorkType } from "../work-generator/types";
 import type { LifecycleStage } from "../lifecycle-intelligence/types";

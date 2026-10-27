@@ -1,4 +1,4 @@
-import { hostedAuthenticatedMalwareScannerAvailable } from "@rtb/engineering-review";
+import { hostedAuthenticatedMalwareScannerAvailable } from "@rtb/types";
 
 export const A14A_PILOT_PROFILE = "PROFILE_A_CORE_EOS" as const;
 

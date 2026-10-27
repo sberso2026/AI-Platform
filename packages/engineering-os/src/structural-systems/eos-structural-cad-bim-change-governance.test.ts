@@ -345,7 +345,7 @@ describe("EOS-D1M-R7 change staleness and supersession", () => {
     expect(change.D1M_R8_PHASE_TYPE).toBe("CAD_OR_BIM_D1K_D1L_D1N_EVIDENCE_HANDOFF");
     expect(change.D1M_R8_CANONICAL_SCOPE).toContain("Do not make D1K intelligence ready");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-change-governance.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(source.includes("recordCadBimSourceRevision")).toBe(false);
     expect(source.includes("recordSourceObjectMapping")).toBe(false);

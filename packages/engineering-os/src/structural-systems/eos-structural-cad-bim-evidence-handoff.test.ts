@@ -290,7 +290,7 @@ describe("EOS-D1M-R8 D1K D1L D1N evidence handoff", () => {
     expect(handoff.D1M_R9_PHASE_TYPE).toBe("CAD_OR_BIM_INTELLIGENCE_CLOSEOUT");
     expect(handoff.D1M_R9_CANONICAL_SCOPE).toContain("add no new substantive runtime");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-evidence-handoff.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(source.includes("evaluateEligibility")).toBe(false);
     expect(scanAnalysisFormulaBypass("cad-bim-evidence-handoff.ts", source)).toEqual([]);

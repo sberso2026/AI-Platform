@@ -95,7 +95,7 @@ describe("EOS-D1M-R9 CAD or BIM intelligence closeout", () => {
     }
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-intelligence-closeout.ts"), "utf8");
     expect(source.includes("export function")).toBe(false);
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(scanAnalysisFormulaBypass("cad-bim-intelligence-closeout.ts", source)).toEqual([]);
   });

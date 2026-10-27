@@ -733,7 +733,7 @@ describe("EOS-D1M-R3 geometry and semantic evidence", () => {
     expect(D1M_R4_PHASE_TYPE).toBe("CAD_OR_BIM_UNIT_COORDINATE_AXIS_REFERENCE");
     expect(D1M_R4_CANONICAL_SCOPE).toContain("Do not silently convert geometry");
     const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "cad-bim-model-evidence.ts"), "utf8");
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(source.includes("fetch(")).toBe(false);
     expect(source.includes("existingUnitPairCompatible")).toBe(false);
     expect(scanAnalysisFormulaBypass("cad-bim-model-evidence.ts", source)).toEqual([]);

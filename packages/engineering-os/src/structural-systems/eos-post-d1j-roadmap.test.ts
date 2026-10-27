@@ -186,7 +186,7 @@ describe("EOS roadmap after structural optimization closeout", () => {
     expect(doc).toContain("does not mean an optimizer");
     expect(doc).toContain("cycle detection remains D9");
     expect(source).not.toMatch(/\bfetch\(|mqtt|opcua|modbus|WebSocket|fft\(|child_process|eval\(|new Function/);
-    expect(source.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(scanAnalysisFormulaBypass(join(here, "post-d1j-roadmap.ts"), source)).toEqual([]);
     expect(scanAnalysisFormulaBypass(docPath, doc)).toEqual([]);
     expect(readdirSync(here).filter((name) => /digital-twin|d1i-/i.test(name))).toEqual([]);

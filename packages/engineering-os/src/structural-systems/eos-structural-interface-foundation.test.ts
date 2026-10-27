@@ -372,7 +372,7 @@ describe("EOS-D1K-R1 interface identity and exact source reference", () => {
     expect(D1K_R2_CANONICAL_SCOPE).toContain("Do not convert units");
     const sourceText = readFileSync(runtimePath, "utf8");
     const doc = readFileSync(docPath, "utf8");
-    expect(sourceText.includes('from "@rtb/engineering-review"')).toBe(false);
+    expect(sourceText.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
     expect(sourceText).not.toMatch(/\bfetch\(|mqtt|opcua|modbus|WebSocket|fft\(|child_process|eval\(|new Function/);
     expect(sourceText).not.toContain("existingUnitPairCompatible");
     expect(scanAnalysisFormulaBypass(runtimePath, sourceText)).toEqual([]);

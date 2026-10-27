@@ -428,8 +428,7 @@ describe("EOS-D5-R1 piping identity and object foundation", () => {
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
     expect(Object.keys(packageJson.dependencies).sort()).toEqual([
       "@rtb/database",
-      "@rtb/engineering-review",
-      "@rtb/platform-commerce",
+            "@rtb/platform-commerce",
       "@rtb/platform-intelligence",
       "@rtb/platform-kernel",
       "@rtb/types",

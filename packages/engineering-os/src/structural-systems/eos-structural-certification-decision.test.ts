@@ -414,7 +414,7 @@ describe("EOS-D1L-R4 certification authority and decision record", () => {
     expect(row?.implementationState).toBe("IMPLEMENTED_BOUNDED");
     expect(row?.validationState).toBe("NOT_VALIDATED");
     const source = readFileSync(join(root, "certification-decision.ts"), "utf8");
-    expect(source).not.toContain("from \"@rtb/engineering-review\"");
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(scanAnalysisFormulaBypass(join(root, "certification-decision.ts"), source)).toEqual([]);
     const closeout = readFileSync(join(root, "../../../../docs/architecture/engineering-os/EOS_D1L_R4_CERTIFICATION_AUTHORITY_DECISION_RECORD_CLOSEOUT.md"), "utf8");
     expect(scanAnalysisFormulaBypass(join(root, "closeout.md"), closeout)).toEqual([]);

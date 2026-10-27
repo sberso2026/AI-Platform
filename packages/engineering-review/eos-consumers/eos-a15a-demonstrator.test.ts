@@ -1,12 +1,13 @@
+import { createPreIssueReviewBridge } from "../src/eos-pre-issue-bridge";
 import { describe, expect, it } from "vitest";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
-import { createTestArtifactService } from "../artifact-automation/service";
-import { createMemoryArtifactStore } from "../artifact-automation/memory-store";
-import { createMemoryTemplatePolicyStore, policyRecord } from "../artifact-automation/memory-template-store";
-import { LegacyRelationalArtifactBinaryStore, MemoryObjectArtifactBinaryStore, RoutingArtifactBinaryStore } from "../artifact-automation/binary-adapters";
-import { assertObjectKeyAuthorization, hashBytes, pointerFromArtifact } from "../artifact-automation/binary-store";
-import { createTestPreIssueService } from "../pre-issue-review/service";
-import { createTestChangeWorkbenchService } from "../change-workbench/service";
+import { createTestArtifactService } from "../../engineering-os/src/artifact-automation/service";
+import { createMemoryArtifactStore } from "../../engineering-os/src/artifact-automation/memory-store";
+import { createMemoryTemplatePolicyStore, policyRecord } from "../../engineering-os/src/artifact-automation/memory-template-store";
+import { LegacyRelationalArtifactBinaryStore, MemoryObjectArtifactBinaryStore, RoutingArtifactBinaryStore } from "../../engineering-os/src/artifact-automation/binary-adapters";
+import { assertObjectKeyAuthorization, hashBytes, pointerFromArtifact } from "../../engineering-os/src/artifact-automation/binary-store";
+import { createTestPreIssueService } from "../../engineering-os/src/pre-issue-review/service";
+import { createTestChangeWorkbenchService } from "../../engineering-os/src/change-workbench/service";
 import {
   A11E_PROJECT_A,
   A11E_PROJECT_B,
@@ -14,10 +15,10 @@ import {
   handoverStaleFixture,
   loadChangeFixture,
   steelConcreteOptions,
-} from "../change-workbench/fixture";
-import { assembleConstructionContext } from "../change-workbench/construction";
-import { EngineeringInformationRequirementService } from "../information-requirements/service";
-import { createMemoryInformationRequirementStore } from "../information-requirements/memory-store";
+} from "../../engineering-os/src/change-workbench/fixture";
+import { assembleConstructionContext } from "../../engineering-os/src/change-workbench/construction";
+import { EngineeringInformationRequirementService } from "../../engineering-os/src/information-requirements/service";
+import { createMemoryInformationRequirementStore } from "../../engineering-os/src/information-requirements/memory-store";
 import {
   A10A_MECH_LOAD_ID,
   A10A_SOURCE_B_ID,
@@ -26,11 +27,11 @@ import {
   A10C_SURVEY_REF_ID,
   a10cAuthorityPolicies,
   foundationInformationRefs,
-} from "../information-requirements/fixture";
-import { evaluateHandoverCompleteness } from "../information-requirements/handover";
-import { createMemoryWorkPlanStore } from "../work-generator/memory-store";
-import { EngineeringWorkGeneratorService } from "../work-generator/service";
-import { ref, snapshotFromPlan, workPlanThreadGraph } from "../work-generator/compose";
+} from "../../engineering-os/src/information-requirements/fixture";
+import { evaluateHandoverCompleteness } from "../../engineering-os/src/information-requirements/handover";
+import { createMemoryWorkPlanStore } from "../../engineering-os/src/work-generator/memory-store";
+import { EngineeringWorkGeneratorService } from "../../engineering-os/src/work-generator/service";
+import { ref, snapshotFromPlan, workPlanThreadGraph } from "../../engineering-os/src/work-generator/compose";
 import {
   A11A_HANDOVER_ID,
   A11A_SYSTEM_ID,
@@ -46,17 +47,17 @@ import {
   handoverSnapshot,
   optionStudySnapshot,
   WORKFLOW_READINESS,
-} from "../work-generator/fixture";
-import { inheritWorkPlanContext } from "../workbench/inherit";
-import { workbenchActionsForLifecycle } from "../workbench/lifecycle-actions";
-import { answerLifecycleQuestion, LIFECYCLE_ASK_QUESTIONS } from "../workbench/ask-lifecycle";
-import { composeOperationsReference } from "../workbench/operations-reference";
-import { explainDecisionOrigin, explainWhatChanged, explainWhyAffected, explainWhyRelated } from "../workbench/explain-lifecycle";
-import { resolveEngineeringAttention } from "../attention/resolve";
-import type { AttentionProjectSnapshot } from "../attention/types";
-import { SPACE_GASS_CATALOG_ENTRY } from "../external-tools/catalog";
-import { officeToolReadiness } from "../tool-orchestration/tools";
-import { returnedBinaryUploadsInPilot, SURVEILLANCE_PROHIBITIONS } from "./a14a-profile";
+} from "../../engineering-os/src/work-generator/fixture";
+import { inheritWorkPlanContext } from "../../engineering-os/src/workbench/inherit";
+import { workbenchActionsForLifecycle } from "../../engineering-os/src/workbench/lifecycle-actions";
+import { answerLifecycleQuestion, LIFECYCLE_ASK_QUESTIONS } from "../../engineering-os/src/workbench/ask-lifecycle";
+import { composeOperationsReference } from "../../engineering-os/src/workbench/operations-reference";
+import { explainDecisionOrigin, explainWhatChanged, explainWhyAffected, explainWhyRelated } from "../../engineering-os/src/workbench/explain-lifecycle";
+import { resolveEngineeringAttention } from "../../engineering-os/src/attention/resolve";
+import type { AttentionProjectSnapshot } from "../../engineering-os/src/attention/types";
+import { SPACE_GASS_CATALOG_ENTRY } from "../../engineering-os/src/external-tools/catalog";
+import { officeToolReadiness } from "../../engineering-os/src/tool-orchestration/tools";
+import { returnedBinaryUploadsInPilot, SURVEILLANCE_PROHIBITIONS } from "../../engineering-os/src/pilot/a14a-profile";
 import {
   A15A_AUTHORITY_REMINDER,
   A15A_CARRY_FORWARD_BLOCKERS,
@@ -76,7 +77,7 @@ import {
   a15aReturnedUserUploadAllowed,
   remainingPilotBlockers,
   type A15AArtifactManifestRow,
-} from "./a15a-demonstrator";
+} from "../../engineering-os/src/pilot/a15a-demonstrator";
 
 function commerce(action: "analysis.read" | "analysis.write" = "analysis.write") {
   return createTestCommerceExecutionContext({
@@ -155,7 +156,7 @@ describe("EOS-A15A end-to-end crusher engineering demonstrator", () => {
     const artifacts = createMemoryArtifactStore();
     const routing = new RoutingArtifactBinaryStore(new LegacyRelationalArtifactBinaryStore(), new MemoryObjectArtifactBinaryStore());
     const artifactSvc = createTestArtifactService(artifacts, (id) => plans.getPlan(id), undefined, policies, routing);
-    const review = createTestPreIssueService({ artifacts, loadPlan: (id) => plans.getPlan(id) });
+    const review = createTestPreIssueService({ bridge: createPreIssueReviewBridge(), artifacts, loadPlan: (id) => plans.getPlan(id) });
     await policies.savePolicy(policyRecord({
       tenantId: CRUSHER_FEED_TENANT,
       workspaceId: CRUSHER_FEED_WORKSPACE,

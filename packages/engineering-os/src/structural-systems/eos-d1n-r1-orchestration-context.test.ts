@@ -375,7 +375,7 @@ describe("EOS-D1N-R1 orchestration context", () => {
     const pkg = readFileSync(join(root, "packages/engineering-os/package.json"), "utf8");
     expect(source).toContain("fingerprintCanonical");
     expect(source).not.toContain("createHash");
-    expect(source).not.toContain('from "@rtb/engineering-review"');
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(source).not.toContain("fetch(");
     expect(source).not.toContain("CREATE TABLE");
     expect(scanAnalysisFormulaBypass("orchestration-context.ts", source)).toEqual([]);

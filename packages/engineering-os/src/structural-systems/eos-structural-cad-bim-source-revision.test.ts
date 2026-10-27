@@ -295,7 +295,7 @@ describe("EOS-D1M-R1 CAD or BIM artifact source revision", () => {
     expect(D1M_R2_CANONICAL_SCOPE).toContain("Do not extract geometry");
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(here, "cad-bim-source-revision.ts"), "utf8");
-    expect(source).not.toContain("from \"@rtb/engineering-review\"");
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
     expect(source).not.toContain("fetch(");
     expect(scanAnalysisFormulaBypass(join(here, "cad-bim-source-revision.ts"), source)).toEqual([]);
   });

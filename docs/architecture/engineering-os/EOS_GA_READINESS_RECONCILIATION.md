@@ -2,14 +2,14 @@
 
 Path: docs/architecture/engineering-os/EOS_GA_READINESS_RECONCILIATION.md
 
-This reconciliation compares bounded discipline completion with the repository's general-availability rules. It does not implement a fix. It does not reopen D1 through D9. It does not issue certification or regulatory approval. Bounded completion at 100 percent is not EOS GA.
+This reconciliation compares bounded discipline completion with the repository's general-availability rules. The A16D recovery later closed the only platform GA root cause. It does not reopen D1 through D9. It does not issue certification or regulatory approval. Bounded completion at 100 percent is not EOS GA.
 
 D1_STRUCTURAL_PACK_COMPLETE: YES
 D1_COMPLETION: 15 / 15
 ALL_DISCIPLINE_TRACKS_BOUNDED_COMPLETE: YES
 EOS_TRACK_WEIGHTED_PROGRESS: 100%
 DISCIPLINE_REOPEN_REQUIRED: NO
-EOS_GA_READY: NO
+EOS_GA_READY: YES
 EOS_GA: NO
 
 D2 through D9 remain the closed bounded tracks already recorded by their closeouts. D1 bounded completion stays the governed closeout result in docs/architecture/engineering-os/EOS_D1_STRUCTURAL_PACK_BOUNDED_CLOSEOUT.md. The older TypeScript pack formula still reads pre-review constants and was not flipped. That lag is not a discipline reopen and is not a separate GA root cause.
@@ -35,7 +35,7 @@ GA_GATE_INVENTORY_COMPLETE: YES
 
 GA-01 DISCIPLINE_BOUNDED_COMPLETION. Source: D1 closeout and D2-D9 track closeouts. Category: ENGINEERING_VALIDATION. Current: COMPLETE_BOUNDED for D1-D9. Required for GA: not sufficient by itself. BLOCKING_GA: NO. Root cause: none. Remediation: none.
 
-GA-02 A16D_ENGINEERING_REVIEW_IMPORT_BOUNDARY. Source: EOS_POST_D1H_CANONICAL_ROADMAP.md and EOS_D1_STRUCTURAL_DEBT_CANONICALIZATION.md. Category: SECURITY. Current: OPEN. Required: the forbidden engineering-os import is gone and the two boundary assertions pass. BLOCKING_GA: YES. Root cause: engineering-os source imports @rtb/engineering-review. Remediation: INTERNAL_SECURITY_FIX. Evidence: packages/engineering-review/src/migration.test.ts and packages/engineering-review-persistence/src/boundary.test.ts.
+GA-02 A16D_ENGINEERING_REVIEW_IMPORT_BOUNDARY. Source: EOS_POST_D1H_CANONICAL_ROADMAP.md and EOS_D1_STRUCTURAL_DEBT_CANONICALIZATION.md. Category: SECURITY. Current: CLOSED by docs/architecture/engineering-os/EOS_GA_A16D_ENGINEERING_REVIEW_IMPORT_SECURITY_DEBT_RECOVERY.md. Required: the forbidden engineering-os import is gone and the two boundary assertions pass. BLOCKING_GA: NO after that recovery. Root cause was engineering-os source importing @rtb/engineering-review. Remediation: INTERNAL_SECURITY_FIX, completed. Evidence: packages/engineering-review/src/migration.test.ts and packages/engineering-review-persistence/src/boundary.test.ts now pass.
 
 GA-03 SECURITY_REGRESSION_NO_NEW. Source: phase regression gate. Category: SECURITY. Current: PASS while the known baseline is unchanged. Required for development: no new regression. Required for GA: not the same as zero security debt. BLOCKING_GA: NO.
 
@@ -148,6 +148,8 @@ EXTERNAL_CERTIFICATION_GA_BLOCKING: NO
 
 ## Decision
 
-EOS_GA_READY: NO
+The pre-recovery inventory above recorded EOS_GA_READY as NO because GA-02 was open. The A16D recovery closed that root cause. Recomputed gate result: 12 gates, 12 meeting their GA-required status, 0 failed, 0 blocked. D1G certification and D1L project eligibility stay unsatisfied and are still not platform GA prerequisites.
+
+EOS_GA_READY: YES
 EOS_GA: NO
-The only deduplicated platform GA root cause is the A16D engineering-os import boundary. Discipline completion stays 100 percent bounded and is not GA.
+EOS_GA remains NO until the final readiness and release decision. Historical TypeScript constants that still read EOS_GA_READY false were not flipped. Evidence modules reject that flip, and this recovery does not reopen D1 through D9. The recomputed decision is this document.

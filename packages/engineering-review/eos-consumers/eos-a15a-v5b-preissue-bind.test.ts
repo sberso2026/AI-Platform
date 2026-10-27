@@ -1,13 +1,14 @@
+import { createPreIssueReviewBridge } from "../src/eos-pre-issue-bridge";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { createTestCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import { describe, expect, it } from "vitest";
-import { createMemoryArtifactStore } from "../artifact-automation/memory-store";
-import { createTestArtifactService } from "../artifact-automation/service";
-import { A11E_PROJECT_B } from "../change-workbench/fixture";
-import { createTestPreIssueService } from "../pre-issue-review/service";
+import { createMemoryArtifactStore } from "../../engineering-os/src/artifact-automation/memory-store";
+import { createTestArtifactService } from "../../engineering-os/src/artifact-automation/service";
+import { A11E_PROJECT_B } from "../../engineering-os/src/change-workbench/fixture";
+import { createTestPreIssueService } from "../../engineering-os/src/pre-issue-review/service";
 import {
   A11A_SYSTEM_ID,
   CRUSHER_EXPANSION_FEED_PROJECT_ID,
@@ -15,23 +16,23 @@ import {
   CRUSHER_FEED_WORKSPACE,
   feedStructuralSnapshot,
   WORKFLOW_READINESS,
-} from "../work-generator/fixture";
-import { createMemoryWorkPlanStore } from "../work-generator/memory-store";
-import { EngineeringWorkGeneratorService } from "../work-generator/service";
-import { createMemoryStructuralStore } from "../work-generator/structural/store";
-import { createTestStructuralWorkService } from "../work-generator/structural/service";
-import type { EngineeringWorkPlan } from "../work-generator/types";
+} from "../../engineering-os/src/work-generator/fixture";
+import { createMemoryWorkPlanStore } from "../../engineering-os/src/work-generator/memory-store";
+import { EngineeringWorkGeneratorService } from "../../engineering-os/src/work-generator/service";
+import { createMemoryStructuralStore } from "../../engineering-os/src/work-generator/structural/store";
+import { createTestStructuralWorkService } from "../../engineering-os/src/work-generator/structural/service";
+import type { EngineeringWorkPlan } from "../../engineering-os/src/work-generator/types";
 import {
   A15A_V5B_PREISSUE_BIND,
   A15A_V5B_REPORTBIND,
   COMPOSITION_EVIDENCE_RELATIONSHIP,
-} from "./composition-evidence";
-import { composeWorkPlanValueRequirements, DEFAULT_PROJECT_VALUE_POLICY, resolveProjectValuePolicy } from "./cross-lifecycle-value";
-import { fingerprintItems } from "./quantity-mto";
-import { crusherMtoRevAItems } from "./quantity-mto-demonstrator";
-import type { PersistedMtoSnapshot } from "./quantity-mto-persist";
-import { createMemoryQuantityMtoStore } from "./quantity-mto-store";
-import { createTestQuantityMtoService } from "./quantity-mto-service";
+} from "../../engineering-os/src/lifecycle-intelligence/composition-evidence";
+import { composeWorkPlanValueRequirements, DEFAULT_PROJECT_VALUE_POLICY, resolveProjectValuePolicy } from "../../engineering-os/src/lifecycle-intelligence/cross-lifecycle-value";
+import { fingerprintItems } from "../../engineering-os/src/lifecycle-intelligence/quantity-mto";
+import { crusherMtoRevAItems } from "../../engineering-os/src/lifecycle-intelligence/quantity-mto-demonstrator";
+import type { PersistedMtoSnapshot } from "../../engineering-os/src/lifecycle-intelligence/quantity-mto-persist";
+import { createMemoryQuantityMtoStore } from "../../engineering-os/src/lifecycle-intelligence/quantity-mto-store";
+import { createTestQuantityMtoService } from "../../engineering-os/src/lifecycle-intelligence/quantity-mto-service";
 
 function commerce(action: "analysis.read" | "analysis.write" = "analysis.write", extras: { tenantId?: string; workspaceId?: string } = {}) {
   return createTestCommerceExecutionContext({
@@ -80,7 +81,7 @@ function harness() {
   mto.bindStructuralCalculation(loadCalc);
   artifactSvc.bindStructuralCalculation(loadCalc);
   artifactSvc.bindQuantityMto((planId) => mto.loadCompositionContext(planId));
-  const review = createTestPreIssueService({ artifacts, loadPlan: (id) => plans.getPlan(id) });
+  const review = createTestPreIssueService({ bridge: createPreIssueReviewBridge(), artifacts, loadPlan: (id) => plans.getPlan(id) });
   review.bindQuantityMto((planId) => mto.loadCompositionContext(planId));
   review.bindStructuralCalculation(async (planId) => {
     const plan = await plans.getPlan(planId);
@@ -208,7 +209,7 @@ function codes(result: { review: { conditions: Array<{ code: string }> } }) {
 
 describe("EOS-A15A-V5B-PREISSUE-BIND explicit MTO source alignment", () => {
   it("reuses loadCompositionContext and does not add a second selector", () => {
-    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../engineering-os.ts"), "utf8");
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../engineering-os/src/engineering-os.ts"), "utf8");
     expect(src).toContain("preIssueReview.bindQuantityMto((planId) => quantityMto.loadCompositionContext(planId))");
     expect(src).not.toMatch(/preIssueReview\.bindQuantityMto\(\(planId\) => quantityMto\.loadForPlan\(planId\)\)/);
     expect(A15A_V5B_PREISSUE_BIND.canonicalSelector).toBe("loadCompositionContext");

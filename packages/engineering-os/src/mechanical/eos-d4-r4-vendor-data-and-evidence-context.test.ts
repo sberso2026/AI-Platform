@@ -756,8 +756,7 @@ describe("EOS-D4-R4 Mechanical vendor data and evidence context", () => {
     const packageJson = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8")) as { dependencies: Record<string, string> };
     expect(Object.keys(packageJson.dependencies).sort()).toEqual([
       "@rtb/database",
-      "@rtb/engineering-review",
-      "@rtb/platform-commerce",
+            "@rtb/platform-commerce",
       "@rtb/platform-intelligence",
       "@rtb/platform-kernel",
       "@rtb/types",
