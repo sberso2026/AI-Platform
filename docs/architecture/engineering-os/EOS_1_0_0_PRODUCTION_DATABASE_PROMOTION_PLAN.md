@@ -9,11 +9,12 @@ Recovery: docs/architecture/engineering-os/EOS_1_0_0_PRODUCTION_DATA_RECOVERY_RE
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
 PRODUCTION_MIGRATION_EXECUTION_ALLOWED: YES
 PRODUCTION_DATA_RECOVERY_READY: YES
-PRODUCTION_MIGRATIONS_APPLIED: NO
-PRODUCTION_SCHEMA_MUTATION_ALLOWED: NO
+PRODUCTION_MIGRATIONS_APPLIED: YES
+PRODUCTION_DATABASE_GA_READY: YES
 FRESH_PRE_MIGRATION_BACKUP_REQUIRED: YES
+PRE_MIGRATION_BACKUP_RETAINED: YES
 
-The executable sequence was rehearsed on a fresh isolated PostgreSQL 17.6 restore. A data-bearing logical backup was restored to a separate isolated database and matched production. This plan does not apply that sequence. The later execution phase must create a new backup after this rehearsal backup has been deleted, and that new backup timestamp must be earlier than the migration start. PITR is disabled. Do not run supabase backups restore against wcydlhqiqdwgoaqrlget as a test.
+The approved 41-file sequence was applied to wcydlhqiqdwgoaqrlget on 2026-10-27 after a fresh data-bearing backup. 20260930090000 was not executed. The excluded files were not executed. Pilot access stays disabled. See EOS_1_0_0_PRODUCTION_MIGRATION_CONTROLLED_EXECUTION.md.
 
 ## 1. Production preflight
 
@@ -90,8 +91,10 @@ Recovery uses LOGICAL_RESTORE of the fresh pre-migration backup into a replaceme
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
 PRODUCTION_DATA_RECOVERY_READY: YES
 PRODUCTION_MIGRATION_EXECUTION_ALLOWED: YES
+PRODUCTION_MIGRATIONS_APPLIED: YES
+PRODUCTION_DATABASE_GA_READY: YES
 
-The executable 41-file sequence passed on a fresh isolated restore. Inspection cross-tenant reads are zero. The data-bearing recovery route passed on a separate isolated restore. Production migrations were not applied. Execution still requires a new backup taken immediately before the apply. See EOS_1_0_0_MIGRATION_20260930090000_AND_INSPECTION_RLS_REMEDIATION.md and EOS_1_0_0_PRODUCTION_DATA_RECOVERY_READINESS.md.
+The approved sequence was applied. Forty-one files passed. Failed migration count is 0. The fresh pre-migration backup is retained outside the repository. Pilot invitations remain disabled. See EOS_1_0_0_PRODUCTION_MIGRATION_CONTROLLED_EXECUTION.md.
 
 ## Gate
 
@@ -101,11 +104,14 @@ FINAL_REQUIRED_MIGRATION_COUNT: 41
 BACKUP_AVAILABLE: physical backups listed; data-bearing logical restore rehearsed; PITR disabled
 RESTORE_PATH_VERIFIED: YES for the data-bearing logical restore; NO for provider PITR
 FRESH_PRE_MIGRATION_BACKUP_REQUIRED: YES
-MANUAL_RESTORE_VERIFICATION_REQUIRED: YES for a new backup taken immediately before any production apply
+PRE_MIGRATION_BACKUP_RETAINED: YES
 STAGING_MIGRATION_REHEARSAL: NOT_PERFORMED. The shared staging project was not used as the restore target.
 POST_MIGRATION_RLS_REHEARSAL: PASS
 CROSS_TENANT_LEAK_COUNT: 0
 GA_APPLICATION_SCHEMA_COMPATIBILITY: PASS
+PRODUCTION_MIGRATIONS_APPLIED: YES
+PRODUCTION_DATABASE_GA_READY: YES
+CONTROLLED_PRODUCTION_PILOT_READY: NO
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
 PRODUCTION_DATA_RECOVERY_READY: YES
 PRODUCTION_MIGRATION_EXECUTION_ALLOWED: YES
