@@ -4,12 +4,16 @@ Path: docs/architecture/engineering-os/EOS_1_0_0_PRODUCTION_DATABASE_PROMOTION_P
 
 Evidence: docs/architecture/engineering-os/EOS_1_0_0_DATABASE_RECOVERY_AND_MIGRATION_REHEARSAL.md
 
+Recovery: docs/architecture/engineering-os/EOS_1_0_0_PRODUCTION_DATA_RECOVERY_READINESS.md
+
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
-PRODUCTION_MIGRATION_EXECUTION_ALLOWED: NO
+PRODUCTION_MIGRATION_EXECUTION_ALLOWED: YES
+PRODUCTION_DATA_RECOVERY_READY: YES
 PRODUCTION_MIGRATIONS_APPLIED: NO
 PRODUCTION_SCHEMA_MUTATION_ALLOWED: NO
+FRESH_PRE_MIGRATION_BACKUP_REQUIRED: YES
 
-The executable sequence was rehearsed on a fresh isolated PostgreSQL 17.6 restore. Do not run it on production until a new completed physical backup id is recorded. PITR is disabled. Do not run supabase backups restore against wcydlhqiqdwgoaqrlget.
+The executable sequence was rehearsed on a fresh isolated PostgreSQL 17.6 restore. A data-bearing logical backup was restored to a separate isolated database and matched production. This plan does not apply that sequence. The later execution phase must create a new backup after this rehearsal backup has been deleted, and that new backup timestamp must be earlier than the migration start. PITR is disabled. Do not run supabase backups restore against wcydlhqiqdwgoaqrlget as a test.
 
 ## 1. Production preflight
 
@@ -21,15 +25,15 @@ Pilot access stays disabled. This plan does not invite a user, change Auth signu
 
 ## 3. Backup creation
 
-Provider physical backups are available. Seven completed backups were listed for 2026-10-20 through 2026-10-26. The newest listed id is 2078357680 at 2026-10-26T17:11:08.561Z. pitr_enabled is false. WAL-G is enabled and pg_stat_archiver had archived_count 2960 with failed_count 0. That is not point-in-time recovery.
+Provider physical backups remain available. Seven completed backups were listed again for 2026-10-20 through 2026-10-26. The newest listed id is 2078357680 at 2026-10-26T17:11:08.561Z. pitr_enabled is false. WAL-G is enabled. pg_stat_archiver had archived_count 2970 and failed_count 0 at the readiness read. The provider restore command is a point-in-time restore of the same project. It has no isolated target. It was not run.
 
-Before any production apply, record a new completed physical backup id from supabase backups list for wcydlhqiqdwgoaqrlget. Do not run supabase backups restore against production.
+The rehearsed recovery route is a PostgreSQL 17.6 logical dump of public, auth, storage, and supabase_migrations. The schema file had no COPY data. The data file used COPY. Two provider version tables omitted by the dump tool, auth.schema_migrations and storage.migrations, were exported separately and included in the restore. The files were stored outside the repository, restricted to the current user, integrity-hashed, restored, and then deleted. They are not the backup that execution may use.
 
-A schema-only logical dump was created on 2026-10-27T08:25:10.617Z, sha256 cd577f40dee47f5444e5f7a3943c7757a816395412b7728cce3a077058af2f75, 1972801 bytes. It contained no table-data sections. It was restored, verified, and then deleted. It is not a retained copy of customer rows and it is not in git.
+FRESH_PRE_MIGRATION_BACKUP_REQUIRED: YES. Immediately before production migration, create a new data-bearing logical backup of the same schemas, record its sha256 and timestamp, and require that timestamp to be earlier than the migration start. Do not reuse the deleted rehearsal files.
 
 ## 4. Backup integrity
 
-The schema dump was restored into the isolated container. After vector was installed and its dependent objects were replayed, public table, index, policy, function, trigger, and constraint names matched production with no missing and no extra names. Auth and storage table counts matched. Treat that as integrity of the schema script only.
+The isolated restore matched production on 513 tables, 154663 rows, the row-count manifest, and the table-content manifest. Public tables 478, indexes 1249, constraints 3520, validated foreign keys 1652, invalid foreign keys 0, policies 1120, functions 168, triggers 141. Storage policies 4. Auth users, storage bucket rows, and storage object metadata counts matched. Sequence state matched. Normalized table grants matched. Production database size and migration ledger were unchanged after the read.
 
 ## 5. Exact migrations
 
@@ -47,7 +51,7 @@ The order is the list in section 5. Stop on the first error. Do not continue aft
 
 ## 7. Validation after critical migrations
 
-After 20260930090000, engineering_lifecycle_gate_decisions and engineering_lifecycle_transitions must both exist, and each must have its same-scope trigger. After 20260930160000, engineering_work_plans must exist. After 20261001200000, engineering_generated_artifacts.storage_kind must exist. After 20261001210000, storage.buckets must contain engineering-artifacts with public false, and storage.objects must have the restrictive client policy. security_assurance_controls must remain absent.
+After 20260930090001, engineering_lifecycle_gate_decisions and engineering_lifecycle_transitions must both exist, and each must have its same-scope trigger. Do not execute 20260930090000. After 20260930160000, engineering_work_plans must exist. After 20261001200000, engineering_generated_artifacts.storage_kind must exist. After 20261001210000, storage.buckets must contain engineering-artifacts with public false, and storage.objects must have the restrictive client policy. security_assurance_controls must remain absent.
 
 ## 8. Data transformation validation
 
@@ -59,7 +63,7 @@ Do not run 20260903080000. Production already has the gpt-4o-mini row. An isolat
 
 Use two synthetic workspaces and two users. User A must read workspace A and not workspace B. User B must read workspace B and not workspace A. An unauthenticated role must read neither.
 
-The isolated rehearsal passed that matrix for engineering_work_plans. It failed for nine existing inspection tables whose policy uses COALESCE of the JWT tenant claim and the row tenant id. When the claim is absent, those policies are true for every row. Do not promote until that fail-open behavior is corrected by a reviewed forward change. Do not weaken the engineering workspace policies to match it.
+The remediated rehearsal passed that matrix. 20261027170000 replaces the twelve fail-open inspection policies. Cross-tenant leak count on the migrated isolated database was 0. Do not weaken the engineering workspace policies.
 
 ## 10. Storage validation
 
@@ -67,34 +71,41 @@ Synthetic files only. User A must read the tenant A object and not the tenant B 
 
 ## 11. Application smoke validation
 
-Not run. Do not point the live RLS suite at production. Its schema test applies a hosted migration. engineering_review_security_schema_status() returned ready on the isolated database. That does not replace an application run.
+The remediation phase recorded GA application schema compatibility PASS against the migrated isolated database. Do not point the live RLS suite at production. Its schema test applies a hosted migration.
 
 ## 12. Stop conditions
 
-Stop if the target ref is wrong, if an excluded file is included, if 20260930090000 still creates a trigger before its table, if a physical backup id newer than the apply has not been recorded, if security_assurance_controls would be created, if a cross-tenant read returns a row, or if the application smoke cannot run without using the service role in place of the user.
+Stop on migration SQL failure, an unexpected row-count change, data-transformation validation failure, RLS failure, any cross-tenant read, or application compatibility failure. Also stop if the target ref is wrong, if an excluded file is included, if 20260930090000 is executed, if the fresh pre-migration backup is missing or its timestamp is not earlier than the migration start, or if security_assurance_controls would be created.
+
+For each stop: stop the apply, assess which files committed, recover from the fresh logical backup, validate the restored counts and content manifest, and abort. Do not resume a partially migrated production database.
 
 ## 13. Recovery action
 
-If a file fails, stop. Do not invent a down migration. The observed failure left the earlier files applied. Restore the recorded physical backup to an isolated target and retry with the corrected file. Do not restore over wcydlhqiqdwgoaqrlget as a test. Irreversible migrations are RESTORE_AND_RETRY, not automatic ROLLBACK. The trigger-order defect is a FORWARD_FIX and it is not yet committed.
+There is no automatic rollback. Files before a failure are already committed. 20260930010000 can insert system discipline rows. 20261001210000 can insert or update one storage.buckets row and replace a storage.objects policy. Neither writes storage object bytes.
+
+Recovery uses LOGICAL_RESTORE of the fresh pre-migration backup into a replacement or restored database. PROVIDER_RESTORE was not rehearsed and must not be used as a test against wcydlhqiqdwgoaqrlget. A reviewed FORWARD_FIX is only for a later migration file. It does not undo committed data changes.
 
 ## 14. Promotion decision
 
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
-PRODUCTION_MIGRATION_EXECUTION_ALLOWED: NO
+PRODUCTION_DATA_RECOVERY_READY: YES
+PRODUCTION_MIGRATION_EXECUTION_ALLOWED: YES
 
-The executable 41-file sequence passed on a fresh isolated restore. Inspection cross-tenant reads are zero. Execution stays blocked until a new completed physical backup id is recorded. PITR remains disabled. Production migrations were not applied. See EOS_1_0_0_MIGRATION_20260930090000_AND_INSPECTION_RLS_REMEDIATION.md.
+The executable 41-file sequence passed on a fresh isolated restore. Inspection cross-tenant reads are zero. The data-bearing recovery route passed on a separate isolated restore. Production migrations were not applied. Execution still requires a new backup taken immediately before the apply. See EOS_1_0_0_MIGRATION_20260930090000_AND_INSPECTION_RLS_REMEDIATION.md and EOS_1_0_0_PRODUCTION_DATA_RECOVERY_READINESS.md.
 
 ## Gate
 
 EXACT_TARGET_SCHEMA_DEFINED: YES
 ACTUAL_REQUIRED_MIGRATION_SET_FINAL: YES
 FINAL_REQUIRED_MIGRATION_COUNT: 41
-BACKUP_AVAILABLE: physical backups listed; PITR disabled
-RESTORE_PATH_VERIFIED: YES for the logical schema restore; NO for provider PITR
-MANUAL_RESTORE_VERIFICATION_REQUIRED: YES for a fresh physical backup id before any production apply
+BACKUP_AVAILABLE: physical backups listed; data-bearing logical restore rehearsed; PITR disabled
+RESTORE_PATH_VERIFIED: YES for the data-bearing logical restore; NO for provider PITR
+FRESH_PRE_MIGRATION_BACKUP_REQUIRED: YES
+MANUAL_RESTORE_VERIFICATION_REQUIRED: YES for a new backup taken immediately before any production apply
 STAGING_MIGRATION_REHEARSAL: NOT_PERFORMED. The shared staging project was not used as the restore target.
 POST_MIGRATION_RLS_REHEARSAL: PASS
 CROSS_TENANT_LEAK_COUNT: 0
 GA_APPLICATION_SCHEMA_COMPATIBILITY: PASS
 PRODUCTION_MIGRATION_PROMOTION_ALLOWED: YES
-PRODUCTION_MIGRATION_EXECUTION_ALLOWED: NO
+PRODUCTION_DATA_RECOVERY_READY: YES
+PRODUCTION_MIGRATION_EXECUTION_ALLOWED: YES
