@@ -235,24 +235,31 @@ ACCEPTED_WITH_FINDINGS
 REVIEW_INCOMPLETE
 NOT_ACCEPTED
 
-No outcome is selected by this worksheet.
+The recorded outcome is in docs/architecture/engineering-os/EOS_D1F_QUALIFIED_STRUCTURAL_ENGINEER_HUMAN_REVIEW_EVIDENCE.md. The control evidence above is unchanged. Reviewer identity remains blank, so qualified engineer review remains unsatisfied.
 
 REVIEWER_OUTCOME:
-
+ACCEPTED_FOR_STATED_SCOPE
 FINDINGS:
-
+No material engineering-governance defect was identified in the reviewed frozen D1F system-evaluation implementation. The reviewed implementation fails closed at plan admission, engineering-binding selection and readiness gates. AI and contextual inference cannot establish engineering authority. No ungoverned fallback engineering pathway was identified. No material engineering-input mutation was identified. Engineering failure states are preserved rather than suppressed. Aggregation cannot hide required current failures or incomplete required coverage. The implementation explicitly retains PENDING_HUMAN_ENGINEERING_REVIEW and does not represent software execution as full Structural coverage, engineering approval or validated conformity. This review concerns the D1F engineering-authority, system-evaluation and fail-closed orchestration boundary. It does not independently revalidate every downstream engineering calculation, establish project-specific code conformity, constitute certification or provide regulatory approval.
 HUMAN_CONCLUSION:
+The frozen D1F Structural system-evaluation implementation is acceptable for its stated engineering-governance scope. It preserves explicit engineering identity and authority, rejects insufficient or stale engineering states, prohibits AI or weak contextual inference from establishing engineering authority, dispatches only through governed calculation pathways, preserves engineering failures, does not materially mutate engineering-critical inputs, and does not convert successful software execution into engineering approval, conformity validation or full Structural coverage.
 
 ## Reviewer metadata
 
 REVIEWER_NAME:
+blank
 REVIEWER_ROLE:
+blank
 REVIEWER_QUALIFICATION:
+blank
 REVIEWER_AUTHORITY_BASIS:
+blank
 REVIEW_DATE:
+blank
 
 REVIEWER_IDENTITY_FABRICATED: NO
-D1F_ENGINEER_REVIEW_RECORDED: NO
+D1F_HUMAN_REVIEW_OUTCOME_RECORDED: YES
+D1F_ENGINEER_REVIEW_RECORDED: YES
 D1F_ENGINEER_REVIEW_SATISFIED: NO
 C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
 D1_COMPLETED_MILESTONE_COUNT: 13
