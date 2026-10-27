@@ -3,8 +3,6 @@
  * Runs the machine-executable route. Does not sign a human review.
  */
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { D1gR1GovernedContext, D1gR1ObjectMapping } from "@rtb/types";
 import { D9_STATUS, D9_TRACK_COMPLETE } from "../cross-discipline/cross-discipline-bounded-closeout";
 import {
@@ -58,7 +56,30 @@ import {
   D1K_INTERNAL_INTEGRATION_SATISFIED,
 } from "./structural-pack-sequencing";
 
-const here = dirname(fileURLToPath(import.meta.url));
+declare const STRUCTURAL_RESULT_PACKAGE_EXAMPLE_BASE64: string | undefined;
+
+const STRUCTURAL_RESULT_PACKAGE_EXAMPLE_FILE = "eos-structural-result-package-v1.example.json";
+
+export function decodeStructuralResultPackageExample(encoded: string): Uint8Array {
+  if (encoded.length === 0) throw new Error("D1G_RESULT_PACKAGE_EXAMPLE_UNAVAILABLE");
+  const bytes = Buffer.from(encoded, "base64");
+  if (bytes.byteLength === 0) throw new Error("D1G_RESULT_PACKAGE_EXAMPLE_UNAVAILABLE");
+  return new Uint8Array(bytes);
+}
+
+function structuralResultPackageExampleBytes(): Uint8Array {
+  if (typeof STRUCTURAL_RESULT_PACKAGE_EXAMPLE_BASE64 === "string" && STRUCTURAL_RESULT_PACKAGE_EXAMPLE_BASE64.length > 0) {
+    return decodeStructuralResultPackageExample(STRUCTURAL_RESULT_PACKAGE_EXAMPLE_BASE64);
+  }
+  try {
+    const bytes = readFileSync(new URL(STRUCTURAL_RESULT_PACKAGE_EXAMPLE_FILE, import.meta.url));
+    if (bytes.byteLength === 0) throw new Error("D1G_RESULT_PACKAGE_EXAMPLE_UNAVAILABLE");
+    return new Uint8Array(bytes);
+  } catch (error) {
+    if (error instanceof Error && error.message === "D1G_RESULT_PACKAGE_EXAMPLE_UNAVAILABLE") throw error;
+    throw new Error("D1G_RESULT_PACKAGE_EXAMPLE_UNAVAILABLE");
+  }
+}
 
 /** SI prefix. Identity checks stay exact. This is not a fitted comparison tolerance. */
 const NEWTON_PER_KILONEWTON = 1000;
@@ -230,8 +251,7 @@ function records(): { comparisons: Comparison[]; rows: D1gExecutionRecord[]; fin
   });
   const supportPass = supportEos.value === supportRaw.value && supportEos.unit === "kN";
 
-  const examplePath = join(here, "eos-structural-result-package-v1.example.json");
-  const exampleBytes = new Uint8Array(readFileSync(examplePath));
+  const exampleBytes = structuralResultPackageExampleBytes();
   const ingested = ingestStructuralResultPackage({
     bytes: exampleBytes,
     filename: "synthetic-results.txt",

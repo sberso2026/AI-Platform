@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
@@ -35,7 +36,19 @@ const pdfTraceIncludes = [
   .filter((value): value is string => Boolean(value))
   .map(toWebRelative);
 
-const structuralExampleTrace = "../../packages/engineering-os/src/structural-systems/eos-structural-result-package-v1.example.json";
+const structuralExamplePath = path.join(
+  repoRoot,
+  "packages/engineering-os/src/structural-systems/eos-structural-result-package-v1.example.json",
+);
+let structuralExampleBase64 = "";
+try {
+  structuralExampleBase64 = readFileSync(structuralExamplePath).toString("base64");
+} catch {
+  structuralExampleBase64 = "";
+}
+if (structuralExampleBase64.length === 0) {
+  throw new Error("D1G_RESULT_PACKAGE_EXAMPLE_UNAVAILABLE");
+}
 
 const nextConfig: NextConfig = {
   transpilePackages: [
@@ -63,11 +76,16 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
   },
   outputFileTracingIncludes: {
-    "/api/**": [...pdfTraceIncludes, structuralExampleTrace],
+    "/api/**": pdfTraceIncludes,
     "/api/engineering/documents/**": pdfTraceIncludes,
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     if (isServer) {
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          STRUCTURAL_RESULT_PACKAGE_EXAMPLE_BASE64: JSON.stringify(structuralExampleBase64),
+        }),
+      );
       const previous = config.externals;
       const forcePdfExternal = ({ request }: { request?: string }, callback: (error?: Error | null, result?: string) => void) => {
         if (request === "pdf-parse" || request === "pdf-parse/worker") {
