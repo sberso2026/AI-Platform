@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+import type { AuthContext } from "@/lib/kernel";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 import {
   DOCUMENT_BUCKET,
@@ -41,15 +41,18 @@ async function relocateToCanonicalPath(
   return toPath;
 }
 
-export const POST = withEngineeringApi("documents", async ({ ctx, commerce, correlationId }, request) => {
-  if (!pilotFileIngestionEnabled()) {
-    return lifecycleErrorResponse(
-      "pilot_file_upload_disabled",
-      "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.",
-      403,
-      correlationId,
-    );
-  }
+async function handleUpload(
+  {
+    ctx,
+    commerce,
+    correlationId,
+  }: {
+    ctx: AuthContext;
+    commerce: Parameters<AuthContext["engineering"]["documents"]["attachFile"]>[0];
+    correlationId: string;
+  },
+  request: Request,
+) {
   if (!ctx.workspaceId) {
     return lifecycleErrorResponse("workspace_required", "Workspace required", 403, correlationId);
   }
@@ -232,4 +235,21 @@ export const POST = withEngineeringApi("documents", async ({ ctx, commerce, corr
     }
     throw err;
   }
-});
+}
+
+export async function POST(request: Request) {
+  if (!pilotFileIngestionEnabled()) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "pilot_file_upload_disabled",
+          message:
+            "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.",
+        },
+      },
+      { status: 403 },
+    );
+  }
+  const { withEngineeringApi } = await import("@/lib/commerce/engineering-api");
+  return withEngineeringApi("documents", handleUpload as never)(request);
+}

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/kernel";
-import { currentUserFailureResponse, hasAuthSessionCookie, logPilotEvent } from "@/lib/pilot/pilot-controls";
+import { classifyPilotFailure, currentUserFailureResponse, hasAuthSessionCookie, logPilotEvent } from "@/lib/pilot/pilot-controls";
 
 export const dynamic = "force-dynamic";
 
@@ -8,13 +7,14 @@ export async function GET(request: Request) {
   const hasSessionCookie = hasAuthSessionCookie(request.headers.get("cookie"));
   let ctx;
   try {
+    const { getAuthContext } = await import("@/lib/kernel");
     ctx = await getAuthContext();
-  } catch {
+  } catch (error) {
     const failure = currentUserFailureResponse(hasSessionCookie);
     logPilotEvent({
       eventClass: hasSessionCookie ? "application_exception" : "authentication_failure",
       action: "current_user",
-      result: failure.status === 401 ? "unauthenticated" : "failed",
+      result: `${failure.status === 401 ? "unauthenticated" : "failed"}:${classifyPilotFailure(error)}`,
     });
     return NextResponse.json(failure.body, { status: failure.status });
   }

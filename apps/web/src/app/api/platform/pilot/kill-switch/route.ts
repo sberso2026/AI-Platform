@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/kernel";
 import { currentUserFailureResponse, hasAuthSessionCookie, logPilotEvent } from "@/lib/pilot/pilot-controls";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json(currentUserFailureResponse(false).body, { status: 401 });
   }
   try {
+    const { getAuthContext } = await import("@/lib/kernel");
     const ctx = await getAuthContext();
     if (!ctx) {
       logPilotEvent({ eventClass: "authorization_denial", action: "kill_switch", result: "unauthenticated" });

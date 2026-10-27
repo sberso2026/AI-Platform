@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 import { createDocumentSignedUpload, inferDocumentMimeType } from "@/lib/engineering/document-storage";
 import { validateDocumentStoragePolicy, DOCUMENT_MAX_UPLOAD_BYTES } from "@rtb/project-intelligence";
 import { pilotFileIngestionEnabled } from "@/lib/pilot/pilot-controls";
 
-export const POST = withEngineeringApi("documents", async ({ ctx, correlationId }, request) => {
-  if (!pilotFileIngestionEnabled()) {
-    return lifecycleErrorResponse(
-      "pilot_file_upload_disabled",
-      "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.",
-      403,
-      correlationId,
-    );
-  }
+const CLOSED_MESSAGE =
+  "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.";
+
+async function handleUpload(
+  { ctx, correlationId }: { ctx: { tenantId: string; workspaceId?: string }; correlationId: string },
+  request: Request,
+) {
   if (!ctx.workspaceId) {
     return lifecycleErrorResponse("workspace_required", "Workspace required", 403, correlationId);
   }
@@ -67,4 +64,15 @@ export const POST = withEngineeringApi("documents", async ({ ctx, correlationId 
       correlationId,
     );
   }
-});
+}
+
+export async function POST(request: Request) {
+  if (!pilotFileIngestionEnabled()) {
+    return NextResponse.json(
+      { error: { code: "pilot_file_upload_disabled", message: CLOSED_MESSAGE } },
+      { status: 403 },
+    );
+  }
+  const { withEngineeringApi } = await import("@/lib/commerce/engineering-api");
+  return withEngineeringApi("documents", handleUpload as never)(request);
+}

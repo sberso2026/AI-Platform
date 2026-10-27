@@ -38,6 +38,14 @@ export function adminRoleIsEngineeringAuthority(_roleSlug: string): boolean {
   return false;
 }
 
+export function classifyPilotFailure(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (/configuration/i.test(message)) return "configuration";
+  if (/dynamic server usage|cookies/i.test(message)) return "request_scope";
+  if (/unauthorized|permission|policy/i.test(message)) return "authorization";
+  return "unhandled";
+}
+
 export function currentUserFailureResponse(hasSessionCookie: boolean): {
   status: 401 | 500;
   body: { error: string };

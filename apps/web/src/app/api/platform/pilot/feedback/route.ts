@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import { isPlatformAdmin } from "@rtb/platform-core";
-import { getAuthContext } from "@/lib/kernel";
 import { buildPilotFeedbackRecord, logPilotEvent } from "@/lib/pilot/pilot-controls";
+
+async function authContext() {
+  const { getAuthContext } = await import("@/lib/kernel");
+  return getAuthContext();
+}
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   let ctx;
   try {
-    ctx = await getAuthContext();
+    ctx = await authContext();
   } catch {
     logPilotEvent({ eventClass: "authentication_failure", action: "pilot_feedback", result: "denied" });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,11 +55,12 @@ export async function POST(request: Request) {
 export async function GET() {
   let ctx;
   try {
-    ctx = await getAuthContext();
+    ctx = await authContext();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { isPlatformAdmin } = await import("@rtb/platform-core");
   if (!isPlatformAdmin(ctx.roleSlug)) {
     logPilotEvent({ eventClass: "authorization_denial", action: "pilot_feedback_triage", result: "denied" });
     return NextResponse.json({ error: "Pilot feedback triage requires a tenant administrator." }, { status: 403 });
