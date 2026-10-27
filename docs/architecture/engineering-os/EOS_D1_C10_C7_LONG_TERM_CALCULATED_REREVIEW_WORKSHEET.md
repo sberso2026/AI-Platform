@@ -2,7 +2,7 @@
 
 Path: docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_REREVIEW_WORKSHEET.md
 
-This worksheet is the targeted human re-review subject for the calculated class N creep and shrinkage revision. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_HUMAN_REVIEW_EVIDENCE.md. The historical explicit-state review remains REVIEW_INCOMPLETE, fingerprint 9b2c325cdad7b78d, independent result BLANK. This revision does not inherit that review. Human identity, qualification, authority, date, and outcome remain blank.
+This worksheet is the targeted human re-review subject for the calculated class N creep and shrinkage revision. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_HUMAN_REVIEW_EVIDENCE.md. The historical explicit-state review remains REVIEW_INCOMPLETE, fingerprint 9b2c325cdad7b78d, independent result BLANK. This revision does not inherit that review. The recorded review is in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md. Reviewer identity, qualification, authority basis, and review date remain blank.
 
 REVIEWER_NAME:
 blank
@@ -15,7 +15,7 @@ blank
 REVIEW_DATE:
 blank
 REVIEWER_OUTCOME:
-blank
+ACCEPTED_FOR_STATED_SCOPE
 REVIEWER_INDEPENDENT_RESULT:
 blank
 
@@ -134,3 +134,16 @@ INVALID_EVALUATION_AGE
 UNBOUND_METHOD_PROFILE
 
 Finite evaluation ages later than the loading age fail closed because the size-time term has no recovered upper cap and that cap could change the result. The ultimate horizon and the instant of loading do not depend on that cap.
+
+METHOD_REVIEW:
+ACCEPTABLE_FOR_STATED_SCOPE
+UNIT_REVIEW:
+PASS
+ASSUMPTION_REVIEW:
+ACCEPTED_WITH_LIMITATIONS
+APPLICABILITY_REVIEW:
+ACCEPTABLE_FOR_VALIDATED_CLASS_N_CALCULATED_LONG_TERM_SCOPE
+HUMAN_CONCLUSION:
+The supplemental C7 calculated-mode implementation and independent validation resolve the technical deficiency identified in the original frozen long-term human review. The calculated creep and shrinkage capability is accepted for the stated bounded class-N engineering scope. The original explicit-state implementation remains separately valid as a provenance-controlled supplied-value mode.
+C7_CURRENT_REVIEW_STATUS:
+ACCEPTED_FOR_STATED_SCOPE
