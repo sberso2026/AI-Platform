@@ -49,9 +49,11 @@ NEW_REVISION_INHERITS_OLD_HUMAN_REVIEW: NO
 OLD_C7_HUMAN_REVIEW_PRESERVED: YES
 C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: YES
 D1F_ENGINEER_REVIEW_SATISFIED: YES
-D1_COMPLETED_MILESTONE_COUNT: 14
-D1_REMAINING_MILESTONE_COUNT: 1
-D1_STRUCTURAL_PACK_COMPLETE: NO
+D1_COMPLETED_MILESTONE_COUNT: 15
+D1_REMAINING_MILESTONE_COUNT: 0
+D1_STRUCTURAL_PACK_COMPLETE: YES
+D1_CLOSEOUT: docs/architecture/engineering-os/EOS_D1_STRUCTURAL_PACK_BOUNDED_CLOSEOUT.md
+CURRENT_QUALIFIED_REVIEW_BASELINE: docs/architecture/engineering-os/EOS_D1_STRUCTURAL_QUALIFIED_REVIEW_BASELINE.md
 QUALIFIED_REVIEWER_ATTESTATION: docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 REVIEWER_NAME: Silvestre Berso
 REVIEWER_ROLE: Structural Engineer / Qualified Structural Reviewer
@@ -65,7 +67,7 @@ REVIEWER_QUALIFICATION_COMPLETE: YES
 REVIEWER_AUTHORITY_BASIS_COMPLETE: YES
 REVIEW_DATE_COMPLETE: YES
 
-Current inventory counts are 16 ACCEPTED_FOR_STATED_SCOPE and 0 REVIEW_INCOMPLETE. All sixteen technical human-review outcomes are accepted for their stated scopes. Qualified human review for that current set, and D1F engineer review for its stated scope, are satisfied by the human-supplied reviewer metadata in the attestation. The original C3 file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C3 status is the supplemental re-review in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md, outcome ACCEPTED_FOR_STATED_SCOPE. The original C7 explicit-state file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C7 status is the calculated re-review in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md, fingerprint fp:ac109d1f, outcome ACCEPTED_FOR_STATED_SCOPE.
+Current inventory counts are 16 ACCEPTED_FOR_STATED_SCOPE and 0 REVIEW_INCOMPLETE. All sixteen technical human-review outcomes are accepted for their stated scopes. Qualified human review for that current set, and D1F engineer review for its stated scope, are satisfied by the human-supplied reviewer metadata in the attestation. The original C3 file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C3 status is the supplemental re-review in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md, outcome ACCEPTED_FOR_STATED_SCOPE. The original C7 explicit-state file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C7 status is the calculated re-review in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md, fingerprint fp:ac109d1f, outcome ACCEPTED_FOR_STATED_SCOPE. The bounded pack closeout does not remove the recorded limitations and does not rewrite the historical C3 or C7 files.
 
 Routing-state boundaries preserved from the C9 records:
 
