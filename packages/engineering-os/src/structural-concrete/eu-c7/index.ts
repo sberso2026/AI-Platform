@@ -125,3 +125,11 @@ export {
   ULS_STEEL_STRESS_USED_AS_C7_SLS_INPUT,
   assertEuC7CloseoutPreservesPriorFlags,
 } from "./closeout";
+export {
+  EU_C7_CALC_IMPLEMENTATION_FINGERPRINT,
+  calculateEuC7LongTermState,
+  shrinkageMicrostrainFromStrain,
+  shrinkageStrainFromMicrostrain,
+  type EuC7CalculatedLongTermInput,
+  type EuC7CalculatedLongTermResult,
+} from "./long-term-calculated";

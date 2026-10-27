@@ -33,8 +33,15 @@ C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: NO
 C3_QUALIFIED_HUMAN_REREVIEW_SUPPLIED: YES
 COMPLETE_INTERACTION_SURFACE_VALIDATED: NO
 C7_LONG_TERM_REVIEW_STATUS: REVIEW_INCOMPLETE
+C7_CURRENT_HUMAN_REVIEW_STATUS: REVIEW_INCOMPLETE
 C7_CALCULATED_CREEP_VALIDATED: NO
 C7_CALCULATED_SHRINKAGE_VALIDATED: NO
+C7_CALCULATED_CLASS_N_TECHNICAL_VALIDATION: YES
+C7_CALCULATED_HUMAN_REREVIEW_REQUIRED: YES
+C7_CALCULATED_HUMAN_REREVIEW_SUPPLIED: NO
+NEW_C7_CALCULATED_FINGERPRINT: fp:ac109d1f
+NEW_REVISION_INHERITS_OLD_HUMAN_REVIEW: NO
+OLD_C7_HUMAN_REVIEW_PRESERVED: YES
 C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
 D1F_ENGINEER_REVIEW_SATISFIED: NO
 D1_COMPLETED_MILESTONE_COUNT: 13
@@ -59,7 +66,7 @@ C9 wall BLOCKED_SCOPE_MISMATCH and NOT_IMPLEMENTED are not a completed wall-desi
 Known product gaps identified by the records and left unchanged:
 
 C3 bounded nonzero N-M validation is satisfied for the stated scope. Complete interaction-surface validation remains unclaimed.
-C7 calculated creep and calculated shrinkage remain unvalidated. phi = 2.4 and shrinkage strain = 0.00032 remain supplied explicit-state values.
+C7 calculated class N creep and class N shrinkage have technical benchmark validation. The C7 human review remains REVIEW_INCOMPLETE. phi = 2.4 and shrinkage strain = 0.00032 remain supplied explicit-state values.
 Two-way slab analysis and design remain outside the recorded slab routing review.
 Complete reinforced-concrete wall design, wall shear, wall second-order behavior, boundary elements, and seismic wall detailing remain unimplemented.
 
@@ -151,7 +158,7 @@ EVIDENCE_PATH: docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_HUMAN_RE
 HUMAN_REVIEW_OUTCOME: REVIEW_INCOMPLETE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: NO
-CURRENT_LIMITATION: phi = 2.4 and shrinkage strain = 0.00032 are supplied explicit-state values, not calculated creep or shrinkage results. The independent result remains BLANK. C7_CALCULATED_CREEP_VALIDATED: NO. C7_CALCULATED_SHRINKAGE_VALIDATED: NO.
+CURRENT_LIMITATION: phi = 2.4 and shrinkage strain = 0.00032 are supplied explicit-state values, not calculated creep or shrinkage results. The independent result remains BLANK. C7_CALCULATED_CREEP_VALIDATED: NO. C7_CALCULATED_SHRINKAGE_VALIDATED: NO. Class N calculated technical validation is recorded separately in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_REREVIEW_WORKSHEET.md. Human re-review fields on that worksheet remain blank. The new fingerprint fp:ac109d1f does not inherit this review.
 REVIEWER_METADATA: blank
 
 ## C10-R3A-PACK-C8-COVER
