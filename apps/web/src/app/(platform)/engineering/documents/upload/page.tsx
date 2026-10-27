@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PilotDataNotice } from "@/components/pilot/pilot-notices";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, Button } from "@rtb/ui";
@@ -39,6 +40,16 @@ export default function UploadEngineeringDocumentPage() {
   const [extractionNote, setExtractionNote] = useState<string | null>(null);
   const [session, setSession] = useState<DocumentUploadSession | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [fileUploadEnabled, setFileUploadEnabled] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/platform/pilot/status")
+      .then((response) => response.json())
+      .then((body: { data?: { fileUploadEnabled?: boolean } }) => {
+        setFileUploadEnabled(body.data?.fileUploadEnabled === true);
+      })
+      .catch(() => setFileUploadEnabled(false));
+  }, []);
 
   useEffect(() => {
     fetch("/api/engineering/projects")
@@ -69,7 +80,7 @@ export default function UploadEngineeringDocumentPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (writeBlocked) return;
+    if (!fileUploadEnabled || writeBlocked) return;
     if (!file) {
       setError("Choose a source file first.");
       return;
@@ -110,6 +121,7 @@ export default function UploadEngineeringDocumentPage() {
   }
 
   async function onFileChosen(next: File | null) {
+    if (!fileUploadEnabled) return;
     setFile(next);
     setSession(null);
     setExtractionNote(null);
@@ -169,6 +181,16 @@ export default function UploadEngineeringDocumentPage() {
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
         <Card className="max-w-2xl">
           <CardContent className="p-6">
+            <PilotDataNotice />
+            {fileUploadEnabled ? null : (
+              <p data-testid="pilot-file-upload-disabled">
+                File upload is excluded from this controlled pilot until a hosted malware scan is available.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="max-w-2xl">
+          <CardContent className="p-6">
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
                 <label htmlFor="document-source-file" className="mb-1 block text-xs font-medium text-muted-foreground">
@@ -177,10 +199,10 @@ export default function UploadEngineeringDocumentPage() {
                 <input
                   id="document-source-file"
                   type="file"
-                  required
+                  required={fileUploadEnabled}
                   accept={DOCUMENT_UPLOAD_ACCEPT}
                   className="block w-full text-sm"
-                  disabled={writeBlocked || loading}
+                  disabled={writeBlocked || loading || !fileUploadEnabled}
                   data-testid="document-source-file"
                   onChange={(e) => void onFileChosen(e.target.files?.[0] ?? null)}
                 />

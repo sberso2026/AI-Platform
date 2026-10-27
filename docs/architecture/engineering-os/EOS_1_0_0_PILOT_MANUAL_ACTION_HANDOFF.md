@@ -18,23 +18,21 @@ Completed for the Vercel project. The eight required production names are presen
 
 Production deployment dpl_HQJCcTcuN1zKyJgJr1TVxtjk3L9T is Ready at https://rtb-ai-platform-4wkewy79q-silvestres-projects-96ea276a.vercel.app. Its build identity is commit da6b78fd3137f8209ae8271bd88373641e42f43c on cursor/era-7a-engineering-review-pilot-gate. The web package version reported by that deployment is 0.1.0. That is the apps/web package metadata, not a substitute for the hostname serving this commit. PI_TEAMS_GRAPH_MODE is off on that deployment. Do not redeploy 4cf16a2f7da5bf39e133b4a32eaab8239d98b454.
 
-## 3. Enable production monitoring on the governed deployment
+## 3. Production monitoring for the controlled pilot
 
-ACTION: Configure monitoring that records application errors, authentication failures, database failures, job failures, AI provider failures, document-processing failures, engineering-runtime failures, connector failures, and the deployment version. Do not log confidential engineering contents.
-WHY_REQUIRED: The governed hostname returns /api/health. The production project has no monitoring-provider credentials. This session could not enable an external monitor.
-SYSTEM: The monitoring provider chosen for rtb-ai-platform. No provider credential was available in this session.
-EXACT_SETTING: Alert on the nine event classes above, tagged with the deployment commit and version 1.0.0. Leave document bodies, prompts, and credentials out of the logs.
-HOW_TO_VERIFY: A synthetic failed authentication and a synthetic application error appear in the monitor with the governed deployment commit, and the event payload contains no document body.
-RISK_IF_SKIPPED: Pilot failures would not be visible to the operator.
+Operator visibility uses the existing Vercel runtime logs and deployment status for rtb-ai-platform, plus Supabase logs for the production project. The application writes an `eos-pilot` log line for authentication failures, authorization denials, kill-switch attempts, and pilot feedback results. Those lines do not include document bodies, feedback text, tokens, or credentials.
 
-## 4. Finish the live pilot gates before invitation
+Event classes: deployment or build failure, application exception, HTTP or API failure, authentication failure, authorization denial, database connectivity failure, storage or file-processing failure, kill switch, and pilot admin.
 
-ACTION: Prove authorized synthetic storage and file-security behavior, show the pilot data notice and engineering-authority notice on the user-facing pilot, verify the kill switch without leaving it active, and keep monitoring from action 3. Do not invite a user before those gates pass.
-WHY_REQUIRED: Two synthetic users could read and update only their own workspace, and cross-workspace reads and updates returned no rows. Direct storage calls for a synthetic text object returned HTTP 400, so the authorized file path was not proven. The login and signup pages do not show the data notice or the authority notice. The kill switch was not activated.
-SYSTEM: The governed production deployment dpl_HQJCcTcuN1zKyJgJr1TVxtjk3L9T.
-EXACT_SETTING: Keep PI_TEAMS_GRAPH_MODE off and public signup disabled. Do not weaken storage or RLS controls.
-HOW_TO_VERIFY: An authorized synthetic upload and same-workspace retrieval succeed, a cross-workspace retrieval is denied, the notices are visible before upload, and the kill switch can be turned on and back off with an audit event.
-RISK_IF_SKIPPED: A pilot user could be invited before file handling and the authority boundary are demonstrated.
+Retention is whatever the current Vercel and Supabase project plans keep. This pilot does not add a separate SIEM. `/api/platform/pilot/status` reports the channel names and whether the kill switch is active. It does not return secret values.
+
+## 4. Remaining live pilot limits
+
+Direct authenticated upload to `engineering-documents` returns HTTP 400 because storage row-level security denies the insert. That bucket has no authenticated policy. The denial message is `new row violates row-level security policy`. The tenant-scoped bucket is `tenant-documents`, whose first folder must be one of the caller's tenant ids.
+
+Engineering file ingestion is fail-closed while no hosted malware scanner is configured. Upload session, upload complete, query-image upload, and metadata extraction reject with `pilot_file_upload_disabled`. The raw `tenant-documents` storage API can still accept an authenticated object. Closing that path needs a storage policy change, and this phase does not add or run a migration.
+
+The production kill switch remains `EOS_CONTROLLED_PILOT_ENABLED=0`. Tenant administrators receive HTTP 403 if they try to activate it. Do not leave the variable set to `0`. Do not invite a user from this document. Public signup stays disabled. `PI_TEAMS_GRAPH_MODE` stays off.
 
 ## Completed in this session
 

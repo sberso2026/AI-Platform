@@ -15,6 +15,7 @@ import {
   resolveRequestActorContext,
 } from "@/lib/identity/canonical-context";
 import { resolvePublicSupabaseConfig } from "@/lib/supabase/public-config";
+import { hasAuthSessionCookie, pilotKillSwitchSuspended } from "@/lib/pilot/pilot-edge";
 import { canAccessPlatformRoute, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
 import type { NavTier } from "@rtb/types";
 
@@ -127,9 +128,46 @@ function resolveMembershipAccess(
   };
 }
 
+function pilotSuspensionResponse(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const openWhileSuspended =
+    pathname === "/login" ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname === "/" ||
+    pathname === "/api/platform/pilot/status";
+  if (openWhileSuspended) return null;
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "pilot_suspended" }, { status: 503 });
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.search = "";
+  url.searchParams.set("pilot_suspended", "1");
+  return NextResponse.redirect(url);
+}
+
 export async function middleware(request: NextRequest) {
+  if (pilotKillSwitchSuspended()) {
+    const suspended = pilotSuspensionResponse(request);
+    if (suspended) return suspended;
+  }
+
   let response = NextResponse.next({ request });
-  const { url, anonKey } = resolvePublicSupabaseConfig();
+  let url: string;
+  let anonKey: string;
+  try {
+    ({ url, anonKey } = resolvePublicSupabaseConfig());
+  } catch {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/login";
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
+  }
 
   const supabase = createServerClient(url, anonKey, {
       cookies: {
@@ -147,7 +185,16 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] = null;
+  try {
+    const userResult = await supabase.auth.getUser();
+    user = userResult.data.user;
+  } catch {
+    if (request.nextUrl.pathname.startsWith("/api/") && !hasAuthSessionCookie(request.headers.get("cookie"))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
   const pathname = request.nextUrl.pathname;
 
   const isMfaChallengeRoute = pathname === MFA_CHALLENGE_ROUTE;

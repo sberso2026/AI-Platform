@@ -88,6 +88,8 @@ export async function createDocumentSignedUpload(input: {
   revision?: string;
   fileName: string;
 }) {
+  const { pilotFileIngestionEnabled } = await import("@/lib/pilot/pilot-controls");
+  if (!pilotFileIngestionEnabled()) return null;
   const storage = await documentStorageClient();
   if (!storage) return null;
   await ensureDocumentBucket(storage);

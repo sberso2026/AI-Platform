@@ -11,6 +11,7 @@ import {
   proposeDocumentMetadataFromText,
   type ProposedDocumentMetadata,
 } from "@rtb/engineering-os";
+import { pilotFileIngestionEnabled } from "@/lib/pilot/pilot-controls";
 
 async function proposeFromStoredSource(input: {
   fileName: string;
@@ -38,6 +39,14 @@ async function proposeFromStoredSource(input: {
 }
 
 export const POST = withEngineeringApi("documents", async ({ ctx, correlationId }, request) => {
+  if (!pilotFileIngestionEnabled()) {
+    return lifecycleErrorResponse(
+      "pilot_file_upload_disabled",
+      "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.",
+      403,
+      correlationId,
+    );
+  }
   if (!ctx.workspaceId) {
     return lifecycleErrorResponse("workspace_required", "Workspace required", 403, correlationId);
   }

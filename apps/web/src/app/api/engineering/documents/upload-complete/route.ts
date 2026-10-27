@@ -14,6 +14,7 @@ import { EngineeringReviewError, gateEngineeringUploadBytes } from "@rtb/enginee
 import { emitReviewSecurityAlert } from "@rtb/engineering-review-persistence";
 import { normalizeEngineeringDocumentType, normalizeEngineeringRevision } from "@rtb/engineering-os";
 import { enqueueCanonicalDocumentIngestion } from "@/lib/project-intelligence/document-ingestion";
+import { pilotFileIngestionEnabled } from "@/lib/pilot/pilot-controls";
 
 export const maxDuration = 60;
 
@@ -41,6 +42,14 @@ async function relocateToCanonicalPath(
 }
 
 export const POST = withEngineeringApi("documents", async ({ ctx, commerce, correlationId }, request) => {
+  if (!pilotFileIngestionEnabled()) {
+    return lifecycleErrorResponse(
+      "pilot_file_upload_disabled",
+      "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.",
+      403,
+      correlationId,
+    );
+  }
   if (!ctx.workspaceId) {
     return lifecycleErrorResponse("workspace_required", "Workspace required", 403, correlationId);
   }

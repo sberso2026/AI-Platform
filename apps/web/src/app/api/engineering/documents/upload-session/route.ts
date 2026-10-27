@@ -3,8 +3,17 @@ import { withEngineeringApi } from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 import { createDocumentSignedUpload, inferDocumentMimeType } from "@/lib/engineering/document-storage";
 import { validateDocumentStoragePolicy, DOCUMENT_MAX_UPLOAD_BYTES } from "@rtb/project-intelligence";
+import { pilotFileIngestionEnabled } from "@/lib/pilot/pilot-controls";
 
 export const POST = withEngineeringApi("documents", async ({ ctx, correlationId }, request) => {
+  if (!pilotFileIngestionEnabled()) {
+    return lifecycleErrorResponse(
+      "pilot_file_upload_disabled",
+      "File upload is excluded from this controlled pilot until a hosted malware scan is available. The file was not accepted.",
+      403,
+      correlationId,
+    );
+  }
   if (!ctx.workspaceId) {
     return lifecycleErrorResponse("workspace_required", "Workspace required", 403, correlationId);
   }

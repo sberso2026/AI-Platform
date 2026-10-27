@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/kernel";
+import { currentUserFailureResponse, hasAuthSessionCookie, logPilotEvent } from "@/lib/pilot/pilot-controls";
 
-export async function GET() {
-  const ctx = await getAuthContext();
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  const hasSessionCookie = hasAuthSessionCookie(request.headers.get("cookie"));
+  let ctx;
+  try {
+    ctx = await getAuthContext();
+  } catch {
+    const failure = currentUserFailureResponse(hasSessionCookie);
+    logPilotEvent({
+      eventClass: hasSessionCookie ? "application_exception" : "authentication_failure",
+      action: "current_user",
+      result: failure.status === 401 ? "unauthenticated" : "failed",
+    });
+    return NextResponse.json(failure.body, { status: failure.status });
+  }
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Load profile to get full_name for the current authenticated user.

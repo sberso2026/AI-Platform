@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/header";
+import { PilotDataNotice } from "@/components/pilot/pilot-notices";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@rtb/ui";
 
 type Member = {
@@ -188,6 +189,12 @@ export default function UsersPage() {
   return (
     <>
       <Header title="Users" description="Invite users into this tenant using Platform Identity memberships" />
+      <div className="px-6 pt-4 sm:px-8">
+        <PilotDataNotice />
+      </div>
+      <p className="px-6 text-sm text-muted-foreground sm:px-8" data-testid="pilot-admin-authority">
+        Tenant administration can invite users and see membership status. A tenant administrator is not an engineering validator, approver, qualified reviewer, or certifier.
+      </p>
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8" data-testid="page-main">
         <Card className="mb-6">
           <CardHeader>

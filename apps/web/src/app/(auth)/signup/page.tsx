@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Button, Input, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@rtb/ui";
 import { RtbLogo } from "@/components/brand/rtb-logo";
+import { EngineeringAuthorityNotice, PilotDataNotice } from "@/components/pilot/pilot-notices";
 import { buildAuthLoginRedirect, describeSignupAuthResult, logAuthError, mapAuthError } from "@rtb/platform-core";
 
 export default function SignupPage() {
@@ -89,6 +90,8 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <PilotDataNotice />
+          <EngineeringAuthorityNotice />
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="fullName" className="text-sm font-medium">

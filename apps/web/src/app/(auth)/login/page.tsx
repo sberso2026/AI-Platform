@@ -6,6 +6,7 @@ import { postPasswordMfaDestination, safeMfaReturnPath } from "@rtb/engineering-
 import { useRouter } from "next/navigation";
 import { Button, Input, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@rtb/ui";
 import { RtbLogo } from "@/components/brand/rtb-logo";
+import { EngineeringAuthorityNotice, PilotDataNotice } from "@/components/pilot/pilot-notices";
 import { logAuthError, mapAuthError } from "@rtb/platform-core";
 
 function readQueryFlag(name: string): boolean {
@@ -158,6 +159,13 @@ export default function LoginPage() {
           <CardDescription>Sign in to your platform account</CardDescription>
         </CardHeader>
         <CardContent>
+          <PilotDataNotice />
+          <EngineeringAuthorityNotice />
+          {readQueryFlag("pilot_suspended") ? (
+            <p className="mb-3 text-sm text-amber-800" role="status">
+              The controlled pilot is suspended.
+            </p>
+          ) : null}
           <div className="mb-4 space-y-2" data-testid="enterprise-sso-login-entry">
             <label htmlFor="sso-email" className="text-sm font-medium">
               Work email
