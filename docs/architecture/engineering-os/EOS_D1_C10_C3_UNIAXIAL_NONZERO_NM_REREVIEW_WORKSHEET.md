@@ -2,18 +2,18 @@
 
 Path: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_REREVIEW_WORKSHEET.md
 
-This worksheet records the supplied targeted human re-review of the supplemental nonzero axial-flexure evidence. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REVIEW_EVIDENCE.md. Reviewer identity fields remain blank. The supplied review is also recorded in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md.
+This worksheet records the supplied targeted human re-review of the supplemental nonzero axial-flexure evidence. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REVIEW_EVIDENCE.md. Reviewer metadata is recorded below and bound by docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md. The supplied review is also recorded in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md.
 
 REVIEWER_NAME:
-blank
+Silvestre Berso
 REVIEWER_ROLE:
-blank
+Structural Engineer / Qualified Structural Reviewer
 REVIEWER_QUALIFICATION:
-blank
+Master of Engineering, Kogakuin University; ASCE; ASEP; PICE
 REVIEWER_AUTHORITY_BASIS:
-blank
+Qualified Structural Engineer and designated human engineering reviewer for the RTB Engineering OS D1 Structural review scope
 REVIEW_DATE:
-blank
+2026-10-27
 
 OLD_C3_FINGERPRINT:
 a32bf2a00b313d9d
@@ -54,5 +54,5 @@ ACCEPTED_FOR_STATED_SCOPE
 ORIGINAL_C3_PACK_RECORD_REWRITTEN: NO
 ORIGINAL_C3_PACK_RECORD_OUTCOME: REVIEW_INCOMPLETE
 C3_CURRENT_SUPPLEMENTAL_REVIEW_STATUS: ACCEPTED_FOR_STATED_SCOPE
-C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
-D1F_ENGINEER_REVIEW_SATISFIED: NO
+C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: YES
+D1F_ENGINEER_REVIEW_SATISFIED: YES

@@ -4,20 +4,20 @@ Path: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_R
 
 This file records reviewer-supplied human re-review evidence for the supplemental nonzero axial-flexure validation. The values below are copied from the reviewer. They are not inferred, completed, or restated by the repository.
 
-This record does not rewrite docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REVIEW_EVIDENCE.md. That historical record remains REVIEW_INCOMPLETE for the original frozen zero-axial case. This record does not review any other C10 pack. It does not review D1F. It does not satisfy C10 qualified human review. It does not satisfy D1 qualified Structural review. It does not change the frozen baseline, the calculation method, the frozen inputs, or runtime code.
+This record does not rewrite docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_HUMAN_REVIEW_EVIDENCE.md. That historical record remains REVIEW_INCOMPLETE for the original frozen zero-axial case. This record does not review any other C10 pack. It does not review D1F. This subject record keeps its original technical outcome. The qualified-review gate for the current D1 set is docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md. It does not change the frozen baseline, the calculation method, the frozen inputs, or runtime code.
 
-Reviewer identity, role, qualification, authority basis, and review date were not supplied. Those fields stay blank.
+Reviewer identity, role, qualification, authority basis, and review date were supplied by the human reviewer for the RTB Engineering OS D1 Structural review scope. They were not inferred. Technical findings, limitations, fingerprints, and the review outcome in this record are unchanged. The qualified-review attestation is docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md.
 
 REVIEWER_NAME:
-blank
+Silvestre Berso
 REVIEWER_ROLE:
-blank
+Structural Engineer / Qualified Structural Reviewer
 REVIEWER_QUALIFICATION:
-blank
+Master of Engineering, Kogakuin University; ASCE; ASEP; PICE
 REVIEWER_AUTHORITY_BASIS:
-blank
+Qualified Structural Engineer and designated human engineering reviewer for the RTB Engineering OS D1 Structural review scope
 REVIEW_DATE:
-blank
+2026-10-27
 
 PACK:
 C10-R3A-PACK-C3-UNIAXIAL
@@ -100,5 +100,5 @@ ACCEPTED_FOR_STATED_SCOPE
 ORIGINAL_C3_PACK_RECORD_REWRITTEN: NO
 ORIGINAL_C3_PACK_RECORD_OUTCOME: REVIEW_INCOMPLETE
 C10_REVIEWED_SUBJECT_COUNT: 16
-C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
-D1F_ENGINEER_REVIEW_SATISFIED: NO
+C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: YES
+D1F_ENGINEER_REVIEW_SATISFIED: YES

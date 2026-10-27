@@ -2,18 +2,18 @@
 
 Path: docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_REREVIEW_WORKSHEET.md
 
-This worksheet is the targeted human re-review subject for the calculated class N creep and shrinkage revision. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_HUMAN_REVIEW_EVIDENCE.md. The historical explicit-state review remains REVIEW_INCOMPLETE, fingerprint 9b2c325cdad7b78d, independent result BLANK. This revision does not inherit that review. The recorded review is in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md. Reviewer identity, qualification, authority basis, and review date remain blank.
+This worksheet is the targeted human re-review subject for the calculated class N creep and shrinkage revision. It does not replace docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_HUMAN_REVIEW_EVIDENCE.md. The historical explicit-state review remains REVIEW_INCOMPLETE, fingerprint 9b2c325cdad7b78d, independent result BLANK. This revision does not inherit that review. The recorded review is in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md. Reviewer metadata is recorded below and bound by docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md.
 
 REVIEWER_NAME:
-blank
+Silvestre Berso
 REVIEWER_ROLE:
-blank
+Structural Engineer / Qualified Structural Reviewer
 REVIEWER_QUALIFICATION:
-blank
+Master of Engineering, Kogakuin University; ASCE; ASEP; PICE
 REVIEWER_AUTHORITY_BASIS:
-blank
+Qualified Structural Engineer and designated human engineering reviewer for the RTB Engineering OS D1 Structural review scope
 REVIEW_DATE:
-blank
+2026-10-27
 REVIEWER_OUTCOME:
 ACCEPTED_FOR_STATED_SCOPE
 REVIEWER_INDEPENDENT_RESULT:

@@ -2,20 +2,20 @@
 
 Path: docs/architecture/engineering-os/EOS_D1F_QUALIFIED_STRUCTURAL_ENGINEER_HUMAN_REVIEW_EVIDENCE.md
 
-This file records the supplied human engineering conclusion for the frozen D1F system-evaluation implementation. It does not rewrite the control evidence in docs/architecture/engineering-os/EOS_D1F_QUALIFIED_STRUCTURAL_ENGINEER_REVIEW_WORKSHEET.md. It does not change runtime, formulas, the frozen baseline, or downstream calculation methods. It does not satisfy qualified engineer review while reviewer identity, role, qualification, authority basis, and review date remain blank. It is not certification, regulatory approval, or complete code conformity.
+This file records the supplied human engineering conclusion for the frozen D1F system-evaluation implementation. It does not rewrite the control evidence in docs/architecture/engineering-os/EOS_D1F_QUALIFIED_STRUCTURAL_ENGINEER_REVIEW_WORKSHEET.md. It does not change runtime, formulas, the frozen baseline, or downstream calculation methods. Reviewer metadata supplied for this frozen subject is recorded below and bound by docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md. The technical conclusion is unchanged. It is not certification, regulatory approval, or complete code conformity.
 
-Reviewer identity was not supplied. Those fields stay blank.
+Reviewer identity, role, qualification, authority basis, and review date were supplied by the human reviewer for the RTB Engineering OS D1 Structural review scope. They were not inferred.
 
 REVIEWER_NAME:
-blank
+Silvestre Berso
 REVIEWER_ROLE:
-blank
+Structural Engineer / Qualified Structural Reviewer
 REVIEWER_QUALIFICATION:
-blank
+Master of Engineering, Kogakuin University; ASCE; ASEP; PICE
 REVIEWER_AUTHORITY_BASIS:
-blank
+Qualified Structural Engineer and designated human engineering reviewer for the RTB Engineering OS D1 Structural review scope
 REVIEW_DATE:
-blank
+2026-10-27
 
 REVIEWED_REVISION:
 2371facfa15cf0a1bae68fea419d57e8f97a6b0c
@@ -93,16 +93,16 @@ D1F_CURRENT_REVIEW_STATUS:
 ACCEPTED_FOR_STATED_SCOPE
 
 D1F_HUMAN_REVIEW_OUTCOME_RECORDED: YES
-D1F_ENGINEER_REVIEW_SATISFIED: NO
+D1F_ENGINEER_REVIEW_SATISFIED: YES
 REVIEWER_IDENTITY_FABRICATED: NO
 C10_TOTAL_PACK_COUNT: 16
 C10_REVIEW_RECORD_COUNT: 16
 ACCEPTED_FOR_STATED_SCOPE_COUNT: 16
 REVIEW_INCOMPLETE_COUNT: 0
 ALL_C10_TECHNICAL_HUMAN_REVIEW_OUTCOMES_ACCEPTED: YES
-C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
-D1_COMPLETED_MILESTONE_COUNT: 13
-D1_REMAINING_MILESTONE_COUNT: 2
+C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: YES
+D1_COMPLETED_MILESTONE_COUNT: 14
+D1_REMAINING_MILESTONE_COUNT: 1
 D1_STRUCTURAL_PACK_COMPLETE: NO
 ENGINEERING_RUNTIME_CHANGED: NO
 CALCULATION_FORMULA_CHANGED: NO

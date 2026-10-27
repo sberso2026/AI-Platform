@@ -235,7 +235,7 @@ ACCEPTED_WITH_FINDINGS
 REVIEW_INCOMPLETE
 NOT_ACCEPTED
 
-The recorded outcome is in docs/architecture/engineering-os/EOS_D1F_QUALIFIED_STRUCTURAL_ENGINEER_HUMAN_REVIEW_EVIDENCE.md. The control evidence above is unchanged. Reviewer identity remains blank, so qualified engineer review remains unsatisfied.
+The recorded outcome is in docs/architecture/engineering-os/EOS_D1F_QUALIFIED_STRUCTURAL_ENGINEER_HUMAN_REVIEW_EVIDENCE.md. The control evidence above is unchanged. Reviewer metadata for this subject is recorded below and bound by docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md.
 
 REVIEWER_OUTCOME:
 ACCEPTED_FOR_STATED_SCOPE
@@ -247,23 +247,23 @@ The frozen D1F Structural system-evaluation implementation is acceptable for its
 ## Reviewer metadata
 
 REVIEWER_NAME:
-blank
+Silvestre Berso
 REVIEWER_ROLE:
-blank
+Structural Engineer / Qualified Structural Reviewer
 REVIEWER_QUALIFICATION:
-blank
+Master of Engineering, Kogakuin University; ASCE; ASEP; PICE
 REVIEWER_AUTHORITY_BASIS:
-blank
+Qualified Structural Engineer and designated human engineering reviewer for the RTB Engineering OS D1 Structural review scope
 REVIEW_DATE:
-blank
+2026-10-27
 
 REVIEWER_IDENTITY_FABRICATED: NO
 D1F_HUMAN_REVIEW_OUTCOME_RECORDED: YES
 D1F_ENGINEER_REVIEW_RECORDED: YES
-D1F_ENGINEER_REVIEW_SATISFIED: NO
-C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
-D1_COMPLETED_MILESTONE_COUNT: 13
-D1_REMAINING_MILESTONE_COUNT: 2
+D1F_ENGINEER_REVIEW_SATISFIED: YES
+C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: YES
+D1_COMPLETED_MILESTONE_COUNT: 14
+D1_REMAINING_MILESTONE_COUNT: 1
 D1_STRUCTURAL_PACK_COMPLETE: NO
 C10_TOTAL_PACK_COUNT: 16
 C10_REVIEW_RECORD_COUNT: 16

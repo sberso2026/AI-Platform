@@ -2,9 +2,9 @@
 
 Path: docs/architecture/engineering-os/EOS_D1_C10_HUMAN_REVIEW_INVENTORY.md
 
-This inventory lists the sixteen frozen C10 human-review records. It preserves the reviewer-supplied outcomes. It does not upgrade any outcome. It does not supply reviewer identity, role, qualification, authority basis, or review date. It is not engineering approval, certification, regulatory approval, full code compliance, or end-to-end discipline validation.
+This inventory lists the sixteen frozen C10 human-review records. It preserves the reviewer-supplied outcomes. It does not upgrade any outcome. Reviewer identity, role, qualification, authority basis, and review date are the values supplied by the human reviewer and bound in docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md. It is not engineering approval, certification, regulatory approval, full code compliance, or end-to-end discipline validation.
 
-Sixteen technical review outcomes are ACCEPTED_FOR_STATED_SCOPE. That count does not satisfy C10 qualified human review. The original C3 pack file remains REVIEW_INCOMPLETE and has not been rewritten. A supplemental C3 nonzero N-M re-review is recorded separately as ACCEPTED_FOR_STATED_SCOPE. The original C7 explicit-state file remains REVIEW_INCOMPLETE and has not been rewritten. The calculated C7 re-review, fingerprint fp:ac109d1f, is ACCEPTED_FOR_STATED_SCOPE. Reviewer identity, qualification, authority basis, and review date remain blank. D1F remains unsatisfied.
+Sixteen technical review outcomes are ACCEPTED_FOR_STATED_SCOPE. The qualified-review gate for that current set is satisfied by the human-supplied reviewer metadata in the attestation. The original C3 pack file remains REVIEW_INCOMPLETE and has not been rewritten. A supplemental C3 nonzero N-M re-review is recorded separately as ACCEPTED_FOR_STATED_SCOPE. The original C7 explicit-state file remains REVIEW_INCOMPLETE and has not been rewritten. The calculated C7 re-review, fingerprint fp:ac109d1f, is ACCEPTED_FOR_STATED_SCOPE. D1F current review status remains ACCEPTED_FOR_STATED_SCOPE, and D1F engineer review is satisfied for that stated scope.
 
 FROZEN_RUNTIME_BASELINE: ef416f1f4ec92e1e97e97096ae625f8d61ca6265
 FROZEN_RUNTIME_BASELINE_CHANGED: NO
@@ -47,19 +47,25 @@ C7_CALCULATED_HUMAN_REREVIEW_SUPPLIED: YES
 NEW_C7_CALCULATED_FINGERPRINT: fp:ac109d1f
 NEW_REVISION_INHERITS_OLD_HUMAN_REVIEW: NO
 OLD_C7_HUMAN_REVIEW_PRESERVED: YES
-C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: NO
-D1F_ENGINEER_REVIEW_SATISFIED: NO
-D1_COMPLETED_MILESTONE_COUNT: 13
-D1_REMAINING_MILESTONE_COUNT: 2
+C10_QUALIFIED_HUMAN_REVIEW_SATISFIED: YES
+D1F_ENGINEER_REVIEW_SATISFIED: YES
+D1_COMPLETED_MILESTONE_COUNT: 14
+D1_REMAINING_MILESTONE_COUNT: 1
 D1_STRUCTURAL_PACK_COMPLETE: NO
+QUALIFIED_REVIEWER_ATTESTATION: docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
+REVIEWER_NAME: Silvestre Berso
+REVIEWER_ROLE: Structural Engineer / Qualified Structural Reviewer
+REVIEWER_QUALIFICATION: Master of Engineering, Kogakuin University; ASCE; ASEP; PICE
+REVIEWER_AUTHORITY_BASIS: Qualified Structural Engineer and designated human engineering reviewer for the RTB Engineering OS D1 Structural review scope
+REVIEW_DATE: 2026-10-27
 
-REVIEWER_NAME_COMPLETE: NO
-REVIEWER_ROLE_COMPLETE: NO
-REVIEWER_QUALIFICATION_COMPLETE: NO
-REVIEWER_AUTHORITY_BASIS_COMPLETE: NO
-REVIEW_DATE_COMPLETE: NO
+REVIEWER_NAME_COMPLETE: YES
+REVIEWER_ROLE_COMPLETE: YES
+REVIEWER_QUALIFICATION_COMPLETE: YES
+REVIEWER_AUTHORITY_BASIS_COMPLETE: YES
+REVIEW_DATE_COMPLETE: YES
 
-Current inventory counts are 16 ACCEPTED_FOR_STATED_SCOPE and 0 REVIEW_INCOMPLETE. All sixteen technical human-review outcomes are accepted for their stated scopes. That acceptance does not complete C10 qualified human review or D1F. The original C3 file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C3 status is the supplemental re-review in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md, outcome ACCEPTED_FOR_STATED_SCOPE. The original C7 explicit-state file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C7 status is the calculated re-review in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md, fingerprint fp:ac109d1f, outcome ACCEPTED_FOR_STATED_SCOPE.
+Current inventory counts are 16 ACCEPTED_FOR_STATED_SCOPE and 0 REVIEW_INCOMPLETE. All sixteen technical human-review outcomes are accepted for their stated scopes. Qualified human review for that current set, and D1F engineer review for its stated scope, are satisfied by the human-supplied reviewer metadata in the attestation. The original C3 file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C3 status is the supplemental re-review in docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md, outcome ACCEPTED_FOR_STATED_SCOPE. The original C7 explicit-state file was not rewritten and its historical outcome remains REVIEW_INCOMPLETE. The current C7 status is the calculated re-review in docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md, fingerprint fp:ac109d1f, outcome ACCEPTED_FOR_STATED_SCOPE.
 
 Routing-state boundaries preserved from the C9 records:
 
@@ -83,7 +89,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: The review does not establish member stability, unsupported geometry capability, validated National Annex conformity, regulatory approval or full project code compliance. The equivalent-rectangular hand model is a reasonableness comparison and is not identical to the EOS fiber-integration formulation.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C3-UNIAXIAL
 
@@ -93,8 +99,8 @@ HISTORICAL_FILE_OUTCOME: REVIEW_INCOMPLETE
 HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
-CURRENT_LIMITATION: The original file outcome remains REVIEW_INCOMPLETE and was not rewritten. The current supplemental re-review outcome is ACCEPTED_FOR_STATED_SCOPE for the stated bounded nonzero uniaxial scope. That acceptance does not establish complete interaction-surface validation, member stability, validated National Annex conformity, regulatory approval, or complete member design. SUPPLEMENTAL_REREVIEW_PATH: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md.
-REVIEWER_METADATA: blank
+CURRENT_LIMITATION: The original file outcome remains REVIEW_INCOMPLETE and was not rewritten. The current supplemental re-review outcome is ACCEPTED_FOR_STATED_SCOPE for the stated bounded nonzero uniaxial scope. That acceptance does not establish complete interaction-surface validation, member stability, validated National Annex conformity, regulatory approval, or complete member design. SUPPLEMENTAL_REREVIEW_PATH: docs/architecture/engineering-os/EOS_D1_C10_C3_UNIAXIAL_NONZERO_NM_HUMAN_REREVIEW_EVIDENCE.md. Historical file reviewer metadata was not rewritten.
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C4-BIAXIAL
 
@@ -104,7 +110,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: This review covers only the frozen biaxial section point at N = 0 and theta = pi/4. The result was not independently numerically reproduced. Uniaxial reduction coverage is missing. Separate Mx and My values are not exposed.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C5-SHEAR
 
@@ -114,7 +120,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: The displayed frozen input set reproduces the first resistance. The source-case inputs corresponding to the second 62517 N benchmark are not separately exposed. National Annex validation, nonzero axial-force shear, and transverse-reinforcement design remain outside scope.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C5-PUNCHING
 
@@ -124,7 +130,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: Only the frozen interior concrete punching-resistance case is reviewed. Ledger evidence status PASS is an evidence-validation state and is not an engineering punching-capacity pass. The representative demand exceeds the calculated concrete punching resistance.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C5-TORSION
 
@@ -134,7 +140,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: The frozen representative case has zero accompanying shear and does not exercise general shear-torsion interaction. General V-T-N-M interaction, wall torsion, slab torsion, and nonrectangular-section torsion remain outside scope.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C6-NOMINAL-CURVATURE
 
@@ -144,7 +150,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: Effective length and phiEf are supplied inputs. Geometric-imperfection treatment is not separately exposed. Biaxial second-order effects, slenderness-neglect logic, and full member-design conformity remain outside scope.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C7-CRACK-WIDTH
 
@@ -154,7 +160,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
 CURRENT_LIMITATION: The frozen row does not bind a calendar code edition or validated National Annex. The method does not derive the supplied steel stress or neutral-axis depth.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C7-LONG-TERM
 
@@ -164,8 +170,8 @@ HISTORICAL_FILE_OUTCOME: REVIEW_INCOMPLETE
 HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
-CURRENT_LIMITATION: The original explicit-state file remains REVIEW_INCOMPLETE and was not rewritten. phi = 2.4 and shrinkage strain = 0.00032 remain supplied values. The current calculated re-review, fingerprint fp:ac109d1f, is ACCEPTED_FOR_STATED_SCOPE for cement class N only. Temperature adjustment, phiEf, cement classes S and R, National Annex conformity, and complete EN 1992 conformance are not established. SUPPLEMENTAL_REREVIEW_PATH: docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md.
-REVIEWER_METADATA: blank
+CURRENT_LIMITATION: The original explicit-state file remains REVIEW_INCOMPLETE and was not rewritten. phi = 2.4 and shrinkage strain = 0.00032 remain supplied values. The current calculated re-review, fingerprint fp:ac109d1f, is ACCEPTED_FOR_STATED_SCOPE for cement class N only. Temperature adjustment, phiEf, cement classes S and R, National Annex conformity, and complete EN 1992 conformance are not established. SUPPLEMENTAL_REREVIEW_PATH: docs/architecture/engineering-os/EOS_D1_C10_C7_LONG_TERM_CALCULATED_HUMAN_REREVIEW_EVIDENCE.md. Historical file reviewer metadata was not rewritten.
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C8-COVER
 
@@ -175,7 +181,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
 CURRENT_LIMITATION: Does not validate exposure-class derivation, National Annex values, calendar code edition, member compliance, or full EN 1992 engineering conformance.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C8-SPACING
 
@@ -185,7 +191,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
 CURRENT_LIMITATION: The frozen row uses a reference profile and does not bind a calendar code edition or validated National Annex. The review does not establish universal EN 1992 or project-specific detailing conformity.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C8-ANCHORAGE
 
@@ -195,7 +201,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: YES
 INDEPENDENT_CALCULATION_RECORDED: YES
 CURRENT_LIMITATION: This review covers basic required anchorage length only. Full design anchorage length, minima, modification factors, bond derivation, and available length remain outside scope.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C9-BEAM
 
@@ -205,7 +211,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: The result is the routing identity D1E.EU.C2.FLEXURE.UNIAXIAL, not beam resistance or engineering adequacy. Shear, torsion, serviceability, detailing, and anchorage are not inferred as validated from this routing result.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C9-COLUMN
 
@@ -215,7 +221,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: MEMBER_UNDETERMINED is a contract state, not an engineering failure. A correct route to C3 is not validation of nonzero axial-flexure calculation. Biaxial second-order analysis is outside the frozen contract.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C9-SLAB
 
@@ -225,7 +231,7 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: ORTHOGONAL_MOMENTS_ARE_NOT_C4 is a routing boundary, not slab resistance. Two-way slab analysis, support reactions, deflection, and complete slab design remain outside this review.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
 
 ## C10-R3A-PACK-C9-WALL
 
@@ -235,4 +241,4 @@ HUMAN_REVIEW_OUTCOME: ACCEPTED_FOR_STATED_SCOPE
 INDEPENDENT_CALCULATION_REQUIRED: NO
 INDEPENDENT_CALCULATION_RECORDED: NO
 CURRENT_LIMITATION: D1E.EU.C5.SHEAR:BLOCKED_SCOPE_MISMATCH, WALL_SECOND_ORDER:NOT_IMPLEMENTED, BOUNDARY_ELEMENT:NOT_IMPLEMENTED, and SEISMIC_WALL_DETAILING:NOT_IMPLEMENTED are contract states. They are not a completed wall-design failure. Complete reinforced-concrete wall design remains unimplemented.
-REVIEWER_METADATA: blank
+REVIEWER_METADATA: Silvestre Berso; Structural Engineer / Qualified Structural Reviewer; 2026-10-27; docs/architecture/engineering-os/EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md
