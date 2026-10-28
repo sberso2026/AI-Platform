@@ -22,7 +22,8 @@
     "./electrical-delivery": "./src/electrical-delivery/index.ts",
     "./instrumentation-delivery": "./src/instrumentation-delivery/index.ts",
     "./interface-intelligence": "./src/interface-intelligence/index.ts",
-    "./change-impact": "./src/change-impact/index.ts"
+    "./change-impact": "./src/change-impact/index.ts",
+    "./design-freeze": "./src/design-freeze/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
