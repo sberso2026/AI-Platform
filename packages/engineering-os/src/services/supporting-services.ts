@@ -16,6 +16,7 @@ import {
 } from "./core-services";
 import { dedupeDisciplinesForDisplay } from "./discipline-dedupe";
 import { isOperationalRegisterQuery } from "./engineering-evidence";
+import { prepareEngineeringAskScope } from "../phase-e5/general-methodology";
 import type { DocumentBodyRetrievalProbe } from "./engineering-retrieval-service";
 
 type RegisterOps = {
@@ -513,10 +514,29 @@ export class EngineeringAIService {
       const memoryCapture = new EngineeringMemoryCaptureService(memoryStore);
       const intelligence = new EngineeringIntelligenceService();
 
-      const objectType =
-        input.objectType ??
-        (input.documentId ? "document" : input.assetId ? "asset" : input.projectId ? "project" : null);
-      const objectId = input.objectId ?? input.documentId ?? input.assetId ?? null;
+      const prepared = prepareEngineeringAskScope(input);
+      if (!prepared.ok) {
+        return {
+          message: prepared.message,
+          requiresReview: true,
+          evidence: [],
+          evidenceState: "INSUFFICIENT" as const,
+          scope: prepared.scope,
+          limitations: [prepared.message],
+          diagnosticLimitations: [],
+          retrievalMode: "retrieval_only",
+          grounded: { abstained: true, answer: prepared.message },
+          why: null,
+          recommendedNextActions: [],
+          basis: [],
+          assumptions: [],
+          authorityStatus: "ABSTAINED",
+          explanationStatus: "unsupported",
+          meta: { policyApplied: true, phase: "E5", scopeGate: prepared.scope },
+        };
+      }
+      const objectType = prepared.objectType;
+      const objectId = prepared.objectId;
 
       const contextProvider = createSupabaseContextProvider(this.supabase, input.tenantId);
       const contextAuth = {
@@ -538,17 +558,11 @@ export class EngineeringAIService {
           tenantId: input.tenantId,
           workspaceId: input.workspaceId,
           userId: input.userId,
-          projectId: input.projectId,
+          projectId: prepared.projectId,
           objectType,
           objectId,
           query: input.message,
-          scope: (input.scope as
-            | "workspace"
-            | "project"
-            | "asset"
-            | "document"
-            | "object"
-            | undefined) ?? undefined,
+          scope: prepared.retrievalScope,
           limit: 12,
         },
           contextProvider,
@@ -582,9 +596,9 @@ export class EngineeringAIService {
                 message,
                 context: {
                   operating_system: "engineering",
-                  project_id: input.projectId,
-                  asset_id: input.assetId,
-                  document_id: input.documentId,
+                  project_id: prepared.projectId,
+                  asset_id: prepared.retrievalScope === "asset" ? input.assetId : undefined,
+                  document_id: prepared.retrievalScope === "document" ? input.documentId : undefined,
                   discipline_id: input.disciplineId,
                   grounded: true,
                   phase: input.toolAction ? "E6" : "E5",
@@ -652,14 +666,17 @@ export class EngineeringAIService {
           requiresReview: grounded.requiresReview,
           evidence: grounded.evidence,
           evidenceState: grounded.evidenceState,
-          scope: grounded.scope,
-          limitations: presented.user.length
+          scope: prepared.publicScope,
+          limitations: (presented.user.length
             ? presented.user
             : grounded.evidence.length
               ? generationFailed
                 ? ["Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning."]
                 : []
-              : ["Insufficient authorised evidence for a client-specific claim."],
+              : [prepared.publicScope === "all_engineering"
+                  ? "General methodology is not authorised project evidence."
+                  : "Insufficient authorised project evidence to provide a project-specific conclusion."]
+          ).map((item) => item.replace("Searched scope: workspace.", "Searched scope: all_engineering.")),
           diagnosticLimitations: presented.details,
           retrievalMode: grounded.retrievalMode,
           grounded: {

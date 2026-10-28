@@ -22,6 +22,7 @@ import type {
   EngineeringRecommendedAction,
   EngineeringWhyExplanation,
 } from "./contracts";
+import { generalEngineeringMethodology, projectEvidenceAbstention } from "./general-methodology";
 
 const DEFAULT_MAX_EVIDENCE = 12;
 
@@ -163,13 +164,25 @@ function buildBasis(
   evidence: EngineeringEvidence[],
   evidenceState: EngineeringEvidenceState,
   mode: EngineeringReasoningMode,
+  scope?: string | null,
 ): EngineeringReasoningBasisItem[] {
+  if (scope === "workspace" && (evidenceState === "INSUFFICIENT" || evidence.length === 0)) {
+    return [
+      {
+        kind: "DERIVED",
+        statement:
+          "All Engineering returned general methodology. It is not project evidence and it is not an engineering approval.",
+      },
+    ];
+  }
   if (evidenceState === "INSUFFICIENT" || evidence.length === 0) {
     return [
       {
         kind: "INSUFFICIENT_EVIDENCE",
         statement:
-          "Authorised evidence is inadequate to support a client-specific engineering claim.",
+          scope === "project"
+            ? "Authorised project evidence is inadequate for a project-specific conclusion."
+            : "Authorised evidence is inadequate to support a client-specific engineering claim.",
       },
     ];
   }
@@ -258,7 +271,8 @@ function synthesiseFinding(
   mode: EngineeringReasoningMode,
   evidence: EngineeringEvidence[],
   evidenceState: EngineeringEvidenceState,
-): { finding: string; answer: string; abstained: boolean; missing?: string[] } {
+  scope?: string | null,
+): { finding: string; answer: string; abstained: boolean; missing?: string[]; limitations?: string[] } {
   if (isDocumentBodyEvidence(evidence) && evidenceState !== "INSUFFICIENT") {
     const grounded = buildDocumentGroundedAnswer({ query, evidence });
     return {
@@ -269,6 +283,15 @@ function synthesiseFinding(
     };
   }
   if (evidence.length === 0 || evidenceState === "INSUFFICIENT") {
+    if (scope === "workspace") {
+      const guidance = generalEngineeringMethodology(query);
+      return {
+        abstained: false,
+        finding: guidance.finding,
+        answer: guidance.answer,
+        limitations: guidance.limitations,
+      };
+    }
     const missing = [
       "Authorised native or connector records matching the query",
       "Current approved revisions where document authority is required",
@@ -277,7 +300,9 @@ function synthesiseFinding(
       abstained: true,
       finding: "Insufficient authorised evidence.",
       answer:
-        "Engineering OS cannot support a client-specific engineering claim with the authorised evidence available. No standards, revisions, approvals, calculations, or asset history were invented.",
+        scope === "project"
+          ? projectEvidenceAbstention()
+          : "Engineering OS cannot support a client-specific engineering claim with the authorised evidence available. No standards, revisions, approvals, calculations, or asset history were invented.",
       missing,
     };
   }
@@ -499,14 +524,16 @@ export class EngineeringReasoningService {
     const reasoningStarted = Date.now();
     const mode = detectMode(request.query, request.requestedIntent);
     const evidenceState = classifyEvidenceState({ evidence: assembled.evidence });
+    const searchScope = request.searchQuery?.scope ?? null;
     const synth = synthesiseFinding(
       request.query,
       mode,
       assembled.evidence,
       evidenceState,
+      searchScope,
     );
     const assumptions = buildAssumptions(assembled.evidence, mode);
-    const basis = buildBasis(assembled.evidence, evidenceState, mode);
+    const basis = buildBasis(assembled.evidence, evidenceState, mode, searchScope);
     if (assumptions.length) {
       for (const a of assumptions) {
         basis.push({
@@ -520,6 +547,7 @@ export class EngineeringReasoningService {
     const rules = resolveRules(request.governedRuleRefs);
     const limitations = [
       ...assembled.limitations,
+      ...(synth.limitations ?? []),
       ...(synth.missing?.map((m) => `Missing: ${m}`) ?? []),
     ];
     if (request.applicableToolRefs?.length) {
@@ -531,7 +559,8 @@ export class EngineeringReasoningService {
     let answer = synth.answer;
     let degradedToRetrievalOnly = false;
 
-    if (!synth.abstained && this.provider.refine) {
+    const generalMethodology = searchScope === "workspace" && !synth.abstained && assembled.evidence.length === 0;
+    if (!synth.abstained && this.provider.refine && !generalMethodology) {
       try {
         const evidenceSummary = assembled.evidence
           .slice(0, 8)
@@ -563,8 +592,12 @@ export class EngineeringReasoningService {
       }
     }
 
-    const authorityStatus = mapAuthority(synth.abstained, evidenceState);
-    const explanationStatus = mapExplanationStatus(evidenceState, synth.abstained);
+    const authorityStatus = generalMethodology
+      ? "ADVISORY"
+      : mapAuthority(synth.abstained, evidenceState);
+    const explanationStatus = generalMethodology
+      ? "incomplete"
+      : mapExplanationStatus(evidenceState, synth.abstained);
     const why = buildWhy({
       finding: synth.finding,
       evidence: assembled.evidence,

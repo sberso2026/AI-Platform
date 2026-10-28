@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
@@ -17,6 +17,16 @@ import { useExperiencePerf } from "@/hooks/use-experience-perf";
 import {
   ENGINEERING_PROJECT_FILTER_KEY,
 } from "@/hooks/use-engineering-project-filter";
+import {
+  ASK_SCOPE_ALL,
+  ASK_SCOPE_ASSET,
+  ASK_SCOPE_DOCUMENT,
+  ASK_SCOPE_PROJECT,
+  askRequestBody,
+  normalizeAskScope,
+  projectFilterScopeDecision,
+  type AskScopeId,
+} from "@/lib/engineering/ask-scope";
 import { contextualAskStarters, describeAskContext, formatEvidenceSection, presentAskAnswer } from "@/lib/engineering/enterprise-ux";
 
 type EvidenceItem = {
@@ -84,11 +94,34 @@ interface Message {
 }
 
 const SCOPE_OPTIONS = [
-  { id: "workspace", label: "All Engineering" },
-  { id: "project", label: "Current Project" },
-  { id: "asset", label: "Current Asset/Object" },
-  { id: "document", label: "Current Document" },
+  { id: ASK_SCOPE_ALL, label: "All Engineering" },
+  { id: ASK_SCOPE_PROJECT, label: "Current Project" },
+  { id: ASK_SCOPE_ASSET, label: "Current Asset/Object" },
+  { id: ASK_SCOPE_DOCUMENT, label: "Current Document" },
 ] as const;
+
+function initialAskScope(searchParams: { get(name: string): string | null }): AskScopeId {
+  return (
+    normalizeAskScope(searchParams.get("scope")) ??
+    (searchParams.get("documentId")
+      ? ASK_SCOPE_DOCUMENT
+      : searchParams.get("assetId")
+        ? ASK_SCOPE_ASSET
+        : searchParams.get("projectId")
+          ? ASK_SCOPE_PROJECT
+          : ASK_SCOPE_ALL)
+  );
+}
+
+function readProjectFilter(): string | null {
+  try {
+    const stored = sessionStorage.getItem(ENGINEERING_PROJECT_FILTER_KEY);
+    if (!stored || stored === "all") return null;
+    return stored;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Ask Engineering OS — E2–E8 grounded evidence, Why?, tools, memory context, and governed work proposals.
@@ -135,16 +168,8 @@ export function AskEngineeringShell({
   } | null>(null);
   const [proposalDraftEdit, setProposalDraftEdit] = useState("");
   const [proposalBusy, setProposalBusy] = useState(false);
-  const [scope, setScope] = useState<string>(
-    searchParams.get("scope") ??
-      (searchParams.get("documentId")
-        ? "document"
-        : searchParams.get("assetId")
-          ? "asset"
-          : searchParams.get("projectId")
-            ? "project"
-            : "workspace"),
-  );
+  const [scope, setScope] = useState<AskScopeId>(() => initialAskScope(searchParams));
+  const scopeChosenByUser = useRef(normalizeAskScope(searchParams.get("scope")) === ASK_SCOPE_ALL);
   const [contextLabels, setContextLabels] = useState<{
     documentNumber?: string;
     documentTitle?: string;
@@ -204,36 +229,41 @@ export function AskEngineeringShell({
   }, [pathname, searchParams, initFromDeepLink]);
 
   useEffect(() => {
-    const projectFromFilter = (() => {
-      try {
-        const stored = sessionStorage.getItem(ENGINEERING_PROJECT_FILTER_KEY);
-        if (!stored || stored === "all") return null;
-        return stored;
-      } catch {
-        return null;
-      }
-    })();
-    if (projectFromFilter && !context.projectId) {
-      setContext({
-        projectId: projectFromFilter,
-        objectType: context.objectType ?? "project",
-        objectId: context.objectId ?? projectFromFilter,
-      });
-      if (scope === "workspace") setScope("project");
-    }
+    const decision = projectFilterScopeDecision({
+      scope,
+      userChoseScope: scopeChosenByUser.current,
+      projectFromFilter: readProjectFilter(),
+      contextProjectId: context.projectId,
+    });
+    if (!decision.restoreProjectId) return;
+    setContext({
+      projectId: decision.restoreProjectId,
+      objectType: context.objectType ?? "project",
+      objectId: context.objectId ?? decision.restoreProjectId,
+    });
+    if (decision.forceProjectScope) setScope(ASK_SCOPE_PROJECT);
   }, [context.projectId, context.objectType, context.objectId, setContext, scope]);
 
-  function applyScope(next: string) {
+  function applyScope(next: AskScopeId) {
+    scopeChosenByUser.current = true;
     setScope(next);
     const params = new URLSearchParams(searchParams.toString());
     params.set("scope", next);
-    if (next === "workspace") {
+    if (next === ASK_SCOPE_ALL) {
       params.delete("projectId");
       params.delete("assetId");
       params.delete("documentId");
       params.delete("objectId");
       params.delete("objectType");
       setContext({ projectId: null, objectId: null, objectType: null });
+    } else if (next === ASK_SCOPE_PROJECT) {
+      const projectId = context.projectId || readProjectFilter();
+      if (projectId) {
+        params.set("projectId", projectId);
+        params.delete("assetId");
+        params.delete("documentId");
+        setContext({ projectId, objectType: "project", objectId: projectId });
+      }
     }
     router.replace(`${pathname}?${params.toString()}`);
   }
@@ -425,19 +455,18 @@ export function AskEngineeringShell({
         if (checkNeedle) toolInputs.needle = checkNeedle;
       }
 
+      const scoped = askRequestBody({
+        scope,
+        message: userMessage.content,
+        projectId: context.projectId,
+        assetId: context.objectType === "asset" ? context.objectId : null,
+        documentId: context.objectType === "document" ? context.objectId : null,
+      });
       const res = await fetch("/api/engineering/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.content,
-          projectId: scope === "workspace" ? undefined : context.projectId || undefined,
-          assetId:
-            context.objectType === "asset" ? context.objectId || undefined : undefined,
-          documentId:
-            context.objectType === "document" ? context.objectId || undefined : undefined,
-          objectType: context.objectType || undefined,
-          objectId: context.objectId || undefined,
-          scope,
+          ...scoped,
           sessionId: context.sessionId || undefined,
           agentSlug: "engineering-director",
           toolAction: toolAction || undefined,
@@ -580,6 +609,7 @@ export function AskEngineeringShell({
             key={opt.id}
             type="button"
             onClick={() => applyScope(opt.id)}
+            aria-pressed={scope === opt.id}
             className={cn(
               "rounded-md border px-2 py-1 text-xs",
               scope === opt.id
@@ -595,8 +625,15 @@ export function AskEngineeringShell({
           className="text-xs text-slate-800 underline-offset-2 hover:underline"
           href={buildAskHref({ projectId: null })}
           onClick={() => {
+            scopeChosenByUser.current = true;
+            try {
+              sessionStorage.setItem(ENGINEERING_PROJECT_FILTER_KEY, "all");
+              window.dispatchEvent(new CustomEvent("rtb:project-filter", { detail: { projectId: null } }));
+            } catch {
+              // Storage can be unavailable; the URL clear still removes the Ask context.
+            }
             setContext({ projectId: null, objectId: null, objectType: null });
-            setScope("workspace");
+            setScope(ASK_SCOPE_ALL);
           }}
         >
           Clear context
