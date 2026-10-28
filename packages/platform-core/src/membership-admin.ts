@@ -218,16 +218,17 @@ export class MembershipAdminService {
     const existing = await this.findAuthUserByEmail(email);
     let userId: string;
     let created = false;
+    let inThisTenant = false;
 
     if (existing) {
       const memberships = await this.listTenantMembershipsForUser(existing.id);
-      const inThisTenant = memberships.some((row) => row.tenant_id === input.tenantId);
-      const inOtherTenant = memberships.some((row) => row.tenant_id !== input.tenantId);
-      if (inOtherTenant && !inThisTenant) {
+      const current = memberships.find((row) => row.tenant_id === input.tenantId);
+      inThisTenant = Boolean(current);
+      if (current?.role_slug === "owner") {
         throw new IdentityProvisioningError(
-          "identity_exists",
-          "An Auth user with this email already exists on another tenant. Do not create a duplicate or cross-link.",
-          409,
+          "invalid_recipient",
+          "An existing owner membership cannot be changed through invite.",
+          422,
           { userId: existing.id },
         );
       }
@@ -259,6 +260,18 @@ export class MembershipAdminService {
       workspaceId: input.workspaceId,
       userId,
       roleId: role.id as string,
+    });
+    await this.recordMembershipAudit({
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      userId,
+      action: existing
+        ? inThisTenant
+          ? "workspace_membership_reaffirmed"
+          : "existing_identity_workspace_membership_created"
+        : "invitation_created",
+      roleSlug,
+      existingIdentityMatched: Boolean(existing),
     });
 
     let delivery: InviteMemberResult["delivery"] = created ? "activation_delivery_failed" : "existing_user";
@@ -355,6 +368,14 @@ export class MembershipAdminService {
     if (input.workspaceId) {
       await this.attachWorkspace(input.workspaceId, input.userId, role.id as string);
     }
+    await this.recordMembershipAudit({
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      userId: input.userId,
+      action: "workspace_role_changed",
+      roleSlug,
+      existingIdentityMatched: true,
+    });
     return { userId: input.userId, roleSlug };
   }
 
@@ -400,6 +421,12 @@ export class MembershipAdminService {
       .eq("tenant_id", input.tenantId)
       .eq("user_id", input.userId);
     if (tenantError) throw new Error(tenantError.message);
+    await this.recordMembershipAudit({
+      tenantId: input.tenantId,
+      userId: input.userId,
+      action: "workspace_membership_removed",
+      existingIdentityMatched: true,
+    });
     return { userId: input.userId, tenantId: input.tenantId, removed: true as const };
   }
 
@@ -429,13 +456,44 @@ export class MembershipAdminService {
     return (await this.findAuthUserByEmail(email))?.id ?? null;
   }
 
-  private async listTenantMembershipsForUser(userId: string): Promise<Array<{ tenant_id: string }>> {
+  private async listTenantMembershipsForUser(
+    userId: string,
+  ): Promise<Array<{ tenant_id: string; role_slug: string | null }>> {
     const { data, error } = await this.admin
       .from("tenant_memberships")
-      .select("tenant_id")
+      .select("tenant_id, roles(slug)")
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
-    return (data ?? []) as Array<{ tenant_id: string }>;
+    return ((data ?? []) as Array<{ tenant_id?: string; roles?: { slug?: string } | { slug?: string }[] | null }>).map(
+      (row) => {
+        const role = Array.isArray(row.roles) ? row.roles[0] : row.roles;
+        return { tenant_id: String(row.tenant_id ?? ""), role_slug: role?.slug ?? null };
+      },
+    );
+  }
+
+  private async recordMembershipAudit(input: {
+    tenantId: string;
+    workspaceId?: string | null;
+    userId: string;
+    action: string;
+    roleSlug?: string | null;
+    existingIdentityMatched?: boolean;
+  }) {
+    const { error } = await this.admin.from("audit_events").insert({
+      tenant_id: input.tenantId,
+      workspace_id: input.workspaceId ?? null,
+      user_id: input.userId,
+      action: input.action,
+      resource_type: "workspace_membership",
+      metadata: {
+        roleSlug: input.roleSlug ?? null,
+        existingIdentityMatched: input.existingIdentityMatched === true,
+        duplicateAuthIdentity: false,
+        engineeringAuthority: false,
+      },
+    });
+    if (error) throw new Error(error.message);
   }
 
   private async tryDeliverActivation(
@@ -547,12 +605,19 @@ export class MembershipAdminService {
         404,
       );
     }
-    return {
+    const result = {
       membershipId: data.id as string,
       userId: data.user_id as string,
       status: data.status as "active" | "suspended",
       engineeringAuthority: false,
     };
+    await this.recordMembershipAudit({
+      tenantId: input.tenantId,
+      userId: input.userId,
+      action: result.status === "suspended" ? "workspace_membership_suspended" : "workspace_membership_restored",
+      existingIdentityMatched: true,
+    });
+    return result;
   }
 
   private async attachMembership(input: { tenantId: string; workspaceId: string; userId: string; roleId: string }) {

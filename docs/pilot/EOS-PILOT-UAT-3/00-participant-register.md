@@ -21,7 +21,7 @@ Fill one row when a human is **approved by the founder**, before invite. Do not 
 
 ## Rules
 
-- One Auth user per email. If invite returns `identity_exists` on another tenant, stop. Do not cross-link.
+- One Auth user per email. An existing user may receive a separate workspace membership. Do not create a second Auth user, and do not change the role on any other workspace.
 - Participant sets their own password from the activation / recovery email.
 - Sign-in path: password **Sign In** on https://eos-pilot.rtbea.com.au/login (not SSO unless the operator later certifies SSO for that person).
 - Yahoo / Worley identities are out of scope.

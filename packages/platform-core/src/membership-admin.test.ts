@@ -7,6 +7,7 @@ import {
   isPilotInviteRoleSlug,
   mapPilotInviteRole,
 } from "./membership-admin";
+import { resolveActiveMembershipAccess } from "./nav-visibility";
 
 describe("pilot invite role mapping", () => {
   it("locks self-service as the only canonical owner onboarding model", () => {
@@ -16,6 +17,7 @@ describe("pilot invite role mapping", () => {
     expect(mapPilotInviteRole("admin")).toBe("admin");
     expect(mapPilotInviteRole("project manager")).toBe("admin");
     expect(mapPilotInviteRole("engineer")).toBe("member");
+    expect(mapPilotInviteRole("pilot_engineer")).toBe("member");
     expect(mapPilotInviteRole("member")).toBe("member");
     expect(mapPilotInviteRole("licensed reviewer")).toBe("viewer");
     expect(mapPilotInviteRole("viewer")).toBe("viewer");
@@ -44,6 +46,7 @@ describe("pilot invite role mapping", () => {
             return this;
           },
           maybeSingle: async () => ({ data: { id: "membership-1", user_id: "user-b", status: "suspended" }, error: null }),
+          insert: async () => ({ error: null }),
         };
       },
     };
@@ -55,7 +58,7 @@ describe("pilot invite role mapping", () => {
       status: "suspended",
     });
     expect(updated).toMatchObject({ status: "suspended", engineeringAuthority: false });
-    expect(calls).toEqual(["tenant_memberships", "suspended"]);
+    expect(calls).toEqual(["tenant_memberships", "suspended", "audit_events"]);
     await expect(
       service.setMembershipStatus({
         tenantId: "tenant-a",
@@ -71,5 +74,34 @@ describe("pilot invite role mapping", () => {
     expect(() => assertCanAssignInviteRole("admin")).not.toThrow();
     expect(() => assertCanAssignInviteRole("member")).not.toThrow();
     expect(() => assertCanAssignInviteRole("viewer")).not.toThrow();
+  });
+});
+
+describe("active workspace role isolation", () => {
+  const memberships = [{ roleSlug: "owner" }, { roleSlug: "member" }];
+
+  it("uses the selected workspace role instead of the other workspace owner role", () => {
+    expect(resolveActiveMembershipAccess(memberships, "member")).toEqual({
+      roleSlug: "member",
+      tier: "engineer",
+    });
+  });
+
+  it("keeps owner authority when that workspace is selected", () => {
+    expect(resolveActiveMembershipAccess(memberships, "owner")).toEqual({
+      roleSlug: "owner",
+      tier: "admin",
+    });
+  });
+
+  it("fails closed to the least privilege when no workspace is selected", () => {
+    expect(resolveActiveMembershipAccess(memberships, null)?.roleSlug).toBe("member");
+  });
+
+  it("preserves a single owner workspace when it is the only membership", () => {
+    expect(resolveActiveMembershipAccess([{ roleSlug: "owner" }], null)).toEqual({
+      roleSlug: "owner",
+      tier: "admin",
+    });
   });
 });

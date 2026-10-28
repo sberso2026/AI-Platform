@@ -21,6 +21,7 @@ import { cn, SidebarNavItem, sidebarNavItemClassName, SPACING, TYPOGRAPHY } from
 import { getIcon } from "@/lib/icons";
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { ProductSwitcher } from "@/components/layout/product-switcher";
+import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 
@@ -301,6 +302,7 @@ export function Sidebar() {
       aria-label="Primary navigation"
     >
       <ProductSwitcher compact={collapsed} />
+      <WorkspaceSwitcher compact={collapsed} />
 
       <nav
         ref={navRef}

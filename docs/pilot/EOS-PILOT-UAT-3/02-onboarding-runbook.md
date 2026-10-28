@@ -16,7 +16,7 @@ Use this **after** a row exists in [00-participant-register.md](./00-participant
 2. **Activation.** Participant receives the Auth activation / recovery mail from configured SMTP. Redirect must be `https://eos-pilot.rtbea.com.au/reset-password` (or the certified recovery path). If 502 `activation_delivery_failed`, use **Resend activation**. Do not auto-confirm.
 3. **Password.** Participant sets their own password. No temporary password. No shared inbox. No operator-set password.
 4. **Login.** Participant uses **Sign In** (password), not SSO, unless later certified. Confirm they land on Command Centre for RTB Engineering Pilot LAUNCH-1.
-5. **Tenant / workspace.** Header shows RTB Engineering. No prompt to join another tenant. If `identity_exists` on another tenant, stop.
+5. **Tenant / workspace.** The active workspace is shown in the sidebar. An existing Auth user can be added to another workspace with that workspace's own role. Do not create a second Auth user for the same email, and do not change the original workspace role.
 6. **Role.** Confirm directory role matches the register. Do not assign `owner`.
 7. **Seat.** Licences & Seats → assign that user id to pool `299fe9d8-d0d1-4414-acff-770b7afcaf74`. Confirm pool still ≤ 5/5. Unseated users must hit the seat gate (record that as evidence).
 8. **Isolation.** Participant must not see Worley/Yahoo data, WSB-1RC as normal work, or other-tenant projects.

@@ -130,6 +130,27 @@ export function isPlatformAdmin(roleSlug: string): boolean {
   return resolveNavTier(roleSlug) === "admin";
 }
 
+/** Route authority follows the selected workspace. With no selection, fail closed to the least privilege. */
+export function resolveActiveMembershipAccess(
+  memberships: Array<{ roleSlug: string }>,
+  activeRoleSlug: string | null,
+): { roleSlug: string; tier: NavTier } | null {
+  if (!memberships.length) return null;
+  if (activeRoleSlug && memberships.some((row) => row.roleSlug === activeRoleSlug)) {
+    return { roleSlug: activeRoleSlug, tier: resolveNavTier(activeRoleSlug) };
+  }
+  let strictestTier: NavTier = "admin";
+  let strictestRoleSlug = memberships[0]?.roleSlug ?? "member";
+  for (const row of memberships) {
+    const tier = resolveNavTier(row.roleSlug);
+    if (NAV_TIER_RANK[tier] <= NAV_TIER_RANK[strictestTier]) {
+      strictestTier = tier;
+      strictestRoleSlug = row.roleSlug;
+    }
+  }
+  return { roleSlug: strictestRoleSlug, tier: strictestTier };
+}
+
 export function defaultNavAudience(item: NavItem): NavTier {
   if (item.audience) return item.audience;
   const group = item.group ?? "platform";

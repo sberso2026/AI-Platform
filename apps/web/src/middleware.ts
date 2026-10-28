@@ -16,8 +16,7 @@ import {
 } from "@/lib/identity/canonical-context";
 import { resolvePublicSupabaseConfig } from "@/lib/supabase/public-config";
 import { hasAuthSessionCookie, logPilotEdgeEvent, pilotKillSwitchSuspended } from "@/lib/pilot/pilot-edge";
-import { canAccessPlatformRoute, NAV_TIER_RANK, resolveNavTier } from "@rtb/platform-core";
-import type { NavTier } from "@rtb/types";
+import { canAccessPlatformRoute, resolveActiveMembershipAccess } from "@rtb/platform-core";
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
@@ -102,30 +101,6 @@ function isDeliverableLifecycleAal2Path(pathname: string): boolean {
     pathname === "/engineering/settings/templates" ||
     pathname.startsWith("/engineering/settings/templates/")
   );
-}
-
-function resolveMembershipAccess(
-  memberships: Array<{ roles: { slug: string } | { slug: string }[] | null }>
-): { roleSlug: string; tier: NavTier } | null {
-  if (!memberships.length) return null;
-
-  let strictestTier: NavTier = "admin";
-  let strictestRoleSlug = "owner";
-
-  for (const row of memberships) {
-    const role = row.roles;
-    const slug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
-    const tier = resolveNavTier(slug);
-    if (NAV_TIER_RANK[tier] <= NAV_TIER_RANK[strictestTier]) {
-      strictestTier = tier;
-      strictestRoleSlug = slug;
-    }
-  }
-
-  return {
-    roleSlug: strictestRoleSlug,
-    tier: strictestTier,
-  };
 }
 
 function pilotSuspensionResponse(request: NextRequest) {
@@ -263,13 +238,27 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && needsPlatformAccessCheck(pathname)) {
+    const resolvedContext = await resolveRequestActorContext({
+      supabase: boundActorContextClient(supabase),
+      userId: user.id,
+      header: (name) => request.headers.get(name),
+      cookie: (name) => request.cookies.get(name)?.value,
+    });
     const { data: memberships } = await supabase
       .from("tenant_memberships")
       .select("role_id, roles(slug)")
       .eq("user_id", user.id)
       .eq("status", "active");
 
-    const access = resolveMembershipAccess(memberships ?? []);
+    const access = resolveActiveMembershipAccess(
+      (memberships ?? []).map((row) => {
+        const role = row.roles as { slug?: string } | { slug?: string }[] | null;
+        const slug = (Array.isArray(role) ? role[0]?.slug : role?.slug) ?? "member";
+        return { roleSlug: slug };
+      }),
+      resolvedContext.ok ? resolvedContext.roleSlug : null,
+    );
+    if (resolvedContext.ok) persistCanonicalContext(response, resolvedContext);
 
     if (!access) {
       const url = request.nextUrl.clone();

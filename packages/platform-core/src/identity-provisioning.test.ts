@@ -45,6 +45,7 @@ function createMock(options: {
     user_metadata?: Record<string, unknown>;
   }>;
   otherTenant?: boolean;
+  memberships?: Array<{ tenant_id: string; roles?: { slug?: string } | null }>;
   createUser?: (input: Record<string, unknown>) => Promise<{ data: { user: { id: string; email: string; email_confirmed_at: null } }; error: null }>;
   mailer?: AuthMailAdapter;
 }) {
@@ -85,12 +86,22 @@ function createMock(options: {
     from(table: string) {
       if (table === "roles") return chain({ data: { id: ROLE_ID, slug: "member" }, error: null });
       if (table === "workspaces") return chain({ data: { id: WS }, error: null });
+      if (table === "audit_events") {
+        return {
+          insert: async (row: unknown) => {
+            upserts.push({ table, row });
+            return { error: null };
+          },
+        };
+      }
       if (table === "tenant_memberships") {
-        const memberships = options.otherTenant
-          ? [{ tenant_id: "other-tenant" }]
-          : users.length
-            ? [{ tenant_id: TENANT }]
-            : [];
+        const memberships =
+          options.memberships ??
+          (options.otherTenant
+            ? [{ tenant_id: "other-tenant", roles: { slug: "owner" } }]
+            : users.length
+              ? [{ tenant_id: TENANT, roles: { slug: "member" } }]
+              : []);
         return {
           ...chain({ data: memberships[0] ?? null, error: null }),
           select: () => ({
@@ -235,21 +246,54 @@ describe("MembershipAdminService.invite", () => {
     expect(mock.created).toHaveLength(0);
   });
 
-  it("refuses to cross-link an identity from another tenant", async () => {
+  it("adds a second workspace membership for an existing identity without another Auth user", async () => {
     const mock = createMock({
       users: [{ id: "foreign", email: "sberso@yahoo.com.au", email_confirmed_at: "2026-01-01" }],
-      otherTenant: true,
+      memberships: [{ tenant_id: "workspace-a-tenant", roles: { slug: "owner" } }],
+    });
+    const result = await mock.service.invite({
+      tenantId: TENANT,
+      workspaceId: WS,
+      email: "sberso@yahoo.com.au",
+      roleSlug: "pilot_engineer",
+      invitedBy: "admin-1",
+      redirectTo: `${PILOT}/reset-password`,
+    });
+    expect(result).toMatchObject({
+      userId: "foreign",
+      created: false,
+      roleSlug: "member",
+      delivery: "existing_user",
+    });
+    expect(mock.created).toHaveLength(0);
+    const tenantUpsert = mock.upserts.find((row) => row.table === "tenant_memberships");
+    expect(tenantUpsert?.row).toMatchObject({ tenant_id: TENANT, user_id: "foreign", role_id: ROLE_ID });
+    expect(JSON.stringify(mock.upserts)).not.toContain("workspace-a-tenant");
+    const audit = mock.upserts.find((row) => row.table === "audit_events");
+    expect(audit?.row).toMatchObject({
+      action: "existing_identity_workspace_membership_created",
+      metadata: { existingIdentityMatched: true, duplicateAuthIdentity: false, engineeringAuthority: false },
+    });
+    expect(JSON.stringify(audit?.row)).not.toContain("action_link");
+  });
+
+  it("does not downgrade an owner membership in the destination workspace", async () => {
+    const mock = createMock({
+      users: [{ id: "owner-1", email: "owner@rtbea.com.au", email_confirmed_at: "2026-01-01" }],
+      memberships: [{ tenant_id: TENANT, roles: { slug: "owner" } }],
     });
     await expect(
       mock.service.invite({
         tenantId: TENANT,
         workspaceId: WS,
-        email: "sberso@yahoo.com.au",
+        email: "owner@rtbea.com.au",
         roleSlug: "member",
         invitedBy: "admin-1",
         redirectTo: `${PILOT}/reset-password`,
       }),
-    ).rejects.toMatchObject({ code: "identity_exists", status: 409 });
+    ).rejects.toMatchObject({ status: 422 });
+    expect(mock.created).toHaveLength(0);
+    expect(mock.upserts.filter((row) => row.table === "tenant_memberships")).toHaveLength(0);
   });
 
   it("keeps the pending identity when activation mail fails", async () => {

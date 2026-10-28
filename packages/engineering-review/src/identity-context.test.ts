@@ -68,6 +68,27 @@ describe("ERA-7B canonical Review context", () => {
     });
   });
 
+  it("selects the pilot workspace role and does not inherit owner from the other workspace", () => {
+    const context = resolveCanonicalActorContext({
+      memberships: [signupX, reviewA],
+      requested: { tenantId: TENANT_A, workspaceId: WS_A },
+    });
+    expect(context.ok).toBe(true);
+    if (!context.ok) return;
+    expect(context.roleSlug).toBe("engineer");
+    expect(context.tenantId).toBe(TENANT_A);
+    expect(context.workspaceId).toBe(WS_A);
+  });
+
+  it("denies a workspace with no membership", () => {
+    const context = resolveCanonicalActorContext({
+      memberships: [signupX, reviewA],
+      requested: { workspaceId: WS_OTHER },
+      requestedWorkspaceOwnership: { workspaceId: WS_OTHER, tenantId: TENANT_OTHER },
+    });
+    expect(context).toEqual({ ok: false, reason: "workspace_unauthorized" });
+  });
+
   it("D. Active Tenant X does not resolve Tenant A workspace or projects", () => {
     const context = resolveCanonicalActorContext({
       memberships: [signupX, reviewA],
