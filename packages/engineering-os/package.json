@@ -23,7 +23,8 @@
     "./instrumentation-delivery": "./src/instrumentation-delivery/index.ts",
     "./interface-intelligence": "./src/interface-intelligence/index.ts",
     "./change-impact": "./src/change-impact/index.ts",
-    "./design-freeze": "./src/design-freeze/index.ts"
+    "./design-freeze": "./src/design-freeze/index.ts",
+    "./integrated-project": "./src/integrated-project/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -1,0 +1,38 @@
+{
+  "projectId": "EOS-IPF-001",
+  "projectTitle": "EOS Integrated Process Facility Demonstration",
+  "facility": "Synthetic Gas Conditioning Facility",
+  "fixtureLabel": "SYNTHETIC_VALIDATION_FIXTURE",
+  "lifecycleStages": ["not_classified", "concept", "feasibility", "feed", "detailed_engineering"],
+  "disciplines": ["process", "mechanical", "piping", "structural", "civil", "geotechnical", "electrical", "instrumentation_and_control"],
+  "counts": {
+    "interfaces": 105,
+    "changes": 27,
+    "deliverables": 57,
+    "dependencyEdges": 250
+  },
+  "baselines": {
+    "concept": "907faf43556c0e48b0f8e8ac4541af0d0856805d18eb49cea6254b4bcad25657",
+    "feasibility": "604d4d44354c5e01302f5d18761c19921b1e7c5bec3ee773addd6a36e017e243",
+    "feed": "6416f084a8f1bba12d0f83162ddf4267f0558298225d01f73483e3fb9bd8ac17",
+    "detailed": "608c7cb37a94b0040b270736c609131a524ca1c7c648469fc4a70f9cad5b8e1e",
+    "ifc": "2cf4024a60cb0dc7a7474bca1e3672b011648ea4abcd43b402cee63689b17ee7",
+    "ifc-r2": "d32eaa18db79acdf26f61f588fc9dbabb16fb2a4d26eec241f9b146c0cd26159"
+  },
+  "keyRevisions": {
+    "p101OperatingMass": "12000 kg -> 14000 kg",
+    "p101MotorPowerRecordedWithVendorRevision": "75 kW -> 110 kW",
+    "designTemperature": "80 C -> 120 C",
+    "originalIfcPipeRevision": "1",
+    "revisedIfcPipeRevision": "2"
+  },
+  "fixtures": ["src-project", "input-mass", "input-temp", "str-cal", "chg-mass", "chg-temp"],
+  "knownLimitations": [
+    "No unsupported thermodynamic, hydraulic, relief, vessel, pump, pipe-stress, civil, geotechnical, electrical, or I&C calculation is executed.",
+    "Qualified D1 formulas are unchanged.",
+    "Fixtures are not calculation qualification.",
+    "No staging or production row was written."
+  ],
+  "cleanupState": "no_hosted_rows_written",
+  "schemaChanged": false
+}
