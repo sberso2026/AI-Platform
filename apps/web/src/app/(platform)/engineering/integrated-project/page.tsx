@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
+import { QualificationRuntimePanel } from "@/components/engineering/qualification-runtime-panel";
 
 type View = {
   projectId: string;
@@ -47,6 +48,7 @@ export default function IntegratedProjectPage() {
         wrapDescription
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
+        <QualificationRuntimePanel />
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/design-freeze">Design freeze</Link>
         </p>

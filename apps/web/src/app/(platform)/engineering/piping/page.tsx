@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
+import { PersistedQualificationNotice } from "@/components/engineering/qualification-runtime-panel";
 
 type Capability = { id: string; stage: string; state: string };
 type View = {
@@ -58,6 +59,7 @@ export default function PipingDeliveryPage() {
         wrapDescription
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
+        <PersistedQualificationNotice />
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/mechanical">Mechanical delivery</Link>
           {" · "}

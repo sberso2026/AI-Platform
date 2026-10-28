@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
+import { PersistedQualificationNotice } from "@/components/engineering/qualification-runtime-panel";
 import { Button, Input, StatusChip, CommandPanel, ProjectHealthIndicator, LiveSignal, type HealthLevel } from "@rtb/ui";
 import { EosAiCore } from "@/components/layout/eos-ai-core";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
@@ -183,6 +184,7 @@ export default function EngineeringHomePage() {
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
         data-testid="engineering-os-v1-ready"
       >
+        <PersistedQualificationNotice />
         <div data-testid="engineering-os-shell" className="contents">
           <div data-testid="engineering-os-product-ready" className="contents">
             <div data-testid="engineering-command-center" className="contents">
