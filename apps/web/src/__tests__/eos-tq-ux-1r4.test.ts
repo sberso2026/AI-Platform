@@ -47,10 +47,21 @@ describe("EOS-TQ-UX-1R4 draft editing, hybrid asset, rich query", () => {
     expect(editor).toContain("Insert Image");
     expect(editor).toContain("aria-label=\"Insert image\"");
     expect(editor).toContain("contentEditable");
+    expect(editor).toContain("disabled={!imageUploadEnabled}");
+    expect(editor).toContain("Image upload is unavailable while file upload is disabled.");
     expect(editor).toContain("Uploading image...");
+    expect(css).toContain(".tq-query-editor-frame");
     expect(css).toContain("min-height: 360px");
     expect(css).toContain("max-height: 480px");
     expect(css).toContain("overflow-y: auto");
+    expect(css).toContain("caret-color: var(--eos-text-primary)");
+    expect(css).toContain("user-select: text");
+    const editorStart = css.indexOf(".tq-query-editor {\n  min-height: 360px") >= 0
+      ? css.indexOf(".tq-query-editor {\n  min-height: 360px")
+      : css.indexOf(".tq-query-editor {\r\n  min-height: 360px");
+    const editorRule = editorStart >= 0 ? css.slice(editorStart, css.indexOf(".tq-query-editor:empty", editorStart)) : "";
+    expect(editorRule).toContain("overflow: visible");
+    expect(editorRule).not.toContain("overflow-x: hidden");
     expect(upload).toContain("/api/engineering/technical-queries/query-images/upload-session");
     expect(upload).not.toContain("createCanonicalDocumentUploadSession");
   });
@@ -66,12 +77,16 @@ describe("EOS-TQ-UX-1R4 draft editing, hybrid asset, rich query", () => {
     expect(css).toContain("overflow: visible !important");
     expect(css).toContain("page-break-inside: avoid");
     expect(queryCss).toContain("@media print");
+    expect(queryCss).toContain(".tq-query-editor-frame");
     expect(queryCss).toContain(".tq-query-toolbar");
   });
 
   it("authorizes query images through the TQ route rather than a public storage path", () => {
     const getImage = readApp("src/app/api/engineering/technical-queries/[id]/query-images/[documentId]/route.ts");
-    const complete = readApp("src/app/api/engineering/technical-queries/query-images/upload-complete/route.ts");
+    const completeGate = readApp("src/app/api/engineering/technical-queries/query-images/upload-complete/route.ts");
+    const complete = readApp("src/app/api/engineering/technical-queries/query-images/upload-complete/handler.ts");
+    expect(completeGate).toContain("pilotFileIngestionEnabled");
+    expect(completeGate).toContain("pilot_file_upload_disabled");
     expect(getImage).toContain("technicalQueries.getPresented");
     expect(getImage).toContain("query_image");
     expect(getImage).not.toContain("createSignedUrl");
