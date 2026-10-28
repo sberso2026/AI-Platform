@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveAuthContext, type AuthContext } from "@/lib/kernel";
+import { isPilotEngineerRole } from "@rtb/platform-core";
 import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
 import {
   forbiddenResponse,
@@ -93,6 +94,23 @@ export async function guardReviewApi(method: string): Promise<ReviewHandlerConte
     );
   }
   const ctx = resolved.context;
+  if (isPilotEngineerRole(ctx.roleSlug)) {
+    recordSecurity({
+      name: "review.authz_failed",
+      at: new Date().toISOString(),
+      actorId: ctx.userId,
+      tenantId: ctx.tenantId,
+      workspaceId: ctx.workspaceId,
+      requestId,
+      code: "pilot_engineer_not_review_authority",
+    });
+    return lifecycleErrorResponse(
+      "pilot_engineer_not_review_authority",
+      "A pilot engineer does not have qualified review, approval, or certification authority",
+      403,
+      requestId,
+    );
+  }
   if (!ctx.workspaceId) {
     recordSecurity({
       name: "review.authz_failed",

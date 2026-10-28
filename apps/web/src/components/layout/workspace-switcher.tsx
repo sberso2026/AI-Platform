@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { displayWorkspaceRole } from "@rtb/platform-core";
 
 type WorkspaceOption = {
   tenantId: string;
@@ -93,7 +94,7 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
         {selected ? `${selected.tenantSlug} / ${selected.slug}` : "Select a workspace"}
       </p>
       <p className="truncate text-[0.75rem] text-sidebar-foreground/70">
-        {selected ? `Role ${selected.roleSlug}` : "Role follows the selected workspace"}
+        {selected ? `Role ${displayWorkspaceRole(selected.roleSlug)}` : "Role follows the selected workspace"}
       </p>
       {options.length > 1 ? (
         <select
@@ -107,7 +108,7 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
           <option value="">Select a workspace</option>
           {options.map((option) => (
             <option key={`${option.tenantId}:${option.workspaceId}`} value={`${option.tenantId}:${option.workspaceId}`}>
-              {`${option.tenantSlug} / ${option.slug} (${option.roleSlug})`}
+              {`${option.tenantSlug} / ${option.slug} (${displayWorkspaceRole(option.roleSlug)})`}
             </option>
           ))}
         </select>

@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
+import { ActiveWorkspaceLabel } from "@/components/layout/active-workspace-label";
 import { ModuleSectionNav, type ModuleNavLink } from "@/components/engineering/module-section-nav";
 import { useEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
 import {
@@ -201,7 +202,7 @@ function ModuleContextStrip() {
       data-testid="module-context-strip"
     >
       <span>
-        Workspace <strong className="font-medium text-[color:var(--eos-text-primary)]">RTB Engineering</strong>
+        Workspace <ActiveWorkspaceLabel />
       </span>
       <span>
         Project <strong className="font-medium text-[color:var(--eos-text-primary)]">{displayOperationalText(projectLabel, "All projects")}</strong>

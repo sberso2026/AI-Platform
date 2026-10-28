@@ -457,6 +457,14 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     audience: "viewer",
   },
   {
+    id: "eng-workbench",
+    label: "Engineering Workbench",
+    icon: "ClipboardCheck",
+    href: "/engineering/work",
+    group: "engineering_work",
+    audience: "viewer",
+  },
+  {
     id: "eng-projects",
     label: "Projects",
     icon: "FolderKanban",
@@ -547,6 +555,14 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     icon: "ClipboardList",
     href: "/engineering/reports",
     group: "engineering_analysis",
+    audience: "viewer",
+  },
+  {
+    id: "eng-pilot-feedback",
+    label: "Feedback",
+    icon: "MessageSquare",
+    href: "/engineering/pilot",
+    group: "engineering_registers",
     audience: "viewer",
   },
   {

@@ -262,7 +262,7 @@ describe("MembershipAdminService.invite", () => {
     expect(result).toMatchObject({
       userId: "foreign",
       created: false,
-      roleSlug: "member",
+      roleSlug: "pilot-engineer",
       delivery: "existing_user",
     });
     expect(mock.created).toHaveLength(0);

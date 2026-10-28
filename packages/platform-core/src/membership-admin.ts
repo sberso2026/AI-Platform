@@ -8,12 +8,22 @@ import {
   classifyIdentityFailure,
   deriveOnboardingState,
 } from "./identity-onboarding";
+import { PILOT_ENGINEER_ROLE_SLUG } from "./nav-visibility";
 
 /** Canonical owner path: /signup creates the tenant. Members join by admin invite email.
  * Locked for EOS external pilot — do not add a parallel RTB_ADMIN_PROVISIONED owner path. */
 export const CANONICAL_TENANT_ONBOARDING_MODEL = "SELF_SERVICE" as const;
 
-export const PILOT_INVITE_ROLE_SLUGS = ["admin", "member", "viewer"] as const;
+export const PILOT_INVITE_ROLE_SLUGS = ["admin", "member", "viewer", PILOT_ENGINEER_ROLE_SLUG] as const;
+
+const PILOT_ENGINEER_PERMISSIONS = [
+  { resource: "workspace", action: "read" },
+  { resource: "command_centre", action: "execute" },
+  { resource: "ai_agent", action: "execute" },
+  { resource: "settings", action: "read" },
+  { resource: "engineering", action: "read" },
+  { resource: "engineering", action: "execute" },
+] as const;
 export type PilotInviteRoleSlug = (typeof PILOT_INVITE_ROLE_SLUGS)[number];
 
 export function isPilotInviteRoleSlug(value: string): value is PilotInviteRoleSlug {
@@ -34,6 +44,7 @@ export function mapPilotInviteRole(input: string): PilotInviteRoleSlug {
   if (normalized === "viewer" || normalized === "reviewer" || normalized === "licensed-reviewer") {
     return "viewer";
   }
+  if (normalized === PILOT_ENGINEER_ROLE_SLUG) return PILOT_ENGINEER_ROLE_SLUG;
   return "member";
 }
 
@@ -205,6 +216,7 @@ export class MembershipAdminService {
       throw new IdentityProvisioningError("invalid_recipient", "Owner cannot be assigned through invite", 422);
     }
     const roleSlug = mapPilotInviteRole(input.roleSlug);
+    if (roleSlug === PILOT_ENGINEER_ROLE_SLUG) await this.ensurePilotEngineerRole(input.tenantId);
     const role = await this.requireRole(input.tenantId, roleSlug);
     await this.requireWorkspace(input.tenantId, input.workspaceId);
 
@@ -358,6 +370,7 @@ export class MembershipAdminService {
     if (roleLookupError) throw new Error(roleLookupError.message);
     assertCanAssignInviteRole(String(currentRoleRow?.slug ?? ""));
     const roleSlug = mapPilotInviteRole(input.roleSlug);
+    if (roleSlug === PILOT_ENGINEER_ROLE_SLUG) await this.ensurePilotEngineerRole(input.tenantId);
     const role = await this.requireRole(input.tenantId, roleSlug);
     const { error } = await this.admin
       .from("tenant_memberships")
@@ -526,6 +539,37 @@ export class MembershipAdminService {
       });
       return "activation_delivery_failed";
     }
+  }
+
+  private async ensurePilotEngineerRole(tenantId: string) {
+    const existing = await this.admin
+      .from("roles")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("slug", PILOT_ENGINEER_ROLE_SLUG)
+      .maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (existing.data?.id) return;
+    const member = await this.admin
+      .from("roles")
+      .select("permissions")
+      .eq("tenant_id", tenantId)
+      .eq("slug", "member")
+      .maybeSingle();
+    if (member.error) throw new Error(member.error.message);
+    const permissions = Array.isArray(member.data?.permissions) && member.data.permissions.length
+      ? member.data.permissions
+      : [...PILOT_ENGINEER_PERMISSIONS];
+    const inserted = await this.admin.from("roles").insert({
+      tenant_id: tenantId,
+      name: "Pilot Engineer",
+      slug: PILOT_ENGINEER_ROLE_SLUG,
+      description:
+        "Least-privilege controlled pilot engineering access. Not an administrator, reviewer, approver, or certifier.",
+      permissions,
+      is_system: true,
+    });
+    if (inserted.error) throw new Error(inserted.error.message);
   }
 
   private async requireRole(tenantId: string, slug: PilotInviteRoleSlug) {

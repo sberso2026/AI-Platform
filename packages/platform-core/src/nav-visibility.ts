@@ -115,6 +115,16 @@ export interface SidebarNavContext {
   entitledApplicationKeys?: string[];
 }
 
+export const PILOT_ENGINEER_ROLE_SLUG = "pilot-engineer";
+
+export function isPilotEngineerRole(roleSlug: string | null | undefined): boolean {
+  return roleSlug === PILOT_ENGINEER_ROLE_SLUG || roleSlug === "pilot_engineer";
+}
+
+export function displayWorkspaceRole(roleSlug: string): string {
+  return isPilotEngineerRole(roleSlug) ? "pilot_engineer" : roleSlug;
+}
+
 export function resolveNavTier(roleSlug: string): NavTier {
   if (roleSlug === "owner" || roleSlug === "admin") return "admin";
   if (roleSlug === "engineering_manager" || roleSlug === "manager") return "manager";
@@ -174,8 +184,23 @@ export function isOwnerOnlyCommerceRoute(pathname: string): boolean {
   );
 }
 
+const PILOT_ENGINEER_DENIED_GROUPS = new Set([
+  "platform",
+  "platform_advanced",
+  "administration",
+  "engineering_admin",
+]);
+
+const PILOT_ENGINEER_DENIED_IDS = new Set(["eng-review"]);
+
 export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolean {
   if (item.sidebarHidden) return false;
+  if (
+    isPilotEngineerRole(context.roleSlug) &&
+    (PILOT_ENGINEER_DENIED_IDS.has(item.id) || PILOT_ENGINEER_DENIED_GROUPS.has(item.group ?? ""))
+  ) {
+    return false;
+  }
 
   const engGroups = new Set([
     "engineering",

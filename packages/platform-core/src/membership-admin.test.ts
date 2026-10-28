@@ -17,7 +17,7 @@ describe("pilot invite role mapping", () => {
     expect(mapPilotInviteRole("admin")).toBe("admin");
     expect(mapPilotInviteRole("project manager")).toBe("admin");
     expect(mapPilotInviteRole("engineer")).toBe("member");
-    expect(mapPilotInviteRole("pilot_engineer")).toBe("member");
+    expect(mapPilotInviteRole("pilot_engineer")).toBe("pilot-engineer");
     expect(mapPilotInviteRole("member")).toBe("member");
     expect(mapPilotInviteRole("licensed reviewer")).toBe("viewer");
     expect(mapPilotInviteRole("viewer")).toBe("viewer");
@@ -25,6 +25,7 @@ describe("pilot invite role mapping", () => {
 
   it("only treats platform RBAC slugs as assignable invite roles", () => {
     expect(isPilotInviteRoleSlug("admin")).toBe(true);
+    expect(isPilotInviteRoleSlug("pilot-engineer")).toBe(true);
     expect(isPilotInviteRoleSlug("owner")).toBe(false);
     expect(isPilotInviteRoleSlug("engineer")).toBe(false);
   });

@@ -40,13 +40,15 @@ describe("EOS-SHELL-NAV-1 restore Engineering Systems navigation", () => {
 
     expect(osItems.map((i) => i.id)).toEqual(["eng-home", "eng-modules"]);
     expect(osItems.map((i) => i.label)).toEqual(["Command Centre", "Engineering Systems"]);
-    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.id).slice(0, 4)).toEqual([
+    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.id).slice(0, 5)).toEqual([
+      "eng-workbench",
       "eng-projects",
       "eng-assets",
       "eng-inspections",
       "eng-documents",
     ]);
-    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.label).slice(0, 4)).toEqual([
+    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.label).slice(0, 5)).toEqual([
+      "Engineering Workbench",
       "Projects",
       "Assets",
       "Inspections",

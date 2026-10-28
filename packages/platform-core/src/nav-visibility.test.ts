@@ -304,6 +304,35 @@ describe("EOS-SHELL-NAV-1 — Engineering Systems primary nav", () => {
     expect(item?.applicationKey).toBeUndefined();
   });
 
+  it("shows ordinary engineering navigation to a pilot engineer and hides administration and review", () => {
+    const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("pilot-engineer"));
+    const ids = visible.map((item) => item.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "eng-home",
+        "eng-modules",
+        "eng-workbench",
+        "eng-projects",
+        "eng-assets",
+        "eng-risks",
+        "eng-tqs",
+        "eng-decisions",
+        "eng-pilot-feedback",
+      ]),
+    );
+    expect(ids).not.toContain("eng-review");
+    expect(ids).not.toContain("platform-home");
+    expect(ids).not.toContain("users-permissions");
+    expect(resolveNavTier("pilot-engineer")).toBe("engineer");
+  });
+
+  it("keeps owner navigation when the same person is an owner in another workspace context", () => {
+    const owner = filterSidebarNavigation(FULL_NAVIGATION, ctx("owner")).map((item) => item.id);
+    expect(owner).toContain("platform-home");
+    expect(owner).toContain("eng-modules");
+    expect(owner).toContain("eng-review");
+  });
+
   it("hides Engineering Systems when Engineering OS is not the active operating system", () => {
     const visible = filterSidebarNavigation(
       FULL_NAVIGATION,

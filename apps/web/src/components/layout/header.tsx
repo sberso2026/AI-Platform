@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatProjectContextLabel, isRawUuid } from "@/lib/engineering/module-ops";
 import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
 import { EosAiCore } from "@/components/layout/eos-ai-core";
+import { ActiveWorkspaceLabel } from "@/components/layout/active-workspace-label";
 
 interface HeaderProps {
   title: string;
@@ -136,7 +137,9 @@ export function Header({ title, description, showEngineeringChrome, wrapDescript
               <span className="hidden text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--eos-text-secondary)] sm:inline">
                 Workspace
               </span>
-              <span className="text-[1rem] font-medium text-[color:var(--eos-text-primary)]">RTB Engineering</span>
+              <span className="text-[1rem] font-medium text-[color:var(--eos-text-primary)]">
+                <ActiveWorkspaceLabel />
+              </span>
             </div>
 
             <label className="sr-only" htmlFor="project-selector">
