@@ -45,6 +45,8 @@ export default function DeliveryLifecyclePage() {
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/lifecycle">Lifecycle intelligence</Link>
+          {" · "}
+          <Link className="underline" href="/engineering/engineering-basis">Engineering basis</Link>
         </p>
         {error ? <p className="text-sm">{error}</p> : null}
         {view ? (
