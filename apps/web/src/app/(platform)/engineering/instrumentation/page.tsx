@@ -68,6 +68,8 @@ export default function InstrumentationDeliveryPage() {
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/electrical">Electrical delivery</Link>
+          {" · "}
+          <Link className="underline" href="/engineering/interface-intelligence">Interface intelligence</Link>
         </p>
         <div className="mb-4 flex flex-wrap gap-2">
           {STAGES.map((item) => (
