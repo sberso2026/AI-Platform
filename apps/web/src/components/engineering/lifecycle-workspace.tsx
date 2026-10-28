@@ -285,6 +285,9 @@ export function LifecycleWorkspace() {
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Lifecycle" }]} />
+        <p className="mb-3 text-sm">
+          <Link className="underline" href="/engineering/delivery-lifecycle">Delivery lifecycle</Link>
+        </p>
         <EngineeringProjectContextBar />
         {error ? <OperationalError message={error} /> : null}
         <div className="mb-4 flex flex-wrap gap-2">

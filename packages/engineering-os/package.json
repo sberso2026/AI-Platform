@@ -10,7 +10,8 @@
     "./manifest": "./src/manifest.ts",
     "./commerce": "./src/commerce/service-guard.ts",
     "./security-closure": "./src/security-closure/index.ts",
-    "./security-closure/privileged-mfa": "./src/security-closure/privileged-mfa.ts"
+    "./security-closure/privileged-mfa": "./src/security-closure/privileged-mfa.ts",
+    "./delivery-lifecycle": "./src/delivery-lifecycle/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
