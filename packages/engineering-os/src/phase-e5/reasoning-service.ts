@@ -374,8 +374,18 @@ function recommendedActions(
   mode: EngineeringReasoningMode,
   abstained: boolean,
   evidenceState: EngineeringEvidenceState,
+  options?: { generalMethodology?: boolean; evidenceCount?: number },
 ): EngineeringRecommendedAction[] {
   const actions: EngineeringRecommendedAction[] = [];
+  if (options?.generalMethodology) {
+    actions.push({
+      action: "Have a qualified engineer collect authorised project evidence before any project conclusion",
+      rationale: "General methodology is not project evidence and does not approve engineering work",
+      requiresHumanReview: true,
+      autonomousApproval: false,
+    });
+    return actions;
+  }
   if (abstained) {
     actions.push({
       action: "Provide or link authorised project/asset/document records relevant to the question",
@@ -401,12 +411,14 @@ function recommendedActions(
       autonomousApproval: false,
     });
   }
-  actions.push({
-    action: "Open cited sources and verify currency (approved vs superseded)",
-    rationale: "Preserve human engineering authority over record interpretation",
-    requiresHumanReview: true,
-    autonomousApproval: false,
-  });
+  if ((options?.evidenceCount ?? 1) > 0) {
+    actions.push({
+      action: "Open cited sources and verify currency (approved vs superseded)",
+      rationale: "Preserve human engineering authority over record interpretation",
+      requiresHumanReview: true,
+      autonomousApproval: false,
+    });
+  }
   return actions;
 }
 
@@ -616,7 +628,10 @@ export class EngineeringReasoningService {
       assumptions,
       limitations: [...new Set(limitations)],
       applicableRules: rules,
-      recommendedNextActions: recommendedActions(mode, synth.abstained, evidenceState),
+      recommendedNextActions: recommendedActions(mode, synth.abstained, evidenceState, {
+        generalMethodology,
+        evidenceCount: assembled.evidence.length,
+      }),
       evidenceState,
       explanationStatus,
       authorityStatus,

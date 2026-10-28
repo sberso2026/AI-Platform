@@ -340,6 +340,22 @@ html.light select.eos-select {
   }
 }
 
+.ask-user-message,
+.ask-user-message * {
+  color: var(--eos-text-primary) !important;
+  caret-color: var(--eos-text-primary) !important;
+  -webkit-text-fill-color: var(--eos-text-primary);
+}
+.ask-user-message {
+  background: color-mix(in srgb, var(--eos-accent) 18%, var(--eos-bg-secondary)) !important;
+}
+.ask-user-message::selection,
+.ask-user-message *::selection {
+  background-color: color-mix(in srgb, var(--eos-accent) 45%, var(--eos-bg-secondary));
+  color: var(--eos-text-primary) !important;
+  -webkit-text-fill-color: var(--eos-text-primary);
+}
+
 [data-eos-theme="enterprise-dark"] .bg-white {
   background-color: var(--eos-panel-elevated);
 }

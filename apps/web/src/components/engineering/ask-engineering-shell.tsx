@@ -674,7 +674,7 @@ export function AskEngineeringShell({
                 <Card
                   className={cn(
                     "max-w-[85%]",
-                    message.role === "user" ? "bg-primary text-primary-foreground" : "",
+                    message.role === "user" ? "ask-user-message" : "",
                   )}
                 >
                   <CardContent className="p-3 text-sm">
@@ -694,7 +694,7 @@ export function AskEngineeringShell({
                             <>
                               <div>
                                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Answer</p>
-                                <p className="mt-1 text-sm font-medium text-slate-900" data-testid="ask-answer-headline">
+                                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800" data-testid="ask-answer-headline">
                                   {presented.answer}
                                 </p>
                               </div>
@@ -804,7 +804,9 @@ export function AskEngineeringShell({
                       </ul>
                     ) : (
                       <p className="mt-1 text-xs text-muted-foreground" data-testid="ask-no-evidence">
-                        No clickable sources for this response.
+                        {message.scope === "all_engineering"
+                          ? "No project-specific source. General engineering guidance, not authorised project evidence."
+                          : "No clickable sources for this response."}
                       </p>
                     )}
                   </div>

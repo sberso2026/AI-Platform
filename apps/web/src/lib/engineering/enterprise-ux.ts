@@ -268,6 +268,12 @@ export function presentAskAnswer(input: {
       why: basisBlock || input.whyFinding?.replace(/\s+/g, " ").trim() || "",
     };
   }
+  if (raw.includes("\n")) {
+    return {
+      answer: raw,
+      why: (input.whyFinding || "").replace(/\s+/g, " ").trim(),
+    };
+  }
   const stripped = raw.replace(/\s+/g, " ");
   const answerMatch = stripped.match(/answer:\s*(.+?)(?=\swhy:|\ssources|\slimitations|$)/i);
   const whyMatch = stripped.match(/why[?:]?\s*(.+?)(?=\ssources|\slimitations|$)/i);

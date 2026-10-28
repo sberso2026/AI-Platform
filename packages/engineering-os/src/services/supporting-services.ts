@@ -675,8 +675,17 @@ export class EngineeringAIService {
                 : []
               : [prepared.publicScope === "all_engineering"
                   ? "General methodology is not authorised project evidence."
-                  : "Insufficient authorised project evidence to provide a project-specific conclusion."]
-          ).map((item) => item.replace("Searched scope: workspace.", "Searched scope: all_engineering.")),
+                  : "Insufficient authorised project evidence is available to provide a project-specific conclusion."]
+          ).map((item) =>
+            prepared.publicScope === "all_engineering"
+              ? item
+                  .replace("Searched scope: workspace.", "Searched scope: all_engineering.")
+                  .replace(
+                    "No certified intelligence capability advertised for this intent; using evidence/reasoning fallback.",
+                    "No certified calculation capability applies. This is general engineering guidance, not authorised project evidence.",
+                  )
+              : item,
+          ),
           diagnosticLimitations: presented.details,
           retrievalMode: grounded.retrievalMode,
           grounded: {

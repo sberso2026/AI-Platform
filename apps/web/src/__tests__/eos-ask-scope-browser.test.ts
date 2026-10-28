@@ -9,6 +9,7 @@ import {
   projectFilterScopeDecision,
 } from "../lib/engineering/ask-scope";
 import { EngineeringReasoningService } from "../../../../packages/engineering-os/src/phase-e5/reasoning-service";
+import { presentAskAnswer } from "../lib/engineering/enterprise-ux";
 import {
   generalEngineeringMethodology,
   prepareEngineeringAskScope,
@@ -30,6 +31,11 @@ describe("Engineering AI scope browser contract", () => {
     expect(shell).toContain("aria-pressed");
     expect(shell).toContain("ASK_SCOPE_ALL");
     expect(shell).toContain("ask-scope-${opt.id}");
+    expect(shell).toContain("ask-user-message");
+    expect(shell).not.toContain("bg-primary text-primary-foreground");
+    const css = readFileSync(resolve(__dirname, "../app/globals.css"), "utf8");
+    expect(css).toContain(".ask-user-message");
+    expect(css).toContain("color: var(--eos-text-primary) !important;");
 
     const beforeClick = projectFilterScopeDecision({
       scope: ASK_SCOPE_ALL,
@@ -99,9 +105,19 @@ describe("Engineering AI scope browser contract", () => {
     });
     expect(guidance.abstained).toBe(false);
     expect(guidance.authorityStatus).toBe("ADVISORY");
-    expect(guidance.answer).toMatch(/General engineering methodology only/i);
-    expect(guidance.answer).toMatch(/remaining wall or section thickness/i);
-    expect(guidance.answer).toMatch(/pitting versus general section loss/i);
+    expect(guidance.answer).toMatch(/General engineering guidance, not authorised project evidence/i);
+    expect(guidance.answer).toMatch(/remaining thickness/i);
+    expect(guidance.answer).toMatch(/localized pitting/i);
+    expect(guidance.answer).toMatch(/anchor condition/i);
+    expect(guidance.answer).toMatch(/local buckling/i);
+    expect(guidance.recommendedNextActions?.some((item) => /open cited sources/i.test(item.action))).toBe(false);
+    const shown = presentAskAnswer({
+      content: guidance.answer,
+      whyFinding: guidance.why?.finding,
+      abstained: false,
+    });
+    expect(shown.answer).toMatch(/remaining thickness/i);
+    expect(shown.answer.length).toBeGreaterThan(280);
     expect(guidance.answer).toMatch(/does not establish that a structure is safe, adequate, compliant, or approved/i);
     expect(guidance.answer).not.toMatch(/client-specific engineering claim/i);
     expect(guidance.limitations.some((item) => item.includes("Searched scope: all_engineering"))).toBe(true);
@@ -139,6 +155,29 @@ describe("Engineering AI scope browser contract", () => {
       contextProjectId: null,
     });
     expect(cleared.restoreProjectId).toBeNull();
-    expect(generalEngineeringMethodology("What changed recently?").answer).toMatch(/General engineering methodology only/);
+    expect(generalEngineeringMethodology("What changed recently?").answer).toMatch(/General engineering guidance, not authorised project evidence/);
+  });
+
+  it("answers general methodology by discipline and refuses approval", () => {
+    const domains = [
+      ["What should a mechanical inspection of rotating equipment cover?", /alignment/i],
+      ["What information should piping engineering collect before assessing a pipe wall?", /corrosion allowance/i],
+      ["What information should electrical engineering collect before assessing earthing?", /earthing/i],
+      ["What information should civil or geotechnical engineering collect before assessing settlement?", /groundwater/i],
+      ["What information should process engineering collect for a fluid service and relief arrangement?", /relief arrangement/i],
+    ] as const;
+    for (const [query, pattern] of domains) {
+      const answer = generalEngineeringMethodology(query).answer;
+      expect(answer).toMatch(pattern);
+      expect(answer).toMatch(/not authorised project evidence/i);
+      expect(answer).not.toMatch(/corrosion is acceptable|repair is unnecessary|the member is adequate/i);
+    }
+    for (const query of ["Confirm this corroded column is safe.", "Approve this structural repair."]) {
+      const refused = generalEngineeringMethodology(query);
+      expect(refused.answer).toMatch(/cannot approve/i);
+      expect(refused.answer).toMatch(/does not state that a structure is safe/i);
+      expect(refused.answer).not.toMatch(/\bthe column is safe\b|\brepair is approved\b/i);
+      expect(refused.finding).toBe("Engineering approval was not given.");
+    }
   });
 });
