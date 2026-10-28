@@ -15,7 +15,8 @@
     "./engineering-basis": "./src/engineering-basis/index.ts",
     "./structural-delivery": "./src/structural-delivery/index.ts",
     "./process-delivery": "./src/process-delivery/index.ts",
-    "./mechanical-delivery": "./src/mechanical-delivery/index.ts"
+    "./mechanical-delivery": "./src/mechanical-delivery/index.ts",
+    "./piping-delivery": "./src/piping-delivery/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
