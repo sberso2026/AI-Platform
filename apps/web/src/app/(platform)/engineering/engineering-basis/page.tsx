@@ -67,6 +67,8 @@ export default function EngineeringBasisPage() {
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/delivery-lifecycle">Delivery lifecycle</Link>
+          {" · "}
+          <Link className="underline" href="/engineering/structural">Structural delivery</Link>
         </p>
         <div className="mb-4 flex flex-wrap gap-2">
           {SECTIONS.map((item) => (
