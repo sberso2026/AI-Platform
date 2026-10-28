@@ -18,7 +18,8 @@
     "./mechanical-delivery": "./src/mechanical-delivery/index.ts",
     "./piping-delivery": "./src/piping-delivery/index.ts",
     "./civil-delivery": "./src/civil-delivery/index.ts",
-    "./geotechnical-delivery": "./src/geotechnical-delivery/index.ts"
+    "./geotechnical-delivery": "./src/geotechnical-delivery/index.ts",
+    "./electrical-delivery": "./src/electrical-delivery/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
