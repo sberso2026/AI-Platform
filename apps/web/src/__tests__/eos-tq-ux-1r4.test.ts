@@ -55,6 +55,11 @@ describe("EOS-TQ-UX-1R4 draft editing, hybrid asset, rich query", () => {
     expect(css).toContain("max-height: 480px");
     expect(css).toContain("overflow-y: auto");
     expect(css).toContain("caret-color: var(--eos-text-primary)");
+    expect(css).toContain(".tq-query-editor *");
+    expect(css).toContain("-webkit-text-fill-color: var(--eos-text-primary)");
+    expect(css).toContain(".tq-query-editor::selection");
+    expect(css).toContain("color-scheme: dark");
+    expect(css).toContain("html.light .tq-query-editor-frame");
     expect(css).toContain("user-select: text");
     const editorStart = css.indexOf(".tq-query-editor {\n  min-height: 360px") >= 0
       ? css.indexOf(".tq-query-editor {\n  min-height: 360px")
