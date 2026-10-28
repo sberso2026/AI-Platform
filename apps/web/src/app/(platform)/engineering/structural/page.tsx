@@ -57,6 +57,8 @@ export default function StructuralDeliveryPage() {
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/engineering-basis">Engineering basis</Link>
+          {" · "}
+          <Link className="underline" href="/engineering/process">Process delivery</Link>
         </p>
         <div className="mb-4 flex flex-wrap gap-2">
           {STAGES.map((item) => (
