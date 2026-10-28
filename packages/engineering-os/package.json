@@ -21,7 +21,8 @@
     "./geotechnical-delivery": "./src/geotechnical-delivery/index.ts",
     "./electrical-delivery": "./src/electrical-delivery/index.ts",
     "./instrumentation-delivery": "./src/instrumentation-delivery/index.ts",
-    "./interface-intelligence": "./src/interface-intelligence/index.ts"
+    "./interface-intelligence": "./src/interface-intelligence/index.ts",
+    "./change-impact": "./src/change-impact/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

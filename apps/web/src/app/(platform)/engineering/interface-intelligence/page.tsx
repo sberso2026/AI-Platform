@@ -61,6 +61,8 @@ export default function InterfaceIntelligencePage() {
           <Link className="underline" href="/engineering/interfaces">Interface register</Link>
           {" · "}
           <Link className="underline" href="/engineering/instrumentation">Instrumentation and control</Link>
+          {" · "}
+          <Link className="underline" href="/engineering/change-impact">Change impact</Link>
         </p>
         <div className="mb-4 flex flex-wrap gap-2">
           {STAGES.map((item) => (
