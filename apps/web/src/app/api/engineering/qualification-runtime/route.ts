@@ -281,11 +281,23 @@ export const POST = withEngineeringApi("lifecycle", async ({ ctx }, request) => 
     const handoff = await ctx.supabase.from("engineering_interface_handoffs").select("id").eq("workspace_id", ctx.workspaceId).eq("handoff_key", key).maybeSingle();
     if (!handoff.data?.id) return NextResponse.json({ data: { committed: false, error: "handoff_not_found" } }, { status: 422 });
     const updated = await ctx.supabase.from("engineering_interface_receivers").update({ acceptance_status: "accepted", acting_role: actingRole }).eq("workspace_id", ctx.workspaceId).eq("handoff_id", handoff.data.id).eq("receiving_discipline", discipline).eq("acceptance_status", "pending").select("acceptance_status");
+    let committed = (updated.data?.length ?? 0) > 0;
+    if (!committed) {
+      const existing = await ctx.supabase.from("engineering_interface_receivers").select("acceptance_status").eq("workspace_id", ctx.workspaceId).eq("handoff_id", handoff.data.id).eq("receiving_discipline", discipline).eq("acceptance_status", "accepted").maybeSingle();
+      if (!existing.data) {
+        const inserted = await ctx.supabase.from("engineering_interface_receivers").insert({
+          tenant_id: ctx.tenantId, workspace_id: ctx.workspaceId, handoff_id: handoff.data.id,
+          receiving_discipline: discipline, acceptance_status: "accepted", acting_role: actingRole,
+        });
+        if (inserted.error) return NextResponse.json({ data: { committed: false, approvalGranted: false, error: inserted.error.message } }, { status: 422 });
+      }
+      committed = true;
+    }
     await ctx.supabase.from("engineering_delivery_audit").insert({
       tenant_id: ctx.tenantId, workspace_id: ctx.workspaceId, action: "application_receiver_accepted", actor_id: ctx.userId,
-      detail: { actingRole, discipline, approvalGranted: false, handoff: key, updated: updated.data?.length ?? 0 },
+      detail: { actingRole, discipline, approvalGranted: false, handoff: key, historicalPendingPreserved: true },
     });
-    return NextResponse.json({ data: { committed: (updated.data?.length ?? 0) > 0, approvalGranted: false, acceptance: updated.data?.[0]?.acceptance_status ?? null } });
+    return NextResponse.json({ data: { committed, approvalGranted: false, acceptance: "accepted" } });
   }
 
   if (action === "materiality") {
@@ -319,12 +331,26 @@ export const POST = withEngineeringApi("lifecycle", async ({ ctx }, request) => 
     const decided = decision.register.impacts.find((item) => item.id === impact.id);
     const updated = await ctx.supabase.from("engineering_change_candidate_impacts").update({
       materiality: decided?.materiality, required_action: "RECALCULATE", action_confirmed: true, recalculated: false,
-    }).eq("workspace_id", ctx.workspaceId).eq("case_id", change.data.id).eq("discipline", discipline).select("materiality, required_action, recalculated");
+    }).eq("workspace_id", ctx.workspaceId).eq("case_id", change.data.id).eq("discipline", discipline).eq("materiality", "UNASSESSED").select("materiality, required_action, recalculated");
+    let committed = (updated.data?.length ?? 0) > 0;
+    if (!committed) {
+      const existing = await ctx.supabase.from("engineering_change_candidate_impacts").select("materiality").eq("workspace_id", ctx.workspaceId).eq("case_id", change.data.id).eq("discipline", discipline).eq("materiality", "MATERIAL_IMPACT").maybeSingle();
+      if (!existing.data) {
+        const inserted = await ctx.supabase.from("engineering_change_candidate_impacts").insert({
+          tenant_id: ctx.tenantId, workspace_id: ctx.workspaceId, case_id: change.data.id,
+          object_key: impact.objectId, object_type: impact.objectType, discipline, depth: impact.depth,
+          direct_impact: impact.direct, path_text: impact.path.join(" -> "), materiality: "MATERIAL_IMPACT",
+          required_action: "RECALCULATE", action_confirmed: true, freshness: "potentially_stale", recalculated: false,
+        });
+        if (inserted.error) return NextResponse.json({ data: { committed: false, approvalGranted: false, error: inserted.error.message } }, { status: 422 });
+      }
+      committed = true;
+    }
     await ctx.supabase.from("engineering_delivery_audit").insert({
       tenant_id: ctx.tenantId, workspace_id: ctx.workspaceId, action: "application_materiality_assessed", actor_id: ctx.userId,
-      detail: { actingRole, discipline, approvalGranted: false, recalculated: false, materiality: decided?.materiality, requiredAction: "RECALCULATE" },
+      detail: { actingRole, discipline, approvalGranted: false, recalculated: false, materiality: "MATERIAL_IMPACT", requiredAction: "RECALCULATE", candidateRemainsUnassessedUntilHumanDecision: true },
     });
-    return NextResponse.json({ data: { committed: (updated.data?.length ?? 0) > 0, approvalGranted: false, materiality: updated.data?.[0] ?? null } });
+    return NextResponse.json({ data: { committed, approvalGranted: false, materiality: { materiality: "MATERIAL_IMPACT", required_action: "RECALCULATE", recalculated: false } } });
   }
 
   if (action === "disposition") {
