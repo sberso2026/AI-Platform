@@ -1,6 +1,7 @@
 {
   "phase": "EOS-2.17-CONTROLLED-PRODUCTION-PROMOTION-EXECUTION",
   "productionPromotionStatus": "DEPLOYED_COHORT_DISABLED",
+  "continuationVerdict": "BLOCKED",
   "verdict": "PASS_WITH_LIMITATIONS",
   "productionMigrationApplied": true,
   "productionRedeployed": true,

@@ -2,7 +2,9 @@
 
 ## Result
 
-`PRODUCTION_PRE_ENABLEMENT_SECURITY_GATE=PARTIAL`
+`PRODUCTION_PRE_ENABLEMENT_SECURITY_GATE=NOT_RUN`
+
+The continuation re-read the promoted state. Ledger 158, deployment `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ`, and zero enrollment rows were unchanged. Authenticated tenant-isolation checks were not run because the Production pilot login was not completed. The cohort was not enabled.
 
 `EOS_2_PRODUCTION_CONTROLLED_PILOT_ENABLED=NO`
 

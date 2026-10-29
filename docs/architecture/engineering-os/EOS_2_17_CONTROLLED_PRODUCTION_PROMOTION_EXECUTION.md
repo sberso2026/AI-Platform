@@ -28,7 +28,7 @@ Rollback deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` was the serving deploymen
 
 ## What did not run
 
-Authenticated pilot login, EOS 1 workflow smoke, and cross-workspace UI smoke were not run. The approved sequence says not to enable the cohort until those pass. Unauthenticated checks only: `/engineering` returns 307 to `/login`, and `/api/engineering/delivery-lifecycle` returns 401. The named workspace was not enrolled. EOS 2 remains disabled for every Production workspace.
+Authenticated pilot login, EOS 1 workflow smoke, and cross-workspace UI smoke were not run in the first execution. The continuation reached the Production login page and stopped there. The pilot account password is not available in this session, and authentication was not bypassed. The named workspace remains unenrolled. EOS 2 remains disabled for every Production workspace.
 
 `LEGACY_PROJECT_AUTO_MIGRATION=NO`
 

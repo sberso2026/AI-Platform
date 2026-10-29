@@ -26,7 +26,7 @@ Rollback deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` remains the prior Product
 | Build identity | Candidate commit, production env, production Supabase |
 | `/engineering` unauthenticated | 307 to `/login` |
 | `/api/engineering/delivery-lifecycle` unauthenticated | 401 |
-| Authenticated pilot login | Not run |
+| Authenticated pilot login | Not run. The continuation opened the normal login form and did not submit credentials. |
 | EOS 1 workflow | Not run |
 | Cross-workspace UI isolation | Not run |
 | Cohort enablement | Not run |
