@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
+import { PilotWorkflowPanel } from "@/components/engineering/pilot-workflow-panel";
 
 type View = {
   stage: string;
@@ -65,6 +66,7 @@ export default function EngineeringBasisPage() {
         wrapDescription
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
+        <PilotWorkflowPanel />
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/delivery-lifecycle">Delivery lifecycle</Link>
           {" · "}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { PersistedQualificationNotice } from "@/components/engineering/qualification-runtime-panel";
+import { PilotWorkflowPanel } from "@/components/engineering/pilot-workflow-panel";
 
 type MatrixRow = { source: string; receiver: string; active: number; open: number; rejected: number; conditional: number; stale: number };
 type Summary = { waiting: number; received: number; owed: number; accepted: number; rejected: number; stale: number };
@@ -59,6 +60,7 @@ export default function InterfaceIntelligencePage() {
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <PersistedQualificationNotice />
+        <PilotWorkflowPanel />
         <p className="mb-4 text-sm">
           <Link className="underline" href="/engineering/interfaces">Interface register</Link>
           {" · "}
