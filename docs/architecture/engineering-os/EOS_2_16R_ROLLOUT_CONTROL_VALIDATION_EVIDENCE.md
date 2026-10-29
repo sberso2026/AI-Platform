@@ -101,6 +101,6 @@ Executed after the runtime commit:
 
 ## Migration
 
-`20261029120000` SHA-256 `9896c49a648ffe05892caccb733b82b342006bde618eb73235a058a3a4a5b21`. Isolated rehearsal created the table with RLS enabled, three policies, and zero rows. Staging apply did not enroll any workspace by itself. The qualification enrollment was a separate explicit write. Production was not migrated.
+`20261029120000` SHA-256 `9896c49a648ffe05892caccdb733b82b342006bde618eb73235a058a3a4a5b21`. Isolated rehearsal created the table with RLS enabled, three policies, and zero rows. Staging apply did not enroll any workspace by itself. The qualification enrollment was a separate explicit write. Production was not migrated.
 
 Pending Production versions are the previous thirteen EOS 2.x files plus this file. Count 14. Destructive count 0. Version `20261028240000` remains a historical key and was not renamed.

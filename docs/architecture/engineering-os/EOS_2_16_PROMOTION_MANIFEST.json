@@ -29,7 +29,7 @@
   "migrationRehearsal": "PASS",
   "migrationRehearsalEnvironment": "isolated-postgres-16",
   "newMigrationId": "20261029120000",
-  "newMigrationSha256": "9896c49a648ffe05892caccb733b82b342006bde618eb73235a058a3a4a5b21",
+  "newMigrationSha256": "9896c49a648ffe05892caccdb733b82b342006bde618eb73235a058a3a4a5b21",
   "applicationRollbackDeploymentId": "dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB",
   "featureFlagDefault": "OFF",
   "eos2FeatureFlagRolloutReady": true,

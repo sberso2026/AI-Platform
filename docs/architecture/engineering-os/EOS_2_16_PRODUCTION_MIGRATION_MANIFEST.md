@@ -19,7 +19,7 @@ Each row is `ADDITIVE_SAFE`, rollback class `FORWARD_FIX_REQUIRED` for the appli
 | 20261029060000 | eos_2_11_interface_intelligence | EOS 2.11 | `8669c6ec7d61ba94642ec727571d3871c5754a143e297258945e24793dee966b` |
 | 20261029080000 | eos_2_12_change_impact_intelligence | EOS 2.12 | `045fec433e080cdad3478f345ec7eea51c3c799f7eb9d55409bab56d6169f1b6` |
 | 20261029100000 | eos_2_13_design_freeze_deliverable_governance | EOS 2.13 | `9f27021b5e4e4d4def5f68cc8a2430605ba05d641ced0ae1b060cf797f027350` |
-| 20261029120000 | eos_2_16r_rollout_enrollment | EOS 2.16R | `9896c49a648ffe05892caccb733b82b342006bde618eb73235a058a3a4a5b21` |
+| 20261029120000 | eos_2_16r_rollout_enrollment | EOS 2.16R | `9896c49a648ffe05892caccdb733b82b342006bde618eb73235a058a3a4a5b21` |
 
 Objects are the `engineering_delivery_*`, `engineering_basis_*`, eight discipline delivery families, `engineering_interface_*`, `engineering_change_impact_*`, and `engineering_design_freeze_*` / `engineering_governed_*` tables created by those files. Each enables RLS and adds select/insert policies plus workspace-tenant triggers. The rehearsal created 113 tables, 227 policies, and 126 triggers. Staging column counts for those 113 tables matched the rehearsal. Production has none of the EOS 2.x delivery tables checked in this phase.
 
