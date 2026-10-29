@@ -1,0 +1,21 @@
+{
+  "phase": "EOS-3.14-GA-POST-ACTIVATION-ASSURANCE-AND-PROGRAM-CLOSEOUT",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "startHead": "5ffe47e8b987df53d3afb06703f854910178c4d3",
+  "releaseStatus": "GENERAL_AVAILABILITY",
+  "activationStatus": "ACTIVE_CONTROLLED_GA",
+  "version": "3.0.0",
+  "releaseTag": "engineering-os-v3.0.0",
+  "finalGaRuntimeCommit": "5ffe47e8b987df53d3afb06703f854910178c4d3",
+  "finalGaDeploymentId": "dpl_9CxbKHsVh7Uvkszz8F82CqCbPqFy",
+  "productionMigrationLedger": 170,
+  "productionChangeCount": 0,
+  "maintenanceMode": "ACTIVE",
+  "developmentProgramStatus": "CLOSED",
+  "programComplete": true,
+  "canonicalGaBaselineFingerprint": "sha256:3970ed9b7c5748e37beaa2f30ce055d8dc347d43291da00e779af7e724589291",
+  "gaEvidenceManifestFingerprint": "sha256:f3ef08cb12f458c5a77d462d6e5061b278fbd09af8784973fec7c012bde04042",
+  "programCloseoutFingerprint": "sha256:8b4ebbb38e33bdcd7ce3e8d09283f0a8501da42296dcd8af7eadad755d7d4ff8",
+  "readyForNextPhase": true,
+  "recommendedNextPhase": "POST_GA_MAINTENANCE_AND_SEPARATE_CAPABILITY_TRACKS"
+}
