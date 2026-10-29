@@ -50,8 +50,12 @@ Missing: GA entitlement, GA onboarding, customer-facing GA scope packaging, auth
 
 ## Human GA authority
 
-`HUMAN_GA_RELEASE_SIGNATORY_IDENTIFIED=YES` — Silvestre Berso, Founder and Authorized Production Release Authority
+`HUMAN_GA_RELEASE_SIGNATORY_IDENTIFIED=YES` — Silvestre Berso
 
-`HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=NO` — verified scope is Controlled Production Pilot Promotion only (EOS 2.17R). Not automatically broadened to GA.
+`HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=YES` — declared Founder and Authorized General Availability Release Authority for EOS 2.0 GA readiness remediation and final GA release decision (`EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`)
+
+`FINAL_GA_GO_NO_GO=NOT_ISSUED`
 
 `AI_GA_RELEASE_AUTHORITY=NO`
+
+Prior EOS 2.17R pilot-promotion authority remains preserved and is not reinterpreted as a GA GO.

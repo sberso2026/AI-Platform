@@ -46,7 +46,7 @@ Additional mandatory gap for declared global deployability:
 
 5. **Live multi-enrolled Production cohort** — `LIVE_MULTI_ENROLLED_PRODUCTION_COHORT_VALIDATED=NO` while `MULTI_ENROLLED_COHORT_GA_DISPOSITION=REQUIRED` for globally deployable multi-workspace GA. Isolation against non-enrolled workspaces is not a substitute.
 
-Human GA release authority: Silvestre Berso is identified as Founder and Authorized Production Release Authority, but the verified decision scope remains **EOS 2.0 Controlled Production Pilot Promotion** only. `HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=NO` for General Availability. Even if remediations complete, a separate human GA authorization step would still be required before activation.
+Human GA release authority: After this gate, Silvestre Berso was designated Founder and Authorized General Availability Release Authority for remediation and the final GA decision (`EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`). That later declaration sets `HUMAN_GA_RELEASE_AUTHORITY=YES` and `FINAL_GA_GO_NO_GO=NOT_ISSUED`. It does not convert this gate’s `NO_GO_REMEDIATION_REQUIRED` into GA activation. A separate final human `GO` or `NO-GO` remains required after EOS 2.20R remediation and a successful EOS 2.20 GA Gate rerun.
 
 ## What did pass (non-decisive for GA)
 
