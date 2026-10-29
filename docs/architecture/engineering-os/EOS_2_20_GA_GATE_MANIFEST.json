@@ -87,7 +87,6 @@
   "qualifiedD1BaselineInvalidated": false,
   "nextPhase": "EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION",
   "readyForNextPhase": true,
-  "gaActivationPerformed": false,
   "limitations": [
     "Formal legal review of customer policy package required before external customers",
     "Pricing externally configured",
