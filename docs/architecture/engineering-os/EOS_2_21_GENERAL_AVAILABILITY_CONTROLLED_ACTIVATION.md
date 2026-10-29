@@ -61,6 +61,8 @@
 | Enrolled workspaces | `2` |
 | Active `eos-2` grants | `2` |
 | Migration ledger | `161` |
+| Activation runtime | `051a341092f9a37fd6270c5bb1702b08169f6db0` |
+| Activation deployment | `dpl_Hyixcc94d7sbfJbWwR1sBWozmmxF` |
 
 ## Qualification preserved
 

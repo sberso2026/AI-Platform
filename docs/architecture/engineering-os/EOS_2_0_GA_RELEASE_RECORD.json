@@ -12,6 +12,8 @@
   "preActivationRuntimeCommit": "72d668d2a34e33de9c9b438e0462d0af8c15b031",
   "preActivationDeploymentId": "dpl_DL6rmuFs2iX2hKKwS83XNhVtmCpF",
   "preActivationMigrationLedgerCount": 160,
+  "activationRuntimeCommit": "051a341092f9a37fd6270c5bb1702b08169f6db0",
+  "activationDeploymentId": "dpl_Hyixcc94d7sbfJbWwR1sBWozmmxF",
   "activationMigrationId": "20261029170000",
   "postActivationMigrationLedgerCount": 161,
   "productionSupabase": "wcydlhqiqdwgoaqrlget",
