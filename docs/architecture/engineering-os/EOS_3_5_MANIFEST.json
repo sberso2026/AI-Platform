@@ -1,0 +1,30 @@
+{
+  "phase": "EOS-3.5-GOVERNED-WORKFLOW-AND-EVENT-ARCHITECTURE",
+  "verdict": "PASS",
+  "branch": "eos-3/foundation-and-compatibility",
+  "eos31FoundationPreserved": true,
+  "eos32CanonicalObjectBaselinePreserved": true,
+  "eos33KnowledgeRetrievalBaselinePreserved": true,
+  "eos34DecisionOptimizationBaselinePreserved": true,
+  "workflowEngineDecision": "EVOLVE_EXISTING",
+  "eventAuthoritySeparation": true,
+  "aiWorkflowAuthority": false,
+  "databaseSchemaChanged": true,
+  "newMigrationId": "20261030020000_eos_3_5_workflow_events",
+  "historicalMigrationsUnchanged": true,
+  "productionMigrationLedger": 161,
+  "eos3ProductionActivationPerformed": false,
+  "productionDataWriteCount": 0,
+  "qualificationImpact": "NONE",
+  "newMaterialArchitecturalDecisionCount": 0,
+  "recommendedNextPhase": "EOS-3.6-INTEGRATION-AND-SOLVER-FRAMEWORK",
+  "readyForNextPhase": true,
+  "artifacts": {
+    "phase": "docs/architecture/engineering-os/EOS_3_5_GOVERNED_WORKFLOW_AND_EVENT_ARCHITECTURE.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_5_WORKFLOW_STATE_AND_AUTHORITY_MODEL.md",
+    "events": "docs/architecture/engineering-os/EOS_3_5_EVENT_MODEL_AND_CAUSATION.md",
+    "staleness": "docs/architecture/engineering-os/EOS_3_5_CHANGE_PROPAGATION_AND_STALENESS.md",
+    "checkpoints": "docs/architecture/engineering-os/EOS_3_5_HUMAN_CHECKPOINT_GOVERNANCE.md",
+    "staging": "docs/architecture/engineering-os/EOS_3_5_STAGING_VALIDATION_EVIDENCE.md"
+  }
+}
