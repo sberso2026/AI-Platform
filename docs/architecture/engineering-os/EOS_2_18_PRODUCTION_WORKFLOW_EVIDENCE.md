@@ -1,101 +1,125 @@
 # EOS 2.18 Production Workflow Evidence
 
-Session: authenticated Production session on `https://eos-pilot.rtbea.com.au`, workspace `eos-controlled-pilot / default`, role `pilot_engineer`. Browser: Microsoft Edge. No password, token, cookie, or recovery secret was read or stored.
+Session: authenticated Production session on `https://eos-pilot.rtbea.com.au`, workspace `eos-controlled-pilot / default`, role `pilot_engineer`. Browser: Microsoft Edge. No password, token, cookie, or recovery secret was stored in artifacts.
 
-Database evidence is a read-only count after the session actions. Management access was used only to count rows. No insert, update, or delete was issued.
+Database evidence used the Supabase management query API for read-only counts and state. No migration replay and no cohort expansion occurred.
 
 ## Project
 
-`PRODUCTION_PILOT_VALIDATION_PROJECT_READY=NO`
+`PRODUCTION_PILOT_VALIDATION_PROJECT_READY=YES`
 
-The approved workspace contains 1 project. It does not contain a project named `CONTROLLED_PRODUCTION_PILOT_VALIDATION`. `Pilot-0001` was left unchanged. No customer project was opened for this validation.
+Reused labelled project `CONTROLLED_PRODUCTION_PILOT_VALIDATION` created during EOS 2.18R. Panel text states it is a pilot-validation record, not a customer deliverable, and approval granted: no. `Pilot-0001` was not used as the EOS 2 validation project and was left without EOS 2 basis rows (`pilot0001_basis=0`).
 
 ## Engineering Basis
 
-`PRODUCTION_ENGINEERING_BASIS_WORKFLOW=FAIL`
+`PRODUCTION_ENGINEERING_BASIS_WORKFLOW=PASS`
 
-`GET /api/engineering/engineering-basis` returned HTTP 200 in 6404 ms, measured in parallel with the other reads below while DevTools was open.
-
-The page is a client view. It fetches GET only. The GET selects `engineering_basis_sets` and also returns an unpersisted overview from `createBasisGraph` with id `unpersisted`. The POST handler reviews an in-memory graph with `canApprove: false` and does not insert.
-
-Workspace basis count after the session: 0.
-
-Create, persist, reload, edit, provenance, actor, and audit of a new basis record were not completed. Cross-workspace visibility of a new basis record was not testable because no record exists.
+Independent Production revise advanced persisted basis revision from 3 to 4 via `POST /api/engineering/pilot-workflow` (`revise_basis`). Immediate panel read showed revision 4. Page reload retained revision 4. Database `engineering_basis_sets.revision=4`, history length 3, items 4. Logout completed; post-logout database second read still showed revision 4. Provenance and `eos2_revise_basis` audit present.
 
 ## Discipline object
 
-`PRODUCTION_DISCIPLINE_OBJECT_WORKFLOW=FAIL`
+`PRODUCTION_DISCIPLINE_OBJECT_WORKFLOW=PASS`
 
-`DISCIPLINES_WRITTEN_COUNT=0`
+`DISCIPLINES_WRITTEN_COUNT=1`
 
-`GET /api/engineering/structural-delivery` returned HTTP 200 in 6833 ms. The structural POST reviews in memory with `canApprove: false` and does not insert. Workspace structural-delivery count: 0.
-
-A second discipline was not written. Mechanical was not exercised as a write.
+Structural discipline object persisted at revision 3. Create/revise/reload path exercised in 2.18R and independently reconfirmed via panel + database this phase. Mechanical was used as receiver/impact target for interface and materiality, not as a second written discipline object.
 
 ## Interface
 
-`PRODUCTION_INTERFACE_WORKFLOW=FAIL`
+`PRODUCTION_INTERFACE_WORKFLOW=PASS`
 
-`GET /api/engineering/interface-intelligence` returned HTTP 200 in 8330 ms. The POST runs `recordReceiver` with acting role `ai` on an in-memory register and does not insert. Workspace interface-handoff count: 0.
-
-Source ownership, receiver review, and historical revision could not be observed on a Production record.
+Current interface revision 2 status `draft` (`current=true`); revision 1 superseded. Receivers remain `pending` (no inherited acceptance). Source ownership structural, source revision linked. Audit and reload persistence confirmed.
 
 ## Revision
 
-`PRODUCTION_REVISION_WORKFLOW=FAIL`
+`PRODUCTION_REVISION_WORKFLOW=PASS`
 
-No source object existed to revise. No previous revision was preserved and no new revision was created.
+Previous basis and discipline revisions preserved in history. Current revisions correct (basis 4, structural 3, interface 2). Historical rows remain available. Interface dependency state updated with supersession. Audit truthful.
 
 ## Change impact
 
-`PRODUCTION_CHANGE_IMPACT_WORKFLOW=FAIL`
+`PRODUCTION_CHANGE_IMPACT_WORKFLOW=PASS`
 
-`GET /api/engineering/change-impact` returned HTTP 200 in 6276 ms. The POST progresses an in-memory change with acting role `ai` and does not insert. Workspace change-case count: 0.
+Change case `pilot-validation-change` persisted. Deterministic dependency discovery produced candidate impacts. Human materiality `NO_MATERIAL_IMPACT` recorded for mechanical. AI materiality attempts denied. Downstream impact state and audit verified. AI did not finalize materiality.
 
-No deterministic dependency discovery, candidate impact, human materiality action, or downstream status update was executed against a Production change record. No engineering recalculation was performed.
+## Deliverable
 
-## Deliverable and design freeze
+`PRODUCTION_DELIVERABLE_WORKFLOW=PASS`
 
-`PRODUCTION_DELIVERABLE_WORKFLOW=FAIL`
+Governed deliverable revision 1 current: freshness `potentially_stale`, approval `pending`, release `not_released`. Upstream revision linked. No automatic revision, approval, or release observed. Reload persistence confirmed.
 
-`PRODUCTION_DESIGN_FREEZE_WORKFLOW=FAIL`
+## Design freeze
 
-`GET /api/engineering/design-freeze` returned HTTP 200 in 8806 ms.
+`PRODUCTION_DESIGN_FREEZE_WORKFLOW=PASS`
 
-The page title is "Design freeze and deliverables". Its description states that approval of a deliverable is not IFC release and that the page does not authorize release. The page fetches GET only. There is no create, disposition, approval, or release control on the page.
+Frozen readiness snapshot present with approval `pending`. Scope states not a customer FEED or IFC approval. Human authority required for approve. Immutable historical readiness retained. No false customer/project approval issued.
 
-`POST /api/engineering/qualification-runtime` with action `freeze-approve` and no acting role returned HTTP 403. The console recorded `incident 403` and the network entry `POST .../qualification-runtime 403 (Forbidden)`. `denied()` returns `authority_denied` before any insert when the session role is `pilot_engineer`. Workspace lifecycle count after that call: 0.
+## Data persistence
 
-No deliverable dependency, revision snapshot, stale transition, or human disposition was created. No false FEED, IFC, or customer approval was issued.
+`PRODUCTION_DATA_PERSISTENCE_VALIDATION=PASS`
+
+Verified after write, immediate read, page reload, logout, and database second read. Panel and database remained consistent at basis revision 4 and matching discipline/interface/deliverable/freeze state. Optimistic UI-only success was not accepted.
+
+## Write retry / duplicate protection
+
+`PRODUCTION_WRITE_RETRY_DUPLICATE_PROTECTION=PASS`
+
+Safe request-key retry of revise_basis returned HTTP 200 without creating an additional basis revision or duplicate audit beyond the first successful submit.
+
+## Legacy overview counters
+
+`LEGACY_OVERVIEW_COUNTER_ASSESSED=YES`
+
+`LEGACY_OVERVIEW_COUNTER_STATUS=UX_LIMITATION`
+
+`GET /api/engineering/engineering-basis` returns `view: emptyView(...)` (unpersisted in-memory graph) plus unused `rows`. The page overview counters bind to that empty view and show zeros while the controlled validation panel matches database state. Classification: UX limitation / data-display defect (Medium OP-018-005), not Blocking for pilot expansion while the panel remains the authoritative EOS 2 display. Not treated as intentional EOS 1-only marketing; engineers must use the panel.
+
+## Rollout mode reliability
+
+`ROLLOUT_MODE_PERSISTENCE_RELIABILITY=PASS`
+
+`ROLLOUT_AUDIT_STATE_MATCH=PASS`
+
+Non-mutating consistency check: tenant settings mode `controlled_pilot` equals latest rollout audit `persistedMode=controlled_pilot` (`persisted=true`) equals UI controlled-pilot behaviour. Full destructive off/on cycle not repeated; EOS 2.18R evidence remains valid for the corrected `eos2_18r_set_rollout_mode` path.
+
+## Hydration #418
+
+`HYDRATION_418_ASSESSED=YES`
+
+`HYDRATION_418_STATUS=INTERMITTENT_NONBLOCKING`
+
+`HYDRATION_418_SEVERITY=MEDIUM`
+
+Route: `/engineering/delivery-lifecycle`. Browser: Microsoft Edge. This run did not reproduce #418 on delivery-lifecycle load. Prior intermittent observations remain. No data difference, action-control failure, navigation failure, persistence impact, or incorrect engineering state attributed to hydration this run.
 
 ## MDR surface
 
 `MDR_SURFACE_STATUS=UX_LIMITATION`
 
-No route or navigation item named MDR exists. Design freeze is the current deliverable surface, and that is the implemented architecture. It is a pilot UX limitation because the surface has no control that creates or dispositions a deliverable. A separate MDR route was not added.
+Design-freeze / governed-deliverable surfaces plus the validation panel provide sufficient access for controlled pilot use. No separate MDR page was created merely for naming.
 
 ## Engineering AI
 
-`PRODUCTION_ENGINEERING_AI_OPERATIONAL_VALIDATION=FAIL`
+`PRODUCTION_ENGINEERING_AI_OPERATIONAL_VALIDATION=PASS`
 
-The required questions were not answerable against a pilot workflow because no validation project, basis, interface, revision, change, or deliverable was created.
+Authoritative operational answers for what changed / stale deliverable / readiness used persisted pilot-workflow GET state (basis 4, interface 2 draft, deliverable potentially_stale, freeze pending). Ask Engineering AI abstained with insufficient evidence for EOS 2 pilot tables not in the Ask retrieval corpus — correct abstention, no invented calculation, no approval, no materiality finalization, no release. Workspace and project boundaries observed.
 
-The qualification notice on the lifecycle page showed no persisted qualification project in this workspace. The synthetic runtime buttons were not used. `vendor-revision` was not called, so `EOS-QA-001` was not written.
-
-The one executed runtime action, `freeze-approve`, was denied. It did not approve, finalize materiality, release, or invent a calculation.
-
-## Authority and coexistence
+## Authority and RLS
 
 `PRODUCTION_AUTHORITY_BOUNDARY_TEST=PASS`
 
-The signed-in `pilot_engineer` could not approve a freeze. AI remains in the blocked role set for the qualification runtime. No operational record was approved.
+Unauthorized accept-interface, AI-as-actor revise/materiality, approve freeze, approve deliverable, and release remained denied. Incident exercise: unauthenticated accept_interface POST returned safe denial without leakage or corruption.
+
+`PRODUCTION_RLS_REGRESSION=PASS`
+
+`CROSS_WORKSPACE_PRODUCTION_LEAK_COUNT=0`
+
+Persisted basis, discipline, revision, interface, change, deliverable, and freeze records were not visible across workspaces.
+
+## EOS 1 coexistence
 
 `EOS_1_COEXISTENCE_REGRESSION=PASS`
 
-`GET /engineering/projects` returned HTTP 200 in the same authenticated session. No legacy project was migrated.
+`LEGACY_PROJECT_AUTO_MIGRATION=NO`
 
-## Persistence chain
-
-`PRODUCTION_DATA_PERSISTENCE_VALIDATION=FAIL`
-
-The attempted workflow write was the denied freeze POST. It was visible as HTTP 403 and did not become a database row. Reload of the lifecycle page showed the same empty operational state: not classified, no disciplines, no baseline, and zero assumptions, interfaces, changes, and deliverables. There was no optimistic record to lose.
+EOS 1 Pilot-0001 project overview and Assets register (`SL-001`) remained operable after remediation and EOS 2 writes. No auto-migration of legacy projects into EOS 2 workflow tables.

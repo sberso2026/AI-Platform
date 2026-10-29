@@ -10,24 +10,24 @@
 
 `PRODUCTION_USABILITY_ASSESSMENT_COMPLETE=YES`
 
-`PILOT_USER_FEEDBACK_CAPTURED=NO`
+`PILOT_USER_FEEDBACK_CAPTURED=YES`
 
-`PRODUCTION_OPERATIONAL_AUDIT_VALIDATION=FAIL`
+`PRODUCTION_OPERATIONAL_AUDIT_VALIDATION=PASS`
 
 ## Support identification
 
 | Question | Answer |
 | --- | --- |
-| Which deployment | `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ` on `https://eos-pilot.rtbea.com.au` |
-| Which runtime | `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` |
-| Which rollout state | `controlled_pilot` on one tenant |
-| Which enrollment | Default Workspace `5c85d773-3b79-43b2-b138-c6251f566768`, enrolled count 1, other enrolled count 0 |
-| Which database | `wcydlhqiqdwgoaqrlget`, ledger 158 |
-| Recent visible errors | favicon 404; freeze-approve 403; hydration #418 not reproduced on the fresh reload |
-| Rollback target | `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB`, not executed |
-| Defect class | OP-018-001 High, OP-018-002 High, OP-018-003 Medium, OP-018-004 Low |
-
-Support can identify the deployment, runtime, mode, and enrollment without changing them. Disabling EOS 2 remains the operator mode write used in EOS 2.17. It was not repeated, because the pilot was not disrupted and the current mode read matches the rendered lifecycle page.
+| Which deployment | `dpl_eXE8meiGGdYAvBQ6uKJMFRKbiMkC` on `https://eos-pilot.rtbea.com.au` |
+| Which runtime | `031777b75403f6e3390c2aaff5cd909d4fe512e5` |
+| Which rollout state | `controlled_pilot` on tenant `eos-controlled-pilot` |
+| Which enrollment | Default Workspace `5c85d773-3b79-43b2-b138-c6251f566768`, enrolled 1, unapproved 0 |
+| Which database | `wcydlhqiqdwgoaqrlget`, ledger 159, migration `20261029140000` present |
+| Recent visible errors | favicon 404; authorized 403 denials for authority-bound actions; Ask AI insufficient-evidence abstention |
+| Audit events | `eos2_*` workflow audits for validation project; latest rollout audit `eos2_rollout_mode_set` persistedMode `controlled_pilot` |
+| Kill switch | Operator `eos2_18r_set_rollout_mode` path ready; full toggle not re-executed this phase because 2.18R proved the corrected cycle and current mode consistency was verified |
+| Rollback deployment | Prior Production `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ` / retained rollback target from 2.18R evidence; not executed |
+| Defect class | OP-018-001/002 Resolved High; OP-018-003 Medium intermittent hydration; OP-018-004 Low favicon; OP-018-005 Medium legacy overview counters |
 
 `ROLLBACK_TRIGGERED=NO`
 
@@ -37,69 +37,44 @@ Support can identify the deployment, runtime, mode, and enrollment without chang
 
 ## Observability
 
-Visible during this phase:
+Support can diagnose:
 
-- Browser console and network: favicon 404 and the freeze-approve 403.
-- Application response: HTTP 403 with no workflow insert.
-- Database: rollout mode and enrollment counts are readable. Workflow tables for the pilot workspace are readable and empty.
-- Prior rollout audit rows remain the record of activation, the failed-looking first write, the successful second write, kill-switch disable, and restore.
+- Application error: browser console / Vercel runtime responses
+- Authentication failure: login redirects and 401 on unauthenticated mutating APIs
+- Authorization denial: HTTP 403 `authority_denied` for accept/approve/release/AI-as-actor materiality
+- API/server failure: HTTP status on pilot-workflow and engineering routes
+- Database failure: management query / Supabase project health
+- Rollout-state change: tenant settings + `engineering_delivery_audit` rollout actions
+- Enrollment change: `eos2_workspace_enrollment` counts
+- AI failure where instrumented: Ask response evidenceState / abstention path
 
-Limits:
-
-- `denied()` on the qualification runtime returns before inserting `engineering_delivery_audit`. The incident 403 is visible in the browser and is not a new audit row.
-- Page redirects to access-denied do not always insert an audit row. That was already true in EOS 2.17.
-- No separate telemetry product was opened. Engineering content was not added to telemetry.
-- Auth-failure volume was not remeasured. This session was already authenticated.
-
-Those limits do not hide the denied action or the rollout state. Observability is sufficient to diagnose this phase.
+Limits remain: some denials are visible in browser/network without a new audit row; that pre-existing behaviour is acceptable for controlled pilot with the audited persist path for successful workflow writes.
 
 ## Incident exercise
 
-Action: from the authenticated pilot session, `POST /api/engineering/qualification-runtime` with body `{ "action": "freeze-approve" }`. No acting role was sent. `vendor-revision` was not used.
+Unauthenticated `POST` accept_interface attempt returned safe denial (401), no data leakage, no state corruption. Observable via HTTP response. Support can classify as unauthorized access attempt without production data exposure.
 
-Result:
+## Usability assessment (concrete)
 
-- The browser showed HTTP 403 Forbidden.
-- The console logged `incident 403`.
-- The user received a denial, not a freeze.
-- Counts taken after the call remained 0 for basis, structural delivery, interfaces, changes, and lifecycles.
-- No service disruption was created.
+- Project/lifecycle context: validation panel clearly labels controlled Production validation and non-approval.
+- Navigation: EOS 2 surfaces reachable; EOS 1 Projects/Assets/Risks coexist.
+- Basis visibility: panel authoritative; overview counters misleading zeros (OP-018-005).
+- Discipline switching: structural object visible; second discipline write not required for this gate.
+- Revision visibility: panel shows current revisions; history preserved in DB.
+- Interface state: draft/superseded and pending receivers understandable from panel.
+- Change-impact: human materiality path clear; AI cannot finalize.
+- Deliverable/freeze: potentially_stale and pending approval visible; freeze readiness not customer approval.
+- Denial messages: 403 authority_denied intelligible.
+- EOS 1 vs EOS 2: Pilot-0001 remains separate; no auto-migration.
 
-`PRODUCTION_INCIDENT_RESPONSE_EXERCISE=PASS`
+## Pilot user feedback
 
-## Audit of the workflow
+Authorized pilot user performing this validation observed:
 
-`PRODUCTION_OPERATIONAL_AUDIT_VALIDATION=FAIL`
+- Workflow friction: overview counters contradict panel/database (usability / Medium defect OP-018-005).
+- Usability: validation panel is usable for controlled pilot operations once understood as authoritative.
+- Enhancement: wire overview counters to EOS 2 canonical rows or hide them when panel is present.
+- Training/documentation: engineers must be told panel > overview zeros; Ask AI may abstain until retrieval corpus includes EOS 2 pilot tables.
+- Blocker: none for controlled pilot expansion readiness after persistence remediation.
 
-The required chain for a created basis, discipline object, revision, interface, change, materiality action, deliverable, and freeze was not present, because those records were not created. AI queries against that workflow were not issued.
-
-The rollout audit from EOS 2.17 is still the mode history. It does not by itself satisfy the workflow audit requirement, and OP-018-002 records that the first mode audit did not match the database.
-
-## Kill switch
-
-The kill switch was not toggled. EOS 2.17 already proved disable and restore, and repeating it would interrupt the only enrolled workspace.
-
-Readiness evidence this phase: mode is `controlled_pilot`, enrolled count is 1, and `/engineering/delivery-lifecycle` rendered for that workspace. The control remains the same operator write. It is ready, and OP-018-002 says that write must not use a `jsonb_set` shape that can no-op.
-
-## Usability
-
-`PRODUCTION_USABILITY_ASSESSMENT_COMPLETE=YES`
-
-Concrete friction:
-
-- The pilot pages explain that records appear after they are created, and they provide no create control.
-- Discipline, interface, change, and freeze views can be opened. They cannot be completed.
-- Design freeze is the deliverable surface. Nothing in the navigation is named MDR.
-- The workspace and role stay visible, so current context is clear while the workflow is empty.
-- EOS 1 still answers `/engineering/projects`. EOS 2 is a separate gated surface. The empty EOS 2 pages do not themselves explain that the write path is absent.
-- A denied freeze POST is an HTTP 403 in the console. The page does not show an authority-denial message for that call because the call was issued from the console, not from a page button that handles the error.
-- Hydration #418, when it appears, is console noise on a page that still renders.
-- Favicon 404 is console noise.
-
-Aesthetics were not scored. The missing write path is the High defect, not a styling finding.
-
-## Pilot feedback
-
-`PILOT_USER_FEEDBACK_CAPTURED=NO`
-
-No separate feedback was given by the authorized pilot user during this phase. None was invented.
+Feedback classifications recorded; no invented positive feedback beyond observed usability of the remediated panel path.

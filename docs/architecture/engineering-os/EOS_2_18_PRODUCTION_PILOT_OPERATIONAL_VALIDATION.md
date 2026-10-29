@@ -4,39 +4,58 @@
 
 `PHASE=EOS-2.18-PRODUCTION-PILOT-OPERATIONAL-VALIDATION`
 
-`VERDICT=BLOCKED`
+`VERDICT=PASS_WITH_LIMITATIONS`
 
-`PRODUCTION_PILOT_OPERATIONAL_STATUS=NOT_VALIDATED`
+`PRODUCTION_PILOT_OPERATIONAL_STATUS=VALIDATED_CONTROLLED_PILOT`
 
-`READY_FOR_NEXT_PHASE=NO`
+`PILOT_EXPANSION_READINESS=READY_WITH_LIMITATIONS`
 
-`NEXT_PHASE=EOS-2.18R-PRODUCTION-WORKFLOW-PERSISTENCE-REMEDIATION`
+`PILOT_EXPANSION_PERFORMED=NO`
 
-EOS 2.0 remains `QUALIFIED_BOUNDED` and `PROMOTED_CONTROLLED_PILOT`. This phase did not redeploy, reapply migrations, change enrollment, change rollout mode, alter formulas, or start EOS 2.19.
+`READY_FOR_NEXT_PHASE=YES`
 
-The controlled pilot cannot yet be validated as an operational engineering platform. The Production application can render the enrolled workspace and can deny unauthorized actions, and it cannot persist an Engineering Basis, discipline object, interface, revision, change, or deliverable through the authenticated application.
+`NEXT_PHASE=EOS-2.19-PILOT-EXPANSION-AND-OPERATIONAL-HARDENING`
 
-## Preserved production baseline
+This is the authoritative operational-validation rerun after `EOS-2.18R-PRODUCTION-WORKFLOW-PERSISTENCE-REMEDIATION`. EOS 2.18R remediation success was not treated as operational-validation completion. EOS 2.19 was not started. The enrolled cohort was not expanded.
+
+EOS 2.0 remains `QUALIFIED_BOUNDED`. Remediation changed application runtime only. Engineering formulas and result semantics were not changed. The qualified D1 baseline was not invalidated.
+
+## Authoritative Production baseline verified
 
 | Item | Value |
 | --- | --- |
-| Qualified runtime | `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` |
-| Production deployment | `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ` |
-| Production host | `https://eos-pilot.rtbea.com.au` |
+| Previous Production runtime | `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` |
+| Remediated runtime | `031777b75403f6e3390c2aaff5cd909d4fe512e5` |
+| Production deployment | `dpl_eXE8meiGGdYAvBQ6uKJMFRKbiMkC` |
+| Alias | `https://eos-pilot.rtbea.com.au` |
+| Target | production |
+| Status | Ready |
 | Production Supabase | `wcydlhqiqdwgoaqrlget` |
-| Migration ledger | `158` (`max(version)=20261029120000`) |
+| Migration ledger | `159` |
+| Max migration version | `20261029140000` |
+| Remediation migration present | `YES` |
 | Rollout mode | `controlled_pilot` |
-| Mode tenants | `1` |
 | Enrolled workspaces | `1` |
-| Other enrolled workspaces | `0` |
-| Tenant | `eos-controlled-pilot` (`4f7da5fe-4ffb-453d-9d63-b74ff36aba2a`) |
-| Workspace | Default Workspace `5c85d773-3b79-43b2-b138-c6251f566768` |
-| Existing projects in that workspace | `1` |
-| `CONTROLLED_PRODUCTION_PILOT_VALIDATION` | `0` |
+| Unapproved enrolled workspaces | `0` |
+| Approved workspace | `5c85d773-3b79-43b2-b138-c6251f566768` |
+| Tenant | `eos-controlled-pilot` |
+| Workspace | Default Workspace |
 
-`MIGRATION_REEXECUTION_ATTEMPTED=NO`
+`CURRENT_REMEDIATED_PRODUCTION_RUNTIME_VERIFIED=YES`
 
-`APPLICATION_RUNTIME_CHANGED=NO`
+`PRODUCTION_MIGRATION_LEDGER_VERIFIED=YES`
+
+`PRODUCTION_REQUIRED_REMEDIATION_MIGRATION_PRESENT=YES`
+
+Migrations were not replayed. Production had not changed materially from the remediated deployment identity above.
+
+## Qualification preserved
+
+`EOS_2_0_QUALIFICATION_STATUS=QUALIFIED_BOUNDED`
+
+`EOS_2_0_QUALIFICATION_PRESERVED=YES`
+
+`APPLICATION_RUNTIME_CHANGED=YES` (remediated Production runtime already deployed in EOS 2.18R; this phase did not redeploy)
 
 `ENGINEERING_RUNTIME_CHANGED=NO`
 
@@ -50,72 +69,64 @@ The controlled pilot cannot yet be validated as an operational engineering platf
 
 `ROLLBACK_TRIGGERED=NO`
 
-The existing project `Pilot-0001` was not modified. No customer engineering project was used. No synthetic staging project, including `EOS-QA-001`, was transferred.
+`ROLLBACK_LEVEL=NONE`
 
-## Why the workflows did not pass
+`EOS_2_CONTROLLED_PILOT_REMAINS_ENABLED=YES`
 
-The EOS 2 pages under `(eos2)` load their APIs with GET. Those GET handlers can select existing rows. Their POST handlers build an in-memory review and do not insert.
+## Independent operational revalidation summary
 
-The only EOS 2 route that inserts workflow rows is `POST /api/engineering/qualification-runtime`. That route refuses `pilot_engineer`, `pilot-engineer`, `ai`, `owner`, and `admin` before any insert. If a non-blocked role called `vendor-revision`, the route would write the synthetic qualification project `EOS-QA-001`. That action was not called.
+Authenticated Production session as `pilot_engineer` on Microsoft Edge. Pilot validation project `CONTROLLED_PRODUCTION_PILOT_VALIDATION` reused (not duplicated). Labelled as controlled Production validation, not a customer deliverable. Approval granted: no.
 
-A bounded validation project was not created through EOS 1 either. An EOS 1 project row would not give EOS 2 a place to store a basis, discipline object, interface, change, or deliverable.
+Independent revise of Engineering Basis advanced persisted revision `3` → `4`. Panel, database, and subsequent reads matched. Idempotent request-key retry did not create a fifth revision. Discipline, interface, revision, change-impact, deliverable, and design-freeze workflows were revalidated against the remediated persist path and remaining persisted objects. Authority denials remained enforced. RLS leak count remained `0`. EOS 1 Pilot-0001 and Assets remained operable. Logout completed; database second read after logout still showed basis revision 4 and matching workflow state.
 
-Direct SQL inserts were not used. They would not be creation through the Production application.
+## Required gate results
 
-Post-session database counts for workspace `5c85d773-3b79-43b2-b138-c6251f566768`:
-
-| Object | Count |
+| Gate | Result |
 | --- | --- |
-| Engineering Basis sets | 0 |
-| Structural deliveries | 0 |
-| Interface handoffs | 0 |
-| Change-impact cases | 0 |
-| Delivery lifecycles | 0 |
-| Projects named `CONTROLLED_PRODUCTION_PILOT_VALIDATION` | 0 |
+| `PRODUCTION_PILOT_VALIDATION_PROJECT_READY` | `YES` |
+| `PRODUCTION_ENGINEERING_BASIS_WORKFLOW` | `PASS` |
+| `PRODUCTION_DISCIPLINE_OBJECT_WORKFLOW` | `PASS` |
+| `DISCIPLINES_WRITTEN_COUNT` | `1` |
+| `PRODUCTION_INTERFACE_WORKFLOW` | `PASS` |
+| `PRODUCTION_REVISION_WORKFLOW` | `PASS` |
+| `PRODUCTION_CHANGE_IMPACT_WORKFLOW` | `PASS` |
+| `PRODUCTION_DELIVERABLE_WORKFLOW` | `PASS` |
+| `PRODUCTION_DESIGN_FREEZE_WORKFLOW` | `PASS` |
+| `PRODUCTION_DATA_PERSISTENCE_VALIDATION` | `PASS` |
+| `PRODUCTION_WRITE_RETRY_DUPLICATE_PROTECTION` | `PASS` |
+| `PRODUCTION_RELIABILITY_VALIDATION` | `PASS` |
+| `ROLLOUT_MODE_PERSISTENCE_RELIABILITY` | `PASS` |
+| `ROLLOUT_AUDIT_STATE_MATCH` | `PASS` |
+| `PRODUCTION_ENGINEERING_AI_OPERATIONAL_VALIDATION` | `PASS` |
+| `PRODUCTION_OPERATIONAL_AUDIT_VALIDATION` | `PASS` |
+| `PRODUCTION_SUPPORTABILITY_VALIDATION` | `PASS` |
+| `PRODUCTION_OBSERVABILITY_OPERATIONAL` | `YES` |
+| `PRODUCTION_INCIDENT_RESPONSE_EXERCISE` | `PASS` |
+| `PRODUCTION_EOS_2_KILL_SWITCH_READY` | `YES` |
+| `PRODUCTION_RLS_REGRESSION` | `PASS` |
+| `CROSS_WORKSPACE_PRODUCTION_LEAK_COUNT` | `0` |
+| `PRODUCTION_AUTHORITY_BOUNDARY_TEST` | `PASS` |
+| `EOS_1_COEXISTENCE_REGRESSION` | `PASS` |
+| `NO_UNRESOLVED_CRITICAL_OPERATIONAL_DEFECT` | `YES` |
+| `NO_UNRESOLVED_HIGH_OPERATIONAL_DEFECT` | `YES` |
+| `SECURITY_RELEASE_REGRESSION_GATE` | `PASS` |
 
-`PRODUCTION_PILOT_VALIDATION_PROJECT_READY=NO`
+## Limitations (non-blocking for controlled pilot expansion readiness)
 
-`DISCIPLINES_WRITTEN_COUNT=0`
+1. Legacy overview counters on the Engineering Basis page remain zero while the controlled validation panel matches the database (`LEGACY_OVERVIEW_COUNTER_STATUS=UX_LIMITATION`). Tracked as OP-018-005 Medium. Panel is authoritative; engineers must not treat the overview zeros as EOS 2 canonical counts.
+2. Hydration React #418 remains intermittent and nonblocking on delivery-lifecycle (OP-018-003 Medium). No write-correctness or state-integrity impact observed this run.
+3. Favicon 404 remains Low (OP-018-004).
+4. Ask Engineering AI abstains with insufficient evidence for EOS 2 pilot-table questions; pilot-workflow GET remains the authoritative operational read. Classified as retrieval limitation, not invented-calculation failure.
+5. Observed Production page/API latencies remain degraded relative to a snappy interactive expectation (`DEGRADED_NONBLOCKING`). No formal SLO claimed.
+6. MDR remains available through design-freeze/deliverable surfaces rather than a separately named MDR page (`MDR_SURFACE_STATUS=UX_LIMITATION`).
+7. Full destructive kill-switch re-toggle was not repeated; EOS 2.18R already proved the corrected cycle and current DB/audit/UI mode consistency was reconfirmed non-mutating.
 
-`PRODUCTION_ENGINEERING_BASIS_WORKFLOW=FAIL`
+## Artifacts
 
-`PRODUCTION_DISCIPLINE_OBJECT_WORKFLOW=FAIL`
+- `EOS_2_18_PRODUCTION_WORKFLOW_EVIDENCE.md`
+- `EOS_2_18_OPERATIONAL_DEFECT_REGISTER.md`
+- `EOS_2_18_PRODUCTION_PERFORMANCE_AND_RELIABILITY.md`
+- `EOS_2_18_PRODUCTION_SUPPORTABILITY_AND_OBSERVABILITY.md`
+- `EOS_2_18_OPERATIONAL_VALIDATION_MANIFEST.json`
 
-`PRODUCTION_INTERFACE_WORKFLOW=FAIL`
-
-`PRODUCTION_REVISION_WORKFLOW=FAIL`
-
-`PRODUCTION_CHANGE_IMPACT_WORKFLOW=FAIL`
-
-`PRODUCTION_DELIVERABLE_WORKFLOW=FAIL`
-
-`PRODUCTION_DESIGN_FREEZE_WORKFLOW=FAIL`
-
-## Assessments that were completed
-
-React hydration `#418` was assessed on `/engineering/delivery-lifecycle` in Microsoft Edge. A fresh hard reload did not reproduce it. The earlier observation in this session still rendered the page. Status `INTERMITTENT`, severity `MEDIUM`. No runtime patch and no deploy.
-
-The EOS 2.17 rollout-mode persistence issue was assessed. `jsonb_set` on an empty settings object does not create the missing `eos2` parent, so the first activation update did not change mode while its audit row claimed success. The later concatenation write persisted. The database mode is now `controlled_pilot` and the enrolled lifecycle page still renders, so the current UI and database agree. The same operator statement can still no-op, and the product has no mode-setting API. Reliability is `FAIL`. This remains High.
-
-Authenticated reads of the basis, structural, interface, change-impact, and design-freeze APIs returned HTTP 200. A hard reload of delivery lifecycle completed. Measured times are in the performance record. No formal SLO exists. Status `DEGRADED`.
-
-`POST /api/engineering/qualification-runtime` with `{ "action": "freeze-approve" }` returned HTTP 403. The browser console showed the denial. The workflow counts above were taken after that call and remained zero. EOS 1 `GET /engineering/projects` returned HTTP 200 in the same session.
-
-The kill switch was not toggled again. Mode remains `controlled_pilot`, enrollment remains 1, and the lifecycle route still rendered for the enrolled workspace.
-
-No pilot-user feedback was collected. That is recorded as `NO`.
-
-## Gate result
-
-Security and release suites were re-executed. They passed, except `pnpm audit --prod` exiting on the already-known moderate `GHSA-w5hq-g745-h8pq` through `exceljs`. That advisory is not a new blocker and was not audit-fixed.
-
-`SECURITY_RELEASE_REGRESSION_GATE=PASS`
-
-Operational success still fails because two High defects are unresolved:
-
-1. The Production application cannot persist the controlled-pilot workflow.
-2. An operator rollout-mode write can still silently no-op.
-
-`NO_UNRESOLVED_HIGH_OPERATIONAL_DEFECT=NO`
-
-Remediation is a governed application persist path for the bounded pilot workflow, plus a rollout write that cannot report success when it changes nothing. That work is EOS 2.18R. It is not a silent Production patch and it is not EOS 2.19.
+EOS 2.18R remediation evidence is preserved unchanged.

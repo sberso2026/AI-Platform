@@ -8,18 +8,19 @@
 | OP-018-002 | HIGH | Resolved | Rollout-mode SQL can report success when it changes nothing |
 | OP-018-003 | MEDIUM | Open | React hydration #418 on delivery lifecycle is intermittent and nonblocking |
 | OP-018-004 | LOW | Open | Pilot host returns 404 for favicon.ico |
+| OP-018-005 | MEDIUM | Open | Legacy Engineering Basis overview counters stay zero while EOS 2 panel matches database |
 
-`OPERATIONAL_DEFECT_COUNT=4`
+`OPERATIONAL_DEFECT_COUNT=5`
 
 `RESOLVED_OPERATIONAL_DEFECT_COUNT=2`
 
-`UNRESOLVED_OPERATIONAL_DEFECT_COUNT=2`
+`UNRESOLVED_OPERATIONAL_DEFECT_COUNT=3`
 
 `CRITICAL_OPERATIONAL_DEFECT_COUNT=0`
 
 `HIGH_OPERATIONAL_DEFECT_COUNT=0`
 
-`MEDIUM_OPERATIONAL_DEFECT_COUNT=1`
+`MEDIUM_OPERATIONAL_DEFECT_COUNT=2`
 
 `LOW_OPERATIONAL_DEFECT_COUNT=1`
 
@@ -27,47 +28,27 @@
 
 `NO_UNRESOLVED_HIGH_OPERATIONAL_DEFECT=YES`
 
-No Critical defect was observed. EOS 2.18R closed both High defects. The remaining Medium and Low defects do not block the next operational validation. The cohort was not expanded.
+No unresolved Critical or High defect remains. EOS 2.18R closed OP-018-001 and OP-018-002. EOS 2.18 operational validation confirmed those remediations remain effective and added OP-018-005 for the legacy overview counter mismatch. Remaining Medium/Low items do not block controlled pilot expansion readiness when the validation panel is treated as authoritative.
 
 ## OP-018-001
 
-Severity: HIGH. Status: Resolved by EOS 2.18R.
+Severity: HIGH. Status: Resolved by EOS 2.18R. Reconfirmed resolved in EOS 2.18.
 
-The enrolled pilot user can open Engineering Basis, structural delivery, interface, change impact, and design freeze. Those pages read. They do not create a persisted record.
+Resolution: `POST /api/engineering/pilot-workflow` and `eos2_18r_persist` persist the labelled validation project. Independent EOS 2.18 revise_basis 3→4, reload, logout, and database second read remained consistent.
 
-Evidence:
-
-- Page modules under `(eos2)` call `fetch` for GET.
-- `engineering-basis`, `structural-delivery`, `interface-intelligence`, `change-impact`, and `design-freeze` POST handlers return an in-memory review and do not insert.
-- `qualification-runtime` is the only inserter. It returns HTTP 403 `authority_denied` for `pilot_engineer` before insert. Its write path is the synthetic project `EOS-QA-001`, which must not be used as this pilot workflow.
-- After the session, the approved workspace had 0 basis sets, 0 structural deliveries, 0 interface handoffs, 0 change cases, and 0 delivery lifecycles.
-
-Impact: Engineering Basis, discipline, interface, revision, change-impact, deliverable, and design-freeze workflows are unusable in Production. This matches the High example "critical workflow unusable".
-
-Resolution: `POST /api/engineering/pilot-workflow` and `eos2_18r_persist` persist the labelled validation project. Staging and Production both created, revised, reloaded, and audited the workflow. Evidence: `EOS_2_18R_WRITE_PATH_ROOT_CAUSE_AND_FIX.md` and `EOS_2_18R_PRODUCTION_REMEDIATION_EVIDENCE.md`.
+Evidence: `EOS_2_18R_WRITE_PATH_ROOT_CAUSE_AND_FIX.md`, `EOS_2_18R_PRODUCTION_REMEDIATION_EVIDENCE.md`, `EOS_2_18_PRODUCTION_WORKFLOW_EVIDENCE.md`.
 
 ## OP-018-002
 
-Severity: HIGH. Status: Resolved by EOS 2.18R.
-
-`ROLLOUT_MODE_PERSISTENCE_ISSUE_ASSESSED=YES`
+Severity: HIGH. Status: Resolved by EOS 2.18R. Reconfirmed resolved in EOS 2.18.
 
 `ROLLOUT_MODE_PERSISTENCE_RELIABILITY=PASS`
 
-`ROLLOUT_MODE_PERSISTENCE_ROOT_CAUSE=jsonb_set does not create a missing eos2 parent on empty settings, so the first activation update changed nothing while its audit row claimed the new mode`
+`ROLLOUT_AUDIT_STATE_MATCH=PASS`
 
-Evidence from EOS 2.17, reconfirmed by the current database:
+Resolution: `eos2_18r_set_rollout_mode` writes the `eos2` object without a missing-parent no-op and audits only the persisted mode. EOS 2.18 non-mutating check: database mode `controlled_pilot` = latest audit `persistedMode=controlled_pilot` = UI controlled-pilot behaviour. Full destructive re-toggle not required given 2.18R cycle proof plus current consistency.
 
-- Settings started as `{}`. `jsonb_set(settings, '{eos2,mode}', ...)` does not create the missing intermediate `eos2` object. The update was a no-op.
-- Audit action `eos2_controlled_pilot_activated` at `2026-10-29 04:26:43.213415+00` recorded the intended mode anyway.
-- The correcting write concatenated `'{"eos2":{"mode":"controlled_pilot"}}'` and was audited as `eos2_rollout_mode_set` at `2026-10-29 04:28:03.14931+00`.
-- This phase read `settings.eos2.mode` as `controlled_pilot` for the one pilot tenant. Enrolled workspace count is 1. Other enrolled workspaces are 0. The lifecycle page rendered for that workspace.
-
-The failure is deterministic for that SQL shape. It is not a browser timing or session retry. The product has no rollout-mode API, so the operator statement is the write path. The first audit row does not distinguish a zero-row update from success, so the UI and database can diverge until a later read is compared with settings.
-
-The successful retry is not a close. A later kill-switch or restore statement of the same `jsonb_set` shape can silently leave the previous mode in place.
-
-Resolution: `eos2_18r_set_rollout_mode` writes the `eos2` object without a missing-parent no-op and audits only the persisted mode. Production cycled `controlled_pilot` to `off` and back. Each audit `persistedMode` matched the read-back. Enrollment stayed 1. Evidence: `EOS_2_18R_ROLLOUT_MODE_PERSISTENCE_REMEDIATION.md`.
+Evidence: `EOS_2_18R_ROLLOUT_MODE_PERSISTENCE_REMEDIATION.md`.
 
 ## OP-018-003
 
@@ -75,26 +56,32 @@ Severity: MEDIUM. Status: Open.
 
 `HYDRATION_418_ASSESSED=YES`
 
-`HYDRATION_418_STATUS=INTERMITTENT`
+`HYDRATION_418_STATUS=INTERMITTENT_NONBLOCKING`
 
 `HYDRATION_418_SEVERITY=MEDIUM`
 
-Route: `/engineering/delivery-lifecycle`. Browser: Microsoft Edge. React minified error #418 is a server/client markup mismatch.
-
-The console preserved from earlier in this phase showed #418 while the page still rendered stage, maturity, and zero counts. After `console.clear()` and a hard reload, the new console showed only `GET /favicon.ico 404`. #418 did not recur on that reload. The page still showed the empty lifecycle and the qualification notice.
-
-No data loss, navigation loss, or failed user action was observed. The page body is a client component whose view starts null. Header and sidebar timestamps run in effects, so they are not the confirmed source. The mismatch source was not isolated because the fresh reload did not reproduce the error.
-
-EOS 2.18R did not edit the delivery lifecycle page. The persistence writes on Engineering Basis completed and reloaded. #418 was not observed on those writes. It remains intermittent and Medium. A reproducible mismatch that changes data or action results would be a blocker. This observation does not meet that bar.
+Route: `/engineering/delivery-lifecycle`. Browser: Microsoft Edge. This operational-validation run did not reproduce #418. Prior intermittent observations remain. No data loss, action failure, navigation failure, or persistence impact observed. Remains Medium and nonblocking for pilot expansion readiness.
 
 ## OP-018-004
 
 Severity: LOW. Status: Open.
 
-`GET https://eos-pilot.rtbea.com.au/favicon.ico` returned 404 on the reloaded lifecycle page. The page remained usable. This is cosmetic.
+`GET https://eos-pilot.rtbea.com.au/favicon.ico` returns 404. Cosmetic only.
+
+## OP-018-005
+
+Severity: MEDIUM. Status: Open.
+
+`LEGACY_OVERVIEW_COUNTER_ASSESSED=YES`
+
+`LEGACY_OVERVIEW_COUNTER_STATUS=UX_LIMITATION`
+
+Root cause: `GET /api/engineering/engineering-basis` returns `view: emptyView(...)` from an in-memory unpersisted `createBasisGraph`, while persisted `rows` are unused by the overview counters. The controlled validation panel matches database state; overview counters remain zero. Not Blocking while panel authority is explicit. Would become Blocking if the zeros were presented as the sole authoritative engineering-state counts without an accurate alternate surface.
 
 ## Items that are not defects in this register
 
-The known moderate advisory `GHSA-w5hq-g745-h8pq` (`exceljs` to `uuid`) is unchanged and is not a new operational defect.
+Known moderate advisory `GHSA-w5hq-g745-h8pq` (`exceljs` → `uuid`) is unchanged and is not a new operational defect.
 
-The absence of a separate MDR route is the current design-freeze surface. It is classified `UX_LIMITATION` in the workflow evidence, not as an additional functional defect. The missing persist path is OP-018-001.
+Ask Engineering AI abstention for EOS 2 pilot tables not in the Ask retrieval corpus is a retrieval limitation with correct abstention behaviour, not a calculation invention defect.
+
+Absence of a separately named MDR route remains `UX_LIMITATION`, not an additional functional defect, while design-freeze/deliverable surfaces remain usable for controlled pilot.
