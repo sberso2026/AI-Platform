@@ -58,4 +58,10 @@ Eligible for the next readiness phase only. This report does not deploy producti
 
 ## EOS 2.16R provenance
 
-The engineering qualification above remains `QUALIFIED_BOUNDED` for runtime `af6612bdebe40616dab18525ceab4dc70f03621e`. EOS 2.16R changed application access control and reran the affected hosted qualification. The current qualified hosted runtime is `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` on preview `dpl_GgVBzbU9N2ZnR5fR41fWwdnYDhbC`. Engineering formulas, result semantics, and the D1 baseline were not changed. The historical 2.15R browser and critical-path records stay attached to the earlier deployment. They are not rewritten as if they ran on the new runtime.
+The engineering qualification above remains `QUALIFIED_BOUNDED` for runtime `af6612bdebe40616dab18525ceab4dc70f03621e`. EOS 2.16R changed application access control and reran the affected hosted qualification. The qualified hosted runtime at EOS 2.16R was `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` on preview `dpl_GgVBzbU9N2ZnR5fR41fWwdnYDhbC`. Engineering formulas, result semantics, and the D1 baseline were not changed. The historical 2.15R browser and critical-path records stay attached to the earlier deployment. They are not rewritten as if they ran on the new runtime.
+
+## EOS 2.18R provenance
+
+EOS 2.18R changed the application write path and the rollout-mode mutation. It did not change engineering formulas, result semantics, or the qualified D1 baseline. `EOS_2_0_QUALIFICATION_STATUS` remains `QUALIFIED_BOUNDED`. `QUALIFIED_D1_BASELINE_INVALIDATED=NO`.
+
+The remediated application runtime is commit `031777b75403f6e3390c2aaff5cd909d4fe512e5`. Staging preview `dpl_mchJL3jgpsaS1ZTf8YaGxpTsT3VS`. Production deployment `dpl_eXE8meiGGdYAvBQ6uKJMFRKbiMkC` on `https://eos-pilot.rtbea.com.au`. The documentation commit that records this provenance is not the runtime.

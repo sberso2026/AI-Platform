@@ -4,16 +4,20 @@
 
 | ID | Severity | Status | Title |
 | --- | --- | --- | --- |
-| OP-018-001 | HIGH | Open | Production EOS 2 has no application path that persists a pilot workflow |
-| OP-018-002 | HIGH | Open | Rollout-mode SQL can report success when it changes nothing |
+| OP-018-001 | HIGH | Resolved | Production EOS 2 has no application path that persists a pilot workflow |
+| OP-018-002 | HIGH | Resolved | Rollout-mode SQL can report success when it changes nothing |
 | OP-018-003 | MEDIUM | Open | React hydration #418 on delivery lifecycle is intermittent and nonblocking |
 | OP-018-004 | LOW | Open | Pilot host returns 404 for favicon.ico |
 
 `OPERATIONAL_DEFECT_COUNT=4`
 
+`RESOLVED_OPERATIONAL_DEFECT_COUNT=2`
+
+`UNRESOLVED_OPERATIONAL_DEFECT_COUNT=2`
+
 `CRITICAL_OPERATIONAL_DEFECT_COUNT=0`
 
-`HIGH_OPERATIONAL_DEFECT_COUNT=2`
+`HIGH_OPERATIONAL_DEFECT_COUNT=0`
 
 `MEDIUM_OPERATIONAL_DEFECT_COUNT=1`
 
@@ -21,13 +25,13 @@
 
 `NO_UNRESOLVED_CRITICAL_OPERATIONAL_DEFECT=YES`
 
-`NO_UNRESOLVED_HIGH_OPERATIONAL_DEFECT=NO`
+`NO_UNRESOLVED_HIGH_OPERATIONAL_DEFECT=YES`
 
-No Critical defect was observed. The two High defects block cohort expansion.
+No Critical defect was observed. EOS 2.18R closed both High defects. The remaining Medium and Low defects do not block the next operational validation. The cohort was not expanded.
 
 ## OP-018-001
 
-Severity: HIGH. Status: Open.
+Severity: HIGH. Status: Resolved by EOS 2.18R.
 
 The enrolled pilot user can open Engineering Basis, structural delivery, interface, change impact, and design freeze. Those pages read. They do not create a persisted record.
 
@@ -40,15 +44,15 @@ Evidence:
 
 Impact: Engineering Basis, discipline, interface, revision, change-impact, deliverable, and design-freeze workflows are unusable in Production. This matches the High example "critical workflow unusable".
 
-Remediation: add a bounded Production create/revise/persist path that writes the pilot workspace through the application, refuses AI and unauthorized approval, and does not import synthetic qualification data. Stage it, run the security and release gates, and deploy only under release governance.
+Resolution: `POST /api/engineering/pilot-workflow` and `eos2_18r_persist` persist the labelled validation project. Staging and Production both created, revised, reloaded, and audited the workflow. Evidence: `EOS_2_18R_WRITE_PATH_ROOT_CAUSE_AND_FIX.md` and `EOS_2_18R_PRODUCTION_REMEDIATION_EVIDENCE.md`.
 
 ## OP-018-002
 
-Severity: HIGH. Status: Open.
+Severity: HIGH. Status: Resolved by EOS 2.18R.
 
 `ROLLOUT_MODE_PERSISTENCE_ISSUE_ASSESSED=YES`
 
-`ROLLOUT_MODE_PERSISTENCE_RELIABILITY=FAIL`
+`ROLLOUT_MODE_PERSISTENCE_RELIABILITY=PASS`
 
 `ROLLOUT_MODE_PERSISTENCE_ROOT_CAUSE=jsonb_set does not create a missing eos2 parent on empty settings, so the first activation update changed nothing while its audit row claimed the new mode`
 
@@ -63,7 +67,7 @@ The failure is deterministic for that SQL shape. It is not a browser timing or s
 
 The successful retry is not a close. A later kill-switch or restore statement of the same `jsonb_set` shape can silently leave the previous mode in place.
 
-Remediation: make the operator write create the parent object and fail the audit when the update matches zero rows, or add a single application control that writes and reads back the mode. Do not broaden enrollment as part of that fix.
+Resolution: `eos2_18r_set_rollout_mode` writes the `eos2` object without a missing-parent no-op and audits only the persisted mode. Production cycled `controlled_pilot` to `off` and back. Each audit `persistedMode` matched the read-back. Enrollment stayed 1. Evidence: `EOS_2_18R_ROLLOUT_MODE_PERSISTENCE_REMEDIATION.md`.
 
 ## OP-018-003
 
@@ -81,7 +85,7 @@ The console preserved from earlier in this phase showed #418 while the page stil
 
 No data loss, navigation loss, or failed user action was observed. The page body is a client component whose view starts null. Header and sidebar timestamps run in effects, so they are not the confirmed source. The mismatch source was not isolated because the fresh reload did not reproduce the error.
 
-No Production patch was deployed. A reproducible mismatch that changes data or action results would be a blocker. This observation does not meet that bar.
+EOS 2.18R did not edit the delivery lifecycle page. The persistence writes on Engineering Basis completed and reloaded. #418 was not observed on those writes. It remains intermittent and Medium. A reproducible mismatch that changes data or action results would be a blocker. This observation does not meet that bar.
 
 ## OP-018-004
 
