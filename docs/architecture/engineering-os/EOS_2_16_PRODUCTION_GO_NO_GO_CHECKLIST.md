@@ -1,6 +1,6 @@
 # EOS 2.16 Production GO / NO-GO Checklist
 
-Current result: **NO-GO**. EOS 2.17R verified a logical Production backup for the current baseline. EOS 2.17 execution is still blocked. A named human must sign, and that human must name the single Production workspace. This checklist does not authorize deployment.
+Current result: **NO-GO**. The release signatory and the Production pilot workspace are named. The signatory has not issued GO. EOS 2.17 execution has not started. This checklist does not authorize deployment.
 
 AI may recommend. AI must not mark GO, deploy, migrate, or roll back.
 
@@ -15,17 +15,17 @@ AI may recommend. AI must not mark GO, deploy, migrate, or roll back.
 | Application rollback target verified | YES, `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` | YES |
 | Post-migration EOS 1.0 rollback compatible | YES | YES |
 | EOS 2-only cohort control, default off | YES | Remains off |
-| Initial cohort defined and not auto-enrolled | Policy only. No Production workspace named | Human names the workspace |
+| Initial cohort defined and not auto-enrolled | `eos-controlled-pilot` / `Default Workspace` / `5c85d773-3b79-43b2-b138-c6251f566768`. Not enrolled. | Remains unenrolled until EOS 2.17 |
 | Production smoke plan ready | YES | Executed only in EOS 2.17 |
 | Monitoring plan ready | YES | Baseline captured before change |
 | Security gate PASS | YES, rerun in the EOS 2.17R closeout | YES |
 | Release gate PASS | YES, 220 tests, executed again in the EOS 2.17R closeout | YES |
-| Unresolved Critical or High readiness defect | PR-002 and PR-003 open | None open |
-| Human release authority identified | Not named | Named human signs |
+| Unresolved Critical or High readiness defect | PR-001, PR-002, and PR-003 resolved. GO is not issued. | None open |
+| Human release authority identified | Silvestre Berso, Founder and Authorized Production Release Authority. GO is not issued. | Named human signs GO or NO-GO |
 
 ## Human authority model
 
-Production identity must be `wcydlhqiqdwgoaqrlget`, enforced by `assertProductionIdentity`. A generic workspace owner, admin, pilot engineer, or AI is not sufficient. The named human is recorded on the EOS 2.17 execution record. This phase does not invent that person's name.
+Production identity must be `wcydlhqiqdwgoaqrlget`, enforced by `assertProductionIdentity`. A generic workspace owner, admin, pilot engineer, or AI is not sufficient. The named release signatory is Silvestre Berso. AI must not mark GO.
 
 ## Change window
 

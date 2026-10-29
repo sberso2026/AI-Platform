@@ -83,4 +83,4 @@ Production ledger remains 144, maximum `20261027233000`. The fourteen-file promo
 
 ## Limitation
 
-The release signatory is still not named. A later human designation must give a full name, a software release role, and an authority basis limited to `EOS 2.0 controlled Production pilot software promotion`.
+The release signatory is now Silvestre Berso, Founder and Authorized Production Release Authority, by explicit declaration. The GO decision is not issued.

@@ -14,8 +14,8 @@ Production was not migrated and was not redeployed. EOS 2 was not enabled. No Pr
 | --- | --- | --- |
 | PR-001 | RESOLVED | A logical backup of Production was taken, checksummed, and restored into isolated Postgres 17. The promotion ledger, tenant count, and workspace count matched. |
 | PR-001 residual | RESOLVED | The stock restore gap was classified. Application RLS and the embeddings table recover on an extension-compatible target. |
-| PR-002 | OPEN | No existing record names a human with authority for controlled EOS 2.0 Production promotion. |
-| PR-003 | OPEN | No existing record names the Production workspace for the first EOS 2 cohort. |
+| PR-002 | RESOLVED | Later explicit declaration names Silvestre Berso. That declaration does not issue GO. |
+| PR-003 | RESOLVED | Later cohort binding names workspace `5c85d773-3b79-43b2-b138-c6251f566768`. It is not enrolled. |
 
 ## What was not inferred
 
@@ -29,7 +29,7 @@ Pending Production migrations remain the fourteen approved versions. This closeo
 
 The release-governance suite was executed again: 220 passed. Persistence was 37 passed and 1 skipped. Secret scan was 624 files and 0 findings. Engineering OS security, interface, change, freeze, and D1 tests were 18 passed. EOS 2 rollout was 4 passed. Engineering review was 166 passed and 1 skipped. Platform core was 162 passed. `pnpm audit --prod` reported one moderate advisory, `GHSA-w5hq-g745-h8pq`, through `exceljs` and `uuid`. No new vulnerability was reported.
 
-`FINAL_GO_RECORD_READY=NO`. `FINAL_PRE_PROMOTION_GO_NO_GO=NO-GO`. No GO record was issued.
+`FINAL_GO_RECORD_READY=NO`. `FINAL_PRE_PROMOTION_GO_NO_GO=NOT_ISSUED`. No GO record was issued.
 
 ## GO invalidation
 
@@ -37,4 +37,4 @@ Any later change to the candidate commit, the migration manifest, the Production
 
 ## Required human input
 
-One human designation is still required before any GO record can be issued. An authoritative project record must name the human release signatory, that person's role, and the authority basis, with decision scope limited to `EOS 2.0 controlled Production pilot software promotion`. The same record must name the single existing Production workspace, including its workspace id, that has an active `engineering-os` entitlement and is not yet EOS 2 enrolled. Repository ownership, GitHub access, workspace ownership, admin access, an engineering role, pilot-user status, and AI output are not that designation. Do not start EOS 2.17 execution until that record exists.
+The release signatory is Silvestre Berso, Founder and Authorized Production Release Authority, by explicit declaration on 2026-10-29. The initial workspace is `5c85d773-3b79-43b2-b138-c6251f566768`. That declaration authorizes the named human to issue GO or NO-GO. It does not issue GO. Do not start EOS 2.17 execution until that GO is explicit.

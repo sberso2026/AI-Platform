@@ -26,7 +26,7 @@
   "physicalBackupUsedAsPromotionCheckpoint": false,
   "remediationPhase": "EOS-2.17R-PRE-PROMOTION-GO-NO-GO-REMEDIATION",
   "pr001Resolved": true,
-  "pr002Resolved": false,
+  "pr002Resolved": true,
   "pr003Resolved": true,
   "rollbackTargetDeploymentId": "dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB",
   "rollbackTargetStillAvailable": true,
@@ -56,8 +56,16 @@
   "engineeringOsEntitlementActive": true,
   "eos2WorkspaceEnrolled": false,
   "finalExecutionBackupRefreshRequired": false,
+  "releaseSignatoryName": "Silvestre Berso",
+  "releaseSignatoryRole": "Founder and Authorized Production Release Authority",
+  "releaseSignatoryAuthorityBasis": "Founder and authorized decision-maker of RTB Engineering and Analytics Pty Ltd for internal software Production releases",
+  "releaseSignatoryDecisionScope": "EOS 2.0 Controlled Production Pilot Promotion",
+  "aiReleaseSignatory": false,
+  "aiProductionGoAuthority": false,
+  "humanProductionGoAuthority": true,
+  "finalGoDecisionIssued": false,
   "finalGoRecordReady": false,
-  "finalPrePromotionGoNoGo": "NO-GO",
+  "finalPrePromotionGoNoGo": "NOT_ISSUED",
   "crossWorkspaceLeakCount": null,
   "smokeResult": "NOT_RUN",
   "qualificationStatus": "QUALIFIED_BOUNDED",
@@ -67,6 +75,6 @@
     "A logical backup was verified for the current fingerprint.",
     "Stock Postgres 17 cannot restore the vector column. An isolated pgvector restore recovered the embeddings table, its 1537 rows, and its two policies.",
     "supabase_vault does not restore without that platform extension. It is not an application RLS policy.",
-    "The EOS 1 controlled pilot workspace is the named EOS 2 cohort and is not enrolled. The release signatory is not named."
+    "The EOS 1 controlled pilot workspace is the named EOS 2 cohort and is not enrolled. Silvestre Berso is the named release signatory. The GO decision has not been issued."
   ]
 }
