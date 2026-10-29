@@ -18,6 +18,10 @@ export function PersistedQualificationNotice() {
   useEffect(() => {
     void fetch("/api/engineering/qualification-runtime")
       .then(async (response) => {
+        if (!response.ok) {
+          setText("EOS 2 is not enabled for this workspace.");
+          return;
+        }
         const body = (await response.json()) as { data?: Payload };
         const ids = body.data?.projectIds ?? [];
         setText(

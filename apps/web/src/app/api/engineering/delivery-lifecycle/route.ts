@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+﻿import { NextResponse } from "next/server";
+import { withEos2Api } from "@/lib/commerce/engineering-api";
 import {
   createDeliveryLifecycle,
   lifecycleAdvisory,
@@ -26,7 +26,7 @@ function view(lifecycle: DeliveryLifecycle) {
   };
 }
 
-export const GET = withEngineeringApi("lifecycle", async ({ ctx }, request) => {
+export const GET = withEos2Api("lifecycle", async ({ ctx }, request) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const projectId = new URL(request.url).searchParams.get("projectId");
   const created = createDeliveryLifecycle({
@@ -54,7 +54,7 @@ export const GET = withEngineeringApi("lifecycle", async ({ ctx }, request) => {
   });
 });
 
-export const POST = withEngineeringApi("lifecycle", async ({ ctx }, request) => {
+export const POST = withEos2Api("lifecycle", async ({ ctx }, request) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const body = (await request.json()) as {
     projectId?: string;

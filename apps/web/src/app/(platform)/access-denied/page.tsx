@@ -34,6 +34,10 @@ const REASON_MESSAGES: Record<string, { title: string; description: string; acti
     description: "This application is not included in your current plan.",
     action: "Upgrade plan",
   },
+  eos2_not_enabled: {
+    title: "EOS 2 is not enabled",
+    description: "EOS 2 is not enabled for this workspace.",
+  },
   feature_not_enabled: {
     title: "Feature not enabled",
     description: "This feature is not enabled on your current plan.",

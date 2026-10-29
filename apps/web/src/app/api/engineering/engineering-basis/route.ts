@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+﻿import { NextResponse } from "next/server";
+import { withEos2Api } from "@/lib/commerce/engineering-api";
 import { createBasisGraph, overview, reviewBasis } from "@rtb/engineering-os/engineering-basis";
 import type { EngineeringBasisGraph } from "@rtb/engineering-os/engineering-basis";
 
@@ -15,7 +15,7 @@ function emptyView(tenantId: string, workspaceId: string, actorId: string) {
   return overview(created.graph);
 }
 
-export const GET = withEngineeringApi("requirements", async ({ ctx }, request) => {
+export const GET = withEos2Api("requirements", async ({ ctx }, request) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const projectId = new URL(request.url).searchParams.get("projectId");
   let query = ctx.supabase
@@ -34,7 +34,7 @@ export const GET = withEngineeringApi("requirements", async ({ ctx }, request) =
   });
 });
 
-export const POST = withEngineeringApi("requirements", async ({ ctx }, request) => {
+export const POST = withEos2Api("requirements", async ({ ctx }, request) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const body = (await request.json()) as { projectId?: string; itemId?: string; outcome?: "approved" };
   const created = createBasisGraph({

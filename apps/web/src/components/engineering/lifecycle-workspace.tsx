@@ -94,6 +94,25 @@ const VIEWS = [
   { id: "transitions", label: "Transitions" },
 ] as const;
 
+function Eos2DeliveryLink() {
+  const [allowed, setAllowed] = useState(false);
+  useEffect(() => {
+    void fetch("/api/engineering/eos2-rollout")
+      .then(async (response) => {
+        if (!response.ok) return;
+        const body = (await response.json()) as { allowed?: boolean };
+        setAllowed(body.allowed === true);
+      })
+      .catch(() => setAllowed(false));
+  }, []);
+  if (!allowed) return null;
+  return (
+    <p className="mb-3 text-sm">
+      <Link className="underline" href="/engineering/delivery-lifecycle">Delivery lifecycle</Link>
+    </p>
+  );
+}
+
 export function LifecycleWorkspace() {
   const params = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
   const [view, setView] = useState<(typeof VIEWS)[number]["id"]>((params?.get("view") as (typeof VIEWS)[number]["id"]) ?? "current");
@@ -285,9 +304,7 @@ export function LifecycleWorkspace() {
       />
       <main className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
         <EngineeringBreadcrumb items={[{ label: "Engineering", href: "/engineering" }, { label: "Lifecycle" }]} />
-        <p className="mb-3 text-sm">
-          <Link className="underline" href="/engineering/delivery-lifecycle">Delivery lifecycle</Link>
-        </p>
+        <Eos2DeliveryLink />
         <EngineeringProjectContextBar />
         {error ? <OperationalError message={error} /> : null}
         <div className="mb-4 flex flex-wrap gap-2">

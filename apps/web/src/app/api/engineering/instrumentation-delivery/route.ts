@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+﻿import { NextResponse } from "next/server";
+import { withEos2Api } from "@/lib/commerce/engineering-api";
 import { createInstrumentationDelivery, instrumentationHome, reviewInstrumentation } from "@rtb/engineering-os/instrumentation-delivery";
 
-export const GET = withEngineeringApi("lifecycle", async ({ ctx }) => {
+export const GET = withEos2Api("lifecycle", async ({ ctx }) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const created = createInstrumentationDelivery({
     id: "unpersisted",
@@ -22,7 +22,7 @@ export const GET = withEngineeringApi("lifecycle", async ({ ctx }) => {
   return NextResponse.json({ data: { view: instrumentationHome(created.delivery), rows: data ?? [], approvalGranted: false } });
 });
 
-export const POST = withEngineeringApi("lifecycle", async ({ ctx }) => {
+export const POST = withEos2Api("lifecycle", async ({ ctx }) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const created = createInstrumentationDelivery({
     id: crypto.randomUUID(),

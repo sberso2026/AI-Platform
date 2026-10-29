@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+﻿import { NextResponse } from "next/server";
+import { withEos2Api } from "@/lib/commerce/engineering-api";
 import {
   addChange,
   addDependency,
@@ -47,7 +47,7 @@ function chain<R>(
   return current;
 }
 
-export const GET = withEngineeringApi("lifecycle", async ({ ctx }) => {
+export const GET = withEos2Api("lifecycle", async ({ ctx }) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const [lifecycles, handoffs, changes, impacts, deliverables, freezes, audits] = await Promise.all([
     ctx.supabase.from("engineering_delivery_lifecycles").select("project_id, stage, state").eq("workspace_id", ctx.workspaceId),
@@ -86,7 +86,7 @@ export const GET = withEngineeringApi("lifecycle", async ({ ctx }) => {
   });
 });
 
-export const POST = withEngineeringApi("lifecycle", async ({ ctx }, request) => {
+export const POST = withEos2Api("lifecycle", async ({ ctx }, request) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const body = (await request.json().catch(() => null)) as { action?: string; actingRole?: string; discipline?: string } | null;
   const action = body?.action ?? "";

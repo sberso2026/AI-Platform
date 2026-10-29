@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { withEngineeringApi } from "@/lib/commerce/engineering-api";
+﻿import { NextResponse } from "next/server";
+import { withEos2Api } from "@/lib/commerce/engineering-api";
 import { approveFreeze, createFreezeRegister, freezeHome } from "@rtb/engineering-os/design-freeze";
 
-export const GET = withEngineeringApi("lifecycle", async ({ ctx }) => {
+export const GET = withEos2Api("lifecycle", async ({ ctx }) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const created = createFreezeRegister({
     id: "unpersisted",
@@ -24,7 +24,7 @@ export const GET = withEngineeringApi("lifecycle", async ({ ctx }) => {
   });
 });
 
-export const POST = withEngineeringApi("lifecycle", async ({ ctx }) => {
+export const POST = withEos2Api("lifecycle", async ({ ctx }) => {
   if (!ctx.workspaceId) return NextResponse.json({ error: "workspace_required" }, { status: 400 });
   const created = createFreezeRegister({
     id: crypto.randomUUID(),

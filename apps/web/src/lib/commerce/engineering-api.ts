@@ -20,6 +20,7 @@ import {
 } from "@/lib/lifecycle-api";
 import { isReadOnlyEngineeringRole } from "@/lib/commerce/canonical-access";
 import { hasEngineeringAdminAuthority } from "@/lib/commerce/engineering-admin-authority";
+import { auditEos2Rollout, readEos2Access } from "@/lib/commerce/eos2-rollout-server";
 
 export type { CommerceHandlerContext };
 
@@ -189,6 +190,38 @@ export async function authorizeEngineeringSegment(
     decision: result,
     policy,
   });
+}
+
+async function denyUnlessEos2(context: CommerceHandlerContext): Promise<NextResponse | null> {
+  const decision = await readEos2Access(context.ctx);
+  if (decision.allowed) return null;
+  await auditEos2Rollout(context.ctx, "eos2_access_denied", {
+    reason: decision.reason,
+    approvalGranted: false,
+  });
+  return lifecycleErrorResponse(
+    "eos2_not_enabled",
+    "EOS 2 is not enabled for this workspace.",
+    403,
+    context.correlationId,
+  );
+}
+
+export function withEos2Api(
+  segment: string,
+  handler: (context: CommerceHandlerContext, request: Request) => Promise<NextResponse>
+) {
+  return async (request: Request): Promise<NextResponse> => {
+    try {
+      const guarded = await guardEngineeringApi(segment, request.method);
+      if (guarded instanceof NextResponse) return guarded;
+      const denied = await denyUnlessEos2(guarded);
+      if (denied) return denied;
+      return await handler(guarded, request);
+    } catch (err) {
+      return handleCommerceDomainError(err, crypto.randomUUID());
+    }
+  };
 }
 
 export function withEngineeringApi(
