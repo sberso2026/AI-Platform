@@ -1,65 +1,106 @@
-# EOS 2.20 EOS 2.0 General Availability Gate
+# EOS 2.20 EOS 2.0 General Availability Gate (rerun after 2.20R)
 
 ## Decision
 
 `PHASE=EOS-2.20-EOS-2.0-GENERAL-AVAILABILITY-GATE`
 
-`VERDICT=BLOCKED`
+`VERDICT=PASS_WITH_LIMITATIONS`
 
-`GA_DECISION=NO_GO_REMEDIATION_REQUIRED`
+`GA_DECISION=TECHNICALLY_READY_PENDING_FINAL_HUMAN_GA_GO`
+
+`TECHNICAL_GA_READINESS=READY`
+
+`FINAL_GA_GO_NO_GO=NOT_ISSUED`
 
 `GA_ACTIVATION_PERFORMED=NO`
 
+`AI_GA_RELEASE_AUTHORITY=NO`
+
 `READY_FOR_NEXT_PHASE=YES`
 
-`NEXT_PHASE=EOS-2.20R-GENERAL-AVAILABILITY-READINESS-REMEDIATION`
+`NEXT_PHASE=EOS-2.20R-HUMAN-GA-RELEASE-AUTHORIZATION`
 
-EOS 2.0 is **not** defensibly ready for General Availability as a globally deployable Engineering Operating System within the declared commercial GA scope. A blocked verdict is preferred to an unsupported GA claim.
+This gate determines **technical / operational / commercial / governance readiness** for General Availability. It does **not** issue human GA GO and does **not** activate GA. Production remains `CONTROLLED_PILOT`.
 
-AI does not issue GA approval (`AI_GA_RELEASE_AUTHORITY=NO`). No Production rollout mode change, enrollment expansion, PITR enablement, pricing, licence, or contract mutation was performed.
-
-## Baseline verified
+## Post-remediation Production reconciliation
 
 | Item | Value |
 | --- | --- |
-| Deployment | `dpl_9ormC4dMrDwNbbKFoPzMSBLVz5uZ` Ready on `https://eos-pilot.rtbea.com.au` |
-| Runtime | `7991f7f0cb6254ecb31f77ef94b6411e8892b329` |
+| Live domain | `https://eos-pilot.rtbea.com.au` |
+| Deployment | `dpl_DL6rmuFs2iX2hKKwS83XNhVtmCpF` |
+| Runtime (build-identity) | `72d668d2a34e33de9c9b438e0462d0af8c15b031` |
+| Dirty | `false` |
 | Supabase | `wcydlhqiqdwgoaqrlget` |
-| Ledger | `159` / max `20261029140000` |
+| Ledger | `160` / max `20261029160000` present |
 | Mode | `controlled_pilot` |
-| Enrolled workspaces | `1` |
+| Enrolled workspaces | `2` — `5c85d773-3b79-43b2-b138-c6251f566768`, `ce113edd-45b8-4efd-b2e0-0ad0307c611c` |
+| Active `eos-2` grants | `2` |
 
-`EOS_2_19_PRODUCTION_BASELINE_VERIFIED=YES`
+`POST_REMEDIATION_PRODUCTION_STATE_RECONCILED=YES`
 
-Qualification remains `QUALIFIED_BOUNDED`. Formulas/semantics unchanged. D1 baseline not invalidated.
+`PRODUCTION_DEPLOYMENT_SOURCE_PROVENANCE_VERIFIED=YES`
 
-## Why GA is NO-GO
+`PRODUCTION_MIGRATION_LEDGER_VERIFIED=YES`
 
-GA-blocking `NOT_READY` items after adjudication (not relabelled as limitations):
+`GA_ENTITLEMENT_MIGRATION_PRESENT=YES`
 
-1. **Entitlement** — EOS 2 access still depends on controlled-pilot mode + workspace enrollment with `productEntitled` forced true in rollout server path. Internal pilot allow-override is not a commercial GA entitlement architecture.
-2. **Onboarding** — No defined non-SQL customer→entitlement→EOS 2 grant workflow suitable for normal GA customers.
-3. **Legal/compliance claims** — No authorized GA customer-facing claim set; no formal SOC 2 / ISO 27001 / EU AI Act certification to cite.
-4. **Commercial readiness** — Entitlement + onboarding + terms/support packaging incomplete for external GA.
+Prior baseline `dpl_9orm…` / `7991f7f0…` / ledger `159` is superseded by the EOS 2.20R remediation deployment and is preserved as historical evidence only.
 
-Additional mandatory gap for declared global deployability:
+## Qualification
 
-5. **Live multi-enrolled Production cohort** — `LIVE_MULTI_ENROLLED_PRODUCTION_COHORT_VALIDATED=NO` while `MULTI_ENROLLED_COHORT_GA_DISPOSITION=REQUIRED` for globally deployable multi-workspace GA. Isolation against non-enrolled workspaces is not a substitute.
+`EOS_2_0_QUALIFICATION_STATUS=QUALIFIED_BOUNDED`
 
-Human GA release authority: After this gate, Silvestre Berso was designated Founder and Authorized General Availability Release Authority for remediation and the final GA decision (`EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`). That later declaration sets `HUMAN_GA_RELEASE_AUTHORITY=YES` and `FINAL_GA_GO_NO_GO=NOT_ISSUED`. It does not convert this gate’s `NO_GO_REMEDIATION_REQUIRED` into GA activation. A separate final human `GO` or `NO-GO` remains required after EOS 2.20R remediation and a successful EOS 2.20 GA Gate rerun.
+`EOS_2_0_QUALIFICATION_PRESERVED=YES`
 
-## What did pass (non-decisive for GA)
+`ENGINEERING_FORMULAS_CHANGED=NO`
 
-- Canonical security/release orchestration: authoritative `PASS_WITH_KNOWN_MODERATE`, release suite 220, secret scan PASS.
-- Security posture for controlled pilot: RLS, authority boundaries, kill switch, coexistence.
-- Persistence and reliability soak evidence within pilot scope.
-- Bounded Structural D1 claim preserved; non-D1 calculations and external solvers remain not globally qualified.
-- AI authority boundaries PASS; Ask retrieval correctly abstains outside indexed corpus (GA claim must stay limited).
+`ENGINEERING_RESULT_SEMANTICS_CHANGED=NO`
 
-## Controlled GA rollout strategy (if/when GO later)
+`QUALIFIED_D1_BASELINE_INVALIDATED=NO`
+
+## Why GA is now technically ready (pending human GO)
+
+Prior EOS 2.20 `NO_GO_REMEDIATION_REQUIRED` blockers were remediable and are now evidenced:
+
+1. **Entitlement** — Canonical `eos-2` grants + fail-closed evaluator in Production runtime; product filtering PASS; legacy auto-enable NO.
+2. **Onboarding / offboarding** — Audited admin workflow + E2E internal validation + Production revocation test PASS.
+3. **Documentation** — GA documentation package READY; certifications correctly claimed as NO.
+4. **Commercial readiness** — Product model defined; `READY_WITH_LIMITATIONS` (external pricing; formal legal review still required before accepting external customers).
+5. **Live multi-enrolled cohort** — Two Production enrolled workspaces validated; soak/RLS/authority PASS; leak counts 0. Internal validation workspaces are **not** paying-customer proof.
+
+Human GA release authority remains verified (`Silvestre Berso`). Final GO is intentionally **not** issued in this gate.
+
+## Bounded limitations (nonblocking for technical readiness)
+
+- Customer policy package awaits formal legal counsel review before external customer acceptance
+- Commercial pricing remains externally configured
+- PITR recommended, not enabled; logical-backup risk acceptance documented
+- Ask AI corpus limitation (READY_WITH_LIMITATIONS)
+- MDR UX limitation retained
+- `GHSA-w5hq-g745-h8pq` ACCEPTED_BOUNDED_RISK
+- Reliability evidence is bounded soak (28 + 18 ops), not large-scale field proof
+- Performance authenticated interactive remains DEGRADED_NONBLOCKING; no formal SLO adopted
+- No 24/7 support claim
+- Internal GA validation workspaces ≠ commercial customer evidence
+
+## Security / release regression
+
+`CANONICAL_GATE_ORCHESTRATION_DETERMINISTIC=YES`
+
+`AUTHORITATIVE_GATE_COMPLETION=PASS` (`PASS_WITH_KNOWN_MODERATE`)
+
+`RELEASE_TEST_COUNT=220`
+
+`SECURITY_RELEASE_REGRESSION_GATE=PASS`
+
+`GA_SECURITY_POSTURE=PASS`
+
+`NEW_BLOCKING_SECURITY_ISSUE=NO`
+
+## Controlled GA rollout strategy (for later human GO)
 
 `GA_ROLLOUT_STRATEGY_DEFINED=YES`
 
 `LEGACY_ENTITLEMENT_AUTO_ENABLES_EOS_2=NO`
 
-Even after a future GO: product GA would not auto-enable EOS 2 for the existing Engineering OS install population; explicit entitlement + enrollment; progressive rollout; kill switch retained; no silent EOS 1 migration.
+If human GO is later issued: declare EOS 2 product GA; onboard via canonical entitlement; explicit workspace enrollment; progressive customer activation; no legacy auto-migration; kill switch retained; Production mode change only under that human authorization.

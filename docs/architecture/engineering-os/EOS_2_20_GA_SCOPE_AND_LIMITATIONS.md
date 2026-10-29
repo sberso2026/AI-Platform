@@ -4,9 +4,9 @@
 
 `EOS_2_GA_EXCLUDED_SCOPE_DEFINED=YES`
 
-This statement describes the **intended** product scope if/when GA is later approved. It does **not** approve GA. Current Production remains `CONTROLLED_PILOT` with one enrolled workspace.
+This statement describes product scope for General Availability **technical readiness**. It does **not** issue human GA GO and does **not** activate GA. Current Production remains `CONTROLLED_PILOT` with **two** enrolled Production workspaces (internal validation cohort).
 
-## Supported scope (when GA is later authorized)
+## Supported scope (when human GA GO is later authorized)
 
 EOS 2.0 is intended to support, within explicit bounds:
 
@@ -21,7 +21,8 @@ EOS 2.0 is intended to support, within explicit bounds:
 - Tenant/workspace RLS and role authority boundaries
 - AI-assisted engineering reasoning with grounding/abstention and no approval authority
 - Bounded qualified Structural D1 calculation capability (`QUALIFIED_BOUNDED`) where that path applies
-- Controlled deterministic workflows already validated in pilot evidence
+- Controlled deterministic workflows already validated in pilot / multi-enrolled evidence
+- Canonical `eos-2` commercial entitlement + explicit workspace enrollment (billing-independent authorization)
 
 ## Excluded / not qualified
 
@@ -35,6 +36,8 @@ EOS 2.0 is intended to support, within explicit bounds:
 - Claiming Ask Engineering AI retrieves all EOS 2 canonical tables (current corpus excludes pilot-workflow tables; abstention is correct)
 - Silent auto-migration of EOS 1 projects into EOS 2
 - Automatic EOS 2 enablement for legacy Engineering OS entitlements
+- Representing INTERNAL_GA_VALIDATION workspaces as paying commercial customers
+- Formal SOC 2 / ISO 27001 / EU AI Act certification claims
 
 ## Qualification claims
 
@@ -45,3 +48,13 @@ EOS 2.0 is intended to support, within explicit bounds:
 `EXTERNAL_SOLVER_GLOBAL_GA_QUALIFICATION=NO`
 
 `IMPLEMENTED != VALIDATED != QUALIFIED` remains in force.
+
+## Known operational limitations retained at technical GA readiness
+
+- Formal legal review of customer policy package pending before external customers
+- PITR recommended, not enabled
+- Ask AI retrieval READY_WITH_LIMITATIONS
+- MDR usability READY_WITH_LIMITATIONS
+- Authenticated interactive performance DEGRADED_NONBLOCKING; no formal SLO
+- Bounded soak reliability only (not large-scale field evidence)
+- Known moderate dependency `GHSA-w5hq-g745-h8pq` ACCEPTED_BOUNDED_RISK

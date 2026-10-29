@@ -1,4 +1,4 @@
-# EOS 2.20 GA Operational Readiness
+# EOS 2.20 GA Operational Readiness (gate rerun)
 
 ## Performance
 
@@ -8,21 +8,23 @@
 
 `FORMAL_GA_SLO_DEFINED=NO`
 
-EOS 2.19 baseline: unauthenticated edge medians ~0.2–0.3 s; authenticated interactive still DEGRADED_NONBLOCKING (~3–5 s class). Acceptable only as a bounded limitation if GA were otherwise ready; not itself the primary blocker.
+Post-remediation: no engineering formula/result-semantics change; measured baseline preserved. Authenticated interactive remains DEGRADED_NONBLOCKING (~3–5 s class). Proposed non-contractual objectives exist in `EOS_2_20R_GA_COMMERCIAL_READINESS.md`. Formal SLO not adopted.
 
 ## Reliability
 
 `GA_RELIABILITY_STATUS=READY_WITH_LIMITATIONS`
 
-28 soak operations / 0 failures support controlled-pilot confidence, not large-scale Production GA evidence.
+Evidence: EOS 2.19 soak 28/0 + EOS 2.20R multi-enrolled soak 18/0. Supports technical readiness; not large-scale field proof.
 
 ## Recovery
+
+`CURRENT_PRODUCTION_SCHEMA_RECOVERABILITY=PASS`
 
 `GA_RECOVERY_STATUS=READY_WITH_LIMITATIONS`
 
 `PITR_GA_DISPOSITION=RECOMMENDED_FOR_GA`
 
-Logical backup/restore + deployment rollback documented; RPO/RTO unvalidated; PITR not enabled and not silently purchased. GA may proceed later without PITR only with explicit acceptance of logical-backup RPO — currently moot because other blockers dominate.
+Logical backup/restore + deployment rollback documented; risk acceptance from EOS 2.20R remains valid. PITR not enabled.
 
 ## Observability / support / docs
 
@@ -30,9 +32,9 @@ Logical backup/restore + deployment rollback documented; RPO/RTO unvalidated; PI
 
 `GA_SUPPORTABILITY_STATUS=READY_WITH_LIMITATIONS`
 
-`GA_DOCUMENTATION_STATUS=NOT_READY` for external GA (controlled-pilot docs exist; GA customer documentation incomplete)
+`GA_DOCUMENTATION_STATUS=READY`
 
-No 24/7 support claim is made.
+No 24/7 support claim.
 
 ## MDR / overview / hydration
 
@@ -40,35 +42,80 @@ No 24/7 support claim is made.
 
 `GA_OVERVIEW_COUNTER_STATUS=PASS`
 
-`GA_HYDRATION_REGRESSION=PASS` (OP-018-003 resolved in runtime `7991f7f0`; no new Critical/High)
+`GA_HYDRATION_REGRESSION=PASS`
 
 ## Multi-enrolled cohort
 
-`LIVE_MULTI_ENROLLED_PRODUCTION_COHORT_VALIDATED=NO`
+`LIVE_MULTI_ENROLLED_PRODUCTION_COHORT_VALIDATED=YES`
 
-`MULTI_ENROLLED_COHORT_GA_DISPOSITION=REQUIRED`
+`MULTI_ENROLLED_OPERATIONAL_SOAK=PASS`
 
-For a globally deployable multi-workspace Engineering OS GA claim, live multi-enrolled operational evidence is required. Cross-workspace denial against non-enrolled peers is security isolation proof only.
+`MULTI_ENROLLED_RLS_VALIDATION=PASS`
+
+`MULTI_ENROLLED_AUTHORITY_VALIDATION=PASS`
+
+`CROSS_WORKSPACE_PRODUCTION_LEAK_COUNT=0`
+
+`AI_CROSS_WORKSPACE_LEAK_COUNT=0`
+
+`INTERNAL_VALIDATION_NOT_MISREPRESENTED_AS_CUSTOMER_PROOF=YES`
+
+## AI
+
+`GA_AI_GOVERNANCE=PASS`
+
+`GA_AI_RETRIEVAL_STATUS=READY_WITH_LIMITATIONS`
+
+`AI_ENGINEERING_APPROVAL_AUTHORITY=NO`
+
+`AI_RELEASE_AUTHORITY=NO`
+
+`AI_IFC_RELEASE_AUTHORITY=NO`
+
+`AI_REGULATORY_CERTIFICATION_AUTHORITY=NO`
 
 ## Operational ownership
 
-`GA_OPERATIONAL_OWNERSHIP_COMPLETE=YES` (reverified in EOS 2.20R):
+`GA_OPERATIONAL_OWNERSHIP_COMPLETE=YES`
 
-- Production release / GA release authority: Silvestre Berso (Founder; `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`)
-- Infrastructure: Vercel Production alias operations
-- Database: Supabase project `wcydlhqiqdwgoaqrlget`
-- Security / incident / recovery: EOS 2.19 runbooks under that authority
-- Support: bounded pilot/GA validation support under same authority (no fabricated 24/7 SLA)
-- Engineering qualification / AI governance: QUALIFIED_BOUNDED D1 + documented AI authority boundaries
-
-`FINAL_GA_GO_NO_GO=NOT_ISSUED` — ownership complete does not activate GA.
+- Production / GA release authority: Silvestre Berso
+- Infrastructure: Vercel Production
+- Database: `wcydlhqiqdwgoaqrlget`
+- Security / incident / recovery / support: EOS 2.19 runbooks under that authority
+- Engineering qualification / AI governance: QUALIFIED_BOUNDED + documented AI boundaries
 
 ## Rollback / kill switch
 
-`GA_APPLICATION_ROLLBACK_READY=YES` (prior Ready deployments retained; procedure documented)
+`GA_APPLICATION_ROLLBACK_READY=YES`
 
-`GA_EOS_2_KILL_SWITCH_READY=YES` (`eos2_18r_set_rollout_mode`)
+`GA_EOS_2_KILL_SWITCH_READY=YES`
+
+`EOS_1_COEXISTENCE_REGRESSION=PASS`
+
+`LEGACY_PROJECT_AUTO_MIGRATION=NO`
+
+`GA_ROLLOUT_STRATEGY_DEFINED=YES`
+
+`LEGACY_ENTITLEMENT_AUTO_ENABLES_EOS_2=NO`
 
 ## Defects
 
-Critical 0 / High 0 / Medium 0 / Low 2 (favicon; Ask corpus gap tracked as Low). No unresolved Critical/High.
+`OPERATIONAL_DEFECT_COUNT=2`
+
+`CRITICAL_OPERATIONAL_DEFECT_COUNT=0`
+
+`HIGH_OPERATIONAL_DEFECT_COUNT=0`
+
+`MEDIUM_OPERATIONAL_DEFECT_COUNT=0`
+
+`LOW_OPERATIONAL_DEFECT_COUNT=2` (favicon; Ask corpus gap)
+
+`NO_UNRESOLVED_CRITICAL_OPERATIONAL_DEFECT=YES`
+
+`NO_UNRESOLVED_HIGH_OPERATIONAL_DEFECT=YES`
+
+## Dependency
+
+`GA_DEPENDENCY_RISK_STATUS=ACCEPTED_BOUNDED_RISK` (`GHSA-w5hq-g745-h8pq`)
+
+`GA_SECURITY_POSTURE=PASS`

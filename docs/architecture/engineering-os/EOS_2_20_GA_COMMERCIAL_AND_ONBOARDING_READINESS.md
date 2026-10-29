@@ -1,42 +1,56 @@
-# EOS 2.20 GA Commercial and Onboarding Readiness
+# EOS 2.20 GA Commercial and Onboarding Readiness (gate rerun)
 
 ## Entitlement
 
 `GA_ENTITLEMENT_MODEL_ASSESSED=YES`
 
-`GA_ENTITLEMENT_MODEL_STATUS=NOT_READY`
+`GA_ENTITLEMENT_MODEL_STATUS=READY`
 
-Assessment:
+`GA_ENTITLEMENT_EVALUATOR=PASS`
 
-| Concern | Finding |
-| --- | --- |
-| Product identity | `engineering-os` product key exists |
-| Installation / tenant / workspace / user / role | Platform model exists |
-| Subscription/licence grant for EOS 2 specifically | No canonical GA EOS 2 licence SKU path evidenced |
-| EOS 2 access grant | Requires `controlled_pilot` mode + enrollment; `readEos2Access` forces `productEntitled: true` |
-| Cancellation/revocation/suspension/expiry of EOS 2 | Not a complete commercial EOS 2 entitlement lifecycle |
-| Billing-independent authorization | Pilot override bypasses normal commercial structure |
-| Audit of entitlement changes | Rollout/enrollment audits exist; not full commercial entitlement audit product |
+`ENTITLEMENT_PRODUCT_FILTERING=PASS`
 
-An internal tenant allow override / forced `productEntitled: true` **must not** be called a GA commercial entitlement architecture. This item is GA-blocking.
+`GA_ENTITLEMENT_TEST_MATRIX=PASS`
 
-## Onboarding
+`LEGACY_ENTITLEMENT_AUTO_ENABLES_EOS_2=NO`
 
-`GA_ONBOARDING_WORKFLOW_DEFINED=YES` (as a required target description)
+Canonical `eos2_ga_entitlements` (`product_key=eos-2`) + server-side fail-closed evaluator are live in Production remediation runtime. Access is workspace- and product-specific. Billing provider state is not the authorization source. Internal pilot override alone is no longer the entitlement mechanism.
 
-`GA_ONBOARDING_STATUS=NOT_READY`
+## Onboarding / offboarding
 
-Required GA steps (create → entitle → configure → users/roles → onboard → grant EOS 2 → suspend/revoke) are **not** available as a normal customer workflow without manual/internal pilot controls. Manual SQL or internal overrides are not accepted as normal GA onboarding.
+`GA_ONBOARDING_STATUS=READY`
+
+`GA_ONBOARDING_END_TO_END_TEST=PASS`
+
+`GA_OFFBOARDING_WORKFLOW_IMPLEMENTED=YES`
+
+`PRODUCTION_ENTITLEMENT_REVOCATION_TEST=PASS`
+
+Normal GA onboarding uses the audited admin entitlement/enrollment path documented in `EOS_2_20R_GA_ONBOARDING_AND_OFFBOARDING.md`. Ad hoc direct SQL is not the standard workflow.
+
+## Multi-enrolled evidence
+
+`LIVE_MULTI_ENROLLED_PRODUCTION_COHORT_VALIDATED=YES`
+
+`INTERNAL_VALIDATION_NOT_MISREPRESENTED_AS_CUSTOMER_PROOF=YES`
+
+Workspaces `5c85d773-3b79-43b2-b138-c6251f566768` and `ce113edd-45b8-4efd-b2e0-0ad0307c611c` are internal controlled/validation Production evidence, not paying customers.
 
 ## Commercial readiness
 
-`GA_COMMERCIAL_READINESS=NOT_READY`
+`GA_COMMERCIAL_READINESS=READY_WITH_LIMITATIONS`
 
-Missing: GA entitlement, GA onboarding, customer-facing GA scope packaging, authorized compliance language, external support commitment. Technical pilot readiness does not substitute.
+Canonical entitlement, onboarding/offboarding, product model, qualification disclaimer, and supported-scope packaging are in place. Pricing remains external. Support is bounded (no 24/7 claim).
+
+## Customer policy package
+
+`GA_CUSTOMER_POLICY_PACKAGE_STATUS=READY_WITH_LIMITATIONS`
+
+Bounded draft/product-requirement coverage exists for terms, privacy, acceptable use, support, and engineering-use disclaimers. **No formal legal review is claimed.** Under RTB governance this does **not** block technical GA readiness / pre-authorization, but **formal legal review is required before accepting external customers**.
 
 ## Compliance / privacy / residency
 
-`GA_COMPLIANCE_CLAIMS_ACCURATE=YES` (by refusing unsupported certifications)
+`GA_COMPLIANCE_CLAIMS_ACCURATE=YES`
 
 `FORMAL_SOC2_CERTIFIED=NO`
 
@@ -44,18 +58,18 @@ Missing: GA entitlement, GA onboarding, customer-facing GA scope packaging, auth
 
 `FORMAL_EU_AI_ACT_CERTIFIED=NO`
 
-`GA_DATA_RESIDENCY_CLAIM_STATUS=SUPPORTED_BOUNDED` (architecture supports jurisdiction profiles; not every jurisdiction commercially deployed)
+`GA_DATA_RESIDENCY_CLAIM_STATUS=SUPPORTED_BOUNDED`
 
-`GA_PRIVACY_STATUS=READY_WITH_LIMITATIONS` (tenant isolation, minimization, AI boundaries; GA privacy notice packaging incomplete)
+`GA_PRIVACY_STATUS=READY_WITH_LIMITATIONS`
 
 ## Human GA authority
 
 `HUMAN_GA_RELEASE_SIGNATORY_IDENTIFIED=YES` — Silvestre Berso
 
-`HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=YES` — declared Founder and Authorized General Availability Release Authority for EOS 2.0 GA readiness remediation and final GA release decision (`EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`)
+`HUMAN_GA_RELEASE_ROLE=Founder and Authorized General Availability Release Authority`
+
+`HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=YES`
 
 `FINAL_GA_GO_NO_GO=NOT_ISSUED`
 
 `AI_GA_RELEASE_AUTHORITY=NO`
-
-Prior EOS 2.17R pilot-promotion authority remains preserved and is not reinterpreted as a GA GO.
