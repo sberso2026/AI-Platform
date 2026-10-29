@@ -1,0 +1,32 @@
+{
+  "phase": "EOS-3.11-PRODUCTION-PILOT-GATE",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "branch": "eos-3/foundation-and-compatibility",
+  "startHead": "c89f106af689a2e79c81a30d0a8420803e632220",
+  "eos310BaselineVerified": true,
+  "candidateCommit": "c89f106af689a2e79c81a30d0a8420803e632220",
+  "candidateFingerprint": "sha256:4c8f9bcb48c478b32fc8ccded642ada8a3f4f330952645ef8f0ff1b6d5b964e1",
+  "approvedProductionMigrationCount": 9,
+  "productionLedgerPreGate": 161,
+  "expectedLedgerAfterPilotMigrations": 170,
+  "productionChangeCount": 0,
+  "productionMigrationCount": 0,
+  "humanGo": "NOT_ISSUED",
+  "activationPerformed": false,
+  "technicalGate": "READY_WITH_LIMITATIONS",
+  "releaseDecision": "TECHNICALLY_READY_PENDING_HUMAN_GO",
+  "liveLlmPilotStatus": "DISABLED_NOT_VALIDATED",
+  "databaseSchemaChanged": false,
+  "newMigrationCreated": false,
+  "recommendedNextPhase": "EOS-3.11R-HUMAN-PRODUCTION-PILOT-AUTHORIZATION-AND-CONTROLLED-ACTIVATION",
+  "readyForNextPhase": true,
+  "artifacts": {
+    "gate": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_GATE.md",
+    "releaseCandidate": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_RELEASE_CANDIDATE.json",
+    "claims": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_CLAIM_MATRIX.md",
+    "limitations": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_LIMITATIONS_REGISTER.md",
+    "defects": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_DEFECT_DISPOSITION.md",
+    "runbook": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_ACTIVATION_RUNBOOK.md",
+    "security": "docs/architecture/engineering-os/EOS_3_11_PRODUCTION_PILOT_SECURITY_EVIDENCE.md"
+  }
+}
