@@ -2,39 +2,56 @@
 
 ## Decision
 
-EOS 2.0 is not granted `QUALIFIED_BOUNDED` in this gate. The qualification status is `VALIDATED_NOT_QUALIFIED`. The phase verdict is `BLOCKED`.
-
-The repository evidence and the persisted staging project support a bounded delivery-workflow claim. The gate also requires a signed-in browser walk of the deployed candidate. That walk did not complete. A preview deployment of commit `b96342587cc3a9ef0487dfd2363295e55fb8aa48` is Ready at `dpl_3LyLRCMuYuXQkyoc2k6rop6ZZaPR`, and its build identity reports staging Supabase `rntonzigxwxcjlcsadip`. Opening `/login` in a browser was redirected to Vercel login by deployment protection. The application login and the nineteen engineering routes were not observed in a signed-in session.
-
-Production was not changed. `https://eos-pilot.rtbea.com.au/api/platform/build-identity` still reports commit `0c1ec9e06eea59ac089753f3c930f1a599b14648`, deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB`, and production Supabase `wcydlhqiqdwgoaqrlget`.
-
-## Qualified scope that was not granted
-
-The intended claim remains ungranted:
+EOS 2.15R remediates the signed-in evidence gap from EOS 2.15. The qualification status is `QUALIFIED_BOUNDED`. The phase verdict is `PASS_WITH_LIMITATIONS`.
 
 EOS 2.0 is a validated and bounded-qualified multidisciplinary engineering delivery, traceability, interface, change-impact, lifecycle, configuration and deliverable-governance platform for controlled engineering workflows across Concept, Feasibility, FEED and Detailed Engineering.
 
-That sentence may be used only after the signed-in staging browser evidence exists. It must still exclude unsupported deterministic calculations and external solver qualification.
+This claim does not cover unsupported deterministic calculations, global external solver qualification, autonomous engineering approval, regulatory certification, a full enterprise document-management system, or full construction management.
 
-## What was validated
+The validated runtime is commit `af6612bdebe40616dab18525ceab4dc70f03621e`, deployed as preview `dpl_Am7AhnHwv7Hjdymx4e73AXrfv75C`. Build identity for that deployment reports branch `cursor/era-7a-engineering-review-pilot-gate`, dirty false, and staging Supabase `rntonzigxwxcjlcsadip`. The documentation commit that records this decision was not deployed. Production promotion was not executed.
 
-- EOS 2.1 through EOS 2.14 remain implemented and covered by their existing automated tests.
-- Staging already contained the EOS 2.x tables. The thirteen approved versions `20261028120000` through `20261029100000` were absent from `schema_migrations`. This gate inserted those version and name rows only. The SQL files were not replayed. Staging ledger count is 145, maximum version `20261029100000`, duplicate version count 0, order valid. Production ledger remains 144 and maximum `20261027233000`, with no EOS 2.x version present.
-- Project `EOS-QA-001` is persisted on staging and labelled `SYNTHETIC_QUALIFICATION_PROJECT`. It contains a detailed-engineering lifecycle, a project design basis, a requirement, an engineering input, one delivery row for each of the eight disciplines, two issued interfaces, a vendor change with structural and electrical candidate impacts, a stale construction deliverable, and a frozen FEED baseline. The baseline fingerprint is `d718a0888df3d9260ff968dc3c90bdc8bac4dc5a06857d9cda4964393c7eb4ed`.
-- A second synthetic user in an unrelated workspace on the same tenant received zero rows from those tables when the database role was `authenticated` and the JWT subject was that user. The member of the qualification workspace received the persisted rows. Leak count is 0. This is a hosted role test, not a browser session.
-- An attempt to set `approved_by_ai` on the qualification freeze remained false.
-- The preview build identity was read from the deployment, not inferred only from the local git HEAD.
+## Remediation of QD-001
+
+| ID | Severity | Status | Record |
+| --- | --- | --- | --- |
+| QD-001 | MEDIUM | RESOLVED | Vercel deployment protection redirected an ordinary browser to Vercel login before EOS login. The preview stayed protected. Qualification used the existing Protection Bypass for Automation, then the normal EOS login. Nineteen routes passed. The hosted P-101 path was executed by the application. |
+
+Root cause: the preview's deployment protection intercepted the browser before the application. Remediation: authorized automation bypass, then application authentication. Evidence: `EOS_2_15R_AUTHENTICATED_BROWSER_VALIDATION.md` and `EOS_2_15R_HOSTED_CRITICAL_PATH_EVIDENCE.md`. Residual limitation: an unauthenticated browser still meets Vercel protection, and receiver or impact decisions are inserted because those tables do not grant update to the application role. Defect history is retained. No additional qualification defect was opened.
+
+Defect count 1. Resolved 1. Unresolved 0. Critical 0. High 0. Medium 1. Low 0.
+
+## Hosted evidence
+
+- Authenticated browser validation: 19 of 19 paths passed on the deployed preview.
+- Application login, workspace `eos-qa-a`, qualification project visibility, logout, and the protected route after logout passed.
+- Workspace `eos-qa-b` did not see `EOS-QA-001`. Leak count 0.
+- The application issued P-101 at `12000 kg` and `75 kW`, revised it to `14000 kg` and `110 kW`, kept historical receiver acceptance, required a new receiver decision, discovered unassessed structural and electrical candidates, recorded human materiality separately, left `str-dwg` at revision 1 and `potentially_stale`, and left the FEED fingerprint prefix `d718a0888df3d926` unchanged.
+- AI, owner, and wrong-discipline approval probes were denied. `approvalGranted` remained false.
+- The hosted API returned four bounded answers and did not approve, finalize materiality, or release.
+
+## Ledger and production
+
+Staging ledger count 145, maximum version `20261029100000`, thirteen EOS 2.x versions present once, duplicate count 0, order valid. Migrations were not replayed. No new migration was created and the database schema was not changed. Staging commerce rows for the synthetic qualification tenant are fixture data, not a schema change.
+
+Production ledger count 144, maximum `20261027233000`, EOS 2.x versions 0. Production commit `0c1ec9e06eea59ac089753f3c930f1a599b14648` and deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` were re-read after the staging deploy. Production was not migrated or redeployed.
+
+## Regression measured in this phase
+
+- `@rtb/release-governance`: 220 passed.
+- `@rtb/engineering-review`: 166 passed, 1 skipped.
+- `@rtb/engineering-review-persistence` unit gate: 37 passed, 1 skipped.
+- Secret scan: PASS, 624 files, 0 findings.
+- Engineering OS security closure: 7 passed. Integrated project: 2 passed. Qualified D1 review: 2 passed.
+- Interface, change-impact, design-freeze, and lifecycle-intelligence tests: 93 passed.
+- `@rtb/platform-core`: 162 passed.
+- `pnpm audit --prod`: one known moderate `uuid` advisory through `exceljs` (`GHSA-w5hq-g745-h8pq`). No new blocking advisory. The dependency was not upgraded in this phase.
+
+Engineering formulas and result semantics were not changed. The qualified D1 baseline was not invalidated. The application runtime gained a bounded qualification route so the hosted path could be executed. That route does not calculate engineering results.
 
 ## Excluded scope
 
-Unsupported deterministic calculations for process, mechanical, piping, civil, geotechnical, electrical, and I&C remain not qualified. External solvers remain metadata or import only and are not certified. EOS is not a universal design calculator, a document-management system, construction-management software, or a regulatory certifier. AI has no engineering approval, acceptance, materiality, freeze, release, or baseline-mutation authority.
-
-## Defects
-
-| ID | Severity | Status | Effect |
-| --- | --- | --- | --- |
-| QD-001 | MEDIUM | Open | Signed-in browser qualification is blocked by Vercel deployment protection on the preview. No tenant, authority, baseline, or D1 defect was found. Qualification is not granted. |
+Process, mechanical, piping, civil, geotechnical, electrical, and I&C deterministic calculations remain not qualified. External solver execution is not globally qualified. Synthetic project `EOS-QA-001` validates runtime, workflow, provenance, security, governance, and traceability. It does not qualify an engineering formula.
 
 ## Production promotion
 
-Not eligible. No production migration was applied and production was not redeployed.
+Eligible for the next readiness phase only. This report does not deploy production or apply a production migration. The next phase is `EOS-2.16-CONTROLLED-PRODUCTION-PROMOTION-READINESS`.
