@@ -33,3 +33,17 @@ Authenticated pilot login, EOS 1 workflow smoke, and cross-workspace UI smoke we
 `LEGACY_PROJECT_AUTO_MIGRATION=NO`
 
 `SYNTHETIC_PRODUCTION_TRANSFER=NO`
+
+## EOS 2.17R authentication and activation
+
+The continuation above stopped before login. This later phase authenticated the approved pilot through the normal login page, completed the pre-enablement denials, and enrolled only workspace `5c85d773-3b79-43b2-b138-c6251f566768`.
+
+`PRODUCTION_PROMOTION_STATUS=PROMOTED_CONTROLLED_PILOT`
+
+`EOS_2_PRODUCTION_ROLLOUT_MODE=CONTROLLED_PILOT`
+
+`EOS_2_PRODUCTION_ENROLLED_WORKSPACE_COUNT=1`
+
+`MIGRATION_REEXECUTION_ATTEMPTED=NO`
+
+Ledger remains 158, maximum `20261029120000`. The live deployment remains `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ`. The bounded workflow did not write Production engineering records. Evidence is in `EOS_2_17R_PRODUCTION_PILOT_AUTHENTICATION_AND_ACTIVATION.md`.
