@@ -1,8 +1,9 @@
 # EOS 3 External Customer Legal and Commercial Requirements
 
 `EOS_3_EXTERNAL_CUSTOMER_CONTRACT_PACKAGE_DEFINED=YES`  
-`EOS_3_EXTERNAL_CUSTOMER_LEGAL_REVIEW_REQUIRED=YES`  
-`EOS_3_EXTERNAL_CUSTOMER_LEGAL_REVIEW_STATUS=NOT_STARTED`  
+`EOS_3_EXTERNAL_CUSTOMER_LEGAL_REVIEW_MODEL=RISK_BASED`  
+`EOS_3_EXTERNAL_CUSTOMER_LEGAL_REVIEW_REQUIRED=CONDITIONAL`  
+`EOS_3_EXTERNAL_CUSTOMER_LEGAL_REVIEW_STATUS=PENDING_RISK_BASED_PATH`  
 `EOS_3_EXTERNAL_CUSTOMER_COMMERCIAL_MODEL_DEFINED=YES`  
 `EOS_3_EXTERNAL_CUSTOMER_PRICING_STATUS=NOT_FINALIZED`  
 `EOS_3_EXTERNAL_CUSTOMER_BILLING_OPERATIONS_DEFINED=YES`  
@@ -17,7 +18,7 @@ Identify need for (as applicable): software subscription/service agreement; term
 
 ## Legal review status
 
-`NOT_STARTED` — blocks final external release authorization (not technical readiness assessment).
+`PENDING_RISK_BASED_PATH` — residual governance item (RG-004). External counsel is **not** mandatory for every agreement. Standard DESIGN_PARTNER terms within approved guardrails may proceed via internal acceptance + AI-assisted classification; material deviations escalate to specialist review. This is a governance decision path, not a platform defect.
 
 ## Commercial model (bounded)
 
@@ -33,7 +34,7 @@ Identify need for (as applicable): software subscription/service agreement; term
 
 ## Pricing
 
-`NOT_FINALIZED`. Pricing finalization is a commercial prerequisite before paid activation; design-partner may proceed under executed agreement with deferred or nominal pricing **only if** legal/commercial review accepts that structure. Until then: legal/commercial status remains incomplete for authorization.
+`NOT_FINALIZED` — residual governance item (RG-002). Pricing/commercial approval must close before paid activation; design-partner may use deferred/nominal terms only with recorded commercial approval. Does not reopen engineering.
 
 ## Billing operations
 

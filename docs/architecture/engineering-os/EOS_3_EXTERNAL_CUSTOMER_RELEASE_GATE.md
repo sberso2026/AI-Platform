@@ -60,11 +60,11 @@ Justification: cohort size 1; contractual recovery limitation disclosed; restore
 
 | Field | Value |
 |-------|-------|
-| Technical readiness | `READY_WITH_LIMITATIONS` |
-| Legal/commercial status | `INCOMPLETE` |
-| Release decision | `TECHNICALLY_READY_PENDING_LEGAL_COMMERCIAL_AND_HUMAN_GO` |
+| Technical readiness | `READY_WITH_RESIDUAL_GOVERNANCE_ITEMS` (platform PASS) |
+| Legal/commercial status | `READY_WITH_RESIDUAL_GOVERNANCE_ITEMS` |
+| Release decision | `PLATFORM_READY_PENDING_GOVERNANCE_DECISIONS_AND_HUMAN_GO` |
 | Hold remains | ACTIVE |
-| Recommended next | `EOS-3-EXTERNAL-CUSTOMER-LEGAL-COMMERCIAL-READINESS` |
+| Recommended next | `EOS-3-EXTERNAL-CUSTOMER-GOVERNANCE-DECISION-CLOSEOUT` |
 
 ## Security gate (docs + existing GA evidence)
 
