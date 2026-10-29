@@ -83,7 +83,7 @@ export function runEos3StagingIntegrationSolverScenario() {
   const connectorSolverQualSeparation =
     connector.health === "AVAILABLE" && connector.qualificationState === "INTEGRATED_NOT_VALIDATED";
 
-  let solver = createSolver({
+  const solver = createSolver({
     provider: "eos3-synthetic",
     product: "SyntheticStatic",
     version: "1.0.0",
