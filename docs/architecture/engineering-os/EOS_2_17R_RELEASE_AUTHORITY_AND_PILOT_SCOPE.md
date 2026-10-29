@@ -12,6 +12,10 @@ Existing release governance names a role, not a person. `assertProductionIdentit
 
 The EOS 1.0 attestation records an operator and a pilot-engineer membership on `eos-controlled-pilot / default`, plus an owner membership on another workspace. Those facts are EOS 1 evidence. They do not appoint anyone to approve controlled EOS 2.0 Production promotion. No professional registration, corporate office, or delegated EOS 2 release authority is stated in that attestation, and none is added here.
 
+The D1 attestation `EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md` names Silvestre Berso as Structural Engineer / Qualified Structural Reviewer for the D1 structural review scope. That document says the attestation is not certification, regulatory approval, or project design approval. It is an engineering-reviewer record. It is not an appointment to approve EOS 2 Production software promotion. This closeout does not convert it into one.
+
+`RELEASE_SIGNATORY_NAME` is not assigned. `RELEASE_SIGNATORY_ROLE` is not assigned. `RELEASE_SIGNATORY_AUTHORITY_BASIS` is none. `RELEASE_SIGNATORY_DECISION_SCOPE` is not assigned. `AI_RELEASE_SIGNATORY=NO`.
+
 ## PR-003
 
 `PRODUCTION_PILOT_WORKSPACE_IDENTIFIED=NO`

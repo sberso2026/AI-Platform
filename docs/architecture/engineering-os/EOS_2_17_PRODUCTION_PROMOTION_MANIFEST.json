@@ -34,6 +34,20 @@
   "enrolledPilotWorkspaceCount": 0,
   "activeEngineeringOsInstallations": 396,
   "securityStatus": "NOT_RUN",
+  "closeoutPhase": "EOS-2.17R-PRE-PROMOTION-GO-NO-GO-REMEDIATION-CLOSEOUT",
+  "pr001ResidualRecoveryGapClosed": true,
+  "missingRestorePolicyClassificationComplete": true,
+  "applicationOwnedRlsPolicyRestoreParity": "PASS",
+  "documentEmbeddingsRecoveryPathVerified": true,
+  "restoredPolicyFingerprint": "4cf95ff1a5867d4fdd659cdaedce7ee5",
+  "productionMigrationDeltaReconfirmed": true,
+  "promotionManifestPendingCount": 14,
+  "stagingOnlyVersionsOutsideManifest": 22,
+  "closeoutSecurityStatus": "PASS",
+  "closeoutReleaseTestCount": 220,
+  "knownModerateAdvisory": "GHSA-w5hq-g745-h8pq",
+  "finalGoRecordReady": false,
+  "finalPrePromotionGoNoGo": "NO-GO",
   "crossWorkspaceLeakCount": null,
   "smokeResult": "NOT_RUN",
   "qualificationStatus": "QUALIFIED_BOUNDED",
@@ -41,7 +55,8 @@
   "knownLimitations": [
     "The latest physical backup was not used as the promotion checkpoint.",
     "A logical backup was verified for the current fingerprint.",
-    "public.project_intelligence_document_embeddings did not restore on stock Postgres 17.",
+    "Stock Postgres 17 cannot restore the vector column. An isolated pgvector restore recovered the embeddings table, its 1537 rows, and its two policies.",
+    "supabase_vault does not restore without that platform extension. It is not an application RLS policy.",
     "No Production workspace or release signatory is named."
   ]
 }

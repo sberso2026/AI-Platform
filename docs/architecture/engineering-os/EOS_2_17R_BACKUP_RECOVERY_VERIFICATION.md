@@ -59,7 +59,32 @@ The dump was restored into a new isolated Postgres 17 container that was not pub
 | EOS 1 pilot tenant `eos-controlled-pilot` | 1 | 1 |
 | Workspaces in that tenant | 1 | 1 |
 
-`public.project_intelligence_document_embeddings` did not restore on stock Postgres 17. Public tables were 570 restored of 571. Policies were 1392 restored of 1489. The gap follows Supabase extension objects, including `supabase_vault`, which stock Postgres 17 does not provide. The promotion ledger and the tenant and workspace populations matched.
+`public.project_intelligence_document_embeddings` did not restore on stock Postgres 17. Public tables were 570 restored of 571. Policies were 1392 restored of 1489. The promotion ledger and the tenant and workspace populations matched. That stock result is retained. It is not the recovery conclusion.
+
+## Closeout classification
+
+`MISSING_RESTORE_POLICY_CLASSIFICATION_COMPLETE=YES`
+
+`APPLICATION_OWNED_RLS_POLICY_RESTORE_PARITY=PASS`
+
+`DOCUMENT_EMBEDDINGS_RECOVERY_PATH_VERIFIED=YES`
+
+`PR_001_RESIDUAL_RECOVERY_GAP_CLOSED=YES`
+
+The same dump was restored again into an isolated `pgvector/pgvector:pg17` container that was not published. The container and its network were removed after the checks. The checksum was re-read first and still matched `392be8e01ce0adb4cca3aeff3c681c4c4833020dab0aeeb1547c7de913e6f1a8`.
+
+Production has extensions `vector` and `supabase_vault`. The embeddings table has `embedding jsonb` and `embedding_vector vector(1536)`. Migration `20260712180000` creates the table. Migration `20260712200000` installs `vector` and adds the vector column. The backup contains the table definition and its rows. On the pgvector image the table restored, `vector` was installed, and the row count was 1537. Production has the same row count and the same two policies on that table. Stock Postgres 17 is not a full recovery target for this schema.
+
+The first pgvector pass restored 1394 public policies and no storage policies. The 95 missing policies were all `CREATE POLICY` statements rejected because the isolated database had no `authenticated` role. Classification of those 95:
+
+| Class | Count | Cause |
+| --- | --- | --- |
+| Application-owned public-schema RLS | 87 | Missing Supabase role `authenticated` |
+| Storage-managed policies | 8 | Missing Supabase role `authenticated` |
+| Supabase Auth-managed policies | 0 | No `auth` schema policies are in the Production policy catalog |
+| Extension/platform-managed objects | `supabase_vault` and `vault.secrets` | The isolated image has no `supabase_vault` control file |
+
+Production policy catalog is 1481 public policies and 8 storage policies, 1489 total. After the isolated database was given the `authenticated`, `anon`, and `service_role` roles that already exist on the Supabase recovery target, the post-data section was replayed. Public policies were 1481 and storage policies were 8. The ordered policy-name fingerprint was `4cf95ff1a5867d4fdd659cdaedce7ee5` on both Production and the restore. No application-owned RLS policy remained missing. `vault.secrets` still does not restore without `supabase_vault`. That object is platform-managed and is not an application RLS policy.
 
 ## Limitation
 
