@@ -35,4 +35,13 @@
 | Kill switch | operational (fail-closed) |
 | EOS 2 auto-migration | 0 |
 
-Activation Production deployment ID / runtime commit recorded in phase closeout after Vercel deploy.
+## Activation deployment
+
+| Field | Value |
+|-------|-------|
+| `EOS_3_PRODUCTION_DEPLOYMENT_ID` | `dpl_7uVMd6bKM1g8Kc1VyNEkSwvfE37r` |
+| `EOS_3_PRODUCTION_RUNTIME_COMMIT` | `a7b23b48656a224cb606b12baeb202849c0c731f` |
+| Ready state | READY |
+| Alias | https://eos-pilot.rtbea.com.au |
+
+`EOS_3_PRODUCTION_RUNTIME_MATCHES_AUTHORIZATION=YES` — Production runtime is frozen GA candidate `429e0452` plus authorized GA activation delta only (identity/status + GA GO binding; no schema/claim/qualification expansion).

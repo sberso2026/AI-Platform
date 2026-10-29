@@ -30,7 +30,7 @@
 
 1. Software GA authorization module + identity release status (no schema migration)
 2. Production foundation audit `eos3_13r_ga_activation`
-3. Production runtime redeploy of activation delta (deployment ID in closeout)
+3. Production runtime redeploy `a7b23b48` as `dpl_7uVMd6bKM1g8Kc1VyNEkSwvfE37r` (READY)
 
 ## Explicit non-effects
 

@@ -16,6 +16,8 @@
   "enabledEnrolledWorkspaceCount": 1,
   "crossWorkspaceLeakCount": 0,
   "eos2ProjectAutoMigrationCount": 0,
+  "productionDeploymentId": "dpl_7uVMd6bKM1g8Kc1VyNEkSwvfE37r",
+  "productionRuntimeCommit": "a7b23b48656a224cb606b12baeb202849c0c731f",
   "recommendedNextPhase": "EOS-3.14-GA-POST-ACTIVATION-ASSURANCE-AND-HARDENING",
   "readyForNextPhase": true
 }
