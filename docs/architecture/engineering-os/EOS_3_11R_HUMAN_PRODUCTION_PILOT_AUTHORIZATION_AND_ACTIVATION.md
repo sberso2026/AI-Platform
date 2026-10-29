@@ -25,7 +25,7 @@
 2. Applied exact nine approved EOS 3 migrations; ledger `161 → 170`
 3. Granted eos-3 entitlement + PILOT enrollment to workspace `5c85d773-3b79-43b2-b138-c6251f566768` only
 4. Created controlled smoke project `eos3-pilot-smoke-001` (2 objects); foreign workspace leak probe `0`
-5. Deployed activation runtime with PILOT Production access enablement
+5. Deployed activation runtime `429e0452` as Production `dpl_8fKpNWQDpXzoaNT7jQXvV8heeZjd` (READY; alias eos-pilot.rtbea.com.au) with PILOT Production access enablement
 
 ## Explicit non-effects
 
