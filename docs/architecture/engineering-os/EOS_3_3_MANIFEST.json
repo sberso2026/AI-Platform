@@ -1,0 +1,31 @@
+{
+  "phase": "EOS-3.3-KNOWLEDGE-AND-RETRIEVAL-ARCHITECTURE",
+  "verdict": "PASS",
+  "branch": "eos-3/foundation-and-compatibility",
+  "eos31FoundationPreserved": true,
+  "eos32CanonicalObjectBaselinePreserved": true,
+  "graphAuthorityModel": "STRUCTURED_CANONICAL_STATE",
+  "vectorIndexIsSystemOfRecord": false,
+  "vectorArchitectureReuse": "REUSE_PROJECT_INTELLIGENCE_DETERMINISTIC_LOCAL_EMBEDDING_PATTERN",
+  "databaseSchemaChanged": true,
+  "newMigrationId": "20261029220000_eos_3_3_knowledge_retrieval",
+  "historicalMigrationsUnchanged": true,
+  "productionMigrationLedger": 161,
+  "productionEos33TablesPresent": false,
+  "eos3ProductionActivationPerformed": false,
+  "productionDataWriteCount": 0,
+  "goldenSetSize": 15,
+  "qualificationImpact": "NONE",
+  "newMaterialArchitecturalDecisionCount": 0,
+  "recommendedNextPhase": "EOS-3.4-DECISION-AND-OPTIMIZATION-INTELLIGENCE",
+  "readyForNextPhase": true,
+  "artifacts": {
+    "architecture": "docs/architecture/engineering-os/EOS_3_3_KNOWLEDGE_AND_RETRIEVAL_ARCHITECTURE.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_3_KNOWLEDGE_SOURCE_AND_AUTHORITY_MODEL.md",
+    "hybrid": "docs/architecture/engineering-os/EOS_3_3_HYBRID_RETRIEVAL_AND_RANKING.md",
+    "revisionBaseline": "docs/architecture/engineering-os/EOS_3_3_REVISION_BASELINE_AND_CONFLICT_RETRIEVAL.md",
+    "context": "docs/architecture/engineering-os/EOS_3_3_ENGINEERING_CONTEXT_ASSEMBLY.md",
+    "security": "docs/architecture/engineering-os/EOS_3_3_RETRIEVAL_SECURITY_AND_ISOLATION.md",
+    "evaluation": "docs/architecture/engineering-os/EOS_3_3_RETRIEVAL_EVALUATION.md"
+  }
+}
