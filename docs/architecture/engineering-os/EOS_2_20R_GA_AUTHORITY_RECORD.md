@@ -12,19 +12,37 @@
 
 `HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=YES`
 
-Source: `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`
-
 `AI_GA_RELEASE_AUTHORITY=NO`
 
-`FINAL_GA_GO_NO_GO=NOT_ISSUED`
+## Final GA decision
 
-## Multi-workspace validation GO
+`FINAL_GA_GO_NO_GO=GO`
+
+`EOS_2_0_GA_RELEASE_AUTHORIZED=YES`
+
+Source: `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md`
+
+Prior authority-only declaration (GO not yet issued): `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`
+
+## Activation status
+
+`GA_ACTIVATION_PERFORMED=NO`
+
+Controlled activation is authorized for:
+
+`EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION`
+
+## External customer restriction
+
+`EXTERNAL_COMMERCIAL_CUSTOMER_ONBOARDING_AUTHORIZED=NO`
+
+Technical GA activation may proceed under EOS 2.21 controls. External commercial customer onboarding/contracting/acceptance must wait for RTB legal review of the customer policy package.
+
+## Multi-workspace validation GO (retained)
 
 `HUMAN_MULTI_WORKSPACE_VALIDATION_GO=YES`
 
 `INTERNAL_GA_VALIDATION_WORKSPACES_AUTHORIZED=YES`
-
-Under the GA authority declaration (bounded Production validation including controlled creation/enrollment of additional internal Production validation workspaces), the following exact workspaces are authorized for EOS 2.20R multi-enrolled validation:
 
 | Workspace ID | Name | Classification |
 | --- | --- | --- |
@@ -32,5 +50,3 @@ Under the GA authority declaration (bounded Production validation including cont
 | `ce113edd-45b8-4efd-b2e0-0ad0307c611c` | INTERNAL_GA_VALIDATION_B | INTERNAL_GA_VALIDATION |
 
 Tenant: `eos-controlled-pilot` / `4f7da5fe-4ffb-453d-9d63-b74ff36aba2a`
-
-These are not customers. No fabricated contracts or billing records.

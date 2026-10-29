@@ -10,7 +10,7 @@
 
 `TECHNICAL_GA_READINESS=READY`
 
-`FINAL_GA_GO_NO_GO=NOT_ISSUED`
+`FINAL_GA_GO_NO_GO=GO` (issued after this gate in `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md`)
 
 `GA_ACTIVATION_PERFORMED=NO`
 
@@ -18,9 +18,9 @@
 
 `READY_FOR_NEXT_PHASE=YES`
 
-`NEXT_PHASE=EOS-2.20R-HUMAN-GA-RELEASE-AUTHORIZATION`
+`NEXT_PHASE=EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION`
 
-This gate determines **technical / operational / commercial / governance readiness** for General Availability. It does **not** issue human GA GO and does **not** activate GA. Production remains `CONTROLLED_PILOT`.
+This gate determined **technical / operational / commercial / governance readiness** for General Availability. Human GA GO was subsequently issued by Silvestre Berso. Production remained `CONTROLLED_PILOT` at gate time and is not activated by the gate document alone.
 
 ## Post-remediation Production reconciliation
 

@@ -12,7 +12,7 @@ Recorded: 2026-10-29
 
 `AI_GA_RELEASE_AUTHORITY=NO`
 
-`FINAL_GA_GO_NO_GO=NOT_ISSUED`
+`FINAL_GA_GO_NO_GO=GO` — superseding issuance recorded in `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md`
 
 `EOS_2_0_QUALIFICATION_STATUS=QUALIFIED_BOUNDED`
 
@@ -26,22 +26,9 @@ Founder and authorized decision-maker of RTB Engineering and Analytics Pty Ltd f
 
 This authority includes approval of bounded Production validation necessary to establish General Availability readiness, including the controlled creation or enrollment of additional **internal** Production validation workspaces where required to prove multi-workspace EOS 2 operation.
 
-## Explicit non-effects
+## Historical note
 
-This declaration does **not**:
-
-- issue EOS 2.0 General Availability `GO`;
-- issue EOS 2.0 General Availability `NO-GO`;
-- activate unrestricted GA;
-- auto-enroll legacy Engineering OS installations;
-- constitute engineering design approval, calculation verification, professional engineering certification, IFC approval, statutory approval, regulatory certification, or autonomous engineering authority;
-- broaden `QUALIFIED_BOUNDED` engineering calculation qualification;
-- grant AI any General Availability release authority.
-
-A separate final human `GO` or `NO-GO` remains required after:
-
-1. completion of `EOS-2.20R-GENERAL-AVAILABILITY-READINESS-REMEDIATION`; and
-2. successful rerun of `EOS-2.20-EOS-2.0-GENERAL-AVAILABILITY-GATE`.
+This document originally recorded GA **authority** with `FINAL_GA_GO_NO_GO=NOT_ISSUED`. The final human GA `GO` was later issued in `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md` after successful EOS 2.20R remediation and the EOS 2.20 GA gate rerun. This authority declaration is retained for provenance; the authorization record is the operative GO.
 
 ## Relationship to prior pilot authority
 
@@ -53,4 +40,4 @@ That pilot-scoped authority remains preserved. This declaration separately verif
 
 ## Current Production posture
 
-Production remains `CONTROLLED_PILOT` until a later explicit final human GA decision and any subsequent controlled activation phase. `GA_ACTIVATION_PERFORMED` remains `NO` under this declaration alone.
+At GO issuance, Production remained `CONTROLLED_PILOT`. Controlled activation is a separate phase (`EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION`). `GA_ACTIVATION_PERFORMED` remains `NO` until that phase completes under the GO.

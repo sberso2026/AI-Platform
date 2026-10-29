@@ -70,6 +70,12 @@ Bounded draft/product-requirement coverage exists for terms, privacy, acceptable
 
 `HUMAN_GA_RELEASE_AUTHORITY_VERIFIED=YES`
 
-`FINAL_GA_GO_NO_GO=NOT_ISSUED`
+`FINAL_GA_GO_NO_GO=GO` — see `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md`
+
+`EOS_2_0_GA_RELEASE_AUTHORIZED=YES`
+
+`EXTERNAL_COMMERCIAL_CUSTOMER_ONBOARDING_AUTHORIZED=NO` — formal legal review of customer policy package still required before external commercial onboarding/contracting/acceptance
 
 `AI_GA_RELEASE_AUTHORITY=NO`
+
+`GA_ACTIVATION_PERFORMED=NO` — controlled activation is the separate EOS 2.21 phase

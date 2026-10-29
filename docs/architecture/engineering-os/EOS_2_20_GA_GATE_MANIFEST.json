@@ -26,7 +26,10 @@
   "humanGaReleaseSignatory": "Silvestre Berso",
   "humanGaReleaseRole": "Founder and Authorized General Availability Release Authority",
   "humanGaReleaseAuthorityVerified": true,
-  "finalGaGoNoGo": "NOT_ISSUED",
+  "finalGaGoNoGo": "GO",
+  "eos20GaReleaseAuthorized": true,
+  "externalCommercialCustomerOnboardingAuthorized": false,
+  "humanGaReleaseAuthorizationArtifact": "docs/architecture/engineering-os/EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md",
   "gaEntitlementModelStatus": "READY",
   "gaEntitlementEvaluator": "PASS",
   "entitlementProductFiltering": "PASS",
@@ -82,8 +85,9 @@
   "engineeringFormulasChanged": false,
   "engineeringResultSemanticsChanged": false,
   "qualifiedD1BaselineInvalidated": false,
-  "nextPhase": "EOS-2.20R-HUMAN-GA-RELEASE-AUTHORIZATION",
+  "nextPhase": "EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION",
   "readyForNextPhase": true,
+  "gaActivationPerformed": false,
   "limitations": [
     "Formal legal review of customer policy package required before external customers",
     "Pricing externally configured",
@@ -93,7 +97,7 @@
     "GHSA-w5hq-g745-h8pq ACCEPTED_BOUNDED_RISK",
     "Bounded soak reliability only",
     "Performance DEGRADED_NONBLOCKING; no formal SLO",
-    "FINAL_GA_GO_NO_GO remains NOT_ISSUED; GA not activated"
+    "FINAL_GA_GO issued; controlled activation not yet performed"
   ],
   "blocker": "none"
 }

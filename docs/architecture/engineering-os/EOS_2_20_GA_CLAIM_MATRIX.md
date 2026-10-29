@@ -35,4 +35,4 @@ Preserve: `IMPLEMENTED != VALIDATED != QUALIFIED`.
 
 `EXTERNAL_SOLVER_GLOBAL_GA_QUALIFICATION=NO`
 
-`GA_SUPPORTED=CONDITIONAL` means technically ready pending `FINAL_GA_GO` and activation under human authorization. This matrix does not authorize activation.
+`GA_SUPPORTED=CONDITIONAL` means human `FINAL_GA_GO=GO` has been issued (`EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md`) but controlled activation (`EOS-2.21`) has not yet been performed. External commercial customer onboarding remains unauthorized pending legal review. This matrix does not itself activate Production.
