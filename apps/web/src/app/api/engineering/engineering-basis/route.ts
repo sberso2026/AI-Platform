@@ -25,10 +25,13 @@ export const GET = withEos2Api("requirements", async ({ ctx }, request) => {
     .eq("workspace_id", ctx.workspaceId);
   if (projectId) query = query.eq("project_id", projectId);
   const { data } = await query.limit(20);
+  const rows = data ?? [];
   return NextResponse.json({
     data: {
       view: emptyView(ctx.tenantId, ctx.workspaceId, ctx.userId),
-      rows: data ?? [],
+      viewSource: "unpersisted_scaffold",
+      persistedBasisSetCount: rows.length,
+      rows,
       approvalGranted: false,
     },
   });

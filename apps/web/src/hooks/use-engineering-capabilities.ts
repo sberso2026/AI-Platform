@@ -54,27 +54,31 @@ function writeCache(value: Omit<EngineeringCapabilitySnapshot, "loaded">) {
  */
 export function useEngineeringCapabilities(): EngineeringCapabilitySnapshot {
   const profileId = resolveEngineeringDeploymentProfile();
-  const cached = typeof window !== "undefined" ? readCache() : null;
+  // SSR and the first client paint must share one tree. Reading sessionStorage
+  // during useState init made Ask/nav chrome diverge after a cached visit and
+  // produced intermittent React hydration #418 (OP-018-003).
   const [state, setState] = useState<EngineeringCapabilitySnapshot>(() => ({
-    productEntitled: cached?.value.productEntitled ?? true,
-    entitledFeatureKeys: cached?.value.entitledFeatureKeys ?? [],
-    entitledApplicationKeys: cached?.value.entitledApplicationKeys ?? [],
-    visiblePrimaryNavIds:
-      cached?.value.visiblePrimaryNavIds ??
-      resolveVisiblePrimaryNavIds({
-        productEntitled: true,
-        entitledFeatureKeys: [],
-        profileId,
-      }),
-    profileId: cached?.value.profileId ?? profileId,
-    uxDensity: cached?.value.uxDensity ?? resolveExperienceUxDensity(profileId),
-    timingMs: cached?.value.timingMs ?? null,
-    loaded: Boolean(cached),
+    productEntitled: true,
+    entitledFeatureKeys: [],
+    entitledApplicationKeys: [],
+    visiblePrimaryNavIds: resolveVisiblePrimaryNavIds({
+      productEntitled: true,
+      entitledFeatureKeys: [],
+      profileId,
+    }),
+    profileId,
+    uxDensity: resolveExperienceUxDensity(profileId),
+    timingMs: null,
+    loaded: false,
   }));
 
   useEffect(() => {
     let cancelled = false;
     const started = performance.now();
+    const cached = readCache();
+    if (cached) {
+      setState({ ...cached.value, loaded: true });
+    }
 
     (async () => {
       try {

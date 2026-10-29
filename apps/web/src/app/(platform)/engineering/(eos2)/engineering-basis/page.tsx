@@ -24,6 +24,7 @@ const SECTIONS = ["Overview", "Design Basis", "Requirements", "Assumptions", "Cr
 
 export default function EngineeringBasisPage() {
   const [view, setView] = useState<View | null>(null);
+  const [persistedBasisSetCount, setPersistedBasisSetCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<(typeof SECTIONS)[number]>("Overview");
   const [discipline, setDiscipline] = useState("all");
@@ -38,6 +39,13 @@ export default function EngineeringBasisPage() {
           return;
         }
         setView(body.data.view as View);
+        setPersistedBasisSetCount(
+          typeof body.data.persistedBasisSetCount === "number"
+            ? body.data.persistedBasisSetCount
+            : Array.isArray(body.data.rows)
+              ? body.data.rows.length
+              : 0,
+        );
       })
       .catch(() => setError("Engineering basis is not available."));
   }, []);
@@ -84,6 +92,10 @@ export default function EngineeringBasisPage() {
         {error ? <p className="text-sm">{error}</p> : null}
         {view && section === "Overview" ? (
           <section className="max-w-3xl space-y-2 text-sm" data-testid="engineering-basis-overview">
+            <p data-testid="engineering-basis-overview-scope">
+              Scaffold overview (not EOS 2 pilot persistence counts). Authoritative controlled-pilot state is in the
+              Controlled production pilot validation panel above. Persisted basis sets visible to this workspace API: {persistedBasisSetCount}.
+            </p>
             <p>Lifecycle stage: {view.stage === "not_classified" ? "Not classified." : view.stage}</p>
             <p>Design basis items: {view.basisCount}. Disciplines: {view.disciplines.length ? view.disciplines.join(", ") : "None declared."}</p>
             <p>Unresolved basis items: {view.unresolvedBasis}. Unresolved assumptions: {view.unresolvedAssumptions}.</p>

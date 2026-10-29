@@ -592,6 +592,10 @@ export function AskEngineeringShell({
         <span className="text-muted-foreground" data-testid="ask-scope-indicator">
           Scope: {scopeLabel}
         </span>
+        <span className="text-muted-foreground text-xs" data-testid="ask-eos2-retrieval-limit">
+          Ask grounds on indexed documents and project intelligence. EOS 2 pilot-workflow tables are outside this
+          corpus; abstention is preferred over unsupported engineering claims.
+        </span>
         <span className="text-slate-800" data-testid="ask-object-context">
           {describeAskContext({
             objectType: context.objectType,

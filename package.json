@@ -31,7 +31,8 @@
     "review:staging": "node scripts/review-staging.mjs",
     "release:drift-report": "pnpm --filter @rtb/release-governance report",
     "release:production-guard": "pnpm --filter @rtb/release-governance guard",
-    "release:ledger-only": "pnpm --filter @rtb/release-governance ledger-only"
+    "release:ledger-only": "pnpm --filter @rtb/release-governance ledger-only",
+    "eos2:canonical-gates": "node scripts/eos2-19-canonical-gates.mjs"
   },
   "devDependencies": {
     "turbo": "^2.5.4",
