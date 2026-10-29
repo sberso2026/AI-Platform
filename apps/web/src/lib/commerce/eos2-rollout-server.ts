@@ -79,7 +79,8 @@ export async function readEos2Access(ctx: AuthContext): Promise<Eos2AccessDecisi
   const settings = (tenant.data?.settings ?? {}) as { eos2?: { mode?: unknown } };
   const enrolled = enrollment.data?.enrolled === true;
 
-  // Evaluate commercial grant validity independently of current enrollment/mode.
+  // Evaluate commercial grant validity independently of current enrollment/mode
+  // (pass an active rollout + enrolled to isolate grant checks from access gates).
   const commercial = evaluateEos2GaEntitlement({
     authenticated: true,
     requestedProductKey: EOS2_GA_PRODUCT_KEY,
@@ -87,7 +88,7 @@ export async function readEos2Access(ctx: AuthContext): Promise<Eos2AccessDecisi
     workspaceId: ctx.workspaceId,
     record: mapGrant((grant.data as Record<string, unknown> | null) ?? null),
     enrolled: true,
-    rolloutMode: "controlled_pilot",
+    rolloutMode: "general_availability",
     emergencyOff: false,
   });
 

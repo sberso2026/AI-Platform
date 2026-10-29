@@ -1,4 +1,4 @@
-export const EOS2_ROLLOUT_MODES = ["off", "controlled_pilot"] as const;
+export const EOS2_ROLLOUT_MODES = ["off", "controlled_pilot", "general_availability"] as const;
 
 export type Eos2RolloutMode = (typeof EOS2_ROLLOUT_MODES)[number];
 
@@ -8,7 +8,9 @@ export function applyEos2Mode(
   settings: unknown,
   mode: string,
 ): { ok: true; settings: Eos2Settings; previousMode: string | null } | { ok: false; error: "invalid_mode" } {
-  if (mode !== "off" && mode !== "controlled_pilot") return { ok: false, error: "invalid_mode" };
+  if (mode !== "off" && mode !== "controlled_pilot" && mode !== "general_availability") {
+    return { ok: false, error: "invalid_mode" };
+  }
   const base: Eos2Settings =
     settings && typeof settings === "object" && !Array.isArray(settings)
       ? { ...(settings as Record<string, unknown>) }
@@ -19,5 +21,12 @@ export function applyEos2Mode(
       ? { ...(current as Record<string, unknown>) }
       : {};
   const previous = typeof eos2.mode === "string" ? eos2.mode : null;
-  return { ok: true, previousMode: previous, settings: { ...base, eos2: { ...eos2, mode } } };
+  const next: Record<string, unknown> = { ...eos2, mode };
+  if (mode === "general_availability") {
+    next.product_release_state = "GENERAL_AVAILABILITY";
+    next.access_model = "EXPLICIT_ENTITLEMENT_AND_ENROLLMENT";
+    next.external_customer_onboarding_hold = true;
+    next.ga_version = "2.0.0";
+  }
+  return { ok: true, previousMode: previous, settings: { ...base, eos2: next } };
 }

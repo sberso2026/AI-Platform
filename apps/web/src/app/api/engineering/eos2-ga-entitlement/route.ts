@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/kernel";
 import { canEnrollEos2 } from "@/lib/commerce/eos2-rollout";
 import { EOS2_GA_PRODUCT_KEY } from "@/lib/commerce/eos2-ga-entitlement";
+import {
+  getEos2ExternalCustomerHoldState,
+  isEos2ExternalCommercialGrantAllowed,
+} from "@/lib/commerce/eos2-external-customer-hold";
 import { lifecycleErrorResponse, unauthenticatedResponse } from "@/lib/lifecycle-api";
 
 type Body = {
@@ -29,7 +33,13 @@ export async function GET() {
     .eq("product_key", EOS2_GA_PRODUCT_KEY)
     .maybeSingle();
   if (error) return NextResponse.json({ error: "read_failed" }, { status: 500 });
-  return NextResponse.json({ data: { entitlement: data, productKey: EOS2_GA_PRODUCT_KEY } });
+  return NextResponse.json({
+    data: {
+      entitlement: data,
+      productKey: EOS2_GA_PRODUCT_KEY,
+      externalCustomerHold: getEos2ExternalCustomerHoldState(),
+    },
+  });
 }
 
 export async function POST(request: Request) {
@@ -63,6 +73,14 @@ export async function POST(request: Request) {
 
   if (body.action === "grant") {
     const grantSource = body.grantSource ?? "INTERNAL_VALIDATION";
+    if (!isEos2ExternalCommercialGrantAllowed(grantSource)) {
+      return lifecycleErrorResponse(
+        "eos2_external_customer_hold",
+        "External commercial EOS 2 onboarding is held pending RTB legal review of the customer policy package.",
+        403,
+        crypto.randomUUID(),
+      );
+    }
     const classification = body.classification ?? "INTERNAL_GA_VALIDATION";
     const row = {
       tenant_id: ctx.tenantId,

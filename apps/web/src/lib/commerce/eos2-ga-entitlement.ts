@@ -3,6 +3,8 @@
  * Fail closed. Product key must be exactly `eos-2`.
  */
 
+import { isEos2ProductRolloutActive } from "./eos2-rollout";
+
 export const EOS2_GA_PRODUCT_KEY = "eos-2" as const;
 
 export const EOS2_GA_GRANT_SOURCES = [
@@ -103,7 +105,8 @@ export function evaluateEos2GaEntitlement(input: {
   }
 
   // Commercial entitlement is necessary but not sufficient: rollout + enrollment remain separate.
-  if (input.rolloutMode !== "controlled_pilot") {
+  // GA product rollout (`general_availability`) still requires explicit entitlement + enrollment.
+  if (!isEos2ProductRolloutActive(input.rolloutMode)) {
     return { entitled: false, reason: "rollout_off" };
   }
   if (!input.enrolled) {

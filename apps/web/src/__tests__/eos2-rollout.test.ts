@@ -11,8 +11,12 @@ const open = {
 };
 
 describe("EOS 2 rollout decision", () => {
-  it("allows only an entitled, enrolled workspace while the global gate is controlled pilot", () => {
+  it("allows entitled enrolled workspaces in controlled_pilot or general_availability", () => {
     expect(decideEos2Access(open)).toEqual({ allowed: true, reason: "enrolled" });
+    expect(decideEos2Access({ ...open, mode: "general_availability" })).toEqual({
+      allowed: true,
+      reason: "enrolled",
+    });
   });
 
   it("fails closed when the flag, enrollment, workspace, or entitlement is missing or malformed", () => {
@@ -29,6 +33,9 @@ describe("EOS 2 rollout decision", () => {
 
   it("lets the kill switch deny an enrolled workspace", () => {
     expect(decideEos2Access({ ...open, emergencyOff: true }).reason).toBe("kill_switch");
+    expect(
+      decideEos2Access({ ...open, mode: "general_availability", emergencyOff: true }).reason,
+    ).toBe("kill_switch");
   });
 
   it("does not let an engineer, pilot engineer, or AI enroll a workspace", () => {

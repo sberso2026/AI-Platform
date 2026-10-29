@@ -11,6 +11,8 @@ export type Eos2AccessDecision = {
     | "indeterminate";
 };
 
+export type Eos2ActiveRolloutMode = "controlled_pilot" | "general_availability";
+
 const ENROLLMENT_DENIED_ROLES = new Set([
   "engineer",
   "pilot-engineer",
@@ -20,8 +22,14 @@ const ENROLLMENT_DENIED_ROLES = new Set([
   "viewer",
 ]);
 
-export function normalizeEos2Mode(value: unknown): "off" | "controlled_pilot" {
-  return value === "controlled_pilot" ? "controlled_pilot" : "off";
+/** Product rollout is active only for controlled pilot or GA; both still require entitlement + enrollment. */
+export function isEos2ProductRolloutActive(value: unknown): value is Eos2ActiveRolloutMode {
+  return value === "controlled_pilot" || value === "general_availability";
+}
+
+export function normalizeEos2Mode(value: unknown): "off" | Eos2ActiveRolloutMode {
+  if (value === "controlled_pilot" || value === "general_availability") return value;
+  return "off";
 }
 
 export function decideEos2Access(input: {
@@ -38,7 +46,9 @@ export function decideEos2Access(input: {
   if (!input.productEntitled) return { allowed: false, reason: "entitlement_missing" };
   if (!input.workspaceId) return { allowed: false, reason: "workspace_missing" };
   if (input.emergencyOff) return { allowed: false, reason: "kill_switch" };
-  if (normalizeEos2Mode(input.mode) !== "controlled_pilot") return { allowed: false, reason: "global_off" };
+  if (!isEos2ProductRolloutActive(normalizeEos2Mode(input.mode))) {
+    return { allowed: false, reason: "global_off" };
+  }
   if (input.enrolled !== true) return { allowed: false, reason: "not_enrolled" };
   return { allowed: true, reason: "enrolled" };
 }

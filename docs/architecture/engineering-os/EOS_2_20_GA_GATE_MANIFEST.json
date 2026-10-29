@@ -20,7 +20,10 @@
   "unapprovedEnrolledWorkspaceCount": 0,
   "qualificationStatus": "QUALIFIED_BOUNDED",
   "qualificationPreserved": true,
-  "gaActivationPerformed": false,
+  "gaActivationPerformed": true,
+  "eos21ActivationArtifact": "docs/architecture/engineering-os/EOS_2_21_GENERAL_AVAILABILITY_CONTROLLED_ACTIVATION.md",
+  "eos20GaReleaseRecordArtifact": "docs/architecture/engineering-os/EOS_2_0_GA_RELEASE_RECORD.json",
+  "eos20GaActivationStatus": "ACTIVE_CONTROLLED_GA",
   "aiGaReleaseAuthority": false,
   "humanGaReleaseSignatoryIdentified": true,
   "humanGaReleaseSignatory": "Silvestre Berso",
@@ -89,7 +92,7 @@
   "engineeringFormulasChanged": false,
   "engineeringResultSemanticsChanged": false,
   "qualifiedD1BaselineInvalidated": false,
-  "nextPhase": "EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION",
+  "nextPhase": "EOS-2.22-GA-POST-ACTIVATION-ASSURANCE-AND-EOS-2-CLOSEOUT",
   "readyForNextPhase": true,
   "limitations": [
     "Formal legal review of customer policy package required before external customers",
@@ -100,7 +103,7 @@
     "GHSA-w5hq-g745-h8pq ACCEPTED_BOUNDED_RISK",
     "Bounded soak reliability only",
     "Performance DEGRADED_NONBLOCKING; no formal SLO",
-    "FINAL_GA_GO issued; controlled activation not yet performed"
+    "ACTIVE_CONTROLLED_GA with external-customer hold enforced"
   ],
   "blocker": "none"
 }

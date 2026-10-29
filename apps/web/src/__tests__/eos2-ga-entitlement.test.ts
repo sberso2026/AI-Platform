@@ -85,6 +85,19 @@ describe("EOS 2 GA entitlement evaluator", () => {
     expect(evaluateEos2GaEntitlement({ ...open, rolloutMode: "off" }).reason).toBe("rollout_off");
   });
 
+  it("allows general_availability only with entitlement and enrollment", () => {
+    expect(
+      evaluateEos2GaEntitlement({ ...open, rolloutMode: "general_availability" }),
+    ).toEqual({ entitled: true, reason: "active" });
+    expect(
+      evaluateEos2GaEntitlement({
+        ...open,
+        rolloutMode: "general_availability",
+        enrolled: false,
+      }).reason,
+    ).toBe("not_enrolled");
+  });
+
   it("never auto-enables from legacy engineering-os entitlement", () => {
     expect(legacyEngineeringOsGrantsEos2("engineering-os")).toBe(false);
     expect(legacyEngineeringOsGrantsEos2(null)).toBe(false);

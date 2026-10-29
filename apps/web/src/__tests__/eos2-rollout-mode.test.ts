@@ -23,7 +23,20 @@ describe("EOS 2 rollout mode merge", () => {
     });
   });
 
-  it("rejects a mode that is not off or controlled_pilot", () => {
+  it("accepts general_availability and stamps GA product metadata", () => {
+    const applied = applyEos2Mode({ eos2: { mode: "controlled_pilot" } }, "general_availability");
+    expect(applied.ok).toBe(true);
+    if (!applied.ok) return;
+    expect(applied.settings.eos2).toMatchObject({
+      mode: "general_availability",
+      product_release_state: "GENERAL_AVAILABILITY",
+      access_model: "EXPLICIT_ENTITLEMENT_AND_ENROLLMENT",
+      external_customer_onboarding_hold: true,
+      ga_version: "2.0.0",
+    });
+  });
+
+  it("rejects a mode that is not off, controlled_pilot, or general_availability", () => {
     expect(applyEos2Mode({}, "ON")).toEqual({ ok: false, error: "invalid_mode" });
     expect(applyEos2Mode({}, "")).toEqual({ ok: false, error: "invalid_mode" });
   });
@@ -31,9 +44,9 @@ describe("EOS 2 rollout mode merge", () => {
   it("keeps each sequential write equal to the mode that write persisted", () => {
     const first = applyEos2Mode({}, "controlled_pilot");
     const second = applyEos2Mode(first.ok ? first.settings : {}, "off");
-    const third = applyEos2Mode(second.ok ? second.settings : {}, "controlled_pilot");
+    const third = applyEos2Mode(second.ok ? second.settings : {}, "general_availability");
     expect(first.ok && first.settings.eos2?.mode).toBe("controlled_pilot");
     expect(second.ok && second.settings.eos2?.mode).toBe("off");
-    expect(third.ok && third.settings.eos2?.mode).toBe("controlled_pilot");
+    expect(third.ok && third.settings.eos2?.mode).toBe("general_availability");
   });
 });
