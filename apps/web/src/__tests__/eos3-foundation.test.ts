@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  EOS3_ACTIVATION_STATUS,
   EOS3_PRODUCT_KEY,
   EOS3_RELEASE_STATUS,
   EOS3_VERSION,
@@ -56,6 +57,10 @@ describe("EOS 3.1 foundation compatibility matrix", () => {
     expect(evaluateEos3Access({ ...open, productionEnvironment: true }).reason).toBe(
       "production_denied",
     );
+  });
+
+  it("records ACTIVE_CONTROLLED_GA as canonical activation status", () => {
+    expect(EOS3_ACTIVATION_STATUS).toBe("ACTIVE_CONTROLLED_GA");
   });
 
   it("preserves legacy project default as EOS 2 compatible", () => {

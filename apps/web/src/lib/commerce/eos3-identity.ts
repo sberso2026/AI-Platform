@@ -3,6 +3,8 @@
 export const EOS3_PRODUCT_KEY = "eos-3" as const;
 export const EOS3_VERSION = "3.0.0" as const;
 export const EOS3_RELEASE_STATUS = "GENERAL_AVAILABILITY" as const;
+/** Canonical activation: entitlement+enrollment, default deny — not uncontrolled public GA. */
+export const EOS3_ACTIVATION_STATUS = "ACTIVE_CONTROLLED_GA" as const;
 export const EOS3_GENERATION = 3 as const;
 export const EOS2_GENERATION = 2 as const;
 
@@ -34,6 +36,7 @@ export function eos3VersionContext() {
     productKey: EOS3_PRODUCT_KEY,
     version: EOS3_VERSION,
     releaseStatus: EOS3_RELEASE_STATUS,
+    activationStatus: EOS3_ACTIVATION_STATUS,
     generation: EOS3_GENERATION,
   };
 }

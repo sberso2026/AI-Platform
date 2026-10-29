@@ -7,7 +7,7 @@
   "functionalRuntimeCommit": "429e0452319641b717864c50ce6a40507548a7a9",
   "productionMigrationLedger": 170,
   "releaseStatus": "GENERAL_AVAILABILITY",
-  "activationStatus": "ACTIVE_GENERAL_AVAILABILITY",
+  "activationStatus": "ACTIVE_CONTROLLED_GA",
   "externalCustomerHold": "ACTIVE",
   "externalCustomerReleaseAuthorized": false,
   "publicSelfServiceSignup": false,

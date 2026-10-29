@@ -1,0 +1,46 @@
+{
+  "phase": "EOS-3.13R-C-GA-STATE-RECONCILIATION-AND-ACTIVATION-EVIDENCE-CLOSEOUT",
+  "product": "EOS 3.0",
+  "version": "3.0.0",
+  "createdAtUtc": "2026-10-29T16:10:00Z",
+  "releaseStatus": "GENERAL_AVAILABILITY",
+  "activationStatus": "ACTIVE_CONTROLLED_GA",
+  "bindings": {
+    "functionalCandidate": "429e0452319641b717864c50ce6a40507548a7a9",
+    "productionRuntimeAtActivation": "a7b23b48656a224cb606b12baeb202849c0c731f",
+    "productionDeploymentAtActivation": "dpl_7uVMd6bKM1g8Kc1VyNEkSwvfE37r",
+    "migrationLedger": 170,
+    "candidateFingerprint": "sha256:c5d2bef972bd4a8b108d32b8d762da58a6fe4a301977ac724630479ab25af158",
+    "authorizationFingerprint": "sha256:bf4eb958c50576c5e8b279c0955346ce2813270e92fbc6f7adcf81fe7708613d",
+    "humanGo": "ISSUED",
+    "releaseAuthority": "Silvestre Berso",
+    "accessModel": "EXPLICIT_ENTITLEMENT_AND_ENROLLMENT",
+    "accessDefault": "DENY",
+    "externalCustomerHold": "ACTIVE",
+    "enabledEnrolledWorkspaceCount": 1
+  },
+  "artifacts": [
+    "docs/architecture/engineering-os/EOS_3_13R_C_GA_STATE_RECONCILIATION.md",
+    "docs/architecture/engineering-os/EOS_3_13R_C_GA_ACCESS_AND_RLS_EVIDENCE.md",
+    "docs/architecture/engineering-os/EOS_3_13R_C_GA_RUNTIME_DELTA_EVIDENCE.md",
+    "docs/architecture/engineering-os/EOS_3_13R_C_GA_POST_ACTIVATION_ASSURANCE.md",
+    "docs/architecture/engineering-os/EOS_3_0_CANONICAL_GA_BASELINE.json",
+    "docs/architecture/engineering-os/EOS_3_13_GA_CLAIM_MATRIX.md",
+    "docs/architecture/engineering-os/EOS_3_13_GA_LIMITATIONS_REGISTER.md",
+    "docs/architecture/engineering-os/EOS_3_13R_GA_AUTHORIZATION_RECORD.json",
+    "docs/architecture/engineering-os/EOS_3_13R_GA_ACTIVATION_EVIDENCE.md",
+    "docs/architecture/engineering-os/EOS_3_13_GA_RECOVERY_AND_SUPPORTABILITY.md"
+  ],
+  "gates": {
+    "accessMatrix": "PASS",
+    "rls": "PASS",
+    "crossWorkspaceLeakCount": 0,
+    "runtimeDeltaReview": "PASS",
+    "smokeTest": "PASS",
+    "killSwitch": "PASS",
+    "eos2PostGaRegression": "PASS",
+    "activationAudit": "PASS",
+    "activationProvenance": "PASS"
+  },
+  "evidenceManifestFingerprint": "sha256:f3ef08cb12f458c5a77d462d6e5061b278fbd09af8784973fec7c012bde04042"
+}

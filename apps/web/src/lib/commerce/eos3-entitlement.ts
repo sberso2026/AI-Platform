@@ -31,7 +31,7 @@ export type Eos3AccessDecision = {
   reason:
     | "active_development"
     | "active_controlled_pilot"
-    | "active_general_availability"
+    | "active_controlled_ga"
     | "unauthenticated"
     | "missing"
     | "wrong_product"
@@ -107,7 +107,9 @@ export function evaluateEos3Access(input: {
   }
 
   if (enrollment === "PILOT" && input.productionEnvironment) {
-    return { allowed: true, reason: "active_general_availability" };
+    // Allow-reason label for bounded Production GA (explicit entitlement + enrollment).
+    // Not public/uncontrolled access — synonymous with ACTIVE_CONTROLLED_GA semantics.
+    return { allowed: true, reason: "active_controlled_ga" };
   }
   return { allowed: true, reason: "active_development" };
 }

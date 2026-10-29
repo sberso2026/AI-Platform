@@ -73,7 +73,11 @@ export function createEos3GaAuthorizationFingerprint(authorizedAtIso: string): s
  * Production EOS 3 access under GA requires issued human GA GO and explicit enrollment.
  * Enrollment state PILOT remains the auditable enrolled marker for controlled workspace rollout
  * (no public self-service; no auto EOS 2 enablement).
+ * Semantics: ACTIVE_CONTROLLED_GA — not uncontrolled / public General Availability access.
  */
 export function eos3ProductionGaAccessAllowed(enrollmentState: string | null | undefined): boolean {
   return EOS_3_GA_HUMAN_GO === "ISSUED" && enrollmentState === "PILOT";
 }
+
+/** Canonical activation status bound to GA authorization controls. */
+export const EOS_3_GA_ACTIVATION_STATUS = "ACTIVE_CONTROLLED_GA" as const;

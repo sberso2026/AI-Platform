@@ -1,0 +1,61 @@
+{
+  "product": "EOS 3.0",
+  "version": "3.0.0",
+  "phase": "EOS-3.13R-C-GA-STATE-RECONCILIATION-AND-ACTIVATION-EVIDENCE-CLOSEOUT",
+  "frozenAtUtc": "2026-10-29T16:10:00Z",
+  "releaseStatus": "GENERAL_AVAILABILITY",
+  "activationStatus": "ACTIVE_CONTROLLED_GA",
+  "productReleaseState": "GENERAL_AVAILABILITY",
+  "accessModel": "EXPLICIT_ENTITLEMENT_AND_ENROLLMENT",
+  "accessDefault": "DENY",
+  "automaticWorkspaceExpansion": false,
+  "publicSelfServiceSignupEnabled": false,
+  "externalCustomerHold": "ACTIVE",
+  "externalCustomerReleaseAuthorized": false,
+  "functionalCandidateCommit": "429e0452319641b717864c50ce6a40507548a7a9",
+  "productionRuntimeCommitAtActivation": "a7b23b48656a224cb606b12baeb202849c0c731f",
+  "productionDeploymentIdAtActivation": "dpl_7uVMd6bKM1g8Kc1VyNEkSwvfE37r",
+  "productionMigrationLedgerCount": 170,
+  "productionSupabase": "wcydlhqiqdwgoaqrlget",
+  "gaCandidateFingerprint": "sha256:c5d2bef972bd4a8b108d32b8d762da58a6fe4a301977ac724630479ab25af158",
+  "gaAuthorizationFingerprint": "sha256:bf4eb958c50576c5e8b279c0955346ce2813270e92fbc6f7adcf81fe7708613d",
+  "humanGaReleaseSignatory": "Silvestre Berso",
+  "finalGaGoNoGo": "GO",
+  "enabledEnrolledWorkspaceCount": 1,
+  "unapprovedProductionWorkspaceCount": 0,
+  "authorizedWorkspaceId": "5c85d773-3b79-43b2-b138-c6251f566768",
+  "claimMatrixPath": "docs/architecture/engineering-os/EOS_3_13_GA_CLAIM_MATRIX.md",
+  "limitationsRegisterPath": "docs/architecture/engineering-os/EOS_3_13_GA_LIMITATIONS_REGISTER.md",
+  "defectDisposition": {
+    "d001": "OPEN_ACCEPTED_FOR_GA",
+    "d002": "OPEN_ACCEPTED_FOR_GA"
+  },
+  "qualification": {
+    "d1": "QUALIFIED_BOUNDED",
+    "nonD1": "NOT_QUALIFIED",
+    "spaceGassGlobal": false,
+    "externalSolverGlobal": false
+  },
+  "disabledCapabilities": {
+    "liveLlm": "NOT_SUPPORTED",
+    "realConnectors": "NOT_SUPPORTED"
+  },
+  "aiAuthorities": {
+    "engineering": false,
+    "finalDecision": false,
+    "deliverableApproval": false,
+    "release": false,
+    "ifc": false,
+    "migration": false,
+    "solverQualification": false
+  },
+  "preGaRecoveryReference": "walg:2097755872+logical_snapshot:2026-10-29T14:29:09Z",
+  "pitrEnabled": false,
+  "pitrGaRiskAccepted": true,
+  "formalSoc2Certified": false,
+  "formalIso27001Certified": false,
+  "formalEuAiActCertified": false,
+  "releaseTag": "engineering-os-v3.0.0",
+  "ghsaW5hqG745H8pqStatus": "ACCEPTED_BOUNDED_RISK",
+  "baselineFingerprint": "sha256:3970ed9b7c5748e37beaa2f30ce055d8dc347d43291da00e779af7e724589291"
+}

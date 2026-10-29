@@ -17,7 +17,7 @@
 - `EOS3_VERSION=3.0.0`
 - `EOS3_RELEASE_STATUS=GENERAL_AVAILABILITY`
 - `eos3-ga-authorization.ts` human GO binding
-- Production access reason `active_general_availability` for explicit enrolled workspaces only
+- Production access reason originally labeled `active_general_availability` for explicit enrolled workspaces only (13R-C corrected canonical label to `active_controlled_ga` / `ACTIVE_CONTROLLED_GA` without broadening access)
 - No schema migration; no claim/qualification expansion; live LLM/connectors remain disabled
 
 ## Post-activation controls
