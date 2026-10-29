@@ -61,5 +61,14 @@
   "engineeringResultSemanticsChanged": false,
   "qualifiedD1BaselineInvalidated": false,
   "engineeringRuntimeChanged": true,
-  "runtimeChange": "Bounded hosted qualification route and panel only. No formula or result semantic change."
+  "runtimeChange": "Bounded hosted qualification route and panel only. No formula or result semantic change.",
+  "rolloutControlRemediation": {
+    "priorQualifiedApplicationRuntime": "af6612bdebe40616dab18525ceab4dc70f03621e",
+    "priorStagingDeploymentId": "dpl_Am7AhnHwv7Hjdymx4e73AXrfv75C",
+    "newQualifiedHostedRuntimeCommit": "bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01",
+    "newStagingDeploymentId": "dpl_GgVBzbU9N2ZnR5fR41fWwdnYDhbC",
+    "engineeringScopeUnchanged": true,
+    "qualifiedD1BaselineInvalidated": false,
+    "evidence": "docs/architecture/engineering-os/EOS_2_16R_ROLLOUT_CONTROL_VALIDATION_EVIDENCE.md"
+  }
 }

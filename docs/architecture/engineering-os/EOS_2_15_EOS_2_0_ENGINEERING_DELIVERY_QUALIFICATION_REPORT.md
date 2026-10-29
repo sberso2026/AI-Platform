@@ -55,3 +55,7 @@ Process, mechanical, piping, civil, geotechnical, electrical, and I&C determinis
 ## Production promotion
 
 Eligible for the next readiness phase only. This report does not deploy production or apply a production migration. The next phase is `EOS-2.16-CONTROLLED-PRODUCTION-PROMOTION-READINESS`.
+
+## EOS 2.16R provenance
+
+The engineering qualification above remains `QUALIFIED_BOUNDED` for runtime `af6612bdebe40616dab18525ceab4dc70f03621e`. EOS 2.16R changed application access control and reran the affected hosted qualification. The current qualified hosted runtime is `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` on preview `dpl_GgVBzbU9N2ZnR5fR41fWwdnYDhbC`. Engineering formulas, result semantics, and the D1 baseline were not changed. The historical 2.15R browser and critical-path records stay attached to the earlier deployment. They are not rewritten as if they ran on the new runtime.

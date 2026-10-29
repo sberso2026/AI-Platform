@@ -16,9 +16,11 @@ Do not copy `EOS-QA-001`, the synthetic staging workspaces, or browser-validatio
 
 Lifecycle, Engineering Basis, the eight delivery homes, interface, change impact, design freeze, and deliverables, inside the EOS 2.15R bounds. Engineering AI may explain and may not approve. D1 remains its existing bounded calculation. External solvers stay unqualified.
 
-## Enforcement gap
+## Enforcement
 
-This cohort cannot be enforced by the current build. The engineering layout checks product `engineering-os` only. `EOS_CONTROLLED_PILOT_ENABLED` and the `feature_flags` table do not gate the EOS 2 routes. Suspending `engineering-os` would suspend EOS 1.0 as well. Until a requalified control can disable EOS 2 without disabling EOS 1.0, the cohort stays unopened.
+The cohort is now enforceable. An active `engineering-os` entitlement does not grant EOS 2. Production tenants stay off until a human release authority sets `tenants.settings.eos2.mode` to `controlled_pilot` and enrolls the named workspace in `eos2_workspace_enrollment`. Owner or admin may call the enrollment API. An engineer, a pilot engineer, and AI may not. Setting the mode to `off`, or setting server `EOS_2_ROLLOUT=off`, denies EOS 2 without suspending EOS 1.0 and without deleting data.
+
+The staging qualification cohort is `eos-qa-a` only. It is not a Production enrollment. The other staging workspaces in the same tenant stayed denied.
 
 ## Communication
 

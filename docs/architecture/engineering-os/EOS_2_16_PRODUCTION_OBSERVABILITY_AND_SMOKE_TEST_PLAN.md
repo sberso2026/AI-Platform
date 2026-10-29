@@ -29,7 +29,7 @@ Escalate to the human release authority for: authentication outage, deployment f
 | EOS 2 read, only where the cohort control allows | Lifecycle, basis, one discipline home, interface, change impact, deliverable, baseline | Keep the cohort off. |
 | AI authority | AI cannot approve, accept, freeze, or release | Stop on approval granted. |
 | Audit | The smoke actor and action are stored | Stop on missing audit. |
-| Ledger | 157 versions, maximum `20261029100000`, duplicates 0 | Stop. Do not replay. |
+| Ledger | 158 versions, maximum `20261029120000`, duplicates 0 | Stop. Do not replay. |
 
 ## Post-enablement pilot test
 
@@ -44,12 +44,12 @@ Intake is the existing pilot channel to the human release authority. Collect bui
 1. Human GO, with RD-001 closed by a requalified cohort control.
 2. Verify a new Production backup.
 3. Record build identity and ledger count 144.
-4. Apply only the thirteen manifest versions, in order, to `wcydlhqiqdwgoaqrlget`.
-5. Read the ledger. Expect count 157 and maximum `20261029100000`.
+4. Apply only the fourteen manifest versions, in order, to `wcydlhqiqdwgoaqrlget`.
+5. Read the ledger. Expect count 158 and maximum `20261029120000`.
 6. Confirm the EOS 1.0 deployment still serves the pilot.
-7. Deploy only `af6612bdebe40616dab18525ceab4dc70f03621e`, or a commit whose diff from it is documentation-only.
+7. Deploy only `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01`.
 8. Read build identity. Mismatch stops the phase.
-9. Leave the EOS 2 cohort control off.
+9. Leave `EOS_2_ROLLOUT` unset and leave tenant mode off. Missing `settings.eos2.mode` is off.
 10. Run the pre-enablement smoke tests.
 11. Enable only the named workspace.
 12. Run the post-enablement path.
