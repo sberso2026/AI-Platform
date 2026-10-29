@@ -1,0 +1,28 @@
+{
+  "phase": "EOS-3-MAINT-0-POST-GA-MAINTENANCE-BASELINE-AND-CAPABILITY-TRACK-INTAKE",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "startHead": "7381ecb1ac11dd2e60f0b3a7141c6b387aee3680",
+  "frozenGaBaselineVerified": true,
+  "gaBaselineMutationAllowed": false,
+  "maintenanceMode": "ACTIVE",
+  "developmentProgramStatus": "CLOSED",
+  "releaseStatus": "GENERAL_AVAILABILITY",
+  "activationStatus": "ACTIVE_CONTROLLED_GA",
+  "version": "3.0.0",
+  "releaseTag": "engineering-os-v3.0.0",
+  "canonicalGaBaselineFingerprint": "sha256:3970ed9b7c5748e37beaa2f30ce055d8dc347d43291da00e779af7e724589291",
+  "gaEvidenceManifestFingerprint": "sha256:f3ef08cb12f458c5a77d462d6e5061b278fbd09af8784973fec7c012bde04042",
+  "programCloseoutFingerprint": "sha256:8b4ebbb38e33bdcd7ce3e8d09283f0a8501da42296dcd8af7eadad755d7d4ff8",
+  "priorityTracks": [
+    "EOS-3-EXTERNAL-CUSTOMER-RELEASE-GATE",
+    "EOS-3-PRODUCTION-MIGRATION-VALIDATION",
+    "EOS-3-REAL-CONNECTOR-VALIDATION",
+    "EOS-3-PITR-AND-RECOVERY-HARDENING",
+    "EOS-3-SPACE-GASS-EXECUTION-QUALIFICATION"
+  ],
+  "runtimeChanged": false,
+  "schemaChanged": false,
+  "releaseTestSuiteExecuted": false,
+  "readyForNextPhase": true,
+  "recommendedNextPhase": "EOS-3-EXTERNAL-CUSTOMER-RELEASE-GATE"
+}
