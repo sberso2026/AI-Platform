@@ -20,7 +20,7 @@
 
 `NEXT_PHASE=EOS-2.21-GENERAL-AVAILABILITY-CONTROLLED-ACTIVATION`
 
-This gate determined **technical / operational / commercial / governance readiness** for General Availability. Human GA GO was subsequently issued by Silvestre Berso. Production remained `CONTROLLED_PILOT` at gate time and is not activated by the gate document alone.
+This gate determined **technical / operational / commercial / governance readiness** for General Availability. Human GA GO was subsequently recorded in `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md` / `EOS_2_20_FINAL_GA_AUTHORIZATION_RECORD.json` (`FINAL_GA_AUTHORIZATION_FINGERPRINT=bf582829bfa7169d912c6ae73a2bd9a148dab3e9fa13f12702784e0cc4c183c2`). Production remained `CONTROLLED_PILOT` at gate time and is not activated by the gate document alone. Historical gate evidence in this file is otherwise preserved.
 
 ## Post-remediation Production reconciliation
 
