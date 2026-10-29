@@ -1,0 +1,137 @@
+{
+  "phase": "EOS-2.22-GA-POST-ACTIVATION-ASSURANCE-AND-EOS-2-CLOSEOUT",
+  "product": "EOS 2.0",
+  "version": "2.0.0",
+  "manifestComplete": true,
+  "historicalEvidenceRewritten": false,
+  "entries": [
+    {
+      "area": "architecture",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_0_ENGINEERING_LIFECYCLE_ARCHITECTURE.md",
+        "docs/architecture/engineering-os/EOS_2_0_DISCIPLINE_MODULE_CONTRACT.md"
+      ]
+    },
+    {
+      "area": "qualification",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20_GA_CLAIM_MATRIX.md",
+        "docs/architecture/engineering-os/EOS_2_20_GA_SCOPE_AND_LIMITATIONS.md"
+      ]
+    },
+    {
+      "area": "production_promotion",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_17_CONTROLLED_PRODUCTION_PROMOTION_EXECUTION.md",
+        "docs/architecture/engineering-os/EOS_2_17R_PRODUCTION_PILOT_AUTHENTICATION_AND_ACTIVATION.md"
+      ]
+    },
+    {
+      "area": "operational_validation",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_18_PRODUCTION_PILOT_OPERATIONAL_VALIDATION.md"
+      ]
+    },
+    {
+      "area": "persistence_remediation",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_18R_PRODUCTION_WORKFLOW_PERSISTENCE_REMEDIATION.md"
+      ]
+    },
+    {
+      "area": "hardening",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_19_PILOT_EXPANSION_AND_OPERATIONAL_HARDENING.md"
+      ]
+    },
+    {
+      "area": "ga_gate",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20_GENERAL_AVAILABILITY_GATE.md",
+        "docs/architecture/engineering-os/EOS_2_20_GA_GATE_MANIFEST.json"
+      ]
+    },
+    {
+      "area": "ga_remediation",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20R_GA_READINESS_REMEDIATION.md",
+        "docs/architecture/engineering-os/EOS_2_20R_GA_ENTITLEMENT_ARCHITECTURE.md",
+        "docs/architecture/engineering-os/EOS_2_20R_GA_ONBOARDING_AND_OFFBOARDING.md",
+        "docs/architecture/engineering-os/EOS_2_20R_MULTI_WORKSPACE_PRODUCTION_VALIDATION.md"
+      ]
+    },
+    {
+      "area": "human_authorization",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20R_HUMAN_GA_RELEASE_AUTHORIZATION.md",
+        "docs/architecture/engineering-os/EOS_2_20_FINAL_GA_AUTHORIZATION_RECORD.json"
+      ]
+    },
+    {
+      "area": "ga_activation",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_21_GENERAL_AVAILABILITY_CONTROLLED_ACTIVATION.md",
+        "docs/architecture/engineering-os/EOS_2_0_GA_RELEASE_RECORD.json",
+        "docs/architecture/engineering-os/EOS_2_0_GA_RELEASE_NOTES.md"
+      ]
+    },
+    {
+      "area": "security",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20_GA_SECURITY_AND_RELEASE_EVIDENCE.md",
+        "docs/architecture/engineering-os/EOS_2_21_GA_ACTIVATION_SECURITY_EVIDENCE.md",
+        "docs/architecture/engineering-os/EOS_2_19_CANONICAL_GATE_RESULT.json"
+      ]
+    },
+    {
+      "area": "entitlement",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20R_GA_ENTITLEMENT_ARCHITECTURE.md",
+        "docs/architecture/engineering-os/EOS_2_21_GA_ACCESS_CONTROL_VALIDATION.md"
+      ]
+    },
+    {
+      "area": "onboarding",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20R_GA_ONBOARDING_AND_OFFBOARDING.md",
+        "docs/architecture/engineering-os/EOS_2_20_GA_COMMERCIAL_AND_ONBOARDING_READINESS.md"
+      ]
+    },
+    {
+      "area": "multi_workspace",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20R_MULTI_WORKSPACE_PRODUCTION_VALIDATION.md"
+      ]
+    },
+    {
+      "area": "recovery",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_19_BACKUP_RECOVERY_AND_INCIDENT_RUNBOOK.md"
+      ]
+    },
+    {
+      "area": "claims",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_20_GA_CLAIM_MATRIX.md"
+      ]
+    },
+    {
+      "area": "limitations",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_0_GA_LIMITATIONS_REGISTER.md",
+        "docs/architecture/engineering-os/EOS_2_21_EXTERNAL_CUSTOMER_HOLD.md"
+      ]
+    },
+    {
+      "area": "closeout",
+      "paths": [
+        "docs/architecture/engineering-os/EOS_2_22_GA_POST_ACTIVATION_ASSURANCE_AND_CLOSEOUT.md",
+        "docs/architecture/engineering-os/EOS_2_0_CANONICAL_GA_BASELINE.json",
+        "docs/architecture/engineering-os/EOS_2_0_POST_GA_CHANGE_GOVERNANCE.md",
+        "docs/architecture/engineering-os/EOS_2_0_POST_GA_MAINTENANCE_POLICY.md",
+        "docs/architecture/engineering-os/EOS_2_22_EOS_3_START_READINESS.md"
+      ]
+    }
+  ],
+  "evidenceManifestFingerprint": "01240a3847fe533eb01782f58e58856ad9c987775c7d1e0ce7b029872b6bf8c3"
+}

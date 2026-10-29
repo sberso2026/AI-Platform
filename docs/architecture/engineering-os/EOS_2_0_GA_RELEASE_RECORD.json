@@ -53,5 +53,14 @@
     "performance DEGRADED_NONBLOCKING; no formal GA SLO",
     "not SOC 2 / ISO 27001 / EU AI Act certified"
   ],
-  "nextPhase": "EOS-2.22-GA-POST-ACTIVATION-ASSURANCE-AND-EOS-2-CLOSEOUT"
+  "closeoutPhase": "EOS-2.22-GA-POST-ACTIVATION-ASSURANCE-AND-EOS-2-CLOSEOUT",
+  "closeoutArtifact": "docs/architecture/engineering-os/EOS_2_22_GA_POST_ACTIVATION_ASSURANCE_AND_CLOSEOUT.md",
+  "canonicalBaselineArtifact": "docs/architecture/engineering-os/EOS_2_0_CANONICAL_GA_BASELINE.json",
+  "evidenceManifestArtifact": "docs/architecture/engineering-os/EOS_2_0_GA_EVIDENCE_MANIFEST.json",
+  "limitationsRegisterArtifact": "docs/architecture/engineering-os/EOS_2_0_GA_LIMITATIONS_REGISTER.md",
+  "baselineFingerprint": "c794308a34219e1e5c7074ca5b3637a5a7c8b9a2cf6682312dd53dd270d1f946",
+  "evidenceManifestFingerprint": "01240a3847fe533eb01782f58e58856ad9c987775c7d1e0ce7b029872b6bf8c3",
+  "releaseProgramComplete": true,
+  "postGaMaintenanceMode": "ACTIVE",
+  "nextPhase": "EOS-3.0-ARCHITECTURE-AND-PROGRAM-BOUNDARY"
 }
