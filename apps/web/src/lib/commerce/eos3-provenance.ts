@@ -53,7 +53,7 @@ export function buildEos3Provenance(
   return {
     ...partial,
     generation: partial.generation ?? 3,
-    version: partial.version ?? "3.0.0-development",
+    version: partial.version ?? "3.0.0",
     timestamp: partial.timestamp ?? new Date().toISOString(),
   };
 }

@@ -51,8 +51,8 @@ const open = {
 
 describe("EOS 3.1 foundation compatibility matrix", () => {
   it("identifies EOS 3 development version and denies Production by default", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(evaluateEos3Access({ ...open, productionEnvironment: true }).reason).toBe(
       "production_denied",
     );
@@ -94,7 +94,7 @@ describe("EOS 3.1 foundation compatibility matrix", () => {
   it("keeps EOS 2 and EOS 3 API contexts distinct and defaults unspecified to EOS 2", () => {
     expect(resolveApiContext(null, "t", "w").productKey).toBe("eos-2");
     expect(eos2ApiContext("t", "w").releaseStatus).toBe("GENERAL_AVAILABILITY");
-    expect(eos3ApiContext("t", "w").releaseStatus).toBe("DEVELOPMENT");
+    expect(eos3ApiContext("t", "w").releaseStatus).toBe("GENERAL_AVAILABILITY");
     expect(resolveApiContext({ generation: 3 }, "t", "w").productKey).toBe("eos-3");
   });
 

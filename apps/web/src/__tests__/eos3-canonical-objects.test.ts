@@ -15,8 +15,8 @@ import { EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE, getEos2ExternalCustomerHoldState } 
 
 describe("EOS 3.2 canonical object and digital thread", () => {
   it("preserves EOS 3.1 foundation identity and fail-closed access", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(
       evaluateEos3Access({
         authenticated: true,

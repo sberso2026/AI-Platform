@@ -1,11 +1,12 @@
 /**
- * EOS 3 development entitlement evaluator.
+ * EOS 3 entitlement evaluator (bounded GENERAL_AVAILABILITY).
  * Inherits EOS 2 GA *architecture* (product-filtered, fail-closed, auditable)
  * but NOT EOS 2 grants. eos-2 entitlement never enables eos-3.
+ * Production access requires explicit enrollment under issued human GA GO.
  */
 
 import { EOS3_PRODUCT_KEY } from "./eos3-identity";
-import { eos3ProductionPilotAccessAllowed } from "./eos3-pilot-authorization";
+import { eos3ProductionGaAccessAllowed } from "./eos3-ga-authorization";
 
 export const EOS3_DEV_GRANT_SOURCES = [
   "INTERNAL_VALIDATION",
@@ -30,6 +31,7 @@ export type Eos3AccessDecision = {
   reason:
     | "active_development"
     | "active_controlled_pilot"
+    | "active_general_availability"
     | "unauthenticated"
     | "missing"
     | "wrong_product"
@@ -67,8 +69,8 @@ export function evaluateEos3Access(input: {
 }): Eos3AccessDecision {
   if (input.emergencyOff) return { allowed: false, reason: "kill_switch" };
   if (!input.authenticated) return { allowed: false, reason: "unauthenticated" };
-  // Production denied unless explicit controlled PILOT enrollment under issued human GO.
-  if (input.productionEnvironment && !eos3ProductionPilotAccessAllowed(input.enrollmentState)) {
+  // Production denied unless explicit enrollment under issued human GA GO (DENY default).
+  if (input.productionEnvironment && !eos3ProductionGaAccessAllowed(input.enrollmentState)) {
     return { allowed: false, reason: "production_denied" };
   }
   if (input.requestedProductKey !== EOS3_PRODUCT_KEY) {
@@ -104,8 +106,8 @@ export function evaluateEos3Access(input: {
     return { allowed: false, reason: "enrollment_not_eligible" };
   }
 
-  return {
-    allowed: true,
-    reason: enrollment === "PILOT" && input.productionEnvironment ? "active_controlled_pilot" : "active_development",
-  };
+  if (enrollment === "PILOT" && input.productionEnvironment) {
+    return { allowed: true, reason: "active_general_availability" };
+  }
+  return { allowed: true, reason: "active_development" };
 }

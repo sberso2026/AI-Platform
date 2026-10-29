@@ -31,7 +31,7 @@ export function createEos3EventEnvelope(
   return {
     ...input,
     generation: 3,
-    version: input.version ?? "3.0.0-development",
+    version: input.version ?? "3.0.0",
     timestamp: input.timestamp ?? new Date().toISOString(),
   };
 }

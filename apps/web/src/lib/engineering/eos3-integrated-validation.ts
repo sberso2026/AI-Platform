@@ -184,8 +184,8 @@ export function buildPilotScope() {
 export function validateBaselinesPreserved() {
   return {
     eos2Ga: EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE === true,
-    eos3Version: EOS3_VERSION === "3.0.0-development",
-    eos3Status: EOS3_RELEASE_STATUS === "DEVELOPMENT",
+    eos3Version: EOS3_VERSION === "3.0.0",
+    eos3Status: EOS3_RELEASE_STATUS === "GENERAL_AVAILABILITY",
     graphAuthority: EOS3_GRAPH_AUTHORITY_MODEL === "STRUCTURED_CANONICAL_STATE",
     aiDecisionAuthority: EOS3_AI_DECISION_AUTHORITY === false,
     aiNoD1Inherit: EOS3_AI_DOES_NOT_INHERIT_D1_QUALIFICATION === true,

@@ -12,8 +12,8 @@ import { runEos3StagingProjectAssetScenario } from "../lib/engineering/eos3-proj
 
 describe("EOS 3.8 project-to-asset digital thread", () => {
   it("preserves 3.1–3.7 baselines", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
     expect(AI_DECISION_AUTHORITY).toBe(false);

@@ -15,8 +15,8 @@ import { runEos3EngineeringReasoningEvaluationPack } from "../lib/engineering/eo
 
 describe("EOS 3.7 AI orchestration and engineering reasoning", () => {
   it("preserves 3.1–3.6 baselines and AI authority boundaries", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
     expect(AI_DECISION_AUTHORITY).toBe(false);

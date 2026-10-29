@@ -1,0 +1,36 @@
+{
+  "phase": "EOS-3.13R-HUMAN-GA-AUTHORIZATION-AND-CONTROLLED-GA-ACTIVATION",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "humanGaGo": "ISSUED",
+  "authorizationDecision": "GO",
+  "authorizedAt": "2026-10-29T15:27:00.000Z",
+  "authorizationFingerprint": "sha256:bf4eb958c50576c5e8b279c0955346ce2813270e92fbc6f7adcf81fe7708613d",
+  "candidateFingerprintVerified": true,
+  "candidateFingerprint": "sha256:c5d2bef972bd4a8b108d32b8d762da58a6fe4a301977ac724630479ab25af158",
+  "functionalRuntimeCommit": "429e0452319641b717864c50ce6a40507548a7a9",
+  "productionMigrationLedger": 170,
+  "authorizationScopeDrift": false,
+  "releaseAuthority": {
+    "designated": true,
+    "name": "Silvestre Berso",
+    "role": "Founder, RTB Engineering & Analytics",
+    "scope": "EOS_3_GENERAL_AVAILABILITY_SOFTWARE_RELEASE_ONLY"
+  },
+  "controls": {
+    "accessModel": "EXPLICIT_ENTITLEMENT_AND_ENROLLMENT",
+    "accessDefault": "DENY",
+    "publicSelfServiceSignup": false,
+    "externalCustomerRelease": "NOT_AUTHORIZED",
+    "externalCustomerHold": "ACTIVE",
+    "liveLlm": "NOT_SUPPORTED",
+    "realConnectors": "NOT_SUPPORTED"
+  },
+  "doesNotGrant": [
+    "engineering design approval",
+    "professional engineering certification",
+    "regulatory certification",
+    "IFC approval",
+    "engineering deliverable approval",
+    "solver qualification"
+  ]
+}

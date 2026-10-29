@@ -15,8 +15,8 @@ import { runEos3StagingGovernedWorkflowScenario } from "../lib/engineering/eos3-
 
 describe("EOS 3.5 governed workflow and event architecture", () => {
   it("preserves EOS 2 / 3.1–3.4 baselines", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
     expect(EOS3_OBJECT_TYPES.length).toBe(19);

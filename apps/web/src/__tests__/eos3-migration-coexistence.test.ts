@@ -10,8 +10,8 @@ import { EOS_2_AUTO_MIGRATION_TO_EOS_3, AI_MIGRATION_AUTHORITY } from "../lib/en
 
 describe("EOS 3.9 migration and EOS 2 coexistence", () => {
   it("preserves baselines and no-auto-migration invariants", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
     expect(EOS3_AI_DECISION_AUTHORITY).toBe(false);

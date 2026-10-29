@@ -1,8 +1,8 @@
-/** EOS 3 generation/version identity. Not GA. */
+/** EOS 3 generation/version identity. Bounded GENERAL_AVAILABILITY under human GO. */
 
 export const EOS3_PRODUCT_KEY = "eos-3" as const;
-export const EOS3_VERSION = "3.0.0-development" as const;
-export const EOS3_RELEASE_STATUS = "DEVELOPMENT" as const;
+export const EOS3_VERSION = "3.0.0" as const;
+export const EOS3_RELEASE_STATUS = "GENERAL_AVAILABILITY" as const;
 export const EOS3_GENERATION = 3 as const;
 export const EOS2_GENERATION = 2 as const;
 

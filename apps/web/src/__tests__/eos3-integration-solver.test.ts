@@ -20,8 +20,8 @@ import { runEos3StagingIntegrationSolverScenario } from "../lib/engineering/eos3
 
 describe("EOS 3.6 integration and solver framework", () => {
   it("preserves baselines and qualification boundaries", () => {
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
     expect(AI_DECISION_AUTHORITY).toBe(false);

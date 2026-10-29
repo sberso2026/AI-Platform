@@ -17,8 +17,8 @@ import { EOS_2_AUTO_MIGRATION_TO_EOS_3 } from "../lib/engineering/eos3-migration
 describe("EOS 3.10 integrated validation", () => {
   it("preserves EOS 2 GA and EOS 3.1–3.9 baselines without Production activation", () => {
     const b = validateBaselinesPreserved();
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
     expect(EOS3_AI_DECISION_AUTHORITY).toBe(false);

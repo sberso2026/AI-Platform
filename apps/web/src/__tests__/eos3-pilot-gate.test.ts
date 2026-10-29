@@ -17,8 +17,8 @@ import {
 describe("EOS 3.11 Production Pilot Gate", () => {
   it("verifies EOS 3.10 baseline and preserves EOS 2 GA / Production deny", () => {
     expect(verifyEos310Baseline(EOS_3_10_BASELINE)).toBe(true);
-    expect(EOS3_VERSION).toBe("3.0.0-development");
-    expect(EOS3_RELEASE_STATUS).toBe("DEVELOPMENT");
+    expect(EOS3_VERSION).toBe("3.0.0");
+    expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS_3_PILOT_CANDIDATE_COMMIT).toBe("c89f106af689a2e79c81a30d0a8420803e632220");
     expect(EOS_3_APPROVED_PRODUCTION_MIGRATIONS).toHaveLength(9);
