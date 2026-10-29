@@ -16,10 +16,18 @@
   "migrationsAppliedCount": 0,
   "ledgerAfter": 144,
   "pendingMigrationCountBefore": 14,
-  "backupVerified": false,
+  "backupVerified": true,
+  "backupMechanism": "VERIFIED_LOGICAL_BACKUP",
+  "backupSha256": "392be8e01ce0adb4cca3aeff3c681c4c4833020dab0aeeb1547c7de913e6f1a8",
+  "backupCompletedAt": "2026-10-29T01:56:35.075Z",
   "pointInTimeRecoveryEnabled": false,
   "latestCompletedPhysicalBackupId": "2097755872",
   "latestCompletedPhysicalBackupAt": "2026-10-28T17:07:26.140Z",
+  "physicalBackupUsedAsPromotionCheckpoint": false,
+  "remediationPhase": "EOS-2.17R-PRE-PROMOTION-GO-NO-GO-REMEDIATION",
+  "pr001Resolved": true,
+  "pr002Resolved": false,
+  "pr003Resolved": false,
   "rollbackTargetDeploymentId": "dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB",
   "rollbackTargetStillAvailable": true,
   "eos2GlobalState": "DISABLED",
@@ -31,9 +39,9 @@
   "qualificationStatus": "QUALIFIED_BOUNDED",
   "structuralD1CalculationQualification": "QUALIFIED_BOUNDED",
   "knownLimitations": [
-    "Point-in-time recovery is not enabled.",
-    "On-demand backup creation is not available on the management API.",
-    "The latest physical backup predates this GO attempt.",
-    "No Production workspace was named for the initial cohort."
+    "The latest physical backup was not used as the promotion checkpoint.",
+    "A logical backup was verified for the current fingerprint.",
+    "public.project_intelligence_document_embeddings did not restore on stock Postgres 17.",
+    "No Production workspace or release signatory is named."
   ]
 }

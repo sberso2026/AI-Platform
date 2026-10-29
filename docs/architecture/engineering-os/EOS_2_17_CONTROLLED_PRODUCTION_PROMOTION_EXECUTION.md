@@ -29,3 +29,7 @@ The fourteen approved migration versions are present once on staging and zero ti
 ## Required before a rerun
 
 A named human release authority must sign the GO record, name the single Production workspace, and a completed Production backup must exist after that GO and before migration. Then rerun this phase. Do not start EOS 2.18.
+
+## EOS 2.17R
+
+EOS 2.17R verified a logical backup for this same Production fingerprint. PR-001 is resolved. PR-002 and PR-003 remain open. The GO decision is still NO-GO. No Production mutation was added by that remediation.

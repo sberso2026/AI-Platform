@@ -1,6 +1,6 @@
 # EOS 2.16 Production GO / NO-GO Checklist
 
-Current result: **READY FOR HUMAN GO**. RD-001 is resolved. EOS 2.17 may start only when a named human release authority signs. This checklist does not itself authorize deployment.
+Current result: **NO-GO**. EOS 2.17R verified a logical Production backup for the current baseline. EOS 2.17 execution is still blocked. A named human must sign, and that human must name the single Production workspace. This checklist does not authorize deployment.
 
 AI may recommend. AI must not mark GO, deploy, migrate, or roll back.
 
@@ -11,17 +11,17 @@ AI may recommend. AI must not mark GO, deploy, migrate, or roll back.
 | Migration manifest approved by the human release authority | Prepared, not approved | Human signature |
 | Migration rehearsal PASS | YES | YES |
 | Destructive unapproved migration count 0 | YES | YES |
-| Database recovery plan ready | YES | A new backup verified after GO and before migration |
-| Application rollback target verified | YES | YES |
+| Database recovery plan ready | Logical backup verified `2026-10-29T01:56:35.075Z`, SHA-256 `392be8e01ce0adb4cca3aeff3c681c4c4833020dab0aeeb1547c7de913e6f1a8`. PITR is not enabled. | Revalidate if the Production fingerprint changes |
+| Application rollback target verified | YES, `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` | YES |
 | Post-migration EOS 1.0 rollback compatible | YES | YES |
-| EOS 2-only cohort control, default off | YES | Requalified on `dpl_GgVBzbU9N2ZnR5fR41fWwdnYDhbC` |
-| Initial cohort defined and not auto-enrolled | Defined | Human names the workspace at GO |
+| EOS 2-only cohort control, default off | YES | Remains off |
+| Initial cohort defined and not auto-enrolled | Policy only. No Production workspace named | Human names the workspace |
 | Production smoke plan ready | YES | Executed only in EOS 2.17 |
 | Monitoring plan ready | YES | Baseline captured before change |
-| Security gate PASS | YES, rerun after the rollout runtime | YES |
-| Release gate PASS | YES, 220 tests, rerun after the rollout runtime | YES |
-| Unresolved Critical or High readiness defect | RD-001 resolved | None open |
-| Human release authority identified | Model recorded | Named human signs |
+| Security gate PASS | YES, rerun in EOS 2.17R | YES |
+| Release gate PASS | YES, 220 tests, rerun in EOS 2.17R | YES |
+| Unresolved Critical or High readiness defect | PR-002 and PR-003 open | None open |
+| Human release authority identified | Not named | Named human signs |
 
 ## Human authority model
 
