@@ -15,8 +15,10 @@
   },
   "stagingHardeningValidation": "PASS",
   "stagingDeploymentId": "dpl_FoK4LGBZMy1DwEhZCvnd4aA3QqDQ",
-  "productionHardeningDeploymentId": "dpl_EVv4KvCjcFWchGfhvBeAHjgbXpX3",
-  "productionHardeningNote": "Initial promote from worktree; authoritative commit redeploy follows docs commit",
+  "productionHardeningDeploymentId": "dpl_9ormC4dMrDwNbbKFoPzMSBLVz5uZ",
+  "productionHardeningSourceCommit": "7991f7f0cb6254ecb31f77ef94b6411e8892b329",
+  "productionHardeningSourceProvenanceVerified": true,
+  "productionHardeningNote": "Authoritative Production promote from committed SHA 7991f7f0 after staging Ready preview",
   "hydration418": {
     "rootCauseIdentified": true,
     "status": "RESOLVED",
