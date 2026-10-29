@@ -2,22 +2,12 @@
 
 ## Result
 
-`PRODUCTION_PRE_ENABLEMENT_SECURITY_GATE=NOT_RUN`
+`PRODUCTION_PRE_ENABLEMENT_SECURITY_GATE=PARTIAL`
 
-`SECURITY_RELEASE_REGRESSION_GATE=NOT_RUN`
+`EOS_2_PRODUCTION_CONTROLLED_PILOT_ENABLED=NO`
 
-No Production schema or application change was made, so the post-promotion security suite was not claimed as a pass. The stop happened at the GO gate.
+Production and staging remain separate: `wcydlhqiqdwgoaqrlget` and `rntonzigxwxcjlcsadip`. The enrollment table exists and has 0 rows. No tenant is in `controlled_pilot`. The 396 active `engineering-os` installations were not enrolled. No synthetic qualification project was copied.
 
-## State confirmed before the stop
+Unauthenticated EOS 2 API access returns 401. The engineering page redirects to login. Authenticated tenant-isolation, route, authority, and leak tests were not run against the new Production runtime. They remain a prerequisite for enrollment.
 
-- Production and staging project references remain separate: `wcydlhqiqdwgoaqrlget` and `rntonzigxwxcjlcsadip`.
-- The EOS 2 enrollment table is absent on Production.
-- No tenant has EOS 2 mode `controlled_pilot`.
-- Enrolled workspace count is 0.
-- The 396 active `engineering-os` installations were not enrolled and were not treated as an authorization rule.
-- No synthetic qualification project was copied.
-- AI was not given promotion, rollback, enrollment, or engineering-approval authority.
-
-## Not claimed
-
-Production RLS, route gate, API gate, kill switch, authority probes, and cross-workspace leak tests were not executed against a changed Production runtime. Leak count is not reported as zero from a new test. The prior staging qualification remains the staging evidence only.
+AI was not given promotion, rollback, enrollment, or engineering-approval authority.

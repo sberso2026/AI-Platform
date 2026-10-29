@@ -2,34 +2,34 @@
 
 ## Decision
 
-`PRODUCTION_PROMOTION_STATUS=BLOCKED_BEFORE_PROMOTION`
+`FINAL_PRE_PROMOTION_GO_NO_GO=GO`
 
-`VERDICT=BLOCKED`
+`HUMAN_PRODUCTION_GO_AUTHORITY=YES`
 
-No Production migration was applied. Production was not redeployed. EOS 2 was not enabled. No workspace was enrolled.
+`AI_PRODUCTION_GO_AUTHORITY=NO`
 
-## Why execution stopped
+`PRODUCTION_MIGRATION_APPLIED=YES`
 
-The EOS 2.16 GO / NO-GO checklist was executed before any Production change. It is NO-GO.
+`PRODUCTION_REDEPLOYED=YES`
 
-1. A new Production backup taken after this GO attempt could not be verified. Point-in-time recovery is not enabled. `POST /v1/projects/wcydlhqiqdwgoaqrlget/database/backups` returns 404, so an on-demand backup could not be requested. The latest completed physical backup is id `2097755872` at `2026-10-28T17:07:26.140Z`, region `ap-southeast-2`, WAL-G enabled. That checkpoint predates this execution. The recovery plan requires a completed backup after GO and before migration.
+`EOS_2_PRODUCTION_CONTROLLED_PILOT_ENABLED=NO`
 
-2. The checklist requires a named human release signature and one named Production workspace. Neither was supplied. This record does not invent a signatory or choose one of the 396 active `engineering-os` installations. AI has no Production promotion authority and no rollback authority.
+An earlier attempt on this branch stopped before any Production change because there was no post-GO backup, no named signatory, and no named workspace. This execution started only after Silvestre Berso issued GO and the pre-migration fingerprint still matched.
 
-The migration files were not applied because those gates failed.
+## What ran
 
-## What was verified
+The post-GO logical backup completed at `2026-10-29T03:30:07.828Z`, SHA-256 `7ec6a70389874eeb14bc7972000a8972df1e8506e863997b8c1e510f4bf5f6b0`, 35239632 bytes. It is outside git. The temporary backup role was removed.
 
-Production build identity matches the approved baseline: commit `0c1ec9e06eea59ac089753f3c930f1a599b14648`, deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB`, Supabase `wcydlhqiqdwgoaqrlget`, ledger 144, maximum `20261027233000`. The enrollment table is absent. Zero tenants have `settings.eos2.mode = controlled_pilot`. Active `engineering-os` installations: 396. Rollback deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` is still Ready.
+The fourteen approved migrations were applied in version order to `wcydlhqiqdwgoaqrlget`. Ledger is 158, maximum `20261029120000`. All fourteen versions are present once. `eos2_workspace_enrollment` exists and has 0 rows. No tenant has `settings.eos2.mode = controlled_pilot`. The pilot workspace still has 1 engineering project. No synthetic project was copied.
 
-The qualified runtime remains `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01`. Repository HEAD `1422df806f7380c1a42d164ce5256207884216a9` differs from it only by documentation. HEAD was not deployed.
+The qualified tree `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` was deployed to Production. Live identity is that commit, deployment `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ`, environment `production`, Supabase `wcydlhqiqdwgoaqrlget`, dirty false. The CLI upload does not set `VERCEL_GIT_COMMIT_SHA`, so the deploy supplied `NEXT_PUBLIC_BUILD_SHA` with the worktree commit. That is the value the existing identity route already reads. An earlier CLI deployment, `dpl_9QcyzEHQTVi8QciYuXkAc8XvZ2cC`, reported commit `unknown` and was replaced before any cohort step.
 
-The fourteen approved migration versions are present once on staging and zero times on Production. Pending count is 14. Their file hashes match the corrected manifest. Version `20261028240000` was not renamed. No synthetic data was transferred.
+Rollback deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` was the serving deployment until this deploy. It was not deleted.
 
-## Required before a rerun
+## What did not run
 
-A named human release authority must sign the GO record, name the single Production workspace, and a completed Production backup must exist after that GO and before migration. Then rerun this phase. Do not start EOS 2.18.
+Authenticated pilot login, EOS 1 workflow smoke, and cross-workspace UI smoke were not run. The approved sequence says not to enable the cohort until those pass. Unauthenticated checks only: `/engineering` returns 307 to `/login`, and `/api/engineering/delivery-lifecycle` returns 401. The named workspace was not enrolled. EOS 2 remains disabled for every Production workspace.
 
-## EOS 2.17R
+`LEGACY_PROJECT_AUTO_MIGRATION=NO`
 
-EOS 2.17R verified a logical backup for this same Production fingerprint. PR-001 is resolved. PR-002 and PR-003 remain open. The GO decision is still NO-GO. No Production mutation was added by that remediation.
+`SYNTHETIC_PRODUCTION_TRANSFER=NO`

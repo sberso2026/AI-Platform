@@ -2,29 +2,33 @@
 
 ## Deployment
 
-`PRODUCTION_REDEPLOYED=NO`
+`PRODUCTION_REDEPLOYED=YES`
 
-Production remains deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB`, commit `0c1ec9e06eea59ac089753f3c930f1a599b14648`, environment `production`, Supabase `wcydlhqiqdwgoaqrlget`. Build identity was read from `https://eos-pilot.rtbea.com.au/api/platform/build-identity` before the stop. Dirty is false.
+Live Production identity:
 
-The qualified candidate `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` was not deployed. The staging preview `dpl_GgVBzbU9N2ZnR5fR41fWwdnYDhbC` was not promoted, because that preview was built with the staging Supabase project.
+| Item | Value |
+| --- | --- |
+| Commit | `bd9654fc35ce9bdcc8fc3a42570ae2cd92311c01` |
+| Deployment | `dpl_9UhYQdVBkiBA6mAd4ajBHRFndhYZ` |
+| Environment | `production` |
+| Supabase | `wcydlhqiqdwgoaqrlget` |
+| Dirty | false |
+| Alias | `https://eos-pilot.rtbea.com.au` |
 
-Rollback target `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` was inspected and is Ready.
+The source tree was a detached worktree at that commit. The identity route reports the commit through `NEXT_PUBLIC_BUILD_SHA`, because a CLI upload does not set `VERCEL_GIT_COMMIT_SHA`. The branch field is `unknown`. The staging preview was not promoted.
+
+Rollback deployment `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB` remains the prior Production deployment.
 
 ## Smoke
 
-Pre-enablement smoke, EOS 1 post-migration compatibility, legacy entitlement denial, and EOS 2 route smoke were not run. There was no new Production deployment and no schema change to test.
-
-## Observability snapshot
-
-Captured before the stop, not after a promotion:
-
-| Signal | Observed |
+| Check | Result |
 | --- | --- |
-| Deployment | `dpl_7EBZUxhkVX7MjR44rYCgkg8odHgB`, Ready |
-| Database | Ledger 144, maximum `20261027233000` |
-| EOS 2 mode | No tenant is `controlled_pilot` |
-| Enrollment table | Absent |
-| Enrolled workspaces | 0 |
-| Active engineering-os installations | 396 |
-| Point-in-time recovery | Not enabled |
-| Latest completed physical backup | `2097755872` at `2026-10-28T17:07:26.140Z` |
+| Build identity | Candidate commit, production env, production Supabase |
+| `/engineering` unauthenticated | 307 to `/login` |
+| `/api/engineering/delivery-lifecycle` unauthenticated | 401 |
+| Authenticated pilot login | Not run |
+| EOS 1 workflow | Not run |
+| Cross-workspace UI isolation | Not run |
+| Cohort enablement | Not run |
+
+EOS 2 mode remains off. Enrolled workspace count is 0.

@@ -2,18 +2,16 @@
 
 ## Result
 
-`PRODUCTION_MIGRATION_EXECUTION=NOT_RUN`
+`PRODUCTION_MIGRATION_EXECUTION=APPLIED`
 
-`MIGRATIONS_APPLIED_COUNT=0`
+`MIGRATIONS_APPLIED_COUNT=14`
 
 `SYNTHETIC_DATA_PRODUCTION_TRANSFER=NO`
 
-Production ledger before and after this phase: 144, maximum `20261027233000`. Staging ledger: 146, maximum `20261029120000`. The fourteen approved versions are present 14 times on staging and 0 times on Production. Pending count before execution: 14.
+Production ledger before execution: 144, maximum `20261027233000`. Production ledger after execution: 158, maximum `20261029120000`. The fourteen approved versions are present once. Staging already had the same fourteen versions. File hashes matched the manifest. No `DROP TABLE` or `TRUNCATE` is in those files. Version `20261028240000` was not renamed.
 
-## Integrity
+## Order applied
 
-Each repository file was hashed again. Thirteen hashes already matched the manifest. `20261029120000` matched the original measurement `9896c49a648ffe05892caccdb733b82b342006bde618eb73235a058a3a4a5b21`. The previously published manifest string omitted one character. The migration file was not edited. The manifest string is corrected in this phase. Version `20261028240000` remains the historical key.
+`20261028120000`, `20261028140000`, `20261028160000`, `20261028180000`, `20261028200000`, `20261028220000`, `20261028240000`, `20261029000000`, `20261029020000`, `20261029040000`, `20261029060000`, `20261029080000`, `20261029100000`, `20261029120000`.
 
-## Stop
-
-No migration started. The post-GO backup was not verified, and the GO record has no named signatory or named workspace. Database recovery was not required and was not executed.
+Each file was applied, then its version and name were inserted into `supabase_migrations.schema_migrations`. Statement bodies were not stored. The enrollment table was created with zero rows.

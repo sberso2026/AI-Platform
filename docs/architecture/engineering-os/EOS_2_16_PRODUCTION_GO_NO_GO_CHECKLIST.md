@@ -1,6 +1,6 @@
 # EOS 2.16 Production GO / NO-GO Checklist
 
-Current result: **NO-GO**. The release signatory and the Production pilot workspace are named. The signatory has not issued GO. EOS 2.17 execution has not started. This checklist does not authorize deployment.
+Current result: **GO issued, cohort disabled**. Migrations are applied and the qualified runtime is deployed. The named workspace is not enrolled. Authenticated pilot smoke has not run. This checklist does not authorize enrollment by itself.
 
 AI may recommend. AI must not mark GO, deploy, migrate, or roll back.
 

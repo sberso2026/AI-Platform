@@ -10,7 +10,7 @@
 
 `PR_002_RESOLVED=YES`
 
-`FINAL_PRE_PROMOTION_GO_NO_GO=NOT_ISSUED`
+`FINAL_PRE_PROMOTION_GO_NO_GO=GO`
 
 The operator explicitly designated the signatory on 2026-10-29. The identity and role below are recorded as supplied. Earlier EOS 1 pilot-engineer evidence and the D1 structural reviewer attestation were not used as this authority.
 
@@ -48,7 +48,7 @@ The acknowledged exclusions remain outside the qualified scope: unsupported dete
 
 EOS 2 stays disabled. It may be enabled only for this workspace during EOS 2.17 execution after the pre-enablement migration, backup, security, tenant-isolation, EOS 1 regression, smoke-test, and rollback controls have passed.
 
-The declaration authorizes Silvestre Berso to issue the final human GO or NO-GO. It does not itself issue GO. No Production migration, deployment, or enrollment was performed from this designation.
+The declaration issued GO on 2026-10-29. It does not enable EOS 2 by itself. The qualified runtime was deployed and the fourteen migrations were applied. The named workspace stays unenrolled until authenticated pre-enablement smoke passes.
 
 ## PR-003
 
