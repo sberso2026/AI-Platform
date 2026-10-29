@@ -36,11 +36,38 @@ describe("EOS 3.11 Production Pilot Gate", () => {
         requestedProductKey: "eos-3",
         tenantId: "t",
         workspaceId: "w",
-        record: null,
-        enrollmentState: "PILOT",
+        record: {
+          productKey: "eos-3",
+          tenantId: "t",
+          workspaceId: "w",
+          status: "active",
+          grantSource: "INTERNAL_DEVELOPMENT",
+          validFrom: "2026-01-01",
+          validUntil: null,
+        },
+        enrollmentState: "DEVELOPMENT",
         productionEnvironment: true,
       }).reason,
     ).toBe("production_denied");
+    expect(
+      evaluateEos3Access({
+        authenticated: true,
+        requestedProductKey: "eos-3",
+        tenantId: "t",
+        workspaceId: "w",
+        record: {
+          productKey: "eos-3",
+          tenantId: "t",
+          workspaceId: "w",
+          status: "active",
+          grantSource: "INTERNAL_VALIDATION",
+          validFrom: "2026-01-01",
+          validUntil: null,
+        },
+        enrollmentState: "PILOT",
+        productionEnvironment: true,
+      }).allowed,
+    ).toBe(true);
   });
 
   it("freezes pilot gate without activation or human GO", () => {

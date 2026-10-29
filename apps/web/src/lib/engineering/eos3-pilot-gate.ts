@@ -323,7 +323,24 @@ export function runEos3ProductionPilotGate() {
     return arr[i - 1]! < id;
   });
 
-  const prodDenied = evaluateEos3Access({
+  const prodNonPilotDenied = evaluateEos3Access({
+    authenticated: true,
+    requestedProductKey: "eos-3",
+    tenantId: "t",
+    workspaceId: "w",
+    record: {
+      productKey: "eos-3",
+      tenantId: "t",
+      workspaceId: "w",
+      status: "active",
+      grantSource: "INTERNAL_DEVELOPMENT",
+      validFrom: "2026-01-01",
+      validUntil: null,
+    },
+    enrollmentState: "DEVELOPMENT",
+    productionEnvironment: true,
+  });
+  const prodPilotAllowed = evaluateEos3Access({
     authenticated: true,
     requestedProductKey: "eos-3",
     tenantId: "t",
@@ -359,7 +376,8 @@ export function runEos3ProductionPilotGate() {
     !eos2EnrollmentAutoEnablesEos3(true) &&
     !EOS_2_AUTO_MIGRATION_TO_EOS_3 &&
     !productionMigrationGuard(true).allowed &&
-    prodDenied.reason === "production_denied"
+    prodNonPilotDenied.reason === "production_denied" &&
+    prodPilotAllowed.allowed === true
       ? ("READY_WITH_LIMITATIONS" as const)
       : ("NOT_READY" as const);
 

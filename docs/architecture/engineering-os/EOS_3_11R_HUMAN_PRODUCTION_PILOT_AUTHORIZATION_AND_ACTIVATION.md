@@ -2,50 +2,40 @@
 
 ## Verdict
 
-`VERDICT=BLOCKED`
+`VERDICT=PASS_WITH_LIMITATIONS`
 
-`BLOCKER=EOS_3_PRODUCTION_PILOT_HUMAN_GO_NOT_ISSUED`
+`EOS_3_PRODUCTION_PILOT_HUMAN_GO=ISSUED`
 
-Secondary unmet prerequisite: `EOS_3_PILOT_RELEASE_AUTHORITY_NOT_DESIGNATED`
+`EOS_3_RELEASE_STATUS=CONTROLLED_PRODUCTION_PILOT`
 
-## Absolute authorization gate
+`EOS_3_ACTIVATION_STATUS=ACTIVE_CONTROLLED_PILOT`
 
-No explicit human authorization record exists for:
+## Authorization
 
-`EOS-3.11R-HUMAN-PRODUCTION-PILOT-AUTHORIZATION-AND-CONTROLLED-ACTIVATION`
+- Release authority: Silvestre Berso — Founder, RTB Engineering & Analytics
+- Scope: `EOS_3_CONTROLLED_PRODUCTION_PILOT_SOFTWARE_RELEASE_ONLY`
+- Authorization fingerprint: `sha256:5f8f8398a7578aa1622c1d65be8acfdce9c3ae0f08d1942686f68dcb649f7129`
+- Candidate fingerprint verified: `sha256:4c8f9bcb48c478b32fc8ccded642ada8a3f4f330952645ef8f0ff1b6d5b964e1`
+- Validated functional runtime: `c89f106af689a2e79c81a30d0a8420803e632220`
+- Authorized activation delta: Production access for `enrollmentState=PILOT` only under issued GO
 
-EOS 3.11 freeze remains:
+## Production mutations performed
 
-- `EOS_3_PRODUCTION_PILOT_HUMAN_GO=NOT_ISSUED`
-- `EOS_3_PILOT_RELEASE_AUTHORITY_DESIGNATED=NO`
-- `EOS_3_PRODUCTION_PILOT_RELEASE_DECISION=TECHNICALLY_READY_PENDING_HUMAN_GO`
+1. Pre-migration recovery snapshot at ledger `161` (plus latest WAL-G physical backup `2097755872`)
+2. Applied exact nine approved EOS 3 migrations; ledger `161 → 170`
+3. Granted eos-3 entitlement + PILOT enrollment to workspace `5c85d773-3b79-43b2-b138-c6251f566768` only
+4. Created controlled smoke project `eos3-pilot-smoke-001` (2 objects); foreign workspace leak probe `0`
+5. Deployed activation runtime with PILOT Production access enablement
 
-GO was **not** inferred from this execution prompt, prior EOS 2 authorization, repository ownership, technical readiness, or credentials.
+## Explicit non-effects
 
-## Production mutation
+- No EOS 2 project auto-migration
+- No external customer access
+- Live LLM remains `DISABLED_NOT_VALIDATED`
+- Real connectors remain `DISABLED`
+- Not GENERAL_AVAILABILITY
+- Not EXTERNAL_CUSTOMER_RELEASE
 
-`EOS_3_11R_PRODUCTION_CHANGE_COUNT=0`
+## Next phase
 
-- No Production backup created for activation
-- No EOS 3 migrations applied
-- Production ledger remains `161`
-- No runtime deploy
-- No entitlement / enrollment
-- No Production data writes
-
-## Candidate preserved (not activated)
-
-- VALIDATED_FUNCTIONAL_CANDIDATE: `c89f106af689a2e79c81a30d0a8420803e632220`
-- RELEASE_EVIDENCE_COMMIT (3.11): `4417cc642ebf98f97a84066893db8fc6cd04947e`
-- Candidate fingerprint: `sha256:4c8f9bcb48c478b32fc8ccded642ada8a3f4f330952645ef8f0ff1b6d5b964e1`
-
-## Resume conditions
-
-Before retrying this phase:
-
-1. Explicit human `GO` for EOS 3 Production Pilot bound to the candidate fingerprint, runtime, migrations, scope, limitations, cohort, and timestamp
-2. Explicitly designated SOFTWARE RELEASE AUTHORITY (`EOS_3_PILOT_RELEASE_AUTHORITY_DESIGNATED=YES`) with scope limited to controlled Production Pilot software release
-3. Re-verify ledger `161`, kill switch, and EOS 2 GA baseline
-4. Then execute activation runbook only under that binding
-
-`NEXT_PHASE=EOS-3.11R-HUMAN-PRODUCTION-PILOT-AUTHORIZATION-AND-CONTROLLED-ACTIVATION` (retry after GO)
+`EOS-3.12-PRODUCTION-PILOT-ASSURANCE-AND-HARDENING`

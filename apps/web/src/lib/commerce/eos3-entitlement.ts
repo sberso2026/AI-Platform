@@ -5,6 +5,7 @@
  */
 
 import { EOS3_PRODUCT_KEY } from "./eos3-identity";
+import { eos3ProductionPilotAccessAllowed } from "./eos3-pilot-authorization";
 
 export const EOS3_DEV_GRANT_SOURCES = [
   "INTERNAL_VALIDATION",
@@ -28,6 +29,7 @@ export type Eos3AccessDecision = {
   allowed: boolean;
   reason:
     | "active_development"
+    | "active_controlled_pilot"
     | "unauthenticated"
     | "missing"
     | "wrong_product"
@@ -65,8 +67,10 @@ export function evaluateEos3Access(input: {
 }): Eos3AccessDecision {
   if (input.emergencyOff) return { allowed: false, reason: "kill_switch" };
   if (!input.authenticated) return { allowed: false, reason: "unauthenticated" };
-  // Production remains inaccessible in EOS 3.1 foundation.
-  if (input.productionEnvironment) return { allowed: false, reason: "production_denied" };
+  // Production denied unless explicit controlled PILOT enrollment under issued human GO.
+  if (input.productionEnvironment && !eos3ProductionPilotAccessAllowed(input.enrollmentState)) {
+    return { allowed: false, reason: "production_denied" };
+  }
   if (input.requestedProductKey !== EOS3_PRODUCT_KEY) {
     return { allowed: false, reason: "wrong_product" };
   }
@@ -100,5 +104,8 @@ export function evaluateEos3Access(input: {
     return { allowed: false, reason: "enrollment_not_eligible" };
   }
 
-  return { allowed: true, reason: "active_development" };
+  return {
+    allowed: true,
+    reason: enrollment === "PILOT" && input.productionEnvironment ? "active_controlled_pilot" : "active_development",
+  };
 }

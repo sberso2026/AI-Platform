@@ -1,14 +1,22 @@
 # EOS 3.11R Production Pilot Security Evidence
 
-Activation-path Production security checks were **not executed** because human GO was not issued.
+## Enforced controls
 
-Controls that remained in force by non-activation:
+- D001 live LLM excluded (`DISABLED_NOT_VALIDATED`)
+- D002 real connectors excluded (`DISABLED`)
+- Production migration of EOS 2 projects denied / count 0
+- Kill switch fail-closed (`emergencyOff`)
+- Non-PILOT Production access denied
+- External customer pilot hold ACTIVE
+- Unauthorized workspace entitlement count 0
+- Cross-workspace smoke leak count 0
 
-- Production EOS 3 access DENIED
-- Production enabled workspace count 0
-- Production migration count 0
-- Production change count 0
-- Ledger unchanged at 161
-- External customer pilot hold ACTIVE (no enrollment)
+## AI authority
 
-`BLOCKER=EOS_3_PRODUCTION_PILOT_HUMAN_GO_NOT_ISSUED`
+All AI final/engineering/approval/release/IFC/migration/solver-qualification authorities remain NO.
+
+## Compliance
+
+`FORMAL_SOC2_CERTIFIED=NO`  
+`FORMAL_ISO27001_CERTIFIED=NO`  
+`FORMAL_EU_AI_ACT_CERTIFIED=NO`
