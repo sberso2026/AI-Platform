@@ -1,0 +1,31 @@
+# EOS 3.7 AI Tool and Policy Model
+
+`EOS_3_AI_POLICY_ENGINE_IMPLEMENTED=YES`
+
+`EOS_3_AI_POLICY_FAIL_CLOSED=PASS`
+
+`EOS_3_AI_TOOL_REGISTRY_IMPLEMENTED=YES`
+
+`EOS_3_AI_TOOL_SIDE_EFFECT_CLASSIFICATION=PASS`
+
+`EOS_3_AI_TOOL_QUALIFICATION_AWARENESS=PASS`
+
+`EOS_3_AI_CANNOT_CHANGE_TOOL_QUALIFICATION=PASS`
+
+`EOS_3_AI_TASK_CLASSIFICATION_IMPLEMENTED=YES`
+
+`EOS_3_AI_TASK_AUTHORITY_CLASSIFICATION=PASS`
+
+## Task classes
+
+`LOOKUP`, `TRACE`, `COMPARE`, `SUMMARIZE`, `ANALYZE`, `RECOMMEND`, `CALCULATION_REQUEST`, `OPTIMIZATION_REQUEST`, `SOLVER_REQUEST`, `REVIEW_ASSIST`, `CHANGE_IMPACT_ASSIST`, `DECISION_SUPPORT`
+
+No AI `APPROVE` task.
+
+## Side effects
+
+`READ_ONLY` / `DRAFT_WRITE` (bounded) / `GOVERNED_WRITE` (checkpoint) / `HUMAN_ONLY_ACTION` (denied to AI)
+
+## Policy inputs
+
+User identity, role, tenant/workspace/project, entitlement, enrollment, requested action/tool, capability, authority, qualification, data classification, workflow state. Incomplete context → fail closed.

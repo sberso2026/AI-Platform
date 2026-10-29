@@ -1,0 +1,39 @@
+# EOS 3.7 Staging Validation Evidence
+
+`EOS_3_STAGING_ENGINEERING_REASONING_SCENARIO=PASS`
+
+`EOS_3_STAGING_REASONING_TRACE=PASS`
+
+`EOS_3_AI_FACT_INFERENCE_TEST=PASS`
+
+`EOS_3_AI_ABSTENTION_TEST=PASS`
+
+`EOS_3_AI_CONFLICTING_EVIDENCE_TEST=PASS`
+
+`EOS_3_AI_BASELINE_CONTEXT_TEST=PASS`
+
+`EOS_3_AI_FINAL_DECISION_DENIAL_TEST=PASS`
+
+`EOS_3_AI_APPROVAL_DENIAL_TEST=PASS`
+
+`EOS_3_AI_SOLVER_QUALIFICATION_DENIAL_TEST=PASS`
+
+`EOS_3_AI_FAILED_TOOL_REASONING_TEST=PASS`
+
+`EOS_3_AI_ORCHESTRATION_BOUND_TEST=PASS`
+
+`EOS_3_AI_REASONING_PERFORMANCE_BASELINE_CAPTURED=YES`
+
+`EOS_3_BOUNDED_MULTI_AGENT_ORCHESTRATION_IMPLEMENTED=YES`
+
+## Target
+
+Review staging schema apply: `rntonzigxwxcjlcsadip`
+
+Production: ledger `161`; EOS 3.7 AI tables absent; no Production writes / no Production AI exposure.
+
+## Module
+
+`apps/web/src/lib/engineering/eos3-ai-reasoning-staging.ts`
+
+`apps/web/src/__tests__/eos3-ai-reasoning.test.ts`

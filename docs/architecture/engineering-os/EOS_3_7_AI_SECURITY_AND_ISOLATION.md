@@ -1,0 +1,31 @@
+# EOS 3.7 AI Security and Isolation
+
+`EOS_3_AI_PROMPT_INJECTION_RESISTANCE=PASS`
+
+`EOS_3_AI_TOOL_INJECTION_RESISTANCE=PASS`
+
+`EOS_3_AI_CROSS_WORKSPACE_SECURITY=PASS`
+
+`EOS_3_STAGING_AI_CROSS_WORKSPACE_LEAK_COUNT=0`
+
+`EOS_3_AI_FOREIGN_OBJECT_ID_TEST=PASS`
+
+`EOS_3_AI_ROLE_ESCALATION_TEST=PASS`
+
+`EOS_3_AI_SECRET_ACCESS_TEST=PASS`
+
+`EOS_3_AI_DATA_EXFILTRATION_TEST=PASS`
+
+`EOS_3_AI_AUTHORITY_ATTACK_TEST=PASS`
+
+`EOS_3_AI_ORCHESTRATION_LOOP_CONTROL=PASS`
+
+`EOS_3_AI_EXECUTION_BUDGET_IMPLEMENTED=YES`
+
+`EOS_3_AI_SIDE_EFFECT_IDEMPOTENCY=PASS`
+
+`EOS_3_AI_ORCHESTRATION_RLS=PASS`
+
+## Controls
+
+Retrieved content is data, not privileged instruction. Tool allowlists + authority ceilings for bounded agents. Max steps/tool calls/timeouts/token budget. Failures never become successful evidence. Secrets inaccessible to AI.
