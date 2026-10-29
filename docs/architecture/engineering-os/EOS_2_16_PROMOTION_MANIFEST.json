@@ -7,7 +7,7 @@
   "qualificationReportCommit": "9d6fb55c39bbbc10e148a0b37268142e3a2bb72b",
   "eos215rPointerCommit": "b7ac95e8c634b0118e7547541b7479b2653b4a3a",
   "startHead": "b7ac95e8c634b0118e7547541b7479b2653b4a3a",
-  "readinessCommit": "PENDING_READINESS_COMMIT",
+  "readinessCommit": "c2b6dd67c8ffc56ad91590e38b62604b9d221ac5",
   "readinessCommitDeployed": false,
   "postQualificationChangeClassification": "DOCUMENTATION_ONLY",
   "promotionCandidateRuntimeEquivalenceVerified": true,
