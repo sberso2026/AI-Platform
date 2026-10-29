@@ -1,0 +1,33 @@
+{
+  "phase": "EOS-3.6-INTEGRATION-AND-SOLVER-FRAMEWORK",
+  "verdict": "PASS",
+  "branch": "eos-3/foundation-and-compatibility",
+  "eos35StartingDirtyStateReconciled": true,
+  "eos35BaselineProvenanceAcceptable": true,
+  "eos35WorkflowEventBaselinePreserved": true,
+  "externalSolverGlobalQualification": false,
+  "spaceGassGlobalQualification": false,
+  "spaceGassConnectorStatus": "EXISTING_D1G_READ_ONLY_CONNECTOR_BOUNDED_LIMITATION_NOT_EXECUTION_CERTIFIED",
+  "realConnectorValidationStatus": "NOT_EXECUTED",
+  "dmsBoundaryPreserved": true,
+  "arbitraryCodeExecutionDisabled": true,
+  "databaseSchemaChanged": true,
+  "newMigrationId": "20261030040000_eos_3_6_integration_solver_framework",
+  "historicalMigrationsUnchanged": true,
+  "productionMigrationLedger": 161,
+  "eos3ProductionActivationPerformed": false,
+  "productionDataWriteCount": 0,
+  "qualificationImpact": "NONE",
+  "d1MigrationState": "PRESERVE_COMPATIBLE",
+  "newMaterialArchitecturalDecisionCount": 0,
+  "recommendedNextPhase": "EOS-3.7-AI-ORCHESTRATION-AND-ENGINEERING-REASONING",
+  "readyForNextPhase": true,
+  "artifacts": {
+    "phase": "docs/architecture/engineering-os/EOS_3_6_INTEGRATION_AND_SOLVER_FRAMEWORK.md",
+    "connector": "docs/architecture/engineering-os/EOS_3_6_CONNECTOR_CONTRACT_AND_SECURITY.md",
+    "solverModel": "docs/architecture/engineering-os/EOS_3_6_SOLVER_EXECUTION_AND_QUALIFICATION_MODEL.md",
+    "provenance": "docs/architecture/engineering-os/EOS_3_6_SOLVER_INPUT_RESULT_PROVENANCE.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_6_EXTERNAL_SYSTEM_AUTHORITY_BOUNDARY.md",
+    "staging": "docs/architecture/engineering-os/EOS_3_6_STAGING_VALIDATION_EVIDENCE.md"
+  }
+}
