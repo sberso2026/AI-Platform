@@ -52,14 +52,16 @@ For a globally deployable multi-workspace Engineering OS GA claim, live multi-en
 
 ## Operational ownership
 
-`GA_OPERATIONAL_OWNERSHIP_COMPLETE=YES` for current pilot scale:
+`GA_OPERATIONAL_OWNERSHIP_COMPLETE=YES` (reverified in EOS 2.20R):
 
-- Production release / founder authority: Silvestre Berso (pilot scope verified; GA scope not verified)
+- Production release / GA release authority: Silvestre Berso (Founder; `EOS_2_20R_HUMAN_GA_RELEASE_AUTHORITY_DECLARATION.md`)
 - Infrastructure: Vercel Production alias operations
 - Database: Supabase project `wcydlhqiqdwgoaqrlget`
-- Security / incident / recovery: as documented in EOS 2.19 runbooks under that authority
+- Security / incident / recovery: EOS 2.19 runbooks under that authority
+- Support: bounded pilot/GA validation support under same authority (no fabricated 24/7 SLA)
+- Engineering qualification / AI governance: QUALIFIED_BOUNDED D1 + documented AI authority boundaries
 
-Scale/customer-support ownership for external GA remains incomplete → contributes to commercial/support limitations and documentation NOT_READY for GA.
+`FINAL_GA_GO_NO_GO=NOT_ISSUED` — ownership complete does not activate GA.
 
 ## Rollback / kill switch
 

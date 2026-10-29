@@ -447,6 +447,15 @@ export class EntitlementService {
     const rows = await this.overrides.listActive(input.tenantId);
     const match = rows.find((o) => {
       if (o.effect !== effect) return false;
+      // Product identity must match when either side names a product. A grant for one
+      // product must not authorize another (EOS 2.20R ENTITLEMENT_PRODUCT_FILTERING).
+      if (o.product_id) {
+        const requestedProductId =
+          typeof (input as { productId?: string }).productId === "string"
+            ? (input as { productId?: string }).productId
+            : undefined;
+        if (!requestedProductId || o.product_id !== requestedProductId) return false;
+      }
       if (o.user_id && input.userId && o.user_id !== input.userId) return false;
       if (o.workspace_id && input.workspaceId && o.workspace_id !== input.workspaceId) return false;
       if (o.application_key && input.applicationKey && o.application_key !== input.applicationKey)
